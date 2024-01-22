@@ -14,21 +14,6 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ fc76d775-49c8-47f5-bfaf-1a1b9091deaf
-using Pkg
-
-# ╔═╡ 662442c1-b691-400b-9d63-adcc0b33d66c
-Pkg.activate("../")
-
-# ╔═╡ 49761f06-c4f1-4ea4-9fc4-a455728ad916
-Pkg.add("InfrastructureModels")
-
-# ╔═╡ e35b627a-01e2-4bb1-9a9b-9f67bde224a5
-Pkg.add("JSON")
-
-# ╔═╡ 9787aa73-8ffc-4634-bf0f-b70eee0bf377
-using CodeTracking, Revise, PlutoUI
-
 # ╔═╡ a1989876-9301-11eb-0783-83b3aa7abfbc
 begin
 	using PowerModelsDistribution
@@ -77,8 +62,22 @@ Details about PowerModelsDistribution.jl can be found in our [PSCC Conference Pr
 # ╔═╡ 62c14531-357a-4669-90cd-2a186df123eb
 md"The following packages are used for notebook features only and do not relate to tutorial content"
 
-# ╔═╡ 2f0fe1af-3b40-40a6-ba78-f5450e628ff6
-Pkg.status()
+# ╔═╡ e2de04b7-7f78-430e-95f3-db34cff03dd6
+wd = @__DIR__
+
+# ╔═╡ 64f4a64f-d103-49f6-a078-54d0d4042f69
+cd(dirname(wd))
+
+# ╔═╡ 0029c8f3-88b9-44b7-a357-4b50f2b11cdc
+pwd()
+
+# ╔═╡ e40cdeb6-742a-4956-ba3d-58ebd8732855
+
+
+# ╔═╡ a32f769c-3cb3-497b-b04d-fde584b19eda
+using Pkg
+Pkg.activate(".")
+using CodeTracking, Revise, PlutoUI
 
 # ╔═╡ b953c65d-515f-4334-a4d4-b27af1b0e29a
 md"""
@@ -1125,14 +1124,13 @@ We always welcome [Pull Requests](https://github.com/lanl-ansi/PowerModelsDistri
 # ╟─c9a5c344-961b-11eb-0458-a746afcb280c
 # ╟─b5928052-9616-11eb-14b3-79770b9929df
 # ╟─62c14531-357a-4669-90cd-2a186df123eb
-# ╠═9787aa73-8ffc-4634-bf0f-b70eee0bf377
-# ╠═fc76d775-49c8-47f5-bfaf-1a1b9091deaf
-# ╠═662442c1-b691-400b-9d63-adcc0b33d66c
-# ╠═2f0fe1af-3b40-40a6-ba78-f5450e628ff6
+# ╠═e2de04b7-7f78-430e-95f3-db34cff03dd6
+# ╠═64f4a64f-d103-49f6-a078-54d0d4042f69
+# ╠═0029c8f3-88b9-44b7-a357-4b50f2b11cdc
+# ╠═e40cdeb6-742a-4956-ba3d-58ebd8732855
+# ╠═a32f769c-3cb3-497b-b04d-fde584b19eda
 # ╟─b953c65d-515f-4334-a4d4-b27af1b0e29a
 # ╠═a1989876-9301-11eb-0783-83b3aa7abfbc
-# ╠═49761f06-c4f1-4ea4-9fc4-a455728ad916
-# ╠═e35b627a-01e2-4bb1-9a9b-9f67bde224a5
 # ╠═f4d7c365-ce18-46b8-8ebb-dd2fbc0e73de
 # ╟─749d062d-72a1-4160-afcf-1cdc27d85c84
 # ╟─7e032130-c565-42d1-93ed-87955e1f2334

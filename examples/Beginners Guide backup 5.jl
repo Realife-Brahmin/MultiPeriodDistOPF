@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.36
+# v0.19.30
 
 using Markdown
 using InteractiveUtils
@@ -13,18 +13,6 @@ macro bind(def, element)
         el
     end
 end
-
-# ╔═╡ fc76d775-49c8-47f5-bfaf-1a1b9091deaf
-using Pkg
-
-# ╔═╡ 662442c1-b691-400b-9d63-adcc0b33d66c
-Pkg.activate("../")
-
-# ╔═╡ 49761f06-c4f1-4ea4-9fc4-a455728ad916
-Pkg.add("InfrastructureModels")
-
-# ╔═╡ e35b627a-01e2-4bb1-9a9b-9f67bde224a5
-Pkg.add("JSON")
 
 # ╔═╡ 9787aa73-8ffc-4634-bf0f-b70eee0bf377
 using CodeTracking, Revise, PlutoUI
@@ -76,9 +64,6 @@ Details about PowerModelsDistribution.jl can be found in our [PSCC Conference Pr
 
 # ╔═╡ 62c14531-357a-4669-90cd-2a186df123eb
 md"The following packages are used for notebook features only and do not relate to tutorial content"
-
-# ╔═╡ 2f0fe1af-3b40-40a6-ba78-f5450e628ff6
-Pkg.status()
 
 # ╔═╡ b953c65d-515f-4334-a4d4-b27af1b0e29a
 md"""
@@ -1126,13 +1111,8 @@ We always welcome [Pull Requests](https://github.com/lanl-ansi/PowerModelsDistri
 # ╟─b5928052-9616-11eb-14b3-79770b9929df
 # ╟─62c14531-357a-4669-90cd-2a186df123eb
 # ╠═9787aa73-8ffc-4634-bf0f-b70eee0bf377
-# ╠═fc76d775-49c8-47f5-bfaf-1a1b9091deaf
-# ╠═662442c1-b691-400b-9d63-adcc0b33d66c
-# ╠═2f0fe1af-3b40-40a6-ba78-f5450e628ff6
 # ╟─b953c65d-515f-4334-a4d4-b27af1b0e29a
 # ╠═a1989876-9301-11eb-0783-83b3aa7abfbc
-# ╠═49761f06-c4f1-4ea4-9fc4-a455728ad916
-# ╠═e35b627a-01e2-4bb1-9a9b-9f67bde224a5
 # ╠═f4d7c365-ce18-46b8-8ebb-dd2fbc0e73de
 # ╟─749d062d-72a1-4160-afcf-1cdc27d85c84
 # ╟─7e032130-c565-42d1-93ed-87955e1f2334
