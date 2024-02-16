@@ -196,7 +196,8 @@ if  false # specify which case to run, by specifying the case's name
     #### i = findall(x -> occursin(TheKey, x),CaseNames) # also works
 
 else    # specify which case to run, by specifying the case's number
-    i         = 58 # there are 57 cases
+    # i         = 58 # there are 57 cases
+    i = 1
     TheKey    = CaseNames[i]
 end
 
@@ -204,22 +205,45 @@ if sizeof(CustomCaseName)>0
     CustomCaseName = string("_",CustomCaseName)
 end
 # ==============================================================================
-OutLog      = "output_data/March2023_LoadDataFromAttestCloud/EditedInputFiles/OutLog.xlsx"
-LogThis(;CaseLog, Append=false) = append_xl_row(workbook_path=OutLog,
-                                                sheet_name="Log",
-                                                row_data=collect(CaseLog),
-                                                Append=Append)
 
-LogLabels   = ["#","CaseName","InputFile","OutputFile","Start_Time", "Init_PF","N_Violations","Opt_Started","Opt_Found"]
-if isfile(OutLog)
-    XLS_MODE = "rw"
-else
-    XLS_MODE = "w" # file does NOT exist. use write mode.
+# OutLog = "output_data/March2023_LoadDataFromAttestCloud/EditedInputFiles/OutLog.xlsx"
+LogLabels = ["#", "CaseName", "InputFile", "OutputFile", "Start_Time", "Init_PF", "N_Violations", "Opt_Started", "Opt_Found"]
+
+# OutLog = "output_data/March2023_LoadDataFromAttestCloud/EditedInputFiles/OutLog.xlsx"
+OutLog = joinpath("output_data", "March2023_LoadDataFromAttestCloud", "EditedInputFiles", "OutLog.xlsx")
+outdir = dirname(OutLog)
+
+println("Attempting to create directory: ", outdir)
+println("Path length: ", length(outdir))
+
+try
+    # mkpath(outdir)
+    mkdir(outdir)
+    println("Directory created successfully.")
+catch e
+    println("Error creating directory: ", e)
 end
+
+
+# Check if the file exists to determine the mode
+XLS_MODE = isfile(OutLog) ? "rw" : "w"
+
+function LogThis(; CaseLog, Append=false)
+    append_xl_row(workbook_path=OutLog, sheet_name="Log", row_data=collect(CaseLog), Append=Append)
+end
+
 XLSX.openxlsx(OutLog, mode=XLS_MODE) do xf
-    sheet = xf[1]
-    XLSX.rename!(sheet, "Log")
-    sheet["A1"] = LogLabels
+    if XLS_MODE == "w"
+        # Create a new sheet named "Log" if we are in write mode
+        sheet = XLSX.addsheet!(xf, "Log")
+    else
+        # In read-write mode, try to get the "Log" sheet or create if it doesn't exist
+        sheet = haskey(xf.sheets, "Log") ? xf["Log"] : XLSX.addsheet!(xf, "Log")
+    end
+    if XLS_MODE == "w" || isempty(sheet)
+        # Only write the LogLabels if the sheet is new or empty
+        sheet["A1"] = LogLabels
+    end
 end
 # ==============================================================================
 
