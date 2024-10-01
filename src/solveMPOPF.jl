@@ -1,145 +1,43 @@
+# main.jl
+
+# Include the parseOpenDSSFiles.jl script
+include("./parseOpenDSSFiles.jl")
+
+# Call the parsing function to get the data
+N, Nset, Nm1set, Lset, L1set, Lm1set, r, x, Parent, Children,
+T, Tset, C, η_C, η_D, V_base, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params = parseOpenDSSFiles()
+
+# Import necessary packages
 using JuMP
-using Ipopt  # You can choose the appropriate solver
+using Ipopt
 
-# ===========================
-# Placeholder Functions to Read Data from .dss Files
-# ===========================
-
-# Function to read bus data from 'BusData.dss'
-function ReadBusData(filename::String)
-    # Placeholder: Simulate reading bus data
-    # Return data structures for buses
-    # For example, return total number of nodes N, bus coordinates, etc.
-    N = ...  # Total number of nodes (to be read from the file)
-    Nset = 1:N
-    Nm1set = 2:N  # Nodes excluding substation node 1
-    return N, Nset, Nm1set
-end
-
-# Function to read branch data from 'BranchData.dss'
-function ReadBranchData(filename::String)
-    # Placeholder: Simulate reading branch data
-    # Return Lset, L1set, Lm1set, r, x, Parent, Children
-    Lset = [...]  # List of branches (i, j)
-    L1set = [...]  # Branches connected directly to substation node
-    Lm1set = setdiff(Lset, L1set)
-    r = Dict{Tuple{Int,Int},Float64}()  # Resistances
-    x = Dict{Tuple{Int,Int},Float64}()  # Reactances
-    Parent = Dict{Int,Int}()             # Parent nodes
-    Children = Dict{Int,Vector{Int}}()   # Children nodes
-    # Populate the above structures based on the branch data
-    return Lset, L1set, Lm1set, r, x, Parent, Children
-end
-
-# Function to read load data from 'Loads.dss'
-function ReadLoadData(filename::String)
-    # Placeholder: Simulate reading load data
-    # Return p_L and q_L
-    p_L = Dict{Int,Vector{Float64}}()  # Real power load
-    q_L = Dict{Int,Vector{Float64}}()  # Reactive power load
-    # Populate p_L and q_L based on the load data
-    return p_L, q_L
-end
-
-# Function to read PV system data from 'PVSystem.dss'
-function ReadPVData(filename::String)
-    # Placeholder: Simulate reading PV data
-    # Return Dset and p_D
-    Dset = [...]  # Nodes with PV systems
-    p_D = Dict{Int,Vector{Float64}}()  # PV generation data
-    # Populate p_D based on the PV system data
-    return Dset, p_D
-end
-
-# Function to read battery data from 'Storage.dss'
-function ReadBatteryData(filename::String)
-    # Placeholder: Simulate reading battery data
-    # Return Bset and battery parameters
-    Bset = [...]  # Nodes with batteries
-    # Include battery capacities, efficiencies, etc., if needed
-    return Bset
-end
-
-# Function to read capacitor data from 'Capacitor.dss'
-function ReadCapacitorData(filename::String)
-    # Placeholder: Simulate reading capacitor data
-    # Return capacitor settings, if applicable
-    # For this model, we may or may not need this data
-    return
-end
-
-# Function to read system simulation data from 'SysSim.dss'
-function ReadSystemSimulationData(filename::String)
-    # Placeholder: Simulate reading system-level data
-    # Return T (number of time periods), Tset, C (cost data), η_C, η_D
-    T = 10  # Total number of time periods (to be read from the file)
-    Tset = 1:T
-    C = Dict{Int,Float64}()  # Cost of power from the substation at each time t
-    # Populate C based on the system simulation data
-    η_C = 0.9  # Battery charging efficiency
-    η_D = 0.9  # Battery discharging efficiency
-    return T, Tset, C, η_C, η_D
-end
-
-# ===========================
-# Read Data from .dss Files
-# ===========================
-
-# Paths to the .dss files
-bus_data_file = "BusData.dss"
-branch_data_file = "BranchData.dss"
-load_data_file = "Loads.dss"
-pv_data_file = "PVSystem.dss"
-battery_data_file = "Storage.dss"
-capacitor_data_file = "Capacitor.dss"
-system_sim_data_file = "SysSim.dss"
-
-# Read data using the placeholder functions
-N, Nset, Nm1set = ReadBusData(bus_data_file)
-Lset, L1set, Lm1set, r, x, Parent, Children = ReadBranchData(branch_data_file)
-p_L, q_L = ReadLoadData(load_data_file)
-Dset, p_D = ReadPVData(pv_data_file)
-Bset = ReadBatteryData(battery_data_file)
-ReadCapacitorData(capacitor_data_file)  # If needed
-T, Tset, C, η_C, η_D = ReadSystemSimulationData(system_sim_data_file)
-
-# ===========================
-# Define the Model
-# ===========================
-
+# Define the optimization model
 model = Model(Ipopt.Optimizer)
 
 # ===========================
 # Variables
 # ===========================
 
-# Substation power at each time t
+# Define all variables as before, using the data parsed
 @variable(model, P_Subs[t in Tset])
 
-# Real power flow on each branch (i, j) at each time t
 @variable(model, P[i in Nset, j in Nset, t in Tset], base_name = "P")
-
-# Reactive power flow on each branch (i, j) at each time t
 @variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
-
-# Squared current magnitude on each branch (i, j) at each time t
-@variable(model, l[i in Nset, j in Nset, t in Tset], base_name = "l")
-
-# Battery discharge power at node j and time t
+@variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
+@variable(model, v[j in Nset, t in Tset] >= 0, base_name = "v")
 @variable(model, P_d[j in Bset, t in Tset] >= 0, base_name = "P_d")
-
-# Battery charge power at node j and time t
 @variable(model, P_c[j in Bset, t in Tset] >= 0, base_name = "P_c")
-
-# Reactive power from PV inverters at node j and time t
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
-
-# Reactive power from battery inverters at node j and time t
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
 
 # ===========================
 # Constraints
 # ===========================
+
+# Implement all constraints as before, using the data and variables
+
+# Substation node
+SubstationNode = 1
 
 ## Real Power Balance Constraints ##
 
@@ -168,16 +66,11 @@ for t in Tset, j in Nm1set
 
     # Load and PV generation at node j and time t
     p_L_j_t = p_L[j][t]
-    p_D_j_t = p_D[j][t]
+    p_D_j_t = haskey(p_D, j) ? p_D[j][t] : 0.0  # Check if node j has PV
 
     # Battery variables at node j and time t
-    if j in Bset
-        P_d_j_t = P_d[j, t]
-        P_c_j_t = P_c[j, t]
-    else
-        P_d_j_t = 0.0  # No battery discharge
-        P_c_j_t = 0.0  # No battery charge
-    end
+    P_d_j_t = haskey(P_d, (j, t)) ? P_d[j, t] : 0.0
+    P_c_j_t = haskey(P_c, (j, t)) ? P_c[j, t] : 0.0
 
     @constraint(model,
         sum_Pjk - (P_ij_t - line_loss) + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
@@ -206,35 +99,73 @@ for t in Tset, j in Nm1set
     q_L_j_t = q_L[j][t]
 
     # Reactive power from PV inverter at node j and time t
-    if j in Dset
-        q_D_j_t = q_D[j, t]
-    else
-        q_D_j_t = 0.0  # No PV inverter reactive power
-    end
+    q_D_j_t = haskey(q_D, (j, t)) ? q_D[j, t] : 0.0
 
     # Reactive power from battery inverter at node j and time t
-    if j in Bset
-        q_B_j_t = q_B[j, t]
-    else
-        q_B_j_t = 0.0  # No battery inverter reactive power
-    end
+    q_B_j_t = haskey(q_B, (j, t)) ? q_B[j, t] : 0.0
 
     @constraint(model,
         sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
         "NodeReactivePowerBalance_Node$(j)_t$(t)")
 end
 
-# ===========================
-# Additional Constraints (if any)
-# ===========================
+## KVL Constraints ##
 
-# Add any additional constraints required (e.g., battery limits, voltage constraints, inverter limits)
+# Constraint h_3a: KVL for branches connected directly to the substation
+for t in Tset, (i, j) in L1set
+    r_ij = r[(i, j)]
+    x_ij = x[(i, j)]
+    P_ij_t = P[i, j, t]
+    Q_ij_t = Q[i, j, t]
+    l_ij_t = l[i, j, t]
+    v_i_t = v[i, t]
+    v_j_t = v[j, t]
+    @constraint(model,
+        v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+        "KVL_SubstationBranch_$(i)_$(j)_t$(t)")
+end
+
+# Constraint h_3b: KVL for branches not connected directly to the substation
+for t in Tset, (i, j) in Lm1set
+    r_ij = r[(i, j)]
+    x_ij = x[(i, j)]
+    P_ij_t = P[i, j, t]
+    Q_ij_t = Q[i, j, t]
+    l_ij_t = l[i, j, t]
+    v_i_t = v[i, t]
+    v_j_t = v[j, t]
+    @constraint(model,
+        v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+        "KVL_NonSubstationBranch_$(i)_$(j)_t$(t)")
+end
+
+# Voltage limits at each node
+for t in Tset, j in Nset
+    @constraint(model,
+        v_min <= v[j, t] <= v_max,
+        "VoltageLimits_Node$(j)_t$(t)")
+end
+
+# Fix substation voltage
+for t in Tset
+    @constraint(model, v[SubstationNode, t] == (V_base)^2)
+end
+
+# Relationship between power flows and current magnitudes
+for t in Tset, (i, j) in Lset
+    v_i_t = v[i, t]
+    P_ij_t = P[i, j, t]
+    Q_ij_t = Q[i, j, t]
+    l_ij_t = l[i, j, t]
+    @constraint(model,
+        l_ij_t * v_i_t == P_ij_t^2 + Q_ij_t^2 + 1e-6,  # Added small epsilon to avoid division by zero
+        "CurrentMagnitude_$(i)_$(j)_t$(t)")
+end
 
 # ===========================
 # Objective Function
 # ===========================
 
-# Objective: Minimize total cost over all time periods
 @objective(model, Min,
     sum(
         C[t] * P_Subs[t] +
@@ -247,6 +178,43 @@ end
 )
 
 # ===========================
+# Initializing Variables
+# ===========================
+
+# Initialize voltage variables
+for j in Nset, t in Tset
+    set_start_value(v[j, t], (V_base)^2)
+end
+
+# Initialize power flow variables
+for (i, j) in Lset, t in Tset
+    set_start_value(P[i, j, t], 0.0)
+    set_start_value(Q[i, j, t], 0.0)
+    set_start_value(l[i, j, t], 0.0)
+end
+
+# Initialize battery variables
+for j in Bset, t in Tset
+    set_start_value(P_d[j, t], 0.0)
+    set_start_value(P_c[j, t], 0.0)
+    set_start_value(q_B[j, t], 0.0)
+end
+
+# Initialize PV inverter variables
+for j in Dset, t in Tset
+    set_start_value(q_D[j, t], 0.0)
+end
+
+# ===========================
+# Solver Settings
+# ===========================
+
+# Set IPOPT options
+set_optimizer_attribute(model, "tol", 1e-6)
+set_optimizer_attribute(model, "max_iter", 10000)
+set_optimizer_attribute(model, "print_level", 5)
+
+# ===========================
 # Solve the Model
 # ===========================
 
@@ -256,11 +224,10 @@ optimize!(model)
 # Retrieve Results
 # ===========================
 
-# After solving, you can retrieve variable values as follows:
-# value(P_Subs[t])
-# value(P[i, j, t])
-# value(Q[i, j, t])
-# value(P_d[j, t])
-# value(P_c[j, t])
-# value(q_D[j, t])
-# value(q_B[j, t])
+# Check solver status and retrieve results
+if termination_status(model) == MOI.OPTIMAL
+    println("Optimal solution found.")
+    # Retrieve and process results as needed
+else
+    println("Optimization did not find an optimal solution.")
+end
