@@ -30,6 +30,15 @@ model = Model(Ipopt.Optimizer)
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
 
+# B[j, t]: SOC of battery j at time t (for t = 1 to T-1)
+@variable(model, B[j in Bset, t in 1:(T-1)] >= 0, base_name = "B")
+
+# For now, set Bref[j] = B0[j] (desired final SOC equals initial SOC)
+for j in Bset
+    Bref[j] = B0[j]
+end
+
+
 # ===========================
 # Constraints
 # ===========================
@@ -161,6 +170,29 @@ for t in Tset, (i, j) in Lm1set
     @constraint(model,
         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
         "BCPF_NonSubstationBranch_$(i)_$(j)_t$(t)")
+end
+
+## Battery SOC Trajectory Equality Constraints ##
+
+# Constraint h_SOC_j^{t=1}: Initial SOC constraint
+for j in Bset
+    @constraint(model,
+        B[j, 1] - (B0[j] + Δt * η_C * P_c[j, 1] - Δt * (1 / η_D) * P_d[j, 1]) == 0,
+        "SOC_Initial_Node$(j)_t1")
+end
+
+# Constraint h_SOC_j^{t=2 to T-1}: SOC trajectory for middle time periods
+for j in Bset, t in 2:(T-1)
+    @constraint(model,
+        B[j, t] - (B[j, t-1] + Δt * η_C * P_c[j, t] - Δt * (1 / η_D) * P_d[j, t]) == 0,
+        "SOC_Trajectory_Node$(j)_t$(t)")
+end
+
+# Constraint h_SOC_j^{t=T}: Final SOC constraint
+for j in Bset
+    @constraint(model,
+        Bref[j] - (B[j, T-1] + Δt * η_C * P_c[j, T] - Δt * (1 / η_D) * P_d[j, T]) == 0,
+        "SOC_Final_Node$(j)_t$(T)")
 end
 
 # Voltage limits at each node
