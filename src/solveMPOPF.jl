@@ -5,7 +5,7 @@ include("./parseOpenDSSFiles.jl")
 
 # Call the parsing function to get the data
 N, Nset, Nm1set, Lset, L1set, Lm1set, r, x, Parent, Children,
-T, Tset, C, η_C, η_D, V_base, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params = parseOpenDSSFiles()
+T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params = parseOpenDSSFiles()
 
 # Import necessary packages
 using JuMP
@@ -195,17 +195,24 @@ for j in Bset
         "SOC_Final_Node$(j)_t$(T)")
 end
 
-# Voltage limits at each node
-for t in Tset, j in Nset
-    @constraint(model,
-        v_min <= v[j, t] <= v_max,
-        "VoltageLimits_Node$(j)_t$(t)")
+## Voltage Limits Inequality Constraints ##
+
+## Voltage Limits Inequality Constraints ##
+
+for t in Tset
+    ## g1_1^t: Fix Substation Voltage ##
+    @constraint(model, v[1, t] == (V_Subs)^2, "g1_1^t_fixed_substation_voltage_t_$(t)")
+
+    for j in Nm1set  # Nm1set includes nodes 2 to N (non-substation)
+        ## g1_j^t: Lower Voltage Bound for Non-substation Nodes ##
+        @constraint(model, (V_min^2) - v[j, t] <= 0, "g1_j^t_lower_voltage_bound_node_$(j)_time_$(t)")
+
+        ## g2_j^t: Upper Voltage Bound for Non-substation Nodes ##
+        @constraint(model, v[j, t] - (V_max^2) <= 0, "g2_j^t_upper_voltage_bound_node_$(j)_time_$(t)")
+    end
 end
 
-# Fix substation voltage
-for t in Tset
-    @constraint(model, v[SubstationNode, t] == (V_base)^2)
-end
+
 
 # ===========================
 # Objective Function

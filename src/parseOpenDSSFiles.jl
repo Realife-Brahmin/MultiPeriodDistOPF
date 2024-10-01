@@ -23,7 +23,7 @@ function parseOpenDSSFiles()
     system_sim_data_file = "SysSim.dss"
 
     # Parse system simulation data first to get T
-    T, Tset, C, η_C, η_D, V_base, v_min, v_max = parse_system_simulation_data(system_sim_data_file)
+    T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max = parse_system_simulation_data(system_sim_data_file)
 
     # Parse branch data
     Lset, L1set, Lm1set, r, x, Parent, Children = parse_branch_data(branch_data_file)
@@ -38,5 +38,5 @@ function parseOpenDSSFiles()
     Bset, battery_params = parse_battery_data(battery_data_file)
 
     return N, Nset, Nm1set, Lset, L1set, Lm1set, r, x, Parent, Children,
-    T, Tset, C, η_C, η_D, V_base, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params
+    T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params
 end

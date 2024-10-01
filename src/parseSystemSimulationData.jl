@@ -54,10 +54,11 @@ function parse_system_simulation_data(filename::String)
         end
     end
 
+    V_Subs = 1.03
     Tset = 1:T
     v_min = (V_min * V_base)^2
     v_max = (V_max * V_base)^2
-    return T, Tset, C, η_C, η_D, V_base, v_min, v_max
+    return T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max
 end
 
 end # module
