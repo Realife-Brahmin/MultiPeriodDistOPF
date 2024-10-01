@@ -211,6 +211,8 @@ end
 # Objective Function
 # ===========================
 
+alpha = 1e-3  # Adjust based on your problem requirements
+
 # Updated Objective Function with Battery Loss Term
 @objective(model, Min,
     sum(
