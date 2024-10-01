@@ -211,16 +211,19 @@ end
 # Objective Function
 # ===========================
 
+# Updated Objective Function with Battery Loss Term
 @objective(model, Min,
     sum(
         C[t] * P_Subs[t] +
-        sum(
-            (1 - η_C) * P_c[j, t] + (1 / η_D - 1) * P_d[j, t]
+        alpha * sum(
+            (1 - η_C * η_D) * (P_c[j, t] + P_d[j, t]) +
+            γ * P_c[j, t] * P_d[j, t]
             for j in Bset
         )
         for t in Tset
     )
 )
+
 
 # ===========================
 # Initializing Variables
