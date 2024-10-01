@@ -30,13 +30,9 @@ model = Model(Ipopt.Optimizer)
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
 
-# B[j, t]: SOC of battery j at time t (for t = 1 to T-1)
-@variable(model, B[j in Bset, t in 1:(T-1)] >= 0, base_name = "B")
+## Battery SOC Variables ##
+@variable(model, B[j in Bset, t in 1:T] >= 0, base_name = "B")
 
-# For now, set Bref[j] = B0[j] (desired final SOC equals initial SOC)
-for j in Bset
-    Bref[j] = B0[j]
-end
 
 
 # ===========================
@@ -180,22 +176,23 @@ end
 for j in Bset
     @constraint(model,
         B[j, 1] - (B0[j] + Δt * η_C * P_c[j, 1] - Δt * (1 / η_D) * P_d[j, 1]) == 0,
-        "SOC_Initial_Node$(j)_t1")
+        "h_SOC_j^{t=1}_Initial_SOC_Node$(j)_t1")
 end
 
-# Constraint h_SOC_j^{t=2 to T-1}: SOC trajectory for middle time periods
-for j in Bset, t in 2:(T-1)
+# Constraint h_SOC_j^{t=2 to T}: SOC trajectory for middle and final time periods
+for j in Bset, t in 2:T
     @constraint(model,
         B[j, t] - (B[j, t-1] + Δt * η_C * P_c[j, t] - Δt * (1 / η_D) * P_d[j, t]) == 0,
-        "SOC_Trajectory_Node$(j)_t$(t)")
+        "h_SOC_j^{t=$(t)}_SOC_Trajectory_Node$(j)_t$(t)")
 end
 
-# Constraint h_SOC_j^{t=T}: Final SOC constraint
+# Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = B_ref_j)
 for j in Bset
     @constraint(model,
-        Bref[j] - (B[j, T-1] + Δt * η_C * P_c[j, T] - Δt * (1 / η_D) * P_d[j, T]) == 0,
-        "SOC_Final_Node$(j)_t$(T)")
+        B[j, T] == B_ref[j],
+        "h_SOC_j^{T}_Final_SOC_Node$(j)_t$(T)")
 end
+
 
 ## Voltage Limits Inequality Constraints ##
 for t in Tset
@@ -286,6 +283,26 @@ for t in Tset, j in Bset
     @constraint(model,
         P_d[j, t] - P_B_R[j] <= 0,
         "g_10_j^t_MaxDischargingPowerLimit_Node$(j)_t$(t)")
+end
+
+## SOC Limits for Batteries ##
+
+# Parameters:
+# soc_min: Minimum SOC fraction (e.g., 0.2 for 20%)
+# soc_max: Maximum SOC fraction (e.g., 0.9 for 90%)
+# B_R[j]: Rated capacity of battery j (from data or assumptions)
+
+# Constraints:
+for j in Bset, t in 1:T
+    ## g_11_j^t: Minimum SOC Constraint ##
+    @constraint(model,
+        soc_min * B_R[j] - B[j, t] <= 0,
+        "g_11_j^t_MinSOC_Node$(j)_t$(t)")
+
+    ## g_12_j^t: Maximum SOC Constraint ##
+    @constraint(model,
+        B[j, t] - soc_max * B_R[j] <= 0,
+        "g_12_j^t_MaxSOC_Node$(j)_t$(t)")
 end
 
 # ===========================
