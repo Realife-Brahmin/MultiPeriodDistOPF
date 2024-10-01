@@ -86,9 +86,7 @@ for t in Tset, j in Nm1set
         "NodeRealPowerBalance_Node$(j)_t$(t)")
 end
 
-## Reactive Power Balance Constraints ##
-
-# Constraint h_2_j^t: Nodal reactive power balance at non-substation nodes
+## Nodal Reactive Power Balance Constraints ##
 for t in Tset, j in Nm1set
     # Sum of reactive powers flowing from node j to its children
     sum_Qjk = sum(Q[j, k, t] for k in Children[j])
@@ -108,14 +106,18 @@ for t in Tset, j in Nm1set
     q_L_j_t = q_L[j][t]
 
     # Reactive power from PV inverter at node j and time t
-    q_D_j_t = haskey(q_D, (j, t)) ? q_D[j, t] : 0.0
+    q_D_j_t = q_D[j, t]
 
     # Reactive power from battery inverter at node j and time t
-    q_B_j_t = haskey(q_B, (j, t)) ? q_B[j, t] : 0.0
+    q_B_j_t = q_B[j, t]
 
+    # Static reactive power injection from capacitor bank at node j and time t
+    q_C_j_t = q_C[j][t]  # q_C_j_t is a parameter (from data)
+
+    ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
     @constraint(model,
-        sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
-        "NodeReactivePowerBalance_Node$(j)_t$(t)")
+        sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t - q_C_j_t == 0,
+        "h_2_j^t_NodeReactivePowerBalance_Node$(j)_t$(t)")
 end
 
 ## KVL Constraints ##
@@ -196,9 +198,6 @@ for j in Bset
 end
 
 ## Voltage Limits Inequality Constraints ##
-
-## Voltage Limits Inequality Constraints ##
-
 for t in Tset
     ## g1_1^t: Fix Substation Voltage ##
     @constraint(model, v[1, t] == (V_Subs)^2, "g1_1^t_fixed_substation_voltage_t_$(t)")
@@ -212,7 +211,82 @@ for t in Tset
     end
 end
 
+## Reactive Power Limits for PV Inverters ##
+for t in Tset, j in Dset
+    # Rated active power of the PV inverter at node j
+    p_D_R_j = p_D_R[j]
 
+    # Active power output of PV at node j and time t
+    p_D_j_t = p_D[j][t]
+
+    # Compute q_D_Max_j^t
+    q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
+
+    ## g_3_j^t: Lower Limit of Reactive Power from PV Inverter ##
+    @constraint(model,
+        -q_D_Max_j_t - q_D[j, t] <= 0,
+        "g_3_j^t_LowerReactivePowerLimit_PV_Node$(j)_t$(t)")
+
+    ## g_4_j^t: Upper Limit of Reactive Power from PV Inverter ##
+    @constraint(model,
+        q_D[j, t] - q_D_Max_j_t <= 0,
+        "g_4_j^t_UpperReactivePowerLimit_PV_Node$(j)_t$(t)")
+end
+
+## Reactive Power Limits for Battery Inverters ##
+
+# Precompute q_B_Max_j for each battery inverter
+q_B_Max = Dict{Int,Float64}()
+
+for j in Bset
+    # Rated active power of the battery inverter at node j
+    P_B_R_j = P_B_R[j]  # P_B_R[j] should be provided (we'll handle data parsing later)
+
+    # Compute q_B_Max_j
+    q_B_Max_j = sqrt((1.2 * P_B_R_j)^2 - (1.0 * P_B_R_j)^2)
+
+    # Store q_B_Max_j in the dictionary
+    q_B_Max[j] = q_B_Max_j
+end
+
+# Define constraints for each time period and battery inverter
+for t in Tset, j in Bset
+    ## g_5_j^t: Lower Limit of Reactive Power from Battery Inverter ##
+    @constraint(model,
+        -q_B_Max[j] - q_B[j, t] <= 0,
+        "g_5_j^t_LowerReactivePowerLimit_Battery_Node$(j)_t$(t)")
+
+    ## g_6_j^t: Upper Limit of Reactive Power from Battery Inverter ##
+    @constraint(model,
+        q_B[j, t] - q_B_Max[j] <= 0,
+        "g_6_j^t_UpperReactivePowerLimit_Battery_Node$(j)_t$(t)")
+end
+
+## Charging Power Limits for Batteries ##
+for t in Tset, j in Bset
+    ## g_7_j^t: Non-negativity of Charging Power ##
+    @constraint(model,
+        -P_c[j, t] <= 0,
+        "g_7_j^t_NonNegativity_ChargingPower_Node$(j)_t$(t)")
+
+    ## g_8_j^t: Maximum Charging Power Limit ##
+    @constraint(model,
+        P_c[j, t] - P_B_R[j] <= 0,
+        "g_8_j^t_MaxChargingPowerLimit_Node$(j)_t$(t)")
+end
+
+## Discharging Power Limits for Batteries ##
+for t in Tset, j in Bset
+    ## g_9_j^t: Non-negativity of Discharging Power ##
+    @constraint(model,
+        -P_d[j, t] <= 0,
+        "g_9_j^t_NonNegativity_DischargingPower_Node$(j)_t$(t)")
+
+    ## g_10_j^t: Maximum Discharging Power Limit ##
+    @constraint(model,
+        P_d[j, t] - P_B_R[j] <= 0,
+        "g_10_j^t_MaxDischargingPowerLimit_Node$(j)_t$(t)")
+end
 
 # ===========================
 # Objective Function
