@@ -139,6 +139,30 @@ for t in Tset, (i, j) in Lm1set
         "KVL_NonSubstationBranch_$(i)_$(j)_t$(t)")
 end
 
+## Branch Complex Power Flow Equations (BCPF) ##
+
+# Constraint h_4a_j^t: For branches connected directly to the substation
+for t in Tset, (i, j) in L1set
+    P_ij_t = P[i, j, t]
+    Q_ij_t = Q[i, j, t]
+    v_i_t = v[i, t]
+    l_ij_t = l[i, j, t]
+    @constraint(model,
+        (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+        "BCPF_SubstationBranch_$(i)_$(j)_t$(t)")
+end
+
+# Constraint h_4b_j^t: For branches not connected directly to the substation
+for t in Tset, (i, j) in Lm1set
+    P_ij_t = P[i, j, t]
+    Q_ij_t = Q[i, j, t]
+    v_i_t = v[i, t]
+    l_ij_t = l[i, j, t]
+    @constraint(model,
+        (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+        "BCPF_NonSubstationBranch_$(i)_$(j)_t$(t)")
+end
+
 # Voltage limits at each node
 for t in Tset, j in Nset
     @constraint(model,
@@ -149,17 +173,6 @@ end
 # Fix substation voltage
 for t in Tset
     @constraint(model, v[SubstationNode, t] == (V_base)^2)
-end
-
-# Relationship between power flows and current magnitudes
-for t in Tset, (i, j) in Lset
-    v_i_t = v[i, t]
-    P_ij_t = P[i, j, t]
-    Q_ij_t = Q[i, j, t]
-    l_ij_t = l[i, j, t]
-    @constraint(model,
-        l_ij_t * v_i_t == P_ij_t^2 + Q_ij_t^2 + 1e-6,  # Added small epsilon to avoid division by zero
-        "CurrentMagnitude_$(i)_$(j)_t$(t)")
 end
 
 # ===========================
