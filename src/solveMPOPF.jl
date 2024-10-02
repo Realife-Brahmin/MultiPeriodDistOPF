@@ -194,19 +194,24 @@ for j in Bset
 end
 
 
-## Voltage Limits Inequality Constraints ##
-for t in Tset
-    ## g1_1^t: Fix Substation Voltage ##
-    @constraint(model, v[1, t] == (V_Subs)^2, "g1_1^t_fixed_substation_voltage_t_$(t)")
+# Voltage variables
+@variable(model, v[j in Nset, t in Tset] >= 0, base_name = "v")
 
-    for j in Nm1set  # Nm1set includes nodes 2 to N (non-substation)
-        ## g1_j^t: Lower Voltage Bound for Non-substation Nodes ##
-        @constraint(model, (V_min^2) - v[j, t] <= 0, "g1_j^t_lower_voltage_bound_node_$(j)_time_$(t)")
+# Voltage limits (using per-node limits if available)
+for t in Tset, j in Nset
+    if j == substationBus
+        # Fix substation voltage
+        @constraint(model, v[j, t] == (V_Subs)^2, "fixed_substation_voltage_t_$(t)")
+    else
+        # Use per-node voltage limits if available
+        V_min_j_sq = (V_minpu[j] * kv_bus[j])^2
+        V_max_j_sq = (V_maxpu[j] * kv_bus[j])^2
 
-        ## g2_j^t: Upper Voltage Bound for Non-substation Nodes ##
-        @constraint(model, v[j, t] - (V_max^2) <= 0, "g2_j^t_upper_voltage_bound_node_$(j)_time_$(t)")
+        @constraint(model, V_min_j_sq - v[j, t] <= 0, "g1_j^t_lower_voltage_bound_node_$(j)_time_$(t)")
+        @constraint(model, v[j, t] - V_max_j_sq <= 0, "g2_j^t_upper_voltage_bound_node_$(j)_time_$(t)")
     end
 end
+
 
 ## Reactive Power Limits for PV Inverters ##
 for t in Tset, j in Dset

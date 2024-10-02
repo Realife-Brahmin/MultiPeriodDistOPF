@@ -27,8 +27,8 @@ function parseOpenDSSFiles()
     # Parse branch data
     Lset, L1set, Lm1set, r, x, Parent, Children = parse_branch_data(branch_data_file)
 
-    # Parse load data (includes bus data)
-    N, Nset, Nm1set, p_L, q_L = parse_load_data(load_data_file, T)
+    # Parse load data
+    Nset, p_L_R, q_L_R, V_minpu, V_maxpu, p_L, q_L = parse_load_data(systemName, T)
 
     # Parse PV data
     Dset, p_D = parse_pv_data(pv_data_file, T)
@@ -36,6 +36,5 @@ function parseOpenDSSFiles()
     # Parse battery data
     Bset, battery_params = parse_battery_data(battery_data_file)
 
-    return N, Nset, Nm1set, Lset, L1set, Lm1set, r, x, Parent, Children,
-    T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params
+    return nothing
 end

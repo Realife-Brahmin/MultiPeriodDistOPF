@@ -4,69 +4,96 @@ module parseLoadData
 
 export parse_load_data
 
-function parse_load_data(filename::String, T::Int)
-    Nset = Set{Int}()
-    p_L = Dict{Int,Vector{Float64}}()
-    q_L = Dict{Int,Vector{Float64}}()
+function parse_load_data(systemName::String, T::Int)
+    # Construct the file path
+    filename = joinpath("..", "rawData", systemName, "Loads.dss")
+
+    # Initialize data structures
+    Nset = Set{Int}()                 # Set of nodes with loads
+    p_L_R = Dict{Int,Float64}()      # Rated active power for each load (kW)
+    q_L_R = Dict{Int,Float64}()      # Rated reactive power for each load (kVAR)
+    V_minpu = Dict{Int,Float64}()    # Minimum per-unit voltage for each node
+    V_maxpu = Dict{Int,Float64}()    # Maximum per-unit voltage for each node
+
+    # Placeholder for load shapes (to be updated later)
+    p_L = Dict{Int,Vector{Float64}}()  # Active power profile over time
+    q_L = Dict{Int,Vector{Float64}}()  # Reactive power profile over time
 
     # Open and read the file
     open(filename, "r") do file
         for line in eachline(file)
-            # Skip comments and empty lines
-            if isempty(strip(line)) || startswith(strip(line), "!") || startswith(strip(line), "//")
+            # Remove comments and strip whitespace
+            line = split(line, "!")[1]
+            line = strip(line)
+
+            # Skip empty lines
+            if isempty(line)
                 continue
             end
-            # Parse load data
-            # Example line: "New Load.Load1   Bus1=2   kW=100   kvar=50"
-            tokens = split(strip(line))
-            if occursin("Load.", tokens[2]) || occursin("Load.", tokens[1])
-                load_info = Dict{String,Any}()
-                for token in tokens
+
+            # Parse lines starting with "New load."
+            if startswith(line, "New load.")
+                # Extract parameters from the line
+                tokens = split(line)
+                load_info = Dict{String,String}()
+
+                for token in tokens[2:end]
                     if occursin("=", token)
                         key, value = split(token, "=")
+                        key = strip(key)
+                        value = strip(value)
                         load_info[key] = value
                     end
                 end
-                # Get bus number
-                if haskey(load_info, "Bus1")
-                    bus = load_info["Bus1"]
-                    # Extract bus number (assuming format like "2" or "Bus2")
-                    if occursin(".", bus)
-                        # If format is "Bus.2", extract the number
-                        bus_id = parse(Int, split(bus, ".")[2])
-                    else
-                        bus_id = parse(Int, bus)
-                    end
-                    Nset = union(Nset, [bus_id])
 
-                    # Extract kW and kvar
-                    p_kw = parse(Float64, load_info["kW"])
-                    q_kvar = parse(Float64, load_info["kvar"])
-
-                    # Assume load is constant over time (or modify as needed)
-                    p_L[bus_id] = [p_kw for t in 1:T]
-                    q_L[bus_id] = [q_kvar for t in 1:T]
+                # Extract bus number (e.g., Bus=2.1)
+                if haskey(load_info, "Bus")
+                    bus_str = load_info["Bus"]
+                    # Extract the integer part before the decimal point
+                    bus_parts = split(bus_str, ".")
+                    j = parse(Int, bus_parts[1])  # Node number
+                    Nset = union(Nset, [j])
+                else
+                    error("Bus not specified for a load in Loads.dss")
                 end
+
+                # Extract rated active power (kw)
+                if haskey(load_info, "kw")
+                    p_L_R[j] = parse(Float64, load_info["kw"])
+                else
+                    p_L_R[j] = 0.0  # Default to zero if not specified
+                end
+
+                # Extract rated reactive power (kvar)
+                if haskey(load_info, "kvar")
+                    q_L_R[j] = parse(Float64, load_info["kvar"])
+                else
+                    q_L_R[j] = 0.0  # Default to zero if not specified
+                end
+
+                # Extract minimum per-unit voltage (Vminpu)
+                if haskey(load_info, "Vminpu")
+                    V_minpu[j] = parse(Float64, load_info["Vminpu"])
+                else
+                    V_minpu[j] = 0.95  # Default value if not specified
+                end
+
+                # Extract maximum per-unit voltage (Vmaxpu)
+                if haskey(load_info, "Vmaxpu")
+                    V_maxpu[j] = parse(Float64, load_info["Vmaxpu"])
+                else
+                    V_maxpu[j] = 1.05  # Default value if not specified
+                end
+
+                # Initialize load profiles with rated values (to be updated with actual load shapes)
+                p_L[j] = [p_L_R[j] for t in 1:T]
+                q_L[j] = [q_L_R[j] for t in 1:T]
             end
         end
     end
 
-    # Identify the substation node (assuming node 1)
-    SubstationNode = 1
-    Nset = union(Nset, [SubstationNode])
-
-    N = maximum(Nset)
-    Nm1set = setdiff(Nset, [SubstationNode])
-
-    # Ensure all nodes have p_L and q_L (zero if not specified)
-    for node in Nset
-        if !haskey(p_L, node)
-            p_L[node] = [0.0 for t in 1:T]
-            q_L[node] = [0.0 for t in 1:T]
-        end
-    end
-
-    return N, Nset, Nm1set, p_L, q_L
+    # Return the extracted data
+    return Nset, p_L_R, q_L_R, V_minpu, V_maxpu, p_L, q_L
 end
 
 end # module
