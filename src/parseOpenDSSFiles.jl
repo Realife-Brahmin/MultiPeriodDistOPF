@@ -22,8 +22,7 @@ function parseOpenDSSFiles()
     battery_data_file = "Storage.dss"
     system_sim_data_file = "SysSim.dss"
 
-    # Parse system simulation data first to get T
-    T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max = parse_system_simulation_data(system_sim_data_file)
+    substationBus, V_Subs, V_base, Δt = parse_system_simulation_data(systemName)
 
     # Parse branch data
     Lset, L1set, Lm1set, r, x, Parent, Children = parse_branch_data(branch_data_file)
