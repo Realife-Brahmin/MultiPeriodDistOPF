@@ -11,10 +11,10 @@ function parse_branch_data(systemName::String)
     # Initialize data structures
     Nset = Set{Int}()                         # Set of all bus numbers
     Lset = Set{Tuple{Int,Int}}()             # Set of branches (edges)
-    RList = Dict{Tuple{Int,Int},Float64}()  # Resistance of each branch
-    XList = Dict{Tuple{Int,Int},Float64}()  # Reactance of each branch
-    Parent = Dict{Int,Int}()                 # Parent node of each node
-    Children = Dict{Int,Vector{Int}}()       # Children nodes of each node
+    rdict = Dict{Tuple{Int,Int},Float64}()  # Resistance of each branch
+    xdict = Dict{Tuple{Int,Int},Float64}()  # Reactance of each branch
+    parent = Dict{Int,Int}()                 # parent node of each node
+    children = Dict{Int,Vector{Int}}()       # children nodes of each node
 
     # Regular expression to match key=value pairs with optional spaces
     kv_pattern = r"(\w+)\s*=\s*([\S]+)"
@@ -60,12 +60,12 @@ function parse_branch_data(systemName::String)
                     # Add to branch set
                     Lset = union(Lset, [(from_bus, to_bus)])
 
-                    # Update Parent and Children dictionaries
-                    Parent[to_bus] = from_bus
-                    if haskey(Children, from_bus)
-                        push!(Children[from_bus], to_bus)
+                    # Update parent and children dictionaries
+                    parent[to_bus] = from_bus
+                    if haskey(children, from_bus)
+                        push!(children[from_bus], to_bus)
                     else
-                        Children[from_bus] = [to_bus]
+                        children[from_bus] = [to_bus]
                     end
                 else
                     error("Bus1 or Bus2 not specified for a line in BranchData.dss")
@@ -73,15 +73,15 @@ function parse_branch_data(systemName::String)
 
                 # Extract resistance (r1) and reactance (x1)
                 if haskey(branch_info, "r1")
-                    RList[(from_bus, to_bus)] = parse(Float64, branch_info["r1"])
+                    rdict[(from_bus, to_bus)] = parse(Float64, branch_info["r1"])
                 else
-                    RList[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
+                    rdict[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
                 end
 
                 if haskey(branch_info, "x1")
-                    XList[(from_bus, to_bus)] = parse(Float64, branch_info["x1"])
+                    xdict[(from_bus, to_bus)] = parse(Float64, branch_info["x1"])
                 else
-                    XList[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
+                    xdict[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
                 end
             end
         end
@@ -91,7 +91,20 @@ function parse_branch_data(systemName::String)
     N = length(Nset)
     m = length(Lset)
 
-    return Nset, Lset, rdict, xdict, parent, children, N, m
-end
+    # Create a dictionary with all outputs
+    branchData = Dict(
+        :Nset => Nset,
+        :Lset => Lset,
+        :rdict => rdict,
+        :xdict => xdict,
+        :parent => parent,
+        :children => children,
+        :N => N,
+        :m => m,
+    )
+
+    return branchData
+
+end 
 
 end # module
