@@ -1,37 +1,37 @@
 # parseOpenDSSFiles.jl
 
-# Include individual parsing scripts
-include("parseBranchData.jl")
-include("parseLoadData.jl")  # Updated to include bus data parsing
-include("parsePVData.jl")
-include("parseBatteryData.jl")
+module parseOpenDSSFiles
+
+export parse_all_data
+
 include("parseSystemSimulationData.jl")
+include("parseBranchData.jl")
+include("parseLoadData.jl")
+# ... include other parsing scripts as needed
 
-# Import functions from the parsing scripts
-using .parseBranchData: parse_branch_data
-using .parseLoadData: parse_load_data  # Updated
-using .parsePVData: parse_pv_data
-using .parseBatteryData: parse_battery_data
 using .parseSystemSimulationData: parse_system_simulation_data
+using .parseBranchData: parse_branch_data
+using .parseLoadData: parse_load_data
+# ... using other parsing modules as needed
 
-function parseOpenDSSFiles()
-    # Paths to the .dss files (update with actual paths)
-    branch_data_file = "BranchData.dss"
-    load_data_file = "Loads.dss"
-    pv_data_file = "PVSystem.dss"
-    battery_data_file = "Storage.dss"
-    system_sim_data_file = "SysSim.dss"
-
-    substationBus, V_Subs, V_base, Δt = parse_system_simulation_data(systemName)
+function parse_all_data(systemName::String, T::Int)
+    # Parse system simulation data
+    sim_data = parse_system_simulation_data(systemName)
 
     # Parse branch data
-    Nset, Lset, rdict, xdict, parent, children, N, m = parse_branch_data(systemName)
+    branch_data = parse_branch_data(systemName)
 
-    # Parse PV data
-    Dset, p_D = parse_pv_data(pv_data_file, T)
+    # Parse load data
+    load_data = parse_load_data(systemName, T)
 
-    # Parse battery data
-    Bset, battery_params = parse_battery_data(battery_data_file)
+    # Merge dictionaries
+    data = merge(sim_data, branch_data, load_data)
 
-    return nothing
+    # Combine bus sets if necessary
+    data[:Nset] = union(data[:Nset], data[:Nset_load])
+    data[:N] = length(data[:Nset])
+
+    return data
 end
+
+end # module
