@@ -25,10 +25,7 @@ function parseOpenDSSFiles()
     substationBus, V_Subs, V_base, Δt = parse_system_simulation_data(systemName)
 
     # Parse branch data
-    Lset, L1set, Lm1set, r, x, Parent, Children = parse_branch_data(branch_data_file)
-
-    # Parse load data
-    Nset, p_L_R, q_L_R, V_minpu, V_maxpu, p_L, q_L = parse_load_data(systemName, T)
+    Nset, Lset, rdict, xdict, parent, children, N, m = parse_branch_data(systemName)
 
     # Parse PV data
     Dset, p_D = parse_pv_data(pv_data_file, T)
