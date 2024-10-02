@@ -1,11 +1,11 @@
 # main.jl
 
-# Include the parseOpenDSSFiles.jl script
+using Parameters: @unpack
 include("./parseOpenDSSFiles.jl")
+using .parseOpenDSSFiles: parse_all_data
 
-# Call the parsing function to get the data
-N, Nset, Nm1set, Lset, L1set, Lm1set, r, x, Parent, Children,
-T, Tset, C, η_C, η_D, V_base, V_Subs, v_min, v_max, p_L, q_L, Dset, p_D, Bset, battery_params = parseOpenDSSFiles()
+# Parse all data
+data = parse_all_data(systemName, T)
 
 # Import necessary packages
 using JuMP
