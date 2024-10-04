@@ -11,8 +11,12 @@ function parse_system_simulation_data(systemName::String)
     V_base = 1.0            # Default base voltage in kV (line-to-ground)
     Δt = 1.0                # Default time step in hours
 
+    wd = @__DIR__
+    println("pwd = $(pwd())")
+    println("wd = $(wd)")
     # Construct the file path
-    filename = "../rawData/$systemName/SysSim.dss"
+    # filename = "../rawData/$systemName/SysSim.dss"
+    filename = "./rawData/$systemName/SysSim.dss"
 
     # Open and read the file
     open(filename, "r") do file

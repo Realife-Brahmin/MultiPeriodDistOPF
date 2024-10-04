@@ -6,7 +6,7 @@ export parse_branch_data
 
 function parse_branch_data(systemName::String)
     # Construct the file path
-    filename = joinpath("..", "rawData", systemName, "BranchData.dss")
+    filename = joinpath(".", "rawData", systemName, "BranchData.dss")
 
     # Initialize data structures
     Nset = Set{Int}()                         # Set of all bus numbers
