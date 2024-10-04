@@ -92,8 +92,17 @@ function parse_load_data(systemName::String, T::Int)
         end
     end
 
-    # Return the extracted data
-    return Nset, p_L_R, q_L_R, V_minpu, V_maxpu, p_L, q_L
+    # Return the extracted data as a dictionary
+    return Dict(
+        :Nset => Nset,
+        :p_L_R => p_L_R,
+        :q_L_R => q_L_R,
+        :V_minpu => V_minpu,
+        :V_maxpu => V_maxpu,
+        :p_L => p_L,
+        :q_L => q_L
+    )
+
 end
 
 end # module

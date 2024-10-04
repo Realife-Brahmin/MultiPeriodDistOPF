@@ -71,8 +71,14 @@ function parse_system_simulation_data(systemName::String)
         end
     end
 
-    # Return the extracted parameters
-    return substationBus, V_Subs, V_base, Δt
+    # Return the extracted parameters as a dictionary
+    return Dict(
+        :substationBus => substationBus,
+        :V_Subs => V_Subs,
+        :V_base => V_base,
+        :delta_t => Δt
+    )
+
 end
 
 end # module
