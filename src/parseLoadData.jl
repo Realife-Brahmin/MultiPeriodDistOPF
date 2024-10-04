@@ -6,7 +6,7 @@ export parse_load_data
 
 function parse_load_data(systemName::String, T::Int)
     # Construct the file path
-    filename = joinpath("..", "rawData", systemName, "Loads.dss")
+    filename = joinpath(".", "rawData", systemName, "Loads.dss")
 
     # Initialize data structures
     Nset = Set{Int}()                 # Set of nodes with loads
