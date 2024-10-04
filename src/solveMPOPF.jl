@@ -1,9 +1,11 @@
-# main.jl
+# solveMPOPF.jl
 
 using Parameters: @unpack
 include("./parseOpenDSSFiles.jl")
 using .parseOpenDSSFiles: parse_all_data
 
+systemName = "ads10_1ph"
+T = 5
 # Parse all data
 data = parse_all_data(systemName, T)
 
