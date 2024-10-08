@@ -110,8 +110,7 @@ for t in Tset, j in Nm1set
     l_ij_t = l[(i, j), t]
     line_reactive_loss = x_ij * l_ij_t
 
-    # # Reactive load at node j and time t
-    # q_L_j_t = q_L[j][t]
+    # Todo: Figure out whether p_L[i][j] be allowed to exist or should it be made the same as p_L[i, j].
     # Reactive load at node j and time t
     q_L_j_t = (j in NLset) ? q_L[j][t] : 0.0  # Assign 0.0 if j is not in Nset
 
