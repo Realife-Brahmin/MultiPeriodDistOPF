@@ -36,11 +36,12 @@ model = Model(Ipopt.Optimizer)
 # Todo How to model nonnegative l? Is it always automatically taken care of? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
 @variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
 
+@variable(model, v[j in Nset, t in Tset], base_name = "v")
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
-@variable(model, P_c[j in Bset, t in Tset] >= 0, base_name = "P_c")
-@variable(model, P_d[j in Bset, t in Tset] >= 0, base_name = "P_d")
-@variable(model, B[j in Bset, t in 1:T] >= 0, base_name = "B")
+@variable(model, P_c[j in Bset, t in Tset], base_name = "P_c")
+@variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
+@variable(model, B[j in Bset, t in 1:T], base_name = "B")
 
 
 
