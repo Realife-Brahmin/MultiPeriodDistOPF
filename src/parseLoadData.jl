@@ -8,7 +8,7 @@ using .helperFunctions: generateLoadShape
 function parse_load_data(systemName::String, T::Int;
     LoadShape=nothing, 
     filenameLoadShape::String="LoadShapeDefault.dss")
-    
+
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path for Loads.dss using wd
@@ -18,8 +18,8 @@ function parse_load_data(systemName::String, T::Int;
     NLset = Set{Int}()                 # Set of nodes with loads
     p_L_R = Dict{Int,Float64}()      # Rated active power for each load (kW)
     q_L_R = Dict{Int,Float64}()      # Rated reactive power for each load (kVAR)
-    V_minpu = Dict{Int,Float64}()    # Minimum per-unit voltage for each node
-    V_maxpu = Dict{Int,Float64}()    # Maximum per-unit voltage for each node
+    Vminpu_L = Dict{Int,Float64}()    # Minimum per-unit voltage for each node
+    Vmaxpu_L = Dict{Int,Float64}()    # Maximum per-unit voltage for each node
 
     # Placeholder for load shapes (to be updated later)
     p_L = Dict{Int,Vector{Float64}}()  # Active power profile over time
@@ -84,16 +84,16 @@ function parse_load_data(systemName::String, T::Int;
 
                 # Extract minimum per-unit voltage (Vminpu)
                 if haskey(load_info, "Vminpu")
-                    V_minpu[j] = parse(Float64, load_info["Vminpu"])
+                    Vminpu_L[j] = parse(Float64, load_info["Vminpu"])
                 else
-                    V_minpu[j] = 0.95  # Default value if not specified
+                    Vminpu_L[j] = 0.95  # Default value if not specified
                 end
 
                 # Extract maximum per-unit voltage (Vmaxpu)
                 if haskey(load_info, "Vmaxpu")
-                    V_maxpu[j] = parse(Float64, load_info["Vmaxpu"])
+                    Vmaxpu_L[j] = parse(Float64, load_info["Vmaxpu"])
                 else
-                    V_maxpu[j] = 1.05  # Default value if not specified
+                    Vmaxpu_L[j] = 1.05  # Default value if not specified
                 end
 
                 # Initialize load profiles using the provided or generated LoadShape
@@ -110,8 +110,8 @@ function parse_load_data(systemName::String, T::Int;
         :NLset => NLset,
         :p_L_R => p_L_R,
         :q_L_R => q_L_R,
-        :V_minpu => V_minpu,
-        :V_maxpu => V_maxpu,
+        :Vminpu_L => Vminpu_L,
+        :Vmaxpu_L => Vmaxpu_L,
         :p_L => p_L,
         :q_L => q_L,
         :LoadShape => LoadShape  # Store the LoadShape used
