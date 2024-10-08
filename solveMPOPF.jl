@@ -1,14 +1,15 @@
 # solveMPOPF.jl
 
-using Parameters: @unpack
 using Revise
+using MultiPeriodDistOPF
+using Parameters: @unpack
 using Debugger
-include("./src/parseOpenDSSFiles.jl")
-using .parseOpenDSSFiles: parse_all_data
+
 
 systemName = "ads10_1ph"
 T = 5
 # Parse all data
+# data = MultiPeriodDistOPF.parseOpenDSSFiles.parse_all_data(systemName, T)
 data = parse_all_data(systemName, T)
 
 # Import necessary packages
