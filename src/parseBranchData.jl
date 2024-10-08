@@ -7,7 +7,7 @@ export parse_branch_data
 function parse_branch_data(systemName::String)
 
     # Todo: Ensure that substation bus being equal to 1 is not taken for granted, have some kwarg or something to ensure that even bus 153 can be the substation bus
-    
+
     wd = @__DIR__
     # Construct the file path using wd
     filename = joinpath(wd, "..", "rawData", systemName, "BranchData.dss")
@@ -17,7 +17,9 @@ function parse_branch_data(systemName::String)
     Lset = Set{Tuple{Int,Int}}()             # Set of branches (edges)
     rdict = Dict{Tuple{Int,Int},Float64}()  # Resistance of each branch
     xdict = Dict{Tuple{Int,Int},Float64}()  # Reactance of each branch
-    parent = Dict{Int,Int}()                 # parent node of each node
+    # parent = Dict{Int,Int}()                 # parent node of each node
+    # Define the parent dictionary to hold Int or nothing
+    parent = Dict{Int,Union{Int,Nothing}}()
     children = Dict{Int,Vector{Int}}()       # children nodes of each node
 
     # Initialize additional sets and parameters
@@ -77,6 +79,12 @@ function parse_branch_data(systemName::String)
                     else
                         children[from_bus] = [to_bus]
                     end
+                    
+                    # Ensure to_bus is a key in the children dictionary, even if it might not have any child nodes
+                    get!(children, to_bus, Int[])
+
+                    # Ensure from_bus is a key in the parent dictionary, even if it might not have any parent node (only substation bus)
+                    get!(parent, from_bus, nothing)
 
                     # Update N1set, Nm1set, L1set, Lm1set
                     if from_bus == 1
