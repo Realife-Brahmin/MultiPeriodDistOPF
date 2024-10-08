@@ -109,7 +109,7 @@ for t in Tset, j in Nm1set
 
     @constraint(model,
         sum_Pjk - (P_ij_t - line_loss) + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
-        base_name = "NodeRealPowerBalance_Node$(j)_t$(t)")
+        base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
 end
 
 @unpack q_L = data;
@@ -157,8 +157,9 @@ for t in Tset, j in Nm1set
 
     ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
     @constraint(model,
+        base_name =     "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
         sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
-        base_name = "h_2_j^t_NodeReactivePowerBalance_Node$(j)_t$(t)")
+    )
 end
 
 ## KVL Constraints ##
@@ -173,8 +174,9 @@ for t in Tset, (i, j) in L1set
     v_i_t = v[i, t]
     v_j_t = v[j, t]
     @constraint(model,
+        base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-        "KVL_SubstationBranch_$(i)_$(j)_t$(t)")
+    )
 end
 
 # Constraint h_3b: KVL for branches not connected directly to the substation
