@@ -37,6 +37,9 @@ function parse_all_data(systemName::String, T::Int)
     # Merge dictionaries
     data = merge(sysSimData, branch_data, load_data, pv_data, battery_data, cost_data)
 
+    Tset = Set(1:T)
+    data[:Tset] = Tset
+    
     return data
 end
 
