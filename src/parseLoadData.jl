@@ -12,7 +12,7 @@ function parse_load_data(systemName::String, T::Int)
     filename = joinpath(wd, "..", "rawData", systemName, "Loads.dss")
 
     # Initialize data structures
-    Nset = Set{Int}()                 # Set of nodes with loads
+    NLset = Set{Int}()                 # Set of nodes with loads
     p_L_R = Dict{Int,Float64}()      # Rated active power for each load (kW)
     q_L_R = Dict{Int,Float64}()      # Rated reactive power for each load (kVAR)
     V_minpu = Dict{Int,Float64}()    # Minimum per-unit voltage for each node
@@ -55,7 +55,7 @@ function parse_load_data(systemName::String, T::Int)
                     # Extract the integer part before the decimal point
                     bus_parts = split(bus_str, ".")
                     j = parse(Int, bus_parts[1])  # Node number
-                    Nset = union(Nset, [j])
+                    NLset = union(NLset, [j])
                 else
                     error("Bus not specified for a load in Loads.dss")
                 end
@@ -95,9 +95,11 @@ function parse_load_data(systemName::String, T::Int)
         end
     end
 
-    # Return the extracted data as a dictionary
-    return Dict(
-        :Nset => Nset,
+    N_L = length(NLset)
+
+    loadData = Dict(
+        :N_L => N_L,
+        :NLset => NLset,
         :p_L_R => p_L_R,
         :q_L_R => q_L_R,
         :V_minpu => V_minpu,
@@ -105,6 +107,9 @@ function parse_load_data(systemName::String, T::Int)
         :p_L => p_L,
         :q_L => q_L
     )
+
+    # Return the extracted data as a dictionary
+    return loadData
 
 end
 
