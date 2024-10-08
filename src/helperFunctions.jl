@@ -88,10 +88,17 @@ export generateLoadShape, generateBinaryLoadShape, myprintln
 #     return costData
 # end
 
+function myprintln(verbose::Bool, msg::String)
+    if verbose
+        println(msg)
+    end
+end
+
 function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSubsCostDefault.dss",
     hi::Union{Float64,Nothing}=nothing,
     lo::Union{Float64,Nothing}=nothing,
-    peakHoursFraction::Float64=0.3)
+    peakHoursFraction::Float64=0.3,
+    verbose::Bool=false)
     # Get the working directory of this script
     wd = @__DIR__
 
@@ -99,21 +106,21 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
     filepath = joinpath(wd, "..", "rawData", filenameLoadShape)
 
     # Print the file path to confirm it's the correct file
-    println("Attempting to read LoadShape from: $filepath")
+    myprintln(verbose, "Attempting to read LoadShape from: $filepath")
 
     # Initialize a vector for prices
     prices = Float64[]
 
     # Read the LoadShapePSubsCostDefault.dss file
-    println("Reading file content:")
+    myprintln(verbose, "Reading file content:")
     open(filepath, "r") do file
         for line in eachline(file)
             line = strip(line)
             # Print each line read from the file
-            println("Read line: $line")
+            myprintln(verbose, "Read line: $line")
             # Skip empty lines and comments
             if isempty(line) || startswith(line, "!")
-                println("Skipping comment or empty line")
+                myprintln(verbose, "Skipping comment or empty line")
                 continue
             end
             # Check if the line contains the 'mult=' string
@@ -122,9 +129,9 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
                 price_str = replace(line, r".*mult=\[(.*)\]" => s"\1")
                 # Parse the prices from the string
                 prices = [parse(Float64, p) for p in split(price_str)]
-                println("Parsed prices: $prices")
+                myprintln(verbose, "Parsed prices: $prices")
             else
-                println("Skipping line, does not contain mult=")
+                myprintln(verbose, "Skipping line, does not contain mult=")
             end
         end
     end
@@ -138,18 +145,18 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
     hi = isnothing(hi) ? maximum(prices) : hi
     lo = isnothing(lo) ? minimum(prices) : lo
 
-    println("Computed hi: $hi, lo: $lo")
+    myprintln(verbose, "Computed hi: $hi, lo: $lo")
 
     # Subsampling or supersampling the 24-step price array to get lambdaVals0
     if T < 24
         # Subsample the middle T points
         start_idx = Int(floor((24 - T) / 2)) + 1
         lambdaVals0 = prices[start_idx:(start_idx+T-1)]
-        println("Subsampling: lambdaVals0 = $lambdaVals0")
+        myprintln(verbose, "Subsampling: lambdaVals0 = $lambdaVals0")
     elseif T > 24
         # Supersample using interpolation to create T values from the 24-step array
         lambdaVals0 = Float64[]
-        println("Supersampling to $T values:")
+        myprintln(verbose, "Supersampling to $T values:")
         for i in 1:T
             scaled_idx = (i - 1) * (24 - 1) / (T - 1) + 1
             lower_idx = Int(floor(scaled_idx))
@@ -158,29 +165,29 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
             interpolated_value = (1 - frac) * prices[lower_idx] + frac * prices[upper_idx]
             push!(lambdaVals0, interpolated_value)
         end
-        println("Supersampled: lambdaVals0 = $lambdaVals0")
+        myprintln(verbose, "Supersampled: lambdaVals0 = $lambdaVals0")
     else
         # If T == 24, use the original prices
         lambdaVals0 = prices
-        println("T == 24, using original prices: lambdaVals0 = $lambdaVals0")
+        myprintln(verbose, "T == 24, using original prices: lambdaVals0 = $lambdaVals0")
     end
 
     # Now that we have lambdaVals0, compute the number of peak hours
     num_peak_hours = max(1, floor(Int, peakHoursFraction * T))
 
-    println("Number of peak hours: $num_peak_hours")
+    myprintln(verbose, "Number of peak hours: $num_peak_hours")
 
     # Initialize the cost array to the low value (lo)
     costArray = fill(lo, T)
-    println("Initialized costArray with low values: $costArray")
+    myprintln(verbose, "Initialized costArray with low values: $costArray")
 
     # Sort lambdaVals0 in descending order and get the sorted indices
     sortedIndices = sortperm(lambdaVals0, rev=true)
-    println("Sorted indices for peak hours: $sortedIndices")
+    myprintln(verbose, "Sorted indices for peak hours: $sortedIndices")
 
     # Assign the high value (hi) to the peak hours
     costArray[sortedIndices[1:num_peak_hours]] .= hi
-    println("Updated costArray with peak values: $costArray")
+    myprintln(verbose, "Updated costArray with peak values: $costArray")
 
     # Create the output dictionary
     costData = Dict(
@@ -246,11 +253,5 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
     return LoadShape
 end
 
-
-function myprintln(msg::String, verbose::Bool=true)
-    if verbose
-        println(msg)
-    end
-end
 
 end
