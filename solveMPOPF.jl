@@ -65,12 +65,19 @@ SubstationNode = 1
 #     @constraint(model, P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0, "SubstationRealPowerBalance_$(t)")
 
 # end
+# for t in Tset
+#     @constraint(
+#         model,
+#         base_name = "SubstationRealPowerBalance_$(t)",
+#         P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0
+#     )
+# end
 for t in Tset
-@constraint(
-    model,
-    base_name = "SubstationRealPowerBalance_$(t)",
-    P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0
-)
+    @constraint(
+        model,
+        base_name = "SubstationRealPowerBalance_t_$(t)",
+        P_Subs[t] - sum(P[(SubstationNode, j), t] for (SubstationNode, j) in L1set) == 0
+    )
 end
 
 @unpack NLset, Nm1set, children, parent, rdict, xdict, p_L, p_D,  = data;
@@ -78,17 +85,17 @@ end
 for t in Tset, j in Nm1set
     # Sum of real powers flowing from node j to its children
     # sum_Pjk = sum(P[j, k, t] for k in children[j])
-    sum_Pjk = isempty(children[j]) ? 0 : sum(P[j, k, t] for k in children[j])
+    sum_Pjk = isempty(children[j]) ? 0 : sum(P[(j, k), t] for k in children[j]) 
 
     # parent node i of node j
     i = parent[j]
 
     # Real power flow from parent i to node j
-    P_ij_t = P[i, j, t]
+    P_ij_t = P[(i, j), t]
 
     # Line losses on branch (i, j)
     r_ij = rdict[(i, j)]
-    l_ij_t = l[i, j, t]
+    l_ij_t = l[(i, j), t]
     line_loss = r_ij * l_ij_t
 
     # # Load and PV generation at node j and time t
@@ -119,17 +126,17 @@ for t in Tset, j in Nm1set
     # sum_Qjk = sum(Q[j, k, t] for k in children[j])
 
     # Sum of reactive powers flowing from node j to its children
-    sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[j, k, t] for k in children[j])
+    sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
 
     # parent node i of node j
     i = parent[j]
 
     # Reactive power flow from parent i to node j
-    Q_ij_t = Q[i, j, t]
+    Q_ij_t = Q[(i, j), t]
 
     # Line reactive losses on branch (i, j)
     x_ij = xdict[(i, j)]
-    l_ij_t = l[i, j, t]
+    l_ij_t = l[(i, j), t]
     line_reactive_loss = x_ij * l_ij_t
 
     # # Reactive load at node j and time t
@@ -168,9 +175,9 @@ end
 for t in Tset, (i, j) in L1set
     r_ij = rdict[(i, j)]
     x_ij = xdict[(i, j)]
-    P_ij_t = P[i, j, t]
-    Q_ij_t = Q[i, j, t]
-    l_ij_t = l[i, j, t]
+    P_ij_t = P[(i, j), t]
+    Q_ij_t = Q[(i, j), t]
+    l_ij_t = l[(i, j), t]
     v_i_t = v[i, t]
     v_j_t = v[j, t]
     @constraint(model,
