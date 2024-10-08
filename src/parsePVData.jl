@@ -19,6 +19,8 @@ function parse_pv_data(systemName::String, T::Int; LoadShape=nothing, filenameLo
     S_D_R = Dict{Int,Float64}()         # Rated PV apparent power (kVA)
     irrad = Dict{Int,Float64}()         # Irradiance values for each PV
     p_D = Dict{Int,Vector{Float64}}()   # PV active power profile over time
+    Vminpu_D = Dict{Int,Float64}()   # PV bus voltage lower limit (artifically created data entry)
+    Vmaxpu_D = Dict{Int,Float64}()   # PV bus voltage upper limit (artifically created data entry)
 
     LoadShapePV = LoadShape 
 
@@ -86,6 +88,20 @@ function parse_pv_data(systemName::String, T::Int; LoadShape=nothing, filenameLo
                     irrad[j] = 1.0  # Default irradiance if not specified
                 end
 
+                # Force bus voltage limits (Vminpu)
+                if haskey(pv_info, "Vminpu") # will never be read, as it doesn't exist for the OpenDSS class PVSystem
+                    Vminpu_D[j] = parse(Float64, pv_info["Vminpu"])
+                else
+                    Vminpu_D[j] = 0.95  # Default to 0.95 if not specified
+                end
+
+                # Force bus voltage limits (Vmaxpu)
+                if haskey(pv_info, "Vmaxpu") # will never be read, as it doesn't exist for the OpenDSS class PVSystem
+                    Vmaxpu_D[j] = parse(Float64, pv_info["Vmaxpu"])
+                else
+                    Vmaxpu_D[j] = 1.05  # Default to 1.05 if not specified
+                end
+
                 # Calculate active power profile over time using the user-provided or generated LoadShapePV
                 p_D[j] = [p_D_R[j] * LoadShapePV[t] for t in 1:T]
             end
@@ -102,6 +118,8 @@ function parse_pv_data(systemName::String, T::Int; LoadShape=nothing, filenameLo
         :S_D_R => S_D_R,
         :irrad => irrad,
         :p_D => p_D,
+        :Vminpu_D => Vminpu_D,
+        :Vmaxpu_D => Vmaxpu_D,
         :LoadShapePV => LoadShapePV  # Store the LoadShapePV used (either user-supplied or generated)
     )
 
