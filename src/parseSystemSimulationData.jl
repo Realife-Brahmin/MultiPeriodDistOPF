@@ -68,13 +68,15 @@ function parse_system_simulation_data(systemName::String)
         end
     end
 
-    # Return the extracted parameters as a dictionary
-    return Dict(
+    sysSimData = Dict(
         :substationBus => substationBus,
         :V_Subs => V_Subs,
         :V_base => V_base,
         :delta_t => Δt
     )
+
+    # Return the extracted parameters as a dictionary
+    return sysSimData
 
 end
 
