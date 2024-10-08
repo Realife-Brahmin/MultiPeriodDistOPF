@@ -5,8 +5,11 @@ module parseLoadData
 export parse_load_data
 
 function parse_load_data(systemName::String, T::Int)
-    # Construct the file path
-    filename = joinpath(".", "rawData", systemName, "Loads.dss")
+
+    # get wd: the path of <this> file
+    wd = @__DIR__
+    # Construct the file path using wd
+    filename = joinpath(wd, "..", "rawData", systemName, "Loads.dss")
 
     # Initialize data structures
     Nset = Set{Int}()                 # Set of nodes with loads
