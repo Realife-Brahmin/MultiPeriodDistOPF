@@ -22,14 +22,20 @@ model = Model(Ipopt.Optimizer)
 # Variables
 # ===========================
 
-@unpack Tset, Nset, Dset, Bset = data
+@unpack Tset, Nset, Lset, Dset, Bset = data;
 
 # Define all variables as before, using the data parsed
 @variable(model, P_Subs[t in Tset])
-@variable(model, P[i in Nset, j in Nset, t in Tset], base_name = "P")
-@variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
-@variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
-@variable(model, v[j in Nset, t in Tset] >= 0, base_name = "v")
+# @variable(model, P[i in Nset, j in Nset, t in Tset], base_name = "P")
+# @variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
+# @variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
+
+# Define variables over the set of branches Lset and time periods Tset
+@variable(model, P[(i, j) in Lset, t in Tset], base_name = "P")
+@variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
+# Todo How to model nonnegative l? Is it always automatically taken care of? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
+@variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
+
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
 @variable(model, P_c[j in Bset, t in Tset] >= 0, base_name = "P_c")
