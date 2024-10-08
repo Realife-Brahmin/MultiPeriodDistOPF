@@ -83,7 +83,7 @@ for t in Tset, j in Nm1set
 
     @constraint(model,
         sum_Pjk - (P_ij_t - line_loss) + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
-        "NodeRealPowerBalance_Node$(j)_t$(t)")
+        base_name = "NodeRealPowerBalance_Node$(j)_t$(t)")
 end
 
 ## Nodal Reactive Power Balance Constraints ##
