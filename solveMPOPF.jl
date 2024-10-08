@@ -50,11 +50,21 @@ SubstationNode = 1
 
 ## Real Power Balance Constraints ##
 
+@unpack L1set = data
 # Constraint h_1a: Nodal real power balance at the substation node
+# for t in Tset
+#     # @constraint(model,
+#     #     P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0,
+#     #     "SubstationRealPowerBalance_t$(t)")
+#     @constraint(model, P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0, "SubstationRealPowerBalance_$(t)")
+
+# end
 for t in Tset
-    @constraint(model,
-        P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0,
-        "SubstationRealPowerBalance_t$(t)")
+@constraint(
+    model,
+    base_name = "SubstationRealPowerBalance_$(t)",
+    P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0
+)
 end
 
 # Constraint h_1b_j: Nodal real power balance at non-substation nodes
