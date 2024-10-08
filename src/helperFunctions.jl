@@ -1,3 +1,8 @@
+# helperFunctions.jl
+module helperFunctions
+
+export generateLoadShape, myprintln
+
 function generateLoadShape(T::Int; filenameLoadShape=nothing)
     wd = @__DIR__
 
@@ -55,4 +60,6 @@ function myprintln(msg::String, verbose::Bool=true)
     if verbose
         println(msg)
     end
+end
+
 end
