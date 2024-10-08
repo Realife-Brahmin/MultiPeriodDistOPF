@@ -22,9 +22,10 @@ model = Model(Ipopt.Optimizer)
 # Variables
 # ===========================
 
+@unpack Tset, Nset, Dset, Bset = data
+
 # Define all variables as before, using the data parsed
 @variable(model, P_Subs[t in Tset])
-
 @variable(model, P[i in Nset, j in Nset, t in Tset], base_name = "P")
 @variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
 @variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
@@ -65,19 +66,20 @@ for t in Tset
 )
 end
 
+@unpack Nm1set, children, parent, rdict, xdict, p_L, p_D,  = data
 # Constraint h_1b_j: Nodal real power balance at non-substation nodes
 for t in Tset, j in Nm1set
     # Sum of real powers flowing from node j to its children
-    sum_Pjk = sum(P[j, k, t] for k in Children[j])
+    sum_Pjk = sum(P[j, k, t] for k in children[j])
 
-    # Parent node i of node j
-    i = Parent[j]
+    # parent node i of node j
+    i = parent[j]
 
     # Real power flow from parent i to node j
     P_ij_t = P[i, j, t]
 
     # Line losses on branch (i, j)
-    r_ij = r[(i, j)]
+    r_ij = rdict[(i, j)]
     l_ij_t = l[i, j, t]
     line_loss = r_ij * l_ij_t
 
@@ -97,16 +99,16 @@ end
 ## Nodal Reactive Power Balance Constraints ##
 for t in Tset, j in Nm1set
     # Sum of reactive powers flowing from node j to its children
-    sum_Qjk = sum(Q[j, k, t] for k in Children[j])
+    sum_Qjk = sum(Q[j, k, t] for k in children[j])
 
-    # Parent node i of node j
-    i = Parent[j]
+    # parent node i of node j
+    i = parent[j]
 
     # Reactive power flow from parent i to node j
     Q_ij_t = Q[i, j, t]
 
     # Line reactive losses on branch (i, j)
-    x_ij = x[(i, j)]
+    x_ij = xdict[(i, j)]
     l_ij_t = l[i, j, t]
     line_reactive_loss = x_ij * l_ij_t
 
@@ -132,8 +134,8 @@ end
 
 # Constraint h_3a: KVL for branches connected directly to the substation
 for t in Tset, (i, j) in L1set
-    r_ij = r[(i, j)]
-    x_ij = x[(i, j)]
+    r_ij = rdict[(i, j)]
+    x_ij = xdict[(i, j)]
     P_ij_t = P[i, j, t]
     Q_ij_t = Q[i, j, t]
     l_ij_t = l[i, j, t]
@@ -146,8 +148,8 @@ end
 
 # Constraint h_3b: KVL for branches not connected directly to the substation
 for t in Tset, (i, j) in Lm1set
-    r_ij = r[(i, j)]
-    x_ij = x[(i, j)]
+    r_ij = rdict[(i, j)]
+    x_ij = xdict[(i, j)]
     P_ij_t = P[i, j, t]
     Q_ij_t = Q[i, j, t]
     l_ij_t = l[i, j, t]
