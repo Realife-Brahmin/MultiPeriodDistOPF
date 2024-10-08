@@ -26,10 +26,6 @@ model = Model(Ipopt.Optimizer)
 
 # Define all variables as before, using the data parsed
 @variable(model, P_Subs[t in Tset])
-# @variable(model, P[i in Nset, j in Nset, t in Tset], base_name = "P")
-# @variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
-# @variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
-
 # Define variables over the set of branches Lset and time periods Tset
 @variable(model, P[(i, j) in Lset, t in Tset], base_name = "P")
 @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
@@ -43,8 +39,6 @@ model = Model(Ipopt.Optimizer)
 @variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
 @variable(model, B[j in Bset, t in 1:T], base_name = "B")
 
-
-
 # ===========================
 # Constraints
 # ===========================
@@ -57,21 +51,7 @@ SubstationNode = 1
 ## Real Power Balance Constraints ##
 
 @unpack L1set = data;
-# Constraint h_1a: Nodal real power balance at the substation node
-# for t in Tset
-#     # @constraint(model,
-#     #     P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0,
-#     #     "SubstationRealPowerBalance_t$(t)")
-#     @constraint(model, P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0, "SubstationRealPowerBalance_$(t)")
 
-# end
-# for t in Tset
-#     @constraint(
-#         model,
-#         base_name = "SubstationRealPowerBalance_$(t)",
-#         P_Subs[t] - sum(P[SubstationNode, j, t] for (i, j) in L1set) == 0
-#     )
-# end
 for t in Tset
     @constraint(
         model,
@@ -98,10 +78,6 @@ for t in Tset, j in Nm1set
     l_ij_t = l[(i, j), t]
     line_loss = r_ij * l_ij_t
 
-    # # Load and PV generation at node j and time t
-    # p_L_j_t = p_L[j][t]
-    # p_D_j_t = haskey(p_D, j) ? p_D[j][t] : 0.0  # Check if node j has PV
-
     # Load at node j and time t
     p_L_j_t = (j in NLset) ? p_L[j][t] : 0.0  # Check if node j has a load
 
@@ -109,8 +85,6 @@ for t in Tset, j in Nm1set
     p_D_j_t = (j in Dset) ? p_D[j][t] : 0.0  # Check if node j has PV
 
     # # Battery variables at node j and time t
-    # P_d_j_t = haskey(P_d, (j, t)) ? P_d[j, t] : 0.0
-    # P_c_j_t = haskey(P_c, (j, t)) ? P_c[j, t] : 0.0
     P_d_j_t = (j in Bset && t in Tset) ? P_d[j, t] : 0.0
     P_c_j_t = (j in Bset && t in Tset) ? P_c[j, t] : 0.0
 
@@ -122,9 +96,6 @@ end
 @unpack q_L = data;
 ## Nodal Reactive Power Balance Constraints ##
 for t in Tset, j in Nm1set
-    # # 
-    # sum_Qjk = sum(Q[j, k, t] for k in children[j])
-
     # Sum of reactive powers flowing from node j to its children
     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
 
@@ -144,23 +115,11 @@ for t in Tset, j in Nm1set
     # Reactive load at node j and time t
     q_L_j_t = (j in NLset) ? q_L[j][t] : 0.0  # Assign 0.0 if j is not in Nset
 
-    # # Reactive power from PV inverter at node j and time t
-    # q_D_j_t = q_D[j, t]
     # Reactive power from PV inverter at node j and time t
     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
 
-    # # Reactive power from battery inverter at node j and time t
-    # q_B_j_t = q_B[j, t]
     # Reactive power from battery inverter at node j and time t
     q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
-
-    # # Static reactive power injection from capacitor bank at node j and time t
-    # q_C_j_t = q_C[j][t]  # q_C_j_t is a parameter (from data)
-
-    # ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
-    # @constraint(model,
-    #     sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t - q_C_j_t == 0,
-    #     "h_2_j^t_NodeReactivePowerBalance_Node$(j)_t$(t)")
 
     ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
     @constraint(model,
