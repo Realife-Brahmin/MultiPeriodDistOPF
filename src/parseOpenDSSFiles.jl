@@ -15,21 +15,15 @@ using .parseLoadData: parse_load_data
 # ... using other parsing modules as needed
 
 function parse_all_data(systemName::String, T::Int)
-    # Parse system simulation data
-    sim_data = parse_system_simulation_data(systemName)
 
+    # Parse system simulation data
+    sysSimData = parse_system_simulation_data(systemName)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
-
     # Parse load data
     load_data = parse_load_data(systemName, T)
-
     # Merge dictionaries
-    data = merge(sim_data, branch_data, load_data)
-
-    # Combine bus sets if necessary
-    data[:Nset] = union(data[:Nset], data[:Nset_load])
-    data[:N] = length(data[:Nset])
+    data = merge(sysSimData, branch_data, load_data)
 
     return data
 end
