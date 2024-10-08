@@ -1,15 +1,18 @@
-# parseLoadData.jl
-
 module parseLoadData
 
 export parse_load_data
 
-function parse_load_data(systemName::String, T::Int)
+include("helperFunctions.jl")
+using .helperFunctions: generateLoadShape
 
+function parse_load_data(systemName::String, T::Int;
+    LoadShape=nothing, 
+    filenameLoadShape::String="LoadShapeDefault.dss")
+    
     # get wd: the path of <this> file
     wd = @__DIR__
-    # Construct the file path using wd
-    filename = joinpath(wd, "..", "rawData", systemName, "Loads.dss")
+    # Construct the file path for Loads.dss using wd
+    filename_load = joinpath(wd, "..", "rawData", systemName, "Loads.dss")
 
     # Initialize data structures
     NLset = Set{Int}()                 # Set of nodes with loads
@@ -22,8 +25,13 @@ function parse_load_data(systemName::String, T::Int)
     p_L = Dict{Int,Vector{Float64}}()  # Active power profile over time
     q_L = Dict{Int,Vector{Float64}}()  # Reactive power profile over time
 
-    # Open and read the file
-    open(filename, "r") do file
+    # If user does not provide a LoadShape, generate one using the helper function
+    if LoadShape === nothing
+        LoadShape = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
+    end
+
+    # Open and read the Loads.dss file
+    open(filename_load, "r") do file
         for line in eachline(file)
             # Remove comments and strip whitespace
             line = split(line, "!")[1]
@@ -88,9 +96,9 @@ function parse_load_data(systemName::String, T::Int)
                     V_maxpu[j] = 1.05  # Default value if not specified
                 end
 
-                # Initialize load profiles with rated values (to be updated with actual load shapes)
-                p_L[j] = [p_L_R[j] for t in 1:T]
-                q_L[j] = [q_L_R[j] for t in 1:T]
+                # Initialize load profiles using the provided or generated LoadShape
+                p_L[j] = [p_L_R[j] * LoadShape[t] for t in 1:T]
+                q_L[j] = [q_L_R[j] * LoadShape[t] for t in 1:T]
             end
         end
     end
@@ -105,12 +113,12 @@ function parse_load_data(systemName::String, T::Int)
         :V_minpu => V_minpu,
         :V_maxpu => V_maxpu,
         :p_L => p_L,
-        :q_L => q_L
+        :q_L => q_L,
+        :LoadShape => LoadShape  # Store the LoadShape used
     )
 
     # Return the extracted data as a dictionary
     return loadData
-
 end
 
-end # module
+end
