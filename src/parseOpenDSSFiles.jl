@@ -7,11 +7,13 @@ export parse_all_data
 include("parseSystemSimulationData.jl")
 include("parseBranchData.jl")
 include("parseLoadData.jl")
+include("parsePVData.jl")
 # ... include other parsing scripts as needed
 
 using .parseSystemSimulationData: parse_system_simulation_data
 using .parseBranchData: parse_branch_data
 using .parseLoadData: parse_load_data
+using .parsePVData: parse_pv_data
 # ... using other parsing modules as needed
 
 function parse_all_data(systemName::String, T::Int)
@@ -22,8 +24,10 @@ function parse_all_data(systemName::String, T::Int)
     branch_data = parse_branch_data(systemName)
     # Parse load data
     load_data = parse_load_data(systemName, T)
+    # Parse PV data
+    pv_data = parse_pv_data(systemName, T)
     # Merge dictionaries
-    data = merge(sysSimData, branch_data, load_data)
+    data = merge(sysSimData, branch_data, load_data, pv_data)
 
     return data
 end
