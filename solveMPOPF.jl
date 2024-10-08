@@ -29,12 +29,10 @@ model = Model(Ipopt.Optimizer)
 @variable(model, Q[i in Nset, j in Nset, t in Tset], base_name = "Q")
 @variable(model, l[i in Nset, j in Nset, t in Tset] >= 0, base_name = "l")
 @variable(model, v[j in Nset, t in Tset] >= 0, base_name = "v")
-@variable(model, P_d[j in Bset, t in Tset] >= 0, base_name = "P_d")
-@variable(model, P_c[j in Bset, t in Tset] >= 0, base_name = "P_c")
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
 @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
-
-## Battery SOC Variables ##
+@variable(model, P_c[j in Bset, t in Tset] >= 0, base_name = "P_c")
+@variable(model, P_d[j in Bset, t in Tset] >= 0, base_name = "P_d")
 @variable(model, B[j in Bset, t in 1:T] >= 0, base_name = "B")
 
 
