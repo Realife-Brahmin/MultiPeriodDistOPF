@@ -29,7 +29,7 @@ model = Model(Ipopt.Optimizer)
 # Define variables over the set of branches Lset and time periods Tset
 @variable(model, P[(i, j) in Lset, t in Tset], base_name = "P")
 @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
-# Todo How to model nonnegative l? Is it always automatically taken care of? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
+# Todo How to model nonnegative l? Is it always automatically taken care of (speaking for a practical real world problem) even without the constraint? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
 @variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
 
 @variable(model, v[j in Nset, t in Tset], base_name = "v")
