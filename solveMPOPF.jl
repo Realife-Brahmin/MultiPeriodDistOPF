@@ -46,7 +46,7 @@ model = Model(Ipopt.Optimizer)
 # Implement all constraints as before, using the data and variables
 
 # Substation node
-SubstationNode = 1
+j1 = 1
 
 ## Real Power Balance Constraints ##
 
@@ -56,7 +56,7 @@ for t in Tset
     @constraint(
         model,
         base_name = "SubstationRealPowerBalance_t_$(t)",
-        P_Subs[t] - sum(P[(SubstationNode, j), t] for (SubstationNode, j) in L1set) == 0
+        P_Subs[t] - sum(P[(j1, j), t] for (j1, j) in L1set) == 0
     )
 end
 
