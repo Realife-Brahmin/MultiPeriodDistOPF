@@ -45,8 +45,9 @@ model = Model(Ipopt.Optimizer)
 
 # Implement all constraints as before, using the data and variables
 
+@unpack substationBus = data;
 # Substation node
-j1 = 1
+j1 = substationBus
 
 ## Real Power Balance Constraints ##
 
@@ -144,18 +145,20 @@ for t in Tset, (i, j) in L1set
     )
 end
 
+@unpack Lm1set = data;
 # Constraint h_3b: KVL for branches not connected directly to the substation
 for t in Tset, (i, j) in Lm1set
     r_ij = rdict[(i, j)]
     x_ij = xdict[(i, j)]
-    P_ij_t = P[i, j, t]
-    Q_ij_t = Q[i, j, t]
-    l_ij_t = l[i, j, t]
+    P_ij_t = P[(i, j), t]
+    Q_ij_t = Q[(i, j), t]
+    l_ij_t = l[(i, j), t]
     v_i_t = v[i, t]
     v_j_t = v[j, t]
     @constraint(model,
+        base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-        "KVL_NonSubstationBranch_$(i)_$(j)_t$(t)")
+    )
 end
 
 ## Branch Complex Power Flow Equations (BCPF) ##
