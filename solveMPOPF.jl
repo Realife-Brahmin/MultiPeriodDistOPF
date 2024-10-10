@@ -210,11 +210,13 @@ for j in Bset, t in 2:T
     )
 end
 
-# Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = B_ref_j)
+@unpack Bref = data;
+# Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = Bref_j)
 for j in Bset
     @constraint(model,
-        B[j, T] == B_ref[j],
-        "h_SOC_j^{T}_Final_SOC_Node$(j)_t$(T)")
+        base_name = "h_SOC_j^{T}_Final_SOC_Node_j_$(j)_t_$(T)",
+        B[j, T] == Bref[j],
+    )
 end
 
 
