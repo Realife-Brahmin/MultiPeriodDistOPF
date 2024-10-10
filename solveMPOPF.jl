@@ -205,8 +205,9 @@ end
 # Constraint h_SOC_j^{t=2 to T}: SOC trajectory for middle and final time periods
 for j in Bset, t in 2:T
     @constraint(model,
-        B[j, t] - (B[j, t-1] + Δt * η_C * P_c[j, t] - Δt * (1 / η_D) * P_d[j, t]) == 0,
-        "h_SOC_j^{t=$(t)}_SOC_Trajectory_Node$(j)_t$(t)")
+        base_name = "h_SOC_j^{t=$(t)}_SOC_Trajectory_Node$(j)_t$(t)",
+        B[j, t] - (B[j, t-1] + Δt * η_C[j] * P_c[j, t] - Δt * (1 / η_D[j]) * P_d[j, t]) == 0,
+    )
 end
 
 # Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = B_ref_j)
