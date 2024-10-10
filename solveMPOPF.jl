@@ -165,21 +165,22 @@ end
 
 # Constraint h_4a_j^t: For branches connected directly to the substation
 for t in Tset, (i, j) in L1set
-    P_ij_t = P[i, j, t]
-    Q_ij_t = Q[i, j, t]
+    P_ij_t = P[(i, j), t]
+    Q_ij_t = Q[(i, j), t]
     v_i_t = v[i, t]
-    l_ij_t = l[i, j, t]
+    l_ij_t = l[(i, j), t]
     @constraint(model,
+        base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-        "BCPF_SubstationBranch_$(i)_$(j)_t$(t)")
+    )
 end
 
 # Constraint h_4b_j^t: For branches not connected directly to the substation
 for t in Tset, (i, j) in Lm1set
-    P_ij_t = P[i, j, t]
-    Q_ij_t = Q[i, j, t]
+    P_ij_t = P[(i, j), t]
+    Q_ij_t = Q[(i, j), t]
     v_i_t = v[i, t]
-    l_ij_t = l[i, j, t]
+    l_ij_t = l[(i, j), t]
     @constraint(model,
         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
         "BCPF_NonSubstationBranch_$(i)_$(j)_t$(t)")
@@ -354,9 +355,9 @@ end
 
 # Initialize power flow variables
 for (i, j) in Lset, t in Tset
-    set_start_value(P[i, j, t], 0.0)
-    set_start_value(Q[i, j, t], 0.0)
-    set_start_value(l[i, j, t], 0.0)
+    set_start_value(P[(i, j), t], 0.0)
+    set_start_value(Q[(i, j), t], 0.0)
+    set_start_value(l[(i, j), t], 0.0)
 end
 
 # Initialize battery variables
