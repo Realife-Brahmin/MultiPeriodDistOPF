@@ -230,17 +230,27 @@ end
 @unpack Compset, Vminpu_Comp, Vmaxpu_Comp = data;
 # Voltage limits (using per-node limits if available)
 for t in Tset, j in Compset
-    if j == substationBus
+    if j == substationBus # not expected as per my parsing as substation should normally not have any components
         # Fix substation voltage
-        @constraint(model, v[j, t] == (V_Subs)^2, "fixed_substation_voltage_t_$(t)")
-    else
-        # Use per-node voltage limits if available
-        V_min_j_sq = (V_minpu[j] * kv_bus[j])^2
-        V_max_j_sq = (V_maxpu[j] * kv_bus[j])^2
-
-        @constraint(model, V_min_j_sq - v[j, t] <= 0, "g1_j^t_lower_voltage_bound_node_$(j)_time_$(t)")
-        @constraint(model, v[j, t] - V_max_j_sq <= 0, "g2_j^t_upper_voltage_bound_node_$(j)_time_$(t)")
+        @constraint(model,
+            base_name = "fixed_voltage_substation_component_node_j1_t_$(t)",
+            v[substationBus, t] == (V_Subs)^2,
+        )
     end
+
+    # Use per-node voltage limits if available
+    V_min_j_sq = Vminpu_Comp[j]^2
+    V_max_j_sq = Vmaxpu_Comp[j]^2
+
+    @constraint(model, 
+        base_name = "g1_j^t_lower_voltage_bound_component_node_j_$(j)_t_$(t)",
+        V_min_j_sq - v[j, t] <= 0 
+    )
+    @constraint(model,
+        base_name = "g2_j^t_upper_voltage_bound_component_node_j_$(j)_t_$(t)",
+        v[j, t] - V_max_j_sq <= 0
+    )
+    
 end
 
 
