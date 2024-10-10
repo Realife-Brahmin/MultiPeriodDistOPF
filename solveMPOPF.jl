@@ -219,10 +219,6 @@ for j in Bset
     )
 end
 
-
-# Voltage variables
-@variable(model, v[j in Nset, t in Tset] >= 0, base_name = "v")
-
 # Voltage limits (using per-node limits if available)
 # Todo: what about voltage limits for buses with no loads?
 for t in Tset, j in Nset
