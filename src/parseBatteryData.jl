@@ -208,11 +208,15 @@ function parse_battery_data(systemName::String;
     # Compute the cardinality of Bset
     n_B = length(Bset)
 
+    # By default, ensuring that batteries always get back to their original SOCs at the end of the optimization horizon
+    Bref = B0 
+    
     # Create a dictionary with all outputs
     storageData = Dict(
         :Bset => Bset,
         :n_B => n_B,
         :B0 => B0,
+        :Bref => Bref,
         :B_R => B_R,
         :eta_C => eta_C,
         :eta_D => eta_D,
