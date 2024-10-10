@@ -182,8 +182,9 @@ for t in Tset, (i, j) in Lm1set
     v_i_t = v[i, t]
     l_ij_t = l[(i, j), t]
     @constraint(model,
+        base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-        "BCPF_NonSubstationBranch_$(i)_$(j)_t$(t)")
+    )
 end
 
 ## Battery SOC Trajectory Equality Constraints ##
