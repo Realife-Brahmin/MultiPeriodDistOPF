@@ -219,9 +219,17 @@ for j in Bset
     )
 end
 
+@unpack substationBus, V_Subs = data;
+for t in Tset
+    @constraint(model,
+        base_name = "fixed_substation_node_j1_voltage_t_$(t)", 
+        v[substationBus, t] == (V_Subs)^2,
+    )
+end
+
+@unpack Compset, Vminpu_Comp, Vmaxpu_Comp = data;
 # Voltage limits (using per-node limits if available)
-# Todo: what about voltage limits for buses with no loads?
-for t in Tset, j in Nset
+for t in Tset, j in Compset
     if j == substationBus
         # Fix substation voltage
         @constraint(model, v[j, t] == (V_Subs)^2, "fixed_substation_voltage_t_$(t)")
