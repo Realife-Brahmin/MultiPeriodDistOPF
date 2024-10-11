@@ -253,6 +253,7 @@ for t in Tset, j in Compset
     
 end
 
+@unpack p_D_R = data;
 ## Reactive Power Limits for PV Inverters ##
 for t in Tset, j in Dset
     # Rated active power of the PV inverter at node j
