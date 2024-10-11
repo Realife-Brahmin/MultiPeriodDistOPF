@@ -447,3 +447,22 @@ if termination_status(model) == MOI.OPTIMAL
 else
     println("Optimization did not find an optimal solution.")
 end
+
+begin
+    # Define the output file path
+    filename = "model_output.txt"
+
+    # Check if the file exists, and delete it if it does
+    if isfile(filename)
+        rm(filename)
+    end
+
+    # Open a new file and write the model contents to it
+    open(filename, "w") do f
+        print(f, model)
+    end
+
+    println("Model successfully written to $filename")
+end
+
+
