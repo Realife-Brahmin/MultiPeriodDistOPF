@@ -253,7 +253,6 @@ for t in Tset, j in Compset
     
 end
 
-
 ## Reactive Power Limits for PV Inverters ##
 for t in Tset, j in Dset
     # Rated active power of the PV inverter at node j
@@ -267,16 +266,19 @@ for t in Tset, j in Dset
 
     ## g_3_j^t: Lower Limit of Reactive Power from PV Inverter ##
     @constraint(model,
+        base_name = "g_3_j^t_LowerReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
         -q_D_Max_j_t - q_D[j, t] <= 0,
-        "g_3_j^t_LowerReactivePowerLimit_PV_Node$(j)_t$(t)")
+    )
 
     ## g_4_j^t: Upper Limit of Reactive Power from PV Inverter ##
     @constraint(model,
+        base_name = "g_4_j^t_UpperReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
         q_D[j, t] - q_D_Max_j_t <= 0,
-        "g_4_j^t_UpperReactivePowerLimit_PV_Node$(j)_t$(t)")
+    )
 end
 
 ## Reactive Power Limits for Battery Inverters ##
+
 
 # Precompute q_B_Max_j for each battery inverter
 q_B_Max = Dict{Int,Float64}()
