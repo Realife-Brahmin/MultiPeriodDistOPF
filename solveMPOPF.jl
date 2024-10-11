@@ -396,6 +396,7 @@ for (i, j) in Lset, t in Tset
     set_start_value(l[(i, j), t], 0.0)
 end
 
+@unpack Tset, Bset = data;
 # Initialize battery variables
 for j in Bset, t in Tset
     set_start_value(P_d[j, t], 0.0)
