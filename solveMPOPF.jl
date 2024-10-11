@@ -388,6 +388,7 @@ for j in Nset, t in Tset
     set_start_value(v[j, t], (V_Subs)^2)
 end
 
+@unpack Tset, Lset = data;
 # Initialize power flow variables
 for (i, j) in Lset, t in Tset
     set_start_value(P[(i, j), t], 0.0)
