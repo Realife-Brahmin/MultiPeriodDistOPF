@@ -310,30 +310,36 @@ for t in Tset, j in Bset
     )
 end
 
+@unpack P_B_R = data;
 ## Charging Power Limits for Batteries ##
 for t in Tset, j in Bset
     ## g_7_j^t: Non-negativity of Charging Power ##
     @constraint(model,
-        -P_c[j, t] <= 0,
-        "g_7_j^t_NonNegativity_ChargingPower_Node$(j)_t$(t)")
+        base_name = "g_7_j^t_NonNegativity_ChargingPower_Node_j_$(j)_t_$(t)",
+        - P_c[j, t] <= 0,
+    )
 
     ## g_8_j^t: Maximum Charging Power Limit ##
     @constraint(model,
+        base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
         P_c[j, t] - P_B_R[j] <= 0,
-        "g_8_j^t_MaxChargingPowerLimit_Node$(j)_t$(t)")
+    )
 end
 
+@unpack P_B_R = data;
 ## Discharging Power Limits for Batteries ##
 for t in Tset, j in Bset
     ## g_9_j^t: Non-negativity of Discharging Power ##
     @constraint(model,
-        -P_d[j, t] <= 0,
-        "g_9_j^t_NonNegativity_DischargingPower_Node$(j)_t$(t)")
+        base_name = "g_9_j^t_NonNegativity_DischargingPower_Node_j_$(j)_t_$(t)",
+        - P_d[j, t] <= 0,
+    )
 
     ## g_10_j^t: Maximum Discharging Power Limit ##
     @constraint(model,
+        base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
         P_d[j, t] - P_B_R[j] <= 0,
-        "g_10_j^t_MaxDischargingPowerLimit_Node$(j)_t$(t)")
+    )
 end
 
 ## SOC Limits for Batteries ##
@@ -348,12 +354,12 @@ for j in Bset, t in 1:T
     ## g_11_j^t: Minimum SOC Constraint ##
     @constraint(model,
         soc_min * B_R[j] - B[j, t] <= 0,
-        "g_11_j^t_MinSOC_Node$(j)_t$(t)")
+        "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)")
 
     ## g_12_j^t: Maximum SOC Constraint ##
     @constraint(model,
         B[j, t] - soc_max * B_R[j] <= 0,
-        "g_12_j^t_MaxSOC_Node$(j)_t$(t)")
+        "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)")
 end
 
 # ===========================
