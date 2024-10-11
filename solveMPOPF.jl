@@ -342,24 +342,22 @@ for t in Tset, j in Bset
     )
 end
 
+@unpack Bset, Tset, B_R, soc_min, soc_max = data;
 ## SOC Limits for Batteries ##
 
-# Parameters:
-# soc_min: Minimum SOC fraction (e.g., 0.2 for 20%)
-# soc_max: Maximum SOC fraction (e.g., 0.9 for 90%)
-# B_R[j]: Rated capacity of battery j (from data or assumptions)
-
 # Constraints:
-for j in Bset, t in 1:T
+for j in Bset, t in Tset
     ## g_11_j^t: Minimum SOC Constraint ##
     @constraint(model,
-        soc_min * B_R[j] - B[j, t] <= 0,
-        "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)")
+        base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
+        soc_min[j] * B_R[j] - B[j, t] <= 0,
+    )
 
     ## g_12_j^t: Maximum SOC Constraint ##
     @constraint(model,
-        B[j, t] - soc_max * B_R[j] <= 0,
-        "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)")
+        base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
+        B[j, t] - soc_max[j] * B_R[j] <= 0,
+    )
 end
 
 # ===========================
