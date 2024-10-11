@@ -382,9 +382,10 @@ C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 # Initializing Variables
 # ===========================
 
+@unpack Tset, Nset, V_Subs = data;
 # Initialize voltage variables
 for j in Nset, t in Tset
-    set_start_value(v[j, t], (V_base)^2)
+    set_start_value(v[j, t], (V_Subs)^2)
 end
 
 # Initialize power flow variables
