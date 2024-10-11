@@ -365,12 +365,13 @@ end
 # ===========================
 
 alpha = 1e-3  # Adjust based on your problem requirements
-
+@unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
+C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 @objective(model, Min,
     sum(
         C[t] * P_Subs[t] +
         alpha * sum(
-            (1 - η_C) * P_c[j, t] + (1 / η_D - 1) * P_d[j, t]
+            (1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t]
             for j in Bset
         )
         for t in Tset
