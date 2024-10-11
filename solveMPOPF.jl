@@ -280,7 +280,7 @@ end
 
 ## Reactive Power Limits for Battery Inverters ##
 
-
+@unpack P_B_R = data;
 # Precompute q_B_Max_j for each battery inverter
 q_B_Max = Dict{Int,Float64}()
 
@@ -299,13 +299,15 @@ end
 for t in Tset, j in Bset
     ## g_5_j^t: Lower Limit of Reactive Power from Battery Inverter ##
     @constraint(model,
-        -q_B_Max[j] - q_B[j, t] <= 0,
-        "g_5_j^t_LowerReactivePowerLimit_Battery_Node$(j)_t$(t)")
+        base_name = "g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+        -q_B_Max[j] - q_B[j, t] <= 0
+    )
 
     ## g_6_j^t: Upper Limit of Reactive Power from Battery Inverter ##
     @constraint(model,
+        base_name = "g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
         q_B[j, t] - q_B_Max[j] <= 0,
-        "g_6_j^t_UpperReactivePowerLimit_Battery_Node$(j)_t$(t)")
+    )
 end
 
 ## Charging Power Limits for Batteries ##
