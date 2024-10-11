@@ -396,19 +396,31 @@ for (i, j) in Lset, t in Tset
     set_start_value(l[(i, j), t], 0.0)
 end
 
-@unpack Tset, Bset = data;
-# Initialize battery variables
-for j in Bset, t in Tset
-    set_start_value(P_d[j, t], 0.0)
-    set_start_value(P_c[j, t], 0.0)
-    set_start_value(q_B[j, t], 0.0)
+@unpack Tset, Compset, V_Subs = data;
+# Initialize voltage variables
+for j in Compset, t in Tset
+    set_start_value(v[j, t], (V_Subs)^2)
 end
 
-# Initialize PV inverter variables
+@unpack Tset, Dset = data;
+# Initialize PV inverter reactive dispatch variables
 for j in Dset, t in Tset
     set_start_value(q_D[j, t], 0.0)
 end
 
+@unpack Tset, Bset = data;
+# Initialize battery real and reactive dispatch variables
+for j in Bset, t in Tset
+    set_start_value(q_B[j, t], 0.0)
+    set_start_value(P_c[j, t], 0.0)
+    set_start_value(P_d[j, t], 0.0)
+end
+
+@unpack Tset, Bset, B0 = data;
+# Initialize battery state of charge (SOC) variables
+for j in Bset, t in Tset
+    set_start_value(B[j, t], B0[j])
+end
 # ===========================
 # Solver Settings
 # ===========================
