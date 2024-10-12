@@ -1,3 +1,3 @@
 # MultiPeriodDistOPF
 
-[![Build Status](https://github.com/Realife-Brahmin/MultiPeriodDistOPF.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/Realife-Brahmin/MultiPeriodDistOPF.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+The new repo for solving Multi Period Optimal Power Flow problems in Active Distribution Systems (with Batteries and Solar PVs) in a scalable manner.
