@@ -281,15 +281,15 @@ for t in Tset, j in Dset
     )
 end
 
+@unpack Bset, P_B_R_pu = data;
 ## Reactive Power Limits for Battery Inverters ##
 
-@unpack P_B_R = data;
 # Precompute q_B_Max_j for each battery inverter
 q_B_Max = Dict{Int,Float64}()
 
 for j in Bset
     # Rated active power of the battery inverter at node j
-    P_B_R_j = P_B_R[j]  # P_B_R[j] should be provided (we'll handle data parsing later)
+    P_B_R_j = P_B_R_pu[j]  # P_B_R_pu[j] should be provided (we'll handle data parsing later)
 
     # Compute q_B_Max_j
     q_B_Max_j = sqrt((1.2 * P_B_R_j)^2 - (1.0 * P_B_R_j)^2)
@@ -313,7 +313,7 @@ for t in Tset, j in Bset
     )
 end
 
-@unpack P_B_R = data;
+@unpack P_B_R_pu = data;
 ## Charging Power Limits for Batteries ##
 for t in Tset, j in Bset
     ## g_7_j^t: Non-negativity of Charging Power ##
@@ -325,11 +325,11 @@ for t in Tset, j in Bset
     ## g_8_j^t: Maximum Charging Power Limit ##
     @constraint(model,
         base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
-        P_c[j, t] - P_B_R[j] <= 0,
+        P_c[j, t] - P_B_R_pu[j] <= 0,
     )
 end
 
-@unpack P_B_R = data;
+@unpack P_B_R_pu = data;
 ## Discharging Power Limits for Batteries ##
 for t in Tset, j in Bset
     ## g_9_j^t: Non-negativity of Discharging Power ##
@@ -341,7 +341,7 @@ for t in Tset, j in Bset
     ## g_10_j^t: Maximum Discharging Power Limit ##
     @constraint(model,
         base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
-        P_d[j, t] - P_B_R[j] <= 0,
+        P_d[j, t] - P_B_R_pu[j] <= 0,
     )
 end
 
