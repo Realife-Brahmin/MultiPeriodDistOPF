@@ -8,7 +8,7 @@ function parse_system_simulation_data(systemName::String)
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
     V_Subs = 1.0            # Default per-unit voltage at substation
-    V_base = 1.0            # Default base voltage in kV (line-to-ground)
+    kV_B = 1.0            # Default base voltage in kV (line-to-ground)
     Δt = 1.0                # Default time step in hours
 
     wd = @__DIR__
@@ -41,7 +41,7 @@ function parse_system_simulation_data(systemName::String)
                         elseif key == "pu"
                             V_Subs = parse(Float64, value)
                         elseif key == "basekv"
-                            V_base = parse(Float64, value)
+                            kV_B = parse(Float64, value)
                         end
                     end
                 end
@@ -71,7 +71,7 @@ function parse_system_simulation_data(systemName::String)
     sysSimData = Dict(
         :substationBus => substationBus,
         :V_Subs => V_Subs,
-        :V_base => V_base,
+        :kV_B => kV_B,
         :delta_t => Δt
     )
 
