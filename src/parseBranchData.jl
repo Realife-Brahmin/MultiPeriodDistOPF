@@ -4,7 +4,43 @@ module parseBranchData
 
 export parse_branch_data
 
-function parse_branch_data(systemName::String)
+include("helperFunctions.jl")
+using .helperFunctions: myprintln
+
+function parse_branch_data(systemName::String;
+    kVA_B = 1000,
+    kV_B = 2.4018,
+    Z_B = 5.768643240000001,
+    verbose::Bool = false)
+
+    ## Now let's take a small detour to ensure that we know exactly what base impedance to compute pu values of impedances:
+    
+    MVA_B = kVA_B/1000,
+
+    # Rule: If Z_B is not provided and kVA_B is specified but not kV_B, throw an error
+    if isnothing(Z_B) && !isnothing(kVA_B) && isnothing(kV_B)
+        error("Error: You must specify both kV_B and kVA_B to calculate Z_B, or provide Z_B directly.")
+    end
+
+    # Rule: If Z_B is not specified, and kV_B is provided, compute Z_B using the default or given kVA_B
+    if isnothing(Z_B) && !isnothing(kV_B)
+        Z_B = (kV_B^2) / MVA_B
+        myprintln(verbose, "Computed Z_B = (kV_B^2) / MVA_B = $Z_B using kV_B = $kV_B and kVA_B = $kVA_B")
+    end
+
+    # Rule: If Z_B is provided and kV_B/kVA_B are not specified, just use the provided Z_B
+    if !isnothing(Z_B)
+        myprintln(verbose, "Using user-specified Z_B = $Z_B")
+    end
+
+    # Rule: If neither Z_B nor kV_B/kVA_B are provided, use the default value of Z_B
+    if isnothing(Z_B) && isnothing(kV_B) && isnothing(kVA_B)
+        Z_B = 5.768643240000001  # Default value
+        myprintln(verbose, "Using default Z_B = $Z_B")
+    end
+
+    # Now Z_B is guaranteed to be set to a valid value at this point
+    myprintln(verbose, "Final Z_B = $Z_B")
 
     # Todo: Ensure that substation bus being equal to 1 is not taken for granted, have some kwarg or something to ensure that even bus 153 can be the substation bus
 
@@ -17,6 +53,9 @@ function parse_branch_data(systemName::String)
     Lset = Set{Tuple{Int,Int}}()             # Set of branches (edges)
     rdict = Dict{Tuple{Int,Int},Float64}()  # Resistance of each branch
     xdict = Dict{Tuple{Int,Int},Float64}()  # Reactance of each branch
+
+    rdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit resistance of each branch
+    xdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit reactance of each branch
     # parent = Dict{Int,Int}()                 # parent node of each node
     # Define the parent dictionary to hold Int or nothing
     parent = Dict{Int,Union{Int,Nothing}}()
@@ -101,18 +140,14 @@ function parse_branch_data(systemName::String)
                     error("Bus1 or Bus2 not specified for a line in BranchData.dss")
                 end
 
-                # Extract resistance (r1) and reactance (x1)
-                if haskey(branch_info, "r1")
-                    rdict[(from_bus, to_bus)] = parse(Float64, branch_info["r1"])
-                else
-                    rdict[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
-                end
+                # Extract resistance (r1) and reactance (x1), and calculate per-unit values
+                rdict[(from_bus, to_bus)] = haskey(branch_info, "r1") ? parse(Float64, branch_info["r1"]) : 0.0
+                xdict[(from_bus, to_bus)] = haskey(branch_info, "x1") ? parse(Float64, branch_info["x1"]) : 0.0
 
-                if haskey(branch_info, "x1")
-                    xdict[(from_bus, to_bus)] = parse(Float64, branch_info["x1"])
-                else
-                    xdict[(from_bus, to_bus)] = 0.0  # Default to zero if not specified
-                end
+                # Calculate per-unit values for resistance and reactance
+                rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B
+                xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B
+
             end
         end
     end
@@ -133,6 +168,8 @@ function parse_branch_data(systemName::String)
         :Lset => Lset,
         :rdict => rdict,
         :xdict => xdict,
+        :rdict_pu => rdict_pu,
+        :xdict_pu => xdict_pu,
         :parent => parent,
         :children => children,
         :N => N,
