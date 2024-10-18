@@ -419,10 +419,10 @@ for j in Bset, t in Tset
     set_start_value(P_d[j, t], 0.0)
 end
 
-@unpack Tset, Bset, B0 = data;
+@unpack Tset, Bset, B0_pu = data;
 # Initialize battery state of charge (SOC) variables
 for j in Bset, t in Tset
-    set_start_value(B[j, t], B0[j])
+    set_start_value(B[j, t], B0_pu[j])
 end
 # ===========================
 # Solver Settings
