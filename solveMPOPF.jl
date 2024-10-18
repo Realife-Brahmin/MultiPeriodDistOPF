@@ -193,7 +193,7 @@ end
 ## Battery SOC Trajectory Equality Constraints ##
 
 # Constraint h_SOC_j^{t=1}: Initial SOC constraint
-@unpack delta_t, eta_C, eta_D, B0 = data;
+@unpack Bset, delta_t, eta_C, eta_D, B0_pu = data;
 Δt = delta_t
 η_C = eta_C
 η_D = eta_D
@@ -201,7 +201,7 @@ end
 for j in Bset
     @constraint(model,
         base_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1",
-        B[j, 1] - (B0[j] + Δt * η_C[j] * P_c[j, 1] - Δt * (1 / η_D[j]) * P_d[j, 1]) == 0,
+        B[j, 1] - (B0_pu[j] + Δt * η_C[j] * P_c[j, 1] - Δt * (1 / η_D[j]) * P_d[j, 1]) == 0,
     )
 end
 
@@ -213,12 +213,12 @@ for j in Bset, t in 2:T
     )
 end
 
-@unpack Bref = data;
+@unpack Bref_pu = data;
 # Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = Bref_j)
 for j in Bset
     @constraint(model,
         base_name = "h_SOC_j^{T}_Final_SOC_Node_j_$(j)_t_$(T)",
-        B[j, T] == Bref[j],
+        B[j, T] == Bref_pu[j],
     )
 end
 
