@@ -230,7 +230,7 @@ for t in Tset
     )
 end
 
-@unpack Compset, Vminpu_Comp, Vmaxpu_Comp = data;
+@unpack Tset, Compset, Vminpu_Comp, Vmaxpu_Comp = data;
 # Voltage limits (using per-node limits if available)
 for t in Tset, j in Compset
     if j == substationBus # not expected as per my parsing as substation should normally not have any components
