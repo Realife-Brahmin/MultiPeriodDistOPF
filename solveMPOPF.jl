@@ -6,7 +6,7 @@ using Debugger
 
 Revise.revise()
 systemName = "ads10_1ph"
-T = 5
+T = 3
 
 # Parse all data
 data = parse_all_data(systemName, T)
@@ -369,7 +369,7 @@ alpha = 1e-3  # Adjust based on your problem requirements
 C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 @objective(model, Min,
     sum(
-        C[t] * P_Subs[t] +
+        C[t] * P_Subs[t] * delta_t +
         alpha * sum(
             (1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t]
             for j in Bset
