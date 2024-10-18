@@ -130,10 +130,11 @@ end
 
 ## KVL Constraints ##
 
+@unpack Tset, L1set, rdict_pu, xdict_pu = data;
 # Constraint h_3a: KVL for branches connected directly to the substation
 for t in Tset, (i, j) in L1set
-    r_ij = rdict[(i, j)]
-    x_ij = xdict[(i, j)]
+    r_ij = rdict_pu[(i, j)]
+    x_ij = xdict_pu[(i, j)]
     P_ij_t = P[(i, j), t]
     Q_ij_t = Q[(i, j), t]
     l_ij_t = l[(i, j), t]
@@ -145,11 +146,11 @@ for t in Tset, (i, j) in L1set
     )
 end
 
-@unpack Lm1set = data;
+@unpack Tset, Lm1set, rdict_pu, xdict_pu = data;
 # Constraint h_3b: KVL for branches not connected directly to the substation
 for t in Tset, (i, j) in Lm1set
-    r_ij = rdict[(i, j)]
-    x_ij = xdict[(i, j)]
+    r_ij = rdict_pu[(i, j)]
+    x_ij = xdict_pu[(i, j)]
     P_ij_t = P[(i, j), t]
     Q_ij_t = Q[(i, j), t]
     l_ij_t = l[(i, j), t]
