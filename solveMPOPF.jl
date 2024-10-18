@@ -94,7 +94,7 @@ for t in Tset, j in Nm1set
         base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
 end
 
-@unpack q_L = data;
+@unpack q_L_pu = data;
 ## Nodal Reactive Power Balance Constraints ##
 for t in Tset, j in Nm1set
     # Sum of reactive powers flowing from node j to its children
@@ -107,13 +107,13 @@ for t in Tset, j in Nm1set
     Q_ij_t = Q[(i, j), t]
 
     # Line reactive losses on branch (i, j)
-    x_ij = xdict[(i, j)]
+    x_ij = xdict_pu[(i, j)]
     l_ij_t = l[(i, j), t]
     line_reactive_loss = x_ij * l_ij_t
 
-    # Todo: Figure out whether p_L[i][j] be allowed to exist or should it be made the same as p_L[i, j].
+    # Todo: Figure out whether p_L_pu[i][j] be allowed to exist or should it be made the same as p_L_pu[i, j].
     # Reactive load at node j and time t
-    q_L_j_t = (j in NLset) ? q_L[j][t] : 0.0  # Assign 0.0 if j is not in Nset
+    q_L_j_t = (j in NLset) ? q_L_pu[j][t] : 0.0  # Assign 0.0 if j is not in Nset
 
     # Reactive power from PV inverter at node j and time t
     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
