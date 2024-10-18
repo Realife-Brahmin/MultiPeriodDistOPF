@@ -61,7 +61,7 @@ for t in Tset
     )
 end
 
-@unpack NLset, Nm1set, children, parent, rdict, xdict, p_L, p_D,  = data;
+@unpack NLset, Nm1set, children, parent, rdict_pu, xdict_pu, p_L_pu, p_D_pu = data;
 # Constraint h_1b_j: Nodal real power balance at non-substation nodes
 for t in Tset, j in Nm1set
     # Sum of real powers flowing from node j to its children
@@ -75,15 +75,15 @@ for t in Tset, j in Nm1set
     P_ij_t = P[(i, j), t]
 
     # Line losses on branch (i, j)
-    r_ij = rdict[(i, j)]
+    r_ij = rdict_pu[(i, j)]
     l_ij_t = l[(i, j), t]
     line_loss = r_ij * l_ij_t
 
     # Load at node j and time t
-    p_L_j_t = (j in NLset) ? p_L[j][t] : 0.0  # Check if node j has a load
+    p_L_j_t = (j in NLset) ? p_L_pu[j][t] : 0.0  # Check if node j has a load
 
     # PV generation at node j and time t
-    p_D_j_t = (j in Dset) ? p_D[j][t] : 0.0  # Check if node j has PV
+    p_D_j_t = (j in Dset) ? p_D_pu[j][t] : 0.0  # Check if node j has PV
 
     # # Battery variables at node j and time t
     P_d_j_t = (j in Bset && t in Tset) ? P_d[j, t] : 0.0
