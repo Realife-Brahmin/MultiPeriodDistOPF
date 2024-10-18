@@ -4,7 +4,8 @@ module parseSystemSimulationData
 
 export parse_system_simulation_data
 
-function parse_system_simulation_data(systemName::String)
+function parse_system_simulation_data(systemName::String;
+    kVA_B = 1000)
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
     V_Subs = 1.0            # Default per-unit voltage at substation
@@ -68,10 +69,14 @@ function parse_system_simulation_data(systemName::String)
         end
     end
 
+    Z_B = (kV_B)^2/kVA_B
+    
     sysSimData = Dict(
         :substationBus => substationBus,
         :V_Subs => V_Subs,
         :kV_B => kV_B,
+        :kVA_B => kVA_B,
+        :Z_B => Z_B,
         :delta_t => Δt
     )
 
