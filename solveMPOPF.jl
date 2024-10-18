@@ -345,7 +345,7 @@ for t in Tset, j in Bset
     )
 end
 
-@unpack Bset, Tset, B_R, soc_min, soc_max = data;
+@unpack Bset, Tset, B_R_pu, soc_min, soc_max = data;
 ## SOC Limits for Batteries ##
 
 # Constraints:
@@ -353,13 +353,13 @@ for j in Bset, t in Tset
     ## g_11_j^t: Minimum SOC Constraint ##
     @constraint(model,
         base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
-        soc_min[j] * B_R[j] - B[j, t] <= 0,
+        soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
     )
 
     ## g_12_j^t: Maximum SOC Constraint ##
     @constraint(model,
         base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
-        B[j, t] - soc_max[j] * B_R[j] <= 0,
+        B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
     )
 end
 
