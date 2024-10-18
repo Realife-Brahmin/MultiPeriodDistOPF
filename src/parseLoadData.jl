@@ -6,6 +6,7 @@ include("helperFunctions.jl")
 using .helperFunctions: generateLoadShape
 
 function parse_load_data(systemName::String, T::Int;
+    kVA_B = 1000,
     LoadShape=nothing, 
     filenameLoadShape::String="LoadShapeDefault.dss")
 
@@ -17,13 +18,17 @@ function parse_load_data(systemName::String, T::Int;
     # Initialize data structures
     NLset = Set{Int}()                 # Set of nodes with loads
     p_L_R = Dict{Int,Float64}()      # Rated active power for each load (kW)
+    p_L_R_pu = Dict{Int,Float64}()      # Rated active power for each load [pu]
     q_L_R = Dict{Int,Float64}()      # Rated reactive power for each load (kVAR)
+    q_L_R_pu = Dict{Int,Float64}()      # Rated reactive power for each load [pu]
     Vminpu_L = Dict{Int,Float64}()    # Minimum per-unit voltage for each node
     Vmaxpu_L = Dict{Int,Float64}()    # Maximum per-unit voltage for each node
 
     # Placeholder for load shapes (to be updated later)
     p_L = Dict{Int,Vector{Float64}}()  # Active power profile over time
+    p_L_pu = Dict{Int,Vector{Float64}}()  # Active power profile over time [pu]
     q_L = Dict{Int,Vector{Float64}}()  # Reactive power profile over time
+    q_L_pu = Dict{Int,Vector{Float64}}()  # Reactive power profile over time [pu]
 
     # If user does not provide a LoadShape, generate one using the helper function
     if LoadShape === nothing
@@ -71,15 +76,19 @@ function parse_load_data(systemName::String, T::Int;
                 # Extract rated active power (kw)
                 if haskey(load_info, "kw")
                     p_L_R[j] = parse(Float64, load_info["kw"])
+                    p_L_R_pu[j] = p_L_R[j]/kVA_B
                 else
                     p_L_R[j] = 0.0  # Default to zero if not specified
+                    p_L_R_pu[j] = p_L_R[j] / kVA_B
                 end
 
                 # Extract rated reactive power (kvar)
                 if haskey(load_info, "kvar")
                     q_L_R[j] = parse(Float64, load_info["kvar"])
+                    q_L_R_pu[j] = q_L_R[j]/kVA_B
                 else
                     q_L_R[j] = 0.0  # Default to zero if not specified
+                    q_L_R_pu[j] = q_L_R[j] / kVA_B
                 end
 
                 # Extract minimum per-unit voltage (Vminpu)
@@ -98,7 +107,9 @@ function parse_load_data(systemName::String, T::Int;
 
                 # Initialize load profiles using the provided or generated LoadShape
                 p_L[j] = [p_L_R[j] * LoadShape[t] for t in 1:T]
+                p_L_pu[j] = [p_L_R_pu[j] * LoadShape[t] for t in 1:T]
                 q_L[j] = [q_L_R[j] * LoadShape[t] for t in 1:T]
+                q_L_pu[j] = [q_L_R_pu[j] * LoadShape[t] for t in 1:T]
             end
         end
     end
@@ -109,11 +120,15 @@ function parse_load_data(systemName::String, T::Int;
         :N_L => N_L,
         :NLset => NLset,
         :p_L_R => p_L_R,
+        :p_L_R_pu => p_L_R_pu,
         :q_L_R => q_L_R,
+        :q_L_R_pu => q_L_R_pu,
         :Vminpu_L => Vminpu_L,
         :Vmaxpu_L => Vmaxpu_L,
         :p_L => p_L,
+        :p_L_pu => p_L_pu,
         :q_L => q_L,
+        :q_L_pu => q_L_pu,
         :LoadShape => LoadShape  # Store the LoadShape used
     )
 
