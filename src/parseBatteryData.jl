@@ -8,6 +8,7 @@ include("helperFunctions.jl")
 import .helperFunctions: myprintln
 
 function parse_battery_data(systemName::String;
+    kVA_B = 1000,
     verbose::Bool=false)
     # Get the working directory of this script
     wd = @__DIR__
@@ -20,11 +21,15 @@ function parse_battery_data(systemName::String;
     # Initialize output data structures
     Bset = Set{Int}()  # Set of bus numbers with batteries
     B0 = Dict{Int,Float64}()  # Initial SOC (kWhr) for each battery
+    B0_pu = Dict{Int,Float64}()  # Initial SOC (kWhr) for each battery in [pu h]
     B_R = Dict{Int,Float64}()  # Rated storage capacity for each battery (kWhr)
+    B_R_pu = Dict{Int,Float64}()  # Rated storage capacity for each battery [pu h]
     eta_C = Dict{Int,Float64}()  # Charging efficiency for each battery
     eta_D = Dict{Int,Float64}()  # Discharging efficiency for each battery
     P_B_R = Dict{Int,Float64}()  # Rated charging/discharging power (kW)
+    P_B_R_pu = Dict{Int,Float64}()  # Rated charging/discharging power [pu]
     S_B_R = Dict{Int,Float64}()  # Rated inverter apparent power (kVA)
+    S_B_R_pu = Dict{Int,Float64}()  # Rated inverter apparent power (pu)
     Vminpu_B = Dict{Int,Float64}()  # Minimum voltage for each battery (pu)
     Vmaxpu_B = Dict{Int,Float64}()  # Maximum voltage for each battery (pu)
     soc_min = Dict{Int,Float64}()  # Minimum SOC (%reserve)
@@ -77,8 +82,11 @@ function parse_battery_data(systemName::String;
 
                 # Extract rated power and energy values
                 P_B_R[bus] = haskey(storage_info, "kWrated") ? parse(Float64, storage_info["kWrated"]) : 0.0
+                P_B_R_pu[bus] = P_B_R[bus]/kVA_B
                 S_B_R[bus] = haskey(storage_info, "kVA") ? parse(Float64, storage_info["kVA"]) : 0.0
+                S_B_R_pu[bus] = S_B_R[bus]/kVA_B
                 B_R[bus] = haskey(storage_info, "kWhrated") ? parse(Float64, storage_info["kWhrated"]) : 0.0
+                B_R_pu[bus] = B_R[bus]/kVA_B
                 myprintln(verbose, "P_B_R: $(P_B_R[bus]), S_B_R: $(S_B_R[bus]), B_R: $(B_R[bus])")
 
                 # Extract efficiencies
@@ -96,6 +104,7 @@ function parse_battery_data(systemName::String;
 
                 # Compute initial SOC (B0)
                 B0[bus] = soc_0[bus] * B_R[bus]
+                B0_pu[bus] = B0[bus]/kVA_B
                 myprintln(verbose, "Initial SOC B0: $(B0[bus])")
 
                 # Extract voltage limits
@@ -111,18 +120,24 @@ function parse_battery_data(systemName::String;
 
     # By default, ensuring that batteries always get back to their original SOCs at the end of the optimization horizon
     Bref = B0 
-    
+    Bref_pu = B0_pu
+
     # Create a dictionary with all outputs
     storageData = Dict(
         :Bset => Bset,
         :n_B => n_B,
         :B0 => B0,
+        :B0_pu => B0_pu,
         :Bref => Bref,
+        :Bref_pu => Bref_pu,
         :B_R => B_R,
+        :B_R_pu => B_R_pu,
         :eta_C => eta_C,
         :eta_D => eta_D,
         :P_B_R => P_B_R,
+        :P_B_R_pu => P_B_R_pu,
         :S_B_R => S_B_R,
+        :S_B_R_pu => S_B_R_pu,
         :Vminpu_B => Vminpu_B,
         :Vmaxpu_B => Vmaxpu_B,
         :soc_min => soc_min,
