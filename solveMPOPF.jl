@@ -164,6 +164,7 @@ end
 
 ## Branch Complex Power Flow Equations (BCPF) ##
 
+@unpack Tset, L1set = data;
 # Constraint h_4a_j^t: For branches connected directly to the substation
 for t in Tset, (i, j) in L1set
     P_ij_t = P[(i, j), t]
@@ -176,6 +177,7 @@ for t in Tset, (i, j) in L1set
     )
 end
 
+@unpack Tset, Lm1set = data;
 # Constraint h_4b_j^t: For branches not connected directly to the substation
 for t in Tset, (i, j) in Lm1set
     P_ij_t = P[(i, j), t]
