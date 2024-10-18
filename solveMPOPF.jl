@@ -256,14 +256,14 @@ for t in Tset, j in Compset
     
 end
 
-@unpack p_D_R = data;
+@unpack p_D_R_pu = data;
 ## Reactive Power Limits for PV Inverters ##
 for t in Tset, j in Dset
     # Rated active power of the PV inverter at node j
-    p_D_R_j = p_D_R[j]
+    p_D_R_j = p_D_R_pu[j]
 
     # Active power output of PV at node j and time t
-    p_D_j_t = p_D[j][t]
+    p_D_j_t = p_D_pu[j][t]
 
     # Compute q_D_Max_j^t
     q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
