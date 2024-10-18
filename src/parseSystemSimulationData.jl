@@ -69,7 +69,8 @@ function parse_system_simulation_data(systemName::String;
         end
     end
 
-    Z_B = (kV_B)^2/kVA_B
+    MVA_B = kVA_B/1000
+    Z_B = (kV_B)^2/MVA_B
     
     sysSimData = Dict(
         :substationBus => substationBus,
