@@ -16,8 +16,10 @@ function plot_battery_actions(model, data;
     Bset = data[:Bset]
     P_c = model[:P_c]
     P_d = model[:P_d]
+    kVA_B = data[:kVA_B]
     B = model[:B]
     B_R_pu = data[:B_R_pu]  # Rated storage capacity (for SOC % conversion)
+    Bref = data[:Bref]  # Base reference for the storage
 
     systemName = data[:systemName]
     numAreas = data[:numAreas]
@@ -32,12 +34,6 @@ function plot_battery_actions(model, data;
         "pv_$(DER_percent)_batt_$(Batt_percent)",
         "macroItr_$(macroItrNum)")
 
-    # # Create the base directory if it does not exist
-    # if savePlots && !isdir(base_dir)
-    #     println("Creating directory: $base_dir")
-    #     mkdir(base_dir; recursive=true)
-    # end
-
     # Create the base directory if it does not exist
     if savePlots && !isdir(base_dir)
         println("Creating directory: $base_dir")
@@ -49,22 +45,25 @@ function plot_battery_actions(model, data;
         time_intervals = collect(Tset)
 
         # Collect charging, discharging power, and state of charge values
-        charging_power = [value(P_c[j, t]) for t in Tset]
-        discharging_power = [value(P_d[j, t]) for t in Tset]
+        charging_power_kW = [value(P_c[j, t]) * kVA_B for t in Tset]
+        discharging_power_kW = [value(P_d[j, t]) * kVA_B for t in Tset]
 
         # State of charge percentage, converted by dividing by the rated capacity in pu
         soc = [value(B[j, t]) / B_R_pu[j] * 100 for t in Tset]
 
+        # Adjust SOC based on the reference values from Bref
+        soc_adjusted = [soc[t] - Bref[j] * 100 for t in 1:length(soc)]
+
         # Create a plot for charging and discharging
-        charging_discharge_plot = bar(time_intervals, charging_power, label="Charging", color=:green, legend=:top, xlabel="Time Interval Number", ylabel="[kW]", ylim=(-5, 5))
-        bar!(time_intervals, -discharging_power, label="Discharging", color=:purple)
+        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:top, xlabel="Time Interval Number", ylabel="[kW]", xminorgrid=true, yminorgrid=true)
+        bar!(time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
 
         # Add a title for each battery bus
         bus_label = "Bus $j"
         title!(charging_discharge_plot, "Battery at $bus_label\nCharging and Discharging")
 
-        # Create a plot for SOC
-        soc_plot = bar(time_intervals, soc, label="Battery State of Charge", color=:purple, legend=:bottom, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100))
+        # Create a plot for SOC (adjusted by Bref)
+        soc_plot = bar(time_intervals, soc_adjusted, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100), xminorgrid=true, yminorgrid=true)
         title!(soc_plot, "SOC at $bus_label")
 
         # Combine the two plots in a layout
