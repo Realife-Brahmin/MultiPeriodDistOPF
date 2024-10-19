@@ -32,10 +32,11 @@ function parse_all_data(systemName::String, T::Int;
     branch_data = parse_branch_data(systemName)
     # Parse load data
     load_data = parse_load_data(systemName, T)
+    N_L = load_data[:N_L]
     # Parse PV data
-    pv_data = parse_pv_data(systemName, T)
+    pv_data = parse_pv_data(systemName, T, N_L=N_L)
     # Parse Battery data
-    battery_data = parse_battery_data(systemName)
+    battery_data = parse_battery_data(systemName, N_L=N_L)
     # Evaluate Voltage Limits for every bus based on various components (load, pv, battery) attached to it
     component_data = evaluate_voltage_limits(load_data, pv_data, battery_data)
     # Parse substation real power cost data

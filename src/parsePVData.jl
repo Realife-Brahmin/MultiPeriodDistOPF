@@ -8,6 +8,7 @@ include("helperFunctions.jl")
 using .helperFunctions: generateLoadShape
 
 function parse_pv_data(systemName::String, T::Int;
+    N_L = nothing,
     kVA_B = 1000,
     LoadShape=nothing,
     filenameLoadShape=nothing)
@@ -129,10 +130,19 @@ function parse_pv_data(systemName::String, T::Int;
     end
 
     n_D = length(Dset)
+    DER_percent = 0
+
+    # If the user doesn't provide a N_L, set DER_percent to 100, else compute an actual percentage
+    if N_L === nothing
+        DER_percent = 100
+    else # 1% if it is less than that (but nonzero)
+        DER_percent = Int(ceil(n_D/N_L * 100))
+    end
 
     # Return the extracted data as a dictionary
     pvData = Dict(
         :n_D => n_D,
+        :DER_percent => DER_percent,
         :Dset => Dset,
         :p_D_R => p_D_R,
         :p_D_R_pu => p_D_R_pu,  # Per-unit rated active power
