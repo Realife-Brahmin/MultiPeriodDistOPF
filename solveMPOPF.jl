@@ -6,7 +6,7 @@ using Debugger
 
 Revise.revise()
 systemName = "ads10_1ph"
-T = 3
+T = 1
 
 # Parse all data
 data = parse_all_data(systemName, T)
@@ -25,7 +25,7 @@ model = Model(Ipopt.Optimizer)
 @unpack Tset, Nset, Lset, Dset, Bset = data;
 
 # Define all variables as before, using the data parsed
-@variable(model, P_Subs[t in Tset])
+@variable(model, P_Subs[t in Tset] >= 0)
 # Define variables over the set of branches Lset and time periods Tset
 @variable(model, P[(i, j) in Lset, t in Tset], base_name = "P")
 @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
@@ -444,12 +444,22 @@ optimize!(model)
 # ===========================
 
 # Check solver status and retrieve results
-if termination_status(model) == MOI.OPTIMAL
+if termination_status(model) == LOCALLY_SOLVED
     println("Optimal solution found.")
     # Retrieve and process results as needed
 else
     println("Optimization did not find an optimal solution.")
 end
+
+optimal_obj_value = objective_value(model)
+println("Optimal objective function value: ", optimal_obj_value)
+
+verbose = true
+t = rand(1:T)
+myprintln(verbose, "P_Subs[t] = $(value(P_Subs[t]))")
+myprintln(verbose, "P[(1, 2), t] = $(value(P[(1, 2), t]))")
+myprintln(verbose, "P[(1, 3), t] = $(value(P[(1, 3), t]))")
+myprintln(verbose, "P[(1, 10), t] = $(value(P[(1, 10), t]))")
 
 begin
     # Define the output file path
