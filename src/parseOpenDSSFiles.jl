@@ -23,11 +23,12 @@ using .helperFunctions: generateBinaryLoadShape
 # ... using other parsing modules as needed
 
 function parse_all_data(systemName::String, T::Int;
-    numAreas=1)
+    numAreas=1,
+    alpha=1e-3)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
-    numAreas=numAreas)
+    numAreas=numAreas, alpha=alpha)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
     # Parse load data
