@@ -5,11 +5,12 @@ using Parameters: @unpack
 using Debugger
 
 Revise.revise()
-systemName = "ads10_1ph"
+systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
 T = 1
+numAreas = 1
 
 # Parse all data
-data = parse_all_data(systemName, T)
+data = parse_all_data(systemName, T, numAreas=numAreas)
 
 # Import necessary packages
 using JuMP

@@ -22,10 +22,12 @@ using .evaluateVoltageLimits: evaluate_voltage_limits
 using .helperFunctions: generateBinaryLoadShape
 # ... using other parsing modules as needed
 
-function parse_all_data(systemName::String, T::Int)
+function parse_all_data(systemName::String, T::Int;
+    numAreas=1)
 
     # Parse system simulation data
-    sysSimData = parse_system_simulation_data(systemName)
+    sysSimData = parse_system_simulation_data(systemName, T,
+    numAreas=numAreas)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
     # Parse load data
@@ -40,9 +42,6 @@ function parse_all_data(systemName::String, T::Int)
     cost_data = generateBinaryLoadShape(T)
     # Merge dictionaries
     data = merge(sysSimData, branch_data, load_data, pv_data, battery_data, component_data, cost_data)
-    # Saving Horizon Duration here
-    Tset = Set(1:T)
-    data[:Tset] = Tset
     
     return data
 end
