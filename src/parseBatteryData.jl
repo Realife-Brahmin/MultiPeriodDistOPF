@@ -9,6 +9,7 @@ import .helperFunctions: myprintln
 
 function parse_battery_data(systemName::String;
     kVA_B = 1000,
+    N_L = nothing,
     verbose::Bool=false)
     # Get the working directory of this script
     wd = @__DIR__
@@ -117,6 +118,12 @@ function parse_battery_data(systemName::String;
 
     # Compute the cardinality of Bset
     n_B = length(Bset)
+    # If the user doesn't provide a N_L, Set Batt_percent to 100, else compute an actual percentage
+    if N_L === nothing
+        Batt_percent = 100
+    else # 1% if it is less than that (but nonzero)
+        Batt_percent = Int(ceil(n_B / N_L * 100))
+    end
 
     # By default, ensuring that batteries always get back to their original SOCs at the end of the optimization horizon
     Bref = B0 
@@ -126,6 +133,7 @@ function parse_battery_data(systemName::String;
     storageData = Dict(
         :Bset => Bset,
         :n_B => n_B,
+        :Batt_percent => Batt_percent,
         :B0 => B0,
         :B0_pu => B0_pu,
         :Bref => Bref,
