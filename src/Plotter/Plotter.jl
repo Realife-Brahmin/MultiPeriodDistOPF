@@ -56,7 +56,7 @@ function plot_battery_actions(model, data;
         ylimit = (-P_B_R[j], P_B_R[j])
 
         # Create a plot for charging and discharging
-        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[kW]", ylim=ylimit)
+        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[kW]", ylim=ylimit, xticks=1:T)
         bar!(time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
 
         # Add a horizontal line at y=0 to clearly separate charging and discharging
@@ -67,7 +67,7 @@ function plot_battery_actions(model, data;
         title!(charging_discharge_plot, "Battery at $bus_label\nCharging and Discharging")
 
         # Create a plot for SOC, starting from t=0 with Bref_pu and continuing with the values in SOC
-        soc_plot = bar(0:T, soc, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100))
+        soc_plot = bar(0:T, soc, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100), xticks=0:T)
         title!(soc_plot, "SOC")
 
         # Combine the two plots in a layout
