@@ -19,7 +19,7 @@ using .parseLoadData: parse_load_data
 using .parsePVData: parse_pv_data
 using .parseBatteryData: parse_battery_data
 using .evaluateVoltageLimits: evaluate_voltage_limits
-using .helperFunctions: generateBinaryLoadShape
+using .helperFunctions: generateBinaryLoadShape, myprintln
 # ... using other parsing modules as needed
 
 function parse_all_data(systemName::String, T::Int;

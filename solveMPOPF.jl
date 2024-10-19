@@ -6,7 +6,7 @@ using Debugger
 
 Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
-T = 1
+T = 3
 numAreas = 1
 alpha = 1e-3
 
@@ -480,4 +480,4 @@ begin
     println("Model successfully written to $filename")
 end
 
-
+plot_battery_actions(model, data, showPlots=true, savePlots=true)
