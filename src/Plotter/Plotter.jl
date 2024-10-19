@@ -2,7 +2,7 @@ module Plotter
 
 using Plots
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
-import Base.Filesystem: mkdir, isdir  # To create directories
+import Base.Filesystem: mkpath, isdir  # To create directories
 
 export plot_battery_actions
 
@@ -19,7 +19,8 @@ function plot_battery_actions(model, data;
     kVA_B = data[:kVA_B]
     B = model[:B]
     B_R_pu = data[:B_R_pu]  # Rated storage capacity (for SOC % conversion)
-    Bref = data[:Bref]  # Base reference for the storage
+    P_B_R = data[:P_B_R]  # Maximum rated power (kW)
+    Bref_pu = data[:Bref_pu]
 
     systemName = data[:systemName]
     numAreas = data[:numAreas]
@@ -48,22 +49,22 @@ function plot_battery_actions(model, data;
         charging_power_kW = [value(P_c[j, t]) * kVA_B for t in Tset]
         discharging_power_kW = [value(P_d[j, t]) * kVA_B for t in Tset]
 
-        # State of charge percentage, converted by dividing by the rated capacity in pu
-        soc = [value(B[j, t]) / B_R_pu[j] * 100 for t in Tset]
+        # State of charge percentage, starting with Bref_pu for t=0 and continuing with B[t]
+        soc = [Bref_pu[j] / B_R_pu[j] * 100; [value(B[j, t]) / B_R_pu[j] * 100 for t in Tset]]
 
-        # Adjust SOC based on the reference values from Bref
-        soc_adjusted = [soc[t] - Bref[j] * 100 for t in 1:length(soc)]
+        # Use P_B_R[j] to set the y-limits for charging/discharging
+        ylimit = (-P_B_R[j], P_B_R[j])
 
         # Create a plot for charging and discharging
-        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:top, xlabel="Time Interval Number", ylabel="[kW]", xminorgrid=true, yminorgrid=true)
+        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[kW]", ylim=ylimit)
         bar!(time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
 
         # Add a title for each battery bus
         bus_label = "Bus $j"
         title!(charging_discharge_plot, "Battery at $bus_label\nCharging and Discharging")
 
-        # Create a plot for SOC (adjusted by Bref)
-        soc_plot = bar(time_intervals, soc_adjusted, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100), xminorgrid=true, yminorgrid=true)
+        # Create a plot for SOC, starting from t=0 with Bref_pu and continuing with the values in SOC
+        soc_plot = bar(0:T, soc, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100))
         title!(soc_plot, "SOC at $bus_label")
 
         # Combine the two plots in a layout
