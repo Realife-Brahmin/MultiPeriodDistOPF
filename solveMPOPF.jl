@@ -8,9 +8,10 @@ Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
 T = 1
 numAreas = 1
+alpha = 1e-3
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha)
 
 # Import necessary packages
 using JuMP
@@ -368,7 +369,7 @@ end
 # Objective Function
 # ===========================
 
-alpha = 1e-3  # Adjust based on your problem requirements
+# alpha = 1e-3  # Adjust based on your problem requirements
 @unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
 C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 @objective(model, Min,

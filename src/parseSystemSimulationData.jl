@@ -6,6 +6,7 @@ export parse_system_simulation_data
 
 function parse_system_simulation_data(systemName::String, T::Int;
     numAreas=1,
+    alpha=1e-3,
     kVA_B = 1000)
 
     # Initialize parameters with default values
@@ -78,6 +79,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     Tset = Set(1:T)
 
     sysSimData = Dict(
+        :alpha => alpha, # user input
         :systemName => systemName, # user input
         :numAreas => numAreas, # user input
         :substationBus => substationBus,
