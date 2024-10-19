@@ -59,13 +59,16 @@ function plot_battery_actions(model, data;
         charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[kW]", ylim=ylimit)
         bar!(time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
 
+        # Add a horizontal line at y=0 to clearly separate charging and discharging
+        hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)  # Add prominent black line at y=0
+
         # Add a title for each battery bus
         bus_label = "Bus $j"
         title!(charging_discharge_plot, "Battery at $bus_label\nCharging and Discharging")
 
         # Create a plot for SOC, starting from t=0 with Bref_pu and continuing with the values in SOC
         soc_plot = bar(0:T, soc, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100))
-        title!(soc_plot, "SOC at $bus_label")
+        title!(soc_plot, "SOC")
 
         # Combine the two plots in a layout
         plot_combined = plot(charging_discharge_plot, soc_plot, layout=@layout([a; b]))
