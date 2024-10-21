@@ -482,3 +482,6 @@ begin
 end
 
 plot_battery_actions(model, data, showPlots=true, savePlots=true)
+
+export_decision_variables(model, data, "decision_variables.xlsx")
+
