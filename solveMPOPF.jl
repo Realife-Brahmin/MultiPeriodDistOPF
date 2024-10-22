@@ -9,9 +9,9 @@ systemName = "ads10_1ph" # this is something which the user will specify but wil
 T = 5
 numAreas = 1
 alpha = 1
-# objfun = "powerflow"
-objfun = "lineLossMin"
-# objfun = "genCostMin"
+# objfun0 = "powerflow"
+objfun0 = "lineLossMin"
+# objfun0 = "genCostMin"
 objfun2 = "scd"
 
 # Parse all data
@@ -373,19 +373,22 @@ end
 # Objective Function
 # ===========================
 
-# Assume objfun and objfun2 are passed to the function that defines the model.
-if objfun == "powerflow"
+@unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
+C, η_C, η_D = LoadShapeCost, eta_C, eta_D
+
+# Assume objfun0 and objfun2 are passed to the function that defines the model.
+if objfun0 == "powerflow"
     # Set the objective function to zero for powerflow
     # @objective(model, Min, 0)
-    base_objective = 0
-elseif objfun == "genCostMin"
+    objfun = 0
+elseif objfun0 == "genCostMin"
     # Define the base objective function (generation cost minimization)
-    base_objective = sum(
+    objfun = sum(
         C[t] * P_Subs[t] * delta_t
         for t in Tset
     )
-elseif objfun == "lineLossMin"
-    base_objective = sum(
+elseif objfun0 == "lineLossMin"
+    objfun = sum(
         rdict_pu[(i, j)]*l[(i, j), t]
         for (i, j) in Lset, t in Tset
     )
@@ -393,15 +396,15 @@ end
 
 # Append the alpha term only if objfun2 == "scd"
 if objfun2 == "scd"
-    base_objective += sum(
+    objfun += sum(
         alpha * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
         for j in Bset, t in Tset
     )
 end
 
-# Use the base objective if objfun is "genCostMin"
-# if objfun == "genCostMin"
-@objective(model, Min, base_objective)
+# Use the base objective if objfun0 is "genCostMin"
+# if objfun0 == "genCostMin"
+@objective(model, Min, objfun)
 # end
 
 
