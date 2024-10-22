@@ -56,10 +56,10 @@ function parse_branch_data(systemName::String;
 
     rdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit resistance of each branch
     xdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit reactance of each branch
-    # parent = Dict{Int,Int}()                 # parent node of each node
+
     # Define the parent dictionary to hold Int or nothing
-    parent = Dict{Int,Union{Int,Nothing}}()
-    children = Dict{Int,Vector{Int}}()       # children nodes of each node
+    parent = Dict{Int,Union{Int,Nothing}}()    # Parent node of each node
+    children = Dict{Int,Vector{Int}}()         # Children nodes of each node
 
     # Initialize additional sets and parameters
     N1set = Set{Int}()                            # Substation node (bus 1)
