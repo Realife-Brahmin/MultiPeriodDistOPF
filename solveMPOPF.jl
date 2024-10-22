@@ -384,9 +384,9 @@ if objfun0 == "powerflow"
     objfun = 0
 elseif objfun0 == "genCostMin"
     # Define the base objective function (generation cost minimization)
-    dollars_per_pu = C[t]*kVA_B
+    dollars_per_pu = kVA_B
     objfun = sum(
-        dollars_per_pu * P_Subs[t] * delta_t
+        dollars_per_pu * C[t] * P_Subs[t] * delta_t
         for t in Tset
     )
 elseif objfun0 == "lineLossMin"
@@ -523,6 +523,14 @@ begin
 end
 
 plot_battery_actions(model, data, showPlots=false, savePlots=true)
+
+# # Assuming you have the model and data already
+# using .computeOutputs  # Import the module
+
+# Call the function after solving the model
+# Todo: Add real unit fields to the data field, like PSubsCost_vs_1toT_Dollars, PSubs_vs_1toT_kW, PLoss_vs_1toT_kW
+
+data = compute_output_values(model, data)
 
 export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=true)
 
