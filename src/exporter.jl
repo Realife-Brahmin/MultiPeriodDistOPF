@@ -2,10 +2,10 @@ module Exporter
 
 using XLSX
 import JuMP: value
-
 include("./helperFunctions.jl")
-using .helperFunctions: myprintln
-# import .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
+import .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
+
+using Parameters: @unpack
 
 export export_decision_variables
 
@@ -19,6 +19,8 @@ function export_decision_variables(model, data;
     # Ensure the filename has a valid path or is saved in the current directory
     myprintln(verbose, "Saving to filename: $filename")
 
+    # Unpack the data
+    # @unpack Tset, Lset, Nset, Bset, Dset = data
     Tset = sort(collect(data[:Tset]))  # Convert Set to array and sort
     Lset = sort(collect(data[:Lset]))  # Convert Set to array and sort
     Nset = sort(collect(data[:Nset]))  # Convert Set to array and sort
@@ -36,12 +38,11 @@ function export_decision_variables(model, data;
     P_d = model[:P_d]
     B = model[:B]
 
+    # Use the `do` block syntax to ensure that the file is closed automatically
     try
         myprintln(verbose, "Opening file: $filename")
-        xf = XLSX.openxlsx(filename, mode="w")  # Open the file explicitly
-        myprintln(verbose, "File opened successfully.")
-
-        try
+        XLSX.openxlsx(filename, mode="w") do xf
+            myprintln(verbose, "File opened successfully.")
             sheet = xf[1]
 
             # First row: P_Subs for all time intervals, sorted by t
@@ -134,10 +135,13 @@ function export_decision_variables(model, data;
             end
 
             myprintln(verbose, "Data written successfully.")
+        end
 
-        finally
-            myprintln(verbose, "Closing file.")
-            XLSX.close(xf)  # Ensure the file is closed
+        # Check if file was created
+        if isfile(filename)
+            myprintln(verbose, "File exists: $filename")
+        else
+            myprintln(verbose, "File does not exist: $filename")
         end
 
     catch e
