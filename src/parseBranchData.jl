@@ -49,10 +49,10 @@ function parse_branch_data(systemName::String;
     filename = joinpath(wd, "..", "rawData", systemName, "BranchData.dss")
 
     # Initialize data structures
-    Nset = Set{Int}()                         # Set of all bus numbers
-    Lset = Set{Tuple{Int,Int}}()             # Set of branches (edges)
-    rdict = Dict{Tuple{Int,Int},Float64}()  # Resistance of each branch
-    xdict = Dict{Tuple{Int,Int},Float64}()  # Reactance of each branch
+    Nset = Set{Int}()                             # Set of all bus numbers
+    Lset = Set{Tuple{Int,Int}}()                  # Set of branches (edges)
+    rdict = Dict{Tuple{Int,Int},Float64}()     # Resistance of each branch
+    xdict = Dict{Tuple{Int,Int},Float64}()     # Reactance of each branch
 
     rdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit resistance of each branch
     xdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit reactance of each branch
@@ -62,10 +62,12 @@ function parse_branch_data(systemName::String;
     children = Dict{Int,Vector{Int}}()       # children nodes of each node
 
     # Initialize additional sets and parameters
-    N1set = Set{Int}()                       # Buses connected to substation bus (1)
-    Nm1set = Set{Int}()                      # Buses not connected to substation bus (1)
-    L1set = Set{Tuple{Int,Int}}()           # Branches where one node is 1
-    Lm1set = Set{Tuple{Int,Int}}()          # Branches where no node is 1
+    N1set = Set{Int}()                            # Substation node (bus 1)
+    Nm1set = Set{Int}()                           # Buses not including substation bus (1)
+    Nc1set = Set{Int}()                           # Buses connected to substation bus (1)
+    Nnc1set = Set{Int}()                          # Buses not connected to substation bus (1)
+    L1set = Set{Tuple{Int,Int}}()                 # Branches where one node is the substation (1)
+    Lm1set = Set{Tuple{Int,Int}}()                # Branches where no node is the substation (1)
 
     # Regular expression to match key=value pairs with optional spaces
     kv_pattern = r"(\w+)\s*=\s*([\S]+)"
@@ -127,15 +129,24 @@ function parse_branch_data(systemName::String;
 
                     # Update N1set, Nm1set, L1set, Lm1set
                     if from_bus == 1
-                        push!(N1set, to_bus)
+                        push!(N1set, from_bus)
+                        push!(Nc1set, to_bus)
                         push!(L1set, (from_bus, to_bus))
                     elseif to_bus == 1
                         push!(N1set, from_bus)
+                        push!(Nc1set, from_bus)
                         push!(L1set, (from_bus, to_bus))
                     else
                         Nm1set = union(Nm1set, [from_bus, to_bus])
                         push!(Lm1set, (from_bus, to_bus))
                     end
+
+                    # # Nm1set  will be all nodes except substation node
+                    Nm1set = setdiff(Nset, N1set)
+
+                    # # Nnc1set will be all nodes that are not connected to the substation
+                    Nnc1set = setdiff(Nm1set, Nc1set)
+
                 else
                     error("Bus1 or Bus2 not specified for a line in BranchData.dss")
                 end
@@ -159,6 +170,8 @@ function parse_branch_data(systemName::String;
     # Calculate additional parameters
     N1 = length(N1set)
     Nm1 = length(Nm1set)
+    Nc1 = length(Nc1set)
+    Nnc1 = length(Nnc1set)
     m1 = length(L1set)
     mm1 = length(Lm1set)
 
@@ -176,10 +189,14 @@ function parse_branch_data(systemName::String;
         :m => m,
         :N1set => N1set,
         :Nm1set => Nm1set,
+        :Nc1set => Nc1set,
+        :Nnc1set => Nnc1set,
         :L1set => L1set,
         :Lm1set => Lm1set,
         :N1 => N1,
         :Nm1 => Nm1,
+        :Nc1 => Nc1,
+        :Nnc1 => Nnc1,
         :m1 => m1,
         :mm1 => mm1
     )
