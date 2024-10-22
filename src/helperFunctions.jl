@@ -115,7 +115,6 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
     return costData
 end
 
-
 function generateLoadShape(T::Int; filenameLoadShape=nothing)
     wd = @__DIR__
 
@@ -168,5 +167,4 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
     return LoadShape
 end
 
-
-end
+end # module
