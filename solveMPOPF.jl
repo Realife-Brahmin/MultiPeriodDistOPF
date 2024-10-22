@@ -12,6 +12,7 @@ alpha = 1
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
 # objfun0 = "genCostMin"
+# objfun2 = "none"
 objfun2 = "scd"
 
 # Parse all data
