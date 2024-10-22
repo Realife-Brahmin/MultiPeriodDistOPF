@@ -15,6 +15,8 @@ function plot_battery_actions(model, data;
     # Extract necessary parameters from the `data` dictionary
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha = data;
 
+    Tset = sort(collect(Tset))
+
     # @unpack P_c, P_d, B = model; # Why does this not work?
 
     P_c = model[:P_c]
