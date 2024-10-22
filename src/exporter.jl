@@ -19,13 +19,16 @@ function export_decision_variables(model, data;
     # Ensure the filename has a valid path or is saved in the current directory
     myprintln(verbose, "Saving to filename: $filename")
 
-    # Unpack the data
-    # @unpack Tset, Lset, Nset, Bset, Dset = data
-    Tset = sort(collect(data[:Tset]))  # Convert Set to array and sort
-    Lset = sort(collect(data[:Lset]))  # Convert Set to array and sort
-    Nset = sort(collect(data[:Nset]))  # Convert Set to array and sort
-    Bset = sort(collect(data[:Bset]))  # Convert Set to array and sort
-    Dset = sort(collect(data[:Dset]))  # Convert Set to array and sort
+    # Unpack the necessary data from `data`
+    Tset = sort(collect(data[:Tset]))  # Time steps
+    LoadShape = data[:LoadShape]  # Load shape values
+    LoadShapePV = data[:LoadShapePV]  # Irradiance values
+    LoadShapeCost = data[:LoadShapeCost] * 100  # Convert from $/kWh to cents/kWh
+
+    Lset = sort(collect(data[:Lset]))  # Line set
+    Nset = sort(collect(data[:Nset]))  # Node set
+    Bset = sort(collect(data[:Bset]))  # Battery set
+    Dset = sort(collect(data[:Dset]))  # PV set
 
     P_Subs = model[:P_Subs]
     P = model[:P]
@@ -45,8 +48,40 @@ function export_decision_variables(model, data;
             myprintln(verbose, "File opened successfully.")
             sheet = xf[1]
 
-            # First row: P_Subs for all time intervals, sorted by t
+            # Add the headers before the decision variables
+
+            # First header: "t"
             row_index = 1
+            sheet[row_index, 1] = "t"
+            for t in Tset
+                sheet[row_index, t+1] = t
+            end
+            row_index += 1
+
+            # Second header: LoadShape values (lambda)
+            sheet[row_index, 1] = "lambda"
+            for t in eachindex(LoadShape)
+                sheet[row_index, t+1] = LoadShape[t]
+            end
+            row_index += 1
+
+            # Third header: Irradiance (LoadShapePV)
+            sheet[row_index, 1] = "Irrad"
+            for t in eachindex(LoadShapePV)
+                sheet[row_index, t+1] = LoadShapePV[t]
+            end
+            row_index += 1
+
+            # Fourth header: cents/kWh (LoadShapeCost)
+            sheet[row_index, 1] = "cents/kWh"
+            for t in eachindex(LoadShapeCost)
+                sheet[row_index, t+1] = LoadShapeCost[t]
+            end
+            row_index += 1
+
+            # Now start the original decision variables
+
+            # First row: P_Subs for all time intervals, sorted by t
             sheet[row_index, 1] = "P_Subs"
             for t in Tset
                 sheet[row_index, t+1] = value(P_Subs[t])
