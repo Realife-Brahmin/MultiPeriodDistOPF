@@ -8,7 +8,7 @@ Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
 T = 24
 numAreas = 1
-alpha = 1
+alpha = 1e-3
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
 objfun0 = "genCostMin"
