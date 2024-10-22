@@ -6,10 +6,13 @@ using Debugger
 
 Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
-T = 3
+T = 5
 numAreas = 1
-alpha = 1e-3
-# alpha = 0
+alpha = 1
+# objfun = "powerflow"
+objfun = "lineLossMin"
+# objfun = "genCostMin"
+objfun2 = "scd"
 
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha)
@@ -106,7 +109,7 @@ for t in Tset, j in Nm1set
     # parent node i of node j
     i = parent[j]
 
-    # Reactive power flow from parent i to node j
+    # Reactive power flow from paren t i to node j
     Q_ij_t = Q[(i, j), t]
 
     # Line reactive losses on branch (i, j)
@@ -370,19 +373,52 @@ end
 # Objective Function
 # ===========================
 
-# alpha = 1e-3  # Adjust based on your problem requirements
-@unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
-C, η_C, η_D = LoadShapeCost, eta_C, eta_D
-@objective(model, Min,
-    sum(
-        C[t] * P_Subs[t] * delta_t +
-        alpha * sum(
-            (1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t]
-            for j in Bset
-        )
+# Assume objfun and objfun2 are passed to the function that defines the model.
+if objfun == "powerflow"
+    # Set the objective function to zero for powerflow
+    # @objective(model, Min, 0)
+    base_objective = 0
+elseif objfun == "genCostMin"
+    # Define the base objective function (generation cost minimization)
+    base_objective = sum(
+        C[t] * P_Subs[t] * delta_t
         for t in Tset
     )
-)
+elseif objfun == "lineLossMin"
+    base_objective = sum(
+        rdict_pu[(i, j)]*l[(i, j), t]
+        for (i, j) in Lset, t in Tset
+    )
+end
+
+# Append the alpha term only if objfun2 == "scd"
+if objfun2 == "scd"
+    base_objective += sum(
+        alpha * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
+        for j in Bset, t in Tset
+    )
+end
+
+# Use the base objective if objfun is "genCostMin"
+# if objfun == "genCostMin"
+@objective(model, Min, base_objective)
+# end
+
+
+# alpha = 1e-3  # Adjust based on your problem requirements
+# @unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
+# C, η_C, η_D = LoadShapeCost, eta_C, eta_D
+# @objective(model, Min,
+#     sum(
+#         C[t] * P_Subs[t] * delta_t +
+#         alpha * sum(
+#             (1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t]
+#             for j in Bset
+#         )
+#         for t in Tset
+#     )
+#     # 0
+# )
 
 # ===========================
 # Initializing Variables
