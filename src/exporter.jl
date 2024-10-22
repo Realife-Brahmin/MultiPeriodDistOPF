@@ -2,16 +2,22 @@ module Exporter
 
 using XLSX
 import JuMP: value
-# import helperFunctions: myprintln  # Import myprintln from the helperFunctions module
-
-export export_decision_variables
 
 include("./helperFunctions.jl")
 using .helperFunctions: myprintln
+# import .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
+
+export export_decision_variables
 
 function export_decision_variables(model, data;
-    filename::String="decision_variables.xlsx", 
+    filename::String="decision_variables.xlsx",
     verbose::Bool=false)
+
+    # Log current working directory
+    myprintln(verbose, "Current working directory: $(pwd())")
+
+    # Ensure the filename has a valid path or is saved in the current directory
+    myprintln(verbose, "Saving to filename: $filename")
 
     Tset = sort(collect(data[:Tset]))  # Convert Set to array and sort
     Lset = sort(collect(data[:Lset]))  # Convert Set to array and sort
