@@ -11,7 +11,7 @@ numAreas = 1
 alpha = 1
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
-# objfun0 = "genCostMin"
+objfun0 = "genCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
 
@@ -34,10 +34,10 @@ model = Model(Ipopt.Optimizer)
 # Define all variables as before, using the data parsed
 @variable(model, P_Subs[t in Tset] >= 0)
 # Define variables over the set of branches Lset and time periods Tset
-@variable(model, P[(i, j) in Lset, t in Tset], base_name = "P")
-@variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
+@variable(model, 1 >= P[(i, j) in Lset, t in Tset], base_name = "P")
+@variable(model, 1 >= Q[(i, j) in Lset, t in Tset], base_name = "Q")
 # Todo How to model nonnegative l? Is it always automatically taken care of (speaking for a practical real world problem) even without the constraint? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
-@variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
+@variable(model, 5 >= l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
 
 @variable(model, v[j in Nset, t in Tset], base_name = "v")
 @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
@@ -374,7 +374,7 @@ end
 # Objective Function
 # ===========================
 
-@unpack Tset, Bset, eta_C, eta_D, LoadShapeCost = data;
+@unpack Tset, Bset, eta_C, eta_D, LoadShapeCost, kVA_B = data;
 C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 
 # Assume objfun0 and objfun2 are passed to the function that defines the model.
@@ -384,8 +384,9 @@ if objfun0 == "powerflow"
     objfun = 0
 elseif objfun0 == "genCostMin"
     # Define the base objective function (generation cost minimization)
+    dollars_per_pu = C[t]*kVA_B
     objfun = sum(
-        C[t] * P_Subs[t] * delta_t
+        dollars_per_pu * P_Subs[t] * delta_t
         for t in Tset
     )
 elseif objfun0 == "lineLossMin"
