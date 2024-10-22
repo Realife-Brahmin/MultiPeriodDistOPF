@@ -58,8 +58,8 @@ j1 = substationBus
 
 ## Real Power Balance Constraints ##
 
-@unpack L1set = data;
-
+@unpack Tset, L1set = data;
+# Constraint h_1b_j: Nodal real power balance at non-substation nodes
 for t in Tset
     @constraint(
         model,
@@ -101,7 +101,7 @@ for t in Tset, j in Nm1set
         base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
 end
 
-@unpack q_L_pu = data;
+@unpack Tset, Nm1set, NLset, Dset, Bset, children, parent, xdict_pu, q_L_pu  = data;
 ## Nodal Reactive Power Balance Constraints ##
 for t in Tset, j in Nm1set
     # Sum of reactive powers flowing from node j to its children
@@ -130,7 +130,7 @@ for t in Tset, j in Nm1set
 
     ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
     @constraint(model,
-        base_name =     "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
+        base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
         sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
     )
 end
