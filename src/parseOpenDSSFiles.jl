@@ -10,7 +10,11 @@ include("parseLoadData.jl")
 include("parsePVData.jl")
 include("parseBatteryData.jl")
 include("evaluateVoltageLimits.jl")
-include("helperFunctions.jl")
+# include("helperFunctions.jl")
+
+include("./helperFunctions.jl")
+# using .helperFunctions
+
 # ... include other parsing scripts as needed
 
 using .parseSystemSimulationData: parse_system_simulation_data
