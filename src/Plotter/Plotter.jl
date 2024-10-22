@@ -15,24 +15,11 @@ function plot_battery_actions(model, data;
     # Extract necessary parameters from the `data` dictionary
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha = data;
 
+    # @unpack P_c, P_d, B = model; # Why does this not work?
 
-    # @unpack P_c, P_d, B = model;
-    # Tset = data[:Tset]
-    # Bset = data[:Bset]
     P_c = model[:P_c]
     P_d = model[:P_d]
-    # kVA_B = data[:kVA_B]
     B = model[:B]
-    # B_R_pu = data[:B_R_pu]  # Rated storage capacity (for SOC % conversion)
-    # P_B_R = data[:P_B_R]  # Maximum rated power (kW)
-    # Bref_pu = data[:Bref_pu]
-
-    # systemName = data[:systemName]
-    # numAreas = data[:numAreas]
-    # T = data[:T]
-    # DER_percent = data[:DER_percent]
-    # Batt_percent = data[:Batt_percent]
-    # alpha = data[:alpha]
 
     # Set the base directory for saving plots
     base_dir = joinpath("processedData", systemName, "numAreas_$(numAreas)",
