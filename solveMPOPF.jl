@@ -481,7 +481,7 @@ begin
     println("Model successfully written to $filename")
 end
 
-plot_battery_actions(model, data, showPlots=true, savePlots=true)
+plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
-export_decision_variables(model, data, "decision_variables.xlsx")
+export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=true)
 
