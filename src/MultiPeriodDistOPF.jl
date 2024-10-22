@@ -2,8 +2,8 @@ module MultiPeriodDistOPF
 
 # include("./helperFunctions.jl")
 # using .helperFunctions: myprintln
-# include("./helperFunctions.jl")
-# using .helperFunctions
+include("./helperFunctions.jl")
+using .helperFunctions: myprintln
 
 include("./parseOpenDSSFiles.jl")
 using .parseOpenDSSFiles
