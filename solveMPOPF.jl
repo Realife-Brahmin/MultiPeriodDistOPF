@@ -16,7 +16,7 @@ objfun0 = "genCostMin"
 objfun2 = "scd"
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2)
 
 # Import necessary packages
 using JuMP

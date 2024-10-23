@@ -7,7 +7,9 @@ export parse_system_simulation_data
 function parse_system_simulation_data(systemName::String, T::Int;
     numAreas=1,
     alpha=1e-3,
-    kVA_B = 1000)
+    kVA_B = 1000,
+    objfun0 = "genCostMin",
+    objfun2 = "scd")
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -88,6 +90,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :kVA_B => kVA_B,
         :Z_B => Z_B,
         :delta_t => Δt,
+        :objfun0 => objfun0, # user input
+        :objfun2 => objfun2, # user input
         :T => T, # user input
         :Tset => Tset
     )

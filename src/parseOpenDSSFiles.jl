@@ -28,11 +28,13 @@ using .helperFunctions: generateBinaryLoadShape, myprintln
 
 function parse_all_data(systemName::String, T::Int;
     numAreas=1,
-    alpha=1e-3)
+    alpha=1e-3,
+    objfun0="genCostMin",
+    objfun2="scd")
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
-    numAreas=numAreas, alpha=alpha)
+    numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
     # Parse load data
