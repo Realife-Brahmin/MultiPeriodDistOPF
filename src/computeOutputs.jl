@@ -16,12 +16,6 @@ function compute_output_values(model, data)
     
     C, r, η_C, η_D = LoadShapeCost, rdict_pu, eta_C, eta_D
 
-    # LoadShapeCost = data[:LoadShapeCost]
-    # delta_t = data[:delta_t]
-    # r = data[:r]  # Line resistance values
-    # η_C = data[:η_C]  # Charging efficiency
-    # η_D = data[:η_D]  # Discharging efficiency
-
     P_Subs = model[:P_Subs]
     P_c = model[:P_c]
     P_d = model[:P_d]
