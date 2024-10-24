@@ -36,7 +36,6 @@ model = Model(Ipopt.Optimizer)
 # Define variables over the set of branches Lset and time periods Tset
 @variable(model, 1 >= P[(i, j) in Lset, t in Tset], base_name = "P")
 @variable(model, 1 >= Q[(i, j) in Lset, t in Tset], base_name = "Q")
-# Todo How to model nonnegative l? Is it always automatically taken care of (speaking for a practical real world problem) even without the constraint? Should I just sneakily let it be as a JuMP constraint? Or should I expliclty define lower limit of l as an 'official' inequality constraint?
 @variable(model, 5 >= l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
 
 @variable(model, v[j in Nset, t in Tset], base_name = "v")
@@ -506,11 +505,7 @@ end
 
 plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
-# # Assuming you have the model and data already
-# using .computeOutputs  # Import the module
-
 # Call the function after solving the model
-# Todo: Add real unit fields to the data field, like PSubsCost_vs_1toT_Dollars, PSubs_vs_1toT_kW, PLoss_vs_1toT_kW
 
 data = compute_output_values(model, data)
 
