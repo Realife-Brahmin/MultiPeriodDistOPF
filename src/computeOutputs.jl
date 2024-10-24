@@ -34,6 +34,18 @@ function compute_output_values(model, data)
     QLoss_vs_t_1toT_kVAr = get_reactive_power_loss(model, data, horizon="1toT")
     QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
 
+    battery_real_power_vs_t_1toT_kW = get_battery_real_power(model, data, horizon="1toT")
+    battery_real_power_allT_kW = get_battery_real_power(model, data, horizon="allT")
+
+    battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(model, data, horizon="1toT")
+    battery_reactive_power_allT_kVAr = get_battery_reactive_power(model, data, horizon="allT")
+
+    pv_real_power_vs_t_1toT_kW = get_pv_real_power(model, data, horizon="1toT")
+    pv_real_power_allT_kW = get_pv_real_power(model, data, horizon="allT")
+
+    pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
+    pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
+
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
@@ -80,7 +92,15 @@ function compute_output_values(model, data)
     scd_allT_kW,
     terminal_soc_violation_kWh,
     QLoss_vs_t_1toT_kVAr,
-    QLoss_allT_kVAr
+    QLoss_allT_kVAr,
+    battery_reactive_power_vs_t_1toT_kVAr,
+    battery_reactive_power_allT_kVAr,
+    battery_real_power_vs_t_1toT_kW,
+    battery_real_power_allT_kW,
+    pv_reactive_power_vs_t_1toT_kVAr,
+    pv_reactive_power_allT_kVAr,
+    pv_real_power_vs_t_1toT_kW,
+    pv_real_power_allT_kW
 
     return data  # Return the updated data dictionary
 end
