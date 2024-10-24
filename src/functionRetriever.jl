@@ -1,6 +1,13 @@
 module functionRetriever
 
-export get_real_power_loss, get_reactive_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
+# export get_real_power_loss, get_reactive_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
+
+export get_real_power_loss,
+    get_reactive_power_loss,
+    get_substation_power,
+    get_substation_power_cost,
+    get_scd,
+    get_terminal_SOC_violation
 
 import JuMP: value  # Importing JuMP's value function to extract values from the model
 using Parameters: @unpack  # For easier unpacking of parameters from data
