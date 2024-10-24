@@ -76,10 +76,6 @@ function compute_output_values(model, data)
 
     end
 
-    # Store the computed arrays and scalars in `data` for later export
-    # @pack! data = fval_vs_t_1toT, fval_allT, PLoss_vs_t_1toT_kW, PLoss_allT_kW, PSubs_vs_t_1toT_kW, PSubs_allT_kW, PSubsCost_vs_t_1toT_dollar, PSubsCost_allT_dollar, scd_vs_t_1toT_kW, scd_allT_kW, terminal_soc_violation_kWh,
-    # QLoss_vs_t_1toT_kVAr, QLoss_allT_kVAr
-
     @pack! data = fval_vs_t_1toT,
     fval_allT,
     PLoss_vs_t_1toT_kW,
