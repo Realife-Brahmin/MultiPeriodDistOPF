@@ -67,34 +67,10 @@ function compute_output_values(model, data)
     QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
 
     # Loop over time steps to compute all required values
+    @unpack Tset = data;
     for t in Tset
-        # 1. Compute P_Subs over time and total PSubs_allT
-        # # PSubs_vs_t_1toT[t] = value(P_Subs[t])
-        # PSubs_vs_t_1toT_kW[t] = value(P_Subs[t])*kVA_B
-        # # PSubs_allT += PSubs_vs_t_1toT[t]
-        # PSubs_allT_kW += PSubs_vs_t_1toT_kW[t]
+        @unpack kVA_B = data;
 
-        # 2. Compute PSubsCost over time and total cost
-        # PSubsCost_vs_t_1toT[t] = C[t] * value(P_Subs[t]) * delta_t
-        # PSubsCost_vs_t_1toT_dollar[t] = C[t] * kVA_B * value(P_Subs[t]) * delta_t
-
-        # # PSubsCost_allT += PSubsCost_vs_t_1toT[t]
-        # PSubsCost_allT_dollar += PSubsCost_vs_t_1toT_dollar[t]
-
-        # # 3. Compute Power Loss (PLoss) over time
-        # PLoss_vs_t_1toT[t] = sum(r[i, j] * value(l[(i, j), t]) for (i, j) in Lset)
-        # PLoss_vs_t_1toT_kW[t] = kVA_B * sum(r[i, j] * value(l[(i, j), t]) for (i, j) in Lset)
-        # PLoss_allT += PLoss_vs_t_1toT[t]
-        # PLoss_allT_kW += PLoss_vs_t_1toT_kW[t]
-
-        # 4. Compute SCD over time using the provided formula
-        # scd_vs_t_1toT[t] = sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
-        # scd_vs_t_1toT_kW[t] = kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
-
-        # scd_allT += scd_vs_t_1toT[t]
-        # scd_allT_kW += scd_vs_t_1toT_kW[t]
-
-        # 5. Compute Objective Function (fval) over time
         PLoss_vs_t_1toT = PLoss_vs_t_1toT_kW./kVA_B
         PSubsCost_vs_t_1toT = PSubsCost_vs_t_1toT_dollar./kVA_B
         scd_vs_t_1toT = scd_vs_t_1toT_kW./kVA_B
