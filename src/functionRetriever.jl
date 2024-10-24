@@ -1,7 +1,5 @@
 module functionRetriever
 
-# export get_real_power_loss, get_reactive_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
-
 export get_battery_reactive_power,
     get_battery_real_power,
     get_pv_reactive_power,
