@@ -55,9 +55,11 @@ function compute_output_values(model, data)
     scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
     scd_allT_kW = get_scd(model, data; horizon="allT")
 
+    terminal_soc_violation_kWh = get_terminal_SOC_violation(model, data)
+
     QLoss_vs_t_1toT_kVAr = get_reactive_power_loss(model, data, horizon="1toT")
     QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
-    
+
     # Loop over time steps to compute all required values
     for t in Tset
         # 1. Compute P_Subs over time and total PSubs_allT
@@ -111,10 +113,10 @@ function compute_output_values(model, data)
         # fval_vs_t_1toT[t] = PSubsCost_vs_t_1toT[t] + scd_vs_t_1toT[t]
         fval_allT += fval_vs_t_1toT[t]
 
-        # Compute Terminal SOC Constraint Violation
-        @unpack T, kVA_B, Bset, Bref_pu = data;
-        B = model[:B]
-        terminal_soc_violation_kWh = kVA_B * sum(abs(value(B[j, T]) - Bref_pu[j]) for j in Bset)
+        # # Compute Terminal SOC Constraint Violation
+        # @unpack T, kVA_B, Bset, Bref_pu = data;
+        # B = model[:B]
+        # terminal_soc_violation_kWh = kVA_B * sum(abs(value(B[j, T]) - Bref_pu[j]) for j in Bset)
     end
 
     # Store the computed arrays and scalars in `data` for later export
