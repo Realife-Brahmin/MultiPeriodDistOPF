@@ -1,5 +1,8 @@
 module computeOutputs
 
+include("./functionRetriever.jl")
+using .functionRetriever
+
 import JuMP: value
 
 export compute_output_values
@@ -67,12 +70,15 @@ function compute_output_values(model, data)
         # PLoss_allT += PLoss_vs_t_1toT[t]
         PLoss_allT_kW += PLoss_vs_t_1toT_kW[t]
 
+        scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
+        scd_allT_kW = get_scd(model, data; horizon="allT")
+
         # 4. Compute SCD over time using the provided formula
         # scd_vs_t_1toT[t] = sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
-        scd_vs_t_1toT_kW[t] = kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
+        # scd_vs_t_1toT_kW[t] = kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
 
         # scd_allT += scd_vs_t_1toT[t]
-        scd_allT_kW += scd_vs_t_1toT_kW[t]
+        # scd_allT_kW += scd_vs_t_1toT_kW[t]
 
         # 5. Compute Objective Function (fval) over time
         PLoss_vs_t_1toT = PLoss_vs_t_1toT_kW./kVA_B
