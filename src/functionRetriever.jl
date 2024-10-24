@@ -2,7 +2,11 @@ module functionRetriever
 
 # export get_real_power_loss, get_reactive_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
 
-export get_real_power_loss,
+export get_battery_reactive_power,
+    get_battery_real_power,
+    get_pv_reactive_power,
+    get_pv_real_power,
+    get_real_power_loss,
     get_reactive_power_loss,
     get_substation_power,
     get_substation_power_cost,
@@ -107,6 +111,70 @@ end
 # Function to get any variable from the model (does not depend on horizon)
 function get_variable(model, variable_name::Symbol)
     return model[variable_name]  # Fetch the variable using its symbol
+end
+
+# Function to get total battery real power in kW (P_d - P_c)
+function get_battery_real_power(model, data; horizon::String="allT")
+    @unpack Tset, Bset, kVA_B = data
+    P_c = model[:P_c]
+    P_d = model[:P_d]
+
+    if horizon == "1toT"
+        battery_real_power_vs_t_kW = [kVA_B * sum(value(P_d[j, t]) - value(P_c[j, t]) for j in Bset) for t in Tset]
+        return battery_real_power_vs_t_kW
+    elseif horizon == "allT"
+        total_battery_real_power_kW = kVA_B * sum(value(P_d[j, t]) - value(P_c[j, t]) for j in Bset, t in Tset)
+        return total_battery_real_power_kW
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get total battery reactive power in kVAr
+function get_battery_reactive_power(model, data; horizon::String="allT")
+    @unpack Tset, Bset, kVA_B = data
+    q_B = model[:q_B]
+
+    if horizon == "1toT"
+        battery_reactive_power_vs_t_kVAr = [kVA_B * sum(value(q_B[j, t]) for j in Bset) for t in Tset]
+        return battery_reactive_power_vs_t_kVAr
+    elseif horizon == "allT"
+        total_battery_reactive_power_kVAr = kVA_B * sum(value(q_B[j, t]) for j in Bset, t in Tset)
+        return total_battery_reactive_power_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get total PV real power in kW (from p_D_pu in data, not a decision variable)
+function get_pv_real_power(model, data; horizon::String="allT")
+    @unpack Tset, Dset, p_D_pu, kVA_B = data
+
+    if horizon == "1toT"
+        pv_real_power_vs_t_kW = [kVA_B * sum(p_D_pu[j][t] for j in Dset) for t in Tset]
+        return pv_real_power_vs_t_kW
+    elseif horizon == "allT"
+        total_pv_real_power_kW = kVA_B * sum(p_D_pu[j][t] for j in Dset, t in Tset)
+        return total_pv_real_power_kW
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get total PV reactive power in kVAr (q_D from the model)
+function get_pv_reactive_power(model, data; horizon::String="allT")
+    @unpack Tset, Dset, kVA_B = data
+    q_D = model[:q_D]
+
+    if horizon == "1toT"
+        pv_reactive_power_vs_t_kVAr = [kVA_B * sum(value(q_D[j, t]) for j in Dset) for t in Tset]
+        return pv_reactive_power_vs_t_kVAr
+    elseif horizon == "allT"
+        total_pv_reactive_power_kVAr = kVA_B * sum(value(q_D[j, t]) for j in Dset, t in Tset)
+        return total_pv_reactive_power_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
 end
 
 end # module FunctionRetriever
