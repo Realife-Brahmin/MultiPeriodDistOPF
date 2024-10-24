@@ -49,11 +49,14 @@ function compute_output_values(model, data)
     scd_allT_kW = 0.0
     terminal_soc_violation_kWh = 0.0
 
-    QLoss_vs_t_1toT_kVAr = get_reactive_power_loss(model, data, horizon="1toT")
-    QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
-
     PLoss_vs_t_1toT_kW = get_real_power_loss(model, data, horizon="1toT")
     PLoss_allT_kW = get_real_power_loss(model, data, horizon="allT")
+
+    scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
+    scd_allT_kW = get_scd(model, data; horizon="allT")
+
+    QLoss_vs_t_1toT_kVAr = get_reactive_power_loss(model, data, horizon="1toT")
+    QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
     
     # Loop over time steps to compute all required values
     for t in Tset
@@ -75,9 +78,6 @@ function compute_output_values(model, data)
         # PLoss_vs_t_1toT_kW[t] = kVA_B * sum(r[i, j] * value(l[(i, j), t]) for (i, j) in Lset)
         # PLoss_allT += PLoss_vs_t_1toT[t]
         # PLoss_allT_kW += PLoss_vs_t_1toT_kW[t]
-
-        scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
-        scd_allT_kW = get_scd(model, data; horizon="allT")
 
         # 4. Compute SCD over time using the provided formula
         # scd_vs_t_1toT[t] = sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset)
