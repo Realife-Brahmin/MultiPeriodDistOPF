@@ -52,6 +52,9 @@ function compute_output_values(model, data)
     PLoss_vs_t_1toT_kW = get_real_power_loss(model, data, horizon="1toT")
     PLoss_allT_kW = get_real_power_loss(model, data, horizon="allT")
 
+    PSubs_vs_t_1toT_kW = get_substation_power(model, data, horizon="1toT")
+    PSubs_allT_kW = get_substation_power(model, data, horizon="allT")
+
     scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
     scd_allT_kW = get_scd(model, data; horizon="allT")
 
@@ -63,10 +66,10 @@ function compute_output_values(model, data)
     # Loop over time steps to compute all required values
     for t in Tset
         # 1. Compute P_Subs over time and total PSubs_allT
-        # PSubs_vs_t_1toT[t] = value(P_Subs[t])
-        PSubs_vs_t_1toT_kW[t] = value(P_Subs[t])*kVA_B
-        # PSubs_allT += PSubs_vs_t_1toT[t]
-        PSubs_allT_kW += PSubs_vs_t_1toT_kW[t]
+        # # PSubs_vs_t_1toT[t] = value(P_Subs[t])
+        # PSubs_vs_t_1toT_kW[t] = value(P_Subs[t])*kVA_B
+        # # PSubs_allT += PSubs_vs_t_1toT[t]
+        # PSubs_allT_kW += PSubs_vs_t_1toT_kW[t]
 
         # 2. Compute PSubsCost over time and total cost
         # PSubsCost_vs_t_1toT[t] = C[t] * value(P_Subs[t]) * delta_t
