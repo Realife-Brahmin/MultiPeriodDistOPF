@@ -1,6 +1,6 @@
 module functionRetriever
 
-export get_real_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
+export get_real_power_loss, get_reactive_power_loss, get_substation_power, get_substation_power_cost, get_scd, get_terminal_SOC_violation
 
 import JuMP: value  # Importing JuMP's value function to extract values from the model
 using Parameters: @unpack  # For easier unpacking of parameters from data
@@ -17,6 +17,23 @@ function get_real_power_loss(model, data; horizon::String="allT")
     elseif horizon == "allT"
         total_loss_kW = kVA_B * sum(rdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
         return total_loss_kW
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get reactive power losses from a model
+function get_reactive_power_loss(model, data; horizon::String="allT")
+    @unpack Tset, Lset, xdict_pu, kVA_B = data
+    Q = model[:Q]
+    l = model[:l]
+
+    if horizon == "1toT"
+        loss_vs_t_kVAr = [kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset) for t in Tset]
+        return loss_vs_t_kVAr
+    elseif horizon == "allT"
+        total_loss_kVAr = kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
+        return total_loss_kVAr
     else
         error("Specify either '1toT' or 'allT'")
     end
