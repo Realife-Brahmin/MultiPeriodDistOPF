@@ -55,6 +55,9 @@ function compute_output_values(model, data)
     PSubs_vs_t_1toT_kW = get_substation_power(model, data, horizon="1toT")
     PSubs_allT_kW = get_substation_power(model, data, horizon="allT")
 
+    PSubsCost_vs_t_1toT_dollar = get_substation_power_cost(model, data, horizon="1toT")
+    PSubsCost_allT_dollar = get_substation_power_cost(model, data, horizon="allT")
+
     scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
     scd_allT_kW = get_scd(model, data; horizon="allT")
 
@@ -73,12 +76,12 @@ function compute_output_values(model, data)
 
         # 2. Compute PSubsCost over time and total cost
         # PSubsCost_vs_t_1toT[t] = C[t] * value(P_Subs[t]) * delta_t
-        PSubsCost_vs_t_1toT_dollar[t] = C[t] * kVA_B * value(P_Subs[t]) * delta_t
+        # PSubsCost_vs_t_1toT_dollar[t] = C[t] * kVA_B * value(P_Subs[t]) * delta_t
 
-        # PSubsCost_allT += PSubsCost_vs_t_1toT[t]
-        PSubsCost_allT_dollar += PSubsCost_vs_t_1toT_dollar[t]
+        # # PSubsCost_allT += PSubsCost_vs_t_1toT[t]
+        # PSubsCost_allT_dollar += PSubsCost_vs_t_1toT_dollar[t]
 
-        # 3. Compute Power Loss (PLoss) over time
+        # # 3. Compute Power Loss (PLoss) over time
         # PLoss_vs_t_1toT[t] = sum(r[i, j] * value(l[(i, j), t]) for (i, j) in Lset)
         # PLoss_vs_t_1toT_kW[t] = kVA_B * sum(r[i, j] * value(l[(i, j), t]) for (i, j) in Lset)
         # PLoss_allT += PLoss_vs_t_1toT[t]
