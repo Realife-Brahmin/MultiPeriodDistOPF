@@ -1,16 +1,5 @@
 module functionRetriever
 
-# export get_battery_reactive_power,
-#     get_battery_real_power,
-#     get_pv_reactive_power,
-#     get_pv_real_power,
-#     get_loss_real_power,
-#     get_loss_reactive_power,
-#     get_substation_real_power,
-#     get_substation_power_cost,
-#     get_scd,
-#     get_terminal_SOC_violation
-
 export get_battery_reactive_power,
     get_battery_real_power,
     get_battery_reactive_power_transaction_magnitude,
@@ -332,7 +321,7 @@ end
 function get_solution_time(model, data)
 
     solution_time = JuMP.solve_time(model)  # Retrieves solution time 
-    
+
     return solution_time
 end
 
