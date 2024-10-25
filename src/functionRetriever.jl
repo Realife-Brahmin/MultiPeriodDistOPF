@@ -9,7 +9,8 @@ export get_battery_reactive_power,
     get_substation_power,
     get_substation_power_cost,
     get_scd,
-    get_terminal_SOC_violation
+    get_load_real_power,
+    get_load_reactive_power
 
 import JuMP: value  # Importing JuMP's value function to extract values from the model
 using Parameters: @unpack  # For easier unpacking of parameters from data
@@ -165,11 +166,32 @@ function get_pv_reactive_power(model, data; horizon::String="allT")
     q_D = model[:q_D]
 
     if horizon == "1toT"
-        pv_reactive_power_vs_t_kVAr = [kVA_B * sum(value(q_D[j, t]) for j in Dset) for t in Tset]
-        return pv_reactive_power_vs_t_kVAr
+
+# Function to get total real load over the horizon
+function get_load_real_power(model, data; horizon::String="allT")
+    @unpack Tset, p_L_pu, kVA_B = data
+
+    if horizon == "1toT"
+        load_real_power_vs_t_kW = [kVA_B * sum(p_L_pu[j][t] for j in keys(p_L_pu)) for t in Tset]
+        return load_real_power_vs_t_kW
     elseif horizon == "allT"
-        total_pv_reactive_power_kVAr = kVA_B * sum(value(q_D[j, t]) for j in Dset, t in Tset)
-        return total_pv_reactive_power_kVAr
+        load_real_power_kW_allT = kVA_B * sum(p_L_pu[j][t] for j in keys(p_L_pu), t in Tset)
+        return load_real_power_kW_allT
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get total reactive load over the horizon
+function get_load_reactive_power(model, data; horizon::String="allT")
+    @unpack Tset, q_L_pu, kVA_B = data
+
+    if horizon == "1toT"
+        load_reactive_power_vs_t_kVAr = [kVA_B * sum(q_L_pu[j][t] for j in keys(q_L_pu)) for t in Tset]  # Assuming p_L_pu contains reactive power
+        return load_reactive_power_vs_t_kVAr
+    elseif horizon == "allT"
+        load_reactive_power_allT_kVAr = kVA_B * sum(q_L_pu[j][t] for j in keys(q_L_pu), t in Tset)  # Assuming p_L_pu contains reactive power
+        return load_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
     end
