@@ -82,7 +82,12 @@ function compute_output_values(model, data)
 
     end
 
-    @pack! data = fval_vs_t_1toT,
+
+    @pack! data =
+        battery_real_power_allT_kW,
+        battery_real_power_vs_t_1toT_kW,
+        battery_reactive_power_allT_kVAr,
+        battery_reactive_power_vs_t_1toT_kVAr,
     fval_allT,
         load_reactive_power_vs_t_1toT_kVAr,
         load_reactive_power_allT_kVAr,
