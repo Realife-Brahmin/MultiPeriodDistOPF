@@ -150,11 +150,11 @@ function get_pv_real_power(model, data; horizon::String="allT")
     @unpack Tset, Dset, p_D_pu, kVA_B = data
 
     if horizon == "1toT"
-        pv_real_power_vs_t_kW = [kVA_B * sum(p_D_pu[j][t] for j in Dset) for t in Tset]
-        return pv_real_power_vs_t_kW
+        pv_real_power_vs_t_1toT_kW = [kVA_B * sum(p_D_pu[j][t] for j in Dset) for t in Tset]
+        return pv_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        total_pv_real_power_kW = kVA_B * sum(p_D_pu[j][t] for j in Dset, t in Tset)
-        return total_pv_real_power_kW
+        pv_real_power_allT_kW = kVA_B * sum(p_D_pu[j][t] for j in Dset, t in Tset)
+        return pv_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
     end
@@ -166,6 +166,15 @@ function get_pv_reactive_power(model, data; horizon::String="allT")
     q_D = model[:q_D]
 
     if horizon == "1toT"
+        pv_reactive_power_vs_t_1toT_kVAr = [kVA_B * sum(value(q_D[j, t]) for j in Dset) for t in Tset]
+        return pv_reactive_power_vs_t_1toT_kVAr
+    elseif horizon == "allT"
+        pv_reactive_power_allT_kVAr = kVA_B * sum(value(q_D[j, t]) for j in Dset, t in Tset)
+        return pv_reactive_power_allT_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
 
 # Function to get total real load over the horizon
 function get_load_real_power(model, data; horizon::String="allT")
