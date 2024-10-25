@@ -1,9 +1,22 @@
 module functionRetriever
 
+# export get_battery_reactive_power,
+#     get_battery_real_power,
+#     get_pv_reactive_power,
+#     get_pv_real_power,
+#     get_loss_real_power,
+#     get_loss_reactive_power,
+#     get_substation_real_power,
+#     get_substation_power_cost,
+#     get_scd,
+#     get_terminal_SOC_violation
+
 export get_battery_reactive_power,
     get_battery_real_power,
     get_battery_reactive_power_transaction_magnitude,
     get_battery_real_power_transaction_magnitude,
+    get_load_reactive_power,
+    get_load_real_power,
     get_pv_reactive_power,
     get_pv_real_power,
     get_loss_reactive_power,
@@ -11,11 +24,13 @@ export get_battery_reactive_power,
     get_substation_real_power,
     get_substation_power_cost,
     get_scd,
+    get_terminal_SOC_violation,
     get_total_generation_reactive_power,
     get_total_generation_real_power,
     get_static_capacitor_reactive_power,
     get_load_real_power,
     get_load_reactive_power
+    # get_substation_power_peak
 
 import JuMP: value  # Importing JuMP's value function to extract values from the model
 using Parameters: @unpack  # For easier unpacking of parameters from data

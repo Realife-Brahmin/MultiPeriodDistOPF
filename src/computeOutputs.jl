@@ -52,9 +52,14 @@ function compute_output_values(model, data)
     load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(model, data, horizon="1toT")
     load_reactive_power_allT_kVAr = get_load_reactive_power(model, data, horizon="allT")
 
+    total_gen_real_power_vs_t_1toT_kW = get_total_generation_real_power(model, data, horizon="1toT")
+    total_gen_real_power_allT_kW = get_total_generation_real_power(model, data, horizon="allT")
+
+    total_gen_reactive_power_vs_t_1toT_kVAr = get_total_generation_reactive_power(model, data, horizon="1toT")
+    total_gen_reactive_power_allT_kVAr = get_total_generation_reactive_power(model, data, horizon="allT")
 
     # Todo: Insert Battery Transaction powers into data
-    
+
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
@@ -85,25 +90,49 @@ function compute_output_values(model, data)
 
     end
 
+    # @pack! data = fval_vs_t_1toT,
+    # fval_allT,
+    # PLoss_vs_t_1toT_kW,
+    # PLoss_allT_kW,
+    # PSubs_vs_t_1toT_kW,
+    # PSubs_allT_kW,
+    # PSubsCost_vs_t_1toT_dollar,
+    # PSubsCost_allT_dollar,
+    # scd_vs_t_1toT_kW,
+    # scd_allT_kW,
+    # terminal_soc_violation_kWh,
+    # QLoss_vs_t_1toT_kVAr,
+    # QLoss_allT_kVAr,
+    # battery_reactive_power_vs_t_1toT_kVAr,
+    # battery_reactive_power_allT_kVAr,
+    # battery_real_power_vs_t_1toT_kW,
+    # battery_real_power_allT_kW,
+    # pv_reactive_power_vs_t_1toT_kVAr,
+    # pv_reactive_power_allT_kVAr,
+    # pv_real_power_vs_t_1toT_kW,
+    # pv_real_power_allT_kW
 
     # Todo: Add static reactive powers to data
 
     # Todo: Add total real/reactive powers to data
-
+    
     @pack! data =
         battery_real_power_allT_kW,
         battery_real_power_vs_t_1toT_kW,
         battery_reactive_power_allT_kVAr,
         battery_reactive_power_vs_t_1toT_kVAr,
-    fval_allT,
+        fval_allT,
+        fval_vs_t_1toT,
         load_reactive_power_vs_t_1toT_kVAr,
         load_reactive_power_allT_kVAr,
         load_real_power_vs_t_1toT_kW,
         load_real_power_allT_kW,
         PSubsCost_allT_dollar,
         PSubsCost_vs_t_1toT_dollar,
-    PSubs_allT_kW,
+        PSubs_allT_kW,
         PSubs_vs_t_1toT_kW,
+        PLoss_allT_kW,
+        PLoss_vs_t_1toT_kW,
         pv_real_power_allT_kW,
         pv_real_power_vs_t_1toT_kW,
         pv_reactive_power_allT_kVAr,
@@ -111,19 +140,8 @@ function compute_output_values(model, data)
         QLoss_allT_kVAr,
         QLoss_vs_t_1toT_kVAr,
         scd_allT_kW,
-    scd_vs_t_1toT_kW,
-    scd_allT_kW,
-    terminal_soc_violation_kWh,
-    QLoss_vs_t_1toT_kVAr,
-    QLoss_allT_kVAr,
-    battery_reactive_power_vs_t_1toT_kVAr,
-    battery_reactive_power_allT_kVAr,
-    battery_real_power_vs_t_1toT_kW,
-    battery_real_power_allT_kW,
-    pv_reactive_power_vs_t_1toT_kVAr,
-    pv_reactive_power_allT_kVAr,
-    pv_real_power_vs_t_1toT_kW,
-    pv_real_power_allT_kW
+        scd_vs_t_1toT_kW,
+        terminal_soc_violation_kWh
 
     return data  # Return the updated data dictionary
 end
