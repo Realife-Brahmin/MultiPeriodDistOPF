@@ -4,8 +4,8 @@ export get_battery_reactive_power,
     get_battery_real_power,
     get_pv_reactive_power,
     get_pv_real_power,
-    get_real_power_loss,
-    get_reactive_power_loss,
+    get_loss_reactive_power,
+    get_loss_real_power,
     get_substation_power,
     get_substation_power_cost,
     get_scd,
@@ -16,34 +16,34 @@ import JuMP: value  # Importing JuMP's value function to extract values from the
 using Parameters: @unpack  # For easier unpacking of parameters from data
 
 # Function to get real power losses from a model
-function get_real_power_loss(model, data; horizon::String="allT")
+function get_loss_real_power(model, data; horizon::String="allT")
     @unpack Tset, Lset, rdict_pu, kVA_B = data
     P = model[:P]
     l = model[:l]
 
     if horizon == "1toT"
-        loss_vs_t_kW = [kVA_B * sum(rdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset) for t in Tset]
-        return loss_vs_t_kW
+        loss_real_power_vs_t_1toT_kW = [kVA_B * sum(rdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset) for t in Tset]
+        return loss_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        total_loss_kW = kVA_B * sum(rdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
-        return total_loss_kW
+        loss_real_power_allT_kW = kVA_B * sum(rdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
+        return loss_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
     end
 end
 
 # Function to get reactive power losses from a model
-function get_reactive_power_loss(model, data; horizon::String="allT")
+function get_loss_reactive_power(model, data; horizon::String="allT")
     @unpack Tset, Lset, xdict_pu, kVA_B = data
     Q = model[:Q]
     l = model[:l]
 
     if horizon == "1toT"
-        loss_vs_t_kVAr = [kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset) for t in Tset]
-        return loss_vs_t_kVAr
+        loss_reactive_power_vs_t_1toT_kVAr = [kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset) for t in Tset]
+        return loss_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        total_loss_kVAr = kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
-        return total_loss_kVAr
+        loss_reactive_power_allT_kVAr = kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
+        return loss_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
     end
