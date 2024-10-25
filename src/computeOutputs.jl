@@ -52,6 +52,9 @@ function compute_output_values(model, data)
     load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(model, data, horizon="1toT")
     load_reactive_power_allT_kVAr = get_load_reactive_power(model, data, horizon="allT")
 
+
+    # Todo: Insert Battery Transaction powers into data
+    
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
