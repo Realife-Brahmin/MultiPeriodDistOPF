@@ -20,8 +20,8 @@ function compute_output_values(model, data)
     PLoss_vs_t_1toT_kW = get_loss_real_power(model, data, horizon="1toT")
     PLoss_allT_kW = get_loss_real_power(model, data, horizon="allT")
 
-    PSubs_vs_t_1toT_kW = get_substation_power(model, data, horizon="1toT")
-    PSubs_allT_kW = get_substation_power(model, data, horizon="allT")
+    PSubs_vs_t_1toT_kW = get_substation_real_power(model, data, horizon="1toT")
+    PSubs_allT_kW = get_substation_real_power(model, data, horizon="allT")
 
     PSubsCost_vs_t_1toT_dollar = get_substation_power_cost(model, data, horizon="1toT")
     PSubsCost_allT_dollar = get_substation_power_cost(model, data, horizon="allT")
@@ -90,6 +90,7 @@ function compute_output_values(model, data)
         load_real_power_allT_kW,
     PSubs_allT_kW,
     PSubsCost_vs_t_1toT_dollar,
+        PSubs_vs_t_1toT_kW,
         pv_real_power_allT_kW,
         pv_real_power_vs_t_1toT_kW,
         pv_reactive_power_allT_kVAr,
