@@ -93,28 +93,6 @@ function compute_output_values(model, data)
 
     end
 
-    # @pack! data = fval_vs_t_1toT,
-    # fval_allT,
-    # PLoss_vs_t_1toT_kW,
-    # PLoss_allT_kW,
-    # PSubs_vs_t_1toT_kW,
-    # PSubs_allT_kW,
-    # PSubsCost_vs_t_1toT_dollar,
-    # PSubsCost_allT_dollar,
-    # scd_vs_t_1toT_kW,
-    # scd_allT_kW,
-    # terminal_soc_violation_kWh,
-    # QLoss_vs_t_1toT_kVAr,
-    # QLoss_allT_kVAr,
-    # battery_reactive_power_vs_t_1toT_kVAr,
-    # battery_reactive_power_allT_kVAr,
-    # battery_real_power_vs_t_1toT_kW,
-    # battery_real_power_allT_kW,
-    # pv_reactive_power_vs_t_1toT_kVAr,
-    # pv_reactive_power_allT_kVAr,
-    # pv_real_power_vs_t_1toT_kW,
-    # pv_real_power_allT_kW
-
     # Todo: Add static reactive powers to data
 
     # Todo: Add total real/reactive powers to data
