@@ -31,8 +31,8 @@ function compute_output_values(model, data)
 
     terminal_soc_violation_kWh = get_terminal_SOC_violation(model, data)
 
-    QLoss_vs_t_1toT_kVAr = get_reactive_power_loss(model, data, horizon="1toT")
-    QLoss_allT_kVAr = get_reactive_power_loss(model, data, horizon="allT")
+    QLoss_vs_t_1toT_kVAr = get_loss_reactive_power(model, data, horizon="1toT")
+    QLoss_allT_kVAr = get_loss_reactive_power(model, data, horizon="allT")
 
     battery_real_power_vs_t_1toT_kW = get_battery_real_power(model, data, horizon="1toT")
     battery_real_power_allT_kW = get_battery_real_power(model, data, horizon="allT")
@@ -96,6 +96,9 @@ function compute_output_values(model, data)
         pv_real_power_vs_t_1toT_kW,
         pv_reactive_power_allT_kVAr,
         pv_reactive_power_vs_t_1toT_kVAr,
+        QLoss_allT_kVAr,
+        QLoss_vs_t_1toT_kVAr,
+        scd_allT_kW,
     scd_vs_t_1toT_kW,
     scd_allT_kW,
     terminal_soc_violation_kWh,

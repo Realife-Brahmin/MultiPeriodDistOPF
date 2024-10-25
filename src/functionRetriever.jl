@@ -88,11 +88,11 @@ function get_scd(model, data; horizon::String="allT")
     P_d = model[:P_d]
 
     if horizon == "1toT"
-        scd_vs_t_kW = [kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset) for t in Tset]
-        return scd_vs_t_kW
+        scd_vs_t_1toT_kW = [kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset) for t in Tset]
+        return scd_vs_t_1toT_kW
     elseif horizon == "allT"
-        total_scd_kW = kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset, t in Tset)
-        return total_scd_kW
+        scd_allT_kW = kVA_B * sum(max(value(P_c[j, t]), value(P_d[j, t])) - abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset, t in Tset)
+        return scd_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
     end
