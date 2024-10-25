@@ -53,6 +53,9 @@ function compute_output_values(model, data)
     load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(model, data, horizon="1toT")
     load_reactive_power_allT_kVAr = get_load_reactive_power(model, data, horizon="allT")
 
+    static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="1toT")
+    static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="allT")
+
     total_gen_real_power_vs_t_1toT_kW = get_total_generation_real_power(model, data, horizon="1toT")
     total_gen_real_power_allT_kW = get_total_generation_real_power(model, data, horizon="allT")
 
@@ -129,6 +132,8 @@ function compute_output_values(model, data)
         scd_allT_kW,
         scd_vs_t_1toT_kW,
         solution_time,
+        static_cap_reactive_power_allT_kVAr,
+        static_cap_reactive_power_vs_t_1toT_kVAr,
         terminal_soc_violation_kWh,
         total_gen_reactive_power_allT_kVAr,
         total_gen_reactive_power_vs_t_1toT_kVAr,
