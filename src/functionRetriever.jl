@@ -6,7 +6,7 @@ export get_battery_reactive_power,
     get_pv_real_power,
     get_loss_reactive_power,
     get_loss_real_power,
-    get_substation_power,
+    get_substation_real_power,
     get_substation_power_cost,
     get_scd,
     get_load_real_power,
@@ -50,16 +50,16 @@ function get_loss_reactive_power(model, data; horizon::String="allT")
 end
 
 # Function to get substation power in kW
-function get_substation_power(model, data; horizon::String="allT")
+function get_substation_real_power(model, data; horizon::String="allT")
     @unpack Tset, kVA_B = data
     P_Subs = model[:P_Subs]
 
     if horizon == "1toT"
-        substation_power_vs_t_kW = [value(P_Subs[t]) * kVA_B for t in Tset]
-        return substation_power_vs_t_kW
+        substation_real_power_vs_t_1toT_kW = [value(P_Subs[t]) * kVA_B for t in Tset]
+        return substation_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        total_substation_power_kW = sum(value(P_Subs[t]) * kVA_B for t in Tset)
-        return total_substation_power_kW
+        substation_real_power_allT_kW = sum(value(P_Subs[t]) * kVA_B for t in Tset)
+        return substation_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
     end
