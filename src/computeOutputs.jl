@@ -59,6 +59,10 @@ function compute_output_values(model, data)
     total_gen_reactive_power_vs_t_1toT_kVAr = get_total_generation_reactive_power(model, data, horizon="1toT")
     total_gen_reactive_power_allT_kVAr = get_total_generation_reactive_power(model, data, horizon="allT")
 
+    battery_real_power_transaction_magnitude_vs_t_1toT_kW = get_battery_real_power_transaction_magnitude(model, data, horizon="1toT")
+    battery_real_power_transaction_magnitude_allT_kW = get_battery_real_power_transaction_magnitude(model, data, horizon="allT")
+    battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr = get_battery_reactive_power_transaction_magnitude(model, data, horizon="1toT")
+    battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(model, data, horizon="allT")
     solution_time = get_solution_time(model, data)
 
     # Todo: Insert Battery Transaction powers into data
@@ -96,10 +100,14 @@ function compute_output_values(model, data)
     # Todo: Add static reactive powers to data
     
     @pack! data =
-        battery_real_power_allT_kW,
-        battery_real_power_vs_t_1toT_kW,
         battery_reactive_power_allT_kVAr,
+        battery_reactive_power_transaction_magnitude_allT_kVAr,
+        battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr,
         battery_reactive_power_vs_t_1toT_kVAr,
+        battery_real_power_allT_kW,
+        battery_real_power_transaction_magnitude_allT_kW,
+        battery_real_power_transaction_magnitude_vs_t_1toT_kW,
+        battery_real_power_vs_t_1toT_kW,
         fval_allT,
         fval_vs_t_1toT,
         load_reactive_power_vs_t_1toT_kVAr,
