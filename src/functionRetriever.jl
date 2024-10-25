@@ -2,6 +2,8 @@ module functionRetriever
 
 export get_battery_reactive_power,
     get_battery_real_power,
+    get_battery_reactive_power_transaction_magnitude,
+    get_battery_real_power_transaction_magnitude,
     get_pv_reactive_power,
     get_pv_real_power,
     get_loss_reactive_power,
@@ -175,6 +177,40 @@ function get_pv_reactive_power(model, data; horizon::String="allT")
         error("Specify either '1toT' or 'allT'")
     end
 end
+
+# Function to compute battery real power transaction magnitude |P_c - P_d|
+function get_battery_real_power_transaction_magnitude(model, data; horizon::String="allT")
+    @unpack Tset, Bset, kVA_B = data
+    P_c = model[:P_c]
+    P_d = model[:P_d]
+
+    if horizon == "1toT"
+        battery_real_power_magnitude_vs_t_1toT_kW = [kVA_B * sum(abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset) for t in Tset]
+        return battery_real_power_magnitude_vs_t_1toT_kW
+    elseif horizon == "allT"
+        battery_real_power_magnitude_allT_kW = kVA_B * sum(abs(value(P_c[j, t]) - value(P_d[j, t])) for j in Bset, t in Tset)
+        return battery_real_power_magnitude_allT_kW
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to compute battery reactive power transaction magnitude |q_B|
+function get_battery_reactive_power_transaction_magnitude(model, data; horizon::String="allT")
+    @unpack Tset, Bset, kVA_B = data
+    q_B = model[:q_B]
+
+    if horizon == "1toT"
+        battery_reactive_power_magnitude_vs_t_1toT_kVAr = [kVA_B * sum(abs(value(q_B[j, t])) for j in Bset) for t in Tset]
+        return battery_reactive_power_magnitude_vs_t_1toT_kVAr
+    elseif horizon == "allT"
+        battery_reactive_power_magnitude_allT_kVAr = kVA_B * sum(abs(value(q_B[j, t])) for j in Bset, t in Tset)
+        return battery_reactive_power_magnitude_allT_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
 
 # Function to get total real load over the horizon
 function get_load_real_power(model, data; horizon::String="allT")
