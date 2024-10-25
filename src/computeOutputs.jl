@@ -94,8 +94,6 @@ function compute_output_values(model, data)
     end
 
     # Todo: Add static reactive powers to data
-
-    # Todo: Add total real/reactive powers to data
     
     @pack! data =
         battery_real_power_allT_kW,
@@ -123,7 +121,11 @@ function compute_output_values(model, data)
         scd_allT_kW,
         scd_vs_t_1toT_kW,
         solution_time,
-        terminal_soc_violation_kWh
+        terminal_soc_violation_kWh,
+        total_gen_reactive_power_allT_kVAr,
+        total_gen_reactive_power_vs_t_1toT_kVAr,
+        total_gen_real_power_allT_kW,
+        total_gen_real_power_vs_t_1toT_kW
 
     return data  # Return the updated data dictionary
 end
