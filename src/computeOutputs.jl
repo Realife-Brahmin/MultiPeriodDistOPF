@@ -46,6 +46,12 @@ function compute_output_values(model, data)
     pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
     pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
 
+    load_real_power_vs_t_1toT_kW = get_load_real_power(model, data, horizon="1toT")
+    load_real_power_allT_kW = get_load_real_power(model, data, horizon="allT")
+
+    load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(model, data, horizon="1toT")
+    load_reactive_power_allT_kVAr = get_load_reactive_power(model, data, horizon="allT")
+
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
@@ -78,9 +84,10 @@ function compute_output_values(model, data)
 
     @pack! data = fval_vs_t_1toT,
     fval_allT,
-    PLoss_vs_t_1toT_kW,
-    PLoss_allT_kW,
-    PSubs_vs_t_1toT_kW,
+        load_reactive_power_vs_t_1toT_kVAr,
+        load_reactive_power_allT_kVAr,
+        load_real_power_vs_t_1toT_kW,
+        load_real_power_allT_kW,
     PSubs_allT_kW,
     PSubsCost_vs_t_1toT_dollar,
     PSubsCost_allT_dollar,
