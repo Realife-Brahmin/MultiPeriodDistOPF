@@ -11,6 +11,7 @@ export get_battery_reactive_power,
     get_substation_real_power,
     get_substation_power_cost,
     get_scd,
+    get_static_capacitor_reactive_power,
     get_load_real_power,
     get_load_reactive_power
 
@@ -208,6 +209,33 @@ function get_battery_reactive_power_transaction_magnitude(model, data; horizon::
         return battery_reactive_power_magnitude_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to compute total static capacitor reactive power generation (if exists)
+function get_static_capacitor_reactive_power(model, data; horizon::String="allT")
+    @unpack Tset, kVA_B, T = data
+
+    if haskey(model, :q_C)
+        q_C = model[:q_C]
+
+        if horizon == "1toT"
+            static_cap_reactive_power_vs_t_1toT_kVAr = [kVA_B * value(q_C[t]) for t in Tset]
+            return static_cap_reactive_power_vs_t_1toT_kVAr
+        elseif horizon == "allT"
+            static_cap_reactive_power_allT_kVAr = kVA_B * sum(value(q_C[t]) for t in Tset)
+            return static_cap_reactive_power_allT_kVAr
+        else
+            error("Specify either '1toT' or 'allT'")
+        end
+    else
+        if horizon == "1toT"
+            return zeros(Float64, T)  # If static capacitor does not exist, return an array of zeros
+        elseif horizon == "allT"
+            return 0.0  # If static capacitor does not exist, return 0
+        else
+            error("Specify either '1toT' or 'allT'")
+        end
     end
 end
 
