@@ -11,6 +11,8 @@ export get_battery_reactive_power,
     get_substation_real_power,
     get_substation_power_cost,
     get_scd,
+    get_total_generation_reactive_power,
+    get_total_generation_real_power,
     get_static_capacitor_reactive_power,
     get_load_real_power,
     get_load_reactive_power
@@ -239,6 +241,45 @@ function get_static_capacitor_reactive_power(model, data; horizon::String="allT"
     end
 end
 
+# Function to compute total real power generation
+function get_total_generation_real_power(model, data; horizon::String="allT")
+
+    if horizon == "1toT"
+        # Battery + PV + Static Capacitor (if applicable)
+        battery_real_power_vs_t_1toT_kW = get_battery_real_power(model, data, horizon="1toT")
+        pv_real_power_vs_t_1toT_kW = get_pv_real_power(model, data, horizon="1toT")
+        total_gen_real_power_vs_t_1toT_kW = battery_real_power_vs_t_1toT_kW + pv_real_power_vs_t_1toT_kW
+        return total_gen_real_power_vs_t_1toT_kW
+    elseif horizon == "allT"
+        battery_real_power_allT_kW = get_battery_real_power(model, data, horizon="allT")
+        pv_real_power_allT_kW = get_pv_real_power(model, data, horizon="allT")
+        total_gen_real_power_allT_kW = battery_real_power_allT_kW + pv_real_power_allT_kW
+        return total_gen_real_power_allT_kW
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to compute total reactive power generation
+function get_total_generation_reactive_power(model, data; horizon::String="allT")
+    # Battery + PV + Static Capacitor (if applicable)
+
+    if horizon == "1toT"
+        battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(model, data, horizon="1toT")
+        pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
+        static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="1toT")
+        total_gen_reactive_power_vs_t_1toT_kVAr = battery_reactive_power_vs_t_1toT_kVAr + pv_reactive_power_vs_t_1toT_kVAr + static_cap_reactive_power_vs_t_1toT_kVAr
+        return total_gen_reactive_power_vs_t_1toT_kVAr
+    elseif horizon == "allT"
+        battery_reactive_power_allT_kVAr = get_battery_reactive_power(model, data, horizon="allT")
+        pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
+        static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="allT")
+        total_gen_reactive_power_allT_kVAr = battery_reactive_power_allT_kVAr + pv_reactive_power_allT_kVAr + static_cap_reactive_power_allT_kVAr
+        return total_gen_reactive_power_allT_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
 
 # Function to get total real load over the horizon
 function get_load_real_power(model, data; horizon::String="allT")
