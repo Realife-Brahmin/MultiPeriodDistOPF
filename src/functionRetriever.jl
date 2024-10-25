@@ -21,6 +21,7 @@ export get_battery_reactive_power,
     get_pv_real_power,
     get_loss_reactive_power,
     get_loss_real_power,
+    get_solution_time,
     get_substation_real_power,
     get_substation_power_cost,
     get_scd,
@@ -32,7 +33,8 @@ export get_battery_reactive_power,
     get_load_reactive_power
     # get_substation_power_peak
 
-import JuMP: value  # Importing JuMP's value function to extract values from the model
+using JuMP
+# import JuMP: value, solve_time  # Importing JuMP's value function to extract values from the model
 using Parameters: @unpack  # For easier unpacking of parameters from data
 
 # Function to get real power losses from a model
@@ -324,6 +326,14 @@ function get_load_reactive_power(model, data; horizon::String="allT")
     else
         error("Specify either '1toT' or 'allT'")
     end
+end
+
+# Function to compute solution time (in seconds)
+function get_solution_time(model, data)
+
+    solution_time = JuMP.solve_time(model)  # Retrieves solution time 
+    
+    return solution_time
 end
 
 end # module FunctionRetriever
