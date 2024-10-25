@@ -17,8 +17,8 @@ function compute_output_values(model, data)
     # Scalars to store cumulative values
     fval_allT = 0.0
 
-    PLoss_vs_t_1toT_kW = get_real_power_loss(model, data, horizon="1toT")
-    PLoss_allT_kW = get_real_power_loss(model, data, horizon="allT")
+    PLoss_vs_t_1toT_kW = get_loss_real_power(model, data, horizon="1toT")
+    PLoss_allT_kW = get_loss_real_power(model, data, horizon="allT")
 
     PSubs_vs_t_1toT_kW = get_substation_power(model, data, horizon="1toT")
     PSubs_allT_kW = get_substation_power(model, data, horizon="allT")
