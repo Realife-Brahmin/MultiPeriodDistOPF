@@ -3,7 +3,8 @@ module computeOutputs
 include("./functionRetriever.jl")
 using .functionRetriever
 
-import JuMP: value
+# import JuMP: value, solve_time
+using JuMP
 
 export compute_output_values
 using Parameters: @unpack, @pack!
@@ -57,6 +58,8 @@ function compute_output_values(model, data)
 
     total_gen_reactive_power_vs_t_1toT_kVAr = get_total_generation_reactive_power(model, data, horizon="1toT")
     total_gen_reactive_power_allT_kVAr = get_total_generation_reactive_power(model, data, horizon="allT")
+
+    solution_time = get_solution_time(model, data)
 
     # Todo: Insert Battery Transaction powers into data
 
@@ -141,6 +144,7 @@ function compute_output_values(model, data)
         QLoss_vs_t_1toT_kVAr,
         scd_allT_kW,
         scd_vs_t_1toT_kW,
+        solution_time,
         terminal_soc_violation_kWh
 
     return data  # Return the updated data dictionary
