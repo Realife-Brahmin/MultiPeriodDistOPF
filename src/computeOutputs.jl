@@ -86,6 +86,8 @@ function compute_output_values(model, data)
     end
 
 
+    # Todo: Add static reactive powers to data
+
     @pack! data =
         battery_real_power_allT_kW,
         battery_real_power_vs_t_1toT_kW,
