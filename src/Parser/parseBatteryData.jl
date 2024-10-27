@@ -129,6 +129,8 @@ function parse_battery_data(systemName::String;
     Bref = B0 
     Bref_pu = B0_pu
 
+    Bset = sort(collect(Bset))
+
     # Create a dictionary with all outputs
     storageData = Dict(
         :Bset => Bset,

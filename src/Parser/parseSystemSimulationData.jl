@@ -116,6 +116,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
         @error "floc"
     end
 
+    Tset = sort(collect(Tset))
+    
     sysSimData = Dict(
         :alpha => alpha, # user input
         :systemName => systemName, # user input
