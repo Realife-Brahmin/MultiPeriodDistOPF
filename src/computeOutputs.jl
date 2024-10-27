@@ -68,8 +68,6 @@ function compute_output_values(model, data)
     battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(model, data, horizon="allT")
     solution_time = get_solution_time(model, data)
 
-    # Todo: Insert Battery Transaction powers into data
-
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
@@ -101,8 +99,6 @@ function compute_output_values(model, data)
         fval_allT += fval_vs_t_1toT[t]
 
     end
-
-    # Todo: Add static reactive powers to data
     
     @pack! data =
         battery_reactive_power_allT_kVAr,
