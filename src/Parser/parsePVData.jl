@@ -139,6 +139,8 @@ function parse_pv_data(systemName::String, T::Int;
         DER_percent = Int(ceil(n_D/N_L * 100))
     end
 
+    Dset = sort(collect(Dset))
+    
     # Return the extracted data as a dictionary
     pvData = Dict(
         :n_D => n_D,

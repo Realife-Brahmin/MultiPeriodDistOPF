@@ -116,6 +116,8 @@ function parse_load_data(systemName::String, T::Int;
 
     N_L = length(NLset)
 
+    NLset = sort(collect(NLset))
+    
     loadData = Dict(
         :N_L => N_L,
         :NLset => NLset,

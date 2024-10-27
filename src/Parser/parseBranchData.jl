@@ -175,6 +175,16 @@ function parse_branch_data(systemName::String;
     m1 = length(L1set)
     mm1 = length(Lm1set)
 
+    # Sort each data structure in place or by reassigning to the same variable
+    Nset = sort(collect(Nset))
+    Lset = sort(collect(Lset))
+    N1set = sort(collect(N1set))
+    Nm1set = sort(collect(Nm1set))
+    Nc1set = sort(collect(Nc1set))
+    Nnc1set = sort(collect(Nnc1set))
+    L1set = sort(collect(L1set))
+    Lm1set = sort(collect(Lm1set))
+
     # Create a dictionary with all outputs
     branchData = Dict(
         :Nset => Nset,
