@@ -13,6 +13,7 @@ export get_battery_reactive_power,
     get_scd,
     get_solution_time,
     get_substation_power_cost,
+    get_substation_reactive_power,
     get_substation_real_power,
     get_substation_real_power_peak,
     get_terminal_SOC_violation,
@@ -21,7 +22,6 @@ export get_battery_reactive_power,
     get_static_capacitor_reactive_power,
     get_load_real_power,
     get_load_reactive_power
-    # get_substation_power_peak
 
 using JuMP
 # import JuMP: value, solve_time  # Importing JuMP's value function to extract values from the model
@@ -56,6 +56,26 @@ function get_loss_reactive_power(model, data; horizon::String="allT")
     elseif horizon == "allT"
         loss_reactive_power_allT_kVAr = kVA_B * sum(xdict_pu[i, j] * value(l[(i, j), t]) for (i, j) in Lset, t in Tset)
         return loss_reactive_power_allT_kVAr
+    else
+        error("Specify either '1toT' or 'allT'")
+    end
+end
+
+# Function to get substation reactive power in kVAr
+function get_substation_reactive_power(model, data; horizon::String="allT")
+    @unpack Tset, L1set, kVA_B = data
+    Q = model[:Q]
+
+    if horizon == "1toT"
+        # Compute reactive power at the substation for each time step as the sum of Q values in L1set
+        substation_reactive_power_vs_t_1toT_kVAr = [
+            kVA_B * sum(value(Q[(i, j), t]) for (i, j) in L1set) for t in Tset
+        ]
+        return substation_reactive_power_vs_t_1toT_kVAr
+    elseif horizon == "allT"
+        # Compute total reactive power at the substation over all time steps
+        substation_reactive_power_allT_kVAr = kVA_B * sum(value(Q[(i, j), t]) for (i, j) in L1set, t in Tset)
+        return substation_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
     end
