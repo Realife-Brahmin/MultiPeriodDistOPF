@@ -21,6 +21,9 @@ function compute_output_values(model, data)
     PLoss_vs_t_1toT_kW = get_loss_real_power(model, data, horizon="1toT")
     PLoss_allT_kW = get_loss_real_power(model, data, horizon="allT")
 
+    QSubs_vs_t_1toT_kVAr = get_substation_reactive_power(model, data, horizon="1toT")
+    QSubs_allT_kVAr = get_substation_reactive_power(model, data, horizon="allT")
+
     PSubs_vs_t_1toT_kW = get_substation_real_power(model, data, horizon="1toT")
     PSubs_allT_kW = get_substation_real_power(model, data, horizon="allT")
 
@@ -129,6 +132,8 @@ function compute_output_values(model, data)
         pv_reactive_power_vs_t_1toT_kVAr,
         QLoss_allT_kVAr,
         QLoss_vs_t_1toT_kVAr,
+        QSubs_allT_kVAr,
+        QSubs_vs_t_1toT_kVAr,
         scd_allT_kW,
         scd_vs_t_1toT_kW,
         solution_time,
