@@ -9,7 +9,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     alpha=1e-3,
     kVA_B = 1000,
     objfun0 = "genCostMin",
-    objfun2 = "scd")
+    objfun2 = "scd",
+    temporal_decmp = false)
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -117,7 +118,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     end
 
     Tset = sort(collect(Tset))
-    
+
     sysSimData = Dict(
         :alpha => alpha, # user input
         :systemName => systemName, # user input

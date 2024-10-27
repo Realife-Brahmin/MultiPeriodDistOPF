@@ -8,6 +8,7 @@ Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
 T = 24
 numAreas = 1
+temporal_decmp = false
 alpha = 1e-3
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
@@ -16,7 +17,7 @@ objfun0 = "subsPowerCostMin"
 objfun2 = "scd"
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp)
 
 # Import necessary packages
 using JuMP
