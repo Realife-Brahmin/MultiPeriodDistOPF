@@ -1,8 +1,5 @@
 module MultiPeriodDistOPF
 
-# include("./helperFunctions.jl")
-# using .helperFunctions: myprintln
-
 include("./computeOutputs.jl")
 using .computeOutputs: compute_output_values
 
