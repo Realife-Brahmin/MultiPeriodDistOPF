@@ -9,15 +9,20 @@ systemName = "ads10_1ph" # this is something which the user will specify but wil
 T = 24
 numAreas = 1
 temporal_decmp = false
-alpha = 1e-3
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
 
+# Technically user inputs (can be handled as such) but not expected to be changed between sims
+alpha = 1e-3
+PSubsMax_kW = Inf # Inf means no limit
+
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW)
+
+
 
 # Import necessary packages
 using JuMP
