@@ -77,10 +77,9 @@ function parse_system_simulation_data(systemName::String, T::Int;
     MVA_B = kVA_B/1000
     Z_B = (kV_B)^2/MVA_B
     
-    # Saving Horizon Duration here
-    # Tset = Set(1:T)
     Tset = collect(1:T)
 
+    
     sysSimData = Dict(
         :alpha => alpha, # user input
         :systemName => systemName, # user input
