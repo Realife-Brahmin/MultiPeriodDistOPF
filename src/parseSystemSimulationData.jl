@@ -88,6 +88,12 @@ function parse_system_simulation_data(systemName::String, T::Int;
         objfunString = "Line Losses"
         objfunSense = "Min"
         objfunPrefix = "lineLoss_min"
+        objfunUnit = "kW"
+    elseif objfun0 == "subsPowerMin"
+        objfunString = "Substation Power"
+        objfunSense = "Min"
+        objfunPrefix = "subsPower_min"
+        objfunUnit = "kW"
     else
         objfunString = "unknown objective";
         objfunSense = "Min"
@@ -116,6 +122,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :objfunSense => objfunSense,
         :objfunPrefix => objfunPrefix,
         :objfunAppendix => objfunAppendix,
+        :objfunUnit => objfunUnit,
         :T => T, # user input
         :Tset => Tset
     )
