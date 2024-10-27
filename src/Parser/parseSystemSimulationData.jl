@@ -108,6 +108,16 @@ function parse_system_simulation_data(systemName::String, T::Int;
         objfunAppendix = ""
     end
 
+    if temporal_decmp == true
+        temporalDecmpString = "Temporally Decomposed via DDP"
+        temporalDecmpAppendix = "temporald"
+    elseif temporal_decmp == false
+        temporalDecmpString = "Temporally Brute-forced"
+        temporalDecmpAppendix = "_tmprl_bruteforced"
+    else
+        @error "floc"
+    end
+
     if numAreas > 1
         spatialDecString = "Spatially Decomposed into $(numAreas) areas"
         spatialDecAppendix = "_spatd_$(numAreas)_areas"
@@ -140,6 +150,9 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :spatialDecAppendix => spatialDecAppendix,
         :spatialDecString => spatialDecString,
         :T => T, # user input
+        :temporal_decmp => temporal_decmp,
+        :temporalDecmpString => temporalDecmpString,
+        :temporalDecmpAppendix => temporalDecmpAppendix,
         :Tset => Tset
     )
 
