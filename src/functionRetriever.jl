@@ -12,8 +12,9 @@ export get_battery_reactive_power,
     get_loss_real_power,
     get_scd,
     get_solution_time,
-    get_substation_real_power,
     get_substation_power_cost,
+    get_substation_real_power,
+    get_substation_real_power_peak,
     get_terminal_SOC_violation,
     get_total_generation_reactive_power,
     get_total_generation_real_power,
@@ -245,6 +246,17 @@ function get_static_capacitor_reactive_power(model, data; horizon::String="allT"
             error("Specify either '1toT' or 'allT'")
         end
     end
+end
+
+# Function to get the peak substation real power over the horizon
+function get_substation_real_power_peak(model, data)
+    @unpack Tset, kVA_B = data
+    P_Subs = model[:P_Subs]
+
+    # Calculate the peak substation power (kW) by finding the maximum across all time steps
+    peak_substation_power_kW = maximum([value(P_Subs[t]) * kVA_B for t in Tset])
+
+    return peak_substation_power_kW
 end
 
 # Function to compute total real power generation
