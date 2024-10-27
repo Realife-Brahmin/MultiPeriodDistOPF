@@ -84,6 +84,8 @@ function compute_output_values(model, data)
             fval_vs_t_1toT[t] = PSubsCost_vs_t_1toT[t]
         elseif objfun0 == "lineLossMin"
             fval_vs_t_1toT[t] = PLoss_vs_t_1toT[t]
+        elseif objfun0 == "subsPowerMin"
+            fval_vs_t_1toT[t] = PSubs_vs_t_1toT_kW[t]
         else
             @error "floc"
         end
