@@ -7,7 +7,7 @@ import .helperFunctions: myprintln  # Import myprintln from the helperFunctions 
 
 using Parameters: @unpack
 
-export export_decision_variables
+export export_decision_variables, export_simulation_key_results_txt
 
 function export_decision_variables(model, data;
     filename::String="decision_variables.xlsx",
@@ -184,6 +184,90 @@ function export_decision_variables(model, data;
     end
 
     myprintln(verbose, "Decision variables exported to $filename")
+end
+
+function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
+
+    # Extract system information and parameters from `data`
+    # system_name = data[:machine_ID]  # System name
+    # horizon_duration = data[:T]  # Horizon duration
+    macroItrsCompleted = get(data, :macroItrsCompleted, 1)  # Default to 1 if not set
+    solution_time = get(data, :solution_time, -1)  # Placeholder, real solution time
+
+    # Open the file and write each section
+    open(filename, "w") do f
+        # Initialize output item counter
+        item_counter = 1
+
+        # Header Section
+        println(f, "---------------------------------------------")
+        println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
+        item_counter += 1
+        println(f, "$(item_counter). Horizon Duration: $(data[:T])")
+        item_counter += 1
+        println(f, "$(item_counter). Nature of Simulation: $(data[:simNatureString])")
+        item_counter += 1  # Placeholder
+        println(f, "$(item_counter). Objective: $(data[:objfunString])")
+        item_counter += 1  # Placeholder
+        println(f, "$(item_counter). GED Configuration: $(data[:gedAppendix])")
+        item_counter += 1
+        println(f, "$(item_counter). Maximum Substation Power Allowed: $(data[:PSubsMax_kW]) kW")
+        item_counter += 1
+        println(f, "---------------------------------------------")
+
+        # Horizon Results
+        println(f, "Full $(data[:T]) Hour Horizon")
+
+        # Example metrics using the iterator
+        println(f, "$(item_counter). Horizon Line Loss: $(round(data[:PLoss_allT_kW], digits=2)) kW")
+        item_counter += 1
+
+        println(f, "$(item_counter). Horizon Total Substation Power: $(round(data[:PSubs_allT_kW], digits=2)) kW + $(round(data[:QSubs_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        println(f, "$(item_counter). Horizon Total Load: $(round(data[:load_real_power_allT_kW], digits=2)) kW + $(round(data[:load_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        println(f, "$(item_counter). Horizon Total Generation: $(round(data[:total_gen_real_power_allT_kW], digits=2)) kW + $(round(data[:total_gen_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Placeholder for additional metrics
+        # Example for static capacitor power generation
+        println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(data[:static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Example substation power cost
+        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(data[:PSubsCost_allT_dollar])")
+        item_counter += 1
+
+        # Battery-related metrics
+        println(f, "$(item_counter). Horizon Total Battery Generation: $(round(data[:battery_real_power_allT_kW], digits=2)) kW + $(round(data[:battery_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Example for end horizon SCD observed and energy deviation
+        println(f, "$(item_counter). Horizon Total SCD Observed: $(round(data[:scd_allT_kW], digits=2)) kW")
+        item_counter += 1
+
+        println(f, "$(item_counter). Horizon-end Battery Energy Deviation from Reference: $(round(data[:terminal_soc_violation_kWh], digits=2)) kWh")
+        item_counter += 1
+
+        # Example for substation power peak
+        println(f, "$(item_counter). Horizon-Total All time Substation Power Peak: $(round(data[:substation_real_power_peak_allT_kW], digits=2)) kW")
+        item_counter += 1
+
+        # Additional Simulation Metadata
+        println(f, "---------------------------------------------")
+        println(f, "$(item_counter). Number of Macro-Iterations: $(macroItrsCompleted)")
+        item_counter += 1
+        println(f, "$(item_counter). Simulation Time: $(round(solution_time, digits=2)) s")
+        item_counter += 1
+        println(f, "$(item_counter). Time to solve with sequential (non-parallel) computation: $(round(solution_time, digits=2)) s")
+        item_counter += 1  # Placeholder for non-parallel time
+        println(f, "$(item_counter). Time to solve if OPF computation parallelized: $(round(solution_time, digits=2)) s")  # Placeholder for parallelized time
+        println(f, "---------------------------------------------")
+    end
+
+    myprintln(verbose, "Simulation key results exported to $filename")
 end
 
 end  # module Exporter

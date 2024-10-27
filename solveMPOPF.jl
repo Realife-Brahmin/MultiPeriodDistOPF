@@ -517,3 +517,4 @@ data = compute_output_values(model, data)
 
 export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=true)
 
+export_simulation_key_results_txt(model, data, filename="simulation_results.txt")
