@@ -4,7 +4,7 @@ module parseBranchData
 
 export parse_branch_data
 
-include("helperFunctions.jl")
+include("../helperFunctions.jl")
 using .helperFunctions: myprintln
 
 function parse_branch_data(systemName::String;
@@ -46,7 +46,7 @@ function parse_branch_data(systemName::String;
 
     wd = @__DIR__
     # Construct the file path using wd
-    filename = joinpath(wd, "..", "rawData", systemName, "BranchData.dss")
+    filename = joinpath(wd, "..", "..", "rawData", systemName, "BranchData.dss")
 
     # Initialize data structures
     Nset = Set{Int}()                             # Set of all bus numbers

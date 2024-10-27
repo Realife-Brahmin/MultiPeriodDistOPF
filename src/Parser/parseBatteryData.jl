@@ -4,7 +4,7 @@ module parseBatteryData
 
 export parse_battery_data
 
-include("helperFunctions.jl")
+include("../helperFunctions.jl")
 import .helperFunctions: myprintln
 
 function parse_battery_data(systemName::String;
@@ -15,7 +15,7 @@ function parse_battery_data(systemName::String;
     wd = @__DIR__
 
     # Construct the full file path for the Storage.dss file
-    filename = joinpath(wd, "..", "rawData", systemName, "Storage.dss")
+    filename = joinpath(wd, "..", "..", "rawData", systemName, "Storage.dss")
 
     myprintln(verbose, "Reading Storage file from: $filename")
 

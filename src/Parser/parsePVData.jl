@@ -4,7 +4,7 @@ module parsePVData
 
 export parse_pv_data
 
-include("helperFunctions.jl")
+include("../helperFunctions.jl")
 using .helperFunctions: generateLoadShape
 
 function parse_pv_data(systemName::String, T::Int;
@@ -15,7 +15,7 @@ function parse_pv_data(systemName::String, T::Int;
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path using wd
-    filename = joinpath(wd, "..", "rawData", systemName, "PVSystem.dss")
+    filename = joinpath(wd, "..", "..", "rawData", systemName, "PVSystem.dss")
 
     # Initialize data structures for PV systems
     Dset = Set{Int}()                     # Set of nodes with PVs
