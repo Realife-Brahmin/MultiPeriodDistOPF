@@ -79,10 +79,11 @@ function parse_system_simulation_data(systemName::String, T::Int;
     
     Tset = collect(1:T)
 
-    if objfun0 == "genCostMin"
+    if objfun0 == "subsPowerCostMin"
         objfunString = "Cost of Substation Power"
         objfunSense = "Min"
-        objfunPrefix = "subsCost_min"
+        objfunPrefix = "subsPowerCost_min"
+        objfunUnit = "\$"
     elseif objfun0 == "lineLossMin"
         objfunString = "Line Losses"
         objfunSense = "Min"

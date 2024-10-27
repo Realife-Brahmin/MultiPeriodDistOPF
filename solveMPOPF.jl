@@ -11,7 +11,7 @@ numAreas = 1
 alpha = 1e-3
 # objfun0 = "powerflow"
 objfun0 = "lineLossMin"
-objfun0 = "genCostMin"
+objfun0 = "subsPowerCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
 
@@ -381,7 +381,7 @@ if objfun0 == "powerflow"
     # Set the objective function to zero for powerflow
     # @objective(model, Min, 0)
     objfun = 0
-elseif objfun0 == "genCostMin"
+elseif objfun0 == "subsPowerCostMin"
     # Define the base objective function (generation cost minimization)
     dollars_per_pu = kVA_B
     objfun = sum(
