@@ -13,7 +13,7 @@ using .functionRetriever
 include("./helperFunctions.jl")
 using .helperFunctions: myprintln
 
-include("./parseOpenDSSFiles.jl")
+include("./Parser/parseOpenDSSFiles.jl")
 using .parseOpenDSSFiles
 
 # Import the plotter module

@@ -2,7 +2,7 @@ module parseLoadData
 
 export parse_load_data
 
-include("helperFunctions.jl")
+include("../helperFunctions.jl")
 using .helperFunctions: generateLoadShape
 
 function parse_load_data(systemName::String, T::Int;
@@ -13,7 +13,7 @@ function parse_load_data(systemName::String, T::Int;
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path for Loads.dss using wd
-    filename_load = joinpath(wd, "..", "rawData", systemName, "Loads.dss")
+    filename_load = joinpath(wd, "..", "..", "rawData", systemName, "Loads.dss")
 
     # Initialize data structures
     NLset = Set{Int}()                 # Set of nodes with loads

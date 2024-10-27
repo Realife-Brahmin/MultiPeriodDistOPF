@@ -19,7 +19,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     wd = @__DIR__
     # Construct the file path using wd
-    filename = joinpath(wd, "..", "rawData", systemName, "SysSim.dss")
+    filename = joinpath(wd, "..", "..",  "rawData", systemName, "SysSim.dss")
 
     # Open and read the file
     open(filename, "r") do file
