@@ -2,7 +2,7 @@
 
 module parseOpenDSSFiles
 
-export myprintln, parse_all_data, parse_system_simulation_data, parse_branch_data, parse_load_data, parse_pv_data, parse_battery_data, evaluate_voltage_limits, generateBinaryLoadShape
+export myprintln, parse_all_data, parse_system_simulation_data, parse_branch_data, parse_load_data, parse_pv_data, parse_battery_data, post_process_data, evaluate_voltage_limits, generateBinaryLoadShape
 
 include("parseSystemSimulationData.jl")
 include("parseBranchData.jl")
@@ -17,7 +17,7 @@ include("../helperFunctions.jl")
 
 # ... include other parsing scripts as needed
 
-using .parseSystemSimulationData: parse_system_simulation_data
+using .parseSystemSimulationData: parse_system_simulation_data, post_process_data
 using .parseBranchData: parse_branch_data
 using .parseLoadData: parse_load_data
 using .parsePVData: parse_pv_data
@@ -54,6 +54,8 @@ function parse_all_data(systemName::String, T::Int;
     # Merge dictionaries
     data = merge(sysSimData, branch_data, load_data, pv_data, battery_data, component_data, cost_data)
     
+    data = post_process_data(data)
+
     return data
 end
 

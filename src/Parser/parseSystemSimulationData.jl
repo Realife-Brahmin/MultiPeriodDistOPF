@@ -2,7 +2,9 @@
 
 module parseSystemSimulationData
 
-export parse_system_simulation_data
+export parse_system_simulation_data, post_process_data
+
+using Parameters: @unpack, @pack!
 
 function parse_system_simulation_data(systemName::String, T::Int;
     numAreas=1,
@@ -164,6 +166,16 @@ function parse_system_simulation_data(systemName::String, T::Int;
     # Return the extracted parameters as a dictionary
     return sysSimData
 
+end
+
+function post_process_data(data)
+    
+    @unpack DER_percent, Batt_percent = data;
+    gedString = "$(DER_percent)% PVs and $(Batt_percent)% Batteries"
+    gedAppendix = "pv_$(DER_percent)_batt_$(Batt_percent)"
+    @pack! data = gedAppendix, gedString
+
+    return data
 end
 
 end # module
