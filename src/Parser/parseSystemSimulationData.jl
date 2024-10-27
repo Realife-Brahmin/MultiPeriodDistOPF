@@ -79,6 +79,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     Z_B = (kV_B)^2/MVA_B
     
     Tset = collect(1:T)
+    Tset = sort(collect(Tset))
 
     if objfun0 == "subsPowerCostMin"
         objfunString = "Cost of Substation Power"
