@@ -130,14 +130,21 @@ function parse_system_simulation_data(systemName::String, T::Int;
     else
         @error "floc"
     end
+    machine_ID = gethostname()
 
     simNatureString = temporalDecmpString * "\n" * spatialDecString
     simNatureAppendix = temporalDecmpAppendix * "_" * spatialDecAppendix
 
+    macroItrsCompleted = 0
+    solution_time = -1 
+
     sysSimData = Dict(
         :alpha => alpha, # user input
+        :machine_ID => machine_ID,
+        :macroItrsCompleted => macroItrsCompleted,
         :systemName => systemName, # user input
         :numAreas => numAreas, # user input
+        :solution_time => solution_time,
         :substationBus => substationBus,
         :V_Subs => V_Subs,
         :kV_B => kV_B,
