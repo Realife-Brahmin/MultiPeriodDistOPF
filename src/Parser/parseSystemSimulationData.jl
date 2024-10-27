@@ -122,13 +122,14 @@ function parse_system_simulation_data(systemName::String, T::Int;
         spatialDecString = "Spatially Decomposed into $(numAreas) areas"
         spatialDecAppendix = "_spatd_$(numAreas)_areas"
     elseif numAreas == 1
-        spatialDecString = "Centralized"
-        spatialDecAppendix = "_centr_system"
+        spatialDecString = "Spatially Centralized"
+        spatialDecAppendix = "_spat_centr_system"
     else
         @error "floc"
     end
 
-    Tset = sort(collect(Tset))
+    simNatureString = temporalDecmpString * "\n" * spatialDecString
+    simNatureAppendix = temporalDecmpAppendix * "_" * spatialDecAppendix
 
     sysSimData = Dict(
         :alpha => alpha, # user input
@@ -147,6 +148,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :objfunPrefix => objfunPrefix,
         :objfunAppendix => objfunAppendix,
         :objfunUnit => objfunUnit,
+        :simNatureAppendix => simNatureAppendix,
+        :simNatureString => simNatureString,
         :spatialDecAppendix => spatialDecAppendix,
         :spatialDecString => spatialDecString,
         :T => T, # user input
