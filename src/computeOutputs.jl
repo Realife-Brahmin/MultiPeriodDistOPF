@@ -80,7 +80,7 @@ function compute_output_values(model, data)
         scd_vs_t_1toT = scd_vs_t_1toT_kW./kVA_B
 
         @unpack objfun0, objfun2 = data;
-        if objfun0 == "genCostMin"
+        if objfun0 == "subsPowerCostMin"
             fval_vs_t_1toT[t] = PSubsCost_vs_t_1toT[t]
         elseif objfun0 == "lineLossMin"
             fval_vs_t_1toT[t] = PLoss_vs_t_1toT[t]
