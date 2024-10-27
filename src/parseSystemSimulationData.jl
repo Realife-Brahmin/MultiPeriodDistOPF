@@ -79,7 +79,26 @@ function parse_system_simulation_data(systemName::String, T::Int;
     
     Tset = collect(1:T)
 
-    
+    if objfun0 == "genCostMin"
+        objfunString = "Cost of Substation Power"
+        objfunSense = "Min"
+        objfunPrefix = "subsCost_min"
+    elseif objfun0 == "lineLossMin"
+        objfunString = "Line Losses"
+        objfunSense = "Min"
+        objfunPrefix = "lineLoss_min"
+    else
+        objfunString = "unknown objective";
+        objfunSense = "Min"
+        objfunPrefix = "unknown_obj" 
+    end
+
+    if objfun2 == "scd"
+        objfunAppendix = "with_scd"
+    else
+        objfunAppendix = ""
+    end
+
     sysSimData = Dict(
         :alpha => alpha, # user input
         :systemName => systemName, # user input
@@ -92,6 +111,10 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :delta_t => Δt,
         :objfun0 => objfun0, # user input
         :objfun2 => objfun2, # user input
+        :objfunString => objfunString,
+        :objfunSense => objfunSense,
+        :objfunPrefix => objfunPrefix,
+        :objfunAppendix => objfunAppendix,
         :T => T, # user input
         :Tset => Tset
     )
