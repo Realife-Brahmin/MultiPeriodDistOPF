@@ -10,7 +10,7 @@ T = 24
 numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
-objfun0 = "lineLossMin"
+# objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
@@ -21,8 +21,6 @@ PSubsMax_kW = Inf # Inf means no limit
 
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW)
-
-
 
 # Import necessary packages
 using JuMP
