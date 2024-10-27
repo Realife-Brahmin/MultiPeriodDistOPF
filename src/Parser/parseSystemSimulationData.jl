@@ -10,7 +10,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     kVA_B = 1000,
     objfun0 = "genCostMin",
     objfun2 = "scd",
-    temporal_decmp = false)
+    temporal_decmp = false,
+    PSubsMax_kW = Inf)
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -148,6 +149,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :objfunPrefix => objfunPrefix,
         :objfunAppendix => objfunAppendix,
         :objfunUnit => objfunUnit,
+        :PSubsMax_kW => PSubsMax_kW,
         :simNatureAppendix => simNatureAppendix,
         :simNatureString => simNatureString,
         :spatialDecAppendix => spatialDecAppendix,
