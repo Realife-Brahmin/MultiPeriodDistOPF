@@ -188,6 +188,17 @@ end
 
 function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
 
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    base_dir = joinpath("processedData", systemName, "numAreas_$(numAreas)", "Horizon_$(T)", gedAppendix)
+
+    if !isdir(base_dir)
+        println("Creating directory: $base_dir")
+        mkpath(base_dir)
+    end
+
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_results_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
+
     # Extract system information and parameters from `data`
     # system_name = data[:machine_ID]  # System name
     # horizon_duration = data[:T]  # Horizon duration
