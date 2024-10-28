@@ -9,7 +9,11 @@ import Base.Filesystem: mkpath, isdir  # To create directories
 
 export plot_battery_actions, plot_line_losses, plot_substation_power, plot_substation_power_cost
 
-common_theme = :dao
+#good light themes: :bright, :dao, :gruvbox_light, :solarized_light, :vibrant, :wong, :wong2
+common_theme = :mute
+common_marker_face = :circle
+common_marker_stroke_color = :black
+common_marker_stroke_width = 2.0
 
 function plot_battery_actions(model, data;
     showPlots::Bool=false,
@@ -64,7 +68,7 @@ function plot_battery_actions(model, data;
             gridalpha=0.2,
             minorgrid=true,
             minorgridstyle=:solid,
-            minorgridalpha=0.05,
+            minorgridalpha=0.15,
             title="Battery at Bus $(j)\nCharging and Discharging",
             titlefont=font(12, "Computer Modern"),
             guidefont=font(15, "Computer Modern"),
@@ -156,7 +160,7 @@ function plot_substation_power(data;
         label=L"(P^t_{Subs})",
         xlabel="Time Period " * L"t",
         ylabel=L"P_{Subs} \, [kW]",
-        title="Substation Power " * L"(P_{Subs})" * " across the Horizon\n" *
+        title="Substation Power " * L"(P^t_{Subs})" * " across the Horizon\n" *
         "using $(simNatureString) OPF\n" *
         "with $(gedString)\n" *
         "optimizing for $(objfunString)",
@@ -168,8 +172,10 @@ function plot_substation_power(data;
         minorgridstyle=:solid,
         minorgridalpha=0.05,
         lw=4,
-        marker=:circle,
+        marker=common_marker_face,
         markersize=4,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
         xlims=(0, T + 1),
         xticks=1:T,  # Set xticks for every hour from 1 to T
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
@@ -210,7 +216,7 @@ function plot_substation_power_cost(data;
     outputPlot = plot(
         Tset, yvalues,
         dpi=600,
-        label=L"(C^t_{Subs})",
+        label=L"(P^t_{SubsCost})",
         xlabel="Time Period " * L"t",
         ylabel="Substation Power Cost " * L"[$]",
         title="Substation Power Cost " * L"(P^t_{SubsCost})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)",
@@ -222,8 +228,10 @@ function plot_substation_power_cost(data;
         minorgridstyle=:solid,
         minorgridalpha=0.05,
         lw=4,
-        marker=:circle,
+        marker=common_marker_face,
         markersize=4,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
         xlims=(0, T + 1),
         xticks=1:1:T,
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
@@ -281,8 +289,10 @@ function plot_line_losses(data;
         minorgridstyle=:solid,
         minorgridalpha=0.05,
         lw=4,
-        marker=:circle,
+        marker=common_marker_face,
         markersize=4,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
         xlims=(0, T + 1),
         xticks=1:1:T,
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
