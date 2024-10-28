@@ -513,3 +513,4 @@ export_decision_variables(model, data, filename="decision_variables.xlsx", verbo
 export_simulation_key_results_txt(model, data, filename="simulation_results.txt")
 
 plot_substation_power(data)
+plot_substation_power_cost(data)
