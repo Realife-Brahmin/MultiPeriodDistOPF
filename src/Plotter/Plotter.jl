@@ -119,7 +119,7 @@ function plot_substation_power(data;
     macroItrNum::Int=1
     )
     
-    @unpack Tset, PSubs_vs_t_1toT_kW, T = data  # Assuming T is the last time period
+    @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString = data;  # Assuming T is the last time period
 
     yvalues = PSubs_vs_t_1toT_kW;
 
@@ -129,8 +129,8 @@ function plot_substation_power(data;
         label=L"(P^t_{Subs})",
         xlabel="Time Period " * L"t",
         ylabel=L"P_{Subs} \, [kW]",
-        title="Substation Power " * L"(P_{Subs})" * " across the Horizon",
-        legend=:topright,
+        title="Substation Power " * L"(P_{Subs})" * " across the Horizon\n"*"Using $(simNatureString) OPF\n"*"with $(gedString)",
+        legend=:topleft,
         gridstyle=:solid,
         gridlinewidth=1.0,
         gridalpha=0.2,
