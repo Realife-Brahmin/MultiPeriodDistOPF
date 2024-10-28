@@ -6,7 +6,7 @@ using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
 import Base.Filesystem: mkpath, isdir  # To create directories
 
-export plot_battery_actions, plot_substation_power, plot_substation_power_cost
+export plot_battery_actions, plot_line_losses, plot_substation_power, plot_substation_power_cost
 
 function plot_battery_actions(model, data;
     showPlots::Bool=false,
@@ -47,6 +47,7 @@ function plot_battery_actions(model, data;
         # Create a plot for charging and discharging
         charging_discharge_plot = bar(
             time_intervals, charging_power_kW,
+            dpi=600,
             label="Charging",
             color=:green,
             legend=:bottomleft,
@@ -66,13 +67,17 @@ function plot_battery_actions(model, data;
             tickfontfamily="Computer Modern"
         )
 
-        bar!(charging_discharge_plot, time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
+        bar!(charging_discharge_plot, 
+            time_intervals, -discharging_power_kW, 
+            dpi=600,
+            label="Discharging", color=:darkred)
 
         hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)
 
         # Create a plot for SOC
         soc_plot = bar(
             0:T, soc,
+            dpi=600,
             label=L"SOC",
             color=:purple,
             legend=:bottomleft,
@@ -184,6 +189,7 @@ function plot_substation_power_cost(data;
 
     outputPlot = plot(
         Tset, yvalues,
+        dpi=600,
         label=L"(C^t_{Subs})",
         xlabel="Time Period " * L"t",
         ylabel="Substation Power Cost " * L"[$]",
@@ -218,6 +224,59 @@ function plot_substation_power_cost(data;
             mkpath(base_dir)
         end
         filename = joinpath(base_dir, "Horizon_$(T)_SubstationPowerCost_vs_t_for_$(objfunString)_$(gedAppendix).png")
+        println("Saving plot to: $filename")
+        savefig(outputPlot, filename)
+    end
+end
+
+function plot_line_losses(data;
+    showPlots::Bool=false,
+    savePlots::Bool=true,
+    macroItrNum::Int=1)
+
+    @unpack Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
+
+    yvalues = PLoss_vs_t_1toT_kW
+
+    gr()
+
+    outputPlot = plot(
+        Tset, yvalues,
+        dpi=600,
+        label=L"(P^t_{Loss})",
+        xlabel="Time Period " * L"t",
+        ylabel="Line Losses " * L"[kW]",
+        title="Line Losses " * L"(P^t_{Loss})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)",
+        legend=:topleft,
+        gridstyle=:solid,
+        gridlinewidth=1.0,
+        gridalpha=0.2,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.05,
+        lw=4,
+        marker=:circle,
+        markersize=4,
+        xlims=(0, T + 1),
+        xticks=1:1:T,
+        ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
+        titlefont=font(8, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+
+    if showPlots
+        display(outputPlot)
+    end
+
+    # Saving plot if requested
+    if savePlots
+        base_dir = joinpath("processedData", systemName, "numAreas_1", "Horizon_$(T)", gedAppendix)
+        if !isdir(base_dir)
+            println("Creating directory: $base_dir")
+            mkpath(base_dir)
+        end
+        filename = joinpath(base_dir, "Horizon_$(T)_LineLosses_vs_t_for_$(objfunString)_$(gedAppendix).png")
         println("Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
