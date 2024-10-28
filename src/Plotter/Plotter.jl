@@ -1,11 +1,17 @@
 module Plotter
 
+using LaTeXStrings
 using Plots
 using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
 import Base.Filesystem: mkpath, isdir  # To create directories
 
-export plot_battery_actions
+plot_font = "Computer Modern"
+default(fontfamily=plot_font,
+    linewidth=2, framestyle=:box, label=nothing, grid=false)
+scalefontsizes(1.3)
+
+export plot_battery_actions, plot_substation_power
 
 function plot_battery_actions(model, data;
     showPlots::Bool=false,
@@ -81,5 +87,57 @@ function plot_battery_actions(model, data;
         end
     end
 end
+
+# # Function to plot Substation Power over time
+# function plot_substation_power(data)
+#     @unpack Tset, PSubs_vs_t_1toT_kW = data;
+
+#     plot(
+#         Tset, PSubs_vs_t_1toT_kW,
+#         label="Substation Power",
+#         xlabel=L"Time\ Period\ t",
+#         ylabel=L"P_{Subs}\ [kW]",
+#         title=L"Substation\ Power\ (P_{Subs})\ across\ the\ Horizon",
+#         legend=:topright,
+#         grid=true,
+#         lw=2,
+#         marker=:circle,
+#         markersize=4
+#     )
+# end
+
+# Function to plot Substation Power over time
+function plot_substation_power(data)
+    @unpack Tset, PSubs_vs_t_1toT_kW = data
+
+    gr()
+    plot(
+        Tset, PSubs_vs_t_1toT_kW,
+        label=L"(P^t_{Subs})",
+        xlabel="Time Period "*L"t",
+        ylabel=L"P_{Subs} \, [kW]",
+        title="Substation Power "* L"(P_{Subs})" * " across the Horizon",
+        legend=:topright,
+        grid=true,
+        lw=2,
+        # marker=:circle,
+        # markersize=4,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(15, "Computer Modern"),
+        # line=:stem,
+        linewidth=0.3,
+        marker=:circle,
+        markersize=2,
+        alpha=1.0,
+        # aspect_ratio=:equal,
+        # xlims=(-0.01, 1.01),
+        # ylims=(-0.00, 1.01)
+    )
+end
+
+# plot(sort(rand(10)), sort(rand(10)), label="Legend")
+# plot!(xlabel=L"\textrm{Standard text}(r) / \mathrm{cm^3}")
+# plot!(ylabel="Same font as everything")
+# annotate!(0.2, 0.8, text("My note", plot_font, 12))
 
 end  # module Plotter
