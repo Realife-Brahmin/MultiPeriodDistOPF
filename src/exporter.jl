@@ -248,7 +248,11 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         item_counter += 1
 
         # Example substation power cost
-        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(data[:PSubsCost_allT_dollar])")
+        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(data[:PSubsCost_allT_dollar], digits=2))")
+        item_counter += 1
+
+        # PV-related metrics
+        println(f, "$(item_counter). Horizon Total PV Generation: $(round(data[:pv_real_power_allT_kW], digits=2)) kW + $(round(data[:pv_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
 
         # Battery-related metrics
