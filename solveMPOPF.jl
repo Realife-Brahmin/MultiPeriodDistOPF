@@ -510,7 +510,7 @@ data = compute_output_values(model, data)
 
 export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=false)
 
-export_simulation_key_results_txt(model, data, filename="simulation_results.txt")
+export_simulation_key_results_txt(model, data)
 
 plot_substation_power(data)
 plot_substation_power_cost(data)
