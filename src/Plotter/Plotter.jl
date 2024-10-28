@@ -106,9 +106,7 @@ function plot_battery_actions(model, data;
         if savePlots
             filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha).png")
             println("Saving plot to: $filename")
-            println("Hello2.3")
             savefig(plot_combined, filename)
-            println("Hello2.4")
         end
 
     end
