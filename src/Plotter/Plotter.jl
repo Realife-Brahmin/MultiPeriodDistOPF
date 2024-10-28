@@ -120,13 +120,18 @@ function plot_battery_actions(model, data;
 end
 
 # Function to plot Substation Power over time
-function plot_substation_power(data)
+function plot_substation_power(data;
+    showPlots::Bool=false,
+    savePlots::Bool=true,
+    macroItrNum::Int=1
+    )
+    
     @unpack Tset, PSubs_vs_t_1toT_kW, T = data  # Assuming T is the last time period
 
     yvalues = PSubs_vs_t_1toT_kW;
 
     gr()
-    plot(
+    outputPlot = plot(
         Tset, PSubs_vs_t_1toT_kW,
         label=L"(P^t_{Subs})",
         xlabel="Time Period " * L"t",
@@ -149,6 +154,12 @@ function plot_substation_power(data)
         guidefont=font(15, "Computer Modern"),
         tickfontfamily="Computer Modern"
     )
+
+    # Show the plot if `showPlots` is true
+    if showPlots
+        display(outputPlot)
+    end
+
 end
 
 
