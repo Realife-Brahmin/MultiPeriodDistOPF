@@ -1,6 +1,7 @@
 module Plotter
 
 using LaTeXStrings
+using Measures
 using Plots
 using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
@@ -8,11 +9,14 @@ import Base.Filesystem: mkpath, isdir  # To create directories
 
 export plot_battery_actions, plot_line_losses, plot_substation_power, plot_substation_power_cost
 
+common_theme = :dao
+
 function plot_battery_actions(model, data;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1)
 
+    theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max = data;
     Tset = sort(collect(Tset))
@@ -64,7 +68,11 @@ function plot_battery_actions(model, data;
             title="Battery at Bus $(j)\nCharging and Discharging",
             titlefont=font(12, "Computer Modern"),
             guidefont=font(15, "Computer Modern"),
-            tickfontfamily="Computer Modern"
+            tickfontfamily="Computer Modern",
+            # left_margin=10mm,   # Adds space to the left
+            # right_margin=10mm,  # Adds space to the right
+            top_margin=5mm,    # Adds space at the top
+            # bottom_margin=10mm  # Adds space at the bottom
         )
 
         bar!(charging_discharge_plot, 
@@ -96,7 +104,11 @@ function plot_battery_actions(model, data;
             title="SOC",
             titlefont=font(12, "Computer Modern"),
             guidefont=font(15, "Computer Modern"),
-            tickfontfamily="Computer Modern"
+            tickfontfamily="Computer Modern",
+            # left_margin=10mm,   # Adds space to the left
+            # right_margin=10mm,  # Adds space to the right
+            top_margin=0mm,    # Adds space at the top
+            # bottom_margin=10mm  # Adds space at the bottom
         )
 
         # Combine the two plots in a layout
@@ -125,6 +137,8 @@ function plot_substation_power(data;
     @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix = data
 
     yvalues = PSubs_vs_t_1toT_kW
+
+    theme(common_theme)
 
     # Setup for saving plot
     base_dir = joinpath("processedData", systemName, "numAreas_1", "Horizon_$(T)", gedAppendix)
@@ -161,7 +175,11 @@ function plot_substation_power(data;
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
         titlefont=font(8, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        tickfontfamily="Computer Modern",
+        # left_margin=10mm,   # Adds space to the left
+        # right_margin=10mm,  # Adds space to the right
+        top_margin=5mm,    # Adds space at the top
+        # bottom_margin=10mm  # Adds space at the bottom
     )
 
     # Show the plot if `showPlots` is true
@@ -180,6 +198,8 @@ function plot_substation_power_cost(data;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1)
+
+    theme(common_theme)
 
     @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
 
@@ -209,7 +229,11 @@ function plot_substation_power_cost(data;
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
         titlefont=font(8, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        tickfontfamily="Computer Modern",
+        # left_margin=10mm,   # Adds space to the left
+        # right_margin=10mm,  # Adds space to the right
+        top_margin=5mm,    # Adds space at the top
+        # bottom_margin=10mm  # Adds space at the bottom
     )
 
     if showPlots
@@ -238,6 +262,8 @@ function plot_line_losses(data;
 
     yvalues = PLoss_vs_t_1toT_kW
 
+    theme(common_theme)
+
     gr()
 
     outputPlot = plot(
@@ -262,7 +288,11 @@ function plot_line_losses(data;
         ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
         titlefont=font(8, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        tickfontfamily="Computer Modern",
+        # left_margin=10mm,   # Adds space to the left
+        # right_margin=10mm,  # Adds space to the right
+        top_margin=5mm,    # Adds space at the top
+        # bottom_margin=10mm  # Adds space at the bottom
     )
 
     if showPlots
