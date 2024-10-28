@@ -113,48 +113,6 @@ function plot_battery_actions(model, data;
 end
 
 # Function to plot Substation Power over time
-# function plot_substation_power(data;
-#     showPlots::Bool=false,
-#     savePlots::Bool=true,
-#     macroItrNum::Int=1
-#     )
-    
-#     @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString = data;  # Assuming T is the last time period
-
-#     yvalues = PSubs_vs_t_1toT_kW;
-
-#     gr()
-
-#     outputPlot = plot(
-#         Tset, PSubs_vs_t_1toT_kW,
-#         label=L"(P^t_{Subs})",
-#         xlabel="Time Period " * L"t",
-#         ylabel=L"P_{Subs} \, [kW]",
-#         title="Substation Power " * L"(P_{Subs})" * " across the Horizon\n"*"using $(simNatureString) OPF\n"*"with $(gedString)\n"*"optimizing for $(objfunString)",
-#         legend=:topleft,
-#         gridstyle=:solid,
-#         gridlinewidth=1.0,
-#         gridalpha=0.2,
-#         minorgrid=true,
-#         minorgridstyle=:solid,
-#         minorgridalpha=0.05,
-#         lw=4,
-#         marker=:circle,
-#         markersize=4,
-#         xlims=(0, T+1),
-#         xticks=1:1:T,  # Set xticks for every hour from 1 to T
-#         ylims=(minimum(yvalues)*0.95, maximum(yvalues)*1.05), 
-#         titlefont=font(8, "Computer Modern"),
-#         guidefont=font(12, "Computer Modern"),
-#         tickfontfamily="Computer Modern"
-#     )
-
-#     # Show the plot if `showPlots` is true
-#     if showPlots
-#         display(outputPlot)
-#     end
-
-# end
 function plot_substation_power(data;
     showPlots::Bool=false,
     savePlots::Bool=true,
