@@ -132,7 +132,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     end
     machine_ID = gethostname()
 
-    simNatureString = temporalDecmpString * "\n" * spatialDecString
+    simNatureString = temporalDecmpString * ", " * spatialDecString
     simNatureAppendix = temporalDecmpAppendix * "_" * spatialDecAppendix
 
     macroItrsCompleted = 0
