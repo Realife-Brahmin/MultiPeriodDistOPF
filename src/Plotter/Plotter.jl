@@ -6,10 +6,10 @@ using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
 import Base.Filesystem: mkpath, isdir  # To create directories
 
-plot_font = "Computer Modern"
-default(fontfamily=plot_font,
-    linewidth=2, framestyle=:box, label=nothing, grid=false)
-scalefontsizes(1.3)
+# plot_font = "Computer Modern"
+# default(fontfamily=plot_font,
+#     linewidth=2, framestyle=:box, label=nothing, grid=false)
+# scalefontsizes(1.3)
 
 export plot_battery_actions, plot_substation_power
 
