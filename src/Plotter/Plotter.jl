@@ -19,11 +19,8 @@ function plot_battery_actions(model, data;
     macroItrNum::Int=1)
 
     # Extract necessary parameters from the `data` dictionary
-    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha = data;
-
+    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max = data;
     Tset = sort(collect(Tset))
-
-    # @unpack P_c, P_d, B = model; # Why does this not work?
 
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -34,11 +31,9 @@ function plot_battery_actions(model, data;
         "batteryActionPlots", "Horizon_$(T)",
         "pv_$(DER_percent)_batt_$(Batt_percent)",
         "macroItr_$(macroItrNum)")
-
-    # Create the base directory if it does not exist
     if savePlots && !isdir(base_dir)
         println("Creating directory: $base_dir")
-        mkpath(base_dir)  # This will create the directory and its parents if needed
+        mkpath(base_dir)
     end
 
     # Loop through all battery buses and create plots
@@ -48,27 +43,61 @@ function plot_battery_actions(model, data;
         # Collect charging, discharging power, and state of charge values
         charging_power_kW = [value(P_c[j, t]) * kVA_B for t in Tset]
         discharging_power_kW = [value(P_d[j, t]) * kVA_B for t in Tset]
-
-        # State of charge percentage, starting with Bref_pu for t=0 and continuing with B[t]
         soc = [Bref_pu[j] / B_R_pu[j] * 100; [value(B[j, t]) / B_R_pu[j] * 100 for t in Tset]]
 
-        # Use P_B_R[j] to set the y-limits for charging/discharging
         ylimit = (-P_B_R[j], P_B_R[j])
 
+        gr()
+
         # Create a plot for charging and discharging
-        charging_discharge_plot = bar(time_intervals, charging_power_kW, label="Charging", color=:green, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[kW]", ylim=ylimit, xticks=1:T)
-        bar!(time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
+        charging_discharge_plot = bar(
+            time_intervals, charging_power_kW,
+            label="Charging",
+            color=:green,
+            legend=:bottomleft,
+            xlabel="Time Interval " * L"t",
+            ylabel=L"P_c/P_d \, [kW]",
+            ylim=ylimit,
+            xticks=1:T,
+            gridstyle=:solid,
+            gridlinewidth=1.0,
+            gridalpha=0.2,
+            minorgrid=true,
+            minorgridstyle=:solid,
+            minorgridalpha=0.05,
+            title="Battery at Bus $(j)\nCharging and Discharging",
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(15, "Computer Modern"),
+            tickfontfamily="Computer Modern"
+        )
 
-        # Add a horizontal line at y=0 to clearly separate charging and discharging
-        hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)  # Add prominent black line at y=0
+        bar!(charging_discharge_plot, time_intervals, -discharging_power_kW, label="Discharging", color=:darkred)
 
-        # Add a title for each battery bus
-        bus_label = "Bus $j"
-        title!(charging_discharge_plot, "Battery at $bus_label\nCharging and Discharging")
+        hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)
 
-        # Create a plot for SOC, starting from t=0 with Bref_pu and continuing with the values in SOC
-        soc_plot = bar(0:T, soc, label="Battery State of Charge", color=:purple, legend=:bottomleft, xlabel="Time Interval Number", ylabel="[%]", ylim=(0, 100), xticks=0:T)
-        title!(soc_plot, "SOC")
+        # Create a plot for SOC
+        soc_plot = bar(
+            0:T, soc,
+            label=L"SOC",
+            color=:purple,
+            legend=:bottomleft,
+            xlabel="Time Interval " * L"t",
+            ylabel="SOC "*L"[\%]",
+            ylim=(soc_min[j]*100*0.95, soc_max[j]*100*1.10),
+            # ylim=(0, 100),
+            xticks=0:T,
+            yticks=5*(div(soc_min[j] * 100 * 0.95, 5)-1):10:5*(div(soc_max[j] * 100 * 1.05, 5)+1),
+            gridstyle=:solid,
+            gridlinewidth=1.0,
+            gridalpha=0.2,
+            minorgrid=true,
+            minorgridstyle=:solid,
+            minorgridalpha=0.05,
+            title="SOC",
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(15, "Computer Modern"),
+            tickfontfamily="Computer Modern"
+        )
 
         # Combine the two plots in a layout
         plot_combined = plot(charging_discharge_plot, soc_plot, layout=@layout([a; b]))
@@ -80,11 +109,13 @@ function plot_battery_actions(model, data;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            # Create the filename with the required format
             filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha).png")
             println("Saving plot to: $filename")
-            png(plot_combined, filename)
+            println("Hello2.3")
+            savefig(plot_combined, filename)
+            println("Hello2.4")
         end
+
     end
 end
 
