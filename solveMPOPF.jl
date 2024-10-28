@@ -484,11 +484,6 @@ optimal_obj_value = objective_value(model)
 println("Optimal objective function value: ", optimal_obj_value)
 
 verbose = true
-t = rand(1:T)
-myprintln(verbose, "P_Subs[t] = $(value(P_Subs[t]))")
-myprintln(verbose, "P[(1, 2), t] = $(value(P[(1, 2), t]))")
-myprintln(verbose, "P[(1, 3), t] = $(value(P[(1, 3), t]))")
-myprintln(verbose, "P[(1, 10), t] = $(value(P[(1, 10), t]))")
 
 begin
     # Define the output file path
@@ -513,7 +508,7 @@ plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
 data = compute_output_values(model, data)
 
-export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=true)
+export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=false)
 
 export_simulation_key_results_txt(model, data, filename="simulation_results.txt")
 
