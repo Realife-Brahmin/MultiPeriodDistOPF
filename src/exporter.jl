@@ -230,6 +230,10 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         println(f, "Full $(data[:T]) Hour Horizon")
 
         # Example metrics using the iterator
+        println(f, "$(item_counter). Horizon Total Cost of Substation Power: \$ $(round(data[:PSubsCost_allT_dollar], digits=2))")
+        item_counter += 1
+
+        # Example metrics using the iterator
         println(f, "$(item_counter). Horizon Total Line Loss: $(round(data[:PLoss_allT_kW], digits=2)) kW")
         item_counter += 1
 
