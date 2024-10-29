@@ -262,8 +262,6 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         # Battery-related metrics
         println(f, "$(item_counter). Horizon Total Battery Generation: $(round(data[:battery_real_power_allT_kW], digits=2)) kW + $(round(data[:battery_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-
-        # Todo: Add PV outputs too
         
         println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(data[:battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(data[:battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
