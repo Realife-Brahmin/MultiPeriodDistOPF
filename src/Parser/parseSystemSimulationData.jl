@@ -113,20 +113,20 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     if temporal_decmp == true
         temporalDecmpString = "Temporally Decomposed via DDP"
-        temporalDecmpAppendix = "temporald"
+        temporalDecmpAppendix = "tmrpl_dcmpsd"
     elseif temporal_decmp == false
         temporalDecmpString = "Temporally Brute-forced"
-        temporalDecmpAppendix = "_tmprl_bruteforced"
+        temporalDecmpAppendix = "tmprl_bruteforced"
     else
         @error "floc"
     end
 
     if numAreas > 1
         spatialDecString = "Spatially Decomposed into $(numAreas) areas"
-        spatialDecAppendix = "_spatd_$(numAreas)_areas"
+        spatialDecAppendix = "spat_dcmpsd_$(numAreas)_areas"
     elseif numAreas == 1
         spatialDecString = "Spatially Centralized"
-        spatialDecAppendix = "_spat_centr_system"
+        spatialDecAppendix = "spat_centr_system"
     else
         @error "floc"
     end
