@@ -322,4 +322,87 @@ function plot_line_losses(data;
     end
 end
 
+function plot_input_forecast_curves(data; showPlots::Bool=false, savePlots::Bool=true, filename::String="input_forecast_curves.png",
+filenameSuffix::String="nonspecific")
+
+    @unpack LoadShape, LoadShapePV, LoadShapeCost, T = data
+
+    # Prepare data for plotting
+    time_steps = 1:T
+    load_cost_cents = LoadShapeCost .* 100  # Convert from $/kWh to cents/kWh
+
+    # Calculate y-axis limits
+    left_min = 0.95 * minimum([minimum(LoadShape), minimum(LoadShapePV)])
+    left_max = 1.05 * maximum([maximum(LoadShape), maximum(LoadShapePV)])
+    right_min = 0.95 * minimum(load_cost_cents)
+    right_max = 1.05 * maximum(load_cost_cents)
+
+    gr()
+
+    # Plot LoadShape and LoadShapePV on the primary (left) y-axis
+    outputPlot = plot(
+        time_steps, LoadShape,
+        dpi=600,
+        label="Loading Factor "*L"(\lambda^t)",
+        xlabel="Time Period",
+        ylabel="Loading/Irradiance Factor [Dimensionless]",
+        legend=:bottomleft,
+        lw=2,
+        color=:blue,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.05,
+        ylims=(left_min, left_max),
+        title="Forecast Curves for Load, PV, and Cost",
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        right_margin=1cm
+    )
+
+    plot!(time_steps, LoadShapePV, 
+        label="Solar Irradiance "*L"(\lambda^t_{PV})", 
+        lw=2, 
+        color=:green
+    )
+
+    # Use twinx() for the secondary y-axis for LoadShapeCost
+    ax2 = twinx()
+    plot!(
+        ax2, time_steps, load_cost_cents,
+        label="Substation Power Cost "*L"(C^t)",
+        lw=2,
+        color=:red,
+        ylabel="Cost [cents/kWh]",
+        ylims=(right_min, right_max),
+        legend=:bottomright,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+
+    # Show the plot if requested
+    if showPlots
+        display(outputPlot)
+    end
+
+    # Saving plot if requested
+    if savePlots
+        @unpack systemName = data;
+        base_dir = joinpath("processedData", systemName, "Horizon_$(T)")
+        if !isdir(base_dir)
+            println("Creating directory: $base_dir")
+            mkpath(base_dir)
+        end
+        filename = joinpath(base_dir, "Horizon_$(T)_InputForecastCurves")
+        ext = ".png"
+        filename = filename*"_"*filenameSuffix*ext
+        println("Saving plot to: $filename")
+        savefig(outputPlot, filename)
+    end
+end
+
+
 end  # module Plotter
