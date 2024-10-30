@@ -399,8 +399,8 @@ filenameSuffix::String="nonspecific")
 
     # Saving plot if requested
     if savePlots
-        @unpack systemName = data;
-        base_dir = joinpath("processedData", systemName, "Horizon_$(T)")
+        @unpack systemName, gedAppendix = data;
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)")
         if !isdir(base_dir)
             println("Creating directory: $base_dir")
             mkpath(base_dir)
