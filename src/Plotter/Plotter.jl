@@ -261,7 +261,7 @@ function plot_line_losses(data;
     savePlots::Bool=true,
     macroItrNum::Int=1)
 
-    @unpack Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
+    @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
 
     yvalues = PLoss_vs_t_1toT_kW
 
@@ -306,7 +306,7 @@ function plot_line_losses(data;
 
     # Saving plot if requested
     if savePlots
-        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1",)
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",)
         if !isdir(base_dir)
             println("Creating directory: $base_dir")
             mkpath(base_dir)
