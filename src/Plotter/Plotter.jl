@@ -30,9 +30,8 @@ function plot_battery_actions(model, data;
     B = model[:B]
 
     # Set the base directory for saving plots
-    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)",
-        "batteryActionPlots", "numAreas_$(numAreas)",
-        "macroItr_$(macroItrNum)")
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",
+        "batteryActionPlots", "macroItr_$(macroItrNum)")
     if savePlots && !isdir(base_dir)
         println("Creating directory: $base_dir")
         mkpath(base_dir)
