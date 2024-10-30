@@ -513,7 +513,7 @@ export_decision_variables(model, data, filename="decision_variables.xlsx", verbo
 
 export_simulation_key_results_txt(model, data)
 
-plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=true)
+plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false)
 plot_substation_power(data)
 plot_substation_power_cost(data)
 plot_line_losses(data)
