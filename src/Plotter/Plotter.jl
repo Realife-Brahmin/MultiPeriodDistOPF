@@ -329,10 +329,11 @@ filenameSuffix::String="nonspecific")
     load_cost_cents = LoadShapeCost .* 100  # Convert from $/kWh to cents/kWh
 
     # Calculate y-axis limits
-    left_min = 0.95 * minimum([minimum(LoadShape), minimum(LoadShapePV)])
+    # left_min = 0.95 * minimum([minimum(LoadShape), minimum(LoadShapePV)])
+    left_min = -0.05
     left_max = 1.05 * maximum([maximum(LoadShape), maximum(LoadShapePV)])
-    right_min = 0.95 * minimum(load_cost_cents)
-    right_max = 1.05 * maximum(load_cost_cents)
+    right_min = floor(0.95 * minimum(load_cost_cents))
+    right_max = ceil(1.05 * maximum(load_cost_cents))
 
     gr()
     theme(common_theme)
@@ -347,6 +348,8 @@ filenameSuffix::String="nonspecific")
         lw=3,
         color=:darkgoldenrod2,
         markershape=:square,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
@@ -366,7 +369,9 @@ filenameSuffix::String="nonspecific")
         lw=3, 
         color=:orangered,
         markershape=:utriangle,
-        markersize=8
+        markersize=8,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width
     )
 
     # Use twinx() for the secondary y-axis for LoadShapeCost
@@ -376,8 +381,11 @@ filenameSuffix::String="nonspecific")
         label="Substation Power Cost "*L"(C^t)",
         lw=3,
         color=:darkgreen,
-        linestyle=:dashdot,
+        linestyle=:solid,
         markershape=:diamond,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
+        markersize=7,
         ylabel="Cost [cents/kWh]",
         ylims=(right_min, right_max),
         legend=:bottomright,
