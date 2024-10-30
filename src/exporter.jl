@@ -9,6 +9,8 @@ using Parameters: @unpack
 
 export export_decision_variables, export_simulation_key_results_txt
 
+using DelimitedFiles  # To write CSV files
+
 function export_decision_variables(model, data;
     filename::String="decision_variables.xlsx",
     verbose::Bool=false)
