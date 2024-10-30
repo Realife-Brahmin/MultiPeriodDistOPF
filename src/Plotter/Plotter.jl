@@ -338,23 +338,25 @@ filenameSuffix::String="nonspecific")
     right_max = 1.05 * maximum(load_cost_cents)
 
     gr()
-
+    theme(common_theme)
     # Plot LoadShape and LoadShapePV on the primary (left) y-axis
     outputPlot = plot(
         time_steps, LoadShape,
         dpi=600,
         label="Loading Factor "*L"(\lambda^t)",
-        xlabel="Time Period",
+        xlabel="Time Period "*L"t",
         ylabel="Loading/Irradiance Factor [Dimensionless]",
         legend=:bottomleft,
-        lw=2,
-        color=:blue,
+        lw=3,
+        color=:darkgoldenrod2,
+        markershape=:square,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.05,
         ylims=(left_min, left_max),
+        xticks=1:T,
         title="Forecast Curves for Load, PV, and Cost",
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
@@ -364,8 +366,10 @@ filenameSuffix::String="nonspecific")
 
     plot!(time_steps, LoadShapePV, 
         label="Solar Irradiance "*L"(\lambda^t_{PV})", 
-        lw=2, 
-        color=:green
+        lw=3, 
+        color=:orangered,
+        markershape=:utriangle,
+        markersize=8
     )
 
     # Use twinx() for the secondary y-axis for LoadShapeCost
@@ -373,8 +377,10 @@ filenameSuffix::String="nonspecific")
     plot!(
         ax2, time_steps, load_cost_cents,
         label="Substation Power Cost "*L"(C^t)",
-        lw=2,
-        color=:red,
+        lw=3,
+        color=:darkgreen,
+        linestyle=:dashdot,
+        markershape=:diamond,
         ylabel="Cost [cents/kWh]",
         ylims=(right_min, right_max),
         legend=:bottomright,
