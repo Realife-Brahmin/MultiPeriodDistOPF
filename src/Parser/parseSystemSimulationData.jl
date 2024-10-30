@@ -13,7 +13,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     objfun0 = "genCostMin",
     objfun2 = "scd",
     temporal_decmp = false,
-    PSubsMax_kW = Inf)
+    PSubsMax_kW = Inf,
+    inputForecastDescription = "nonspecific")
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -140,6 +141,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     sysSimData = Dict(
         :alpha => alpha, # user input
+        :inputForecastDescription => inputForecastDescription,
         :machine_ID => machine_ID,
         :macroItrsCompleted => macroItrsCompleted,
         :systemName => systemName, # user input
