@@ -12,9 +12,21 @@ export export_decision_variables, export_simulation_key_results_txt
 using DelimitedFiles  # To write CSV files
 
 function export_decision_variables(model, data;
-    filename::String="decision_variables.xlsx",
+    filename::String="decision_variables.csv",
     verbose::Bool=false)
 
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    if !isdir(base_dir)
+        println("Creating directory: $base_dir")
+        mkpath(base_dir)
+    end
+
+    ext = ".csv"
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
+    
     # Log current working directory
     myprintln(verbose, "Current working directory: $(pwd())")
 
@@ -43,150 +55,88 @@ function export_decision_variables(model, data;
     P_d = model[:P_d]
     B = model[:B]
 
-    # Use the `do` block syntax to ensure that the file is closed automatically
+    # Prepare data to write in CSV format as a matrix of strings
+    data_matrix = []
+
+    # First row: Time step "t"
+    push!(data_matrix, ["t"; Tset...])
+
+    # Second row: LoadShape values (lambda)
+    push!(data_matrix, ["lambda"; LoadShape...])
+
+    # Third row: Irradiance (LoadShapePV)
+    push!(data_matrix, ["Irrad"; LoadShapePV...])
+
+    # Fourth row: cents/kWh (LoadShapeCost)
+    push!(data_matrix, ["cents/kWh"; LoadShapeCost...])
+
+    # Next row: P_Subs for all time intervals
+    push!(data_matrix, ["P_Subs"; [value(P_Subs[t]) for t in Tset]...])
+
+    # Next rows: P_ij for all (i, j) pairs in Lset
+    for (i, j) in Lset
+        push!(data_matrix, ["P_ij_$(i)_$(j)"; [value(P[(i, j), t]) for t in Tset]...])
+    end
+
+    # Next rows: Q_ij for all (i, j) pairs in Lset
+    for (i, j) in Lset
+        push!(data_matrix, ["Q_ij_$(i)_$(j)"; [value(Q[(i, j), t]) for t in Tset]...])
+    end
+
+    # Next rows: l_ij for all (i, j) pairs in Lset
+    for (i, j) in Lset
+        push!(data_matrix, ["l_ij_$(i)_$(j)"; [value(l[(i, j), t]) for t in Tset]...])
+    end
+
+    # Next rows: v_j for all nodes in Nset
+    for j in Nset
+        push!(data_matrix, ["v_j_$(j)"; [value(v[j, t]) for t in Tset]...])
+    end
+
+    # Next rows: q_D_j for all PV buses in Dset
+    for j in Dset
+        push!(data_matrix, ["q_D_j_$(j)"; [value(q_D[j, t]) for t in Tset]...])
+    end
+
+    # Next rows: q_B_j for all battery buses in Bset
+    for j in Bset
+        push!(data_matrix, ["q_B_j_$(j)"; [value(q_B[j, t]) for t in Tset]...])
+    end
+
+    # Next rows: P_c_j for all battery buses in Bset
+    for j in Bset
+        push!(data_matrix, ["P_c_j_$(j)"; [value(P_c[j, t]) for t in Tset]...])
+    end
+
+    # Next rows: P_d_j for all battery buses in Bset
+    for j in Bset
+        push!(data_matrix, ["P_d_j_$(j)"; [value(P_d[j, t]) for t in Tset]...])
+    end
+
+    # Next rows: B_j for all battery buses in Bset
+    for j in Bset
+        push!(data_matrix, ["B_j_$(j)"; [value(B[j, t]) for t in Tset]...])
+    end
+
+    # Write the matrix to the CSV file
     try
         myprintln(verbose, "Opening file: $filename")
-        XLSX.openxlsx(filename, mode="w") do xf
-            myprintln(verbose, "File opened successfully.")
-            sheet = xf[1]
-
-            # Add the headers before the decision variables
-
-            # First header: "t"
-            row_index = 1
-            sheet[row_index, 1] = "t"
-            for t in Tset
-                sheet[row_index, t+1] = t
-            end
-            row_index += 1
-
-            # Second header: LoadShape values (lambda)
-            sheet[row_index, 1] = "lambda"
-            for t in eachindex(LoadShape)
-                sheet[row_index, t+1] = LoadShape[t]
-            end
-            row_index += 1
-
-            # Third header: Irradiance (LoadShapePV)
-            sheet[row_index, 1] = "Irrad"
-            for t in eachindex(LoadShapePV)
-                sheet[row_index, t+1] = LoadShapePV[t]
-            end
-            row_index += 1
-
-            # Fourth header: cents/kWh (LoadShapeCost)
-            sheet[row_index, 1] = "cents/kWh"
-            for t in eachindex(LoadShapeCost)
-                sheet[row_index, t+1] = LoadShapeCost[t]
-            end
-            row_index += 1
-
-            # Now start the original decision variables
-
-            # First row: P_Subs for all time intervals, sorted by t
-            sheet[row_index, 1] = "P_Subs"
-            for t in Tset
-                sheet[row_index, t+1] = value(P_Subs[t])
-            end
-            row_index += 1
-
-            # Next row: P_ij for all (i, j), with all time steps in one row, sorted by (i, j)
-            for (i, j) in Lset
-                sheet[row_index, 1] = "P_ij_$(i)_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(P[(i, j), t])
-                end
-                row_index += 1
-            end
-
-            # Next row: Q_ij for all (i, j), with all time steps in one row, sorted by (i, j)
-            for (i, j) in Lset
-                sheet[row_index, 1] = "Q_ij_$(i)_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(Q[(i, j), t])
-                end
-                row_index += 1
-            end
-
-            # Next row: l_ij for all (i, j), with all time steps in one row, sorted by (i, j)
-            for (i, j) in Lset
-                sheet[row_index, 1] = "l_ij_$(i)_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(l[(i, j), t])
-                end
-                row_index += 1
-            end
-
-            # Next row: v_j for all buses, with all time steps in one row, sorted by j
-            for j in Nset
-                sheet[row_index, 1] = "v_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(v[j, t])
-                end
-                row_index += 1
-            end
-
-            # Next row: q_D_j for all PV buses, with all time steps in one row, sorted by j
-            for j in Dset
-                sheet[row_index, 1] = "q_D_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(q_D[j, t])
-                end
-                row_index += 1
-            end
-
-            # Next row: q_B_j for all battery buses, with all time steps in one row, sorted by j
-            for j in Bset
-                sheet[row_index, 1] = "q_B_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(q_B[j, t])
-                end
-                row_index += 1
-            end
-
-            # Next row: P_c_j for all battery buses, with all time steps in one row, sorted by j
-            for j in Bset
-                sheet[row_index, 1] = "P_c_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(P_c[j, t])
-                end
-                row_index += 1
-            end
-
-            # Next row: P_d_j for all battery buses, with all time steps in one row, sorted by j
-            for j in Bset
-                sheet[row_index, 1] = "P_d_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(P_d[j, t])
-                end
-                row_index += 1
-            end
-
-            # Next row: B_j for all battery buses, with all time steps in one row, sorted by j
-            for j in Bset
-                sheet[row_index, 1] = "B_j_$(j)"
-                for t in Tset
-                    sheet[row_index, t+1] = value(B[j, t])
-                end
-                row_index += 1
-            end
-
-            myprintln(verbose, "Data written successfully.")
-        end
-
-        # Check if file was created
-        if isfile(filename)
-            myprintln(verbose, "File exists: $filename")
-        else
-            myprintln(verbose, "File does not exist: $filename")
-        end
-
+        writedlm(filename, data_matrix, ',')
+        myprintln(verbose, "Data written successfully.")
     catch e
         myprintln(verbose, "Error occurred: $e")
     end
 
+    # Check if file was created
+    if isfile(filename)
+        myprintln(verbose, "File exists: $filename")
+    else
+        myprintln(verbose, "File does not exist: $filename")
+    end
+
     myprintln(verbose, "Decision variables exported to $filename")
 end
+
 
 function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
 
