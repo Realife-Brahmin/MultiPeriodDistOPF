@@ -238,10 +238,7 @@ function plot_substation_power_cost(data;
         titlefont=font(8, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        # left_margin=10mm,   # Adds space to the left
-        # right_margin=10mm,  # Adds space to the right
         top_margin=5mm,    # Adds space at the top
-        # bottom_margin=10mm  # Adds space at the bottom
     )
 
     if showPlots
