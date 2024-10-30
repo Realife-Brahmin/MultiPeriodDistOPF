@@ -202,7 +202,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
     # Extract system information and parameters from `data`
     # system_name = data[:machine_ID]  # System name
     # horizon_duration = data[:T]  # Horizon duration
-    macroItrsCompleted = get(data, :macroItrsCompleted, 1)  # Default to 1 if not set
+    macroItrsCompleted = get(data, :macroItrsCompleted, 0)  # Default to 1 if not set
     solution_time = get(data, :solution_time, -1)  # Placeholder, real solution time
 
     # Open the file and write each section
@@ -279,7 +279,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
 
         # Additional Simulation Metadata
         println(f, "---------------------------------------------")
-        println(f, "$(item_counter). Number of Macro-Iterations: $(macroItrsCompleted)")
+        println(f, "$(item_counter). Number of Macro-Iterations: $(macroItrsCompleted+1)")
         item_counter += 1
         println(f, "$(item_counter). Simulation Time: $(round(solution_time, digits=2)) s")
         item_counter += 1
