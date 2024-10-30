@@ -22,7 +22,7 @@ function plot_battery_actions(model, data;
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
-    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max = data;
+    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max, gedAppendix = data;
     Tset = sort(collect(Tset))
 
     P_c = model[:P_c]
@@ -30,9 +30,8 @@ function plot_battery_actions(model, data;
     B = model[:B]
 
     # Set the base directory for saving plots
-    base_dir = joinpath("processedData", systemName, "numAreas_$(numAreas)",
-        "batteryActionPlots", "Horizon_$(T)",
-        "pv_$(DER_percent)_batt_$(Batt_percent)",
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)",
+        "batteryActionPlots", "numAreas_$(numAreas)",
         "macroItr_$(macroItrNum)")
     if savePlots && !isdir(base_dir)
         println("Creating directory: $base_dir")
@@ -145,7 +144,7 @@ function plot_substation_power(data;
     theme(common_theme)
 
     # Setup for saving plot
-    base_dir = joinpath("processedData", systemName, "numAreas_1", "Horizon_$(T)", gedAppendix)
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
     if savePlots && !isdir(base_dir)
         println("Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
@@ -247,7 +246,7 @@ function plot_substation_power_cost(data;
 
     # Saving plot if requested
     if savePlots
-        base_dir = joinpath("processedData", systemName, "numAreas_1", "Horizon_$(T)", gedAppendix)
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
         if !isdir(base_dir)
             println("Creating directory: $base_dir")
             mkpath(base_dir)
@@ -308,7 +307,7 @@ function plot_line_losses(data;
 
     # Saving plot if requested
     if savePlots
-        base_dir = joinpath("processedData", systemName, "numAreas_1", "Horizon_$(T)", gedAppendix)
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1",)
         if !isdir(base_dir)
             println("Creating directory: $base_dir")
             mkpath(base_dir)
