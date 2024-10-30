@@ -509,7 +509,7 @@ plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
 data = compute_output_values(model, data)
 
-export_decision_variables(model, data, filename="decision_variables.xlsx", verbose=false)
+export_decision_variables(model, data)
 
 export_simulation_key_results_txt(model, data)
 
