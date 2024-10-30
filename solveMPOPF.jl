@@ -14,13 +14,14 @@ temporal_decmp = false
 objfun0 = "subsPowerCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
+inputForecastDescription = "bilevelCosts"
 
 # Technically user inputs (can be handled as such) but not expected to be changed between sims
 alpha = 1e-3
 PSubsMax_kW = Inf # Inf means no limit
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription)
 
 # Import necessary packages
 using JuMP
@@ -512,6 +513,7 @@ export_decision_variables(model, data, filename="decision_variables.xlsx", verbo
 
 export_simulation_key_results_txt(model, data)
 
+plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=true)
 plot_substation_power(data)
 plot_substation_power_cost(data)
 plot_line_losses(data)

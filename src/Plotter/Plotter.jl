@@ -7,7 +7,7 @@ using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
 import Base.Filesystem: mkpath, isdir  # To create directories
 
-export plot_battery_actions, plot_line_losses, plot_substation_power, plot_substation_power_cost
+export plot_battery_actions, plot_input_forecast_curves, plot_line_losses, plot_substation_power, plot_substation_power_cost
 
 #good light themes: :bright, :dao, :gruvbox_light, :solarized_light, :vibrant, :wong, :wong2
 common_theme = :mute
