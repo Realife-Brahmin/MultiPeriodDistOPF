@@ -190,7 +190,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
 
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
-    base_dir = joinpath("processedData", systemName, "numAreas_$(numAreas)", "Horizon_$(T)", gedAppendix)
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
         println("Creating directory: $base_dir")
