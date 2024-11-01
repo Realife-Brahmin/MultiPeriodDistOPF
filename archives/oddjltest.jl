@@ -7,7 +7,7 @@ filename = joinpath(@__DIR__, "rawData", systemName, "Master.dss")
 dss("""
     clear
     redirect "$filename"
-    solve
+    ! solve
 """)
 
 function main()
