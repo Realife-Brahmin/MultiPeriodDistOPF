@@ -517,3 +517,5 @@ plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPl
 plot_substation_power(data)
 plot_substation_power_cost(data)
 plot_line_losses(data)
+
+validate_opf_against_opendss(model, data)
