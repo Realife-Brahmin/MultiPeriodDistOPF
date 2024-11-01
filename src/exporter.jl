@@ -7,9 +7,36 @@ import .helperFunctions: myprintln  # Import myprintln from the helperFunctions 
 
 using Parameters: @unpack
 
-export export_decision_variables, export_simulation_key_results_txt
+export export_decision_variables, export_optimization_model, export_simulation_key_results_txt
 
 using DelimitedFiles  # To write CSV files
+
+function export_optimization_model(model, data)
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    # Create the directory if it doesn't exist
+    if !isdir(base_dir)
+        println("Creating directory: $base_dir")
+        mkpath(base_dir)
+    end
+
+    # Define the filename with the appropriate structure
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
+
+    # Check if the file already exists, and delete it if so
+    if isfile(filename)
+        rm(filename)
+    end
+
+    # Open a new file and write the model contents to it
+    open(filename, "w") do f
+        print(f, model)
+    end
+
+    println("Model successfully written to $filename")
+end
 
 function export_decision_variables(model, data;
     filename::String="decision_variables.csv",
