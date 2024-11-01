@@ -486,22 +486,24 @@ println("Optimal objective function value: ", optimal_obj_value)
 
 verbose = true
 
-begin
-    # Define the output file path
-    filename = "model_output.txt"
+export_optimization_model(model, data)
 
-    # Check if the file exists, and delete it if it does
-    if isfile(filename)
-        rm(filename)
-    end
+# begin
+#     # Define the output file path
+#     filename = "model_output.txt"
 
-    # Open a new file and write the model contents to it
-    open(filename, "w") do f
-        print(f, model)
-    end
+#     # Check if the file exists, and delete it if it does
+#     if isfile(filename)
+#         rm(filename)
+#     end
 
-    println("Model successfully written to $filename")
-end
+#     # Open a new file and write the model contents to it
+#     open(filename, "w") do f
+#         print(f, model)
+#     end
+
+#     println("Model successfully written to $filename")
+# end
 
 plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
