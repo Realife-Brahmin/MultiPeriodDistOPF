@@ -76,7 +76,6 @@ end
 # Constraint h_1b_j: Nodal real power balance at non-substation nodes
 for t in Tset, j in Nm1set
     # Sum of real powers flowing from node j to its children
-    # sum_Pjk = sum(P[j, k, t] for k in children[j])
     sum_Pjk = isempty(children[j]) ? 0 : sum(P[(j, k), t] for k in children[j]) 
 
     # parent node i of node j
@@ -384,7 +383,6 @@ C, η_C, η_D = LoadShapeCost, eta_C, eta_D
 # Assume objfun0 and objfun2 are passed to the function that defines the model.
 if objfun0 == "powerflow"
     # Set the objective function to zero for powerflow
-    # @objective(model, Min, 0)
     objfun = 0
 elseif objfun0 == "subsPowerCostMin"
     # Define the base objective function (generation cost minimization)
@@ -487,23 +485,6 @@ println("Optimal objective function value: ", optimal_obj_value)
 verbose = true
 
 export_optimization_model(model, data)
-
-# begin
-#     # Define the output file path
-#     filename = "model_output.txt"
-
-#     # Check if the file exists, and delete it if it does
-#     if isfile(filename)
-#         rm(filename)
-#     end
-
-#     # Open a new file and write the model contents to it
-#     open(filename, "w") do f
-#         print(f, model)
-#     end
-
-#     println("Model successfully written to $filename")
-# end
 
 plot_battery_actions(model, data, showPlots=false, savePlots=true)
 
