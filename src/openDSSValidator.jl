@@ -41,12 +41,20 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     system_name = data[:systemName]
     dss_dir = joinpath(dirname(@__DIR__), "rawData", system_name)
     dss_file = joinpath(dss_dir, "Master.dss")
-
+    println(dss_file)
     # Initialize OpenDSS
     OpenDSSDirect.Text.Command("Clear")
     # OpenDSSDirect.Text.Command("Redirect $dss_file")
     OpenDSSDirect.Text.Command("Redirect '$dss_file'")
 
+
+    # List all components in the circuit
+    component_names = OpenDSSDirect.Circuit.AllElementNames()
+
+    # Display component names and types
+    for component in component_names
+        println("Component: $component")
+    end
 
     # Unpack data
     T = data[:T]
@@ -70,7 +78,7 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     for t in 1:T
         # Set power levels for PVs based on current timestep
         for pv_bus in Dset
-            OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_bus")
+            OpenDSSDirect.Circuit.SetActiveElement("PVSystem.pv$(pv_bus)")
             OpenDSSDirect.PVSystem.kW(pv_bus, load_shape_pv[t] * kVA_B)
         end
 
