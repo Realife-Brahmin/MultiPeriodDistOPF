@@ -482,23 +482,25 @@ end
 optimal_obj_value = objective_value(model)
 println("Optimal objective function value: ", optimal_obj_value)
 
-verbose = true
+verbose = false
+# verbose = true
 
-export_optimization_model(model, data)
+export_optimization_model(model, data, verbose=verbose)
 
-plot_battery_actions(model, data, showPlots=false, savePlots=true)
+plot_battery_actions(model, data, showPlots=false, savePlots=false, verbose=verbose)
 
 # Call the function after solving the model
 
-data = compute_output_values(model, data)
+data = compute_output_values(model, data, verbose=verbose)
 
-export_decision_variables(model, data)
+export_decision_variables(model, data, verbose=verbose)
 
-export_simulation_key_results_txt(model, data)
+export_simulation_key_results_txt(model, data, verbose=verbose)
 
-plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false)
-plot_substation_power(data)
-plot_substation_power_cost(data)
-plot_line_losses(data)
+savePlots = false
+plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
+plot_substation_power(data, savePlots=savePlots, verbose=verbose)
+plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
+plot_line_losses(data, savePlots=savePlots, verbose=verbose)
 
 validate_opf_against_opendss(model, data)
