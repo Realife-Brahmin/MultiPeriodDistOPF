@@ -44,7 +44,9 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
 
     # Initialize OpenDSS
     OpenDSSDirect.Text.Command("Clear")
-    OpenDSSDirect.Text.Command("Redirect $dss_file")
+    # OpenDSSDirect.Text.Command("Redirect $dss_file")
+    OpenDSSDirect.Text.Command("Redirect '$dss_file'")
+
 
     # Unpack data
     T = data[:T]
