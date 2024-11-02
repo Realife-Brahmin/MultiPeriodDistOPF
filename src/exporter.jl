@@ -11,7 +11,8 @@ export export_decision_variables, export_optimization_model, export_simulation_k
 
 using DelimitedFiles  # To write CSV files
 
-function export_optimization_model(model, data)
+function export_optimization_model(model, data;
+    verbose::Bool=false)
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -35,7 +36,7 @@ function export_optimization_model(model, data)
         print(f, model)
     end
 
-    println("Model successfully written to $filename")
+    myprintln(verbose, "Model successfully written to $filename")
 end
 
 function export_decision_variables(model, data;
@@ -172,7 +173,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
-        println("Creating directory: $base_dir")
+        myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)
     end
 

@@ -6,6 +6,8 @@ using Plots
 using Parameters: @unpack
 import JuMP: value  # Import JuMP's value function to extract values of decision variables
 import Base.Filesystem: mkpath, isdir  # To create directories
+include("../helperFunctions.jl")
+using .helperFunctions: myprintln
 
 export plot_battery_actions, plot_input_forecast_curves, plot_line_losses, plot_substation_power, plot_substation_power_cost
 
@@ -18,7 +20,8 @@ common_marker_stroke_width = 2.0
 function plot_battery_actions(model, data;
     showPlots::Bool=false,
     savePlots::Bool=true,
-    macroItrNum::Int=1)
+    macroItrNum::Int=1,
+    verbose::Bool=false)
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
@@ -33,7 +36,7 @@ function plot_battery_actions(model, data;
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",
         "batteryActionPlots", "macroItr_$(macroItrNum)")
     if savePlots && !isdir(base_dir)
-        println("Creating directory: $base_dir")
+        myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)
     end
 
@@ -124,7 +127,7 @@ function plot_battery_actions(model, data;
         # Save the plot if `savePlots` is true
         if savePlots
             filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha).png")
-            println("Saving plot to: $filename")
+            myprintln(verbose, "Saving plot to: $filename")
             savefig(plot_combined, filename)
         end
 
@@ -135,7 +138,8 @@ end
 function plot_substation_power(data;
     showPlots::Bool=false,
     savePlots::Bool=true,
-    macroItrNum::Int=1)
+    macroItrNum::Int=1,
+    verbose::Bool=false)
     @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix = data
 
     yvalues = PSubs_vs_t_1toT_kW
@@ -145,7 +149,7 @@ function plot_substation_power(data;
     # Setup for saving plot
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
     if savePlots && !isdir(base_dir)
-        println("Creating directory: $base_dir")
+        myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
     filename = joinpath(base_dir, "Horizon_$(T)_SubstationRealPowers_vs_t_for_$(objfunPrefix)_$(gedAppendix).png")
@@ -193,7 +197,7 @@ function plot_substation_power(data;
 
     # Save the plot if `savePlots` is true
     if savePlots
-        println("Saving plot to: $filename")
+        myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
 end
@@ -201,7 +205,8 @@ end
 function plot_substation_power_cost(data;
     showPlots::Bool=false,
     savePlots::Bool=true,
-    macroItrNum::Int=1)
+    macroItrNum::Int=1,
+    verbose::Bool=false)
 
     theme(common_theme)
 
@@ -247,11 +252,11 @@ function plot_substation_power_cost(data;
     if savePlots
         base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
         if !isdir(base_dir)
-            println("Creating directory: $base_dir")
+            myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
         filename = joinpath(base_dir, "Horizon_$(T)_SubstationPowerCost_vs_t_for_$(objfunString)_$(gedAppendix).png")
-        println("Saving plot to: $filename")
+        myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
 end
@@ -259,7 +264,8 @@ end
 function plot_line_losses(data;
     showPlots::Bool=false,
     savePlots::Bool=true,
-    macroItrNum::Int=1)
+    macroItrNum::Int=1,
+    verbose::Bool=false)
 
     @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
 
@@ -308,17 +314,17 @@ function plot_line_losses(data;
     if savePlots
         base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",)
         if !isdir(base_dir)
-            println("Creating directory: $base_dir")
+            myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
         filename = joinpath(base_dir, "Horizon_$(T)_LineLosses_vs_t_for_$(objfunString)_$(gedAppendix).png")
-        println("Saving plot to: $filename")
+        myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
 end
 
 function plot_input_forecast_curves(data; showPlots::Bool=false, savePlots::Bool=true, filename::String="input_forecast_curves.png",
-filenameSuffix::String="nonspecific")
+filenameSuffix::String="nonspecific", verbose::Bool=false)
 
     @unpack LoadShape, LoadShapePV, LoadShapeCost, T = data
 
@@ -402,13 +408,13 @@ filenameSuffix::String="nonspecific")
         @unpack systemName, gedAppendix = data;
         base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)")
         if !isdir(base_dir)
-            println("Creating directory: $base_dir")
+            myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
         filename = joinpath(base_dir, "Horizon_$(T)_InputForecastCurves")
         ext = ".png"
         filename = filename*"_"*filenameSuffix*ext
-        println("Saving plot to: $filename")
+        myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
 end

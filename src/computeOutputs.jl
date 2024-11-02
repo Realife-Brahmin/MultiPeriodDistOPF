@@ -9,7 +9,8 @@ using JuMP
 export compute_output_values
 using Parameters: @unpack, @pack!
 
-function compute_output_values(model, data)
+function compute_output_values(model, data;
+    verbose::Bool=false)
 
     # Initialize arrays of size T
     @unpack T = data;
