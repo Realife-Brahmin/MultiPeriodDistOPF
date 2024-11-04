@@ -19,6 +19,7 @@ OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 P_c = model[:P_c]
 P_d = model[:P_d]
 q_D = model[:q_D]
+q_B = model[:q_B]
 @unpack p_D_pu = data
 
 # Initialize results DataFrame
@@ -51,12 +52,10 @@ for t in 1:T
 
         charge_power_kW = value(P_d[storage_number, t]) * kVA_B
         discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
-        net_power_kW = charge_power_kW - discharge_power_kW
+        Pdc_t_kW = charge_power_kW - discharge_power_kW
+        q_B_t_kVAr = value(q_B[storage_number, t]) * kVA_B
 
-        # Use `Text.Command` to set battery values directly
-        OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$net_power_kW kvar=0")
-        OpenDSSDirect.Text.Command("Edit Storage.$storage_name State=" * (net_power_kW >= 0 ? "2" : "1"))
-
+        OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$(Pdc_t_kW) kvar=$(q_B_t_kVAr)")
         storage_id = Storages.Next()
     end
 
@@ -65,14 +64,37 @@ for t in 1:T
 
     # Retrieve circuit losses
     total_losses = OpenDSSDirect.Circuit.Losses() ./ 1000
-    # println(total_losses)
     results.PLoss_kW[t] = real(total_losses)
 
-    # Retrieve substation real and reactive power
-    OpenDSSDirect.Circuit.SetActiveElement("Line.L1")
-    substation_powers = OpenDSSDirect.CktElement.Powers()
-    results.PSubs_kW[t] = real(substation_powers[1])
-    results.QSubs_kVAr[t] = imag(substation_powers[1])
+    # Get substation bus and lines connected to it
+    substation_bus = get_source_bus()
+    substation_lines = get_substation_lines(substation_bus)
+
+    # Calculate the total substation power by summing power from each line
+    P_substation_total_kW = 0.0
+    Q_substation_total_kVAr = 0.0
+
+    for line in substation_lines
+        OpenDSSDirect.Circuit.SetActiveElement("Line.$line")
+        line_powers = OpenDSSDirect.CktElement.Powers()
+        P_line = sum(real(line_powers[1]))
+        Q_line = sum(imag(line_powers[1]))
+
+        P_substation_total_kW += P_line
+        Q_substation_total_kVAr += Q_line
+
+        # println("Line: $line, P_line: $P_line kW, Q_line: $Q_line kVAr")
+    end
+
+    # Also retrieve the VSource substation power for comparison
+    OpenDSSDirect.Circuit.SetActiveElement("Vsource.source")
+    vsource_powers = -OpenDSSDirect.CktElement.Powers()
+    P_vsource_kW = real(vsource_powers[1])
+    Q_vsource_kVAr = imag(vsource_powers[1])
+
+    # Store total substation power based on line summation
+    results.PSubs_kW[t] = P_substation_total_kW
+    results.QSubs_kVAr[t] = Q_substation_total_kVAr
 
     # Capture voltage magnitudes at all buses
     results.Voltages[t] = OpenDSSDirect.Circuit.AllBusMagPu()
@@ -81,9 +103,11 @@ for t in 1:T
     println("\n" * "*"^30)
     println("   Time Step: $t")
     println("*"^30)
-    println("   Power Loss      : $(results.PLoss_kW[t]) kW")
-    println("   Substation Power: $(results.PSubs_kW[t]) kW")
-    println("   Reactive Power  : $(results.QSubs_kVAr[t]) kVAr")
+    println("   Power Loss           : $(results.PLoss_kW[t]) kW")
+    println("   Substation Power (Lines): $P_substation_total_kW kW")
+    println("   Reactive Power (Lines)  : $Q_substation_total_kVAr kVAr")
+    println("   Substation Power (VSource): $P_vsource_kW kW")
+    println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
     println("*"^30 * "\n")
 end
 
