@@ -4,7 +4,7 @@ using CSV
 using DataFrames
 using OpenDSSDirect
 using Parameters: @unpack
-export validate_opf_against_opendss
+export get_source_bus, get_substation_lines, validate_opf_against_opendss
 
 # function validate_opf_against_opendss(model, data)
 #     # Extract systemName from data dictionary
@@ -118,6 +118,35 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     # Save the results
     CSV.write(filename, results)
     println("Validation results written to $filename")
+end
+
+function get_source_bus()
+    vsource_element = OpenDSSDirect.Vsources.First()
+    vsource_name = OpenDSSDirect.Vsources.Name()
+    OpenDSSDirect.Circuit.SetActiveElement("Vsource.$vsource_name")
+    source_bus = OpenDSSDirect.CktElement.BusNames()[1]
+    return source_bus
+end
+
+function get_substation_lines(substation_bus::String)
+    substation_lines = []
+
+    # Iterate over all lines in the circuit
+    line_id = Lines.First()
+    while line_id > 0
+        line_name = Lines.Name()
+        OpenDSSDirect.Circuit.SetActiveElement("Line.$line_name")
+        bus1 = OpenDSSDirect.CktElement.BusNames()[1]
+        bus2 = OpenDSSDirect.CktElement.BusNames()[2]
+
+        if bus1 == substation_bus || bus2 == substation_bus
+            push!(substation_lines, line_name)
+        end
+
+        line_id = Lines.Next()
+    end
+
+    return substation_lines
 end
 
 end # module openDSSValidator
