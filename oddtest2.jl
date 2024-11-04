@@ -13,18 +13,13 @@ OpenDSSDirect.Text.Command("Clear")
 OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 
 # Unpack data
-@unpack T, kVA_B, LoadShapePV, Dset, Bset = data;
-# T = data[:T]
-# kVA_B = data[:kVA_B]
-# load_shape_pv = data[:LoadShapePV]
-# @unpack Dset, Bset = data  # PV and Battery bus sets
+@unpack T, kVA_B, LoadShapePV, Dset, Bset = data
 
 # Extract battery charge (P_c) and discharge (P_d) from the model
 P_c = model[:P_c]
 P_d = model[:P_d]
 q_D = model[:q_D]
-# p_D_pu = data[:p_D_pu]
-@unpack p_D_pu = data;
+@unpack p_D_pu = data
 
 # Initialize results DataFrame
 results = DataFrame(
@@ -40,12 +35,11 @@ for t in 1:T
     pv_id = PVsystems.First()
     while pv_id > 0
         pv_name = PVsystems.Name()
-        pv_number = parse(Int, split(pv_name, "pv")[2])  # Extract numeric part from name
+        pv_number = parse(Int, split(pv_name, "pv")[2])
 
-        p_D_t_kW = p_D_pu[pv_number] * kVA_B * LoadShapePV[t] 
-        # pv_kW = value(p_D[pv_number, t]) * kVA_B
-        PVsystems.kW() = p_D_t_kW  # Set real power output for the PV system
-        PVsystems.kvar() = q_D[pv_number, t]  # Set reactive power output for the PV system if needed
+        p_D_t_kW = p_D_pu[pv_number] * kVA_B * LoadShapePV[t]
+        PVsystems.kW() = p_D_t_kW
+        PVsystems.kvar() = q_D[pv_number, t]
         pv_id = PVsystems.Next()
     end
 
@@ -53,14 +47,16 @@ for t in 1:T
     storage_id = Storages.First()
     while storage_id > 0
         storage_name = Storages.Name()
-        storage_number = parse(Int, split(storage_name, "battery")[2])  # Extract numeric part from name
+        storage_number = parse(Int, split(storage_name, "battery")[2])
 
         charge_power_kW = value(P_d[storage_number, t]) * kVA_B
         discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
         net_power_kW = charge_power_kW - discharge_power_kW
 
-        Storages.kW() = net_power_kW  # Set net real power for the storage
-        Storages.kvar(0.0)         # Set reactive power for the storage if needed
+        # Use `Text.Command` to set battery values directly
+        OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$net_power_kW kvar=0")
+        OpenDSSDirect.Text.Command("Edit Storage.$storage_name State=" * (net_power_kW >= 0 ? "2" : "1"))
+
         storage_id = Storages.Next()
     end
 
@@ -68,22 +64,30 @@ for t in 1:T
     OpenDSSDirect.Solution.Solve()
 
     # Retrieve circuit losses
-    total_losses = OpenDSSDirect.Circuit.Losses() ./ 1000  # Convert W to kW
-    results.PLoss_kW[t] = total_losses[1]
+    total_losses = OpenDSSDirect.Circuit.Losses() ./ 1000
+    # println(total_losses)
+    results.PLoss_kW[t] = real(total_losses)
 
     # Retrieve substation real and reactive power
     OpenDSSDirect.Circuit.SetActiveElement("Line.L1")
     substation_powers = OpenDSSDirect.CktElement.Powers()
-    results.PSubs_kW[t] = sum(substation_powers[1:2:end])  # Summing real power across phases
-    results.QSubs_kVAr[t] = sum(substation_powers[2:2:end])  # Summing reactive power across phases
+    results.PSubs_kW[t] = real(substation_powers[1])
+    results.QSubs_kVAr[t] = imag(substation_powers[1])
 
     # Capture voltage magnitudes at all buses
-    results.Voltages[t] = OpenDSSDirect.Circuit.AllBusVmagPu()
+    results.Voltages[t] = OpenDSSDirect.Circuit.AllBusMagPu()
 
     # Print the key results for this timestep
-    println("Time: $t, PLoss: $(results.PLoss_kW[t]) kW, PSubs: $(results.PSubs_kW[t]) kW, QSubs: $(results.QSubs_kVAr[t]) kVAr")
+    println("\n" * "*"^30)
+    println("   Time Step: $t")
+    println("*"^30)
+    println("   Power Loss      : $(results.PLoss_kW[t]) kW")
+    println("   Substation Power: $(results.PSubs_kW[t]) kW")
+    println("   Reactive Power  : $(results.QSubs_kVAr[t]) kVAr")
+    println("*"^30 * "\n")
 end
 
 # Save the results
+filename = "validation_results.csv"
 CSV.write(filename, results)
 println("Validation results written to $filename")
