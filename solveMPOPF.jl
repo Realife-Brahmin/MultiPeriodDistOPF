@@ -503,4 +503,13 @@ plot_substation_power(data, savePlots=savePlots, verbose=verbose)
 plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
 plot_line_losses(data, savePlots=savePlots, verbose=verbose)
 
-validate_opf_against_opendss(model, data)
+# validate_opf_against_opendss(model, data)
+
+# function validate_opf_against_opendss_beta(model, data; filename="validation_results.csv")
+
+# end
+
+using OpenDSSDirect
+using CSV, DataFrames
+
+# validate_opf_against_opendss_beta(model, data)

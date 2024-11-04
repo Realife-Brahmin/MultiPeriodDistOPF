@@ -17,7 +17,7 @@ export validate_opf_against_opendss
 #     dss("""
 #         clear
 #         redirect "$filename"
-#         ! solve
+#         // solve
 #     """)
 
 #     # Initialize load aggregation variables
