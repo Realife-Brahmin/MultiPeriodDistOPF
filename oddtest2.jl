@@ -46,9 +46,11 @@ for t in 1:T
         pv_number = parse(Int, split(pv_name, "pv")[2])
 
         p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-        println("p_D_t_kW for t = $t = $p_D_t_kW")
+        println("p_D_t_kW set for t = $(t) for bus $(pv_number) = $(p_D_t_kW) kW")
         PVsystems.kW() = p_D_t_kW
-        PVsystems.kvar() = value(q_D[pv_number, t]) * kVA_B
+        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+        println("q_D_t_kVAr set for t = $(t) for bus $(pv_number) = $(q_D_t_kVAr) kVAr")
+        PVsystems.kvar() = q_D_t_kVAr
         pv_id = PVsystems.Next()
     end
 
@@ -121,13 +123,19 @@ for t in 1:T
     # Sum up the PV systems
     pv_id = PVsystems.First()
     while pv_id > 0
+        pv_name = PVsystems.Name()
+        pv_number = parse(Int, split(pv_name, "pv")[2])
+        
+        println("p_D_t_kW_ODD for t = $t for bus $pv_number = $(PVsystems.kW()) kW")
+        println("q_D_t_kVAr_ODD for t = $t for bus $pv_number = $(PVsystems.kvar()) kVAr")
+
         total_pv_kW += PVsystems.kW()
         total_pv_kVAr += PVsystems.kvar()
         pv_id = PVsystems.Next()
     end
 
-    # println("total_pv_kVAr = $(total_pv_kVAr)")
-    println("total_pv_kW = $(total_pv_kW)")
+    println("total_pv_kW_ODD = $(total_pv_kW) kW")
+    println("total_pv_kVAr_ODD for t = $t = $(total_pv_kVAr) kVAr")
 
     # Sum up the battery storage based on power flow
     battery_names = Storages.AllNames()
