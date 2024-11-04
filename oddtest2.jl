@@ -14,6 +14,7 @@ OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 
 # Unpack data
 @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
+LoadShapeSim = data[:LoadShape]
 
 # Extract battery charge (P_c) and discharge (P_d) from the model
 P_c = model[:P_c]
@@ -28,6 +29,12 @@ results = DataFrame(
     PLoss_kW=zeros(T),
     PSubs_kW=zeros(T),
     QSubs_kVAr=zeros(T),
+    TotalLoad_kW=zeros(T),
+    TotalLoad_kVAr=zeros(T),
+    TotalPV_kW=zeros(T),
+    TotalPV_kVAr=zeros(T),
+    TotalBattery_kW=zeros(T),
+    TotalBattery_kVAr=zeros(T),
     Voltages=Vector{Vector{Float64}}(undef, T)
 )
 
@@ -38,9 +45,10 @@ for t in 1:T
         pv_name = PVsystems.Name()
         pv_number = parse(Int, split(pv_name, "pv")[2])
 
-        p_D_t_kW = p_D_pu[pv_number] * kVA_B * LoadShapePV[t]
+        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+        println("p_D_t_kW for t = $t = $p_D_t_kW")
         PVsystems.kW() = p_D_t_kW
-        PVsystems.kvar() = q_D[pv_number, t]
+        PVsystems.kvar() = value(q_D[pv_number, t]) * kVA_B
         pv_id = PVsystems.Next()
     end
 
@@ -82,8 +90,6 @@ for t in 1:T
 
         P_substation_total_kW += P_line
         Q_substation_total_kVAr += Q_line
-
-        # println("Line: $line, P_line: $P_line kW, Q_line: $Q_line kVAr")
     end
 
     # Also retrieve the VSource substation power for comparison
@@ -96,6 +102,50 @@ for t in 1:T
     results.PSubs_kW[t] = P_substation_total_kW
     results.QSubs_kVAr[t] = Q_substation_total_kVAr
 
+    # Calculate and store total load, PV power, and battery power
+    total_load_kW = 0.0
+    total_load_kVAr = 0.0
+    total_pv_kW = 0.0
+    total_pv_kVAr = 0.0
+    total_battery_kW = 0.0
+    total_battery_kVAr = 0.0
+
+    # Sum up the loads
+    load_id = Loads.First()
+    while load_id > 0
+        total_load_kW += Loads.kW() * LoadShapeSim[t]
+        total_load_kVAr += Loads.kvar() * LoadShapeSim[t]
+        load_id = Loads.Next()
+    end
+
+    # Sum up the PV systems
+    pv_id = PVsystems.First()
+    while pv_id > 0
+        total_pv_kW += PVsystems.kW()
+        total_pv_kVAr += PVsystems.kvar()
+        pv_id = PVsystems.Next()
+    end
+
+    # println("total_pv_kVAr = $(total_pv_kVAr)")
+    println("total_pv_kW = $(total_pv_kW)")
+
+    # Sum up the battery storage based on power flow
+    battery_names = Storages.AllNames()
+    for battery in battery_names
+        Circuit.SetActiveElement("Storage.$battery")
+        battery_powers = CktElement.Powers()
+        total_battery_kW += -real(battery_powers[1])
+        total_battery_kVAr += -imag(battery_powers[1])
+    end
+
+    # Store the computed values in results DataFrame
+    results.TotalLoad_kW[t] = total_load_kW
+    results.TotalLoad_kVAr[t] = total_load_kVAr
+    results.TotalPV_kW[t] = total_pv_kW
+    results.TotalPV_kVAr[t] = total_pv_kVAr
+    results.TotalBattery_kW[t] = total_battery_kW
+    results.TotalBattery_kVAr[t] = total_battery_kVAr
+
     # Capture voltage magnitudes at all buses
     results.Voltages[t] = Circuit.AllBusMagPu()
 
@@ -103,11 +153,17 @@ for t in 1:T
     println("\n" * "*"^30)
     println("   Time Step: $t")
     println("*"^30)
-    println("   Power Loss           : $(results.PLoss_kW[t]) kW")
+    println("   Power Loss              : $(results.PLoss_kW[t]) kW")
     println("   Substation Power (Lines): $P_substation_total_kW kW")
     println("   Reactive Power (Lines)  : $Q_substation_total_kVAr kVAr")
     println("   Substation Power (VSource): $P_vsource_kW kW")
     println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
+    println("   Total Load Power        : $(results.TotalLoad_kW[t]) kW")
+    println("   Total Load Reactive Power: $(results.TotalLoad_kVAr[t]) kVAr")
+    println("   Total PV Power          : $(results.TotalPV_kW[t]) kW")
+    println("   Total PV Reactive Power : $(results.TotalPV_kVAr[t]) kVAr")
+    println("   Total Battery Power     : $(results.TotalBattery_kW[t]) kW")
+    println("   Total Battery Reactive Power: $(results.TotalBattery_kVAr[t]) kVAr")
     println("*"^30 * "\n")
 end
 
