@@ -60,10 +60,10 @@ for t in 1:T
     end
 
     # Solve the power flow
-    OpenDSSDirect.Solution.Solve()
+    Solution.Solve()
 
     # Retrieve circuit losses
-    total_losses = OpenDSSDirect.Circuit.Losses() ./ 1000
+    total_losses = Circuit.Losses() ./ 1000
     results.PLoss_kW[t] = real(total_losses)
 
     # Get substation bus and lines connected to it
@@ -75,8 +75,8 @@ for t in 1:T
     Q_substation_total_kVAr = 0.0
 
     for line in substation_lines
-        OpenDSSDirect.Circuit.SetActiveElement("Line.$line")
-        line_powers = OpenDSSDirect.CktElement.Powers()
+        Circuit.SetActiveElement("Line.$line")
+        line_powers = CktElement.Powers()
         P_line = sum(real(line_powers[1]))
         Q_line = sum(imag(line_powers[1]))
 
@@ -87,8 +87,8 @@ for t in 1:T
     end
 
     # Also retrieve the VSource substation power for comparison
-    OpenDSSDirect.Circuit.SetActiveElement("Vsource.source")
-    vsource_powers = -OpenDSSDirect.CktElement.Powers()
+    Circuit.SetActiveElement("Vsource.source")
+    vsource_powers = -CktElement.Powers()
     P_vsource_kW = real(vsource_powers[1])
     Q_vsource_kVAr = imag(vsource_powers[1])
 
@@ -97,7 +97,7 @@ for t in 1:T
     results.QSubs_kVAr[t] = Q_substation_total_kVAr
 
     # Capture voltage magnitudes at all buses
-    results.Voltages[t] = OpenDSSDirect.Circuit.AllBusMagPu()
+    results.Voltages[t] = Circuit.AllBusMagPu()
 
     # Print the key results for this timestep
     println("\n" * "*"^30)
