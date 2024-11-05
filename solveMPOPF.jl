@@ -5,7 +5,7 @@ using Parameters: @unpack
 
 Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
-T = 12
+T = 3
 numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
@@ -22,6 +22,7 @@ data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=obj
 
 model = optimize_MPOPF_1ph_NL(data)
 
+# postsim computation, plotting, logging
 begin
 
     verbose = false
