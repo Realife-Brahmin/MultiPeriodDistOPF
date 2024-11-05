@@ -10,6 +10,9 @@ using .functionRetriever
 include("./helperFunctions.jl")
 using .helperFunctions: myprintln
 
+include("./playbook_of_mpopf.jl")
+using .Playbook_of_MPOPF
+
 include("./Parser/parseOpenDSSFiles.jl")
 using .parseOpenDSSFiles
 
@@ -36,6 +39,7 @@ export compute_output_values,
     get_source_bus,
     get_substation_lines,
     myprintln,
+    optimize_MPOPF_1ph_NL,
     parse_all_data,
     parse_battery_data,
     parse_branch_data,
