@@ -483,36 +483,26 @@ data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=obj
 
 model = optimize_MPOPF_1ph_NL(data)
 
-verbose = false
-# verbose = true
+begin
 
-export_optimization_model(model, data, verbose=verbose)
+    verbose = false
+    # verbose = true
 
-plot_battery_actions(model, data, showPlots=false, savePlots=false, verbose=verbose)
+    export_optimization_model(model, data, verbose=verbose)
 
-# Call the function after solving the model
+    plot_battery_actions(model, data, showPlots=false, savePlots=false, verbose=verbose)
 
-data = compute_output_values(model, data, verbose=verbose)
+    data = compute_output_values(model, data, verbose=verbose)
 
-export_decision_variables(model, data, verbose=verbose)
+    export_decision_variables(model, data, verbose=verbose)
 
-# Todo: Maybe separtely save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
-export_simulation_key_results_txt(model, data, verbose=verbose)
+    # Todo: Maybe separtely save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
+    export_simulation_key_results_txt(model, data, verbose=verbose)
 
-savePlots = false
-savePlots = true
-plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
-plot_substation_power(data, savePlots=savePlots, verbose=verbose)
-plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
-plot_line_losses(data, savePlots=savePlots, verbose=verbose)
-
-# validate_opf_against_opendss(model, data)
-
-# function validate_opf_against_opendss_beta(model, data; filename="validation_results.csv")
-
-# end
-
-using OpenDSSDirect
-using CSV, DataFrames
-
-# validate_opf_against_opendss_beta(model, data)
+    savePlots = false
+    # savePlots = true
+    plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
+    plot_substation_power(data, savePlots=savePlots, verbose=verbose)
+    plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
+    plot_line_losses(data, savePlots=savePlots, verbose=verbose)
+end
