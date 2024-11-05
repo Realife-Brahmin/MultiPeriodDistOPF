@@ -167,7 +167,18 @@ for t in 1:T
     println("*"^30 * "\n")
 end
 
-# Save the results
-filename = "validation_results.csv"
+# Define the path and filename based on the specified structure
+@unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
+base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+# Create the directory if it doesn't exist
+if !isdir(base_dir)
+    println("Creating directory: $base_dir")
+    mkpath(base_dir)
+end
+
+# Define the filename with the appropriate structure
+filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+
 CSV.write(filename, results)
 println("Validation results written to $filename")
