@@ -1,6 +1,7 @@
 using OpenDSSDirect
 using CSV, DataFrames
 using Parameters: @unpack
+using JuMP: value
 
 # Set paths for DSS files
 system_name = data[:systemName]
