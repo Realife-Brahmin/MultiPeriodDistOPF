@@ -40,20 +40,6 @@ results = DataFrame(
 )
 
 for t in 1:T
-    # # Set power levels for PV systems
-    # pv_id = PVsystems.First()
-    # while pv_id > 0
-    #     pv_name = PVsystems.Name()
-    #     pv_number = parse(Int, split(pv_name, "pv")[2])
-
-    #     p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-    #     println("p_D_t_kW set for t = $(t) for bus $(pv_number) = $(p_D_t_kW) kW")
-    #     PVsystems.kW() = p_D_t_kW
-    #     q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
-    #     println("q_D_t_kVAr set for t = $(t) for bus $(pv_number) = $(q_D_t_kVAr) kVAr")
-    #     PVsystems.kvar() = q_D_t_kVAr
-    #     pv_id = PVsystems.Next()
-    # end
 
     # Set power levels for PV systems
     pv_id = PVsystems.First()
@@ -166,31 +152,6 @@ for t in 1:T
         total_pv_kVAr += actual_q_D_kVAr
     end
 
-    # # Verify post-powerflow PV values
-    # pv_id = PVsystems.First()
-    # while pv_id > 0
-    #     pv_name = PVsystems.Name()
-    #     OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
-    #     actual_p_D_kW = PVsystems.Pmpp()
-    #     actual_q_D_kVAr = PVsystems.kvar()
-    #     println("Post-powerflow PV values for $pv_name: kW = $actual_p_D_kW, kvar = $actual_q_D_kVAr")
-    #     pv_id = PVsystems.Next()
-    # end
-
-    # Sum up the PV systems
-    # pv_id = PVsystems.First()
-    # while pv_id > 0
-    #     pv_name = PVsystems.Name()
-    #     pv_number = parse(Int, split(pv_name, "pv")[2])
-        
-    #     println("p_D_t_kW_ODD for t = $t for bus $pv_number = $(PVsystems.Pmpp()) kW")
-    #     println("q_D_t_kVAr_ODD for t = $t for bus $pv_number = $(PVsystems.kvar()) kVAr")
-
-    #     total_pv_kW += PVsystems.Pmpp()
-    #     total_pv_kVAr += PVsystems.kvar()
-    #     pv_id = PVsystems.Next()
-    # end
-
     println("total_pv_kW_ODD = $(total_pv_kW) kW")
     println("total_pv_kVAr_ODD for t = $t = $(total_pv_kVAr) kVAr")
 
@@ -219,8 +180,6 @@ for t in 1:T
     println("   Time Step: $t")
     println("*"^30)
     println("   Power Loss              : $(results.PLoss_kW[t]) kW")
-    # println("   Substation Power (Lines): $P_substation_total_kW kW")
-    # println("   Reactive Power (Lines)  : $Q_substation_total_kVAr kVAr")
     println("   Substation Power (VSource): $P_vsource_kW kW")
     println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
     println("   Total Load Power        : $(results.TotalLoad_kW[t]) kW")
