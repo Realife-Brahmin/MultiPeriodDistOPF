@@ -5,7 +5,7 @@ using Parameters: @unpack
 
 Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
-T = 3
+T = 12
 numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
@@ -500,6 +500,7 @@ export_decision_variables(model, data, verbose=verbose)
 export_simulation_key_results_txt(model, data, verbose=verbose)
 
 savePlots = false
+savePlots = true
 plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
 plot_substation_power(data, savePlots=savePlots, verbose=verbose)
 plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
