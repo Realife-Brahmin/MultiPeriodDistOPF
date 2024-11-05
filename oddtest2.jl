@@ -15,14 +15,14 @@ OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 
 # Unpack data
 @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
-LoadShapeSim = data[:LoadShape]
+LoadShapeSim = data[:LoadShape];
 
 # Extract battery charge (P_c) and discharge (P_d) from the model
-P_c = model[:P_c]
-P_d = model[:P_d]
-q_D = model[:q_D]
-q_B = model[:q_B]
-@unpack p_D_pu = data
+P_c = model[:P_c];
+P_d = model[:P_d];
+q_D = model[:q_D];
+q_B = model[:q_B];
+@unpack p_D_pu = data;
 
 # Initialize results DataFrame
 results = DataFrame(
