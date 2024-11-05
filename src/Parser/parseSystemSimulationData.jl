@@ -112,6 +112,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
         objfunAppendix = ""
     end
 
+    objfunConciseDescription = objfunPrefix*"_"*objfunAppendix 
+
     if temporal_decmp == true
         temporalDecmpString = "Temporally Decomposed via DDP"
         temporalDecmpAppendix = "tmrpl_dcmpsd"
@@ -159,6 +161,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :objfunSense => objfunSense,
         :objfunPrefix => objfunPrefix,
         :objfunAppendix => objfunAppendix,
+        :objfunConciseDescription => objfunConciseDescription,
         :objfunUnit => objfunUnit,
         :PSubsMax_kW => PSubsMax_kW,
         :simNatureAppendix => simNatureAppendix,
