@@ -3,6 +3,11 @@ using CSV, DataFrames
 using Parameters: @unpack
 using JuMP: value
 
+include("src/helperFunctions.jl")
+using .helperFunctions: myprintln
+
+verbose = false
+
 # Set paths for DSS files
 system_name = data[:systemName]
 dss_dir = joinpath(@__DIR__, "rawData", system_name)
@@ -55,7 +60,7 @@ for t in 1:T
         p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
         q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
 
-        println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
+        myprintln(verbose, "Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
 
         # Attempt to set the real and reactive power for the PV system
         PVsystems.Pmpp(p_D_t_kW)
@@ -76,17 +81,19 @@ for t in 1:T
         # Assuming the storage name has a numeric suffix that corresponds to the index in the optimization variables
         storage_number = parse(Int, split(storage_name, "battery")[2])
 
-        charge_power_kW = value(P_d[storage_number, t]) * kVA_B
-        discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
+        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
+        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
 
         # Calculate net power for the battery (discharge - charge)
         net_power_kW = discharge_power_kW - charge_power_kW
         reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
 
         # Construct the OpenDSS command to set the battery's active and reactive power
-        command_str = "Edit Storage.$storage_name kW=$net_power_kW kvar=$reactive_power_kVAr"
-        println(command_str)
-        println("Executing command for storage $storage_name at t = $t: $command_str")
+        # command_str = "Edit Storage.$storage_name kW=$net_power_kW kvar=$reactive_power_kVAr"
+        command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
+
+        println("t = $t: "*command_str)
+        # println("Executing command for storage $storage_name at t = $t: $command_str")
 
         # Execute the command
         OpenDSSDirect.Text.Command(command_str)
@@ -152,7 +159,7 @@ for t in 1:T
         total_load_kVAr += actual_load_kVAr
     end
 
-    println("Total Load Power after power flow solution: kW = $(total_load_kW), kvar = $(total_load_kVAr)")
+    myprintln(verbose, "Total Load Power after power flow solution: kW = $(total_load_kW), kvar = $(total_load_kVAr)")
 
     total_pv_kW = 0.0
     total_pv_kVAr = 0.0
