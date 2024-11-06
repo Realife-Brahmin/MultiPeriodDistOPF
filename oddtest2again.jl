@@ -41,13 +41,13 @@ results = Dict(
     :vald_PSubs_vs_t_1toT_kW => zeros(T),
     :vald_QLoss_vs_t_1toT_kVAr => zeros(T),
     :vald_QSubs_vs_t_1toT_kVAr => zeros(T),
-    :TotalLoad_kW => zeros(T),
-    :TotalLoad_kVAr => zeros(T),
-    :TotalPV_kW => zeros(T),
-    :TotalPV_kVAr => zeros(T),
-    :TotalBattery_kW => zeros(T),
-    :TotalBattery_kVAr => zeros(T),
-    :Voltages => Vector{Vector{Float64}}(undef, T),
+    :vald_load_real_power_vs_t_1toT_kW => zeros(T),
+    :vald_load_reactive_power_vs_t_1toT_kVAr => zeros(T),
+    :vald_pv_real_power_vs_t_1toT_kW => zeros(T),
+    :vald_pv_reactive_power_vs_t_1toT_kVAr => zeros(T),
+    :vald_battery_real_power_vs_t_1toT_kW => zeros(T),
+    :vald_battery_reactive_power_vs_t_1toT_kVAr => zeros(T),
+    :vald_voltages_vs_t_1toT_pu => Vector{Vector{Float64}}(undef, T),
 
     # Cumulative fields
     :vald_PLoss_allT_kW => 0.0,
@@ -149,8 +149,8 @@ for t in 1:T
         total_load_kVAr += actual_load_kVAr
     end
 
-    results[:TotalLoad_kW][t] = total_load_kW
-    results[:TotalLoad_kVAr][t] = total_load_kVAr
+    results[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_kW
+    results[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_kVAr
     results[:vald_total_load_real_power_allT_kW] += total_load_kW
     results[:vald_total_load_reactive_power_allT_kVAr] += total_load_kVAr
 
@@ -165,8 +165,8 @@ for t in 1:T
         total_pv_kVAr += actual_q_D_kVAr
     end
 
-    results[:TotalPV_kW][t] = total_pv_kW
-    results[:TotalPV_kVAr][t] = total_pv_kVAr
+    results[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_kW
+    results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_kVAr
     results[:vald_total_gen_real_power_allT_kW] += total_pv_kW
     results[:vald_total_gen_reactive_power_allT_kVAr] += total_pv_kVAr
 
@@ -180,11 +180,11 @@ for t in 1:T
         total_battery_kVAr += imag(battery_powers[1])
     end
 
-    results[:TotalBattery_kW][t] = total_battery_kW
-    results[:TotalBattery_kVAr][t] = total_battery_kVAr
+    results[:vald_battery_real_power_vs_t_1toT_kW][t] = total_battery_kW
+    results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = total_battery_kVAr
 
     # Capture voltage magnitudes at all buses
-    results[:Voltages][t] = Circuit.AllBusMagPu()
+    results[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
 
     # Print the key results for this timestep
     println("\n" * "*"^30)
@@ -193,12 +193,12 @@ for t in 1:T
     println("   Power Loss              : $(results[:vald_PLoss_vs_t_1toT_kW][t]) kW")
     println("   Substation Power (VSource): $P_vsource_kW kW")
     println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
-    println("   Total Load Power        : $(results[:TotalLoad_kW][t]) kW")
-    println("   Total Load Reactive Power: $(results[:TotalLoad_kVAr][t]) kVAr")
-    println("   Total PV Power          : $(results[:TotalPV_kW][t]) kW")
-    println("   Total PV Reactive Power : $(results[:TotalPV_kVAr][t]) kVAr")
-    println("   Total Battery Power     : $(results[:TotalBattery_kW][t]) kW")
-    println("   Total Battery Reactive Power: $(results[:TotalBattery_kVAr][t]) kVAr")
+    println("   Total Load Power        : $(results[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total Load Reactive Power: $(results[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    println("   Total PV Power          : $(results[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total PV Reactive Power : $(results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    println("   Total Battery Power     : $(results[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total Battery Reactive Power: $(results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
     println("*"^30 * "\n")
 end
 
