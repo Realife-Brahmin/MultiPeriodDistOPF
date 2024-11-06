@@ -1,10 +1,14 @@
 module openDSSValidator
 
+export get_source_bus, get_substation_lines, set_custom_load_shape!, validate_opf_against_opendss
+
 using CSV
 using DataFrames
 using OpenDSSDirect
 using Parameters: @unpack
-export get_source_bus, get_substation_lines, validate_opf_against_opendss
+
+include("helperFunctions.jl")
+using .helperFunctions: myprintln
 
 # function validate_opf_against_opendss(model, data)
 #     # Extract systemName from data dictionary
@@ -147,6 +151,23 @@ function get_substation_lines(substation_bus::String)
     end
 
     return substation_lines
+end
+
+function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
+    verbose::Bool=false)
+    # Define LoadShapeLoad in OpenDSS with the provided LoadShapeArray array
+    loadshape_command = "New Loadshape.LoadShapeLoad npts = $(length(LoadShapeArray)) interval = 1 mult = [" *
+                        join(LoadShapeArray, " ") * "]"
+    OpenDSSDirect.Text.Command(loadshape_command)
+    myprintln(verbose, "Defined LoadShapeLoad with provided LoadShapeArray")
+
+    # Apply this load shape to all loads in the system
+    load_id = OpenDSSDirect.Loads.First()
+    while load_id > 0
+        OpenDSSDirect.Loads.Daily("LoadShapeLoad")
+        load_id = OpenDSSDirect.Loads.Next()
+    end
+    myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
 
 end # module openDSSValidator
