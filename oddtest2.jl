@@ -194,7 +194,9 @@ for t in 1:T
     end
 
     println("Total Load Power after power flow solution: kW = $(total_load_kW), kvar = $(total_load_kVAr)")
+
     # Retrieve and sum up PV system outputs after power flow solution
+    pv_names = PVsystems.AllNames()
     for pv_name in pv_names
         OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
         actual_p_D_kW = -real(CktElement.Powers()[1])
