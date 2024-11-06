@@ -2,6 +2,8 @@ using OpenDSSDirect
 using CSV, DataFrames
 using Parameters: @unpack
 using JuMP: value
+include("src/helperFunctions.jl")
+using .helperFunctions: myprintln
 
 # Set paths for DSS files
 system_name = data[:systemName]
@@ -23,6 +25,26 @@ P_d = model[:P_d];
 q_D = model[:q_D];
 q_B = model[:q_B];
 @unpack p_D_pu = data;
+
+function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
+    verbose::Bool=false)
+    # Define LoadShapeLoad in OpenDSS with the provided LoadShapeArray array
+    loadshape_command = "New Loadshape.LoadShapeLoad npts = $(length(LoadShapeArray)) interval = 1 mult = [" *
+                        join(LoadShapeArray, " ") * "]"
+    OpenDSSDirect.Text.Command(loadshape_command)
+    myprintln(verbose, "Defined LoadShapeLoad with provided LoadShapeArray")
+
+    # Apply this load shape to all loads in the system
+    load_id = OpenDSSDirect.Loads.First()
+    while load_id > 0
+        OpenDSSDirect.Loads.Daily("LoadShapeLoad")
+        load_id = OpenDSSDirect.Loads.Next()
+    end
+    myprintln(verbose, "Applied LoadShapeLoad to all loads")
+end
+
+# Set the custom load shape before each power flow solution
+set_custom_load_shape!(LoadShapeLoad)
 
 # Initialize results DataFrame
 results = DataFrame(
@@ -74,7 +96,7 @@ for t in 1:T
             println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
 
             # Attempt to set the real and reactive power for the PV system
-            # PVsystems.kW() = p_D_t_kW
+            # PVsystems.Pmpp() = p_D_t_kW
             PVsystems.Pmpp(p_D_t_kW)
             # PVsystems.kvar() = q_D_t_kVAr
             PVsystems.kvar(q_D_t_kVAr)
@@ -146,8 +168,8 @@ for t in 1:T
     # # Sum up the loads
     # load_id = Loads.First()
     # while load_id > 0
-    #     total_load_kW += Loads.kW() * LoadShapeSim[t]
-    #     total_load_kVAr += Loads.kvar() * LoadShapeSim[t]
+    #     total_load_kW += Loads.kW() * LoadShapeLoad[t]
+    #     total_load_kVAr += Loads.kvar() * LoadShapeLoad[t]
     #     load_id = Loads.Next()
     # end
 
