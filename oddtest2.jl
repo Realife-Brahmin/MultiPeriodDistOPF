@@ -3,9 +3,6 @@ using CSV, DataFrames
 using Parameters: @unpack
 using JuMP: value
 
-# include("src/openDSSValidator.jl")
-# using .openDSSValidator: get_source_bus, get_substation_lines, set_custom_load_shape!
-
 # Set paths for DSS files
 system_name = data[:systemName]
 dss_dir = joinpath(@__DIR__, "rawData", system_name)
@@ -69,31 +66,33 @@ for t in 1:T
         pv_id = PVsystems.Next()
     end
 
-    # # Set battery power for each battery bus based on P_c and P_d values using DSSText command
-    # battery_names = Storages.AllNames()
-    # for storage_name in battery_names
-    #     storage_number = parse(Int, split(storage_name, "battery")[2])
+    # Iterate over each battery in OpenDSSDirect
+    storage_id = Storages.First()
+    while storage_id > 0
+        # Get the storage element's name
+        storage_name = Storages.Name()
 
-    #     charge_power_kW = value(P_d[storage_number, t]) * kVA_B
-    #     discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
-    #     Pdc_t_kW = discharge_power_kW - charge_power_kW
-    #     q_B_t_kVAr = value(q_B[storage_number, t]) * kVA_B
+        # Calculate the charge and discharge powers based on optimization values
+        # Assuming the storage name has a numeric suffix that corresponds to the index in the optimization variables
+        storage_number = parse(Int, split(storage_name, "battery")[2])
 
-    #     # Set the battery power using DSSText command
-    #     OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$Pdc_t_kW kvar=$q_B_t_kVAr")
-    # end
-
-    # Set battery power for each battery bus based on P_c and P_d values
-    for battery_bus in Bset
-        charge_power_kW = value(P_d[battery_bus, t]) * kVA_B
-        discharge_power_kW = value(P_c[battery_bus, t]) * kVA_B
+        charge_power_kW = value(P_d[storage_number, t]) * kVA_B
+        discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
 
         # Calculate net power for the battery (discharge - charge)
         net_power_kW = discharge_power_kW - charge_power_kW
-        reactive_power_kVAr = value(q_B[battery_bus, t]) * kVA_B
+        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
 
-        # Construct the OpenDSS command to set the battery's kW and kvar
-        OpenDSSDirect.Text.Command("Edit Storage.battery$battery_bus kW=$net_power_kW kvar=$reactive_power_kVAr")
+        # Construct the OpenDSS command to set the battery's active and reactive power
+        command_str = "Edit Storage.$storage_name kW=$net_power_kW kvar=$reactive_power_kVAr"
+        println(command_str)
+        println("Executing command for storage $storage_name at t = $t: $command_str")
+
+        # Execute the command
+        OpenDSSDirect.Text.Command(command_str)
+
+        # Move to the next storage element
+        storage_id = Storages.Next()
     end
 
     # Solve the power flow
