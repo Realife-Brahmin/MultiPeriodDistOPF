@@ -71,18 +71,31 @@ for t in 1:T
         pv_id = PVsystems.Next()
     end
 
-    # Set battery power for each battery bus based on P_c and P_d values using DSSText command
-    battery_names = Storages.AllNames()
-    for storage_name in battery_names
-        storage_number = parse(Int, split(storage_name, "battery")[2])
+    # # Set battery power for each battery bus based on P_c and P_d values using DSSText command
+    # battery_names = Storages.AllNames()
+    # for storage_name in battery_names
+    #     storage_number = parse(Int, split(storage_name, "battery")[2])
 
-        charge_power_kW = value(P_d[storage_number, t]) * kVA_B
-        discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
-        Pdc_t_kW = discharge_power_kW - charge_power_kW
-        q_B_t_kVAr = value(q_B[storage_number, t]) * kVA_B
+    #     charge_power_kW = value(P_d[storage_number, t]) * kVA_B
+    #     discharge_power_kW = value(P_c[storage_number, t]) * kVA_B
+    #     Pdc_t_kW = discharge_power_kW - charge_power_kW
+    #     q_B_t_kVAr = value(q_B[storage_number, t]) * kVA_B
 
-        # Set the battery power using DSSText command
-        OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$Pdc_t_kW kvar=$q_B_t_kVAr")
+    #     # Set the battery power using DSSText command
+    #     OpenDSSDirect.Text.Command("Edit Storage.$storage_name kW=$Pdc_t_kW kvar=$q_B_t_kVAr")
+    # end
+
+    # Set battery power for each battery bus based on P_c and P_d values
+    for battery_bus in Bset
+        charge_power_kW = value(P_d[battery_bus, t]) * kVA_B
+        discharge_power_kW = value(P_c[battery_bus, t]) * kVA_B
+
+        # Calculate net power for the battery (discharge - charge)
+        net_power_kW = discharge_power_kW - charge_power_kW
+        reactive_power_kVAr = value(q_B[battery_bus, t]) * kVA_B
+
+        # Construct the OpenDSS command to set the battery's kW and kvar
+        OpenDSSDirect.Text.Command("Edit Storage.battery$battery_bus kW=$net_power_kW kvar=$reactive_power_kVAr")
     end
 
     # Solve the power flow
@@ -159,6 +172,7 @@ for t in 1:T
     total_battery_kW = 0.0
     total_battery_kVAr = 0.0
     # Sum up the battery storage outputs after power flow
+    battery_names = Storages.AllNames()
     for battery in battery_names
         Circuit.SetActiveElement("Storage.$battery")
         battery_powers = -CktElement.Powers()
