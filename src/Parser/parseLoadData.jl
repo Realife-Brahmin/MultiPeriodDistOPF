@@ -7,7 +7,7 @@ using .helperFunctions: generateLoadShape
 
 function parse_load_data(systemName::String, T::Int;
     kVA_B = 1000,
-    LoadShape=nothing, 
+    LoadShapeLoad=nothing, 
     filenameLoadShape::String="LoadShapeDefault.dss")
 
     # get wd: the path of <this> file
@@ -30,9 +30,9 @@ function parse_load_data(systemName::String, T::Int;
     q_L = Dict{Int,Vector{Float64}}()  # Reactive power profile over time
     q_L_pu = Dict{Int,Vector{Float64}}()  # Reactive power profile over time [pu]
 
-    # If user does not provide a LoadShape, generate one using the helper function
-    if LoadShape === nothing
-        LoadShape = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
+    # If user does not provide a LoadShapeLoad, generate one using the helper function
+    if LoadShapeLoad === nothing
+        LoadShapeLoad = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
     end
 
     # Open and read the Loads.dss file
@@ -105,11 +105,11 @@ function parse_load_data(systemName::String, T::Int;
                     Vmaxpu_L[j] = 1.05  # Default value if not specified
                 end
 
-                # Initialize load profiles using the provided or generated LoadShape
-                p_L[j] = [p_L_R[j] * LoadShape[t] for t in 1:T]
-                p_L_pu[j] = [p_L_R_pu[j] * LoadShape[t] for t in 1:T]
-                q_L[j] = [q_L_R[j] * LoadShape[t] for t in 1:T]
-                q_L_pu[j] = [q_L_R_pu[j] * LoadShape[t] for t in 1:T]
+                # Initialize load profiles using the provided or generated LoadShapeLoad
+                p_L[j] = [p_L_R[j] * LoadShapeLoad[t] for t in 1:T]
+                p_L_pu[j] = [p_L_R_pu[j] * LoadShapeLoad[t] for t in 1:T]
+                q_L[j] = [q_L_R[j] * LoadShapeLoad[t] for t in 1:T]
+                q_L_pu[j] = [q_L_R_pu[j] * LoadShapeLoad[t] for t in 1:T]
             end
         end
     end
@@ -131,7 +131,7 @@ function parse_load_data(systemName::String, T::Int;
         :p_L_pu => p_L_pu,
         :q_L => q_L,
         :q_L_pu => q_L_pu,
-        :LoadShape => LoadShape  # Store the LoadShape used
+        :LoadShapeLoad => LoadShapeLoad  # Store the LoadShapeLoad used
     )
 
     # Return the extracted data as a dictionary

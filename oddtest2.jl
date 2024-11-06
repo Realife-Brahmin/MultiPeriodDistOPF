@@ -15,7 +15,7 @@ OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 
 # Unpack data
 @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
-LoadShapeSim = data[:LoadShape];
+LoadShapeLoad = data[:LoadShapeLoad];
 
 # Extract battery charge (P_c) and discharge (P_d) from the model
 P_c = model[:P_c];

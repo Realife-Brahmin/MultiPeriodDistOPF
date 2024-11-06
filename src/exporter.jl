@@ -63,7 +63,7 @@ function export_decision_variables(model, data;
 
     # Unpack the necessary data from `data`
     Tset = sort(collect(data[:Tset]))  # Time steps
-    LoadShape = data[:LoadShape]  # Load shape values
+    LoadShapeLoad = data[:LoadShapeLoad]  # Load shape values
     LoadShapePV = data[:LoadShapePV]  # Irradiance values
     LoadShapeCost = data[:LoadShapeCost] * 100  # Convert from $/kWh to cents/kWh
 
@@ -89,8 +89,8 @@ function export_decision_variables(model, data;
     # First row: Time step "t"
     push!(data_matrix, ["t"; Tset...])
 
-    # Second row: LoadShape values (lambda)
-    push!(data_matrix, ["lambda"; LoadShape...])
+    # Second row: LoadShapeLoad values (lambda)
+    push!(data_matrix, ["lambda"; LoadShapeLoad...])
 
     # Third row: Irradiance (LoadShapePV)
     push!(data_matrix, ["Irrad"; LoadShapePV...])
