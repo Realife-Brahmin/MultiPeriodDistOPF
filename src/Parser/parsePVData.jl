@@ -15,7 +15,7 @@ function parse_pv_data(systemName::String, T::Int;
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path using wd
-    filename = joinpath(wd, "..", "..", "rawData", systemName, "PVSystem.dss")
+    filename = joinpath(wd, "..", "..", "rawData", systemName, "PVsystem.dss")
 
     # Initialize data structures for PV systems
     Dset = Set{Int}()                     # Set of nodes with PVs
@@ -36,7 +36,7 @@ function parse_pv_data(systemName::String, T::Int;
         LoadShapePV = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
     end
 
-    # Open and read the PVSystem.dss file
+    # Open and read the PVsystem.dss file
     open(filename, "r") do file
         for line in eachline(file)
             # Remove comments and strip whitespace
@@ -48,8 +48,8 @@ function parse_pv_data(systemName::String, T::Int;
                 continue
             end
 
-            # Parse lines starting with "New PVSystem."
-            if startswith(line, "New PVSystem.")
+            # Parse lines starting with "New PVsystem."
+            if startswith(line, "New PVsystem.")
                 # Extract parameters from the line
                 tokens = split(line)
                 pv_info = Dict{String,String}()
@@ -71,7 +71,7 @@ function parse_pv_data(systemName::String, T::Int;
                     j = parse(Int, bus_parts[1])  # Node number
                     Dset = union(Dset, [j])
                 else
-                    error("Bus1 not specified for a PV in PVSystem.dss")
+                    error("Bus1 not specified for a PV in PVsystem.dss")
                 end
 
                 # # Extract rated active power (Pmpp)
@@ -105,14 +105,14 @@ function parse_pv_data(systemName::String, T::Int;
                 end
 
                 # Force bus voltage limits (Vminpu)
-                if haskey(pv_info, "Vminpu") # will never be read, as it doesn't exist for the OpenDSS class PVSystem
+                if haskey(pv_info, "Vminpu") # will never be read, as it doesn't exist for the OpenDSS class PVsystem
                     Vminpu_D[j] = parse(Float64, pv_info["Vminpu"])
                 else
                     Vminpu_D[j] = 0.95  # Default to 0.95 if not specified
                 end
 
                 # Force bus voltage limits (Vmaxpu)
-                if haskey(pv_info, "Vmaxpu") # will never be read, as it doesn't exist for the OpenDSS class PVSystem
+                if haskey(pv_info, "Vmaxpu") # will never be read, as it doesn't exist for the OpenDSS class PVsystem
                     Vmaxpu_D[j] = parse(Float64, pv_info["Vmaxpu"])
                 else
                     Vmaxpu_D[j] = 1.05  # Default to 1.05 if not specified
