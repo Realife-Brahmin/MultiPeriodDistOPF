@@ -326,24 +326,24 @@ end
 function plot_input_forecast_curves(data; showPlots::Bool=false, savePlots::Bool=true, filename::String="input_forecast_curves.png",
 filenameSuffix::String="nonspecific", verbose::Bool=false)
 
-    @unpack LoadShape, LoadShapePV, LoadShapeCost, T = data
+    @unpack LoadShapeLoad, LoadShapePV, LoadShapeCost, T = data
 
     # Prepare data for plotting
     time_steps = 1:T
     load_cost_cents = LoadShapeCost .* 100  # Convert from $/kWh to cents/kWh
 
     # Calculate y-axis limits
-    # left_min = 0.95 * minimum([minimum(LoadShape), minimum(LoadShapePV)])
+    # left_min = 0.95 * minimum([minimum(LoadShapeLoad), minimum(LoadShapePV)])
     left_min = -0.05
-    left_max = 1.05 * maximum([maximum(LoadShape), maximum(LoadShapePV)])
+    left_max = 1.05 * maximum([maximum(LoadShapeLoad), maximum(LoadShapePV)])
     right_min = floor(0.95 * minimum(load_cost_cents))
     right_max = ceil(1.05 * maximum(load_cost_cents))
 
     gr()
     theme(common_theme)
-    # Plot LoadShape and LoadShapePV on the primary (left) y-axis
+    # Plot LoadShapeLoad and LoadShapePV on the primary (left) y-axis
     outputPlot = plot(
-        time_steps, LoadShape,
+        time_steps, LoadShapeLoad,
         dpi=600,
         label="Loading Factor "*L"(\lambda^t)",
         xlabel="Time Period "*L"(t)",
