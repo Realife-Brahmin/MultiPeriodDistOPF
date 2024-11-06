@@ -63,50 +63,29 @@ results = DataFrame(
 
 for t in 1:T
 
-    # # Set power levels for PV systems using DSSText commands
-    pv_names = PVsystems.AllNames()
-    # for pv_name in pv_names
-    #     pv_number = parse(Int, split(pv_name, "pv")[2])
-    #     p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-    #     q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+    # Set power levels for PV systems at each time step
+    pv_id = PVsystems.First()
+    while pv_id > 0
+        # Get the PV name and the bus number (assuming naming convention like 'pv1', 'pv2', etc.)
+        pv_name = PVsystems.Name()
+        pv_number = parse(Int, split(pv_name, "pv")[2])
 
-    #     # Set the PV output power using DSSText command
-    #     OpenDSSDirect.Text.Command("Edit PVSystem.$pv_name pmpp=$p_D_t_kW kvar=$q_D_t_kVAr")
+        # Define the real and reactive power settings for the PV system
+        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
 
-    #     # Confirm setting by re-selecting the PVSystem element and fetching values
-    #     OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
-    #     actual_p_D_kW = -real(CktElement.Powers()[1])
-    #     actual_q_D_kVAr = -imag(CktElement.Powers()[1])
-    #     println("Post-setting verification for $pv_name at t=$t: p_D_kW=$actual_p_D_kW, q_D_kVAr=$actual_q_D_kVAr")
-    # end   
+        println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
 
-    # Loop through each time step
-    # for t in 1:T
-        # Set power levels for PV systems at each time step
-        pv_id = PVsystems.First()
-        while pv_id > 0
-            # Get the PV name and the bus number (assuming naming convention like 'pv1', 'pv2', etc.)
-            pv_name = PVsystems.Name()
-            pv_number = parse(Int, split(pv_name, "pv")[2])
-
-            # Define the real and reactive power settings for the PV system
-            p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-            q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
-
-            println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
-
-            # Attempt to set the real and reactive power for the PV system
-            # PVsystems.Pmpp() = p_D_t_kW
-            PVsystems.Pmpp(p_D_t_kW)
-            # PVsystems.kvar() = q_D_t_kVAr
-            PVsystems.kvar(q_D_t_kVAr)
+        # Attempt to set the real and reactive power for the PV system
+        # PVsystems.Pmpp() = p_D_t_kW
+        PVsystems.Pmpp(p_D_t_kW)
+        # PVsystems.kvar() = q_D_t_kVAr
+        PVsystems.kvar(q_D_t_kVAr)
 
 
-            # Move to the next PV system
-            pv_id = PVsystems.Next()
-        end
-    # end
-
+        # Move to the next PV system
+        pv_id = PVsystems.Next()
+    end
 
     # Set battery power for each battery bus based on P_c and P_d values using DSSText command
     battery_names = Storages.AllNames()
@@ -158,20 +137,6 @@ for t in 1:T
     results.QSubs_kVAr[t] = Q_substation_total_kVAr
 
     # Calculate and store total load, PV power, and battery power
-    # total_load_kW = 0.0
-    # total_load_kVAr = 0.0
-    total_pv_kW = 0.0
-    total_pv_kVAr = 0.0
-    total_battery_kW = 0.0
-    total_battery_kVAr = 0.0
-
-    # # Sum up the loads
-    # load_id = Loads.First()
-    # while load_id > 0
-    #     total_load_kW += Loads.kW() * LoadShapeLoad[t]
-    #     total_load_kVAr += Loads.kvar() * LoadShapeLoad[t]
-    #     load_id = Loads.Next()
-    # end
 
     # Initialize total load values for each timestep
     total_load_kW = 0.0
@@ -195,6 +160,8 @@ for t in 1:T
 
     println("Total Load Power after power flow solution: kW = $(total_load_kW), kvar = $(total_load_kVAr)")
 
+    total_pv_kW = 0.0
+    total_pv_kVAr = 0.0
     # Retrieve and sum up PV system outputs after power flow solution
     pv_names = PVsystems.AllNames()
     for pv_name in pv_names
@@ -205,6 +172,8 @@ for t in 1:T
         total_pv_kVAr += actual_q_D_kVAr
     end
 
+    total_battery_kW = 0.0
+    total_battery_kVAr = 0.0
     # Sum up the battery storage outputs after power flow
     for battery in battery_names
         Circuit.SetActiveElement("Storage.$battery")
