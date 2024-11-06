@@ -86,18 +86,18 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
             OpenDSSDirect.PVSystem.kW(pv_bus, load_shape_pv[t] * kVA_B)
         end
 
-        # Set battery power for each battery bus based on P_c and P_d values
-        for battery_bus in Bset
-            charge_power_kW = value(P_d[battery_bus, t]) * kVA_B
-            discharge_power_kW = value(P_c[battery_bus, t]) * kVA_B
+        # # Set battery power for each battery bus based on P_c and P_d values
+        # for battery_bus in Bset
+        #     charge_power_kW = value(P_d[battery_bus, t]) * kVA_B
+        #     discharge_power_kW = value(P_c[battery_bus, t]) * kVA_B
 
-            # Calculate net power for the battery (discharge - charge)
-            net_power_kW = charge_power_kW - discharge_power_kW
+        #     # Calculate net power for the battery (discharge - charge)
+        #     net_power_kW = charge_power_kW - discharge_power_kW
 
-            # Set battery power at this timestep
-            OpenDSSDirect.Circuit.SetActiveElement("Storage.$battery_bus")
-            OpenDSSDirect.Storage.kW(battery_bus, net_power_kW)
-        end
+        #     # Set battery power at this timestep
+        #     OpenDSSDirect.Circuit.SetActiveElement("Storage.$battery_bus")
+        #     OpenDSSDirect.Storage.kW(battery_bus, net_power_kW)
+        # end
 
         # Solve the power flow
         OpenDSSDirect.Solution.Solve()
