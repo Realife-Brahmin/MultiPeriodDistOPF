@@ -41,22 +41,50 @@ results = DataFrame(
 
 for t in 1:T
 
-    # Set power levels for PV systems using DSSText commands
+    # # Set power levels for PV systems using DSSText commands
     pv_names = PVsystems.AllNames()
-    for pv_name in pv_names
+    # for pv_name in pv_names
+    #     pv_number = parse(Int, split(pv_name, "pv")[2])
+    #     p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+    #     q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+
+    #     # Set the PV output power using DSSText command
+    #     OpenDSSDirect.Text.Command("Edit PVSystem.$pv_name pmpp=$p_D_t_kW kvar=$q_D_t_kVAr")
+
+    #     # Confirm setting by re-selecting the PVSystem element and fetching values
+    #     OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
+    #     actual_p_D_kW = -real(CktElement.Powers()[1])
+    #     actual_q_D_kVAr = -imag(CktElement.Powers()[1])
+    #     println("Post-setting verification for $pv_name at t=$t: p_D_kW=$actual_p_D_kW, q_D_kVAr=$actual_q_D_kVAr")
+    # end   
+
+    # Loop through each time step
+    # for t in 1:T
+        # Set power levels for PV systems at each time step
+        pv_id = PVsystems.First()
+        while pv_id > 0
+            # Get the PV name and the bus number (assuming naming convention like 'pv1', 'pv2', etc.)
+            pv_name = PVsystems.Name()
         pv_number = parse(Int, split(pv_name, "pv")[2])
+
+            # Define the real and reactive power settings for the PV system
         p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
         q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
 
-        # Set the PV output power using DSSText command
-        OpenDSSDirect.Text.Command("Edit PVSystem.$pv_name pmpp=$p_D_t_kW kvar=$q_D_t_kVAr")
+            println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
 
-        # Confirm setting by re-selecting the PVSystem element and fetching values
-        OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
-        actual_p_D_kW = -real(CktElement.Powers()[1])
-        actual_q_D_kVAr = -imag(CktElement.Powers()[1])
-        println("Post-setting verification for $pv_name at t=$t: p_D_kW=$actual_p_D_kW, q_D_kVAr=$actual_q_D_kVAr")
+            # Attempt to set the real and reactive power for the PV system
+            # PVsystems.kW() = p_D_t_kW
+            PVsystems.Pmpp(p_D_t_kW)
+            # PVsystems.kvar() = q_D_t_kVAr
+            PVsystems.kvar(q_D_t_kVAr)
+
+
+            # Move to the next PV system
+            pv_id = PVsystems.Next()
     end
+    # end
+
 
     # Set battery power for each battery bus based on P_c and P_d values using DSSText command
     battery_names = Storages.AllNames()
