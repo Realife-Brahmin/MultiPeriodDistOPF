@@ -61,9 +61,7 @@ for t in 1:T
         println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
 
         # Attempt to set the real and reactive power for the PV system
-        # PVsystems.Pmpp() = p_D_t_kW
         PVsystems.Pmpp(p_D_t_kW)
-        # PVsystems.kvar() = q_D_t_kVAr
         PVsystems.kvar(q_D_t_kVAr)
 
 
