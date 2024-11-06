@@ -1,30 +1,17 @@
-// Master file for 8500-Node IEEE Test Feeder Case
-// Balanced Load Case
-
 Clear
 
 New Circuit.ads10_1ph  
 
-! Make the source stiff with small impedance
-// ~ pu=1.05  r1=0  x1=0.001  r0=0  x0=0.001  
-
-// Redirect  LineCodes2.dss
-// Redirect  Triplex_Linecodes.dss
 Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001
 
 Redirect BranchData.dss
-// Redirect  Lines.dss
-// Redirect  Transformers.dss
-// Redirect  LoadXfmrs.dss    ! Load Transformers
-// Redirect  Triplex_Lines.dss
+
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect  Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
 Redirect PVSystem.dss
 Redirect Storage.dss
-// Redirect  CapControls.dss
-// Redirect  Regulators.dss
 
 Set VoltageBases = [4.16]
 Set mode = Daily 
@@ -32,5 +19,4 @@ Set stepsize = 1h
 Set number = 1
 
 ! Let DSS estimate the voltage bases
-// Set voltagebases=[115, 12.47,  0.48, 0.208]
 Calcvoltagebases     ! This also establishes the bus list
