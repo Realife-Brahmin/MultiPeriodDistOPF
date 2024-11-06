@@ -6,13 +6,16 @@ using JuMP: value
 include("src/helperFunctions.jl")
 using .helperFunctions: myprintln
 
+include("src/openDSSValidator.jl")
+using .openDSSValidator: get_source_bus, get_substation_lines
+
 verbose = false
 
 # Set paths for DSS files
 system_name = data[:systemName]
 dss_dir = joinpath(@__DIR__, "rawData", system_name)
 dss_file = joinpath(dss_dir, "Master.dss")
-println(dss_file)
+myprintln(verbose, "Master.dss file path: $(dss_file)")
 
 # Initialize OpenDSS
 OpenDSSDirect.Text.Command("Clear")
@@ -22,7 +25,7 @@ OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
 @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
 LoadShapeLoad = data[:LoadShapeLoad];
 
-# Extract battery charge (P_c) and discharge (P_d) from the model
+# Extract controllables (and time-varying variables) from the solved optimization model
 P_c = model[:P_c];
 P_d = model[:P_d];
 q_D = model[:q_D];
@@ -66,7 +69,6 @@ for t in 1:T
         PVsystems.Pmpp(p_D_t_kW)
         PVsystems.kvar(q_D_t_kVAr)
 
-
         # Move to the next PV system
         pv_id = PVsystems.Next()
     end
@@ -89,11 +91,9 @@ for t in 1:T
         reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
 
         # Construct the OpenDSS command to set the battery's active and reactive power
-        # command_str = "Edit Storage.$storage_name kW=$net_power_kW kvar=$reactive_power_kVAr"
         command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
 
-        println("t = $t: "*command_str)
-        # println("Executing command for storage $storage_name at t = $t: $command_str")
+        myprintln(verbose, "t = $t: "*command_str)
 
         # Execute the command
         OpenDSSDirect.Text.Command(command_str)
@@ -177,8 +177,8 @@ for t in 1:T
     total_battery_kVAr = 0.0
     # Sum up the battery storage outputs after power flow
     battery_names = Storages.AllNames()
-    for battery in battery_names
-        Circuit.SetActiveElement("Storage.$battery")
+    for battery_name in battery_names
+        Circuit.SetActiveElement("Storage.$battery_name")
         battery_powers = -CktElement.Powers()
         total_battery_kW += real(battery_powers[1])
         total_battery_kVAr += imag(battery_powers[1])
@@ -225,4 +225,4 @@ end
 filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
 CSV.write(filename, results)
-println("Validation results written to $filename")
+myprintln(verbose, "Validation results written to $filename")
