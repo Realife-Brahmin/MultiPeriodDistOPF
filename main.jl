@@ -36,7 +36,7 @@ begin
 
     export_decision_variables(model, data, verbose=verbose)
 
-    # Todo: Maybe separtely save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
+    # Todo: Maybe separately save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
     export_simulation_key_results_txt(model, data, verbose=verbose)
 
     savePlots = false
