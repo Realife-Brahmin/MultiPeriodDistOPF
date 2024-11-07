@@ -5,7 +5,7 @@ using Parameters: @unpack
 
 Revise.revise()
 systemName = "ads10_1ph" # this is something which the user will specify but will get saved into data
-T = 3
+T = 24
 numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
