@@ -275,8 +275,8 @@ for t in 1:T
     for (bus_index, vald_voltage) in enumerate(vald[:vald_voltages_vs_t_1toT_pu][t])
         model_voltage = sqrt(value(v[bus_index, t]))
         discrepancy = abs(vald_voltage - model_voltage)
-        global disc_voltage_all_time
-        if discrepancy > disc_voltage_all_time
+        global disc_voltage_all_time_pu
+        if discrepancy > disc_voltage_all_time_pu
             disc_voltage_all_time_pu = discrepancy
         end
     end

@@ -360,7 +360,7 @@ function export_key_validation_results(vald, data; filename::String="validation_
 
         # Additional Metadata
         println(f, "---------------------------------------------")
-        println(f, "$(item_counter). Solution Time: $(round(vald[:solution_time], digits=2)) s")
+        println(f, "$(item_counter). Solution Time: Small")
         item_counter += 1
 
     end
