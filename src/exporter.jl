@@ -304,6 +304,10 @@ function export_key_validation_results(vald, data; filename::String="validation_
         # Horizon Results
         println(f, "Full $(data[:T]) Hour Horizon Validation Results")
 
+        # Substation Power Cost
+        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(vald[:vald_PSubsCost_allT_dollar], digits=2))")
+        item_counter += 1
+        
         # Line Loss
         println(f, "$(item_counter). Horizon Total Line Loss: $(round(vald[:vald_PLoss_allT_kW], digits=2)) kW")
         item_counter += 1
@@ -320,10 +324,6 @@ function export_key_validation_results(vald, data; filename::String="validation_
 
         # Static Capacitor Power
         println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(vald[:vald_static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
-        item_counter += 1
-
-        # Substation Power Cost
-        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(vald[:vald_PSubsCost_allT_dollar], digits=2))")
         item_counter += 1
 
         # PV Generation
