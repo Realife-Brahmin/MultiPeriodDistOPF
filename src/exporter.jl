@@ -337,7 +337,7 @@ function export_key_validation_results(vald, data; filename::String="validation_
         item_counter += 1
 
         # SCD and Energy Deviation
-        println(f, "$(item_counter). Horizon Total SCD Observed: $(round(vald[:scd_allT_kW], digits=2)) kW")
+        println(f, "$(item_counter). Horizon Total SCD Observed: N/A")
         item_counter += 1
         println(f, "$(item_counter). Horizon-end Battery Energy Deviation from Reference: $(round(vald[:vald_terminal_soc_violation_kWh], digits=2)) kWh")
         item_counter += 1
