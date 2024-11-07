@@ -250,7 +250,7 @@ global max_voltage_discrepancy = 0.0
 v = model[:v]
 for t in 1:T
     for (bus_index, vald_voltage) in enumerate(vald[:vald_voltages_vs_t_1toT_pu][t])
-        model_voltage = value(v[bus_index, t])
+        model_voltage = sqrt(value(v[bus_index, t]))
         discrepancy = abs(vald_voltage - model_voltage)
         global max_voltage_discrepancy
         if discrepancy > max_voltage_discrepancy
