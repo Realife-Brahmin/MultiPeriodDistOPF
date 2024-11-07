@@ -9,6 +9,9 @@ using .helperFunctions: myprintln
 include("src/openDSSValidator.jl")
 using .openDSSValidator: get_source_bus, get_substation_lines
 
+include("src/exporter.jl")
+using .Exporter: export_key_validation_results
+
 verbose = false
 
 # Set paths for DSS files
@@ -299,3 +302,5 @@ filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(ge
 
 CSV.write(filename, vald)
 myprintln(verbose, "Validation results written to $filename")
+
+export_key_validation_results(vald, data)

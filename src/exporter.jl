@@ -272,4 +272,102 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
     myprintln(verbose, "Simulation key results exported to $filename")
 end
 
+function export_key_validation_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false)
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, simNatureAppendix = data
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    if !isdir(base_dir)
+        if verbose
+            println("Creating directory: $base_dir")
+        end
+        mkpath(base_dir)
+    end
+
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_valdResults_$(gedAppendix)_via_$(simNatureAppendix).txt")
+
+    # Open the file and write each section
+    open(filename, "w") do f
+        # Initialize output item counter
+        item_counter = 1
+
+        # Header Section
+        println(f, "---------------------------------------------")
+        println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
+        item_counter += 1
+        println(f, "$(item_counter). Horizon Duration: $(data[:T])")
+        item_counter += 1
+        println(f, "$(item_counter). Nature of Simulation: Validation")
+        item_counter += 1
+        println(f, "---------------------------------------------")
+
+        # Horizon Results
+        println(f, "Full $(data[:T]) Hour Horizon Validation Results")
+
+        # Line Loss
+        println(f, "$(item_counter). Horizon Total Line Loss: $(round(vald[:vald_PLoss_allT_kW], digits=2)) kW")
+        item_counter += 1
+
+        # Substation Power
+        println(f, "$(item_counter). Horizon Total Substation Power: $(round(vald[:vald_PSubs_allT_kW], digits=2)) kW + $(round(vald[:vald_QSubs_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Load and Generation
+        println(f, "$(item_counter). Horizon Total Load: $(round(vald[:vald_load_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_load_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+        println(f, "$(item_counter). Horizon Total Generation: $(round(vald[:vald_total_gen_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_total_gen_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Static Capacitor Power
+        println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(vald[:vald_static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Substation Power Cost
+        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(vald[:vald_PSubsCost_allT_dollar], digits=2))")
+        item_counter += 1
+
+        # PV Generation
+        println(f, "$(item_counter). Horizon Total PV Generation: $(round(vald[:vald_pv_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_pv_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # Battery Generation and Transactions
+        println(f, "$(item_counter). Horizon Total Battery Generation: $(round(vald[:vald_battery_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_battery_reactive_power_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+        println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(vald[:battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(vald[:battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
+        item_counter += 1
+
+        # SCD and Energy Deviation
+        println(f, "$(item_counter). Horizon Total SCD Observed: $(round(vald[:scd_allT_kW], digits=2)) kW")
+        item_counter += 1
+        println(f, "$(item_counter). Horizon-end Battery Energy Deviation from Reference: $(round(vald[:vald_terminal_soc_violation_kWh], digits=2)) kWh")
+        item_counter += 1
+
+        # Peak Power
+        println(f, "$(item_counter). Horizon-Total All Time Substation Power Peak: $(round(vald[:vald_substation_real_power_peak_allT_kW], digits=2)) kW")
+        item_counter += 1
+
+        # Discrepancies
+        println(f, "---------------------------------------------")
+        println(f, "Discrepancies (Maximum All Time):")
+        println(f, "$(item_counter). Maximum All Time Voltage Discrepancy: $(round(vald[:disc_voltage_all_time], digits=6)) pu")
+        item_counter += 1
+        println(f, "$(item_counter). Maximum All Time Line Loss Discrepancy: $(round(vald[:disc_line_loss_all_time], digits=6)) kW")
+        item_counter += 1
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Real Power Discrepancy: $(round(vald[:disc_PSubs_all_time], digits=6)) kW")
+        item_counter += 1
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(round(vald[:disc_QSubs_all_time], digits=6)) kVAr")
+        item_counter += 1
+
+        # Additional Metadata
+        println(f, "---------------------------------------------")
+        println(f, "$(item_counter). Solution Time: $(round(vald[:solution_time], digits=2)) s")
+        item_counter += 1
+
+    end
+
+    if verbose
+        println("Validation key results exported to $filename")
+    end
+end
+
 end  # module Exporter
