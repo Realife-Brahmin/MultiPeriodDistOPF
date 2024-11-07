@@ -36,7 +36,7 @@ q_B = model[:q_B]
 set_custom_load_shape!(LoadShapeLoad)
 
 # Initialize Dictionary for timestep-specific and cumulative results
-results = Dict(
+vald = Dict(
     # Timestep-specific fields
     :vald_PLoss_vs_t_1toT_kW => zeros(T),
     :vald_PSubs_vs_t_1toT_kW => zeros(T),
@@ -73,7 +73,7 @@ results = Dict(
     :vald_terminal_soc_violation_kWh => 0.0
 )
 
-# Loop through each timestep to perform power flow and store results
+# Loop through each timestep to perform power flow and store vald
 for t in 1:T
     # Set power levels for PV systems at each time step
     pv_id = PVsystems.First()
@@ -108,10 +108,10 @@ for t in 1:T
 
     # Retrieve circuit losses
     total_losses = Circuit.Losses() ./ 1000
-    results[:vald_PLoss_vs_t_1toT_kW][t] = real(total_losses)
-    results[:vald_PLoss_allT_kW] += real(total_losses)
-    results[:vald_QLoss_vs_t_1toT_kVAr][t] = -imag(total_losses) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
-    results[:vald_QLoss_allT_kVAr] += -imag(total_losses)
+    vald[:vald_PLoss_vs_t_1toT_kW][t] = real(total_losses)
+    vald[:vald_PLoss_allT_kW] += real(total_losses)
+    vald[:vald_QLoss_vs_t_1toT_kVAr][t] = -imag(total_losses) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
+    vald[:vald_QLoss_allT_kVAr] += -imag(total_losses)
 
     # Substation power calculations
     substation_bus = get_source_bus()
@@ -135,15 +135,15 @@ for t in 1:T
     P_vsource_kW = real(vsource_powers[1])
     Q_vsource_kVAr = imag(vsource_powers[1])
 
-    results[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_kW
-    results[:vald_PSubs_allT_kW] += P_substation_total_kW
-    results[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_kVAr
-    results[:vald_QSubs_allT_kVAr] += Q_substation_total_kVAr
-    results[:vald_substation_real_power_peak_allT_kW] = max(results[:vald_substation_real_power_peak_allT_kW], P_vsource_kW)
+    vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_kW
+    vald[:vald_PSubs_allT_kW] += P_substation_total_kW
+    vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_kVAr
+    vald[:vald_QSubs_allT_kVAr] += Q_substation_total_kVAr
+    vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_vsource_kW)
 
     # Cost calculation
-    results[:vald_PSubsCost_vs_t_1toT_dollar][t] = kVA_B * LoadShapeCost[t] * P_substation_total_kW * delta_t
-    results[:vald_PSubsCost_allT_dollar] += results[:vald_PSubsCost_vs_t_1toT_dollar][t]
+    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = kVA_B * LoadShapeCost[t] * P_substation_total_kW * delta_t
+    vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
     # Reactive and real power totals
     total_load_kW = 0.0
@@ -156,10 +156,10 @@ for t in 1:T
         total_load_kVAr += imag(load_powers[1])
     end
 
-    results[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_kW
-    results[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_kVAr
-    results[:vald_load_real_power_allT_kW] += total_load_kW
-    results[:vald_load_reactive_power_allT_kVAr] += total_load_kVAr
+    vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_kW
+    vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_kVAr
+    vald[:vald_load_real_power_allT_kW] += total_load_kW
+    vald[:vald_load_reactive_power_allT_kVAr] += total_load_kVAr
 
     # PV power calculations
     total_pv_kW = 0.0
@@ -171,8 +171,8 @@ for t in 1:T
         total_pv_kVAr -= imag(CktElement.Powers()[1])
     end
 
-    results[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_kW
-    results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_kVAr
+    vald[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_kW
+    vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_kVAr
 
     # Battery power calculations
     vald_battery_real_power_t_kW = 0.0
@@ -184,35 +184,35 @@ for t in 1:T
         vald_battery_reactive_power_t_kVAr += imag(-CktElement.Powers()[1])
     end
 
-    results[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
-    results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
+    vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+    vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
 
-    results[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] + results[:vald_static_cap_reactive_power_vs_t_1toT_kVAr][t]
+    vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_static_cap_reactive_power_vs_t_1toT_kVAr][t]
 
-    results[:vald_total_gen_reactive_power_allT_kVAr] += results[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t]
+    vald[:vald_total_gen_reactive_power_allT_kVAr] += vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t]
 
-    results[:vald_total_gen_real_power_vs_t_1toT_kW][t] = results[:vald_pv_real_power_vs_t_1toT_kW][t] + results[:vald_battery_real_power_vs_t_1toT_kW][t]
+    vald[:vald_total_gen_real_power_vs_t_1toT_kW][t] = vald[:vald_pv_real_power_vs_t_1toT_kW][t] + vald[:vald_battery_real_power_vs_t_1toT_kW][t]
 
     # Other cumulative battery metrics
-    results[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
-    results[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
+    vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
+    vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
 
     # Capture voltage magnitudes at all buses
-    results[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
+    vald[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
 
-    # Print key results for this timestep
+    # Print key vald for this timestep
     println("\n" * "*"^30)
     println("   Time Step: $t")
     println("*"^30)
-    println("   Power Loss              : $(results[:vald_PLoss_vs_t_1toT_kW][t]) kW")
+    println("   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
     println("   Substation Power (VSource): $P_vsource_kW kW")
     println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
-    println("   Total Load Power        : $(results[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Load Reactive Power: $(results[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total PV Power          : $(results[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total PV Reactive Power : $(results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total Battery Power     : $(results[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Battery Reactive Power: $(results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    println("   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    println("   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    println("   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
+    println("   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
     println("*"^30 * "\n")
 end
 
@@ -229,5 +229,5 @@ end
 # Define the filename with the appropriate structure
 filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
-CSV.write(filename, results)
+CSV.write(filename, vald)
 myprintln(verbose, "Validation results written to $filename")
