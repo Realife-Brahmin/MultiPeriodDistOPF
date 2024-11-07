@@ -193,6 +193,8 @@ for t in 1:T
 
     vald[:vald_total_gen_real_power_vs_t_1toT_kW][t] = vald[:vald_pv_real_power_vs_t_1toT_kW][t] + vald[:vald_battery_real_power_vs_t_1toT_kW][t]
 
+    vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
+
     # Other cumulative battery metrics
     vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
     vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
@@ -227,8 +229,6 @@ global storage_id = Storages.First() # It is weird that I have to specify it as 
 while storage_id > 0
     storage_name = Storages.Name()
     storage_number = parse(Int, split(storage_name, "battery")[2])  # assuming 'batteryX' naming
-    println("Checking storage with storage_number: $storage_number and storage_name: $storage_name")
-
     # Retrieve the SOC in per-unit for this battery
     Bj_T = Storages.puSOC()
 
