@@ -128,6 +128,7 @@ function parse_battery_data(systemName::String;
     # By default, ensuring that batteries always get back to their original SOCs at the end of the optimization horizon
     Bref = B0 
     Bref_pu = B0_pu
+    Bref_percent = Dict(j => Bref_pu[j] / B_R_pu[j] for j ∈ Bset)
 
     Bset = sort(collect(Bset))
 
@@ -139,6 +140,7 @@ function parse_battery_data(systemName::String;
         :B0 => B0,
         :B0_pu => B0_pu,
         :Bref => Bref,
+        :Bref_percent => Bref_percent,
         :Bref_pu => Bref_pu,
         :B_R => B_R,
         :B_R_pu => B_R_pu,
