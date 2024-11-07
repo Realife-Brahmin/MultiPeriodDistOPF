@@ -240,6 +240,48 @@ while storage_id > 0
     global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
 end
 
+# Assume vald and model_outputs are dictionaries containing vald (OpenDSS) and model (simulation) outputs respectively.
+
+# 1. Maximum All Time Voltage Discrepancy
+# Assuming vald[:vald_voltages_vs_t_1toT_pu] and model_outputs[:voltages_vs_t_1toT_pu] 
+# are arrays of voltage magnitudes for each bus at each time step (arrays of arrays).
+
+global max_voltage_discrepancy = 0.0
+v = model[:v]
+for t in 1:T
+    for (bus_index, vald_voltage) in enumerate(vald[:vald_voltages_vs_t_1toT_pu][t])
+        model_voltage = value(v[bus_index, t])
+        discrepancy = abs(vald_voltage - model_voltage)
+        global max_voltage_discrepancy
+        if discrepancy > max_voltage_discrepancy
+            max_voltage_discrepancy = discrepancy
+        end
+    end
+end
+
+println("Maximum All Time Voltage Discrepancy: ", max_voltage_discrepancy, " pu")
+
+# 2. Maximum All Time Line Loss Discrepancy
+# Assuming vald[:vald_PLoss_vs_t_1toT_kW] and model_outputs[:PLoss_vs_t_1toT_kW] are arrays of power loss at each time step.
+
+line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
+max_line_loss_discrepancy = maximum(line_loss_discrepancies)
+println("Maximum All Time Line Loss Discrepancy: ", max_line_loss_discrepancy, " kW")
+
+# 3. Maximum All Time Substation Borrowed Real Power Discrepancy
+# Assuming vald[:vald_PSubs_vs_t_1toT_kW] and model_outputs[:PSubs_vs_t_1toT_kW] are arrays of real power at each time step.
+
+substation_real_power_discrepancies = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
+max_substation_real_power_discrepancy = maximum(substation_real_power_discrepancies)
+println("Maximum All Time Substation Borrowed Real Power Discrepancy: ", max_substation_real_power_discrepancy, " kW")
+
+# 4. Maximum All Time Substation Borrowed Reactive Power Discrepancy
+# Assuming vald[:vald_QSubs_vs_t_1toT_kVAr] and model_outputs[:QSubs_vs_t_1toT_kVAr] are arrays of reactive power at each time step.
+
+substation_reactive_power_discrepancies = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
+max_substation_reactive_power_discrepancy = maximum(substation_reactive_power_discrepancies)
+println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", max_substation_reactive_power_discrepancy, " kVAr")
+
 # Define the path and filename based on the specified structure
 @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
 base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
