@@ -175,17 +175,17 @@ for t in 1:T
     results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_kVAr
 
     # Battery power calculations
-    total_battery_kW = 0.0
-    total_battery_kVAr = 0.0
+    vald_battery_real_power_t_kW = 0.0
+    vald_battery_reactive_power_t_kVAr = 0.0
     battery_names = Storages.AllNames()
     for battery_name in battery_names
         Circuit.SetActiveElement("Storage.$battery_name")
-        total_battery_kW += real(-CktElement.Powers()[1])
-        total_battery_kVAr += imag(-CktElement.Powers()[1])
+        vald_battery_real_power_t_kW += real(-CktElement.Powers()[1])
+        vald_battery_reactive_power_t_kVAr += imag(-CktElement.Powers()[1])
     end
 
-    results[:vald_battery_real_power_vs_t_1toT_kW][t] = total_battery_kW
-    results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = total_battery_kVAr
+    results[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+    results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
 
     results[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = results[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + results[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] + results[:vald_static_cap_reactive_power_vs_t_1toT_kVAr][t]
 
@@ -194,8 +194,8 @@ for t in 1:T
     results[:vald_total_gen_real_power_vs_t_1toT_kW][t] = results[:vald_pv_real_power_vs_t_1toT_kW][t] + results[:vald_battery_real_power_vs_t_1toT_kW][t]
 
     # Other cumulative battery metrics
-    results[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(total_battery_kW)
-    results[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(total_battery_kVAr)
+    results[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
+    results[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
 
     # Capture voltage magnitudes at all buses
     results[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
