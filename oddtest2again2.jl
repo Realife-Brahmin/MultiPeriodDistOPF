@@ -1,6 +1,6 @@
 using OpenDSSDirect
 using CSV, DataFrames
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 using JuMP: value
 
 include("src/helperFunctions.jl")
@@ -60,6 +60,10 @@ vald = Dict(
     :vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr => zeros(T),
 
     # Cumulative fields
+    :vald_battery_reactive_power_allT_kVAr => 0.0,
+    :vald_battery_real_power_allT_kW => 0.0,
+    :vald_pv_reactive_power_allT_kVAr => 0.0,
+    :vald_pv_real_power_allT_kW => 0.0,
     :vald_PLoss_allT_kW => 0.0,
     :vald_PSubs_allT_kW => 0.0,
     :vald_QLoss_allT_kVAr => 0.0,
@@ -175,7 +179,12 @@ for t in 1:T
     end
 
     vald[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_kW
+
+    vald[:vald_pv_real_power_allT_kW] += total_pv_kW
+
     vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_kVAr
+
+    vald[:vald_pv_reactive_power_allT_kVAr] += total_pv_kVAr
 
     # Battery power calculations
     vald_battery_real_power_t_kW = 0.0
@@ -188,7 +197,12 @@ for t in 1:T
     end
 
     vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+
+    vald[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
+
     vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
+
+    vald[:vald_battery_reactive_power_allT_kVAr] += vald_battery_reactive_power_t_kVAr
 
     vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_static_cap_reactive_power_vs_t_1toT_kVAr][t]
 
@@ -285,12 +299,12 @@ disc_QSubs_all_time = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_
 max_substation_reactive_power_discrepancy = maximum(disc_QSubs_all_time)
 println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", max_substation_reactive_power_discrepancy, " kVAr")
 
-
+@pack! vald = disc_voltage_all_time, disc_line_loss_all_time, disc_PSubs_all_time, disc_QSubs_all_time;
 
 # Define the path and filename based on the specified structure
 @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
 base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
-
+# 
 # Create the directory if it doesn't exist
 if !isdir(base_dir)
     println("Creating directory: $base_dir")
