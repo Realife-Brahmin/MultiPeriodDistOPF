@@ -149,7 +149,7 @@ for t in 1:T
     vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_vsource_kW)
 
     # Cost calculation
-    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = kVA_B * LoadShapeCost[t] * P_substation_total_kW * delta_t
+    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_kW * delta_t
     vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
     # Reactive and real power totals
