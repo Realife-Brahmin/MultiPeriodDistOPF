@@ -349,13 +349,13 @@ function export_key_validation_results(vald, data; filename::String="validation_
         # Discrepancies
         println(f, "---------------------------------------------")
         println(f, "Discrepancies (Maximum All Time):")
-        println(f, "$(item_counter). Maximum All Time Voltage Discrepancy: $(round(vald[:disc_voltage_all_time], digits=6)) pu")
+        println(f, "$(item_counter). Maximum All Time Voltage Discrepancy: $(round(vald[:disc_voltage_all_time_pu], digits=6)) pu")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Line Loss Discrepancy: $(round(vald[:disc_line_loss_all_time], digits=6)) kW")
+        println(f, "$(item_counter). Maximum All Time Line Loss Discrepancy: $(round(vald[:disc_line_loss_all_time_kW], digits=6)) kW")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Substation Borrowed Real Power Discrepancy: $(round(vald[:disc_PSubs_all_time], digits=6)) kW")
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Real Power Discrepancy: $(round(vald[:disc_PSubs_all_time_kW], digits=6)) kW")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(round(vald[:disc_QSubs_all_time], digits=6)) kVAr")
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(round(vald[:disc_QSubs_all_time_kVAr], digits=6)) kVAr")
         item_counter += 1
 
         # Additional Metadata
