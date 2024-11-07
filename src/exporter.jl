@@ -333,7 +333,7 @@ function export_key_validation_results(vald, data; filename::String="validation_
         # Battery Generation and Transactions
         println(f, "$(item_counter). Horizon Total Battery Generation: $(round(vald[:vald_battery_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_battery_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(vald[:battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(vald[:battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(vald[:vald_battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(vald[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
 
         # SCD and Energy Deviation

@@ -61,7 +61,9 @@ vald = Dict(
 
     # Cumulative fields
     :vald_battery_reactive_power_allT_kVAr => 0.0,
+    :vald_battery_reactive_power_transaction_magnitude_allT_kVAr => 0.0,
     :vald_battery_real_power_allT_kW => 0.0,
+    :vald_battery_real_power_transaction_magnitude_allT_kW => 0.0,
     :vald_pv_reactive_power_allT_kVAr => 0.0,
     :vald_pv_real_power_allT_kW => 0.0,
     :vald_PLoss_allT_kW => 0.0,
@@ -194,6 +196,10 @@ for t in 1:T
         Circuit.SetActiveElement("Storage.$battery_name")
         vald_battery_real_power_t_kW += real(-CktElement.Powers()[1])
         vald_battery_reactive_power_t_kVAr += imag(-CktElement.Powers()[1])
+
+        vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] += abs(vald_battery_real_power_t_kW)
+        vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] += abs(vald_battery_reactive_power_t_kVAr)
+
     end
 
     vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
@@ -213,8 +219,8 @@ for t in 1:T
     vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
 
     # Other cumulative battery metrics
-    vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
-    vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
+    # vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] = abs(vald_battery_real_power_t_kW)
+    # vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] = abs(vald_battery_reactive_power_t_kVAr)
 
     # Capture voltage magnitudes at all buses
     vald[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
