@@ -216,6 +216,30 @@ for t in 1:T
     println("*"^30 * "\n")
 end
 
+# Battery Terminal SOC Checking
+@unpack Bref_percent, B_R = data
+vald[:vald_terminal_soc_violation_kWh] = 0.0
+
+# Initialize storage_id with the first storage element
+global storage_id = Storages.First() # It is weird that I have to specify it as a global variable here and I don't have a definite explanation on why so. I think this will get resolved once this script is in its own function
+
+# Begin the while loop
+while storage_id > 0
+    storage_name = Storages.Name()
+    storage_number = parse(Int, split(storage_name, "battery")[2])  # assuming 'batteryX' naming
+    println("Checking storage with storage_number: $storage_number and storage_name: $storage_name")
+
+    # Retrieve the SOC in per-unit for this battery
+    Bj_T = Storages.puSOC()
+
+    # Calculate SOC violation in kWh
+    soc_violation_j_kWh = abs(Bj_T - Bref_percent[storage_number]) * B_R[storage_number]
+    vald[:vald_terminal_soc_violation_kWh] += soc_violation_j_kWh
+
+    # Move to the next storage element
+    global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
+end
+
 # Define the path and filename based on the specified structure
 @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
 base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
