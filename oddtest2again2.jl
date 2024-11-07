@@ -269,7 +269,7 @@ end
 # Assuming vald[:vald_voltages_vs_t_1toT_pu] and model_outputs[:voltages_vs_t_1toT_pu] 
 # are arrays of voltage magnitudes for each bus at each time step (arrays of arrays).
 
-global disc_voltage_all_time = 0.0
+global disc_voltage_all_time_pu = 0.0
 v = model[:v]
 for t in 1:T
     for (bus_index, vald_voltage) in enumerate(vald[:vald_voltages_vs_t_1toT_pu][t])
@@ -277,35 +277,35 @@ for t in 1:T
         discrepancy = abs(vald_voltage - model_voltage)
         global disc_voltage_all_time
         if discrepancy > disc_voltage_all_time
-            disc_voltage_all_time = discrepancy
+            disc_voltage_all_time_pu = discrepancy
         end
     end
 end
 
-println("Maximum All Time Voltage Discrepancy: ", disc_voltage_all_time, " pu")
+println("Maximum All Time Voltage Discrepancy: ", disc_voltage_all_time_pu, " pu")
 
 # 2. Maximum All Time Line Loss Discrepancy
 # Assuming vald[:vald_PLoss_vs_t_1toT_kW] and model_outputs[:PLoss_vs_t_1toT_kW] are arrays of power loss at each time step.
 
 line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
-disc_line_loss_all_time = maximum(line_loss_discrepancies)
-println("Maximum All Time Line Loss Discrepancy: ", disc_line_loss_all_time, " kW")
+disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
+println("Maximum All Time Line Loss Discrepancy: ", disc_line_loss_all_time_kW, " kW")
 
 # 3. Maximum All Time Substation Borrowed Real Power Discrepancy
 # Assuming vald[:vald_PSubs_vs_t_1toT_kW] and model_outputs[:PSubs_vs_t_1toT_kW] are arrays of real power at each time step.
 
-disc_PSubs_all_time = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
-max_substation_real_power_discrepancy = maximum(disc_PSubs_all_time)
-println("Maximum All Time Substation Borrowed Real Power Discrepancy: ", max_substation_real_power_discrepancy, " kW")
+disc_PSubs_vs_t_1toT_kW = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
+disc_PSubs_all_time_kW = maximum(disc_PSubs_vs_t_1toT_kW)
+println("Maximum All Time Substation Borrowed Real Power Discrepancy: ", disc_PSubs_all_time_kW, " kW")
 
 # 4. Maximum All Time Substation Borrowed Reactive Power Discrepancy
 # Assuming vald[:vald_QSubs_vs_t_1toT_kVAr] and model_outputs[:QSubs_vs_t_1toT_kVAr] are arrays of reactive power at each time step.
 
-disc_QSubs_all_time = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
-max_substation_reactive_power_discrepancy = maximum(disc_QSubs_all_time)
-println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", max_substation_reactive_power_discrepancy, " kVAr")
+disc_QSubs_vs_t_1toT_kVAr = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
+disc_QSubs_all_time_kVAr = maximum(disc_QSubs_vs_t_1toT_kVAr)
+println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", disc_QSubs_all_time_kVAr, " kVAr")
 
-@pack! vald = disc_voltage_all_time, disc_line_loss_all_time, disc_PSubs_all_time, disc_QSubs_all_time;
+@pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr;
 
 # Define the path and filename based on the specified structure
 @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
