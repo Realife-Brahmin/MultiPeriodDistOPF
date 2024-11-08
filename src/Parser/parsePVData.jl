@@ -1,5 +1,5 @@
 # parsePVData.jl
-
+# Note: PVsystem and NOT PVSystem will be read (note the lowercase third letter)
 module parsePVData
 
 export parse_pv_data
