@@ -231,10 +231,6 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(data[:static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
 
-        # Example substation power cost
-        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(data[:PSubsCost_allT_dollar], digits=2))")
-        item_counter += 1
-
         # PV-related metrics
         println(f, "$(item_counter). Horizon Total PV Generation: $(round(data[:pv_real_power_allT_kW], digits=2)) kW + $(round(data[:pv_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
@@ -290,7 +286,7 @@ function export_key_validation_results(vald, data; filename::String="validation_
     open(filename, "w") do f
         # Initialize output item counter
         item_counter = 1
-
+        # Todo: Add System Name to this as well
         # Header Section
         println(f, "---------------------------------------------")
         println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
