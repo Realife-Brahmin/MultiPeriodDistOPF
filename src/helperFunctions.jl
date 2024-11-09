@@ -144,7 +144,7 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
     end
 
     # Generate load shape values based on T
-    LoadShape = []
+    LoadShape = Float64[]
     if T < 24
         # Take the middle T values
         start_idx = Int(floor((24 - T) / 2)) + 1
@@ -164,7 +164,8 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
         LoadShape = defaultLoadShape
     end
 
-    return LoadShape
+    LoadShapeLoad = [Float64(x) for x in LoadShape] # a patch for T>24 where the resultant returned vector is Vector{Any} instead of Vector{Float64}
+    return LoadShapeLoad
 end
 
 end # module
