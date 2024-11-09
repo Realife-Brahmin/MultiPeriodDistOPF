@@ -7,7 +7,9 @@ Revise.revise()
 
 systemName = "ads10_1ph"
 systemName = "ieee123_1ph"
-T = 96
+T0 = 24
+factor = 20
+T = T0*factor 
 numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
