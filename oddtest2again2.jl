@@ -218,17 +218,6 @@ for t in 1:T
 
     vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
 
-    # # vald[:vald_voltages_vs_t_1toT_pu][t] = Circuit.AllBusMagPu()
-    # # Retrieve all bus names and their corresponding magnitudes
-    # bus_names = Circuit.AllBusNames()  # Array of bus names
-    # bus_voltages = Circuit.AllBusMagPu()  # Array of per-unit voltage magnitudes
-
-    # # Create a dictionary mapping each bus name to its voltage magnitude
-    # bus_voltage_dict = Dict(bus_names[i] => bus_voltages[i] for i in eachindex(bus_names))
-
-    # # Store the dictionary in your results for the current timestep
-    # vald[:vald_voltages_vs_t_1toT_pu][t] = bus_voltage_dict
-
     # Initialize a dictionary to store voltages with integer bus numbers as keys
     voltage_dict = Dict{Int,Float64}()
 
@@ -282,19 +271,6 @@ while storage_id > 0
     # Move to the next storage element
     global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
 end
-
-# global disc_voltage_all_time_pu = 0.0
-# v = model[:v]
-# for t in 1:T
-#     for (bus_index, vald_voltage) in enumerate(vald[:vald_voltages_vs_t_1toT_pu][t])
-#         model_voltage = sqrt(value(v[bus_index, t]))
-#         discrepancy = abs(vald_voltage - model_voltage)
-#         global disc_voltage_all_time_pu
-#         if discrepancy > disc_voltage_all_time_pu
-#             disc_voltage_all_time_pu = discrepancy
-#         end
-#     end
-# end
 
 # Initialize the global discrepancy variable for voltage
 global disc_voltage_all_time_pu = 0.0
