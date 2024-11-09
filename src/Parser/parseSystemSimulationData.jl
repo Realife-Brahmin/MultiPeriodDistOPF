@@ -20,7 +20,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     substationBus = 1       # Default substation bus number
     V_Subs = 1.0            # Default per-unit voltage at substation
     kV_B = 1.0            # Default base voltage in kV (line-to-ground)
-    Δt = 1.0                # Default time step in hours
+    Δt = min(1.0, 24.0/T) # Currently has no effect as what's read from SysSim.dss takes precedence (which is always 1h as of now)
 
     wd = @__DIR__
     # Construct the file path using wd
