@@ -1,0 +1,103 @@
+Min 48.20404 P_Subs[1] + 48.20404 P_Subs[2] + 48.20404 P_Subs[3] + 48.20404 P_Subs[4] + 48.20404 P_Subs[5] + 48.20404 P_Subs[6] + 48.20404 P_Subs[7] + 48.20404 P_Subs[8] + 48.20404 P_Subs[9] + 48.20404 P_Subs[10] + 48.20404 P_Subs[11] + 48.20404 P_Subs[12] + 48.20404 P_Subs[13] + 48.20404 P_Subs[14] + 48.20404 P_Subs[15] + 48.20404 P_Subs[16] + 48.20404 P_Subs[17] + 48.20404 P_Subs[18] + 48.20404 P_Subs[19] + 48.20404 P_Subs[20] + 48.20404 P_Subs[21] + 48.20404 P_Subs[22] + 48.20404 P_Subs[23] + 48.20404 P_Subs[24] + 48.20404 P_Subs[25] + 48.20404 P_Subs[26] + 48.20404 P_Subs[27] + 48.20404 P_Subs[28] + 48.20404 P_Subs[29] + 48.20404 P_Subs[30] + [[...25380 terms omitted...]] + 5.000000000000004e-5 P_c[53,480] + 5.263157894736836e-5 P_d[53,480] + 5.000000000000004e-5 P_c[58,480] + 5.263157894736836e-5 P_d[58,480] + 5.000000000000004e-5 P_c[62,480] + 5.263157894736836e-5 P_d[62,480] + 5.000000000000004e-5 P_c[67,480] + 5.263157894736836e-5 P_d[67,480] + 5.000000000000004e-5 P_c[71,480] + 5.263157894736836e-5 P_d[71,480] + 5.000000000000004e-5 P_c[75,480] + 5.263157894736836e-5 P_d[75,480] + 5.000000000000004e-5 P_c[79,480] + 5.263157894736836e-5 P_d[79,480] + 5.000000000000004e-5 P_c[84,480] + 5.263157894736836e-5 P_d[84,480] + 5.000000000000004e-5 P_c[87,480] + 5.263157894736836e-5 P_d[87,480] + 5.000000000000004e-5 P_c[92,480] + 5.263157894736836e-5 P_d[92,480] + 5.000000000000004e-5 P_c[97,480] + 5.263157894736836e-5 P_d[97,480] + 5.000000000000004e-5 P_c[101,480] + 5.263157894736836e-5 P_d[101,480] + 5.000000000000004e-5 P_c[106,480] + 5.263157894736836e-5 P_d[106,480] + 5.000000000000004e-5 P_c[111,480] + 5.263157894736836e-5 P_d[111,480] + 5.000000000000004e-5 P_c[116,480] + 5.263157894736836e-5 P_d[116,480]
+Subject to
+ SubstationRealPowerBalance_t_1 : P_Subs[1] - P[(1, 2),1] == 0
+ SubstationRealPowerBalance_t_2 : P_Subs[2] - P[(1, 2),2] == 0
+ SubstationRealPowerBalance_t_3 : P_Subs[3] - P[(1, 2),3] == 0
+ SubstationRealPowerBalance_t_4 : P_Subs[4] - P[(1, 2),4] == 0
+ SubstationRealPowerBalance_t_5 : P_Subs[5] - P[(1, 2),5] == 0
+ SubstationRealPowerBalance_t_6 : P_Subs[6] - P[(1, 2),6] == 0
+ SubstationRealPowerBalance_t_7 : P_Subs[7] - P[(1, 2),7] == 0
+ SubstationRealPowerBalance_t_8 : P_Subs[8] - P[(1, 2),8] == 0
+ SubstationRealPowerBalance_t_9 : P_Subs[9] - P[(1, 2),9] == 0
+ SubstationRealPowerBalance_t_10 : P_Subs[10] - P[(1, 2),10] == 0
+ SubstationRealPowerBalance_t_11 : P_Subs[11] - P[(1, 2),11] == 0
+ SubstationRealPowerBalance_t_12 : P_Subs[12] - P[(1, 2),12] == 0
+ SubstationRealPowerBalance_t_13 : P_Subs[13] - P[(1, 2),13] == 0
+ SubstationRealPowerBalance_t_14 : P_Subs[14] - P[(1, 2),14] == 0
+ SubstationRealPowerBalance_t_15 : P_Subs[15] - P[(1, 2),15] == 0
+ SubstationRealPowerBalance_t_16 : P_Subs[16] - P[(1, 2),16] == 0
+ SubstationRealPowerBalance_t_17 : P_Subs[17] - P[(1, 2),17] == 0
+ SubstationRealPowerBalance_t_18 : P_Subs[18] - P[(1, 2),18] == 0
+ SubstationRealPowerBalance_t_19 : P_Subs[19] - P[(1, 2),19] == 0
+ SubstationRealPowerBalance_t_20 : P_Subs[20] - P[(1, 2),20] == 0
+ SubstationRealPowerBalance_t_21 : P_Subs[21] - P[(1, 2),21] == 0
+ SubstationRealPowerBalance_t_22 : P_Subs[22] - P[(1, 2),22] == 0
+ SubstationRealPowerBalance_t_23 : P_Subs[23] - P[(1, 2),23] == 0
+ SubstationRealPowerBalance_t_24 : P_Subs[24] - P[(1, 2),24] == 0
+ SubstationRealPowerBalance_t_25 : P_Subs[25] - P[(1, 2),25] == 0
+ SubstationRealPowerBalance_t_26 : P_Subs[26] - P[(1, 2),26] == 0
+ SubstationRealPowerBalance_t_27 : P_Subs[27] - P[(1, 2),27] == 0
+ SubstationRealPowerBalance_t_28 : P_Subs[28] - P[(1, 2),28] == 0
+ SubstationRealPowerBalance_t_29 : P_Subs[29] - P[(1, 2),29] == 0
+ SubstationRealPowerBalance_t_30 : P_Subs[30] - P[(1, 2),30] == 0
+ SubstationRealPowerBalance_t_31 : P_Subs[31] - P[(1, 2),31] == 0
+ SubstationRealPowerBalance_t_32 : P_Subs[32] - P[(1, 2),32] == 0
+ SubstationRealPowerBalance_t_33 : P_Subs[33] - P[(1, 2),33] == 0
+ SubstationRealPowerBalance_t_34 : P_Subs[34] - P[(1, 2),34] == 0
+ SubstationRealPowerBalance_t_35 : P_Subs[35] - P[(1, 2),35] == 0
+ SubstationRealPowerBalance_t_36 : P_Subs[36] - P[(1, 2),36] == 0
+ SubstationRealPowerBalance_t_37 : P_Subs[37] - P[(1, 2),37] == 0
+ SubstationRealPowerBalance_t_38 : P_Subs[38] - P[(1, 2),38] == 0
+ SubstationRealPowerBalance_t_39 : P_Subs[39] - P[(1, 2),39] == 0
+ SubstationRealPowerBalance_t_40 : P_Subs[40] - P[(1, 2),40] == 0
+ SubstationRealPowerBalance_t_41 : P_Subs[41] - P[(1, 2),41] == 0
+ SubstationRealPowerBalance_t_42 : P_Subs[42] - P[(1, 2),42] == 0
+ SubstationRealPowerBalance_t_43 : P_Subs[43] - P[(1, 2),43] == 0
+ SubstationRealPowerBalance_t_44 : P_Subs[44] - P[(1, 2),44] == 0
+ SubstationRealPowerBalance_t_45 : P_Subs[45] - P[(1, 2),45] == 0
+ SubstationRealPowerBalance_t_46 : P_Subs[46] - P[(1, 2),46] == 0
+ SubstationRealPowerBalance_t_47 : P_Subs[47] - P[(1, 2),47] == 0
+ SubstationRealPowerBalance_t_48 : P_Subs[48] - P[(1, 2),48] == 0
+ SubstationRealPowerBalance_t_49 : P_Subs[49] - P[(1, 2),49] == 0
+ SubstationRealPowerBalance_t_50 : P_Subs[50] - P[(1, 2),50] == 0
+[[...516406 constraints skipped...]]
+ l[(74, 75),480] >= 0
+ l[(74, 78),480] >= 0
+ l[(75, 76),480] >= 0
+ l[(76, 77),480] >= 0
+ l[(78, 79),480] >= 0
+ l[(78, 88),480] >= 0
+ l[(79, 80),480] >= 0
+ l[(80, 81),480] >= 0
+ l[(80, 82),480] >= 0
+ l[(82, 83),480] >= 0
+ l[(83, 84),480] >= 0
+ l[(83, 86),480] >= 0
+ l[(84, 85),480] >= 0
+ l[(86, 87),480] >= 0
+ l[(88, 89),480] >= 0
+ l[(89, 90),480] >= 0
+ l[(89, 91),480] >= 0
+ l[(91, 92),480] >= 0
+ l[(91, 93),480] >= 0
+ l[(93, 94),480] >= 0
+ l[(93, 95),480] >= 0
+ l[(95, 96),480] >= 0
+ l[(95, 97),480] >= 0
+ l[(97, 98),480] >= 0
+ l[(99, 100),480] >= 0
+ l[(99, 124),480] >= 0
+ l[(100, 101),480] >= 0
+ l[(101, 102),480] >= 0
+ l[(102, 123),480] >= 0
+ l[(103, 104),480] >= 0
+ l[(103, 107),480] >= 0
+ l[(104, 105),480] >= 0
+ l[(105, 106),480] >= 0
+ l[(107, 108),480] >= 0
+ l[(107, 110),480] >= 0
+ l[(108, 109),480] >= 0
+ l[(110, 111),480] >= 0
+ l[(110, 121),480] >= 0
+ l[(111, 112),480] >= 0
+ l[(112, 113),480] >= 0
+ l[(112, 114),480] >= 0
+ l[(114, 115),480] >= 0
+ l[(115, 116),480] >= 0
+ l[(117, 54),480] >= 0
+ l[(118, 37),480] >= 0
+ l[(124, 103),480] >= 0
+ l[(125, 128),480] >= 0
+ l[(126, 16),480] >= 0
+ l[(127, 28),480] >= 0
+ l[(128, 69),480] >= 0
