@@ -25,7 +25,7 @@ function plot_battery_actions(model, data;
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
-    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max, gedAppendix = data;
+    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max, gedAppendix, solver = data;
     Tset = sort(collect(Tset))
 
     P_c = model[:P_c]
@@ -126,7 +126,7 @@ function plot_battery_actions(model, data;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha).png")
+            filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha)_$(solver).png")
             myprintln(verbose, "Saving plot to: $filename")
             savefig(plot_combined, filename)
         end
@@ -140,7 +140,7 @@ function plot_substation_power(data;
     savePlots::Bool=true,
     macroItrNum::Int=1,
     verbose::Bool=false)
-    @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix = data
+    @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver = data
 
     yvalues = PSubs_vs_t_1toT_kW
 
@@ -152,7 +152,7 @@ function plot_substation_power(data;
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
-    filename = joinpath(base_dir, "Horizon_$(T)_SubstationRealPowers_vs_t_for_$(objfunPrefix)_$(gedAppendix).png")
+    filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationRealPowers_vs_t_for_$(objfunPrefix)_$(gedAppendix).png")
 
     gr()
 
@@ -210,7 +210,7 @@ function plot_substation_power_cost(data;
 
     theme(common_theme)
 
-    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
+    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
 
     yvalues = PSubsCost_vs_t_1toT_dollar
 
@@ -255,7 +255,7 @@ function plot_substation_power_cost(data;
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
-        filename = joinpath(base_dir, "Horizon_$(T)_SubstationPowerCost_vs_t_for_$(objfunString)_$(gedAppendix).png")
+        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationPowerCost_vs_t_for_$(objfunString)_$(gedAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
@@ -267,7 +267,7 @@ function plot_line_losses(data;
     macroItrNum::Int=1,
     verbose::Bool=false)
 
-    @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix = data
+    @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
 
     yvalues = PLoss_vs_t_1toT_kW
 
@@ -317,7 +317,7 @@ function plot_line_losses(data;
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
-        filename = joinpath(base_dir, "Horizon_$(T)_LineLosses_vs_t_for_$(objfunString)_$(gedAppendix).png")
+        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_LineLosses_vs_t_for_$(objfunString)_$(gedAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end

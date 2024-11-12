@@ -33,9 +33,9 @@ function optimize_MPOPF_1ph_NL(data)
             model = Model(Gurobi.Optimizer)
             # set_optimizer_attribute(model, "OptimalityTol", 1e-6)
             # set_optimizer_attribute(model, "IterationLimit", 10000)
-            set_optimizer_attribute(model, "OutputFlag", 1)
+            # set_optimizer_attribute(model, "OutputFlag", 1)
             # You can also adjust LogToConsole if needed
-            set_optimizer_attribute(model, "LogToConsole", 1)
+            # set_optimizer_attribute(model, "LogToConsole", 1)
         else
             error("Unsupported solver")
         end
