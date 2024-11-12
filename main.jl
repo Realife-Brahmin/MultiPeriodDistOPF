@@ -8,7 +8,7 @@ Revise.revise()
 systemName = "ads10_1ph"
 systemName = "ieee123_1ph"
 T0 = 24
-factor = 20
+factor = 4
 T = T0*factor 
 numAreas = 1
 temporal_decmp = false
