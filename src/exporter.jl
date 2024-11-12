@@ -44,7 +44,7 @@ function export_decision_variables(model, data;
     verbose::Bool=false)
 
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -53,7 +53,7 @@ function export_decision_variables(model, data;
     end
 
     ext = ".csv"
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
     
     # Log current working directory
     myprintln(verbose, "Current working directory: $(pwd())")
@@ -165,11 +165,10 @@ function export_decision_variables(model, data;
     myprintln(verbose, "Decision variables exported to $filename")
 end
 
-
 function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
 
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -177,7 +176,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         mkpath(base_dir)
     end
 
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_results_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
 
     # Extract system information and parameters from `data`
     # system_name = data[:machine_ID]  # System name
@@ -280,7 +279,8 @@ function export_key_validation_results(vald, data; filename::String="validation_
         mkpath(base_dir)
     end
 
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_valdResults_$(gedAppendix)_via_$(simNatureAppendix).txt")
+    @unpack solver = data;
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_via_$(simNatureAppendix).txt")
 
     # Open the file and write each section
     open(filename, "w") do f
