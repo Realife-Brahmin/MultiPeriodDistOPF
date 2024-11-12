@@ -4,17 +4,50 @@ module Playbook_of_MPOPF
 export optimize_MPOPF_1ph_NL
 
 using JuMP
+using Gurobi
 using Ipopt
 using Parameters: @unpack
 
 function optimize_MPOPF_1ph_NL(data)
 
+    @unpack solver = data;
     # Define the optimization model
-    model = Model(Ipopt.Optimizer)
+
+    # if solver == "Ipopt"
+    #     model = Model(Ipopt.Optimizer)
+    #     set_optimizer_attribute(model, "tol", 1e-6)
+
+    # elseif solver == "Gurobi"
+    #     model = Model(Gurobi.Optimizer)
+    #     set_optimizer_attribute(model, "OptimalityTol", 1e-6)  # Sets Gurobi's optimality tolerance
+    # else
+    #     @error "floc"
+    # end
+    function configure_solver(solver_name)
+        if solver_name == "Ipopt"
+            model = Model(Ipopt.Optimizer)
+            set_optimizer_attribute(model, "tol", 1e-6)
+            set_optimizer_attribute(model, "max_iter", 10000)
+            set_optimizer_attribute(model, "print_level", 5)
+        elseif solver_name == "Gurobi"
+            model = Model(Gurobi.Optimizer)
+            # set_optimizer_attribute(model, "OptimalityTol", 1e-6)
+            # set_optimizer_attribute(model, "IterationLimit", 10000)
+            set_optimizer_attribute(model, "OutputFlag", 1)
+            # You can also adjust LogToConsole if needed
+            set_optimizer_attribute(model, "LogToConsole", 1)
+        else
+            error("Unsupported solver")
+        end
+
+        return model
+    end
 
     # ===========================
     # Variables
     # ===========================
+
+    model = configure_solver(solver)
 
     @unpack Tset, Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data;
     PSubsMax_pu = PSubsMax_kW/kVA_B
@@ -441,9 +474,9 @@ function optimize_MPOPF_1ph_NL(data)
     # ===========================
 
     # Set IPOPT options
-    set_optimizer_attribute(model, "tol", 1e-6)
-    set_optimizer_attribute(model, "max_iter", 10000)
-    set_optimizer_attribute(model, "print_level", 5)
+    # set_optimizer_attribute(model, "tol", 1e-6)
+    # set_optimizer_attribute(model, "max_iter", 10000)
+    # set_optimizer_attribute(model, "print_level", 5)
 
     # ===========================
     # Solve the Model
