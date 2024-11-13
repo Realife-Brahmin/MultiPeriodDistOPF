@@ -22,8 +22,9 @@ inputForecastDescription = "bilevelCosts"
 alpha = 1e-3
 PSubsMax_kW = Inf # Inf means no limit
 solver = "Ipopt"
+# solver = "EAGO"
 # solver = "Gurobi"
-solver = "Juniper"
+# solver = "Juniper"
 
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver)
