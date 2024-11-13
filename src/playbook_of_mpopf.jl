@@ -4,6 +4,7 @@ module Playbook_of_MPOPF
 export optimize_MPOPF_1ph_NL
 
 using JuMP
+using EAGO
 using Gurobi
 using Ipopt
 using Juniper
@@ -50,6 +51,8 @@ function optimize_MPOPF_1ph_NL(data)
             ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
             optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
             model = Model(optimizer)
+        elseif solver == "EAGO"
+            model = Model(EAGO.Optimizer)
         else
             error("Unsupported solver")
         end
