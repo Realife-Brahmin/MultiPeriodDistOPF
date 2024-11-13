@@ -15,17 +15,6 @@ function optimize_MPOPF_1ph_NL(data)
 
     @unpack solver = data;
     # Define the optimization model
-
-    # if solver == "Ipopt"
-    #     model = Model(Ipopt.Optimizer)
-    #     set_optimizer_attribute(model, "tol", 1e-6)
-
-    # elseif solver == "Gurobi"
-    #     model = Model(Gurobi.Optimizer)
-    #     set_optimizer_attribute(model, "OptimalityTol", 1e-6)  # Sets Gurobi's optimality tolerance
-    # else
-    #     @error "floc"
-    # end
     function configure_solver(solver_name)
         if solver_name == "Ipopt"
             model = Model(Ipopt.Optimizer)
