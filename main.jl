@@ -25,7 +25,7 @@ solver = "Ipopt"
 # solver = "EAGO"
 # solver = "Gurobi"
 # solver = "Juniper"
-solver = "MadNLP"
+# solver = "MadNLP"
 
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver)
