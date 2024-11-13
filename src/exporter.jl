@@ -193,9 +193,13 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         println(f, "---------------------------------------------")
         println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
         item_counter += 1
+        println(f, "$(item_counter). Solver Used: $(data[:solver])")
+        item_counter += 1
+        println(f, "$(item_counter). System Name: $(data[:systemName])")
+        item_counter += 1
         println(f, "$(item_counter). Horizon Duration: $(data[:T])")
         item_counter += 1
-        println(f, "$(item_counter). Nature of Simulation: $(data[:simNatureString])")
+        println(f, "$(item_counter). Nature of Optimization Simulation: $(data[:simNatureString])")
         item_counter += 1  # Placeholder
         println(f, "$(item_counter). Objective: $(data[:objfunString])")
         item_counter += 1  # Placeholder
@@ -291,9 +295,13 @@ function export_key_validation_results(vald, data; filename::String="validation_
         println(f, "---------------------------------------------")
         println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
         item_counter += 1
+        println(f, "$(item_counter). Solver Used: $(data[:solver])")
+        item_counter += 1
+        println(f, "$(item_counter). System Name: $(data[:systemName])")
+        item_counter += 1
         println(f, "$(item_counter). Horizon Duration: $(data[:T])")
         item_counter += 1
-        println(f, "$(item_counter). Nature of Simulation: Validation")
+        println(f, "$(item_counter). Nature of Validation Simulation: $(data[:simNatureString])")
         item_counter += 1
         println(f, "---------------------------------------------")
 
