@@ -6,6 +6,7 @@ export optimize_MPOPF_1ph_NL
 using JuMP
 using Gurobi
 using Ipopt
+using Juniper
 using Parameters: @unpack
 
 function optimize_MPOPF_1ph_NL(data)
@@ -45,6 +46,10 @@ function optimize_MPOPF_1ph_NL(data)
             # set_optimizer_attribute(model, "OutputFlag", 1)
             # You can also adjust LogToConsole if needed
             # set_optimizer_attribute(model, "LogToConsole", 1)
+        elseif solver == "Juniper"
+            ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
+            optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
+            model = Model(optimizer)
         else
             error("Unsupported solver")
         end
