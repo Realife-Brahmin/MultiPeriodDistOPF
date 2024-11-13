@@ -8,8 +8,8 @@ Revise.revise()
 systemName = "ads10_1ph"
 systemName = "ieee123_1ph"
 T0 = 24
-# factor = 1/4
-factor = 1
+factor = 1/2
+# factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
@@ -22,7 +22,7 @@ inputForecastDescription = "bilevelCosts"
 alpha = 1e-3
 PSubsMax_kW = Inf # Inf means no limit
 solver = "Ipopt"
-solver = "Gurobi"
+# solver = "Gurobi"
 solver = "Juniper"
 
 # Parse all data
