@@ -32,6 +32,15 @@ function optimize_MPOPF_1ph_NL(data)
         elseif solver_name == "Gurobi"
             model = Model(Gurobi.Optimizer)
             # set_optimizer_attribute(model, "OptimalityTol", 1e-6)
+            # set_optimizer_attribute(model, "FeasibilityTol", 1e-6)
+            # # set_optimizer_attribute(model, "IterationLimit", 10000)  # Limit iterations (if appropriate)
+            set_optimizer_attribute(model, "TimeLimit", 300)        # Limit time (in seconds)
+            # set_optimizer_attribute(model, "MIPGap", 1e-3)                # Set a relative gap tolerance (1% optimality gap)
+        # set_optimizer_attribute(model, "Method", 2)  # 2 = Barrier method in Gurobi
+            # set_optimizer_attribute(model, "OutputFlag", 0)  # Set to 1 if you want to see output
+            # set_optimizer_attribute(model, "Presolve", 2)  # Aggressive presolve level
+
+            # set_optimizer_attribute(model, "OptimalityTol", 1e-6)
             # set_optimizer_attribute(model, "IterationLimit", 10000)
             # set_optimizer_attribute(model, "OutputFlag", 1)
             # You can also adjust LogToConsole if needed
