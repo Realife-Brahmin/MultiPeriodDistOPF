@@ -8,6 +8,7 @@ using EAGO
 using Gurobi
 using Ipopt
 using Juniper
+using MadNLP
 using Parameters: @unpack
 
 function optimize_MPOPF_1ph_NL(data)
@@ -53,6 +54,8 @@ function optimize_MPOPF_1ph_NL(data)
             model = Model(optimizer)
         elseif solver == "EAGO"
             model = Model(EAGO.Optimizer)
+        elseif solver == "MadNLP"
+            model = Model(MadNLP.Optimizer)
         else
             error("Unsupported solver")
         end
