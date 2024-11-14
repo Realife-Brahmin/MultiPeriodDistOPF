@@ -290,7 +290,6 @@ function export_key_validation_results(vald, data; filename::String="validation_
     open(filename, "w") do f
         # Initialize output item counter
         item_counter = 1
-        # Todo: Add System Name to this as well
         # Header Section
         println(f, "---------------------------------------------")
         println(f, "$(item_counter). Machine ID: $(data[:machine_ID])")
