@@ -157,6 +157,44 @@ function get_substation_lines(substation_bus::String)
     return substation_lines
 end
 
+function get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSourcePower::Bool=true)
+    # Unpack the substation bus from data
+    @unpack substationBus = data
+
+    # Initialize variables for substation power totals
+    P_substation_total_t_kW = 0.0
+    Q_substation_total_t_kVAr = 0.0
+
+    if useVSourcePower
+        # Directly use VSource power if the kwarg is true
+        OpenDSSDirect.Circuit.SetActiveElement("Vsource.source")
+        vsource_powers = -OpenDSSDirect.CktElement.Powers()
+        P_substation_total_t_kW = real(vsource_powers[1])
+        Q_substation_total_t_kVAr = imag(vsource_powers[1])
+    else
+        # Use individual line powers if the kwarg is false
+        substation_lines = get_substation_lines(substationBus)
+
+        for line in substation_lines
+            OpenDSSDirect.Circuit.SetActiveElement("Line.$line")
+            line_powers = OpenDSSDirect.CktElement.Powers()
+            P_line = sum(real(line_powers[1]))
+            Q_line = sum(imag(line_powers[1]))
+
+            P_substation_total_t_kW += P_line
+            Q_substation_total_t_kVAr += Q_line
+        end
+    end
+
+    # Return the results as a dictionary
+    substationPowersDict_t = Dict(
+        :P_substation_total_t_kW => P_substation_total_t_kW,
+        :Q_substation_total_t_kVAr => Q_substation_total_t_kVAr
+    )
+
+    return substationPowersDict_t
+end
+
 function get_voltages_opendss_powerflow_for_timestep_t()
     # Initialize a dictionary to store voltages with integer bus numbers as keys
     vald_voltage_dict_t_pu = Dict{Int,Float64}()
