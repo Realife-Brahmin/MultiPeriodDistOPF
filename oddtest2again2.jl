@@ -234,22 +234,22 @@ for t in 1:T
     # Store the dictionary in the results
     vald[:vald_voltages_vs_t_1toT_pu][t] = voltage_dict
 
-    # Print key vald for this timestep
-    println("\n" * "*"^30)
-    println("   Time Step: $t")
-    println("*"^30)
-    println("   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
-    # println("   Substation Power (VSource): $P_vsource_kW kW")
-    println("   Substation Power: $(vald[:vald_PSubs_vs_t_1toT_kW][t]) kW")
-    # println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
-    println("   Reactive Power : $(vald[:vald_QSubs_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("*"^30 * "\n")
+    # # Print key vald for this timestep
+    # println("\n" * "*"^30)
+    # println("   Time Step: $t")
+    # println("*"^30)
+    # println("   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
+    # # println("   Substation Power (VSource): $P_vsource_kW kW")
+    # println("   Substation Power: $(vald[:vald_PSubs_vs_t_1toT_kW][t]) kW")
+    # # println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
+    # println("   Reactive Power : $(vald[:vald_QSubs_vs_t_1toT_kVAr][t]) kVAr")
+    # println("   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
+    # println("   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    # println("   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
+    # println("   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    # println("   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
+    # println("   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+    # println("*"^30 * "\n")
 end
 
 # Battery Terminal SOC Checking
