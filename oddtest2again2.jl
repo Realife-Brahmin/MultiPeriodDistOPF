@@ -105,11 +105,12 @@ for t in 1:T
     Solution.Solve()
 
     # Retrieve circuit losses
-    total_losses = Circuit.Losses() ./ 1000
-    vald[:vald_PLoss_vs_t_1toT_kW][t] = real(total_losses)
-    vald[:vald_PLoss_allT_kW] += real(total_losses)
-    vald[:vald_QLoss_vs_t_1toT_kVAr][t] = -imag(total_losses) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
-    vald[:vald_QLoss_allT_kVAr] += -imag(total_losses)
+    totalLosses_t_kVA = Circuit.Losses() ./ 1000
+    totalLosses_t_kW, totalLosses_t_kVAr = real(totalLosses_t_kVA), -imag(totalLosses_t_kVA) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
+    vald[:vald_PLoss_vs_t_1toT_kW][t] = totalLosses_t_kW
+    vald[:vald_PLoss_allT_kW] += totalLosses_t_kW
+    vald[:vald_QLoss_vs_t_1toT_kVAr][t] = totalLosses_t_kVAr 
+    vald[:vald_QLoss_allT_kVAr] += totalLosses_t_kVAr
 
     # Retrieve substation real and reactive powers post powerflow for this timestep
     substationPowersDict_t = get_substation_powers_opendss_powerflow_for_timestep_t(data, useVSourcePower=useVSourcePower)
