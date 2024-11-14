@@ -1,6 +1,6 @@
 module openDSSValidator
 
-export get_source_bus, get_substation_lines, set_custom_load_shape!, validate_opf_against_opendss
+export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, validate_opf_against_opendss
 
 using CSV
 using DataFrames
@@ -92,6 +92,32 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     # Save the results
     CSV.write(filename, results)
     println("Validation results written to $filename")
+end
+
+function export_validation_decision_variables(vald, data; verbose::Bool=false)
+
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver = data
+    base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    # Create the directory if it doesn't exist
+    if !isdir(base_dir)
+        if verbose
+            println("Creating directory: $base_dir")
+        end
+        mkpath(base_dir)
+    end
+
+    # Define the filename with the appropriate structure
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+
+    # Write the vald dictionary to a CSV file
+    CSV.write(filename, vald)
+
+    # Print confirmation if verbose is enabled
+    if verbose
+        println("Validation decision variables written to $filename")
+    end
 end
 
 function get_source_bus()
