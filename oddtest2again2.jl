@@ -9,7 +9,7 @@ using .helperFunctions: myprintln
 
 # include("src/openDSSValidator.jl")
 includet("src/openDSSValidator.jl")
-using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_pv_controls_for_timestep_t
+using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines, set_battery_controls_for_timestep_t, set_custom_load_shape!, set_pv_controls_for_timestep_t
 # using .openDSSValidator
 
 include("src/exporter.jl")
@@ -103,20 +103,22 @@ for t in 1:T
 
     set_pv_controls_for_timestep_t(model, data, t)
 
-    # Set battery power levels
-    storage_id = Storages.First()
-    while storage_id > 0
-        storage_name = Storages.Name()
-        storage_number = parse(Int, split(storage_name, "battery")[2])
+    # # Set battery power levels
+    # storage_id = Storages.First()
+    # while storage_id > 0
+    #     storage_name = Storages.Name()
+    #     storage_number = parse(Int, split(storage_name, "battery")[2])
 
-        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
-        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
-        net_power_kW = discharge_power_kW - charge_power_kW
-        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
+    #     charge_power_kW = value(P_c[storage_number, t]) * kVA_B
+    #     discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
+    #     net_power_kW = discharge_power_kW - charge_power_kW
+    #     reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
 
-        OpenDSSDirect.Text.Command("Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)")
-        storage_id = Storages.Next()
-    end
+    #     OpenDSSDirect.Text.Command("Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)")
+    #     storage_id = Storages.Next()
+    # end
+
+    set_battery_controls_for_timestep_t(model, data, t)
 
     Solution.Solve()
 
