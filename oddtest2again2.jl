@@ -111,8 +111,8 @@ for t in 1:T
     substation_bus = get_source_bus()
     substation_lines = get_substation_lines(substation_bus)
 
-    P_substation_total_kW = 0.0
-    Q_substation_total_kVAr = 0.0
+    P_substation_total_t_kW = 0.0
+    Q_substation_total_t_kVAr = 0.0
 
     for line in substation_lines
         Circuit.SetActiveElement("Line.$line")
@@ -120,8 +120,8 @@ for t in 1:T
         P_line = sum(real(line_powers[1]))
         Q_line = sum(imag(line_powers[1]))
 
-        P_substation_total_kW += P_line
-        Q_substation_total_kVAr += Q_line
+        P_substation_total_t_kW += P_line
+        Q_substation_total_t_kVAr += Q_line
     end
 
     Circuit.SetActiveElement("Vsource.source")
@@ -129,14 +129,14 @@ for t in 1:T
     P_vsource_kW = real(vsource_powers[1])
     Q_vsource_kVAr = imag(vsource_powers[1])
 
-    vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_kW
-    vald[:vald_PSubs_allT_kW] += P_substation_total_kW
-    vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_kVAr
-    vald[:vald_QSubs_allT_kVAr] += Q_substation_total_kVAr
-    vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_vsource_kW)
+    vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_t_kW
+    vald[:vald_PSubs_allT_kW] += P_substation_total_t_kW
+    vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_t_kVAr
+    vald[:vald_QSubs_allT_kVAr] += Q_substation_total_t_kVAr
+    vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_substation_total_t_kW)
 
     # Cost calculation
-    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_kW * delta_t
+    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_t_kW * delta_t
     vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
     # Reactive and real power totals
