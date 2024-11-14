@@ -1,7 +1,12 @@
 module openDSSValidator
 
-export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
-validate_opf_against_opendss
+export export_validation_decision_variables, 
+    get_source_bus, 
+    get_substation_lines, 
+    get_voltages_opendss_powerflow_for_timestep_t, 
+    set_custom_load_shape!, 
+    set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
+    validate_opf_against_opendss
 
 using CSV
 using DataFrames
@@ -150,6 +155,24 @@ function get_substation_lines(substation_bus::String)
     end
 
     return substation_lines
+end
+
+function get_voltages_opendss_powerflow_for_timestep_t()
+    # Initialize a dictionary to store voltages with integer bus numbers as keys
+    vald_voltage_dict_t_pu = Dict{Int,Float64}()
+
+    # Get the bus names and corresponding voltage magnitudes
+    bus_names = OpenDSSDirect.Circuit.AllBusNames()
+    bus_voltages = OpenDSSDirect.Circuit.AllBusMagPu()
+
+    # Populate the dictionary with integer keys
+    for (i, bus_name) in enumerate(bus_names)
+        # Assuming bus names are integers in string format, like "1", "2", etc.
+        bus_number = parse(Int, bus_name)
+        vald_voltage_dict_t_pu[bus_number] = bus_voltages[i]
+    end
+
+    return vald_voltage_dict_t_pu
 end
 
 function set_custom_load_shape!(LoadShapeArray::Vector{Float64};

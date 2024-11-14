@@ -9,7 +9,13 @@ using .helperFunctions: myprintln
 
 # include("src/openDSSValidator.jl")
 includet("src/openDSSValidator.jl")
-using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines, set_battery_controls_opendss_powerflow_for_timestep_t, set_custom_load_shape!, set_pv_controls_opendss_powerflow_for_timestep_t
+using .openDSSValidator: export_validation_decision_variables, 
+    get_source_bus, 
+    get_substation_lines,
+    get_voltages_opendss_powerflow_for_timestep_t, 
+    set_battery_controls_opendss_powerflow_for_timestep_t, 
+    set_custom_load_shape!, 
+    set_pv_controls_opendss_powerflow_for_timestep_t
 # using .openDSSValidator
 
 include("src/exporter.jl")
@@ -197,19 +203,20 @@ for t in 1:T
 
     vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
 
-    # Initialize a dictionary to store voltages with integer bus numbers as keys
-    vald_voltage_dict_t_pu = Dict{Int,Float64}()
+    # # Initialize a dictionary to store voltages with integer bus numbers as keys
+    # vald_voltage_dict_t_pu = Dict{Int,Float64}()
 
-    # Get the bus names and magnitudes
-    bus_names = Circuit.AllBusNames()
-    bus_voltages = Circuit.AllBusMagPu()
+    # # Get the bus names and magnitudes
+    # bus_names = Circuit.AllBusNames()
+    # bus_voltages = Circuit.AllBusMagPu()
 
-    # Populate the dictionary with integer keys
-    for (i, bus_name) in enumerate(bus_names)
-        bus_number = parse(Int, bus_name)  # Assuming bus names are integers as strings like "1", "2", etc.
-        vald_voltage_dict_t_pu[bus_number] = bus_voltages[i]
-    end
+    # # Populate the dictionary with integer keys
+    # for (i, bus_name) in enumerate(bus_names)
+    #     bus_number = parse(Int, bus_name)  # Assuming bus names are integers as strings like "1", "2", etc.
+    #     vald_voltage_dict_t_pu[bus_number] = bus_voltages[i]
+    # end
 
+    vald_voltage_dict_t_pu = get_voltages_opendss_powerflow_for_timestep_t()
     # Store the dictionary in the results
     vald[:vald_voltages_vs_t_1toT_pu][t] = vald_voltage_dict_t_pu
 
