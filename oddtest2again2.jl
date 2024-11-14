@@ -87,36 +87,8 @@ vald = Dict(
 
 # Loop through each timestep to perform power flow and store vald
 for t in 1:T
-    # # Set power levels for PV systems at each time step
-    # pv_id = PVsystems.First()
-    # while pv_id > 0
-    #     pv_name = PVsystems.Name()
-    #     pv_number = parse(Int, split(pv_name, "pv")[2])
-
-    #     p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-    #     q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
-    #     PVsystems.Pmpp(p_D_t_kW)
-    #     PVsystems.kvar(q_D_t_kVAr)
-
-    #     pv_id = PVsystems.Next()
-    # end
 
     set_pv_controls_for_timestep_t(model, data, t)
-
-    # # Set battery power levels
-    # storage_id = Storages.First()
-    # while storage_id > 0
-    #     storage_name = Storages.Name()
-    #     storage_number = parse(Int, split(storage_name, "battery")[2])
-
-    #     charge_power_kW = value(P_c[storage_number, t]) * kVA_B
-    #     discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
-    #     net_power_kW = discharge_power_kW - charge_power_kW
-    #     reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
-
-    #     OpenDSSDirect.Text.Command("Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)")
-    #     storage_id = Storages.Next()
-    # end
 
     set_battery_controls_for_timestep_t(model, data, t)
 
