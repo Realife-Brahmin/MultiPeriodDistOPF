@@ -1,6 +1,6 @@
 module openDSSValidator
 
-export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_pv_controls_for_timestep_t,
+export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_battery_controls_for_timestep_t, set_pv_controls_for_timestep_t,
 validate_opf_against_opendss
 
 using CSV
@@ -167,6 +167,39 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
         load_id = OpenDSSDirect.Loads.Next()
     end
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
+end
+
+function set_battery_controls_for_timestep_t(model, data, t; verbose=false)
+    # Unpack necessary data
+    P_c = model[:P_c]
+    P_d = model[:P_d]
+    q_B = model[:q_B]
+    @unpack kVA_B = data
+
+    # Set battery power levels
+    storage_id = OpenDSSDirect.Storages.First()
+    while storage_id > 0
+        storage_name = OpenDSSDirect.Storages.Name()
+        storage_number = parse(Int, split(storage_name, "battery")[2])
+
+        # Calculate power levels based on optimization model variables
+        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
+        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
+        net_power_kW = discharge_power_kW - charge_power_kW
+        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
+
+        # Command to set battery power levels in OpenDSS
+        command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
+        OpenDSSDirect.Text.Command(command_str)
+
+        # Optionally print command for verification
+        if verbose
+            println("Time Step $t: Setting battery $storage_number with command: $command_str")
+        end
+
+        # Move to the next storage element
+        storage_id = OpenDSSDirect.Storages.Next()
+    end
 end
 
 function set_pv_controls_for_timestep_t(model, data, t; verbose::Bool=false)
