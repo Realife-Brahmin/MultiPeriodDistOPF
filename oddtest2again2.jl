@@ -2,12 +2,15 @@ using OpenDSSDirect
 using CSV, DataFrames
 using Parameters: @unpack, @pack!
 using JuMP: value
+using Revise
 
 include("src/helperFunctions.jl")
 using .helperFunctions: myprintln
 
-include("src/openDSSValidator.jl")
-using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines
+# include("src/openDSSValidator.jl")
+includet("src/openDSSValidator.jl")
+using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_pv_controls_for_timestep_t
+# using .openDSSValidator
 
 include("src/exporter.jl")
 using .Exporter: export_key_validation_results
@@ -84,19 +87,21 @@ vald = Dict(
 
 # Loop through each timestep to perform power flow and store vald
 for t in 1:T
-    # Set power levels for PV systems at each time step
-    pv_id = PVsystems.First()
-    while pv_id > 0
-        pv_name = PVsystems.Name()
-        pv_number = parse(Int, split(pv_name, "pv")[2])
+    # # Set power levels for PV systems at each time step
+    # pv_id = PVsystems.First()
+    # while pv_id > 0
+    #     pv_name = PVsystems.Name()
+    #     pv_number = parse(Int, split(pv_name, "pv")[2])
 
-        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
-        PVsystems.Pmpp(p_D_t_kW)
-        PVsystems.kvar(q_D_t_kVAr)
+    #     p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+    #     q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+    #     PVsystems.Pmpp(p_D_t_kW)
+    #     PVsystems.kvar(q_D_t_kVAr)
 
-        pv_id = PVsystems.Next()
-    end
+    #     pv_id = PVsystems.Next()
+    # end
+
+    set_pv_controls_for_timestep_t(model, data, t)
 
     # Set battery power levels
     storage_id = Storages.First()
