@@ -133,24 +133,12 @@ for t in 1:T
     vald[:vald_load_real_power_allT_kW] += total_load_t_kW
     vald[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
 
-    # PV power calculations
-    # total_pv_t_kW = 0.0
-    # total_pv_t_kVAr = 0.0
-    # pv_names = PVsystems.AllNames()
-    # for pv_name in pv_names
-    #     OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
-    #     total_pv_t_kW -= real(CktElement.Powers()[1])
-    #     total_pv_t_kVAr -= imag(CktElement.Powers()[1])
-    # end
     pvPowersDict_t = get_pv_powers_opendss_powerflow_for_timestep_t()
     @unpack total_pv_t_kW, total_pv_t_kVAr = pvPowersDict_t;
 
     vald[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_t_kW
-
     vald[:vald_pv_real_power_allT_kW] += total_pv_t_kW
-
     vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_t_kVAr
-
     vald[:vald_pv_reactive_power_allT_kVAr] += total_pv_t_kVAr
 
     # Battery power calculations
