@@ -234,22 +234,6 @@ for t in 1:T
     # Store the dictionary in the results
     vald[:vald_voltages_vs_t_1toT_pu][t] = voltage_dict
 
-    # # Print key vald for this timestep
-    # println("\n" * "*"^30)
-    # println("   Time Step: $t")
-    # println("*"^30)
-    # println("   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
-    # # println("   Substation Power (VSource): $P_vsource_kW kW")
-    # println("   Substation Power: $(vald[:vald_PSubs_vs_t_1toT_kW][t]) kW")
-    # # println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
-    # println("   Reactive Power : $(vald[:vald_QSubs_vs_t_1toT_kVAr][t]) kVAr")
-    # println("   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
-    # println("   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    # println("   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
-    # println("   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    # println("   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
-    # println("   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    # println("*"^30 * "\n")
 end
 
 # Battery Terminal SOC Checking
@@ -313,22 +297,6 @@ disc_QSubs_all_time_kVAr = maximum(disc_QSubs_vs_t_1toT_kVAr)
 println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", disc_QSubs_all_time_kVAr, " kVAr")
 
 @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr;
-
-# # Define the path and filename based on the specified structure
-# @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
-# base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
-# # 
-# # Create the directory if it doesn't exist
-# if !isdir(base_dir)
-#     println("Creating directory: $base_dir")
-#     mkpath(base_dir)
-# end
-
-# # Define the filename with the appropriate structure
-# filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
-
-# CSV.write(filename, vald)
-# myprintln(verbose, "Validation decision variables written to $filename")
 
 export_validation_decision_variables(vald, data, verbose=true)
 
