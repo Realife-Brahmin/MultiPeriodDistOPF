@@ -1,6 +1,7 @@
 module openDSSValidator
 
 export export_validation_decision_variables, 
+    get_battery_powers_opendss_powerflow_for_timestep_t,
     get_load_powers_opendss_powerflow_for_timestep_t,
     get_pv_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
@@ -128,6 +129,48 @@ function export_validation_decision_variables(vald, data; verbose::Bool=false)
     if verbose
         println("Validation decision variables written to $filename")
     end
+end
+
+function get_battery_powers_opendss_powerflow_for_timestep_t(;
+    verbose::Bool=false)
+    # Initialize total battery power values
+    vald_battery_real_power_t_kW = 0.0
+    vald_battery_reactive_power_t_kVAr = 0.0
+    vald_battery_real_power_transaction_magnitude_t_kW = 0.0
+    vald_battery_reactive_power_transaction_magnitude_t_kVAr = 0.0
+
+    # Retrieve all battery system names
+    battery_names = OpenDSSDirect.Storages.AllNames()
+
+    # Iterate through each battery system to calculate total real and reactive power
+    for battery_name in battery_names
+        OpenDSSDirect.Circuit.SetActiveElement("Storage.$battery_name")
+        battery_powers = OpenDSSDirect.CktElement.Powers()
+
+        # Retrieve and sum real and reactive power components
+        real_power = -real(battery_powers[1])  # Negate for power injection convention
+        reactive_power = -imag(battery_powers[1])
+
+        # Accumulate total battery power for this timestep
+        vald_battery_real_power_t_kW += real_power
+        vald_battery_reactive_power_t_kVAr += reactive_power
+
+        # Track transaction magnitude for each component
+        vald_battery_real_power_transaction_magnitude_t_kW += abs(real_power)
+        vald_battery_reactive_power_transaction_magnitude_t_kVAr += abs(reactive_power)
+
+        myprintln(verbose, "Battery $battery_name | Real Power: $real_power kW, Reactive Power: $reactive_power kVAr")
+    end
+
+    # Store results in a dictionary and return
+    batteryPowersDict_t = Dict(
+        :vald_battery_real_power_t_kW => vald_battery_real_power_t_kW,
+        :vald_battery_reactive_power_t_kVAr => vald_battery_reactive_power_t_kVAr,
+        :vald_battery_real_power_transaction_magnitude_t_kW => vald_battery_real_power_transaction_magnitude_t_kW,
+        :vald_battery_reactive_power_transaction_magnitude_t_kVAr => vald_battery_reactive_power_transaction_magnitude_t_kVAr
+    )
+
+    return batteryPowersDict_t
 end
 
 function get_load_powers_opendss_powerflow_for_timestep_t()
