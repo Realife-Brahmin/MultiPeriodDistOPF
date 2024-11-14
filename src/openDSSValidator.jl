@@ -1,6 +1,6 @@
 module openDSSValidator
 
-export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_battery_controls_for_timestep_t, set_pv_controls_for_timestep_t,
+export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
 validate_opf_against_opendss
 
 using CSV
@@ -169,7 +169,7 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
 
-function set_battery_controls_for_timestep_t(model, data, t; verbose=false)
+function set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose=false)
     # Unpack necessary data
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -202,7 +202,7 @@ function set_battery_controls_for_timestep_t(model, data, t; verbose=false)
     end
 end
 
-function set_pv_controls_for_timestep_t(model, data, t; verbose::Bool=false)
+function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose::Bool=false)
     # Unpack necessary data fields from `data`
     @unpack kVA_B, p_D_pu = data
     q_D = model[:q_D]  # Access q_D from the model
