@@ -7,7 +7,7 @@ include("src/helperFunctions.jl")
 using .helperFunctions: myprintln
 
 include("src/openDSSValidator.jl")
-using .openDSSValidator: get_source_bus, get_substation_lines
+using .openDSSValidator: export_validation_decision_variables, get_source_bus, get_substation_lines
 
 include("src/exporter.jl")
 using .Exporter: export_key_validation_results
@@ -314,20 +314,22 @@ println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", dis
 
 @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr;
 
-# Define the path and filename based on the specified structure
-@unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
-base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
-# 
-# Create the directory if it doesn't exist
-if !isdir(base_dir)
-    println("Creating directory: $base_dir")
-    mkpath(base_dir)
-end
+# # Define the path and filename based on the specified structure
+# @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
+# base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+# # 
+# # Create the directory if it doesn't exist
+# if !isdir(base_dir)
+#     println("Creating directory: $base_dir")
+#     mkpath(base_dir)
+# end
 
-# Define the filename with the appropriate structure
-filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+# # Define the filename with the appropriate structure
+# filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
-CSV.write(filename, vald)
-myprintln(verbose, "Validation results written to $filename")
+# CSV.write(filename, vald)
+# myprintln(verbose, "Validation decision variables written to $filename")
+
+export_validation_decision_variables(vald, data, verbose=true)
 
 export_key_validation_results(vald, data)
