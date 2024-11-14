@@ -9,7 +9,8 @@ using .helperFunctions: myprintln
 
 # include("src/openDSSValidator.jl")
 includet("src/openDSSValidator.jl")
-using .openDSSValidator: export_validation_decision_variables, 
+using .openDSSValidator: export_validation_decision_variables,
+    get_load_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
     get_substation_lines,
     get_substation_powers_opendss_powerflow_for_timestep_t,
@@ -122,21 +123,25 @@ for t in 1:T
     vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_t_kW * delta_t
     vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
-    # Reactive and real power totals
-    total_load_kW = 0.0
-    total_load_kVAr = 0.0
-    load_names = Loads.AllNames()
-    for load_name in load_names
-        OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
-        load_powers = CktElement.Powers()
-        total_load_kW += real(load_powers[1])
-        total_load_kVAr += imag(load_powers[1])
-    end
+    # # Reactive and real power totals
+    # total_load_t_kW = 0.0
+    # total_load_t_kVAr = 0.0
+    # load_names = Loads.AllNames()
+    # for load_name in load_names
+    #     OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
+    #     load_powers = CktElement.Powers()
+    #     total_load_t_kW += real(load_powers[1])
+    #     total_load_t_kVAr += imag(load_powers[1])
+    # end
 
-    vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_kW
-    vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_kVAr
-    vald[:vald_load_real_power_allT_kW] += total_load_kW
-    vald[:vald_load_reactive_power_allT_kVAr] += total_load_kVAr
+    # Retrieve load real and reactive powers post powerflow for this timestep
+    loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
+    @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t;
+
+    vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
+    vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_t_kVAr
+    vald[:vald_load_real_power_allT_kW] += total_load_t_kW
+    vald[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
 
     # PV power calculations
     total_pv_kW = 0.0

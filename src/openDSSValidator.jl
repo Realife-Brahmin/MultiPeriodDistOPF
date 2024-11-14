@@ -1,6 +1,7 @@
 module openDSSValidator
 
 export export_validation_decision_variables, 
+    get_load_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
     get_substation_lines, 
     get_voltages_opendss_powerflow_for_timestep_t, 
@@ -126,6 +127,31 @@ function export_validation_decision_variables(vald, data; verbose::Bool=false)
     if verbose
         println("Validation decision variables written to $filename")
     end
+end
+
+function get_load_powers_opendss_powerflow_for_timestep_t()
+    # Initialize total load power values
+    total_load_t_kW = 0.0
+    total_load_t_kVAr = 0.0
+
+    # Retrieve all load names
+    load_names = OpenDSSDirect.Loads.AllNames()
+
+    # Iterate through each load to calculate total real and reactive power
+    for load_name in load_names
+        OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
+        load_powers = OpenDSSDirect.CktElement.Powers()
+        total_load_t_kW += real(load_powers[1])
+        total_load_t_kVAr += imag(load_powers[1])
+    end
+
+    # Store results in a dictionary and return
+    loadPowersDict_t = Dict(
+        :total_load_t_kW => total_load_t_kW,
+        :total_load_t_kVAr => total_load_t_kVAr
+    )
+
+    return loadPowersDict_t
 end
 
 function get_source_bus()
