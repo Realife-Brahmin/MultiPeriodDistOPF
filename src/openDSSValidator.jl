@@ -1,9 +1,11 @@
 module openDSSValidator
 
-export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, validate_opf_against_opendss
+export export_validation_decision_variables, get_source_bus, get_substation_lines, set_custom_load_shape!, set_pv_controls_for_timestep_t,
+validate_opf_against_opendss
 
 using CSV
 using DataFrames
+using JuMP: value
 using OpenDSSDirect
 using Parameters: @unpack
 
@@ -94,6 +96,7 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     println("Validation results written to $filename")
 end
 
+# Todo: This function should be in exporter instead of this mod
 function export_validation_decision_variables(vald, data; verbose::Bool=false)
 
     # Define the path and filename based on the specified structure
@@ -165,5 +168,35 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     end
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
+
+function set_pv_controls_for_timestep_t(model, data, t; verbose::Bool=false)
+    # Unpack necessary data fields from `data`
+    @unpack kVA_B, p_D_pu = data
+    q_D = model[:q_D]  # Access q_D from the model
+
+    # Set power levels for PV systems at each time step
+    pv_id = OpenDSSDirect.PVsystems.First()
+    while pv_id > 0
+        pv_name = OpenDSSDirect.PVsystems.Name()
+        pv_number = parse(Int, split(pv_name, "pv")[2])
+
+        # Retrieve real and reactive power setpoints for this PV system and timestep
+        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+
+        # Set real and reactive power for the PV system
+        OpenDSSDirect.PVsystems.Pmpp(p_D_t_kW)
+        OpenDSSDirect.PVsystems.kvar(q_D_t_kVAr)
+
+        if verbose
+            println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
+        end
+
+        # Move to the next PV system
+        pv_id = OpenDSSDirect.PVsystems.Next()
+    end
+end
+
+
 
 end # module openDSSValidator
