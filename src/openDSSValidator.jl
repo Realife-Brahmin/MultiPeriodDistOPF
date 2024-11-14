@@ -1,44 +1,22 @@
 module openDSSValidator
 
-export get_source_bus, get_substation_lines, set_custom_load_shape!, validate_opf_against_opendss
+export export_validation_decision_variables, 
+    get_load_powers_opendss_powerflow_for_timestep_t,
+    get_source_bus, 
+    get_substation_lines, 
+    get_voltages_opendss_powerflow_for_timestep_t, 
+    set_custom_load_shape!, 
+    set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
+    validate_opf_against_opendss
 
 using CSV
 using DataFrames
+using JuMP: value
 using OpenDSSDirect
 using Parameters: @unpack
 
 include("helperFunctions.jl")
 using .helperFunctions: myprintln
-
-# function validate_opf_against_opendss(model, data)
-#     # Extract systemName from data dictionary
-#     systemName = data[:systemName]
-    
-#     # Build the path to the Master.dss file
-#     filename = joinpath(dirname(@__DIR__), "rawData", systemName, "Master.dss")
-    
-#     # Set up and run the OpenDSS commands
-#     dss("""
-#         clear
-#         redirect "$filename"
-#         // solve
-#     """)
-
-#     # Initialize load aggregation variables
-#     loadnumber = Loads.First()
-#     kWsum = 0.0
-#     kvarsum = 0.0
-    
-#     # Sum up kW and kvar across all loads in OpenDSS
-#     while loadnumber > 0
-#         kWsum += Loads.kW()
-#         kvarsum += Loads.kvar()
-#         loadnumber = Loads.Next()
-#     end
-
-#     # Return the aggregated results
-#     return kWsum, kvarsum
-# end
 
 function validate_opf_against_opendss(model, data; filename="validation_results.csv")
     # Set paths for DSS files
@@ -124,6 +102,58 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     println("Validation results written to $filename")
 end
 
+# Todo: This function should be in exporter instead of this mod
+function export_validation_decision_variables(vald, data; verbose::Bool=false)
+
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver = data
+    base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    # Create the directory if it doesn't exist
+    if !isdir(base_dir)
+        if verbose
+            println("Creating directory: $base_dir")
+        end
+        mkpath(base_dir)
+    end
+
+    # Define the filename with the appropriate structure
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+
+    # Write the vald dictionary to a CSV file
+    CSV.write(filename, vald)
+
+    # Print confirmation if verbose is enabled
+    if verbose
+        println("Validation decision variables written to $filename")
+    end
+end
+
+function get_load_powers_opendss_powerflow_for_timestep_t()
+    # Initialize total load power values
+    total_load_t_kW = 0.0
+    total_load_t_kVAr = 0.0
+
+    # Retrieve all load names
+    load_names = OpenDSSDirect.Loads.AllNames()
+
+    # Iterate through each load to calculate total real and reactive power
+    for load_name in load_names
+        OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
+        load_powers = OpenDSSDirect.CktElement.Powers()
+        total_load_t_kW += real(load_powers[1])
+        total_load_t_kVAr += imag(load_powers[1])
+    end
+
+    # Store results in a dictionary and return
+    loadPowersDict_t = Dict(
+        :total_load_t_kW => total_load_t_kW,
+        :total_load_t_kVAr => total_load_t_kVAr
+    )
+
+    return loadPowersDict_t
+end
+
 function get_source_bus()
     vsource_element = OpenDSSDirect.Vsources.First()
     vsource_name = OpenDSSDirect.Vsources.Name()
@@ -153,6 +183,62 @@ function get_substation_lines(substation_bus::String)
     return substation_lines
 end
 
+function get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSourcePower::Bool=true)
+    # Unpack the substation bus from data
+    @unpack substationBus = data
+
+    # Initialize variables for substation power totals
+    P_substation_total_t_kW = 0.0
+    Q_substation_total_t_kVAr = 0.0
+
+    if useVSourcePower
+        # Directly use VSource power if the kwarg is true
+        OpenDSSDirect.Circuit.SetActiveElement("Vsource.source")
+        vsource_powers = -OpenDSSDirect.CktElement.Powers()
+        P_substation_total_t_kW = real(vsource_powers[1])
+        Q_substation_total_t_kVAr = imag(vsource_powers[1])
+    else
+        # Use individual line powers if the kwarg is false
+        substation_lines = get_substation_lines(substationBus)
+
+        for line in substation_lines
+            OpenDSSDirect.Circuit.SetActiveElement("Line.$line")
+            line_powers = OpenDSSDirect.CktElement.Powers()
+            P_line = sum(real(line_powers[1]))
+            Q_line = sum(imag(line_powers[1]))
+
+            P_substation_total_t_kW += P_line
+            Q_substation_total_t_kVAr += Q_line
+        end
+    end
+
+    # Return the results as a dictionary
+    substationPowersDict_t = Dict(
+        :P_substation_total_t_kW => P_substation_total_t_kW,
+        :Q_substation_total_t_kVAr => Q_substation_total_t_kVAr
+    )
+
+    return substationPowersDict_t
+end
+
+function get_voltages_opendss_powerflow_for_timestep_t()
+    # Initialize a dictionary to store voltages with integer bus numbers as keys
+    vald_voltage_dict_t_pu = Dict{Int,Float64}()
+
+    # Get the bus names and corresponding voltage magnitudes
+    bus_names = OpenDSSDirect.Circuit.AllBusNames()
+    bus_voltages = OpenDSSDirect.Circuit.AllBusMagPu()
+
+    # Populate the dictionary with integer keys
+    for (i, bus_name) in enumerate(bus_names)
+        # Assuming bus names are integers in string format, like "1", "2", etc.
+        bus_number = parse(Int, bus_name)
+        vald_voltage_dict_t_pu[bus_number] = bus_voltages[i]
+    end
+
+    return vald_voltage_dict_t_pu
+end
+
 function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     verbose::Bool=false)
     # Define LoadShapeLoad in OpenDSS with the provided LoadShapeArray array
@@ -169,5 +255,68 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     end
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
+
+function set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose=false)
+    # Unpack necessary data
+    P_c = model[:P_c]
+    P_d = model[:P_d]
+    q_B = model[:q_B]
+    @unpack kVA_B = data
+
+    # Set battery power levels
+    storage_id = OpenDSSDirect.Storages.First()
+    while storage_id > 0
+        storage_name = OpenDSSDirect.Storages.Name()
+        storage_number = parse(Int, split(storage_name, "battery")[2])
+
+        # Calculate power levels based on optimization model variables
+        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
+        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
+        net_power_kW = discharge_power_kW - charge_power_kW
+        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
+
+        # Command to set battery power levels in OpenDSS
+        command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
+        OpenDSSDirect.Text.Command(command_str)
+
+        # Optionally print command for verification
+        if verbose
+            println("Time Step $t: Setting battery $storage_number with command: $command_str")
+        end
+
+        # Move to the next storage element
+        storage_id = OpenDSSDirect.Storages.Next()
+    end
+end
+
+function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose::Bool=false)
+    # Unpack necessary data fields from `data`
+    @unpack kVA_B, p_D_pu = data
+    q_D = model[:q_D]  # Access q_D from the model
+
+    # Set power levels for PV systems at each time step
+    pv_id = OpenDSSDirect.PVsystems.First()
+    while pv_id > 0
+        pv_name = OpenDSSDirect.PVsystems.Name()
+        pv_number = parse(Int, split(pv_name, "pv")[2])
+
+        # Retrieve real and reactive power setpoints for this PV system and timestep
+        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+
+        # Set real and reactive power for the PV system
+        OpenDSSDirect.PVsystems.Pmpp(p_D_t_kW)
+        OpenDSSDirect.PVsystems.kvar(q_D_t_kVAr)
+
+        if verbose
+            println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
+        end
+
+        # Move to the next PV system
+        pv_id = OpenDSSDirect.PVsystems.Next()
+    end
+end
+
+
 
 end # module openDSSValidator

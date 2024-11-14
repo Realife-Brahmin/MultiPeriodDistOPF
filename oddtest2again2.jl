@@ -2,18 +2,29 @@ using OpenDSSDirect
 using CSV, DataFrames
 using Parameters: @unpack, @pack!
 using JuMP: value
+using Revise
 
 include("src/helperFunctions.jl")
 using .helperFunctions: myprintln
 
-include("src/openDSSValidator.jl")
-using .openDSSValidator: get_source_bus, get_substation_lines
+# include("src/openDSSValidator.jl")
+includet("src/openDSSValidator.jl")
+using .openDSSValidator: export_validation_decision_variables,
+    get_load_powers_opendss_powerflow_for_timestep_t,
+    get_source_bus, 
+    get_substation_lines,
+    get_substation_powers_opendss_powerflow_for_timestep_t,
+    get_voltages_opendss_powerflow_for_timestep_t, 
+    set_battery_controls_opendss_powerflow_for_timestep_t, 
+    set_custom_load_shape!, 
+    set_pv_controls_opendss_powerflow_for_timestep_t
+# using .openDSSValidator
 
 include("src/exporter.jl")
 using .Exporter: export_key_validation_results
 
 verbose = false
-
+useVSourcePower = true
 # Set paths for DSS files
 system_name = data[:systemName]
 dss_dir = joinpath(@__DIR__, "rawData", system_name)
@@ -84,34 +95,10 @@ vald = Dict(
 
 # Loop through each timestep to perform power flow and store vald
 for t in 1:T
-    # Set power levels for PV systems at each time step
-    pv_id = PVsystems.First()
-    while pv_id > 0
-        pv_name = PVsystems.Name()
-        pv_number = parse(Int, split(pv_name, "pv")[2])
 
-        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
-        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
-        PVsystems.Pmpp(p_D_t_kW)
-        PVsystems.kvar(q_D_t_kVAr)
+    set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t)
 
-        pv_id = PVsystems.Next()
-    end
-
-    # Set battery power levels
-    storage_id = Storages.First()
-    while storage_id > 0
-        storage_name = Storages.Name()
-        storage_number = parse(Int, split(storage_name, "battery")[2])
-
-        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
-        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
-        net_power_kW = discharge_power_kW - charge_power_kW
-        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
-
-        OpenDSSDirect.Text.Command("Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)")
-        storage_id = Storages.Next()
-    end
+    set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t)
 
     Solution.Solve()
 
@@ -122,53 +109,39 @@ for t in 1:T
     vald[:vald_QLoss_vs_t_1toT_kVAr][t] = -imag(total_losses) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
     vald[:vald_QLoss_allT_kVAr] += -imag(total_losses)
 
-    # Substation power calculations
-    substation_bus = get_source_bus()
-    substation_lines = get_substation_lines(substation_bus)
+    # Retrieve substation real and reactive powers post powerflow for this timestep
+    substationPowersDict_t = get_substation_powers_opendss_powerflow_for_timestep_t(data, useVSourcePower=useVSourcePower)
+    @unpack P_substation_total_t_kW, Q_substation_total_t_kVAr = substationPowersDict_t;
 
-    P_substation_total_kW = 0.0
-    Q_substation_total_kVAr = 0.0
-
-    for line in substation_lines
-        Circuit.SetActiveElement("Line.$line")
-        line_powers = CktElement.Powers()
-        P_line = sum(real(line_powers[1]))
-        Q_line = sum(imag(line_powers[1]))
-
-        P_substation_total_kW += P_line
-        Q_substation_total_kVAr += Q_line
-    end
-
-    Circuit.SetActiveElement("Vsource.source")
-    vsource_powers = -CktElement.Powers()
-    P_vsource_kW = real(vsource_powers[1])
-    Q_vsource_kVAr = imag(vsource_powers[1])
-
-    vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_kW
-    vald[:vald_PSubs_allT_kW] += P_substation_total_kW
-    vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_kVAr
-    vald[:vald_QSubs_allT_kVAr] += Q_substation_total_kVAr
-    vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_vsource_kW)
+    vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_t_kW
+    vald[:vald_PSubs_allT_kW] += P_substation_total_t_kW
+    vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_t_kVAr
+    vald[:vald_QSubs_allT_kVAr] += Q_substation_total_t_kVAr
+    vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_substation_total_t_kW)
 
     # Cost calculation
-    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_kW * delta_t
+    vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_t_kW * delta_t
     vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
-    # Reactive and real power totals
-    total_load_kW = 0.0
-    total_load_kVAr = 0.0
-    load_names = Loads.AllNames()
-    for load_name in load_names
-        OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
-        load_powers = CktElement.Powers()
-        total_load_kW += real(load_powers[1])
-        total_load_kVAr += imag(load_powers[1])
-    end
+    # # Reactive and real power totals
+    # total_load_t_kW = 0.0
+    # total_load_t_kVAr = 0.0
+    # load_names = Loads.AllNames()
+    # for load_name in load_names
+    #     OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
+    #     load_powers = CktElement.Powers()
+    #     total_load_t_kW += real(load_powers[1])
+    #     total_load_t_kVAr += imag(load_powers[1])
+    # end
 
-    vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_kW
-    vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_kVAr
-    vald[:vald_load_real_power_allT_kW] += total_load_kW
-    vald[:vald_load_reactive_power_allT_kVAr] += total_load_kVAr
+    # Retrieve load real and reactive powers post powerflow for this timestep
+    loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
+    @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t;
+
+    vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
+    vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_t_kVAr
+    vald[:vald_load_real_power_allT_kW] += total_load_t_kW
+    vald[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
 
     # PV power calculations
     total_pv_kW = 0.0
@@ -218,36 +191,10 @@ for t in 1:T
 
     vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
 
-    # Initialize a dictionary to store voltages with integer bus numbers as keys
-    voltage_dict = Dict{Int,Float64}()
-
-    # Get the bus names and magnitudes
-    bus_names = Circuit.AllBusNames()
-    bus_voltages = Circuit.AllBusMagPu()
-
-    # Populate the dictionary with integer keys
-    for (i, bus_name) in enumerate(bus_names)
-        bus_number = parse(Int, bus_name)  # Assuming bus names are integers as strings like "1", "2", etc.
-        voltage_dict[bus_number] = bus_voltages[i]
-    end
-
+    vald_voltage_dict_t_pu = get_voltages_opendss_powerflow_for_timestep_t()
     # Store the dictionary in the results
-    vald[:vald_voltages_vs_t_1toT_pu][t] = voltage_dict
+    vald[:vald_voltages_vs_t_1toT_pu][t] = vald_voltage_dict_t_pu
 
-    # Print key vald for this timestep
-    println("\n" * "*"^30)
-    println("   Time Step: $t")
-    println("*"^30)
-    println("   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
-    println("   Substation Power (VSource): $P_vsource_kW kW")
-    println("   Reactive Power (VSource) : $Q_vsource_kVAr kVAr")
-    println("   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
-    println("   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-    println("*"^30 * "\n")
 end
 
 # Battery Terminal SOC Checking
@@ -312,20 +259,6 @@ println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", dis
 
 @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr;
 
-# Define the path and filename based on the specified structure
-@unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix = data
-base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
-# 
-# Create the directory if it doesn't exist
-if !isdir(base_dir)
-    println("Creating directory: $base_dir")
-    mkpath(base_dir)
-end
-
-# Define the filename with the appropriate structure
-filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_postsimValidation_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
-
-CSV.write(filename, vald)
-myprintln(verbose, "Validation results written to $filename")
+export_validation_decision_variables(vald, data, verbose=true)
 
 export_key_validation_results(vald, data)
