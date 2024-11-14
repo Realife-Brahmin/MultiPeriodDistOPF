@@ -2,6 +2,8 @@
 
 module parseOpenDSSFiles
 
+using Parameters: @pack!
+
 export myprintln, parse_all_data, parse_system_simulation_data, parse_branch_data, parse_load_data, parse_pv_data, parse_battery_data, post_process_data, evaluate_voltage_limits, generateBinaryLoadShape
 
 include("parseSystemSimulationData.jl")
@@ -57,6 +59,12 @@ function parse_all_data(systemName::String, T::Int;
     # Merge dictionaries
     data = merge(sysSimData, branch_data, load_data, pv_data, battery_data, component_data, cost_data)
     
+    rootFolderPath = dirname(dirname(@__DIR__)) # This really assumes that this specific file lies in root/src/Parser/
+    rawDataFolderPath = joinpath(rootFolderPath, "rawData")
+    processedDataFolderPath = joinpath(rootFolderPath, "processedData")
+    srcFolderPath = joinpath(rootFolderPath, "src")
+
+    @pack! data = processedDataFolderPath, rawDataFolderPath, rootFolderPath, srcFolderPath
     data = post_process_data(data)
 
     return data
