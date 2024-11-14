@@ -123,17 +123,6 @@ for t in 1:T
     vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = LoadShapeCost[t] * P_substation_total_t_kW * delta_t
     vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
-    # # Reactive and real power totals
-    # total_load_t_kW = 0.0
-    # total_load_t_kVAr = 0.0
-    # load_names = Loads.AllNames()
-    # for load_name in load_names
-    #     OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
-    #     load_powers = CktElement.Powers()
-    #     total_load_t_kW += real(load_powers[1])
-    #     total_load_t_kVAr += imag(load_powers[1])
-    # end
-
     # Retrieve load real and reactive powers post powerflow for this timestep
     loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
     @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t;
