@@ -108,28 +108,7 @@ for t in 1:T
     vald[:vald_QLoss_vs_t_1toT_kVAr][t] = -imag(total_losses) # maybe this is cheating but it is not a top priority for me to investigate reactive power losses in the grid
     vald[:vald_QLoss_allT_kVAr] += -imag(total_losses)
 
-    # # Substation power calculations
-    # substation_bus = get_source_bus()
-    # substation_lines = get_substation_lines(substation_bus)
-
-    # P_substation_total_t_kW = 0.0
-    # Q_substation_total_t_kVAr = 0.0
-
-    # for line in substation_lines
-    #     Circuit.SetActiveElement("Line.$line")
-    #     line_powers = CktElement.Powers()
-    #     P_line = sum(real(line_powers[1]))
-    #     Q_line = sum(imag(line_powers[1]))
-
-    #     P_substation_total_t_kW += P_line
-    #     Q_substation_total_t_kVAr += Q_line
-    # end
-
-    # Circuit.SetActiveElement("Vsource.source")
-    # vsource_powers = -CktElement.Powers()
-    # P_vsource_kW = real(vsource_powers[1])
-    # Q_vsource_kVAr = imag(vsource_powers[1])
-
+    # Retrieve substation real and reactive powers post powerflow for this timestep
     substationPowersDict_t = get_substation_powers_opendss_powerflow_for_timestep_t(data, useVSourcePower=useVSourcePower)
     @unpack P_substation_total_t_kW, Q_substation_total_t_kVAr = substationPowersDict_t;
 
