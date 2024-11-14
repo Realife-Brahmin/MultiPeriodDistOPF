@@ -2,6 +2,7 @@ module openDSSValidator
 
 export export_validation_decision_variables, 
     get_load_powers_opendss_powerflow_for_timestep_t,
+    get_pv_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
     get_substation_lines, 
     get_voltages_opendss_powerflow_for_timestep_t, 
@@ -152,6 +153,31 @@ function get_load_powers_opendss_powerflow_for_timestep_t()
     )
 
     return loadPowersDict_t
+end
+
+function get_pv_powers_opendss_powerflow_for_timestep_t()
+    # Initialize total PV power values
+    total_pv_t_kW = 0.0
+    total_pv_t_kVAr = 0.0
+
+    # Retrieve all PV system names
+    pv_names = OpenDSSDirect.PVsystems.AllNames()
+
+    # Iterate through each PV system to calculate total real and reactive power
+    for pv_name in pv_names
+        OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
+        pv_powers = OpenDSSDirect.CktElement.Powers()
+        total_pv_t_kW -= real(pv_powers[1])  # Negate since power is injected
+        total_pv_t_kVAr -= imag(pv_powers[1])
+    end
+
+    # Store results in a dictionary and return
+    pvPowersDict_t = Dict(
+        :total_pv_t_kW => total_pv_t_kW,
+        :total_pv_t_kVAr => total_pv_t_kVAr
+    )
+
+    return pvPowersDict_t
 end
 
 function get_source_bus()
