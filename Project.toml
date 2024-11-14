@@ -19,6 +19,7 @@ JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
 Juniper = "2ddba703-00a4-53a7-87a5-e8b9971dde84"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6"
 Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
 Measures = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
@@ -31,6 +32,10 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"
 
 [compat]
+CSV = "0.10.15"
+DataFrames = "1.7.0"
+LinearAlgebra = "1.11.0"
+MadNLP = "0.8.4"
 julia = "1"
 
 [extras]
