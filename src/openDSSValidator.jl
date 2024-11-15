@@ -456,6 +456,4 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbos
     end
 end
 
-
-
 end # module openDSSValidator
