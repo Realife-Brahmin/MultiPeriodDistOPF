@@ -14,37 +14,13 @@ using Parameters: @unpack
 function optimize_MPOPF_1ph_NL(data)
 
     @unpack solver = data;
-    # Define the optimization model
-    function configure_solver(solver_name)
-        if solver_name == "Ipopt"
-            model = Model(Ipopt.Optimizer)
-            set_optimizer_attribute(model, "tol", 1e-6)
-            set_optimizer_attribute(model, "max_iter", 10000)
-            set_optimizer_attribute(model, "print_level", 5)
-        elseif solver_name == "Gurobi"
-            model = Model(Gurobi.Optimizer)
-            set_optimizer_attribute(model, "TimeLimit", 300)        # Limit time (in seconds)
-        elseif solver == "Juniper"
-            ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
-            optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
-            model = Model(optimizer)
-        elseif solver == "EAGO"
-            model = Model(EAGO.Optimizer)
-        elseif solver == "MadNLP"
-            model = Model(MadNLP.Optimizer)
-        else
-            error("Unsupported solver")
-        end
 
-        return model
-    end
+    # Define the optimization model including any specific solver settings
+    model = configure_solver(solver)
 
     # ===========================
     # Variables
     # ===========================
-
-    model = configure_solver(solver)
-
     @unpack Tset, Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data;
     PSubsMax_pu = PSubsMax_kW/kVA_B
     # Define all variables as before, using the data parsed
@@ -485,6 +461,30 @@ function optimize_MPOPF_1ph_NL(data)
 
     optimal_obj_value = objective_value(model)
     println("Optimal objective function value: ", optimal_obj_value)
+
+    return model
+end
+
+function configure_solver(solver_name)
+    if solver_name == "Ipopt"
+        model = Model(Ipopt.Optimizer)
+        set_optimizer_attribute(model, "tol", 1e-6)
+        set_optimizer_attribute(model, "max_iter", 10000)
+        set_optimizer_attribute(model, "print_level", 5)
+    elseif solver_name == "Gurobi"
+        model = Model(Gurobi.Optimizer)
+        set_optimizer_attribute(model, "TimeLimit", 300)        # Limit time (in seconds)
+    elseif solver == "Juniper"
+        ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
+        optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
+        model = Model(optimizer)
+    elseif solver == "EAGO"
+        model = Model(EAGO.Optimizer)
+    elseif solver == "MadNLP"
+        model = Model(MadNLP.Optimizer)
+    else
+        error("Unsupported solver")
+    end
 
     return model
 end
