@@ -465,14 +465,6 @@ function optimize_MPOPF_1ph_NL(data)
     for j in Bset, t in Tset
         set_start_value(B[j, t], B0_pu[j])
     end
-    # ===========================
-    # Solver Settings
-    # ===========================
-
-    # Set IPOPT options
-    # set_optimizer_attribute(model, "tol", 1e-6)
-    # set_optimizer_attribute(model, "max_iter", 10000)
-    # set_optimizer_attribute(model, "print_level", 5)
 
     # ===========================
     # Solve the Model
@@ -481,13 +473,12 @@ function optimize_MPOPF_1ph_NL(data)
     optimize!(model)
 
     # ===========================
-    # Retrieve Results
+    # Check Results
     # ===========================
 
     # Check solver status and retrieve results
     if termination_status(model) == LOCALLY_SOLVED
         println("Optimal solution found.")
-        # Retrieve and process results as needed
     else
         println("Optimization did not find an optimal solution.")
     end
