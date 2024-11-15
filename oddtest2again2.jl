@@ -9,7 +9,8 @@ using .helperFunctions: myprintln
 
 # include("src/openDSSValidator.jl")
 includet("src/openDSSValidator.jl")
-using .openDSSValidator: export_validation_decision_variables,
+    using .openDSSValidator: compute_highest_allTime_voltage_discrepancy,
+    export_validation_decision_variables,
     get_battery_powers_opendss_powerflow_for_timestep_t,
     get_load_powers_opendss_powerflow_for_timestep_t,
     get_pv_powers_opendss_powerflow_for_timestep_t,
@@ -178,51 +179,39 @@ vald[:vald_terminal_soc_violation_kWh] = 0.0
 # Initialize storage_id with the first storage element
 global storage_id = Storages.First() # It is weird that I have to specify it as a global variable here and I don't have a definite explanation on why so. I think this will get resolved once this script is in its own function
 
-# # Begin the while loop
-# while storage_id > 0
-#     storage_name = Storages.Name()
-#     storage_number = parse(Int, split(storage_name, "battery")[2])  # assuming 'batteryX' naming
-#     # Retrieve the SOC in per-unit for this battery
-#     Bj_T = Storages.puSOC()
-
-#     # Calculate SOC violation in kWh
-#     soc_violation_j_kWh = abs(Bj_T - Bref_percent[storage_number]) * B_R[storage_number]
-#     vald[:vald_terminal_soc_violation_kWh] += soc_violation_j_kWh
-
-#     # Move to the next storage element
-#     global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
-# end
-
 terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
 @unpack vald_terminal_soc_violation_kWh = terminalSOCDict
 @pack! vald = vald_terminal_soc_violation_kWh
-# vald[:vald_terminal_soc_violation_kWh] = vald_terminal_soc_violation_kWh
 
-# Initialize the global discrepancy variable for voltage
-global disc_voltage_all_time_pu = 0.0
-v = model[:v]
+# # Initialize the global discrepancy variable for voltage
+# global disc_voltage_all_time_pu = 0.0
+# v = model[:v]
 
-# Iterate over each timestep
-for t in 1:T
-    # Retrieve the dictionary of bus voltages for the current timestep
-    vald_voltages_dict = vald[:vald_voltages_vs_t_1toT_pu][t]
+# # Iterate over each timestep
+# for t in 1:T
+#     # Retrieve the dictionary of bus voltages for the current timestep
+#     vald_voltages_dict = vald[:vald_voltages_vs_t_1toT_pu][t]
 
-    # Iterate over each bus in the dictionary
-    for (bus_index, vald_voltage) in vald_voltages_dict
+#     # Iterate over each bus in the dictionary
+#     for (bus_index, vald_voltage) in vald_voltages_dict
 
-        # Compute the model voltage for the bus at the current timestep
-        model_voltage = sqrt(value(v[bus_index, t]))
+#         # Compute the model voltage for the bus at the current timestep
+#         model_voltage = sqrt(value(v[bus_index, t]))
 
-        # Calculate the discrepancy and update the maximum discrepancy if needed
-        discrepancy = abs(vald_voltage - model_voltage)
-        global disc_voltage_all_time_pu
-        if discrepancy > disc_voltage_all_time_pu
-            disc_voltage_all_time_pu = discrepancy
-        end
-    end
-end
+#         # Calculate the discrepancy and update the maximum discrepancy if needed
+#         discrepancy = abs(vald_voltage - model_voltage)
+#         global disc_voltage_all_time_pu
+#         if discrepancy > disc_voltage_all_time_pu
+#             disc_voltage_all_time_pu = discrepancy
+#         end
+#     end
+# end
 
-println("Maximum All Time Voltage Discrepancy: ", disc_voltage_all_time_pu, " pu")
+# Example usage
+disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(model, data, vald)
+println("Maximum voltage discrepancy across all timesteps and buses: $disc_voltage_all_time_pu pu")
+
+# println("Maximum All Time Voltage Discrepancy: ", disc_voltage_all_time_pu, " pu")
 
 line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
 disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
