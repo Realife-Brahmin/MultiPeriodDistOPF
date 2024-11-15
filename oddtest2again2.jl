@@ -179,19 +179,19 @@ terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
 
 # Checking discrepancies in value of state/output variables between OpenDSS and optsim model
 disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(model, data, vald)
-println("Maximum voltage discrepancy across all timesteps and buses: $disc_voltage_all_time_pu pu")
+myprintln(verbose, "Maximum voltage discrepancy across all timesteps and buses: $disc_voltage_all_time_pu pu")
 
 line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
 disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
-println("Maximum All Time Line Loss Discrepancy: ", disc_line_loss_all_time_kW, " kW")
+myprintln(verbose, "Maximum All Time Line Loss Discrepancy: $(disc_line_loss_all_time_kW) kW")
 
 disc_PSubs_vs_t_1toT_kW = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
 disc_PSubs_all_time_kW = maximum(disc_PSubs_vs_t_1toT_kW)
-println("Maximum All Time Substation Borrowed Real Power Discrepancy: ", disc_PSubs_all_time_kW, " kW")
+myprintln(verbose, "Maximum All Time Substation Borrowed Real Power Discrepancy: $(disc_PSubs_all_time_kW) kW")
 
 disc_QSubs_vs_t_1toT_kVAr = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
 disc_QSubs_all_time_kVAr = maximum(disc_QSubs_vs_t_1toT_kVAr)
-println("Maximum All Time Substation Borrowed Reactive Power Discrepancy: ", disc_QSubs_all_time_kVAr, " kVAr")
+myprintln(verbose, "Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(disc_QSubs_all_time_kVAr) kVAr")
 
 @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr;
 
