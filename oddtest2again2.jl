@@ -143,28 +143,18 @@ for t in 1:T
     vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_t_kVAr
     vald[:vald_pv_reactive_power_allT_kVAr] += total_pv_t_kVAr
 
-    # Battery power calculations
-    # vald_battery_real_power_t_kW = 0.0
-    # vald_battery_reactive_power_t_kVAr = 0.0
-    # battery_names = Storages.AllNames()
-    # for battery_name in battery_names
-    #     Circuit.SetActiveElement("Storage.$battery_name")
-    #     vald_battery_real_power_t_kW += real(-CktElement.Powers()[1])
-    #     vald_battery_reactive_power_t_kVAr += imag(-CktElement.Powers()[1])
-
-    #     vald[:vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW][t] += abs(vald_battery_real_power_t_kW)
-    #     vald[:vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr][t] += abs(vald_battery_reactive_power_t_kVAr)
-
-    # end
-
     batteryPowersDict_t = get_battery_powers_opendss_powerflow_for_timestep_t(verbose=verbose)
 
     @unpack vald_battery_real_power_t_kW, vald_battery_reactive_power_t_kVAr, vald_battery_real_power_transaction_magnitude_t_kW, vald_battery_reactive_power_transaction_magnitude_t_kVAr = batteryPowersDict_t;
 
-    vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
-    vald[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
     vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
     vald[:vald_battery_reactive_power_allT_kVAr] += vald_battery_reactive_power_t_kVAr
+    vald[:vald_battery_reactive_power_transaction_magnitude_t_kVAr] = vald_battery_reactive_power_transaction_magnitude_t_kVAr
+    vald[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr] += vald_battery_reactive_power_transaction_magnitude_t_kVAr
+    vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+    vald[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
+    vald[:vald_battery_real_power_transaction_magnitude_t_kW] = vald_battery_real_power_transaction_magnitude_t_kW
+    vald[:vald_battery_real_power_transaction_magnitude_allT_kW] += vald_battery_real_power_transaction_magnitude_t_kW
 
     vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_static_cap_reactive_power_vs_t_1toT_kVAr][t]
 
