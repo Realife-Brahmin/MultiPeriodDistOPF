@@ -6,6 +6,7 @@ export export_validation_decision_variables,
     get_pv_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
     get_substation_lines, 
+    get_terminal_soc_values_opendss_powerflow,
     get_voltages_opendss_powerflow_for_timestep_t, 
     set_custom_load_shape!, 
     set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
@@ -288,6 +289,44 @@ function get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSource
     )
 
     return substationPowersDict_t
+end
+
+function get_terminal_soc_values_opendss_powerflow(data)
+    # Unpack required fields from data
+    @unpack Bref_percent, B_R = data
+
+    # Initialize output dictionary
+    terminalSOCDict = Dict(
+        :vald_Bj_T_pu => Dict{Int, Float64}(),          # Maps storage_number to SOC in pu
+        :soc_violation_j_kWh => Dict{Int, Float64}(),   # Maps storage_number to SOC violation in kWh
+        :vald_terminal_soc_violation_kWh => 0.0         # Cumulative SOC violation in kWh
+    )
+
+    # Initialize storage_id to start iterating over Storages
+    storage_id = OpenDSSDirect.Storages.First()
+
+    # Iterate over all storage elements
+    while storage_id > 0
+        # Get storage name and determine storage number assuming 'batteryX' naming convention
+        storage_name = OpenDSSDirect.Storages.Name()
+        storage_number = parse(Int, split(storage_name, "battery")[2])
+
+        # Retrieve the SOC in per-unit for this battery
+        vald_Bj_T_pu = OpenDSSDirect.Storages.puSOC()
+        terminalSOCDict[:vald_Bj_T_pu][storage_number] = vald_Bj_T_pu  # Store SOC in dict with storage_number as key
+
+        # Calculate SOC violation in kWh
+        soc_violation = abs(vald_Bj_T_pu - Bref_percent[storage_number]) * B_R[storage_number]
+        terminalSOCDict[:soc_violation_j_kWh][storage_number] = soc_violation  # Store SOC violation in dict
+
+        # Accumulate total SOC violation in kWh
+        terminalSOCDict[:vald_terminal_soc_violation_kWh] += soc_violation
+
+        # Move to the next storage element
+        storage_id = OpenDSSDirect.Storages.Next()
+    end
+
+    return terminalSOCDict
 end
 
 function get_voltages_opendss_powerflow_for_timestep_t()
