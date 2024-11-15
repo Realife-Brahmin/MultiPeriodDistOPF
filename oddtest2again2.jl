@@ -173,17 +173,11 @@ for t in 1:T
 end
 
 # Battery Terminal SOC Checking
-@unpack Bref_percent, B_R = data
-vald[:vald_terminal_soc_violation_kWh] = 0.0
-
-# Initialize storage_id with the first storage element
-global storage_id = Storages.First() # It is weird that I have to specify it as a global variable here and I don't have a definite explanation on why so. I think this will get resolved once this script is in its own function
-
 terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
 @unpack vald_terminal_soc_violation_kWh = terminalSOCDict
 @pack! vald = vald_terminal_soc_violation_kWh
 
-# Example usage
+# Checking discrepancies in value of state/output variables between OpenDSS and optsim model
 disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(model, data, vald)
 println("Maximum voltage discrepancy across all timesteps and buses: $disc_voltage_all_time_pu pu")
 
