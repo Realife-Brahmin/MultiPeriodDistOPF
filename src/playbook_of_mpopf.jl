@@ -12,7 +12,7 @@ using Juniper
 using MadNLP
 using Parameters: @unpack
 
-function prepare_full_MPOPF_1ph_NL_model_t_1toT(data)
+function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
@@ -446,7 +446,7 @@ function prepare_full_MPOPF_1ph_NL_model_t_1toT(data)
 end
 
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    model = prepare_full_MPOPF_1ph_NL_model_t_1toT(data)
+    model = build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # ===========================
     # Solve the Model
