@@ -1,6 +1,7 @@
 module openDSSValidator
 
 export export_validation_decision_variables, 
+    compute_highest_allTime_voltage_discrepancy,
     get_battery_powers_opendss_powerflow_for_timestep_t,
     get_load_powers_opendss_powerflow_for_timestep_t,
     get_pv_powers_opendss_powerflow_for_timestep_t,
@@ -103,6 +104,36 @@ function validate_opf_against_opendss(model, data; filename="validation_results.
     # Save the results
     CSV.write(filename, results)
     println("Validation results written to $filename")
+end
+
+function compute_highest_allTime_voltage_discrepancy(model, data, vald)
+    # Initialize the maximum voltage discrepancy
+    disc_voltage_all_time_pu = 0.0
+
+    # Retrieve the model voltage variable `v`
+    v = model[:v]
+    @unpack Tset = data;
+    # Iterate over each timestep
+    for t in Tset
+        # Retrieve the dictionary of bus voltages for the current timestep
+        vald_voltages_dict = vald[:vald_voltages_vs_t_1toT_pu][t]
+
+        # Iterate over each bus in the dictionary
+        for (bus_index, vald_voltage) in vald_voltages_dict
+            # Compute the model voltage for the bus at the current timestep
+            model_voltage = sqrt(value(v[bus_index, t]))
+
+            # Calculate the discrepancy
+            discrepancy = abs(vald_voltage - model_voltage)
+
+            # Update the maximum discrepancy if needed
+            if discrepancy > disc_voltage_all_time_pu
+                disc_voltage_all_time_pu = discrepancy
+            end
+        end
+    end
+
+    return disc_voltage_all_time_pu
 end
 
 # Todo: This function should be in exporter instead of this mod
