@@ -3,16 +3,16 @@ module Exporter
 export export_decision_variables, 
     export_optimization_model,
     export_simulation_key_results_txt,
+    export_validation_decision_variables,
     export_validation_key_results
 
-using XLSX
-import JuMP: value
-include("./helperFunctions.jl")
-import .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
-
-using Parameters: @unpack
-
+using CSV
 using DelimitedFiles  # To write CSV files
+using JuMP: value
+using XLSX
+using Parameters: @unpack
+include("./helperFunctions.jl")
+using .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
 
 function export_optimization_model(model, data;
     verbose::Bool=false)
@@ -377,6 +377,32 @@ end
 #         println("Validation key results exported to $filename")
 #     end
 # end
+
+function export_validation_decision_variables(vald, data; verbose::Bool=false)
+
+    # Define the path and filename based on the specified structure
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver = data
+    base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+
+    # Create the directory if it doesn't exist
+    if !isdir(base_dir)
+        if verbose
+            println("Creating directory: $base_dir")
+        end
+        mkpath(base_dir)
+    end
+
+    # Define the filename with the appropriate structure
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+
+    # Write the vald dictionary to a CSV file
+    CSV.write(filename, vald)
+
+    # Print confirmation if verbose is enabled
+    if verbose
+        println("Validation decision variables written to $filename")
+    end
+end
 
 function export_validation_key_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
     printEveryTimeStepPowerflow::Bool=true)
