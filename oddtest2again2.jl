@@ -16,6 +16,7 @@ using .openDSSValidator: export_validation_decision_variables,
     get_source_bus, 
     get_substation_lines,
     get_substation_powers_opendss_powerflow_for_timestep_t,
+    get_terminal_soc_values_opendss_powerflow,
     get_voltages_opendss_powerflow_for_timestep_t, 
     set_battery_controls_opendss_powerflow_for_timestep_t, 
     set_custom_load_shape!, 
@@ -177,20 +178,25 @@ vald[:vald_terminal_soc_violation_kWh] = 0.0
 # Initialize storage_id with the first storage element
 global storage_id = Storages.First() # It is weird that I have to specify it as a global variable here and I don't have a definite explanation on why so. I think this will get resolved once this script is in its own function
 
-# Begin the while loop
-while storage_id > 0
-    storage_name = Storages.Name()
-    storage_number = parse(Int, split(storage_name, "battery")[2])  # assuming 'batteryX' naming
-    # Retrieve the SOC in per-unit for this battery
-    Bj_T = Storages.puSOC()
+# # Begin the while loop
+# while storage_id > 0
+#     storage_name = Storages.Name()
+#     storage_number = parse(Int, split(storage_name, "battery")[2])  # assuming 'batteryX' naming
+#     # Retrieve the SOC in per-unit for this battery
+#     Bj_T = Storages.puSOC()
 
-    # Calculate SOC violation in kWh
-    soc_violation_j_kWh = abs(Bj_T - Bref_percent[storage_number]) * B_R[storage_number]
-    vald[:vald_terminal_soc_violation_kWh] += soc_violation_j_kWh
+#     # Calculate SOC violation in kWh
+#     soc_violation_j_kWh = abs(Bj_T - Bref_percent[storage_number]) * B_R[storage_number]
+#     vald[:vald_terminal_soc_violation_kWh] += soc_violation_j_kWh
 
-    # Move to the next storage element
-    global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
-end
+#     # Move to the next storage element
+#     global storage_id = Storages.Next()  # Only use Storages.Next() to advance to the next storage
+# end
+
+terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
+@unpack vald_terminal_soc_violation_kWh = terminalSOCDict
+@pack! vald = vald_terminal_soc_violation_kWh
+# vald[:vald_terminal_soc_violation_kWh] = vald_terminal_soc_violation_kWh
 
 # Initialize the global discrepancy variable for voltage
 global disc_voltage_all_time_pu = 0.0
