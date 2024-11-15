@@ -4,13 +4,12 @@ using Parameters: @unpack, @pack!
 using JuMP: value
 using Revise
 
-include("src/helperFunctions.jl")
+includet("src/helperFunctions.jl")
 using .helperFunctions: myprintln
 
 # include("src/openDSSValidator.jl")
 includet("src/openDSSValidator.jl")
     using .openDSSValidator: compute_highest_allTime_voltage_discrepancy,
-    export_validation_decision_variables,
     get_battery_powers_opendss_powerflow_for_timestep_t,
     get_load_powers_opendss_powerflow_for_timestep_t,
     get_pv_powers_opendss_powerflow_for_timestep_t,
@@ -24,8 +23,9 @@ includet("src/openDSSValidator.jl")
     set_pv_controls_opendss_powerflow_for_timestep_t
 # using .openDSSValidator
 
-include("src/exporter.jl")
+includet("src/exporter.jl")
 using .Exporter: 
+    export_validation_decision_variables,
     export_validation_key_results
 
 verbose = false
