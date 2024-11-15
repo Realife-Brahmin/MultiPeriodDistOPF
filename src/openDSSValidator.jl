@@ -17,81 +17,10 @@ using CSV
 using DataFrames
 using JuMP: value
 using OpenDSSDirect
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 
 include("helperFunctions.jl")
 using .helperFunctions: myprintln
-
-# function validate_opf_against_opendss(model, data; filename="validation_results.csv")
-#     # Set paths for DSS files
-#     system_name = data[:systemName]
-#     dss_dir = joinpath(dirname(@__DIR__), "rawData", system_name)
-#     dss_file = joinpath(dss_dir, "Master.dss")
-#     println(dss_file)
-#     # Initialize OpenDSS
-#     OpenDSSDirect.Text.Command("Clear")
-#     # OpenDSSDirect.Text.Command("Redirect $dss_file")
-#     OpenDSSDirect.Text.Command("Redirect '$dss_file'")
-
-
-#     # List all components in the circuit
-#     component_names = OpenDSSDirect.Circuit.AllElementNames()
-
-#     # Display component names and types
-#     for component in component_names
-#         println("Component: $component")
-#     end
-
-#     # Unpack data
-#     T = data[:T]
-#     kVA_B = data[:kVA_B]
-#     load_shape_pv = data[:LoadShapePV]
-#     @unpack Dset, Bset = data  # PV and Battery bus sets
-
-#     # Extract battery charge (P_c) and discharge (P_d) from the model
-#     P_c = model[:P_c]
-#     P_d = model[:P_d]
-
-#     # Initialize results DataFrame
-#     results = DataFrame(
-#         t=1:T,
-#         PLoss_kW=zeros(T),
-#         PSubs_kW=zeros(T),
-#         QSubs_kVAr=zeros(T),
-#         Voltages=Vector{Vector{Float64}}(undef, T)
-#     )
-
-#     for t in 1:T
-#         # Set power levels for PVs based on current timestep
-#         for pv_bus in Dset
-#             OpenDSSDirect.Circuit.SetActiveElement("PVSystem.pv$(pv_bus)")
-#             OpenDSSDirect.PVSystem.kW(pv_bus, load_shape_pv[t] * kVA_B)
-#         end
-
-#         # Solve the power flow
-#         OpenDSSDirect.Solution.Solve()
-
-#         # Retrieve circuit losses
-#         total_losses = OpenDSSDirect.Circuit.Losses() ./ 1000  # Convert W to kW
-#         results.PLoss_kW[t] = total_losses[1]
-
-#         # Retrieve substation real and reactive power
-#         OpenDSSDirect.Circuit.SetActiveElement("Line.L1")
-#         substation_powers = OpenDSSDirect.CktElement.Powers()
-#         results.PSubs_kW[t] = sum(substation_powers[1:2:end])  # Summing real power across phases
-#         results.QSubs_kVAr[t] = sum(substation_powers[2:2:end])  # Summing reactive power across phases
-
-#         # Capture voltage magnitudes at all buses
-#         results.Voltages[t] = OpenDSSDirect.Circuit.AllBusVmagPu()
-
-#         # Print the key results for this timestep
-#         println("Time: $t, PLoss: $(results.PLoss_kW[t]) kW, PSubs: $(results.PSubs_kW[t]) kW, QSubs: $(results.QSubs_kVAr[t]) kVAr")
-#     end
-
-#     # Save the results
-#     CSV.write(filename, results)
-#     println("Validation results written to $filename")
-# end
 
 function compute_highest_allTime_voltage_discrepancy(model, data, vald)
     # Initialize the maximum voltage discrepancy
@@ -414,6 +343,159 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbos
         # Move to the next PV system
         pv_id = OpenDSSDirect.PVsystems.Next()
     end
+end
+
+function validate_opf_against_opendss(model, data; verbose::Bool=false)
+    # Initialize vald dictionary for timestep-specific and cumulative results
+    @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
+    LoadShapeLoad = data[:LoadShapeLoad]
+
+    vald = Dict(
+        # Timestep-specific fields
+        :vald_PLoss_vs_t_1toT_kW => zeros(T),
+        :vald_PSubs_vs_t_1toT_kW => zeros(T),
+        :vald_QLoss_vs_t_1toT_kVAr => zeros(T),
+        :vald_QSubs_vs_t_1toT_kVAr => zeros(T),
+        :vald_load_real_power_vs_t_1toT_kW => zeros(T),
+        :vald_load_reactive_power_vs_t_1toT_kVAr => zeros(T),
+        :vald_pv_real_power_vs_t_1toT_kW => zeros(T),
+        :vald_pv_reactive_power_vs_t_1toT_kVAr => zeros(T),
+        :vald_battery_real_power_vs_t_1toT_kW => zeros(T),
+        :vald_battery_reactive_power_vs_t_1toT_kVAr => zeros(T),
+        :vald_static_cap_reactive_power_vs_t_1toT_kVAr => zeros(T),
+        :vald_total_gen_reactive_power_vs_t_1toT_kVAr => zeros(T),
+        :vald_total_gen_real_power_vs_t_1toT_kW => zeros(T),
+        :vald_voltages_vs_t_1toT_pu => Vector{Dict{Int,Float64}}(undef, T),
+        :vald_PSubsCost_vs_t_1toT_dollar => zeros(T),
+        :vald_battery_real_power_transaction_magnitude_vs_t_1toT_kW => zeros(T),
+        :vald_battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr => zeros(T),
+
+        # Cumulative fields
+        :vald_battery_reactive_power_allT_kVAr => 0.0,
+        :vald_battery_reactive_power_transaction_magnitude_allT_kVAr => 0.0,
+        :vald_battery_real_power_allT_kW => 0.0,
+        :vald_battery_real_power_transaction_magnitude_allT_kW => 0.0,
+        :vald_pv_reactive_power_allT_kVAr => 0.0,
+        :vald_pv_real_power_allT_kW => 0.0,
+        :vald_PLoss_allT_kW => 0.0,
+        :vald_PSubs_allT_kW => 0.0,
+        :vald_QLoss_allT_kVAr => 0.0,
+        :vald_QSubs_allT_kVAr => 0.0,
+        :vald_static_cap_reactive_power_allT_kVAr => 0.0,
+        :vald_total_gen_real_power_allT_kW => 0.0,
+        :vald_total_gen_reactive_power_allT_kVAr => 0.0,
+        :vald_load_real_power_allT_kW => 0.0,
+        :vald_load_reactive_power_allT_kVAr => 0.0,
+        :vald_PSubsCost_allT_dollar => 0.0,
+        :vald_solution_time => 0.0,
+        :vald_static_cap_reactive_power_allT_kVAr => 0.0,
+        :vald_substation_real_power_peak_allT_kW => 0.0,
+        :vald_terminal_soc_violation_kWh => 0.0
+    )
+
+    useVSourcePower = true
+    # Set paths for DSS files
+    @unpack systemName, rawDataFolderPath = data;
+    dss_dir = joinpath(rawDataFolderPath, systemName)
+    # dss_dir = joinpath(@__DIR__, "rawData", system_name)
+    dss_file = joinpath(dss_dir, "Master.dss")
+    myprintln(verbose, "Master.dss file path: $(dss_file)")
+
+    # Initialize OpenDSS
+    OpenDSSDirect.Text.Command("Clear")
+    OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
+
+    # Set custom load shape
+    set_custom_load_shape!(LoadShapeLoad)
+
+    # Loop through each timestep to perform power flow and store vald
+    for t in 1:T
+        set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t)
+        set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t)
+        Solution.Solve()
+
+        # Retrieve circuit losses
+        totalLosses_t_kVA = Circuit.Losses() ./ 1000
+        totalLosses_t_kW, totalLosses_t_kVAr = real(totalLosses_t_kVA), -imag(totalLosses_t_kVA)
+        vald[:vald_PLoss_vs_t_1toT_kW][t] = totalLosses_t_kW
+        vald[:vald_PLoss_allT_kW] += totalLosses_t_kW
+        vald[:vald_QLoss_vs_t_1toT_kVAr][t] = totalLosses_t_kVAr
+        vald[:vald_QLoss_allT_kVAr] += totalLosses_t_kVAr
+
+        # Retrieve substation real and reactive powers post powerflow for this timestep
+        substationPowersDict_t = get_substation_powers_opendss_powerflow_for_timestep_t(data, useVSourcePower=true)
+        @unpack P_substation_total_t_kW, Q_substation_total_t_kVAr = substationPowersDict_t
+
+        vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_t_kW
+        vald[:vald_PSubs_allT_kW] += P_substation_total_t_kW
+        vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_t_kVAr
+        vald[:vald_QSubs_allT_kVAr] += Q_substation_total_t_kVAr
+        vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_substation_total_t_kW)
+
+        # Cost calculation
+        vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = data[:LoadShapeCost][t] * P_substation_total_t_kW * data[:delta_t]
+        vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
+
+        # Retrieve load real and reactive powers
+        loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
+        @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t
+
+        vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
+        vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_t_kVAr
+        vald[:vald_load_real_power_allT_kW] += total_load_t_kW
+        vald[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
+
+        # PV and battery power calculations
+        pvPowersDict_t = get_pv_powers_opendss_powerflow_for_timestep_t()
+        @unpack total_pv_t_kW, total_pv_t_kVAr = pvPowersDict_t
+
+        vald[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_t_kW
+        vald[:vald_pv_real_power_allT_kW] += total_pv_t_kW
+        vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_t_kVAr
+        vald[:vald_pv_reactive_power_allT_kVAr] += total_pv_t_kVAr
+
+        batteryPowersDict_t = get_battery_powers_opendss_powerflow_for_timestep_t(verbose=verbose)
+        @unpack vald_battery_real_power_t_kW, vald_battery_reactive_power_t_kVAr, vald_battery_real_power_transaction_magnitude_t_kW, vald_battery_reactive_power_transaction_magnitude_t_kVAr = batteryPowersDict_t
+
+        vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
+        vald[:vald_battery_reactive_power_allT_kVAr] += vald_battery_reactive_power_t_kVAr
+        vald[:vald_battery_reactive_power_transaction_magnitude_t_kVAr] = vald_battery_reactive_power_transaction_magnitude_t_kVAr
+        vald[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr] += vald_battery_reactive_power_transaction_magnitude_t_kVAr
+        vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+        vald[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
+        vald[:vald_battery_real_power_transaction_magnitude_t_kW] = vald_battery_real_power_transaction_magnitude_t_kW
+        vald[:vald_battery_real_power_transaction_magnitude_allT_kW] += vald_battery_real_power_transaction_magnitude_t_kW
+
+        # Aggregate generation data
+        vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]
+        vald[:vald_total_gen_reactive_power_allT_kVAr] += vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t]
+
+        vald[:vald_total_gen_real_power_vs_t_1toT_kW][t] = vald[:vald_pv_real_power_vs_t_1toT_kW][t] + vald[:vald_battery_real_power_vs_t_1toT_kW][t]
+        vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
+
+        # Retrieve voltage magnitudes
+        vald[:vald_voltages_vs_t_1toT_pu][t] = get_voltages_opendss_powerflow_for_timestep_t()
+    end
+
+    # Battery Terminal SOC Checking
+    terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
+    @unpack vald_terminal_soc_violation_kWh = terminalSOCDict
+    @pack! vald = vald_terminal_soc_violation_kWh
+
+    # Discrepancy Calculations
+    disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(model, data, vald)
+    line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
+    disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
+
+    disc_PSubs_vs_t_1toT_kW = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
+    disc_PSubs_all_time_kW = maximum(disc_PSubs_vs_t_1toT_kW)
+
+    disc_QSubs_vs_t_1toT_kVAr = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
+    disc_QSubs_all_time_kVAr = maximum(disc_QSubs_vs_t_1toT_kVAr)
+
+    @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr
+
+    return vald
 end
 
 end # module openDSSValidator
