@@ -25,7 +25,8 @@ includet("src/openDSSValidator.jl")
 # using .openDSSValidator
 
 include("src/exporter.jl")
-using .Exporter: export_key_validation_results
+using .Exporter: 
+    export_validation_key_results
 
 verbose = false
 useVSourcePower = true
@@ -197,4 +198,4 @@ myprintln(verbose, "Maximum All Time Substation Borrowed Reactive Power Discrepa
 
 export_validation_decision_variables(vald, data, verbose=true)
 
-export_key_validation_results(vald, data)
+export_validation_key_results(vald, data)

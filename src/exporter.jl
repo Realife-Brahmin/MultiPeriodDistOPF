@@ -1,13 +1,16 @@
 module Exporter
 
+export export_decision_variables, 
+    export_optimization_model,
+    export_simulation_key_results_txt,
+    export_validation_key_results
+
 using XLSX
 import JuMP: value
 include("./helperFunctions.jl")
 import .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
 
 using Parameters: @unpack
-
-export export_decision_variables, export_optimization_model, export_simulation_key_results_txt
 
 using DelimitedFiles  # To write CSV files
 
@@ -271,7 +274,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
     myprintln(verbose, "Simulation key results exported to $filename")
 end
 
-# function export_key_validation_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
+# function export_validation_key_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
 #     printEveryTimeStepPowerflow::Bool=true)
 
 #     # Define the path and filename based on the specified structure
@@ -375,7 +378,7 @@ end
 #     end
 # end
 
-function export_key_validation_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
+function export_validation_key_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
     printEveryTimeStepPowerflow::Bool=true)
 
     # Define the path and filename based on the specified structure
