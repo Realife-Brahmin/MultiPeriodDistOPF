@@ -1,14 +1,13 @@
 module MultiPeriodDistOPF
 
 include("./computeOutputs.jl")
-using .computeOutputs: compute_output_values
+using .computeOutputs
 
 include("./functionRetriever.jl")
-# using .functionRetriever: get_scd
 using .functionRetriever
 
 include("./helperFunctions.jl")
-using .helperFunctions: myprintln
+using .helperFunctions
 
 include("./playbook_of_mpopf.jl")
 using .Playbook_of_MPOPF
@@ -16,7 +15,6 @@ using .Playbook_of_MPOPF
 include("./Parser/parseOpenDSSFiles.jl")
 using .parseOpenDSSFiles
 
-# Import the plotter module
 include("./Plotter/Plotter.jl")
 using .Plotter
 
