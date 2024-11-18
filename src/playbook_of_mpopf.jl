@@ -950,4 +950,34 @@ function configure_solver(solver_name)
     return model
 end
 
+function update_with_forwardStep_solutions!(model::Model, model_ddp_t::Model;
+    verbose::Bool=false)
+    # Iterate over all variables in the surrogate model
+    for var_ddp in all_variables(model_ddp_t)
+        # Extract the variable's value
+        var_value = value(var_ddp)
+
+        if isnothing(var_value)
+            @warn "Variable $(name(var_ddp)) in surrogate model has no value. Skipping."
+            continue
+        end
+
+        # Get the variable name
+        var_name = name(var_ddp)
+
+        # Check if the variable exists in the overarching model
+        if haskey(model, var_name)
+            # Retrieve the corresponding variable from the overarching model
+            var_in_main_model = model[:$(var_name)]
+
+            # Update the value in the main model
+            set_start_value(var_in_main_model, var_value)  # Set the value in the main model
+        else
+            @warn "Variable $(var_name) does not exist in the overarching model. Skipping."
+        end
+    end
+
+    return model
+end
+
 end # module Playbook_of_MPOPF
