@@ -980,4 +980,33 @@ function update_with_forwardStep_solutions!(model::Model, model_ddp_t::Model;
     return model
 end
 
+function build_ddpMPOPF_1ph_NL_model_t_is_T(ddpModel, data;
+    verbose::Bool=false)
+
+    @unpack k_ddp = ddpModel;
+    if k_ddp == 1
+        # cold start
+        # copy the model locs here (maybe carve them into functions)
+        # save the model as
+        model_ddp_t0 = Model() # placeholder
+    elseif k_ddp >= 2
+        @unpack models_ddp_vs_t_vs_k = ddpModel;
+        model_ddp_t0_km1 = models_ddp_vs_t_vs_k[(t0, k_ddp-1)]
+        model_ddp_t0 = deepcopy(model_ddp_t0_km1)
+        @unpack model = ddpModel; # because it has previous iteration's model's values saved
+        B = model[:B]
+        # modify hsoc equations (how to index them correctly?)
+        # no need for using μ for terminal time-step, only modify objective function with f0, fscd, ftsoc
+        model_ddp_t0 = Model() # placeholder
+    else
+        @error "Invalid value of k_ddp: $k_ddp"
+    end
+
+    models_ddp_vs_t_vs_k[t0, k_ddp] = model_ddp_t0 # this loc assumes that models_ddp_vs_t_vs_k is at least an already defined dictionary (even if empty) in ddpModel
+
+    @pack! ddpModel = models_ddp_vs_t_vs_k;
+
+    return ddpModel
+end
+
 end # module Playbook_of_MPOPF
