@@ -397,6 +397,46 @@ function reactive_power_limits_PV_inverters_t_in_Tset(model, data; Tset=nothing)
     return model
 end
 
+function reactive_power_limits_battery_inverters_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack Bset, P_B_R_pu = data
+
+    # Precompute q_B_Max_j for each battery inverter
+    q_B_Max = Dict{Int,Float64}()
+
+    for j in Bset
+        # Rated active power of the battery inverter at node j
+        P_B_R_j = P_B_R_pu[j]  # P_B_R_pu[j] should be provided (we'll handle data parsing later)
+
+        # Compute q_B_Max_j
+        q_B_Max_j = sqrt((1.2 * P_B_R_j)^2 - (1.0 * P_B_R_j)^2)
+
+        # Store q_B_Max_j in the dictionary
+        q_B_Max[j] = q_B_Max_j
+    end
+
+    for t in Tset, j in Bset
+        q_B = model[:q_B]
+
+        ## g_5_j^t: Lower Limit of Reactive Power from Battery Inverter ##
+        @constraint(model,
+            base_name = "g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+            -q_B_Max[j] - q_B[j, t] <= 0
+        )
+
+        ## g_6_j^t: Upper Limit of Reactive Power from Battery Inverter ##
+        @constraint(model,
+            base_name = "g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+            q_B[j, t] - q_B_Max[j] <= 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -462,36 +502,38 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     model = reactive_power_limits_PV_inverters_t_in_Tset(model, data)
 
     #---Reactive Power Limits for Battery Inverters---#
-    @unpack Bset, P_B_R_pu = data
+    model = reactive_power_limits_battery_inverters_t_in_Tset(model, data)
 
-    # Precompute q_B_Max_j for each battery inverter
-    q_B_Max = Dict{Int,Float64}()
+    # @unpack Bset, P_B_R_pu = data
 
-    for j in Bset
-        # Rated active power of the battery inverter at node j
-        P_B_R_j = P_B_R_pu[j]  # P_B_R_pu[j] should be provided (we'll handle data parsing later)
+    # # Precompute q_B_Max_j for each battery inverter
+    # q_B_Max = Dict{Int,Float64}()
 
-        # Compute q_B_Max_j
-        q_B_Max_j = sqrt((1.2 * P_B_R_j)^2 - (1.0 * P_B_R_j)^2)
+    # for j in Bset
+    #     # Rated active power of the battery inverter at node j
+    #     P_B_R_j = P_B_R_pu[j]  # P_B_R_pu[j] should be provided (we'll handle data parsing later)
 
-        # Store q_B_Max_j in the dictionary
-        q_B_Max[j] = q_B_Max_j
-    end
+    #     # Compute q_B_Max_j
+    #     q_B_Max_j = sqrt((1.2 * P_B_R_j)^2 - (1.0 * P_B_R_j)^2)
 
-    # Define constraints for each time period and battery inverter
-    for t in Tset, j in Bset
-        # g_5_j^t: Lower Limit of Reactive Power from Battery Inverter #
-        @constraint(model,
-            base_name = "g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
-            -q_B_Max[j] - q_B[j, t] <= 0
-        )
+    #     # Store q_B_Max_j in the dictionary
+    #     q_B_Max[j] = q_B_Max_j
+    # end
 
-        # g_6_j^t: Upper Limit of Reactive Power from Battery Inverter #
-        @constraint(model,
-            base_name = "g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
-            q_B[j, t] - q_B_Max[j] <= 0,
-        )
-    end
+    # # Define constraints for each time period and battery inverter
+    # for t in Tset, j in Bset
+    #     # g_5_j^t: Lower Limit of Reactive Power from Battery Inverter #
+    #     @constraint(model,
+    #         base_name = "g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+    #         -q_B_Max[j] - q_B[j, t] <= 0
+    #     )
+
+    #     # g_6_j^t: Upper Limit of Reactive Power from Battery Inverter #
+    #     @constraint(model,
+    #         base_name = "g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+    #         q_B[j, t] - q_B_Max[j] <= 0,
+    #     )
+    # end
 
     @unpack P_B_R_pu = data
     #---Charging Power Limits for Batteries---#
