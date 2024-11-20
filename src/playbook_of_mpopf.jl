@@ -487,6 +487,31 @@ function discharging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
     return model
 end
 
+function SOC_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack Bset, B_R_pu, soc_min, soc_max = data
+    for j in Bset, t in Tset
+        B = model[:B]
+
+        # g_11_j^t: Minimum SOC Constraint #
+        @constraint(model,
+            base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
+            soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
+        )
+
+        # g_12_j^t: Maximum SOC Constraint #
+        @constraint(model,
+            base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
+            B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -560,23 +585,23 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     #---Discharging Power Limits for Batteries---#
     model = discharging_power_limits_batteries_t_in_Tset(model, data, Tset=Tset)
 
-    @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
     #---SOC Limits for Batteries---#
+    model = SOC_limits_batteries_t_in_Tset(model, data, Tset=Tset)
+    # @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
+    # # Constraints:
+    # for j in Bset, t in Tset
+    #     # g_11_j^t: Minimum SOC Constraint #
+    #     @constraint(model,
+    #         base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
+    #         soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
+    #     )
 
-    # Constraints:
-    for j in Bset, t in Tset
-        # g_11_j^t: Minimum SOC Constraint #
-        @constraint(model,
-            base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
-            soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
-        )
-
-        # g_12_j^t: Maximum SOC Constraint #
-        @constraint(model,
-            base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
-            B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
-        )
-    end
+    #     # g_12_j^t: Maximum SOC Constraint #
+    #     @constraint(model,
+    #         base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
+    #         B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
+    #     )
+    # end
 
     # ===========================
     # Objective Function
