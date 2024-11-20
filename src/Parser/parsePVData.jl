@@ -14,8 +14,8 @@ function parse_pv_data(systemName::String, T::Int;
     filenameLoadShape=nothing)
     # get wd: the path of <this> file
     wd = @__DIR__
-    # Construct the file path using wd
-    filename = joinpath(wd, "..", "..", "rawData", systemName, "PVsystem.dss")
+    # Construct the file path for PVsystem.dss using wd
+    filename_pv = joinpath(wd, "..", "..", "rawData", systemName, "PVsystem.dss")
 
     # Initialize data structures for PV systems
     Dset = Set{Int}()                     # Set of nodes with PVs
@@ -24,8 +24,8 @@ function parse_pv_data(systemName::String, T::Int;
     S_D_R = Dict{Int,Float64}()            # Rated PV apparent power (kVA)
     S_D_R_pu = Dict{Int,Float64}()         # Rated PV apparent power [pu]
     irrad = Dict{Int,Float64}()            # Irradiance values for each PV
-    p_D = Dict{Int,Vector{Float64}}()      # PV active power profile over time
-    p_D_pu = Dict{Int,Vector{Float64}}()   # PV active power profile over time [pu]
+    p_D = Dict{Tuple{Int,Int},Float64}()   # PV active power profile over time
+    p_D_pu = Dict{Tuple{Int,Int},Float64}()# PV active power profile over time [pu]
     Vminpu_D = Dict{Int,Float64}()         # PV bus voltage lower limit (artificially created data entry)
     Vmaxpu_D = Dict{Int,Float64}()         # PV bus voltage upper limit (artificially created data entry)
 
@@ -37,7 +37,7 @@ function parse_pv_data(systemName::String, T::Int;
     end
 
     # Open and read the PVsystem.dss file
-    open(filename, "r") do file
+    open(filename_pv, "r") do file
         for line in eachline(file)
             # Remove comments and strip whitespace
             line = split(line, "!")[1]
@@ -71,60 +71,53 @@ function parse_pv_data(systemName::String, T::Int;
                     j = parse(Int, bus_parts[1])  # Node number
                     Dset = union(Dset, [j])
                 else
-                    error("Bus1 not specified for a PV in PVsystem.dss")
+                    error("Bus not specified for a PV in PVsystem.dss")
                 end
 
-                # # Extract rated active power (Pmpp)
-                # if haskey(pv_info, "Pmpp")
-                #     p_D_R[j] = parse(Float64, pv_info["Pmpp"])
-                # else
-                #     p_D_R[j] = 0.0  # Default to zero if not specified
-                # end
-
-                # # Extract rated apparent power (kVA)
-                # if haskey(pv_info, "kVA")
-                #     S_D_R[j] = parse(Float64, pv_info["kVA"])
-                # else
-                #     S_D_R[j] = 0.0  # Default to zero if not specified
-                # end
-                # Assuming kVA_B is already defined (the base kVA)
-
-                # Extract rated active power (Pmpp)
-                p_D_R[j] = haskey(pv_info, "Pmpp") ? parse(Float64, pv_info["Pmpp"]) : 0.0
-                p_D_R_pu[j] = p_D_R[j] / kVA_B  # Convert to per-unit based on system base kVA
+                # Extract rated active power (Pmpp, kW)
+                if haskey(pv_info, "Pmpp")
+                    p_D_R[j] = parse(Float64, pv_info["Pmpp"])
+                    p_D_R_pu[j] = p_D_R[j]/kVA_B
+                else
+                    p_D_R[j] = 0.0  # Default to zero if not specified
+                    p_D_R_pu[j] = p_D_R[j] / kVA_B
+                end
 
                 # Extract rated apparent power (kVA)
-                S_D_R[j] = haskey(pv_info, "kVA") ? parse(Float64, pv_info["kVA"]) : 0.0
-                S_D_R_pu[j] = S_D_R[j] / kVA_B  # Convert to per-unit based on system base kVA
-
-                # Extract irradiance (irrad)
-                if haskey(pv_info, "irrad")
-                    irrad[j] = parse(Float64, pv_info["irrad"])
+                if haskey(pv_info, "kVA")
+                    S_D_R[j] = parse(Float64, pv_info["kVA"])
+                    S_D_R_pu[j] = S_D_R[j]/kVA_B
                 else
-                    irrad[j] = 1.0  # Default irradiance if not specified
+                    S_D_R[j] = 0.0  # Default to zero if not specified
+                    S_D_R_pu[j] = S_D_R[j] / kVA_B
                 end
 
-                # Force bus voltage limits (Vminpu)
-                if haskey(pv_info, "Vminpu") # will never be read, as it doesn't exist for the OpenDSS class PVsystem
+                # Extract irradiance values
+                if haskey(pv_info, "irradiance")
+                    irrad[j] = parse(Float64, pv_info["irradiance"])
+                else
+                    irrad[j] = 1.0  # Default to 1.0 if not specified
+                end
+
+                # Extract minimum per-unit voltage (Vminpu)
+                if haskey(pv_info, "Vminpu")
                     Vminpu_D[j] = parse(Float64, pv_info["Vminpu"])
                 else
-                    Vminpu_D[j] = 0.95  # Default to 0.95 if not specified
+                    Vminpu_D[j] = 0.95  # Default value if not specified
                 end
 
-                # Force bus voltage limits (Vmaxpu)
-                if haskey(pv_info, "Vmaxpu") # will never be read, as it doesn't exist for the OpenDSS class PVsystem
+                # Extract maximum per-unit voltage (Vmaxpu)
+                if haskey(pv_info, "Vmaxpu")
                     Vmaxpu_D[j] = parse(Float64, pv_info["Vmaxpu"])
                 else
-                    Vmaxpu_D[j] = 1.05  # Default to 1.05 if not specified
+                    Vmaxpu_D[j] = 1.05  # Default value if not specified
                 end
 
-                # # Calculate active power profile over time using the user-provided or generated LoadShapePV
-                # p_D[j] = [p_D_R[j] * LoadShapePV[t] for t in 1:T]
-
-                # Calculate active power profile over time using the user-provided or generated LoadShapePV
-                p_D[j] = [p_D_R[j] * LoadShapePV[t] for t in 1:T]
-                p_D_pu[j] = [p_D_R_pu[j] * LoadShapePV[t] for t in 1:T]  # Convert to per-unit based on system base kVA
-
+                # Initialize PV profiles using the provided or generated LoadShapePV
+                for t in 1:T
+                    p_D[(j, t)] = p_D_R[j] * LoadShapePV[t]
+                    p_D_pu[(j, t)] = p_D_R_pu[j] * LoadShapePV[t]
+                end
             end
         end
     end
@@ -141,23 +134,23 @@ function parse_pv_data(systemName::String, T::Int;
 
     Dset = sort(collect(Dset))
     
-    # Return the extracted data as a dictionary
     pvData = Dict(
         :n_D => n_D,
         :DER_percent => DER_percent,
         :Dset => Dset,
         :p_D_R => p_D_R,
-        :p_D_R_pu => p_D_R_pu,  # Per-unit rated active power
+        :p_D_R_pu => p_D_R_pu,
         :S_D_R => S_D_R,
-        :S_D_R_pu => S_D_R_pu,  # Per-unit rated apparent power
+        :S_D_R_pu => S_D_R_pu,
         :irrad => irrad,
         :p_D => p_D,
-        :p_D_pu => p_D_pu,  # Per-unit active power profile over time
+        :p_D_pu => p_D_pu,
         :Vminpu_D => Vminpu_D,
         :Vmaxpu_D => Vmaxpu_D,
-        :LoadShapePV => LoadShapePV  # Store the LoadShapePV used (either user-supplied or generated)
+        :LoadShapePV => LoadShapePV  # Store the LoadShapePV used
     )
 
+    # Return the extracted data as a dictionary
     return pvData
 end
 

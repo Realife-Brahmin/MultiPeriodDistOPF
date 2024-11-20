@@ -25,10 +25,10 @@ function parse_load_data(systemName::String, T::Int;
     Vmaxpu_L = Dict{Int,Float64}()    # Maximum per-unit voltage for each node
 
     # Placeholder for load shapes (to be updated later)
-    p_L = Dict{Int,Vector{Float64}}()  # Active power profile over time
-    p_L_pu = Dict{Int,Vector{Float64}}()  # Active power profile over time [pu]
-    q_L = Dict{Int,Vector{Float64}}()  # Reactive power profile over time
-    q_L_pu = Dict{Int,Vector{Float64}}()  # Reactive power profile over time [pu]
+    p_L = Dict{Tuple{Int,Int},Float64}()  # Active power profile over time
+    p_L_pu = Dict{Tuple{Int,Int},Float64}()  # Active power profile over time [pu]
+    q_L = Dict{Tuple{Int,Int},Float64}()  # Reactive power profile over time
+    q_L_pu = Dict{Tuple{Int,Int},Float64}()  # Reactive power profile over time [pu]
 
     # If user does not provide a LoadShapeLoad, generate one using the helper function
     if LoadShapeLoad === nothing
@@ -106,10 +106,12 @@ function parse_load_data(systemName::String, T::Int;
                 end
 
                 # Initialize load profiles using the provided or generated LoadShapeLoad
-                p_L[j] = [p_L_R[j] * LoadShapeLoad[t] for t in 1:T]
-                p_L_pu[j] = [p_L_R_pu[j] * LoadShapeLoad[t] for t in 1:T]
-                q_L[j] = [q_L_R[j] * LoadShapeLoad[t] for t in 1:T]
-                q_L_pu[j] = [q_L_R_pu[j] * LoadShapeLoad[t] for t in 1:T]
+                for t in 1:T
+                    p_L[(j, t)] = p_L_R[j] * LoadShapeLoad[t]
+                    p_L_pu[(j, t)] = p_L_R_pu[j] * LoadShapeLoad[t]
+                    q_L[(j, t)] = q_L_R[j] * LoadShapeLoad[t]
+                    q_L_pu[(j, t)] = q_L_R_pu[j] * LoadShapeLoad[t]
+                end
             end
         end
     end
