@@ -11,19 +11,17 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function build_MPOPF_1ph_NL_model_t_1toT(data)
-    @unpack solver = data
+function define_model_variables_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
 
-    # Define the optimization model including any specific solver settings
-    model = configure_solver(solver)
-
-    # ===========================
-    # Variables
-    # ===========================
-    @unpack Tset, Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data
+    @unpack Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data
     PSubsMax_pu = PSubsMax_kW / kVA_B
+
     # Define all variables as before, using the data parsed
     @variable(model, PSubsMax_pu >= P_Subs[t in Tset] >= 0)
+    # @variable(model, P_Subs[t in Tset] <= PSubsMax_pu, base_name = "P_Subs")
     # Define variables over the set of branches Lset and time periods Tset
     @variable(model, P[(i, j) in Lset, t in Tset] <= PSubsMax_pu, base_name = "P")
     @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
@@ -36,8 +34,8 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     @variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
     @variable(model, B[j in Bset, t in Tset], base_name = "B")
 
-    # ===========================
-    # Constraints
+    return model
+end
     # ===========================
 
     # Implement all constraints as before, using the data and variables
@@ -89,6 +87,34 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
             sum_Pjk - (P_ij_t - line_loss) + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
             base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
     end
+
+function build_MPOPF_1ph_NL_model_t_1toT(data)
+    @unpack solver = data
+
+    # Define the optimization model including any specific solver settings
+    model = configure_solver(solver)
+
+    # ===========================
+    # Variables
+    # ===========================
+    # @unpack Tset, Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data
+    # PSubsMax_pu = PSubsMax_kW / kVA_B
+    # # Define all variables as before, using the data parsed
+    # @variable(model, PSubsMax_pu >= P_Subs[t in Tset] >= 0)
+    # # Define variables over the set of branches Lset and time periods Tset
+    # @variable(model, P[(i, j) in Lset, t in Tset] <= PSubsMax_pu, base_name = "P")
+    # @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
+    # @variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
+
+    # @variable(model, v[j in Nset, t in Tset], base_name = "v")
+    # @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
+    # @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
+    # @variable(model, P_c[j in Bset, t in Tset], base_name = "P_c")
+    # @variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
+    # @variable(model, B[j in Bset, t in Tset], base_name = "B")
+    @unpack Tset = data;
+    model = define_model_variables_t_in_Tset(model, data, Tset=Tset)
+
 
     @unpack Tset, Nm1set, NLset, Dset, Bset, children, parent, xdict_pu, q_L_pu = data
     ## Nodal Reactive Power Balance Constraints ##
