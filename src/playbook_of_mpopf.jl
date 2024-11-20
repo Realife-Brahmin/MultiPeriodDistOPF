@@ -365,37 +365,6 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     
     model = battery_SOC_constraints_t_in_Tset(model, data, tSOC_hard=tSOC_hard, Tset=Tset)
 
-    # # Constraint h_SOC_j^{t=1}: Initial SOC constraint
-    # @unpack Bset, delta_t, eta_C, eta_D, B0_pu = data
-    # Δt = delta_t
-    # η_C = eta_C
-    # η_D = eta_D
-
-    # for j in Bset
-    #     @constraint(model,
-    #         base_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1",
-    #         B[j, 1] - (B0_pu[j] + Δt * η_C[j] * P_c[j, 1] - Δt * (1 / η_D[j]) * P_d[j, 1]) == 0,
-    #     )
-    # end
-
-    # # Constraint h_SOC_j^{t=2 to T}: SOC trajectory for middle and final time periods
-    # @unpack T = data
-    # for j in Bset, t in 2:T
-    #     @constraint(model,
-    #         base_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t)",
-    #         B[j, t] - (B[j, t-1] + Δt * η_C[j] * P_c[j, t] - Δt * (1 / η_D[j]) * P_d[j, t]) == 0,
-    #     )
-    # end
-
-    # @unpack Bref_pu = data
-    # # Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = Bref_j)
-    # for j in Bset
-    #     @constraint(model,
-    #         base_name = "h_SOC_j^{T}_Final_SOC_Node_j_$(j)_t_$(T)",
-    #         B[j, T] == Bref_pu[j],
-    #     )
-    # end
-
     @unpack substationBus, V_Subs = data
     for t in Tset
         @constraint(model,
