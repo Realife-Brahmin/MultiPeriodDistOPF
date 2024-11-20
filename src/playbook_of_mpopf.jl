@@ -76,10 +76,10 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
         line_loss = r_ij * l_ij_t
 
         # Load at node j and time t
-        p_L_j_t = (j in NLset) ? p_L_pu[j][t] : 0.0  # Check if node j has a load
+        p_L_j_t = (j in NLset) ? p_L_pu[(j, t)] : 0.0  # Check if node j has a load
 
         # PV generation at node j and time t
-        p_D_j_t = (j in Dset) ? p_D_pu[j][t] : 0.0  # Check if node j has PV
+        p_D_j_t = (j in Dset) ? p_D_pu[(j, t)] : 0.0  # Check if node j has PV
 
         # # Battery variables at node j and time t
         P_d_j_t = (j in Bset && t in Tset) ? P_d[j, t] : 0.0
@@ -109,7 +109,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
         # Todo: Figure out whether p_L_pu[i][j] be allowed to exist or should it be made the same as p_L_pu[i, j].
         # Reactive load at node j and time t
-        q_L_j_t = (j in NLset) ? q_L_pu[j][t] : 0.0  # Assign 0.0 if j is not in Nset
+        q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
 
         # Reactive power from PV inverter at node j and time t
         q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
@@ -260,7 +260,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
         p_D_R_j = p_D_R_pu[j]
 
         # Active power output of PV at node j and time t
-        p_D_j_t = p_D_pu[j][t]
+        p_D_j_t = p_D_pu[(j, t)]
 
         # Compute q_D_Max_j^t
         q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)

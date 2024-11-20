@@ -329,7 +329,7 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbos
         pv_number = parse(Int, split(pv_name, "pv")[2])
 
         # Retrieve real and reactive power setpoints for this PV system and timestep
-        p_D_t_kW = p_D_pu[pv_number][t] * kVA_B
+        p_D_t_kW = p_D_pu[(pv_number, t)] * kVA_B
         q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
 
         # Set real and reactive power for the PV system
