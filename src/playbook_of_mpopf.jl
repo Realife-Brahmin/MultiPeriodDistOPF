@@ -621,7 +621,9 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
             for j in Bset, t in Tset
         )
     end
-
+    
+    # Todo: Now append the objective locs with another condition taking care of soft-constrained terminal SOC
+    
     # objfun represents our actual objective function which will be optimized for
     @objective(model, Min, objfun)
 
