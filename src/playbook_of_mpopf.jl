@@ -437,6 +437,56 @@ function reactive_power_limits_battery_inverters_t_in_Tset(model, data; Tset=not
     return model
 end
 
+function charging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack P_B_R_pu, Bset = data
+    for t in Tset, j in Bset
+        P_c = model[:P_c]
+
+        # g_7_j^t: Non-negativity of Charging Power #
+        @constraint(model,
+            base_name = "g_7_j^t_NonNegativity_ChargingPower_Node_j_$(j)_t_$(t)",
+            -P_c[j, t] <= 0,
+        )
+
+        # g_8_j^t: Maximum Charging Power Limit #
+        @constraint(model,
+            base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
+            P_c[j, t] - P_B_R_pu[j] <= 0,
+        )
+    end
+
+    return model
+end
+
+function discharging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack P_B_R_pu, Bset = data
+    for t in Tset, j in Bset
+        P_d = model[:P_d]
+
+        # g_9_j^t: Non-negativity of Discharging Power #
+        @constraint(model,
+            base_name = "g_9_j^t_NonNegativity_DischargingPower_Node_j_$(j)_t_$(t)",
+            -P_d[j, t] <= 0,
+        )
+
+        # g_10_j^t: Maximum Discharging Power Limit #
+        @constraint(model,
+            base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
+            P_d[j, t] - P_B_R_pu[j] <= 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -493,48 +543,52 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     #---Voltage Constraints---#
 
     # Fixed substation voltage constraint
-    model = fixed_substation_voltage_constraints_t_in_Tset(model, data)
+    model = fixed_substation_voltage_constraints_t_in_Tset(model, data, Tset=Tset)
 
     # Voltage limits constraints
-    model = voltage_limits_constraints_t_in_Tset(model, data)
+    model = voltage_limits_constraints_t_in_Tset(model, data, Tset=Tset)
 
     #---Reactive Power Limits for PV Inverters---#
-    model = reactive_power_limits_PV_inverters_t_in_Tset(model, data)
+    model = reactive_power_limits_PV_inverters_t_in_Tset(model, data, Tset=Tset)
 
     #---Reactive Power Limits for Battery Inverters---#
-    model = reactive_power_limits_battery_inverters_t_in_Tset(model, data)
+    model = reactive_power_limits_battery_inverters_t_in_Tset(model, data, Tset=Tset)
 
-    @unpack P_B_R_pu = data
     #---Charging Power Limits for Batteries---#
-    for t in Tset, j in Bset
-        # g_7_j^t: Non-negativity of Charging Power #
-        @constraint(model,
-            base_name = "g_7_j^t_NonNegativity_ChargingPower_Node_j_$(j)_t_$(t)",
-            -P_c[j, t] <= 0,
-        )
+    model = charging_power_limits_batteries_t_in_Tset(model, data, Tset=Tset)
 
-        # g_8_j^t: Maximum Charging Power Limit #
-        @constraint(model,
-            base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
-            P_c[j, t] - P_B_R_pu[j] <= 0,
-        )
-    end
+    # @unpack P_B_R_pu = data
+    # for t in Tset, j in Bset
+    #     # g_7_j^t: Non-negativity of Charging Power #
+    #     @constraint(model,
+    #         base_name = "g_7_j^t_NonNegativity_ChargingPower_Node_j_$(j)_t_$(t)",
+    #         -P_c[j, t] <= 0,
+    #     )
 
-    @unpack P_B_R_pu = data
+    #     # g_8_j^t: Maximum Charging Power Limit #
+    #     @constraint(model,
+    #         base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
+    #         P_c[j, t] - P_B_R_pu[j] <= 0,
+    #     )
+    # end
+
     #---Discharging Power Limits for Batteries---#
-    for t in Tset, j in Bset
-        # g_9_j^t: Non-negativity of Discharging Power #
-        @constraint(model,
-            base_name = "g_9_j^t_NonNegativity_DischargingPower_Node_j_$(j)_t_$(t)",
-            -P_d[j, t] <= 0,
-        )
+    model = discharging_power_limits_batteries_t_in_Tset(model, data, Tset=Tset)
 
-        # g_10_j^t: Maximum Discharging Power Limit #
-        @constraint(model,
-            base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
-            P_d[j, t] - P_B_R_pu[j] <= 0,
-        )
-    end
+    # @unpack P_B_R_pu = data
+    # for t in Tset, j in Bset
+    #     # g_9_j^t: Non-negativity of Discharging Power #
+    #     @constraint(model,
+    #         base_name = "g_9_j^t_NonNegativity_DischargingPower_Node_j_$(j)_t_$(t)",
+    #         -P_d[j, t] <= 0,
+    #     )
+
+    #     # g_10_j^t: Maximum Discharging Power Limit #
+    #     @constraint(model,
+    #         base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
+    #         P_d[j, t] - P_B_R_pu[j] <= 0,
+    #     )
+    # end
 
     @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
     #---SOC Limits for Batteries---#
