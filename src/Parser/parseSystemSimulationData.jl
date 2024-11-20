@@ -117,7 +117,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     if temporal_decmp == true
         temporalDecmpString = "Temporally Decomposed via DDP"
-        temporalDecmpAppendix = "tmrpl_dcmpsd"
+        temporalDecmpAppendix = "tmprl_dcmpsd"
     elseif temporal_decmp == false
         temporalDecmpString = "Temporally Brute-forced"
         temporalDecmpAppendix = "tmprl_bruteforced"
