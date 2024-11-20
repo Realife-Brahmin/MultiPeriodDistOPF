@@ -147,7 +147,7 @@ function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data; Tset=no
         q_B = model[:q_B]
         q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
 
-        ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
+        # h_2_j^t: Nodal Reactive Power Balance Constraint #
         @constraint(model,
             base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
             sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
@@ -281,21 +281,20 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # Implement all constraints as before, using the data and variables
 
-    ## Real Power Balance Constraints ##
+    #---Real Power Balance Constraints---#
 
     # Constraint h_1a_j: Nodal real power balance at substation node
-
     model = nodalRealPowerBalance_substation_t_in_Tset(model, data, Tset=Tset)
 
     # Constraint h_1b_j: Nodal real power balance at non-substation nodes
-
     model = nodalRealPowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
 
-    ## Nodal Reactive Power Balance Constraints ##
+    #--- Nodal Reactive Power Balance Constraints ---#
 
+    # Constraint h_2_j: Nodal real power balance at non-substation nodes
     model = nodalReactivePowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
 
-    ## KVL Constraints ##
+    #---KVL Constraints---#
 
     # Constraint h_3a: KVL for branches connected directly to the substation
     model = KVL_substation_branches_t_in_Tset(model, data, Tset=Tset)
@@ -303,39 +302,15 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     # Constraint h_3b: KVL for branches not connected directly to the substation
     model = KVL_non_substation_branches_t_in_Tset(model, data)
 
-    ## Branch Complex Power Flow Equations (BCPF) ##
+    #---Branch Complex Power Flow Equations (BCPF)---#
 
     # Constraint h_4a_j^t: For branches connected directly to the substation
     model = BCPF_substation_branches_t_in_Tset(model, data)
 
-    # @unpack Tset, L1set = data
-    # for t in Tset, (i, j) in L1set
-    #     P_ij_t = P[(i, j), t]
-    #     Q_ij_t = Q[(i, j), t]
-    #     v_i_t = v[i, t]
-    #     l_ij_t = l[(i, j), t]
-    #     @constraint(model,
-    #         base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-    #         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-    #     )
-    # end
-
     # Constraint h_4b_j^t: For branches not connected directly to the substation
     model = BCPF_non_substation_branches_t_in_Tset(model, data)
 
-    # @unpack Tset, Lm1set = data
-    # for t in Tset, (i, j) in Lm1set
-    #     P_ij_t = P[(i, j), t]
-    #     Q_ij_t = Q[(i, j), t]
-    #     v_i_t = v[i, t]
-    #     l_ij_t = l[(i, j), t]
-    #     @constraint(model,
-    #         base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-    #         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-    #     )
-    # end
-
-    ## Battery SOC Trajectory Equality Constraints ##
+    #---Battery SOC Trajectory Equality Constraints---#
 
     # Constraint h_SOC_j^{t=1}: Initial SOC constraint
     @unpack Bset, delta_t, eta_C, eta_D, B0_pu = data
@@ -403,7 +378,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     end
 
     @unpack p_D_R_pu = data
-    ## Reactive Power Limits for PV Inverters ##
+    #---Reactive Power Limits for PV Inverters---#
     for t in Tset, j in Dset
         # Rated active power of the PV inverter at node j
         p_D_R_j = p_D_R_pu[j]
@@ -414,13 +389,13 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
         # Compute q_D_Max_j^t
         q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
 
-        ## g_3_j^t: Lower Limit of Reactive Power from PV Inverter ##
+        # g_3_j^t: Lower Limit of Reactive Power from PV Inverter #
         @constraint(model,
             base_name = "g_3_j^t_LowerReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
             -q_D_Max_j_t - q_D[j, t] <= 0,
         )
 
-        ## g_4_j^t: Upper Limit of Reactive Power from PV Inverter ##
+        # g_4_j^t: Upper Limit of Reactive Power from PV Inverter #
         @constraint(model,
             base_name = "g_4_j^t_UpperReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
             q_D[j, t] - q_D_Max_j_t <= 0,
@@ -428,7 +403,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     end
 
     @unpack Bset, P_B_R_pu = data
-    ## Reactive Power Limits for Battery Inverters ##
+    #---Reactive Power Limits for Battery Inverters---#
 
     # Precompute q_B_Max_j for each battery inverter
     q_B_Max = Dict{Int,Float64}()
@@ -446,13 +421,13 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # Define constraints for each time period and battery inverter
     for t in Tset, j in Bset
-        ## g_5_j^t: Lower Limit of Reactive Power from Battery Inverter ##
+        # g_5_j^t: Lower Limit of Reactive Power from Battery Inverter #
         @constraint(model,
             base_name = "g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
             -q_B_Max[j] - q_B[j, t] <= 0
         )
 
-        ## g_6_j^t: Upper Limit of Reactive Power from Battery Inverter ##
+        # g_6_j^t: Upper Limit of Reactive Power from Battery Inverter #
         @constraint(model,
             base_name = "g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
             q_B[j, t] - q_B_Max[j] <= 0,
@@ -460,15 +435,15 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     end
 
     @unpack P_B_R_pu = data
-    ## Charging Power Limits for Batteries ##
+    #---Charging Power Limits for Batteries---#
     for t in Tset, j in Bset
-        ## g_7_j^t: Non-negativity of Charging Power ##
+        # g_7_j^t: Non-negativity of Charging Power #
         @constraint(model,
             base_name = "g_7_j^t_NonNegativity_ChargingPower_Node_j_$(j)_t_$(t)",
             -P_c[j, t] <= 0,
         )
 
-        ## g_8_j^t: Maximum Charging Power Limit ##
+        # g_8_j^t: Maximum Charging Power Limit #
         @constraint(model,
             base_name = "g_8_j^t_MaxChargingPowerLimit_Node_j_$(j)_t_$(t)",
             P_c[j, t] - P_B_R_pu[j] <= 0,
@@ -476,15 +451,15 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     end
 
     @unpack P_B_R_pu = data
-    ## Discharging Power Limits for Batteries ##
+    #---Discharging Power Limits for Batteries---#
     for t in Tset, j in Bset
-        ## g_9_j^t: Non-negativity of Discharging Power ##
+        # g_9_j^t: Non-negativity of Discharging Power #
         @constraint(model,
             base_name = "g_9_j^t_NonNegativity_DischargingPower_Node_j_$(j)_t_$(t)",
             -P_d[j, t] <= 0,
         )
 
-        ## g_10_j^t: Maximum Discharging Power Limit ##
+        # g_10_j^t: Maximum Discharging Power Limit #
         @constraint(model,
             base_name = "g_10_j^t_MaxDischargingPowerLimit_Node_j_$(j)_t_$(t)",
             P_d[j, t] - P_B_R_pu[j] <= 0,
@@ -492,17 +467,17 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     end
 
     @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
-    ## SOC Limits for Batteries ##
+    #---SOC Limits for Batteries---#
 
     # Constraints:
     for j in Bset, t in Tset
-        ## g_11_j^t: Minimum SOC Constraint ##
+        # g_11_j^t: Minimum SOC Constraint #
         @constraint(model,
             base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
             soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
         )
 
-        ## g_12_j^t: Maximum SOC Constraint ##
+        # g_12_j^t: Maximum SOC Constraint #
         @constraint(model,
             base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
             B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
