@@ -10,7 +10,7 @@ using Gurobi
 using Ipopt
 using Juniper
 using MadNLP
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
