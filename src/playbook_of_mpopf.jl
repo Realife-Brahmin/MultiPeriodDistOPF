@@ -587,21 +587,6 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     #---SOC Limits for Batteries---#
     model = SOC_limits_batteries_t_in_Tset(model, data, Tset=Tset)
-    # @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
-    # # Constraints:
-    # for j in Bset, t in Tset
-    #     # g_11_j^t: Minimum SOC Constraint #
-    #     @constraint(model,
-    #         base_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)",
-    #         soc_min[j] * B_R_pu[j] - B[j, t] <= 0,
-    #     )
-
-    #     # g_12_j^t: Maximum SOC Constraint #
-    #     @constraint(model,
-    #         base_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)",
-    #         B[j, t] - soc_max[j] * B_R_pu[j] <= 0,
-    #     )
-    # end
 
     # ===========================
     # Objective Function
