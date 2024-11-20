@@ -250,38 +250,8 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     # Constraint h_3a: KVL for branches connected directly to the substation
     model = KVL_substation_branches_t_in_Tset(model, data, Tset=Tset)
 
-    # @unpack Tset, L1set, rdict_pu, xdict_pu = data
-    # for t in Tset, (i, j) in L1set
-    #     r_ij = rdict_pu[(i, j)]
-    #     x_ij = xdict_pu[(i, j)]
-    #     P_ij_t = P[(i, j), t]
-    #     Q_ij_t = Q[(i, j), t]
-    #     l_ij_t = l[(i, j), t]
-    #     v_i_t = v[i, t]
-    #     v_j_t = v[j, t]
-    #     @constraint(model,
-    #         base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-    #         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-    #     )
-    # end
-
     # Constraint h_3b: KVL for branches not connected directly to the substation
     model = KVL_non_substation_branches_t_in_Tset(model, data)
-
-    # @unpack Tset, Lm1set, rdict_pu, xdict_pu = data
-    # for t in Tset, (i, j) in Lm1set
-    #     r_ij = rdict_pu[(i, j)]
-    #     x_ij = xdict_pu[(i, j)]
-    #     P_ij_t = P[(i, j), t]
-    #     Q_ij_t = Q[(i, j), t]
-    #     l_ij_t = l[(i, j), t]
-    #     v_i_t = v[i, t]
-    #     v_j_t = v[j, t]
-    #     @constraint(model,
-    #         base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-    #         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-    #     )
-    # end
 
     ## Branch Complex Power Flow Equations (BCPF) ##
 
