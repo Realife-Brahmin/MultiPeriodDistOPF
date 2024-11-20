@@ -215,6 +215,56 @@ function KVL_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
     return model
 end
 
+function BCPF_substation_branches_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack L1set = data
+
+    # Constraint h_4a_j^t: For branches connected directly to the substation
+    for t in Tset, (i, j) in L1set
+        P = model[:P]
+        Q = model[:Q]
+        v = model[:v]
+        l = model[:l]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        v_i_t = v[i, t]
+        l_ij_t = l[(i, j), t]
+        @constraint(model,
+            base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+        )
+    end
+
+    return model
+end
+
+function BCPF_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Lm1set = data
+
+    # Constraint h_4b_j^t: For branches not connected directly to the substation
+    for t in Tset, (i, j) in Lm1set
+        P = model[:P]
+        Q = model[:Q]
+        v = model[:v]
+        l = model[:l]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        v_i_t = v[i, t]
+        l_ij_t = l[(i, j), t]
+        @constraint(model,
+            base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -255,31 +305,35 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     ## Branch Complex Power Flow Equations (BCPF) ##
 
-    @unpack Tset, L1set = data
     # Constraint h_4a_j^t: For branches connected directly to the substation
-    for t in Tset, (i, j) in L1set
-        P_ij_t = P[(i, j), t]
-        Q_ij_t = Q[(i, j), t]
-        v_i_t = v[i, t]
-        l_ij_t = l[(i, j), t]
-        @constraint(model,
-            base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-        )
-    end
+    model = BCPF_substation_branches_t_in_Tset(model, data)
 
-    @unpack Tset, Lm1set = data
+    # @unpack Tset, L1set = data
+    # for t in Tset, (i, j) in L1set
+    #     P_ij_t = P[(i, j), t]
+    #     Q_ij_t = Q[(i, j), t]
+    #     v_i_t = v[i, t]
+    #     l_ij_t = l[(i, j), t]
+    #     @constraint(model,
+    #         base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+    #         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+    #     )
+    # end
+
     # Constraint h_4b_j^t: For branches not connected directly to the substation
-    for t in Tset, (i, j) in Lm1set
-        P_ij_t = P[(i, j), t]
-        Q_ij_t = Q[(i, j), t]
-        v_i_t = v[i, t]
-        l_ij_t = l[(i, j), t]
-        @constraint(model,
-            base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
-        )
-    end
+    model = BCPF_non_substation_branches_t_in_Tset(model, data)
+
+    # @unpack Tset, Lm1set = data
+    # for t in Tset, (i, j) in Lm1set
+    #     P_ij_t = P[(i, j), t]
+    #     Q_ij_t = Q[(i, j), t]
+    #     v_i_t = v[i, t]
+    #     l_ij_t = l[(i, j), t]
+    #     @constraint(model,
+    #         base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+    #         (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+    #     )
+    # end
 
     ## Battery SOC Trajectory Equality Constraints ##
 
