@@ -37,7 +37,10 @@ function define_model_variables_t_in_Tset(model, data; Tset=nothing)
     return model
 end
 
-function nodalRealPowerBalance_substation_t_in_Tset(model, data)
+function nodalRealPowerBalance_substation_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
     @unpack substationBus, Tset, L1set = data
     P_Subs = model[:P_Subs]
     P = model[:P]
@@ -56,8 +59,11 @@ function nodalRealPowerBalance_substation_t_in_Tset(model, data)
     return model
 end
 
-function nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
-    @unpack Tset, Nm1set = data
+function nodalRealPowerBalance_non_substation_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Nm1set = data
     for t in Tset, j in Nm1set
         # Sum of real powers flowing from node j to its children
         @unpack children = data
@@ -102,8 +108,11 @@ function nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
     return model
 end
 
-function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data)
-    @unpack Tset, Nm1set = data
+function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Nm1set = data
     for t in Tset, j in Nm1set
         # Sum of reactive powers flowing from node j to its children
         @unpack children = data
@@ -148,6 +157,64 @@ function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data)
     return model
 end
 
+function KVL_substation_branches_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack L1set = data
+
+    # Constraint h_3a: KVL for branches connected directly to the substation
+    for t in Tset, (i, j) in L1set
+        @unpack rdict_pu, xdict_pu = data
+        r_ij = rdict_pu[(i, j)]
+        x_ij = xdict_pu[(i, j)]
+        P = model[:P]
+        Q = model[:Q]
+        l = model[:l]
+        v = model[:v]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        l_ij_t = l[(i, j), t]
+        v_i_t = v[i, t]
+        v_j_t = v[j, t]
+        @constraint(model,
+            base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+        )
+    end
+
+    return model
+end
+
+function KVL_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Lm1set = data
+
+    # Constraint h_3b: KVL for branches not connected directly to the substation
+    for t in Tset, (i, j) in Lm1set
+        @unpack rdict_pu, xdict_pu = data
+        r_ij = rdict_pu[(i, j)]
+        x_ij = xdict_pu[(i, j)]
+        P = model[:P]
+        Q = model[:Q]
+        l = model[:l]
+        v = model[:v]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        l_ij_t = l[(i, j), t]
+        v_i_t = v[i, t]
+        v_j_t = v[j, t]
+        @constraint(model,
+            base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -164,53 +231,57 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # Implement all constraints as before, using the data and variables
 
-    # ## Real Power Balance Constraints ##
+    ## Real Power Balance Constraints ##
 
     # Constraint h_1a_j: Nodal real power balance at substation node
 
-    model = nodalRealPowerBalance_substation_t_in_Tset(model, data)
+    model = nodalRealPowerBalance_substation_t_in_Tset(model, data, Tset=Tset)
 
     # Constraint h_1b_j: Nodal real power balance at non-substation nodes
 
-    model = nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
+    model = nodalRealPowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
 
-    # ## Nodal Reactive Power Balance Constraints ##
+    ## Nodal Reactive Power Balance Constraints ##
 
-    model = nodalReactivePowerBalance_non_substation_t_in_Tset(model, data)
+    model = nodalReactivePowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
 
     ## KVL Constraints ##
 
-    @unpack Tset, L1set, rdict_pu, xdict_pu = data
     # Constraint h_3a: KVL for branches connected directly to the substation
-    for t in Tset, (i, j) in L1set
-        r_ij = rdict_pu[(i, j)]
-        x_ij = xdict_pu[(i, j)]
-        P_ij_t = P[(i, j), t]
-        Q_ij_t = Q[(i, j), t]
-        l_ij_t = l[(i, j), t]
-        v_i_t = v[i, t]
-        v_j_t = v[j, t]
-        @constraint(model,
-            base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-        )
-    end
+    model = KVL_substation_branches_t_in_Tset(model, data, Tset=Tset)
 
-    @unpack Tset, Lm1set, rdict_pu, xdict_pu = data
+    # @unpack Tset, L1set, rdict_pu, xdict_pu = data
+    # for t in Tset, (i, j) in L1set
+    #     r_ij = rdict_pu[(i, j)]
+    #     x_ij = xdict_pu[(i, j)]
+    #     P_ij_t = P[(i, j), t]
+    #     Q_ij_t = Q[(i, j), t]
+    #     l_ij_t = l[(i, j), t]
+    #     v_i_t = v[i, t]
+    #     v_j_t = v[j, t]
+    #     @constraint(model,
+    #         base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+    #         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+    #     )
+    # end
+
     # Constraint h_3b: KVL for branches not connected directly to the substation
-    for t in Tset, (i, j) in Lm1set
-        r_ij = rdict_pu[(i, j)]
-        x_ij = xdict_pu[(i, j)]
-        P_ij_t = P[(i, j), t]
-        Q_ij_t = Q[(i, j), t]
-        l_ij_t = l[(i, j), t]
-        v_i_t = v[i, t]
-        v_j_t = v[j, t]
-        @constraint(model,
-            base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
-        )
-    end
+    model = KVL_non_substation_branches_t_in_Tset(model, data)
+
+    # @unpack Tset, Lm1set, rdict_pu, xdict_pu = data
+    # for t in Tset, (i, j) in Lm1set
+    #     r_ij = rdict_pu[(i, j)]
+    #     x_ij = xdict_pu[(i, j)]
+    #     P_ij_t = P[(i, j), t]
+    #     Q_ij_t = Q[(i, j), t]
+    #     l_ij_t = l[(i, j), t]
+    #     v_i_t = v[i, t]
+    #     v_j_t = v[j, t]
+    #     @constraint(model,
+    #         base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
+    #         v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+    #     )
+    # end
 
     ## Branch Complex Power Flow Equations (BCPF) ##
 
