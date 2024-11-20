@@ -102,6 +102,52 @@ function nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
     return model
 end
 
+function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data)
+    @unpack Tset, Nm1set = data
+    for t in Tset, j in Nm1set
+        # Sum of reactive powers flowing from node j to its children
+        @unpack children = data
+        Q = model[:Q]
+        sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+
+        # parent node i of node j
+        @unpack parent = data
+        i = parent[j]
+
+        # Reactive power flow from parent i to node j
+        Q_ij_t = Q[(i, j), t]
+
+        # Line reactive losses on branch (i, j)
+        @unpack xdict_pu = data
+        l = model[:l]
+        x_ij = xdict_pu[(i, j)]
+        l_ij_t = l[(i, j), t]
+        line_reactive_loss = x_ij * l_ij_t
+
+        # Reactive load at node j and time t
+        @unpack NLset, q_L_pu = data
+        q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
+
+        # Reactive power from PV inverter at node j and time t
+        @unpack Dset = data
+        q_D = model[:q_D]
+        q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
+
+        # Reactive power from battery inverter at node j and time t
+        @unpack Bset = data
+        q_B = model[:q_B]
+        q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
+
+        ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
+        @constraint(model,
+            base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
+            sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -130,37 +176,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # ## Nodal Reactive Power Balance Constraints ##
 
-    # @unpack Tset, Nm1set, NLset, Dset, Bset, children, parent, xdict_pu, q_L_pu = data
-    # for t in Tset, j in Nm1set
-    #     # Sum of reactive powers flowing from node j to its children
-    #     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
-
-    #     # parent node i of node j
-    #     i = parent[j]
-
-    #     # Reactive power flow from paren t i to node j
-    #     Q_ij_t = Q[(i, j), t]
-
-    #     # Line reactive losses on branch (i, j)
-    #     x_ij = xdict_pu[(i, j)]
-    #     l_ij_t = l[(i, j), t]
-    #     line_reactive_loss = x_ij * l_ij_t
-
-    #     # Reactive load at node j and time t
-    #     q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
-
-    #     # Reactive power from PV inverter at node j and time t
-    #     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
-
-    #     # Reactive power from battery inverter at node j and time t
-    #     q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
-
-    #     ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
-    #     @constraint(model,
-    #         base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
-    #         sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
-    #     )
-    # end
+    model = nodalReactivePowerBalance_non_substation_t_in_Tset(model, data)
 
     ## KVL Constraints ##
 
