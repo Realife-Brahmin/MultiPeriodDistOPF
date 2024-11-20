@@ -108,24 +108,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     # Define the optimization model including any specific solver settings
     model = configure_solver(solver)
 
-    # ===========================
-    # Variables
-    # ===========================
-    # @unpack Tset, Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data
-    # PSubsMax_pu = PSubsMax_kW / kVA_B
-    # # Define all variables as before, using the data parsed
-    # @variable(model, PSubsMax_pu >= P_Subs[t in Tset] >= 0)
-    # # Define variables over the set of branches Lset and time periods Tset
-    # @variable(model, P[(i, j) in Lset, t in Tset] <= PSubsMax_pu, base_name = "P")
-    # @variable(model, Q[(i, j) in Lset, t in Tset], base_name = "Q")
-    # @variable(model, l[(i, j) in Lset, t in Tset] >= 0, base_name = "l")
 
-    # @variable(model, v[j in Nset, t in Tset], base_name = "v")
-    # @variable(model, q_D[j in Dset, t in Tset], base_name = "q_D")
-    # @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
-    # @variable(model, P_c[j in Bset, t in Tset], base_name = "P_c")
-    # @variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
-    # @variable(model, B[j in Bset, t in Tset], base_name = "B")
     @unpack Tset = data;
     model = define_model_variables_t_in_Tset(model, data, Tset=Tset)
 
@@ -135,115 +118,49 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     # Implement all constraints as before, using the data and variables
 
-
-    # @unpack substationBus = data
-    # # Substation node
-    # j1 = substationBus
-
     # ## Real Power Balance Constraints ##
 
     # Constraint h_1a_j: Nodal real power balance at substation node
 
     model = nodalRealPowerBalance_substation_t_in_Tset(model, data)
 
-    # @unpack Tset, L1set = data
-    # P_Subs = model[:P_Subs]
-    # P = model[:P]
-    # # Constraint h_1b_j: Nodal real power balance at non-substation nodes
-    # for t in Tset
-    #     @constraint(
-    #         model,
-    #         base_name = "SubstationRealPowerBalance_t_$(t)",
-    #         P_Subs[t] - sum(P[(j1, j), t] for (j1, j) in L1set) == 0
-    #     )
-    # end
-    model = nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
-
-    # @unpack NLset, Nm1set, children, parent, rdict_pu, xdict_pu, p_L_pu, p_D_pu = data
-    # P = model[:P]
-    # l = model[:l]
-    # P_c = model[:P_c]
-    # P_d = model[:P_d]
-
     # Constraint h_1b_j: Nodal real power balance at non-substation nodes
 
-    # @unpack Tset, Nm1set = data;
-    # for t in Tset, j in Nm1set
+    model = nodalRealPowerBalance_non_substation_t_in_Tset(model, data)
 
-    #     # Sum of real powers flowing from node j to its children
-    #     @unpack children = data;
-    #     P = model[:P]
-    #     sum_Pjk = isempty(children[j]) ? 0 : sum(P[(j, k), t] for k in children[j])
+    # ## Nodal Reactive Power Balance Constraints ##
+
+    # @unpack Tset, Nm1set, NLset, Dset, Bset, children, parent, xdict_pu, q_L_pu = data
+    # for t in Tset, j in Nm1set
+    #     # Sum of reactive powers flowing from node j to its children
+    #     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
 
     #     # parent node i of node j
-    #     @unpack parent = data;
     #     i = parent[j]
 
-    #     # Real power flow from parent i to node j
-    #     P = model[:P]
-    #     P_ij_t = P[(i, j), t]
+    #     # Reactive power flow from paren t i to node j
+    #     Q_ij_t = Q[(i, j), t]
 
-    #     # Line losses on branch (i, j)
-    #     @unpack rdict_pu = data;
-    #     l = model[:l]
-    #     r_ij = rdict_pu[(i, j)]
+    #     # Line reactive losses on branch (i, j)
+    #     x_ij = xdict_pu[(i, j)]
     #     l_ij_t = l[(i, j), t]
-    #     line_loss = r_ij * l_ij_t
+    #     line_reactive_loss = x_ij * l_ij_t
 
-    #     # Load at node j and time t
-    #     @unpack NLset, p_L_pu = data;
-    #     p_L_j_t = (j in NLset) ? p_L_pu[(j, t)] : 0.0  # Check if node j has a load
+    #     # Reactive load at node j and time t
+    #     q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
 
-    #     # PV generation at node j and time t
-    #     @unpack Dset, p_D_pu = data;
-    #     p_D_j_t = (j in Dset) ? p_D_pu[(j, t)] : 0.0  # Check if node j has PV
+    #     # Reactive power from PV inverter at node j and time t
+    #     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
 
-    #     # # Battery variables at node j and time t
-    #     @unpack Bset = data;
-    #     P_c = model[:P_c]
-    #     P_d = model[:P_d]
-    #     # P_d_j_t = (j in Bset && t in Tset) ? P_d[j, t] : 0.0
-    #     P_d_j_t = (j in Bset) ? P_d[j, t] : 0.0
-    #     # P_c_j_t = (j in Bset && t in Tset) ? P_c[j, t] : 0.0
-    #     P_c_j_t = (j in Bset) ? P_c[j, t] : 0.0
+    #     # Reactive power from battery inverter at node j and time t
+    #     q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
 
+    #     ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
     #     @constraint(model,
-    #         sum_Pjk - (P_ij_t - line_loss) + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
-    #         base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
+    #         base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
+    #         sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
+    #     )
     # end
-
-    @unpack Tset, Nm1set, NLset, Dset, Bset, children, parent, xdict_pu, q_L_pu = data
-    ## Nodal Reactive Power Balance Constraints ##
-    for t in Tset, j in Nm1set
-        # Sum of reactive powers flowing from node j to its children
-        sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
-
-        # parent node i of node j
-        i = parent[j]
-
-        # Reactive power flow from paren t i to node j
-        Q_ij_t = Q[(i, j), t]
-
-        # Line reactive losses on branch (i, j)
-        x_ij = xdict_pu[(i, j)]
-        l_ij_t = l[(i, j), t]
-        line_reactive_loss = x_ij * l_ij_t
-
-        # Reactive load at node j and time t
-        q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
-
-        # Reactive power from PV inverter at node j and time t
-        q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
-
-        # Reactive power from battery inverter at node j and time t
-        q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
-
-        ## h_2_j^t: Nodal Reactive Power Balance Constraint ##
-        @constraint(model,
-            base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)",
-            sum_Qjk - (Q_ij_t - line_reactive_loss) + q_L_j_t - q_D_j_t - q_B_j_t == 0,
-        )
-    end
 
     ## KVL Constraints ##
 
