@@ -362,6 +362,41 @@ function voltage_limits_constraints_t_in_Tset(model, data; Tset=nothing)
     return model
 end
 
+function reactive_power_limits_PV_inverters_t_in_Tset(model, data; Tset=nothing)
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack p_D_R_pu, Dset = data
+    for t in Tset, j in Dset
+        # Rated active power of the PV inverter at node j
+        p_D_R_j = p_D_R_pu[j]
+
+        # Active power output of PV at node j and time t
+        @unpack p_D_pu = data
+        p_D_j_t = p_D_pu[(j, t)]
+
+        # Compute q_D_Max_j^t
+        q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
+
+        q_D = model[:q_D]
+
+        # g_3_j^t: Lower Limit of Reactive Power from PV Inverter #
+        @constraint(model,
+            base_name = "g_3_j^t_LowerReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
+            -q_D_Max_j_t - q_D[j, t] <= 0,
+        )
+
+        # g_4_j^t: Upper Limit of Reactive Power from PV Inverter #
+        @constraint(model,
+            base_name = "g_4_j^t_UpperReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
+            q_D[j, t] - q_D_Max_j_t <= 0,
+        )
+    end
+
+    return model
+end
+
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
@@ -423,33 +458,35 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     # Voltage limits constraints
     model = voltage_limits_constraints_t_in_Tset(model, data)
 
-    @unpack p_D_R_pu = data
     #---Reactive Power Limits for PV Inverters---#
-    for t in Tset, j in Dset
-        # Rated active power of the PV inverter at node j
-        p_D_R_j = p_D_R_pu[j]
+    model = reactive_power_limits_PV_inverters_t_in_Tset(model, data)
 
-        # Active power output of PV at node j and time t
-        p_D_j_t = p_D_pu[(j, t)]
+    # @unpack p_D_R_pu = data
+    # for t in Tset, j in Dset
+    #     # Rated active power of the PV inverter at node j
+    #     p_D_R_j = p_D_R_pu[j]
 
-        # Compute q_D_Max_j^t
-        q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
+    #     # Active power output of PV at node j and time t
+    #     p_D_j_t = p_D_pu[(j, t)]
 
-        # g_3_j^t: Lower Limit of Reactive Power from PV Inverter #
-        @constraint(model,
-            base_name = "g_3_j^t_LowerReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
-            -q_D_Max_j_t - q_D[j, t] <= 0,
-        )
+    #     # Compute q_D_Max_j^t
+    #     q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
 
-        # g_4_j^t: Upper Limit of Reactive Power from PV Inverter #
-        @constraint(model,
-            base_name = "g_4_j^t_UpperReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
-            q_D[j, t] - q_D_Max_j_t <= 0,
-        )
-    end
+    #     # g_3_j^t: Lower Limit of Reactive Power from PV Inverter #
+    #     @constraint(model,
+    #         base_name = "g_3_j^t_LowerReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
+    #         -q_D_Max_j_t - q_D[j, t] <= 0,
+    #     )
 
-    @unpack Bset, P_B_R_pu = data
+    #     # g_4_j^t: Upper Limit of Reactive Power from PV Inverter #
+    #     @constraint(model,
+    #         base_name = "g_4_j^t_UpperReactivePowerLimit_PV_Node_j_$(j)_t_$(t)",
+    #         q_D[j, t] - q_D_Max_j_t <= 0,
+    #     )
+    # end
+
     #---Reactive Power Limits for Battery Inverters---#
+    @unpack Bset, P_B_R_pu = data
 
     # Precompute q_B_Max_j for each battery inverter
     q_B_Max = Dict{Int,Float64}()
