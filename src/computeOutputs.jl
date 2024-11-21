@@ -51,11 +51,11 @@ function compute_output_values(model, data;
     pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
     pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
 
-    load_real_power_vs_t_1toT_kW = get_load_real_power(model, data, horizon="1toT")
-    load_real_power_allT_kW = get_load_real_power(model, data, horizon="allT")
+    load_real_power_vs_t_1toT_kW = get_load_real_power(data, horizon="1toT")
+    load_real_power_allT_kW = get_load_real_power(data, horizon="allT")
 
-    load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(model, data, horizon="1toT")
-    load_reactive_power_allT_kVAr = get_load_reactive_power(model, data, horizon="allT")
+    load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(data, horizon="1toT")
+    load_reactive_power_allT_kVAr = get_load_reactive_power(data, horizon="allT")
 
     static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="1toT")
     static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="allT")
