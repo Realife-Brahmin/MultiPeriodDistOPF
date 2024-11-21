@@ -12,6 +12,13 @@ function estimate_alpha(data)
     return alpha
 end
 
+function estimate_fscd(data)
+    @unpack Bset, P_B_R, eta_C, eta_D, T = data;
+    η_C, η_D = eta_C, eta_D
+    fscd_est = sum( (1/η_D[j] - η_C[j]) * P_B_R[j] for j ∈ Bset) * T
+    return fscd_est
+end
+
 function estimate_substation_power_cost(data)
     @unpack LoadShapeCost, kVA_B = data;
     C = LoadShapeCost # dollars_per_kWh
