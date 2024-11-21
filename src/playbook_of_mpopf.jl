@@ -717,46 +717,6 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     # ===========================
     model = initialize_variables_t_in_Tset(model, data)
 
-    # @unpack Tset = data
-    # # Initialize substation power flow variable
-    # for t in Tset
-    #     set_start_value(P_Subs[t], 0.0)
-    # end
-
-    # @unpack Tset, Lset = data
-    # # Initialize power flow variables
-    # for (i, j) in Lset, t in Tset
-    #     set_start_value(P[(i, j), t], 0.0)
-    #     set_start_value(Q[(i, j), t], 0.0)
-    #     set_start_value(l[(i, j), t], 0.0)
-    # end
-
-    # @unpack Tset, Compset, V_Subs = data
-    # # Initialize voltage variables
-    # for j in Compset, t in Tset
-    #     set_start_value(v[j, t], (V_Subs)^2)
-    # end
-
-    # @unpack Tset, Dset = data
-    # # Initialize PV inverter reactive dispatch variables
-    # for j in Dset, t in Tset
-    #     set_start_value(q_D[j, t], 0.0)
-    # end
-
-    # @unpack Tset, Bset = data
-    # # Initialize battery real and reactive dispatch variables
-    # for j in Bset, t in Tset
-    #     set_start_value(q_B[j, t], 0.0)
-    #     set_start_value(P_c[j, t], 0.0)
-    #     set_start_value(P_d[j, t], 0.0)
-    # end
-
-    # @unpack Tset, Bset, B0_pu = data
-    # # Initialize battery state of charge (SOC) variables
-    # for j in Bset, t in Tset
-    #     set_start_value(B[j, t], B0_pu[j])
-    # end
-
     return model
 end
 
