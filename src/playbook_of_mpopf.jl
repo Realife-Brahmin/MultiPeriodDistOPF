@@ -655,53 +655,6 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 
     model = define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
 
-    # @unpack objfun0, objfun2, Tset, Bset, eta_C, eta_D, LoadShapeCost, kVA_B = data
-    # C, η_C, η_D = LoadShapeCost, eta_C, eta_D
-
-    # # Assume objfun0 and objfun2 are passed to the function that defines the model.
-    # if objfun0 == "powerflow"
-    #     # Set the objective function to zero for powerflow
-    #     objfun = 0
-    # elseif objfun0 == "subsPowerCostMin"
-    #     # Define the base objective function (generation cost minimization)
-    #     dollars_per_kWh = C
-    #     dollars_per_puh = dollars_per_kWh * kVA_B
-    #     objfun = sum(
-    #         dollars_per_puh[t] * P_Subs[t] * delta_t
-    #         for t in Tset
-    #     )
-    # elseif objfun0 == "lineLossMin"
-    #     objfun = sum(
-    #         rdict_pu[(i, j)] * l[(i, j), t]
-    #         for (i, j) in Lset, t in Tset
-    #     )
-    # end
-
-    # # Append the alpha term only if objfun2 == "scd"
-    # @unpack alpha = data
-    # α = alpha
-    # if objfun2 == "scd"
-    #     objfun += sum(
-    #         α * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
-    #         for j in Bset, t in Tset
-    #     )
-    # end
-    
-    # if !tSOC_hard
-    #     # Append the gamma term only if tSOC_hard is false
-    #     @unpack gamma, T = data
-    #     γ = gamma
-    #     objfun += sum(
-    #         γ * (B[j, T] - Bref_pu[j])^2
-    #         for j in Bset
-    #     )
-    # end
-
-    # # Todo: Now append the objective locs with another condition taking care of soft-constrained terminal SOC
-
-    # # objfun represents our actual objective function which will be optimized for
-    # @objective(model, Min, objfun)
-
     # ===========================
     # Initializing Variables
     # ===========================
