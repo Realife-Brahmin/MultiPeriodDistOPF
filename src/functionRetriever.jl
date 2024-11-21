@@ -324,7 +324,7 @@ function get_load_real_power(data; horizon::String="allT")
     @unpack Tset, NLset, p_L_pu, kVA_B = data
 
     if horizon == "1toT"
-        load_real_power_vs_t_kW = [kVA_B * sum(p_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)]
+        load_real_power_vs_t_kW = [kVA_B * sum(p_L_pu[(j, t)] for j ∈ NLset) for t ∈ Tset]
         return load_real_power_vs_t_kW
     elseif horizon == "allT"
         load_real_power_kW_allT = kVA_B * sum(p_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)
