@@ -14,11 +14,6 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
     end
 
     @unpack objfun0, objfun2 = data
-    # P_Subs = model[:P_Subs]
-    # P_c = model[:P_c]
-    # P_d = model[:P_d]
-    # l = model[:l]
-    # B = model[:B]
 
     # Assume objfun0 and objfun2 are passed to the function that defines the model.
     if objfun0 == "powerflow"
