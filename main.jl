@@ -20,6 +20,7 @@ objfun0 = "subsPowerCostMin"
 objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
 alpha = 1e-3
+gamma = 1e-3
 PSubsMax_kW = Inf # Inf means no limit
 solver = "Ipopt"
 # solver = "EAGO"
@@ -28,7 +29,7 @@ solver = "Ipopt"
 # solver = "MadNLP"
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver)
+data = parse_all_data(systemName, T, numAreas=numAreas, alpha=alpha, gamma=gamma, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver)
 
 model = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
