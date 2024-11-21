@@ -320,7 +320,7 @@ function get_total_generation_reactive_power(model, data; horizon::String="allT"
 end
 
 # Function to get total real load over the horizon
-function get_load_real_power(model, data; horizon::String="allT")
+function get_load_real_power(data; horizon::String="allT")
     @unpack Tset, NLset, p_L_pu, kVA_B = data
 
     if horizon == "1toT"
@@ -335,7 +335,7 @@ function get_load_real_power(model, data; horizon::String="allT")
 end
 
 # Function to get total reactive load over the horizon
-function get_load_reactive_power(model, data; horizon::String="allT")
+function get_load_reactive_power(data; horizon::String="allT")
     @unpack Tset, NLset, q_L_pu, kVA_B = data
 
     if horizon == "1toT"
