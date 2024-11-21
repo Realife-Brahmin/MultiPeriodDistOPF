@@ -6,7 +6,7 @@ using Parameters: @unpack
 Revise.revise()
 
 systemName = "ads10_1ph"
-# systemName = "ieee123_1ph"
+systemName = "ieee123_1ph"
 T0 = 24
 # factor = 1/8
 factor = 1
@@ -21,7 +21,7 @@ objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
 alpha = 1e-3
 tSOC_hard = false
-tSOC_hard = true
+# tSOC_hard = true
 gamma = 1e-0
 gamma = 1e5
 PSubsMax_kW = Inf # Inf means no limit
