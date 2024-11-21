@@ -6,6 +6,9 @@ using .Variables
 include("Constraints.jl")
 using .Constraints
 
+include("Hyperparameters.jl")
+using .Hyperparameters
+
 include("Objective.jl")
 using .Objective
 
@@ -22,6 +25,7 @@ export BCPF_non_substation_branches_t_in_Tset,
     define_model_variables_1ph_NL_t_in_Tset,
     define_objective_function_t_in_Tset,
     discharging_power_limits_batteries_t_in_Tset,
+    estimate_alpha,
     fixed_substation_voltage_constraints_t_in_Tset,
     initialize_variables_1ph_NL_t_in_Tset,
     nodalReactivePowerBalance_non_substation_t_in_Tset,
