@@ -31,6 +31,7 @@ using .helperFunctions: generateBinaryLoadShape, myprintln
 function parse_all_data(systemName::String, T::Int;
     numAreas=1,
     alpha=1e-3,
+    gamma=1e-3,
     objfun0="genCostMin",
     objfun2="scd",
     temporal_decmp=false,
@@ -40,7 +41,7 @@ function parse_all_data(systemName::String, T::Int;
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
-        numAreas=numAreas, alpha=alpha, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp,
+        numAreas=numAreas, alpha=alpha, gamma=gamma, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp,
         PSubsMax_kW=PSubsMax_kW,
         inputForecastDescription=inputForecastDescription, solver=solver)
     # Parse branch data

@@ -9,6 +9,7 @@ using Parameters: @unpack, @pack!
 function parse_system_simulation_data(systemName::String, T::Int;
     numAreas=1,
     alpha=1e-3,
+    gamma=1e-3,
     kVA_B = 1000,
     objfun0 = "genCostMin",
     objfun2 = "scd",
@@ -144,6 +145,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     sysSimData = Dict(
         :alpha => alpha, # user input
+        :gamma => gamma, # user input
         :inputForecastDescription => inputForecastDescription,
         :machine_ID => machine_ID,
         :macroItrsCompleted => macroItrsCompleted,
