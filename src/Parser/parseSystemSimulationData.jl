@@ -16,7 +16,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     temporal_decmp = false,
     PSubsMax_kW = Inf,
     inputForecastDescription = "nonspecific",
-    solver = "Ipopt")
+    solver = "Ipopt",
+    tSOC_hard = true)
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -172,6 +173,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :solver => solver,
         :spatialDecAppendix => spatialDecAppendix,
         :spatialDecString => spatialDecString,
+        :tSOC_hard => tSOC_hard,
         :T => T, # user input
         :temporal_decmp => temporal_decmp,
         :temporalDecmpString => temporalDecmpString,

@@ -55,7 +55,8 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     model = MB.BCPF_non_substation_branches_t_in_Tset(model, data, Tset=Tset)
 
     # Battery SOC trajectory equality constraints
-    model = MB.battery_SOC_constraints_t_in_Tset(model, data, Tset=Tset, tSOC_hard = true)
+    @unpack tSOC_hard = data;
+    model = MB.battery_SOC_constraints_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
 
     # Fixed substation voltage constraints
     model = MB.fixed_substation_voltage_constraints_t_in_Tset(model, data, Tset=Tset)
@@ -79,7 +80,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     model = MB.SOC_limits_batteries_t_in_Tset(model, data, Tset=Tset)
 
     # Define objective function
-    model = MB.define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=true)
+    model = MB.define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
 
     # Initialize variables
     model = MB.initialize_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
