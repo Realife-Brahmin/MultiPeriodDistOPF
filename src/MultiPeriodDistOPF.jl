@@ -9,7 +9,7 @@ using .functionRetriever
 include("./helperFunctions.jl")
 using .helperFunctions
 
-# include("./ModelBuilder/ModelBuilder.jl")
+include("./ModelBuilder/ModelBuilder.jl")
 # import .ModelBuilder as MB
 
 include("./playbook_of_mpopf.jl")
