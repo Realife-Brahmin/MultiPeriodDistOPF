@@ -25,7 +25,7 @@ function plot_battery_actions(model, data;
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
-    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, soc_min, soc_max, gedAppendix, solver = data;
+    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, soc_min, soc_max, gedAppendix, solver = data;
     Tset = sort(collect(Tset))
 
     P_c = model[:P_c]
@@ -126,7 +126,8 @@ function plot_battery_actions(model, data;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alpha)_$(solver).png")
+            @unpack alphaAppendix = data;
+            filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_$(solver).png")
             myprintln(verbose, "Saving plot to: $filename")
             savefig(plot_combined, filename)
         end
