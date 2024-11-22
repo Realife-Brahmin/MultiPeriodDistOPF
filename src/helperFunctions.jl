@@ -1,7 +1,7 @@
 # helperFunctions.jl
 module helperFunctions
 
-export generateLoadShape, generateBinaryLoadShape, myprintln
+export generateLoadShape, generateBinaryLoadShape, myprintln, trim_number_for_printing
 
 function myprintln(verbose::Bool, msg::String)
     if verbose
@@ -166,6 +166,20 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
 
     LoadShapeLoad = [Float64(x) for x in LoadShape] # a patch for T>24 where the resultant returned vector is Vector{Any} instead of Vector{Float64}
     return LoadShapeLoad
+end
+
+function trim_number_for_printing(number)
+    if number < 1
+        trimmed_number = round(number, digits=4)
+    elseif number < 1e5
+        trimmed_number = round(number, sigdigits=5)
+    else
+        trimmed_number = string(round(number, sigdigits=5), "e", floor(Int, log10(number)))
+    end
+
+    # Convert to string and replace decimal point with underscore
+    formatted_number = string(trimmed_number)
+    return replace(formatted_number, "." => "_")
 end
 
 end # module
