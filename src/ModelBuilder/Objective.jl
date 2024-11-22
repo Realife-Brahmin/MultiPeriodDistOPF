@@ -36,8 +36,8 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
         func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
         l = model[:l]
-        @unpack Lset, rdict_pu = data;
-        objfun = sum(
+        @unpack Lset, rdict_pu, kVA_B = data;
+        objfun = kVA_B * sum(
             rdict_pu[(i, j)] * l[(i, j), t]
             for (i, j) in Lset, t in Tset
         )
