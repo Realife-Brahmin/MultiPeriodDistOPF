@@ -171,7 +171,7 @@ end
 function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
 
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -179,7 +179,7 @@ function export_simulation_key_results_txt(model, data; filename::String="simula
         mkpath(base_dir)
     end
 
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
     # Extract system information and parameters from `data`
     # system_name = data[:machine_ID]  # System name
@@ -289,7 +289,8 @@ function export_validation_decision_variables(vald, data; verbose::Bool=false)
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+    @unpack alphaAppendix, gammaAppendix, objfunConciseDescription = data
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
 
     # Write the vald dictionary to a CSV file
     CSV.write(filename, vald)
@@ -314,12 +315,12 @@ function export_validation_key_results(vald, data; filename::String="validation_
         mkpath(base_dir)
     end
 
-    @unpack solver = data
+    @unpack solver, alphaAppendix, gammaAppendix, objfunConciseDescription = data;
     # Adjust filename based on printEveryTimeStepPowerflow flag
     if printEveryTimeStepPowerflow
-        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_via_$(simNatureAppendix)_full.txt")
+        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_full.txt")
     else
-        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_via_$(simNatureAppendix).txt")
+        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
     end
 
     # Open the file and write each section
