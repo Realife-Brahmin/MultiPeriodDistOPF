@@ -3,10 +3,13 @@ module Objective
 export define_objective_function_t_in_Tset
 
 using JuMP
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 
 include("Hyperparameters.jl")
 import .Hyperparameters as HP
+
+include("../helperFunctions.jl")
+import .helperFunctions as HF
 
 function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_hard=false)
     if Tset === nothing
@@ -44,6 +47,9 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
         η_C = eta_C
         η_D = eta_D
         alpha = HP.estimate_alpha(data)
+        println("alpha = $alpha")
+        alphaAppendix = HF.trim_number_for_printing(alpha)
+        @pack! data = alpha, alphaAppendix;
         α = alpha
         P_c = model[:P_c]
         P_d = model[:P_d]
@@ -66,7 +72,11 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
 
     @objective(model, Min, objfun)
 
-    return model
+    modelDict = Dict(
+        :model => model,
+        :data => data
+    )
+    return modelDict
 end
 
 end

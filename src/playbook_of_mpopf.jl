@@ -80,18 +80,27 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
     model = MB.SOC_limits_batteries_t_in_Tset(model, data, Tset=Tset)
 
     # Define objective function
-    model = MB.define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
+    modelDict = MB.define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
+
+    @unpack model, data = modelDict;
 
     # Initialize variables
     model = MB.initialize_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
 
-    # Other constraints...
+    modelDict = Dict(
+        :model => model,
+        :data => data
+    )
+
+    return modelDict
 end
 
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    model = build_MPOPF_1ph_NL_model_t_1toT(data)
+    modelDict = build_MPOPF_1ph_NL_model_t_1toT(data)
 
+    @unpack model, data = modelDict
     optimize!(model)
+    @pack! modelDict = model
 
     # Check solver status and retrieve results
     if termination_status(model) == LOCALLY_SOLVED
@@ -102,8 +111,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     optimal_obj_value = objective_value(model)
     println("Optimal objective function value: ", optimal_obj_value)
-
-    return model
+    
+    return modelDict
 
 end
 
