@@ -45,7 +45,7 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
     end
 
     @pack! data = func_obj_est;
-    
+
     # Append the alpha term only if objfun2 == "scd"
     if objfun2 == "scd"
         @unpack Bset, eta_C, eta_D = data;
@@ -66,7 +66,11 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
 
     # Append the gamma term only if tSOC_hard is false
     if !tSOC_hard
-        @unpack T, Bset, gamma, Bref_pu = data;
+        @unpack T, Bset, Bref_pu = data;
+        gamma = HP.estimate_gamma(data)
+        println("gamma = $gamma")
+        gammaAppendix = HF.trim_number_for_printing(gamma)
+        @pack! data = gamma, gammaAppendix;
         B = model[:B]
         γ = gamma
         objfun += sum(
