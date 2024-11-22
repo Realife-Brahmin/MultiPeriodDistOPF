@@ -7,10 +7,16 @@ include("../functionRetriever.jl")
 import .functionRetriever as FR
 
 function estimate_alpha(data)
-    fcost_est = estimate_substation_power_cost(data)
+    @unpack func_obj_est = data;
+    if func_obj_est != nothing
+        fobj_est = func_obj_est(data)
+    else
+        fobj_est = 0
+    end
+    # fobj_est = estimate_substation_power_cost(data)
     # alpha = 1e-3
     fscd_est = estimate_fscd(data)
-    alpha = fcost_est / fscd_est
+    alpha = fobj_est / fscd_est
     return alpha
 end
 

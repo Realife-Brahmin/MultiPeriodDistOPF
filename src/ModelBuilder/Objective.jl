@@ -22,6 +22,7 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
     if objfun0 == "powerflow"
         # Set the objective function to zero for powerflow
         objfun = 0
+        func_obj_est = nothing # no objective function (to minimize) for powerflow
     elseif objfun0 == "subsPowerCostMin"
         # Define the base objective function (generation cost minimization)
         @unpack LoadShapeCost, delta_t, kVA_B = data
@@ -32,6 +33,7 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
             dollars_per_pu * C[t] * P_Subs[t] * delta_t
             for t in Tset
         )
+        func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
         l = model[:l]
         @unpack Lset, rdict_pu = data;
@@ -39,8 +41,11 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
             rdict_pu[(i, j)] * l[(i, j), t]
             for (i, j) in Lset, t in Tset
         )
+        func_obj_est = HP.estimate_line_losses
     end
 
+    @pack! data = func_obj_est;
+    
     # Append the alpha term only if objfun2 == "scd"
     if objfun2 == "scd"
         @unpack Bset, eta_C, eta_D = data;
