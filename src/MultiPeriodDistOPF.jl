@@ -11,7 +11,6 @@ using .helperFunctions
 
 include("./ModelBuilder/ModelBuilder.jl")
 using .ModelBuilder
-# import .ModelBuilder as MB
 
 include("./playbook_of_mpopf.jl")
 using .Playbook_of_MPOPF
