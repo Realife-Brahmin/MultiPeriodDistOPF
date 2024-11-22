@@ -63,7 +63,7 @@ function estimate_line_losses(data)
     @unpack kVA_B = data
     load_real_power_allT_kW = FR.get_load_real_power(data, horizon="allT")
     line_loss_accommodation_factor = 0.1 # 10% line loss accommodation factor, just a usual value
-    fPLoss_est = line_loss_accommodation_factor *  load_real_power_vs_t_1toT_kW
+    fPLoss_est = line_loss_accommodation_factor * load_real_power_allT_kW
 
     return fPLoss_est
 end
