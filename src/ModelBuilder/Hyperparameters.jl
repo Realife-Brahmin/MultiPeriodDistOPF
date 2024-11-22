@@ -8,7 +8,9 @@ import .functionRetriever as FR
 
 function estimate_alpha(data)
     fcost_est = estimate_substation_power_cost(data)
-    alpha = 1e-3
+    # alpha = 1e-3
+    fscd_est = estimate_fscd(data)
+    alpha = fcost_est / fscd_est
     return alpha
 end
 
