@@ -168,13 +168,15 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
     return LoadShapeLoad
 end
 
+
 function trim_number_for_printing(number)
     if number < 1
         trimmed_number = round(number, digits=4)
     elseif number < 1e5
         trimmed_number = round(number, sigdigits=5)
     else
-        trimmed_number = string(round(number, sigdigits=5), "e", floor(Int, log10(number)))
+        # Use scientific notation if the number is large
+        trimmed_number = round(number, sigdigits=5)
     end
 
     # Convert to string and replace decimal point with underscore
@@ -182,4 +184,4 @@ function trim_number_for_printing(number)
     return replace(formatted_number, "." => "_")
 end
 
-end # module
+end # helperFunctions module
