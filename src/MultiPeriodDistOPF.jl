@@ -10,6 +10,7 @@ include("./helperFunctions.jl")
 using .helperFunctions
 
 include("./ModelBuilder/ModelBuilder.jl")
+using .ModelBuilder
 # import .ModelBuilder as MB
 
 include("./playbook_of_mpopf.jl")
