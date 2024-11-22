@@ -1,6 +1,11 @@
 module Hyperparameters
 
-export estimate_alpha
+export estimate_alpha,
+    estimate_fscd,
+    estimate_ftsoc,
+    estimate_gamma,
+    estimate_line_losses,
+    estimate_substation_power_cost
 
 using Parameters: @unpack
 include("../functionRetriever.jl")
@@ -23,6 +28,24 @@ function estimate_fscd(data)
     η_C, η_D = eta_C, eta_D
     fscd_est = sum( (1/η_D[j] - η_C[j]) * P_B_R[j] for j ∈ Bset) * T
     return fscd_est
+end
+
+function estimate_ftsoc(data; tol_tSOC_violation_pu=1e-3)
+    @unpack n_B = data;
+    ftsoc_est = tol_tSOC_violation_pu^2 * n_B
+    return ftsoc_est
+end
+
+function estimate_gamma(data)
+    @unpack func_obj_est = data;
+    if func_obj_est != nothing
+        fobj_est = func_obj_est(data)
+    else
+        fobj_est = 0
+    end
+    ftsoc_est = estimate_ftsoc(data)
+    gamma = fobj_est / ftsoc_est
+    return gamma
 end
 
 function estimate_substation_power_cost(data)
