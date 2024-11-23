@@ -13,7 +13,7 @@ import .functionRetriever as FR
 
 function estimate_alpha(data)
     @unpack func_obj_est = data;
-    if func_obj_est != nothing
+    if func_obj_est !== nothing
         fobj_est = func_obj_est(data)
     else
         fobj_est = 0
@@ -38,7 +38,7 @@ end
 
 function estimate_gamma(data)
     @unpack func_obj_est = data;
-    if func_obj_est != nothing
+    if func_obj_est !== nothing
         fobj_est = func_obj_est(data)
     else
         fobj_est = 0
