@@ -17,9 +17,6 @@ using Parameters: @unpack, @pack!
 function build_MPOPF_1ph_NL_model_t_1toT(data)
     @unpack solver = data
 
-    # Compute alpha and gamma
-    # alpha, gamma = MB.compute_alpha_gamma(data)
-
     # Define the optimization model including any specific solver settings
     model = configure_solver(solver)
 
