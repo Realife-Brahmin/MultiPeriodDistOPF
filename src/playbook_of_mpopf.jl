@@ -170,6 +170,8 @@ end
 function build_ddpMPOPF_1ph_NL_model_t_is_T(ddpModel, data;
     verbose::Bool=false)
 
+    @unpack models_ddp_vs_t_vs_k = ddpModel # this loc assumes that models_ddp_vs_t_vs_k is at least an already defined dictionary (even if empty) in ddpModel
+
     @unpack k_ddp = ddpModel;
     if k_ddp == 1
         # cold start
@@ -177,7 +179,6 @@ function build_ddpMPOPF_1ph_NL_model_t_is_T(ddpModel, data;
         # save the model as
         model_ddp_t0 = Model() # placeholder
     elseif k_ddp >= 2
-        @unpack models_ddp_vs_t_vs_k = ddpModel;
         model_ddp_t0_km1 = models_ddp_vs_t_vs_k[(t0, k_ddp-1)]
         model_ddp_t0 = deepcopy(model_ddp_t0_km1)
         @unpack model = ddpModel; # because it has previous iteration's model's values saved
@@ -189,7 +190,7 @@ function build_ddpMPOPF_1ph_NL_model_t_is_T(ddpModel, data;
         @error "Invalid value of k_ddp: $k_ddp"
     end
 
-    models_ddp_vs_t_vs_k[t0, k_ddp] = model_ddp_t0 # this loc assumes that models_ddp_vs_t_vs_k is at least an already defined dictionary (even if empty) in ddpModel
+    models_ddp_vs_t_vs_k[t0, k_ddp] = model_ddp_t0 
 
     @pack! ddpModel = models_ddp_vs_t_vs_k;
 
