@@ -273,7 +273,7 @@ function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=
     end
 
     # Constraint h_SOC_j^{t=2 to T}: SOC trajectory for middle and final time periods
-    @unpack T = data
+    @unpack T = data; # Note that Tset now no longer necessarily contains T i.e. Tset could be [2], with no knowledge of T=24
     for j in Bset, t in Tset
         if t > 1
             @constraint(model,
@@ -284,11 +284,12 @@ function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=
     end
 
     # Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = Bref_j)
-    if tSOC_hard && maximum(Tset) == data[:T]
+    @unpack T = data;
+    if tSOC_hard && maximum(Tset) == T
         for j in Bset
             @constraint(model,
                 base_name = "h_SOC_j^{T}_Terminal_SOC_Node_j_$(j)_t_$(T)",
-                B[j, data[:T]] == Bref_pu[j],
+                B[j, T] == Bref_pu[j],
             )
         end
     end
