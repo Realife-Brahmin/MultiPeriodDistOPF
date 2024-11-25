@@ -160,7 +160,7 @@ function DDPModel(data;
     ddpModel = Dict(
         :converged => false,
         :data => data,
-        :iterationsExceeded => false,
+        :iterLimitReached => false,
         :k_ddp => 0,
         :maxiter => maxiter,
         :model => model,
