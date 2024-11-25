@@ -25,7 +25,14 @@ function define_model_variables_1ph_NL_t_in_Tset(model, data; Tset=nothing)
     @variable(model, q_B[j in Bset, t in Tset], base_name = "q_B")
     @variable(model, P_c[j in Bset, t in Tset], base_name = "P_c")
     @variable(model, P_d[j in Bset, t in Tset], base_name = "P_d")
+
     @variable(model, B[j in Bset, t in Tset], base_name = "B")
+
+    # Since SOC constraints for the t-th hour require SOCs of the previous time-steps i.e. B[j, t-1], we need to ensure that they too (in addition to B[j, t]) are defined. This is important in the case where Tset = [t0] (i.e. only one time-step) and t0 != 1 (for t0=1, B[j, t-1] is not required as it is separately taken from B0 stored in data)
+    if !(1∈Tset)
+        t0m1 = Tset[1] - 1 # assuming Tset is sorted, which it should be
+        @variable(model, B[j in Bset, t0m1], base_name = "B")
+    end
 
     return model
 end
