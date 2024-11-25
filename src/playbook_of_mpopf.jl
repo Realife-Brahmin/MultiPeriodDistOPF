@@ -147,6 +147,50 @@ function configure_solver(solver_name)
     return model
 end
 
+function ForwardStep_1ph_NL_t_is_1(ddpModel;
+    verbose::Bool=false)
+
+    @unpack t_ddp = ddpModel
+    if t_ddp != 1
+        @error "t_ddp = $(t_ddp) is not equal to 1"
+        return
+    end
+
+    ddpModel = build_ForwardStep_1ph_NL_model_t_is_1(ddpModel)
+    ddpModel = optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel)
+
+    return ddpModel
+end
+
+function ForwardStep_1ph_NL_t_in_2toTm1(ddpModel;
+    verbose::Bool=false)
+
+    @unpack t_ddp = ddpModel;
+    if !(2 <= t_ddp <= T-1)
+        @error "t_ddp = $(t_ddp) is not in [2, T-1]"
+        return
+    end
+
+    ddpModel = build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel)
+    ddpModel = optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel)
+
+    return ddpModel
+end
+
+function ForwardStep_1ph_NL_t_is_T(ddpModel;
+    verbose::Bool=false)
+    @unpack t_ddp = ddpModel
+    if t_ddp != T
+        @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
+        return
+    end
+
+    ddpModel = build_ForwardStep_1ph_NL_model_t_is_T(ddpModel)
+    ddpModel = optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel)
+
+    return ddpModel
+end
+
 function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose::Bool=false)
 
