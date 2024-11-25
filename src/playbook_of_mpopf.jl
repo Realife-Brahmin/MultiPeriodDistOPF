@@ -142,6 +142,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
 end
 
 function DDPModel(data;
+    maxiter::Int=10,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
@@ -161,6 +162,7 @@ function DDPModel(data;
         :data => data,
         :iterationsExceeded => false,
         :k_ddp => 0,
+        :maxiter => maxiter,
         :model => model,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :mu=>mu,
