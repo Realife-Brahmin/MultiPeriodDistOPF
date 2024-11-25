@@ -6,6 +6,7 @@ export optimize_MPOPF_1ph_NL_TemporallyBruteforced
 include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
 
+using Crayons
 using JuMP
 using EAGO
 using Gurobi
@@ -105,10 +106,14 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @pack! modelDict = model
 
     # Check solver status and retrieve results
+    # Define crayons for green and red text
+    green_crayon = Crayon(foreground=:light_green, bold=true)
+    red_crayon = Crayon(foreground=:red, bold=true)
+
     if termination_status(model) == LOCALLY_SOLVED
-        println("Optimal solution found.")
+        println(green_crayon("Optimal solution found."))
     else
-        println("Optimization did not find an optimal solution.")
+        println(red_crayon("Optimization did not find an optimal solution."))
     end
 
     optimal_obj_value = objective_value(model)
