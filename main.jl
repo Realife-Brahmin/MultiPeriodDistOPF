@@ -6,7 +6,7 @@ using Parameters: @unpack
 Revise.revise()
 
 systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
+# systemName = "ieee123_1ph"
 T0 = 24
 # factor = 1/8
 factor = 1
@@ -15,7 +15,7 @@ numAreas = 1
 temporal_decmp = false
 # objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
-# objfun0 = "subsPowerCostMin"
+objfun0 = "subsPowerCostMin"
 # objfun2 = "none"
 objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
