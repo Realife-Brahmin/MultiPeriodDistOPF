@@ -14,7 +14,7 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function build_MPOPF_1ph_NL_model_t_1toT(data)
+function build_MPOPF_1ph_NL_model_t_in_Tset(data)
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
@@ -93,7 +93,7 @@ function build_MPOPF_1ph_NL_model_t_1toT(data)
 end
 
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    modelDict = build_MPOPF_1ph_NL_model_t_1toT(data)
+    modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data)
 
     @unpack model, data = modelDict
     optimize!(model)
@@ -137,7 +137,7 @@ function configure_solver(solver_name)
     return model
 end
 
-function update_with_forwardStep_solutions!(model::Model, model_ddp_t::Model;
+function update_with_forwardStep_solutions!(model::Model,       model_ddp_t::Model;
     verbose::Bool=false)
     # Iterate over all variables in the surrogate model
     for var_ddp in all_variables(model_ddp_t)
