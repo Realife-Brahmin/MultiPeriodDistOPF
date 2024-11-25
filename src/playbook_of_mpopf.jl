@@ -14,14 +14,17 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function build_MPOPF_1ph_NL_model_t_in_Tset(data)
+function build_MPOPF_1ph_NL_model_t_in_Tset(data;
+    Tset=nothing)
+
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
     model = configure_solver(solver)
 
-    # Tset represents the set of time periods (for this function, it is basically [1, 2, ... T])
-    @unpack Tset = data
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
 
     # Define variables
     model = MB.define_model_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
@@ -93,7 +96,9 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data)
 end
 
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data)
+
+    Tset = data[:Tset] # In this case, Tset = [1, 2, ... T]
+    modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
 
     @unpack model, data = modelDict
     optimize!(model)
