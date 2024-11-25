@@ -176,9 +176,51 @@ function ForwardPass(ddpModel;
     # currently does nothing
 end
 
-function shouldStop(ddpModel;
-    verbose::Bool=false)
-    # currently does nothing
+function shouldStop(ddpModel; verbose::Bool=false)
+    @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
+    @unpack Tset = data;
+
+    # Criterion 1: Check if k_ddp has crossed the maxiter threshold
+    if k_ddp >= maxiter
+        println("Maximum iterations reached: $k_ddp")
+        return true
+    end
+
+    # Criterion 2: Check the magnitude of updates in the model decision variable values
+    threshold = 1e-3  # Define your threshold here
+    all_under_threshold = true
+
+    for t_ddp in Tset
+        model_current = models_ddp_vs_t_vs_k[(t_ddp, k_ddp)]
+        model_previous = models_ddp_vs_t_vs_k[(t_ddp, k_ddp - 1)]
+
+        max_discrepancy = 0.0
+
+        for var in all_variables(model_current)
+            if haskey(model_previous, var)
+                value_current = value(var, model_current)
+                value_previous = value(var, model_previous)
+                discrepancy = abs(value_current - value_previous)
+                max_discrepancy = max(max_discrepancy, discrepancy)
+
+                if discrepancy > threshold
+                    all_under_threshold = false
+                end
+            end
+        end
+
+        if verbose
+            println("Max discrepancy for t_ddp = $t_ddp: $max_discrepancy")
+        end
+    end
+
+    if all_under_threshold
+        println("All updates are under the threshold.")
+        return true
+    else
+        println("Some updates exceed the threshold.")
+        return false
+    end
 end
 
 function configure_solver(solver_name)
