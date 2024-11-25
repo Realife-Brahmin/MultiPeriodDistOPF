@@ -157,12 +157,14 @@ function DDPModel(data;
     model = configure_solver(solver)
 
     ddpModel = Dict(
+        :converged => false,
+        :data => data,
+        :iterationsExceeded => false,
+        :k_ddp => 0,
+        :model => model,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :mu=>mu,
-        :k_ddp=>0,
-        :t_ddp=>0,
-        :model=>model,
-        :data=>data
+        :t_ddp=>0
     )
     return ddpModel
 end
