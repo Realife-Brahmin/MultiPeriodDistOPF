@@ -138,6 +138,25 @@ function optimize_MPOPF_1ph_NL_DDP(data;
         keepForwardPassesRunning = shouldStop(ddpModel)
     end
 
+    # Check solver status and retrieve results
+    @unpack iterLimitReached, converged, model = ddpModel
+    
+    # Define crayons for green and red text
+    green_crayon = Crayon(foreground=:light_green, bold=true)
+    red_crayon = Crayon(foreground=:red, bold=true)
+
+    if iterLimitReached
+        println(red_crayon("Maximum iterations reached."))
+    elseif converged
+        println(green_crayon("Optimization converged."))
+    else
+        println(red_crayon("Optimization did not converge."))
+    end
+
+    optimal_obj_value = objective_value(model)
+    println("Optimal objective function value: ", optimal_obj_value)
+
+
     return ddpModel
 end
 
