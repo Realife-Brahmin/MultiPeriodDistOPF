@@ -147,66 +147,6 @@ function configure_solver(solver_name)
     return model
 end
 
-function update_with_forwardStep_solutions!(model::Model,       model_ddp_t::Model;
-    verbose::Bool=false)
-    # Iterate over all variables in the surrogate model
-    for var_ddp in all_variables(model_ddp_t)
-        # Extract the variable's value
-        var_value = value(var_ddp)
-
-        if isnothing(var_value)
-            @warn "Variable $(name(var_ddp)) in surrogate model has no value. Skipping."
-            continue
-        end
-
-        # Get the variable name
-        var_name = name(var_ddp)
-
-        # Check if the variable exists in the overarching model
-        if haskey(model, var_name)
-            # Retrieve the corresponding variable from the overarching model
-            var_in_main_model = model[:$(var_name)]
-
-            # Update the value in the main model
-            set_start_value(var_in_main_model, var_value)  # Set the value in the main model
-        else
-            @warn "Variable $(var_name) does not exist in the overarching model. Skipping."
-        end
-    end
-
-    return model
-end
-
-function build_ddpMPOPF_1ph_NL_model_t_is_T(ddpModel, data;
-    verbose::Bool=false)
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel # this loc assumes that models_ddp_vs_t_vs_k is at least an already defined dictionary (even if empty) in ddpModel
-
-    @unpack k_ddp = ddpModel;
-    if k_ddp == 1
-        # cold start
-        # copy the model locs here (maybe carve them into functions)
-        # save the model as
-        model_ddp_t0 = Model() # placeholder
-    elseif k_ddp >= 2
-        model_ddp_t0_km1 = models_ddp_vs_t_vs_k[(t0, k_ddp-1)]
-        model_ddp_t0 = deepcopy(model_ddp_t0_km1)
-        @unpack model = ddpModel; # because it has previous iteration's model's values saved
-        B = model[:B]
-        # modify hsoc equations (how to index them correctly?)
-        # no need for using μ for terminal time-step, only modify objective function with f0, fscd, ftsoc
-        model_ddp_t0 = Model() # placeholder
-    else
-        @error "Invalid value of k_ddp: $k_ddp"
-    end
-
-    models_ddp_vs_t_vs_k[t0, k_ddp] = model_ddp_t0 
-
-    @pack! ddpModel = models_ddp_vs_t_vs_k;
-
-    return ddpModel
-end
-
 function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose::Bool=false)
 
