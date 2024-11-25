@@ -123,6 +123,60 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
 end
 
+function optimize_MPOPF_1ph_NL_DDP(data;
+    verbose::Bool=false)
+
+    ddpModel = DDPModel(data)
+    
+    keepForwardPassesRunning = true
+    while keepForwardPassesRunning
+        @unpack k_ddp = ddpModel;
+        myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+        ddpModel = ForwardPass(ddpModel,
+        verbose=verbose)
+
+        keepForwardPassesRunning = shouldStop(ddpModel)
+    end
+
+    return ddpModel
+end
+
+function DDPModel(data;
+    verbose::Bool=false)
+
+    @unpack Tset, Bset, solver = data;
+    models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
+    mu = Dict{Tuple{Int,Int,Int},Float64}()
+
+    # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
+    for j ∈ Bset, t_ddp ∈ Tset
+        mu[(j, t_ddp, 0)] = 0.0
+    end
+
+    # Initialize an empty model using the configure_solver function
+    model = configure_solver(solver)
+
+    ddpModel = Dict(
+        :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
+        :mu=>mu,
+        :k_ddp=>0,
+        :t_ddp=>0,
+        :model=>model,
+        :data=>data
+    )
+    return ddpModel
+end
+
+function ForwardPass(ddpModel;
+    verbose::Bool=false)
+    # currently does nothing
+end
+
+function shouldStop(ddpModel;
+    verbose::Bool=false)
+    # currently does nothing
+end
+
 function configure_solver(solver_name)
     if solver_name == "Ipopt"
         model = Model(Ipopt.Optimizer)
