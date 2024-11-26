@@ -192,7 +192,27 @@ end
 
 function ForwardPass(ddpModel;
     verbose::Bool=false)
-    # currently does nothing
+    
+    @unpack k_ddp = ddpModel;
+    myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+    t_ddp = 1
+    @unpack data = ddpModel;
+    @unpack Tset = data;
+    for t_ddp ∈ Tset # Tset is assumed sorted
+        @pack! ddpModel = t_ddp
+        if t_ddp == 1
+            ddpModel = ForwardStep_1ph_NL_t_is_1(ddpModel, verbose=verbose)
+        elseif 2 <= t_ddp <= T-1
+            ddpModel = ForwardStep_1ph_NL_t_in_2toTm1(ddpModel, verbose=verbose)
+        elseif t_ddp == T
+            ddpModel = ForwardStep_1ph_NL_t_is_T(ddpModel, verbose=verbose)
+        else
+            @error "Invalid value of t_ddp: $t_ddp"
+            return
+        end
+    end
+
+    return ddpModel
 end
 
 function shouldStop(ddpModel; verbose::Bool=false)
