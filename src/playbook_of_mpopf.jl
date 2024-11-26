@@ -286,6 +286,50 @@ function configure_solver(solver_name)
     return model
 end
 
+function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
+    verbose::Bool=false)
+
+    @unpack t_ddp = ddpModel
+    if t_ddp != 1
+        @error "t_ddp = $(t_ddp) is not equal to 1"
+        return
+    end
+
+    @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel;
+
+    myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+
+    model_t0 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp)]
+    optimize!(model_t0)
+
+    if termination_status(model_t0) == LOCALLY_SOLVED
+        myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
+    else
+        myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
+    end
+
+    # Check solver status and retrieve results
+    green_crayon = Crayon(foreground=:light_green, bold=true)
+    red_crayon = Crayon(foreground=:red, bold=true)
+
+    if termination_status(model_t0) == LOCALLY_SOLVED
+        println(green_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+    else
+        println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+    end
+
+    optimal_obj_value = objective_value(model_t0)
+    println("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): ", optimal_obj_value)
+
+    models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0
+    @pack! ddpModel = models_ddp_vs_t_vs_k;
+
+    ddpModel = update_variables_from_ForwardStep_into_MPOPF_model(ddpModel)
+    ddpModel = update_future_dual_variables_for_BackwardPass(ddpModel)
+
+    return ddpModel
+end
+
 function ForwardStep_1ph_NL_t_is_1(ddpModel;
     verbose::Bool=false)
 
