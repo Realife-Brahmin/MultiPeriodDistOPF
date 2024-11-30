@@ -17,7 +17,7 @@ common_marker_face = :circle
 common_marker_stroke_color = :black
 common_marker_stroke_width = 2.0
 
-function plot_battery_actions(model, data;
+function plot_battery_actions(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1,
@@ -25,6 +25,7 @@ function plot_battery_actions(model, data;
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
+    @unpack data, model = modelDict;
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, gamma, gammaAppendix, soc_min, soc_max, gedAppendix, solver = data;
     Tset = sort(collect(Tset))
 

@@ -43,26 +43,27 @@ begin
     verbose = false
     # verbose = true
 
-    export_optimization_model(model, data, verbose=verbose)
+    export_optimization_model(modelDict, verbose=verbose)
 
-    data = compute_output_values(model, data, verbose=verbose)
+    modelDict = compute_output_values(modelDict, verbose=verbose)
+    @unpack data = modelDict
 
-    export_decision_variables(model, data, verbose=verbose)
+    export_decision_variables(modelDict, verbose=verbose)
 
     # Todo: Maybe separately save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
-    export_simulation_key_results_txt(model, data, verbose=verbose)
+    export_simulation_key_results_txt(modelDict, verbose=verbose)
 
     savePlots = false
     savePlots = true
 
-    plot_battery_actions(model, data, showPlots=false, savePlots=savePlots, verbose=verbose)
+    plot_battery_actions(modelDict, showPlots=false, savePlots=savePlots, verbose=verbose)
 
     plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
     plot_substation_power(data, savePlots=savePlots, verbose=verbose)
     plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
     plot_line_losses(data, savePlots=savePlots, verbose=verbose)
 
-    vald = validate_opf_against_opendss(model, data, verbose=verbose)
+    vald = validate_opf_against_opendss(modelDict, verbose=verbose)
 
     export_validation_key_results(vald, data, verbose=verbose)
 
