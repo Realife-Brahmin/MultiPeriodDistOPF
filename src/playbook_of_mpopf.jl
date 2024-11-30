@@ -15,6 +15,79 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
+function generate_decvar_value_dict(modelDict)
+    model = modelDict[:model]
+    data = modelDict[:data]
+    modelVals = Dict{Symbol, Any}()
+
+    # Extract necessary sets from data
+    Tset = data[:Tset]
+    Bset = data[:Bset]
+    Dset = data[:Dset]
+    Lset = data[:Lset]
+    Nset = data[:Nset]
+
+    # Initialize containers for each variable
+    modelVals[:P_Subs] = Dict{Int, Float64}()  # t => value
+    modelVals[:P] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()  # (i, j), t => value
+    modelVals[:Q] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
+    modelVals[:l] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
+    modelVals[:v] = Dict{Tuple{Int, Int}, Float64}()  # (j, t) => value
+    modelVals[:q_D] = Dict{Tuple{Int, Int}, Float64}()
+    modelVals[:q_B] = Dict{Tuple{Int, Int}, Float64}()
+    modelVals[:P_c] = Dict{Tuple{Int, Int}, Float64}()
+    modelVals[:P_d] = Dict{Tuple{Int, Int}, Float64}()
+    modelVals[:B] = Dict{Tuple{Int, Int}, Float64}()
+
+    # Retrieve variables from the model
+    P_Subs_model = model[:P_Subs]
+    P_model = model[:P]
+    Q_model = model[:Q]
+    l_model = model[:l]
+    v_model = model[:v]
+    q_D_model = model[:q_D]
+    q_B_model = model[:q_B]
+    P_c_model = model[:P_c]
+    P_d_model = model[:P_d]
+    B_model = model[:B]
+
+    # Store values into modelVals using the indices from data
+
+    # P_Subs[t]
+    for t in Tset
+        modelVals[:P_Subs][t] = value(P_Subs_model[t])
+    end
+
+    # P[(i,j), t], Q[(i,j), t], l[(i,j), t] for (i,j) in Lset
+    for (i, j) in Lset, t in Tset
+        modelVals[:P][(i, j), t] = value(P_model[(i, j), t])
+        modelVals[:Q][(i, j), t] = value(Q_model[(i, j), t])
+        modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
+    end
+
+    # v[j, t] for j in Nset
+    for j in Nset, t in Tset
+        modelVals[:v][(j, t)] = value(v_model[j, t])
+    end
+
+    # q_D[j, t] for j in Dset
+    for j in Dset, t in Tset
+        modelVals[:q_D][(j, t)] = value(q_D_model[j, t])
+    end
+
+    # q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
+    for j in Bset, t in Tset
+        modelVals[:q_B][(j, t)] = value(q_B_model[j, t])
+        modelVals[:P_c][(j, t)] = value(P_c_model[j, t])
+        modelVals[:P_d][(j, t)] = value(P_d_model[j, t])
+        modelVals[:B][(j, t)] = value(B_model[j, t])
+    end
+
+    # Add modelVals to modelDict
+    modelDict[:modelVals] = modelVals
+    return modelDict
+end
+
 function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     Tset=nothing)
 
@@ -88,10 +161,12 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     # Initialize variables
     model = MB.initialize_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
 
-    modelDict = Dict(
-        :model => model,
-        :data => data
-    )
+    @pack! modelDict = model, data;
+    
+    # modelDict = Dict(
+        # :model => model,
+        # :data => data
+    # )
 
     return modelDict
 end
@@ -104,6 +179,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @unpack model, data = modelDict
     optimize!(model)
     @pack! modelDict = model
+
+    modelDict = generate_decvar_value_dict(modelDict)
 
     # Check solver status and retrieve results
     # Define crayons for green and red text
