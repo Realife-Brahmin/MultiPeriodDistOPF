@@ -28,7 +28,8 @@ using JuMP
 using Parameters: @unpack  # For easier unpacking of parameters from data
 
 # Function to get real power losses from a model
-function get_loss_real_power(model, data; horizon::String="allT")
+function get_loss_real_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Lset, rdict_pu, kVA_B = data
     P = model[:P]
     l = model[:l]
@@ -45,7 +46,8 @@ function get_loss_real_power(model, data; horizon::String="allT")
 end
 
 # Function to get reactive power losses from a model
-function get_loss_reactive_power(model, data; horizon::String="allT")
+function get_loss_reactive_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Lset, xdict_pu, kVA_B = data
     Q = model[:Q]
     l = model[:l]
@@ -62,7 +64,8 @@ function get_loss_reactive_power(model, data; horizon::String="allT")
 end
 
 # Function to get substation reactive power in kVAr
-function get_substation_reactive_power(model, data; horizon::String="allT")
+function get_substation_reactive_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, L1set, kVA_B = data
     Q = model[:Q]
 
@@ -82,7 +85,8 @@ function get_substation_reactive_power(model, data; horizon::String="allT")
 end
 
 # Function to get substation power in kW
-function get_substation_real_power(model, data; horizon::String="allT")
+function get_substation_real_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, kVA_B = data
     P_Subs = model[:P_Subs]
 
@@ -98,7 +102,8 @@ function get_substation_real_power(model, data; horizon::String="allT")
 end
 
 # Function to get substation power cost in dollars
-function get_substation_power_cost(model, data; horizon::String="allT")
+function get_substation_power_cost(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, LoadShapeCost, delta_t, kVA_B = data
     P_Subs = model[:P_Subs]
 
@@ -114,7 +119,8 @@ function get_substation_power_cost(model, data; horizon::String="allT")
 end
 
 # Function to get SCD (State of Charge Difference) in kW
-function get_scd(model, data; horizon::String="allT")
+function get_scd(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Bset, kVA_B = data
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -131,7 +137,8 @@ function get_scd(model, data; horizon::String="allT")
 end
 
 # Function to get terminal SOC violation in kWh
-function get_terminal_SOC_violation(model, data)
+function get_terminal_SOC_violation(modelDict)
+    @unpack model, data = modelDict
     @unpack T, Bset, Bref_pu, kVA_B = data
     B = model[:B]
 
@@ -139,13 +146,14 @@ function get_terminal_SOC_violation(model, data)
     return soc_violation_kWh
 end
 
-# Function to get any variable from the model (does not depend on horizon)
-function get_variable(model, variable_name::Symbol)
-    return model[variable_name]  # Fetch the variable using its symbol
-end
+# # Function to get any variable from the model (does not depend on horizon)
+# function get_variable(model, variable_name::Symbol)
+#     return model[variable_name]  # Fetch the variable using its symbol
+# end
 
 # Function to get total battery real power in kW (P_d - P_c)
-function get_battery_real_power(model, data; horizon::String="allT")
+function get_battery_real_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Bset, kVA_B = data
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -162,7 +170,8 @@ function get_battery_real_power(model, data; horizon::String="allT")
 end
 
 # Function to get total battery reactive power in kVAr
-function get_battery_reactive_power(model, data; horizon::String="allT")
+function get_battery_reactive_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Bset, kVA_B = data
     q_B = model[:q_B]
 
@@ -178,7 +187,8 @@ function get_battery_reactive_power(model, data; horizon::String="allT")
 end
 
 # Function to get total PV real power in kW (from p_D_pu in data, not a decision variable)
-function get_pv_real_power(model, data; horizon::String="allT")
+function get_pv_real_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Dset, p_D_pu, kVA_B = data
 
     if horizon == "1toT"
@@ -193,7 +203,8 @@ function get_pv_real_power(model, data; horizon::String="allT")
 end
 
 # Function to get total PV reactive power in kVAr (q_D from the model)
-function get_pv_reactive_power(model, data; horizon::String="allT")
+function get_pv_reactive_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Dset, kVA_B = data
     q_D = model[:q_D]
 
@@ -209,7 +220,8 @@ function get_pv_reactive_power(model, data; horizon::String="allT")
 end
 
 # Function to compute battery real power transaction magnitude |P_c - P_d|
-function get_battery_real_power_transaction_magnitude(model, data; horizon::String="allT")
+function get_battery_real_power_transaction_magnitude(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Bset, kVA_B = data
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -226,7 +238,8 @@ function get_battery_real_power_transaction_magnitude(model, data; horizon::Stri
 end
 
 # Function to compute battery reactive power transaction magnitude |q_B|
-function get_battery_reactive_power_transaction_magnitude(model, data; horizon::String="allT")
+function get_battery_reactive_power_transaction_magnitude(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict
     @unpack Tset, Bset, kVA_B = data
     q_B = model[:q_B]
 
@@ -242,7 +255,8 @@ function get_battery_reactive_power_transaction_magnitude(model, data; horizon::
 end
 
 # Function to compute total static capacitor reactive power generation (if exists)
-function get_static_capacitor_reactive_power(model, data; horizon::String="allT")
+function get_static_capacitor_reactive_power(modelDict; horizon::String="allT")
+    @unpack model, data = modelDict;
     @unpack Tset, kVA_B, T = data
 
     if haskey(model, :q_C)
@@ -269,7 +283,8 @@ function get_static_capacitor_reactive_power(model, data; horizon::String="allT"
 end
 
 # Function to get the peak substation real power over the horizon
-function get_substation_real_power_peak(model, data)
+function get_substation_real_power_peak(modelDict)
+    @unpack model, data = modelDict;
     @unpack Tset, kVA_B = data
     P_Subs = model[:P_Subs]
 
@@ -280,17 +295,17 @@ function get_substation_real_power_peak(model, data)
 end
 
 # Function to compute total real power generation
-function get_total_generation_real_power(model, data; horizon::String="allT")
+function get_total_generation_real_power(modelDict; horizon::String="allT")
 
     if horizon == "1toT"
         # Battery + PV + Static Capacitor (if applicable)
-        battery_real_power_vs_t_1toT_kW = get_battery_real_power(model, data, horizon="1toT")
-        pv_real_power_vs_t_1toT_kW = get_pv_real_power(model, data, horizon="1toT")
+        battery_real_power_vs_t_1toT_kW = get_battery_real_power(modelDict, horizon="1toT")
+        pv_real_power_vs_t_1toT_kW = get_pv_real_power(modelDict, horizon="1toT")
         total_gen_real_power_vs_t_1toT_kW = battery_real_power_vs_t_1toT_kW + pv_real_power_vs_t_1toT_kW
         return total_gen_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        battery_real_power_allT_kW = get_battery_real_power(model, data, horizon="allT")
-        pv_real_power_allT_kW = get_pv_real_power(model, data, horizon="allT")
+        battery_real_power_allT_kW = get_battery_real_power(modelDict, horizon="allT")
+        pv_real_power_allT_kW = get_pv_real_power(modelDict, horizon="allT")
         total_gen_real_power_allT_kW = battery_real_power_allT_kW + pv_real_power_allT_kW
         return total_gen_real_power_allT_kW
     else
@@ -299,19 +314,19 @@ function get_total_generation_real_power(model, data; horizon::String="allT")
 end
 
 # Function to compute total reactive power generation
-function get_total_generation_reactive_power(model, data; horizon::String="allT")
+function get_total_generation_reactive_power(modelDict; horizon::String="allT")
     # Battery + PV + Static Capacitor (if applicable)
 
     if horizon == "1toT"
-        battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(model, data, horizon="1toT")
-        pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
-        static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="1toT")
+        battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(modelDict, horizon="1toT")
+        pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(modelDict, horizon="1toT")
+        static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(modelDict, horizon="1toT")
         total_gen_reactive_power_vs_t_1toT_kVAr = battery_reactive_power_vs_t_1toT_kVAr + pv_reactive_power_vs_t_1toT_kVAr + static_cap_reactive_power_vs_t_1toT_kVAr
         return total_gen_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        battery_reactive_power_allT_kVAr = get_battery_reactive_power(model, data, horizon="allT")
-        pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
-        static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="allT")
+        battery_reactive_power_allT_kVAr = get_battery_reactive_power(modelDict, horizon="allT")
+        pv_reactive_power_allT_kVAr = get_pv_reactive_power(modelDict, horizon="allT")
+        static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(modelDict, horizon="allT")
         total_gen_reactive_power_allT_kVAr = battery_reactive_power_allT_kVAr + pv_reactive_power_allT_kVAr + static_cap_reactive_power_allT_kVAr
         return total_gen_reactive_power_allT_kVAr
     else
@@ -350,8 +365,8 @@ function get_load_reactive_power(data; horizon::String="allT")
 end
 
 # Function to compute solution time (in seconds)
-function get_solution_time(model, data)
-
+function get_solution_time(modelDict)
+    @unpack model = modelDict;
     solution_time = JuMP.solve_time(model)  # Retrieves solution time 
 
     return solution_time

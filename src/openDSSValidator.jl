@@ -22,7 +22,8 @@ using Parameters: @unpack, @pack!
 include("helperFunctions.jl")
 using .helperFunctions: myprintln
 
-function compute_highest_allTime_voltage_discrepancy(model, data, vald)
+function compute_highest_allTime_voltage_discrepancy(modelDict, vald)
+    @unpack model, data = modelDict
     # Initialize the maximum voltage discrepancy
     disc_voltage_all_time_pu = 0.0
 
@@ -284,7 +285,8 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
 
-function set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose=false)
+function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose=false)
+    @unpack model, data = modelDict
     # Unpack necessary data
     P_c = model[:P_c]
     P_d = model[:P_d]
@@ -317,7 +319,8 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t; v
     end
 end
 
-function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbose::Bool=false)
+function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose::Bool=false)
+    @unpack model, data = modelDict;
     # Unpack necessary data fields from `data`
     @unpack kVA_B, p_D_pu = data
     q_D = model[:q_D]  # Access q_D from the model
@@ -345,7 +348,8 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t; verbos
     end
 end
 
-function validate_opf_against_opendss(model, data; verbose::Bool=false)
+function validate_opf_against_opendss(modelDict; verbose::Bool=false)
+    @unpack model, data = modelDict
     # Initialize vald dictionary for timestep-specific and cumulative results
     @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
     LoadShapeLoad = data[:LoadShapeLoad]
@@ -410,8 +414,8 @@ function validate_opf_against_opendss(model, data; verbose::Bool=false)
 
     # Loop through each timestep to perform power flow and store vald
     for t in 1:T
-        set_pv_controls_opendss_powerflow_for_timestep_t(model, data, t)
-        set_battery_controls_opendss_powerflow_for_timestep_t(model, data, t)
+        set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t)
+        set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t)
         Solution.Solve()
 
         # Retrieve circuit losses
@@ -483,7 +487,7 @@ function validate_opf_against_opendss(model, data; verbose::Bool=false)
     @pack! vald = vald_terminal_soc_violation_kWh
 
     # Discrepancy Calculations
-    disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(model, data, vald)
+    disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(modelDict, vald)
     line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
     disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
 

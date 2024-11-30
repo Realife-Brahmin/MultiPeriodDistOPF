@@ -14,8 +14,9 @@ using Parameters: @unpack
 include("./helperFunctions.jl")
 using .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
 
-function export_optimization_model(model, data;
+function export_optimization_model(modelDict;
     verbose::Bool=false)
+    @unpack model, data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -42,10 +43,11 @@ function export_optimization_model(model, data;
     myprintln(verbose, "Model successfully written to $filename")
 end
 
-function export_decision_variables(model, data;
+function export_decision_variables(modelDict;
     filename::String="decision_variables.csv",
     verbose::Bool=false)
-
+    
+    @unpack model, data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -168,8 +170,9 @@ function export_decision_variables(model, data;
     myprintln(verbose, "Decision variables exported to $filename")
 end
 
-function export_simulation_key_results_txt(model, data; filename::String="simulation_results.txt", verbose::Bool=false)
+function export_simulation_key_results_txt(modelDict; filename::String="simulation_results.txt", verbose::Bool=false)
 
+    @unpack model, data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")

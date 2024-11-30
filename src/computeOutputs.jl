@@ -9,9 +9,10 @@ using JuMP
 export compute_output_values
 using Parameters: @unpack, @pack!
 
-function compute_output_values(model, data;
+function compute_output_values(modelDict;
     verbose::Bool=false)
 
+    @unpack model, data = modelDict;
     # Initialize arrays of size T
     @unpack T = data;
     fval_vs_t_1toT = zeros(Float64, T)
@@ -19,37 +20,37 @@ function compute_output_values(model, data;
     # Scalars to store cumulative values
     fval_allT = 0.0
 
-    PLoss_vs_t_1toT_kW = get_loss_real_power(model, data, horizon="1toT")
-    PLoss_allT_kW = get_loss_real_power(model, data, horizon="allT")
+    PLoss_vs_t_1toT_kW = get_loss_real_power(modelDict, horizon="1toT")
+    PLoss_allT_kW = get_loss_real_power(modelDict, horizon="allT")
 
-    QSubs_vs_t_1toT_kVAr = get_substation_reactive_power(model, data, horizon="1toT")
-    QSubs_allT_kVAr = get_substation_reactive_power(model, data, horizon="allT")
+    QSubs_vs_t_1toT_kVAr = get_substation_reactive_power(modelDict, horizon="1toT")
+    QSubs_allT_kVAr = get_substation_reactive_power(modelDict, horizon="allT")
 
-    PSubs_vs_t_1toT_kW = get_substation_real_power(model, data, horizon="1toT")
-    PSubs_allT_kW = get_substation_real_power(model, data, horizon="allT")
+    PSubs_vs_t_1toT_kW = get_substation_real_power(modelDict, horizon="1toT")
+    PSubs_allT_kW = get_substation_real_power(modelDict, horizon="allT")
 
-    PSubsCost_vs_t_1toT_dollar = get_substation_power_cost(model, data, horizon="1toT")
-    PSubsCost_allT_dollar = get_substation_power_cost(model, data, horizon="allT")
+    PSubsCost_vs_t_1toT_dollar = get_substation_power_cost(modelDict, horizon="1toT")
+    PSubsCost_allT_dollar = get_substation_power_cost(modelDict, horizon="allT")
 
-    scd_vs_t_1toT_kW = get_scd(model, data; horizon="1toT")
-    scd_allT_kW = get_scd(model, data; horizon="allT")
+    scd_vs_t_1toT_kW = get_scd(modelDict; horizon="1toT")
+    scd_allT_kW = get_scd(modelDict; horizon="allT")
 
-    terminal_soc_violation_kWh = get_terminal_SOC_violation(model, data)
+    terminal_soc_violation_kWh = get_terminal_SOC_violation(modelDict)
 
-    QLoss_vs_t_1toT_kVAr = get_loss_reactive_power(model, data, horizon="1toT")
-    QLoss_allT_kVAr = get_loss_reactive_power(model, data, horizon="allT")
+    QLoss_vs_t_1toT_kVAr = get_loss_reactive_power(modelDict, horizon="1toT")
+    QLoss_allT_kVAr = get_loss_reactive_power(modelDict, horizon="allT")
 
-    battery_real_power_vs_t_1toT_kW = get_battery_real_power(model, data, horizon="1toT")
-    battery_real_power_allT_kW = get_battery_real_power(model, data, horizon="allT")
+    battery_real_power_vs_t_1toT_kW = get_battery_real_power(modelDict, horizon="1toT")
+    battery_real_power_allT_kW = get_battery_real_power(modelDict, horizon="allT")
 
-    battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(model, data, horizon="1toT")
-    battery_reactive_power_allT_kVAr = get_battery_reactive_power(model, data, horizon="allT")
+    battery_reactive_power_vs_t_1toT_kVAr = get_battery_reactive_power(modelDict, horizon="1toT")
+    battery_reactive_power_allT_kVAr = get_battery_reactive_power(modelDict, horizon="allT")
 
-    pv_real_power_vs_t_1toT_kW = get_pv_real_power(model, data, horizon="1toT")
-    pv_real_power_allT_kW = get_pv_real_power(model, data, horizon="allT")
+    pv_real_power_vs_t_1toT_kW = get_pv_real_power(modelDict, horizon="1toT")
+    pv_real_power_allT_kW = get_pv_real_power(modelDict, horizon="allT")
 
-    pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(model, data, horizon="1toT")
-    pv_reactive_power_allT_kVAr = get_pv_reactive_power(model, data, horizon="allT")
+    pv_reactive_power_vs_t_1toT_kVAr = get_pv_reactive_power(modelDict, horizon="1toT")
+    pv_reactive_power_allT_kVAr = get_pv_reactive_power(modelDict, horizon="allT")
 
     load_real_power_vs_t_1toT_kW = get_load_real_power(data, horizon="1toT")
     load_real_power_allT_kW = get_load_real_power(data, horizon="allT")
@@ -57,22 +58,22 @@ function compute_output_values(model, data;
     load_reactive_power_vs_t_1toT_kVAr = get_load_reactive_power(data, horizon="1toT")
     load_reactive_power_allT_kVAr = get_load_reactive_power(data, horizon="allT")
 
-    static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="1toT")
-    static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(model, data, horizon="allT")
+    static_cap_reactive_power_vs_t_1toT_kVAr = get_static_capacitor_reactive_power(modelDict, horizon="1toT")
+    static_cap_reactive_power_allT_kVAr = get_static_capacitor_reactive_power(modelDict, horizon="allT")
 
-    substation_real_power_peak_allT_kW = get_substation_real_power_peak(model, data)
+    substation_real_power_peak_allT_kW = get_substation_real_power_peak(modelDict)
 
-    total_gen_real_power_vs_t_1toT_kW = get_total_generation_real_power(model, data, horizon="1toT")
-    total_gen_real_power_allT_kW = get_total_generation_real_power(model, data, horizon="allT")
+    total_gen_real_power_vs_t_1toT_kW = get_total_generation_real_power(modelDict, horizon="1toT")
+    total_gen_real_power_allT_kW = get_total_generation_real_power(modelDict, horizon="allT")
 
-    total_gen_reactive_power_vs_t_1toT_kVAr = get_total_generation_reactive_power(model, data, horizon="1toT")
-    total_gen_reactive_power_allT_kVAr = get_total_generation_reactive_power(model, data, horizon="allT")
+    total_gen_reactive_power_vs_t_1toT_kVAr = get_total_generation_reactive_power(modelDict, horizon="1toT")
+    total_gen_reactive_power_allT_kVAr = get_total_generation_reactive_power(modelDict, horizon="allT")
 
-    battery_real_power_transaction_magnitude_vs_t_1toT_kW = get_battery_real_power_transaction_magnitude(model, data, horizon="1toT")
-    battery_real_power_transaction_magnitude_allT_kW = get_battery_real_power_transaction_magnitude(model, data, horizon="allT")
-    battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr = get_battery_reactive_power_transaction_magnitude(model, data, horizon="1toT")
-    battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(model, data, horizon="allT")
-    solution_time = get_solution_time(model, data)
+    battery_real_power_transaction_magnitude_vs_t_1toT_kW = get_battery_real_power_transaction_magnitude(modelDict, horizon="1toT")
+    battery_real_power_transaction_magnitude_allT_kW = get_battery_real_power_transaction_magnitude(modelDict, horizon="allT")
+    battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="1toT")
+    battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="allT")
+    solution_time = get_solution_time(modelDict)
 
     # Loop over time steps to compute all required values
     @unpack Tset = data;
@@ -147,7 +148,10 @@ function compute_output_values(model, data;
         total_gen_real_power_allT_kW,
         total_gen_real_power_vs_t_1toT_kW
 
-    return data  # Return the updated data dictionary
+
+    @pack! modelDict = data;
+    return modelDict
+    # return data  # Return the updated data dictionary
 end
 
 end  # module computeOutputs
