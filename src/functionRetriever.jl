@@ -366,8 +366,8 @@ end
 
 # Function to compute solution time (in seconds)
 function get_solution_time(modelDict)
-    @unpack model = modelDict;
-    solution_time = JuMP.solve_time(model)  # Retrieves solution time 
+    @unpack modelVals = modelDict;
+    solution_time = modelVals[:solve_time]  # Retrieves solution time 
 
     return solution_time
 end
