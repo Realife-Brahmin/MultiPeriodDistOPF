@@ -25,13 +25,13 @@ function plot_battery_actions(modelDict;
 
     theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
-    @unpack data, model = modelDict;
+    @unpack data, modelVals = modelDict;
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, gamma, gammaAppendix, soc_min, soc_max, gedAppendix, solver = data;
     Tset = sort(collect(Tset))
 
-    P_c = model[:P_c]
-    P_d = model[:P_d]
-    B = model[:B]
+    P_c = modelVals[:P_c]
+    P_d = modelVals[:P_d]
+    B = modelVals[:B]
 
     # Set the base directory for saving plots
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",
@@ -46,9 +46,9 @@ function plot_battery_actions(modelDict;
         time_intervals = collect(Tset)
 
         # Collect charging, discharging power, and state of charge values
-        charging_power_kW = [value(P_c[j, t]) * kVA_B for t in Tset]
-        discharging_power_kW = [value(P_d[j, t]) * kVA_B for t in Tset]
-        soc = [Bref_pu[j] / B_R_pu[j] * 100; [value(B[j, t]) / B_R_pu[j] * 100 for t in Tset]]
+        charging_power_kW = [P_c[j, t] * kVA_B for t in Tset]
+        discharging_power_kW = [P_d[j, t] * kVA_B for t in Tset]
+        soc = [Bref_pu[j] / B_R_pu[j] * 100; [B[j, t] / B_R_pu[j] * 100 for t in Tset]]
 
         ylimit = (-P_B_R[j], P_B_R[j])
 
