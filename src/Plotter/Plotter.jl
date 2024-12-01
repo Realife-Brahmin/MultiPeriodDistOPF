@@ -22,12 +22,11 @@ function plot_battery_actions(modelDict;
     savePlots::Bool=true,
     macroItrNum::Int=1,
     verbose::Bool=false)
-
-    theme(common_theme)
     # Extract necessary parameters from the `data` dictionary
     @unpack data, modelVals = modelDict;
     @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, gamma, gammaAppendix, soc_min, soc_max, gedAppendix, solver = data;
     Tset = sort(collect(Tset))
+
 
     P_c = modelVals[:P_c]
     P_d = modelVals[:P_d]
@@ -40,6 +39,8 @@ function plot_battery_actions(modelDict;
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)
     end
+
+    theme(common_theme)
 
     # Loop through all battery buses and create plots
     for j in Bset
@@ -137,11 +138,12 @@ function plot_battery_actions(modelDict;
 end
 
 # Function to plot Substation Power over time
-function plot_substation_power(data;
+function plot_substation_power(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1,
     verbose::Bool=false)
+    @unpack data = modelDict;
     @unpack Tset, PSubs_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver = data
 
     yvalues = PSubs_vs_t_1toT_kW
@@ -205,15 +207,15 @@ function plot_substation_power(data;
     end
 end
 
-function plot_substation_power_cost(data;
+function plot_substation_power_cost(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1,
     verbose::Bool=false)
+    @unpack data = modelDict
+    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
 
     theme(common_theme)
-
-    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
 
     yvalues = PSubsCost_vs_t_1toT_dollar
 
@@ -265,17 +267,18 @@ function plot_substation_power_cost(data;
     end
 end
 
-function plot_line_losses(data;
+function plot_line_losses(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1,
     verbose::Bool=false)
 
+    @unpack data = modelDict
     @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
 
-    yvalues = PLoss_vs_t_1toT_kW
-
     theme(common_theme)
+
+    yvalues = PLoss_vs_t_1toT_kW
 
     gr()
 
