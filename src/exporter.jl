@@ -47,7 +47,7 @@ function export_decision_variables(modelDict;
     filename::String="decision_variables.csv",
     verbose::Bool=false)
     
-    @unpack model, data = modelDict;
+    @unpack modelVals, data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -77,16 +77,16 @@ function export_decision_variables(modelDict;
     Bset = sort(collect(data[:Bset]))  # Battery set
     Dset = sort(collect(data[:Dset]))  # PV set
 
-    P_Subs = model[:P_Subs]
-    P = model[:P]
-    Q = model[:Q]
-    l = model[:l]
-    v = model[:v]
-    q_D = model[:q_D]
-    q_B = model[:q_B]
-    P_c = model[:P_c]
-    P_d = model[:P_d]
-    B = model[:B]
+    P_Subs = modelVals[:P_Subs]
+    P = modelVals[:P]
+    Q = modelVals[:Q]
+    l = modelVals[:l]
+    v = modelVals[:v]
+    q_D = modelVals[:q_D]
+    q_B = modelVals[:q_B]
+    P_c = modelVals[:P_c]
+    P_d = modelVals[:P_d]
+    B = modelVals[:B]
 
     # Prepare data to write in CSV format as a matrix of strings
     data_matrix = []
@@ -104,51 +104,51 @@ function export_decision_variables(modelDict;
     push!(data_matrix, ["cents/kWh"; LoadShapeCost...])
 
     # Next row: P_Subs for all time intervals
-    push!(data_matrix, ["P_Subs"; [value(P_Subs[t]) for t in Tset]...])
+    push!(data_matrix, ["P_Subs"; [P_Subs[t] for t in Tset]...])
 
     # Next rows: P_ij for all (i, j) pairs in Lset
     for (i, j) in Lset
-        push!(data_matrix, ["P_ij_$(i)_$(j)"; [value(P[(i, j), t]) for t in Tset]...])
+        push!(data_matrix, ["P_ij_$(i)_$(j)"; [P[(i, j), t] for t in Tset]...])
     end
 
     # Next rows: Q_ij for all (i, j) pairs in Lset
     for (i, j) in Lset
-        push!(data_matrix, ["Q_ij_$(i)_$(j)"; [value(Q[(i, j), t]) for t in Tset]...])
+        push!(data_matrix, ["Q_ij_$(i)_$(j)"; [Q[(i, j), t] for t in Tset]...])
     end
 
     # Next rows: l_ij for all (i, j) pairs in Lset
     for (i, j) in Lset
-        push!(data_matrix, ["l_ij_$(i)_$(j)"; [value(l[(i, j), t]) for t in Tset]...])
+        push!(data_matrix, ["l_ij_$(i)_$(j)"; [l[(i, j), t] for t in Tset]...])
     end
 
     # Next rows: v_j for all nodes in Nset
     for j in Nset
-        push!(data_matrix, ["v_j_$(j)"; [value(v[j, t]) for t in Tset]...])
+        push!(data_matrix, ["v_j_$(j)"; [v[j, t] for t in Tset]...])
     end
 
     # Next rows: q_D_j for all PV buses in Dset
     for j in Dset
-        push!(data_matrix, ["q_D_j_$(j)"; [value(q_D[j, t]) for t in Tset]...])
+        push!(data_matrix, ["q_D_j_$(j)"; [q_D[j, t] for t in Tset]...])
     end
 
     # Next rows: q_B_j for all battery buses in Bset
     for j in Bset
-        push!(data_matrix, ["q_B_j_$(j)"; [value(q_B[j, t]) for t in Tset]...])
+        push!(data_matrix, ["q_B_j_$(j)"; [q_B[j, t] for t in Tset]...])
     end
 
     # Next rows: P_c_j for all battery buses in Bset
     for j in Bset
-        push!(data_matrix, ["P_c_j_$(j)"; [value(P_c[j, t]) for t in Tset]...])
+        push!(data_matrix, ["P_c_j_$(j)"; [P_c[j, t] for t in Tset]...])
     end
 
     # Next rows: P_d_j for all battery buses in Bset
     for j in Bset
-        push!(data_matrix, ["P_d_j_$(j)"; [value(P_d[j, t]) for t in Tset]...])
+        push!(data_matrix, ["P_d_j_$(j)"; [P_d[j, t] for t in Tset]...])
     end
 
     # Next rows: B_j for all battery buses in Bset
     for j in Bset
-        push!(data_matrix, ["B_j_$(j)"; [value(B[j, t]) for t in Tset]...])
+        push!(data_matrix, ["B_j_$(j)"; [B[j, t] for t in Tset]...])
     end
 
     # Write the matrix to the CSV file
