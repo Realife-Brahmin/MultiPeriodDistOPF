@@ -172,7 +172,7 @@ end
 
 function export_simulation_key_results_txt(modelDict; filename::String="simulation_results.txt", verbose::Bool=false)
 
-    @unpack model, data = modelDict;
+    @unpack data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -185,8 +185,6 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
     filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
     # Extract system information and parameters from `data`
-    # system_name = data[:machine_ID]  # System name
-    # horizon_duration = data[:T]  # Horizon duration
     macroItrsCompleted = get(data, :macroItrsCompleted, 0)  # Default to 1 if not set
     solution_time = get(data, :solution_time, -1)  # Placeholder, real solution time
 
