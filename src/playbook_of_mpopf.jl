@@ -15,7 +15,7 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function generate_decvar_value_dict(modelDict)
+function generate_1ph_NL_model_decvar_value_dict(modelDict)
     model = modelDict[:model]
     data = modelDict[:data]
     modelVals = Dict{Symbol, Any}()
@@ -180,7 +180,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     optimize!(model)
     @pack! modelDict = model
 
-    modelDict = generate_decvar_value_dict(modelDict)
+    modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
 
     # Check solver status and retrieve results
     # Define crayons for green and red text
@@ -216,7 +216,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     end
 
     # Check solver status and retrieve results
-    @unpack iterLimitReached, converged, model = ddpModel
+    @unpack iterLimitReached, converged, modelVals = ddpModel
     
     # Define crayons for green and red text
     green_crayon = Crayon(foreground=:light_green, bold=true)
@@ -230,7 +230,8 @@ function optimize_MPOPF_1ph_NL_DDP(data;
         println(red_crayon("Optimization did not converge."))
     end
 
-    optimal_obj_value = objective_value(model)
+    # optimal_obj_value = objective_value(model)
+    optimal_obj_value = modelVals[:objective_value]
     println("Optimal objective function value: ", optimal_obj_value)
 
 
@@ -244,7 +245,7 @@ function DDPModel(data;
     @unpack Tset, Bset, solver = data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
-
+    modelVals = Dict{Symbol,Any}()
     # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[(j, t_ddp, 0)] = 0.0
@@ -259,7 +260,8 @@ function DDPModel(data;
         :iterLimitReached => false,
         :k_ddp => 0,
         :maxiter => maxiter,
-        :model => model,
+        # :model => model,
+        :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :mu=>mu,
         :t_ddp=>0
@@ -493,7 +495,7 @@ end
 function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
-    @unpack k_ddp, t_ddp, model, models_ddp_vs_t_vs_k, data, mu = ddpModel
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel
 
     if !(2 <= t_ddp <= T-1)
         @error "t_ddp = $(t_ddp) is not in [2, T-1]"
@@ -504,8 +506,8 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
-        modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
-        model_t0 = modelDict[:model]
+        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
         model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)]
@@ -518,7 +520,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     # Update the model with the solutions from the last iteration (backward pass) and previous time-step's SOC values (forward pass)
 
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
-    B_model = model[:B]
+    B_model = modelVals[:B]
     fix(model_t0[:B][(j, t_ddp - 1)], B_model[(j, t_ddp - 1)])
 
     # Update the model with the future dual variables from the last iteration (backward pass)
@@ -537,7 +539,7 @@ end
 function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     verbose::Bool=false)
     
-    @unpack k_ddp, t_ddp, model, models_ddp_vs_t_vs_k, data = ddpModel;
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data = ddpModel;
 
     if t_ddp != T
         @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
@@ -548,8 +550,8 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [T]
-        modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
-        model_t0 = modelDict[:model]
+        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
         model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)]
@@ -562,7 +564,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     # Update the model with the solutions from the previous time-step's SOC values (forward pass)
 
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
-    B_model = model[:B]
+    B_model = modelVals[:B]
 
     for j ∈ Bset
         fix(model_t0[:B][(j, t_ddp - 1)], B_model[(j, t_ddp - 1)])
@@ -579,7 +581,7 @@ end
 function update_variables_from_ForwardStep_t_is_1_into_MPOPF_model(ddpModel;
     verbose::Bool=false)
 
-    @unpack k_ddp, t_ddp, model, models_ddp_vs_t_vs_k, data, mu = ddpModel;
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel;
 
     if t_ddp == 1
         @error "t_ddp = $(t_ddp) is equal to 1"
