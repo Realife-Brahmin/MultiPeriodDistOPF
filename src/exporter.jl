@@ -275,8 +275,9 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
     myprintln(verbose, "Simulation key results exported to $filename")
 end
 
-function export_validation_decision_variables(vald, data; verbose::Bool=false)
+function export_validation_decision_variables(modelDict; verbose::Bool=false)
 
+    @unpack valdVals, data = modelDict
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver = data
     base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -293,8 +294,8 @@ function export_validation_decision_variables(vald, data; verbose::Bool=false)
     @unpack alphaAppendix, gammaAppendix, objfunConciseDescription = data
     filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
 
-    # Write the vald dictionary to a CSV file
-    CSV.write(filename, vald)
+    # Write the valdVals dictionary to a CSV file
+    CSV.write(filename, valdVals)
 
     # Print confirmation if verbose is enabled
     if verbose
@@ -302,9 +303,9 @@ function export_validation_decision_variables(vald, data; verbose::Bool=false)
     end
 end
 
-function export_validation_key_results(vald, data; filename::String="validation_results.txt", verbose::Bool=false,
+function export_validation_key_results(modelDict; filename::String="validation_results.txt", verbose::Bool=false,
     printEveryTimeStepPowerflow::Bool=true)
-
+    @unpack valdVals, data = modelDict
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, simNatureAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -345,41 +346,41 @@ function export_validation_key_results(vald, data; filename::String="validation_
 
         # Horizon Results
         println(f, "Full $(data[:T]) Hour Horizon Validation Results")
-        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(vald[:vald_PSubsCost_allT_dollar], digits=2))")
+        println(f, "$(item_counter). Horizon Total Substation Power Cost: \$$(round(valdVals[:vald_PSubsCost_allT_dollar], digits=2))")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Line Loss: $(round(vald[:vald_PLoss_allT_kW], digits=2)) kW")
+        println(f, "$(item_counter). Horizon Total Line Loss: $(round(valdVals[:vald_PLoss_allT_kW], digits=2)) kW")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Substation Power: $(round(vald[:vald_PSubs_allT_kW], digits=2)) kW + $(round(vald[:vald_QSubs_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Substation Power: $(round(valdVals[:vald_PSubs_allT_kW], digits=2)) kW + $(round(valdVals[:vald_QSubs_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Load: $(round(vald[:vald_load_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_load_reactive_power_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Load: $(round(valdVals[:vald_load_real_power_allT_kW], digits=2)) kW + $(round(valdVals[:vald_load_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Generation: $(round(vald[:vald_total_gen_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_total_gen_reactive_power_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Generation: $(round(valdVals[:vald_total_gen_real_power_allT_kW], digits=2)) kW + $(round(valdVals[:vald_total_gen_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(vald[:vald_static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Static Capacitor Reactive Power Generation: $(round(valdVals[:vald_static_cap_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total PV Generation: $(round(vald[:vald_pv_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_pv_reactive_power_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total PV Generation: $(round(valdVals[:vald_pv_real_power_allT_kW], digits=2)) kW + $(round(valdVals[:vald_pv_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Battery Generation: $(round(vald[:vald_battery_real_power_allT_kW], digits=2)) kW + $(round(vald[:vald_battery_reactive_power_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Battery Generation: $(round(valdVals[:vald_battery_real_power_allT_kW], digits=2)) kW + $(round(valdVals[:vald_battery_reactive_power_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
-        println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(vald[:vald_battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(vald[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
+        println(f, "$(item_counter). Horizon Total Battery Transaction Magnitude: $(round(valdVals[:vald_battery_real_power_transaction_magnitude_allT_kW], digits=2)) kW + $(round(valdVals[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr], digits=2)) kVAr")
         item_counter += 1
         println(f, "$(item_counter). Horizon Total SCD Observed: N/A")
         item_counter += 1
-        println(f, "$(item_counter). Horizon-end Battery Energy Deviation from Reference: $(round(vald[:vald_terminal_soc_violation_kWh], digits=2)) kWh")
+        println(f, "$(item_counter). Horizon-end Battery Energy Deviation from Reference: $(round(valdVals[:vald_terminal_soc_violation_kWh], digits=2)) kWh")
         item_counter += 1
-        println(f, "$(item_counter). Horizon-Total All Time Substation Power Peak: $(round(vald[:vald_substation_real_power_peak_allT_kW], digits=2)) kW")
+        println(f, "$(item_counter). Horizon-Total All Time Substation Power Peak: $(round(valdVals[:vald_substation_real_power_peak_allT_kW], digits=2)) kW")
         item_counter += 1
 
         # Discrepancies
         println(f, "---------------------------------------------")
         println(f, "Discrepancies (Maximum All Time):")
-        println(f, "$(item_counter). Maximum All Time Voltage Discrepancy: $(round(vald[:disc_voltage_all_time_pu], digits=6)) pu")
+        println(f, "$(item_counter). Maximum All Time Voltage Discrepancy: $(round(valdVals[:disc_voltage_all_time_pu], digits=6)) pu")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Line Loss Discrepancy: $(round(vald[:disc_line_loss_all_time_kW], digits=6)) kW")
+        println(f, "$(item_counter). Maximum All Time Line Loss Discrepancy: $(round(valdVals[:disc_line_loss_all_time_kW], digits=6)) kW")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Substation Borrowed Real Power Discrepancy: $(round(vald[:disc_PSubs_all_time_kW], digits=6)) kW")
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Real Power Discrepancy: $(round(valdVals[:disc_PSubs_all_time_kW], digits=6)) kW")
         item_counter += 1
-        println(f, "$(item_counter). Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(round(vald[:disc_QSubs_all_time_kVAr], digits=6)) kVAr")
+        println(f, "$(item_counter). Maximum All Time Substation Borrowed Reactive Power Discrepancy: $(round(valdVals[:disc_QSubs_all_time_kVAr], digits=6)) kVAr")
         item_counter += 1
 
         # Additional Metadata
@@ -394,15 +395,15 @@ function export_validation_key_results(vald, data; filename::String="validation_
                 println(f, "\n" * "*"^30)
                 println(f, "   Time Step: $t")
                 println(f, "*"^30)
-                println(f, "   Power Loss              : $(vald[:vald_PLoss_vs_t_1toT_kW][t]) kW")
-                println(f, "   Substation Power        : $(vald[:vald_PSubs_vs_t_1toT_kW][t]) kW")
-                println(f, "   Reactive Power          : $(vald[:vald_QSubs_vs_t_1toT_kVAr][t]) kVAr")
-                println(f, "   Total Load Power        : $(vald[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
-                println(f, "   Total Load Reactive Power: $(vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-                println(f, "   Total PV Power          : $(vald[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
-                println(f, "   Total PV Reactive Power : $(vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
-                println(f, "   Total Battery Power     : $(vald[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
-                println(f, "   Total Battery Reactive Power: $(vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+                println(f, "   Power Loss              : $(valdVals[:vald_PLoss_vs_t_1toT_kW][t]) kW")
+                println(f, "   Substation Power        : $(valdVals[:vald_PSubs_vs_t_1toT_kW][t]) kW")
+                println(f, "   Reactive Power          : $(valdVals[:vald_QSubs_vs_t_1toT_kVAr][t]) kVAr")
+                println(f, "   Total Load Power        : $(valdVals[:vald_load_real_power_vs_t_1toT_kW][t]) kW")
+                println(f, "   Total Load Reactive Power: $(valdVals[:vald_load_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+                println(f, "   Total PV Power          : $(valdVals[:vald_pv_real_power_vs_t_1toT_kW][t]) kW")
+                println(f, "   Total PV Reactive Power : $(valdVals[:vald_pv_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
+                println(f, "   Total Battery Power     : $(valdVals[:vald_battery_real_power_vs_t_1toT_kW][t]) kW")
+                println(f, "   Total Battery Reactive Power: $(valdVals[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]) kVAr")
                 println(f, "*"^30 * "\n")
             end
         end

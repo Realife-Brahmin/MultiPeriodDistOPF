@@ -63,10 +63,10 @@ begin
     plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
     plot_line_losses(data, savePlots=savePlots, verbose=verbose)
 
-    vald = validate_opf_against_opendss(modelDict, verbose=verbose)
+    modelDict = validate_opf_against_opendss(modelDict, verbose=verbose)
 
-    export_validation_key_results(vald, data, verbose=verbose)
+    export_validation_key_results(modelDict, verbose=verbose)
 
-    export_validation_decision_variables(vald, data, verbose=verbose)
+    export_validation_decision_variables(modelDict, verbose=verbose)
 end
 
