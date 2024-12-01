@@ -86,7 +86,12 @@ function generate_1ph_NL_model_decvar_value_dict(modelDict)
     modelVals[:objective_value] = objective_value(model)
 
     modelVals[:termination_status] = termination_status(model)
-    # Add modelVals to modelDict
+    
+    if !haskey(modelVals, :solve_time)
+        modelVals[:solve_time] = solve_time(model)
+    else
+        modelVals[:solve_time] += solve_time(model)
+    end    # Add modelVals to modelDict
     modelDict[:modelVals] = modelVals
     return modelDict
 end
