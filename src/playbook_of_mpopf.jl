@@ -83,6 +83,9 @@ function generate_1ph_NL_model_decvar_value_dict(modelDict)
         modelVals[:B][(j, t)] = value(B_model[j, t])
     end
 
+    modelVals[:objective_value] = objective_value(model)
+
+    modelVals[:termination_status] = termination_status(model)
     # Add modelVals to modelDict
     modelDict[:modelVals] = modelVals
     return modelDict
@@ -178,6 +181,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     @unpack model, data = modelDict
     optimize!(model)
+    
     @pack! modelDict = model
 
     modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
@@ -187,13 +191,17 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     green_crayon = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
-    if termination_status(model) == LOCALLY_SOLVED
+    @unpack modelVals = modelDict
+    termination_status = modelVals[:termination_status]
+
+    if termination_status == LOCALLY_SOLVED
         println(green_crayon("Optimal solution found."))
     else
         println(red_crayon("Optimization did not find an optimal solution."))
     end
 
-    optimal_obj_value = objective_value(model)
+    # optimal_obj_value = objective_value(model)
+    optimal_obj_value = modelVals[:objective_value]
     println("Optimal objective function value: ", optimal_obj_value)
     
     return modelDict
