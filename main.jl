@@ -46,7 +46,7 @@ begin
     # export_optimization_model(modelDict, verbose=verbose) # temporarily retired as ddp will not have an equivalent unified model to write out
 
     modelDict = compute_output_values(modelDict, verbose=verbose)
-    @unpack data = modelDict
+    # @unpack data = modelDict
 
     export_decision_variables(modelDict, verbose=verbose)
 
@@ -58,10 +58,11 @@ begin
 
     plot_battery_actions(modelDict, showPlots=false, savePlots=savePlots, verbose=verbose)
 
+    @unpack data = modelDict;
     plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
-    plot_substation_power(data, savePlots=savePlots, verbose=verbose)
-    plot_substation_power_cost(data, savePlots=savePlots, verbose=verbose)
-    plot_line_losses(data, savePlots=savePlots, verbose=verbose)
+    plot_substation_power(modelDict, savePlots=savePlots, verbose=verbose)
+    plot_substation_power_cost(modelDict, savePlots=savePlots, verbose=verbose)
+    plot_line_losses(modelDict, savePlots=savePlots, verbose=verbose)
 
     modelDict = validate_opf_against_opendss(modelDict, verbose=verbose)
 
