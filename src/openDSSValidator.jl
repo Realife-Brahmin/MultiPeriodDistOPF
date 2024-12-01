@@ -22,23 +22,23 @@ using Parameters: @unpack, @pack!
 include("helperFunctions.jl")
 using .helperFunctions: myprintln
 
-function compute_highest_allTime_voltage_discrepancy(modelDict, vald)
-    @unpack model, data = modelDict
+function compute_highest_allTime_voltage_discrepancy(modelDict, valdVals)
+    @unpack modelVals, data = modelDict
     # Initialize the maximum voltage discrepancy
     disc_voltage_all_time_pu = 0.0
 
     # Retrieve the model voltage variable `v`
-    v = model[:v]
+    v = modelVals[:v]
     @unpack Tset = data;
     # Iterate over each timestep
     for t in Tset
         # Retrieve the dictionary of bus voltages for the current timestep
-        vald_voltages_dict = vald[:vald_voltages_vs_t_1toT_pu][t]
+        vald_voltages_dict = valdVals[:vald_voltages_vs_t_1toT_pu][t]
 
         # Iterate over each bus in the dictionary
         for (bus_index, vald_voltage) in vald_voltages_dict
             # Compute the model voltage for the bus at the current timestep
-            model_voltage = sqrt(value(v[bus_index, t]))
+            model_voltage = sqrt(v[bus_index, t])
 
             # Calculate the discrepancy
             discrepancy = abs(vald_voltage - model_voltage)
@@ -286,11 +286,11 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
 end
 
 function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose=false)
-    @unpack model, data = modelDict
+    @unpack modelVals, data = modelDict
     # Unpack necessary data
-    P_c = model[:P_c]
-    P_d = model[:P_d]
-    q_B = model[:q_B]
+    P_c = modelVals[:P_c]
+    P_d = modelVals[:P_d]
+    q_B = modelVals[:q_B]
     @unpack kVA_B = data
 
     # Set battery power levels
@@ -300,10 +300,10 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
         storage_number = parse(Int, split(storage_name, "battery")[2])
 
         # Calculate power levels based on optimization model variables
-        charge_power_kW = value(P_c[storage_number, t]) * kVA_B
-        discharge_power_kW = value(P_d[storage_number, t]) * kVA_B
+        charge_power_kW = P_c[storage_number, t] * kVA_B
+        discharge_power_kW = P_d[storage_number, t] * kVA_B
         net_power_kW = discharge_power_kW - charge_power_kW
-        reactive_power_kVAr = value(q_B[storage_number, t]) * kVA_B
+        reactive_power_kVAr = q_B[storage_number, t] * kVA_B
 
         # Command to set battery power levels in OpenDSS
         command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
@@ -320,10 +320,10 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
 end
 
 function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose::Bool=false)
-    @unpack model, data = modelDict;
+    @unpack modelVals, data = modelDict;
     # Unpack necessary data fields from `data`
     @unpack kVA_B, p_D_pu = data
-    q_D = model[:q_D]  # Access q_D from the model
+    q_D = modelVals[:q_D]  # Access q_D from the model
 
     # Set power levels for PV systems at each time step
     pv_id = OpenDSSDirect.PVsystems.First()
@@ -333,7 +333,7 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose:
 
         # Retrieve real and reactive power setpoints for this PV system and timestep
         p_D_t_kW = p_D_pu[(pv_number, t)] * kVA_B
-        q_D_t_kVAr = value(q_D[pv_number, t]) * kVA_B
+        q_D_t_kVAr = q_D[pv_number, t] * kVA_B
 
         # Set real and reactive power for the PV system
         OpenDSSDirect.PVsystems.Pmpp(p_D_t_kW)
@@ -349,12 +349,12 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose:
 end
 
 function validate_opf_against_opendss(modelDict; verbose::Bool=false)
-    @unpack model, data = modelDict
-    # Initialize vald dictionary for timestep-specific and cumulative results
+    @unpack modelVals, data = modelDict
+    # Initialize valdVals dictionary for timestep-specific and cumulative results
     @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
     LoadShapeLoad = data[:LoadShapeLoad]
 
-    vald = Dict(
+    valdVals = Dict(
         # Timestep-specific fields
         :vald_PLoss_vs_t_1toT_kW => zeros(T),
         :vald_PSubs_vs_t_1toT_kW => zeros(T),
@@ -412,7 +412,7 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     # Set custom load shape
     set_custom_load_shape!(LoadShapeLoad)
 
-    # Loop through each timestep to perform power flow and store vald
+    # Loop through each timestep to perform power flow and store valdVals
     for t in 1:T
         set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t)
         set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t)
@@ -421,85 +421,87 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
         # Retrieve circuit losses
         totalLosses_t_kVA = Circuit.Losses() ./ 1000
         totalLosses_t_kW, totalLosses_t_kVAr = real(totalLosses_t_kVA), -imag(totalLosses_t_kVA)
-        vald[:vald_PLoss_vs_t_1toT_kW][t] = totalLosses_t_kW
-        vald[:vald_PLoss_allT_kW] += totalLosses_t_kW
-        vald[:vald_QLoss_vs_t_1toT_kVAr][t] = totalLosses_t_kVAr
-        vald[:vald_QLoss_allT_kVAr] += totalLosses_t_kVAr
+        valdVals[:vald_PLoss_vs_t_1toT_kW][t] = totalLosses_t_kW
+        valdVals[:vald_PLoss_allT_kW] += totalLosses_t_kW
+        valdVals[:vald_QLoss_vs_t_1toT_kVAr][t] = totalLosses_t_kVAr
+        valdVals[:vald_QLoss_allT_kVAr] += totalLosses_t_kVAr
 
         # Retrieve substation real and reactive powers post powerflow for this timestep
         substationPowersDict_t = get_substation_powers_opendss_powerflow_for_timestep_t(data, useVSourcePower=true)
         @unpack P_substation_total_t_kW, Q_substation_total_t_kVAr = substationPowersDict_t
 
-        vald[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_t_kW
-        vald[:vald_PSubs_allT_kW] += P_substation_total_t_kW
-        vald[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_t_kVAr
-        vald[:vald_QSubs_allT_kVAr] += Q_substation_total_t_kVAr
-        vald[:vald_substation_real_power_peak_allT_kW] = max(vald[:vald_substation_real_power_peak_allT_kW], P_substation_total_t_kW)
+        valdVals[:vald_PSubs_vs_t_1toT_kW][t] = P_substation_total_t_kW
+        valdVals[:vald_PSubs_allT_kW] += P_substation_total_t_kW
+        valdVals[:vald_QSubs_vs_t_1toT_kVAr][t] = Q_substation_total_t_kVAr
+        valdVals[:vald_QSubs_allT_kVAr] += Q_substation_total_t_kVAr
+        valdVals[:vald_substation_real_power_peak_allT_kW] = max(valdVals[:vald_substation_real_power_peak_allT_kW], P_substation_total_t_kW)
 
         # Cost calculation
-        vald[:vald_PSubsCost_vs_t_1toT_dollar][t] = data[:LoadShapeCost][t] * P_substation_total_t_kW * data[:delta_t]
-        vald[:vald_PSubsCost_allT_dollar] += vald[:vald_PSubsCost_vs_t_1toT_dollar][t]
+        valdVals[:vald_PSubsCost_vs_t_1toT_dollar][t] = data[:LoadShapeCost][t] * P_substation_total_t_kW * data[:delta_t]
+        valdVals[:vald_PSubsCost_allT_dollar] += valdVals[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
         # Retrieve load real and reactive powers
         loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
         @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t
 
-        vald[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
-        vald[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_t_kVAr
-        vald[:vald_load_real_power_allT_kW] += total_load_t_kW
-        vald[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
+        valdVals[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
+        valdVals[:vald_load_reactive_power_vs_t_1toT_kVAr][t] = total_load_t_kVAr
+        valdVals[:vald_load_real_power_allT_kW] += total_load_t_kW
+        valdVals[:vald_load_reactive_power_allT_kVAr] += total_load_t_kVAr
 
         # PV and battery power calculations
         pvPowersDict_t = get_pv_powers_opendss_powerflow_for_timestep_t()
         @unpack total_pv_t_kW, total_pv_t_kVAr = pvPowersDict_t
 
-        vald[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_t_kW
-        vald[:vald_pv_real_power_allT_kW] += total_pv_t_kW
-        vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_t_kVAr
-        vald[:vald_pv_reactive_power_allT_kVAr] += total_pv_t_kVAr
+        valdVals[:vald_pv_real_power_vs_t_1toT_kW][t] = total_pv_t_kW
+        valdVals[:vald_pv_real_power_allT_kW] += total_pv_t_kW
+        valdVals[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] = total_pv_t_kVAr
+        valdVals[:vald_pv_reactive_power_allT_kVAr] += total_pv_t_kVAr
 
         batteryPowersDict_t = get_battery_powers_opendss_powerflow_for_timestep_t(verbose=verbose)
         @unpack vald_battery_real_power_t_kW, vald_battery_reactive_power_t_kVAr, vald_battery_real_power_transaction_magnitude_t_kW, vald_battery_reactive_power_transaction_magnitude_t_kVAr = batteryPowersDict_t
 
-        vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
-        vald[:vald_battery_reactive_power_allT_kVAr] += vald_battery_reactive_power_t_kVAr
-        vald[:vald_battery_reactive_power_transaction_magnitude_t_kVAr] = vald_battery_reactive_power_transaction_magnitude_t_kVAr
-        vald[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr] += vald_battery_reactive_power_transaction_magnitude_t_kVAr
-        vald[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
-        vald[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
-        vald[:vald_battery_real_power_transaction_magnitude_t_kW] = vald_battery_real_power_transaction_magnitude_t_kW
-        vald[:vald_battery_real_power_transaction_magnitude_allT_kW] += vald_battery_real_power_transaction_magnitude_t_kW
+        valdVals[:vald_battery_reactive_power_vs_t_1toT_kVAr][t] = vald_battery_reactive_power_t_kVAr
+        valdVals[:vald_battery_reactive_power_allT_kVAr] += vald_battery_reactive_power_t_kVAr
+        valdVals[:vald_battery_reactive_power_transaction_magnitude_t_kVAr] = vald_battery_reactive_power_transaction_magnitude_t_kVAr
+        valdVals[:vald_battery_reactive_power_transaction_magnitude_allT_kVAr] += vald_battery_reactive_power_transaction_magnitude_t_kVAr
+        valdVals[:vald_battery_real_power_vs_t_1toT_kW][t] = vald_battery_real_power_t_kW
+        valdVals[:vald_battery_real_power_allT_kW] += vald_battery_real_power_t_kW
+        valdVals[:vald_battery_real_power_transaction_magnitude_t_kW] = vald_battery_real_power_transaction_magnitude_t_kW
+        valdVals[:vald_battery_real_power_transaction_magnitude_allT_kW] += vald_battery_real_power_transaction_magnitude_t_kW
 
         # Aggregate generation data
-        vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = vald[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + vald[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]
-        vald[:vald_total_gen_reactive_power_allT_kVAr] += vald[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t]
+        valdVals[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t] = valdVals[:vald_pv_reactive_power_vs_t_1toT_kVAr][t] + valdVals[:vald_battery_reactive_power_vs_t_1toT_kVAr][t]
+        valdVals[:vald_total_gen_reactive_power_allT_kVAr] += valdVals[:vald_total_gen_reactive_power_vs_t_1toT_kVAr][t]
 
-        vald[:vald_total_gen_real_power_vs_t_1toT_kW][t] = vald[:vald_pv_real_power_vs_t_1toT_kW][t] + vald[:vald_battery_real_power_vs_t_1toT_kW][t]
-        vald[:vald_total_gen_real_power_allT_kW] += vald[:vald_total_gen_real_power_vs_t_1toT_kW][t]
+        valdVals[:vald_total_gen_real_power_vs_t_1toT_kW][t] = valdVals[:vald_pv_real_power_vs_t_1toT_kW][t] + valdVals[:vald_battery_real_power_vs_t_1toT_kW][t]
+        valdVals[:vald_total_gen_real_power_allT_kW] += valdVals[:vald_total_gen_real_power_vs_t_1toT_kW][t]
 
         # Retrieve voltage magnitudes
-        vald[:vald_voltages_vs_t_1toT_pu][t] = get_voltages_opendss_powerflow_for_timestep_t()
+        valdVals[:vald_voltages_vs_t_1toT_pu][t] = get_voltages_opendss_powerflow_for_timestep_t()
     end
 
     # Battery Terminal SOC Checking
     terminalSOCDict = get_terminal_soc_values_opendss_powerflow(data)
     @unpack vald_terminal_soc_violation_kWh = terminalSOCDict
-    @pack! vald = vald_terminal_soc_violation_kWh
+    @pack! valdVals = vald_terminal_soc_violation_kWh
 
     # Discrepancy Calculations
-    disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(modelDict, vald)
-    line_loss_discrepancies = abs.(vald[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
+    disc_voltage_all_time_pu = compute_highest_allTime_voltage_discrepancy(modelDict, valdVals)
+    line_loss_discrepancies = abs.(valdVals[:vald_PLoss_vs_t_1toT_kW] .- data[:PLoss_vs_t_1toT_kW])
     disc_line_loss_all_time_kW = maximum(line_loss_discrepancies)
 
-    disc_PSubs_vs_t_1toT_kW = abs.(vald[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
+    disc_PSubs_vs_t_1toT_kW = abs.(valdVals[:vald_PSubs_vs_t_1toT_kW] .- data[:PSubs_vs_t_1toT_kW])
     disc_PSubs_all_time_kW = maximum(disc_PSubs_vs_t_1toT_kW)
 
-    disc_QSubs_vs_t_1toT_kVAr = abs.(vald[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
+    disc_QSubs_vs_t_1toT_kVAr = abs.(valdVals[:vald_QSubs_vs_t_1toT_kVAr] .- data[:QSubs_vs_t_1toT_kVAr])
     disc_QSubs_all_time_kVAr = maximum(disc_QSubs_vs_t_1toT_kVAr)
 
-    @pack! vald = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr
+    @pack! valdVals = disc_voltage_all_time_pu, disc_line_loss_all_time_kW, disc_PSubs_all_time_kW, disc_QSubs_all_time_kVAr
 
-    return vald
+    @pack! modelDict = valdVals
+    # return valdVals
+    return modelDict
 end
 
 end # module openDSSValidator
