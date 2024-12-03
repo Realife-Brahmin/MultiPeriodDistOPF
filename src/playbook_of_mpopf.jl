@@ -384,7 +384,7 @@ function DDPModel(data;
         :converged => false,
         :data => data,
         :iterLimitReached => false,
-        :k_ddp => 0,
+        :k_ddp => 1,
         :maxiter => maxiter,
         # :model => model,
         :modelVals => modelVals,
