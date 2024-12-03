@@ -27,7 +27,11 @@ using .Exporter
 include("./openDSSValidator.jl")
 using .openDSSValidator
 
-export compute_output_values,
+using Parameters: @unpack, @pack!
+
+export @unpack,
+    @pack!,
+    compute_output_values,
     evaluate_voltage_limits,
     export_decision_variables,
     export_optimization_model,
