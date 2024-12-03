@@ -25,7 +25,7 @@ function nodalRealPowerBalance_substation_t_in_Tset(model, data; Tset=nothing)
     if Tset === nothing
         Tset = data[:Tset]
     end
-    @unpack substationBus, Tset, L1set = data
+    @unpack substationBus, L1set = data
     P_Subs = model[:P_Subs]
     P = model[:P]
     # Substation node
