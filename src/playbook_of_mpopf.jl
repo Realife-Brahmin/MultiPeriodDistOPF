@@ -219,66 +219,68 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
         Tset = data[:Tset]
     end
 
+    modelDict = Dict{Symbol, Any}()
+    @pack! modelDict = model, data
     # Define variables
-    model = MB.define_model_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.define_model_variables_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
 
     # ===========================
     # Constraints
     # ===========================
 
     # Substation node real power balance constraints
-    model = MB.nodalRealPowerBalance_substation_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.nodalRealPowerBalance_substation_t_in_Tset(modelDict, Tset=Tset)
 
     # Non-substation node real power balance constraints
-    model = MB.nodalRealPowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.nodalRealPowerBalance_non_substation_t_in_Tset(modelDict, Tset=Tset)
 
     # Non-substation node reactive power balance constraints
-    model = MB.nodalReactivePowerBalance_non_substation_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict, Tset=Tset)
 
     # KVL constraints for branches connected directly to the substation
-    model = MB.KVL_substation_branches_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.KVL_substation_branches_t_in_Tset(modelDict, Tset=Tset)
 
     # KVL constraints for branches not connected directly to the substation
-    model = MB.KVL_non_substation_branches_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.KVL_non_substation_branches_t_in_Tset(modelDict, Tset=Tset)
 
     # BCPF constraints for branches connected directly to the substation
-    model = MB.BCPF_substation_branches_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.BCPF_substation_branches_t_in_Tset(modelDict, Tset=Tset)
 
     # BCPF constraints for branches not connected directly to the substation
-    model = MB.BCPF_non_substation_branches_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.BCPF_non_substation_branches_t_in_Tset(modelDict, Tset=Tset)
 
     # Battery SOC trajectory equality constraints
     @unpack tSOC_hard = data;
-    model = MB.battery_SOC_constraints_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
+    modelDict = MB.battery_SOC_constraints_t_in_Tset(modelDict, Tset=Tset, tSOC_hard=tSOC_hard)
 
     # Fixed substation voltage constraints
-    model = MB.fixed_substation_voltage_constraints_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.fixed_substation_voltage_constraints_t_in_Tset(modelDict, Tset=Tset)
 
     # Voltage limits constraints
-    model = MB.voltage_limits_constraints_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.voltage_limits_constraints_t_in_Tset(modelDict, Tset=Tset)
 
     # Reactive power limits for PV inverters
-    model = MB.reactive_power_limits_PV_inverters_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.reactive_power_limits_PV_inverters_t_in_Tset(modelDict, Tset=Tset)
 
     # Reactive power limits for battery inverters
-    model = MB.reactive_power_limits_battery_inverters_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.reactive_power_limits_battery_inverters_t_in_Tset(modelDict, Tset=Tset)
 
     # Charging power limits for batteries
-    model = MB.charging_power_limits_batteries_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.charging_power_limits_batteries_t_in_Tset(modelDict, Tset=Tset)
 
     # Discharging power limits for batteries
-    model = MB.discharging_power_limits_batteries_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.discharging_power_limits_batteries_t_in_Tset(modelDict, Tset=Tset)
 
     # SOC limits for batteries
-    model = MB.SOC_limits_batteries_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.SOC_limits_batteries_t_in_Tset(modelDict, Tset=Tset)
 
     # Define objective function
-    modelDict = MB.define_objective_function_t_in_Tset(model, data, Tset=Tset, tSOC_hard=tSOC_hard)
+    modelDict = MB.define_objective_function_t_in_Tset(modelDict, Tset=Tset, tSOC_hard=tSOC_hard)
 
     @unpack model, data = modelDict;
 
     # Initialize variables
-    model = MB.initialize_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
+    modelDict = MB.initialize_variables_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
 
     # @pack! modelDict = model, data;
     

@@ -17,11 +17,12 @@ export BCPF_non_substation_branches_t_in_Tset,
     voltage_limits_constraints_t_in_Tset
 
 using JuMP
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 
 # Define all constraint functions here...
 
-function nodalRealPowerBalance_substation_t_in_Tset(model, data; Tset=nothing)
+function nodalRealPowerBalance_substation_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -40,10 +41,11 @@ function nodalRealPowerBalance_substation_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function nodalRealPowerBalance_non_substation_t_in_Tset(model, data; Tset=nothing)
+function nodalRealPowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -89,10 +91,11 @@ function nodalRealPowerBalance_non_substation_t_in_Tset(model, data; Tset=nothin
             base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)")
     end
 
-    return model
+    return modelDict
 end
 
-function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data; Tset=nothing)
+function nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -138,10 +141,11 @@ function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data; Tset=no
         )
     end
 
-    return model
+    return modelDict
 end
 
-function KVL_substation_branches_t_in_Tset(model, data; Tset=nothing)
+function KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -167,10 +171,11 @@ function KVL_substation_branches_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function KVL_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
+function KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -196,10 +201,11 @@ function KVL_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function BCPF_substation_branches_t_in_Tset(model, data; Tset=nothing)
+function BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -221,10 +227,11 @@ function BCPF_substation_branches_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function BCPF_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
+function BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -246,10 +253,11 @@ function BCPF_non_substation_branches_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=false)
+function battery_SOC_constraints_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
+    @unpack model, data = modelDict;
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -273,7 +281,7 @@ function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=
     end
 
     # Constraint h_SOC_j^{t=2 to T}: SOC trajectory for middle and final time periods
-    @unpack T = data; # Note that Tset now no longer necessarily contains T i.e. Tset could be [2], with no knowledge of T=24
+    @unpack T = data # Note that Tset now no longer necessarily contains T i.e. Tset could be [2], with no knowledge of T=24
     for j in Bset, t in Tset
         if t > 1
             @constraint(model,
@@ -284,7 +292,7 @@ function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=
     end
 
     # Constraint h_SOC_j^{T}: Final SOC constraint (B_j^T = Bref_j)
-    @unpack T = data;
+    @unpack T = data
     if tSOC_hard && maximum(Tset) == T
         for j in Bset
             @constraint(model,
@@ -294,10 +302,11 @@ function battery_SOC_constraints_t_in_Tset(model, data; Tset=nothing, tSOC_hard=
         end
     end
 
-    return model
+    return modelDict
 end
 
-function fixed_substation_voltage_constraints_t_in_Tset(model, data; Tset=nothing)
+function fixed_substation_voltage_constraints_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -311,10 +320,11 @@ function fixed_substation_voltage_constraints_t_in_Tset(model, data; Tset=nothin
         )
     end
 
-    return model
+    return modelDict
 end
 
-function voltage_limits_constraints_t_in_Tset(model, data; Tset=nothing)
+function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -344,10 +354,11 @@ function voltage_limits_constraints_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function reactive_power_limits_PV_inverters_t_in_Tset(model, data; Tset=nothing)
+function reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -379,10 +390,11 @@ function reactive_power_limits_PV_inverters_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function reactive_power_limits_battery_inverters_t_in_Tset(model, data; Tset=nothing)
+function reactive_power_limits_battery_inverters_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -419,10 +431,11 @@ function reactive_power_limits_battery_inverters_t_in_Tset(model, data; Tset=not
         )
     end
 
-    return model
+    return modelDict
 end
 
-function charging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+function charging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -444,10 +457,11 @@ function charging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function discharging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+function discharging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -469,10 +483,11 @@ function discharging_power_limits_batteries_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
-function SOC_limits_batteries_t_in_Tset(model, data; Tset=nothing)
+function SOC_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -494,7 +509,7 @@ function SOC_limits_batteries_t_in_Tset(model, data; Tset=nothing)
         )
     end
 
-    return model
+    return modelDict
 end
 
 end
