@@ -108,9 +108,11 @@ function copy_modelVals(modelDict, model_Tset;
 
     @unpack T = data;
     if length(Tset) == 1
+        for t ∈ Tset
         modelVals[:objective_value_vs_t][t] = objective_value(model_Tset)
         modelVals[:termination_status_vs_t][t] = termination_status(model_Tset)
         modelVals[:solve_time_vs_t][t] = solve_time(model_Tset)
+        end
     elseif length(Tset) == T
         modelVals[:objective_value] = objective_value(model_Tset)
         modelVals[:termination_status] = termination_status(model_Tset)
