@@ -1,10 +1,14 @@
 # optimizer.jl
 module Playbook_of_MPOPF
 
-export optimize_MPOPF_1ph_NL_TemporallyBruteforced
+export optimize_MPOPF_1ph_NL_DDP,
+    optimize_MPOPF_1ph_NL_TemporallyBruteforced
 
 include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
+
+include("./helperFunctions.jl")
+using .helperFunctions: myprintln
 
 using Crayons
 using JuMP
@@ -367,7 +371,7 @@ function DDPModel(data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
-    modelVals = initialize_modelVals(data)
+    modelVals = ModelVals(data)
     # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[(j, t_ddp, 0)] = 0.0
@@ -577,7 +581,7 @@ end
 function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose::Bool=false)
 
-    @unpack k_ddp, t_ddp, model, models_ddp_vs_t_vs_k, data, mu = ddpModel;
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel;
 
     if t_ddp != 1
         @error "t_ddp = $(t_ddp) is not equal to 1"
