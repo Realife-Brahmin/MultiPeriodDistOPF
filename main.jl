@@ -5,14 +5,15 @@ using Parameters: @unpack
 
 Revise.revise()
 
-# systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
+systemName = "ads10_1ph"
+# systemName = "ieee123_1ph"
 T0 = 24
-# factor = 1/8
-factor = 1
+factor = 1/8
+# factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
+# temporal_decmp = true
 # objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
@@ -34,9 +35,14 @@ solver = "Ipopt"
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver, tSOC_hard=tSOC_hard)
 
-modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+if !temporal_decmp
+    modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+elseif temporal_decmp
+    modelDict = optimize_MPOPF_1ph_NL_DDP(data)
+else
+    error("temporal_decmp must be either true or false")
+end
 
-# modelDict = optimize_MPOPF_1ph_NL_DDP(data)
 @unpack model, data = modelDict
 
 # postsim computation, plotting, logging
