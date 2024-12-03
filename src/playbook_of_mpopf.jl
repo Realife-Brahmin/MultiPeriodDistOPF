@@ -714,31 +714,6 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
-
-    return ddpModel
-end
-
-function update_variables_from_ForwardStep_t_is_1_into_MPOPF_model(ddpModel;
-    verbose::Bool=false)
-
-    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel;
-
-    if t_ddp == 1
-        @error "t_ddp = $(t_ddp) is equal to 1"
-        return
-    end
-
-    myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Updating MPOPF model with Forward Step model for t = $(t_ddp)")
-
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    
-    # Update the MPOPF model with the solutions from the Forward Step model for t = 1
-
-    # right now don't know how exactly to achieve that
-
-    # Then I also need to compute the dual variables for the constraints of the Forward Step model for t = 1 and store them in μ
-
-    # this can be done, but I'll see to it later.
     
     return ddpModel
 end
