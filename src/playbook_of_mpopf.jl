@@ -34,7 +34,7 @@ function ModelVals(data)
     modelVals[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()  # (i, j), t => value
     modelVals[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
     modelVals[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
-    modelVals[:v] = Dict{Tuple{Int,Int},Float64}()  # (j, t) => value
+    modelVals[:v] = Dict{Tuple{Int,Int},Float64}() 
     modelVals[:q_D] = Dict{Tuple{Int,Int},Float64}()
     modelVals[:q_B] = Dict{Tuple{Int,Int},Float64}()
     modelVals[:P_c] = Dict{Tuple{Int,Int},Float64}()
@@ -90,20 +90,20 @@ function copy_modelVals(modelDict, model_Tset;
 
     # v[j, t] for j in Nset
     for j in Nset, t in Tset
-        modelVals[:v][(j, t)] = value(v_model[j, t])
+        modelVals[:v][j, t] = value(v_model[j, t])
     end
 
     # q_D[j, t] for j in Dset
     for j in Dset, t in Tset
-        modelVals[:q_D][(j, t)] = value(q_D_model[j, t])
+        modelVals[:q_D][j, t] = value(q_D_model[j, t])
     end
 
     # q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
     for j in Bset, t in Tset
-        modelVals[:q_B][(j, t)] = value(q_B_model[j, t])
-        modelVals[:P_c][(j, t)] = value(P_c_model[j, t])
-        modelVals[:P_d][(j, t)] = value(P_d_model[j, t])
-        modelVals[:B][(j, t)] = value(B_model[j, t])
+        modelVals[:q_B][j, t] = value(q_B_model[j, t])
+        modelVals[:P_c][j, t] = value(P_c_model[j, t])
+        modelVals[:P_d][j, t] = value(P_d_model[j, t])
+        modelVals[:B][j, t] = value(B_model[j, t])
     end
 
     @unpack T = data;
@@ -141,7 +141,7 @@ end
 #     modelVals[:P] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()  # (i, j), t => value
 #     modelVals[:Q] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
 #     modelVals[:l] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
-#     modelVals[:v] = Dict{Tuple{Int, Int}, Float64}()  # (j, t) => value
+#     modelVals[:v] = Dict{Tuple{Int, Int}, Float64}()  # j, t => value
 #     modelVals[:q_D] = Dict{Tuple{Int, Int}, Float64}()
 #     modelVals[:q_B] = Dict{Tuple{Int, Int}, Float64}()
 #     modelVals[:P_c] = Dict{Tuple{Int, Int}, Float64}()
@@ -176,20 +176,20 @@ end
 
 #     # v[j, t] for j in Nset
 #     for j in Nset, t in Tset
-#         modelVals[:v][(j, t)] = value(v_model[j, t])
+#         modelVals[:v][j, t] = value(v_model[j, t])
 #     end
 
 #     # q_D[j, t] for j in Dset
 #     for j in Dset, t in Tset
-#         modelVals[:q_D][(j, t)] = value(q_D_model[j, t])
+#         modelVals[:q_D][j, t] = value(q_D_model[j, t])
 #     end
 
 #     # q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
 #     for j in Bset, t in Tset
-#         modelVals[:q_B][(j, t)] = value(q_B_model[j, t])
-#         modelVals[:P_c][(j, t)] = value(P_c_model[j, t])
-#         modelVals[:P_d][(j, t)] = value(P_d_model[j, t])
-#         modelVals[:B][(j, t)] = value(B_model[j, t])
+#         modelVals[:q_B][j, t] = value(q_B_model[j, t])
+#         modelVals[:P_c][j, t] = value(P_c_model[j, t])
+#         modelVals[:P_d][j, t] = value(P_d_model[j, t])
+#         modelVals[:B][j, t] = value(B_model[j, t])
 #     end
 
 #     modelVals[:objective_value] = objective_value(model)
@@ -375,6 +375,7 @@ function DDPModel(data;
     # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[(j, t_ddp, 0)] = 0.0
+        mu[(j, t_ddp, -1)] = 0.0
     end
 
     # Initialize an empty model using the configure_solver function
@@ -593,11 +594,11 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [1]
-        modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
         model_t0 = modelDict[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)]
+        model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)] # I guess a solved model
         model_t0 = deepcopy(model_t0_km1)
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -606,10 +607,19 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     # Update the model with the solutions from the last iteration (backward pass)
 
-    objfun_expr_t0_km1 = objective_function(model_t0)
+    objfun_expr_t0_km1 = objective_function(model_t0) # same as model_t0_km1 as it is a copy
     μ = mu
     @unpack Bset = data;
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][(j, t_ddp)]) for j ∈ Bset )
+    # @show objfun_expr_t0_km1
+    @show μ
+    @show model_t0[:B]
+    # @show modelVals[:B]
+    for j ∈ Bset
+        @show μ[(j, t_ddp+1, k_ddp-1)]
+        @show μ[(j, t_ddp+1, k_ddp-2)]
+        @show model_t0[:B][j, t_ddp]
+    end
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
     # B0 values are already set in the model so no need to fix them separately
@@ -649,13 +659,13 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
-    fix(model_t0[:B][(j, t_ddp - 1)], B_model[(j, t_ddp - 1)])
+    fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
 
     # Update the model with the future dual variables from the last iteration (backward pass)
 
     objfun_expr_t0_km1 = objective_function(model_t0)
     μ = mu
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][(j, t_ddp)]) for j ∈ Bset )
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
     models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0

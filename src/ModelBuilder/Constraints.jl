@@ -71,11 +71,11 @@ function nodalRealPowerBalance_non_substation_t_in_Tset(model, data; Tset=nothin
 
         # Load at node j and time t
         @unpack NLset, p_L_pu = data
-        p_L_j_t = (j in NLset) ? p_L_pu[(j, t)] : 0.0  # Check if node j has a load
+        p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0  # Check if node j has a load
 
         # PV generation at node j and time t
         @unpack Dset, p_D_pu = data
-        p_D_j_t = (j in Dset) ? p_D_pu[(j, t)] : 0.0  # Check if node j has PV
+        p_D_j_t = (j in Dset) ? p_D_pu[j, t] : 0.0  # Check if node j has PV
 
         # Battery variables at node j and time t
         @unpack Bset = data
@@ -119,7 +119,7 @@ function nodalReactivePowerBalance_non_substation_t_in_Tset(model, data; Tset=no
 
         # Reactive load at node j and time t
         @unpack NLset, q_L_pu = data
-        q_L_j_t = (j in NLset) ? q_L_pu[(j, t)] : 0.0  # Assign 0.0 if j is not in Nset
+        q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0  # Assign 0.0 if j is not in Nset
 
         # Reactive power from PV inverter at node j and time t
         @unpack Dset = data
@@ -359,7 +359,7 @@ function reactive_power_limits_PV_inverters_t_in_Tset(model, data; Tset=nothing)
 
         # Active power output of PV at node j and time t
         @unpack p_D_pu = data
-        p_D_j_t = p_D_pu[(j, t)]
+        p_D_j_t = p_D_pu[j, t]
 
         # Compute q_D_Max_j^t
         q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
