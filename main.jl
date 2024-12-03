@@ -35,6 +35,8 @@ solver = "Ipopt"
 data = parse_all_data(systemName, T, numAreas=numAreas, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver, tSOC_hard=tSOC_hard)
 
 modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+
+# modelDict = optimize_MPOPF_1ph_NL_DDP(data)
 @unpack model, data = modelDict
 
 # postsim computation, plotting, logging
