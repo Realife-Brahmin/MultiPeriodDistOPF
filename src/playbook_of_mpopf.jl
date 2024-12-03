@@ -351,7 +351,8 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     end
 
     # optimal_obj_value = objective_value(model)
-    optimal_obj_value = modelVals[:objective_value]
+    @unpack Tset = data;
+    optimal_obj_value = sum(modelVals[:objective_value_vs_t][t] for t ∈ Tset)
     println("Optimal objective function value: ", optimal_obj_value)
 
 
