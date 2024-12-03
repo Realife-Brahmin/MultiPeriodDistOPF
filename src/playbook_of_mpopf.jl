@@ -15,10 +15,8 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function generate_1ph_NL_model_decvar_value_dict(modelDict)
-    model = modelDict[:model]
-    data = modelDict[:data]
-    modelVals = Dict{Symbol, Any}()
+function ModelVals(data)
+    modelVals = Dict{Symbol,Any}()
 
     # Extract necessary sets from data
     Tset = data[:Tset]
@@ -28,28 +26,49 @@ function generate_1ph_NL_model_decvar_value_dict(modelDict)
     Nset = data[:Nset]
 
     # Initialize containers for each variable
-    modelVals[:P_Subs] = Dict{Int, Float64}()  # t => value
-    modelVals[:P] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()  # (i, j), t => value
-    modelVals[:Q] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
-    modelVals[:l] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
-    modelVals[:v] = Dict{Tuple{Int, Int}, Float64}()  # (j, t) => value
-    modelVals[:q_D] = Dict{Tuple{Int, Int}, Float64}()
-    modelVals[:q_B] = Dict{Tuple{Int, Int}, Float64}()
-    modelVals[:P_c] = Dict{Tuple{Int, Int}, Float64}()
-    modelVals[:P_d] = Dict{Tuple{Int, Int}, Float64}()
-    modelVals[:B] = Dict{Tuple{Int, Int}, Float64}()
+    modelVals[:P_Subs] = Dict{Int,Float64}()  # t => value
+    modelVals[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()  # (i, j), t => value
+    modelVals[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals[:v] = Dict{Tuple{Int,Int},Float64}()  # (j, t) => value
+    modelVals[:q_D] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:q_B] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:P_c] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:P_d] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:B] = Dict{Tuple{Int,Int},Float64}()
+
+    modelVals[:termination_status_vs_t] = Dict{Int,String}()
+    modelVals[:solve_time_vs_t] = Dict{Int,Float64}()
+    modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
+
+    return modelVals
+end
+
+function copy_modelVals(modelDict, model_Tset;
+    Tset=nothing)
+
+    @unpack modelVals, data = modelDict;
+    if Tset === nothing
+        Tset = modelDict[:data][:Tset]
+    end
+    # Extract necessary sets from data
+    # Tset = data[:Tset]
+    Bset = data[:Bset]
+    Dset = data[:Dset]
+    Lset = data[:Lset]
+    Nset = data[:Nset]
 
     # Retrieve variables from the model
-    P_Subs_model = model[:P_Subs]
-    P_model = model[:P]
-    Q_model = model[:Q]
-    l_model = model[:l]
-    v_model = model[:v]
-    q_D_model = model[:q_D]
-    q_B_model = model[:q_B]
-    P_c_model = model[:P_c]
-    P_d_model = model[:P_d]
-    B_model = model[:B]
+    P_Subs_model = model_Tset[:P_Subs]
+    P_model = model_Tset[:P]
+    Q_model = model_Tset[:Q]
+    l_model = model_Tset[:l]
+    v_model = model_Tset[:v]
+    q_D_model = model_Tset[:q_D]
+    q_B_model = model_Tset[:q_B]
+    P_c_model = model_Tset[:P_c]
+    P_d_model = model_Tset[:P_d]
+    B_model = model_Tset[:B]
 
     # Store values into modelVals using the indices from data
 
@@ -83,18 +102,104 @@ function generate_1ph_NL_model_decvar_value_dict(modelDict)
         modelVals[:B][(j, t)] = value(B_model[j, t])
     end
 
-    modelVals[:objective_value] = objective_value(model)
-
-    modelVals[:termination_status] = termination_status(model)
-    
-    if !haskey(modelVals, :solve_time)
-        modelVals[:solve_time] = solve_time(model)
+    @unpack T = data;
+    if length(Tset) == 1
+        modelVals[:objective_value_vs_t][t] = objective_value(model_Tset)
+        modelVals[:termination_status_vs_t][t] = termination_status(model_Tset)
+        modelVals[:solve_time_vs_t][t] = solve_time(model_Tset)
+    elseif length(Tset) == T
+        modelVals[:objective_value] = objective_value(model_Tset)
+        modelVals[:termination_status] = termination_status(model_Tset)
+        modelVals[:solve_time] = solve_time(model_Tset)
     else
-        modelVals[:solve_time] += solve_time(model)
-    end    # Add modelVals to modelDict
-    modelDict[:modelVals] = modelVals
+        @error "Invalid length of Tset: $(length(Tset))"
+        return
+    end
+
+    @pack! modelDict = modelVals;
     return modelDict
 end
+
+# function generate_1ph_NL_model_decvar_value_dict(modelDict)
+#     model = modelDict[:model]
+#     data = modelDict[:data]
+#     modelVals = Dict{Symbol, Any}()
+
+#     # Extract necessary sets from data
+#     Tset = data[:Tset]
+#     Bset = data[:Bset]
+#     Dset = data[:Dset]
+#     Lset = data[:Lset]
+#     Nset = data[:Nset]
+
+#     # Initialize containers for each variable
+#     modelVals[:P_Subs] = Dict{Int, Float64}()  # t => value
+#     modelVals[:P] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()  # (i, j), t => value
+#     modelVals[:Q] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
+#     modelVals[:l] = Dict{Tuple{Tuple{Int, Int}, Int}, Float64}()
+#     modelVals[:v] = Dict{Tuple{Int, Int}, Float64}()  # (j, t) => value
+#     modelVals[:q_D] = Dict{Tuple{Int, Int}, Float64}()
+#     modelVals[:q_B] = Dict{Tuple{Int, Int}, Float64}()
+#     modelVals[:P_c] = Dict{Tuple{Int, Int}, Float64}()
+#     modelVals[:P_d] = Dict{Tuple{Int, Int}, Float64}()
+#     modelVals[:B] = Dict{Tuple{Int, Int}, Float64}()
+
+#     # Retrieve variables from the model
+#     P_Subs_model = model[:P_Subs]
+#     P_model = model[:P]
+#     Q_model = model[:Q]
+#     l_model = model[:l]
+#     v_model = model[:v]
+#     q_D_model = model[:q_D]
+#     q_B_model = model[:q_B]
+#     P_c_model = model[:P_c]
+#     P_d_model = model[:P_d]
+#     B_model = model[:B]
+
+#     # Store values into modelVals using the indices from data
+
+#     # P_Subs[t]
+#     for t in Tset
+#         modelVals[:P_Subs][t] = value(P_Subs_model[t])
+#     end
+
+#     # P[(i,j), t], Q[(i,j), t], l[(i,j), t] for (i,j) in Lset
+#     for (i, j) in Lset, t in Tset
+#         modelVals[:P][(i, j), t] = value(P_model[(i, j), t])
+#         modelVals[:Q][(i, j), t] = value(Q_model[(i, j), t])
+#         modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
+#     end
+
+#     # v[j, t] for j in Nset
+#     for j in Nset, t in Tset
+#         modelVals[:v][(j, t)] = value(v_model[j, t])
+#     end
+
+#     # q_D[j, t] for j in Dset
+#     for j in Dset, t in Tset
+#         modelVals[:q_D][(j, t)] = value(q_D_model[j, t])
+#     end
+
+#     # q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
+#     for j in Bset, t in Tset
+#         modelVals[:q_B][(j, t)] = value(q_B_model[j, t])
+#         modelVals[:P_c][(j, t)] = value(P_c_model[j, t])
+#         modelVals[:P_d][(j, t)] = value(P_d_model[j, t])
+#         modelVals[:B][(j, t)] = value(B_model[j, t])
+#     end
+
+#     modelVals[:objective_value] = objective_value(model)
+
+#     modelVals[:termination_status] = termination_status(model)
+    
+#     if !haskey(modelVals, :solve_time)
+#         modelVals[:solve_time] = solve_time(model)
+#     else
+#         modelVals[:solve_time] += solve_time(model)
+#     end    # Add modelVals to modelDict
+#     modelDict[:modelVals] = modelVals
+#     return modelDict
+# end
 
 function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     Tset=nothing)
@@ -169,8 +274,10 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     # Initialize variables
     model = MB.initialize_variables_1ph_NL_t_in_Tset(model, data, Tset=Tset)
 
-    @pack! modelDict = model, data;
+    # @pack! modelDict = model, data;
     
+    modelVals = ModelVals(data)
+    @pack! modelDict = model, modelVals, data
     # modelDict = Dict(
         # :model => model,
         # :data => data
@@ -189,8 +296,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     
     @pack! modelDict = model
 
-    modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
-
+    # modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
+    modelDict = copy_modelVals(modelDict, model)
     # Check solver status and retrieve results
     # Define crayons for green and red text
     green_crayon = Crayon(foreground=:light_green, bold=true)
@@ -258,14 +365,15 @@ function DDPModel(data;
     @unpack Tset, Bset, solver = data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
-    modelVals = Dict{Symbol,Any}()
+    # modelVals = Dict{Symbol,Any}()
+    modelVals = initialize_modelVals(data)
     # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[(j, t_ddp, 0)] = 0.0
     end
 
     # Initialize an empty model using the configure_solver function
-    model = configure_solver(solver)
+    # model = configure_solver(solver)
 
     ddpModel = Dict(
         :converged => false,
