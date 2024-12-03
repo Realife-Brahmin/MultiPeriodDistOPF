@@ -372,10 +372,10 @@ function DDPModel(data;
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
     modelVals = ModelVals(data)
-    # Initialize mu[(j, t_ddp, 0)] = 0 for all j in Bset and t_ddp in Tset
+    # Initialize mu[j, t_ddp, 0] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
-        mu[(j, t_ddp, 0)] = 0.0
-        mu[(j, t_ddp, -1)] = 0.0
+        mu[j, t_ddp, 0] = 0.0
+        mu[j, t_ddp, -1] = 0.0
     end
 
     # Initialize an empty model using the configure_solver function
@@ -436,8 +436,8 @@ function shouldStop(ddpModel; verbose::Bool=false)
     all_under_threshold = true
 
     for t_ddp in Tset
-        model_current = models_ddp_vs_t_vs_k[(t_ddp, k_ddp)]
-        model_previous = models_ddp_vs_t_vs_k[(t_ddp, k_ddp - 1)]
+        model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+        model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
         max_discrepancy = 0.0
 
@@ -505,7 +505,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
-    model_t0 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp)]
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
     optimize!(model_t0)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
@@ -527,7 +527,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     optimal_obj_value = objective_value(model_t0)
     println("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): ", optimal_obj_value)
 
-    models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k;
 
     ddpModel = update_variables_from_ForwardStep_into_MPOPF_model(ddpModel)
@@ -598,7 +598,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         model_t0 = modelDict[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)] # I guess a solved model
+        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1] # I guess a solved model
         model_t0 = deepcopy(model_t0_km1)
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -615,16 +615,16 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     @show model_t0[:B]
     # @show modelVals[:B]
     for j ∈ Bset
-        @show μ[(j, t_ddp+1, k_ddp-1)]
-        @show μ[(j, t_ddp+1, k_ddp-2)]
+        @show μ[j, t_ddp+1, k_ddp-1]
+        @show μ[j, t_ddp+1, k_ddp-2]
         @show model_t0[:B][j, t_ddp]
     end
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
     # B0 values are already set in the model so no need to fix them separately
 
-    models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
 
@@ -648,7 +648,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)]
+        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
         model_t0 = deepcopy(model_t0_km1)
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -665,10 +665,10 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_km1 = objective_function(model_t0)
     μ = mu
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
-    models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return
 
@@ -692,7 +692,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp-1)]
+        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
         model_t0 = deepcopy(model_t0_km1)
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -705,12 +705,12 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     B_model = modelVals[:B]
 
     for j ∈ Bset
-        fix(model_t0[:B][(j, t_ddp - 1)], B_model[(j, t_ddp - 1)])
+        fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
     end 
 
     # No need of updating objective function, as no μ term is present in the objective function for the terminal time-step
 
-    models_ddp_vs_t_vs_k[(t_ddp, k_ddp)] = model_t0
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
     return ddpModel
@@ -728,7 +728,7 @@ function update_variables_from_ForwardStep_t_is_1_into_MPOPF_model(ddpModel;
 
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Updating MPOPF model with Forward Step model for t = $(t_ddp)")
 
-    model_t0 = models_ddp_vs_t_vs_k[(t_ddp, k_ddp)]
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
     
     # Update the MPOPF model with the solutions from the Forward Step model for t = 1
 
