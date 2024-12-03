@@ -41,7 +41,7 @@ function ModelVals(data)
     modelVals[:P_d] = Dict{Tuple{Int,Int},Float64}()
     modelVals[:B] = Dict{Tuple{Int,Int},Float64}()
 
-    modelVals[:termination_status_vs_t] = Dict{Int,String}()
+    modelVals[:termination_status_vs_t] = Dict{Int,Any}()
     modelVals[:solve_time_vs_t] = Dict{Int,Float64}()
     modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
 
