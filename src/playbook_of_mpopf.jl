@@ -587,6 +587,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         @error "t_ddp = $(t_ddp) is not equal to 1"
         return
     end
+    verbose = true
 
     if k_ddp == 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
@@ -607,6 +608,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     objfun_expr_t0_km1 = objective_function(model_t0)
     μ = mu
+    @unpack Bset = data;
     objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[(j, t_ddp+1, k_ddp-1)] - μ[(j, t_ddp+1, k_ddp-2)] ) * (-model_t0[:B][(j, t_ddp)]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
