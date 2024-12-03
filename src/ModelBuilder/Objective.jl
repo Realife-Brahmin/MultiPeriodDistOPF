@@ -65,14 +65,19 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
     end
 
     # Append the gamma term only if tSOC_hard is false
-    if !tSOC_hard
-        @unpack T, Bset, Bref_pu = data;
+    @unpack T = data;
+    if !tSOC_hard && T ∈ Tset
+        @unpack Bset, Bref_pu = data;
         gamma = HP.estimate_gamma(data)
         println("gamma = $gamma")
         gammaAppendix = HF.trim_number_for_printing(gamma)
         @pack! data = gamma, gammaAppendix;
         B = model[:B]
         γ = gamma
+        # @show B
+        # @show Bref_pu
+        # println("Bref_pu = $Bref_pu")
+        # println("B = $B")
         objfun += sum(
             γ * (B[j, T] - Bref_pu[j])^2
             for j in Bset
