@@ -11,7 +11,9 @@ import .Hyperparameters as HP
 include("../helperFunctions.jl")
 import .helperFunctions as HF
 
-function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_hard=false)
+function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
+    @unpack model, data = modelDict
+
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -86,10 +88,11 @@ function define_objective_function_t_in_Tset(model, data; Tset=nothing, tSOC_har
 
     @objective(model, Min, objfun)
 
-    modelDict = Dict(
-        :model => model,
-        :data => data
-    )
+    @pack! modelDict = model, data
+    # modelDict = Dict(
+    #     :model => model,
+    #     :data => data
+    # )
     return modelDict
 end
 

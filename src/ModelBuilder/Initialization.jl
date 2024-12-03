@@ -3,9 +3,11 @@ module Initialization
 export initialize_variables_1ph_NL_t_in_Tset
 
 using JuMP
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 
-function initialize_variables_1ph_NL_t_in_Tset(model, data; Tset=nothing)
+function initialize_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -59,7 +61,8 @@ function initialize_variables_1ph_NL_t_in_Tset(model, data; Tset=nothing)
         set_start_value(B[j, t], B0_pu[j])
     end
 
-    return model
+    @pack! modelDict = model
+    return modelDict
 end
 
 end

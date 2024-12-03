@@ -2,10 +2,11 @@ module Variables
 
 export define_model_variables_1ph_NL_t_in_Tset
 
-using Parameters: @unpack
+using Parameters: @unpack, @pack!
 using JuMP
 
-function define_model_variables_1ph_NL_t_in_Tset(model, data; Tset=nothing)
+function define_model_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict;
     if Tset === nothing
         Tset = data[:Tset]
     end
@@ -34,7 +35,8 @@ function define_model_variables_1ph_NL_t_in_Tset(model, data; Tset=nothing)
         @variable(model, B[j in Bset, t0m1], base_name = "B")
     end
 
-    return model
+    @pack! modelDict = model
+    return modelDict
 end
 
 end
