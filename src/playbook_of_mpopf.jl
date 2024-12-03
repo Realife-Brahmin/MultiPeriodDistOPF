@@ -109,9 +109,9 @@ function copy_modelVals(modelDict, model_Tset;
     @unpack T = data;
     if length(Tset) == 1
         for t ∈ Tset
-        modelVals[:objective_value_vs_t][t] = objective_value(model_Tset)
-        modelVals[:termination_status_vs_t][t] = termination_status(model_Tset)
-        modelVals[:solve_time_vs_t][t] = solve_time(model_Tset)
+            modelVals[:objective_value_vs_t][t] = objective_value(model_Tset)
+            modelVals[:termination_status_vs_t][t] = termination_status(model_Tset)
+            modelVals[:solve_time_vs_t][t] = solve_time(model_Tset)
         end
     elseif length(Tset) == T
         modelVals[:objective_value] = objective_value(model_Tset)
@@ -303,7 +303,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @pack! modelDict = model
 
     # modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
-    modelDict = copy_modelVals(modelDict, model)
+    modelDict = copy_modelVals(modelDict, model, Tset=Tset)
     # Check solver status and retrieve results
     # Define crayons for green and red text
     green_crayon = Crayon(foreground=:light_green, bold=true)
@@ -405,7 +405,7 @@ function ForwardPass(ddpModel;
     myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
     t_ddp = 1
     @unpack data = ddpModel;
-    @unpack Tset = data;
+    @unpack Tset, T = data;
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
         if t_ddp == 1
@@ -532,7 +532,8 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k;
 
-    ddpModel = update_variables_from_ForwardStep_into_MPOPF_model(ddpModel)
+    Tset = [t_ddp]
+    ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
@@ -555,7 +556,8 @@ end
 function ForwardStep_1ph_NL_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
-    @unpack t_ddp = ddpModel;
+    @unpack t_ddp, data = ddpModel;
+    @unpack T = data;
     if !(2 <= t_ddp <= T-1)
         @error "t_ddp = $(t_ddp) is not in [2, T-1]"
         return
@@ -636,7 +638,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
     @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel
-
+    @unpack T = data;
     if !(2 <= t_ddp <= T-1)
         @error "t_ddp = $(t_ddp) is not in [2, T-1]"
         return
@@ -714,7 +716,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
-    
+
     return ddpModel
 end
 
