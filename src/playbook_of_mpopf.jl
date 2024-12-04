@@ -352,6 +352,11 @@ function shouldStop(ddpModel; verbose::Bool=false)
     threshold = 1e-3  # Define your threshold here
     all_under_threshold = true
 
+    if k_ddp == 1
+        println("No updates to check for k_ddp = 1")
+        return false
+    end
+    
     for t_ddp in Tset
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
