@@ -253,7 +253,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
         ddpModel = ForwardPass(ddpModel,
         verbose=verbose)
 
-        keepForwardPassesRunning = shouldStop(ddpModel)
+        keepForwardPassesRunning = !shouldStop(ddpModel)
     end
 
     # Check solver status and retrieve results
