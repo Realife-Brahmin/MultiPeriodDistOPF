@@ -491,7 +491,8 @@ end
 
 function ForwardStep_1ph_NL_t_is_T(ddpModel;
     verbose::Bool=false)
-    @unpack t_ddp = ddpModel
+    @unpack t_ddp, data = ddpModel
+    @unpack T = data;
     if t_ddp != T
         @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
         return
@@ -583,7 +584,10 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
+    @unpack Bset = data;
+    for j ∈ Bset
     fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
+    end
 
     # Update the model with the future dual variables from the last iteration (backward pass)
 
@@ -594,7 +598,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
-    return
+    return ddpModel
 
 end
 
@@ -602,7 +606,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     verbose::Bool=false)
     
     @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data = ddpModel;
-
+    @unpack T = data;
     if t_ddp != T
         @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
         return
@@ -627,7 +631,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
-
+    @unpack Bset = data;
     for j ∈ Bset
         fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
     end 
