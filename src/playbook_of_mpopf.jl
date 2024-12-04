@@ -334,6 +334,8 @@ function ForwardPass(ddpModel;
             return
         end
     end
+    k_ddp += 1
+    @pack! ddpModel = k_ddp
 
     return ddpModel
 end
