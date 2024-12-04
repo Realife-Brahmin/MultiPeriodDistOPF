@@ -289,7 +289,7 @@ function DDPModel(data;
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
     modelVals = ModelVals(data)
-    # Initialize mu[j, t_ddp, 0] = 0 for all j in Bset and t_ddp in Tset
+    # Initialize mu[j, t_ddp, 0/-1] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[j, t_ddp, 0] = 0.0
         mu[j, t_ddp, -1] = 0.0
@@ -354,12 +354,14 @@ function shouldStop(ddpModel; verbose::Bool=false)
     threshold = 1e-3  # Define your threshold here
     all_under_threshold = true
 
+    @show k_ddp
     if k_ddp == 1
         println("No updates to check for k_ddp = 1")
         return false
     end
 
     for t_ddp in Tset
+        @show models_ddp_vs_t_vs_k
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
@@ -539,7 +541,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): ", optimal_obj_value)
+    println("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): ", optimal_obj_value)
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
@@ -627,15 +629,6 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     objfun_expr_t0_km1 = objective_function(model_t0) # same as model_t0_km1 as it is a copy
     μ = mu
     @unpack Bset = data;
-    # @show objfun_expr_t0_km1
-    @show μ
-    @show model_t0[:B]
-    # @show modelVals[:B]
-    for j ∈ Bset
-        @show μ[j, t_ddp+1, k_ddp-1]
-        @show μ[j, t_ddp+1, k_ddp-2]
-        @show model_t0[:B][j, t_ddp]
-    end
     objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     @objective(model_t0, Min, objfun_expr_t0_k)
 
