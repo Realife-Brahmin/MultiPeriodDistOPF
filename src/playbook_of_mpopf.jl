@@ -200,15 +200,9 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
 
     # Initialize variables
     modelDict = MB.initialize_variables_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
-
-    # @pack! modelDict = model, data;
     
     modelVals = ModelVals(data)
     @pack! modelDict = model, modelVals, data
-    # modelDict = Dict(
-        # :model => model,
-        # :data => data
-    # )
 
     return modelDict
 end
