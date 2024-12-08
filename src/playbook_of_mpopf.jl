@@ -56,7 +56,6 @@ function copy_modelVals(modelDict, model_Tset;
         Tset = modelDict[:data][:Tset]
     end
     # Extract necessary sets from data
-    # Tset = data[:Tset]
     Bset = data[:Bset]
     Dset = data[:Dset]
     Lset = data[:Lset]
