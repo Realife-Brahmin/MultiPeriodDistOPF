@@ -482,7 +482,8 @@ function backward_pass(ddpModel, model_t0;
                 @error "Invalid value of t_ddp: $t_ddp"
                 return
             end
-            μ[j, t_ddp, k_ddp] = dual(model_t0[constraint_name])
+            constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
+            μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
         end
     end
     mu = μ
