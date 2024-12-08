@@ -49,7 +49,7 @@ function ModelVals(data)
 end
 
 function copy_modelVals(modelDict, model_Tset;
-    Tset=nothing)
+    Tset=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
 
     @unpack modelVals, data = modelDict;
     if Tset === nothing
@@ -272,7 +272,6 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     optimal_obj_value = sum(modelVals[:objective_value_vs_t][t] for t ∈ Tset)
     println("Optimal objective function value: ", optimal_obj_value)
 
-
     return ddpModel
 end
 
@@ -453,7 +452,43 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     @pack! ddpModel = models_ddp_vs_t_vs_k;
 
     Tset = [t_ddp]
+    # @unpack modelDict = ddpModel;
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    
+    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
+
+    return ddpModel
+end
+
+function backward_pass(ddpModel, model_t0;
+    Tset=nothing)
+    if Tset === nothing
+        println("No Tset defined for backward pass, so using the Tset from the data")
+        @unpack data = ddpModel;
+        Tset = data[:Tset]
+    end
+    @unpack k_ddp, data, mu = ddpModel;
+    μ = mu;
+    @unpack T, Bset = data;
+    # Update mu values post optimization
+    # t_ddp = Tset[1]
+    for t_ddp ∈ Tset
+        for j in Bset
+            if t_ddp == 1
+                constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
+            elseif t_ddp == T
+                constraint_name = "h_SOC_j^{T}_Terminal_SOC_Node_j_$(j)_t_$(Tset[end])"
+            elseif 2 <= t_ddp <= T-1
+                constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
+            else
+                @error "Invalid value of t_ddp: $t_ddp"
+                return
+            end
+            μ[j, t_ddp, k_ddp] = dual(model_t0[constraint_name])
+        end
+    end
+    mu = μ
+    @pack! ddpModel = mu
 
     return ddpModel
 end
@@ -499,6 +534,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     Tset = [t_ddp]
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
@@ -544,6 +580,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     Tset = [t_ddp]
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
