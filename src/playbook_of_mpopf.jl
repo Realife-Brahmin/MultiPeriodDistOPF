@@ -56,10 +56,7 @@ function copy_modelVals(modelDict, model_Tset;
         Tset = modelDict[:data][:Tset]
     end
     # Extract necessary sets from data
-    Bset = data[:Bset]
-    Dset = data[:Dset]
-    Lset = data[:Lset]
-    Nset = data[:Nset]
+    @unpack Bset, Dset, Lset, Nset = data;
 
     # Retrieve variables from the model
     P_Subs_model = model_Tset[:P_Subs]
@@ -120,7 +117,7 @@ function copy_modelVals(modelDict, model_Tset;
         @error "Invalid length of Tset: $(length(Tset))"
         return
     end
-
+    
     @pack! modelDict = modelVals;
     return modelDict
 end
