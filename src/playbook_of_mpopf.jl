@@ -478,7 +478,7 @@ function backward_pass(ddpModel, model_t0;
         for j in Bset
             if t_ddp == 1
                 constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-            elseif 2 <= t_ddp <= T-1
+            elseif 2 <= t_ddp <= T
                 constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
             else
                 @error "Invalid value of t_ddp: $t_ddp"
