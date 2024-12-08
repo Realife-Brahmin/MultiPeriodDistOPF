@@ -310,7 +310,7 @@ end
 
 function ForwardPass(ddpModel;
     verbose::Bool=false)
-    
+    verbose = true
     @unpack k_ddp = ddpModel;
     myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
     t_ddp = 1
@@ -356,7 +356,7 @@ function shouldStop(ddpModel; verbose::Bool=false)
     end
 
     for t_ddp in Tset
-        @show models_ddp_vs_t_vs_k
+        # @show models_ddp_vs_t_vs_k
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
