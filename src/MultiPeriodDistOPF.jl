@@ -1,5 +1,8 @@
 module MultiPeriodDistOPF
 
+using JuMP
+using Parameters: @unpack, @pack!
+
 include("./computeOutputs.jl")
 using .computeOutputs
 
@@ -26,8 +29,6 @@ using .Exporter
 
 include("./openDSSValidator.jl")
 using .openDSSValidator
-
-using Parameters: @unpack, @pack!
 
 export @unpack,
     @pack!,
