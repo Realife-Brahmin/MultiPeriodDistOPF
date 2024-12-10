@@ -337,6 +337,16 @@ function ForwardPass(ddpModel;
     return ddpModel
 end
 
+# Function to create a dictionary of variable values
+function create_variable_dict(model)
+    var_dict = Dict{Symbol,Float64}()
+    for v in all_variables(model)
+        var_name = Symbol(name(v))
+        var_dict[var_name] = value(v)
+    end
+    return var_dict
+end
+
 function shouldStop(ddpModel; verbose::Bool=false)
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
     @unpack Tset = data;
