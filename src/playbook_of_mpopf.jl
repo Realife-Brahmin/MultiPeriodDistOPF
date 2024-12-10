@@ -430,7 +430,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    @show get_attribute(model_t0, MOI.Silent())
+    # @show get_attribute(model_t0, MOI.Silent())
     optimize!(model_t0)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
