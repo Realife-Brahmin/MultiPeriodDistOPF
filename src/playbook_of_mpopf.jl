@@ -356,15 +356,12 @@ function shouldStop(ddpModel; verbose::Bool=false)
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
     @unpack Tset = data;
 
+    verbose = true
     # Criterion 1: Check if k_ddp has crossed the maxiter threshold
     if k_ddp >= maxiter
         println("Maximum iterations reached: $k_ddp")
         return true
     end
-
-    # Criterion 2: Check the magnitude of updates in the model decision variable values
-    threshold = 1e-3  # Define your threshold here
-    all_under_threshold = true
 
     @show k_ddp
     if k_ddp == 1
@@ -372,38 +369,41 @@ function shouldStop(ddpModel; verbose::Bool=false)
         return false
     end
 
+    # Criterion 2: Check the magnitude of updates in the model decision variable values
+    
+    # Compare variable values and compute discrepancies
+    max_discrepancy = 0.0
+    threshold = 1e-5
+    all_under_threshold = true
+
     for t_ddp in Tset
         # @show models_ddp_vs_t_vs_k
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
-        max_discrepancy = 0.0
+        # Create dictionaries for current and previous models
+        var_dict_current = create_variable_dict(model_current)
+        var_dict_previous = create_variable_dict(model_previous)
 
-        for var in all_variables(model_current)
-            if haskey(model_previous, var)
-                value_current = value(var, model_current)
-                value_previous = value(var, model_previous)
+        for var_name in keys(var_dict_current)
+            if haskey(var_dict_previous, var_name)
+                value_current = var_dict_current[var_name]
+                value_previous = var_dict_previous[var_name]
                 discrepancy = abs(value_current - value_previous)
                 max_discrepancy = max(max_discrepancy, discrepancy)
 
-                if discrepancy > threshold
+                if max_discrepancy > threshold
                     all_under_threshold = false
+                    myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
+                    return false
                 end
             end
         end
-
-        if verbose
-            println("Max discrepancy for t_ddp = $t_ddp: $max_discrepancy")
-        end
     end
 
-    if all_under_threshold
-        println("All updates are under the threshold.")
-        return true
-    else
-        println("Some updates exceed the threshold.")
-        return false
-    end
+    myprintln(verbose, "All updates are under the threshold.")
+    return true
+    
 end
 
 function configure_solver(solver_name)
