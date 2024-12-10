@@ -39,13 +39,14 @@ data = parse_all_data(systemName, T, numAreas=numAreas, objfun0=objfun0, objfun2
 
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+    @unpack model, modelVals, data = modelDict
 elseif temporal_decmp
-    modelDict = optimize_MPOPF_1ph_NL_DDP(data)
+    modelDict = optimize_MPOPF_1ph_NL_DDP(data) # modelDict is basically ddpModel
+    @unpack modelVals, data = modelDict
 else
     error("temporal_decmp must be either true or false")
 end
 
-@unpack model, data = modelDict
 
 # postsim computation, plotting, logging
 begin
