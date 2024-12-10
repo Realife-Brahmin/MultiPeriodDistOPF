@@ -128,8 +128,8 @@ function plot_battery_actions(modelDict;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            @unpack alphaAppendix, gammaAppendix = data;
-            filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_$(solver).png")
+            @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix = data;
+            filename = joinpath(base_dir, "Battery_$(j)_$(solver)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
             myprintln(verbose, "Saving plot to: $filename")
             savefig(plot_combined, filename)
         end
@@ -156,8 +156,8 @@ function plot_substation_power(modelDict;
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
-    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix = data;
-    filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationRealPowers_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).png")
+    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
+    filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationRealPowers_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
 
     gr()
 
@@ -260,8 +260,8 @@ function plot_substation_power_cost(modelDict;
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
-        @unpack objfunConciseDescription, alphaAppendix, gammaAppendix = data;
-        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationPowerCost_vs_t__$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).png")
+        @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
+        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationPowerCost_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
@@ -324,8 +324,8 @@ function plot_line_losses(modelDict;
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
         end
-        @unpack objfunConciseDescription, alphaAppendix, gammaAppendix = data;
-        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_LineLosses_vs_t__$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).png")
+        @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
+        filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_LineLosses_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
