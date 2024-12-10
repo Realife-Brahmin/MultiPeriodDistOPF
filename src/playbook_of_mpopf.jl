@@ -251,6 +251,11 @@ function optimize_MPOPF_1ph_NL_DDP(data;
 
         keepForwardPassesRunning = !shouldStop(ddpModel)
 
+        if !keepForwardPassesRunning
+            converged = true
+            @pack! ddpModel = converged
+        end
+
         k_ddp += 1
         @pack! ddpModel = k_ddp
 
