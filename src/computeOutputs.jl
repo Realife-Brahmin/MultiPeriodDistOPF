@@ -12,7 +12,8 @@ using Parameters: @unpack, @pack!
 function compute_output_values(modelDict;
     verbose::Bool=false)
 
-    @unpack model, data = modelDict;
+    # @unpack model, data = modelDict;
+    @unpack data = modelDict
     # Initialize arrays of size T
     @unpack T = data;
     fval_vs_t_1toT = zeros(Float64, T)
