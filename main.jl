@@ -14,6 +14,8 @@ T = Int(T0*factor)
 numAreas = 1
 temporal_decmp = false
 temporal_decmp = true
+savePlots = false
+# savePlots = true
 # objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
@@ -60,9 +62,6 @@ begin
 
     # Todo: Maybe separately save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
     export_simulation_key_results_txt(modelDict, verbose=verbose)
-
-    savePlots = false
-    savePlots = true
 
     plot_battery_actions(modelDict, showPlots=false, savePlots=savePlots, verbose=verbose)
 
