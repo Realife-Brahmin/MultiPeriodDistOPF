@@ -261,6 +261,9 @@ function optimize_MPOPF_1ph_NL_DDP(data;
 
     end
 
+    @unpack modelVals = ddpModel;
+    modelVals[:solve_time] = sum(modelVals[:solve_time_vs_t][t] for t ∈ data[:Tset])
+    @pack! ddpModel = modelVals;
     # Check solver status and retrieve results
     @unpack iterLimitReached, converged, modelVals = ddpModel
     
