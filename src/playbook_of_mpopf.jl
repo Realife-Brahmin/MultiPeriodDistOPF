@@ -250,6 +250,10 @@ function optimize_MPOPF_1ph_NL_DDP(data;
         verbose=verbose)
 
         keepForwardPassesRunning = !shouldStop(ddpModel)
+
+        k_ddp += 1
+        @pack! ddpModel = k_ddp
+
     end
 
     # Check solver status and retrieve results
@@ -329,8 +333,6 @@ function ForwardPass(ddpModel;
             return
         end
     end
-    k_ddp += 1
-    @pack! ddpModel = k_ddp
 
     return ddpModel
 end
