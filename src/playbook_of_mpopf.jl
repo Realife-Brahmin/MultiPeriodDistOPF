@@ -293,6 +293,7 @@ function DDPModel(data;
 
     @unpack Tset, Bset, solver = data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
+    modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
     modelVals = ModelVals(data)
@@ -314,6 +315,7 @@ function DDPModel(data;
         # :model => model,
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
+        :modelVals_ddp_vs_t_vs_k=>modelVals_ddp_vs_t_vs_k,
         :mu=>mu,
         :t_ddp=>0
     )
@@ -476,7 +478,9 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     Tset = [t_ddp]
     # @unpack modelDict = ddpModel;
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
-    
+    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
+    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -556,6 +560,9 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     Tset = [t_ddp]
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
+    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -603,6 +610,9 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     Tset = [t_ddp]
     ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
+    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
