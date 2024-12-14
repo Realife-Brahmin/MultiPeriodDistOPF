@@ -3,6 +3,8 @@ module DDP
 export attach_solver,
     backward_pass, 
     build_ForwardStep_1ph_NL_model_t_is_1,
+    build_ForwardStep_1ph_NL_model_t_in_2toTm1,
+    build_ForwardStep_1ph_NL_model_t_is_T,
     DDPModel,
     check_for_ddp_convergence,
     forward_pass,
@@ -12,6 +14,11 @@ export attach_solver,
     optimize_ForwardStep_1ph_NL_model_t_is_1,
     optimize_MPOPF_1ph_NL_DDP
 
+include("../ModelBuilder/ModelBuilder.jl")
+import .ModelBuilder as MB
+
+include("../helperFunctions.jl")
+using .helperFunctions
 include("../playbook_of_mpopf.jl")
 using .playbook_of_mpopf
 
@@ -142,6 +149,103 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
 
+end
+
+function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
+    verbose::Bool=false)
+
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel
+    @unpack T = data;
+    if !(2 <= t_ddp <= T-1)
+        @error "t_ddp = $(t_ddp) is not in [2, T-1]"
+        return
+    end
+
+    if k_ddp == 1
+        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+
+        Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
+        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        model_t0 = modelDict_t0[:model]
+    elseif k_ddp >= 2
+        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
+        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+        # model_t0 = deepcopy(model_t0_km1)
+        model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
+        @unpack data = ddpModel
+        @unpack solver = data
+        model_t0 = attach_solver(model_t0, solver)
+    else
+        @error "Invalid value of k_ddp: $k_ddp"
+        return
+    end
+
+    # Update the model with the solutions from the last iteration (backward pass) and previous time-step's SOC values (forward pass)
+
+    # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
+    B_model = modelVals[:B]
+    @unpack Bset = data;
+    for j ∈ Bset
+        fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
+    end
+
+    # Update the model with the future dual variables from the last iteration (backward pass)
+
+    objfun_expr_t0_km1 = objective_function(model_t0)
+    μ = mu
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    @objective(model_t0, Min, objfun_expr_t0_k)
+
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
+    @pack! ddpModel = models_ddp_vs_t_vs_k
+    return ddpModel
+
+end
+
+function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
+    verbose::Bool=false)
+    
+    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data = ddpModel;
+    @unpack T = data;
+    if t_ddp != T
+        @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
+        return
+    end
+
+    if k_ddp == 1
+        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+
+        Tset_t0 = [t_ddp] # should be [T]
+        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        model_t0 = modelDict_t0[:model]
+    elseif k_ddp >= 2
+        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
+        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+        # model_t0 = deepcopy(model_t0_km1)
+        model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
+        @unpack data = ddpModel
+        @unpack solver = data
+        model_t0 = attach_solver(model_t0, solver)
+    else
+        @error "Invalid value of k_ddp: $k_ddp"
+        return
+    end
+
+    # Update the model with the solutions from the previous time-step's SOC values (forward pass)
+
+    # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
+    B_model = modelVals[:B]
+    @unpack Bset = data;
+    for j ∈ Bset
+        fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
+    end 
+
+    # No need of updating objective function, as no μ term is present in the objective function for the terminal time-step
+
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
+    @pack! ddpModel = models_ddp_vs_t_vs_k
+
+    return ddpModel
 end
 
 function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
