@@ -218,15 +218,16 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     # Check solver status and retrieve results
     # Define crayons for green and red text
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    red_crayon = Crayon(foreground=:red, bold=true)
+    crayon_red = Crayon(foreground=:red, bold=true)
 
     @unpack modelVals = modelDict
     termination_status = modelVals[:termination_status]
 
+    crayon_final_green = Crayon(foreground=:white,background=:green, bold=true)
     if termination_status == LOCALLY_SOLVED
-        println(crayon_light_green("Optimal solution found."))
+        println(crayon_final_green("Optimal solution found."))
     else
-        println(red_crayon("Optimization did not find an optimal solution."))
+        println(crayon_red("Optimization did not find an optimal solution."))
     end
 
     # optimal_obj_value = objective_value(model)
@@ -267,12 +268,12 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     
     # Define crayons for green and red text
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    red_crayon = Crayon(foreground=:red, bold=true)
-
+    crayon_red = Crayon(foreground=:red, bold=true)
+    crayon_final_green = Crayon(foreground=:white,background=:green, bold=true)
     if iterLimitReached
-        println(red_crayon("Maximum iterations reached!"))
+        println(crayon_red("Maximum iterations reached!"))
     elseif converged
-        println(crayon_light_green("Optimization via DDP converged."))
+        println(crayon_final_green("Optimization via DDP converged."))
     else
         @error "floc"
     end
@@ -467,12 +468,12 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    red_crayon = Crayon(foreground=:red, bold=true)
+    crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
         println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
@@ -550,12 +551,12 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    red_crayon = Crayon(foreground=:red, bold=true)
+    crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
         println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
@@ -600,12 +601,12 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    red_crayon = Crayon(foreground=:red, bold=true)
+    crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
         println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
