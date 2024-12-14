@@ -217,14 +217,14 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     modelDict = copy_modelVals(modelDict, model, Tset=Tset)
     # Check solver status and retrieve results
     # Define crayons for green and red text
-    green_crayon = Crayon(foreground=:light_green, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
     @unpack modelVals = modelDict
     termination_status = modelVals[:termination_status]
 
     if termination_status == LOCALLY_SOLVED
-        println(green_crayon("Optimal solution found."))
+        println(crayon_light_green("Optimal solution found."))
     else
         println(red_crayon("Optimization did not find an optimal solution."))
     end
@@ -268,15 +268,15 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     @unpack iterLimitReached, converged, modelVals = ddpModel
     
     # Define crayons for green and red text
-    green_crayon = Crayon(foreground=:light_green, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
     if iterLimitReached
-        println(red_crayon("Maximum iterations reached."))
+        println(red_crayon("Maximum iterations reached!"))
     elseif converged
-        println(green_crayon("Optimization converged."))
+        println(crayon_light_green("Optimization via DDP converged."))
     else
-        println(red_crayon("Optimization did not converge."))
+        @error "floc"
     end
 
     # optimal_obj_value = objective_value(model)
@@ -460,11 +460,11 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     end
 
     # Check solver status and retrieve results
-    green_crayon = Crayon(foreground=:light_green, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(green_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
         println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
@@ -543,11 +543,11 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     end
 
     # Check solver status and retrieve results
-    green_crayon = Crayon(foreground=:light_green, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(green_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
         println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
@@ -593,11 +593,11 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     end
 
     # Check solver status and retrieve results
-    green_crayon = Crayon(foreground=:light_green, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
     red_crayon = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(green_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
         println(red_crayon("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
