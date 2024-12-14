@@ -5,7 +5,6 @@ export
     create_variable_dict,
     ModelVals
 
-
 using JuMP
 using Ipopt
 using Parameters
