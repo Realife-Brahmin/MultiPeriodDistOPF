@@ -143,14 +143,4 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
 end
 
-# Function to create a dictionary of variable values
-function create_variable_dict(model)
-    var_dict = Dict{Symbol,Float64}()
-    for v in all_variables(model)
-        var_name = Symbol(name(v))
-        var_dict[var_name] = value(v)
-    end
-    return var_dict
-end
-
 end # module Playbook_of_MPOPF
