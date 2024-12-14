@@ -8,7 +8,7 @@ include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
 
 include("./helperFunctions.jl")
-using .helperFunctions: myprintln
+using .helperFunctions
 
 using Crayons
 using JuMP
@@ -504,21 +504,28 @@ function backward_pass(ddpModel, model_t0;
     μ = mu;
     @unpack T, Bset = data;
     # Update mu values post optimization
-    # t_ddp = Tset[1]
-    for t_ddp ∈ Tset
-        for j in Bset
-            if t_ddp == 1
-                constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-            elseif 2 <= t_ddp <= T
-                constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
-            else
-                @error "Invalid value of t_ddp: $t_ddp"
-                return
-            end
-            constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
-            μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
+    t_ddp = Tset[1]
+    # for t_ddp ∈ Tset
+    for j in Bset
+        if t_ddp == 1
+            constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
+        elseif 2 <= t_ddp <= T
+            constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
+        else
+            @error "Invalid value of t_ddp: $t_ddp"
+            return
         end
+        constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
+        μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
     end
+
+    crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
+    println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ values for t_ddp = $(t_ddp)"))
+    for j ∈ Bset
+        # println("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2))
+        println(crayon_update("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+    end
+    # end
     mu = μ
     @pack! ddpModel = mu
 
