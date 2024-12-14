@@ -6,6 +6,9 @@ using Parameters: @unpack, @pack!
 include("./computeOutputs.jl")
 using .computeOutputs
 
+include("./DDP/DDP.jl")
+using .DDP
+
 include("./functionRetriever.jl")
 using .functionRetriever
 
