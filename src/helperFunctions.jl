@@ -169,14 +169,23 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
 end
 
 
-function trim_number_for_printing(number)
+function trim_number_for_printing(number;
+    digits=nothing,
+    sigdigits=nothing)
+
+    if digits == nothing
+        digits = 4
+    end
+    if sigdigits == nothing
+        sigdigits = 5
+    end
     if number < 1
-        trimmed_number = round(number, digits=4)
+        trimmed_number = round(number, digits=digits)
     elseif number < 1e5
-        trimmed_number = round(number, sigdigits=5)
+        trimmed_number = round(number, sigdigits=sigdigits)
     else
         # Use scientific notation if the number is large
-        trimmed_number = round(number, sigdigits=5)
+        trimmed_number = round(number, sigdigits=sigdigits)
     end
 
     # Convert to string and replace decimal point with underscore
