@@ -1,4 +1,13 @@
 # everything is already loaded, just create the for loop of comparison
+
+@unpack data = modelDict
+@unpack temporal_decmp = data
+
+if !temporal_decmp
+    @error "Cannot test for DDP as it wasn't run"
+    return
+end
+
 ddpModel = modelDict
 @unpack data, modelVals, mu,modelVals_ddp_vs_t_vs_k = ddpModel
 @unpack Bset, Compset = data
