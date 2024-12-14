@@ -8,7 +8,7 @@ Revise.revise()
 systemName = "ads10_1ph"
 # systemName = "ieee123_1ph"
 # T0 = 24
-T0 = 5
+T0 = 6
 # factor = 1/8
 factor = 1
 T = Int(T0*factor) 
@@ -16,7 +16,7 @@ numAreas = 1
 temporal_decmp = false
 temporal_decmp = true
 savePlots = false
-savePlots = true
+# savePlots = true
 # objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
