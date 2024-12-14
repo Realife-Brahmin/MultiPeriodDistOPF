@@ -1,6 +1,6 @@
 module DDP 
 
-export attach_solver,
+export
     backward_pass, 
     build_ForwardStep_1ph_NL_model_t_is_1,
     build_ForwardStep_1ph_NL_model_t_in_2toTm1,
@@ -14,6 +14,7 @@ export attach_solver,
     optimize_ForwardStep_1ph_NL_model_t_is_1,
     optimize_MPOPF_1ph_NL_DDP
 
+
 include("../ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
 
@@ -22,8 +23,9 @@ import .ModelCopier as MC
 
 include("../helperFunctions.jl")
 using .helperFunctions
-# include("../playbook_of_mpopf.jl")
-# using .playbook_of_mpopf
+
+include("../SolverArranger/SolverArranger.jl")
+import .SolverArranger as SolverArranger
 
 using Crayons
 using JuMP
@@ -33,41 +35,6 @@ using Ipopt
 using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
-
-function attach_solver(model, solver_name)
-    if solver_name == "Ipopt"
-        optimizer = Ipopt.Optimizer
-        optimizer_attributes = Dict("tol" => 1e-6, "max_iter" => 10000)
-    elseif solver_name == "Gurobi"
-        optimizer = Gurobi.Optimizer
-        optimizer_attributes = Dict("TimeLimit" => 300)
-    elseif solver_name == "Juniper"
-        ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
-        optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
-        optimizer_attributes = Dict()
-    elseif solver_name == "EAGO"
-        optimizer = EAGO.Optimizer
-        optimizer_attributes = Dict()
-    elseif solver_name == "MadNLP"
-        optimizer = MadNLP.Optimizer
-        optimizer_attributes = Dict()
-    else
-        error("Unsupported solver")
-    end
-
-    # Set the optimizer for the model
-    set_optimizer(model, optimizer)
-
-    # Set optimizer attributes
-    for (attr, value) in optimizer_attributes
-        set_optimizer_attribute(model, attr, value)
-    end
-
-    # Optionally, set the model to silent if needed
-    set_silent(model)
-
-    return model
-end
 
 function backward_pass(ddpModel, model_t0;
     Tset=nothing)
@@ -131,7 +98,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel;
         @unpack solver = data;
-        model_t0 = attach_solver(model_t0, solver)
+        model_t0 =SolverArranger.attach_solver(model_t0, solver)
         # @show model_t0
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -177,7 +144,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel
         @unpack solver = data
-        model_t0 = attach_solver(model_t0, solver)
+        model_t0 =SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -228,7 +195,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel
         @unpack solver = data
-        model_t0 = attach_solver(model_t0, solver)
+        model_t0 =SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
