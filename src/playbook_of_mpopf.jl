@@ -249,12 +249,10 @@ function optimize_MPOPF_1ph_NL_DDP(data;
         ddpModel = ForwardPass(ddpModel,
         verbose=verbose)
 
-        keepForwardPassesRunning = !shouldStop(ddpModel)
-
-        if !keepForwardPassesRunning
-            converged = true
-            @pack! ddpModel = converged
-        end
+        dppModel = check_for_ddp_convergence(ddpModel)
+        
+        @unpack shouldStop = ddpModel;
+        keepForwardPassesRunning = !shouldStop
 
         k_ddp += 1
         @pack! ddpModel = k_ddp
@@ -317,6 +315,7 @@ function DDPModel(data;
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :modelVals_ddp_vs_t_vs_k=>modelVals_ddp_vs_t_vs_k,
         :mu=>mu,
+        :shouldStop => false,
         :t_ddp=>0
     )
     return ddpModel
@@ -357,21 +356,25 @@ function create_variable_dict(model)
     return var_dict
 end
 
-function shouldStop(ddpModel; verbose::Bool=false)
+function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
     @unpack Tset = data;
 
     verbose = true
+
     # Criterion 1: Check if k_ddp has crossed the maxiter threshold
     if k_ddp >= maxiter
         println("Maximum iterations reached: $k_ddp")
-        return true
+        iterLimitReached = true
+        shouldStop = true
+        @pack! ddpModel = iterLimitReached, shouldStop
+        return ddpModel
     end
 
     @show k_ddp
     if k_ddp == 1
         println("No updates to check for k_ddp = 1")
-        return false
+        return ddpModel
     end
 
     # Criterion 2: Check the magnitude of updates in the model decision variable values
@@ -400,14 +403,17 @@ function shouldStop(ddpModel; verbose::Bool=false)
                 if max_discrepancy > threshold
                     all_under_threshold = false
                     myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
-                    return false
+                    return ddpModel
                 end
             end
         end
     end
 
     myprintln(verbose, "All updates are under the threshold.")
-    return true
+    converged = true
+    shouldStop = true
+    @pack! ddpModel = converged, shouldStop
+    return ddpModel
     
 end
 
