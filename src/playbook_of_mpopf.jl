@@ -372,9 +372,9 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         return ddpModel
     end
 
-    @show k_ddp
+    # @show k_ddp
     if k_ddp == 1
-        println("No updates to check for k_ddp = 1")
+        # println("No updates to check for k_ddp = 1")
         return ddpModel
     end
 
@@ -403,7 +403,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
                 if max_discrepancy > threshold
                     all_under_threshold = false
-                    myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
+                    # myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
                     return ddpModel
                 end
             end
