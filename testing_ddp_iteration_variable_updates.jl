@@ -18,7 +18,7 @@ println("t_ddp = $t_ddp")
 for j in Bset
     values_mu = []
     for k_ddp in 1:3
-        push!(values_mu, trim_number_for_printing(μ[j, t_ddp, k_ddp]))
+        push!(values_mu, trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2))
     end
     println("j = $j: μ = ", join(values_mu, ", "))
 
