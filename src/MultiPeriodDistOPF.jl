@@ -35,7 +35,9 @@ using .openDSSValidator
 
 export @unpack,
     @pack!,
+    attach_solver,
     compute_output_values,
+    configure_solver,
     evaluate_voltage_limits,
     export_decision_variables,
     export_optimization_model,

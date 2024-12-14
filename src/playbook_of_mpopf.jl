@@ -15,6 +15,9 @@ using .helperFunctions
 include("./DDP/DDP.jl")
 using .DDP
 
+include("./SolverArranger/SolverArranger.jl")
+import .SolverArranger as SolverArranger
+
 using Crayons
 using JuMP
 using EAGO
@@ -30,7 +33,7 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
-    model = configure_solver(solver)
+    model = SolverArranger.configure_solver(solver)
 
     if Tset === nothing
         Tset = data[:Tset]
@@ -148,31 +151,6 @@ function create_variable_dict(model)
         var_dict[var_name] = value(v)
     end
     return var_dict
-end
-
-function configure_solver(solver_name)
-    if solver_name == "Ipopt"
-        model = Model(Ipopt.Optimizer)
-        set_silent(model)
-        set_optimizer_attribute(model, "tol", 1e-6)
-        set_optimizer_attribute(model, "max_iter", 10000)
-        # set_optimizer_attribute(model, "print_level", 5)
-    elseif solver_name == "Gurobi"
-        model = Model(Gurobi.Optimizer)
-        set_optimizer_attribute(model, "TimeLimit", 300)        # Limit time (in seconds)
-    elseif solver == "Juniper"
-        ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)
-        optimizer = optimizer_with_attributes(Juniper.Optimizer, "nl_solver" => ipopt)
-        model = Model(optimizer)
-    elseif solver == "EAGO"
-        model = Model(EAGO.Optimizer)
-    elseif solver == "MadNLP"
-        model = Model(MadNLP.Optimizer)
-    else
-        error("Unsupported solver")
-    end
-
-    return model
 end
 
 end # module Playbook_of_MPOPF
