@@ -59,6 +59,7 @@ export @unpack,
     plot_substation_power,
     plot_substation_power_cost,
     set_custom_load_shape!,
+    trim_number_for_printing,
     validate_opf_against_opendss
 
 end # module
