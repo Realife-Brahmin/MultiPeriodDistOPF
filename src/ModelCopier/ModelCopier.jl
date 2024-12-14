@@ -2,41 +2,13 @@ module ModelCopier
 
 export
     copy_modelVals,
+    create_variable_dict,
     ModelVals
 
 
 using JuMP
 using Ipopt
 using Parameters
-
-function ModelVals(data)
-    modelVals = Dict{Symbol,Any}()
-
-    # Extract necessary sets from data
-    Tset = data[:Tset]
-    Bset = data[:Bset]
-    Dset = data[:Dset]
-    Lset = data[:Lset]
-    Nset = data[:Nset]
-
-    # Initialize containers for each variable
-    modelVals[:P_Subs] = Dict{Int,Float64}()  # t => value
-    modelVals[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()  # (i, j), t => value
-    modelVals[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
-    modelVals[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
-    modelVals[:v] = Dict{Tuple{Int,Int},Float64}() 
-    modelVals[:q_D] = Dict{Tuple{Int,Int},Float64}()
-    modelVals[:q_B] = Dict{Tuple{Int,Int},Float64}()
-    modelVals[:P_c] = Dict{Tuple{Int,Int},Float64}()
-    modelVals[:P_d] = Dict{Tuple{Int,Int},Float64}()
-    modelVals[:B] = Dict{Tuple{Int,Int},Float64}()
-
-    modelVals[:termination_status_vs_t] = Dict{Int,Any}()
-    modelVals[:solve_time_vs_t] = Dict{Int,Float64}()
-    modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
-
-    return modelVals
-end
 
 function copy_modelVals(modelDict, model_Tset;
     Tset=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
@@ -110,6 +82,44 @@ function copy_modelVals(modelDict, model_Tset;
     
     @pack! modelDict = modelVals;
     return modelDict
+end
+
+function create_variable_dict(model)
+    var_dict = Dict{Symbol,Float64}()
+    for v in all_variables(model)
+        var_name = Symbol(name(v))
+        var_dict[var_name] = value(v)
+    end
+    return var_dict
+end
+
+function ModelVals(data)
+    modelVals = Dict{Symbol,Any}()
+
+    # Extract necessary sets from data
+    Tset = data[:Tset]
+    Bset = data[:Bset]
+    Dset = data[:Dset]
+    Lset = data[:Lset]
+    Nset = data[:Nset]
+
+    # Initialize containers for each variable
+    modelVals[:P_Subs] = Dict{Int,Float64}()  # t => value
+    modelVals[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()  # (i, j), t => value
+    modelVals[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals[:v] = Dict{Tuple{Int,Int},Float64}() 
+    modelVals[:q_D] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:q_B] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:P_c] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:P_d] = Dict{Tuple{Int,Int},Float64}()
+    modelVals[:B] = Dict{Tuple{Int,Int},Float64}()
+
+    modelVals[:termination_status_vs_t] = Dict{Int,Any}()
+    modelVals[:solve_time_vs_t] = Dict{Int,Float64}()
+    modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
+
+    return modelVals
 end
 
 end

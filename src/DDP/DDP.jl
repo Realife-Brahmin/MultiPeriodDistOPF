@@ -252,8 +252,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
         # Create dictionaries for current and previous models
-        var_dict_current = create_variable_dict(model_current)
-        var_dict_previous = create_variable_dict(model_previous)
+        var_dict_current = MC.create_variable_dict(model_current)
+        var_dict_previous = MC.create_variable_dict(model_previous)
 
         for var_name in keys(var_dict_current)
             if haskey(var_dict_previous, var_name)
