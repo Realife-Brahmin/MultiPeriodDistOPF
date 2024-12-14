@@ -4,6 +4,11 @@ export
     copy_modelVals,
     ModelVals
 
+
+using JuMP
+using Ipopt
+using Parameters
+
 function ModelVals(data)
     modelVals = Dict{Symbol,Any}()
 
