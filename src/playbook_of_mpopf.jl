@@ -247,7 +247,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel;
         myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
-        ddpModel = ForwardPass(ddpModel,
+        ddpModel = forward_pass(ddpModel,
         verbose=verbose)
 
         dppModel = check_for_ddp_convergence(ddpModel)
@@ -322,7 +322,7 @@ function DDPModel(data;
     return ddpModel
 end
 
-function ForwardPass(ddpModel;
+function forward_pass(ddpModel;
     verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel;
