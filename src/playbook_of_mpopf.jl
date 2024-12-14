@@ -30,7 +30,7 @@ using Parameters: @unpack, @pack!
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     Tset = data[:Tset] # In this case, Tset = [1, 2, ... T]
-    modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
+    modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
 
     @unpack model, data = modelDict
     optimize!(model)
