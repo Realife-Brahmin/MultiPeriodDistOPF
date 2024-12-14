@@ -90,7 +90,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [1]
-        modelDict = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
+        modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
         model_t0 = modelDict[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
@@ -135,7 +135,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
-        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
@@ -186,7 +186,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [T]
-        modelDict_t0 = build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
+        modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
     elseif k_ddp >= 2
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
