@@ -1,8 +1,7 @@
 # optimizer.jl
 module Playbook_of_MPOPF
 
-export optimize_MPOPF_1ph_NL_DDP,
-    optimize_MPOPF_1ph_NL_TemporallyBruteforced
+export optimize_MPOPF_1ph_NL_TemporallyBruteforced
 
 include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
