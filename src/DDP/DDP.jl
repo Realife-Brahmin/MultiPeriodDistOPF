@@ -17,6 +17,9 @@ export attach_solver,
 include("../ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
 
+include("../ModelCopier/ModelCopier.jl")
+import .ModelCopier as MC
+
 include("../helperFunctions.jl")
 using .helperFunctions
 # include("../playbook_of_mpopf.jl")
@@ -421,7 +424,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     Tset = [t_ddp]
     # @unpack modelDict = ddpModel;
-    ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
@@ -471,7 +474,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
     Tset = [t_ddp]
-    ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
@@ -521,7 +524,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
     Tset = [t_ddp]
-    ddpModel = copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
@@ -587,7 +590,7 @@ function DDPModel(data;
     modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
-    modelVals = ModelVals(data)
+    modelVals = MC.ModelVals(data)
     # Initialize mu[j, t_ddp, 0/-1] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[j, t_ddp, 0] = 0.0
