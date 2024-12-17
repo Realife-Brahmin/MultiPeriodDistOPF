@@ -18,6 +18,9 @@ using .DDP
 include("./SolverArranger/SolverArranger.jl")
 import .SolverArranger as SolverArranger
 
+include("./Exporter.jl")
+import .Exporter as Exporter
+
 using Crayons
 using JuMP
 using EAGO
@@ -57,6 +60,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     # optimal_obj_value = objective_value(model)
     optimal_obj_value = modelVals[:objective_value]
     println("Optimal objective function value: ", optimal_obj_value)
+    
+    Exporter.export_optimization_model(modelDict, verbose=false)
     
     return modelDict
 
