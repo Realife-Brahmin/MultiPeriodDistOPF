@@ -16,7 +16,19 @@ using .helperFunctions: myprintln  # Import myprintln from the helperFunctions m
 
 function export_optimization_model(modelDict;
     verbose::Bool=false)
-    @unpack model, data = modelDict;
+    @unpack data = modelDict;
+    @unpack temporal_decmp = data;
+    ddp_appendix = ""
+    if !temporal_decmp
+        @unpack model = modelDict;
+    elseif temporal_decmp
+        ddpModel = modelDict
+        @unpack model_t0, t_ddp, k_ddp = ddpModel;
+        model = model_t0
+        ddp_appendix = "_forward_step_t_$(t_ddp)_k_$(k_ddp)"
+    else
+        @error "temporal_decmp must be either true or false"     
+    end
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
@@ -28,7 +40,7 @@ function export_optimization_model(modelDict;
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix).txt")
+    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
 
     # Check if the file already exists, and delete it if so
     if isfile(filename)
@@ -40,7 +52,7 @@ function export_optimization_model(modelDict;
         print(f, model)
     end
 
-    myprintln(verbose, "Model successfully written to $filename")
+    # myprintln(verbose, "Model successfully written to $filename")
 end
 
 function export_decision_variables(modelDict;
