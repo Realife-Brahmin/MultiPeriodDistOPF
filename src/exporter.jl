@@ -23,7 +23,8 @@ function export_optimization_model(modelDict;
         @unpack model = modelDict;
     elseif temporal_decmp
         ddpModel = modelDict
-        @unpack model_t0, t_ddp, k_ddp = ddpModel;
+        @unpack models_ddp_vs_t_vs_k, t_ddp, k_ddp = ddpModel;
+        model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model = model_t0
         ddp_appendix = "_forward_step_t_$(t_ddp)_k_$(k_ddp)"
     else
