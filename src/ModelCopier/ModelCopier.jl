@@ -9,6 +9,15 @@ using JuMP
 using Ipopt
 using Parameters
 
+#region copy_modelVals
+"""
+    copy_modelVals(modelDict, model_Tset; Tset=nothing)
+
+Copy the values of decision variables from the optimization model to modelVals.
+
+This function extracts the values of decision variables from `model_Tset` and stores them in `modelVals` within `modelDict`.
+It handles different sets of variables and updates the objective value, termination status, and solve time.
+"""
 function copy_modelVals(modelDict, model_Tset;
     Tset=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
 
@@ -82,7 +91,16 @@ function copy_modelVals(modelDict, model_Tset;
     @pack! modelDict = modelVals;
     return modelDict
 end
+#endregion
 
+#region create_variable_dict
+"""
+    create_variable_dict(model)
+
+Create a dictionary of variable names and their values from the optimization model.
+
+This function iterates over all variables in the given `model` and creates a dictionary mapping variable names to their values.
+"""
 function create_variable_dict(model)
     var_dict = Dict{Symbol,Float64}()
     for v in all_variables(model)
@@ -91,7 +109,16 @@ function create_variable_dict(model)
     end
     return var_dict
 end
+#endregion
 
+#region ModelVals
+"""
+    ModelVals(data)
+
+Initialize a dictionary to store the values of decision variables.
+
+This function creates and initializes a dictionary `modelVals` to store the values of various decision variables and other related information.
+"""
 function ModelVals(data)
     modelVals = Dict{Symbol,Any}()
 
@@ -120,5 +147,6 @@ function ModelVals(data)
 
     return modelVals
 end
+#endregion
 
 end
