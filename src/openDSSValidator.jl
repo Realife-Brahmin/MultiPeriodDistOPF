@@ -1,16 +1,18 @@
 module openDSSValidator
 
-export export_validation_decision_variables, 
+export 
     compute_highest_allTime_voltage_discrepancy,
+    export_validation_decision_variables, 
     get_battery_powers_opendss_powerflow_for_timestep_t,
     get_load_powers_opendss_powerflow_for_timestep_t,
     get_pv_powers_opendss_powerflow_for_timestep_t,
     get_source_bus, 
     get_substation_lines, 
     get_terminal_soc_values_opendss_powerflow,
-    get_voltages_opendss_powerflow_for_timestep_t, 
+    get_voltages_opendss_powerflow_for_timestep_t,
+    set_battery_controls_opendss_powerflow_for_timestep_t,
     set_custom_load_shape!, 
-    set_battery_controls_opendss_powerflow_for_timestep_t, set_pv_controls_opendss_powerflow_for_timestep_t,
+    set_pv_controls_opendss_powerflow_for_timestep_t,
     validate_opf_against_opendss
 
 using CSV
