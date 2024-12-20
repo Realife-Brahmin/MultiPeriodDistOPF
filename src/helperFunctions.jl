@@ -7,7 +7,7 @@ export
     myprintln, 
     trim_number_for_printing
 
-#region Documentation for myprintln
+#region myprintln
 """
     myprintln(verbose::Bool, msg::String)
 
@@ -17,14 +17,14 @@ Prints a message to the console if the `verbose` flag is set to `true`.
 - `verbose::Bool`: A flag indicating whether to print the message.
 - `msg::String`: The message to be printed.
 """
-#endregion
 function myprintln(verbose::Bool, msg::String)
     if verbose
         println(msg)
     end
 end
+#endregion
 
-#region Documentation for generateBinaryLoadShape
+#region generateBinaryLoadShape
 """
     generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSubsCostDefault.dss",
                             hi::Union{Float64,Nothing}=nothing,
@@ -52,7 +52,6 @@ Generate a binary load shape cost array.
 # Description
 This function reads a load shape file and generates a binary load shape cost array with specified high and low cost values. It supports subsampling or supersampling the load shape data to match the desired number of time steps (`T`). The function also allows specifying the fraction of time steps to be considered as peak hours, and assigns the high cost value to those peak hours.
 """
-#endregion
 function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSubsCostDefault.dss",
     hi::Union{Float64,Nothing}=nothing,
     lo::Union{Float64,Nothing}=nothing,
@@ -158,7 +157,24 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
 
     return costData
 end
+#endregion
 
+#region generateLoadShape
+"""
+    generateLoadShape(T::Int; filenameLoadShape::String=nothing)
+
+Generate a load shape array.
+
+# Arguments
+- `T::Int`: The number of time steps.
+- `filenameLoadShape::String`: The name of the load shape file. Default is `LoadShapePVDefault.dss`.
+
+# Returns
+- `Vector{Float64}`: The generated load shape array.
+
+# Description
+This function reads a load shape file and generates a load shape array. It supports subsampling or supersampling the load shape data to match the desired number of time steps (`T`).
+"""
 function generateLoadShape(T::Int; filenameLoadShape=nothing)
     wd = @__DIR__
 
@@ -211,8 +227,25 @@ function generateLoadShape(T::Int; filenameLoadShape=nothing)
     LoadShapeLoad = [Float64(x) for x in LoadShape] # a patch for T>24 where the resultant returned vector is Vector{Any} instead of Vector{Float64}
     return LoadShapeLoad
 end
+#endregion
 
+#region trim_number_for_printing
+"""
+    trim_number_for_printing(number; digits=nothing, sigdigits=nothing)
 
+Trim a number for printing.
+
+# Arguments
+- `number`: The number to be trimmed.
+- `digits`: The number of decimal digits to keep. Default is 4.
+- `sigdigits`: The number of significant digits to keep. Default is 5.
+
+# Returns
+- `String`: The trimmed number as a string.
+
+# Description
+This function trims a number to a specified number of decimal digits or significant digits for printing.
+"""
 function trim_number_for_printing(number;
     digits=nothing,
     sigdigits=nothing)
@@ -236,5 +269,6 @@ function trim_number_for_printing(number;
     formatted_number = string(trimmed_number)
     return replace(formatted_number, "." => "_")
 end
+#endregion
 
-end # helperFunctions module
+end # module helperFunctions
