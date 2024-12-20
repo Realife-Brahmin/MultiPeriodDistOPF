@@ -1,8 +1,8 @@
-# parseSystemSimulationData.jl
-
 module parseSystemSimulationData
 
-export parse_system_simulation_data, post_process_data
+export 
+    parse_system_simulation_data, 
+    post_process_data
 
 using Parameters: @unpack, @pack!
 
@@ -196,4 +196,4 @@ function post_process_data(data)
     return data
 end
 
-end # module
+end # module parseSystemSimulationData
