@@ -55,8 +55,6 @@ begin
     verbose = false
     # verbose = true
 
-    # export_optimization_model(modelDict, verbose=verbose) # temporarily retired as ddp will not have an equivalent unified model to write out
-
     modelDict = compute_output_values(modelDict, verbose=verbose)
     # @unpack data = modelDict
 
