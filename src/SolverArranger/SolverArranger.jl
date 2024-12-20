@@ -11,6 +11,15 @@ using Ipopt
 using Juniper
 using MadNLP
 
+#region attach_solver
+"""
+    attach_solver(model, solver_name)
+
+Attach the specified solver to the optimization model.
+
+This function sets the optimizer for the given `model` based on the `solver_name`. 
+It configures the optimizer attributes and sets the model to silent mode if needed.
+"""
 function attach_solver(model, solver_name)
     if solver_name == "Ipopt"
         optimizer = Ipopt.Optimizer
@@ -45,7 +54,17 @@ function attach_solver(model, solver_name)
 
     return model
 end
+#endregion
 
+#region configure_solver
+"""
+    configure_solver(solver_name)
+
+Configure and return an optimization model with the specified solver.
+
+This function creates and configures an optimization model based on the `solver_name`. 
+It sets the optimizer attributes and returns the configured model.
+"""
 function configure_solver(solver_name)
     if solver_name == "Ipopt"
         model = Model(Ipopt.Optimizer)
@@ -70,5 +89,6 @@ function configure_solver(solver_name)
 
     return model
 end
+#endregion
 
 end # module
