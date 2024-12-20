@@ -3,6 +3,23 @@ module evaluateVoltageLimits
 
 export evaluate_voltage_limits
 
+#region evaluate_voltage_limits
+"""
+    evaluate_voltage_limits(load_data, pv_data, battery_data)
+
+Evaluate the voltage limits for a given set of load, PV, and battery data.
+
+This function calculates the most restrictive voltage limits for each bus in the combined set of load, PV, and battery components. 
+It determines the highest lower limit and the lowest upper limit for each bus.
+
+# Arguments
+- `load_data::Dict`: A dictionary containing load data, including voltage limits.
+- `pv_data::Dict`: A dictionary containing PV data, including voltage limits.
+- `battery_data::Dict`: A dictionary containing battery data, including voltage limits.
+
+# Returns
+- `component_data::Dict`: A dictionary containing the combined component set and the calculated voltage limits.
+"""
 function evaluate_voltage_limits(load_data, pv_data, battery_data)
     # Create Compset as the union of the sets from the three components
     Compset = union(load_data[:NLset], pv_data[:Dset], battery_data[:Bset])
@@ -37,5 +54,6 @@ function evaluate_voltage_limits(load_data, pv_data, battery_data)
 
     return component_data
 end
+#endregion
 
-end # module
+end # module evaluateVoltageLimits
