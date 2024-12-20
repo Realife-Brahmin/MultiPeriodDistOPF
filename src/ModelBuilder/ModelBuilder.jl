@@ -44,6 +44,45 @@ import .SolverArranger as SolverArranger
 
 using Parameters
 
+#region build_MPOPF_1ph_NL_model_t_in_Tset
+"""
+    build_MPOPF_1ph_NL_model_t_in_Tset(data; Tset=nothing)
+
+Build the Multi-Period Optimal Power Flow (MPOPF) model for a single-phase network with nonlinear loads over a given time set.
+
+This function constructs the MPOPF model by defining the optimization variables, constraints, and objective function. 
+It handles various aspects of the model, including solver configuration, variable initialization, and constraint setup.
+
+# Arguments
+- `data::Dict`: A dictionary containing all necessary data and parameters for the model.
+- `Tset::Union{Nothing, Vector{Int}}`: An optional vector specifying the time steps to consider. If not provided, it defaults to the full time set in `data`.
+
+# Returns
+- `modelDict::Dict`: A dictionary containing the constructed model, data, and model values.
+
+# Steps
+1. **Solver Configuration**: Configures the solver based on the provided data.
+2. **Variable Definition**: Defines the optimization variables for the model.
+3. **Constraint Setup**: Sets up various constraints, including:
+    - Substation node real power balance
+    - Non-substation node real power balance
+    - Non-substation node reactive power balance
+    - KVL constraints for substation and non-substation branches
+    - BCPF constraints for substation and non-substation branches
+    - Battery SOC trajectory equality constraints
+    - Fixed substation voltage constraints
+    - Voltage limits constraints
+    - Reactive power limits for PV and battery inverters
+    - Charging and discharging power limits for batteries
+    - SOC limits for batteries
+4. **Objective Function Definition**: Defines the objective function for the model, considering substation power cost minimization, line loss minimization, and optionally SOC discrepancies.
+5. **Variable Initialization**: Initializes the variables for the model.
+
+# Nuances
+- The function handles different sets of variables and constraints based on the provided data.
+- It includes optional terminal SOC constraints if `tSOC_hard` is true.
+- The function ensures that the model is properly packed and returned with all necessary components.
+"""
 function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     Tset=nothing)
 
@@ -124,5 +163,6 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
 
     return modelDict
 end
+#endregion
 
-end
+end # module ModelBuilder
