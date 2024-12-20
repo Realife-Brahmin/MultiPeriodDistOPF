@@ -22,6 +22,12 @@ common_marker_face = :circle
 common_marker_stroke_color = :black
 common_marker_stroke_width = 2.0
 
+#region plot_battery_actions
+"""
+    plot_battery_actions(modelDict; showPlots::Bool=false, savePlots::Bool=true, macroItrNum::Int=1, verbose::Bool=false)
+
+Plot battery charging, discharging, and state of charge (SOC) actions.
+"""
 function plot_battery_actions(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
@@ -141,8 +147,14 @@ function plot_battery_actions(modelDict;
 
     end
 end
+#endregion
 
-# Function to plot Substation Power over time
+#region plot_substation_power
+"""
+    plot_substation_power(modelDict; showPlots::Bool=false, savePlots::Bool=true, macroItrNum::Int=1, verbose::Bool=false)
+
+Plot substation power over time.
+"""
 function plot_substation_power(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
@@ -211,7 +223,14 @@ function plot_substation_power(modelDict;
         savefig(outputPlot, filename)
     end
 end
+#endregion
 
+#region plot_substation_power_cost
+"""
+    plot_substation_power_cost(modelDict; showPlots::Bool=false, savePlots::Bool=true, macroItrNum::Int=1, verbose::Bool=false)
+
+Plot substation power cost over time.
+"""
 function plot_substation_power_cost(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
@@ -271,7 +290,14 @@ function plot_substation_power_cost(modelDict;
         savefig(outputPlot, filename)
     end
 end
+#endregion
 
+#region plot_line_losses
+"""
+    plot_line_losses(modelDict; showPlots::Bool=false, savePlots::Bool=true, macroItrNum::Int=1, verbose::Bool=false)
+
+Plot line losses over time.
+"""
 function plot_line_losses(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
@@ -335,7 +361,14 @@ function plot_line_losses(modelDict;
         savefig(outputPlot, filename)
     end
 end
+#endregion
 
+#region plot_input_forecast_curves
+"""
+    plot_input_forecast_curves(data; showPlots::Bool=false, savePlots::Bool=true, filename::String="input_forecast_curves.png", filenameSuffix::String="nonspecific", verbose::Bool=false)
+
+Plot input forecast curves for load, PV, and cost.
+"""
 function plot_input_forecast_curves(data; showPlots::Bool=false, savePlots::Bool=true, filename::String="input_forecast_curves.png",
 filenameSuffix::String="nonspecific", verbose::Bool=false)
 
@@ -431,5 +464,6 @@ filenameSuffix::String="nonspecific", verbose::Bool=false)
         savefig(outputPlot, filename)
     end
 end
+#endregion
 
 end  # module Plotter
