@@ -27,24 +27,6 @@ using JuMP
 # import JuMP: value, solve_time  # Importing JuMP's value function to extract values from the modelVals
 using Parameters: @unpack  # For easier unpacking of parameters from data
 
-# # Function to get real power losses from a modelVals
-# function get_loss_real_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Lset, rdict_pu, kVA_B = data
-#     P = modelVals[:P]
-#     l = modelVals[:l]
-
-#     if horizon == "1toT"
-#         loss_real_power_vs_t_1toT_kW = [kVA_B * sum(rdict_pu[i, j] * l[(i, j, t]) for (i, j) in Lset) for t in Tset]
-#         return loss_real_power_vs_t_1toT_kW
-#     elseif horizon == "allT"
-#         loss_real_power_allT_kW = kVA_B * sum(rdict_pu[i, j] * l[(i, j, t]) for (i, j) in Lset, t in Tset)
-#         return loss_real_power_allT_kW
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
-
 # Function to get real power losses from modelVals
 function get_loss_real_power(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -62,24 +44,6 @@ function get_loss_real_power(modelDict; horizon::String="allT")
         error("Specify either '1toT' or 'allT'")
     end
 end
-
-# # Function to get reactive power losses from a modelVals
-# function get_loss_reactive_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Lset, xdict_pu, kVA_B = data
-#     Q = modelVals[:Q]
-#     l = modelVals[:l]
-
-#     if horizon == "1toT"
-#         loss_reactive_power_vs_t_1toT_kVAr = [kVA_B * sum(xdict_pu[i, j] * l[(i, j, t]) for (i, j) in Lset) for t in Tset]
-#         return loss_reactive_power_vs_t_1toT_kVAr
-#     elseif horizon == "allT"
-#         loss_reactive_power_allT_kVAr = kVA_B * sum(xdict_pu[i, j] * l[(i, j, t]) for (i, j) in Lset, t in Tset)
-#         return loss_reactive_power_allT_kVAr
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 
 # Function to get reactive power losses from modelVals
 function get_loss_reactive_power(modelDict; horizon::String="allT")
@@ -99,26 +63,6 @@ function get_loss_reactive_power(modelDict; horizon::String="allT")
     end
 end
 
-# # Function to get substation reactive power in kVAr
-# function get_substation_reactive_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, L1set, kVA_B = data
-#     Q = modelVals[:Q]
-
-#     if horizon == "1toT"
-#         # Compute reactive power at the substation for each time step as the sum of Q values in L1set
-#         substation_reactive_power_vs_t_1toT_kVAr = [
-#             kVA_B * sum(Q[(i, j, t]) for (i, j) in L1set) for t in Tset
-#         ]
-#         return substation_reactive_power_vs_t_1toT_kVAr
-#     elseif horizon == "allT"
-#         # Compute total reactive power at the substation over all time steps
-#         substation_reactive_power_allT_kVAr = kVA_B * sum(Q[(i, j, t]) for (i, j) in L1set, t in Tset)
-#         return substation_reactive_power_allT_kVAr
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 # Function to get substation reactive power in kVAr from modelVals
 function get_substation_reactive_power(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -140,22 +84,6 @@ function get_substation_reactive_power(modelDict; horizon::String="allT")
     end
 end
 
-# # Function to get substation power in kW
-# function get_substation_real_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, kVA_B = data
-#     P_Subs = modelVals[:P_Subs]
-
-#     if horizon == "1toT"
-#         substation_real_power_vs_t_1toT_kW = [P_Subs[t] * kVA_B for t in Tset]
-#         return substation_real_power_vs_t_1toT_kW
-#     elseif horizon == "allT"
-#         substation_real_power_allT_kW = sum(P_Subs[t] * kVA_B for t in Tset)
-#         return substation_real_power_allT_kW
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 # Function to get substation power in kW from modelVals
 function get_substation_real_power(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -173,22 +101,6 @@ function get_substation_real_power(modelDict; horizon::String="allT")
     end
 end
 
-# # Function to get substation power cost in dollars
-# function get_substation_power_cost(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, LoadShapeCost, delta_t, kVA_B = data
-#     P_Subs = modelVals[:P_Subs]
-
-#     if horizon == "1toT"
-#         substation_power_cost_vs_t_1toT_dollar = [LoadShapeCost[t] * P_Subs[t] * kVA_B * delta_t for t in Tset]
-#         return substation_power_cost_vs_t_1toT_dollar
-#     elseif horizon == "allT"
-#         substation_power_cost_allT_dollar = sum(LoadShapeCost[t] * P_Subs[t] * kVA_B * delta_t for t in Tset)
-#         return substation_power_cost_allT_dollar
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 # Function to get substation power cost in dollars from modelVals
 function get_substation_power_cost(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -206,23 +118,6 @@ function get_substation_power_cost(modelDict; horizon::String="allT")
     end
 end
 
-# # Function to get SCD (State of Charge Difference) in kW
-# function get_scd(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Bset, kVA_B = data
-#     P_c = modelVals[:P_c]
-#     P_d = modelVals[:P_d]
-
-#     if horizon == "1toT"
-#         scd_vs_t_1toT_kW = [kVA_B * sum(max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t]) for j in Bset) for t in Tset]
-#         return scd_vs_t_1toT_kW
-#     elseif horizon == "allT"
-#         scd_allT_kW = kVA_B * sum(max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t]) for j in Bset, t in Tset)
-#         return scd_allT_kW
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 # Function to get SCD (State of Charge Difference) in kW from modelVals
 function get_scd(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -241,15 +136,6 @@ function get_scd(modelDict; horizon::String="allT")
     end
 end
 
-# # Function to get terminal SOC violation in kWh
-# function get_terminal_SOC_violation(modelDict)
-#     @unpack modelVals, data = modelDict
-#     @unpack T, Bset, Bref_pu, kVA_B = data
-#     B = modelVals[:B]
-
-#     soc_violation_kWh = kVA_B * sum(abs(B[j, T] - Bref_pu[j]) for j in Bset)
-#     return soc_violation_kWh
-# end
 # Function to get terminal SOC violation in kWh from modelVals
 function get_terminal_SOC_violation(modelDict)
     @unpack modelVals, data = modelDict
@@ -260,28 +146,6 @@ function get_terminal_SOC_violation(modelDict)
     return soc_violation_kWh
 end
 
-# # Function to get any variable from the modelVals (does not depend on horizon)
-# function get_variable(modelVals, variable_name::Symbol)
-#     return modelVals[variable_name]  # Fetch the variable using its symbol
-# end
-
-# # Function to get total battery real power in kW (P_d - P_c)
-# function get_battery_real_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Bset, kVA_B = data
-#     P_c = modelVals[:P_c]
-#     P_d = modelVals[:P_d]
-
-#     if horizon == "1toT"
-#         battery_real_power_vs_t_1toT_kW = [kVA_B * sum(P_d[j, t] - P_c[j, t] for j in Bset) for t in Tset]
-#         return battery_real_power_vs_t_1toT_kW
-#     elseif horizon == "allT"
-#         battery_real_power_allT_kW = kVA_B * sum(P_d[j, t] - P_c[j, t] for j in Bset, t in Tset)
-#         return battery_real_power_allT_kW
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 # Function to get total battery real power in kW (P_d - P_c)
 function get_battery_real_power(modelDict; horizon::String="allT")
     @unpack modelVals, data = modelDict
@@ -299,23 +163,6 @@ function get_battery_real_power(modelDict; horizon::String="allT")
         error("Specify either '1toT' or 'allT'")
     end
 end
-
-# # Function to get total battery reactive power in kVAr
-# function get_battery_reactive_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Bset, kVA_B = data
-#     q_B = modelVals[:q_B]
-
-#     if horizon == "1toT"
-#         battery_reactive_power_vs_t_1toT_kVAr = [kVA_B * sum(q_B[j, t] for j in Bset) for t in Tset]
-#         return battery_reactive_power_vs_t_1toT_kVAr
-#     elseif horizon == "allT"
-#         battery_reactive_power_allT_kVAr = kVA_B * sum(q_B[j, t] for j in Bset, t in Tset)
-#         return battery_reactive_power_allT_kVAr
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 
 # Function to get total battery reactive power in kVAr from modelVals
 function get_battery_reactive_power(modelDict; horizon::String="allT")
@@ -349,23 +196,6 @@ function get_pv_real_power(modelDict; horizon::String="allT")
         error("Specify either '1toT' or 'allT'")
     end
 end
-
-# # Function to get total PV reactive power in kVAr (q_D from the modelVals)
-# function get_pv_reactive_power(modelDict; horizon::String="allT")
-#     @unpack modelVals, data = modelDict
-#     @unpack Tset, Dset, kVA_B = data
-#     q_D = modelVals[:q_D]
-
-#     if horizon == "1toT"
-#         pv_reactive_power_vs_t_1toT_kVAr = [kVA_B * sum(q_D[j, t] for j in Dset) for t in Tset]
-#         return pv_reactive_power_vs_t_1toT_kVAr
-#     elseif horizon == "allT"
-#         pv_reactive_power_allT_kVAr = kVA_B * sum(q_D[j, t] for j in Dset, t in Tset)
-#         return pv_reactive_power_allT_kVAr
-#     else
-#         error("Specify either '1toT' or 'allT'")
-#     end
-# end
 
 # Function to get total PV reactive power in kVAr (q_D from modelVals)
 function get_pv_reactive_power(modelDict; horizon::String="allT")
