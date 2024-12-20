@@ -14,6 +14,15 @@ using Parameters: @unpack
 include("./helperFunctions.jl")
 using .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
 
+#region export_optimization_model
+"""
+    export_optimization_model(modelDict; verbose::Bool=false)
+
+Export the optimization model's decision variables and results.
+
+This function extracts the optimization model from `modelDict` and exports its decision variables and results. 
+If temporal decomposition is enabled, it handles the forward step and appends the appropriate suffix to the filenames.
+"""
 function export_optimization_model(modelDict;
     verbose::Bool=false)
     @unpack data = modelDict;
@@ -55,7 +64,16 @@ function export_optimization_model(modelDict;
 
     # myprintln(verbose, "Model successfully written to $filename")
 end
+#endregion
 
+#region export_decision_variables
+"""
+    export_decision_variables(modelDict; verbose::Bool=false)
+
+Export the decision variables of the optimization model to CSV files.
+
+This function extracts the decision variables from `modelDict` and writes them to CSV files for further analysis.
+"""
 function export_decision_variables(modelDict;
     filename::String="decision_variables.csv",
     verbose::Bool=false)
@@ -182,7 +200,16 @@ function export_decision_variables(modelDict;
 
     myprintln(verbose, "Decision variables exported to $filename")
 end
+#endregion
 
+#region export_simulation_key_results_txt
+"""
+    export_simulation_key_results_txt(modelDict; verbose::Bool=false)
+
+Export key results of the simulation to a text file.
+
+This function extracts key results from `modelDict` and writes them to a text file for documentation and review.
+"""
 function export_simulation_key_results_txt(modelDict; filename::String="simulation_results.txt", verbose::Bool=false)
 
     @unpack data = modelDict;
@@ -287,7 +314,18 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
 
     myprintln(verbose, "Simulation key results exported to $filename")
 end
+#endregion
 
+#region export_validation_decision_variables
+"""
+    export_validation_decision_variables(modelDict; verbose::Bool=false)
+
+Export the decision variables from the OpenDSS powerflow validation of the optimization's suggested control actions.
+
+This function extracts the decision variables from `modelDict` and writes them to CSV files specifically for validation purposes.
+The 'validation' involves using the 'control actions' stored in `modelDict` in an OpenDSS powerflow simulation, 
+and checking if the resulting powerflow state variables match those solved by the optimizer.
+"""
 function export_validation_decision_variables(modelDict; verbose::Bool=false)
 
     @unpack valdVals, data = modelDict
@@ -315,7 +353,14 @@ function export_validation_decision_variables(modelDict; verbose::Bool=false)
         println("Validation decision variables written to $filename")
     end
 end
+#endregion
 
+#region export_validation_key_results
+"""
+    export_validation_key_results(modelDict; verbose::Bool=false)
+
+Export key results obtained from validating the Optimization results against OpenDSS powerflow results.
+"""
 function export_validation_key_results(modelDict; filename::String="validation_results.txt", verbose::Bool=false,
     printEveryTimeStepPowerflow::Bool=true)
     @unpack valdVals, data = modelDict
@@ -426,5 +471,6 @@ function export_validation_key_results(modelDict; filename::String="validation_r
         println("Validation key results exported to $filename")
     end
 end
+#endregion
 
 end  # module Exporter
