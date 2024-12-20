@@ -1,5 +1,3 @@
-# parseBranchData.jl
-
 module parseBranchData
 
 export parse_branch_data
@@ -7,6 +5,55 @@ export parse_branch_data
 include("../helperFunctions.jl")
 using .helperFunctions: myprintln
 
+#region parse_branch_data
+"""
+    parse_branch_data(systemName::String; kVA_B=1000, kV_B=2.4018, Z_B=5.768643240000001, verbose::Bool=false)
+
+Parse branch data from the BranchData.dss file for a given system.
+
+This function reads and parses the BranchData.dss file for the specified system, extracting relevant branch data and initializing various parameters. 
+It handles the extraction of branch properties such as resistance, reactance, and connectivity information.
+
+# Arguments
+- `systemName::String`: The name of the system for which to parse branch data.
+- `kVA_B::Float64`: The base power in kVA for per-unit calculations (default: 1000).
+- `kV_B::Float64`: The base voltage in kV for per-unit calculations (default: 2.4018).
+- `Z_B::Union{Nothing, Float64}`: The base impedance for per-unit calculations. If not provided, it is calculated using `kVA_B` and `kV_B` (default: 5.768643240000001).
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `branchData::Dict`: A dictionary containing the parsed branch data, including:
+    - `Nset`: Set of all bus numbers.
+    - `Lset`: Set of branches (edges).
+    - `rdict`: Resistance of each branch.
+    - `xdict`: Reactance of each branch.
+    - `rdict_pu`: Per-unit resistance of each branch.
+    - `xdict_pu`: Per-unit reactance of each branch.
+    - `parent`: Parent node of each node.
+    - `children`: Children nodes of each node.
+    - `N`: Total number of buses.
+    - `m`: Total number of branches.
+    - `N1set`: Substation node (bus 1).
+    - `Nm1set`: Buses not including substation bus (1).
+    - `Nc1set`: Buses connected to substation bus (1).
+    - `Nnc1set`: Buses not connected to substation bus (1).
+    - `L1set`: Branches where one node is the substation (1).
+    - `Lm1set`: Branches where no node is the substation (1).
+    - `N1`: Number of substation nodes.
+    - `Nm1`: Number of buses not including substation bus.
+    - `Nc1`: Number of buses connected to substation bus.
+    - `Nnc1`: Number of buses not connected to substation bus.
+    - `m1`: Number of branches where one node is the substation.
+    - `mm1`: Number of branches where no node is the substation.
+
+# Steps
+1. **Base Impedance Calculation**: Ensures that the base impedance `Z_B` is set to a valid value based on `kVA_B` and `kV_B`.
+2. **File Reading**: Reads the BranchData.dss file for the specified system.
+3. **Data Extraction**: Extracts branch properties such as resistance, reactance, and connectivity information.
+4. **Data Initialization**: Initializes various parameters and dictionaries to store the extracted data.
+5. **Verbose Output**: Optionally prints detailed information about the parsing process if `verbose` is true.
+6. **Return Data**: Returns a dictionary containing the parsed branch data.
+"""
 function parse_branch_data(systemName::String;
     kVA_B = 1000,
     kV_B = 2.4018,
@@ -214,6 +261,6 @@ function parse_branch_data(systemName::String;
     return branchData
 
 end
+#endregion
 
-
-end # module
+end # module parseBranchData
