@@ -6,6 +6,41 @@ export
 
 using Parameters: @unpack, @pack!
 
+#region parse_system_simulation_data
+"""
+    parse_system_simulation_data(systemName::String, T::Int; numAreas=1, alpha=1e-3, gamma=1e-3, kVA_B=1000, objfun0="genCostMin", objfun2="scd", temporal_decmp=false, PSubsMax_kW=Inf, inputForecastDescription="nonspecific", solver="Ipopt", tSOC_hard=true)
+
+Parse system simulation data from the SysSim.dss file for a given system.
+
+This function reads and parses the SysSim.dss file for the specified system, extracting relevant simulation parameters and initializing various settings. 
+It handles the extraction of parameters such as substation bus, voltage, base voltage, and time step size.
+
+# Arguments
+- `systemName::String`: The name of the system for which to parse data.
+- `T::Int`: The number of time steps for the simulation.
+- `numAreas::Int`: The number of areas in the system (default: 1).
+- `alpha::Float64`: The alpha parameter for the objective function (default: 1e-3).
+- `gamma::Float64`: The gamma parameter for the objective function (default: 1e-3).
+- `kVA_B::Float64`: The base power in kVA for per-unit calculations (default: 1000).
+- `objfun0::String`: The primary objective function type (default: "genCostMin").
+- `objfun2::String`: The secondary objective function type (default: "scd").
+- `temporal_decmp::Bool`: A flag to enable temporal decomposition (default: false).
+- `PSubsMax_kW::Float64`: The maximum substation power in kW (default: Inf).
+- `inputForecastDescription::String`: A description of the input forecast (default: "nonspecific").
+- `solver::String`: The solver to use for optimization (default: "Ipopt").
+- `tSOC_hard::Bool`: A flag to enable hard terminal SOC constraints (default: true).
+
+# Returns
+- `sysSimData::Dict`: A dictionary containing the parsed system simulation data.
+
+# Steps
+1. **Parameter Initialization**: Initializes parameters with default values.
+2. **File Path Construction**: Constructs the file path for SysSim.dss using the system name.
+3. **File Reading**: Reads the SysSim.dss file for the specified system.
+4. **Data Extraction**: Extracts simulation parameters such as substation bus, voltage, base voltage, and time step size.
+5. **Data Initialization**: Initializes various parameters and dictionaries to store the extracted data.
+6. **Return Data**: Returns a dictionary containing the parsed system simulation data.
+"""
 function parse_system_simulation_data(systemName::String, T::Int;
     numAreas=1,
     alpha=1e-3,
@@ -185,7 +220,22 @@ function parse_system_simulation_data(systemName::String, T::Int;
     return sysSimData
 
 end
+#endregion
 
+#region post_process_data
+"""
+    post_process_data(data)
+
+Post-process the parsed data to add additional information.
+
+This function performs post-processing on the parsed data to add additional information such as DER and battery percentages.
+
+# Arguments
+- `data::Dict`: A dictionary containing the parsed data.
+
+# Returns
+- `data::Dict`: The updated dictionary with additional post-processed information.
+"""
 function post_process_data(data)
     
     @unpack DER_percent, Batt_percent = data;
@@ -195,5 +245,6 @@ function post_process_data(data)
 
     return data
 end
+#endregion
 
 end # module parseSystemSimulationData
