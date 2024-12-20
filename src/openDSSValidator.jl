@@ -24,6 +24,14 @@ using Parameters: @unpack, @pack!
 include("helperFunctions.jl")
 using .helperFunctions: myprintln
 
+#region compute_highest_allTime_voltage_discrepancy
+"""
+    compute_highest_allTime_voltage_discrepancy(modelDict, valdVals)
+
+Compute the highest voltage discrepancy over all time steps.
+
+This function calculates the maximum voltage discrepancy between the optimization results in `modelDict` and the powerflow results in `valdVals` over all time steps.
+"""
 function compute_highest_allTime_voltage_discrepancy(modelDict, valdVals)
     @unpack modelVals, data = modelDict
     # Initialize the maximum voltage discrepancy
@@ -54,7 +62,16 @@ function compute_highest_allTime_voltage_discrepancy(modelDict, valdVals)
 
     return disc_voltage_all_time_pu
 end
+#endregion
 
+#region get_battery_powers_opendss_powerflow_for_timestep_t
+"""
+    get_battery_powers_opendss_powerflow_for_timestep_t(; verbose::Bool=false)
+
+Retrieve battery real and reactive powers for a given timestep from OpenDSS powerflow simulation.
+
+This function calculates the total real and reactive power for all battery systems at a given timestep from the OpenDSS powerflow simulation.
+"""
 function get_battery_powers_opendss_powerflow_for_timestep_t(;
     verbose::Bool=false)
     # Initialize total battery power values
@@ -96,7 +113,16 @@ function get_battery_powers_opendss_powerflow_for_timestep_t(;
 
     return batteryPowersDict_t
 end
+#endregion
 
+#region get_load_powers_opendss_powerflow_for_timestep_t
+"""
+    get_load_powers_opendss_powerflow_for_timestep_t()
+
+Retrieve load real and reactive powers for a given timestep from OpenDSS powerflow simulation.
+
+This function calculates the total real and reactive power for all loads at a given timestep from the OpenDSS powerflow simulation.
+"""
 function get_load_powers_opendss_powerflow_for_timestep_t()
     # Initialize total load power values
     total_load_t_kW = 0.0
@@ -121,7 +147,16 @@ function get_load_powers_opendss_powerflow_for_timestep_t()
 
     return loadPowersDict_t
 end
+#endregion
 
+#region get_pv_powers_opendss_powerflow_for_timestep_t
+"""
+    get_pv_powers_opendss_powerflow_for_timestep_t()
+
+Retrieve PV real and reactive powers for a given timestep from OpenDSS powerflow simulation.
+
+This function calculates the total real and reactive power for all PV systems at a given timestep from the OpenDSS powerflow simulation.
+"""
 function get_pv_powers_opendss_powerflow_for_timestep_t()
     # Initialize total PV power values
     total_pv_t_kW = 0.0
@@ -146,7 +181,16 @@ function get_pv_powers_opendss_powerflow_for_timestep_t()
 
     return pvPowersDict_t
 end
+#endregion
 
+#region get_source_bus
+"""
+    get_source_bus()
+
+Retrieve the source bus name from OpenDSS.
+
+This function retrieves the name of the source bus from the OpenDSS simulation.
+"""
 function get_source_bus()
     vsource_element = OpenDSSDirect.Vsources.First()
     vsource_name = OpenDSSDirect.Vsources.Name()
@@ -154,7 +198,16 @@ function get_source_bus()
     source_bus = OpenDSSDirect.CktElement.BusNames()[1]
     return source_bus
 end
+#endregion
 
+#region get_substation_lines
+"""
+    get_substation_lines(substation_bus::String)
+
+Retrieve the lines connected to the substation bus from OpenDSS.
+
+This function retrieves the names of all lines connected to the specified substation bus from the OpenDSS simulation.
+"""
 function get_substation_lines(substation_bus::String)
     substation_lines = []
 
@@ -175,7 +228,16 @@ function get_substation_lines(substation_bus::String)
 
     return substation_lines
 end
+#endregion
 
+#region get_substation_powers_opendss_powerflow_for_timestep_t
+"""
+    get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSourcePower::Bool=true)
+
+Retrieve substation real and reactive powers for a given timestep from OpenDSS powerflow simulation.
+
+This function calculates the total real and reactive power at the substation for a given timestep, either using VSource power or individual line powers.
+"""
 function get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSourcePower::Bool=true)
     # Unpack the substation bus from data
     @unpack substationBus = data
@@ -213,7 +275,16 @@ function get_substation_powers_opendss_powerflow_for_timestep_t(data; useVSource
 
     return substationPowersDict_t
 end
+#endregion
 
+#region get_terminal_soc_values_opendss_powerflow
+"""
+    get_terminal_soc_values_opendss_powerflow(data)
+
+Retrieve terminal state of charge (SOC) values from OpenDSS powerflow simulation.
+
+This function calculates the SOC values and SOC violations for all storage elements at the terminal timestep from the OpenDSS powerflow simulation.
+"""
 function get_terminal_soc_values_opendss_powerflow(data)
     # Unpack required fields from data
     @unpack Bref_percent, B_R = data
@@ -251,7 +322,16 @@ function get_terminal_soc_values_opendss_powerflow(data)
 
     return terminalSOCDict
 end
+#endregion
 
+#region get_voltages_opendss_powerflow_for_timestep_t
+"""
+    get_voltages_opendss_powerflow_for_timestep_t()
+
+Retrieve bus voltage magnitudes for a given timestep from OpenDSS powerflow simulation.
+
+This function retrieves the voltage magnitudes for all buses at a given timestep from the OpenDSS powerflow simulation.
+"""
 function get_voltages_opendss_powerflow_for_timestep_t()
     # Initialize a dictionary to store voltages with integer bus numbers as keys
     vald_voltage_dict_t_pu = Dict{Int,Float64}()
@@ -269,7 +349,16 @@ function get_voltages_opendss_powerflow_for_timestep_t()
 
     return vald_voltage_dict_t_pu
 end
+#endregion
 
+#region set_custom_load_shape!
+"""
+    set_custom_load_shape!(LoadShapeArray::Vector{Float64}; verbose::Bool=false)
+
+Set a custom load shape in OpenDSS.
+
+This function defines a custom load shape in OpenDSS using the provided load shape array and applies it to all loads in the system.
+"""
 function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     verbose::Bool=false)
     # Define LoadShapeLoad in OpenDSS with the provided LoadShapeArray array
@@ -286,7 +375,16 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     end
     myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
+#endregion
 
+#region set_battery_controls_opendss_powerflow_for_timestep_t
+"""
+    set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose=false)
+
+Set battery control actions for a given timestep in OpenDSS powerflow simulation.
+
+This function sets the charging, discharging, and reactive power levels for all batteries at a given timestep in the OpenDSS powerflow simulation.
+"""
 function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose=false)
     @unpack modelVals, data = modelDict
     # Unpack necessary data
@@ -320,7 +418,16 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
         storage_id = OpenDSSDirect.Storages.Next()
     end
 end
+#endregion
 
+#region set_pv_controls_opendss_powerflow_for_timestep_t
+"""
+    set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose::Bool=false)
+
+Set PV control actions for a given timestep in OpenDSS powerflow simulation.
+
+This function sets the real and reactive power levels for all PV systems at a given timestep in the OpenDSS powerflow simulation.
+"""
 function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose::Bool=false)
     @unpack modelVals, data = modelDict;
     # Unpack necessary data fields from `data`
@@ -349,7 +456,32 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose:
         pv_id = OpenDSSDirect.PVsystems.Next()
     end
 end
+#endregion
 
+#region validate_opf_against_opendss
+"""
+    validate_opf_against_opendss(modelDict; verbose::Bool=false)
+
+Validate the OPF results against OpenDSS powerflow simulation.
+
+This function compares the optimization results stored in `modelDict` with the powerflow results from OpenDSS stored in `valdVals`.
+It performs the following steps:
+1. Initializes the OpenDSS simulation environment.
+2. Sets custom load shapes and control actions for PV and battery systems.
+3. Runs the powerflow simulation for each timestep.
+4. Retrieves and stores various powerflow results, including:
+    - Circuit losses
+    - Substation real and reactive powers
+    - Load real and reactive powers
+    - PV real and reactive powers
+    - Battery real and reactive powers
+    - Voltage magnitudes for all buses
+5. Aggregates generation data and calculates discrepancies between the optimization and powerflow results.
+6. Computes terminal state of charge (SOC) values and SOC violations for storage elements.
+7. Returns the updated `modelDict` with validation results.
+
+The function ensures that the state variables from the powerflow simulation match those solved by the optimizer.
+"""
 function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     @unpack modelVals, data = modelDict
     # Initialize valdVals dictionary for timestep-specific and cumulative results
@@ -505,5 +637,6 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     # return valdVals
     return modelDict
 end
+#endregion
 
 end # module openDSSValidator
