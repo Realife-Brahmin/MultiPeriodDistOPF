@@ -221,6 +221,21 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     return ddpModel
 end
 
+#region check_for_ddp_convergence
+"""
+    check_for_ddp_convergence(ddpModel; verbose::Bool=false)
+
+Check for convergence of the DDP algorithm.
+
+This function checks if the Differential Dynamic Programming (DDP) algorithm has converged by evaluating the iteration count and the magnitude of updates in the model decision variable values.
+
+# Arguments
+- `ddpModel::Dict`: A dictionary containing the current state of the DDP model.
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: The updated dictionary with convergence status and stopping criteria.
+"""
 function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
     @unpack Tset = data;
@@ -281,7 +296,34 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     return ddpModel
     
 end
+#endregion
 
+#region forward_pass
+"""
+    forward_pass(ddpModel; verbose::Bool=false)
+
+Perform a forward pass in the DDP algorithm.
+
+This function performs a forward pass in the Differential Dynamic Programming (DDP) algorithm by iterating over the time steps and updating the model state accordingly.
+
+# Arguments
+- `ddpModel::Dict`: A dictionary containing the current state of the DDP model.
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: The updated dictionary after performing the forward pass.
+
+# Steps
+1. **Unpack Data**: Unpacks necessary data from the DDP model dictionary.
+2. **Initialize Time Step**: Initializes the time step for the forward pass.
+3. **Iterate Over Time Steps**: Iterates over the sorted time steps in `Tset`.
+4. **Forward Step Execution**: Executes the appropriate forward step function based on the current time step:
+    - `ForwardStep_1ph_NL_t_is_1` for the first time step.
+    - `ForwardStep_1ph_NL_t_in_2toTm1` for intermediate time steps.
+    - `ForwardStep_1ph_NL_t_is_T` for the last time step.
+5. **Export Model**: Exports the optimization model after each forward step.
+6. **Return Data**: Returns the updated dictionary after performing the forward pass.
+"""
 function forward_pass(ddpModel;
     verbose::Bool=false)
     verbose = true
@@ -307,6 +349,7 @@ function forward_pass(ddpModel;
 
     return ddpModel
 end
+#endregion
 
 function ForwardStep_1ph_NL_t_is_1(ddpModel;
     verbose::Bool=false)
@@ -504,6 +547,32 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     return ddpModel
 end
 
+#region optimize_MPOPF_1ph_NL_DDP
+"""
+    optimize_MPOPF_1ph_NL_DDP(data; verbose::Bool=false)
+
+Optimize the Multi-Period Optimal Power Flow (MPOPF) model for a single-phase network with nonlinear loads using DDP.
+
+This function optimizes the MPOPF model using the Differential Dynamic Programming (DDP) algorithm. 
+It initializes the DDP model, performs forward passes, checks for convergence, and retrieves the results.
+
+# Arguments
+- `data::Dict`: A dictionary containing all necessary data and parameters for the model.
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: A dictionary containing the optimized DDP model and its parameters.
+
+# Steps
+1. **Initialize DDP Model**: Initializes the DDP model using the provided data.
+2. **Forward Pass Loop**: Performs forward passes until convergence or iteration limit is reached.
+3. **Convergence Check**: Checks for convergence after each forward pass.
+4. **Update Iteration Counter**: Updates the iteration counter for the DDP algorithm.
+5. **Calculate Solve Time**: Calculates the total solve time for the optimization.
+6. **Check Solver Status**: Checks the solver status and prints the results.
+7. **Calculate Objective Value**: Calculates and prints the optimal objective function value.
+8. **Return Data**: Returns the final dictionary containing the optimized DDP model and its parameters.
+"""
 function optimize_MPOPF_1ph_NL_DDP(data;
     verbose::Bool=false)
 
@@ -551,7 +620,25 @@ function optimize_MPOPF_1ph_NL_DDP(data;
 
     return ddpModel
 end
+#endregion
 
+#region DDPModel
+"""
+    DDPModel(data; maxiter::Int=10, verbose::Bool=false)
+
+Initialize the DDP model for a given dataset.
+
+This function initializes the DDP (Differential Dynamic Programming) model by setting up the necessary data structures and parameters. 
+It handles the initialization of dual variables, model values, and other relevant parameters for the DDP algorithm.
+
+# Arguments
+- `data::Dict`: A dictionary containing all necessary data and parameters for the model.
+- `maxiter::Int`: The maximum number of iterations for the DDP algorithm (default: 10).
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
+"""
 function DDPModel(data;
     maxiter::Int=10,
     verbose::Bool=false)
@@ -587,5 +674,6 @@ function DDPModel(data;
     )
     return ddpModel
 end
+#endregion
 
 end
