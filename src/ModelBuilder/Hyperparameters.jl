@@ -11,6 +11,14 @@ using Parameters: @unpack
 include("../functionRetriever.jl")
 import .functionRetriever as FR
 
+#region estimate_alpha
+"""
+    estimate_alpha(data)
+
+Estimate the alpha coefficient for the SCD-term appended to the objective function.
+
+This function calculates the alpha parameter based on the estimated 'regular' objective function value and the estimated magnitude of the maximum possible state of charge discrepancy.
+"""
 function estimate_alpha(data)
     @unpack func_obj_est = data;
     if func_obj_est !== nothing
@@ -22,13 +30,23 @@ function estimate_alpha(data)
     alpha = fobj_est / fscd_est
     return alpha
 end
+#endregion
 
+#region estimate_fscd
+"""
+    estimate_fscd(data)
+
+Estimates the magnitude of the maximum possible state of charge discrepancy (fscd).
+
+This function calculates the estimated state of charge discrepancy for all batteries over the entire time horizon.
+"""
 function estimate_fscd(data)
     @unpack Bset, P_B_R, eta_C, eta_D, T = data;
     η_C, η_D = eta_C, eta_D
     fscd_est = sum( (1/η_D[j] - η_C[j]) * P_B_R[j] for j ∈ Bset) * T
     return fscd_est
 end
+#endregion
 
 function estimate_ftsoc(data; tol_tSOC_violation_pu=1e-3)
     @unpack n_B = data;
