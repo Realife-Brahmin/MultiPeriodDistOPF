@@ -9,6 +9,15 @@ using JuMP
 export compute_output_values
 using Parameters: @unpack, @pack!
 
+#region compute_output_values
+"""
+    compute_output_values(modelDict; verbose::Bool=false)
+
+Compute and return various output values from the model.
+
+This function extracts data from `modelDict` and computes several output variables post-optimization. 
+The computed output variables are appended to the data in `modelDict`.
+"""
 function compute_output_values(modelDict;
     verbose::Bool=false)
 
@@ -152,7 +161,7 @@ function compute_output_values(modelDict;
 
     @pack! modelDict = data;
     return modelDict
-    # return data  # Return the updated data dictionary
 end
+#endregion
 
 end  # module computeOutputs
