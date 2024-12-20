@@ -5,6 +5,22 @@ export initialize_variables_1ph_NL_t_in_Tset
 using JuMP
 using Parameters: @unpack, @pack!
 
+#region initialize_variables_1ph_NL_t_in_Tset
+"""
+    initialize_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+
+Initialize the optimization variables for a single-phase network with nonlinear loads over a given time set.
+
+This function sets the initial values for the optimization variables in the model stored in `modelDict`. 
+It handles the initialization of various variables, including substation power flow, power flow variables, voltage variables, PV inverter reactive dispatch, battery real and reactive dispatch, and battery state of charge (SOC).
+
+# Arguments
+- `modelDict::Dict`: A dictionary containing the model and data.
+- `Tset::Union{Nothing, Vector{Int}}`: An optional vector specifying the time steps to consider. If not provided, it defaults to the full time set in `data`.
+
+# Returns
+- `modelDict::Dict`: The updated dictionary with initialized variables.
+"""
 function initialize_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
 
@@ -64,5 +80,6 @@ function initialize_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @pack! modelDict = model
     return modelDict
 end
+#endregion
 
 end
