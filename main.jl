@@ -20,20 +20,14 @@ savePlots = false
 # objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
-# objfun2 = "none"
 objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
-# alpha = 1e-3
 tSOC_hard = false
 # tSOC_hard = true
-# gamma = 1e-0
-# gamma = 1e6
 PSubsMax_kW = Inf # Inf means no limit
 solver = "Ipopt"
-# solver = "EAGO"
 # solver = "Gurobi"
 # solver = "Juniper"
-# solver = "MadNLP"
 
 # Parse all data
 data = parse_all_data(systemName, T, numAreas=numAreas, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver, tSOC_hard=tSOC_hard)
@@ -47,7 +41,6 @@ elseif temporal_decmp
 else
     error("temporal_decmp must be either true or false")
 end
-
 
 # postsim computation, plotting, logging
 begin
