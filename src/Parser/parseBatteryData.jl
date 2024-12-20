@@ -1,5 +1,3 @@
-# parseBatteryData.jl
-
 module parseBatteryData
 
 export parse_battery_data
@@ -7,6 +5,52 @@ export parse_battery_data
 include("../helperFunctions.jl")
 import .helperFunctions: myprintln
 
+#region parse_battery_data
+"""
+    parse_battery_data(systemName::String; kVA_B=1000, N_L=nothing, verbose::Bool=false)
+
+Parse battery data from the Storage.dss file for a given system.
+
+This function reads and parses the Storage.dss file for the specified system, extracting relevant battery data and initializing various parameters. 
+It handles the extraction of battery properties such as initial state of charge (SOC), rated power, efficiencies, and voltage limits.
+
+# Arguments
+- `systemName::String`: The name of the system for which to parse battery data.
+- `kVA_B::Float64`: The base power in kVA for per-unit calculations (default: 1000).
+- `N_L::Union{Nothing, Int}`: The number of loads, used to calculate the percentage of buses with batteries (default: nothing).
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `storageData::Dict`: A dictionary containing the parsed battery data, including:
+    - `Bset`: Set of bus numbers with batteries.
+    - `n_B`: Number of buses with batteries.
+    - `Batt_percent`: Percentage of buses with batteries.
+    - `B0`: Initial SOC (kWhr) for each battery.
+    - `B0_pu`: Initial SOC (kWhr) for each battery in per-unit.
+    - `Bref`: Reference SOC (kWhr) for each battery.
+    - `Bref_percent`: Reference SOC as a percentage of rated capacity.
+    - `Bref_pu`: Reference SOC (kWhr) for each battery in per-unit.
+    - `B_R`: Rated storage capacity for each battery (kWhr).
+    - `B_R_pu`: Rated storage capacity for each battery in per-unit.
+    - `eta_C`: Charging efficiency for each battery.
+    - `eta_D`: Discharging efficiency for each battery.
+    - `P_B_R`: Rated charging/discharging power (kW).
+    - `P_B_R_pu`: Rated charging/discharging power in per-unit.
+    - `S_B_R`: Rated inverter apparent power (kVA).
+    - `S_B_R_pu`: Rated inverter apparent power in per-unit.
+    - `Vminpu_B`: Minimum voltage for each battery (pu).
+    - `Vmaxpu_B`: Maximum voltage for each battery (pu).
+    - `soc_min`: Minimum SOC (% reserve).
+    - `soc_max`: Maximum SOC (% maximum allowed).
+    - `soc_0`: Initial SOC (% stored).
+
+# Steps
+1. **File Reading**: Reads the Storage.dss file for the specified system.
+2. **Data Extraction**: Extracts battery properties such as initial SOC, rated power, efficiencies, and voltage limits.
+3. **Data Initialization**: Initializes various parameters and dictionaries to store the extracted data.
+4. **Verbose Output**: Optionally prints detailed information about the parsing process if `verbose` is true.
+5. **Return Data**: Returns a dictionary containing the parsed battery data.
+"""
 function parse_battery_data(systemName::String;
     kVA_B = 1000,
     N_L = nothing,
@@ -161,5 +205,6 @@ function parse_battery_data(systemName::String;
 
     return storageData
 end
+#endregion
 
-end # module
+end # module parseBatteryData
