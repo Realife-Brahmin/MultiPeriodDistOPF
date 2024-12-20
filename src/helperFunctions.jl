@@ -3,12 +3,52 @@ module helperFunctions
 
 export generateLoadShape, generateBinaryLoadShape, myprintln, trim_number_for_printing
 
+#region Documentation for myprintln
+"""
+    myprintln(verbose::Bool, msg::String)
+
+Prints a message to the console if the `verbose` flag is set to `true`.
+
+# Arguments
+- `verbose::Bool`: A flag indicating whether to print the message.
+- `msg::String`: The message to be printed.
+"""
+#endregion
 function myprintln(verbose::Bool, msg::String)
     if verbose
         println(msg)
     end
 end
 
+#region Documentation for generateBinaryLoadShape
+"""
+    generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSubsCostDefault.dss",
+                            hi::Union{Float64,Nothing}=nothing,
+                            lo::Union{Float64,Nothing}=nothing,
+                            peakHoursFraction::Float64=0.3,
+                            verbose::Bool=false)
+
+Generate a binary load shape cost array.
+
+# Arguments
+- `T::Int`: The number of time steps.
+- `filenameLoadShape::String`: The name of the load shape file.
+- `hi::Union{Float64,Nothing}`: The high cost value for peak hours.
+- `lo::Union{Float64,Nothing}`: The low cost value for off-peak hours.
+- `peakHoursFraction::Float64`: The fraction of time steps considered as peak hours. Default is 0.3.
+- `verbose::Bool`: If `true`, prints detailed information during execution. Default is `false`.
+
+# Returns
+- `Dict`: A dictionary containing the following keys:
+    - `:LoadShapeCost`: The generated cost array with high and low values.
+    - `:peakCost`: The high cost value used for peak hours.
+    - `:offPeakCost`: The low cost value used for off-peak hours.
+    - `:peakHoursFraction`: The fraction of time steps considered as peak hours.
+
+# Description
+This function reads a load shape file and generates a binary load shape cost array with specified high and low cost values. It supports subsampling or supersampling the load shape data to match the desired number of time steps (`T`). The function also allows specifying the fraction of time steps to be considered as peak hours, and assigns the high cost value to those peak hours.
+"""
+#endregion
 function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSubsCostDefault.dss",
     hi::Union{Float64,Nothing}=nothing,
     lo::Union{Float64,Nothing}=nothing,
