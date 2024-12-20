@@ -22,6 +22,14 @@ using Parameters: @unpack, @pack!
 
 # Define all constraint functions here...
 
+#region nodalRealPowerBalance_substation_t_in_Tset
+"""
+    nodalRealPowerBalance_substation_t_in_Tset(modelDict; Tset=nothing)
+
+Define the nodal real power balance constraints for the substation node over a given time set.
+
+This function sets the nodal real power balance constraints for the optimization model stored in `modelDict`.
+"""
 function nodalRealPowerBalance_substation_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -44,7 +52,16 @@ function nodalRealPowerBalance_substation_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region nodalRealPowerBalance_non_substation_t_in_Tset
+"""
+    nodalRealPowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+
+Define the nodal real power balance constraints for non-substation nodes over a given time set.
+
+This function sets the nodal real power balance constraints for the optimization model stored in `modelDict`.
+"""
 function nodalRealPowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -94,7 +111,16 @@ function nodalRealPowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region nodalReactivePowerBalance_non_substation_t_in_Tset
+"""
+    nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+
+Define the nodal reactive power balance constraints for non-substation nodes over a given time set.
+
+This function sets the nodal reactive power balance constraints for the optimization model stored in `modelDict`.
+"""
 function nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -144,7 +170,16 @@ function nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=noth
 
     return modelDict
 end
+#endregion
 
+#region KVL_substation_branches_t_in_Tset
+"""
+    KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+
+Define the Kirchhoff's Voltage Law (KVL) constraints for substation branches over a given time set.
+
+This function sets the KVL constraints for the optimization model stored in `modelDict`.
+"""
 function KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -174,7 +209,16 @@ function KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region KVL_non_substation_branches_t_in_Tset
+"""
+    KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+
+Define the Kirchhoff's Voltage Law (KVL) constraints for non-substation branches over a given time set.
+
+This function sets the KVL constraints for the optimization model stored in `modelDict`.
+"""
 function KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -204,7 +248,16 @@ function KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region BCPF_substation_branches_t_in_Tset
+"""
+    BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+
+Define the Branch Complex Power Flow (BCPF) constraints for substation branches over a given time set.
+
+This function sets the BCPF constraints for the optimization model stored in `modelDict`.
+"""
 function BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -230,7 +283,16 @@ function BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region BCPF_non_substation_branches_t_in_Tset
+"""
+    BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+
+Define the branch complex power flow (BCPF) constraints for non-substation branches over a given time set.
+
+This function sets the BCPF constraints for the optimization model stored in `modelDict`.
+"""
 function BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -256,7 +318,17 @@ function BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region battery_SOC_constraints_t_in_Tset
+"""
+    battery_SOC_constraints_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
+
+Define the state of charge (SOC) constraints for batteries over a given time set.
+
+This function sets the SOC constraints for the optimization model stored in `modelDict`. 
+It includes initial SOC constraints, SOC trajectory constraints, and optionally terminal SOC constraints if `tSOC_hard` is true.
+"""
 function battery_SOC_constraints_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
     @unpack model, data = modelDict;
     if Tset === nothing
@@ -305,7 +377,16 @@ function battery_SOC_constraints_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=fa
 
     return modelDict
 end
+#endregion
 
+#region fixed_substation_voltage_constraints_t_in_Tset
+"""
+    fixed_substation_voltage_constraints_t_in_Tset(modelDict; Tset=nothing)
+
+Define the fixed voltage constraints for the substation over a given time set.
+
+This function sets the fixed voltage constraints for the optimization model stored in `modelDict`.
+"""
 function fixed_substation_voltage_constraints_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -323,7 +404,16 @@ function fixed_substation_voltage_constraints_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region voltage_limits_constraints_t_in_Tset
+"""
+    voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
+
+Define the voltage limits constraints over a given time set.
+
+This function sets the voltage limits constraints for the optimization model stored in `modelDict`.
+"""
 function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -357,7 +447,16 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region reactive_power_limits_PV_inverters_t_in_Tset
+"""
+    reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
+
+Define the reactive power limits for PV inverters over a given time set.
+
+This function sets the reactive power limits for the optimization model stored in `modelDict`.
+"""
 function reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -393,7 +492,16 @@ function reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region reactive_power_limits_battery_inverters_t_in_Tset
+"""
+    reactive_power_limits_battery_inverters_t_in_Tset(modelDict; Tset=nothing)
+
+Define the reactive power limits for battery inverters over a given time set.
+
+This function sets the reactive power limits for the optimization model stored in `modelDict`.
+"""
 function reactive_power_limits_battery_inverters_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -434,7 +542,16 @@ function reactive_power_limits_battery_inverters_t_in_Tset(modelDict; Tset=nothi
 
     return modelDict
 end
+#endregion
 
+#region charging_power_limits_batteries_t_in_Tset
+"""
+    charging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+
+Define the charging power limits for batteries over a given time set.
+
+This function sets the charging power limits for the optimization model stored in `modelDict`.
+"""
 function charging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -460,7 +577,16 @@ function charging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region discharging_power_limits_batteries_t_in_Tset
+"""
+    discharging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+
+Define the discharging power limits for batteries over a given time set.
+
+This function sets the discharging power limits for the optimization model stored in `modelDict`.
+"""
 function discharging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -486,7 +612,16 @@ function discharging_power_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
+#region SOC_limits_batteries_t_in_Tset
+"""
+    SOC_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
+
+Define the state of charge (SOC) limits for batteries over a given time set.
+
+This function sets the SOC limits for the optimization model stored in `modelDict`.
+"""
 function SOC_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
@@ -512,5 +647,6 @@ function SOC_limits_batteries_t_in_Tset(modelDict; Tset=nothing)
 
     return modelDict
 end
+#endregion
 
 end
