@@ -34,6 +34,45 @@ using .evaluateVoltageLimits
 include("../helperFunctions.jl")
 using .helperFunctions
 
+#region parse_all_data
+"""
+    parse_all_data(systemName::String, T::Int; numAreas=1, alpha=1e-3, gamma=1e-3, objfun0="genCostMin", objfun2="scd", temporal_decmp=false, PSubsMax_kW=Inf, inputForecastDescription="nonspecific", solver="Ipopt", tSOC_hard=true)
+
+Parse all relevant data from OpenDSS files for a given system.
+
+This function reads and parses various OpenDSS files for the specified system, extracting relevant data and initializing various parameters. 
+It handles the extraction of branch, load, PV, and battery data, evaluates voltage limits, and merges all data into a single dictionary.
+
+# Arguments
+- `systemName::String`: The name of the system for which to parse data.
+- `T::Int`: The number of time steps for the simulation.
+- `numAreas::Int`: The number of areas in the system (default: 1).
+- `alpha::Float64`: The alpha parameter for the objective function (default: 1e-3).
+- `gamma::Float64`: The gamma parameter for the objective function (default: 1e-3).
+- `objfun0::String`: The primary objective function type (default: "genCostMin").
+- `objfun2::String`: The secondary objective function type (default: "scd").
+- `temporal_decmp::Bool`: A flag to enable temporal decomposition (default: false).
+- `PSubsMax_kW::Float64`: The maximum substation power in kW (default: Inf).
+- `inputForecastDescription::String`: A description of the input forecast (default: "nonspecific").
+- `solver::String`: The solver to use for optimization (default: "Ipopt").
+- `tSOC_hard::Bool`: A flag to enable hard terminal SOC constraints (default: true).
+
+# Returns
+- `data::Dict`: A dictionary containing all parsed and processed data.
+
+# Steps
+1. **System Simulation Data**: Parses system simulation data.
+2. **Branch Data**: Parses branch data from the BranchData.dss file.
+3. **Load Data**: Parses load data from the Loads.dss file.
+4. **PV Data**: Parses PV data from the PVData.dss file.
+5. **Battery Data**: Parses battery data from the Storage.dss file.
+6. **Voltage Limits Evaluation**: Evaluates voltage limits for each bus based on load, PV, and battery data.
+7. **Cost Data**: Generates substation real power cost data.
+8. **Data Merging**: Merges all parsed data into a single dictionary.
+9. **Folder Paths**: Sets up folder paths for raw and processed data.
+10. **Post-Processing**: Performs post-processing on the merged data.
+11. **Return Data**: Returns the final dictionary containing all parsed and processed data.
+"""
 function parse_all_data(systemName::String, T::Int;
     numAreas=1,
     alpha=1e-3,
@@ -78,5 +117,6 @@ function parse_all_data(systemName::String, T::Int;
 
     return data
 end
+#endregion
 
 end # module parseOpenDSSFiles
