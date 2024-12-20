@@ -48,12 +48,29 @@ function estimate_fscd(data)
 end
 #endregion
 
+#region estimate_ftsoc
+"""
+    estimate_ftsoc(data)
+
+Estimate the terminal state of charge (ftsoc).
+
+This function calculates the estimated terminal state of charge violation for all batteries given a particular tolerance.
+"""
 function estimate_ftsoc(data; tol_tSOC_violation_pu=1e-3)
     @unpack n_B = data;
     ftsoc_est = tol_tSOC_violation_pu^2 * n_B
     return ftsoc_est
 end
+#endregion
 
+#region estimate_gamma
+"""
+    estimate_gamma(data)
+
+Estimate the gamma parameter for the objective function.
+
+This function calculates the gamma parameter based on the estimated terminal state of charge discrepancy.
+"""
 function estimate_gamma(data)
     @unpack func_obj_est = data;
     if func_obj_est !== nothing
@@ -65,7 +82,16 @@ function estimate_gamma(data)
     gamma = fobj_est / ftsoc_est
     return gamma
 end
+#endregion
 
+#region estimate_substation_power_cost
+"""
+    estimate_substation_power_cost(data)
+
+Estimate the substation power cost in dollars.
+
+This function calculates the estimated substation power cost based on the load shape cost and the substation power values.
+"""
 function estimate_substation_power_cost(data)
     @unpack LoadShapeCost, kVA_B = data;
     C = LoadShapeCost # dollars_per_kWh
@@ -76,7 +102,16 @@ function estimate_substation_power_cost(data)
     
     return fcost_est
 end
+#endregion
 
+#region estimate_line_losses
+"""
+    estimate_line_losses(data)
+
+Estimate the line losses.
+
+This function calculates the estimated line losses in kW for the entire network over the entire time horizon.
+"""
 function estimate_line_losses(data)
     @unpack kVA_B = data
     load_real_power_allT_kW = FR.get_load_real_power(data, horizon="allT")
@@ -85,5 +120,6 @@ function estimate_line_losses(data)
 
     return fPLoss_est
 end
+#endregion
 
 end # Hyperparameters module
