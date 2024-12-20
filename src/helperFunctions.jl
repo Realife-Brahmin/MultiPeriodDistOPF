@@ -1,7 +1,11 @@
 # helperFunctions.jl
 module helperFunctions
 
-export generateLoadShape, generateBinaryLoadShape, myprintln, trim_number_for_printing
+export 
+    generateLoadShape, 
+    generateBinaryLoadShape, 
+    myprintln, 
+    trim_number_for_printing
 
 #region Documentation for myprintln
 """
