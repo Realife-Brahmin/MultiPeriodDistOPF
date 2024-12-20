@@ -1,5 +1,3 @@
-# parsePVData.jl
-# Note: PVsystem and NOT PVSystem will be read (note the lowercase third letter)
 module parsePVData
 
 export parse_pv_data
@@ -7,6 +5,49 @@ export parse_pv_data
 include("../helperFunctions.jl")
 using .helperFunctions: generateLoadShape
 
+# Note: PVsystem and NOT PVSystem will be read (note the lowercase third letter)
+
+#region parse_pv_data
+"""
+    parse_pv_data(systemName::String, T::Int; N_L=nothing, kVA_B=1000, LoadShape=nothing, filenameLoadShape=nothing)
+
+Parse PV data from the PVsystem.dss file for a given system.
+
+This function reads and parses the PVsystem.dss file for the specified system, extracting relevant PV data and initializing various parameters. 
+It handles the extraction of PV properties such as rated active and apparent power, voltage limits, and PV profiles over time.
+
+# Arguments
+- `systemName::String`: The name of the system for which to parse PV data.
+- `T::Int`: The number of time steps for the PV profile.
+- `N_L::Union{Nothing, Int}`: The number of loads, used to calculate the percentage of nodes with PVs (default: nothing).
+- `kVA_B::Float64`: The base power in kVA for per-unit calculations (default: 1000).
+- `LoadShape::Union{Nothing, Vector{Float64}}`: An optional vector specifying the PV load shape over time. If not provided, it is generated using the `filenameLoadShape` (default: nothing).
+- `filenameLoadShape::Union{Nothing, String}`: The filename for the default load shape (default: nothing).
+
+# Returns
+- `pvData::Dict`: A dictionary containing the parsed PV data, including:
+    - `n_D`: Number of nodes with PVs.
+    - `DER_percent`: Percentage of nodes with PVs.
+    - `Dset`: Set of nodes with PVs.
+    - `p_D_R`: Rated PV active power for each node (kW).
+    - `p_D_R_pu`: Rated PV active power for each node in per-unit.
+    - `S_D_R`: Rated PV apparent power for each node (kVA).
+    - `S_D_R_pu`: Rated PV apparent power for each node in per-unit.
+    - `irrad`: Irradiance values for each PV.
+    - `p_D`: PV active power profile over time.
+    - `p_D_pu`: PV active power profile over time in per-unit.
+    - `Vminpu_D`: Minimum per-unit voltage for each node.
+    - `Vmaxpu_D`: Maximum per-unit voltage for each node.
+    - `LoadShapePV`: The load shape used for the PV profiles.
+
+# Steps
+1. **File Path Construction**: Constructs the file path for PVsystem.dss using the system name.
+2. **Data Initialization**: Initializes various parameters and dictionaries to store the extracted data.
+3. **Load Shape Generation**: Generates a load shape if not provided by the user.
+4. **File Reading**: Reads the PVsystem.dss file for the specified system.
+5. **Data Extraction**: Extracts PV properties such as rated active and apparent power, voltage limits, and PV profiles over time.
+6. **Return Data**: Returns a dictionary containing the parsed PV data.
+"""
 function parse_pv_data(systemName::String, T::Int;
     N_L = nothing,
     kVA_B = 1000,
@@ -153,5 +194,6 @@ function parse_pv_data(systemName::String, T::Int;
     # Return the extracted data as a dictionary
     return pvData
 end
+#endregion
 
-end # module
+end # module parsePVData
