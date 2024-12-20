@@ -1,17 +1,17 @@
-# parseOpenDSSFiles.jl
-
 module parseOpenDSSFiles
 
 using Parameters: @pack!
 
 export 
-    myprintln, 
     evaluate_voltage_limits, 
-    parse_all_data, parse_system_simulation_data, parse_branch_data, 
+    myprintln,
+    parse_all_data,
+    parse_battery_data,
+    parse_branch_data, 
     parse_load_data, 
-    parse_pv_data, 
-    parse_battery_data, 
-    post_process_data
+    parse_pv_data,  
+    post_process_data,
+    parse_system_simulation_data
 
 include("parseSystemSimulationData.jl")
 include("parseBranchData.jl")
@@ -80,4 +80,4 @@ function parse_all_data(systemName::String, T::Int;
     return data
 end
 
-end # module
+end # module parseOpenDSSFiles
