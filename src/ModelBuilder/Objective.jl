@@ -11,6 +11,16 @@ import .Hyperparameters as HP
 include("../helperFunctions.jl")
 import .helperFunctions as HF
 
+#region define_objective_function_t_in_Tset
+"""
+    define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
+
+Define the objective function for the optimization model over a given time set.
+
+This function sets the objective function for the optimization model stored in `modelDict`. 
+It handles different objective types, including substation power cost minimization and line loss minimization, 
+and optionally includes terms for state of charge (SOC) discrepancies and terminal SOC constraints.
+"""
 function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
     @unpack model, data = modelDict
 
@@ -95,5 +105,6 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
     # )
     return modelDict
 end
+#endregion
 
 end
