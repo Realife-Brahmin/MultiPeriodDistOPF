@@ -1,4 +1,4 @@
-include("../helperFunctions.jl")
+include("../src/helperFunctions.jl")
 
 function count_ways_dp(T::Int;
     verbose::Bool=false)
