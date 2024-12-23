@@ -80,6 +80,7 @@ function estimate_gamma(data)
     end
     ftsoc_est = estimate_ftsoc(data)
     gamma = fobj_est / ftsoc_est
+    # gamma = 0 # temporary
     return gamma
 end
 #endregion
