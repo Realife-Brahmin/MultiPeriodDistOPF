@@ -250,10 +250,10 @@ function trim_number_for_printing(number;
     digits=nothing,
     sigdigits=nothing)
 
-    if digits == nothing
+    if isnothing(digits)
         digits = 4
     end
-    if sigdigits == nothing
+    if isnothing(sigdigits)
         sigdigits = 5
     end
     if number < 1
