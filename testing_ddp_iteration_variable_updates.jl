@@ -18,6 +18,7 @@ crayon_red = Crayon(foreground=:red, bold=true)
 
 μ = mu
 t_ddp = rand(1:T)
+t_ddp = 3
 println("t_ddp = $t_ddp")
 for j in Bset
     values_mu = []
