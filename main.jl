@@ -30,7 +30,7 @@ solver = "Ipopt"
 # solver = "Juniper"
 
 # Parse all data
-data = parse_all_data(systemName, T, objfun0=objfun0, temporal_decmp=temporal_decmp, tSOC_hard=tSOC_hard)
+data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp)
 
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
