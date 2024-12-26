@@ -81,7 +81,7 @@ function parse_all_data(systemName::String, T::Int;
     PSubsMax_kW=Inf,
     inputForecastDescription="nonspecific",
     solver="Ipopt",
-    tSOC_hard=true)
+    tSOC_hard=false)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
