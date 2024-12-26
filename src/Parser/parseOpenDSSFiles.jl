@@ -75,9 +75,7 @@ It handles the extraction of branch, load, PV, and battery data, evaluates volta
 """
 function parse_all_data(systemName::String, T::Int;
     numAreas=1,
-    alpha=1e-3,
-    gamma=1e-3,
-    objfun0="genCostMin",
+    objfun0="subsPowerCostMin",
     objfun2="scd",
     temporal_decmp=false,
     PSubsMax_kW=Inf,
