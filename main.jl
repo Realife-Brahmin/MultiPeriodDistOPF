@@ -1,7 +1,7 @@
 # solveMPOPF.jl
 using Revise
 using MultiPeriodDistOPF
-using Parameters: @unpack
+using Parameters
 
 Revise.revise()
 
@@ -30,7 +30,7 @@ solver = "Ipopt"
 # solver = "Juniper"
 
 # Parse all data
-data = parse_all_data(systemName, T, numAreas=numAreas, objfun0=objfun0, objfun2=objfun2,temporal_decmp=temporal_decmp, PSubsMax_kW=PSubsMax_kW, inputForecastDescription=inputForecastDescription, solver=solver, tSOC_hard=tSOC_hard)
+data = parse_all_data(systemName, T, objfun0=objfun0, temporal_decmp=temporal_decmp, tSOC_hard=tSOC_hard)
 
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
