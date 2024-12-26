@@ -46,7 +46,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     alpha=1e-3,
     gamma=1e-3,
     kVA_B = 1000,
-    objfun0 = "genCostMin",
+    objfun0 = "subsPowerCostMin",
     objfun2 = "scd",
     temporal_decmp = false,
     PSubsMax_kW = Inf,
