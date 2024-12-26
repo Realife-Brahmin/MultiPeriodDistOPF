@@ -50,7 +50,7 @@ function export_optimization_model(modelDict;
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
+    filename = joinpath(base_dir, "$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
 
     # Check if the file already exists, and delete it if so
     if isfile(filename)
@@ -89,7 +89,7 @@ function export_decision_variables(modelDict;
     end
 
     ext = ".csv"
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
     
     # Log current working directory
     myprintln(verbose, "Current working directory: $(pwd())")
@@ -222,7 +222,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         mkpath(base_dir)
     end
 
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
 
     # Extract system information and parameters from `data`
     macroItrsCompleted = get(data, :macroItrsCompleted, 0)  # Default to 1 if not set
@@ -343,7 +343,7 @@ function export_validation_decision_variables(modelDict; verbose::Bool=false)
 
     # Define the filename with the appropriate structure
     @unpack alphaAppendix, gammaAppendix, objfunConciseDescription = data
-    filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
 
     # Write the valdVals dictionary to a CSV file
     CSV.write(filename, valdVals)
@@ -378,9 +378,9 @@ function export_validation_key_results(modelDict; filename::String="validation_r
     @unpack solver, alphaAppendix, gammaAppendix, objfunConciseDescription = data;
     # Adjust filename based on printEveryTimeStepPowerflow flag
     if printEveryTimeStepPowerflow
-        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_full.txt")
+        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_full.txt")
     else
-        filename = joinpath(base_dir, "Horizon_$(T)_$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
+        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
     end
 
     # Open the file and write each section
