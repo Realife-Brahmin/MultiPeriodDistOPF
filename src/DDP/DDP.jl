@@ -158,9 +158,9 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
     @unpack Bset = data;
-    crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
 
-    println("Printing the previous time-step's SOC values to be used for the current time-step")
+    crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
+    println(crayon_light_red1("Printing the previous time-step's SOC values to be used for the current time-step"))
     for j ∈ Bset
         println(crayon_light_red1("B_model[$j, $(t_ddp - 1)] = $(B_model[j, t_ddp - 1])"))
         fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
@@ -213,9 +213,16 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
     @unpack Bset = data;
+    # for j ∈ Bset
+    #     fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
+    # end 
+
+    crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
+    println(crayon_light_red1("Printing the previous time-step's SOC values to be used for the current time-step"))
     for j ∈ Bset
-        fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
-    end 
+        println(crayon_light_red1("B_model[$j, $(t_ddp - 1)] = $(B_model[j, t_ddp - 1])"))
+        fix(model_t0[:B][j, t_ddp-1], B_model[j, t_ddp-1])
+    end
 
     # No need of updating objective function, as no μ term is present in the objective function for the terminal time-step
 
@@ -417,20 +424,12 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
     # @show get_attribute(model_t0, MOI.Silent())
     optimize!(model_t0)
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
 
-    @unpack data = ddpModel
-    @unpack Bset = data
-    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
-    for j ∈ Bset
-        println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    end
-
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    else
-        myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    end
+    # if termination_status(model_t0) == LOCALLY_SOLVED
+    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
+    # else
+    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
+    # end
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -443,7 +442,15 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): ", optimal_obj_value)
+    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
+
+    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
+    @unpack data = ddpModel
+    @unpack Bset = data
+    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
+    for j ∈ Bset
+        println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    end
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k;
@@ -452,8 +459,8 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     # @unpack modelDict = ddpModel;
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
 
+    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
     println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
@@ -486,11 +493,11 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     # set_silent(model_t0)
     optimize!(model_t0)
 
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    else
-        myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    end
+    # if termination_status(model_t0) == LOCALLY_SOLVED
+    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
+    # else
+    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
+    # end
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -503,14 +510,32 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): ", optimal_obj_value)
+    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
+
+    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
+    @unpack data = ddpModel
+    @unpack Bset = data
+    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
+    for j ∈ Bset
+        println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    end
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
+    
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+
+    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
+    @unpack data = ddpModel
+    @unpack Bset = data
+    println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
+    for j ∈ Bset
+        println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
+    end
+
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
@@ -536,11 +561,11 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     # set_silent(model_t0)
     optimize!(model_t0)
 
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    else
-        myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    end
+    # if termination_status(model_t0) == LOCALLY_SOLVED
+    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
+    # else
+    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
+    # end
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -553,7 +578,15 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): ", optimal_obj_value)
+    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): $optimal_obj_value"))
+
+    crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
+    @unpack data = ddpModel
+    @unpack Bset = data
+    println(crayon_blue("Printing the Terminal Battery SOC values"))
+    for j ∈ Bset
+        println(crayon_blue("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    end
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
@@ -561,6 +594,15 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
     @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+
+    crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
+    @unpack data = ddpModel
+    @unpack Bset = data
+    println(crayon_blue("Printing terminal SOC values in modelVals[:B] (should be the same)"))
+    for j ∈ Bset
+        println(crayon_blue("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
+    end
+
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
