@@ -293,7 +293,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
                 if max_discrepancy > threshold
                     all_under_threshold = false
-                    # myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
+                    myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
+                    myprintln(verbose, "Case in point: var_name = $var_name, discrepancy = $discrepancy")
                     return ddpModel
                 end
             end
