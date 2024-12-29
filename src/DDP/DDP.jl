@@ -89,20 +89,21 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     end
     verbose = true
 
-    if k_ddp == 1
+    # if k_ddp == 1
+    if k_ddp >= 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [1]
         modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
         model_t0 = modelDict[:model]
-    elseif k_ddp >= 2
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1] # I guess a solved model
-        model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-        @unpack data = ddpModel;
-        @unpack solver = data;
-        model_t0 = SolverArranger.attach_solver(model_t0, solver)
-        # @show model_t0
+    # elseif k_ddp >= 2
+    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
+    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1] # I guess a solved model
+    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
+    #     @unpack data = ddpModel;
+    #     @unpack solver = data;
+    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
+    #     # @show model_t0
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -113,7 +114,9 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     objfun_expr_t0_km1 = objective_function(model_t0) # same as model_t0_km1 as it is a copy
     μ = mu
     @unpack Bset = data;
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    # objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+
     @objective(model_t0, Min, objfun_expr_t0_k)
 
     # B0 values are already set in the model so no need to fix them separately
@@ -134,20 +137,21 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         return
     end
 
-    if k_ddp == 1
+    # if k_ddp == 1
+    if k_ddp >= 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
-    elseif k_ddp >= 2
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
-        # model_t0 = deepcopy(model_t0_km1)
-        model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-        @unpack data = ddpModel
-        @unpack solver = data
-        model_t0 = SolverArranger.attach_solver(model_t0, solver)
+    # elseif k_ddp >= 2
+    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
+    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+    #     # model_t0 = deepcopy(model_t0_km1)
+    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
+    #     @unpack data = ddpModel
+    #     @unpack solver = data
+    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -170,7 +174,9 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_km1 = objective_function(model_t0)
     μ = mu
-    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    # objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k = objfun_expr_t0_km1 + sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+
     @objective(model_t0, Min, objfun_expr_t0_k)
 
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
@@ -189,20 +195,21 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         return
     end
 
-    if k_ddp == 1
+    # if k_ddp == 1
+    if k_ddp >= 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [T]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
-    elseif k_ddp >= 2
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-        model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
-        # model_t0 = deepcopy(model_t0_km1)
-        model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-        @unpack data = ddpModel
-        @unpack solver = data
-        model_t0 = SolverArranger.attach_solver(model_t0, solver)
+    # elseif k_ddp >= 2
+    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
+    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+    #     # model_t0 = deepcopy(model_t0_km1)
+    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
+    #     @unpack data = ddpModel
+    #     @unpack solver = data
+    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
