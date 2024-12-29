@@ -426,12 +426,6 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     # @show get_attribute(model_t0, MOI.Silent())
     optimize!(model_t0)
 
-    # if termination_status(model_t0) == LOCALLY_SOLVED
-    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    # else
-    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    # end
-
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
     crayon_red = Crayon(foreground=:red, bold=true)
@@ -494,12 +488,6 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     # set_silent(model_t0)
     optimize!(model_t0)
 
-    # if termination_status(model_t0) == LOCALLY_SOLVED
-    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    # else
-    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    # end
-
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
     crayon_red = Crayon(foreground=:red, bold=true)
@@ -561,12 +549,6 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
     # set_silent(model_t0)
     optimize!(model_t0)
-
-    # if termination_status(model_t0) == LOCALLY_SOLVED
-    #     myprintln(verbose, "Optimal solution found for Forward Step model for t = $(t_ddp)")
-    # else
-    #     myprintln(verbose, "Optimal solution not found for Forward Step model for t = $(t_ddp)")
-    # end
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
