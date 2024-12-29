@@ -50,7 +50,7 @@ function export_optimization_model(modelDict;
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "$(machine_ID)_optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
+    filename = joinpath(base_dir, "optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
 
     # Check if the file already exists, and delete it if so
     if isfile(filename)
