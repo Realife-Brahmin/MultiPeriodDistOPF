@@ -1,0 +1,29 @@
+---------------------------------------------
+1. Machine ID: ZEPH-ROG-G14-Aryan
+2. Solver Used: Ipopt
+3. System Name: ieee123_1ph
+4. Horizon Duration: 24
+5. Nature of Optimization Simulation: Temporally Decomposed via DDP, Spatially Centralized
+6. Objective: Cost of Substation Power
+7. GED Configuration: pv_20_batt_31
+8. Maximum Substation Power Allowed: Inf kW
+---------------------------------------------
+Full 24 Hour Horizon
+9. Horizon Total Cost of Substation Power: $ 2882.17
+10. Horizon Total Line Loss: 408.51 kW
+11. Horizon Total Substation Power: 21127.58 kW + 8507.72 kVAr
+12. Horizon Total Load: 21357.46 kW + 11751.26 kVAr
+13. Horizon Total Generation: 638.39 kW + 4067.47 kVAr
+14. Horizon Total Static Capacitor Reactive Power Generation: 0.0 kVAr
+15. Horizon Total PV Generation: 607.46 kW + 1971.08 kVAr
+16. Horizon Total Battery Generation: 30.93 kW + 2096.39 kVAr
+17. Horizon Total Battery Transaction Magnitude: 294.66 kW + 2096.39 kVAr
+18. Horizon Total SCD Observed: 0.4 kW
+19. Horizon-end Battery Energy Deviation from Reference: 46.14 kWh
+20. Horizon-Total All time Substation Power Peak: 1194.39 kW
+---------------------------------------------
+21. Number of Macro-Iterations: 1
+22. Simulation Time: 2.76 s
+23. Time to solve with sequential (non-parallel) computation: 2.76 s
+24. Time to solve if OPF computation parallelized: 2.76 s
+---------------------------------------------
