@@ -137,6 +137,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         return
     end
 
+    verbose = true
     # if k_ddp == 1
     if k_ddp >= 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
@@ -196,6 +197,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     end
 
     # if k_ddp == 1
+    verbose = true
     if k_ddp >= 1
         myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
