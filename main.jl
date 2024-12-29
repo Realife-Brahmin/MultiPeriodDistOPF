@@ -6,15 +6,15 @@ using Parameters
 Revise.revise()
 
 systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
+# systemName = "ieee123_1ph"
 T0 = 24
-# T0 = 3
+T0 = 3
 # factor = 1/8
 factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-# temporal_decmp = true
+temporal_decmp = true
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
