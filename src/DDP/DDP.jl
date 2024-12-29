@@ -101,7 +101,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel;
         @unpack solver = data;
-        model_t0 =SolverArranger.attach_solver(model_t0, solver)
+        model_t0 = SolverArranger.attach_solver(model_t0, solver)
         # @show model_t0
     else
         @error "Invalid value of k_ddp: $k_ddp"
@@ -147,7 +147,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel
         @unpack solver = data
-        model_t0 =SolverArranger.attach_solver(model_t0, solver)
+        model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -202,7 +202,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
         @unpack data = ddpModel
         @unpack solver = data
-        model_t0 =SolverArranger.attach_solver(model_t0, solver)
+        model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
