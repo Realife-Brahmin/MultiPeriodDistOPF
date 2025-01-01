@@ -300,13 +300,19 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 discrepancy = abs(value_current - value_previous)
                 max_discrepancy = max(max_discrepancy, discrepancy)
 
+                crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
                 if max_discrepancy > threshold
                     all_under_threshold = false
                     myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
                     myprintln(verbose, "Case in point: var_name = $var_name, discrepancy = $discrepancy")
-                    return ddpModel
+                    println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                    println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                    # return ddpModel
                 end
             end
+        end
+        if !all_under_threshold
+            return ddpModel
         end
     end
 
