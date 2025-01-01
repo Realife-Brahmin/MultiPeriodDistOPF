@@ -55,14 +55,14 @@ crayon_light_yellow = Crayon(foreground=:light_yellow, bold=true)
 
 # Compare variable values for all t and k
 for t_ddp in Tset
-    println(crayon_red_negative("Comparing variable values for t_ddp = $t_ddp"))
+    println(crayon_red_negative("\nComparing variable values for t_ddp = $t_ddp\n"))
 
     # Compare B variables
     for j in Bset
         values_B = []
         for k_ddp in 1:3
             B = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:B]
-            push!(values_B, trim_number_for_printing(B[j, t_ddp], sigdigits=2))
+            push!(values_B, trim_number_for_printing(B[j, t_ddp], sigdigits=4))
         end
         println(crayon_light_green("B[$j, $t_ddp] = ", join(values_B, ", ")))
     end
@@ -71,7 +71,7 @@ for t_ddp in Tset
     values_P_Subs = []
     for k_ddp in 1:3
         P_Subs = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:P_Subs]
-        push!(values_P_Subs, trim_number_for_printing(P_Subs[t_ddp], sigdigits=2))
+        push!(values_P_Subs, trim_number_for_printing(P_Subs[t_ddp], sigdigits=4))
     end
     println(crayon_blue("P_Subs[$t_ddp] = ", join(values_P_Subs, ", ")))
 
@@ -104,7 +104,7 @@ for t_ddp in Tset
         values_q_D = []
         for k_ddp in 1:3
             q_D = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:q_D]
-            push!(values_q_D, trim_number_for_printing(q_D[j, t_ddp], sigdigits=2))
+            push!(values_q_D, trim_number_for_printing(q_D[j, t_ddp], sigdigits=4))
         end
         println(crayon_light_red("q_D[$j, $t_ddp] = ", join(values_q_D, ", ")))
     end
@@ -114,7 +114,7 @@ for t_ddp in Tset
         values_q_B = []
         for k_ddp in 1:3
             q_B = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:q_B]
-            push!(values_q_B, trim_number_for_printing(q_B[j, t_ddp], sigdigits=2))
+            push!(values_q_B, trim_number_for_printing(q_B[j, t_ddp], sigdigits=4))
         end
         println(crayon_light_blue("q_B[$j, $t_ddp] = ", join(values_q_B, ", ")))
     end
@@ -124,7 +124,7 @@ for t_ddp in Tset
         values_P_c = []
         for k_ddp in 1:3
             P_c = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:P_c]
-            push!(values_P_c, trim_number_for_printing(P_c[j, t_ddp], sigdigits=2))
+            push!(values_P_c, trim_number_for_printing(P_c[j, t_ddp], sigdigits=4))
         end
         println(crayon_light_magenta("P_c[$j, $t_ddp] = ", join(values_P_c, ", ")))
     end
@@ -134,7 +134,7 @@ for t_ddp in Tset
         values_P_d = []
         for k_ddp in 1:3
             P_d = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp][:P_d]
-            push!(values_P_d, trim_number_for_printing(P_d[j, t_ddp], sigdigits=2))
+            push!(values_P_d, trim_number_for_printing(P_d[j, t_ddp], sigdigits=4))
         end
         println(crayon_light_cyan("P_d[$j, $t_ddp] = ", join(values_P_d, ", ")))
     end
