@@ -81,7 +81,7 @@ for t_ddp in Tset
             end
             push!(values_mu, trim_number_for_printing(μ_t_k_j, sigdigits=5))
         end
-        println(crayon_green_neg("μ[$j, $t_ddp] = ", join(values_mu, ", ")))
+        println(crayon_green_neg("μ[$j, $(t_ddp+1)] = ", join(values_mu, ", ")))
     end
 
     # Compare B variables
