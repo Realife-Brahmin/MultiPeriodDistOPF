@@ -289,7 +289,9 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     end
 
-    myprintln(verbose, "All updates are under the threshold.")
+    crayon_green = Crayon(background=:green, foreground=:white, bold=true)
+
+    myprintln(verbose, crayon_green("All updates are under the threshold."))
     converged = true
     shouldStop = true
     @pack! ddpModel = converged, shouldStop
