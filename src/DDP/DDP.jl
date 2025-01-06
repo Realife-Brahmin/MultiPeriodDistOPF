@@ -120,7 +120,7 @@ end
 function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
-    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data, mu = ddpModel
+    @unpack k_ddp, t_ddp, modelVals, data, mu = ddpModel
     @unpack T = data;
     if !(2 <= t_ddp <= T-1)
         @error "t_ddp = $(t_ddp) is not in [2, T-1]"
@@ -157,9 +157,12 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
     objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
-
+    
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
+    # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = t_ddp ∈ [2, T-1]
+
+    @unpack models_ddp_vs_t_vs_k = ddpModel
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
@@ -169,7 +172,7 @@ end
 function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     verbose::Bool=false)
     
-    @unpack k_ddp, t_ddp, modelVals, models_ddp_vs_t_vs_k, data = ddpModel;
+    @unpack k_ddp, t_ddp, modelVals, data = ddpModel;
     @unpack T = data;
     if t_ddp != T
         @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
@@ -202,6 +205,9 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     # No need of updating objective function, as no μ term is present in the objective function for the terminal time-step
 
+    # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = T
+
+    @unpack models_ddp_vs_t_vs_k = ddpModel
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
