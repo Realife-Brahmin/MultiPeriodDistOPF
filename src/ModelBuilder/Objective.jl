@@ -86,10 +86,6 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         @pack! data = gamma, gammaAppendix;
         B = model[:B]
         γ = gamma
-        # @show B
-        # @show Bref_pu
-        # println("Bref_pu = $Bref_pu")
-        # println("B = $B")
         objfun += sum(
             1//2 * γ * (B[j, T] - Bref_pu[j])^2
             for j in Bset
@@ -99,10 +95,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
     @objective(model, Min, objfun)
 
     @pack! modelDict = model, data
-    # modelDict = Dict(
-    #     :model => model,
-    #     :data => data
-    # )
+
     return modelDict
 end
 #endregion
