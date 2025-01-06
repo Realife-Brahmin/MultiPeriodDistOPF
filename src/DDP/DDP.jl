@@ -51,7 +51,6 @@ function backward_pass(ddpModel, model_t0;
     @unpack T, Bset = data;
     # Update mu values post optimization
     t_ddp = Tset[1]
-    # for t_ddp ∈ Tset
     for j in Bset
         if t_ddp == 1
             constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
@@ -412,9 +411,12 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    # @show get_attribute(model_t0, MOI.Silent())
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
+
     optimize!(model_t0)
+
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
+    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -437,13 +439,9 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
     end
 
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k;
-
     Tset = [t_ddp]
-    # @unpack modelDict = ddpModel;
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
-    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
+    @unpack modelVals = ddpModel
 
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
@@ -453,13 +451,18 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
     end
 
+    @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+
+    # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
 
+# Todo check here
 function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
