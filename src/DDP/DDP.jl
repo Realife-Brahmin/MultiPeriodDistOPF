@@ -244,9 +244,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         return ddpModel
     end
 
-    # @show k_ddp
-    if k_ddp == 1
-        # println("No updates to check for k_ddp = 1")
+    if k_ddp == 1 # No need to check for convergence at the first iteration
         return ddpModel
     end
 
@@ -276,17 +274,19 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
                 if max_discrepancy > threshold
                     all_under_threshold = false
-                    myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
-                    myprintln(verbose, "Case in point: var_name = $var_name, discrepancy = $discrepancy")
+                    # myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
+                    myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                     println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
                     println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
                     # return ddpModel
                 end
             end
         end
+
         if !all_under_threshold
             return ddpModel
         end
+
     end
 
     myprintln(verbose, "All updates are under the threshold.")
