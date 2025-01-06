@@ -91,7 +91,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         # println("Bref_pu = $Bref_pu")
         # println("B = $B")
         objfun += sum(
-            γ * (B[j, T] - Bref_pu[j])^2
+            1//2 * γ * (B[j, T] - Bref_pu[j])^2
             for j in Bset
         )
     end
