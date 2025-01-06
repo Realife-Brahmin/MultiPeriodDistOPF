@@ -68,10 +68,8 @@ function backward_pass(ddpModel, model_t0;
     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
     println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ values for t_ddp = $(t_ddp)"))
     for j ∈ Bset
-        # println("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2))
         println(crayon_update("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
     end
-    # end
     mu = μ
     @pack! ddpModel = mu
 
@@ -96,14 +94,6 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         Tset_t0 = [t_ddp] # should be [1]
         modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
         model_t0 = modelDict[:model]
-    # elseif k_ddp >= 2
-    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1] # I guess a solved model
-    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-    #     @unpack data = ddpModel;
-    #     @unpack solver = data;
-    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
-    #     # @show model_t0
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -114,7 +104,6 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     objfun_expr_t0_km1 = objective_function(model_t0) # same as model_t0_km1 as it is a copy
     μ = mu
     @unpack Bset = data;
-    # objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     objfun_expr_t0_k = objfun_expr_t0_km1 + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
 
     @objective(model_t0, Min, objfun_expr_t0_k)
@@ -145,14 +134,6 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
-    # elseif k_ddp >= 2
-    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
-    #     # model_t0 = deepcopy(model_t0_km1)
-    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-    #     @unpack data = ddpModel
-    #     @unpack solver = data
-    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
@@ -160,7 +141,6 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     # Update the model with the solutions from the last iteration (backward pass) and previous time-step's SOC values (forward pass)
 
-    # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
     @unpack Bset = data;
 
@@ -175,7 +155,6 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_km1 = objective_function(model_t0)
     μ = mu
-    # objfun_expr_t0_k = objfun_expr_t0_km1 + sum( ( μ[j, t_ddp+1, k_ddp-1] - μ[j, t_ddp+1, k_ddp-2] ) * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
     objfun_expr_t0_k = objfun_expr_t0_km1 + sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
 
     @objective(model_t0, Min, objfun_expr_t0_k)
@@ -204,27 +183,14 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         Tset_t0 = [t_ddp] # should be [T]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
         model_t0 = modelDict_t0[:model]
-    # elseif k_ddp >= 2
-    #     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Modifying last iteration's Forward Step model for t = $(t_ddp)")
-    #     model_t0_km1 = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
-    #     # model_t0 = deepcopy(model_t0_km1)
-    #     model_t0, reference_t0_k_and_km1 = JuMP.copy_model(model_t0_km1)
-    #     @unpack data = ddpModel
-    #     @unpack solver = data
-    #     model_t0 = SolverArranger.attach_solver(model_t0, solver)
     else
         @error "Invalid value of k_ddp: $k_ddp"
         return
     end
 
     # Update the model with the solutions from the previous time-step's SOC values (forward pass)
-
-    # Previous time-step's SOC values are constant for this model's equations, which have been solved for in the previous Forward Step
     B_model = modelVals[:B]
     @unpack Bset = data;
-    # for j ∈ Bset
-    #     fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
-    # end 
 
     crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
     println(crayon_light_red1("Printing the previous time-step's SOC values to be used for the current time-step"))
