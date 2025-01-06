@@ -473,13 +473,15 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         return
     end
 
-    @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel
+    @unpack k_ddp = ddpModel
 
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    # set_silent(model_t0)
+    @unpack models_ddp_vs_t_vs_k = ddpModel;
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
     optimize!(model_t0)
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
+    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -497,13 +499,10 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
+    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used by the next time-step"))
     for j ∈ Bset
         println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
     end
-
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
@@ -535,13 +534,15 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
         return
     end
 
-    @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel
+    @unpack k_ddp = ddpModel
 
     myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    # set_silent(model_t0)
+    @unpack models_ddp_vs_t_vs_k = ddpModel;
+    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
     optimize!(model_t0)
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
+    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     # Check solver status and retrieve results
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -563,9 +564,6 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     for j ∈ Bset
         println(crayon_blue("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
     end
-
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
@@ -691,11 +689,7 @@ function DDPModel(data;
     # Initialize mu[j, t_ddp, 0/-1] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[j, t_ddp, 0] = 0.0
-        mu[j, t_ddp, -1] = 0.0
     end
-
-    # Initialize an empty model using the configure_solver function
-    # model = configure_solver(solver)
 
     ddpModel = Dict(
         :converged => false,
@@ -703,7 +697,6 @@ function DDPModel(data;
         :iterLimitReached => false,
         :k_ddp => 1,
         :maxiter => maxiter,
-        # :model => model,
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :modelVals_ddp_vs_t_vs_k=>modelVals_ddp_vs_t_vs_k,
