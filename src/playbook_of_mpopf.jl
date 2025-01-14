@@ -80,14 +80,14 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     if Tset === nothing
         Tset = data[:Tset]
     end
-    @unpack Bset = data
-
+    @unpack Bset, T = data
+    
     mu = Dict{Tuple{Int,Int},Float64}()
     for t in Tset
         for j in Bset
             if t == 1
                 constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-            elseif 2 <= t <= length(Tset)
+            elseif 2 <= t <= T
                 constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t)"
             else
                 @error "Invalid value of t: $t"
@@ -100,21 +100,53 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-function print_mu(mu, Tset, Bset)
+# function print_mu(mu, Tset, Bset)
+#     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
+#     crayon_value = Crayon(foreground=:light_green, bold=true)
+#     crayon_error = Crayon(foreground=:red, bold=true)
+
+#     println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
+
+#     for t in Tset
+#         for j in Bset
+#                 println(crayon_value("mu[$j, $t] =  $(mu[j, t])"))
+#         end
+#     end
+# end
+
+function print_mu(modelDict)
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_value = Crayon(foreground=:light_green, bold=true)
     crayon_error = Crayon(foreground=:red, bold=true)
 
     println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
 
-    for t in sort(Tset)
-        for j in sort(Bset)
-            if haskey(mu, (j, t))
-                println(crayon_value("mu[$j, $t] = ", mu[(j, t)]))
-            else
-                println(crayon_error("mu[$j, $t] not found"))
+    @unpack mu, data = modelDict
+    @unpack Tset, Bset, temporal_decmp = data
+
+    if temporal_decmp == false
+        for t in Tset
+            for j in Bset
+                if haskey(mu, (j, t))
+                    println(crayon_value("mu[$j, $t] = $(mu[(j, t)])"))
+                else
+                    println(crayon_error("mu[$j, $t] not found"))
+                end
             end
         end
+    elseif temporal_decmp == true
+        @unpack k_ddp = modelDict
+        for t in Tset
+            for j in Bset
+                if haskey(mu, (j, t, k_ddp - 1))
+                    println(crayon_value("mu[$j, $t, $(k_ddp-1)] = $(mu[(j, t, k_ddp-1)])"))
+                else
+                    println(crayon_error("mu[$j, $t, $(k_ddp-1)] not found"))
+                end
+            end
+        end
+    else
+        println(crayon_error("Invalid value for temporal_decmp: $temporal_decmp"))
     end
 end
 

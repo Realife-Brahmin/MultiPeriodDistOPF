@@ -8,14 +8,14 @@ Revise.revise()
 systemName = "ads10_1ph"
 # systemName = "ieee123_1ph"
 # T0 = 3
-T0 = 24
+T0 = 3
 # factor = 1/8
 factor = 1
 # factor = 20
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-# temporal_decmp = true
+temporal_decmp = true
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
@@ -37,12 +37,16 @@ if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @unpack model, modelVals, data = modelDict
     # Print mu values
-    @unpack mu = modelDict
-    @unpack Tset, Bset = data
-    print_mu(mu, Tset, Bset)
+    # Print mu values
+    print_mu(modelDict)
+    # @unpack mu = modelDict
+    # @unpack Tset, Bset = data
+    # print_mu(mu, Tset, Bset)
 elseif temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_DDP(data) # modelDict is basically ddpModel
     @unpack modelVals, data = modelDict
+    # Print mu values
+    print_mu(modelDict)
 else
     error("temporal_decmp must be either true or false")
 end
