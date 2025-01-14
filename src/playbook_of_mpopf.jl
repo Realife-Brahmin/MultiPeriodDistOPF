@@ -1,7 +1,10 @@
 # optimizer.jl
 module Playbook_of_MPOPF
 
-export optimize_MPOPF_1ph_NL_TemporallyBruteforced
+export
+    get_soc_dual_variables_fullMPOPF,
+    optimize_MPOPF_1ph_NL_TemporallyBruteforced,
+    print_mu
 
 include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
@@ -95,6 +98,24 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
         end
     end
     return mu
+end
+
+function print_mu(mu, Tset, Bset)
+    crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
+    crayon_value = Crayon(foreground=:light_green, bold=true)
+    crayon_error = Crayon(foreground=:red, bold=true)
+
+    println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
+
+    for t in sort(Tset)
+        for j in sort(Bset)
+            if haskey(mu, (j, t))
+                println(crayon_value("mu[$j, $t] = ", mu[(j, t)]))
+            else
+                println(crayon_error("mu[$j, $t] not found"))
+            end
+        end
+    end
 end
 
 end # module Playbook_of_MPOPF
