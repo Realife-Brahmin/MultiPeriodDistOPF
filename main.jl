@@ -8,7 +8,7 @@ Revise.revise()
 systemName = "ads10_1ph"
 # systemName = "ieee123_1ph"
 # T0 = 3
-T0 = 3
+T0 = 24
 # factor = 1/8
 factor = 1
 # factor = 20
@@ -36,6 +36,10 @@ data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp)
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @unpack model, modelVals, data = modelDict
+    # Print mu values
+    @unpack mu = modelDict
+    @unpack Tset, Bset = data
+    print_mu(mu, Tset, Bset)
 elseif temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_DDP(data) # modelDict is basically ddpModel
     @unpack modelVals, data = modelDict
