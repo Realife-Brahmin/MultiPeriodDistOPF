@@ -100,7 +100,6 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-
 function print_mu(modelDict)
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_value = Crayon(foreground=:light_green, bold=true)
@@ -111,9 +110,13 @@ function print_mu(modelDict)
     @unpack mu, data = modelDict
     @unpack Tset, Bset, temporal_decmp = data
 
+    # Limit to the first 2 batteries if there are more than 2
+    # Bset_to_print = Bset
+    Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
+
     if temporal_decmp == false
         for t in Tset
-            for j in Bset
+            for j in Bset_to_print
                 if haskey(mu, (j, t))
                     println(crayon_value("mu[$j, $t] = $(mu[(j, t)])"))
                 else
@@ -124,7 +127,7 @@ function print_mu(modelDict)
     elseif temporal_decmp == true
         @unpack k_ddp = modelDict
         for t in Tset
-            for j in Bset
+            for j in Bset_to_print
                 if haskey(mu, (j, t, k_ddp - 1))
                     println(crayon_value("mu[$j, $t, $(k_ddp-1)] = $(mu[(j, t, k_ddp-1)])"))
                 else
