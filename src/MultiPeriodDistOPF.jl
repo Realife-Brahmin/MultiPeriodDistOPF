@@ -47,7 +47,7 @@ export @unpack,
     generateBinaryLoadShape,
     get_load_real_power,
     get_scd,
-    get_soc_dual_variables_fullMPOPF
+    get_soc_dual_variables_fullMPOPF,
     get_source_bus,
     get_substation_lines,
     myprintln,
