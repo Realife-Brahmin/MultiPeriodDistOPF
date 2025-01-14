@@ -100,19 +100,6 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-# function print_mu(mu, Tset, Bset)
-#     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
-#     crayon_value = Crayon(foreground=:light_green, bold=true)
-#     crayon_error = Crayon(foreground=:red, bold=true)
-
-#     println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
-
-#     for t in Tset
-#         for j in Bset
-#                 println(crayon_value("mu[$j, $t] =  $(mu[j, t])"))
-#         end
-#     end
-# end
 
 function print_mu(modelDict)
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
