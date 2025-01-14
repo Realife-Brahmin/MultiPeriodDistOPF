@@ -42,6 +42,11 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     # modelDict = generate_1ph_NL_model_decvar_value_dict(modelDict)
     modelDict = MC.copy_modelVals(modelDict, model, Tset=Tset)
+
+    # Extract SOC dual variables and update modelDict
+    mu = get_soc_dual_variables_fullMPOPF(modelDict, Tset=Tset)
+    modelDict[:mu] = mu
+
     # Check solver status and retrieve results
     # Define crayons for green and red text
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -65,6 +70,31 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     
     return modelDict
 
+end
+
+function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Bset = data
+
+    mu = Dict{Tuple{Int,Int},Float64}()
+    for t in Tset
+        for j in Bset
+            if t == 1
+                constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
+            elseif 2 <= t <= length(Tset)
+                constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t)"
+            else
+                @error "Invalid value of t: $t"
+                continue
+            end
+            constraint_j_t = constraint_by_name(model, constraint_name)
+            mu[(j, t)] = dual(constraint_j_t)
+        end
+    end
+    return mu
 end
 
 end # module Playbook_of_MPOPF
