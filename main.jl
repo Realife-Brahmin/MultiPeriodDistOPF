@@ -23,6 +23,7 @@ savePlots = true
 objfun0 = "subsPowerCostMin"
 objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
+relax_terminal_soc_constraint = true
 tSOC_hard = false
 # tSOC_hard = true
 PSubsMax_kW = Inf # Inf means no limit
@@ -31,7 +32,7 @@ solver = "Ipopt"
 # solver = "Juniper"
 
 # Parse all data
-data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp)
+data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
 
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
