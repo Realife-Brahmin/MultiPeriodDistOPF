@@ -21,7 +21,7 @@ This function sets the objective function for the optimization model stored in `
 It handles different objective types, including substation power cost minimization and line loss minimization, 
 and optionally includes terms for state of charge (SOC) discrepancies and terminal SOC constraints.
 """
-function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false)
+function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=false, relax_terminal_soc_constraint=false)
     @unpack model, data = modelDict
 
     if Tset === nothing
@@ -80,7 +80,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
     @unpack T = data;
     if !tSOC_hard && T ∈ Tset
         @unpack Bset, Bref_pu = data;
-        gamma = HP.estimate_gamma(data)
+        gamma = HP.estimate_gamma(data, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
         println("gamma = $gamma")
         gammaAppendix = HF.trim_number_for_printing(gamma)
         @pack! data = gamma, gammaAppendix;

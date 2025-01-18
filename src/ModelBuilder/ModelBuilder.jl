@@ -151,7 +151,8 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     modelDict = SOC_limits_batteries_t_in_Tset(modelDict, Tset=Tset)
 
     # Define objective function
-    modelDict = define_objective_function_t_in_Tset(modelDict, Tset=Tset, tSOC_hard=tSOC_hard)
+    @unpack tSOC_hard, relax_terminal_soc_constraint = data;
+    modelDict = define_objective_function_t_in_Tset(modelDict, Tset=Tset, tSOC_hard=tSOC_hard, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
 
     @unpack model, data = modelDict;
 
