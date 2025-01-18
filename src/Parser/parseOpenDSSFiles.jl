@@ -81,14 +81,16 @@ function parse_all_data(systemName::String, T::Int;
     PSubsMax_kW=Inf,
     inputForecastDescription="nonspecific",
     solver="Ipopt",
-    tSOC_hard=false)
+    tSOC_hard=false, 
+    relax_terminal_soc_constraint=false)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
         numAreas=numAreas, objfun0=objfun0, objfun2=objfun2, temporal_decmp=temporal_decmp,
         PSubsMax_kW=PSubsMax_kW,
         inputForecastDescription=inputForecastDescription, solver=solver,
-        tSOC_hard=tSOC_hard)
+        tSOC_hard=tSOC_hard,
+        relax_terminal_soc_constraint=relax_terminal_soc_constraint)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
     # Parse load data

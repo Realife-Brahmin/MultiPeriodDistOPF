@@ -50,7 +50,9 @@ function parse_system_simulation_data(systemName::String, T::Int;
     PSubsMax_kW = Inf,
     inputForecastDescription = "nonspecific",
     solver = "Ipopt",
-    tSOC_hard = false)
+    tSOC_hard = false,
+    relax_terminal_soc_constraint = false
+    )
 
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
@@ -199,6 +201,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :objfunConciseDescription => objfunConciseDescription,
         :objfunUnit => objfunUnit,
         :PSubsMax_kW => PSubsMax_kW,
+        :relax_terminal_soc_constraint => relax_terminal_soc_constraint,
         :simNatureAppendix => simNatureAppendix,
         :simNatureString => simNatureString,
         :solver => solver,

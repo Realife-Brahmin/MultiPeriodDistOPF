@@ -71,8 +71,12 @@ Estimate the gamma parameter for the objective function.
 
 This function calculates the gamma parameter based on the estimated terminal state of charge discrepancy.
 """
-function estimate_gamma(data)
+function estimate_gamma(data; relax_terminal_soc_constraint=false)
     @unpack func_obj_est = data;
+    if relax_terminal_soc_constraint
+        gamma = 0
+        return gamma
+    end
     if func_obj_est !== nothing
         fobj_est = func_obj_est(data)
     else
@@ -80,7 +84,6 @@ function estimate_gamma(data)
     end
     ftsoc_est = estimate_ftsoc(data)
     gamma = fobj_est / ftsoc_est
-    # gamma = 0 # temporary
     return gamma
 end
 #endregion
