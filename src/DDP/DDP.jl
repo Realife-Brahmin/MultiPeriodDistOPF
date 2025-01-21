@@ -102,8 +102,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
     μ = mu
     @unpack Bset = data;
-    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms - sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
 
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
@@ -680,7 +679,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=10,
+    maxiter::Int=22,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
