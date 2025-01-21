@@ -6,7 +6,7 @@ using Parameters
 Revise.revise()
 
 systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
+# systemName = "ieee123_1ph"
 T0 = 3
 T0 = 24
 # factor = 1/2
@@ -15,7 +15,7 @@ factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-# temporal_decmp = true
+temporal_decmp = true
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
@@ -23,7 +23,8 @@ savePlots = true
 objfun0 = "subsPowerCostMin"
 objfun2 = "scd"
 inputForecastDescription = "bilevelCosts"
-relax_terminal_soc_constraint = true
+relax_terminal_soc_constraint = false
+# relax_terminal_soc_constraint = true
 tSOC_hard = false
 # tSOC_hard = true
 PSubsMax_kW = Inf # Inf means no limit
