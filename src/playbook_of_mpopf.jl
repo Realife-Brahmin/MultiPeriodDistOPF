@@ -172,7 +172,7 @@ function print_mu(ddpModel)
 
     println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
 
-    @unpack mu, data, k_ddp = ddpModel
+    @unpack mu, data = ddpModel
     @unpack Tset, Bset, temporal_decmp = data
 
     # Limit to the first and last batteries if there are more than 2
@@ -191,7 +191,7 @@ function print_mu(ddpModel)
             end
         end
     elseif temporal_decmp == true
-        @unpack models_ddp_vs_t_vs_k = ddpModel
+        @unpack models_ddp_vs_t_vs_k, k_ddp = ddpModel
         for (j_B, j) in enumerate(Bset_to_print)
             battery_color = battery_colors_temporal[j_B]
             for t in Tset
