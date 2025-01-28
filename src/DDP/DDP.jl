@@ -61,6 +61,7 @@ function backward_pass(ddpModel, model_t0;
             return
         end
         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
+        println("constraint_j_t0 = ", constraint_j_t0)
         μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
     end
 
@@ -477,6 +478,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
 
     # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
+    println("Backward Pass for Tset = $Tset")
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -539,6 +541,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    println("Backward Pass for Tset = $Tset")
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -599,6 +602,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    println("Backward Pass for Tset = $Tset")
     ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
