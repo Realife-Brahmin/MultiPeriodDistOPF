@@ -251,7 +251,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     
     # Compare variable values and compute discrepancies
     max_discrepancy = 0.0
-    threshold = 1e-8
+    threshold = 1e-5
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
