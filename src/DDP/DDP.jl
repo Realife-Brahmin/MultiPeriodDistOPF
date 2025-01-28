@@ -229,8 +229,8 @@ This function checks if the Differential Dynamic Programming (DDP) algorithm has
 - `ddpModel::Dict`: The updated dictionary with convergence status and stopping criteria.
 """
 function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
-    @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data = ddpModel;
-    @unpack Tset = data;
+    @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data, mu = ddpModel;
+    @unpack Tset, Bset = data;
 
     verbose = true
 
@@ -288,14 +288,28 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
             return ddpModel
         end
 
+    # Check the difference between latest and previous mu values
+    println(crayon_green("Checking convergence for mu values:"))
+
+    for t in Tset
+        for j in Bset
+            if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
+                mu_current = mu[(j, t, k_ddp)]
+                mu_previous = mu[(j, t, k_ddp - 1)]
+                discrepancy = abs(mu_current - mu_previous)
+                max_discrepancy = max(max_discrepancy, discrepancy)
+                if discrepancy > threshold
+                    all_under_threshold = false
+                    myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                    println(crayon_red_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    println(crayon_red_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                end
+            else
+                println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
+            end
+        end
     end
 
-    crayon_green = Crayon(background=:green, foreground=:white, bold=true)
-
-    println(crayon_green("All updates are under the threshold."))
-    converged = true
-    shouldStop = true
-    @pack! ddpModel = converged, shouldStop
     return ddpModel
     
 end
