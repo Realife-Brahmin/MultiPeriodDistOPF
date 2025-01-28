@@ -697,7 +697,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=22,
+    maxiter::Int=55,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
