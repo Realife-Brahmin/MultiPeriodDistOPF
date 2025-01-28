@@ -6,11 +6,11 @@ using Parameters
 Revise.revise()
 
 systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
-# T0 = 8
-T0 = 24
-factor = 1/2
-# factor = 1
+# systemName = "ieee123_1ph"
+T0 = 3
+# T0 = 24
+# factor = 1/2
+factor = 1
 # factor = 20
 T = Int(T0*factor) 
 numAreas = 1

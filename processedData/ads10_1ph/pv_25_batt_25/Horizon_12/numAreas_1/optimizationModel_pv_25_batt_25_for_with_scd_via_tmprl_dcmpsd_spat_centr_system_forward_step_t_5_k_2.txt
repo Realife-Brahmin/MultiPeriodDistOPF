@@ -1,4 +1,4 @@
-Min 48.20404 P_Subs[5] + 0.5421952957150444 P_c[5,5] + 0.5707318902263615 P_d[5,5] + 0.5421952957150444 P_c[6,5] + 0.5707318902263615 P_d[6,5] + 48.2445913952639 B[5,5] + 48.25535768556137 B[6,5]
+Min 48.20404 P_Subs[5] + 0.5421952957150444 P_c[5,5] + 0.5707318902263615 P_d[5,5] + 0.5421952957150444 P_c[6,5] + 0.5707318902263615 P_d[6,5] + 48.24458840147221 B[5,5] + 48.255354948613245 B[6,5]
 Subject to
  SubstationRealPowerBalance_t_5 : P_Subs[5] - P[(1, 2),5] - P[(1, 3),5] - P[(1, 10),5] == 0
  NodeRealPowerBalance_Node_j_2_t_5 : -P[(1, 2),5] + P[(2, 4),5] + P[(2, 5),5] + P[(2, 6),5] + 0.003016307175896701 l[(1, 2),5] == -0.010357410000000001
@@ -51,10 +51,6 @@ Subject to
  g_4_j^t_UpperReactivePowerLimit_PV_Node_j_6_t_5 : q_D[6,5] <= 0.004172950059610108
  g_3_j^t_LowerReactivePowerLimit_PV_Node_j_10_t_5 : -q_D[10,5] <= 0.002087145850198304
  g_4_j^t_UpperReactivePowerLimit_PV_Node_j_10_t_5 : q_D[10,5] <= 0.002087145850198304
- g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_5_t_5 : -q_B[5,5] <= 0.003094742591880624
- g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_5_t_5 : q_B[5,5] <= 0.003094742591880624
- g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_6_t_5 : -q_B[6,5] <= 0.0015478687896588654
- g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_6_t_5 : q_B[6,5] <= 0.0015478687896588654
  g_7_j^t_NonNegativity_ChargingPower_Node_j_5_t_5 : -P_c[5,5] <= 0
  g_8_j^t_MaxChargingPowerLimit_Node_j_5_t_5 : P_c[5,5] <= 0.0046654999999999995
  g_7_j^t_NonNegativity_ChargingPower_Node_j_6_t_5 : -P_c[6,5] <= 0
@@ -76,8 +72,10 @@ Subject to
  BCPF_NonSubstationBranch_i_6_j_7_t_5 : P[(6, 7),5]² + Q[(6, 7),5]² - v[6,5]*l[(6, 7),5] == 0
  BCPF_NonSubstationBranch_i_6_j_8_t_5 : P[(6, 8),5]² + Q[(6, 8),5]² - v[6,5]*l[(6, 8),5] == 0
  BCPF_NonSubstationBranch_i_8_j_9_t_5 : P[(8, 9),5]² + Q[(8, 9),5]² - v[8,5]*l[(8, 9),5] == 0
- B[5,4] == 0.005598590942170688
- B[6,4] == 0.002800130941951441
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_5 : q_B[5,5]² + P_c[5,5]² - 2 P_c[5,5]*P_d[5,5] + P_d[5,5]² <= 3.1344321960000005e-5
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_6_t_5 : q_B[6,5]² + P_c[6,5]² - 2 P_c[6,5]*P_d[6,5] + P_d[6,5]² <= 7.840560010000001e-6
+ B[5,4] == 0.005598590942171908
+ B[6,4] == 0.0028001309419547473
  P_Subs[5] >= 0
  l[(1, 2),5] >= 0
  l[(1, 3),5] >= 0
