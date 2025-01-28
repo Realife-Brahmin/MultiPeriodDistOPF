@@ -494,6 +494,38 @@ function reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
 end
 #endregion
 
+#region reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset
+"""
+    reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+
+Define the reactive power limits for battery inverters over a given time set using the constraint (P_d_j - P_c_j)^2 + q_B_j^2 <= S_B_R_j^2.
+
+This function sets the reactive power limits for the optimization model stored in `modelDict`.
+"""
+function reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack Bset, S_B_R_pu = data
+
+    for t in Tset, j in Bset
+        q_B = model[:q_B]
+        P_d = model[:P_d]
+        P_c = model[:P_c]
+
+        ## g_qB_j^T: Reactive Power Limit for Battery Inverter ##
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
+            (P_d[j, t] - P_c[j, t])^2 + q_B[j, t]^2 <= S_B_R_pu[j]^2
+        )
+    end
+
+    return modelDict
+end
+#endregion
+
 #region reactive_power_limits_battery_inverters_t_in_Tset
 """
     reactive_power_limits_battery_inverters_t_in_Tset(modelDict; Tset=nothing)

@@ -139,10 +139,10 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     modelDict = reactive_power_limits_PV_inverters_t_in_Tset(modelDict, Tset=Tset)
 
     # # Reactive power limits for battery inverters
-    modelDict = reactive_power_limits_battery_inverters_t_in_Tset(modelDict, Tset=Tset)
+    # modelDict = reactive_power_limits_battery_inverters_t_in_Tset(modelDict, Tset=Tset)
 
     # Reactive power limits for battery inverters
-    # modelDict = reactive_power_limits_battery_inverters_NL_1ph_t_in_Tset(modelDict, Tset=Tset)
+    modelDict = reactive_power_limits_battery_inverters_NL_1ph_t_in_Tset(modelDict, Tset=Tset)
 
     # Charging power limits for batteries
     modelDict = charging_power_limits_batteries_t_in_Tset(modelDict, Tset=Tset)
