@@ -1,4 +1,4 @@
-Min 48.20404 P_Subs[1] + 0.640920015906163 P_c[5,1] + 0.6746526483222756 P_d[5,1] + 0.640920015906163 P_c[6,1] + 0.6746526483222756 P_d[6,1] + 45.16617889134663 B[5,1] + 45.17603194665587 B[6,1]
+Min 48.20404 P_Subs[1] + 0.640920015906163 P_c[5,1] + 0.6746526483222756 P_d[5,1] + 0.640920015906163 P_c[6,1] + 0.6746526483222756 P_d[6,1] + 45.165573815048106 B[5,1] + 45.174800380406765 B[6,1]
 Subject to
  SubstationRealPowerBalance_t_1 : P_Subs[1] - P[(1, 2),1] - P[(1, 3),1] - P[(1, 10),1] == 0
  NodeRealPowerBalance_Node_j_2_t_1 : -P[(1, 2),1] + P[(2, 4),1] + P[(2, 5),1] + P[(2, 6),1] + 0.003016307175896701 l[(1, 2),1] == -0.010357410000000001
@@ -51,10 +51,6 @@ Subject to
  g_4_j^t_UpperReactivePowerLimit_PV_Node_j_6_t_1 : q_D[6,1] <= 0.004172950059610108
  g_3_j^t_LowerReactivePowerLimit_PV_Node_j_10_t_1 : -q_D[10,1] <= 0.002087145850198304
  g_4_j^t_UpperReactivePowerLimit_PV_Node_j_10_t_1 : q_D[10,1] <= 0.002087145850198304
- g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_5_t_1 : -q_B[5,1] <= 0.003094742591880624
- g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_5_t_1 : q_B[5,1] <= 0.003094742591880624
- g_5_j^t_LowerReactivePowerLimit_Battery_Node_j_6_t_1 : -q_B[6,1] <= 0.0015478687896588654
- g_6_j^t_UpperReactivePowerLimit_Battery_Node_j_6_t_1 : q_B[6,1] <= 0.0015478687896588654
  g_7_j^t_NonNegativity_ChargingPower_Node_j_5_t_1 : -P_c[5,1] <= 0
  g_8_j^t_MaxChargingPowerLimit_Node_j_5_t_1 : P_c[5,1] <= 0.0046654999999999995
  g_7_j^t_NonNegativity_ChargingPower_Node_j_6_t_1 : -P_c[6,1] <= 0
@@ -76,6 +72,8 @@ Subject to
  BCPF_NonSubstationBranch_i_6_j_7_t_1 : P[(6, 7),1]² + Q[(6, 7),1]² - v[6,1]*l[(6, 7),1] == 0
  BCPF_NonSubstationBranch_i_6_j_8_t_1 : P[(6, 8),1]² + Q[(6, 8),1]² - v[6,1]*l[(6, 8),1] == 0
  BCPF_NonSubstationBranch_i_8_j_9_t_1 : P[(8, 9),1]² + Q[(8, 9),1]² - v[8,1]*l[(8, 9),1] == 0
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_1 : q_B[5,1]² + P_c[5,1]² - 2 P_c[5,1]*P_d[5,1] + P_d[5,1]² <= 3.1344321960000005e-5
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_6_t_1 : q_B[6,1]² + P_c[6,1]² - 2 P_c[6,1]*P_d[6,1] + P_d[6,1]² <= 7.840560010000001e-6
  P_Subs[1] >= 0
  l[(1, 2),1] >= 0
  l[(1, 3),1] >= 0
