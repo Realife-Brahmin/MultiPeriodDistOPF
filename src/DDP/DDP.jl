@@ -102,15 +102,15 @@ function backward_pass(ddpModel, model_t0; Tset=nothing)
         end
         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
         println("constraint_j_t0 = ", constraint_j_t0)
-        μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
+        μ[j, t_ddp, k_ddp] = -dual(constraint_j_t0)
 
         # Update lambda_lo and lambda_up
         lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
         lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
         constraint_lambda_lo = constraint_by_name(model_t0, lambda_lo_name)
         constraint_lambda_up = constraint_by_name(model_t0, lambda_up_name)
-        λ_lo[j, t_ddp, k_ddp] = dual(constraint_lambda_lo)
-        λ_up[j, t_ddp, k_ddp] = dual(constraint_lambda_up)
+        λ_lo[j, t_ddp, k_ddp] = -dual(constraint_lambda_lo)
+        λ_up[j, t_ddp, k_ddp] = -dual(constraint_lambda_up)
     end
 
     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
@@ -768,7 +768,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=55,
+    maxiter::Int=111,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;

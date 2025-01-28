@@ -94,7 +94,7 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
                 continue
             end
             constraint_j_t = constraint_by_name(model, constraint_name)
-            mu[(j, t)] = dual(constraint_j_t)
+            mu[(j, t)] = -dual(constraint_j_t)
         end
     end
     return mu
@@ -216,8 +216,8 @@ function print_mu(ddpModel)
             end
             lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
             lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
-            lambda_lower = dual(constraint_by_name(model, lambda_lower_name))
-            lambda_upper = dual(constraint_by_name(model, lambda_upper_name))
+            lambda_lower = -dual(constraint_by_name(model, lambda_lower_name))
+            lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
             println(battery_color("lambda_lower[$j, $t] = $lambda_lower"))
             println(battery_color("lambda_upper[$j, $t] = $lambda_upper"))
         end
@@ -235,8 +235,8 @@ function print_mu(ddpModel)
             end
             lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
             lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
-            lambda_lower = dual(constraint_by_name(model, lambda_lower_name))
-            lambda_upper = dual(constraint_by_name(model, lambda_upper_name))
+            lambda_lower = -dual(constraint_by_name(model, lambda_lower_name))
+            lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
             if temporal_decmp == false
                 mu_current = mu[(j, t)]
                 if t < maximum(Tset)
