@@ -228,27 +228,34 @@ function print_mu(ddpModel)
     for (j_B, j) in enumerate(Bset_to_print)
         battery_color = temporal_decmp ? battery_colors_temporal[j_B] : battery_colors_non_temporal[j_B]
         for t in Tset
-            if t < maximum(Tset)
-                if temporal_decmp == false
-                    @unpack model = ddpModel
-                else
-                    model = models_ddp_vs_t_vs_k[t, k_ddp-1]
-                end
-                lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
-                lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
-                lambda_lower = dual(constraint_by_name(model, lambda_lower_name))
-                lambda_upper = dual(constraint_by_name(model, lambda_upper_name))
-                if temporal_decmp == false
-                    mu_current = mu[(j, t)]
-                    mu_next = mu[(j, t + 1)]
-                else
-                    mu_current = mu[(j, t, k_ddp - 1)]
-                    mu_next = mu[(j, t + 1, k_ddp - 1)]
-                end
-
-                balance = -lambda_lower + lambda_upper + mu_current - mu_next
-                println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance"))
+            if temporal_decmp == false
+                @unpack model = ddpModel
+            else
+                model = models_ddp_vs_t_vs_k[t, k_ddp-1]
             end
+            lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
+            lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
+            lambda_lower = dual(constraint_by_name(model, lambda_lower_name))
+            lambda_upper = dual(constraint_by_name(model, lambda_upper_name))
+            if temporal_decmp == false
+                mu_current = mu[(j, t)]
+                if t < maximum(Tset)
+                    mu_next = mu[(j, t + 1)]
+                    balance = -lambda_lower + lambda_upper + mu_current - mu_next
+                else
+                    balance = -lambda_lower + lambda_upper + mu_current
+                end
+            else
+                mu_current = mu[(j, t, k_ddp - 1)]
+                if t < maximum(Tset)
+                    mu_next = mu[(j, t + 1, k_ddp - 1)]
+                    balance = -lambda_lower + lambda_upper + mu_current - mu_next
+                else
+                    balance = -lambda_lower + lambda_upper + mu_current
+                end
+            end
+
+            println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance"))
         end
     end
 end
