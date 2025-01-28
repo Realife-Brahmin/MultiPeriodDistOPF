@@ -39,45 +39,6 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-# function backward_pass(ddpModel, model_t0;
-#     Tset=nothing)
-#     if Tset === nothing
-#         println("No Tset defined for backward pass, so using the Tset from the data")
-#         @unpack data = ddpModel;
-#         Tset = data[:Tset]
-#     end
-#     @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel;
-#     μ = mu;
-#     λ_lo = lambda_lo;
-#     λ_up = lambda_up;
-#     @unpack T, Bset = data;
-#     # Update mu values post optimization
-#     t_ddp = Tset[1]
-#     for j in Bset
-#         if t_ddp == 1
-#             constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-#         elseif 2 <= t_ddp <= T
-#             constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
-#         else
-#             @error "Invalid value of t_ddp: $t_ddp"
-#             return
-#         end
-#         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
-#         println("constraint_j_t0 = ", constraint_j_t0)
-#         μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
-#     end
-
-#     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
-#     println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ values for t_ddp = $(t_ddp)"))
-#     for j ∈ Bset
-#         println(crayon_update("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
-#     end
-#     mu = μ
-#     @pack! ddpModel = mu
-
-#     return ddpModel
-# end
-
 function backward_pass(ddpModel, model_t0; Tset=nothing)
     if Tset === nothing
         println("No Tset defined for backward pass, so using the Tset from the data")
