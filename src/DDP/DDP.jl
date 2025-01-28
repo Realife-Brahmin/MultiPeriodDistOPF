@@ -280,7 +280,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     
     # Compare variable values and compute discrepancies
     max_discrepancy = 0.0
-    threshold = 1e-5
+    threshold = 1e-4
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
@@ -729,7 +729,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=111,
+    maxiter::Int=11,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
