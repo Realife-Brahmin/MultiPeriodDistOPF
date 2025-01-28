@@ -39,17 +39,57 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function backward_pass(ddpModel, model_t0;
-    Tset=nothing)
+# function backward_pass(ddpModel, model_t0;
+#     Tset=nothing)
+#     if Tset === nothing
+#         println("No Tset defined for backward pass, so using the Tset from the data")
+#         @unpack data = ddpModel;
+#         Tset = data[:Tset]
+#     end
+#     @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel;
+#     μ = mu;
+#     λ_lo = lambda_lo;
+#     λ_up = lambda_up;
+#     @unpack T, Bset = data;
+#     # Update mu values post optimization
+#     t_ddp = Tset[1]
+#     for j in Bset
+#         if t_ddp == 1
+#             constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
+#         elseif 2 <= t_ddp <= T
+#             constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
+#         else
+#             @error "Invalid value of t_ddp: $t_ddp"
+#             return
+#         end
+#         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
+#         println("constraint_j_t0 = ", constraint_j_t0)
+#         μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
+#     end
+
+#     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
+#     println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ values for t_ddp = $(t_ddp)"))
+#     for j ∈ Bset
+#         println(crayon_update("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+#     end
+#     mu = μ
+#     @pack! ddpModel = mu
+
+#     return ddpModel
+# end
+
+function backward_pass(ddpModel, model_t0; Tset=nothing)
     if Tset === nothing
         println("No Tset defined for backward pass, so using the Tset from the data")
-        @unpack data = ddpModel;
+        @unpack data = ddpModel
         Tset = data[:Tset]
     end
-    @unpack k_ddp, data, mu = ddpModel;
-    μ = mu;
-    @unpack T, Bset = data;
-    # Update mu values post optimization
+    @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel
+    μ = mu
+    λ_lo = lambda_lo
+    λ_up = lambda_up
+    @unpack T, Bset = data
+    # Update mu, lambda_lo, and lambda_up values post optimization
     t_ddp = Tset[1]
     for j in Bset
         if t_ddp == 1
@@ -63,15 +103,42 @@ function backward_pass(ddpModel, model_t0;
         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
         println("constraint_j_t0 = ", constraint_j_t0)
         μ[j, t_ddp, k_ddp] = dual(constraint_j_t0)
+
+        # Update lambda_lo and lambda_up
+        lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
+        lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
+        constraint_lambda_lo = constraint_by_name(model_t0, lambda_lo_name)
+        constraint_lambda_up = constraint_by_name(model_t0, lambda_up_name)
+        λ_lo[j, t_ddp, k_ddp] = dual(constraint_lambda_lo)
+        λ_up[j, t_ddp, k_ddp] = dual(constraint_lambda_up)
     end
 
     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
-    println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ values for t_ddp = $(t_ddp)"))
-    for j ∈ Bset
-        println(crayon_update("j = $j: μ = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+    println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ, λ_lo, and λ_up values for t_ddp = $(t_ddp)"))
+    for j in Bset
+        println(crayon_update("j = $j: μ_t_k = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+        if t_ddp != T
+            println(crayon_update("j = $j: μ_tp1_km1 = ", trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
+        end
+        println(crayon_update("j = $j: λ_lo_t_k = ", trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
+        println(crayon_update("j = $j: λ_up_t_k = ", trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
     end
+
+    # Print KKT balance equation
+    println(crayon_update("KKT balance equation for t_ddp = $(t_ddp):"))
+    for j in Bset
+        if t_ddp < T
+            balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp] - μ[j, t_ddp+1, k_ddp-1]
+        else
+            balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp]
+        end
+        println(crayon_update("j = $j: KKT balance = ", trim_number_for_printing(balance, sigdigits=2)))
+    end
+
     mu = μ
-    @pack! ddpModel = mu
+    lambda_lo = λ_lo
+    lambda_up = λ_up
+    @pack! ddpModel = mu, lambda_lo, lambda_up
 
     return ddpModel
 end
