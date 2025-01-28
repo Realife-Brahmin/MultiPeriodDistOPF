@@ -254,8 +254,10 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     threshold = 1e-8
     all_under_threshold = true
 
+    crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
+    crayon_green = Crayon(background=:green, foreground=:white, bold=true)
+
     for t_ddp in Tset
-        # @show models_ddp_vs_t_vs_k
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp - 1]
 
@@ -264,22 +266,17 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         var_dict_previous = MC.create_variable_dict(model_previous)
 
         for var_name in keys(var_dict_current)
-            if haskey(var_dict_previous, var_name)
-                value_current = var_dict_current[var_name]
-                value_previous = var_dict_previous[var_name]
-                discrepancy = abs(value_current - value_previous)
-                max_discrepancy = max(max_discrepancy, discrepancy)
+            value_current = var_dict_current[var_name]
+            value_previous = var_dict_previous[var_name]
+            discrepancy = abs(value_current - value_previous)
+            max_discrepancy = max(max_discrepancy, discrepancy)
 
-                crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
-                if max_discrepancy > threshold
-                    all_under_threshold = false
-                    # myprintln(verbose, "Some updates exceed the threshold. So keep doing Forward Passes.")
-                    if discrepancy > threshold
-                        myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
-                        println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
-                        println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
-                    end
-                    # return ddpModel
+            if max_discrepancy > threshold
+                all_under_threshold = false
+                if discrepancy > threshold
+                    myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+                    println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                    println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
                 end
             end
         end
@@ -287,6 +284,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         if !all_under_threshold
             return ddpModel
         end
+    end
 
     # Check the difference between latest and previous mu values
     println(crayon_green("Checking convergence for mu values:"))
@@ -310,8 +308,14 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         end
     end
 
+    if all_under_threshold
+        println(crayon_green("All updates are under the threshold."))
+        converged = true
+        shouldStop = true
+        @pack! ddpModel = converged, shouldStop
+    end
+
     return ddpModel
-    
 end
 #endregion
 
