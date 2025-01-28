@@ -708,11 +708,15 @@ function DDPModel(data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
+    lambda_lo = Dict{Tuple{Int,Int,Int},Float64}()
+    lambda_up = Dict{Tuple{Int,Int,Int},Float64}()
     # modelVals = Dict{Symbol,Any}()
     modelVals = MC.ModelVals(data)
     # Initialize mu[j, t_ddp, 0/-1] = 0 for all j in Bset and t_ddp in Tset
     for j ∈ Bset, t_ddp ∈ Tset
         mu[j, t_ddp, 0] = 0.0
+        lambda_lo[j, t_ddp, 0] = 0.0
+        lambda_up[j, t_ddp, 0] = 0.0
     end
 
     ddpModel = Dict(
@@ -720,6 +724,8 @@ function DDPModel(data;
         :data => data,
         :iterLimitReached => false,
         :k_ddp => 1,
+        :lambda_lo => lambda_lo,
+        :lambda_up => lambda_up,
         :maxiter => maxiter,
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
