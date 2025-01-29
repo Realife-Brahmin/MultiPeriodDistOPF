@@ -1,7 +1,7 @@
 module DDP 
 
 export
-    backward_pass, 
+    compute_and_store_dual_variables, 
     build_ForwardStep_1ph_NL_model_t_is_1,
     build_ForwardStep_1ph_NL_model_t_in_2toTm1,
     build_ForwardStep_1ph_NL_model_t_is_T,
@@ -39,7 +39,7 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function backward_pass(ddpModel, model_t0; Tset=nothing)
+function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     if Tset === nothing
         println("No Tset defined for backward pass, so using the Tset from the data")
         @unpack data = ddpModel
@@ -62,7 +62,7 @@ function backward_pass(ddpModel, model_t0; Tset=nothing)
             return
         end
         constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
-        println("constraint_j_t0 = ", constraint_j_t0)
+        # println("constraint_j_t0 = ", constraint_j_t0)
         μ[j, t_ddp, k_ddp] = -dual(constraint_j_t0)
 
         # Update lambda_lo and lambda_up
@@ -131,7 +131,8 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
     μ = mu
     @unpack Bset = data;
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
+    sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
 
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
@@ -507,7 +508,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
     println("Backward Pass for Tset = $Tset")
-    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
+    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
@@ -570,7 +571,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     println("Backward Pass for Tset = $Tset")
-    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
+    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
@@ -631,7 +632,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     println("Backward Pass for Tset = $Tset")
-    ddpModel = backward_pass(ddpModel, model_t0, Tset=Tset)
+    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
 end
