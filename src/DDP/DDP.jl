@@ -393,6 +393,11 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
     crayon_green = Crayon(background=:green, foreground=:white, bold=true)
+    crayon_blue = Crayon(foreground=:blue, bold=true)
+    crayon_blue_neg = Crayon(foreground=:blue, bold=true, negative=true)
+
+    # Limit to the first and last batteries if there are more than 2
+    Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
 
     println(crayon_green("Checking convergence for B values:"))
 
@@ -404,14 +409,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
         var_dict_current = MC.create_variable_dict(model_current)
         var_dict_previous = MC.create_variable_dict(model_previous)
 
-        # @show var_dict_current
-        # var_name = "B"
-        # B_current = var_dict_current[:B]
-        # B_previous = var_dict_previous[:B]
         for j in Bset
             var_name = Symbol("B[$j,$t_ddp]")
-            # value_current = B_current[j, t_ddp]
-            # value_previous = B_previous[j, t_ddp]
             value_current = var_dict_current[var_name]
             value_previous = var_dict_previous[var_name]
             discrepancy = abs(value_current - value_previous)
@@ -421,14 +420,16 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 all_under_threshold = false
                 if discrepancy > threshold
                     myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
-                    println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
-                    println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                    if j in Bset_to_print
+                        println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                        println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                    end
+                else
+                    if j in Bset_to_print
+                        println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
+                    end
                 end
             end
-        end
-
-        if !all_under_threshold
-            return ddpModel
         end
     end
 
@@ -445,13 +446,25 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 if discrepancy > threshold
                     all_under_threshold = false
                     myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
-                    println(crayon_red_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-                    println(crayon_red_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    if j in Bset_to_print
+                        println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                        println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    end
+                else
+                    if j in Bset_to_print
+                        println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                    end
                 end
             else
-                println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
+                if j in Bset_to_print
+                    println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
+                end
             end
         end
+    end
+
+    if !all_under_threshold
+        return ddpModel
     end
 
     if all_under_threshold
