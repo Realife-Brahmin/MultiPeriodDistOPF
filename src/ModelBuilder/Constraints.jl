@@ -9,7 +9,7 @@ export
     fixed_substation_voltage_constraints_t_in_Tset,
     KVL_non_substation_branches_t_in_Tset,
     KVL_substation_branches_t_in_Tset,
-    nodalReactivePowerBalance_non_substation_t_in_Tset,
+    nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset,
     nodalRealPowerBalance_non_substation_1ph_NL_t_in_Tset,
     nodalRealPowerBalance_substation_t_in_Tset,
     reactive_power_limits_PV_inverters_t_in_Tset,
@@ -114,15 +114,15 @@ function nodalRealPowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Tset=n
 end
 #endregion
 
-#region nodalReactivePowerBalance_non_substation_t_in_Tset
+#region nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset
 """
-    nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+    nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 
 Define the nodal reactive power balance constraints for non-substation nodes over a given time set.
 
 This function sets the nodal reactive power balance constraints for the optimization model stored in `modelDict`.
 """
-function nodalReactivePowerBalance_non_substation_t_in_Tset(modelDict; Tset=nothing)
+function nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
