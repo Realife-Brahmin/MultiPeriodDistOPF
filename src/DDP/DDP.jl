@@ -503,10 +503,10 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
-    for j ∈ Bset
-        println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    end
+    # println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
+    # for j ∈ Bset
+    #     println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
+    # end
 
     @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
@@ -557,10 +557,10 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used by the next time-step"))
-    for j ∈ Bset
-        println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    end
+    # println(crayon_light_red("Printing the Forward Step Battery SOC values to be used by the next time-step"))
+    # for j ∈ Bset
+    #     println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    # end
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
@@ -570,10 +570,10 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
-    for j ∈ Bset
-        println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    end
+    # println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
+    # for j ∈ Bset
+    #     println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
+    # end
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
@@ -619,10 +619,10 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_blue("Printing the Terminal Battery SOC values"))
-    for j ∈ Bset
-        println(crayon_blue("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    end
+    # println(crayon_blue("Printing the Terminal Battery SOC values"))
+    # for j ∈ Bset
+    #     println(crayon_blue("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    # end
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
@@ -631,10 +631,10 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_blue("Printing terminal SOC values in modelVals[:B] (should be the same)"))
-    for j ∈ Bset
-        println(crayon_blue("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    end
+    # println(crayon_blue("Printing terminal SOC values in modelVals[:B] (should be the same)"))
+    # for j ∈ Bset
+    #     println(crayon_blue("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
+    # end
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
