@@ -524,7 +524,7 @@ function forward_pass(ddpModel;
             @error "Invalid value of t_ddp: $t_ddp"
             return
         end
-        Exporter.export_optimization_model(ddpModel, verbose=verbose)
+        # Exporter.export_optimization_model(ddpModel, verbose=verbose)
     end
 
     return ddpModel
