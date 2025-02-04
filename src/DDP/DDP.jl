@@ -86,6 +86,7 @@ function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     end
 
     # Print KKT balance equation
+    # Todo: Insert provision of gamma term for KKT balance equation in case terminal SOC constraint is enforced
     println(crayon_update("KKT balance equation for t_ddp = $(t_ddp):"))
     for j in Bset
         if t_ddp < T
