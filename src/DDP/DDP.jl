@@ -411,10 +411,12 @@ function forward_pass(ddpModel; verbose::Bool=false)
     end
 
     # Compute output values without mutating the original modelDict
-    ddpModel_k0 = copy(ddpModel)
-    ddpModel_k0 = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
+    ddpModel_k0 = deepcopy(ddpModel)
+    ddpModel_k0_with_outputVals = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
     @unpack outputVals_vs_k = ddpModel_k0
-    outputVals_vs_k[k_ddp] = ddpModel_k0[:data]
+    # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1])
+    outputVals_vs_k[k_ddp] = ddpModel_k0_with_outputVals[:data]
+    # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp])
     @pack! ddpModel = outputVals_vs_k
 
     return ddpModel
