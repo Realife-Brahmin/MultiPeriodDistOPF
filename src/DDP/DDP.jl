@@ -440,9 +440,10 @@ function forward_pass(ddpModel; verbose::Bool=false)
     end
 
     # Compute output values without mutating the original modelDict
-    outputVals_k0 = CO.compute_output_values(copy(ddpModel), verbose=verbose, forwardPass=true)
-    @unpack outputVals_vs_k = ddpModel
-    outputVals_vs_k[k_ddp] = outputVals_k0
+    ddpModel_k0 = copy(ddpModel)
+    ddpModel_k0 = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
+    @unpack outputVals_vs_k = ddpModel_k0
+    outputVals_vs_k[k_ddp] = ddpModel_k0[:data]
     @pack! ddpModel = outputVals_vs_k
     # Extract PSubsCost_allT_dollar from the computed output values
     # @unpack PSubsCost_allT_dollar = output_values[:data]
@@ -787,7 +788,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=11,
+    maxiter::Int=22,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
