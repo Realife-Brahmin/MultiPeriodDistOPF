@@ -420,9 +420,6 @@ function forward_pass(ddpModel; verbose::Bool=false)
     @unpack data = ddpModel
     @unpack Tset, T = data
 
-    # Initialize an array to store PSubsCost values for each forward pass
-    PSubsCost_allT_dollar_array = []
-
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
         if t_ddp == 1
