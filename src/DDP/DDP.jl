@@ -78,27 +78,27 @@ function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     end
 
     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
-    println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ, λ_lo, and λ_up values for t_ddp = $(t_ddp)"))
-    for j in Bset
-        println(crayon_update("j = $j: μ_t_k = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
-        if t_ddp != T
-            println(crayon_update("j = $j: μ_tp1_km1 = ", trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
-        end
-        println(crayon_update("j = $j: λ_lo_t_k = ", trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
-        println(crayon_update("j = $j: λ_up_t_k = ", trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
-    end
+    # println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ, λ_lo, and λ_up values for t_ddp = $(t_ddp)"))
+    # for j in Bset
+    #     println(crayon_update("j = $j: μ_t_k = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+    #     if t_ddp != T
+    #         println(crayon_update("j = $j: μ_tp1_km1 = ", trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
+    #     end
+    #     println(crayon_update("j = $j: λ_lo_t_k = ", trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
+    #     println(crayon_update("j = $j: λ_up_t_k = ", trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
+    # end
 
     # Print KKT balance equation
     # Todo: Insert provision of gamma term for KKT balance equation in case terminal SOC constraint is enforced
-    println(crayon_update("KKT balance equation for t_ddp = $(t_ddp):"))
-    for j in Bset
-        if t_ddp < T
-            balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp] - μ[j, t_ddp+1, k_ddp-1]
-        else
-            balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp]
-        end
-        println(crayon_update("j = $j: KKT balance = ", trim_number_for_printing(balance, sigdigits=2)))
-    end
+    # println(crayon_update("KKT balance equation for t_ddp = $(t_ddp):"))
+    # for j in Bset
+    #     if t_ddp < T
+    #         balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp] - μ[j, t_ddp+1, k_ddp-1]
+    #     else
+    #         balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp]
+    #     end
+    #     println(crayon_update("j = $j: KKT balance = ", trim_number_for_printing(balance, sigdigits=2)))
+    # end
 
     mu = μ
     lambda_lo = λ_lo
@@ -301,14 +301,14 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
             if max_discrepancy > threshold
                 all_under_threshold = false
                 if discrepancy > threshold
-                    myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+                    # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                     if j in Bset_to_print
-                        println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
-                        println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                        # println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                        # println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
                     end
                 else
                     if j in Bset_to_print
-                        println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
+                        # println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
                     end
                 end
             end
@@ -327,15 +327,15 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 max_discrepancy = max(max_discrepancy, discrepancy)
                 if discrepancy > threshold
                     all_under_threshold = false
-                    myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
-                    if j in Bset_to_print
-                        println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-                        println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
-                    end
+                    # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                    # if j in Bset_to_print
+                    #     println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    #     println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    # end
                 else
-                    if j in Bset_to_print
-                        println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
-                    end
+                    # if j in Bset_to_print
+                    #     println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                    # end
                 end
             else
                 if j in Bset_to_print
@@ -541,10 +541,10 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
     @unpack Bset = data
-    println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
-    for j ∈ Bset
-        println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    end
+    # println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
+    # for j ∈ Bset
+    #     println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
+    # end
 
     Tset = [t_ddp]
     ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
@@ -787,7 +787,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=7,
+    maxiter::Int=11,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
