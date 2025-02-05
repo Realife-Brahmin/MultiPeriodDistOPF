@@ -19,7 +19,8 @@ This function extracts data from `modelDict` and computes several output variabl
 The computed output variables are appended to the data in `modelDict`.
 """
 function compute_output_values(modelDict;
-    verbose::Bool=false)
+    verbose::Bool=false,
+    forwardPass::Bool=false)
 
     # @unpack model, data = modelDict;
     @unpack data = modelDict
@@ -83,8 +84,11 @@ function compute_output_values(modelDict;
     battery_real_power_transaction_magnitude_allT_kW = get_battery_real_power_transaction_magnitude(modelDict, horizon="allT")
     battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="1toT")
     battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="allT")
-    solution_time = get_solution_time(modelDict)
-
+    if !forwardPass
+        solution_time = get_solution_time(modelDict)
+    else 
+        solution_time = 0.0
+    end
     # Loop over time steps to compute all required values
     @unpack Tset = data;
     for t in Tset
@@ -116,6 +120,10 @@ function compute_output_values(modelDict;
         fval_allT += fval_vs_t_1toT[t]
 
     end
+    
+    println("***********************************************")
+    println("Substation power cost: ", PSubsCost_allT_dollar)
+    println("************************************************")
     
     @pack! data =
         battery_reactive_power_allT_kVAr,
