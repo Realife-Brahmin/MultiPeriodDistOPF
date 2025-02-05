@@ -120,7 +120,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose = true
 
     if k_ddp >= 1
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [1]
         modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
@@ -163,7 +163,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose = true
     # if k_ddp == 1
     if k_ddp >= 1
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
@@ -215,7 +215,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     # if k_ddp == 1
     verbose = true
     if k_ddp >= 1
-        myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [T]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
@@ -281,7 +281,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Limit to the first and last batteries if there are more than 2
     Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
 
-    println(crayon_green("Checking convergence for B values:"))
+    # println(crayon_green("Checking convergence for B values:"))
 
     for t_ddp in Tset
         model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
@@ -316,7 +316,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     end
 
     # Check the difference between latest and previous mu values
-    println(crayon_green("Checking convergence for μ values:"))
+    # println(crayon_green("Checking convergence for μ values:"))
 
     for t in Tset
         for j in Bset
@@ -389,7 +389,7 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 function forward_pass(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
-    myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+    # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
     t_ddp = 1
     @unpack data = ddpModel
     @unpack Tset, T = data
@@ -480,7 +480,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel;
 
-    myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
 
@@ -494,13 +494,13 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
+    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
 
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
@@ -528,7 +528,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
 
     # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
-    println("Backward Pass for Tset = $Tset")
+    # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -547,7 +547,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     @unpack k_ddp = ddpModel
 
-    myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     @unpack models_ddp_vs_t_vs_k = ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
@@ -560,13 +560,13 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
+    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
 
     crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
     @unpack data = ddpModel
@@ -591,7 +591,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
-    println("Backward Pass for Tset = $Tset")
+    # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -609,7 +609,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     @unpack k_ddp = ddpModel
 
-    myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     @unpack models_ddp_vs_t_vs_k = ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
@@ -622,13 +622,13 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     crayon_red = Crayon(foreground=:red, bold=true)
 
     if termination_status(model_t0) == LOCALLY_SOLVED
-        println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
-    println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): $optimal_obj_value"))
+    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): $optimal_obj_value"))
 
     crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
     @unpack data = ddpModel
@@ -652,7 +652,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
-    println("Backward Pass for Tset = $Tset")
+    # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
     return ddpModel
@@ -692,7 +692,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     keepForwardPassesRunning = true
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel
-        myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+        # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
         ddpModel = forward_pass(ddpModel,
             verbose=verbose)
 
@@ -751,7 +751,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=22,
+    maxiter::Int=4,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
