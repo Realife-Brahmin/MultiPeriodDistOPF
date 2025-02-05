@@ -20,7 +20,7 @@ function define_model_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
         Tset = data[:Tset]
     end
 
-    @show Tset
+    # @show Tset
 
     @unpack Nset, Lset, Dset, Bset, PSubsMax_kW, kVA_B = data
     PSubsMax_pu = PSubsMax_kW / kVA_B
