@@ -386,32 +386,6 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 5. **Export Model**: Exports the optimization model after each forward step.
 6. **Return Data**: Returns the updated dictionary after performing the forward pass.
 """
-# function forward_pass(ddpModel;
-#     verbose::Bool=false)
-#     verbose = true
-#     @unpack k_ddp = ddpModel;
-#     myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
-#     t_ddp = 1
-#     @unpack data = ddpModel;
-#     @unpack Tset, T = data;
-#     for t_ddp ∈ Tset # Tset is assumed sorted
-#         @pack! ddpModel = t_ddp
-#         if t_ddp == 1
-#             ddpModel = ForwardStep_1ph_NL_t_is_1(ddpModel, verbose=verbose)
-#         elseif 2 <= t_ddp <= T-1
-#             ddpModel = ForwardStep_1ph_NL_t_in_2toTm1(ddpModel, verbose=verbose)
-#         elseif t_ddp == T
-#             ddpModel = ForwardStep_1ph_NL_t_is_T(ddpModel, verbose=verbose)
-#         else
-#             @error "Invalid value of t_ddp: $t_ddp"
-#             return
-#         end
-
-#         # Exporter.export_optimization_model(ddpModel, verbose=verbose)
-#     end
-
-#     return ddpModel
-# end
 function forward_pass(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
@@ -442,16 +416,6 @@ function forward_pass(ddpModel; verbose::Bool=false)
     @unpack outputVals_vs_k = ddpModel_k0
     outputVals_vs_k[k_ddp] = ddpModel_k0[:data]
     @pack! ddpModel = outputVals_vs_k
-    # Extract PSubsCost_allT_dollar from the computed output values
-    # @unpack PSubsCost_allT_dollar = output_values[:data]
-    # push!(PSubsCost_allT_dollar_array, PSubsCost_allT_dollar)
-
-
-    # # Print the PSubsCost values for each forward pass
-    # println("PSubsCost values for each forward pass:")
-    # for (i, cost) in enumerate(PSubsCost_allT_dollar_array)
-    #     println("Forward Pass $(i): PSubsCost = $(cost)")
-    # end
 
     return ddpModel
 end
