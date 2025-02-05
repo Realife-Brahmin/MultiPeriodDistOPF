@@ -16,6 +16,7 @@ T = Int(T0*factor)
 numAreas = 1
 temporal_decmp = false
 temporal_decmp = true
+maxiter_ddp = 22
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
@@ -45,7 +46,7 @@ if !temporal_decmp
     # @unpack Tset, Bset = data
     # print_mu(mu, Tset, Bset)
 elseif temporal_decmp
-    modelDict = optimize_MPOPF_1ph_NL_DDP(data) # modelDict is basically ddpModel
+    modelDict = optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp) # modelDict is basically ddpModel
     @unpack modelVals, data = modelDict
     # Print mu values
     print_mu(modelDict)

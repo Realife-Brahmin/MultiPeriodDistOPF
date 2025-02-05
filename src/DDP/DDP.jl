@@ -685,9 +685,10 @@ It initializes the DDP model, performs forward passes, checks for convergence, a
 8. **Return Data**: Returns the final dictionary containing the optimized DDP model and its parameters.
 """
 function optimize_MPOPF_1ph_NL_DDP(data;
-    verbose::Bool=false)
+    verbose::Bool=false,
+    maxiter::Int=7)
 
-    ddpModel = DDPModel(data)
+    ddpModel = DDPModel(data, maxiter=maxiter)
 
     keepForwardPassesRunning = true
     while keepForwardPassesRunning
@@ -751,7 +752,7 @@ It handles the initialization of dual variables, model values, and other relevan
 - `ddpModel::Dict`: A dictionary containing the initialized DDP model and its parameters.
 """
 function DDPModel(data;
-    maxiter::Int=4,
+    maxiter::Int=7,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
