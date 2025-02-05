@@ -49,13 +49,12 @@ elseif temporal_decmp
     @unpack modelVals, data = modelDict
     # Print mu values
     print_mu(modelDict)
-    @unpack outputVals_vs_k, k_ddp = modelDict
-    # Plot PSubsCost_allT vs k for all k = 1 to k_ddp
-    using Plots
-    PSubsCost_allT = [outputVals_vs_k[k][:data][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
-    plot(1:k_ddp-1, PSubsCost_allT, xlabel="k", ylabel="PSubsCost_allT (dollar)", title="PSubsCost_allT vs k", legend=false)
 else
     error("temporal_decmp must be either true or false")
+end
+
+if temporal_decmp
+    plot_substation_power_cost_vs_k(modelDict, savePlots=savePlots, verbose=verbose)
 end
 
 # postsim computation, plotting, logging

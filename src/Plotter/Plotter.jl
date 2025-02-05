@@ -14,7 +14,8 @@ export
     plot_input_forecast_curves, 
     plot_line_losses, 
     plot_substation_power, 
-    plot_substation_power_cost
+    plot_substation_power_cost,
+    plot_substation_power_cost_vs_k
 
 #good light themes: :bright, :dao, :gruvbox_light, :solarized_light, :vibrant, :wong, :wong2
 common_theme = :mute
@@ -291,6 +292,71 @@ function plot_substation_power_cost(modelDict;
     end
 end
 #endregion
+
+function plot_substation_power_cost_vs_k(modelDict;
+    showPlots::Bool=false,
+    savePlots::Bool=true,
+    verbose::Bool=false)
+    @unpack data, outputVals_vs_k, k_ddp = modelDict
+    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T = data
+
+    yvalues = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
+
+    theme(common_theme)
+
+    # Setup for saving plot
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
+    if savePlots && !isdir(base_dir)
+        myprintln(verbose, "Creating directory: $base_dir")
+        mkpath(base_dir)  # Create the directory and its parents if needed
+    end
+    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data
+    filename = joinpath(base_dir, "Horizon_$(T)_$(solver)_SubstationCost_vs_k_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+
+    gr()
+
+    outputPlot = plot(
+        1:k_ddp-1, yvalues,
+        dpi=600,
+        label=L"PSubsCost_{allT}",
+        xlabel="Iteration " * L"(k)",
+        ylabel=L"PSubsCost_{allT} \, [dollar]",
+        title="Substation Cost " * L"(PSubsCost_{allT})" * " across Iterations\n" *
+        "using $(simNatureString) OPF\n" *
+        "with $(gedString)\n" *
+        "optimizing for $(objfunString)",
+        legend=:topleft,
+        gridstyle=:solid,
+        gridlinewidth=1.0,
+        gridalpha=0.2,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.05,
+        lw=4,
+        marker=common_marker_face,
+        markersize=4,
+        markerstrokecolor=common_marker_stroke_color,
+        markerstrokewidth=common_marker_stroke_width,
+        xlims=(0, k_ddp + 1),
+        xticks=1:k_ddp,  # Set xticks for every iteration from 1 to k_ddp
+        ylims=(minimum(yvalues) * 0.95, maximum(yvalues) * 1.05),
+        titlefont=font(8, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        top_margin=5mm,    # Adds space at the top
+    )
+
+    # Show the plot if `showPlots` is true
+    if showPlots
+        display(outputPlot)
+    end
+
+    # Save the plot if `savePlots` is true
+    if savePlots
+        myprintln(verbose, "Saving plot to: $filename")
+        savefig(outputPlot, filename)
+    end
+end
 
 #region plot_line_losses
 """
