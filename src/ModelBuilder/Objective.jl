@@ -64,7 +64,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         η_C = eta_C
         η_D = eta_D
         alpha = HP.estimate_alpha(data)
-        println("alpha = $alpha")
+        # println("alpha = $alpha")
         alphaAppendix = HF.trim_number_for_printing(alpha)
         @pack! data = alpha, alphaAppendix;
         α = alpha
@@ -81,7 +81,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
     if !tSOC_hard && T ∈ Tset
         @unpack Bset, Bref_pu = data;
         gamma = HP.estimate_gamma(data, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
-        println("gamma = $gamma")
+        # println("gamma = $gamma")
         gammaAppendix = HF.trim_number_for_printing(gamma)
         @pack! data = gamma, gammaAppendix;
         B = model[:B]
