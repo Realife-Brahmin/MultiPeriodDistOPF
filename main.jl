@@ -7,15 +7,15 @@ Revise.revise()
 
 systemName = "ads10_1ph"
 systemName = "ieee123_1ph"
-T0 = 7
+# T0 = 7
 # T0 = 24
-# T0 = 11
+T0 = 11
 # factor = 1/2
 factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-# temporal_decmp = true
+temporal_decmp = true
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
@@ -49,6 +49,11 @@ elseif temporal_decmp
     @unpack modelVals, data = modelDict
     # Print mu values
     print_mu(modelDict)
+    @unpack outputVals_vs_k, k_ddp = modelDict
+    # Plot PSubsCost_allT vs k for all k = 1 to k_ddp
+    using Plots
+    PSubsCost_allT = [outputVals_vs_k[k][:data][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
+    plot(1:k_ddp-1, PSubsCost_allT, xlabel="k", ylabel="PSubsCost_allT (dollar)", title="PSubsCost_allT vs k", legend=false)
 else
     error("temporal_decmp must be either true or false")
 end
