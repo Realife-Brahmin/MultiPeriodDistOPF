@@ -6,17 +6,17 @@ using Parameters
 Revise.revise()
 
 systemName = "ads10_1ph"
-systemName = "ieee123_1ph"
+# systemName = "ieee123_1ph"
 # T0 = 7
-# T0 = 24
-T0 = 11
+T0 = 24
+# T0 = 11
 # factor = 1/2
 factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-temporal_decmp = true
-maxiter_ddp = 22
+# temporal_decmp = true
+maxiter_ddp = 33
 savePlots = false
 savePlots = true
 # objfun0 = "powerflow"
@@ -55,7 +55,7 @@ else
 end
 
 if temporal_decmp
-    plot_substation_power_cost_vs_k(modelDict, savePlots=savePlots, verbose=verbose)
+    plot_substation_power_cost_allT_vs_k(modelDict, savePlots=savePlots)
 end
 
 # postsim computation, plotting, logging
