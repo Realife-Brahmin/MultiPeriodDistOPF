@@ -6,7 +6,7 @@ using Parameters
 Revise.revise()
 
 systemName = "ads10_1ph"
-# systemName = "ieee123_1ph"
+systemName = "ieee123_1ph"
 # T0 = 7
 T0 = 24
 # T0 = 11
@@ -15,7 +15,7 @@ factor = 4
 T = Int(T0*factor) 
 numAreas = 1
 temporal_decmp = false
-# temporal_decmp = true
+temporal_decmp = true
 maxiter_ddp = 33
 savePlots = false
 savePlots = true
