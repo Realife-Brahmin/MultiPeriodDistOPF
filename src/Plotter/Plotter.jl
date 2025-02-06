@@ -149,7 +149,15 @@ function plot_battery_actions(modelDict;
         # Save the plot if `savePlots` is true
         if savePlots
             @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix = data;
-            filename = joinpath(base_dir, "Battery_$(j)_$(solver)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
+            @unpack temporal_decmp = data;
+            if !temporal_decmp
+                filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
+            elseif temporal_decmp
+                @unpack k_ddp = modelDict;
+                filename = joinpath(base_dir, "Battery_$(j)_k_$(k_ddp)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
+            else
+                error("temporal_decmp must be either true or false")
+            end
             myprintln(verbose, "Saving plot to: $filename")
             savefig(plot_combined, filename)
         end
