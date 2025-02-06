@@ -326,7 +326,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
     @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data
-    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(k_ddp)_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
 
     gr()
 
