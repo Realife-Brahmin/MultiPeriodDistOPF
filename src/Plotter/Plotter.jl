@@ -334,7 +334,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         1:k_ddp-1, yvalues,
         dpi=600,
         label="DDP",
-        xlabel="Iteration " * L"(k)",
+        xlabel="Forward Pass " * L"[k]",
         ylabel="All-Time Substation Power Cost " * L"[$]",
         title="All-Time Substation Power Cost " * L"(P_{SubsCost}^{allT})" * " across Forward Passes\n" *
               "using $(simNatureString) OPF\n" *
