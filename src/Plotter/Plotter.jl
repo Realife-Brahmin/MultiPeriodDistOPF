@@ -28,7 +28,7 @@ common_marker_stroke_color = :black
 common_marker_stroke_width = 2.0
 # line_colour_ddp = :slateblue2
 line_colour_ddp = :darkorchid1
-line_colour_bf = :darkorange1
+line_colour_bf = :darkorange2
 
 
 #region plot_battery_actions
@@ -364,8 +364,8 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
 
     # Add a horizontal line for the optimal value
     # hline!([optimal_PSubsCost_allT_dollar], label="Temporally Brute-Forced", linestyle=:dot, color=line_colour_bf, lw=4)
-    hline!([optimal_PSubsCost_allT_dollar], label="", linestyle=:solid, color=:black, lw=4)  # Border line
-    hline!([optimal_PSubsCost_allT_dollar], label="Temporally Brute-Forced", linestyle=:solid, color=line_colour_bf, lw=3)  # Inner line
+    # hline!([optimal_PSubsCost_allT_dollar], label="", linestyle=:solid, color=:black, lw=5)  # Border line
+    hline!([optimal_PSubsCost_allT_dollar], label="Temporally Brute-Forced", linestyle=:dash, color=line_colour_bf, lw=4)  # Inner line
     # Show the plot if `showPlots` is true
     if showPlots
         display(outputPlot)
