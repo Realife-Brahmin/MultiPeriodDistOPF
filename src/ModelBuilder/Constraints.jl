@@ -7,8 +7,8 @@ export
     charging_power_limits_batteries_t_in_Tset,
     discharging_power_limits_batteries_t_in_Tset,
     fixed_substation_voltage_constraints_t_in_Tset,
-    KVL_non_substation_branches_t_in_Tset,
-    KVL_substation_branches_t_in_Tset,
+    KVL_non_substation_branches_1ph_NL_t_in_Tset,
+    KVL_substation_branches_1ph_NL_t_in_Tset,
     nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset,
     nodalRealPowerBalance_non_substation_1ph_NL_t_in_Tset,
     nodalRealPowerBalance_substation_t_in_Tset,
@@ -225,15 +225,67 @@ function nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Ts
 end
 #endregion
 
-#region KVL_substation_branches_t_in_Tset
+#region nodalReactivePowerBalance_non_substation_1ph_L_t_in_Tset
 """
-    KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    nodalReactivePowerBalance_non_substation_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+
+Define the nodal reactive power balance constraints for non-substation nodes over a given time set without considering line reactive losses.
+
+This function sets the nodal reactive power balance constraints for the optimization model stored in `modelDict`.
+"""
+function nodalReactivePowerBalance_non_substation_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Nm1set = data
+    for t in Tset, j in Nm1set
+        # Sum of reactive powers flowing from node j to its children
+        @unpack children = data
+        Q = model[:Q]
+        sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+
+        # parent node i of node j
+        @unpack parent = data
+        i = parent[j]
+
+        # Reactive power flow from parent i to node j
+        Q_ij_t = Q[(i, j), t]
+
+        # Reactive load at node j and time t
+        @unpack NLset, q_L_pu = data
+        q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0  # Assign 0.0 if j is not in Nset
+
+        # Reactive power from PV inverter at node j and time t
+        @unpack Dset = data
+        q_D = model[:q_D]
+        q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0  # Assign 0.0 if j is not in Dset
+
+        # Reactive power from battery inverter at node j and time t
+        @unpack Bset = data
+        q_B = model[:q_B]
+        q_B_j_t = (j in Bset) ? q_B[j, t] : 0.0  # Assign 0.0 if j is not in BCPF_NonSubstationBranch_set
+
+        # h_2_j^t: Nodal Reactive Power Balance Constraint #
+        @constraint(model,
+            base_name = "h_2_j^t_NodeReactivePowerBalance_Node_j_$(j)_t_$(t)_L",
+            sum_Qjk - Q_ij_t + q_L_j_t - q_D_j_t - q_B_j_t == 0,
+        )
+    end
+
+    return modelDict
+end
+#endregion
+
+#region KVL_substation_branches_1ph_NL_t_in_Tset
+"""
+    KVL_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 
 Define the Kirchhoff's Voltage Law (KVL) constraints for substation branches over a given time set.
 
 This function sets the KVL constraints for the optimization model stored in `modelDict`.
 """
-function KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+function KVL_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
@@ -264,15 +316,15 @@ function KVL_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 end
 #endregion
 
-#region KVL_non_substation_branches_t_in_Tset
+#region KVL_non_substation_branches_1ph_NL_t_in_Tset
 """
-    KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    KVL_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 
 Define the Kirchhoff's Voltage Law (KVL) constraints for non-substation branches over a given time set.
 
 This function sets the KVL constraints for the optimization model stored in `modelDict`.
 """
-function KVL_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+function KVL_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
@@ -525,7 +577,7 @@ function reactive_power_limits_PV_inverters_t_in_Tset(modelDict; Tset=nothing)
         @unpack p_D_pu = data
         p_D_j_t = p_D_pu[j, t]
 
-        # Compute q_D_Max_j^t
+        # Compute q_D_Max_j_t
         q_D_Max_j_t = sqrt((1.2 * p_D_R_j)^2 - (p_D_j_t)^2)
 
         q_D = model[:q_D]
