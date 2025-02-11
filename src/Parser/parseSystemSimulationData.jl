@@ -8,7 +8,7 @@ using Parameters: @unpack, @pack!
 
 #region parse_system_simulation_data
 """
-    parse_system_simulation_data(systemName::String, T::Int; numAreas=1, alpha=1e-3, gamma=1e-3, kVA_B=1000, objfun0="genCostMin", objfun2="scd", temporal_decmp=false, PSubsMax_kW=Inf, inputForecastDescription="nonspecific", solver="Ipopt", tSOC_hard=true)
+    parse_system_simulation_data(systemName::String, T::Int; numAreas=1, alpha=1e-3, gamma=1e-3, kVA_B=1000, objfun0="genCostMin", objfun2="scd", temporal_decmp=false, PSubsMax_kW=Inf, inputForecastDescription="nonspecific", solver="Ipopt", tSOC_hard=true, linearizedModel=false)
 
 Parse system simulation data from the SysSim.dss file for a given system.
 
@@ -29,6 +29,7 @@ It handles the extraction of parameters such as substation bus, voltage, base vo
 - `inputForecastDescription::String`: A description of the input forecast (default: "nonspecific").
 - `solver::String`: The solver to use for optimization (default: "Ipopt").
 - `tSOC_hard::Bool`: A flag to enable hard terminal SOC constraints (default: true).
+- `linearizedModel::Bool`: A flag to enable the linearized model (default: false).
 
 # Returns
 - `sysSimData::Dict`: A dictionary containing the parsed system simulation data.
