@@ -148,13 +148,13 @@ function plot_battery_actions(modelDict;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix = data;
+            @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix, linearizedModelAppendix = data;
             @unpack temporal_decmp = data;
             if !temporal_decmp
-                filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
+                filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
             elseif temporal_decmp
                 @unpack k_ddp = modelDict;
-                filename = joinpath(base_dir, "Battery_$(j)_k_$(k_ddp)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).png")
+                filename = joinpath(base_dir, "Battery_$(j)_k_$(k_ddp)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
             else
                 error("temporal_decmp must be either true or false")
             end
@@ -190,8 +190,8 @@ function plot_substation_power(modelDict;
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
-    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
-    filename = joinpath(base_dir, "SubstationRealPowers_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix, linearizedModelAppendix = data;
+    filename = joinpath(base_dir, "SubstationRealPowers_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
 
     gr()
 
@@ -254,7 +254,7 @@ function plot_substation_power_cost(modelDict;
     macroItrNum::Int=1,
     verbose::Bool=false)
     @unpack data = modelDict
-    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
+    @unpack Tset, PSubsCost_vs_t_1toT_dollar, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver, linearizedModelString, linearizedModelAppendix = data
 
     theme(common_theme)
 
@@ -268,7 +268,7 @@ function plot_substation_power_cost(modelDict;
         label=L"(P^t_{SubsCost})",
         xlabel="Time Period " * L"(t)",
         ylabel="Substation Power Cost " * L"[$]",
-        title="Substation Power Cost " * L"(P^t_{SubsCost})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)",
+        title="Substation Power Cost " * L"(P^t_{SubsCost})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)\n" * "with model $(linearizedModelString)",
         legend=:topleft,
         gridstyle=:solid,
         gridlinewidth=1.0,
@@ -302,7 +302,7 @@ function plot_substation_power_cost(modelDict;
             mkpath(base_dir)
         end
         @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
-        filename = joinpath(base_dir, "SubstationPowerCost_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+        filename = joinpath(base_dir, "SubstationPowerCost_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
@@ -314,7 +314,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
     savePlots::Bool=true,
     verbose::Bool=false)
     @unpack data, outputVals_vs_k, k_ddp = modelDict
-    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T = data
+    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T, linearizedModelString, linearizedModelAppendix = data
 
     yvalues = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
 
@@ -333,8 +333,8 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
-    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data
-    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(k_ddp)_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+    @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix, linearizedModelString, linearizedModelAppendix = data
+    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(k_ddp)_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
 
     gr()
 
@@ -347,7 +347,8 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         title="All-Time Substation Power Cost " * L"(P_{SubsCost}^{allT})" * " across Forward Passes\n" *
               "using $(simNatureString) OPF\n" *
               "with $(gedString)\n" *
-            "optimizing for $(objfunString)",
+            "optimizing for $(objfunString)\n", *
+            "with model $(linearizedModelString)",
         legend=:topleft,
         color=line_colour_ddp,
         gridstyle=:solid,
@@ -399,7 +400,7 @@ function plot_line_losses(modelDict;
     verbose::Bool=false)
 
     @unpack data = modelDict
-    @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver = data
+    @unpack numAreas, Tset, PLoss_vs_t_1toT_kW, T, simNatureString, gedString, objfunString, systemName, gedAppendix, solver, linearizedModelString, linearizedModelAppendix = data
 
     theme(common_theme)
 
@@ -413,7 +414,7 @@ function plot_line_losses(modelDict;
         label=L"(P^t_{Loss})",
         xlabel="Time Period " * L"(t)",
         ylabel="Line Losses " * L"[kW]",
-        title="Line Losses " * L"(P^t_{Loss})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)",
+        title="Line Losses " * L"(P^t_{Loss})" * " across the Horizon\n" * "using $(simNatureString) OPF\n" * "with $(gedString)\n" * "optimizing for $(objfunString)\n" * "with model $(linearizedModelString)",
         legend=:topleft,
         gridstyle=:solid,
         gridlinewidth=1.0,
@@ -450,7 +451,7 @@ function plot_line_losses(modelDict;
             mkpath(base_dir)
         end
         @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
-        filename = joinpath(base_dir, "LineLosses_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix).png")
+        filename = joinpath(base_dir, "LineLosses_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
