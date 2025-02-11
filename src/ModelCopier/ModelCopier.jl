@@ -21,18 +21,17 @@ It handles different sets of variables and updates the objective value, terminat
 function copy_modelVals(modelDict, model_Tset;
     Tset=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
 
-    @unpack modelVals, data = modelDict;
+    @unpack modelVals, data = modelDict
     if Tset === nothing
         Tset = modelDict[:data][:Tset]
     end
     # Extract necessary sets from data
-    @unpack Bset, Dset, Lset, Nset = data;
+    @unpack Bset, Dset, Lset, Nset, linearizedModel = data
 
     # Retrieve variables from the model
     P_Subs_model = model_Tset[:P_Subs]
     P_model = model_Tset[:P]
     Q_model = model_Tset[:Q]
-    l_model = model_Tset[:l]
     v_model = model_Tset[:v]
     q_D_model = model_Tset[:q_D]
     q_B_model = model_Tset[:q_B]
@@ -51,7 +50,12 @@ function copy_modelVals(modelDict, model_Tset;
     for (i, j) in Lset, t in Tset
         modelVals[:P][(i, j), t] = value(P_model[(i, j), t])
         modelVals[:Q][(i, j), t] = value(Q_model[(i, j), t])
-        modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
+        if !linearizedModel
+            l_model = model_Tset[:l]
+            modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
+        else
+            modelVals[:l][(i, j), t] = (value(P_model[(i, j), t])^2 + value(Q_model[(i, j), t])^2) / value(v_model[i, t])
+        end
     end
 
     # v[j, t] for j in Nset
@@ -72,7 +76,7 @@ function copy_modelVals(modelDict, model_Tset;
         modelVals[:B][j, t] = value(B_model[j, t])
     end
 
-    @unpack T = data;
+    @unpack T = data
     if length(Tset) == 1
         for t ∈ Tset
             modelVals[:objective_value_vs_t][t] = objective_value(model_Tset)
@@ -87,12 +91,11 @@ function copy_modelVals(modelDict, model_Tset;
         @error "Invalid length of Tset: $(length(Tset))"
         return
     end
-    
-    @pack! modelDict = modelVals;
+
+    @pack! modelDict = modelVals
     return modelDict
 end
 #endregion
-
 #region create_variable_dict
 """
     create_variable_dict(model)
