@@ -14,7 +14,7 @@ export
     nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset,
     nodalReactivePowerBalance_non_substation_1ph_L_t_in_Tset,
     nodalRealPowerBalance_non_substation_1ph_NL_t_in_Tset,
-    nodalRealPowerBalance_non_substation_1ph_L_t_in_Tset
+    nodalRealPowerBalance_non_substation_1ph_L_t_in_Tset,
     nodalRealPowerBalance_substation_t_in_Tset,
     reactive_power_limits_PV_inverters_t_in_Tset,
     reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset,
