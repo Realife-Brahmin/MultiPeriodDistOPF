@@ -2,8 +2,8 @@ module ModelBuilder
 
 export 
     battery_SOC_constraints_t_in_Tset,
-    BCPF_non_substation_branches_t_in_Tset,
-    BCPF_substation_branches_t_in_Tset,
+    BCPF_non_substation_branches_1ph_NL_t_in_Tset,
+    BCPF_substation_branches_1ph_NL_t_in_Tset,
     charging_power_limits_batteries_t_in_Tset,
     discharging_power_limits_batteries_t_in_Tset,
     fixed_substation_voltage_constraints_t_in_Tset,
@@ -121,10 +121,10 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     modelDict = KVL_non_substation_branches_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
 
     # BCPF constraints for branches connected directly to the substation
-    modelDict = BCPF_substation_branches_t_in_Tset(modelDict, Tset=Tset)
+    modelDict = BCPF_substation_branches_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
 
     # BCPF constraints for branches not connected directly to the substation
-    modelDict = BCPF_non_substation_branches_t_in_Tset(modelDict, Tset=Tset)
+    modelDict = BCPF_non_substation_branches_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
 
     # Battery SOC trajectory equality constraints
     @unpack tSOC_hard = data;

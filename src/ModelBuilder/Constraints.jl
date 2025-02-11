@@ -2,8 +2,8 @@ module Constraints
 
 export 
     battery_SOC_constraints_t_in_Tset,
-    BCPF_non_substation_branches_t_in_Tset,
-    BCPF_substation_branches_t_in_Tset,
+    BCPF_non_substation_branches_1ph_NL_t_in_Tset,
+    BCPF_substation_branches_1ph_NL_t_in_Tset,
     charging_power_limits_batteries_t_in_Tset,
     discharging_power_limits_batteries_t_in_Tset,
     fixed_substation_voltage_constraints_t_in_Tset,
@@ -433,15 +433,15 @@ function KVL_non_substation_branches_1ph_L_t_in_Tset(modelDict; Tset=nothing)
 end
 #endregion
 
-#region BCPF_substation_branches_t_in_Tset
+#region BCPF_substation_branches_1ph_NL_t_in_Tset
 """
-    BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    BCPF_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 
 Define the Branch Complex Power Flow (BCPF) constraints for substation branches over a given time set.
 
 This function sets the BCPF constraints for the optimization model stored in `modelDict`.
 """
-function BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+function BCPF_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
@@ -468,15 +468,15 @@ function BCPF_substation_branches_t_in_Tset(modelDict; Tset=nothing)
 end
 #endregion
 
-#region BCPF_non_substation_branches_t_in_Tset
+#region BCPF_non_substation_branches_1ph_NL_t_in_Tset
 """
-    BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+    BCPF_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 
 Define the branch complex power flow (BCPF) constraints for non-substation branches over a given time set.
 
 This function sets the BCPF constraints for the optimization model stored in `modelDict`.
 """
-function BCPF_non_substation_branches_t_in_Tset(modelDict; Tset=nothing)
+function BCPF_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
