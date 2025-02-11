@@ -51,7 +51,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     inputForecastDescription = "nonspecific",
     solver = "Ipopt",
     tSOC_hard = false,
-    relax_terminal_soc_constraint = false
+    relax_terminal_soc_constraint = false,
+    linearizedModel = false
     )
 
     # Initialize parameters with default values
@@ -152,12 +153,27 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     objfunConciseDescription = objfunPrefix*"_"*objfunAppendix 
 
+    if temporal_decmp && linearizedModel
+        @error "Cannot allow DDP in conjunction with linearized model as of now"
+        return
+    end
+
     if temporal_decmp == true
         temporalDecmpString = "Temporally Decomposed via DDP"
         temporalDecmpAppendix = "tmprl_dcmpsd"
     elseif temporal_decmp == false
         temporalDecmpString = "Temporally Brute-forced"
         temporalDecmpAppendix = "tmprl_bruteforced"
+    else
+        @error "floc"
+    end
+
+    if linearizedModel == true
+        linearizedModelString = "LinDistFlow 1ph"
+        linearizedModelAppendix = "ldf_1ph"
+    elseif linearizedModel == false
+        linearizedModelString = "BranchFlowModel 1ph"
+        linearizedModelAppendix = "bfm_NL_1ph"
     else
         @error "floc"
     end
@@ -192,6 +208,9 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :kVA_B => kVA_B,
         :Z_B => Z_B,
         :delta_t => Δt,
+        :linearizedModel => linearizedModel,
+        :linearizedModelAppendix => linearizedModelAppendix,
+        :linearizedModelString => linearizedModelString,
         :objfun0 => objfun0, # user input
         :objfun2 => objfun2, # user input
         :objfunString => objfunString,
