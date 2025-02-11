@@ -18,7 +18,7 @@ export
     nodalRealPowerBalance_substation_t_in_Tset,
     reactive_power_limits_PV_inverters_t_in_Tset,
     reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset,
-    reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset,
+    reactive_power_limits_battery_inverters_1ph_L_t_in_Tset,
     SOC_limits_batteries_t_in_Tset,
     voltage_limits_constraints_t_in_Tset
     
