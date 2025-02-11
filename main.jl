@@ -5,13 +5,13 @@ using Parameters
 
 Revise.revise()
 
-systemName = "ads10_1ph"
-# systemName = "ieee123_1ph"
+# systemName = "ads10_1ph"
+systemName = "ieee123_1ph"
 # T0 = 7
 T0 = 24
 # T0 = 11
 # factor = 1/2
-factor = 4
+factor = 1
 T = Int(T0*factor) 
 numAreas = 1
 linearizedModel = false
@@ -40,7 +40,7 @@ if !temporal_decmp
     if !linearizedModel 
         modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     elseif linearizedModel
-        modelDict = optimize_MPOPF_1ph_L_TemporallyBruteforced(data)
+        modelDict = optimize_MPOPF_1ph_L(data)
     else
         error("linearizedModel must be either true or false")
     end

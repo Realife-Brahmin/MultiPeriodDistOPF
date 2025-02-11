@@ -743,7 +743,7 @@ function reactive_power_limits_battery_inverters_1ph_L_t_in_Tset(modelDict; Tset
         )
         @constraint(model,
             base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq3",
-            q_B[j, t] >= -sqrt(3) / 2 * S_B_R_j
+            q_B[j, t] >= -sqrt(3)/2 * S_B_R_j
         )
         @constraint(model,
             base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq4",
