@@ -14,6 +14,8 @@ T0 = 24
 factor = 4
 T = Int(T0*factor) 
 numAreas = 1
+linearizedModel = false
+linearizedModel = true
 temporal_decmp = false
 # temporal_decmp = true
 maxiter_ddp = 33
@@ -35,9 +37,17 @@ solver = "Ipopt"
 data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
 
 if !temporal_decmp
-    modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+    if !linearizedModel 
+        modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+    elseif linearizedModel
+        modelDict = optimize_MPOPF_1ph_L_TemporallyBruteforced(data)
+    else
+        error("linearizedModel must be either true or false")
+    end
+    
     @unpack model, modelVals, data = modelDict
     print_mu(modelDict)
+
 elseif temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
