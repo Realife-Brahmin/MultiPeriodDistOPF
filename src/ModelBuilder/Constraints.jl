@@ -18,7 +18,7 @@ export
     nodalRealPowerBalance_substation_t_in_Tset,
     reactive_power_limits_PV_inverters_t_in_Tset,
     reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset,
-    reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset,
+    reactive_power_limits_battery_inverters_1ph_L_t_in_Tset,
     SOC_limits_batteries_t_in_Tset,
     voltage_limits_constraints_t_in_Tset
 
@@ -709,15 +709,15 @@ function reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tse
 end
 #endregion
 
-#region reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset
+#region reactive_power_limits_battery_inverters_1ph_L_t_in_Tset
 """
-    reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    reactive_power_limits_battery_inverters_1ph_L_t_in_Tset(modelDict; Tset=nothing)
 
-Define the reactive power limits for battery inverters over a given time set using three pairs of inequalities.
+Define the reactive power limits for battery inverters over a given time set using three pairs of linear inequalities.
 
 This function sets the reactive power limits for the optimization model stored in `modelDict`.
 """
-function reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+function reactive_power_limits_battery_inverters_1ph_L_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
