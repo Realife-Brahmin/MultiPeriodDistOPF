@@ -316,6 +316,43 @@ function KVL_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
 end
 #endregion
 
+#region KVL_substation_branches_1ph_L_t_in_Tset
+"""
+    KVL_substation_branches_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+
+Define the Kirchhoff's Voltage Law (KVL) constraints for substation branches over a given time set without considering `l_ij` terms.
+
+This function sets the KVL constraints for the optimization model stored in `modelDict`.
+"""
+function KVL_substation_branches_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack L1set = data
+
+    # Constraint h_3a: KVL for branches connected directly to the substation
+    for t in Tset, (i, j) in L1set
+        @unpack rdict_pu, xdict_pu = data
+        r_ij = rdict_pu[(i, j)]
+        x_ij = xdict_pu[(i, j)]
+        P = model[:P]
+        Q = model[:Q]
+        v = model[:v]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        v_i_t = v[i, t]
+        v_j_t = v[j, t]
+        @constraint(model,
+            base_name = "KVL_SubstationBranch_i_$(i)_j_$(j)_t_$(t)_L",
+            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) == 0,
+        )
+    end
+
+    return modelDict
+end
+#endregion
+
 #region KVL_non_substation_branches_1ph_NL_t_in_Tset
 """
     KVL_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
@@ -348,6 +385,43 @@ function KVL_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
         @constraint(model,
             base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
             v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) + (r_ij^2 + x_ij^2) * l_ij_t == 0,
+        )
+    end
+
+    return modelDict
+end
+#endregion
+
+#region KVL_non_substation_branches_1ph_L_t_in_Tset
+"""
+    KVL_non_substation_branches_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+
+Define the Kirchhoff's Voltage Law (KVL) constraints for non-substation branches over a given time set without considering `l_ij` terms.
+
+This function sets the KVL constraints for the optimization model stored in `modelDict`.
+"""
+function KVL_non_substation_branches_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Lm1set = data
+
+    # Constraint h_3b: KVL for branches not connected directly to the substation
+    for t in Tset, (i, j) in Lm1set
+        @unpack rdict_pu, xdict_pu = data
+        r_ij = rdict_pu[(i, j)]
+        x_ij = xdict_pu[(i, j)]
+        P = model[:P]
+        Q = model[:Q]
+        v = model[:v]
+        P_ij_t = P[(i, j), t]
+        Q_ij_t = Q[(i, j), t]
+        v_i_t = v[i, t]
+        v_j_t = v[j, t]
+        @constraint(model,
+            base_name = "KVL_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)_L",
+            v_i_t - v_j_t - 2 * (r_ij * P_ij_t + x_ij * Q_ij_t) == 0,
         )
     end
 
@@ -624,6 +698,60 @@ function reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tse
         @constraint(model,
             base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)",
             (P_d[j, t] - P_c[j, t])^2 + q_B[j, t]^2 <= S_B_R_pu[j]^2
+        )
+    end
+
+    return modelDict
+end
+#endregion
+
+#region reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset
+"""
+    reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+
+Define the reactive power limits for battery inverters over a given time set using three pairs of inequalities.
+
+This function sets the reactive power limits for the optimization model stored in `modelDict`.
+"""
+function reactive_power_limits_battery_inverters_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+
+    @unpack Bset, S_B_R_pu = data
+
+    for t in Tset, j in Bset
+        q_B = model[:q_B]
+        P_d = model[:P_d]
+        P_c = model[:P_c]
+        P_B_j_t = P_d[j, t] - P_c[j, t]
+        S_B_R_j = S_B_R_pu[j]
+
+        ## g_qB_j^T: Reactive Power Limit for Battery Inverter ##
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq1",
+            q_B[j, t] >= -sqrt(3) * (P_B_j_t + S_B_R_j)
+        )
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq2",
+            q_B[j, t] <= -sqrt(3) * (P_B_j_t - S_B_R_j)
+        )
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq3",
+            q_B[j, t] >= -sqrt(3) / 2 * S_B_R_j
+        )
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq4",
+            q_B[j, t] <= sqrt(3) / 2 * S_B_R_j
+        )
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq5",
+            q_B[j, t] >= sqrt(3) * (P_B_j_t - S_B_R_j)
+        )
+        @constraint(model,
+            base_name = "g_qB_j^T_ReactivePowerLimit_Battery_Node_j_$(j)_t_$(t)_ineq6",
+            q_B[j, t] <= sqrt(3) * (P_B_j_t + S_B_R_j)
         )
     end
 
