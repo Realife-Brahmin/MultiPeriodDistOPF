@@ -2,6 +2,8 @@ module ModelBuilder
 
 export 
     battery_SOC_constraints_t_in_Tset,
+    build_MPOPF_1ph_NL_model_t_in_Tset,
+    build_MPOPF_1ph_L_model_t_in_Tset,
     BCPF_non_substation_branches_1ph_NL_t_in_Tset,
     BCPF_substation_branches_1ph_NL_t_in_Tset,
     charging_power_limits_batteries_t_in_Tset,
