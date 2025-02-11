@@ -2,7 +2,7 @@ module Variables
 
 export 
     define_model_variables_1ph_NL_t_in_Tset,
-    define_model_variables_1ph_NL_t_in_Tset
+    define_model_variables_1ph_L_t_in_Tset
 
 using Parameters: @unpack, @pack!
 using JuMP
@@ -60,14 +60,14 @@ end
 
 #region define_model_variables_1ph_NL_t_in_Tset
 """
-    define_model_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+    define_model_variables_1ph_L_t_in_Tset(modelDict; Tset=nothing)
 
-Define the optimization model variables for a single-phase network with nonlinear loads over a given time set.
+Define the LinDistFlow optimization model variables for a single-phase network over a given time set.
 
 This function defines the decision variables for the optimization model stored in `modelDict`. 
 It handles different sets of variables, including power flows, voltages, and state of charge (SOC) for batteries.
 """
-function define_model_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
+function define_model_variables_1ph_L_t_in_Tset(modelDict; Tset=nothing)
     @unpack model, data = modelDict
     if Tset === nothing
         Tset = data[:Tset]
