@@ -19,7 +19,6 @@ temporal_decmp = true
 maxiter_ddp = 33
 savePlots = false
 savePlots = true
-# objfun0 = "powerflow"
 # objfun0 = "lineLossMin"
 objfun0 = "subsPowerCostMin"
 objfun2 = "scd"
@@ -28,7 +27,6 @@ relax_terminal_soc_constraint = false
 relax_terminal_soc_constraint = true
 tSOC_hard = false
 # tSOC_hard = true
-PSubsMax_kW = Inf # Inf means no limit
 solver = "Ipopt"
 # solver = "Gurobi"
 # solver = "Juniper"
@@ -39,16 +37,10 @@ data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, relax_termin
 if !temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     @unpack model, modelVals, data = modelDict
-    # Print mu values
-    # Print mu values
     print_mu(modelDict)
-    # @unpack mu = modelDict
-    # @unpack Tset, Bset = data
-    # print_mu(mu, Tset, Bset)
 elseif temporal_decmp
-    modelDict = optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp) # modelDict is basically ddpModel
+    modelDict = optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
-    # Print mu values
     print_mu(modelDict)
 else
     error("temporal_decmp must be either true or false")
@@ -65,7 +57,6 @@ begin
     # verbose = true
 
     modelDict = compute_output_values(modelDict, verbose=verbose)
-    # @unpack data = modelDict
 
     export_decision_variables(modelDict, verbose=verbose)
 
