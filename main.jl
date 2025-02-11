@@ -34,7 +34,7 @@ solver = "Ipopt"
 # solver = "Juniper"
 
 # Parse all data
-data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
+data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
 
 if !temporal_decmp
     if !linearizedModel 
