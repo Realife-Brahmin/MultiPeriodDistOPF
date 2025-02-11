@@ -114,6 +114,58 @@ function nodalRealPowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Tset=n
 end
 #endregion
 
+#region nodalRealPowerBalance_non_substation_1ph_L_t_in_Tset
+"""
+    nodalRealPowerBalance_non_substation_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+
+Define the nodal real power balance constraints for non-substation nodes over a given time set without considering line losses.
+
+This function sets the nodal real power balance constraints for the optimization model stored in `modelDict`.
+"""
+function nodalRealPowerBalance_non_substation_1ph_L_t_in_Tset(modelDict; Tset=nothing)
+    @unpack model, data = modelDict
+    if Tset === nothing
+        Tset = data[:Tset]
+    end
+    @unpack Nm1set = data
+    for t in Tset, j in Nm1set
+        # Sum of real powers flowing from node j to its children
+        @unpack children = data
+        P = model[:P]
+        sum_Pjk = isempty(children[j]) ? 0 : sum(P[(j, k), t] for k in children[j])
+
+        # parent node i of node j
+        @unpack parent = data
+        i = parent[j]
+
+        # Real power flow from parent i to node j
+        P = model[:P]
+        P_ij_t = P[(i, j), t]
+
+        # Load at node j and time t
+        @unpack NLset, p_L_pu = data
+        p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0  # Check if node j has a load
+
+        # PV generation at node j and time t
+        @unpack Dset, p_D_pu = data
+        p_D_j_t = (j in Dset) ? p_D_pu[j, t] : 0.0  # Check if node j has PV
+
+        # Battery variables at node j and time t
+        @unpack Bset = data
+        P_c = model[:P_c]
+        P_d = model[:P_d]
+        P_d_j_t = (j in Bset) ? P_d[j, t] : 0.0
+        P_c_j_t = (j in Bset) ? P_c[j, t] : 0.0
+
+        @constraint(model,
+            sum_Pjk - P_ij_t + p_L_j_t - p_D_j_t - (P_d_j_t - P_c_j_t) == 0,
+            base_name = "NodeRealPowerBalance_Node_j_$(j)_t_$(t)_L")
+    end
+
+    return modelDict
+end
+#endregion
+
 #region nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset
 """
     nodalReactivePowerBalance_non_substation_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
