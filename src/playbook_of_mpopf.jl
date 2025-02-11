@@ -100,58 +100,6 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-# function print_mu(modelDict)
-#     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
-#     crayon_error = Crayon(foreground=:red, bold=true)
-
-#     # Define colors for each battery for non-temporal decomposition
-#     battery_colors_non_temporal = Dict(
-#         1 => Crayon(foreground=:red, bold=true),
-#         2 => Crayon(foreground=:green, bold=true),
-#         3 => Crayon(foreground=:blue, bold=true)
-#     )
-
-#     # Define negative colors for each battery for temporal decomposition
-#     battery_colors_temporal = Dict(
-#         1 => Crayon(foreground=:light_red, bold=true),
-#         2 => Crayon(foreground=:light_green, bold=true),
-#         3 => Crayon(foreground=:light_blue, bold=true)
-#     )
-
-#     println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
-
-#     @unpack mu, data = modelDict
-#     @unpack Tset, Bset, temporal_decmp = data
-
-#     # Limit to the first 2 batteries if there are more than 2
-#     Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
-
-#     if temporal_decmp == false
-#         for (j_B, j) in enumerate(Bset_to_print)
-#             battery_color = battery_colors_non_temporal[j_B]
-#             for t in Tset
-#                 if haskey(mu, (j, t))
-#                     println(battery_color("mu[$j, $t] = $(mu[(j, t)])"))
-#                 else
-#                     println(crayon_error("mu[$j, $t] not found"))
-#                 end
-#             end
-#         end
-#     elseif temporal_decmp == true
-#         @unpack k_ddp = modelDict
-#         for (j_B, j) in enumerate(Bset_to_print)
-#             battery_color = battery_colors_temporal[j_B]
-#             for t in Tset
-#                 if haskey(mu, (j, t, k_ddp - 1))
-#                     println(battery_color("mu[$j, $t, $(k_ddp-1)] = $(mu[(j, t, k_ddp-1)])"))
-#                 else
-#                     println(crayon_error("mu[$j, $t, $(k_ddp-1)] not found"))
-#                 end
-#             end
-#         end
-#     end
-# end
-
 function print_mu(ddpModel)
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_error = Crayon(foreground=:red, bold=true)
@@ -259,9 +207,5 @@ function print_mu(ddpModel)
         end
     end
 end
-
-# Example usage:
-# Assuming ddpModel contains the mu values and data contains Tset and Bset
-# print_mu(ddpModel)
 
 end # module Playbook_of_MPOPF
