@@ -80,7 +80,7 @@ function export_decision_variables(modelDict;
     
     @unpack modelVals, data = modelDict;
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver, linearizedModelAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -89,7 +89,7 @@ function export_decision_variables(modelDict;
     end
 
     ext = ".csv"
-    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ext)
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix)"*ext)
     
     # Log current working directory
     myprintln(verbose, "Current working directory: $(pwd())")
@@ -214,7 +214,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
 
     @unpack data = modelDict;
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, simNatureAppendix, solver, linearizedModelAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -222,7 +222,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         mkpath(base_dir)
     end
 
-    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix).txt")
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_results_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).txt")
 
     # Extract system information and parameters from `data`
     macroItrsCompleted = get(data, :macroItrsCompleted, 0)  # Default to 1 if not set
@@ -330,7 +330,7 @@ function export_validation_decision_variables(modelDict; verbose::Bool=false)
 
     @unpack valdVals, data = modelDict
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver, linearizedModelAppendix = data
     base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     # Create the directory if it doesn't exist
@@ -343,7 +343,7 @@ function export_validation_decision_variables(modelDict; verbose::Bool=false)
 
     # Define the filename with the appropriate structure
     @unpack alphaAppendix, gammaAppendix, objfunConciseDescription = data
-    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
+    filename = joinpath(base_dir, "$(machine_ID)_$(solver)_validationDecisionVariables_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_with_$(linearizedModelAppendix).txt")
 
     # Write the valdVals dictionary to a CSV file
     CSV.write(filename, valdVals)
@@ -365,7 +365,7 @@ function export_validation_key_results(modelDict; filename::String="validation_r
     printEveryTimeStepPowerflow::Bool=true)
     @unpack valdVals, data = modelDict
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, simNatureAppendix = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, simNatureAppendix, linearizedModelAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
@@ -378,9 +378,9 @@ function export_validation_key_results(modelDict; filename::String="validation_r
     @unpack solver, alphaAppendix, gammaAppendix, objfunConciseDescription = data;
     # Adjust filename based on printEveryTimeStepPowerflow flag
     if printEveryTimeStepPowerflow
-        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_full.txt")
+        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_full.txt")
     else
-        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
+        filename = joinpath(base_dir, "$(machine_ID)_$(solver)_valdResults_$(gedAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix).txt")
     end
 
     # Open the file and write each section
