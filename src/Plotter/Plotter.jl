@@ -347,7 +347,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         title="All-Time Substation Power Cost " * L"(P_{SubsCost}^{allT})" * " across Forward Passes\n" *
               "using $(simNatureString) OPF\n" *
               "with $(gedString)\n" *
-            "optimizing for $(objfunString)\n", *
+            "optimizing for $(objfunString)\n" *
             "with model $(linearizedModelString)",
         legend=:topleft,
         color=line_colour_ddp,
