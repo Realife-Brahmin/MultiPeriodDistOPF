@@ -136,7 +136,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     μ = mu
     @unpack Bset = data;
     objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    0.9*sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
 
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
@@ -189,7 +189,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum( μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 0.9*sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
     
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
