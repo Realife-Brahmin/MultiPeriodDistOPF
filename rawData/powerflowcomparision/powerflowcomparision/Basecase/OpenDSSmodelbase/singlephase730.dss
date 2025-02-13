@@ -1,0 +1,22 @@
+Clear
+New Circuit.i730
+
+~ basekv= 12.66 pu=1 phases=1 bus1=1 
+~ Angle=0                                                       ! advance angle 30 deg so result agree with published angle 0.5774
+~ MVAsc3=2000 MVASC1=2100    ! stiffen the source to approximate inf source
+
+redirect linenew.dss
+redirect LoadTransformer.dss
+redirect Loads.dss
+
+
+set loadmult = 1
+!set defaultbasefreq=50
+Set Voltagebases=[21.9278 0.416 ]
+calcv
+!Solve
+
+!Show Voltages LN Nodes
+!Show Powers kVA Elem
+
+
