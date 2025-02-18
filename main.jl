@@ -5,33 +5,38 @@ using Parameters
 
 Revise.revise()
 
-systemName = "ads10_1ph"
-# systemName = "ieee123_1ph"
-T0 = 7
-# T0 = 24
-# T0 = 11
-# factor = 1/2
-factor = 1
-T = Int(T0*factor) 
-numAreas = 1
-linearizedModel = false
-# linearizedModel = true
-temporal_decmp = false
-temporal_decmp = true
-maxiter_ddp = 8
-savePlots = false
-savePlots = true
-# objfun0 = "lineLossMin"
-objfun0 = "subsPowerCostMin"
-objfun2 = "scd"
-inputForecastDescription = "bilevelCosts"
-relax_terminal_soc_constraint = false
-# relax_terminal_soc_constraint = true
-tSOC_hard = false
-# tSOC_hard = true
-solver = "Ipopt"
-# solver = "Gurobi"
-# solver = "Juniper"
+begin
+    # systemName = "ads10_1ph"
+    systemName = "ieee123_1ph"
+    T0 = 7
+    # T0 = 24
+    # T0 = 11
+    # factor = 1/2
+    temporal_decmp = false
+    temporal_decmp = true
+end
+
+begin
+    factor = 1
+    T = Int(T0*factor) 
+    numAreas = 1
+    linearizedModel = false
+    # linearizedModel = true
+    maxiter_ddp = 8
+    savePlots = false
+    savePlots = true
+    # objfun0 = "lineLossMin"
+    objfun0 = "subsPowerCostMin"
+    objfun2 = "scd"
+    inputForecastDescription = "bilevelCosts"
+    relax_terminal_soc_constraint = false
+    # relax_terminal_soc_constraint = true
+    tSOC_hard = false
+    # tSOC_hard = true
+    solver = "Ipopt"
+    # solver = "Gurobi"
+    # solver = "Juniper"
+end
 
 # Parse all data
 data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
