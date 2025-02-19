@@ -1,8 +1,9 @@
 module openDSSFilesGenerator
 
-export 
+export
     convert_files_loads_dss,
-    generate_battery_dss_from_loads_dss
+    generate_battery_dss_from_loads_dss,
+    generate_pvsystem_dss_from_loads_dss
 
 include("../helperFunctions.jl")
 import .helperFunctions as HF
@@ -48,10 +49,19 @@ end
 
 username = ENV["USERNAME"]
 # Example usage
-input_file_path = "C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
+input_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
 
-output_file_path = "C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
+output_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
 convert_files_loads_dss(input_file_path, output_file_path)
+
+function extract_parameter(parts::Vector{String}, param::String)
+    for part in parts
+        if startswith(part, param)
+            return split(part, "=")[2]
+        end
+    end
+    return nothing
+end
 
 function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_percent=30.0, Batt_rating_factor=1.0)
     # Read the Loads.dss file
@@ -96,7 +106,50 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     println("Generated $storage_file_path with $num_batteries batteries.")
 end
 
+function generate_pvsystem_dss_from_loads_dss(loads_file_path::String; DER_Percent=20.0, DER_rating_factor=1.0)
+    # Read the Loads.dss file
+    lines = readlines(loads_file_path)
+
+    # Extract non-zero loads
+    load_buses = []
+    for line in lines
+        if startswith(line, "New load.")
+            parts = split(line)
+            parts = map(String, parts)  # Convert SubString elements to String
+            bus = extract_parameter(parts, "Bus")
+            bus = split(bus, ".")[1]  # Take the integer part of the bus number
+            kV = parse(Float64, extract_parameter(parts, "kV"))
+            kW = parse(Float64, extract_parameter(parts, "kW"))
+            if kW > 0
+                push!(load_buses, (bus, kV, kW))
+            end
+        end
+    end
+
+    # Calculate the number of PV systems
+    N_L = length(load_buses)
+    num_pvsystems = ceil(Int, DER_Percent / 100 * N_L)
+    actual_DER_percent = ceil(Int, num_pvsystems / N_L * 100)
+
+    # Select evenly spaced buses for PV system placement
+    selected_buses = [load_buses[i] for i in 1:div(N_L, num_pvsystems):N_L][1:num_pvsystems]
+
+    # Generate the PVSystem<DER_Percent>.dss file
+    der_rating_factor_str = HF.trim_number_for_printing(DER_rating_factor * 100, digits=2)
+    pvsystem_file_path = joinpath(dirname(loads_file_path), "PVSystem$(actual_DER_percent)_$(der_rating_factor_str).dss")
+    open(pvsystem_file_path, "w") do file
+        for (i, (bus, kV, kW)) in enumerate(selected_buses)
+            Pmpp = DER_rating_factor * kW
+            kVA = 1.2 * Pmpp
+            println(file, "New PVsystem.PV$(bus) irrad=1.0 Phases=1 Bus1=$(bus).1 kV=$(kV) kVA=$(round(kVA, digits=4)) Pmpp=$(round(Pmpp, digits=4)) %cutin=0.001 %cutout=0.001")
+        end
+    end
+
+    println("Generated $pvsystem_file_path with $num_pvsystems PV systems.")
+end
+
 # Example usage:
-generate_battery_dss_from_loads_dss("C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", Batt_percent=30, Batt_rating_factor=1.0)
+generate_battery_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", Batt_percent=30, Batt_rating_factor=1.0)
+generate_pvsystem_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", DER_Percent=20, DER_rating_factor=1.0)
 
 end # module openDSSFilesGenerator
