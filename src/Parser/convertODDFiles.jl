@@ -19,14 +19,14 @@ function convert_files_loads_dss(input_file_path::String, output_file_path::Stri
         match_data = match(pattern, line)
         if match_data !== nothing
             bus_number = match_data.captures[2]
-            kv = match_data.captures[5]
-            kw = parse(Float64, match_data.captures[6])
+            kV = match_data.captures[5]
+            kW = parse(Float64, match_data.captures[6])
             kvar = parse(Float64, match_data.captures[7])
 
             # Check if the load is non-empty or if removeEmptyLoads is disabled
-            if !removeEmptyLoads || (kw != 0.0 || kvar != 0.0)
+            if !removeEmptyLoads || (kW != 0.0 || kvar != 0.0)
                 # Create the new line in the desired format
-                new_line = "New load.S$(bus_number)P Bus=$(bus_number).1 Phases=1 Model=1 kv=$(kv) kw=$(kw) kvar=$(kvar) Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault"
+                new_line = "New load.S$(bus_number)P Bus=$(bus_number).1 Phases=1 Model=1 kV=$(kV) kW=$(kW) kVar=$(kvar) Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault"
                 println(output_file, new_line)
             end
         end
