@@ -1,3 +1,9 @@
+module openDSSFilesGenerator
+
+export 
+    convert_files_loads_dss,
+    generate_battery_dss_from_loads_dss
+
 using CSV
 using DataFrames
 
@@ -81,3 +87,5 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     println("Generated $storage_file_path with $num_batteries batteries.")
 end
 
+
+end # module openDSSFilesGenerator
