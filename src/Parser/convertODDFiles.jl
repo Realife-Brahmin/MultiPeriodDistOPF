@@ -43,10 +43,13 @@ function convert_files_loads_dss(input_file_path::String, output_file_path::Stri
     close(output_file)
 end
 
+username = ENV["USERNAME"]
 # Example usage
-input_file_path = "C:/Users/aryan/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
-output_file_path = "C:/Users/aryan/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
+input_file_path = "C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
+
+output_file_path = "C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
 convert_files_loads_dss(input_file_path, output_file_path)
+
 function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_percent=30.0, Batt_rating_factor=1.0)
     # Read the Loads.dss file
     lines = readlines(loads_file_path)
@@ -87,5 +90,7 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     println("Generated $storage_file_path with $num_batteries batteries.")
 end
 
+# Example usage:
+generate_battery_dss_from_loads_dss("C:/Users/"*username*"/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", Batt_percent=30, Batt_rating_factor=1.0)
 
 end # module openDSSFilesGenerator
