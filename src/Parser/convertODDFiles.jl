@@ -4,6 +4,9 @@ export
     convert_files_loads_dss,
     generate_battery_dss_from_loads_dss
 
+include("../helperFunctions.jl")
+import .helperFunctions as HF
+
 using CSV
 using DataFrames
 
@@ -60,6 +63,7 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
         if startswith(line, "New load.")
             parts = split(line)
             bus = split(parts[3], "=")[2]
+            bus = split(bus, ".")[1]  # Take the integer part of the bus number
             kV = parse(Float64, split(parts[5], "=")[2])
             kW = parse(Float64, split(parts[6], "=")[2])
             if kW > 0
@@ -69,21 +73,22 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     end
 
     # Calculate the number of batteries
-    @show N_L = length(load_buses)
-    @show num_batteries = ceil(Int, Batt_percent / 100 * N_L)
+    N_L = length(load_buses)
+    num_batteries = ceil(Int, Batt_percent / 100 * N_L)
     actual_Batt_percent = ceil(Int, num_batteries / N_L * 100)
 
     # Select evenly spaced buses for battery placement
     selected_buses = [load_buses[i] for i in 1:div(N_L, num_batteries):N_L][1:num_batteries]
 
     # Generate the Storage<BattPercent>.dss file
-    storage_file_path = joinpath(dirname(loads_file_path), "Storage$(actual_Batt_percent).dss")
+    batt_rating_factor_str = HF.trim_number_for_printing(Batt_rating_factor * 100, digits=2)
+    storage_file_path = joinpath(dirname(loads_file_path), "Storage$(actual_Batt_percent)_$(batt_rating_factor_str).dss")
     open(storage_file_path, "w") do file
         for (i, (bus, kV, kW)) in enumerate(selected_buses)
             kVA = Batt_rating_factor * kW
             kWrated = kVA  # 100% of the load
             kWhrated = 4 * kVA
-            println(file, "New Storage.Battery$(i+1) phases=1 Bus1=$(bus) kV=$(kV) kVA=$(round(kVA, digits=4)) kWrated=$(round(kWrated, digits=4)) kWhrated=$(round(kWhrated, digits=4)) %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External")
+            println(file, "New Storage.Battery$(bus) Phases=1 Bus1=$(bus) kV=$(kV) kVA=$(round(kVA, digits=4)) kWrated=$(round(kWrated, digits=4)) kWhrated=$(round(kWhrated, digits=4)) %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External")
         end
     end
 
