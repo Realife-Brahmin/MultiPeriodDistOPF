@@ -62,10 +62,11 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     for line in lines
         if startswith(line, "New load.")
             parts = split(line)
-            bus = split(parts[3], "=")[2]
+            parts = map(String, parts)  # Convert SubString elements to String
+            bus = extract_parameter(parts, "Bus")
             bus = split(bus, ".")[1]  # Take the integer part of the bus number
-            kV = parse(Float64, split(parts[5], "=")[2])
-            kW = parse(Float64, split(parts[6], "=")[2])
+            kV = parse(Float64, extract_parameter(parts, "kV"))
+            kW = parse(Float64, extract_parameter(parts, "kW"))
             if kW > 0
                 push!(load_buses, (bus, kV, kW))
             end
@@ -85,8 +86,8 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     storage_file_path = joinpath(dirname(loads_file_path), "Storage$(actual_Batt_percent)_$(batt_rating_factor_str).dss")
     open(storage_file_path, "w") do file
         for (i, (bus, kV, kW)) in enumerate(selected_buses)
-            kVA = Batt_rating_factor * kW
-            kWrated = kVA  # 100% of the load
+            kWrated = Batt_rating_factor * kW
+            kVA = 1.2 * kWrated  # 120% of the load
             kWhrated = 4 * kVA
             println(file, "New Storage.Battery$(bus) Phases=1 Bus1=$(bus) kV=$(kV) kVA=$(round(kVA, digits=4)) kWrated=$(round(kWrated, digits=4)) kWhrated=$(round(kWhrated, digits=4)) %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External")
         end
