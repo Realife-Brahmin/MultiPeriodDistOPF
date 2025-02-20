@@ -2,10 +2,15 @@
 
 """
 Reads `linedata.txt` and `linenew.dss` to compare R/X values in ohms vs. per-unit,
-then outputs a DataFrame with columns: i, j, r1_factor, x1_factor.
-
-r1_factor = r_pu / r_ohm
-x1_factor = x_pu / x_ohm
+then outputs a DataFrame with columns:
+1) i
+2) j
+3) r_pu
+4) x_pu
+5) r_ohm
+6) x_ohm
+7) r1_factor = r_pu / r_ohm
+8) x1_factor = x_pu / x_ohm
 """
 
 using Printf
@@ -74,19 +79,29 @@ function main()
     end
     sorted_keys = sort(collect(all_keys), by=bus_key)
 
-    # Build a DataFrame
-    results = DataFrame(i=String[], j=String[], r1_factor=Float64[], x1_factor=Float64[])
+    # Build a DataFrame with additional columns
+    results = DataFrame(
+        i=String[],
+        j=String[],
+        r_pu=Float64[],
+        x_pu=Float64[],
+        r_ohm=Float64[],
+        x_ohm=Float64[],
+        r1_factor=Float64[],
+        x1_factor=Float64[]
+    )
+
     for (i, j) in sorted_keys
         if haskey(d_data, (i, j)) && haskey(d_new, (i, j))
             r_pu, x_pu = d_data[(i, j)]
             r_ohm, x_ohm = d_new[(i, j)]
             if abs(r_ohm) > 1e-12 && abs(x_ohm) > 1e-12
-                push!(results, (i, j, r_pu / r_ohm, x_pu / x_ohm))
+                push!(results, (i, j, r_pu, x_pu, r_ohm, x_ohm, r_pu / r_ohm, x_pu / x_ohm))
             end
         end
     end
 
-    # Display the DataFrame
+    # Display the DataFrame with all rows and columns
     show(results, allrows=true, allcols=true)
     return results
 end
