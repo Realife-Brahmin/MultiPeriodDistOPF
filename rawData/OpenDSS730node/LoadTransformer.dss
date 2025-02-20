@@ -1,14 +1,17 @@
 
 New Transformer.XFM1 Phases=1 Windings=2 Xhl=5.72  wdg=1 bus=2 conn=wye kv=12.66 kva=70 %r=1.146
 ~ wdg=2 bus=34 conn=wye kv=0.24 kva=70 %r=1.146
+// Equivalently: New Line.L33 bus1=2 bus2=34 r1=0.014300 x1=0.035700 phases=1, but how?
 
 
 New Transformer.XFM2 Phases=1 Windings=2 Xhl=5.72  wdg=1 bus=3 conn=wye kv=12.66 kva=70 %r=1.146
 ~ wdg=2 bus=53 conn=wye kv=0.24 kva=70 %r=1.146
+// New Line.L52 bus1=3 bus2=53 r1=0.014300 x1=0.035700 phases=1
 
 
 New Transformer.XFM3 Phases=1 Windings=2 Xhl=5.72 wdg=1 bus=4 conn=wye kv=12.66 kva=70 %r=1.146
 ~ wdg=2 bus=69 conn=wye kv=0.24 kva=70 %r=1.146
+// New Line.L68 bus1=4 bus2=69 r1=0.014300 x1=0.035700 phases=1
 
 
 New Transformer.XFM4 Phases=1 Windings=2 Xhl=5.72 wdg=1 bus=5 conn=wye kv=12.66 kva=70 %r=1.146
