@@ -14,7 +14,7 @@ then outputs a DataFrame with columns:
 
 Now includes lines from `linenew.dss` even if they're commented out with "//" 
 (but still contain "New Line." somewhere).
-Also adds a "Remark" column based on whether (r1_factor) and x_ohm are low or high.
+Also adds a "Transformer" column with Yes/No based on whether the line has '!' in linenew.dss.
 """
 
 using Printf
@@ -27,7 +27,7 @@ function sort_bus_pair(bus1::AbstractString, bus2::AbstractString)
     return b1 < b2 ? (bus1, bus2) : (bus2, bus1)
 end
 
-# Classify each line based on r1_factor (ratio) and r_ohm
+# Classify each line based on r1_factor (ratio) and x_ohm
 function get_remark(r_ratio::Float64, x_ohm::Float64)::String
     if r_ratio <= 1 && x_ohm >= 0.005
         return "12.66kV to 12.66kV"
@@ -42,11 +42,11 @@ function get_remark(r_ratio::Float64, x_ohm::Float64)::String
 end
 
 function parse_linedata(linedata_path::String)
-    # Returns a Dict of ((bus1, bus2) => (r_pu, x_pu))
-    d = Dict{Tuple{String,String},Tuple{Float64,Float64}}()
+    # Returns a dict of ((bus1, bus2) => (r_pu, x_pu))
+    d = Dict{Tuple{String,String}, Tuple{Float64,Float64}}()
     for line in eachline(linedata_path)
         l = strip(line)
-        # Skip empty lines or commented lines
+        # Skip empty lines or any line starting with "//"
         if isempty(l) || startswith(l, "//")
             continue
         end
@@ -66,11 +66,11 @@ end
 function parse_linenew(linenew_path::String)
     # Matches lines containing (bus1=..., bus2=..., r1=..., x1=...)
     # even if there's "//" in front or not, as long as "New Line." is present.
+    # Also checks for '!' in the original line for the Transformer column.
     pattern = r"bus1\s*=\s*(\S+).*?bus2\s*=\s*(\S+).*?r1\s*=\s*([0-9.]+).*?x1\s*=\s*([0-9.]+)"
-    d = Dict{Tuple{String,String},Tuple{Float64,Float64}}()
-    for line in eachline(linenew_path)
-        l = strip(line)
-        # Check if the line contains "New Line." (case-insensitive)
+    d = Dict{Tuple{String,String}, Tuple{Float64,Float64,String}}()
+    for raw_line in eachline(linenew_path)
+        l = strip(raw_line)
         if occursin(r"(?i)new\s+line\.", l)
             m = match(pattern, l)
             if m !== nothing
@@ -79,7 +79,8 @@ function parse_linenew(linenew_path::String)
                 r_ohm = parse(Float64, m.captures[3])
                 x_ohm = parse(Float64, m.captures[4])
                 bus_pair = sort_bus_pair(i_bus, j_bus)
-                d[bus_pair] = (r_ohm, x_ohm)
+                transformer_flag = occursin('!', raw_line) ? "Yes" : "No"
+                d[bus_pair] = (r_ohm, x_ohm, transformer_flag)
             end
         end
     end
@@ -91,44 +92,56 @@ function main()
     linenew_file = "./rawData/powerflowcomparision/Node730DG10/Opendss/linenew.dss"
 
     d_data = parse_linedata(linedata_file)
-    d_new = parse_linenew(linenew_file)
+    d_new  = parse_linenew(linenew_file)
 
     all_keys = union(keys(d_data), keys(d_new))
 
-    # Sort by numerical bus ID
+    # Sort by numerical bus IDs
     function bus_key(x)
         (parse(Int, x[1]), parse(Int, x[2]))
     end
     sorted_keys = sort(collect(all_keys), by=bus_key)
 
-    # Build a DataFrame with columns: i, j, r_pu, x_pu, r_ohm, x_ohm, r1_factor, x1_factor, Remark
+    # Build a DataFrame with columns in the specified order:
+    # i, j, x_ohm, x_pu, x_factor, Transformer, r_ohm, r_pu, r_factor
     results = DataFrame(
         i=String[],
         j=String[],
-        x_pu=Float64[],
         x_ohm=Float64[],
-        x1_factor=Float64[],
-        r_pu=Float64[],
+        x_pu=Float64[],
+        x_factor=Float64[],
+        Transformer=String[],
         r_ohm=Float64[],
-        r1_factor=Float64[],
-        Remark=String[]
+        r_pu=Float64[],
+        r_factor=Float64[]
     )
 
-    # Populate the DataFrame
     for (i, j) in sorted_keys
         if haskey(d_data, (i, j)) && haskey(d_new, (i, j))
-            r_pu, x_pu = d_data[(i, j)]
-            r_ohm, x_ohm = d_new[(i, j)]
+            (r_pu, x_pu) = d_data[(i, j)]
+            (r_ohm, x_ohm, transformer_flag) = d_new[(i, j)]
             if abs(r_ohm) > 1e-12 && abs(x_ohm) > 1e-12
-                r_ratio = r_pu / r_ohm
-                x_ratio = x_pu / x_ohm
-                remark = get_remark(r_ratio, x_ohm)
-                push!(results, (i, j, x_pu, x_ohm, x_ratio, r_pu, r_ohm, r_ratio, remark))
+                x_factor = x_pu / x_ohm
+                r_factor = r_pu / r_ohm
+                push!(
+                    results,
+                    (
+                        i,
+                        j,
+                        x_ohm,
+                        x_pu,
+                        x_factor,
+                        transformer_flag,
+                        r_ohm,
+                        r_pu,
+                        r_factor
+                    )
+                )
             end
         end
     end
 
-    # Display the DataFrame with all rows and columns
+    # Display the DataFrame
     show(results, allrows=true, allcols=true)
     return results
 end
