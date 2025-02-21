@@ -1,5 +1,5 @@
-New Line.L1 bus1=1 bus2=2 r1=0.092200 x1=0.047000 phases=1
-New Line.L2 bus1=2 bus2=3 r1=0.493000 x1=0.251100 phases=1
+New Line.L1 bus1=1 bus2=2 r1=0.092200 x1=0.047000 phases=1 // 12.66kV to 12.66kV branch, hence the low ohmic impedance
+New Line.L2 bus1=2 bus2=3 r1=0.493000 x1=0.251100 phases=1 // 12.66kV to 0.24kV branch, hence the medium ohmic impedance
 New Line.L3 bus1=3 bus2=4 r1=0.366000 x1=0.186400 phases=1
 New Line.L4 bus1=4 bus2=5 r1=0.381100 x1=0.194100 phases=1
 New Line.L5 bus1=5 bus2=6 r1=0.819000 x1=0.707000 phases=1
@@ -49,7 +49,7 @@ New Line.L48 bus1=37 bus2=49 r1=0.011000 x1=0.001700 phases=1
 New Line.L49 bus1=38 bus2=50 r1=0.011000 x1=0.001700 phases=1
 New Line.L50 bus1=39 bus2=51 r1=0.011000 x1=0.001700 phases=1
 New Line.L51 bus1=40 bus2=52 r1=0.011000 x1=0.001700 phases=1
-!New Line.L52 bus1=3 bus2=53 r1=0.011000 x1=0.001700 phases=1
+!New Line.L52 bus1=3 bus2=53 r1=0.011000 x1=0.001700 phases=1 // Hmm looks like impedance is same as that of non-xfm lines. Incorrect?
 New Line.L53 bus1=53 bus2=54 r1=0.006900 x1=0.001800 phases=1
 New Line.L54 bus1=54 bus2=55 r1=0.006900 x1=0.001800 phases=1
 New Line.L55 bus1=55 bus2=56 r1=0.006900 x1=0.001800 phases=1
