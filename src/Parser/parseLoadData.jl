@@ -113,18 +113,18 @@ function parse_load_data(systemName::String, T::Int;
                     error("Bus not specified for a load in Loads.dss")
                 end
 
-                # Extract rated active power (kw)
-                if haskey(load_info, "kw")
-                    p_L_R[j] = parse(Float64, load_info["kw"])
+                # Extract rated active power (kW)
+                if haskey(load_info, "kW")
+                    p_L_R[j] = parse(Float64, load_info["kW"])
                     p_L_R_pu[j] = p_L_R[j]/kVA_B
                 else
                     p_L_R[j] = 0.0  # Default to zero if not specified
                     p_L_R_pu[j] = p_L_R[j] / kVA_B
                 end
 
-                # Extract rated reactive power (kvar)
-                if haskey(load_info, "kvar")
-                    q_L_R[j] = parse(Float64, load_info["kvar"])
+                # Extract rated reactive power (kVAr)
+                if haskey(load_info, "kVAr")
+                    q_L_R[j] = parse(Float64, load_info["kVAr"])
                     q_L_R_pu[j] = q_L_R[j]/kVA_B
                 else
                     q_L_R[j] = 0.0  # Default to zero if not specified
