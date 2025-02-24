@@ -3,7 +3,9 @@ module parseBatteryData
 export parse_battery_data
 
 include("../helperFunctions.jl")
-import .helperFunctions: myprintln
+import .helperFunctions as HF
+
+using Parameters
 
 #region parse_battery_data
 """
@@ -54,28 +56,30 @@ It handles the extraction of battery properties such as initial state of charge 
 function parse_battery_data(systemName::String;
     kVA_B = 1000,
     N_L = nothing,
-    verbose::Bool=false)
+    verbose::Bool=false,
+    gedDict_ud=nothing)
     # Get the working directory of this script
     wd = @__DIR__
 
     if isnothing(gedDict_ud)
-        gedDict_ud = Dict(DER_Percent_ud => 20, DER_Rating_factor_ud => 1, Batt_Percent_ud => 30, Batt_rating_factor_ud => 1)
+        gedDict_ud = Dict(:DER_Percent_ud => 20, :DER_Rating_factor_ud => 1, :Batt_Percent_ud => 30, :Batt_Rating_factor_ud => 1)
     end
-    @unpack DER_Percent_ud, DER_Rating_factor_ud, Batt_Percent_ud, Batt_rating_factor_ud = gedDict_ud
+    @unpack DER_Percent_ud, DER_Rating_factor_ud, Batt_Percent_ud, Batt_Rating_factor_ud = gedDict_ud
 
     # If the user doesn't provide a N_L, set Batt_percent to 100, else compute an actual percentage
     if N_L === nothing
         Batt_percent = 100
     else # 1% if it is less than that (but nonzero)
-        Batt_percent = Int(ceil(Batt_Percent_ud / 100 * N_L))
+        n_B = Int(ceil(Batt_Percent_ud / 100 * N_L))
+        Batt_percent = Int(ceil(n_B / N_L * 100))
     end
 
-    Batt_rating_factor_str = HF.trim_number_for_printing(Batt_rating_factor_ud * 100, digits=2)
+    Batt_Rating_factor_str = HF.trim_number_for_printing(Batt_Rating_factor_ud * 100, digits=2)
 
     # Construct the full file path for the Storage.dss file
-    filename_pv = joinpath(wd, "..", "..", "rawData", systemName, strcat("Storage_", Batt_percent, "_", Batt_rating_factor_str, ".dss"))
+    filename_batt = joinpath(wd, "..", "..", "rawData", systemName, "Storage_$(Batt_percent)_$(Batt_Rating_factor_str).dss")
 
-    myprintln(verbose, "Reading Storage file from: $filename")
+    HF.myprintln(verbose, "Reading Storage file from: $filename_batt")
 
     # Initialize output data structures
     Bset = Set{Int}()  # Set of bus numbers with batteries
@@ -99,24 +103,24 @@ function parse_battery_data(systemName::String;
     kv_pattern = r"(\w+)\s*=\s*([\S]+)"
 
     # Read and parse the Storage.dss file
-    open(filename, "r") do file
+    open(filename_batt, "r") do file
         for line in eachline(file)
             # Remove comments and strip whitespace
             line = split(line, "!")[1]
             line = strip(line)
 
             # Print the line being processed
-            myprintln(verbose, "Processing line: $line")
+            HF.myprintln(verbose, "Processing line: $line")
 
             # Skip empty lines
             if isempty(line)
-                myprintln(verbose, "Skipping empty line.")
+                HF.myprintln(verbose, "Skipping empty line.")
                 continue
             end
 
             # Parse lines starting with "New Storage."
             if startswith(line, "New Storage.")
-                myprintln(verbose, "Found a New Storage entry.")
+                HF.myprintln(verbose, "Found a New Storage entry.")
 
                 storage_info = Dict{String,String}()
                 for m in eachmatch(kv_pattern, line)
@@ -126,7 +130,7 @@ function parse_battery_data(systemName::String;
                 end
 
                 # Print the parsed storage information
-                myprintln(verbose, "Parsed storage info: $storage_info")
+                HF.myprintln(verbose, "Parsed storage info: $storage_info")
 
                 # Extract bus number
                 if haskey(storage_info, "Bus1")
@@ -134,7 +138,7 @@ function parse_battery_data(systemName::String;
                     bus_parts = split(bus_str, ".")
                     bus = parse(Int, bus_parts[1])  # Extract the integer part
                     Bset = union(Bset, [bus])
-                    myprintln(verbose, "Battery located at bus $bus.")
+                    HF.myprintln(verbose, "Battery located at bus $bus.")
                 else
                     error("Bus1 not specified for a storage in Storage.dss")
                 end
@@ -146,17 +150,17 @@ function parse_battery_data(systemName::String;
                 S_B_R_pu[bus] = S_B_R[bus]/kVA_B
                 B_R[bus] = haskey(storage_info, "kWhrated") ? parse(Float64, storage_info["kWhrated"]) : 0.0
                 B_R_pu[bus] = B_R[bus]/kVA_B
-                myprintln(verbose, "P_B_R: $(P_B_R[bus]), S_B_R: $(S_B_R[bus]), B_R: $(B_R[bus])")
+                HF.myprintln(verbose, "P_B_R: $(P_B_R[bus]), S_B_R: $(S_B_R[bus]), B_R: $(B_R[bus])")
 
                 # Extract efficiencies
                 eta_C[bus] = haskey(storage_info, "EffCharge") ? parse(Float64, storage_info["EffCharge"]) / 100 : 0.95
                 eta_D[bus] = haskey(storage_info, "EffDischarge") ? parse(Float64, storage_info["EffDischarge"]) / 100 : 0.95
-                myprintln(verbose, "eta_C: $(eta_C[bus]), eta_D: $(eta_D[bus])")
+                HF.myprintln(verbose, "eta_C: $(eta_C[bus]), eta_D: $(eta_D[bus])")
 
                 # Extract minimum and maximum SOC
                 soc_max[bus] = 0.95
                 soc_min[bus] = haskey(storage_info, "reserve") ? parse(Float64, storage_info["reserve"]) / 100 : 0.3
-                myprintln(verbose, "soc_max: $(soc_max[bus]), soc_min: $(soc_min[bus])")
+                HF.myprintln(verbose, "soc_max: $(soc_max[bus]), soc_min: $(soc_min[bus])")
 
                 # Extract initial soc percentage (soc_0)
                 soc_0[bus] = haskey(storage_info, "stored") ? parse(Float64, storage_info["stored"]) / 100 : 0.625
@@ -164,12 +168,12 @@ function parse_battery_data(systemName::String;
                 # Compute initial SOC (B0)
                 B0[bus] = soc_0[bus] * B_R[bus]
                 B0_pu[bus] = B0[bus]/kVA_B
-                myprintln(verbose, "Initial SOC B0: $(B0[bus])")
+                HF.myprintln(verbose, "Initial SOC B0: $(B0[bus])")
 
                 # Extract voltage limits
                 Vminpu_B[bus] = haskey(storage_info, "Vminpu") ? parse(Float64, storage_info["Vminpu"]) : 0.95
                 Vmaxpu_B[bus] = haskey(storage_info, "Vmaxpu") ? parse(Float64, storage_info["Vmaxpu"]) : 1.05
-                myprintln(verbose, "Vminpu: $(Vminpu_B[bus]), Vmaxpu: $(Vmaxpu_B[bus])")
+                HF.myprintln(verbose, "Vminpu: $(Vminpu_B[bus]), Vmaxpu: $(Vmaxpu_B[bus])")
             end
         end
     end
@@ -209,7 +213,7 @@ function parse_battery_data(systemName::String;
         :soc_0 => soc_0
     )
 
-    myprintln(verbose, "Final parsed storage data: $storageData")
+    HF.myprintln(verbose, "Final parsed storage data: $storageData")
 
     return storageData
 end

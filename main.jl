@@ -8,14 +8,14 @@ Revise.revise()
 begin
     # systemName = "ads10_1ph"
     systemName = "ieee123_1ph"
-    # systemName = "ieee730_1ph"
+    systemName = "ieee730_1ph"
     T0 = 7
     # T0 = 24
     # T0 = 11
     # factor = 1/2
     temporal_decmp = false
     # temporal_decmp = true
-end
+end;
 
 begin
     factor = 1
@@ -40,9 +40,9 @@ begin
     DER_Percent_ud = 20
     DER_Rating_factor_ud = 1
     Batt_Percent_ud = 30
-    Batt_rating_factor_ud = 1
-    gedDict_ud = Dit(DER_Percent_ud=DER_Percent_ud, DER_Rating_factor_ud=DER_Rating_factor_ud, Batt_Percent_ud=Batt_Percent_ud, Batt_rating_factor_ud=Batt_rating_factor_ud)
-end
+    Batt_Rating_factor_ud = 1
+    gedDict_ud = Dict(:DER_Percent_ud=>DER_Percent_ud, :DER_Rating_factor_ud=>DER_Rating_factor_ud, :Batt_Percent_ud=>Batt_Percent_ud, :Batt_Rating_factor_ud=>Batt_Rating_factor_ud)
+end;
 
 # Parse all data
 data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud)
