@@ -58,8 +58,22 @@ function parse_battery_data(systemName::String;
     # Get the working directory of this script
     wd = @__DIR__
 
+    if isnothing(gedDict_ud)
+        gedDict_ud = Dict(DER_Percent_ud => 20, DER_Rating_factor_ud => 1, Batt_Percent_ud => 30, Batt_rating_factor_ud => 1)
+    end
+    @unpack DER_Percent_ud, DER_Rating_factor_ud, Batt_Percent_ud, Batt_rating_factor_ud = gedDict_ud
+
+    # If the user doesn't provide a N_L, set Batt_percent to 100, else compute an actual percentage
+    if N_L === nothing
+        Batt_percent = 100
+    else # 1% if it is less than that (but nonzero)
+        Batt_percent = Int(ceil(Batt_Percent_ud / 100 * N_L))
+    end
+
+    Batt_rating_factor_str = HF.trim_number_for_printing(Batt_rating_factor_ud * 100, digits=2)
+
     # Construct the full file path for the Storage.dss file
-    filename = joinpath(wd, "..", "..", "rawData", systemName, "Storage.dss")
+    filename_pv = joinpath(wd, "..", "..", "rawData", systemName, strcat("Storage_", Batt_percent, "_", Batt_rating_factor_str, ".dss"))
 
     myprintln(verbose, "Reading Storage file from: $filename")
 
@@ -162,12 +176,6 @@ function parse_battery_data(systemName::String;
 
     # Compute the cardinality of Bset
     n_B = length(Bset)
-    # If the user doesn't provide a N_L, Set Batt_percent to 100, else compute an actual percentage
-    if N_L === nothing
-        Batt_percent = 100
-    else # 1% if it is less than that (but nonzero)
-        Batt_percent = Int(ceil(n_B / N_L * 100))
-    end
 
     # By default, ensuring that batteries always get back to their original SOCs at the end of the optimization horizon
     Bref = B0 

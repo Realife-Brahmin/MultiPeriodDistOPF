@@ -83,7 +83,8 @@ function parse_all_data(systemName::String, T::Int;
     solver="Ipopt",
     tSOC_hard=false, 
     relax_terminal_soc_constraint=false,
-    linearizedModel=false)
+    linearizedModel=false,
+    gedDict_ud=nothing)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
@@ -92,16 +93,17 @@ function parse_all_data(systemName::String, T::Int;
         inputForecastDescription=inputForecastDescription, solver=solver,
         tSOC_hard=tSOC_hard,
         relax_terminal_soc_constraint=relax_terminal_soc_constraint,
-        linearizedModel=linearizedModel)
+        linearizedModel=linearizedModel,
+        gedDict_ud=gedDict_ud)
     # Parse branch data
     branch_data = parse_branch_data(systemName)
     # Parse load data
     load_data = parse_load_data(systemName, T)
     N_L = load_data[:N_L]
     # Parse PV data
-    pv_data = parse_pv_data(systemName, T, N_L=N_L)
+    pv_data = parse_pv_data(systemName, T, N_L=N_L, gedDict_ud=gedDict_ud)
     # Parse Battery data
-    battery_data = parse_battery_data(systemName, N_L=N_L)
+    battery_data = parse_battery_data(systemName, N_L=N_L, gedDict_ud=gedDict_ud)
     # Evaluate Voltage Limits for every bus based on various components (load, pv, battery) attached to it
     component_data = evaluate_voltage_limits(load_data, pv_data, battery_data)
     # Parse substation real power cost data
