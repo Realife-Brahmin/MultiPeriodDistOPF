@@ -40,6 +40,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
 
     @unpack model, data = modelDict
+    set_optimizer_attribute(model, "print_level", 5)
+
     optimize!(model)
     
     @pack! modelDict = model
