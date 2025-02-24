@@ -53,7 +53,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     solver = "Ipopt",
     tSOC_hard = false,
     relax_terminal_soc_constraint = false,
-    linearizedModel = false
+    linearizedModel = false,
+    gedDict_ud = nothing
     )
 
     # Initialize parameters with default values
@@ -198,6 +199,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     sysSimData = Dict(
         :inputForecastDescription => inputForecastDescription,
+        :gedDict_ud => gedDict_ud,
         :machine_ID => machine_ID,
         :macroItrsCompleted => macroItrsCompleted,
         :systemName => systemName, # user input

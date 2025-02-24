@@ -3,7 +3,7 @@ module parsePVData
 export parse_pv_data
 
 include("../helperFunctions.jl")
-using .helperFunctions: generateLoadShape
+import .helperFunctions as HF
 
 # Note: PVsystem and NOT PVSystem will be read (note the lowercase third letter)
 
@@ -52,11 +52,26 @@ function parse_pv_data(systemName::String, T::Int;
     N_L = nothing,
     kVA_B = 1000,
     LoadShape=nothing,
-    filenameLoadShape=nothing)
+    filenameLoadShape=nothing,
+    gedDict_ud=nothing)
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path for PVsystem.dss using wd
-    filename_pv = joinpath(wd, "..", "..", "rawData", systemName, "PVsystem.dss")
+    if isnothing(gedDict_ud)
+        gedDict_ud = Dict(DER_Percent_ud=>20, DER_Rating_factor_ud=>1, Batt_Percent_ud=>30, Batt_rating_factor_ud=>1)
+    end
+    @unpack DER_Percent_ud, DER_Rating_factor_ud, Batt_Percent_ud, Batt_rating_factor_ud = gedDict_ud
+
+    # If the user doesn't provide a N_L, set DER_percent to 100, else compute an actual percentage
+    if N_L === nothing
+        DER_percent = 100
+    else # 1% if it is less than that (but nonzero)
+        DER_percent = Int(ceil(DER_Percent_ud/100 * N_L))
+    end
+
+    DER_rating_factor_str = HF.trim_number_for_printing(DER_rating_factor_ud * 100, digits=2)
+
+    filename_pv = joinpath(wd, "..", "..", "rawData", systemName, strcat("PVsystem_", DER_percent, "_", DER_rating_factor_str, ".dss"))
 
     # Initialize data structures for PV systems
     Dset = Set{Int}()                     # Set of nodes with PVs
@@ -74,7 +89,7 @@ function parse_pv_data(systemName::String, T::Int;
 
     # If the user doesn't provide a LoadShape, generate it using the helper function
     if LoadShape === nothing
-        LoadShapePV = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
+        LoadShapePV = HF.generateLoadShape(T, filenameLoadShape=filenameLoadShape)
     end
 
     # Open and read the PVsystem.dss file
@@ -164,14 +179,6 @@ function parse_pv_data(systemName::String, T::Int;
     end
 
     n_D = length(Dset)
-    DER_percent = 0
-
-    # If the user doesn't provide a N_L, set DER_percent to 100, else compute an actual percentage
-    if N_L === nothing
-        DER_percent = 100
-    else # 1% if it is less than that (but nonzero)
-        DER_percent = Int(ceil(n_D/N_L * 100))
-    end
 
     Dset = sort(collect(Dset))
     
