@@ -1,22 +1,26 @@
+Clear
 New Circuit.ieee730_1ph  
 
-Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=12.66 R1=0 X1=0.00000001 ! changed 2.4018 to 12.66 to match ieee730_1ph's "~ basekv = 12.66" loc
+// Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=12.66 R1=0 X1=0.00000001 ! changed 2.4018 to 12.66 to match ieee730_1ph's "~ basekv = 12.66" loc
+Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=0.24 R1=0 X1=0.00000001 ! changed 2.4018 to 12.66 to match ieee730_1ph's "~ basekv = 12.66" loc
 
-Redirect BranchData.dss
-
+// Redirect BranchData.dss
+Redirect BranchData_Xfmrs_removed.dss
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect  Loads.dss     ! Balanced Loads
 // Redirect LoadXfmrs.dss  ! dunno if it will work
 // Redirect  Capacitor.dss
-// Redirect PVSystem.dss
-// Redirect Storage.dss
+Redirect PVSystem_21_100_0. dss
+Redirect Storage_31_100_0.dss
 
 // Set VoltageBases = [4.16]
-Set VoltageBases = [21.9278 0.416] // 12.66*sqrt(3) = 21.9278, 0.24*sqrt(3) = 0.416
+Set VoltageBases = [0.416]
+// Set VoltageBases = [21.9278 0.416] // 12.66*sqrt(3) = 21.9278, 0.24*sqrt(3) = 0.416
 Set mode = Daily 
 Set stepsize = 1h
 Set number = 1
 
 ! Let DSS estimate the voltage bases
 CalcVoltageBases     ! This also establishes the bus list
+Solve
