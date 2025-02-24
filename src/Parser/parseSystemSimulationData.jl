@@ -57,6 +57,10 @@ function parse_system_simulation_data(systemName::String, T::Int;
     gedDict_ud = nothing
     )
 
+    if systemName == "ieee730_1ph"
+        kVA_B = 1e5
+    end
+    MVA_B = kVA_B/1000
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
     V_Subs = 1.0            # Default per-unit voltage at substation
@@ -209,6 +213,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :V_Subs => V_Subs,
         :kV_B => kV_B,
         :kVA_B => kVA_B,
+        :MVA_B => MVA_B,
         :Z_B => Z_B,
         :delta_t => Δt,
         :linearizedModel => linearizedModel,
