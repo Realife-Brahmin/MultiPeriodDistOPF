@@ -95,12 +95,13 @@ function parse_all_data(systemName::String, T::Int;
         relax_terminal_soc_constraint=relax_terminal_soc_constraint,
         linearizedModel=linearizedModel,
         gedDict_ud=gedDict_ud)
+
+    @unpack kVA_B, kV_B = sysSimData
     # Parse branch data
-    branch_data = parse_branch_data(systemName)
+    branch_data = parse_branch_data(systemName, kVA_B=kVA_B, kV_B=kV_B)
     # Parse load data
-    kVA_B = sysSimData[:kVA_B]
     load_data = parse_load_data(systemName, T, kVA_B=kVA_B)
-    N_L = load_data[:N_L]
+    @unpack N_L = load_data
     # Parse PV data
     pv_data = parse_pv_data(systemName, T, N_L=N_L, gedDict_ud=gedDict_ud, kVA_B=kVA_B)
     # Parse Battery data
