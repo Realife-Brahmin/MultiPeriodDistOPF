@@ -131,7 +131,7 @@ function get_load_powers_opendss_powerflow_for_timestep_t(;
 
     # Retrieve all load names
     load_names = OpenDSSDirect.Loads.AllNames()
-
+    OpenDSSDirect.Loads.First()
     # Iterate through each load to calculate total real and reactive power
     for (count, load_name) in enumerate(load_names)
         OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
@@ -140,9 +140,18 @@ function get_load_powers_opendss_powerflow_for_timestep_t(;
         total_load_t_kVAr += imag(load_powers[1])
 
         # Print details only for the first 5 loads
-        if verbose && count <= 5
+        if verbose && count <= 50
+            # Retrieve the rated kW from the load
+            rated_kW = OpenDSSDirect.Loads.kW()
+            # Retrieve the load shape name from OpenDSS (if any)
+            shape_name = OpenDSSDirect.Loads.Daily()
+            OpenDSSDirect.Loads.Next()
             HF.myprintln(verbose,
-                "Load $load_name | Real Power: $(real(load_powers[1])) kW, Reactive Power: $(imag(load_powers[1])) kVAr")
+                "Load $load_name => Rated Power: $(rated_kW) kW, " *
+                "Load Shape Name: $(shape_name), " *
+                "Actual Power: $(real(load_powers[1])) kW, " *
+                "Reactive Power: $(imag(load_powers[1])) kVAr"
+            )
         end
     end
 
