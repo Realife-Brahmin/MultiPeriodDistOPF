@@ -39,6 +39,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     Tset = data[:Tset] # In this case, Tset = [1, 2, ... T]
     modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
 
+    Exporter.export_optimization_model(modelDict, verbose=false)
+
     @unpack model, data = modelDict
     set_optimizer_attribute(model, "print_level", 5)
 
@@ -71,9 +73,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     # optimal_obj_value = objective_value(model)
     optimal_obj_value = modelVals[:objective_value]
     println("Optimal objective function value: ", optimal_obj_value)
-    
-    # Exporter.export_optimization_model(modelDict, verbose=false)
-    
+        
     return modelDict
 
 end
