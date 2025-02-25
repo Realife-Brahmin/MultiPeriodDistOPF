@@ -14,7 +14,7 @@ begin
     T0 = 11
     # factor = 1/2
     temporal_decmp = false
-    temporal_decmp = true
+    # temporal_decmp = true
 end;
 
 begin
