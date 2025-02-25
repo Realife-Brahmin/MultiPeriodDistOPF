@@ -8,10 +8,10 @@ Redirect BranchData.dss
 
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
-Redirect  Loads.dss     ! Balanced Loads
+Redirect Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
-Redirect PVSystem.dss
-Redirect Storage.dss
+Redirect PVSystem_21_100_0.dss
+Redirect Storage_31_100_0.dss
 
 Set VoltageBases = [4.16]
 Set mode = Daily 
@@ -19,4 +19,4 @@ Set stepsize = 1h
 Set number = 1
 
 ! Let DSS estimate the voltage bases
-Calcvoltagebases     ! This also establishes the bus list
+CalcVoltageBases     ! This also establishes the bus list
