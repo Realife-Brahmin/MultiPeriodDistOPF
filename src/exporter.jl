@@ -245,7 +245,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         item_counter += 1
         println(f, "$(item_counter). Nature of Optimization Simulation: $(data[:simNatureString])")
         item_counter += 1  # Placeholder
-        println(f, "$(item_counter). Linearized Model: $(data[:linearizedModelString])")
+        println(f, "$(item_counter). Optimization Model: $(data[:linearizedModelString])")
         item_counter += 1  # Placeholder
         println(f, "$(item_counter). Objective: $(data[:objfunString])")
         item_counter += 1  # Placeholder
@@ -307,8 +307,8 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         println(f, "$(item_counter). Number of Macro-Iterations: $(macroItrsCompleted+1)")
         item_counter += 1
         if !data[:temporal_decmp]
-            @unpack num_devars, num_lincons, num_nonlincons = data;
-            println(f, "$(item_counter). Number of Decision Variables: $(num_devars)")
+            @unpack num_decvars, num_lincons, num_nonlincons = data;
+            println(f, "$(item_counter). Number of Decision Variables: $(num_decvars)")
             item_counter += 1
             println(f, "$(item_counter). Number of Linear Constraints: $(num_lincons)")
             item_counter += 1
@@ -411,6 +411,8 @@ function export_validation_key_results(modelDict; filename::String="validation_r
         item_counter += 1
         println(f, "$(item_counter). Nature of Validation Simulation: $(data[:simNatureString])")
         item_counter += 1
+        println(f, "$(item_counter). Optimization Model: $(data[:linearizedModelString])")
+        item_counter += 1  # Placeholder
         println(f, "---------------------------------------------")
 
         # Horizon Results
