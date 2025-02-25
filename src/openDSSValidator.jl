@@ -22,7 +22,7 @@ using OpenDSSDirect
 using Parameters: @unpack, @pack!
 
 include("helperFunctions.jl")
-using .helperFunctions: myprintln
+import .helperFunctions as HF
 
 #region compute_highest_allTime_voltage_discrepancy
 """
@@ -100,7 +100,7 @@ function get_battery_powers_opendss_powerflow_for_timestep_t(;
         vald_battery_real_power_transaction_magnitude_t_kW += abs(real_power)
         vald_battery_reactive_power_transaction_magnitude_t_kVAr += abs(reactive_power)
 
-        myprintln(verbose, "Battery $battery_name | Real Power: $real_power kW, Reactive Power: $reactive_power kVAr")
+        HF.myprintln(verbose, "Battery $battery_name | Real Power: $real_power kW, Reactive Power: $reactive_power kVAr")
     end
 
     # Store results in a dictionary and return
@@ -123,7 +123,8 @@ Retrieve load real and reactive powers for a given timestep from OpenDSS powerfl
 
 This function calculates the total real and reactive power for all loads at a given timestep from the OpenDSS powerflow simulation.
 """
-function get_load_powers_opendss_powerflow_for_timestep_t()
+function get_load_powers_opendss_powerflow_for_timestep_t(;
+    verbose::Bool=false)
     # Initialize total load power values
     total_load_t_kW = 0.0
     total_load_t_kVAr = 0.0
@@ -136,6 +137,7 @@ function get_load_powers_opendss_powerflow_for_timestep_t()
         OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
         load_powers = OpenDSSDirect.CktElement.Powers()
         total_load_t_kW += real(load_powers[1])
+        HF.myprintln(verbose, "Load $load_name | Real Power: $(real(load_powers[1])) kW, Reactive Power: $(imag(load_powers[1])) kVAr")
         total_load_t_kVAr += imag(load_powers[1])
     end
 
@@ -365,7 +367,7 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
     loadshape_command = "New Loadshape.LoadShapeLoad npts = $(length(LoadShapeArray)) interval = 1 mult = [" *
                         join(LoadShapeArray, " ") * "]"
     OpenDSSDirect.Text.Command(loadshape_command)
-    myprintln(verbose, "Defined LoadShapeLoad with provided LoadShapeArray")
+    HF.myprintln(verbose, "Defined LoadShapeLoad with provided LoadShapeArray")
 
     # Apply this load shape to all loads in the system
     load_id = OpenDSSDirect.Loads.First()
@@ -373,7 +375,7 @@ function set_custom_load_shape!(LoadShapeArray::Vector{Float64};
         OpenDSSDirect.Loads.Daily("LoadShapeLoad")
         load_id = OpenDSSDirect.Loads.Next()
     end
-    myprintln(verbose, "Applied LoadShapeLoad to all loads")
+    HF.myprintln(verbose, "Applied LoadShapeLoad to all loads")
 end
 #endregion
 
@@ -410,6 +412,7 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
         OpenDSSDirect.Text.Command(command_str)
 
         # Optionally print command for verification
+        # verbose = true
         if verbose
             println("Time Step $t: Setting battery $storage_number with command: $command_str")
         end
@@ -448,6 +451,7 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose:
         OpenDSSDirect.PVsystems.Pmpp(p_D_t_kW)
         OpenDSSDirect.PVsystems.kvar(q_D_t_kVAr)
 
+        # verbose = true
         if verbose
             println("Setting PV for bus $(pv_number) at t = $(t): p_D_t_kW = $(p_D_t_kW), q_D_t_kVAr = $(q_D_t_kVAr)")
         end
@@ -537,7 +541,7 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     dss_dir = joinpath(rawDataFolderPath, systemName)
     # dss_dir = joinpath(@__DIR__, "rawData", system_name)
     dss_file = joinpath(dss_dir, "Master.dss")
-    myprintln(verbose, "Master.dss file path: $(dss_file)")
+    HF.myprintln(verbose, "Master.dss file path: $(dss_file)")
 
     # Initialize OpenDSS
     OpenDSSDirect.Text.Command("Clear")
@@ -545,6 +549,8 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
 
     # Set custom load shape
     set_custom_load_shape!(LoadShapeLoad)
+
+    @show LoadShapeLoad
 
     # Loop through each timestep to perform power flow and store valdVals
     for t in 1:T
@@ -575,7 +581,12 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
         valdVals[:vald_PSubsCost_allT_dollar] += valdVals[:vald_PSubsCost_vs_t_1toT_dollar][t]
 
         # Retrieve load real and reactive powers
-        loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t()
+        if t == 1
+            verboseLoad = true
+        else
+            verboseLoad = false
+        end
+        loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t(verbose=verboseLoad)
         @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t
 
         valdVals[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
