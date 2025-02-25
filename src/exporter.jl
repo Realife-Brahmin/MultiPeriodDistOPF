@@ -245,6 +245,8 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         item_counter += 1
         println(f, "$(item_counter). Nature of Optimization Simulation: $(data[:simNatureString])")
         item_counter += 1  # Placeholder
+        println(f, "$(item_counter). Linearized Model: $(data[:linearizedModelString])")
+        item_counter += 1  # Placeholder
         println(f, "$(item_counter). Objective: $(data[:objfunString])")
         item_counter += 1  # Placeholder
         println(f, "$(item_counter). GED Configuration: $(data[:gedAppendix])")
@@ -304,6 +306,15 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         println(f, "---------------------------------------------")
         println(f, "$(item_counter). Number of Macro-Iterations: $(macroItrsCompleted+1)")
         item_counter += 1
+        if !data[:temporal_decmp]
+            @unpack num_devars, num_lincons, num_nonlincons = data;
+            println(f, "$(item_counter). Number of Decision Variables: $(num_devars)")
+            item_counter += 1
+            println(f, "$(item_counter). Number of Linear Constraints: $(num_lincons)")
+            item_counter += 1
+            println(f, "$(item_counter). Number of Nonlinear Constraints: $(num_nonlincons)")
+            item_counter += 1
+        end
         println(f, "$(item_counter). Simulation Time: $(round(solution_time, digits=2)) s")
         item_counter += 1
         println(f, "$(item_counter). Time to solve with sequential (non-parallel) computation: $(round(solution_time, digits=2)) s")

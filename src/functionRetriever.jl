@@ -8,6 +8,7 @@ export get_battery_reactive_power,
     get_load_real_power,
     get_loss_reactive_power,
     get_loss_real_power,
+    get_model_size,
     get_pv_reactive_power,
     get_pv_real_power,
     get_scd,
@@ -22,6 +23,8 @@ export get_battery_reactive_power,
     get_static_capacitor_reactive_power
 
 using JuMP
+using MathOptInterface
+const MOI = MathOptInterface
 # import JuMP: value, solve_time  # Importing JuMP's value function to extract values from the modelVals
 using Parameters: @unpack  # For easier unpacking of parameters from data
 
@@ -232,6 +235,30 @@ function get_battery_reactive_power(modelDict; horizon::String="allT")
     end
 end
 #endregion
+
+function get_model_size(model)
+    # Retrieve number of decision variables
+    num_decvars = num_variables(model)
+
+    # Retrieve number of linear constraints
+    num_lincons = num_constraints(model, AffExpr, MOI.EqualTo{Float64}) +
+                num_constraints(model, AffExpr, MOI.GreaterThan{Float64}) +
+                num_constraints(model, AffExpr, MOI.LessThan{Float64})
+
+    # Retrieve number of nonlinear constraints
+    num_nonlincons = num_constraints(model, NonlinearExpr, MOI.EqualTo{Float64}) +
+                    num_constraints(model, NonlinearExpr, MOI.GreaterThan{Float64}) +
+                    num_constraints(model, NonlinearExpr, MOI.LessThan{Float64})
+
+    # Pack results into a dictionary
+    modelSizeDict = Dict(
+        :num_decvars => num_decvars,
+        :num_lincons => num_lincons,
+        :num_nonlincons => num_nonlincons
+    )
+
+    return modelSizeDict
+end
 
 #region get_pv_real_power
 """
