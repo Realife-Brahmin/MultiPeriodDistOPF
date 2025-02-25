@@ -236,19 +236,22 @@ function get_battery_reactive_power(modelDict; horizon::String="allT")
 end
 #endregion
 
-function get_model_size(model)
+function get_model_size(modelDict)
+    @unpack model = modelDict
     # Retrieve number of decision variables
-    num_decvars = num_variables(model)
+    num_decvars = JuMP.num_variables(model)
 
     # Retrieve number of linear constraints
-    num_lincons = num_constraints(model, AffExpr, MOI.EqualTo{Float64}) +
-                num_constraints(model, AffExpr, MOI.GreaterThan{Float64}) +
-                num_constraints(model, AffExpr, MOI.LessThan{Float64})
+    num_lincons =
+        JuMP.num_constraints(model, AffExpr, MOI.EqualTo{Float64}) +
+        JuMP.num_constraints(model, AffExpr, MOI.GreaterThan{Float64}) +
+        JuMP.num_constraints(model, AffExpr, MOI.LessThan{Float64})
 
     # Retrieve number of nonlinear constraints
-    num_nonlincons = num_constraints(model, NonlinearExpr, MOI.EqualTo{Float64}) +
-                    num_constraints(model, NonlinearExpr, MOI.GreaterThan{Float64}) +
-                    num_constraints(model, NonlinearExpr, MOI.LessThan{Float64})
+    num_nonlincons =
+        JuMP.num_constraints(model, NonlinearExpr, MOI.EqualTo{Float64}) +
+        JuMP.num_constraints(model, NonlinearExpr, MOI.GreaterThan{Float64}) +
+        JuMP.num_constraints(model, NonlinearExpr, MOI.LessThan{Float64})
 
     # Pack results into a dictionary
     modelSizeDict = Dict(
