@@ -90,6 +90,10 @@ function compute_output_values(modelDict;
     battery_real_power_transaction_magnitude_allT_kW = get_battery_real_power_transaction_magnitude(modelDict, horizon="allT")
     battery_reactive_power_transaction_magnitude_vs_t_1toT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="1toT")
     battery_reactive_power_transaction_magnitude_allT_kVAr = get_battery_reactive_power_transaction_magnitude(modelDict, horizon="allT")
+    
+    modelSize = get_model_size(modelDict)
+    @unpack num_decvars, num_lincons, num_nonlincons = modelSize;
+
     if !forwardPass
         solution_time = get_solution_time(modelDict)
     else 
@@ -146,6 +150,9 @@ function compute_output_values(modelDict;
         load_reactive_power_allT_kVAr,
         load_real_power_vs_t_1toT_kW,
         load_real_power_allT_kW,
+        num_decvars,
+        num_lincons,
+        num_nonlincons,
         PSubsCost_allT_dollar,
         PSubsCost_vs_t_1toT_dollar,
         PSubs_allT_kW,
