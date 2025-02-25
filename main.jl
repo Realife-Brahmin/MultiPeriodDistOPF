@@ -6,8 +6,8 @@ using Parameters
 Revise.revise()
 
 begin
-    # systemName = "ads10_1ph"
-    systemName = "ieee123_1ph"
+    systemName = "ads10_1ph"
+    # systemName = "ieee123_1ph"
     # systemName = "ieee730_1ph"
     # T0 = 3
     # T0 = 24
@@ -37,10 +37,19 @@ begin
     solver = "Ipopt"
     # solver = "Gurobi"
     # solver = "Juniper"
-    DER_Percent_ud = 20
-    DER_Rating_factor_ud = 1
-    Batt_Percent_ud = 30
-    Batt_Rating_factor_ud = 1
+    if systemName == "ieee123_1ph" || systemName == "ieee730_1ph"
+        DER_Percent_ud = 20
+        DER_Rating_factor_ud = 1
+        Batt_Percent_ud = 30
+        Batt_Rating_factor_ud = 1
+    elseif systemName == "ads10_1ph"
+        DER_Percent_ud = 25
+        DER_Rating_factor_ud = 1
+        Batt_Percent_ud = 25
+        Batt_Rating_factor_ud = 1
+    else
+        error("systemName must be either ieee123_1ph, ieee730_1ph, or ads10_1ph")
+    end
     gedDict_ud = Dict(:DER_Percent_ud=>DER_Percent_ud, :DER_Rating_factor_ud=>DER_Rating_factor_ud, :Batt_Percent_ud=>Batt_Percent_ud, :Batt_Rating_factor_ud=>Batt_Rating_factor_ud)
 end;
 
