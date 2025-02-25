@@ -8,10 +8,10 @@ Revise.revise()
 begin
     # systemName = "ads10_1ph"
     systemName = "ieee123_1ph"
-    systemName = "ieee730_1ph"
-    T0 = 3
+    # systemName = "ieee730_1ph"
+    # T0 = 3
     # T0 = 24
-    # T0 = 11
+    T0 = 11
     # factor = 1/2
     temporal_decmp = false
     temporal_decmp = true
