@@ -8,9 +8,9 @@ Revise.revise()
 begin
     # systemName = "ads10_1ph"
     systemName = "ieee123_1ph"
-    # systemName = "ieee730_1ph"
+    systemName = "ieee730_1ph"
     T0 = 3
-    T0 = 24
+    # T0 = 24
     # T0 = 11
     # factor = 1/2
     temporal_decmp = false
@@ -31,7 +31,7 @@ begin
     objfun2 = "scd"
     inputForecastDescription = "bilevelCosts"
     relax_terminal_soc_constraint = false
-    # relax_terminal_soc_constraint = true
+    relax_terminal_soc_constraint = true
     tSOC_hard = false
     # tSOC_hard = true
     solver = "Ipopt"
