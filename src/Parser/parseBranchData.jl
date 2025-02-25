@@ -7,7 +7,7 @@ using .helperFunctions: myprintln
 
 #region parse_branch_data
 """
-    parse_branch_data(systemName::String; kVA_B=1000, kV_B=2.4018, Z_B=5.768643240000001, verbose::Bool=false)
+    parse_branch_data(systemName::String; kVA_B=1000, kV_B=2.4018,  verbose::Bool=false)
 
 Parse branch data from the BranchData.dss file for a given system.
 
@@ -57,36 +57,37 @@ It handles the extraction of branch properties such as resistance, reactance, an
 function parse_branch_data(systemName::String;
     kVA_B = 1000,
     kV_B = 2.4018,
-    Z_B = 5.768643240000001,
     verbose::Bool = false)
 
     ## Now let's take a small detour to ensure that we know exactly what base impedance to compute pu values of impedances:
     
-    MVA_B = kVA_B/1000,
+    MVA_B = kVA_B/1000
+    Z_B = (kV_B^2) / MVA_B
 
-    # Rule: If Z_B is not provided and kVA_B is specified but not kV_B, throw an error
-    if isnothing(Z_B) && !isnothing(kVA_B) && isnothing(kV_B)
-        error("Error: You must specify both kV_B and kVA_B to calculate Z_B, or provide Z_B directly.")
-    end
+    # # Rule: If Z_B is not provided and kVA_B is specified but not kV_B, throw an error
+    # if isnothing(Z_B) && !isnothing(kVA_B) && isnothing(kV_B)
+    #     error("Error: You must specify both kV_B and kVA_B to calculate Z_B, or provide Z_B directly.")
+    # end
 
-    # Rule: If Z_B is not specified, and kV_B is provided, compute Z_B using the default or given kVA_B
-    if isnothing(Z_B) && !isnothing(kV_B)
-        Z_B = (kV_B^2) / MVA_B
-        myprintln(verbose, "Computed Z_B = (kV_B^2) / MVA_B = $Z_B using kV_B = $kV_B and kVA_B = $kVA_B")
-    end
+    # # Rule: If Z_B is not specified, and kV_B is provided, compute Z_B using the default or given kVA_B
+    # if isnothing(Z_B) && !isnothing(kV_B)
+    #     Z_B = (kV_B^2) / MVA_B
+    #     myprintln(verbose, "Computed Z_B = (kV_B^2) / MVA_B = $Z_B using kV_B = $kV_B and kVA_B = $kVA_B")
+    # end
 
-    # Rule: If Z_B is provided and kV_B/kVA_B are not specified, just use the provided Z_B
-    if !isnothing(Z_B)
-        myprintln(verbose, "Using user-specified Z_B = $Z_B")
-    end
+    # # Rule: If Z_B is provided and kV_B/kVA_B are not specified, just use the provided Z_B
+    # if !isnothing(Z_B)
+    #     myprintln(verbose, "Using user-specified Z_B = $Z_B")
+    # end
 
-    # Rule: If neither Z_B nor kV_B/kVA_B are provided, use the default value of Z_B
-    if isnothing(Z_B) && isnothing(kV_B) && isnothing(kVA_B)
-        Z_B = 5.768643240000001  # Default value
-        myprintln(verbose, "Using default Z_B = $Z_B")
-    end
+    # # Rule: If neither Z_B nor kV_B/kVA_B are provided, use the default value of Z_B
+    # if isnothing(Z_B) && isnothing(kV_B) && isnothing(kVA_B)
+    #     Z_B = 5.768643240000001  # Default value
+    #     myprintln(verbose, "Using default Z_B = $Z_B")
+    # end
 
     # Now Z_B is guaranteed to be set to a valid value at this point
+    verbose = true
     myprintln(verbose, "Final Z_B = $Z_B")
 
     # Todo: Ensure that substation bus being equal to 1 is not taken for granted, have some kwarg or something to ensure that even bus 153 can be the substation bus
