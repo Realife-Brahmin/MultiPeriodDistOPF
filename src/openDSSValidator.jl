@@ -133,12 +133,17 @@ function get_load_powers_opendss_powerflow_for_timestep_t(;
     load_names = OpenDSSDirect.Loads.AllNames()
 
     # Iterate through each load to calculate total real and reactive power
-    for load_name in load_names
+    for (count, load_name) in enumerate(load_names)
         OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
         load_powers = OpenDSSDirect.CktElement.Powers()
         total_load_t_kW += real(load_powers[1])
-        HF.myprintln(verbose, "Load $load_name | Real Power: $(real(load_powers[1])) kW, Reactive Power: $(imag(load_powers[1])) kVAr")
         total_load_t_kVAr += imag(load_powers[1])
+
+        # Print details only for the first 5 loads
+        if verbose && count <= 5
+            HF.myprintln(verbose,
+                "Load $load_name | Real Power: $(real(load_powers[1])) kW, Reactive Power: $(imag(load_powers[1])) kVAr")
+        end
     end
 
     # Store results in a dictionary and return
