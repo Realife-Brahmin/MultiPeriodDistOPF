@@ -25,7 +25,7 @@ begin
     linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
-    savePlots = true
+    # savePlots = true
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
@@ -66,12 +66,12 @@ if !temporal_decmp
     end
     
     @unpack model, modelVals, data = modelDict
-    print_mu(modelDict)
+    # print_mu(modelDict)
 
 elseif temporal_decmp
     modelDict = optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
-    print_mu(modelDict)
+    # print_mu(modelDict)
 else
     error("temporal_decmp must be either true or false")
 end
