@@ -21,8 +21,8 @@ begin
     factor = 1
     T = Int(T0*factor) 
     numAreas = 1
-    # linearizedModel = false
-    linearizedModel = true
+    linearizedModel = false
+    # linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     # savePlots = true
