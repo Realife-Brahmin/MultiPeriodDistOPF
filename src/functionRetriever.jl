@@ -249,9 +249,9 @@ function get_model_size(modelDict)
 
     # Retrieve number of nonlinear constraints
     num_nonlincons =
-        JuMP.num_constraints(model, NonlinearExpr, MOI.EqualTo{Float64}) +
-        JuMP.num_constraints(model, NonlinearExpr, MOI.GreaterThan{Float64}) +
-        JuMP.num_constraints(model, NonlinearExpr, MOI.LessThan{Float64})
+        JuMP.num_constraints(model, QuadExpr, MOI.EqualTo{Float64}) +
+        JuMP.num_constraints(model, QuadExpr, MOI.GreaterThan{Float64}) +
+        JuMP.num_constraints(model, QuadExpr, MOI.LessThan{Float64})
 
     # Pack results into a dictionary
     modelSizeDict = Dict(
