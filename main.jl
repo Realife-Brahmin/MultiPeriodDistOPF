@@ -7,7 +7,8 @@ Revise.revise()
 
 begin
     systemName = "ads10_1ph"
-    # systemName = "ieee123_1ph"
+    systemName0 = "ieee123_1ph-A"
+    # systemName0 = "ieee123_1ph-B"
     # systemName = "ieee730_1ph"
     # T0 = 3
     T0 = 24
@@ -22,7 +23,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     # savePlots = true
@@ -37,7 +38,19 @@ begin
     solver = "Ipopt"
     # solver = "Gurobi"
     # solver = "Juniper"
-    if systemName == "ieee123_1ph" || systemName == "ieee730_1ph"
+    if systemName0 == "ieee123_1ph-A"
+        systemName = "ieee123_1ph"
+        DER_Percent_ud = 20
+        DER_Rating_factor_ud = 1/3
+        Batt_Percent_ud = 30
+        Batt_Rating_factor_ud = 1/3
+    elseif systemName0 == "ieee123_1ph-B"
+        systemName = "ieee123_1ph"
+        DER_Percent_ud = 40
+        DER_Rating_factor_ud = 1
+        Batt_Percent_ud = 50
+        Batt_Rating_factor_ud = 1
+    elseif systemName == "ieee730_1ph"
         DER_Percent_ud = 20
         DER_Rating_factor_ud = 1
         Batt_Percent_ud = 30
