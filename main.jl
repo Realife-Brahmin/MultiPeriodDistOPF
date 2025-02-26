@@ -6,10 +6,10 @@ using Parameters
 Revise.revise()
 
 begin
-    systemName = "ads10_1ph"
+    systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
-    # systemName = "ieee730_1ph"
+    # systemName0 = "ieee730_1ph"
     # T0 = 3
     T0 = 24
     # T0 = 11
@@ -23,10 +23,10 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
-    # savePlots = true
+    savePlots = true
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
@@ -50,12 +50,14 @@ begin
         DER_Rating_factor_ud = 1
         Batt_Percent_ud = 50
         Batt_Rating_factor_ud = 1
-    elseif systemName == "ieee730_1ph"
+    elseif systemName0 == "ieee730_1ph"
+        systemName = "ieee730_1ph"
         DER_Percent_ud = 20
         DER_Rating_factor_ud = 1
         Batt_Percent_ud = 30
         Batt_Rating_factor_ud = 1
-    elseif systemName == "ads10_1ph"
+    elseif systemName0 == "ads10_1ph"
+        systemName = "ads10_1ph"
         DER_Percent_ud = 25
         DER_Rating_factor_ud = 1/3
         Batt_Percent_ud = 25
