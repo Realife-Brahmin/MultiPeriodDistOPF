@@ -74,7 +74,7 @@ function parse_battery_data(systemName::String;
         Batt_percent = Int(ceil(n_B / N_L * 100))
     end
 
-    Batt_Rating_factor_str = HF.trim_number_for_printing(Batt_Rating_factor_ud * 100, digits=2)
+    Batt_Rating_factor_str = HF.trim_number_for_printing(Batt_Rating_factor_ud * 100, sigdigits=4)
 
     # Construct the full file path for the Storage.dss file
     filename_batt = joinpath(wd, "..", "..", "rawData", systemName, "Storage_$(Batt_percent)_$(Batt_Rating_factor_str).dss")

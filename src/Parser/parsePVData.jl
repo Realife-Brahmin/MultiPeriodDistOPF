@@ -72,7 +72,7 @@ function parse_pv_data(systemName::String, T::Int;
         DER_percent = Int(ceil(n_D / N_L * 100))
     end
 
-    DER_Rating_factor_str = HF.trim_number_for_printing(DER_Rating_factor_ud * 100, digits=2)
+    DER_Rating_factor_str = HF.trim_number_for_printing(DER_Rating_factor_ud * 100, sigdigits=4)
 
     filename_pv = joinpath(wd, "..", "..", "rawData", systemName, "PVsystem_$(DER_percent)_$(DER_Rating_factor_str).dss")
 

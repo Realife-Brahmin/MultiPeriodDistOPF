@@ -10,8 +10,10 @@ Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
-Redirect PVSystem_21_100_0.dss
-Redirect Storage_31_100_0.dss
+Redirect PVSystem_21_33_33.dss
+// Redirect PVSystem_21_100_0.dss
+Redirect Storage_31_33_33.dss
+// Redirect Storage_31_100_0.dss
 
 Set VoltageBases = [0.416]
 Set mode = Daily 
