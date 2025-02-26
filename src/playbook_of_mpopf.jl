@@ -43,6 +43,8 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     @unpack model, data = modelDict
     set_optimizer_attribute(model, "print_level", 5)
+    set_optimizer_attribute(model, "print_frequency_iter", 100)
+
 
     optimize!(model)
     
