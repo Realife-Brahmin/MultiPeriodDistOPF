@@ -124,11 +124,23 @@ Retrieve load real and reactive powers for a given timestep from OpenDSS powerfl
 This function calculates the total real and reactive power for all loads at a given timestep from the OpenDSS powerflow simulation.
 """
 function get_load_powers_opendss_powerflow_for_timestep_t(;
+    t=nothing,
+    LoadShapeLoad=nothing,
     verbose::Bool=false)
     # Initialize total load power values
     total_load_t_kW = 0.0
     total_load_t_kVAr = 0.0
 
+    if isnothing(t)
+        # If no specific timestep is provided, use the current time step
+        t = OpenDSSDirect.Solution.Step()
+        myprintln(verbose, "t not provided, using current time step from OpenDSS: $t")
+    end
+
+    if isnothing(LoadShapeLoad)
+        # If no load shape is provided, use a default value
+        myprintln(verbose, "LoadShapeLoad not provided, so cannot check for correctness of load dispatch")
+    end
     # Retrieve all load names
     load_names = OpenDSSDirect.Loads.AllNames()
     OpenDSSDirect.Loads.First()
@@ -140,17 +152,15 @@ function get_load_powers_opendss_powerflow_for_timestep_t(;
         total_load_t_kVAr += imag(load_powers[1])
 
         # Print details only for the first 5 loads
-        if verbose && count <= 50
+        if verbose && count <= 50 && !isnothing(LoadShapeLoad)
             # Retrieve the rated kW from the load
             rated_kW = OpenDSSDirect.Loads.kW()
             # Retrieve the load shape name from OpenDSS (if any)
             shape_name = OpenDSSDirect.Loads.Daily()
             OpenDSSDirect.Loads.Next()
             HF.myprintln(verbose,
-                "Load $load_name => Rated Power: $(rated_kW) kW, " *
-                "Load Shape Name: $(shape_name), " *
-                "Actual Power: $(real(load_powers[1])) kW, " *
-                "Reactive Power: $(imag(load_powers[1])) kVAr"
+                "Load $load_name => Intended  Power: $(rated_kW*LoadShapeLoad[t]) kW,
+                Actual Power: $(real(load_powers[1])) kW"
             )
         end
     end
@@ -600,7 +610,7 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
         else
             verboseLoad = false
         end
-        loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t(verbose=verboseLoad)
+        loadPowersDict_t = get_load_powers_opendss_powerflow_for_timestep_t(verbose=verboseLoad, t=t, LoadShapeLoad=LoadShapeLoad)
         @unpack total_load_t_kW, total_load_t_kVAr = loadPowersDict_t
 
         valdVals[:vald_load_real_power_vs_t_1toT_kW][t] = total_load_t_kW
