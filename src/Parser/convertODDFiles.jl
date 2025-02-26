@@ -92,7 +92,7 @@ function generate_battery_dss_from_loads_dss(loads_file_path::String; Batt_perce
     selected_buses = [load_buses[i] for i in 1:div(N_L, num_batteries):N_L][1:num_batteries]
 
     # Generate the Storage<BattPercent>.dss file
-    batt_rating_factor_str = HF.trim_number_for_printing(Batt_rating_factor * 100, digits=2)
+    batt_rating_factor_str = HF.trim_number_for_printing(Batt_rating_factor * 100, sigdigits=4)
     storage_file_path = joinpath(dirname(loads_file_path), "Storage_$(actual_Batt_percent)_$(batt_rating_factor_str).dss")
     open(storage_file_path, "w") do file
         for (i, (bus, kV, kW)) in enumerate(selected_buses)
@@ -135,7 +135,7 @@ function generate_pvsystem_dss_from_loads_dss(loads_file_path::String; DER_Perce
     selected_buses = [load_buses[i] for i in 1:div(N_L, num_pvsystems):N_L][1:num_pvsystems]
 
     # Generate the PVSystem<DER_Percent>.dss file
-    der_rating_factor_str = HF.trim_number_for_printing(DER_rating_factor * 100, digits=2)
+    der_rating_factor_str = HF.trim_number_for_printing(DER_rating_factor * 100, sigdigits=2)
     pvsystem_file_path = joinpath(dirname(loads_file_path), "PVSystem_$(actual_DER_percent)_$(der_rating_factor_str).dss")
     open(pvsystem_file_path, "w") do file
         for (i, (bus, kV, kW)) in enumerate(selected_buses)
