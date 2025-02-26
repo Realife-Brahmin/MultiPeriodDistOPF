@@ -6,8 +6,8 @@ using Parameters
 Revise.revise()
 
 begin
-    # systemName = "ads10_1ph"
-    systemName = "ieee123_1ph"
+    systemName = "ads10_1ph"
+    # systemName = "ieee123_1ph"
     # systemName = "ieee730_1ph"
     # T0 = 3
     T0 = 24
@@ -21,8 +21,8 @@ begin
     factor = 1
     T = Int(T0*factor) 
     numAreas = 1
-    linearizedModel = false
-    # linearizedModel = true
+    # linearizedModel = false
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     # savePlots = true
