@@ -24,32 +24,32 @@ Subject to
  SubstationRealPowerBalance_t_22 : P_Subs[22] - P[(1, 2),22] == 0
  SubstationRealPowerBalance_t_23 : P_Subs[23] - P[(1, 2),23] == 0
  SubstationRealPowerBalance_t_24 : P_Subs[24] - P[(1, 2),24] == 0
- NodeRealPowerBalance_Node_j_2_t_1 : -P[(1, 2),1] + P[(2, 3),1] + P[(2, 11),1] + 57.52591161723931 l[(1, 2),1] == 0
- NodeRealPowerBalance_Node_j_3_t_1 : -P[(2, 3),1] + P[(3, 4),1] + 307.5951673242839 l[(2, 3),1] == 0
- NodeRealPowerBalance_Node_j_4_t_1 : -P[(3, 4),1] + P[(4, 5),1] + 228.3566556606246 l[(3, 4),1] == 0
- NodeRealPowerBalance_Node_j_5_t_1 : -P[(4, 5),1] + P[(5, 6),1] + 237.77792751984708 l[(4, 5),1] + P_c[5,1] - P_d[5,1] == -5.9001e-6
- NodeRealPowerBalance_Node_j_6_t_1 : -P[(5, 6),1] + P[(6, 7),1] + 510.99481143729923 l[(5, 6),1] == -5.2114e-6
- NodeRealPowerBalance_Node_j_7_t_1 : -P[(6, 7),1] + P[(7, 8),1] + 116.79881404281127 l[(6, 7),1] == -4.9060999999999995e-6
- NodeRealPowerBalance_Node_j_8_t_1 : -P[(7, 8),1] + P[(8, 9),1] + 443.8604503742304 l[(7, 8),1] + P_c[8,1] - P_d[8,1] == -6.2196000000000006e-6
- NodeRealPowerBalance_Node_j_9_t_1 : -P[(8, 9),1] + P[(9, 10),1] + 642.6430473509381 l[(8, 9),1] == -6.4752e-6
- NodeRealPowerBalance_Node_j_10_t_1 : -P[(9, 10),1] + 651.3780013926013 l[(9, 10),1] == 0
- NodeRealPowerBalance_Node_j_11_t_1 : -P[(2, 11),1] + P[(11, 12),1] + 8.922131628270305 l[(2, 11),1] == 0
- NodeRealPowerBalance_Node_j_12_t_1 : -P[(11, 12),1] + P[(12, 13),1] + P[(12, 14),1] + P[(12, 15),1] + 4.305084491962595 l[(11, 12),1] == 0
- NodeRealPowerBalance_Node_j_13_t_1 : -P[(12, 13),1] + 4.305084491962595 l[(12, 13),1] == 0
- NodeRealPowerBalance_Node_j_14_t_1 : -P[(12, 14),1] + 6.863178175592542 l[(12, 14),1] == 0
- NodeRealPowerBalance_Node_j_15_t_1 : -P[(12, 15),1] + 6.863178175592542 l[(12, 15),1] == 0
- NodeRealPowerBalance_Node_j_2_t_2 : -P[(1, 2),2] + P[(2, 3),2] + P[(2, 11),2] + 57.52591161723931 l[(1, 2),2] == 0
- NodeRealPowerBalance_Node_j_3_t_2 : -P[(2, 3),2] + P[(3, 4),2] + 307.5951673242839 l[(2, 3),2] == 0
- NodeRealPowerBalance_Node_j_4_t_2 : -P[(3, 4),2] + P[(4, 5),2] + 228.3566556606246 l[(3, 4),2] == 0
- NodeRealPowerBalance_Node_j_5_t_2 : -P[(4, 5),2] + P[(5, 6),2] + 237.77792751984708 l[(4, 5),2] + P_c[5,2] - P_d[5,2] == -5.45967e-6
- NodeRealPowerBalance_Node_j_6_t_2 : -P[(5, 6),2] + P[(6, 7),2] + 510.99481143729923 l[(5, 6),2] == -4.82238e-6
- NodeRealPowerBalance_Node_j_7_t_2 : -P[(6, 7),2] + P[(7, 8),2] + 116.79881404281127 l[(6, 7),2] == -4.53987e-6
- NodeRealPowerBalance_Node_j_8_t_2 : -P[(7, 8),2] + P[(8, 9),2] + 443.8604503742304 l[(7, 8),2] + P_c[8,2] - P_d[8,2] == -5.755320000000001e-6
- NodeRealPowerBalance_Node_j_9_t_2 : -P[(8, 9),2] + P[(9, 10),2] + 642.6430473509381 l[(8, 9),2] == -5.991840000000001e-6
- NodeRealPowerBalance_Node_j_10_t_2 : -P[(9, 10),2] + 651.3780013926013 l[(9, 10),2] == 0
- NodeRealPowerBalance_Node_j_11_t_2 : -P[(2, 11),2] + P[(11, 12),2] + 8.922131628270305 l[(2, 11),2] == 0
- NodeRealPowerBalance_Node_j_12_t_2 : -P[(11, 12),2] + P[(12, 13),2] + P[(12, 14),2] + P[(12, 15),2] + 4.305084491962595 l[(11, 12),2] == 0
- NodeRealPowerBalance_Node_j_13_t_2 : -P[(12, 13),2] + 4.305084491962595 l[(12, 13),2] == 0
+ NodeRealPowerBalance_Node_j_2_t_1 : -P[(1, 2),1] + P[(2, 3),1] + P[(2, 11),1] + 0.05752591161723931 l[(1, 2),1] == 0
+ NodeRealPowerBalance_Node_j_3_t_1 : -P[(2, 3),1] + P[(3, 4),1] + 0.3075951673242839 l[(2, 3),1] == 0
+ NodeRealPowerBalance_Node_j_4_t_1 : -P[(3, 4),1] + P[(4, 5),1] + 0.22835665566062455 l[(3, 4),1] == 0
+ NodeRealPowerBalance_Node_j_5_t_1 : -P[(4, 5),1] + P[(5, 6),1] + 0.23777792751984705 l[(4, 5),1] + P_c[5,1] - P_d[5,1] == -5.9001e-6
+ NodeRealPowerBalance_Node_j_6_t_1 : -P[(5, 6),1] + P[(6, 7),1] + 0.5109948114372992 l[(5, 6),1] == -5.2114e-6
+ NodeRealPowerBalance_Node_j_7_t_1 : -P[(6, 7),1] + P[(7, 8),1] + 0.11679881404281126 l[(6, 7),1] == -4.9060999999999995e-6
+ NodeRealPowerBalance_Node_j_8_t_1 : -P[(7, 8),1] + P[(8, 9),1] + 0.4438604503742304 l[(7, 8),1] + P_c[8,1] - P_d[8,1] == -6.2196000000000006e-6
+ NodeRealPowerBalance_Node_j_9_t_1 : -P[(8, 9),1] + P[(9, 10),1] + 0.642643047350938 l[(8, 9),1] == -6.4752e-6
+ NodeRealPowerBalance_Node_j_10_t_1 : -P[(9, 10),1] + 0.6513780013926013 l[(9, 10),1] == 0
+ NodeRealPowerBalance_Node_j_11_t_1 : -P[(2, 11),1] + P[(11, 12),1] + 24.82638888888889 l[(2, 11),1] == 0
+ NodeRealPowerBalance_Node_j_12_t_1 : -P[(11, 12),1] + P[(12, 13),1] + P[(12, 14),1] + P[(12, 15),1] + 11.979166666666666 l[(11, 12),1] == 0
+ NodeRealPowerBalance_Node_j_13_t_1 : -P[(12, 13),1] + 11.979166666666666 l[(12, 13),1] == 0
+ NodeRealPowerBalance_Node_j_14_t_1 : -P[(12, 14),1] + 19.09722222222222 l[(12, 14),1] == 0
+ NodeRealPowerBalance_Node_j_15_t_1 : -P[(12, 15),1] + 19.09722222222222 l[(12, 15),1] == 0
+ NodeRealPowerBalance_Node_j_2_t_2 : -P[(1, 2),2] + P[(2, 3),2] + P[(2, 11),2] + 0.05752591161723931 l[(1, 2),2] == 0
+ NodeRealPowerBalance_Node_j_3_t_2 : -P[(2, 3),2] + P[(3, 4),2] + 0.3075951673242839 l[(2, 3),2] == 0
+ NodeRealPowerBalance_Node_j_4_t_2 : -P[(3, 4),2] + P[(4, 5),2] + 0.22835665566062455 l[(3, 4),2] == 0
+ NodeRealPowerBalance_Node_j_5_t_2 : -P[(4, 5),2] + P[(5, 6),2] + 0.23777792751984705 l[(4, 5),2] + P_c[5,2] - P_d[5,2] == -5.45967e-6
+ NodeRealPowerBalance_Node_j_6_t_2 : -P[(5, 6),2] + P[(6, 7),2] + 0.5109948114372992 l[(5, 6),2] == -4.82238e-6
+ NodeRealPowerBalance_Node_j_7_t_2 : -P[(6, 7),2] + P[(7, 8),2] + 0.11679881404281126 l[(6, 7),2] == -4.53987e-6
+ NodeRealPowerBalance_Node_j_8_t_2 : -P[(7, 8),2] + P[(8, 9),2] + 0.4438604503742304 l[(7, 8),2] + P_c[8,2] - P_d[8,2] == -5.755320000000001e-6
+ NodeRealPowerBalance_Node_j_9_t_2 : -P[(8, 9),2] + P[(9, 10),2] + 0.642643047350938 l[(8, 9),2] == -5.991840000000001e-6
+ NodeRealPowerBalance_Node_j_10_t_2 : -P[(9, 10),2] + 0.6513780013926013 l[(9, 10),2] == 0
+ NodeRealPowerBalance_Node_j_11_t_2 : -P[(2, 11),2] + P[(11, 12),2] + 24.82638888888889 l[(2, 11),2] == 0
+ NodeRealPowerBalance_Node_j_12_t_2 : -P[(11, 12),2] + P[(12, 13),2] + P[(12, 14),2] + P[(12, 15),2] + 11.979166666666666 l[(11, 12),2] == 0
+ NodeRealPowerBalance_Node_j_13_t_2 : -P[(12, 13),2] + 11.979166666666666 l[(12, 13),2] == 0
 [[...2828 constraints skipped...]]
  l[(6, 7),21] >= 0
  l[(7, 8),21] >= 0
