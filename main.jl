@@ -11,8 +11,8 @@ begin
     # systemName0 = "ieee123_1ph-B"
     systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
-    # T0 = 3
-    T0 = 24
+    T0 = 3
+    # T0 = 24
     # T0 = 11
     factor = 1
     # factor = 1/2
@@ -25,7 +25,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     savePlots = true
@@ -60,9 +60,9 @@ begin
         Batt_Rating_factor_ud = 1
     elseif systemName0 == "ieee729_1ph"
         systemName = "ieee729_1ph"
-        DER_Percent_ud = 50
+        DER_Percent_ud = 40
         DER_Rating_factor_ud = 1
-        Batt_Percent_ud = 50
+        Batt_Percent_ud = 40
         Batt_Rating_factor_ud = 1
     elseif systemName0 == "ads10_1ph"
         systemName = "ads10_1ph"
