@@ -57,7 +57,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     gedDict_ud = nothing
     )
 
-    if systemName == "ieee730_1ph"
+    if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
         kVA_B = 1e5
     end
     MVA_B = kVA_B/1000
