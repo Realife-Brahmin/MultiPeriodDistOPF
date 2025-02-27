@@ -99,13 +99,15 @@ function parse_all_data(systemName::String, T::Int;
     @unpack kVA_B, kV_B = sysSimData
     # Parse branch data
     branch_data = parse_branch_data(systemName, kVA_B=kVA_B, kV_B=kV_B)
+    @unpack kVA_B_dict, MVA_B_dict, kV_B_dict = data;
+    baseValuesDict = Dict(:kVA_B=>kVA_B, :kV_B=>kV_B, :MVA_B=>MVA_B_dict)
     # Parse load data
-    load_data = parse_load_data(systemName, T, kVA_B=kVA_B)
+    load_data = parse_load_data(systemName, T, baseValuesDict=baseValuesDict)
     @unpack N_L = load_data
     # Parse PV data
-    pv_data = parse_pv_data(systemName, T, N_L=N_L, gedDict_ud=gedDict_ud, kVA_B=kVA_B)
+    pv_data = parse_pv_data(systemName, T, N_L=N_L, gedDict_ud=gedDict_ud, baseValuesDict=baseValuesDict)
     # Parse Battery data
-    battery_data = parse_battery_data(systemName, N_L=N_L, gedDict_ud=gedDict_ud, kVA_B=kVA_B)
+    battery_data = parse_battery_data(systemName, N_L=N_L, gedDict_ud=gedDict_ud, baseValuesDict=baseValuesDict)
     # Evaluate Voltage Limits for every bus based on various components (load, pv, battery) attached to it
     component_data = evaluate_voltage_limits(load_data, pv_data, battery_data)
     # Parse substation real power cost data

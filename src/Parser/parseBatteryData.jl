@@ -2,10 +2,10 @@ module parseBatteryData
 
 export parse_battery_data
 
+using Parameters
+
 include("../helperFunctions.jl")
 import .helperFunctions as HF
-
-using Parameters
 
 #region parse_battery_data
 """
@@ -54,10 +54,16 @@ It handles the extraction of battery properties such as initial state of charge 
 5. **Return Data**: Returns a dictionary containing the parsed battery data.
 """
 function parse_battery_data(systemName::String;
-    kVA_B = 1000,
     N_L = nothing,
     verbose::Bool=false,
-    gedDict_ud=nothing)
+    gedDict_ud=nothing,
+    baseValuesDict=nothing)
+
+    if isnothing(baseValuesDict)
+        error("baseValuesDict must be provided")
+    else
+        @unpack kVA_B_dict, kV_B_dict, MVA_B_dict = baseValuesDict;
+    end
     # Get the working directory of this script
     wd = @__DIR__
 
@@ -145,11 +151,11 @@ function parse_battery_data(systemName::String;
 
                 # Extract rated power and energy values
                 P_B_R[bus] = haskey(storage_info, "kWrated") ? parse(Float64, storage_info["kWrated"]) : 0.0
-                P_B_R_pu[bus] = P_B_R[bus]/kVA_B
+                P_B_R_pu[bus] = P_B_R[bus]/kVA_B_dict[bus]
                 S_B_R[bus] = haskey(storage_info, "kVA") ? parse(Float64, storage_info["kVA"]) : 0.0
-                S_B_R_pu[bus] = S_B_R[bus]/kVA_B
+                S_B_R_pu[bus] = S_B_R[bus]/kVA_B_dict[bus]
                 B_R[bus] = haskey(storage_info, "kWhrated") ? parse(Float64, storage_info["kWhrated"]) : 0.0
-                B_R_pu[bus] = B_R[bus]/kVA_B
+                B_R_pu[bus] = B_R[bus]/kVA_B_dict[bus]
                 HF.myprintln(verbose, "P_B_R: $(P_B_R[bus]), S_B_R: $(S_B_R[bus]), B_R: $(B_R[bus])")
 
                 # Extract efficiencies
@@ -167,7 +173,7 @@ function parse_battery_data(systemName::String;
 
                 # Compute initial SOC (B0)
                 B0[bus] = soc_0[bus] * B_R[bus]
-                B0_pu[bus] = B0[bus]/kVA_B
+                B0_pu[bus] = B0[bus]/kVA_B_dict[bus]
                 HF.myprintln(verbose, "Initial SOC B0: $(B0[bus])")
 
                 # Extract voltage limits

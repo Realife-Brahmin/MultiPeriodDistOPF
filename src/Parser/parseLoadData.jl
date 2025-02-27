@@ -2,8 +2,10 @@ module parseLoadData
 
 export parse_load_data
 
+using Parameters
+
 include("../helperFunctions.jl")
-using .helperFunctions: generateLoadShape
+import .helperFunctions as HF
 
 #region parse_load_data
 """
@@ -46,10 +48,16 @@ It handles the extraction of load properties such as rated active and reactive p
 6. **Return Data**: Returns a dictionary containing the parsed load data.
 """
 function parse_load_data(systemName::String, T::Int;
-    kVA_B = 1000,
-    LoadShapeLoad=nothing, 
+    LoadShapeLoad=nothing,
+    baseValuesDict=nothing, 
     filenameLoadShape::String="LoadShapeDefault.dss")
 
+    if isnothing(baseValuesDict)
+        error("baseValuesDict must be provided")
+        return
+    else
+        @unpack kVA_B_dict, MVA_B_dict, kV_B_dict = baseValuesDict;
+    end
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path for Loads.dss using wd
@@ -72,7 +80,7 @@ function parse_load_data(systemName::String, T::Int;
 
     # If user does not provide a LoadShapeLoad, generate one using the helper function
     if LoadShapeLoad === nothing
-        LoadShapeLoad = generateLoadShape(T, filenameLoadShape=filenameLoadShape)
+        LoadShapeLoad = HF.generateLoadShape(T, filenameLoadShape=filenameLoadShape)
     end
 
     # Open and read the Loads.dss file
@@ -116,33 +124,33 @@ function parse_load_data(systemName::String, T::Int;
                 # Extract rated active power (kW)
                 if haskey(load_info, "kW")
                     p_L_R[j] = parse(Float64, load_info["kW"])
-                    p_L_R_pu[j] = p_L_R[j]/kVA_B
+                    p_L_R_pu[j] = p_L_R[j]/kVA_B_dict[j]
                 else
                     p_L_R[j] = 0.0  # Default to zero if not specified
-                    p_L_R_pu[j] = p_L_R[j] / kVA_B
+                    p_L_R_pu[j] = p_L_R[j] / kVA_B_dict[j]
                 end
 
                 # Extract rated reactive power (kVAr)
                 if haskey(load_info, "kVAr")
                     q_L_R[j] = parse(Float64, load_info["kVAr"])
-                    q_L_R_pu[j] = q_L_R[j]/kVA_B
+                    q_L_R_pu[j] = q_L_R[j]/kVA_B_dict[j]
                 else
                     q_L_R[j] = 0.0  # Default to zero if not specified
-                    q_L_R_pu[j] = q_L_R[j] / kVA_B
+                    q_L_R_pu[j] = q_L_R[j] / kVA_B_dict[j]
                 end
 
                 # Extract minimum per-unit voltage (Vminpu)
                 if haskey(load_info, "Vminpu")
                     Vminpu_L[j] = parse(Float64, load_info["Vminpu"])
                 else
-                    Vminpu_L[j] = 0.95  # Default value if not specified
+                    Vminpu_L[j] = 0.90  # Default value if not specified
                 end
 
                 # Extract maximum per-unit voltage (Vmaxpu)
                 if haskey(load_info, "Vmaxpu")
                     Vmaxpu_L[j] = parse(Float64, load_info["Vmaxpu"])
                 else
-                    Vmaxpu_L[j] = 1.05  # Default value if not specified
+                    Vmaxpu_L[j] = 1.10  # Default value if not specified
                 end
 
                 # Initialize load profiles using the provided or generated LoadShapeLoad
