@@ -13,7 +13,7 @@ begin
     # systemName0 = "ieee730_1ph"
     T0 = 3
     # T0 = 24
-    # T0 = 11
+    T0 = 11
     factor = 1
     # factor = 1/2
     temporal_decmp = false
