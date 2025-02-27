@@ -25,7 +25,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     savePlots = true
@@ -78,6 +78,8 @@ end;
 
 # Parse all data
 data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud)
+
+@unpack kVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu = data;
 
 if !temporal_decmp
     if !linearizedModel 
