@@ -5,6 +5,9 @@ export parse_branch_data
 include("../helperFunctions.jl")
 using .helperFunctions: myprintln
 
+using DataStructures
+using Parameters
+
 #region parse_branch_data
 """
     parse_branch_data(systemName::String; kVA_B=1000, kV_B=2.4018,  verbose::Bool=false)
@@ -45,48 +48,17 @@ It handles the extraction of branch properties such as resistance, reactance, an
     - `Nnc1`: Number of buses not connected to substation bus.
     - `m1`: Number of branches where one node is the substation.
     - `mm1`: Number of branches where no node is the substation.
-
-# Steps
-1. **Base Impedance Calculation**: Ensures that the base impedance `Z_B` is set to a valid value based on `kVA_B` and `kV_B`.
-2. **File Reading**: Reads the BranchData.dss file for the specified system.
-3. **Data Extraction**: Extracts branch properties such as resistance, reactance, and connectivity information.
-4. **Data Initialization**: Initializes various parameters and dictionaries to store the extracted data.
-5. **Verbose Output**: Optionally prints detailed information about the parsing process if `verbose` is true.
-6. **Return Data**: Returns a dictionary containing the parsed branch data.
 """
 function parse_branch_data(systemName::String;
-    kVA_B = 1000,
-    kV_B = 2.4018,
-    verbose::Bool = false)
+    kVA_B=1000,
+    kV_B=2.4018,
+    verbose::Bool=false)
 
     ## Now let's take a small detour to ensure that we know exactly what base impedance to compute pu values of impedances:
-    
-    MVA_B = kVA_B/1000
+
+    MVA_B = kVA_B / 1000
     Z_B = (kV_B^2) / MVA_B
 
-    # # Rule: If Z_B is not provided and kVA_B is specified but not kV_B, throw an error
-    # if isnothing(Z_B) && !isnothing(kVA_B) && isnothing(kV_B)
-    #     error("Error: You must specify both kV_B and kVA_B to calculate Z_B, or provide Z_B directly.")
-    # end
-
-    # # Rule: If Z_B is not specified, and kV_B is provided, compute Z_B using the default or given kVA_B
-    # if isnothing(Z_B) && !isnothing(kV_B)
-    #     Z_B = (kV_B^2) / MVA_B
-    #     myprintln(verbose, "Computed Z_B = (kV_B^2) / MVA_B = $Z_B using kV_B = $kV_B and kVA_B = $kVA_B")
-    # end
-
-    # # Rule: If Z_B is provided and kV_B/kVA_B are not specified, just use the provided Z_B
-    # if !isnothing(Z_B)
-    #     myprintln(verbose, "Using user-specified Z_B = $Z_B")
-    # end
-
-    # # Rule: If neither Z_B nor kV_B/kVA_B are provided, use the default value of Z_B
-    # if isnothing(Z_B) && isnothing(kV_B) && isnothing(kVA_B)
-    #     Z_B = 5.768643240000001  # Default value
-    #     myprintln(verbose, "Using default Z_B = $Z_B")
-    # end
-
-    # Now Z_B is guaranteed to be set to a valid value at this point
     verbose = true
     myprintln(verbose, "Final Z_B = $Z_B")
 
@@ -168,7 +140,7 @@ function parse_branch_data(systemName::String;
                     else
                         children[from_bus] = [to_bus]
                     end
-                    
+
                     # Ensure to_bus is a key in the children dictionary, even if it might not have any child nodes
                     get!(children, to_bus, Int[])
 
@@ -202,13 +174,17 @@ function parse_branch_data(systemName::String;
                 # Extract resistance (r1) and reactance (x1), and calculate per-unit values
                 rdict[(from_bus, to_bus)] = haskey(branch_info, "r1") ? parse(Float64, branch_info["r1"]) : 0.0
                 xdict[(from_bus, to_bus)] = haskey(branch_info, "x1") ? parse(Float64, branch_info["x1"]) : 0.0
-
-                # Calculate per-unit values for resistance and reactance
-                rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B
-                xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B
-
             end
         end
+    end
+
+    baseValuesDict = get_base_units(systemName, Nset, Lset, kVA_B=kVA_B, kV_B=kV_B, verbose=verbose)
+
+    for (from_bus, to_bus) ∈ Lset
+        Z_B = baseValuesDict[:kV_B_dict][(from_bus, to_bus)]^2 / baseValuesDict[:kVA_B_dict][(from_bus, to_bus)]
+        # Calculate per-unit values for resistance and reactance
+        rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B
+        xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B
     end
 
     # Calculate total number of buses and branches
@@ -233,6 +209,7 @@ function parse_branch_data(systemName::String;
     L1set = sort(collect(L1set))
     Lm1set = sort(collect(Lm1set))
 
+    @unpack kVA_B_dict, kV_B_dict, MVA_B_dict = baseValuesDict
     # Create a dictionary with all outputs
     branchData = Dict(
         :Nset => Nset,
@@ -243,6 +220,9 @@ function parse_branch_data(systemName::String;
         :xdict_pu => xdict_pu,
         :parent => parent,
         :children => children,
+        :kV_B_dict => kV_B_dict,
+        :kVA_B_dict => kVA_B_dict,
+        :MVA_B_dict => MVA_B_dict,
         :N => N,
         :m => m,
         :N1set => N1set,
@@ -263,5 +243,105 @@ function parse_branch_data(systemName::String;
 
 end
 #endregion
+
+function parse_transformers(file_path::String)
+    transformers = Dict()
+    open(file_path, "r") do file
+        for line in eachline(file)
+            if startswith(line, "New Transformer")
+                # Use regular expressions to extract the relevant information
+                bus1_match = match(r"wdg=1 bus=(\d+)", line)
+                bus2_match = match(r"wdg=2 bus=(\d+)", line)
+                kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", line)
+
+                if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
+                    bus1 = parse(Int, bus1_match.captures[1])
+                    bus2 = parse(Int, bus2_match.captures[1])
+                    kv2 = parse(Float64, kv2_match.captures[1])
+                    transformers[bus2] = kv2
+                end
+            end
+        end
+    end
+    return transformers
+end
+
+function map_voltage_levels(Nset, Lset, transformers; kV_B=12.66)
+    voltage_levels = Dict()
+    visited = Set{Int}()
+    stack = Stack{Int}()
+
+    # Initialize the stack with the substation bus (assuming it's bus 1)
+    push!(stack, 1)
+    voltage_levels[1] = kV_B  # Assuming the substation bus is at 12.66 kV
+
+    while !isempty(stack)
+        bus = pop!(stack)
+        visited = union(visited, Set([bus]))
+
+        for (i, j) in Lset
+            if i == bus && !(j in visited)
+                if j in keys(transformers)
+                    voltage_levels[j] = transformers[j]
+                else
+                    voltage_levels[j] = voltage_levels[i]
+                end
+                push!(stack, j)
+            elseif j == bus && !(i in visited)
+                if i in transformers
+                    voltage_levels[i] = transformers[i]
+                else
+                    voltage_levels[i] = voltage_levels[j]
+                end
+                push!(stack, i)
+            end
+        end
+    end
+
+    return voltage_levels
+end
+
+function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018, verbose::Bool=false)
+    kVA_B_dict = Dict()
+    MVA_B_dict = Dict()
+    kV_B_dict = Dict()
+
+    if systemName == "ieee730_1ph"
+        file_path = joinpath(@__DIR__, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
+        transformers = parse_transformers(file_path)
+        voltage_levels = map_voltage_levels(Nset, Lset, transformers; kV_B=kV_B)
+
+        for bus in Nset
+            kV_B_dict[bus] = voltage_levels[bus]
+            kVA_B_dict[bus] = kVA_B
+            MVA_B_dict[bus] = kVA_B / 1000
+        end
+
+        for (i, j) in Lset
+            kV_B_dict[(i, j)] = voltage_levels[j]  # Use secondary voltage for branches
+            kVA_B_dict[(i, j)] = kVA_B
+            MVA_B_dict[(i, j)] = kVA_B / 1000
+        end
+    else
+        for bus in Nset
+            kV_B_dict[bus] = kV_B
+            kVA_B_dict[bus] = kVA_B
+            MVA_B_dict[bus] = kVA_B / 1000
+        end
+
+        for (i, j) in Lset
+            kV_B_dict[(i, j)] = kV_B
+            kVA_B_dict[(i, j)] = kVA_B
+            MVA_B_dict[(i, j)] = kVA_B / 1000
+        end
+    end
+
+    baseValuesDict = Dict(
+        :kVA_B_dict => kVA_B_dict,
+        :MVA_B_dict => MVA_B_dict,
+        :kV_B_dict => kV_B_dict
+    )
+    return baseValuesDict
+end
 
 end # module parseBranchData
