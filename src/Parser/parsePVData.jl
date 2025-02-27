@@ -162,14 +162,14 @@ function parse_pv_data(systemName::String, T::Int;
                 if haskey(pv_info, "Vminpu")
                     Vminpu_D[j] = parse(Float64, pv_info["Vminpu"])
                 else
-                    Vminpu_D[j] = 0.95  # Default value if not specified
+                    Vminpu_D[j] = 0.90  # Default value if not specified
                 end
 
                 # Extract maximum per-unit voltage (Vmaxpu)
                 if haskey(pv_info, "Vmaxpu")
                     Vmaxpu_D[j] = parse(Float64, pv_info["Vmaxpu"])
                 else
-                    Vmaxpu_D[j] = 1.05  # Default value if not specified
+                    Vmaxpu_D[j] = 1.10  # Default value if not specified
                 end
 
                 # Initialize PV profiles using the provided or generated LoadShapePV

@@ -171,8 +171,8 @@ function parse_battery_data(systemName::String;
                 HF.myprintln(verbose, "Initial SOC B0: $(B0[bus])")
 
                 # Extract voltage limits
-                Vminpu_B[bus] = haskey(storage_info, "Vminpu") ? parse(Float64, storage_info["Vminpu"]) : 0.95
-                Vmaxpu_B[bus] = haskey(storage_info, "Vmaxpu") ? parse(Float64, storage_info["Vmaxpu"]) : 1.05
+                Vminpu_B[bus] = haskey(storage_info, "Vminpu") ? parse(Float64, storage_info["Vminpu"]) : 0.90
+                Vmaxpu_B[bus] = haskey(storage_info, "Vmaxpu") ? parse(Float64, storage_info["Vmaxpu"]) : 1.10
                 HF.myprintln(verbose, "Vminpu: $(Vminpu_B[bus]), Vmaxpu: $(Vmaxpu_B[bus])")
             end
         end
