@@ -1,0 +1,24 @@
+Clear
+
+New Circuit.ieee729_1ph  
+
+Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=0.24 R1=0 X1=0.00000001
+
+Redirect BranchData.dss
+
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss     ! Balanced Loads
+// Redirect  Capacitor.dss
+// Redirect PVSystem_21_33_33.dss
+Redirect PVSystem_21_100_0.dss
+// Redirect Storage_31_33_33.dss
+Redirect Storage_31_100_0.dss
+
+Set VoltageBases = [0.416]
+Set mode = Daily 
+Set stepsize = 1h
+Set number = 1
+
+! Let DSS estimate the voltage bases
+CalcVoltageBases     ! This also establishes the bus list
