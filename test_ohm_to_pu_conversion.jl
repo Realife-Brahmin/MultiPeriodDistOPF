@@ -88,8 +88,8 @@ function parse_linenew(linenew_path::String)
 end
 
 function main()
-    linedata_file = "./rawData/powerflowcomparision/Node730DG10/BFM/linedata.txt"
-    linenew_file = "./rawData/powerflowcomparision/Node730DG10/Opendss/linenew.dss"
+    linedata_file = "./rawData/ieee730_1ph_rahul/Node730DG10/BFM/linedata.txt"
+    linenew_file = "./rawData/ieee730_1ph_rahul/Node730DG10/Opendss/linenew.dss"
 
     d_data = parse_linedata(linedata_file)
     d_new  = parse_linenew(linenew_file)
