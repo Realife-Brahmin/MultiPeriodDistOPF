@@ -1,4 +1,3 @@
-# evaluateVoltageLimits.jl
 module evaluateVoltageLimits
 
 export evaluate_voltage_limits
@@ -28,11 +27,15 @@ function evaluate_voltage_limits(load_data, pv_data, battery_data)
     Vminpu_Comp = Dict()
     Vmaxpu_Comp = Dict()
 
+    # Initialize variables to store the overall voltage limits
+    Vminpu_allComps = -Inf
+    Vmaxpu_allComps = Inf
+
     # Iterate over each bus in Compset to calculate voltage limits
     for j in Compset
         # Get Vminpu and Vmaxpu for load, PV, and battery components if they exist
-        Vminpu_L = get(load_data[:Vminpu_L], j, -Inf)   # Default to Inf if not in set
-        Vmaxpu_L = get(load_data[:Vmaxpu_L], j, Inf)  # Default to -Inf if not in set
+        Vminpu_L = get(load_data[:Vminpu_L], j, -Inf)   # Default to -Inf if not in set
+        Vmaxpu_L = get(load_data[:Vmaxpu_L], j, Inf)    # Default to Inf if not in set
 
         Vminpu_D = get(pv_data[:Vminpu_D], j, -Inf)
         Vmaxpu_D = get(pv_data[:Vmaxpu_D], j, Inf)
@@ -43,13 +46,19 @@ function evaluate_voltage_limits(load_data, pv_data, battery_data)
         # Calculate the most restrictive voltage limits for this bus
         Vminpu_Comp[j] = maximum([Vminpu_L, Vminpu_D, Vminpu_B])  # Choose the highest lower limit
         Vmaxpu_Comp[j] = minimum([Vmaxpu_L, Vmaxpu_D, Vmaxpu_B])  # Choose the lowest upper limit
+
+        # Update the overall voltage limits
+        Vminpu_allComps = max(Vminpu_allComps, Vminpu_Comp[j])
+        Vmaxpu_allComps = min(Vmaxpu_allComps, Vmaxpu_Comp[j])
     end
 
     # Create the output dictionary
     component_data = Dict(
         :Compset => Compset,
         :Vminpu_Comp => Vminpu_Comp,
-        :Vmaxpu_Comp => Vmaxpu_Comp
+        :Vmaxpu_Comp => Vmaxpu_Comp,
+        :Vminpu_allComps => Vminpu_allComps,
+        :Vmaxpu_allComps => Vmaxpu_allComps
     )
 
     return component_data
