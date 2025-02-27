@@ -126,7 +126,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     MVA_B = kVA_B/1000
     Z_B = (kV_B)^2/MVA_B
-    
+    @show Z_B
     Tset = collect(1:T)
     Tset = sort(collect(Tset))
 
