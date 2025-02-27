@@ -59,12 +59,13 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
         kVA_B = 1e5
+        kV_B = 12.66
     end
     MVA_B = kVA_B/1000
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
     V_Subs = 1.0            # Default per-unit voltage at substation
-    kV_B = 1.0            # Default base voltage in kV (line-to-ground)
+    # kV_B = 1.0            # Default base voltage in kV (line-to-ground)
     Δt = min(1.0, 24.0/T) # Currently has no effect as what's read from SysSim.dss takes precedence (which is always 1h as of now)
 
     wd = @__DIR__
