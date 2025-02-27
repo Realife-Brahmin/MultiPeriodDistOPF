@@ -603,29 +603,35 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
         Tset = data[:Tset]
     end
 
-    @unpack Compset, Vminpu_Comp, Vmaxpu_Comp, substationBus, V_Subs = data
-    for t in Tset, j in Compset
-        if j == substationBus # not expected as per my parsing as substation should normally not have any components
+    @unpack Compset, Vminpu_Comp, Vmaxpu_Comp, substationBus, V_Subs, Vminpu_allComps, Vmaxpu_allComps, Nset = data
+    for t in Tset, j in Nset
+        if j == substationBus
             # Fix substation voltage
             @constraint(model,
                 base_name = "fixed_voltage_substation_component_node_j1_t_$(t)",
                 v[substationBus, t] == (V_Subs)^2,
             )
+        else
+            # Use per-node voltage limits if available
+            if j in Compset
+                V_min_j_sq = Vminpu_Comp[j]^2
+                V_max_j_sq = Vmaxpu_Comp[j]^2
+            else
+                V_min_j_sq = Vminpu_allComps^2
+                V_max_j_sq = Vmaxpu_allComps^2
+            end
+
+            v = model[:v]
+
+            @constraint(model,
+                base_name = "g1_j^t_lower_voltage_bound_component_node_j_$(j)_t_$(t)",
+                V_min_j_sq - v[j, t] <= 0
+            )
+            @constraint(model,
+                base_name = "g2_j^t_upper_voltage_bound_component_node_j_$(j)_t_$(t)",
+                v[j, t] - V_max_j_sq <= 0
+            )
         end
-
-        # Use per-node voltage limits if available
-        V_min_j_sq = Vminpu_Comp[j]^2
-        V_max_j_sq = Vmaxpu_Comp[j]^2
-        v = model[:v]
-
-        @constraint(model,
-            base_name = "g1_j^t_lower_voltage_bound_component_node_j_$(j)_t_$(t)",
-            V_min_j_sq - v[j, t] <= 0
-        )
-        @constraint(model,
-            base_name = "g2_j^t_upper_voltage_bound_component_node_j_$(j)_t_$(t)",
-            v[j, t] - V_max_j_sq <= 0
-        )
     end
 
     return modelDict
