@@ -605,6 +605,10 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
 
     @unpack Compset, Vminpu_Comp, Vmaxpu_Comp, substationBus, V_Subs, Vminpu_allComps, Vmaxpu_allComps, Nset = data
     for t in Tset, j in Nset
+
+        # @show model
+        v = model[:v]
+
         if j == substationBus
             # Fix substation voltage
             @constraint(model,
@@ -620,8 +624,6 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
                 V_min_j_sq = Vminpu_allComps^2
                 V_max_j_sq = Vmaxpu_allComps^2
             end
-
-            v = model[:v]
 
             @constraint(model,
                 base_name = "g1_j^t_lower_voltage_bound_component_node_j_$(j)_t_$(t)",
