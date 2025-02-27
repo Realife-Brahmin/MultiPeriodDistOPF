@@ -245,24 +245,47 @@ end
 #endregion
 
 function parse_transformers(file_path::String)
-    transformers = Dict()
+    transformers = Dict{Int,Float64}()
     open(file_path, "r") do file
+        current_line = ""
         for line in eachline(file)
+            line = strip(line)
             if startswith(line, "New Transformer")
-                # Use regular expressions to extract the relevant information
-                bus1_match = match(r"wdg=1 bus=(\d+)", line)
-                bus2_match = match(r"wdg=2 bus=(\d+)", line)
-                kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", line)
+                current_line = line
+            elseif startswith(line, "~")
+                current_line *= " " * line
+            else
+                if !isempty(current_line)
+                    # Use regular expressions to extract the relevant information
+                    bus1_match = match(r"wdg=1 bus=(\d+)", current_line)
+                    bus2_match = match(r"wdg=2 bus=(\d+)", current_line)
+                    kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
 
-                if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
-                    bus1 = parse(Int, bus1_match.captures[1])
-                    bus2 = parse(Int, bus2_match.captures[1])
-                    kv2 = parse(Float64, kv2_match.captures[1])
-                    transformers[bus2] = kv2
+                    if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
+                        bus1 = parse(Int, bus1_match.captures[1])
+                        bus2 = parse(Int, bus2_match.captures[1])
+                        kv2 = parse(Float64, kv2_match.captures[1])
+                        transformers[bus2] = kv2
+                    end
+                    current_line = ""
                 end
             end
         end
+        # Handle the last transformer if the file does not end with a new transformer line
+        if !isempty(current_line)
+            bus1_match = match(r"wdg=1 bus=(\d+)", current_line)
+            bus2_match = match(r"wdg=2 bus=(\d+)", current_line)
+            kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
+
+            if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
+                bus1 = parse(Int, bus1_match.captures[1])
+                bus2 = parse(Int, bus2_match.captures[1])
+                kv2 = parse(Float64, kv2_match.captures[1])
+                transformers[bus2] = kv2
+            end
+        end
     end
+    @show transformers
     return transformers
 end
 
@@ -306,9 +329,10 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
     MVA_B_dict = Dict()
     kV_B_dict = Dict()
 
-    if systemName == "ieee730_1ph"
+    if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
         file_path = joinpath(@__DIR__, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
         transformers = parse_transformers(file_path)
+        @show transformers
         voltage_levels = map_voltage_levels(Nset, Lset, transformers; kV_B=kV_B)
 
         for bus in Nset
