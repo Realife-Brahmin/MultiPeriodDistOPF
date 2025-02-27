@@ -180,11 +180,12 @@ function parse_branch_data(systemName::String;
 
     baseValuesDict = get_base_units(systemName, Nset, Lset, kVA_B=kVA_B, kV_B=kV_B, verbose=verbose)
 
+    Z_B_dict = Dict{Tuple{Int,Int},Float64}() # Base impedance for each branch
     for (from_bus, to_bus) ∈ Lset
-        Z_B = baseValuesDict[:kV_B_dict][(from_bus, to_bus)]^2 / baseValuesDict[:kVA_B_dict][(from_bus, to_bus)]
+        Z_B_dict[(from_bus, to_bus)] = baseValuesDict[:kV_B_dict][(from_bus, to_bus)]^2 / baseValuesDict[:MVA_B_dict][(from_bus, to_bus)]
         # Calculate per-unit values for resistance and reactance
-        rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B
-        xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B
+        rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B_dict[(from_bus, to_bus)]
+        xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B_dict[(from_bus, to_bus)]
     end
 
     # Calculate total number of buses and branches
@@ -236,7 +237,8 @@ function parse_branch_data(systemName::String;
         :Nc1 => Nc1,
         :Nnc1 => Nnc1,
         :m1 => m1,
-        :mm1 => mm1
+        :mm1 => mm1,
+        :Z_B_dict => Z_B_dict,
     )
 
     return branchData
