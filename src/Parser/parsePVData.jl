@@ -2,10 +2,10 @@ module parsePVData
 
 export parse_pv_data
 
+using Parameters
+
 include("../helperFunctions.jl")
 import .helperFunctions as HF
-
-using Parameters
 
 # Note: PVsystem and NOT PVSystem will be read (note the lowercase third letter)
 
@@ -52,10 +52,16 @@ It handles the extraction of PV properties such as rated active and apparent pow
 """
 function parse_pv_data(systemName::String, T::Int;
     N_L = nothing,
-    kVA_B = 1000,
     LoadShape=nothing,
     filenameLoadShape=nothing,
-    gedDict_ud=nothing)
+    gedDict_ud=nothing,
+    baseValuesDict=nothing)
+    if isnothing(baseValuesDict)
+        error("baseValuesDict must be provided")
+        return
+    else
+        @unpack kVA_B_dict, MVA_B_dict, kV_B_dict = baseValuesDict;
+    end
     # get wd: the path of <this> file
     wd = @__DIR__
     # Construct the file path for PVsystem.dss using wd
@@ -136,19 +142,19 @@ function parse_pv_data(systemName::String, T::Int;
                 # Extract rated active power (Pmpp, kW)
                 if haskey(pv_info, "Pmpp")
                     p_D_R[j] = parse(Float64, pv_info["Pmpp"])
-                    p_D_R_pu[j] = p_D_R[j]/kVA_B
+                    p_D_R_pu[j] = p_D_R[j]/kVA_B_dict[j]
                 else
                     p_D_R[j] = 0.0  # Default to zero if not specified
-                    p_D_R_pu[j] = p_D_R[j] / kVA_B
+                    p_D_R_pu[j] = p_D_R[j] / kVA_B_dict[j]
                 end
 
                 # Extract rated apparent power (kVA)
                 if haskey(pv_info, "kVA")
                     S_D_R[j] = parse(Float64, pv_info["kVA"])
-                    S_D_R_pu[j] = S_D_R[j]/kVA_B
+                    S_D_R_pu[j] = S_D_R[j]/kVA_B_dict[j]
                 else
                     S_D_R[j] = 0.0  # Default to zero if not specified
-                    S_D_R_pu[j] = S_D_R[j] / kVA_B
+                    S_D_R_pu[j] = S_D_R[j] / kVA_B_dict[j]
                 end
 
                 # Extract irradiance values
