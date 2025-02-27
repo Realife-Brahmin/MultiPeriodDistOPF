@@ -99,8 +99,8 @@ function parse_all_data(systemName::String, T::Int;
     @unpack kVA_B, kV_B = sysSimData
     # Parse branch data
     branch_data = parse_branch_data(systemName, kVA_B=kVA_B, kV_B=kV_B)
-    @unpack kVA_B_dict, MVA_B_dict, kV_B_dict = data;
-    baseValuesDict = Dict(:kVA_B=>kVA_B, :kV_B=>kV_B, :MVA_B=>MVA_B_dict)
+    @unpack kVA_B_dict, MVA_B_dict, kV_B_dict = branch_data;
+    baseValuesDict = Dict(:kVA_B_dict=>kVA_B_dict, :kV_B_dict=>kV_B_dict, :MVA_B_dict=>MVA_B_dict)
     # Parse load data
     load_data = parse_load_data(systemName, T, baseValuesDict=baseValuesDict)
     @unpack N_L = load_data
