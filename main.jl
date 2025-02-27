@@ -79,7 +79,7 @@ end;
 # Parse all data
 data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud)
 
-@unpack kVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu = data;
+@unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset = data;
 
 if !temporal_decmp
     if !linearizedModel 
