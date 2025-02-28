@@ -15,17 +15,16 @@ begin
     T0 = 24
     # T0 = 11
     factor = 1
-    # factor = 1/2
+    factor = 1/2
     temporal_decmp = false
     # temporal_decmp = true
 end;
 
 begin
-    factor = 1
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     savePlots = true
