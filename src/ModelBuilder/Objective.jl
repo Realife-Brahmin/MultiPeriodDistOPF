@@ -75,11 +75,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         α = alpha
         P_c = model[:P_c]
         P_d = model[:P_d]
-        # @show alpha
-        # @show sum(
-        #     α * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
-        #     for j in Bset, t in Tset
-        # )
+
         objfun += sum(
             α * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
             for j in Bset, t in Tset
