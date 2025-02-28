@@ -164,10 +164,10 @@ function get_scd(modelDict; horizon::String="allT")
     P_d = modelVals[:P_d]
 
     if horizon == "1toT"
-        scd_vs_t_1toT_kW = [kVA_B_dict[j] * sum(max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t]) for j in Bset) for t in Tset]
+        scd_vs_t_1toT_kW = [sum(kVA_B_dict[j] * (max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t])) for j in Bset) for t in Tset]
         return scd_vs_t_1toT_kW
     elseif horizon == "allT"
-        scd_allT_kW = kVA_B_dict[j] * sum(max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t]) for j in Bset, t in Tset)
+        scd_allT_kW = sum(kVA_B_dict[j] * (max(P_c[j, t], P_d[j, t]) - abs(P_c[j, t] - P_d[j, t])) for j in Bset, t in Tset)
         return scd_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -186,7 +186,7 @@ function get_terminal_SOC_violation(modelDict)
     @unpack T, Bset, Bref_pu, kVA_B_dict = data
     B = modelVals[:B]
 
-    soc_violation_kWh = kVA_B_dict[j] * sum(abs(B[j, T] - Bref_pu[j]) for j in Bset)
+    soc_violation_kWh = sum(kVA_B_dict[j] * abs(B[j, T] - Bref_pu[j]) for j in Bset)
     return soc_violation_kWh
 end
 #endregion
@@ -204,10 +204,10 @@ function get_battery_real_power(modelDict; horizon::String="allT")
     P_d = modelVals[:P_d]
 
     if horizon == "1toT"
-        battery_real_power_vs_t_1toT_kW = [kVA_B_dict[j] * sum(P_d[j, t] - P_c[j, t] for j in Bset) for t in Tset]
+        battery_real_power_vs_t_1toT_kW = [sum(kVA_B_dict[j] * (P_d[j, t] - P_c[j, t]) for j in Bset) for t in Tset]
         return battery_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        battery_real_power_allT_kW = kVA_B_dict[j] * sum(P_d[j, t] - P_c[j, t] for j in Bset, t in Tset)
+        battery_real_power_allT_kW = sum(kVA_B_dict[j] * (P_d[j, t] - P_c[j, t]) for j in Bset, t in Tset)
         return battery_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -227,10 +227,10 @@ function get_battery_reactive_power(modelDict; horizon::String="allT")
     q_B = modelVals[:q_B]
 
     if horizon == "1toT"
-        battery_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[j] * sum(q_B[j, t] for j in Bset) for t in Tset]
+        battery_reactive_power_vs_t_1toT_kVAr = [sum(kVA_B_dict[j] * q_B[j, t] for j in Bset) for t in Tset]
         return battery_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        battery_reactive_power_allT_kVAr = kVA_B_dict[j] * sum(q_B[j, t] for j in Bset, t in Tset)
+        battery_reactive_power_allT_kVAr = sum(kVA_B_dict[j] * q_B[j, t] for j in Bset, t in Tset)
         return battery_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
@@ -276,10 +276,10 @@ function get_pv_real_power(modelDict; horizon::String="allT")
     @unpack Tset, Dset, p_D_pu, kVA_B_dict = data
 
     if horizon == "1toT"
-        pv_real_power_vs_t_1toT_kW = [kVA_B_dict[j] * sum(p_D_pu[(j, t)] for j in Dset) for t in Tset]
+        pv_real_power_vs_t_1toT_kW = [sum(kVA_B_dict[j] * p_D_pu[(j, t)] for j in Dset) for t in Tset]
         return pv_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        pv_real_power_allT_kW = kVA_B_dict[j] * sum(p_D_pu[(j, t)] for j in Dset, t in Tset)
+        pv_real_power_allT_kW = sum(kVA_B_dict[j] * p_D_pu[(j, t)] for j in Dset, t in Tset)
         return pv_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -299,10 +299,10 @@ function get_pv_reactive_power(modelDict; horizon::String="allT")
     q_D = modelVals[:q_D]
 
     if horizon == "1toT"
-        pv_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[j] * sum(q_D[j, t] for j in Dset) for t in Tset]
+        pv_reactive_power_vs_t_1toT_kVAr = [sum(kVA_B_dict[j] * q_D[j, t] for j in Dset) for t in Tset]
         return pv_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        pv_reactive_power_allT_kVAr = kVA_B_dict[j] * sum(q_D[j, t] for j in Dset, t in Tset)
+        pv_reactive_power_allT_kVAr = sum(kVA_B_dict[j] * q_D[j, t] for j in Dset, t in Tset)
         return pv_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
@@ -323,10 +323,10 @@ function get_battery_real_power_transaction_magnitude(modelDict; horizon::String
     P_d = modelVals[:P_d]
 
     if horizon == "1toT"
-        battery_real_power_magnitude_vs_t_1toT_kW = [kVA_B_dict[j] * sum(abs(P_c[j, t] - P_d[j, t]) for j in Bset) for t in Tset]
+        battery_real_power_magnitude_vs_t_1toT_kW = [sum(kVA_B_dict[j] * abs(P_c[j, t] - P_d[j, t]) for j in Bset) for t in Tset]
         return battery_real_power_magnitude_vs_t_1toT_kW
     elseif horizon == "allT"
-        battery_real_power_magnitude_allT_kW = kVA_B_dict[j] * sum(abs(P_c[j, t] - P_d[j, t]) for j in Bset, t in Tset)
+        battery_real_power_magnitude_allT_kW = sum(kVA_B_dict[j] * abs(P_c[j, t] - P_d[j, t]) for j in Bset, t in Tset)
         return battery_real_power_magnitude_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -346,10 +346,10 @@ function get_battery_reactive_power_transaction_magnitude(modelDict; horizon::St
     q_B = modelVals[:q_B]
 
     if horizon == "1toT"
-        battery_reactive_power_magnitude_vs_t_1toT_kVAr = [kVA_B_dict[j] * sum(abs(q_B[j, t]) for j in Bset) for t in Tset]
+        battery_reactive_power_magnitude_vs_t_1toT_kVAr = [sum(kVA_B_dict[j] * abs(q_B[j, t]) for j in Bset) for t in Tset]
         return battery_reactive_power_magnitude_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        battery_reactive_power_magnitude_allT_kVAr = kVA_B_dict[j] * sum(abs(q_B[j, t]) for j in Bset, t in Tset)
+        battery_reactive_power_magnitude_allT_kVAr = sum(kVA_B_dict[j] * abs(q_B[j, t]) for j in Bset, t in Tset)
         return battery_reactive_power_magnitude_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
@@ -374,7 +374,7 @@ function get_static_capacitor_reactive_power(modelDict; horizon::String="allT")
             static_cap_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[j] * q_C[t] for t in Tset]
             return static_cap_reactive_power_vs_t_1toT_kVAr
         elseif horizon == "allT"
-            static_cap_reactive_power_allT_kVAr = kVA_B_dict[j] * sum(q_C[t] for t in Tset)
+            static_cap_reactive_power_allT_kVAr = sum(kVA_B_dict[j] * q_C[t] for t in Tset)
             return static_cap_reactive_power_allT_kVAr
         else
             error("Specify either '1toT' or 'allT'")
@@ -472,10 +472,10 @@ function get_load_real_power(data; horizon::String="allT")
     @unpack Tset, NLset, p_L_pu, kVA_B_dict = data
 
     if horizon == "1toT"
-        load_real_power_vs_t_kW = [kVA_B_dict[j] * sum(p_L_pu[(j, t)] for j ∈ NLset) for t ∈ Tset]
+        load_real_power_vs_t_kW = [sum(kVA_B_dict[j]*p_L_pu[(j, t)] for j ∈ NLset) for t ∈ Tset]
         return load_real_power_vs_t_kW
     elseif horizon == "allT"
-        load_real_power_kW_allT = kVA_B_dict[j] * sum(p_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)
+        load_real_power_kW_allT = sum(kVA_B_dict[j]*p_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)
         return load_real_power_kW_allT
     else
         error("Specify either '1toT' or 'allT'")
@@ -493,10 +493,10 @@ function get_load_reactive_power(data; horizon::String="allT")
     @unpack Tset, NLset, q_L_pu, kVA_B_dict = data
 
     if horizon == "1toT"
-        load_reactive_power_vs_t_kVAr = [kVA_B_dict[j] * sum(q_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)]  # Assuming p_L_pu contains reactive power
+        load_reactive_power_vs_t_kVAr = [sum(kVA_B_dict[j] * q_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)]  # Assuming p_L_pu contains reactive power
         return load_reactive_power_vs_t_kVAr
     elseif horizon == "allT"
-        load_reactive_power_allT_kVAr = kVA_B_dict[j] * sum(q_L_pu[(j, t)] for j ∈ NLset, t in Tset)  # Assuming p_L_pu contains reactive power
+        load_reactive_power_allT_kVAr = sum(kVA_B_dict[j] * q_L_pu[(j, t)] for j ∈ NLset, t in Tset)  # Assuming p_L_pu contains reactive power
         return load_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
