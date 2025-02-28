@@ -41,10 +41,10 @@ function get_loss_real_power(modelDict; horizon::String="allT")
     l = modelVals[:l]
 
     if horizon == "1toT"
-        loss_real_power_vs_t_1toT_kW = [kVA_B_dict[(i, j)] * sum(rdict_pu[i, j] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
+        loss_real_power_vs_t_1toT_kW = [kVA_B_dict[(i, j)] * sum(rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
         return loss_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        loss_real_power_allT_kW = kVA_B_dict[(i, j)] * sum(rdict_pu[i, j] * l[(i, j), t] for (i, j) in Lset, t in Tset)
+        loss_real_power_allT_kW = kVA_B_dict[(i, j)] * sum(rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
         return loss_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -65,10 +65,10 @@ function get_loss_reactive_power(modelDict; horizon::String="allT")
     l = modelVals[:l]
 
     if horizon == "1toT"
-        loss_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[(i, j)] * sum(xdict_pu[i, j] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
+        loss_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[(i, j)] * sum(xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
         return loss_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        loss_reactive_power_allT_kVAr = kVA_B_dict[(i, j)] * sum(xdict_pu[i, j] * l[(i, j), t] for (i, j) in Lset, t in Tset)
+        loss_reactive_power_allT_kVAr = kVA_B_dict[(i, j)] * sum(xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
         return loss_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
