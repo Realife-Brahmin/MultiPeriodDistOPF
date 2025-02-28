@@ -41,10 +41,10 @@ function get_loss_real_power(modelDict; horizon::String="allT")
     l = modelVals[:l]
 
     if horizon == "1toT"
-        loss_real_power_vs_t_1toT_kW = [kVA_B_dict[(i, j)] * sum(rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
+        loss_real_power_vs_t_1toT_kW = [sum(kVA_B_dict[(i, j)] * rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
         return loss_real_power_vs_t_1toT_kW
     elseif horizon == "allT"
-        loss_real_power_allT_kW = kVA_B_dict[(i, j)] * sum(rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
+        loss_real_power_allT_kW = sum(kVA_B_dict[(i, j)] * rdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
         return loss_real_power_allT_kW
     else
         error("Specify either '1toT' or 'allT'")
@@ -65,10 +65,10 @@ function get_loss_reactive_power(modelDict; horizon::String="allT")
     l = modelVals[:l]
 
     if horizon == "1toT"
-        loss_reactive_power_vs_t_1toT_kVAr = [kVA_B_dict[(i, j)] * sum(xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
+        loss_reactive_power_vs_t_1toT_kVAr = [sum(kVA_B_dict[(i, j)] * xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset) for t in Tset]
         return loss_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
-        loss_reactive_power_allT_kVAr = kVA_B_dict[(i, j)] * sum(xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
+        loss_reactive_power_allT_kVAr = sum(kVA_B_dict[(i, j)] * xdict_pu[(i, j)] * l[(i, j), t] for (i, j) in Lset, t in Tset)
         return loss_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
@@ -90,12 +90,12 @@ function get_substation_reactive_power(modelDict; horizon::String="allT")
     if horizon == "1toT"
         # Compute reactive power at the substation for each time step as the sum of Q values in L1set
         substation_reactive_power_vs_t_1toT_kVAr = [
-            kVA_B_dict[(i, j)] * sum(Q[(i, j), t] for (i, j) in L1set) for t in Tset
+            sum(kVA_B_dict[(i, j)] * Q[(i, j), t] for (i, j) in L1set) for t in Tset
         ]
         return substation_reactive_power_vs_t_1toT_kVAr
     elseif horizon == "allT"
         # Compute total reactive power at the substation over all time steps
-        substation_reactive_power_allT_kVAr = kVA_B_dict[(i, j)] * sum(Q[(i, j), t] for (i, j) in L1set, t in Tset)
+        substation_reactive_power_allT_kVAr = sum(kVA_B_dict[(i, j)] * Q[(i, j), t] for (i, j) in L1set, t in Tset)
         return substation_reactive_power_allT_kVAr
     else
         error("Specify either '1toT' or 'allT'")
