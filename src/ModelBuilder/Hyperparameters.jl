@@ -97,7 +97,7 @@ Estimate the substation power cost in dollars.
 This function calculates the estimated substation power cost based on the load shape cost and the substation power values.
 """
 function estimate_substation_power_cost(data)
-    @unpack LoadShapeCost, kVA_B = data;
+    @unpack LoadShapeCost = data;
     C = LoadShapeCost # dollars_per_kWh
     dollars_per_kWh = C
     load_real_power_vs_t_1toT_kW = FR.get_load_real_power(data, horizon="1toT")
@@ -117,7 +117,6 @@ Estimate the line losses.
 This function calculates the estimated line losses in kW for the entire network over the entire time horizon.
 """
 function estimate_line_losses(data)
-    @unpack kVA_B = data
     load_real_power_allT_kW = FR.get_load_real_power(data, horizon="allT")
     line_loss_accommodation_factor = 0.01 # 1% line loss accommodation factor, just a usual value
     fPLoss_est = line_loss_accommodation_factor * load_real_power_allT_kW
