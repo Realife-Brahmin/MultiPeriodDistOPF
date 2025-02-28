@@ -39,21 +39,22 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         # Define the base objective function (generation cost minimization)
         @unpack LoadShapeCost, delta_t, kVA_B_dict, substationBus = data
         C = LoadShapeCost
-        dollars_per_kWh = C
+        dollars_per_kWh_vs_t_1toT = C
         j1 = substationBus
         puh_per_kWh = 1/kVA_B_dict[j1] # per unit hour per kWh
-        dollars_per_puh = dollars_per_kWh * puh_per_kWh
+        dollars_per_puh_vs_t_1toT = dollars_per_kWh_vs_t_1toT * puh_per_kWh
         P_Subs = model[:P_Subs]
         objfun = sum(
-            dollars_per_puh * delta_t * P_Subs[t] # $/(pu*h) * (h) * (pu) = $
+            dollars_per_puh_vs_t_1toT[t] * delta_t * P_Subs[t] # $/(pu*h) * (h) * (pu) = $
             for t in Tset
         )
+        # @show objfun
         func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
         l = model[:l]
         @unpack Lset, rdict_pu, kVA_B_dict = data;
-        objfun = kVA_B_dict[(i, j)] * sum(
-            rdict_pu[(i, j)] * l[(i, j), t]
+        objfun = sum(
+            kVA_B_dict[(i, j)] * rdict_pu[(i, j)] * l[(i, j), t]
             for (i, j) in Lset, t in Tset
         )
         func_obj_est = HP.estimate_line_losses
@@ -67,12 +68,18 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         η_C = eta_C
         η_D = eta_D
         alpha = HP.estimate_alpha(data)
+        # @show alpha
         # println("alpha = $alpha")
         alphaAppendix = HF.trim_number_for_printing(alpha, sigdigits=4)
         @pack! data = alpha, alphaAppendix;
         α = alpha
         P_c = model[:P_c]
         P_d = model[:P_d]
+        # @show alpha
+        # @show sum(
+        #     α * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
+        #     for j in Bset, t in Tset
+        # )
         objfun += sum(
             α * ((1 - η_C[j]) * P_c[j, t] + (1 / η_D[j] - 1) * P_d[j, t])
             for j in Bset, t in Tset
