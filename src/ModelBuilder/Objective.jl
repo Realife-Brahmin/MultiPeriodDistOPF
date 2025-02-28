@@ -37,19 +37,22 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         func_obj_est = nothing # no objective function (to minimize) for powerflow
     elseif objfun0 == "subsPowerCostMin"
         # Define the base objective function (generation cost minimization)
-        @unpack LoadShapeCost, delta_t, kVA_B = data
+        @unpack LoadShapeCost, delta_t, kVA_B_dict, substationBus = data
         C = LoadShapeCost
-        dollars_per_pu = kVA_B
+        dollars_per_kWh = C
+        j1 = substationBus
+        puh_per_kWh = 1/kVA_B_dict[j1] # per unit hour per kWh
+        dollars_per_puh = dollars_per_kWh * puh_per_kWh
         P_Subs = model[:P_Subs]
         objfun = sum(
-            dollars_per_pu * C[t] * P_Subs[t] * delta_t
+            dollars_per_puh * delta_t * P_Subs[t] # $/(pu*h) * (h) * (pu) = $
             for t in Tset
         )
         func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
         l = model[:l]
-        @unpack Lset, rdict_pu, kVA_B = data;
-        objfun = kVA_B * sum(
+        @unpack Lset, rdict_pu, kVA_B_dict = data;
+        objfun = kVA_B_dict[(i, j)] * sum(
             rdict_pu[(i, j)] * l[(i, j), t]
             for (i, j) in Lset, t in Tset
         )
@@ -65,7 +68,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         η_D = eta_D
         alpha = HP.estimate_alpha(data)
         # println("alpha = $alpha")
-        alphaAppendix = HF.trim_number_for_printing(alpha)
+        alphaAppendix = HF.trim_number_for_printing(alpha, sigdigits=4)
         @pack! data = alpha, alphaAppendix;
         α = alpha
         P_c = model[:P_c]
@@ -82,7 +85,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
         @unpack Bset, Bref_pu = data;
         gamma = HP.estimate_gamma(data, relax_terminal_soc_constraint=relax_terminal_soc_constraint)
         # println("gamma = $gamma")
-        gammaAppendix = HF.trim_number_for_printing(gamma)
+        gammaAppendix = HF.trim_number_for_printing(gamma, sigdigits=4)
         @pack! data = gamma, gammaAppendix;
         B = model[:B]
         γ = gamma
