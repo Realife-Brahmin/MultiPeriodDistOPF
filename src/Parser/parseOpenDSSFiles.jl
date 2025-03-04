@@ -4,7 +4,6 @@ using Parameters
 
 export 
     evaluate_voltage_limits, 
-    myprintln,
     parse_all_data,
     parse_battery_data,
     parse_branch_data, 
@@ -32,7 +31,7 @@ include("evaluateVoltageLimits.jl")
 using .evaluateVoltageLimits
 
 include("../helperFunctions.jl")
-using .helperFunctions
+import .helperFunctions as HF
 
 #region parse_all_data
 """
@@ -111,7 +110,7 @@ function parse_all_data(systemName::String, T::Int;
     # Evaluate Voltage Limits for every bus based on various components (load, pv, battery) attached to it
     component_data = evaluate_voltage_limits(load_data, pv_data, battery_data)
     # Parse substation real power cost data
-    cost_data = generateBinaryLoadShape(T)
+    cost_data = HF.generateBinaryLoadShape(T)
     # Merge dictionaries
     data = merge(sysSimData, branch_data, load_data, pv_data, battery_data, component_data, cost_data)
     
