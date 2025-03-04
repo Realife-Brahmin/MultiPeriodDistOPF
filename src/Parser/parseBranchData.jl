@@ -71,8 +71,8 @@ function parse_branch_data(systemName::String;
     # Initialize data structures
     Nset = Set{Int}()                             # Set of all bus numbers
     Lset = Set{Tuple{Int,Int}}()                  # Set of branches (edges)
-    rdict = Dict{Tuple{Int,Int},Float64}()     # Resistance of each branch
-    xdict = Dict{Tuple{Int,Int},Float64}()     # Reactance of each branch
+    rdict = Dict()     # Resistance of each branch
+    xdict = Dict()     # Reactance of each branch
 
     rdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit resistance of each branch
     xdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit reactance of each branch
@@ -247,7 +247,7 @@ end
 #endregion
 
 function parse_transformers(file_path::String)
-    transformers = Dict{Int,Float64}()
+    transformers = Dict{Tuple{Int,Int},Dict{Symbol,Float64}}()
     open(file_path, "r") do file
         current_line = ""
         for line in eachline(file)
@@ -261,13 +261,28 @@ function parse_transformers(file_path::String)
                     # Use regular expressions to extract the relevant information
                     bus1_match = match(r"wdg=1 bus=(\d+)", current_line)
                     bus2_match = match(r"wdg=2 bus=(\d+)", current_line)
+                    kv1_match = match(r"wdg=1 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
                     kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
+                    r_match = match(r"%r=(\d+\.\d+)", current_line)
+                    xhl_match = match(r"Xhl=(\d+\.\d+)", current_line)
+                    kva_match = match(r"kva=(\d+)", current_line)
 
-                    if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
+                    if bus1_match !== nothing && bus2_match !== nothing && kv1_match !== nothing && kv2_match !== nothing && r_match !== nothing && xhl_match !== nothing && kva_match !== nothing
                         bus1 = parse(Int, bus1_match.captures[1])
                         bus2 = parse(Int, bus2_match.captures[1])
+                        kv1 = parse(Float64, kv1_match.captures[1])
                         kv2 = parse(Float64, kv2_match.captures[1])
-                        transformers[bus2] = kv2
+                        r = parse(Float64, r_match.captures[1])
+                        xhl = parse(Float64, xhl_match.captures[1])
+                        kva = parse(Float64, kva_match.captures[1])
+
+                        transformers[(bus1, bus2)] = Dict(
+                            :kv1 => kv1,
+                            :kv2 => kv2,
+                            :r => r,
+                            :xhl => xhl,
+                            :kva => kva
+                        )
                     end
                     current_line = ""
                 end
@@ -277,13 +292,28 @@ function parse_transformers(file_path::String)
         if !isempty(current_line)
             bus1_match = match(r"wdg=1 bus=(\d+)", current_line)
             bus2_match = match(r"wdg=2 bus=(\d+)", current_line)
+            kv1_match = match(r"wdg=1 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
             kv2_match = match(r"wdg=2 bus=\d+ conn=\w+ kv=(\d+\.\d+)", current_line)
+            r_match = match(r"%r=(\d+\.\d+)", current_line)
+            xhl_match = match(r"Xhl=(\d+\.\d+)", current_line)
+            kva_match = match(r"kva=(\d+)", current_line)
 
-            if bus1_match !== nothing && bus2_match !== nothing && kv2_match !== nothing
+            if bus1_match !== nothing && bus2_match !== nothing && kv1_match !== nothing && kv2_match !== nothing && r_match !== nothing && xhl_match !== nothing && kva_match !== nothing
                 bus1 = parse(Int, bus1_match.captures[1])
                 bus2 = parse(Int, bus2_match.captures[1])
+                kv1 = parse(Float64, kv1_match.captures[1])
                 kv2 = parse(Float64, kv2_match.captures[1])
-                transformers[bus2] = kv2
+                r = parse(Float64, r_match.captures[1])
+                xhl = parse(Float64, xhl_match.captures[1])
+                kva = parse(Float64, kva_match.captures[1])
+
+                transformers[(bus1, bus2)] = Dict(
+                    :kv1 => kv1,
+                    :kv2 => kv2,
+                    :r => r,
+                    :xhl => xhl,
+                    :kva => kva
+                )
             end
         end
     end
@@ -306,15 +336,15 @@ function map_voltage_levels(Nset, Lset, transformers; kV_B=12.66)
 
         for (i, j) in Lset
             if i == bus && !(j in visited)
-                if j in keys(transformers)
-                    voltage_levels[j] = transformers[j]
+                if (i, j) in transformers
+                    voltage_levels[j] = transformers[(i, j)][:kv2]
                 else
                     voltage_levels[j] = voltage_levels[i]
                 end
                 push!(stack, j)
             elseif j == bus && !(i in visited)
-                if i in transformers
-                    voltage_levels[i] = transformers[i]
+                if (j, i) in transformers
+                    voltage_levels[i] = transformers[(j, i)][:kv2]
                 else
                     voltage_levels[i] = voltage_levels[j]
                 end
@@ -330,6 +360,10 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
     kVA_B_dict = Dict()
     MVA_B_dict = Dict()
     kV_B_dict = Dict()
+    rdict = Dict()
+    xdict = Dict()
+    rdict_pu = Dict{Tuple{Int,Int},Float64}()
+    xdict_pu = Dict{Tuple{Int,Int},Float64}()
 
     if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
         file_path = joinpath(@__DIR__, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
@@ -348,6 +382,24 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
             kVA_B_dict[(i, j)] = kVA_B
             MVA_B_dict[(i, j)] = kVA_B / 1000
         end
+
+        for ((bus1, bus2), transformer) in transformers
+            kv1 = transformer[:kv1]
+            kv2 = transformer[:kv2]
+            r = transformer[:r]
+            xhl = transformer[:xhl]
+            kva = transformer[:kva]
+
+            rdict[(bus1, bus2)] = Dict{Int,Float64}()
+            xdict[(bus1, bus2)] = Dict{Int,Float64}()
+            rdict[(bus1, bus2)][1] = (r / 100) * kv1^2 / (kva / 1000)
+            rdict[(bus1, bus2)][2] = (r / 100) * kv2^2 / (kva / 1000)
+            xdict[(bus1, bus2)][1] = (xhl / 100) * kv1^2 / (kva / 1000)
+            xdict[(bus1, bus2)][2] = (xhl / 100) * kv2^2 / (kva / 1000)
+
+            rdict_pu[(bus1, bus2)] = rdict[(bus1, bus2)][2] * MVA_B_dict[(bus1, bus2)] / (kva / 1000)
+            xdict_pu[(bus1, bus2)] = xdict[(bus1, bus2)][2] * MVA_B_dict[(bus1, bus2)] / (kva / 1000)
+        end
     else
         for bus in Nset
             kV_B_dict[bus] = kV_B
@@ -365,7 +417,11 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
     baseValuesDict = Dict(
         :kVA_B_dict => kVA_B_dict,
         :MVA_B_dict => MVA_B_dict,
-        :kV_B_dict => kV_B_dict
+        :kV_B_dict => kV_B_dict,
+        :rdict => rdict,
+        :xdict => xdict,
+        :rdict_pu => rdict_pu,
+        :xdict_pu => xdict_pu
     )
     return baseValuesDict
 end
