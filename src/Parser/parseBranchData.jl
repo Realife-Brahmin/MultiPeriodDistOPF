@@ -188,7 +188,7 @@ function parse_branch_data(systemName::String;
     else
         transformers = Dict()
     end
-        # @show transformers
+    # @show transformers
 
     for ((bus1, bus2), transformer) in transformers
         # Add transformer lines to Lset and LTset
@@ -197,6 +197,20 @@ function parse_branch_data(systemName::String;
 
         # Add buses to Nset
         Nset = union(Nset, [bus1, bus2])
+
+        # Update parent and children dictionaries for transformer lines
+        parent[bus2] = bus1
+        if haskey(children, bus1)
+            push!(children[bus1], bus2)
+        else
+            children[bus1] = [bus2]
+        end
+
+        # Ensure bus2 is a key in the children dictionary, even if it might not have any child nodes
+        get!(children, bus2, Int[])
+
+        # Ensure bus1 is a key in the parent dictionary, even if it might not have any parent node (only substation bus)
+        get!(parent, bus1, nothing)
 
         # Extract transformer parameters
         kv1 = transformer[:kv1]
