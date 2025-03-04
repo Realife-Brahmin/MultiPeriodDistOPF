@@ -71,15 +71,17 @@ function parse_branch_data(systemName::String;
     # Initialize data structures
     Nset = Set{Int}()                             # Set of all bus numbers
     Lset = Set{Tuple{Int,Int}}()                  # Set of branches (edges)
-    rdict = Dict()     # Resistance of each branch
-    xdict = Dict()     # Reactance of each branch
+    LTset = Set{Tuple{Int,Int}}()                 # Set of transformer lines
+    LnotTset = Set{Tuple{Int,Int}}()              # Set of non-transformer lines
+    rdict = Dict()                                # Resistance of each branch
+    xdict = Dict()                                # Reactance of each branch
 
-    rdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit resistance of each branch
-    xdict_pu = Dict{Tuple{Int,Int},Float64}()  # Per-unit reactance of each branch
+    rdict_pu = Dict()                             # Per-unit resistance of each branch
+    xdict_pu = Dict()                             # Per-unit reactance of each branch
 
     # Define the parent dictionary to hold Int or nothing
-    parent = Dict{Int,Union{Int,Nothing}}()    # Parent node of each node
-    children = Dict{Int,Vector{Int}}()         # Children nodes of each node
+    parent = Dict{Int,Union{Int,Nothing}}()       # Parent node of each node
+    children = Dict{Int,Vector{Int}}()            # Children nodes of each node
 
     # Initialize additional sets and parameters
     N1set = Set{Int}()                            # Substation node (bus 1)
@@ -132,6 +134,7 @@ function parse_branch_data(systemName::String;
 
                     # Add to branch set
                     Lset = union(Lset, [(from_bus, to_bus)])
+                    LnotTset = union(LnotTset, [(from_bus, to_bus)])
 
                     # Update parent and children dictionaries
                     parent[to_bus] = from_bus
@@ -178,18 +181,62 @@ function parse_branch_data(systemName::String;
         end
     end
 
+    # Parse transformer data
+    transformer_file_path = joinpath(wd, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
+    transformers = parse_transformers(transformer_file_path)
+    @show transformers
+
+    for ((bus1, bus2), transformer) in transformers
+        # Add transformer lines to Lset and LTset
+        Lset = union(Lset, [(bus1, bus2)])
+        LTset = union(LTset, [(bus1, bus2)])
+
+        # Add buses to Nset
+        Nset = union(Nset, [bus1, bus2])
+
+        # Extract transformer parameters
+        kv1 = transformer[:kv1]
+        kv2 = transformer[:kv2]
+        r = transformer[:r]
+        xhl = transformer[:xhl]
+        kva = transformer[:kva]
+
+        # Calculate resistances and reactances
+        rdict[(bus1, bus2)] = Dict{Int,Float64}()
+        xdict[(bus1, bus2)] = Dict{Int,Float64}()
+        rdict[(bus1, bus2)][1] = (r / 100) * kv1^2 / (kva / 1000)
+        rdict[(bus1, bus2)][2] = (r / 100) * kv2^2 / (kva / 1000)
+        xdict[(bus1, bus2)][1] = (xhl / 100) * kv1^2 / (kva / 1000)
+        xdict[(bus1, bus2)][2] = (xhl / 100) * kv2^2 / (kva / 1000)
+
+        # Calculate per-unit values for resistance and reactance
+        rdict_pu[(bus1, bus2)] = rdict[(bus1, bus2)][2] * MVA_B / (kva / 1000)
+        xdict_pu[(bus1, bus2)] = xdict[(bus1, bus2)][2] * MVA_B / (kva / 1000)
+    end
+
+    @show Lset
+    @show length(Lset)
     baseValuesDict = get_base_units(systemName, Nset, Lset, kVA_B=kVA_B, kV_B=kV_B, verbose=verbose)
 
-    Z_B_dict = Dict{Tuple{Int,Int},Float64}() # Base impedance for each branch
-    for (from_bus, to_bus) ∈ Lset
+    Z_B_dict = Dict() # Base impedance for each branch
+
+    # Calculate Z_B_dict, rdict_pu, and xdict_pu for non-transformer lines
+    for (from_bus, to_bus) ∈ LnotTset
         Z_B_dict[(from_bus, to_bus)] = baseValuesDict[:kV_B_dict][(from_bus, to_bus)]^2 / baseValuesDict[:MVA_B_dict][(from_bus, to_bus)]
-        # Calculate per-unit values for resistance and reactance
         rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)] / Z_B_dict[(from_bus, to_bus)]
         xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)] / Z_B_dict[(from_bus, to_bus)]
     end
 
+    # Calculate Z_B_dict, rdict_pu, and xdict_pu for transformer lines
+    for (from_bus, to_bus) ∈ LTset
+        Z_B_dict[(from_bus, to_bus)] = baseValuesDict[:kV_B_dict][(from_bus, to_bus)]^2 / baseValuesDict[:MVA_B_dict][(from_bus, to_bus)]
+        rdict_pu[(from_bus, to_bus)] = rdict[(from_bus, to_bus)][2] * baseValuesDict[:MVA_B_dict][(from_bus, to_bus)] / (transformers[(from_bus, to_bus)][:kva] / 1000)
+        xdict_pu[(from_bus, to_bus)] = xdict[(from_bus, to_bus)][2] * baseValuesDict[:MVA_B_dict][(from_bus, to_bus)] / (transformers[(from_bus, to_bus)][:kva] / 1000)
+    end
+
     # Calculate total number of buses and branches
     N = length(Nset)
+    HF.myprintln(verbose, "N = $N")
     m = length(Lset)
 
     # Calculate additional parameters
@@ -203,6 +250,8 @@ function parse_branch_data(systemName::String;
     # Sort each data structure in place or by reassigning to the same variable
     Nset = sort(collect(Nset))
     Lset = sort(collect(Lset))
+    LTset = sort(collect(LTset))
+    LnotTset = sort(collect(LnotTset))
     N1set = sort(collect(N1set))
     Nm1set = sort(collect(Nm1set))
     Nc1set = sort(collect(Nc1set))
@@ -215,6 +264,8 @@ function parse_branch_data(systemName::String;
     branchData = Dict(
         :Nset => Nset,
         :Lset => Lset,
+        :LTset => LTset,
+        :LnotTset => LnotTset,
         :rdict => rdict,
         :xdict => xdict,
         :rdict_pu => rdict_pu,
@@ -317,7 +368,7 @@ function parse_transformers(file_path::String)
             end
         end
     end
-    @show transformers
+    # @show transformers
     return transformers
 end
 
@@ -336,14 +387,14 @@ function map_voltage_levels(Nset, Lset, transformers; kV_B=12.66)
 
         for (i, j) in Lset
             if i == bus && !(j in visited)
-                if (i, j) in transformers
+                if (i, j) in keys(transformers)
                     voltage_levels[j] = transformers[(i, j)][:kv2]
                 else
                     voltage_levels[j] = voltage_levels[i]
                 end
                 push!(stack, j)
             elseif j == bus && !(i in visited)
-                if (j, i) in transformers
+                if (j, i) in keys(transformers)
                     voltage_levels[i] = transformers[(j, i)][:kv2]
                 else
                     voltage_levels[i] = voltage_levels[j]
@@ -368,9 +419,10 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
     if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
         file_path = joinpath(@__DIR__, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
         transformers = parse_transformers(file_path)
-        @show transformers
+        # @show transformers
         voltage_levels = map_voltage_levels(Nset, Lset, transformers; kV_B=kV_B)
-
+        @show voltage_levels
+        @show length(voltage_levels)
         for bus in Nset
             kV_B_dict[bus] = voltage_levels[bus]
             kVA_B_dict[bus] = kVA_B
