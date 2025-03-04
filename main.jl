@@ -7,9 +7,9 @@ Revise.revise()
 
 begin
     # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
+    # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
-    # systemName0 = "ieee729_1ph"
+    systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 3
     T0 = 24
@@ -81,7 +81,7 @@ data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedMo
 @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset = data;
 
 if !temporal_decmp
-    if !linearizedModel 
+    if !linearizedModel
         modelDict = optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     elseif linearizedModel
         modelDict = optimize_MPOPF_1ph_L(data)
