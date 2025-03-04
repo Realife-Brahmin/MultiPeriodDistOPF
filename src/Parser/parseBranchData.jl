@@ -181,10 +181,14 @@ function parse_branch_data(systemName::String;
         end
     end
 
-    # Parse transformer data
-    transformer_file_path = joinpath(wd, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
-    transformers = parse_transformers(transformer_file_path)
-    # @show transformers
+    if systemName == "ieee730_1ph" || systemName == "ieee729_1ph"
+        # Parse transformer data
+        transformer_file_path = joinpath(wd, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
+        transformers = parse_transformers(transformer_file_path)
+    else
+        transformers = Dict()
+    end
+        # @show transformers
 
     for ((bus1, bus2), transformer) in transformers
         # Add transformer lines to Lset and LTset
