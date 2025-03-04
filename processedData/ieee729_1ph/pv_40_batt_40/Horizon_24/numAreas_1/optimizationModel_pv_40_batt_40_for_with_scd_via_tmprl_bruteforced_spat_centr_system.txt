@@ -33,7 +33,7 @@ Subject to
  NodeRealPowerBalance_Node_j_8_t_1 : -P[(7, 8),1] + P[(8, 9),1] + 0.0044386045037423045 l[(7, 8),1] + P_c[8,1] - P_d[8,1] == -0.00062196
  NodeRealPowerBalance_Node_j_9_t_1 : -P[(8, 9),1] + P[(9, 10),1] + 0.0064264304735093805 l[(8, 9),1] == -0.00064752
  NodeRealPowerBalance_Node_j_10_t_1 : -P[(9, 10),1] + 0.0065137800139260125 l[(9, 10),1] == 0
- NodeRealPowerBalance_Node_j_11_t_1 : -P[(2, 11),1] + P[(11, 12),1] + 0.2482638888888889 l[(2, 11),1] == 0
+ NodeRealPowerBalance_Node_j_11_t_1 : -P[(2, 11),1] + P[(11, 12),1] + 0.13471346938775508 l[(2, 11),1] == 0
  NodeRealPowerBalance_Node_j_12_t_1 : -P[(11, 12),1] + P[(12, 13),1] + P[(12, 14),1] + P[(12, 15),1] + 0.11979166666666667 l[(11, 12),1] == 0
  NodeRealPowerBalance_Node_j_13_t_1 : -P[(12, 13),1] + 0.11979166666666667 l[(12, 13),1] == 0
  NodeRealPowerBalance_Node_j_14_t_1 : -P[(12, 14),1] + 0.1909722222222222 l[(12, 14),1] == 0
@@ -47,10 +47,10 @@ Subject to
  NodeRealPowerBalance_Node_j_8_t_2 : -P[(7, 8),2] + P[(8, 9),2] + 0.0044386045037423045 l[(7, 8),2] + P_c[8,2] - P_d[8,2] == -0.000575532
  NodeRealPowerBalance_Node_j_9_t_2 : -P[(8, 9),2] + P[(9, 10),2] + 0.0064264304735093805 l[(8, 9),2] == -0.0005991840000000001
  NodeRealPowerBalance_Node_j_10_t_2 : -P[(9, 10),2] + 0.0065137800139260125 l[(9, 10),2] == 0
- NodeRealPowerBalance_Node_j_11_t_2 : -P[(2, 11),2] + P[(11, 12),2] + 0.2482638888888889 l[(2, 11),2] == 0
+ NodeRealPowerBalance_Node_j_11_t_2 : -P[(2, 11),2] + P[(11, 12),2] + 0.13471346938775508 l[(2, 11),2] == 0
  NodeRealPowerBalance_Node_j_12_t_2 : -P[(11, 12),2] + P[(12, 13),2] + P[(12, 14),2] + P[(12, 15),2] + 0.11979166666666667 l[(11, 12),2] == 0
  NodeRealPowerBalance_Node_j_13_t_2 : -P[(12, 13),2] + 0.11979166666666667 l[(12, 13),2] == 0
-[[...2828 constraints skipped...]]
+[[...2780 constraints skipped...]]
  l[(6, 7),21] >= 0
  l[(7, 8),21] >= 0
  l[(8, 9),21] >= 0
