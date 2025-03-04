@@ -3,7 +3,7 @@ module parseBranchData
 export parse_branch_data
 
 include("../helperFunctions.jl")
-using .helperFunctions: myprintln
+import .helperFunctions as HF
 
 using DataStructures
 using Parameters
@@ -60,7 +60,7 @@ function parse_branch_data(systemName::String;
     Z_B = (kV_B^2) / MVA_B
 
     verbose = true
-    myprintln(verbose, "Final Z_B = $Z_B")
+    HF.myprintln(verbose, "Final Z_B = $Z_B")
 
     # Todo: Ensure that substation bus being equal to 1 is not taken for granted, have some kwarg or something to ensure that even bus 153 can be the substation bus
 
