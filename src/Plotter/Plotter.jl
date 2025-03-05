@@ -41,12 +41,12 @@ function plot_battery_actions(modelDict;
     showPlots::Bool=false,
     savePlots::Bool=true,
     macroItrNum::Int=1,
-    verbose::Bool=false)
+    verbose::Bool=false,
+    maxBatts::Int=20)
     # Extract necessary parameters from the `data` dictionary
-    @unpack data, modelVals = modelDict;
-    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, gamma, gammaAppendix, soc_min, soc_max, gedAppendix, solver = data;
+    @unpack data, modelVals = modelDict
+    @unpack Tset, Bset, kVA_B, B_R_pu, P_B_R, Bref_pu, systemName, numAreas, T, DER_percent, Batt_percent, alpha, alphaAppendix, gamma, gammaAppendix, soc_min, soc_max, gedAppendix, solver = data
     Tset = sort(collect(Tset))
-
 
     P_c = modelVals[:P_c]
     P_d = modelVals[:P_d]
@@ -62,8 +62,11 @@ function plot_battery_actions(modelDict;
 
     theme(common_theme)
 
-    # Loop through all battery buses and create plots
-    for j in Bset
+    # Select up to maxBatts batteries, evenly spaced
+    selected_batteries = Bset[round.(Int, range(1, length(Bset), length=min(maxBatts, length(Bset))))]
+
+    # Loop through selected battery buses and create plots
+    for j in selected_batteries
         time_intervals = collect(Tset)
 
         # Collect charging, discharging power, and state of charge values
@@ -102,8 +105,8 @@ function plot_battery_actions(modelDict;
             # bottom_margin=10mm  # Adds space at the bottom
         )
 
-        bar!(charging_discharge_plot, 
-            time_intervals, -discharging_power_kW, 
+        bar!(charging_discharge_plot,
+            time_intervals, -discharging_power_kW,
             dpi=600,
             label="Discharging", color=:darkred)
 
@@ -117,8 +120,8 @@ function plot_battery_actions(modelDict;
             color=:purple,
             legend=:bottomleft,
             xlabel="Time Interval " * L"t",
-            ylabel="SOC "*L"[\%]",
-            ylim=(soc_min[j]*100*0.95, soc_max[j]*100*1.10),
+            ylabel="SOC " * L"[\%]",
+            ylim=(soc_min[j] * 100 * 0.95, soc_max[j] * 100 * 1.10),
             # ylim=(0, 100),
             xticks=0:T,
             yticks=5*(div(soc_min[j] * 100 * 0.95, 5)-1):10:5*(div(soc_max[j] * 100 * 1.05, 5)+1),
@@ -148,12 +151,12 @@ function plot_battery_actions(modelDict;
 
         # Save the plot if `savePlots` is true
         if savePlots
-            @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix, linearizedModelAppendix = data;
-            @unpack temporal_decmp = data;
+            @unpack alphaAppendix, gammaAppendix, objfunConciseDescription, simNatureAppendix, linearizedModelAppendix = data
+            @unpack temporal_decmp = data
             if !temporal_decmp
                 filename = joinpath(base_dir, "Battery_$(j)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
             elseif temporal_decmp
-                @unpack k_ddp = modelDict;
+                @unpack k_ddp = modelDict
                 filename = joinpath(base_dir, "Battery_$(j)_k_$(k_ddp)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_for_$(objfunConciseDescription)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
             else
                 error("temporal_decmp must be either true or false")
@@ -165,7 +168,6 @@ function plot_battery_actions(modelDict;
     end
 end
 #endregion
-
 #region plot_substation_power
 """
     plot_substation_power(modelDict; showPlots::Bool=false, savePlots::Bool=true, macroItrNum::Int=1, verbose::Bool=false)
