@@ -439,7 +439,8 @@ function get_base_units(systemName::String, Nset, Lset; kVA_B=1000, kV_B=2.4018,
         file_path = joinpath(@__DIR__, "..", "..", "rawData", systemName, "LoadXfmrs.dss")
         transformers = parse_transformers(file_path)
         # @show transformers
-        voltage_levels = map_voltage_levels(Nset, Lset, transformers; kV_B=kV_B)
+        kV_B_Subs = kV_B
+        voltage_levels = map_voltage_levels(Nset, Lset, transformers; kV_B_Subs=kV_B_Subs)
         # @show voltage_levels
         # @show length(voltage_levels)
         for bus in Nset
