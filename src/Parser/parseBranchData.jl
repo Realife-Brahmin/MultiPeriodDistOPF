@@ -236,6 +236,7 @@ function parse_branch_data(systemName::String;
     # @show length(Lset)
     baseValuesDict = get_base_units(systemName, Nset, Lset, kVA_B=kVA_B, kV_B=kV_B, verbose=verbose)
 
+    @show baseValuesDict
     Z_B_dict = Dict() # Base impedance for each branch
 
     # Calculate Z_B_dict, rdict_pu, and xdict_pu for non-transformer lines
@@ -390,14 +391,14 @@ function parse_transformers(file_path::String)
     return transformers
 end
 
-function map_voltage_levels(Nset, Lset, transformers; kV_B=12.66)
+function map_voltage_levels(Nset, Lset, transformers; kV_B_Subs=12.66)
     voltage_levels = Dict()
     visited = Set{Int}()
     stack = Stack{Int}()
 
     # Initialize the stack with the substation bus (assuming it's bus 1)
     push!(stack, 1)
-    voltage_levels[1] = kV_B  # Assuming the substation bus is at 12.66 kV
+    voltage_levels[1] = kV_B_Subs  # Assuming the substation bus is at 12.66 kV
 
     while !isempty(stack)
         bus = pop!(stack)
