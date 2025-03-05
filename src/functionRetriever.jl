@@ -493,7 +493,7 @@ function get_load_reactive_power(data; horizon::String="allT")
     @unpack Tset, NLset, q_L_pu, kVA_B_dict = data
 
     if horizon == "1toT"
-        load_reactive_power_vs_t_kVAr = [sum(kVA_B_dict[j] * q_L_pu[(j, t)] for j ∈ NLset, t ∈ Tset)]  # Assuming p_L_pu contains reactive power
+        load_reactive_power_vs_t_kVAr = [sum(kVA_B_dict[j] * q_L_pu[(j, t)] for j ∈ NLset) for t ∈ Tset]  # Assuming p_L_pu contains reactive power
         return load_reactive_power_vs_t_kVAr
     elseif horizon == "allT"
         load_reactive_power_allT_kVAr = sum(kVA_B_dict[j] * q_L_pu[(j, t)] for j ∈ NLset, t in Tset)  # Assuming p_L_pu contains reactive power
