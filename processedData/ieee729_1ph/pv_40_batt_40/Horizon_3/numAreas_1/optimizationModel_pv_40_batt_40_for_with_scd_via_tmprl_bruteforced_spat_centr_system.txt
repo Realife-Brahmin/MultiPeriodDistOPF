@@ -1,81 +1,67 @@
-Min 4820.4039999999995 P_Subs[1] + 4820.4039999999995 P_Subs[2] + 30180.66 P_Subs[3] + 0.12264331336931712 P_c[5,1] + 0.12909822459928094 P_d[5,1] + 0.12264331336931712 P_c[8,1] + 0.12909822459928094 P_d[8,1] + 0.12264331336931712 P_c[5,2] + 0.12909822459928094 P_d[5,2] + 0.12264331336931712 P_c[8,2] + 0.12909822459928094 P_d[8,2] + 0.12264331336931712 P_c[5,3] + 0.12909822459928094 P_d[5,3] + 0.12264331336931712 P_c[8,3] + 0.12909822459928094 P_d[8,3]
+Min 4.820404e-5 P_Subs[1] + 4.820404e-5 P_Subs[2] + 0.0003018066 P_Subs[3] + 0.12264331336931711 P_c[5,1] + 0.12909822459928091 P_d[5,1] + 0.12264331336931711 P_c[8,1] + 0.12909822459928091 P_d[8,1] + 0.12264331336931711 P_c[5,2] + 0.12909822459928091 P_d[5,2] + 0.12264331336931711 P_c[8,2] + 0.12909822459928091 P_d[8,2] + 0.12264331336931711 P_c[5,3] + 0.12909822459928091 P_d[5,3] + 0.12264331336931711 P_c[8,3] + 0.12909822459928091 P_d[8,3]
 Subject to
  SubstationRealPowerBalance_t_1 : P_Subs[1] - P[(1, 2),1] == 0
  SubstationRealPowerBalance_t_2 : P_Subs[2] - P[(1, 2),2] == 0
  SubstationRealPowerBalance_t_3 : P_Subs[3] - P[(1, 2),3] == 0
- NodeRealPowerBalance_Node_j_2_t_1 : -P[(1, 2),1] + P[(2, 3),1] + 0.05752591161723931 l[(1, 2),1] == 0
- NodeRealPowerBalance_Node_j_3_t_1 : -P[(2, 3),1] + P[(3, 4),1] + 0.3075951673242839 l[(2, 3),1] == 0
- NodeRealPowerBalance_Node_j_4_t_1 : -P[(3, 4),1] + P[(4, 5),1] + 0.22835665566062455 l[(3, 4),1] == 0
- NodeRealPowerBalance_Node_j_5_t_1 : -P[(4, 5),1] + P[(5, 6),1] + 0.23777792751984705 l[(4, 5),1] + P_c[5,1] - P_d[5,1] == 1.9113000000000015e-7
- NodeRealPowerBalance_Node_j_6_t_1 : -P[(5, 6),1] + P[(6, 7),1] + 0.5109948114372992 l[(5, 6),1] == -5.70318e-6
- NodeRealPowerBalance_Node_j_7_t_1 : -P[(6, 7),1] + P[(7, 8),1] + 0.11679881404281126 l[(6, 7),1] == -5.3690699999999996e-6
- NodeRealPowerBalance_Node_j_8_t_1 : -P[(7, 8),1] + P[(8, 9),1] + 0.4438604503742304 l[(7, 8),1] + P_c[8,1] - P_d[8,1] == -6.8065200000000005e-6
- NodeRealPowerBalance_Node_j_9_t_1 : -P[(8, 9),1] + P[(9, 10),1] + 0.642643047350938 l[(8, 9),1] == 2.0975999999999983e-7
- NodeRealPowerBalance_Node_j_10_t_1 : -P[(9, 10),1] + 0.6513780013926013 l[(9, 10),1] == 0
- NodeRealPowerBalance_Node_j_2_t_2 : -P[(1, 2),2] + P[(2, 3),2] + 0.05752591161723931 l[(1, 2),2] == 0
- NodeRealPowerBalance_Node_j_3_t_2 : -P[(2, 3),2] + P[(3, 4),2] + 0.3075951673242839 l[(2, 3),2] == 0
- NodeRealPowerBalance_Node_j_4_t_2 : -P[(3, 4),2] + P[(4, 5),2] + 0.22835665566062455 l[(3, 4),2] == 0
- NodeRealPowerBalance_Node_j_5_t_2 : -P[(4, 5),2] + P[(5, 6),2] + 0.23777792751984705 l[(4, 5),2] + P_c[5,2] - P_d[5,2] == 9.390299999999994e-7
- NodeRealPowerBalance_Node_j_6_t_2 : -P[(5, 6),2] + P[(6, 7),2] + 0.5109948114372992 l[(5, 6),2] == -5.77658e-6
- NodeRealPowerBalance_Node_j_7_t_2 : -P[(6, 7),2] + P[(7, 8),2] + 0.11679881404281126 l[(6, 7),2] == -5.4381699999999995e-6
- NodeRealPowerBalance_Node_j_8_t_2 : -P[(7, 8),2] + P[(8, 9),2] + 0.4438604503742304 l[(7, 8),2] + P_c[8,2] - P_d[8,2] == -6.894120000000001e-6
- NodeRealPowerBalance_Node_j_9_t_2 : -P[(8, 9),2] + P[(9, 10),2] + 0.642643047350938 l[(8, 9),2] == 1.0305600000000005e-6
- NodeRealPowerBalance_Node_j_10_t_2 : -P[(9, 10),2] + 0.6513780013926013 l[(9, 10),2] == 0
- NodeRealPowerBalance_Node_j_2_t_3 : -P[(1, 2),3] + P[(2, 3),3] + 0.05752591161723931 l[(1, 2),3] == 0
- NodeRealPowerBalance_Node_j_3_t_3 : -P[(2, 3),3] + P[(3, 4),3] + 0.3075951673242839 l[(2, 3),3] == 0
- NodeRealPowerBalance_Node_j_4_t_3 : -P[(3, 4),3] + P[(4, 5),3] + 0.22835665566062455 l[(3, 4),3] == 0
- NodeRealPowerBalance_Node_j_5_t_3 : -P[(4, 5),3] + P[(5, 6),3] + 0.23777792751984705 l[(4, 5),3] + P_c[5,3] - P_d[5,3] == 1.6952399999999997e-6
- NodeRealPowerBalance_Node_j_6_t_3 : -P[(5, 6),3] + P[(6, 7),3] + 0.5109948114372992 l[(5, 6),3] == -5.84264e-6
- NodeRealPowerBalance_Node_j_7_t_3 : -P[(6, 7),3] + P[(7, 8),3] + 0.11679881404281126 l[(6, 7),3] == -5.50036e-6
- NodeRealPowerBalance_Node_j_8_t_3 : -P[(7, 8),3] + P[(8, 9),3] + 0.4438604503742304 l[(7, 8),3] + P_c[8,3] - P_d[8,3] == -6.972960000000001e-6
- NodeRealPowerBalance_Node_j_9_t_3 : -P[(8, 9),3] + P[(9, 10),3] + 0.642643047350938 l[(8, 9),3] == 1.8604799999999997e-6
- NodeRealPowerBalance_Node_j_10_t_3 : -P[(9, 10),3] + 0.6513780013926013 l[(9, 10),3] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_2_t_1 : -Q[(1, 2),1] + Q[(2, 3),1] + 0.02932448856844086 l[(1, 2),1] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_3_t_1 : -Q[(2, 3),1] + Q[(3, 4),1] + 0.156667639990117 l[(2, 3),1] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_4_t_1 : -Q[(3, 4),1] + Q[(4, 5),1] + 0.11629967381185907 l[(3, 4),1] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_5_t_1 : -Q[(4, 5),1] + Q[(5, 6),1] + 0.12110389853477384 l[(4, 5),1] - q_D[5,1] - q_B[5,1] == -2.1522900000000003e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_6_t_1 : -Q[(5, 6),1] + Q[(6, 7),1] + 0.44111517910399334 l[(5, 6),1] == -1.90365e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_7_t_1 : -Q[(6, 7),1] + Q[(7, 8),1] + 0.386084968641515 l[(6, 7),1] == -1.7871e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_8_t_1 : -Q[(7, 8),1] + Q[(8, 9),1] + 0.14668483537107332 l[(7, 8),1] - q_B[8,1] == -2.26884e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_9_t_1 : -Q[(8, 9),1] + Q[(9, 10),1] + 0.461704713630771 l[(8, 9),1] - q_D[9,1] == -2.36208e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_10_t_1 : -Q[(9, 10),1] + 0.461704713630771 l[(9, 10),1] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_2_t_2 : -Q[(1, 2),2] + Q[(2, 3),2] + 0.02932448856844086 l[(1, 2),2] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_3_t_2 : -Q[(2, 3),2] + Q[(3, 4),2] + 0.156667639990117 l[(2, 3),2] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_4_t_2 : -Q[(3, 4),2] + Q[(4, 5),2] + 0.11629967381185907 l[(3, 4),2] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_5_t_2 : -Q[(4, 5),2] + Q[(5, 6),2] + 0.12110389853477384 l[(4, 5),2] - q_D[5,2] - q_B[5,2] == -2.17999e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_6_t_2 : -Q[(5, 6),2] + Q[(6, 7),2] + 0.44111517910399334 l[(5, 6),2] == -1.92815e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_7_t_2 : -Q[(6, 7),2] + Q[(7, 8),2] + 0.386084968641515 l[(6, 7),2] == -1.8101e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_8_t_2 : -Q[(7, 8),2] + Q[(8, 9),2] + 0.14668483537107332 l[(7, 8),2] - q_B[8,2] == -2.29804e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_9_t_2 : -Q[(8, 9),2] + Q[(9, 10),2] + 0.461704713630771 l[(8, 9),2] - q_D[9,2] == -2.3924800000000003e-6
- h_2_j^t_NodeReactivePowerBalance_Node_j_10_t_2 : -Q[(9, 10),2] + 0.461704713630771 l[(9, 10),2] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_2_t_3 : -Q[(1, 2),3] + Q[(2, 3),3] + 0.02932448856844086 l[(1, 2),3] == 0
- h_2_j^t_NodeReactivePowerBalance_Node_j_3_t_3 : -Q[(2, 3),3] + Q[(3, 4),3] + 0.156667639990117 l[(2, 3),3] == 0
-[[...161 constraints skipped...]]
- BCPF_NonSubstationBranch_i_4_j_5_t_2 : P[(4, 5),2]² + Q[(4, 5),2]² - v[4,2]*l[(4, 5),2] == 0
- BCPF_NonSubstationBranch_i_5_j_6_t_2 : P[(5, 6),2]² + Q[(5, 6),2]² - v[5,2]*l[(5, 6),2] == 0
- BCPF_NonSubstationBranch_i_6_j_7_t_2 : P[(6, 7),2]² + Q[(6, 7),2]² - v[6,2]*l[(6, 7),2] == 0
- BCPF_NonSubstationBranch_i_7_j_8_t_2 : P[(7, 8),2]² + Q[(7, 8),2]² - v[7,2]*l[(7, 8),2] == 0
- BCPF_NonSubstationBranch_i_8_j_9_t_2 : P[(8, 9),2]² + Q[(8, 9),2]² - v[8,2]*l[(8, 9),2] == 0
- BCPF_NonSubstationBranch_i_9_j_10_t_2 : P[(9, 10),2]² + Q[(9, 10),2]² - v[9,2]*l[(9, 10),2] == 0
- BCPF_NonSubstationBranch_i_2_j_3_t_3 : P[(2, 3),3]² + Q[(2, 3),3]² - v[2,3]*l[(2, 3),3] == 0
- BCPF_NonSubstationBranch_i_3_j_4_t_3 : P[(3, 4),3]² + Q[(3, 4),3]² - v[3,3]*l[(3, 4),3] == 0
- BCPF_NonSubstationBranch_i_4_j_5_t_3 : P[(4, 5),3]² + Q[(4, 5),3]² - v[4,3]*l[(4, 5),3] == 0
- BCPF_NonSubstationBranch_i_5_j_6_t_3 : P[(5, 6),3]² + Q[(5, 6),3]² - v[5,3]*l[(5, 6),3] == 0
- BCPF_NonSubstationBranch_i_6_j_7_t_3 : P[(6, 7),3]² + Q[(6, 7),3]² - v[6,3]*l[(6, 7),3] == 0
- BCPF_NonSubstationBranch_i_7_j_8_t_3 : P[(7, 8),3]² + Q[(7, 8),3]² - v[7,3]*l[(7, 8),3] == 0
- BCPF_NonSubstationBranch_i_8_j_9_t_3 : P[(8, 9),3]² + Q[(8, 9),3]² - v[8,3]*l[(8, 9),3] == 0
- BCPF_NonSubstationBranch_i_9_j_10_t_3 : P[(9, 10),3]² + Q[(9, 10),3]² - v[9,3]*l[(9, 10),3] == 0
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_1 : q_B[5,1]² + P_c[5,1]² - 2 P_c[5,1]*P_d[5,1] + P_d[5,1]² <= 9.944078400000001e-11
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_1 : q_B[8,1]² + P_c[8,1]² - 2 P_c[8,1]*P_d[8,1] + P_d[8,1]² <= 1.1050214399999998e-10
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_2 : q_B[5,2]² + P_c[5,2]² - 2 P_c[5,2]*P_d[5,2] + P_d[5,2]² <= 9.944078400000001e-11
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_2 : q_B[8,2]² + P_c[8,2]² - 2 P_c[8,2]*P_d[8,2] + P_d[8,2]² <= 1.1050214399999998e-10
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_3 : q_B[5,3]² + P_c[5,3]² - 2 P_c[5,3]*P_d[5,3] + P_d[5,3]² <= 9.944078400000001e-11
- g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_3 : q_B[8,3]² + P_c[8,3]² - 2 P_c[8,3]*P_d[8,3] + P_d[8,3]² <= 1.1050214399999998e-10
+ NodeRealPowerBalance_Node_j_2_t_1 : -P[(1, 2),1] + P[(2, 3),1] + P[(2, 11),1] + 0.000575259116172393 l[(1, 2),1] == 0
+ NodeRealPowerBalance_Node_j_3_t_1 : -P[(2, 3),1] + P[(3, 4),1] + 0.003075951673242839 l[(2, 3),1] == 0
+ NodeRealPowerBalance_Node_j_4_t_1 : -P[(3, 4),1] + P[(4, 5),1] + 0.002283566556606246 l[(3, 4),1] == 0
+ NodeRealPowerBalance_Node_j_5_t_1 : -P[(4, 5),1] + P[(5, 6),1] + 0.002377779275198471 l[(4, 5),1] + P_c[5,1] - P_d[5,1] == 1.9113000000000073e-5
+ NodeRealPowerBalance_Node_j_6_t_1 : -P[(5, 6),1] + P[(6, 7),1] + 0.005109948114372992 l[(5, 6),1] == -0.000570318
+ NodeRealPowerBalance_Node_j_7_t_1 : -P[(6, 7),1] + P[(7, 8),1] + 0.0011679881404281127 l[(6, 7),1] == -0.000536907
+ NodeRealPowerBalance_Node_j_8_t_1 : -P[(7, 8),1] + P[(8, 9),1] + 0.0044386045037423045 l[(7, 8),1] + P_c[8,1] - P_d[8,1] == -0.000680652
+ NodeRealPowerBalance_Node_j_9_t_1 : -P[(8, 9),1] + P[(9, 10),1] + 0.0064264304735093805 l[(8, 9),1] == 2.0976000000000024e-5
+ NodeRealPowerBalance_Node_j_10_t_1 : -P[(9, 10),1] + 0.0065137800139260125 l[(9, 10),1] == 0
+ NodeRealPowerBalance_Node_j_11_t_1 : -P[(2, 11),1] + P[(11, 12),1] + 0.13471346938775508 l[(2, 11),1] == 0
+ NodeRealPowerBalance_Node_j_12_t_1 : -P[(11, 12),1] + P[(12, 13),1] + P[(12, 14),1] + P[(12, 15),1] + 0.11979166666666667 l[(11, 12),1] == 0
+ NodeRealPowerBalance_Node_j_13_t_1 : -P[(12, 13),1] + 0.11979166666666667 l[(12, 13),1] == 0
+ NodeRealPowerBalance_Node_j_14_t_1 : -P[(12, 14),1] + 0.1909722222222222 l[(12, 14),1] == 0
+ NodeRealPowerBalance_Node_j_15_t_1 : -P[(12, 15),1] + 0.1909722222222222 l[(12, 15),1] == 0
+ NodeRealPowerBalance_Node_j_2_t_2 : -P[(1, 2),2] + P[(2, 3),2] + P[(2, 11),2] + 0.000575259116172393 l[(1, 2),2] == 0
+ NodeRealPowerBalance_Node_j_3_t_2 : -P[(2, 3),2] + P[(3, 4),2] + 0.003075951673242839 l[(2, 3),2] == 0
+ NodeRealPowerBalance_Node_j_4_t_2 : -P[(3, 4),2] + P[(4, 5),2] + 0.002283566556606246 l[(3, 4),2] == 0
+ NodeRealPowerBalance_Node_j_5_t_2 : -P[(4, 5),2] + P[(5, 6),2] + 0.002377779275198471 l[(4, 5),2] + P_c[5,2] - P_d[5,2] == 9.390299999999989e-5
+ NodeRealPowerBalance_Node_j_6_t_2 : -P[(5, 6),2] + P[(6, 7),2] + 0.005109948114372992 l[(5, 6),2] == -0.000577658
+ NodeRealPowerBalance_Node_j_7_t_2 : -P[(6, 7),2] + P[(7, 8),2] + 0.0011679881404281127 l[(6, 7),2] == -0.000543817
+ NodeRealPowerBalance_Node_j_8_t_2 : -P[(7, 8),2] + P[(8, 9),2] + 0.0044386045037423045 l[(7, 8),2] + P_c[8,2] - P_d[8,2] == -0.000689412
+ NodeRealPowerBalance_Node_j_9_t_2 : -P[(8, 9),2] + P[(9, 10),2] + 0.0064264304735093805 l[(8, 9),2] == 0.00010305600000000002
+ NodeRealPowerBalance_Node_j_10_t_2 : -P[(9, 10),2] + 0.0065137800139260125 l[(9, 10),2] == 0
+ NodeRealPowerBalance_Node_j_11_t_2 : -P[(2, 11),2] + P[(11, 12),2] + 0.13471346938775508 l[(2, 11),2] == 0
+ NodeRealPowerBalance_Node_j_12_t_2 : -P[(11, 12),2] + P[(12, 13),2] + P[(12, 14),2] + P[(12, 15),2] + 0.11979166666666667 l[(11, 12),2] == 0
+ NodeRealPowerBalance_Node_j_13_t_2 : -P[(12, 13),2] + 0.11979166666666667 l[(12, 13),2] == 0
+ NodeRealPowerBalance_Node_j_14_t_2 : -P[(12, 14),2] + 0.1909722222222222 l[(12, 14),2] == 0
+ NodeRealPowerBalance_Node_j_15_t_2 : -P[(12, 15),2] + 0.1909722222222222 l[(12, 15),2] == 0
+ NodeRealPowerBalance_Node_j_2_t_3 : -P[(1, 2),3] + P[(2, 3),3] + P[(2, 11),3] + 0.000575259116172393 l[(1, 2),3] == 0
+ NodeRealPowerBalance_Node_j_3_t_3 : -P[(2, 3),3] + P[(3, 4),3] + 0.003075951673242839 l[(2, 3),3] == 0
+ NodeRealPowerBalance_Node_j_4_t_3 : -P[(3, 4),3] + P[(4, 5),3] + 0.002283566556606246 l[(3, 4),3] == 0
+ NodeRealPowerBalance_Node_j_5_t_3 : -P[(4, 5),3] + P[(5, 6),3] + 0.002377779275198471 l[(4, 5),3] + P_c[5,3] - P_d[5,3] == 0.000169524
+ NodeRealPowerBalance_Node_j_6_t_3 : -P[(5, 6),3] + P[(6, 7),3] + 0.005109948114372992 l[(5, 6),3] == -0.000584264
+ NodeRealPowerBalance_Node_j_7_t_3 : -P[(6, 7),3] + P[(7, 8),3] + 0.0011679881404281127 l[(6, 7),3] == -0.0005500360000000001
+ NodeRealPowerBalance_Node_j_8_t_3 : -P[(7, 8),3] + P[(8, 9),3] + 0.0044386045037423045 l[(7, 8),3] + P_c[8,3] - P_d[8,3] == -0.000697296
+ NodeRealPowerBalance_Node_j_9_t_3 : -P[(8, 9),3] + P[(9, 10),3] + 0.0064264304735093805 l[(8, 9),3] == 0.00018604799999999996
+ NodeRealPowerBalance_Node_j_10_t_3 : -P[(9, 10),3] + 0.0065137800139260125 l[(9, 10),3] == 0
+ NodeRealPowerBalance_Node_j_11_t_3 : -P[(2, 11),3] + P[(11, 12),3] + 0.13471346938775508 l[(2, 11),3] == 0
+ NodeRealPowerBalance_Node_j_12_t_3 : -P[(11, 12),3] + P[(12, 13),3] + P[(12, 14),3] + P[(12, 15),3] + 0.11979166666666667 l[(11, 12),3] == 0
+ NodeRealPowerBalance_Node_j_13_t_3 : -P[(12, 13),3] + 0.11979166666666667 l[(12, 13),3] == 0
+ NodeRealPowerBalance_Node_j_14_t_3 : -P[(12, 14),3] + 0.1909722222222222 l[(12, 14),3] == 0
+ NodeRealPowerBalance_Node_j_15_t_3 : -P[(12, 15),3] + 0.1909722222222222 l[(12, 15),3] == 0
+ h_2_j^t_NodeReactivePowerBalance_Node_j_2_t_1 : -Q[(1, 2),1] + Q[(2, 3),1] + Q[(2, 11),1] + 0.0002932448856844086 l[(1, 2),1] == 0
+ h_2_j^t_NodeReactivePowerBalance_Node_j_3_t_1 : -Q[(2, 3),1] + Q[(3, 4),1] + 0.0015666763999011703 l[(2, 3),1] == 0
+ h_2_j^t_NodeReactivePowerBalance_Node_j_4_t_1 : -Q[(3, 4),1] + Q[(4, 5),1] + 0.001162996738118591 l[(3, 4),1] == 0
+ h_2_j^t_NodeReactivePowerBalance_Node_j_5_t_1 : -Q[(4, 5),1] + Q[(5, 6),1] + 0.0012110389853477385 l[(4, 5),1] - q_D[5,1] - q_B[5,1] == -0.00021522900000000002
+ h_2_j^t_NodeReactivePowerBalance_Node_j_6_t_1 : -Q[(5, 6),1] + Q[(6, 7),1] + 0.0044111517910399335 l[(5, 6),1] == -0.000190365
+[[...260 constraints skipped...]]
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_1 : q_B[8,1]² + P_c[8,1]² - 2 P_c[8,1]*P_d[8,1] + P_d[8,1]² <= 1.1050214399999999e-6
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_2 : q_B[5,2]² + P_c[5,2]² - 2 P_c[5,2]*P_d[5,2] + P_d[5,2]² <= 9.944078399999998e-7
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_2 : q_B[8,2]² + P_c[8,2]² - 2 P_c[8,2]*P_d[8,2] + P_d[8,2]² <= 1.1050214399999999e-6
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_5_t_3 : q_B[5,3]² + P_c[5,3]² - 2 P_c[5,3]*P_d[5,3] + P_d[5,3]² <= 9.944078399999998e-7
+ g_qB_j^T_ReactivePowerLimit_Battery_Node_j_8_t_3 : q_B[8,3]² + P_c[8,3]² - 2 P_c[8,3]*P_d[8,3] + P_d[8,3]² <= 1.1050214399999999e-6
  P_Subs[1] >= 0
  P_Subs[2] >= 0
  P_Subs[3] >= 0
  l[(1, 2),1] >= 0
  l[(2, 3),1] >= 0
+ l[(2, 11),1] >= 0
  l[(3, 4),1] >= 0
  l[(4, 5),1] >= 0
  l[(5, 6),1] >= 0
@@ -83,8 +69,13 @@ Subject to
  l[(7, 8),1] >= 0
  l[(8, 9),1] >= 0
  l[(9, 10),1] >= 0
+ l[(11, 12),1] >= 0
+ l[(12, 13),1] >= 0
+ l[(12, 14),1] >= 0
+ l[(12, 15),1] >= 0
  l[(1, 2),2] >= 0
  l[(2, 3),2] >= 0
+ l[(2, 11),2] >= 0
  l[(3, 4),2] >= 0
  l[(4, 5),2] >= 0
  l[(5, 6),2] >= 0
@@ -92,8 +83,13 @@ Subject to
  l[(7, 8),2] >= 0
  l[(8, 9),2] >= 0
  l[(9, 10),2] >= 0
+ l[(11, 12),2] >= 0
+ l[(12, 13),2] >= 0
+ l[(12, 14),2] >= 0
+ l[(12, 15),2] >= 0
  l[(1, 2),3] >= 0
  l[(2, 3),3] >= 0
+ l[(2, 11),3] >= 0
  l[(3, 4),3] >= 0
  l[(4, 5),3] >= 0
  l[(5, 6),3] >= 0
@@ -101,3 +97,7 @@ Subject to
  l[(7, 8),3] >= 0
  l[(8, 9),3] >= 0
  l[(9, 10),3] >= 0
+ l[(11, 12),3] >= 0
+ l[(12, 13),3] >= 0
+ l[(12, 14),3] >= 0
+ l[(12, 15),3] >= 0
