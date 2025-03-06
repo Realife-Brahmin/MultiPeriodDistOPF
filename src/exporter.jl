@@ -40,7 +40,7 @@ function export_optimization_model(modelDict;
         @error "temporal_decmp must be either true or false"     
     end
     # Define the path and filename based on the specified structure
-    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix = data
+    @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, linearizedModelAppendix = data
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     # Create the directory if it doesn't exist
@@ -50,7 +50,7 @@ function export_optimization_model(modelDict;
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)"*ddp_appendix*".txt")
+    filename = joinpath(base_dir, "optimizationModel_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)_$(linearizedModelAppendix)"*ddp_appendix*".txt")
 
     # Check if the file already exists, and delete it if so
     if isfile(filename)
