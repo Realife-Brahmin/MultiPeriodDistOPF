@@ -12,7 +12,7 @@ using JuMP: value
 using XLSX
 using Parameters: @unpack
 include("./helperFunctions.jl")
-using .helperFunctions: myprintln  # Import myprintln from the helperFunctions module
+import .helperFunctions as HF
 
 #region export_optimization_model
 """
@@ -92,10 +92,10 @@ function export_decision_variables(modelDict;
     filename = joinpath(base_dir, "decisionVariables_$(gedAppendix)_for_$(objfunAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix)"*ext)
     
     # Log current working directory
-    myprintln(verbose, "Current working directory: $(pwd())")
+    HF.myprintln(verbose, "Current working directory: $(pwd())")
 
     # Ensure the filename has a valid path or is saved in the current directory
-    myprintln(verbose, "Saving to filename: $filename")
+    HF.myprintln(verbose, "Saving to filename: $filename")
 
     # Unpack the necessary data from `data`
     Tset = sort(collect(data[:Tset]))  # Time steps
@@ -184,21 +184,21 @@ function export_decision_variables(modelDict;
 
     # Write the matrix to the CSV file
     try
-        myprintln(verbose, "Opening file: $filename")
+        HF.myprintln(verbose, "Opening file: $filename")
         writedlm(filename, data_matrix, ',')
-        myprintln(verbose, "Data written successfully.")
+        HF.myprintln(verbose, "Data written successfully.")
     catch e
-        myprintln(verbose, "Error occurred: $e")
+        HF.myprintln(verbose, "Error occurred: $e")
     end
 
     # Check if file was created
     if isfile(filename)
-        myprintln(verbose, "File exists: $filename")
+        HF.myprintln(verbose, "File exists: $filename")
     else
-        myprintln(verbose, "File does not exist: $filename")
+        HF.myprintln(verbose, "File does not exist: $filename")
     end
 
-    myprintln(verbose, "Decision variables exported to $filename")
+    HF.myprintln(verbose, "Decision variables exported to $filename")
 end
 #endregion
 
@@ -218,7 +218,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
     base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
 
     if !isdir(base_dir)
-        myprintln(verbose, "Creating directory: $base_dir")
+        HF.myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)
     end
 
@@ -323,7 +323,7 @@ function export_simulation_key_results_txt(modelDict; filename::String="simulati
         println(f, "---------------------------------------------")
     end
 
-    myprintln(verbose, "Simulation key results exported to $filename")
+    HF.myprintln(verbose, "Simulation key results exported to $filename")
 end
 #endregion
 
