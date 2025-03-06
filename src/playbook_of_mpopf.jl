@@ -116,7 +116,7 @@ function optimize_MPOPF_1ph_L(data)
     optimal_obj_value = modelVals[:objective_value]
     println("Optimal objective function value: ", optimal_obj_value)
 
-    # Exporter.export_optimization_model(modelDict, verbose=false)
+    Exporter.export_optimization_model(modelDict, verbose=false)
 
     return modelDict
 
