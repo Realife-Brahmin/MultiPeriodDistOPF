@@ -38,14 +38,13 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
     elseif objfun0 == "subsPowerCostMin"
         # Define the base objective function (generation cost minimization)
         @unpack LoadShapeCost, delta_t, kVA_B_dict, substationBus = data
-        C = LoadShapeCost
-        dollars_per_kWh_vs_t_1toT = C
         j1 = substationBus
-        puh_per_kWh = 1/kVA_B_dict[j1] # per unit hour per kWh
-        dollars_per_puh_vs_t_1toT = dollars_per_kWh_vs_t_1toT * puh_per_kWh
+        C_vs_t_1toT_dollars_per_kWh = LoadShapeCost
+        C_vs_t_1toT_dollars_per_puh = C_vs_t_1toT_dollars_per_kWh * kVA_B_dict[j1] # $/kWh * kVA = $/puh
+        j1 = substationBus
         P_Subs = model[:P_Subs]
         objfun = sum(
-            dollars_per_puh_vs_t_1toT[t] * delta_t * P_Subs[t] # $/(pu*h) * (h) * (pu) = $
+            C_vs_t_1toT_dollars_per_puh[t] * P_Subs[t] * delta_t # [$]/([pu]*[h]) * ([h]) * ([pu]) = [$]
             for t in Tset
         )
         # @show objfun
