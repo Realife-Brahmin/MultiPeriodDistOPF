@@ -193,7 +193,7 @@ function plot_substation_power(modelDict;
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
     @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix, linearizedModelAppendix = data;
-    filename = joinpath(base_dir, "SubstationRealPowers_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
+    filename = joinpath(base_dir, "SubstationRealPowers_vs_t_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
 
     gr()
 
@@ -304,7 +304,7 @@ function plot_substation_power_cost(modelDict;
             mkpath(base_dir)
         end
         @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
-        filename = joinpath(base_dir, "SubstationPowerCost_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
+        filename = joinpath(base_dir, "SubstationPowerCost_vs_t_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
@@ -336,7 +336,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
         mkpath(base_dir)  # Create the directory and its parents if needed
     end
     @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix, linearizedModelString, linearizedModelAppendix = data
-    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(k_ddp)_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
+    filename = joinpath(base_dir, "SubstationPowerCostAllTime_vs_k_$(k_ddp)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
 
     gr()
 
@@ -453,7 +453,7 @@ function plot_line_losses(modelDict;
             mkpath(base_dir)
         end
         @unpack objfunConciseDescription, alphaAppendix, gammaAppendix, simNatureAppendix = data;
-        filename = joinpath(base_dir, "LineLosses_vs_t_$(gedAppendix)_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
+        filename = joinpath(base_dir, "LineLosses_vs_t_for_$(objfunConciseDescription)_alpha_$(alphaAppendix)_gamma_$(gammaAppendix)_via_$(simNatureAppendix)_with_$(linearizedModelAppendix).png")
         myprintln(verbose, "Saving plot to: $filename")
         savefig(outputPlot, filename)
     end
