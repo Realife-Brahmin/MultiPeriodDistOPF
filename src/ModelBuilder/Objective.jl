@@ -47,16 +47,11 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
             C_vs_t_1toT_dollars_per_puh[t] * P_Subs[t] * delta_t # [$]/([pu]*[h]) * ([h]) * ([pu]) = [$]
             for t in Tset
         )
-        # @show objfun
+        @show objfun
         func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
-        l = model[:l]
-        @unpack Lset, rdict_pu, kVA_B_dict = data;
-        objfun = sum(
-            kVA_B_dict[(i, j)] * rdict_pu[(i, j)] * l[(i, j), t]
-            for (i, j) in Lset, t in Tset
-        )
-        func_obj_est = HP.estimate_line_losses
+        # TODO
+        @error("objfun of linelosses has been retired")
     end
 
     @pack! data = func_obj_est;
