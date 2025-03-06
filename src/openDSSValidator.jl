@@ -436,7 +436,7 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
         OpenDSSDirect.Text.Command(command_str)
 
         # Optionally print command for verification
-        verbose = true
+        # verbose = true
         if verbose
             println("Time Step $t: Setting battery $storage_number with command: $command_str")
         end

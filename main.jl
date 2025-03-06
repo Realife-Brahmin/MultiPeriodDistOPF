@@ -24,7 +24,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    linearizedModel = true
+    # linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     savePlots = true
@@ -128,7 +128,7 @@ begin
     plot_line_losses(modelDict, savePlots=savePlots, verbose=verbose)
 
     modelDict = validate_opf_against_opendss(modelDict, verbose=verbose)
-
+    @unpack valdVals = modelDict;
     export_validation_key_results(modelDict, verbose=verbose)
 
     export_validation_decision_variables(modelDict, verbose=verbose)
