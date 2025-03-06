@@ -187,7 +187,7 @@ function plot_substation_power(modelDict;
     theme(common_theme)
 
     # Setup for saving plot
-    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1", "outputPlots")
     if savePlots && !isdir(base_dir)
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
@@ -298,7 +298,7 @@ function plot_substation_power_cost(modelDict;
 
     # Saving plot if requested
     if savePlots
-        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1", "outputPlots")
         if !isdir(base_dir)
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
@@ -330,7 +330,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
     theme(common_theme)
 
     # Setup for saving plot
-    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1")
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_1", "outputPlots")
     if savePlots && !isdir(base_dir)
         myprintln(verbose, "Creating directory: $base_dir")
         mkpath(base_dir)  # Create the directory and its parents if needed
@@ -447,7 +447,7 @@ function plot_line_losses(modelDict;
 
     # Saving plot if requested
     if savePlots
-        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)",)
+        base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)", "outputPlots")
         if !isdir(base_dir)
             myprintln(verbose, "Creating directory: $base_dir")
             mkpath(base_dir)
