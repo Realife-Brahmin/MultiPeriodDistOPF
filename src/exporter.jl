@@ -8,9 +8,9 @@ export export_decision_variables,
 
 using CSV
 using DelimitedFiles  # To write CSV files
-using JuMP: value
+using JuMP
 using XLSX
-using Parameters: @unpack
+using Parameters
 include("./helperFunctions.jl")
 import .helperFunctions as HF
 
@@ -25,19 +25,19 @@ If temporal decomposition is enabled, it handles the forward step and appends th
 """
 function export_optimization_model(modelDict;
     verbose::Bool=false)
-    @unpack data = modelDict;
-    @unpack temporal_decmp = data;
+    @unpack data = modelDict
+    @unpack temporal_decmp = data
     ddp_appendix = ""
     if !temporal_decmp
-        @unpack model = modelDict;
+        @unpack model = modelDict
     elseif temporal_decmp
         ddpModel = modelDict
-        @unpack models_ddp_vs_t_vs_k, t_ddp, k_ddp = ddpModel;
+        @unpack models_ddp_vs_t_vs_k, t_ddp, k_ddp = ddpModel
         model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
         model = model_t0
         ddp_appendix = "_forward_step_t_$(t_ddp)_k_$(k_ddp)"
     else
-        @error "temporal_decmp must be either true or false"     
+        @error "temporal_decmp must be either true or false"
     end
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, linearizedModelAppendix = data
@@ -50,7 +50,7 @@ function export_optimization_model(modelDict;
     end
 
     # Define the filename with the appropriate structure
-    filename = joinpath(base_dir, "optimizationModel_for_$(objfunAppendix)_via_$(simNatureAppendix)_$(linearizedModelAppendix)"*ddp_appendix*".txt")
+    filename = joinpath(base_dir, "optimizationModel_for_$(objfunAppendix)_via_$(simNatureAppendix)_$(linearizedModelAppendix)" * ddp_appendix * ".txt")
 
     # Check if the file already exists, and delete it if so
     if isfile(filename)
@@ -59,7 +59,16 @@ function export_optimization_model(modelDict;
 
     # Open a new file and write the model contents to it
     open(filename, "w") do f
-        print(f, model)
+
+        # Write model constraints
+        println(f, "\nConstraints:")
+        for constr in JuMP.all_constraints(model, include_variable_in_set_constraints=true)
+            println(f, constr)
+        end
+
+        # Write model objective
+        println(f, "\nObjective:")
+        println(f, JuMP.objective_function(model))
     end
 
     # myprintln(verbose, "Model successfully written to $filename")
