@@ -138,12 +138,13 @@ function get_substation_power_cost(modelDict; horizon::String="allT")
     @unpack Tset, LoadShapeCost, delta_t, kVA_B_dict, substationBus = data
     j1 = substationBus
     P_Subs = modelVals[:P_Subs]
-
+    C_vs_t_1toT_dollars_per_kWh = LoadShapeCost
+    C_vs_t_1toT_dollars_per_pu = C_vs_t_1toT_dollars_per_kWh * kVA_B_dict[j1]
     if horizon == "1toT"
-        substation_power_cost_vs_t_1toT_dollar = [LoadShapeCost[t] * P_Subs[t] * kVA_B_dict[j1] * delta_t for t in Tset]
+        substation_power_cost_vs_t_1toT_dollar = [C_vs_t_1toT_dollars_per_pu[t] * P_Subs[t] * delta_t for t in Tset]
         return substation_power_cost_vs_t_1toT_dollar
     elseif horizon == "allT"
-        substation_power_cost_allT_dollar = sum(LoadShapeCost[t] * P_Subs[t] * kVA_B_dict[j1] * delta_t for t in Tset)
+        substation_power_cost_allT_dollar = sum(C_vs_t_1toT_dollars_per_pu[t] * P_Subs[t] * delta_t for t in Tset)
         return substation_power_cost_allT_dollar
     else
         error("Specify either '1toT' or 'allT'")
