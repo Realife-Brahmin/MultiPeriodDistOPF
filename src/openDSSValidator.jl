@@ -158,10 +158,10 @@ function get_load_powers_opendss_powerflow_for_timestep_t(;
             # Retrieve the load shape name from OpenDSS (if any)
             shape_name = OpenDSSDirect.Loads.Daily()
             OpenDSSDirect.Loads.Next()
-            HF.myprintln(verbose,
-                "Load $load_name => Intended  Power: $(rated_kW*LoadShapeLoad[t]) kW,
-                Actual Power: $(real(load_powers[1])) kW"
-            )
+            # HF.myprintln(verbose,
+            #     "Load $load_name => Intended  Power: $(rated_kW*LoadShapeLoad[t]) kW,
+            #     Actual Power: $(real(load_powers[1])) kW"
+            # )
         end
     end
 
