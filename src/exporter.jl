@@ -41,7 +41,7 @@ function export_optimization_model(modelDict;
     end
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, linearizedModelAppendix = data
-    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)", "models")
 
     # Create the directory if it doesn't exist
     if !isdir(base_dir)
@@ -81,7 +81,7 @@ function export_decision_variables(modelDict;
     @unpack modelVals, data = modelDict;
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunAppendix, simNatureAppendix, solver, linearizedModelAppendix = data
-    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+    base_dir = joinpath("processedData", systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)", "decvars")
 
     if !isdir(base_dir)
         println("Creating directory: $base_dir")
@@ -342,7 +342,7 @@ function export_validation_decision_variables(modelDict; verbose::Bool=false)
     @unpack valdVals, data = modelDict
     # Define the path and filename based on the specified structure
     @unpack T, systemName, numAreas, gedAppendix, machine_ID, objfunConciseDescription, processedDataFolderPath, simNatureAppendix, solver, linearizedModelAppendix = data
-    base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)")
+    base_dir = joinpath(processedDataFolderPath, systemName, gedAppendix, "Horizon_$(T)", "numAreas_$(numAreas)", "decvars")
 
     # Create the directory if it doesn't exist
     if !isdir(base_dir)
