@@ -1,0 +1,33 @@
+---------------------------------------------
+1. Machine ID: etrl309-aryan
+2. Solver Used: Ipopt
+3. System Name: ieee123_1ph
+4. Horizon Duration: 12
+5. Nature of Optimization Simulation: Temporally Brute-forced, Spatially Centralized
+6. Optimization Model: BranchFlowModel 1ph
+7. Objective: Cost of Substation Power
+8. GED Configuration: pv_20_batt_31
+9. Maximum Substation Power Allowed: Inf kW
+---------------------------------------------
+Full 12 Hour Horizon
+10. Horizon Total Cost of Substation Power: $ 1104.39
+11. Horizon Total Line Loss: 175.78 kW
+12. Horizon Total Substation Power: 10088.05 kW + 3610.69 kVAr
+13. Horizon Total Load: 10657.21 kW + 5863.79 kVAr
+14. Horizon Total Generation: 744.94 kW + 2607.95 kVAr
+15. Horizon Total Static Capacitor Reactive Power Generation: 0.0 kVAr
+16. Horizon Total PV Generation: 599.76 kW + 861.86 kVAr
+17. Horizon Total Battery Generation: 145.18 kW + 1746.09 kVAr
+18. Horizon Total Battery Transaction Magnitude: 505.99 kW + 1746.09 kVAr
+19. Horizon Total SCD Observed: 0.22 kW
+20. Horizon-end Battery Energy Deviation from Reference: 171.36 kWh
+21. Horizon-Total All time Substation Power Peak: 871.62 kW
+---------------------------------------------
+22. Number of Macro-Iterations: 1
+23. Number of Decision Variables: 7572
+24. Number of Linear Constraints: 10248
+25. Number of Nonlinear Constraints: 1836
+26. Simulation Time: 2.27 s
+27. Time to solve with sequential (non-parallel) computation: 2.27 s
+28. Time to solve if OPF computation parallelized: 2.27 s
+---------------------------------------------
