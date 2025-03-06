@@ -417,7 +417,7 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
     P_c = modelVals[:P_c]
     P_d = modelVals[:P_d]
     q_B = modelVals[:q_B]
-    @unpack kVA_B = data
+    @unpack kVA_B_dict = data
 
     # Set battery power levels
     storage_id = OpenDSSDirect.Storages.First()
@@ -426,10 +426,10 @@ function set_battery_controls_opendss_powerflow_for_timestep_t(modelDict, t; ver
         storage_number = parse(Int, split(storage_name, "battery")[2])
 
         # Calculate power levels based on optimization model variables
-        charge_power_kW = P_c[storage_number, t] * kVA_B
-        discharge_power_kW = P_d[storage_number, t] * kVA_B
+        charge_power_kW = P_c[storage_number, t] * kVA_B_dict[storage_number]
+        discharge_power_kW = P_d[storage_number, t] * kVA_B_dict[storage_number]
         net_power_kW = discharge_power_kW - charge_power_kW
-        reactive_power_kVAr = q_B[storage_number, t] * kVA_B
+        reactive_power_kVAr = q_B[storage_number, t] * kVA_B_dict[storage_number]
 
         # Command to set battery power levels in OpenDSS
         command_str = "Edit Storage.Battery$(storage_number) kW=$(net_power_kW) kvar=$(reactive_power_kVAr)"
@@ -458,7 +458,7 @@ This function sets the real and reactive power levels for all PV systems at a gi
 function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose::Bool=false)
     @unpack modelVals, data = modelDict;
     # Unpack necessary data fields from `data`
-    @unpack kVA_B, p_D_pu = data
+    @unpack kVA_B_dict, p_D_pu = data
     q_D = modelVals[:q_D]  # Access q_D from the model
 
     # Set power levels for PV systems at each time step
@@ -468,8 +468,8 @@ function set_pv_controls_opendss_powerflow_for_timestep_t(modelDict, t; verbose:
         pv_number = parse(Int, split(pv_name, "pv")[2])
 
         # Retrieve real and reactive power setpoints for this PV system and timestep
-        p_D_t_kW = p_D_pu[(pv_number, t)] * kVA_B
-        q_D_t_kVAr = q_D[pv_number, t] * kVA_B
+        p_D_t_kW = p_D_pu[(pv_number, t)] * kVA_B_dict[pv_number]
+        q_D_t_kVAr = q_D[pv_number, t] * kVA_B_dict[pv_number]
 
         # Set real and reactive power for the PV system
         OpenDSSDirect.PVsystems.Pmpp(p_D_t_kW)
@@ -513,7 +513,7 @@ The function ensures that the state variables from the powerflow simulation matc
 function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     @unpack modelVals, data = modelDict
     # Initialize valdVals dictionary for timestep-specific and cumulative results
-    @unpack T, kVA_B, LoadShapePV, Dset, Bset = data
+    @unpack T, LoadShapePV, Dset, Bset = data
     LoadShapeLoad = data[:LoadShapeLoad]
 
     valdVals = Dict(
