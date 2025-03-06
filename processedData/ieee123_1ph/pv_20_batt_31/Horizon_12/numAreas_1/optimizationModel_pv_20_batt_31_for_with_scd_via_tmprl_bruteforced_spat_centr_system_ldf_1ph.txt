@@ -1,0 +1,103 @@
+Min 48.20404 P_Subs[1] + 48.20404 P_Subs[2] + 48.20404 P_Subs[3] + 48.20404 P_Subs[4] + 48.20404 P_Subs[5] + 48.20404 P_Subs[6] + 48.20404 P_Subs[7] + 48.20404 P_Subs[8] + 48.20404 P_Subs[9] + 301.8066 P_Subs[10] + 301.8066 P_Subs[11] + 301.8066 P_Subs[12] + 0.38645156257195934 P_c[3,1] + 0.4067911184967985 P_d[3,1] + 0.38645156257195934 P_c[7,1] + 0.4067911184967985 P_d[7,1] + 0.38645156257195934 P_c[11,1] + 0.4067911184967985 P_d[11,1] + 0.38645156257195934 P_c[18,1] + 0.4067911184967985 P_d[18,1] + 0.38645156257195934 P_c[22,1] + 0.4067911184967985 P_d[22,1] + 0.38645156257195934 P_c[30,1] + 0.4067911184967985 P_d[30,1] + 0.38645156257195934 P_c[34,1] + 0.4067911184967985 P_d[34,1] + 0.38645156257195934 P_c[37,1] + 0.4067911184967985 P_d[37,1] + 0.38645156257195934 P_c[41,1] + 0.4067911184967985 P_d[41,1] + [[...576 terms omitted...]] + 0.38645156257195934 P_c[53,12] + 0.4067911184967985 P_d[53,12] + 0.38645156257195934 P_c[58,12] + 0.4067911184967985 P_d[58,12] + 0.38645156257195934 P_c[62,12] + 0.4067911184967985 P_d[62,12] + 0.38645156257195934 P_c[67,12] + 0.4067911184967985 P_d[67,12] + 0.38645156257195934 P_c[71,12] + 0.4067911184967985 P_d[71,12] + 0.38645156257195934 P_c[75,12] + 0.4067911184967985 P_d[75,12] + 0.38645156257195934 P_c[79,12] + 0.4067911184967985 P_d[79,12] + 0.38645156257195934 P_c[84,12] + 0.4067911184967985 P_d[84,12] + 0.38645156257195934 P_c[87,12] + 0.4067911184967985 P_d[87,12] + 0.38645156257195934 P_c[92,12] + 0.4067911184967985 P_d[92,12] + 0.38645156257195934 P_c[97,12] + 0.4067911184967985 P_d[97,12] + 0.38645156257195934 P_c[101,12] + 0.4067911184967985 P_d[101,12] + 0.38645156257195934 P_c[106,12] + 0.4067911184967985 P_d[106,12] + 0.38645156257195934 P_c[111,12] + 0.4067911184967985 P_d[111,12] + 0.38645156257195934 P_c[116,12] + 0.4067911184967985 P_d[116,12]
+Subject to
+ SubstationRealPowerBalance_t_1 : P_Subs[1] - P[(1, 2),1] == 0
+ SubstationRealPowerBalance_t_2 : P_Subs[2] - P[(1, 2),2] == 0
+ SubstationRealPowerBalance_t_3 : P_Subs[3] - P[(1, 2),3] == 0
+ SubstationRealPowerBalance_t_4 : P_Subs[4] - P[(1, 2),4] == 0
+ SubstationRealPowerBalance_t_5 : P_Subs[5] - P[(1, 2),5] == 0
+ SubstationRealPowerBalance_t_6 : P_Subs[6] - P[(1, 2),6] == 0
+ SubstationRealPowerBalance_t_7 : P_Subs[7] - P[(1, 2),7] == 0
+ SubstationRealPowerBalance_t_8 : P_Subs[8] - P[(1, 2),8] == 0
+ SubstationRealPowerBalance_t_9 : P_Subs[9] - P[(1, 2),9] == 0
+ SubstationRealPowerBalance_t_10 : P_Subs[10] - P[(1, 2),10] == 0
+ SubstationRealPowerBalance_t_11 : P_Subs[11] - P[(1, 2),11] == 0
+ SubstationRealPowerBalance_t_12 : P_Subs[12] - P[(1, 2),12] == 0
+ NodeRealPowerBalance_Node_j_2_t_1_L : -P[(1, 2),1] + P[(2, 3),1] == 0
+ NodeRealPowerBalance_Node_j_3_t_1_L : -P[(2, 3),1] + P[(3, 4),1] + P[(3, 5),1] + P[(3, 9),1] + P_c[3,1] - P_d[3,1] == -0.00811797
+ NodeRealPowerBalance_Node_j_4_t_1_L : -P[(3, 4),1] == -0.004293548
+ NodeRealPowerBalance_Node_j_5_t_1_L : -P[(3, 5),1] + P[(5, 6),1] + P[(5, 7),1] == 0
+ NodeRealPowerBalance_Node_j_6_t_1_L : -P[(5, 6),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_7_t_1_L : -P[(5, 7),1] + P[(7, 8),1] + P_c[7,1] - P_d[7,1] == -0.004293548
+ NodeRealPowerBalance_Node_j_8_t_1_L : -P[(7, 8),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_9_t_1_L : -P[(3, 9),1] + P[(9, 10),1] == -0.004060198
+ NodeRealPowerBalance_Node_j_10_t_1_L : -P[(9, 10),1] + P[(10, 11),1] + P[(10, 14),1] + P[(10, 15),1] == 0
+ NodeRealPowerBalance_Node_j_11_t_1_L : -P[(10, 11),1] + P[(11, 126),1] + P_c[11,1] - P_d[11,1] == -0.00858452
+ NodeRealPowerBalance_Node_j_12_t_1_L : -P[(16, 12),1] == -0.004293548
+ NodeRealPowerBalance_Node_j_13_t_1_L : -P[(16, 13),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_14_t_1_L : -P[(10, 14),1] == -0.004293548
+ NodeRealPowerBalance_Node_j_15_t_1_L : -P[(10, 15),1] + P[(15, 20),1] + P[(15, 36),1] + P[(15, 117),1] == 0
+ NodeRealPowerBalance_Node_j_16_t_1_L : P[(16, 12),1] + P[(16, 13),1] - P[(126, 16),1] == 0
+ NodeRealPowerBalance_Node_j_17_t_1_L : P[(17, 18),1] + P[(17, 19),1] - P[(36, 17),1] == 0
+ NodeRealPowerBalance_Node_j_18_t_1_L : -P[(17, 18),1] + P_c[18,1] - P_d[18,1] == -0.00811797
+ NodeRealPowerBalance_Node_j_19_t_1_L : -P[(17, 19),1] == -0.004293548
+ NodeRealPowerBalance_Node_j_20_t_1_L : -P[(15, 20),1] + P[(20, 21),1] + P[(20, 23),1] + P[(20, 118),1] == 0
+ NodeRealPowerBalance_Node_j_21_t_1_L : -P[(20, 21),1] + P[(21, 22),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_22_t_1_L : -P[(21, 22),1] + P_c[22,1] - P_d[22,1] == -0.00858452
+ NodeRealPowerBalance_Node_j_23_t_1_L : -P[(20, 23),1] + P[(23, 24),1] + P[(23, 25),1] == 0
+ NodeRealPowerBalance_Node_j_24_t_1_L : -P[(23, 24),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_25_t_1_L : -P[(23, 25),1] + P[(25, 26),1] + P[(25, 27),1] == 0
+ NodeRealPowerBalance_Node_j_26_t_1_L : -P[(25, 26),1] == -0.00811797
+ NodeRealPowerBalance_Node_j_27_t_1_L : -P[(25, 27),1] + P[(27, 30),1] + P[(27, 127),1] == 0
+ NodeRealPowerBalance_Node_j_28_t_1_L : P[(28, 29),1] + P[(28, 33),1] - P[(127, 28),1] == 0
+ NodeRealPowerBalance_Node_j_29_t_1_L : -P[(28, 29),1] + P[(29, 35),1] == 0
+ NodeRealPowerBalance_Node_j_30_t_1_L : -P[(27, 30),1] + P[(30, 31),1] + P_c[30,1] - P_d[30,1] == -0.00858452
+ NodeRealPowerBalance_Node_j_31_t_1_L : -P[(30, 31),1] + P[(31, 32),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_32_t_1_L : -P[(31, 32),1] + P[(32, 119),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_33_t_1_L : -P[(28, 33),1] + P[(33, 34),1] == -0.004293548
+ NodeRealPowerBalance_Node_j_34_t_1_L : -P[(33, 34),1] + P_c[34,1] - P_d[34,1] == -0.004293548
+ NodeRealPowerBalance_Node_j_35_t_1_L : -P[(29, 35),1] == -0.00811797
+ NodeRealPowerBalance_Node_j_36_t_1_L : -P[(15, 36),1] + P[(36, 17),1] == -0.00858452
+ NodeRealPowerBalance_Node_j_37_t_1_L : P[(37, 38),1] + P[(37, 42),1] - P[(118, 37),1] + P_c[37,1] - P_d[37,1] == -0.00858452
+ NodeRealPowerBalance_Node_j_38_t_1_L : -P[(37, 38),1] + P[(38, 39),1] + P[(38, 40),1] == 0
+ NodeRealPowerBalance_Node_j_39_t_1_L : -P[(38, 39),1] == -0.00858452
+[[...12032 constraints skipped...]]
+ g_11_j^t_MinSOC_Node_j_111_t_6 : -B[111,6] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_6 : B[111,6] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_7 : -B[111,7] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_7 : B[111,7] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_8 : -B[111,8] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_8 : B[111,8] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_9 : -B[111,9] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_9 : B[111,9] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_10 : -B[111,10] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_10 : B[111,10] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_11 : -B[111,11] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_11 : B[111,11] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_111_t_12 : -B[111,12] <= -0.0055986
+ g_12_j^t_MaxSOC_Node_j_111_t_12 : B[111,12] <= 0.0177289
+ g_11_j^t_MinSOC_Node_j_116_t_1 : -B[116,1] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_1 : B[116,1] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_2 : -B[116,2] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_2 : B[116,2] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_3 : -B[116,3] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_3 : B[116,3] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_4 : -B[116,4] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_4 : B[116,4] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_5 : -B[116,5] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_5 : B[116,5] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_6 : -B[116,6] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_6 : B[116,6] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_7 : -B[116,7] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_7 : B[116,7] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_8 : -B[116,8] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_8 : B[116,8] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_9 : -B[116,9] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_9 : B[116,9] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_10 : -B[116,10] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_10 : B[116,10] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_11 : -B[116,11] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_11 : B[116,11] <= 0.00886711
+ g_11_j^t_MinSOC_Node_j_116_t_12 : -B[116,12] <= -0.00280014
+ g_12_j^t_MaxSOC_Node_j_116_t_12 : B[116,12] <= 0.00886711
+ P_Subs[1] >= 0
+ P_Subs[2] >= 0
+ P_Subs[3] >= 0
+ P_Subs[4] >= 0
+ P_Subs[5] >= 0
+ P_Subs[6] >= 0
+ P_Subs[7] >= 0
+ P_Subs[8] >= 0
+ P_Subs[9] >= 0
+ P_Subs[10] >= 0
+ P_Subs[11] >= 0
+ P_Subs[12] >= 0
