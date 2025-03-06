@@ -13,7 +13,7 @@ begin
     systemName0 = "ieee730_1ph"
     T0 = 3
 
-    # T0 = 24
+    T0 = 24
     # T0 = 11
     factor = 1
     # factor = 1/2
@@ -25,10 +25,10 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
-    # savePlots = true
+    savePlots = true
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
@@ -80,7 +80,7 @@ begin
     # Parse all data
     data = parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud);
 
-    @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset = data;
+    @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset, NLset = data;
 end;
 
 if !temporal_decmp
@@ -109,7 +109,7 @@ end
 
 # postsim computation, plotting, logging
 begin
-    savePlots = true
+    # savePlots = true
     verbose = false
     # verbose = true
 
