@@ -7,12 +7,11 @@ Revise.revise()
 
 begin
     # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
+    # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
-    # systemName0 = "ieee729_1ph"
+    systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     T0 = 3
-
     T0 = 24
     # T0 = 11
     factor = 1
@@ -25,7 +24,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     linearizedModel = false
-    # linearizedModel = true
+    linearizedModel = true
     maxiter_ddp = 8
     savePlots = false
     savePlots = true
