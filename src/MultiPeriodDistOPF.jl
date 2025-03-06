@@ -27,7 +27,7 @@ using .parseOpenDSSFiles
 include("./Plotter/Plotter.jl")
 using .Plotter
 
-include("./Exporter.jl")
+include("./exporter.jl")
 using .Exporter
 
 include("./openDSSValidator.jl")
