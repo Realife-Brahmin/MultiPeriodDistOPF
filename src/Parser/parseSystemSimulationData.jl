@@ -64,7 +64,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     MVA_B = kVA_B/1000
     # Initialize parameters with default values
     substationBus = 1       # Default substation bus number
-    V_Subs = 1.0            # Default per-unit voltage at substation
+    V_Subs_pu = 1.0            # Default per-unit voltage at substation
     # kV_B = 1.0            # Default base voltage in kV (line-to-ground)
     Δt = min(1.0, 24.0/T) # Currently has no effect as what's read from SysSim.dss takes precedence (which is always 1h as of now)
 
@@ -96,7 +96,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
                         if key == "bus1"
                             substationBus = parse(Int, value)
                         elseif key == "pu"
-                            V_Subs = parse(Float64, value)
+                            V_Subs_pu = parse(Float64, value)
                         elseif key == "basekv"
                             kV_B = parse(Float64, value)
                         end
@@ -211,7 +211,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :numAreas => numAreas, # user input
         :solution_time => solution_time,
         :substationBus => substationBus,
-        :V_Subs => V_Subs,
+        :V_Subs_pu => V_Subs_pu,
         :kV_B => kV_B,
         :kVA_B => kVA_B,
         :MVA_B => MVA_B,

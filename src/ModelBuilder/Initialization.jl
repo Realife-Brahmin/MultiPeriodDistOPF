@@ -48,10 +48,10 @@ function initialize_variables_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
     end
 
     # Initialize voltage variables
-    @unpack Nset, V_Subs = data
+    @unpack Nset, V_Subs_pu = data
     v = model[:v]
     for j in Nset, t in Tset
-        set_start_value(v[j, t], (V_Subs)^2)
+        set_start_value(v[j, t], (V_Subs_pu)^2)
     end
 
     # Initialize PV inverter reactive dispatch variables
@@ -123,10 +123,10 @@ function initialize_variables_1ph_L_t_in_Tset(modelDict; Tset=nothing)
     end
 
     # Initialize voltage variables
-    @unpack Nset, V_Subs = data
+    @unpack Nset, V_Subs_pu = data
     v = model[:v]
     for j in Nset, t in Tset
-        set_start_value(v[j, t], (V_Subs)^2)
+        set_start_value(v[j, t], (V_Subs_pu)^2)
     end
 
     # Initialize PV inverter reactive dispatch variables

@@ -576,12 +576,12 @@ function fixed_substation_voltage_constraints_t_in_Tset(modelDict; Tset=nothing)
         Tset = data[:Tset]
     end
 
-    @unpack substationBus, V_Subs = data
+    @unpack substationBus, V_Subs_pu = data
     for t in Tset
         v = model[:v]
         @constraint(model,
             base_name = "fixed_substation_node_j1_voltage_t_$(t)",
-            v[substationBus, t] == (V_Subs)^2,
+            v[substationBus, t] == (V_Subs_pu)^2,
         )
     end
 
@@ -603,7 +603,7 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
         Tset = data[:Tset]
     end
 
-    @unpack Compset, Vminpu_Comp, Vmaxpu_Comp, substationBus, V_Subs, Vminpu_allComps, Vmaxpu_allComps, Nset = data
+    @unpack Compset, Vminpu_Comp, Vmaxpu_Comp, substationBus, V_Subs_pu, Vminpu_allComps, Vmaxpu_allComps, Nset = data
     for t in Tset, j in Nset
 
         # @show model
@@ -613,7 +613,7 @@ function voltage_limits_constraints_t_in_Tset(modelDict; Tset=nothing)
             # Fix substation voltage
             @constraint(model,
                 base_name = "fixed_voltage_substation_component_node_j1_t_$(t)",
-                v[substationBus, t] == (V_Subs)^2,
+                v[substationBus, t] == (V_Subs_pu)^2,
             )
         else
             # Use per-node voltage limits if available
