@@ -59,9 +59,6 @@ function parse_branch_data(systemName::String;
     MVA_B = kVA_B / 1000
     Z_B = (kV_B^2) / MVA_B
 
-    verbose = true
-    HF.myprintln(verbose, "Final Z_B = $Z_B")
-
     # Todo: Ensure that substation bus being equal to 1 is not taken for granted, have some kwarg or something to ensure that even bus 153 can be the substation bus
 
     wd = @__DIR__
@@ -255,7 +252,7 @@ function parse_branch_data(systemName::String;
 
     # Calculate total number of buses and branches
     N = length(Nset)
-    HF.myprintln(verbose, "N = $N")
+    # HF.myprintln(verbose, "N = $N")
     m = length(Lset)
 
     # Calculate additional parameters
