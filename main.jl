@@ -4,16 +4,17 @@ include("./src/setupMultiPeriodDistOPF.jl")
 begin
     # systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
-    # systemName0 = "ieee123_1ph-B"
+    systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
-    systemName0 = "ieee730_1ph"
-    T0 = 3
-    # T0 = 24
+    # systemName0 = "ieee730_1ph"
+    # T0 = 3
+    # T0 = 1
+    T0 = 24
     # T0 = 11
     factor = 1
     # factor = 1/2
     linearizedModel = false
-    linearizedModel = true
+    # linearizedModel = true
     temporal_decmp = false
     # temporal_decmp = true
 end;
@@ -68,7 +69,7 @@ begin
     else
         error("systemName must be either ieee123_1ph, ieee730_1ph, or ads10_1ph")
     end
-    gedDict_ud = Dict(:DER_Percent_ud=>DER_Percent_ud, :DER_Rating_factor_ud=>DER_Rating_factor_ud, :Batt_Percent_ud=>Batt_Percent_ud, :Batt_Rating_factor_ud=>Batt_Rating_factor_ud)
+    gedDict_ud = Dict(:systemName0=>systemName0, :DER_Percent_ud=>DER_Percent_ud, :DER_Rating_factor_ud=>DER_Rating_factor_ud, :Batt_Percent_ud=>Batt_Percent_ud, :Batt_Rating_factor_ud=>Batt_Rating_factor_ud)
 end;
 
 begin
