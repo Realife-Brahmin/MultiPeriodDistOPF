@@ -150,6 +150,6 @@ end
 
 # Example usage:
 generate_battery_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee123_1ph/Loads.dss", Batt_percent=50, Batt_rating_factor=1.0)
-generate_pvsystem_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee123_1ph/Loads.dss", DER_Percent=30, DER_rating_factor=1.0)
+generate_pvsystem_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee123_1ph/Loads.dss", DER_Percent=40, DER_rating_factor=1.0)
 
 end # module openDSSFilesGenerator
