@@ -564,7 +564,27 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
     @unpack systemName, rawDataFolderPath = data;
     dss_dir = joinpath(rawDataFolderPath, systemName)
     # dss_dir = joinpath(@__DIR__, "rawData", system_name)
-    dss_file = joinpath(dss_dir, "Master.dss")
+    @unpack gedDict_ud = data;
+    @unpack systemName0 = gedDict_ud;
+
+    @unpack systemName0 = gedDict_ud
+
+    if systemName0 == systemName
+        # Use the default file
+        dss_file = joinpath(dss_dir, "Master.dss")
+    else
+        # Check if systemName contains a suffix like "A" or "B"
+        if occursin("-", systemName0)
+            # Example: "ieee123_1ph-A" -> ["ieee123_1ph", "A"]
+            parts = split(systemName0, "-")
+            suffix = parts[end]  # "A"
+            dss_file = joinpath(dss_dir, "Master$(suffix).dss")
+        else
+            dss_file = joinpath(dss_dir, "Master.dss")
+        end
+    end
+
+    # dss_file = joinpath(dss_dir, "Master.dss")
     HF.myprintln(verbose, "Master.dss file path: $(dss_file)")
 
     # Initialize OpenDSS
@@ -573,8 +593,6 @@ function validate_opf_against_opendss(modelDict; verbose::Bool=false)
 
     # Set custom load shape
     set_custom_load_shape!(LoadShapeLoad)
-
-    @show LoadShapeLoad
 
     # Loop through each timestep to perform power flow and store valdVals
     for t in 1:T
