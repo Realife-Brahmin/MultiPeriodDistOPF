@@ -58,11 +58,19 @@ function parse_system_simulation_data(systemName::String, T::Int;
     )
 
     if systemName == "ieee730_1ph"
-        kVA_B = 1e5
+        kVA_B = 1e2
         kV_B = 12.66
     elseif systemName == "ieee729_1ph"
         kVA_B = 1e3
         kV_B = 12.66
+    elseif systemName == "ieee123_1ph" 
+        kVA_B = 1e3
+        kV_B = 4.16/sqrt(3)
+    elseif systemName == "ads10_1ph"
+        kVA_B = 1e3
+        kV_B = 4.16/sqrt(3)
+    else
+        @error "Invalid system name"
     end
     MVA_B = kVA_B/1000
     # Initialize parameters with default values
