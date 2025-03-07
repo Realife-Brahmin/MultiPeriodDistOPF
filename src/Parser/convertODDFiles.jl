@@ -48,11 +48,11 @@ function convert_files_loads_dss(input_file_path::String, output_file_path::Stri
 end
 
 username = ENV["USERNAME"]
-# Example usage
-input_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
+# # Example usage
+# input_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/OpenDSS730node/Loads.dss"
 
-output_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
-convert_files_loads_dss(input_file_path, output_file_path)
+# output_file_path = "C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss"
+# convert_files_loads_dss(input_file_path, output_file_path)
 
 function extract_parameter(parts::Vector{String}, param::String)
     for part in parts
@@ -149,7 +149,7 @@ function generate_pvsystem_dss_from_loads_dss(loads_file_path::String; DER_Perce
 end
 
 # Example usage:
-generate_battery_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", Batt_percent=30, Batt_rating_factor=1.0)
-generate_pvsystem_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee730_1ph/Loads.dss", DER_Percent=20, DER_rating_factor=1.0)
+generate_battery_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee123_1ph/Loads.dss", Batt_percent=50, Batt_rating_factor=1.0)
+generate_pvsystem_dss_from_loads_dss("C:/Users/" * username * "/Documents/documents_general/MultiPeriodDistOPF/rawData/ieee123_1ph/Loads.dss", DER_Percent=30, DER_rating_factor=1.0)
 
 end # module openDSSFilesGenerator
