@@ -3,9 +3,9 @@ include("./src/setupMultiPeriodDistOPF.jl")
 
 begin
     # systemName0 = "ads10_1ph"
-    # systemName0 = "ieee123_1ph-A"
+    systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
-    systemName0 = "ieee729_1ph"
+    # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 3
     # T0 = 1
@@ -14,17 +14,17 @@ begin
     factor = 1
     # factor = 1/2
     linearizedModel = false
-    linearizedModel = true
+    # linearizedModel = true
     temporal_decmp = false
     # temporal_decmp = true
+    savePlots = false
+    savePlots = true
 end;
 
 begin
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 8
-    savePlots = false
-    savePlots = true
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
