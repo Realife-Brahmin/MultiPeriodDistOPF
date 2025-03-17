@@ -460,7 +460,8 @@ function BCPF_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
         l_ij_t = l[(i, j), t]
         @constraint(model,
             base_name = "BCPF_SubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+            # (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t <= 0,
         )
     end
 
@@ -495,7 +496,9 @@ function BCPF_non_substation_branches_1ph_NL_t_in_Tset(modelDict; Tset=nothing)
         l_ij_t = l[(i, j), t]
         @constraint(model,
             base_name = "BCPF_NonSubstationBranch_i_$(i)_j_$(j)_t_$(t)",
-            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+            # (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t == 0,
+            (P_ij_t)^2 + (Q_ij_t)^2 - v_i_t * l_ij_t <= 0,
+
         )
     end
 
