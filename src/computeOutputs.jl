@@ -37,8 +37,8 @@ function compute_output_values(modelDict;
     # Scalars to store cumulative values
     fval_allT = 0.0
 
-    @show PLoss_vs_t_1toT_kW = get_loss_real_power(modelDict, horizon="1toT")
-    @show PLoss_allT_kW = get_loss_real_power(modelDict, horizon="allT")
+    PLoss_vs_t_1toT_kW = get_loss_real_power(modelDict, horizon="1toT")
+    PLoss_allT_kW = get_loss_real_power(modelDict, horizon="allT")
 
     QSubs_vs_t_1toT_kVAr = get_substation_reactive_power(modelDict, horizon="1toT")
     QSubs_allT_kVAr = get_substation_reactive_power(modelDict, horizon="allT")

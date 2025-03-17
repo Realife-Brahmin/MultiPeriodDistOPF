@@ -47,7 +47,7 @@ function define_objective_function_t_in_Tset(modelDict; Tset=nothing, tSOC_hard=
             C_vs_t_1toT_dollars_per_puh[t] * P_Subs[t] * delta_t # [$]/([pu]*[h]) * ([h]) * ([pu]) = [$]
             for t in Tset
         )
-        @show objfun
+        # @show objfun
         func_obj_est = HP.estimate_substation_power_cost 
     elseif objfun0 == "lineLossMin"
         # TODO
