@@ -240,6 +240,20 @@ end
 #endregion
 
 function get_model_size(modelDict)
+    @unpack data = modelDict
+    @unpack temporal_decmp = data;
+    if temporal_decmp
+        num_decvars = 0
+        num_lincons = 0
+        num_nonlincons = 0
+        # Pack results into a dictionary
+        modelSizeDict = Dict(
+            :num_decvars => num_decvars,
+            :num_lincons => num_lincons,
+            :num_nonlincons => num_nonlincons
+        )
+        return modelSizeDict
+    end
     @unpack model = modelDict
     # Retrieve number of decision variables
     num_decvars = JuMP.num_variables(model)
