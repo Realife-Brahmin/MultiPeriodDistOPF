@@ -226,6 +226,7 @@ function print_mu(ddpModel;
 
     for (j_B, j) in enumerate(Bset_to_print)
         battery_color = temporal_decmp ? battery_colors_temporal[j_B] : battery_colors_non_temporal[j_B]
+        kkt_balance_total = 0.0
         for t in Tset
             if temporal_decmp == false
                 @unpack model = ddpModel
@@ -253,10 +254,15 @@ function print_mu(ddpModel;
                     balance = -lambda_lower + lambda_upper + mu_current
                 end
             end
-
+            kkt_balance_total += abs(balance)
             balance_str = trim_number_for_printing(balance, sigdigits=4)
             println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
         end
+        @unpack T = data
+        kkt_balance_avg_str = trim_number_for_printing(kkt_balance_total/T, sigdigits=4)
+        println("**************")
+        println(battery_color("Total KKT balance for B_$j: $(kkt_balance_avg_str)"))
+        println("**************")
     end
 end
 
