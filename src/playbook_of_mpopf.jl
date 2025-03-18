@@ -181,9 +181,9 @@ function print_mu(ddpModel;
             for t in Tset
                 if haskey(mu, (j, t))
                     mu_j_t_str = trim_number_for_printing(mu[(j, t)], sigdigits=4)
-                    println(battery_color("mu[$j, $t] = $(mu_j_t_str)"))
+                    println(battery_color("μ[$j, $t] = $(mu_j_t_str)"))
                 else
-                    println(crayon_error("mu[$j, $t] not found"))
+                    println(crayon_error("μ[$j, $t] not found"))
                 end
             end
         end
@@ -194,9 +194,9 @@ function print_mu(ddpModel;
             for t in Tset
                 if haskey(mu, (j, t, k_ddp - 1))
                     mu_j_t_k_str = trim_number_for_printing(mu[(j, t, k_ddp - 1)], sigdigits=4)
-                    println(battery_color("mu[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
+                    println(battery_color("μ[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
                 else
-                    println(crayon_error("mu[$j, $t, $(k_ddp-1)] not found"))
+                    println(crayon_error("μ[$j, $t, $(k_ddp-1)] not found"))
                 end
             end
         end
@@ -216,10 +216,9 @@ function print_mu(ddpModel;
             lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
             lambda_lower = -dual(constraint_by_name(model, lambda_lower_name))
             lambda_lower_str = trim_number_for_printing(lambda_lower, sigdigits=4)
-            println(battery_color("lambda_lower[$j, $t] = $(lambda_lower_str)"))
             lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
             lambda_upper_str = trim_number_for_printing(lambda_upper, sigdigits=4)
-            println(battery_color("lambda_upper[$j, $t] = $(lambda_upper_str)"))
+            println(battery_color("λ_lb[$j, $t] = $(lambda_lower_str) | λ_ub[$j, $t] = $(lambda_upper_str)"))
         end
     end
 
