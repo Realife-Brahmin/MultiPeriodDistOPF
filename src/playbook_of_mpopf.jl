@@ -147,7 +147,8 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-function print_mu(ddpModel)
+function print_mu(ddpModel;
+    tolKKT=1e-6)
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_error = Crayon(foreground=:red, bold=true)
 
@@ -250,7 +251,8 @@ function print_mu(ddpModel)
                 end
             end
 
-            println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance"))
+            balance_str = trim_number_for_printing(balance, sigdigits=4)
+            println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
         end
     end
 end
