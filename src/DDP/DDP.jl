@@ -301,14 +301,14 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
             if max_discrepancy > threshold
                 all_under_threshold = false
                 if discrepancy > threshold
-                    myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+                    # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                     if j in Bset_to_print
-                        println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
-                        println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                        # println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                        # println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
                     end
                 else
                     if j in Bset_to_print
-                        println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
+                        # println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
                     end
                 end
             end
