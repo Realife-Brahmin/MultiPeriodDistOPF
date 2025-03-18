@@ -180,7 +180,8 @@ function print_mu(ddpModel;
             battery_color = battery_colors_non_temporal[j_B]
             for t in Tset
                 if haskey(mu, (j, t))
-                    println(battery_color("mu[$j, $t] = $(mu[(j, t)])"))
+                    mu_j_t_str = trim_number_for_printing(mu[(j, t)], sigdigits=4)
+                    println(battery_color("mu[$j, $t] = $(mu_j_t_str)"))
                 else
                     println(crayon_error("mu[$j, $t] not found"))
                 end
@@ -192,7 +193,8 @@ function print_mu(ddpModel;
             battery_color = battery_colors_temporal[j_B]
             for t in Tset
                 if haskey(mu, (j, t, k_ddp - 1))
-                    println(battery_color("mu[$j, $t, $(k_ddp-1)] = $(mu[(j, t, k_ddp-1)])"))
+                    mu_j_t_k_str = trim_number_for_printing(mu[(j, t, k_ddp - 1)], sigdigits=4)
+                    println(battery_color("mu[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
                 else
                     println(crayon_error("mu[$j, $t, $(k_ddp-1)] not found"))
                 end
@@ -213,9 +215,11 @@ function print_mu(ddpModel;
             lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
             lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
             lambda_lower = -dual(constraint_by_name(model, lambda_lower_name))
+            lambda_lower_str = trim_number_for_printing(lambda_lower, sigdigits=4)
+            println(battery_color("lambda_lower[$j, $t] = $(lambda_lower_str)"))
             lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
-            println(battery_color("lambda_lower[$j, $t] = $lambda_lower"))
-            println(battery_color("lambda_upper[$j, $t] = $lambda_upper"))
+            lambda_upper_str = trim_number_for_printing(lambda_upper, sigdigits=4)
+            println(battery_color("lambda_upper[$j, $t] = $(lambda_upper_str)"))
         end
     end
 
