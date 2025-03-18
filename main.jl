@@ -16,7 +16,7 @@ begin
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    temporal_decmp = true
+    # temporal_decmp = true
     savePlots = false
     savePlots = true
 end;
@@ -24,7 +24,7 @@ end;
 begin
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 11
+    maxiter_ddp = 44
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
@@ -90,11 +90,11 @@ if !temporal_decmp
     end
     
     @unpack model, modelVals, data = modelDict
-    # print_mu(modelDict)
+    Playbook.print_mu(modelDict)
 elseif temporal_decmp
     modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
-    # print_mu(modelDict)
+    Playbook.print_mu(modelDict)
 else
     error("temporal_decmp must be either true or false")
 end
