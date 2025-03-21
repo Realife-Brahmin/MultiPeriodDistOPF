@@ -5,7 +5,7 @@ export
     get_soc_dual_variables_fullMPOPF,
     optimize_MPOPF_1ph_NL_TemporallyBruteforced,
     optimize_MPOPF_1ph_L,
-    print_mu
+    get_dual_variables_state_fullMPOPF
 
 include("./ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
@@ -74,7 +74,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
 
     # optimal_obj_value = objective_value(model)
     optimal_obj_value = modelVals[:objective_value]
-    println("Optimal objective function value: ", optimal_obj_value)
+    println("Optimal objective function value:  $(optimal_obj_value)")
         
     return modelDict
 
@@ -114,7 +114,7 @@ function optimize_MPOPF_1ph_L(data)
 
     # optimal_obj_value = objective_value(model)
     optimal_obj_value = modelVals[:objective_value]
-    println("Optimal objective function value: ", optimal_obj_value)
+    println("Optimal objective function value: $(optimal_obj_value)")
 
     Exporter.export_optimization_model(modelDict, verbose=false)
 
@@ -147,8 +147,10 @@ function get_soc_dual_variables_fullMPOPF(modelDict; Tset=nothing)
     return mu
 end
 
-function print_mu(ddpModel;
-    tolKKT=1e-6)
+function get_dual_variables_state_fullMPOPF(ddpModel;
+    tolKKT=1e-6,
+    verbose=true)
+
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_error = Crayon(foreground=:red, bold=true)
 
@@ -166,7 +168,7 @@ function print_mu(ddpModel;
         3 => Crayon(foreground=:light_blue, bold=true)
     )
 
-    println(crayon_header("Dual Variables (mu) for SOC Constraints:"))
+    myprintln(verbose, crayon_header("Dual Variables (mu) for SOC Constraints:"))
 
     @unpack mu, data = ddpModel
     @unpack Tset, Bset, temporal_decmp = data
@@ -181,9 +183,9 @@ function print_mu(ddpModel;
             for t in Tset
                 if haskey(mu, (j, t))
                     mu_j_t_str = trim_number_for_printing(mu[(j, t)], sigdigits=4)
-                    println(battery_color("μ[$j, $t] = $(mu_j_t_str)"))
+                    myprintln(verbose, battery_color("μ[$j, $t] = $(mu_j_t_str)"))
                 else
-                    println(crayon_error("μ[$j, $t] not found"))
+                    myprintln(verbose, crayon_error("μ[$j, $t] not found"))
                 end
             end
         end
@@ -194,15 +196,15 @@ function print_mu(ddpModel;
             for t in Tset
                 if haskey(mu, (j, t, k_ddp - 1))
                     mu_j_t_k_str = trim_number_for_printing(mu[(j, t, k_ddp - 1)], sigdigits=4)
-                    println(battery_color("μ[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
+                    myprintln(verbose, battery_color("μ[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
                 else
-                    println(crayon_error("μ[$j, $t, $(k_ddp-1)] not found"))
+                    myprintln(verbose, crayon_error("μ[$j, $t, $(k_ddp-1)] not found"))
                 end
             end
         end
     end
 
-    println(crayon_header("Dual Variables (lambda) for SOC Limits:"))
+    myprintln(verbose, crayon_header("Dual Variables (lambda) for SOC Limits:"))
 
     for (j_B, j) in enumerate(Bset_to_print)
         battery_color = temporal_decmp ? battery_colors_temporal[j_B] : battery_colors_non_temporal[j_B]
@@ -218,11 +220,11 @@ function print_mu(ddpModel;
             lambda_lower_str = trim_number_for_printing(lambda_lower, sigdigits=4)
             lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
             lambda_upper_str = trim_number_for_printing(lambda_upper, sigdigits=4)
-            println(battery_color("λ_lb[$j, $t] = $(lambda_lower_str) | λ_ub[$j, $t] = $(lambda_upper_str)"))
+            myprintln(verbose, battery_color("λ_lb[$j, $t] = $(lambda_lower_str) | λ_ub[$j, $t] = $(lambda_upper_str)"))
         end
     end
 
-    println(crayon_header("Checking for KKT Necessary Condition (∇L_{B_j^t} = 0 ∀ j ∈ B, t ∈ τ):"))
+    myprintln(verbose, crayon_header("Checking for KKT Necessary Condition (∇L_{B_j^t} = 0 ∀ j ∈ B, t ∈ τ):"))
 
     for (j_B, j) in enumerate(Bset_to_print)
         battery_color = temporal_decmp ? battery_colors_temporal[j_B] : battery_colors_non_temporal[j_B]
@@ -256,13 +258,13 @@ function print_mu(ddpModel;
             end
             kkt_balance_total += abs(balance)
             balance_str = trim_number_for_printing(balance, sigdigits=4)
-            println(battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
+            myprintln(verbose, battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
         end
         @unpack T = data
         kkt_balance_avg_str = trim_number_for_printing(kkt_balance_total/T, sigdigits=4)
-        println("**************")
-        println(battery_color("Total KKT balance for B_$j: $(kkt_balance_avg_str)"))
-        println("**************")
+        myprintln(verbose, "**************")
+        myprintln(verbose, battery_color("Total KKT balance for B_$j: $(kkt_balance_avg_str)"))
+        myprintln(verbose, "**************")
     end
 end
 
