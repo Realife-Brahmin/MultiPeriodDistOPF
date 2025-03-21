@@ -39,7 +39,7 @@ function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
     Tset = data[:Tset] # In this case, Tset = [1, 2, ... T]
     modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset)
 
-    Exporter.export_optimization_model(modelDict, verbose=false)
+    # Exporter.export_optimization_model(modelDict, verbose=false)
 
     @unpack model, data = modelDict
     set_optimizer_attribute(model, "print_level", 5)
