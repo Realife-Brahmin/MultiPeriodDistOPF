@@ -17,7 +17,7 @@ Prints a message to the console if the `verbose` flag is set to `true`.
 - `verbose::Bool`: A flag indicating whether to print the message.
 - `msg::String`: The message to be printed.
 """
-function myprintln(verbose::Bool, msg::String)
+function myprintln(verbose::Bool, msg)
     if verbose
         println(msg)
     end
