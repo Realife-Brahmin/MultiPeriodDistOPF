@@ -773,7 +773,7 @@ function DDPModel(data;
     mu = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
     for j ∈ Bset, t_ddp ∈ Tset
         # mu[j, t_ddp, 0] = 0.0
-        mu[j, t_ddp] = mu[j, t_ddp]
+        mu[j, t_ddp, 0] = mu[j, t_ddp]
         lambda_lo[j, t_ddp, 0] = 0.0
         lambda_up[j, t_ddp, 0] = 0.0
     end
