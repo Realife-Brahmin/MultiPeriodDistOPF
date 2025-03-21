@@ -152,7 +152,7 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
     verbose=false)
 
     kktBalanceDict = Dict()
-    kktMetricDict = Dict()
+    kktMetricDict = 0.0
     muDict = Dict()
     lambda_lb_Dict = Dict()
     lambda_ub_Dict = Dict()
@@ -271,7 +271,7 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
             kkt_balance_total += abs(balance)
             balance_str = trim_number_for_printing(balance, sigdigits=4)
             myprintln(verbose, battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
-            kktMetricDict[(j, t)] = balance
+            kktMetricDict = balance
         end
         @unpack T = data
         kkt_balance_avg_str = trim_number_for_printing(kkt_balance_total/T, sigdigits=4)
