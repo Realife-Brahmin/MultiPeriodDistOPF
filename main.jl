@@ -16,7 +16,7 @@ begin
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    # temporal_decmp = true
+    temporal_decmp = true
     savePlots = false
     # savePlots = true
 end;
