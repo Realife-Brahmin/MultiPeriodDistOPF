@@ -321,32 +321,32 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Check the difference between latest and previous mu values
     # println(crayon_green("Checking convergence for μ values:"))
 
-    # for t in Tset
-    #     for j in Bset
-    #         if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
-    #             mu_current = mu[(j, t, k_ddp)]
-    #             mu_previous = mu[(j, t, k_ddp - 1)]
-    #             discrepancy = abs(mu_current - mu_previous)
-    #             max_discrepancy = max(max_discrepancy, discrepancy)
-    #             if discrepancy > threshold
-    #                 all_under_threshold = false
-    #                 # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
-    #                 # if j in Bset_to_print
-    #                 #     println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-    #                 #     println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
-    #                 # end
-    #             else
-    #                 # if j in Bset_to_print
-    #                 #     println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
-    #                 # end
-    #             end
-    #         else
-    #             if j in Bset_to_print
-    #                 println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
-    #             end
-    #         end
-    #     end
-    # end
+    for t in Tset
+        for j in Bset
+            if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
+                mu_current = mu[(j, t, k_ddp)]
+                mu_previous = mu[(j, t, k_ddp - 1)]
+                discrepancy = abs(mu_current - mu_previous)
+                max_discrepancy = max(max_discrepancy, discrepancy)
+                if discrepancy > threshold
+                    all_under_threshold = false
+                    # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                    # if j in Bset_to_print
+                    println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    # end
+                else
+                    if j in Bset_to_print
+                        println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                    end
+                end
+            else
+                if j in Bset_to_print
+                    # println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
+                end
+            end
+        end
+    end
 
     if !all_under_threshold
         return ddpModel
