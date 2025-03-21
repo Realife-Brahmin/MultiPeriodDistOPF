@@ -92,7 +92,9 @@ if !temporal_decmp
     @unpack model, modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
 elseif temporal_decmp
-    modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
+    modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+    mu = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
+    modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
     @unpack modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
 else

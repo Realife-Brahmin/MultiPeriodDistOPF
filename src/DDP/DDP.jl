@@ -33,8 +33,8 @@ import .SolverArranger as SolverArranger
 include("../Exporter.jl")
 import .Exporter as Exporter
 
-include("../playbook_of_mpopf.jl")
-import .Playbook_of_MPOPF as Playbook
+# include("../playbook_of_mpopf.jl")
+# import .Playbook_of_MPOPF as Playbook
 
 using Crayons
 using JuMP
@@ -689,9 +689,10 @@ It initializes the DDP model, performs forward passes, checks for convergence, a
 """
 function optimize_MPOPF_1ph_NL_DDP(data;
     verbose::Bool=false,
+    muDict=nothing,
     maxiter::Int=7)
 
-    ddpModel = DDPModel(data, maxiter=maxiter)
+    ddpModel = DDPModel(data, maxiter=maxiter, muDict=muDict)
 
     keepForwardPassesRunning = true
     while keepForwardPassesRunning
@@ -756,6 +757,7 @@ It handles the initialization of dual variables, model values, and other relevan
 """
 function DDPModel(data;
     maxiter::Int=7,
+    muDict=nothing,
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
@@ -769,11 +771,12 @@ function DDPModel(data;
     modelVals = MC.ModelVals(data)
     # Initialize mu[j, t_ddp, 0/-1] = 0 for all j in Bset and t_ddp in Tset
     
-    modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    mu = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
     for j ∈ Bset, t_ddp ∈ Tset
-        # mu[j, t_ddp, 0] = 0.0
-        mu[j, t_ddp, 0] = mu[j, t_ddp]
+        if isnothing(muDict)
+            mu[j, t_ddp, 0] = 0.0
+        else
+            mu[j, t_ddp, 0] = muDict[j, t_ddp]
+        end
         lambda_lo[j, t_ddp, 0] = 0.0
         lambda_up[j, t_ddp, 0] = 0.0
     end
