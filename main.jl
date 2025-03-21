@@ -16,9 +16,9 @@ begin
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    temporal_decmp = true
+    # temporal_decmp = true
     savePlots = false
-    savePlots = true
+    # savePlots = true
 end;
 
 begin
@@ -90,17 +90,17 @@ if !temporal_decmp
     end
     
     @unpack model, modelVals, data = modelDict
-    Playbook.print_mu(modelDict)
+    Playbook.get_dual_variables_state_fullMPOPF(modelDict)
 elseif temporal_decmp
     modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
-    Playbook.print_mu(modelDict)
+    Playbook.get_dual_variables_state_fullMPOPF(modelDict)
 else
     error("temporal_decmp must be either true or false")
 end
 
 if temporal_decmp
-    Plotter.plot_substation_power_cost_allT_vs_k(modelDict, savePlots=savePlots)
+    Plotter.plot_substation_power_cost_allT_vs_k(modelDict, savePlots=true)
 end
 #endregion
 
