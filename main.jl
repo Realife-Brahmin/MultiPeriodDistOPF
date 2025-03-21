@@ -90,11 +90,11 @@ if !temporal_decmp
     end
     
     @unpack model, modelVals, data = modelDict
-    Playbook.get_dual_variables_state_fullMPOPF(modelDict)
+    Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=verbose)
 elseif temporal_decmp
     modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp)
     @unpack modelVals, data = modelDict
-    Playbook.get_dual_variables_state_fullMPOPF(modelDict)
+    Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=verbose)
 else
     error("temporal_decmp must be either true or false")
 end

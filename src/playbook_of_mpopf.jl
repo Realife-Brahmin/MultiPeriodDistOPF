@@ -149,7 +149,13 @@ end
 
 function get_dual_variables_state_fullMPOPF(ddpModel;
     tolKKT=1e-6,
-    verbose=true)
+    verbose=false)
+
+    kktBalanceDict = Dict()
+    kktMetricDict = Dict()
+    muDict = Dict()
+    lambda_lb_Dict = Dict()
+    lambda_ub_Dict = Dict()
 
     crayon_header = Crayon(foreground=:white, background=:blue, bold=true)
     crayon_error = Crayon(foreground=:red, bold=true)
@@ -182,6 +188,7 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
             battery_color = battery_colors_non_temporal[j_B]
             for t in Tset
                 if haskey(mu, (j, t))
+                    muDict[(j, t)] = mu[(j, t)]
                     mu_j_t_str = trim_number_for_printing(mu[(j, t)], sigdigits=4)
                     myprintln(verbose, battery_color("μ[$j, $t] = $(mu_j_t_str)"))
                 else
@@ -195,6 +202,7 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
             battery_color = battery_colors_temporal[j_B]
             for t in Tset
                 if haskey(mu, (j, t, k_ddp - 1))
+                    muDict[(j, t)] = mu[(j, t, k_ddp - 1)]
                     mu_j_t_k_str = trim_number_for_printing(mu[(j, t, k_ddp - 1)], sigdigits=4)
                     myprintln(verbose, battery_color("μ[$j, $t, $(k_ddp-1)] = $(mu_j_t_k_str)"))
                 else
@@ -217,8 +225,10 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
             lambda_lower_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t)"
             lambda_upper_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t)"
             lambda_lower = -dual(constraint_by_name(model, lambda_lower_name))
+            lambda_lb_Dict[(j, t)] = lambda_lower
             lambda_lower_str = trim_number_for_printing(lambda_lower, sigdigits=4)
             lambda_upper = -dual(constraint_by_name(model, lambda_upper_name))
+            lambda_ub_Dict[(j, t)] = lambda_upper
             lambda_upper_str = trim_number_for_printing(lambda_upper, sigdigits=4)
             myprintln(verbose, battery_color("λ_lb[$j, $t] = $(lambda_lower_str) | λ_ub[$j, $t] = $(lambda_upper_str)"))
         end
@@ -247,6 +257,7 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
                 else
                     balance = -lambda_lower + lambda_upper + mu_current
                 end
+                kktBalanceDict[(j, t)] = balance
             else
                 mu_current = mu[(j, t, k_ddp - 1)]
                 if t < maximum(Tset)
@@ -255,16 +266,28 @@ function get_dual_variables_state_fullMPOPF(ddpModel;
                 else
                     balance = -lambda_lower + lambda_upper + mu_current
                 end
+                kktBalanceDict[(j, t)] = balance
             end
             kkt_balance_total += abs(balance)
             balance_str = trim_number_for_printing(balance, sigdigits=4)
             myprintln(verbose, battery_color("∇L_{B_j^t} for [$j, $t]: $balance_str"))
+            kktMetricDict[(j, t)] = balance
         end
         @unpack T = data
         kkt_balance_avg_str = trim_number_for_printing(kkt_balance_total/T, sigdigits=4)
         myprintln(verbose, "**************")
         myprintln(verbose, battery_color("Total KKT balance for B_$j: $(kkt_balance_avg_str)"))
         myprintln(verbose, "**************")
+
+        dualStateDict = Dict(
+            :muDict => muDict,
+            :lambda_lb_Dict => lambda_lb_Dict,
+            :lambda_ub_Dict => lambda_ub_Dict,
+            :kktBalanceDict => kktBalanceDict,
+            :kktMetricDict => kktMetricDict
+        )
+
+        return dualStateDict
     end
 end
 
