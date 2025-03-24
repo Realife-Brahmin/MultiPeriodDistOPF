@@ -54,10 +54,10 @@ function copy_modelVals(modelDict, model_Tset;
     for (i, j) in Lset, t in Tset
         modelVals[:P][(i, j), t] = value(P_model[(i, j), t])
         modelVals[:Q][(i, j), t] = value(Q_model[(i, j), t])
-        if !linearizedModel || solverCallType == "nonlinear"
+        if !linearizedModel && solverCallType == "nonlinear" # neither warm-starting DDP nor doing linear model BF
             l_model = model_Tset[:l]
             modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
-        elseif linearizedModel || solverCallType == "linear"
+        elseif linearizedModel || solverCallType == "linear" # either we're warm-starting DDP with a linear model or doing linear model BF
             modelVals[:l][(i, j), t] = (value(P_model[(i, j), t])^2 + value(Q_model[(i, j), t])^2) / value(v_model[i, t])
         else
             @error "Invalid solverCallType: $solverCallType"
