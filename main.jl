@@ -2,9 +2,9 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 
 begin
-    # systemName0 = "ads10_1ph"
+    systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
-    systemName0 = "ieee123_1ph-B"
+    # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 3
@@ -25,7 +25,7 @@ end;
 begin
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 25
+    maxiter_ddp = 55
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
