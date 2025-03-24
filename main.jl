@@ -2,8 +2,8 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 
 begin
-    # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
+    systemName0 = "ads10_1ph"
+    # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
@@ -25,7 +25,7 @@ begin
 end;
 
 begin
-    alpha_fpi = 1 // 3
+    alpha_fpi = 0.43
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25
