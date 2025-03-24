@@ -91,7 +91,7 @@ function optimize_MPOPF_1ph_L(data)
     @pack! modelDict = model
 
     # modelDict = generate_1ph_L_model_decvar_value_dict(modelDict)
-    modelDict = MC.copy_modelVals(modelDict, model, Tset=Tset)
+    modelDict = MC.copy_modelVals(modelDict, model, Tset=Tset, solverCallType="linear")
 
     # Extract SOC dual variables and update modelDict
     mu = get_soc_dual_variables_fullMPOPF(modelDict, Tset=Tset)
