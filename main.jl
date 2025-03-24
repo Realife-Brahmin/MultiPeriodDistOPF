@@ -31,7 +31,7 @@ begin
     objfun2 = "scd"
     inputForecastDescription = "bilevelCosts"
     relax_terminal_soc_constraint = false
-    relax_terminal_soc_constraint = true
+    # relax_terminal_soc_constraint = true
     tSOC_hard = false
     # tSOC_hard = true
     solver = "Ipopt"
