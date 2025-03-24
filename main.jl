@@ -18,20 +18,20 @@ begin
     temporal_decmp = false
     temporal_decmp = true
     savePlots = false
-    alpha_fpi = 1//3
     savePlots = true
 end;
 
 begin
+    alpha_fpi = 1 // 3
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 111
+    maxiter_ddp = 25
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
     inputForecastDescription = "bilevelCosts"
     relax_terminal_soc_constraint = false
-    # relax_terminal_soc_constraint = true
+    relax_terminal_soc_constraint = true
     tSOC_hard = false
     # tSOC_hard = true
     solver = "Ipopt"
@@ -93,8 +93,9 @@ if !temporal_decmp
     @unpack model, modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
 elseif temporal_decmp
-    modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-    muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
+    # modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+    # muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
+    muDict = nothing
     modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
     @unpack modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
