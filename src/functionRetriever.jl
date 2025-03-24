@@ -133,8 +133,23 @@ end
 
 Calculate substation power cost in dollars from modelVals.
 """
-function get_substation_power_cost(modelDict; horizon::String="allT")
-    @unpack modelVals, data = modelDict
+function get_substation_power_cost(modelDict; horizon::String="allT",
+    k_ddp=nothing)
+
+    @unpack data = modelDict
+    @unpack temporal_decmp = data
+    if temporal_decmp && isnothing(k_ddp)
+        error("Looks like temporal_decmp is true but k_ddp is not provided")
+    elseif temporal_decmp && !isnothing(k_ddp)
+        @unpack modelVals_ddp_vs_t_vs_k = ddpModel
+        modelVals = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
+    elseif !temporal_decmp && !isnothing(k_ddp)
+        error("Looks like temporal_decmp is false but k_ddp is provided")
+    elseif !temporal_decmp && isnothing(k_ddp)
+        @unpack modelVals = modelDict
+    end
+
+    # @unpack modelVals, data = modelDict
     @unpack Tset, LoadShapeCost, delta_t, kVA_B_dict, substationBus = data
     j1 = substationBus
     P_Subs = modelVals[:P_Subs]
