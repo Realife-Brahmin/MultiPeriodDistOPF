@@ -138,15 +138,15 @@ function get_substation_power_cost(modelDict; horizon::String="allT",
     solverCall=nothing)
 
     @unpack data = modelDict
-    @unpack temporal_decmp = data
+    @unpack temporal_decmp, T = data
     if isnothing(solverCall)
         solverCall = "BF"
     end
     if solverCall=="DDP" && isnothing(k_ddp)
         error("Looks like you want to compute PSubsCost for a DDP Forward Pass but have not specified the k_ddp value")
     elseif solverCall=="DDP" && !isnothing(k_ddp)
-        @unpack modelVals_ddp_vs_t_vs_k = ddpModel
-        modelVals = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
+        @unpack modelVals_ddp_vs_t_vs_k = modelDict
+        modelVals = modelVals_ddp_vs_t_vs_k[T, k_ddp]
     elseif solverCall=="BF" && !isnothing(k_ddp)
         error("Looks like you have provided a k_ddp value without specifying the solverCall as -DDP-")
     elseif solverCall == "BF" && isnothing(k_ddp)
