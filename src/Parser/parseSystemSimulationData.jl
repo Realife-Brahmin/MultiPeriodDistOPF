@@ -55,7 +55,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     relax_terminal_soc_constraint = false,
     linearizedModel = false,
     gedDict_ud = nothing,
-    alpha_fpi = 0.43
+    alpha_fpi = 0.43,
+    warmStart_mu = nothing
     )
 
     if systemName == "ieee730_1ph"
@@ -252,7 +253,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :temporal_decmp => temporal_decmp,
         :temporalDecmpString => temporalDecmpString,
         :temporalDecmpAppendix => temporalDecmpAppendix,
-        :Tset => Tset
+        :Tset => Tset,
+        :warmStart_mu => warmStart_mu
     )
 
     # Return the extracted parameters as a dictionary
