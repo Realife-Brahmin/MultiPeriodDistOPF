@@ -309,6 +309,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Compare B and mu values and compute discrepancies
     max_discrepancy = 0.0
     threshold = 1e-3
+    threshold_fval = 1.0
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
@@ -320,14 +321,13 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
     Bset_to_print = length(Bset) > 1 ? [Bset[end]] : Bset
 
-    threshold_fval = 1.0
     for t_ddp in Tset
         # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
         # modelVals_current = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
         # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
 
-        PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp)
-        PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1)
+        PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp, solverCall="DDP")
+        PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1, solverCall="DDP")
         discrepancy = abs(PSubsCost_current - PSubsCost_previous)
         if discrepancy > threshold_fval
             all_under_threshold = false
