@@ -19,14 +19,18 @@ This function extracts the values of decision variables from `model_Tset` and st
 It handles different sets of variables and updates the objective value, termination status, and solve time.
 """
 function copy_modelVals(modelDict, model_Tset;
-    Tset=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
+    Tset=nothing, solverCallType=nothing) # modelDict could be ddpModel or modelDict (temporallyBruteforced)
 
     @unpack modelVals, data = modelDict
     if Tset === nothing
         Tset = modelDict[:data][:Tset]
     end
     # Extract necessary sets from data
-    @unpack Bset, Dset, Lset, Nset, linearizedModel = data
+    @unpack Bset, Dset, Lset, Nset, linearizedModel, warmStart_mu = data
+
+    if isnothing(solverCallType)
+        solverCallType = "nonlinear"
+    end
 
     # Retrieve variables from the model
     P_Subs_model = model_Tset[:P_Subs]
@@ -50,11 +54,14 @@ function copy_modelVals(modelDict, model_Tset;
     for (i, j) in Lset, t in Tset
         modelVals[:P][(i, j), t] = value(P_model[(i, j), t])
         modelVals[:Q][(i, j), t] = value(Q_model[(i, j), t])
-        if !linearizedModel
+        if !linearizedModel || solverCallType == "nonlinear"
             l_model = model_Tset[:l]
             modelVals[:l][(i, j), t] = value(l_model[(i, j), t])
-        else
+        elseif linearizedModel || solverCallType == "linear"
             modelVals[:l][(i, j), t] = (value(P_model[(i, j), t])^2 + value(Q_model[(i, j), t])^2) / value(v_model[i, t])
+        else
+            @error "Invalid solverCallType: $solverCallType"
+            return
         end
     end
 
