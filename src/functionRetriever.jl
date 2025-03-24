@@ -134,18 +134,22 @@ end
 Calculate substation power cost in dollars from modelVals.
 """
 function get_substation_power_cost(modelDict; horizon::String="allT",
-    k_ddp=nothing)
+    k_ddp=nothing,
+    solverCall=nothing)
 
     @unpack data = modelDict
     @unpack temporal_decmp = data
-    if temporal_decmp && isnothing(k_ddp)
-        error("Looks like temporal_decmp is true but k_ddp is not provided")
-    elseif temporal_decmp && !isnothing(k_ddp)
+    if isnothing(solverCall)
+        solverCall = "BF"
+    end
+    if solverCall=="DDP" && isnothing(k_ddp)
+        error("Looks like you want to compute PSubsCost for a DDP Forward Pass but have not specified the k_ddp value")
+    elseif solverCall=="DDP" && !isnothing(k_ddp)
         @unpack modelVals_ddp_vs_t_vs_k = ddpModel
         modelVals = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    elseif !temporal_decmp && !isnothing(k_ddp)
-        error("Looks like temporal_decmp is false but k_ddp is provided")
-    elseif !temporal_decmp && isnothing(k_ddp)
+    elseif solverCall=="BF" && !isnothing(k_ddp)
+        error("Looks like you have provided a k_ddp value without specifying the solverCall as -DDP-")
+    elseif solverCall == "BF" && isnothing(k_ddp)
         @unpack modelVals = modelDict
     end
 
