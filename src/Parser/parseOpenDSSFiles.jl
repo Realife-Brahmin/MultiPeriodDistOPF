@@ -83,7 +83,8 @@ function parse_all_data(systemName::String, T::Int;
     tSOC_hard=false, 
     relax_terminal_soc_constraint=false,
     linearizedModel=false,
-    gedDict_ud=nothing)
+    gedDict_ud=nothing,
+    alpha_fpi=0.43)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
@@ -93,7 +94,8 @@ function parse_all_data(systemName::String, T::Int;
         tSOC_hard=tSOC_hard,
         relax_terminal_soc_constraint=relax_terminal_soc_constraint,
         linearizedModel=linearizedModel,
-        gedDict_ud=gedDict_ud)
+        gedDict_ud=gedDict_ud,
+        alpha_fpi=alpha_fpi)
 
     @unpack kVA_B, kV_B = sysSimData
     # Parse branch data
