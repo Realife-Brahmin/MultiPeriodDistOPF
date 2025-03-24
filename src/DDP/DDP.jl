@@ -309,7 +309,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Compare B and mu values and compute discrepancies
     max_discrepancy = 0.0
     threshold = 1e-3
-    threshold_fval = 1.0
+    threshold_fval = 1e-1
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
