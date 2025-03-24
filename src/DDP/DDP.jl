@@ -144,8 +144,8 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            @show μ[j, t_ddp+1, k_ddp-1]
-            @show MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1])/(1 + α_fpi)
+            μ[j, t_ddp+1, k_ddp-1]
+            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1])/(1 + α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
@@ -214,8 +214,8 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            @show μ[j, t_ddp+1, k_ddp-1]
-            @show MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1]) / (1 + α_fpi)
+            μ[j, t_ddp+1, k_ddp-1]
+            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1]) / (1 + α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
