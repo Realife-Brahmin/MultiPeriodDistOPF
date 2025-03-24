@@ -54,7 +54,8 @@ function parse_system_simulation_data(systemName::String, T::Int;
     tSOC_hard = false,
     relax_terminal_soc_constraint = false,
     linearizedModel = false,
-    gedDict_ud = nothing
+    gedDict_ud = nothing,
+    alpha_fpi = 0.43
     )
 
     if systemName == "ieee730_1ph"
@@ -214,6 +215,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     solution_time = -1 
 
     sysSimData = Dict(
+        :alpha_fpi => alpha_fpi,
         :inputForecastDescription => inputForecastDescription,
         :gedDict_ud => gedDict_ud,
         :machine_ID => machine_ID,
