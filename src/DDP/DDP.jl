@@ -18,6 +18,9 @@ export
 include("../computeOutputs.jl")
 import .computeOutputs as CO
 
+include("../functionRetriever.jl")
+import .functionRetriever as FR
+
 include("../ModelBuilder/ModelBuilder.jl")
 import .ModelBuilder as MB
 
@@ -315,7 +318,28 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     crayon_blue_neg = Crayon(foreground=:blue, bold=true, negative=true)
 
     # Limit to the first and last batteries if there are more than 2
-    Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
+    # Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
+    Bset_to_print = length(Bset) > 1 ? [Bset[end]] : Bset
+
+    threshold_fval = 1.0
+    for t_ddp in Tset
+        # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+        # modelVals_current = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
+        # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+
+        PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp)
+        PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1)
+        discrepancy = abs(PSubsCost_current - PSubsCost_previous)
+        if discrepancy > threshold_fval
+            all_under_threshold = false
+            myprintln(true, "*******")
+            println(crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
+            println(crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
+            myprintln(true, "*******")
+        end
+
+        
+    end
 
     # println(crayon_green("Checking convergence for B values:"))
 
