@@ -25,7 +25,7 @@ begin
 end;
 
 begin
-    alpha_fpi = 9//3
+    alpha_fpi = 0.43
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25
