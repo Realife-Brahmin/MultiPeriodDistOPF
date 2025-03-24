@@ -319,37 +319,37 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     # println(crayon_green("Checking convergence for B values:"))
 
-    for t_ddp in Tset
-        model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-        model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+    # for t_ddp in Tset
+    #     model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+    #     model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
 
-        # Create dictionaries for current and previous models
-        var_dict_current = MC.create_variable_dict(model_current)
-        var_dict_previous = MC.create_variable_dict(model_previous)
+    #     # Create dictionaries for current and previous models
+    #     var_dict_current = MC.create_variable_dict(model_current)
+    #     var_dict_previous = MC.create_variable_dict(model_previous)
 
-        for j in Bset
-            var_name = Symbol("B[$j,$t_ddp]")
-            value_current = var_dict_current[var_name]
-            value_previous = var_dict_previous[var_name]
-            discrepancy = abs(value_current - value_previous)
-            max_discrepancy = max(max_discrepancy, discrepancy)
+    #     for j in Bset
+    #         var_name = Symbol("B[$j,$t_ddp]")
+    #         value_current = var_dict_current[var_name]
+    #         value_previous = var_dict_previous[var_name]
+    #         discrepancy = abs(value_current - value_previous)
+    #         max_discrepancy = max(max_discrepancy, discrepancy)
 
-            if max_discrepancy > threshold
-                all_under_threshold = false
-                if discrepancy > threshold
-                    # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
-                    if j in Bset_to_print
-                        println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
-                        println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
-                    end
-                else
-                    if j in Bset_to_print
-                        # println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
-                    end
-                end
-            end
-        end
-    end
+    #         if max_discrepancy > threshold
+    #             all_under_threshold = false
+    #             if discrepancy > threshold
+    #                 # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+    #                 if j in Bset_to_print
+    #                     println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+    #                     println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+    #                 end
+    #             else
+    #                 if j in Bset_to_print
+    #                     # println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
+    #                 end
+    #             end
+    #         end
+    #     end
+    # end
 
     # Check the difference between latest and previous mu values
     # println(crayon_green("Checking convergence for μ values:"))
@@ -364,14 +364,14 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 if discrepancy > threshold
                     all_under_threshold = false
                     # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
-                    # if j in Bset_to_print
-                    # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-                    # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
-                    # end
-                else
                     if j in Bset_to_print
-                        println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                    println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
                     end
+                else
+                    # if j in Bset_to_print
+                    #     println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                    # end
                 end
             else
                 if j in Bset_to_print

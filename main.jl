@@ -18,7 +18,7 @@ begin
     temporal_decmp = false
     temporal_decmp = true
     savePlots = false
-    alpha_fpi = 3.00
+    alpha_fpi = 1//3
     savePlots = true
 end;
 
