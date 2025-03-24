@@ -1,6 +1,6 @@
 using JuMP
 using Ipopt
-include("src/SolverArranger/SolverArranger.jl")
+include("../src/SolverArranger/SolverArranger.jl")
 import .SolverArranger as SolverArranger
 # Define constants
 eta_C = 0.95
