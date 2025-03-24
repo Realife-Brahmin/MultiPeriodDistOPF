@@ -18,6 +18,7 @@ begin
     temporal_decmp = false
     temporal_decmp = true
     savePlots = false
+    alpha_fpi = 0.43
     # savePlots = true
 end;
 
@@ -74,7 +75,7 @@ end;
 
 begin
     # Parse all data
-    data = Parser.parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud)
+    data = Parser.parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud, alpha_fpi=alpha_fpi)
 
     @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset, NLset = data;
 end;
