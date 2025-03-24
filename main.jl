@@ -25,7 +25,7 @@ end;
 begin
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 55
+    maxiter_ddp = 111
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
