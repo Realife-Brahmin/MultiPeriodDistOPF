@@ -137,10 +137,25 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
     μ = mu
-    @unpack Bset = data;
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    @unpack Bset, alpha_fpi = data;
+    α_fpi = alpha_fpi  
+    MU = Dict()
+    for j ∈ Bset
+        if k_ddp == 1
+            MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
+        elseif k_ddp >= 2
+            @show μ[j, t_ddp+1, k_ddp-1]
+            @show MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1])/(1 + α_fpi)
+        else
+            @error "Invalid value of k_ddp: $k_ddp"
+            return
+        end
+    end
 
+    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
+    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
+    sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
     # B0 values are already set in the model so no need to fix them separately
@@ -192,8 +207,26 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
-    
+    @unpack Bset, alpha_fpi = data
+    α_fpi = alpha_fpi
+    MU = Dict()
+    for j ∈ Bset
+        if k_ddp == 1
+            MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
+        elseif k_ddp >= 2
+            @show μ[j, t_ddp+1, k_ddp-1]
+            @show MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1]) / (1 + α_fpi)
+        else
+            @error "Invalid value of k_ddp: $k_ddp"
+            return
+        end
+    end
+
+    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
+    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms +
+                                     sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
     # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = t_ddp ∈ [2, T-1]
@@ -332,8 +365,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                     all_under_threshold = false
                     # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                     # if j in Bset_to_print
-                    println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-                    println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
                     # end
                 else
                     if j in Bset_to_print
@@ -690,7 +723,8 @@ It initializes the DDP model, performs forward passes, checks for convergence, a
 function optimize_MPOPF_1ph_NL_DDP(data;
     verbose::Bool=false,
     muDict=nothing,
-    maxiter::Int=7)
+    maxiter::Int=7,
+    alpha_fpi=0.43)
 
     ddpModel = DDPModel(data, maxiter=maxiter, muDict=muDict)
 
