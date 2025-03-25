@@ -2,9 +2,9 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 
 begin
-    # systemName0 = "ads10_1ph"
+    systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
-    systemName0 = "ieee123_1ph-B"
+    # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 3
@@ -25,7 +25,8 @@ begin
 end;
 
 begin
-    alpha_fpi = 0.43
+    alpha_fpi = 3.00
+    gamma_fpi = 0.8    
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25
@@ -78,7 +79,7 @@ end;
 
 begin
     # Parse all data
-    data = Parser.parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud, alpha_fpi=alpha_fpi, warmStart_mu=warmStart_mu)
+    data = Parser.parse_all_data(systemName, T, temporal_decmp=temporal_decmp, linearizedModel=linearizedModel, relax_terminal_soc_constraint=relax_terminal_soc_constraint, gedDict_ud=gedDict_ud, alpha_fpi=alpha_fpi, gamma_fpi=gamma_fpi, warmStart_mu=warmStart_mu)
 
     @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset, NLset = data;
 end;
