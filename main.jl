@@ -29,7 +29,7 @@ begin
     gamma_fpi = 0.8    
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 25
+    maxiter_ddp = 50
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
