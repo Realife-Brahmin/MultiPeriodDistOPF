@@ -2,8 +2,8 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 
 begin
-    # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
+    systemName0 = "ads10_1ph"
+    # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
@@ -107,7 +107,7 @@ elseif temporal_decmp
     end
     modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
     @unpack modelVals, data = modelDict
-    dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
+    dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=false)
 else
     error("temporal_decmp must be either true or false")
 end
