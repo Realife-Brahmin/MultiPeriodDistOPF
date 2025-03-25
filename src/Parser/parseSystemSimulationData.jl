@@ -56,6 +56,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     linearizedModel = false,
     gedDict_ud = nothing,
     alpha_fpi = 0.43,
+    gamma_fpi = 0.8,
     warmStart_mu = nothing
     )
 
@@ -230,6 +231,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :MVA_B => MVA_B,
         :Z_B => Z_B,
         :delta_t => Δt,
+        :gamma_fpi => gamma_fpi,
         :linearizedModel => linearizedModel,
         :linearizedModelAppendix => linearizedModelAppendix,
         :linearizedModelString => linearizedModelString,

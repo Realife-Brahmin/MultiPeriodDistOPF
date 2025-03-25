@@ -85,6 +85,7 @@ function parse_all_data(systemName::String, T::Int;
     linearizedModel=false,
     gedDict_ud=nothing,
     alpha_fpi=0.43,
+    gamma_fpi=0.8,
     warmStart_mu=nothing)
 
     # Parse system simulation data
@@ -97,6 +98,7 @@ function parse_all_data(systemName::String, T::Int;
         linearizedModel=linearizedModel,
         gedDict_ud=gedDict_ud,
         alpha_fpi=alpha_fpi,
+        gamma_fpi=gamma_fpi,
         warmStart_mu=warmStart_mu)
 
     @unpack kVA_B, kV_B = sysSimData

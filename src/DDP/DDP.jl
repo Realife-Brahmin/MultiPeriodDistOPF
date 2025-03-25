@@ -140,14 +140,16 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
     μ = mu
-    @unpack Bset, alpha_fpi = data;
-    α_fpi = alpha_fpi  
+    @unpack Bset, alpha_fpi, gamma_fpi = data;
+    α_fpi0 = alpha_fpi
+    γ_fpi = gamma_fpi
+    α_fpi = α_fpi0 * γ_fpi^(k_ddp-2)
     MU = Dict()
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-1] + α_fpi * μ[j, t_ddp+1, k_ddp-2])/(1 + α_fpi)
+            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1])/(1 + α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
@@ -210,14 +212,16 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
     @unpack Bset, alpha_fpi = data
-    α_fpi = alpha_fpi
+    @unpack Bset, alpha_fpi, gamma_fpi = data
+    α_fpi0 = alpha_fpi
+    γ_fpi = gamma_fpi
+    α_fpi = α_fpi0 * γ_fpi^(k_ddp - 2)
     MU = Dict()
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            μ[j, t_ddp+1, k_ddp-1]
-            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-1] + α_fpi * μ[j, t_ddp+1, k_ddp-2]) / (1 + α_fpi)
+            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1]) / (1 + α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
