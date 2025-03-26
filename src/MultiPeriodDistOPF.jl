@@ -1,5 +1,17 @@
 module MultiPeriodDistOPF
 
+# Export submodules
+export computeOutputs
+export DDP
+export functionRetriever
+export helperFunctions
+export ModelBuilder
+export Playbook_of_MPOPF
+export parseOpenDSSFiles
+export Plotter
+export Exporter
+export openDSSValidator
+
 using JuMP
 using Parameters: @unpack, @pack!
 
@@ -26,6 +38,11 @@ using .parseOpenDSSFiles
 using .Plotter
 using .Exporter
 using .openDSSValidator
+
+if isdefined(Main, :Revise)
+    @info "Tracking submodules with Revise"
+    Revise.track(@__MODULE__)
+end
 
 # Explicitly import and re-export macros from external packages (correct way)
 export @unpack, @pack!
