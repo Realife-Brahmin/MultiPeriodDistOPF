@@ -376,8 +376,6 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # Check the difference between latest and previous mu values
     # println(crayon_green("Checking convergence for μ values:"))
 
-    using Crayons
-
     # Define crayons
     crayon_green = Crayon(foreground=:green, bold=true)
     crayon_blue = Crayon(foreground=:blue, bold=true)
@@ -386,11 +384,9 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     # Iterate over batteries in Bset_to_print
     for (line_idx, j) in enumerate(Bset_to_print)
-        line = ""
-
         # Alternate colors per line (Forward Pass label)
         crayon_fp = (line_idx % 2 == 1) ? crayon_green : crayon_blue
-        line *= crayon_fp("FP$(lpad(k_ddp, 2, '0')): ")
+        print(crayon_fp("FP$(lpad(k_ddp, 2, '0')): "))
 
         # Iterate over time steps, alternate colors per time step
         for (t_idx, t) in enumerate(Tset)
@@ -400,12 +396,12 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
             # Retrieve and format the current μ value
             mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=4)
 
-            # Add formatted μ value to the line
-            line *= crayon_t("mu[$j, $t, $k_ddp] = $mu_current ")
+            # Print formatted μ value
+            print(crayon_t("$mu_current "))
         end
 
-        # Print the completed line
-        println(line)
+        # Finish the current line
+        println()
     end
 
     for t in Tset
