@@ -1,12 +1,12 @@
 module DDP 
 
 export
+    check_for_ddp_convergence,
     compute_and_store_dual_variables, 
     build_ForwardStep_1ph_NL_model_t_is_1,
     build_ForwardStep_1ph_NL_model_t_in_2toTm1,
     build_ForwardStep_1ph_NL_model_t_is_T,
     DDPModel,
-    check_for_ddp_convergence,
     forward_pass,
     ForwardStep_1ph_NL_t_is_1,
     ForwardStep_1ph_NL_t_in_2toTm1,
@@ -293,6 +293,40 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     @unpack Tset, Bset = data
 
     verbose = true
+    
+    # Bset_to_print is just a subset of the batteries we wish to inspect (to avoid clutter)
+    # Limit to the first and last batteries if there are more than 2
+    # Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
+    Bset_to_print = length(Bset) > 1 ? [Bset[end]] : Bset
+
+    # So anyway, let's see what the μ(s) look like:
+    # Define crayons
+    crayon_green = Crayon(foreground=:green, bold=true)
+    crayon_blue = Crayon(foreground=:blue, bold=true)
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
+    crayon_light_blue = Crayon(foreground=:light_blue, bold=true)
+
+    # Iterate over batteries in Bset_to_print
+    for (line_idx, j) in enumerate(Bset_to_print)
+        # Alternate colors per line (Forward Pass label)
+        crayon_fp = (line_idx % 2 == 1) ? crayon_green : crayon_blue
+        print(crayon_fp("FP$(lpad(k_ddp, 2, '0')): "))
+
+        # Iterate over time steps, alternate colors per time step
+        for (t_idx, t) in enumerate(Tset)
+            # Alternate colors per time step
+            crayon_t = ((t_idx + line_idx) % 2 == 1) ? crayon_light_green : crayon_light_blue
+
+            # Retrieve and format the current μ value
+            mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=4)
+
+            # Print formatted μ value
+            print(crayon_t("$mu_current "))
+        end
+
+        # Finish the current line
+        println()
+    end
 
     # Criterion 1: Check if k_ddp has crossed the maxiter threshold
     if k_ddp >= maxiter
@@ -319,10 +353,6 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     crayon_green = Crayon(background=:green, foreground=:white, bold=true)
     crayon_blue = Crayon(foreground=:blue, bold=true)
     crayon_blue_neg = Crayon(foreground=:blue, bold=true, negative=true)
-
-    # Limit to the first and last batteries if there are more than 2
-    # Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
-    Bset_to_print = length(Bset) > 1 ? [Bset[end]] : Bset
 
     # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
     # modelVals_current = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
@@ -375,34 +405,6 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     # Check the difference between latest and previous mu values
     # println(crayon_green("Checking convergence for μ values:"))
-
-    # Define crayons
-    crayon_green = Crayon(foreground=:green, bold=true)
-    crayon_blue = Crayon(foreground=:blue, bold=true)
-    crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    crayon_light_blue = Crayon(foreground=:light_blue, bold=true)
-
-    # Iterate over batteries in Bset_to_print
-    for (line_idx, j) in enumerate(Bset_to_print)
-        # Alternate colors per line (Forward Pass label)
-        crayon_fp = (line_idx % 2 == 1) ? crayon_green : crayon_blue
-        print(crayon_fp("FP$(lpad(k_ddp, 2, '0')): "))
-
-        # Iterate over time steps, alternate colors per time step
-        for (t_idx, t) in enumerate(Tset)
-            # Alternate colors per time step
-            crayon_t = ((t_idx + line_idx) % 2 == 1) ? crayon_light_green : crayon_light_blue
-
-            # Retrieve and format the current μ value
-            mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=4)
-
-            # Print formatted μ value
-            print(crayon_t("$mu_current "))
-        end
-
-        # Finish the current line
-        println()
-    end
 
     for t in Tset
         for j in Bset

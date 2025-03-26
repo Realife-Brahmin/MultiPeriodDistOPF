@@ -28,7 +28,7 @@ function compute_output_values(modelDict;
     @unpack temporal_decmp = data;
     if temporal_decmp
         @unpack k_ddp = modelDict
-        println("DDP FP $(k_ddp): Computing Output Values..")
+        # println("DDP FP $(k_ddp): Computing Output Values..")
     end
     # Initialize arrays of size T
     @unpack T = data;
@@ -131,9 +131,9 @@ function compute_output_values(modelDict;
 
     end
     
-    println("***********************************************")
-    println("Substation power cost: ", PSubsCost_allT_dollar)
-    println("************************************************")
+    # println("***********************************************")
+    # println("Substation power cost: ", PSubsCost_allT_dollar)
+    # println("************************************************")
 
     @pack! data =
         battery_reactive_power_allT_kVAr,
