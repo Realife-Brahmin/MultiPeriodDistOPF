@@ -211,7 +211,6 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
-    @unpack Bset, alpha_fpi = data
     @unpack Bset, alpha_fpi, gamma_fpi = data
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
@@ -329,8 +328,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # modelVals_current = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
     # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
 
-    @show PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp, solverCall="DDP")
-    @show PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1, solverCall="DDP")
+    PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp, solverCall="DDP")
+    PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1, solverCall="DDP")
     discrepancy = abs(PSubsCost_current - PSubsCost_previous)
     if discrepancy > threshold_fval
         all_under_threshold = false
@@ -420,8 +419,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                     all_under_threshold = false
                     # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                     if j in Bset_to_print
-                    println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
-                    println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                    # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                    # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
                     end
                 else
                     # if j in Bset_to_print
@@ -778,8 +777,7 @@ It initializes the DDP model, performs forward passes, checks for convergence, a
 function optimize_MPOPF_1ph_NL_DDP(data;
     verbose::Bool=false,
     muDict=nothing,
-    maxiter::Int=7,
-    alpha_fpi=0.43)
+    maxiter::Int=7)
 
     ddpModel = DDPModel(data, maxiter=maxiter, muDict=muDict)
 
