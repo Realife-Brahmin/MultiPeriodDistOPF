@@ -9,8 +9,8 @@ begin
     # systemName0 = "ieee730_1ph"
     # T0 = 3
     # T0 = 1
-    # T0 = 24
-    T0 = 11
+    T0 = 24
+    # T0 = 11
     factor = 1
     # factor = 1/2
     linearizedModel = false
@@ -25,7 +25,8 @@ begin
 end;
 
 begin
-    alpha_fpi = 0.5
+    # alpha_fpi = 0.5
+    alpha_fpi = 1.0
     # gamma_fpi = 0.5    
     gamma_fpi = 1.0
     T = Int(T0*factor) 
