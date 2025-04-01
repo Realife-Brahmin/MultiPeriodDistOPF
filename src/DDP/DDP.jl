@@ -114,6 +114,21 @@ function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     return ddpModel
 end
 
+# Define the function to compute α_fpi adaptively
+function compute_alpha_fpi(alpha_fpi0, gamma_fpi, k_ddp)
+    if k_ddp < 2
+        @error "Invalid value of k_ddp: $k_ddp. Must be >= 2."
+        return NaN  # Return NaN or handle the error appropriately
+    end
+    return alpha_fpi0 * gamma_fpi^(k_ddp - 2)
+end
+
+# Define the function to compute the interpolated value
+function get_interpolated_value(xn, xnm1, alpha)
+    diff = xn - xnm1
+    return xnm1 + diff * alpha
+end
+
 function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose::Bool=false)
 
@@ -143,13 +158,13 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     @unpack Bset, alpha_fpi, gamma_fpi = data;
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
-    α_fpi = α_fpi0 * γ_fpi^(k_ddp-2)
     MU = Dict()
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1])/(1 + α_fpi)
+            α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
+            MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
@@ -214,13 +229,13 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     @unpack Bset, alpha_fpi, gamma_fpi = data
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
-    α_fpi = α_fpi0 * γ_fpi^(k_ddp - 2)
     MU = Dict()
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            MU[j, t_ddp+1] = (μ[j, t_ddp+1, k_ddp-2] + α_fpi * μ[j, t_ddp+1, k_ddp-1]) / (1 + α_fpi)
+            α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
+            MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
