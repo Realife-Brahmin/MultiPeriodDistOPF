@@ -57,6 +57,7 @@ function generateBinaryLoadShape(T::Int; filenameLoadShape::String="LoadShapePSu
     lo::Union{Float64,Nothing}=nothing,
     peakHoursFraction::Float64=0.3,
     verbose::Bool=false)
+
     # Get the working directory of this script
     wd = @__DIR__
 
