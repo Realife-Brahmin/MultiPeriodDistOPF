@@ -7,24 +7,24 @@
 6. Optimization Model: BranchFlowModel 1ph
 ---------------------------------------------
 Full 24 Hour Horizon Validation Results
-7. Horizon Total Substation Power Cost: $199.2
-8. Horizon Total Line Loss: 3.54 kW
-9. Horizon Total Substation Power: 4500.46 kW + 253.04 kVAr
+7. Horizon Total Substation Power Cost: $200.17
+8. Horizon Total Line Loss: 3.46 kW
+9. Horizon Total Substation Power: 4492.43 kW + 201.75 kVAr
 10. Horizon Total Load: 4896.14 kW + 2448.15 kVAr
-11. Horizon Total Generation: 399.22 kW + 2201.97 kVAr
+11. Horizon Total Generation: 407.18 kW + 2253.11 kVAr
 12. Horizon Total Static Capacitor Reactive Power Generation: 0.0 kVAr
-13. Horizon Total PV Generation: 357.9 kW + 1096.22 kVAr
-14. Horizon Total Battery Generation: 41.32 kW + 1105.76 kVAr
-15. Horizon Total Battery Transaction Magnitude: 375.87 kW + 1105.76 kVAr
+13. Horizon Total PV Generation: 358.02 kW + 1085.16 kVAr
+14. Horizon Total Battery Generation: 49.16 kW + 1167.95 kVAr
+15. Horizon Total Battery Transaction Magnitude: 222.9 kW + 1167.95 kVAr
 16. Horizon Total SCD Observed: N/A
-17. Horizon-end Battery Energy Deviation from Reference: 60.67 kWh
+17. Horizon-end Battery Energy Deviation from Reference: 60.66 kWh
 18. Horizon-Total All Time Substation Power Peak: 266.93 kW
 ---------------------------------------------
 Discrepancies (Maximum All Time):
 19. Maximum All Time Voltage Discrepancy: 1.0e-5 pu
 20. Maximum All Time Line Loss Discrepancy: 0.006689 kW
-21. Maximum All Time Substation Borrowed Real Power Discrepancy: 4.6728 kW
-22. Maximum All Time Substation Borrowed Reactive Power Discrepancy: 0.366593 kVAr
+21. Maximum All Time Substation Borrowed Real Power Discrepancy: 4.672748 kW
+22. Maximum All Time Substation Borrowed Reactive Power Discrepancy: 0.366609 kVAr
 ---------------------------------------------
 23. Solution Time: Small
 
@@ -33,359 +33,359 @@ Per-Timestep Power Flow Results:
 ******************************
    Time Step: 1
 ******************************
-   Power Loss              : 0.13612901056409465 kW
-   Substation Power        : 189.48492794159515 kW
-   Reactive Power          : -0.03842747527132457 kVAr
-   Total Load Power        : 189.32865894095525 kW
-   Total Load Reactive Power: 94.66790703428094 kVAr
-   Total PV Power          : -9.893153789973042e-5 kW
-   Total PV Reactive Power : 47.563360894034425 kVAr
-   Total Battery Power     : -0.019334069408108393 kW
-   Total Battery Reactive Power: 47.40514245990604 kVAr
+   Power Loss              : 0.13614912222287967 kW
+   Substation Power        : 189.49612714828004 kW
+   Reactive Power          : -0.04137182055035353 kVAr
+   Total Load Power        : 189.32865895649763 kW
+   Total Load Reactive Power: 94.66790697186477 kVAr
+   Total PV Power          : -9.89332043226554e-5 kW
+   Total PV Reactive Power : 47.568597140444346 kVAr
+   Total Battery Power     : -0.03051319564922298 kW
+   Total Battery Reactive Power: 47.402934056221 kVAr
 ******************************
 
 
 ******************************
    Time Step: 2
 ******************************
-   Power Loss              : 0.11651991921853914 kW
-   Substation Power        : 175.31219489937652 kW
-   Reactive Power          : -0.0012079274854258771 kVAr
-   Total Load Power        : 175.19560976467488 kW
-   Total Load Reactive Power: 87.60049314891009 kVAr
-   Total PV Power          : -8.007635869539343e-6 kW
-   Total PV Reactive Power : 43.928870854274024 kVAr
-   Total Battery Power     : -2.034177476062382e-5 kW
-   Total Battery Reactive Power: 43.89549472781426 kVAr
+   Power Loss              : 0.11655365512249409 kW
+   Substation Power        : 175.33249671726685 kW
+   Reactive Power          : 0.004152290832558308 kVAr
+   Total Load Power        : 175.19560978070737 kW
+   Total Load Reactive Power: 87.60049309726344 kVAr
+   Total PV Power          : -7.997203795525821e-6 kW
+   Total PV Reactive Power : 43.91879379902391 kVAr
+   Total Battery Power     : -0.02028844313114445 kW
+   Total Battery Reactive Power: 43.90026472015415 kVAr
 ******************************
 
 
 ******************************
    Time Step: 3
 ******************************
-   Power Loss              : 0.14761486197283374 kW
-   Substation Power        : 190.59046802361058 kW
-   Reactive Power          : -0.08312112695142099 kVAr
-   Total Load Power        : 164.79588484478904 kW
-   Total Load Reactive Power: 82.4003231469928 kVAr
-   Total PV Power          : 1.1744401913780678e-5 kW
-   Total PV Reactive Power : 41.495606706010705 kVAr
-   Total Battery Power     : -25.647052755250826 kW
-   Total Battery Reactive Power: 41.274340225023 kVAr
+   Power Loss              : 0.1047111671979219 kW
+   Substation Power        : 165.93288794395156 kW
+   Reactive Power          : -0.046581041087538404 kVAr
+   Total Load Power        : 164.79587389469646 kW
+   Total Load Reactive Power: 82.40044358563884 kVAr
+   Total PV Power          : -4.626975194085503e-6 kW
+   Total PV Reactive Power : 41.39153356860771 kVAr
+   Total Battery Power     : -1.03227724238829 kW
+   Total Battery Reactive Power: 41.25398640599581 kVAr
 ******************************
 
 
 ******************************
    Time Step: 4
 ******************************
-   Power Loss              : 0.09459173223437392 kW
-   Substation Power        : 157.95752879249517 kW
-   Reactive Power          : -0.02876397584176177 kVAr
-   Total Load Power        : 157.86269130845545 kW
-   Total Load Reactive Power: 78.93385994539798 kVAr
-   Total PV Power          : -1.9032555014995012e-5 kW
-   Total PV Reactive Power : 39.613092803468966 kVAr
-   Total Battery Power     : -0.00014096484981264724 kW
-   Total Battery Reactive Power: 39.52726990742539 kVAr
+   Power Loss              : 0.13658305661434134 kW
+   Substation Power        : 183.1883185911167 kW
+   Reactive Power          : -0.07964830742767157 kVAr
+   Total Load Power        : 157.86272546992922 kW
+   Total Load Reactive Power: 78.93364074861192 kVAr
+   Total PV Power          : 1.1617237287914861e-5 kW
+   Total PV Reactive Power : 39.73732391389854 kVAr
+   Total Battery Power     : -25.18909281239505 kW
+   Total Battery Reactive Power: 39.5399079153113 kVAr
 ******************************
 
 
 ******************************
    Time Step: 5
 ******************************
-   Power Loss              : 0.16408092004957142 kW
-   Substation Power        : 197.81822364418684 kW
-   Reactive Power          : -0.102221625372365 kVAr
-   Total Load Power        : 159.4626777067436 kW
-   Total Load Reactive Power: 79.7335401388271 kVAr
-   Total PV Power          : 2.506597509547248e-5 kW
-   Total PV Reactive Power : 40.56879366431796 kVAr
-   Total Battery Power     : -38.1916607117273 kW
-   Total Battery Reactive Power: 39.58728153010289 kVAr
+   Power Loss              : 0.09651998948863183 kW
+   Substation Power        : 159.55934781312263 kW
+   Reactive Power          : -0.028537488033239775 kVAr
+   Total Load Power        : 159.46265737454758 kW
+   Total Load Reactive Power: 79.73383654221487 kVAr
+   Total PV Power          : -1.4996282455008725e-5 kW
+   Total PV Reactive Power : 40.01551692557643 kVAr
+   Total Battery Power     : -8.737386287418048e-5 kW
+   Total Battery Reactive Power: 39.92858522384865 kVAr
 ******************************
 
 
 ******************************
    Time Step: 6
 ******************************
-   Power Loss              : 0.04391184547780722 kW
-   Substation Power        : 116.84115441631741 kW
-   Reactive Power          : 0.034124223973909684 kVAr
-   Total Load Power        : 163.46261434234043 kW
-   Total Load Reactive Power: 81.73392775473818 kVAr
-   Total PV Power          : -3.052715766985159e-5 kW
-   Total PV Reactive Power : 51.56792152761518 kVAr
-   Total Battery Power     : 46.66550748082545 kW
-   Total Battery Reactive Power: 30.206056172331156 kVAr
+   Power Loss              : 0.08497820298746228 kW
+   Substation Power        : 152.4219543607532 kW
+   Reactive Power          : -0.03133084001774618 kVAr
+   Total Load Power        : 163.46259162963912 kW
+   Total Load Reactive Power: 81.73376736797452 kVAr
+   Total PV Power          : -2.68631124983898e-6 kW
+   Total PV Reactive Power : 41.01279864939755 kVAr
+   Total Battery Power     : 11.12563613999557 kW
+   Total Battery Reactive Power: 40.91049260795138 kVAr
 ******************************
 
 
 ******************************
    Time Step: 7
 ******************************
-   Power Loss              : 0.04769290416911099 kW
-   Substation Power        : 120.44466920689025 kW
-   Reactive Power          : 0.7115501253442428 kVAr
-   Total Load Power        : 171.72903534683826 kW
-   Total Load Reactive Power: 85.86708242472545 kVAr
-   Total PV Power          : 4.666551900940961 kW
-   Total PV Reactive Power : 55.02824266625693 kVAr
-   Total Battery Power     : 46.66549863087995 kW
-   Total Battery Reactive Power: 30.209181243888406 kVAr
+   Power Loss              : 0.04769296365973423 kW
+   Substation Power        : 120.44473636266545 kW
+   Reactive Power          : 0.7114746293115244 kVAr
+   Total Load Power        : 171.72904613214124 kW
+   Total Load Reactive Power: 85.86716426911175 kVAr
+   Total PV Power          : 4.666538520827766 kW
+   Total PV Reactive Power : 55.02838380247537 kVAr
+   Total Battery Power     : 46.665500088580615 kW
+   Total Battery Reactive Power: 30.209212756652125 kVAr
 ******************************
 
 
 ******************************
    Time Step: 8
 ******************************
-   Power Loss              : 0.14143859708897072 kW
-   Substation Power        : 186.1610413895994 kW
-   Reactive Power          : -0.011248902577279144 kVAr
-   Total Load Power        : 178.12892750659702 kW
-   Total Load Reactive Power: 89.06679577531318 kVAr
-   Total PV Power          : 9.333141066424824 kW
-   Total PV Reactive Power : 44.70539854646159 kVAr
-   Total Battery Power     : -17.224036980906 kW
-   Total Battery Reactive Power: 44.64671474754915 kVAr
+   Power Loss              : 0.14618714812888356 kW
+   Substation Power        : 188.68455713984036 kW
+   Reactive Power          : -0.07308015406340847 kVAr
+   Total Load Power        : 178.12892348595966 kW
+   Total Load Reactive Power: 89.06678007672772 kVAr
+   Total PV Power          : 9.333142633070771 kW
+   Total PV Reactive Power : 44.80971929007241 kVAr
+   Total Battery Power     : -19.742826942028458 kW
+   Total Battery Reactive Power: 44.6140520629986 kVAr
 ******************************
 
 
 ******************************
    Time Step: 9
 ******************************
-   Power Loss              : 0.1302388015782053 kW
-   Substation Power        : 180.13537841853315 kW
-   Reactive Power          : -0.03820098468670929 kVAr
-   Total Load Power        : 187.99529481703027 kW
-   Total Load Reactive Power: 94.00050639059631 kVAr
-   Total PV Power          : 13.999645489981019 kW
-   Total PV Reactive Power : 47.20375734879433 kVAr
-   Total Battery Power     : -6.009464908419923 kW
-   Total Battery Reactive Power: 47.085777589352 kVAr
+   Power Loss              : 0.12322119718564499 kW
+   Substation Power        : 176.14025546008654 kW
+   Reactive Power          : -0.03223679712686533 kVAr
+   Total Load Power        : 187.99528777475243 kW
+   Total Load Reactive Power: 94.00054393539816 kVAr
+   Total PV Power          : 13.99964067186807 kW
+   Total PV Reactive Power : 47.18825855685251 kVAr
+   Total Battery Power     : -2.021337215194352 kW
+   Total Battery Reactive Power: 47.080898401144786 kVAr
 ******************************
 
 
 ******************************
    Time Step: 10
 ******************************
-   Power Loss              : 0.2276092911005544 kW
-   Substation Power        : 224.48512755017373 kW
-   Reactive Power          : 19.348651729313453 kVAr
-   Total Load Power        : 199.99491574221219 kW
-   Total Load Reactive Power: 99.9999900773714 kVAr
-   Total PV Power          : 22.402242820172557 kW
-   Total PV Reactive Power : 50.8855436656763 kVAr
-   Total Battery Power     : -46.66533675938807 kW
-   Total Battery Reactive Power: 30.21632607588413 kVAr
+   Power Loss              : 0.20729484132968354 kW
+   Substation Power        : 216.58724105286745 kW
+   Reactive Power          : 9.772281967044567 kVAr
+   Total Load Power        : 199.9949612787221 kW
+   Total Load Reactive Power: 100.0001146365893 kVAr
+   Total PV Power          : 22.448781150586548 kW
+   Total PV Reactive Power : 50.865046307208544 kVAr
+   Total Battery Power     : -38.83411493757414 kW
+   Total Battery Reactive Power: 39.771679252872595 kVAr
 ******************************
 
 
 ******************************
    Time Step: 11
 ******************************
-   Power Loss              : 0.19106195266195572 kW
-   Substation Power        : 204.14608530390794 kW
-   Reactive Power          : 17.91150925801143 kVAr
-   Total Load Power        : 207.19484327038168 kW
-   Total Load Reactive Power: 103.60069522881722 kVAr
-   Total PV Power          : 36.754813857769044 kW
-   Total PV Reactive Power : 41.71677913445132 kVAr
-   Total Battery Power     : -33.514828238236 kW
-   Total Battery Reactive Power: 44.34768287764048 kVAr
+   Power Loss              : 0.12361108979933488 kW
+   Substation Power        : 170.52303563761478 kW
+   Reactive Power          : 6.759537299174413 kVAr
+   Total Load Power        : 207.19480402186096 kW
+   Total Load Reactive Power: 103.60087439268959 kVAr
+   Total PV Power          : 36.795869327759256 kW
+   Total PV Reactive Power : 41.68058088244366 kVAr
+   Total Battery Power     : -0.0002111008523601896 kW
+   Total Battery Reactive Power: 55.397738929167836 kVAr
 ******************************
 
 
 ******************************
    Time Step: 12
 ******************************
-   Power Loss              : 0.06354388090208522 kW
-   Substation Power        : 125.51497195878495 kW
-   Reactive Power          : 32.70035162504393 kVAr
-   Total Load Power        : 209.86148657903948 kW
-   Total Load Reactive Power: 104.9341040201331 kVAr
-   Total PV Power          : 41.47162228383925 kW
-   Total PV Reactive Power : 37.03122618186257 kVAr
-   Total Battery Power     : 42.93859744895968 kW
-   Total Battery Reactive Power: 35.31680321737479 kVAr
+   Power Loss              : 0.09312029226637969 kW
+   Substation Power        : 150.0461191172591 kW
+   Reactive Power          : 15.647685234172073 kVAr
+   Total Load Power        : 209.86144331669374 kW
+   Total Load Reactive Power: 104.93391669599984 kVAr
+   Total PV Power          : 41.47929142918735 kW
+   Total PV Reactive Power : 37.0226072953281 kVAr
+   Total Battery Power     : 18.429194121856888 kW
+   Total Battery Reactive Power: 52.438494156707655 kVAr
 ******************************
 
 
 ******************************
    Time Step: 13
 ******************************
-   Power Loss              : 0.12241935613288661 kW
-   Substation Power        : 166.17126391153752 kW
-   Reactive Power          : 19.84488716982907 kVAr
-   Total Load Power        : 212.2612759850274 kW
-   Total Load Reactive Power: 106.13372747833742 kVAr
-   Total PV Power          : 46.19366482957506 kW
-   Total PV Reactive Power : 30.941032190560517 kVAr
-   Total Battery Power     : 0.01866146328432832 kW
-   Total Battery Reactive Power: 55.582679080196215 kVAr
+   Power Loss              : 0.07277742408719495 kW
+   Substation Power        : 132.38251564086602 kW
+   Reactive Power          : 31.152833946043835 kVAr
+   Total Load Power        : 212.26135407092158 kW
+   Total Load Reactive Power: 106.13387262849729 kVAr
+   Total PV Power          : 46.19110835166216 kW
+   Total PV Reactive Power : 30.944882313075443 kVAr
+   Total Battery Power     : 33.7605110559514 kW
+   Total Battery Reactive Power: 44.169436017362436 kVAr
 ******************************
 
 
 ******************************
    Time Step: 14
 ******************************
-   Power Loss              : 0.0947345404457883 kW
-   Substation Power        : 148.4560175097996 kW
-   Reactive Power          : 19.705521496565904 kVAr
-   Total Load Power        : 208.52815307809226 kW
-   Total Load Reactive Power: 104.26727015936208 kVAr
-   Total PV Power          : 46.19376016700799 kW
-   Total PV Reactive Power : 30.940943258056343 kVAr
-   Total Battery Power     : 13.973167202633269 kW
-   Total Battery Reactive Power: 53.79901953518999 kVAr
+   Power Loss              : 0.09858044257861912 kW
+   Substation Power        : 150.97970878306904 kW
+   Reactive Power          : 19.122843115727964 kVAr
+   Total Load Power        : 208.52809820997473 kW
+   Total Load Reactive Power: 104.26715120923299 kVAr
+   Total PV Power          : 46.194026891471616 kW
+   Total PV Reactive Power : 30.940518111258413 kVAr
+   Total Battery Power     : 11.45291500369749 kW
+   Total Battery Reactive Power: 54.38983011542532 kVAr
 ******************************
 
 
 ******************************
    Time Step: 15
 ******************************
-   Power Loss              : 0.11159301920437428 kW
-   Substation Power        : 159.3953377477402 kW
-   Reactive Power          : 17.532141705098066 kVAr
-   Total Load Power        : 208.7947581391972 kW
-   Total Load Reactive Power: 104.40047693199581 kVAr
-   Total PV Power          : 45.723630690515506 kW
-   Total PV Reactive Power : 31.631523258267507 kVAr
-   Total Battery Power     : 3.7873501332724993 kW
-   Total Battery Reactive Power: 55.44950687005974 kVAr
+   Power Loss              : 0.11180948868626729 kW
+   Substation Power        : 159.52525150815413 kW
+   Reactive Power          : 17.524290117672386 kVAr
+   Total Load Power        : 208.79476281948575 kW
+   Total Load Reactive Power: 104.40048622209466 kVAr
+   Total PV Power          : 45.72365760581331 kW
+   Total PV Reactive Power : 31.631486515876063 kVAr
+   Total Battery Power     : 3.657637378732694 kW
+   Total Battery Reactive Power: 55.457927725154505 kVAr
 ******************************
 
 
 ******************************
    Time Step: 16
 ******************************
-   Power Loss              : 0.06157288957478158 kW
-   Substation Power        : 122.31967947881273 kW
-   Reactive Power          : 38.05853155450894 kVAr
-   Total Load Power        : 210.39472067684466 kW
-   Total Load Reactive Power: 105.20056612326411 kVAr
-   Total PV Power          : 41.47113877680749 kW
-   Total PV Reactive Power : 37.03172894126246 kVAr
-   Total Battery Power     : 46.66549235642301 kW
-   Total Battery Reactive Power: 30.220657586335207 kVAr
+   Power Loss              : 0.10534694822067103 kW
+   Substation Power        : 158.07771872396154 kW
+   Reactive Power          : 13.891949496111502 kVAr
+   Total Load Power        : 210.39475075654693 kW
+   Total Load Reactive Power: 105.20055451393307 kVAr
+   Total PV Power          : 41.48117496108001 kW
+   Total PV Reactive Power : 37.02049207774665 kVAr
+   Total Battery Power     : 10.941223628162653 kW
+   Total Battery Reactive Power: 54.48808908213234 kVAr
 ******************************
 
 
 ******************************
    Time Step: 17
 ******************************
-   Power Loss              : 0.14721076222312696 kW
-   Substation Power        : 188.37110157210083 kW
-   Reactive Power          : 9.43005845989214 kVAr
-   Total Load Power        : 220.26129950552422 kW
-   Total Load Reactive Power: 110.13370127985374 kVAr
-   Total PV Power          : 32.03733320866839 kW
-   Total PV Reactive Power : 45.4402271960465 kVAr
-   Total Battery Power     : 4.489002921648933e-5 kW
-   Total Battery Reactive Power: 55.54930782356891 kVAr
+   Power Loss              : 0.14721057197057236 kW
+   Substation Power        : 188.37094906637387 kW
+   Reactive Power          : 9.430284947990318 kVAr
+   Total Load Power        : 220.26118599035937 kW
+   Total Load Reactive Power: 110.1337245237437 kVAr
+   Total PV Power          : 32.0373847793674 kW
+   Total PV Reactive Power : 45.440174952275214 kVAr
+   Total Battery Power     : -4.525019330583291e-5 kW
+   Total Battery Reactive Power: 55.549003865960856 kVAr
 ******************************
 
 
 ******************************
    Time Step: 18
 ******************************
-   Power Loss              : 0.17548459226224805 kW
-   Substation Power        : 210.5169005470059 kW
-   Reactive Power          : 6.080978945765175 kVAr
-   Total Load Power        : 227.99426998821878 kW
-   Total Load Reactive Power: 114.00049228300712 kVAr
-   Total PV Power          : 17.65267647292758 kW
-   Total PV Reactive Power : 52.72178282344084 kVAr
-   Total Battery Power     : 0.00012031740036913164 kW
-   Total Battery Reactive Power: 55.541209668605916 kVAr
+   Power Loss              : 0.17546873311816308 kW
+   Substation Power        : 210.50333373627222 kW
+   Reactive Power          : 6.088302060943116 kVAr
+   Total Load Power        : 227.99431371456959 kW
+   Total Load Reactive Power: 114.000472736506 kVAr
+   Total PV Power          : 17.666356281694455 kW
+   Total PV Reactive Power : 52.71720466272673 kVAr
+   Total Battery Power     : 2.564261045151284e-5 kW
+   Total Battery Reactive Power: 55.53850416444127 kVAr
 ******************************
 
 
 ******************************
    Time Step: 19
 ******************************
-   Power Loss              : 0.24474823044145888 kW
-   Substation Power        : 253.57121889122783 kW
-   Reactive Power          : 15.970204252630252 kVAr
-   Total Load Power        : 253.32689910810024 kW
-   Total Load Reactive Power: 126.66698099208523 kVAr
-   Total PV Power          : 3.423828847401467e-5 kW
-   Total PV Reactive Power : 55.59856943855512 kVAr
-   Total Battery Power     : 0.0001503450597195979 kW
-   Total Battery Reactive Power: 55.58346307844796 kVAr
+   Power Loss              : 0.2447484393641498 kW
+   Substation Power        : 253.57130555715347 kW
+   Reactive Power          : 15.97035524469563 kVAr
+   Total Load Power        : 253.32698877972155 kW
+   Total Load Reactive Power: 126.66689840634238 kVAr
+   Total PV Power          : 4.765969170722429e-5 kW
+   Total PV Reactive Power : 55.598574514677466 kVAr
+   Total Battery Power     : 4.3822141147700226e-5 kW
+   Total Battery Reactive Power: 55.583476831275206 kVAr
 ******************************
 
 
 ******************************
    Time Step: 20
 ******************************
-   Power Loss              : 0.27210309063358 kW
-   Substation Power        : 266.93187782660146 kW
-   Reactive Power          : 22.68844520458721 kVAr
-   Total Load Power        : 266.65995196148054 kW
-   Total Load Reactive Power: 133.3338473940438 kVAr
-   Total PV Power          : 1.550077841284292e-5 kW
-   Total PV Reactive Power : 55.5985860467466 kVAr
-   Total Battery Power     : 4.288859846678861e-5 kW
-   Total Battery Reactive Power: 55.58800887890233 kVAr
+   Power Loss              : 0.27210305207440977 kW
+   Substation Power        : 266.93185946402554 kW
+   Reactive Power          : 22.68844520458722 kVAr
+   Total Load Power        : 266.6599830516709 kW
+   Total Load Reactive Power: 133.3338070708596 kVAr
+   Total PV Power          : 2.1089219656659e-5 kW
+   Total PV Reactive Power : 55.598587132745266 kVAr
+   Total Battery Power     : 3.1630621525550854e-5 kW
+   Total Battery Reactive Power: 55.58801617062169 kVAr
 ******************************
 
 
 ******************************
    Time Step: 21
 ******************************
-   Power Loss              : 0.25548742027377014 kW
-   Substation Power        : 258.9158775475956 kW
-   Reactive Power          : 18.656806069999607 kVAr
-   Total Load Power        : 258.66020860488686 kW
-   Total Load Reactive Power: 129.33408958512922 kVAr
-   Total PV Power          : -1.2402860824664686e-5 kW
-   Total PV Reactive Power : 55.59860740350375 kVAr
-   Total Battery Power     : -7.12219949197106e-5 kW
-   Total Battery Reactive Power: 55.585701803677445 kVAr
+   Power Loss              : 0.25548722453178196 kW
+   Substation Power        : 258.915795847189 kW
+   Reactive Power          : 18.656881566032357 kVAr
+   Total Load Power        : 258.66022670262896 kW
+   Total Load Reactive Power: 129.33406610890373 kVAr
+   Total PV Power          : -9.048701898947798e-6 kW
+   Total PV Reactive Power : 55.598608055125105 kVAr
+   Total Battery Power     : -6.742685484994126e-6 kW
+   Total Battery Reactive Power: 55.585697849710364 kVAr
 ******************************
 
 
 ******************************
    Time Step: 22
 ******************************
-   Power Loss              : 0.22966328808426625 kW
-   Substation Power        : 245.82362901482875 kW
-   Reactive Power          : 12.077930793865479 kVAr
-   Total Load Power        : 245.59389819007606 kW
-   Total Load Reactive Power: 122.80074060157372 kVAr
-   Total PV Power          : -1.4099982417235424e-5 kW
-   Total PV Reactive Power : 55.598612301540236 kVAr
-   Total Battery Power     : 4.137214311393223e-5 kW
-   Total Battery Reactive Power: 55.57841945328572 kVAr
+   Power Loss              : 0.22966352665652812 kW
+   Substation Power        : 245.82373869192568 kW
+   Reactive Power          : 12.077779801800002 kVAr
+   Total Load Power        : 245.59387010104217 kW
+   Total Load Reactive Power: 122.80077700330223 kVAr
+   Total PV Power          : -1.9579304665143127e-5 kW
+   Total PV Reactive Power : 55.598611234177284 kVAr
+   Total Battery Power     : -4.227670777842718e-5 kW
+   Total Battery Reactive Power: 55.57854403411148 kVAr
 ******************************
 
 
 ******************************
    Time Step: 23
 ******************************
-   Power Loss              : 0.19513986840067082 kW
-   Substation Power        : 226.85579778919825 kW
-   Reactive Power          : 2.618504391259421 kVAr
-   Total Load Power        : 226.66104478082607 kW
-   Total Load Reactive Power: 113.33405535256291 kVAr
-   Total PV Power          : -1.893660450636503e-5 kW
-   Total PV Reactive Power : 55.59861598846052 kVAr
-   Total Battery Power     : 0.0005172902469656151 kW
-   Total Battery Reactive Power: 55.50047849303881 kVAr
+   Power Loss              : 0.19514122153386415 kW
+   Substation Power        : 226.8564265922401 kW
+   Reactive Power          : 2.618428895226453 kVAr
+   Total Load Power        : 226.661007067379 kW
+   Total Load Reactive Power: 113.33410378706327 kVAr
+   Total PV Power          : -2.685651799137645e-5 kW
+   Total PV Reactive Power : 55.59861440905756 kVAr
+   Total Battery Power     : -7.75848115957558e-5 kW
+   Total Battery Reactive Power: 55.50057076479803 kVAr
 ******************************
 
 
 ******************************
    Time Step: 24
 ******************************
-   Power Loss              : 0.12599688510951818 kW
-   Substation Power        : 184.24166530810723 kW
-   Reactive Power          : -0.024083227625900067 kVAr
-   Total Load Power        : 191.99526092897602 kW
-   Total Load Reactive Power: 96.00064720459005 kVAr
-   Total PV Power          : -1.95532376713885e-5 kW
-   Total PV Reactive Power : 48.20683658578716 kVAr
-   Total Battery Power     : 7.879731444156464 kW
-   Total Battery Reactive Power: 48.05995292559027 kVAr
+   Power Loss              : 0.13995652246419923 kW
+   Substation Power        : 192.13521721614956 kW
+   Reactive Power          : -0.03427519422880635 kVAr
+   Total Load Power        : 191.99525243436244 kW
+   Total Load Reactive Power: 96.00061489587249 kVAr
+   Total PV Power          : -1.5673258516606837e-5 kW
+   Total PV Reactive Power : 48.23058258955319 kVAr
+   Total Battery Power     : 0.00010501155048986277 kW
+   Total Battery Reactive Power: 48.07501195303385 kVAr
 ******************************
 

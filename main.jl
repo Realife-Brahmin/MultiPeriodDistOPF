@@ -3,8 +3,8 @@ include("./src/setupMultiPeriodDistOPF.jl")
 Revise.track(MultiPeriodDistOPF.DDP)
 
 begin
-    systemName0 = "ads3_1ph"
-    # systemName0 = "ads10_1ph"
+    # systemName0 = "ads3_1ph"
+    systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
@@ -27,7 +27,7 @@ begin
 end;
 
 begin
-    alpha_fpi = 0.5
+    alpha_fpi = 0.43
     # alpha_fpi = 1.0
     gamma_fpi = 0.5    
     # gamma_fpi = 1.0
