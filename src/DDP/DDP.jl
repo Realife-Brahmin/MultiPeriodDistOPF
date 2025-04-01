@@ -301,13 +301,15 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     return ddpModel
 end
 
-function check_for_ddp_convergence(ddpModel; verbose::Bool=false;
-    soc_change=true,
+function check_for_ddp_convergence(ddpModel; 
+    verbose::Bool=false,
+    soc_change=false,
     print_soc=true,
-    mu_change=false,
+    mu_change=true,
     print_mu=false,
     fval_change=false,
     print_fval=false)
+
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data, mu = ddpModel
     @unpack Tset, Bset, T = data
 
@@ -399,7 +401,8 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false;
 
     # Compare B and mu values and compute discrepancies
     max_discrepancy = 0.0
-    threshold = 1e-4
+    threshold_soc = 1e-3
+    threshold_mu = 1e-2
     threshold_fval = 1e-2
     all_under_threshold = true
 
@@ -446,7 +449,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false;
 
                 if max_discrepancy > threshold
                     all_under_threshold = false
-                    if discrepancy > threshold
+                    if discrepancy > threshold_soc
                         # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                         if j in Bset_to_print
                             println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
@@ -464,7 +467,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false;
 
     if mu_change
         # Check the difference between latest and previous mu values
-        println(crayon_green("Checking convergence for μ values:"))
+        # println(crayon_green("Checking convergence for μ values:"))
 
         for t in Tset
             for j in Bset[1]
@@ -473,9 +476,9 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false;
                     mu_previous = mu[(j, t, k_ddp - 1)]
                     discrepancy = abs(mu_current - mu_previous)
                     max_discrepancy = max(max_discrepancy, discrepancy)
-                    if discrepancy > threshold
+                    if discrepancy > threshold_mu
                         all_under_threshold = false
-                        myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                        # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                         if j in Bset_to_print
                         # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
                         # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
