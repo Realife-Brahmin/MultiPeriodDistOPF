@@ -69,7 +69,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     elseif systemName == "ieee123_1ph" 
         kVA_B = 1e3
         kV_B = 4.16/sqrt(3)
-    elseif systemName == "ads10_1ph"
+    elseif systemName == "ads10_1ph" || systemName == "ads3_1ph"
         kVA_B = 1e3
         kV_B = 4.16/sqrt(3)
     else
