@@ -27,10 +27,10 @@ begin
 end;
 
 begin
-    alpha_fpi = 0.43
+    alpha_fpi = 1.00
     # alpha_fpi = 0.001
-    gamma_fpi = 0.5    
-    # gamma_fpi = 1.0
+    # gamma_fpi = 0.5    
+    gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 55
