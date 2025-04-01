@@ -122,7 +122,7 @@ end
 # Define the function to compute the interpolated value
 function get_interpolated_value(xn, xnm1, alpha)
     diff = xn - xnm1
-    return xnm1 + diff * alpha
+    return (alpha*xnm1 + xn) / (1 + alpha)
 end
 
 function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
