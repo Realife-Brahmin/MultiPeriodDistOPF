@@ -420,7 +420,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
     # println(crayon_green("Checking convergence for μ values:"))
 
     for t in Tset
-        for j in Bset
+        for j in Bset[1]
             if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
                 mu_current = mu[(j, t, k_ddp)]
                 mu_previous = mu[(j, t, k_ddp - 1)]
