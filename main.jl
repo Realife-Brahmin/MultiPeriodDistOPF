@@ -27,8 +27,8 @@ begin
 end;
 
 begin
-    alpha_fpi = 0.43
-    # alpha_fpi = 1.0
+    # alpha_fpi = 0.43
+    alpha_fpi = 1.0
     gamma_fpi = 0.5    
     # gamma_fpi = 1.0
     T = Int(T0*factor) 
