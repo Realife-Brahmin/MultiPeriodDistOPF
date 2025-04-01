@@ -428,7 +428,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
                 max_discrepancy = max(max_discrepancy, discrepancy)
                 if discrepancy > threshold
                     all_under_threshold = false
-                    # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                    myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                     if j in Bset_to_print
                     # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
                     # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
