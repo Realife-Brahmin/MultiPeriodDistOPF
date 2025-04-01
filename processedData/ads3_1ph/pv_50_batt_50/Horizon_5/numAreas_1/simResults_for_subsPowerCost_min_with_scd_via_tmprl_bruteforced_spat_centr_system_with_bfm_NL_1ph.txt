@@ -2,31 +2,31 @@
 1. Machine ID: ZEPH-ROG-G14-Aryan
 2. Solver Used: Ipopt
 3. System Name: ads3_1ph
-4. Horizon Duration: 3
+4. Horizon Duration: 5
 5. Nature of Optimization Simulation: Temporally Brute-forced, Spatially Centralized
 6. Optimization Model: BranchFlowModel 1ph
 7. Objective: Cost of Substation Power
 8. GED Configuration: pv_50_batt_50
 9. Maximum Substation Power Allowed: Inf kW
 ---------------------------------------------
-Full 3 Hour Horizon
-10. Horizon Total Cost of Substation Power: $ 51.67
-11. Horizon Total Line Loss: 0.29 kW
-12. Horizon Total Substation Power: 445.98 kW + 65.32 kVAr
-13. Horizon Total Load: 629.32 kW + 314.67 kVAr
-14. Horizon Total Generation: 183.63 kW + 249.94 kVAr
+Full 5 Hour Horizon
+10. Horizon Total Cost of Substation Power: $ 67.06
+11. Horizon Total Line Loss: 0.53 kW
+12. Horizon Total Substation Power: 784.75 kW + 83.67 kVAr
+13. Horizon Total Load: 1037.84 kW + 518.94 kVAr
+14. Horizon Total Generation: 253.63 kW + 436.35 kVAr
 15. Horizon Total Static Capacitor Reactive Power Generation: 0.0 kVAr
-16. Horizon Total PV Generation: 126.0 kW + 109.52 kVAr
-17. Horizon Total Battery Generation: 57.63 kW + 140.43 kVAr
-18. Horizon Total Battery Transaction Magnitude: 57.63 kW + 140.43 kVAr
+16. Horizon Total PV Generation: 196.0 kW + 189.64 kVAr
+17. Horizon Total Battery Generation: 57.63 kW + 246.72 kVAr
+18. Horizon Total Battery Transaction Magnitude: 57.63 kW + 246.72 kVAr
 19. Horizon Total SCD Observed: 0.0 kW
 20. Horizon-end Battery Energy Deviation from Reference: 60.67 kWh
-21. Horizon-Total All time Substation Power Peak: 164.33 kW
+21. Horizon-Total All time Substation Power Peak: 173.22 kW
 ---------------------------------------------
 22. Number of Macro-Iterations: 1
-23. Number of Decision Variables: 45
-24. Number of Linear Constraints: 66
-25. Number of Nonlinear Constraints: 9
+23. Number of Decision Variables: 75
+24. Number of Linear Constraints: 110
+25. Number of Nonlinear Constraints: 15
 26. Simulation Time: 0.02 s
 27. Time to solve with sequential (non-parallel) computation: 0.02 s
 28. Time to solve if OPF computation parallelized: 0.02 s
