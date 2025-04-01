@@ -16,9 +16,9 @@ begin
     factor = 1
     # factor = 1/2
     linearizedModel = false
-    linearizedModel = true
+    # linearizedModel = true
     temporal_decmp = false
-    # temporal_decmp = true
+    temporal_decmp = true
     warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
