@@ -20,7 +20,7 @@ begin
     temporal_decmp = false
     temporal_decmp = true
     warmStart_mu = "none"
-    # warmStart_mu = "nonlinear"
+    warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
     savePlots = false
     savePlots = true
