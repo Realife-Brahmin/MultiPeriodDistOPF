@@ -116,10 +116,6 @@ end
 
 # Define the function to compute α_fpi adaptively
 function compute_alpha_fpi(alpha_fpi0, gamma_fpi, k_ddp)
-    if k_ddp < 2
-        @error "Invalid value of k_ddp: $k_ddp. Must be >= 2."
-        return NaN  # Return NaN or handle the error appropriately
-    end
     return alpha_fpi0 * gamma_fpi^(k_ddp - 2)
 end
 
@@ -159,11 +155,13 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
     MU = Dict()
+    α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
+    myprintln(true, "FP$(k_ddp): α_fpi = $α_fpi")
+
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -230,11 +228,11 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
     MU = Dict()
+    α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
-            α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -333,7 +331,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
             crayon_t = ((t_idx + line_idx) % 2 == 1) ? crayon_light_green : crayon_light_blue
 
             # Retrieve and format the current μ value
-            mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=4)
+            mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=2)
 
             # Print formatted μ value
             print(crayon_t("$mu_current "))
@@ -360,7 +358,7 @@ function check_for_ddp_convergence(ddpModel; verbose::Bool=false)
 
     # Compare B and mu values and compute discrepancies
     max_discrepancy = 0.0
-    threshold = 1e-3
+    threshold = 1e-2
     threshold_fval = 1e-2
     all_under_threshold = true
 
