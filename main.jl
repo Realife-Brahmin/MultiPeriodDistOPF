@@ -29,7 +29,7 @@ end;
 begin
     # alpha_fpi = 0.5
     alpha_fpi = 1.0
-    gamma_fpi = 0.9    
+    gamma_fpi = 0.75    
     # gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
