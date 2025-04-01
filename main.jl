@@ -4,15 +4,15 @@ Revise.track(MultiPeriodDistOPF.DDP)
 
 begin
     # systemName0 = "ads3_1ph"
-    systemName0 = "ads10_1ph"
+    # systemName0 = "ads10_1ph"
     # systemName0 = "ieee123_1ph-A"
-    # systemName0 = "ieee123_1ph-B"
+    systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 8
     # T0 = 1
-    T0 = 24
-    # T0 = 3
+    # T0 = 24
+    T0 = 3
     factor = 1
     # factor = 1/2
     linearizedModel = false
@@ -33,7 +33,7 @@ begin
     # gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 100
+    maxiter_ddp = 25
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
