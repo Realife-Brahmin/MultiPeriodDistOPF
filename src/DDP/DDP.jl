@@ -351,6 +351,7 @@ function check_for_ddp_convergence(ddpModel;
         end
     end
 
+    @unpack B_R_pu = data
     if print_soc
         # Iterate over batteries in Bset_to_print
         for (line_idx, j) in enumerate(Bset_to_print)
@@ -373,10 +374,11 @@ function check_for_ddp_convergence(ddpModel;
                 # Retrieve and format the current μ value
                 var_name = Symbol("B[$j,$t]")
                 B_j_t_current = var_dict_current[var_name]
-                B_j_t_current_str = trim_number_for_printing(B_j_t_current, sigdigits=2)
+                soc_percent_j_t_current = B_j_t_current / B_R_pu[j] * 100.0
+                soc_percent_j_t_current_str = trim_number_for_printing(soc_percent_j_t_current, sigdigits=2)
 
                 # Print formatted μ value
-                print(crayon_t("$B_j_t_current_str "))
+                print(crayon_t("$soc_percent_j_t_current_str "))
             end
 
             # Finish the current line
