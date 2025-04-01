@@ -18,7 +18,7 @@ begin
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    temporal_decmp = true
+    # temporal_decmp = true
     warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
@@ -69,11 +69,17 @@ begin
         DER_Rating_factor_ud = 1
         Batt_Percent_ud = 40
         Batt_Rating_factor_ud = 1
-    elseif systemName0 == "ads10_1ph" || systemName0 == "ads3_1ph"
+    elseif systemName0 == "ads10_1ph"
         systemName = "ads10_1ph"
         DER_Percent_ud = 25
         DER_Rating_factor_ud = 1/3
         Batt_Percent_ud = 25
+        Batt_Rating_factor_ud = 1/3
+    elseif systemName0 == "ads3_1ph"
+        systemName = "ads3_1ph"
+        DER_Percent_ud = 50
+        DER_Rating_factor_ud = 1/3
+        Batt_Percent_ud = 50
         Batt_Rating_factor_ud = 1/3
     else
         error("systemName must be either ieee123_1ph, ieee730_1ph, or ads10_1ph")
