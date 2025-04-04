@@ -163,8 +163,10 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            if j in Bset_to_print
-                myprintln(true, "FP(k_ddp): μ[j, t_ddp+1] = $(MU[j, t_ddp+1]) instead of $(μ[j, t_ddp+1, k_ddp-1])")
+            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
+            if j in Bset[1]
+                myprintln(true, "FP(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -237,8 +239,10 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            if j in Bset_to_print
-                myprintln(true, "FP(k_ddp): μ[j, t_ddp+1] = $(MU[j, t_ddp+1]) instead of $(μ[j, t_ddp+1, k_ddp-1])")
+            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
+            if j in Bset[1]
+                myprintln(true, "FP(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
