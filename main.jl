@@ -9,10 +9,10 @@ begin
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
-    # T0 = 8
+    T0 = 8
     # T0 = 1
     # T0 = 24
-    T0 = 6
+    # T0 = 6
     factor = 1
     # factor = 1/2
     linearizedModel = false
