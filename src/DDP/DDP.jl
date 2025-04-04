@@ -314,9 +314,9 @@ end
 function check_for_ddp_convergence(ddpModel; 
     verbose::Bool=false,
     soc_change=false,
-    print_soc=true,
+    print_soc=false,
     mu_change=true,
-    print_mu=false,
+    print_mu=true,
     fval_change=true,
     print_fval=false)
 
