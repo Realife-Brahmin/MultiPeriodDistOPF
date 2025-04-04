@@ -9,10 +9,10 @@ begin
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
-    # T0 = 8
+    T0 = 8
     # T0 = 1
     # T0 = 24
-    T0 = 3
+    # T0 = 3
     # T0 = 6
     # T0 = 12
     factor = 1
@@ -143,7 +143,7 @@ begin
     # Todo: Maybe separately save the simulation times? It is annoying to have file content differences every single run (for same exact sim)
     Exporter.export_simulation_key_results_txt(modelDict, verbose=verbose)
 
-    Plotter.plot_battery_actions(modelDict, showPlots=false, savePlots=savePlots, verbose=verbose, maxBatts=20)
+    Plotter.plot_battery_actions(modelDict, showPlots=false, savePlots=savePlots, verbose=verbose, maxBatts=2)
 
     @unpack data = modelDict;
     Plotter.plot_input_forecast_curves(data, filenameSuffix=inputForecastDescription, showPlots=false, verbose=verbose)
