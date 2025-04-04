@@ -9,12 +9,13 @@ begin
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
-    T0 = 8
+    # T0 = 8
     # T0 = 1
-    # T0 = 24
+    # T0 = 96
     # T0 = 3
     # T0 = 6
     # T0 = 12
+    T0 = 24
     factor = 1
     # factor = 1/2
     linearizedModel = false
@@ -31,11 +32,11 @@ end;
 begin
     alpha_fpi = 1.00
     # alpha_fpi = 0.001
-    gamma_fpi = 0.5    
-    # gamma_fpi = 1.0
+    # gamma_fpi = 0.5    
+    gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 55
+    maxiter_ddp = 25
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
