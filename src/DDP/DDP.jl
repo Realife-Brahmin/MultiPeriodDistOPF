@@ -166,7 +166,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
             MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
             MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                myprintln(true, "FP(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -242,7 +242,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
             MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
             MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                myprintln(true, "FP(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
