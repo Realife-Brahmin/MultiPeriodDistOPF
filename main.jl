@@ -11,8 +11,9 @@ begin
     # systemName0 = "ieee730_1ph"
     # T0 = 8
     # T0 = 1
-    T0 = 24
-    # T0 = 6
+    # T0 = 24
+    # T0 = 3
+    T0 = 5
     factor = 1
     # factor = 1/2
     linearizedModel = false
