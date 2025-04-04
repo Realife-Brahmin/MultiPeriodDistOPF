@@ -7,7 +7,7 @@ export
     build_ForwardStep_1ph_NL_model_t_in_2toTm1,
     build_ForwardStep_1ph_NL_model_t_is_T,
     DDPModel,
-    forward_pass,
+    forward_pass_1ph_NL,
     ForwardStep_1ph_NL_t_is_1,
     ForwardStep_1ph_NL_t_in_2toTm1,
     ForwardStep_1ph_NL_t_is_T,
@@ -514,9 +514,9 @@ function check_for_ddp_convergence(ddpModel;
 end
 # #endregion
 
-#region forward_pass
+#region forward_pass_1ph_NL
 """
-    forward_pass(ddpModel; verbose::Bool=false)
+    forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
 
 Perform a forward pass in the DDP algorithm.
 
@@ -540,7 +540,7 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 5. **Export Model**: Exports the optimization model after each forward step.
 6. **Return Data**: Returns the updated dictionary after performing the forward pass.
 """
-function forward_pass(ddpModel; verbose::Bool=false)
+function forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
     # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
@@ -650,7 +650,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     if termination_status(model_t0) == LOCALLY_SOLVED
         # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
@@ -716,7 +716,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     if termination_status(model_t0) == LOCALLY_SOLVED
         # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
-        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
     end
 
     optimal_obj_value = objective_value(model_t0)
@@ -849,7 +849,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel
         # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
-        ddpModel = forward_pass(ddpModel,
+        ddpModel = forward_pass_1ph_NL(ddpModel,
             verbose=verbose)
 
         dppModel = check_for_ddp_convergence(ddpModel)
