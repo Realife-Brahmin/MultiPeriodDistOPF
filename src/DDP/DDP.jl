@@ -166,7 +166,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
             MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
             MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -242,7 +242,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
             MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
             MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -318,7 +318,7 @@ function check_for_ddp_convergence(ddpModel;
     mu_change=true,
     print_mu=false,
     fval_change=true,
-    print_fval=true)
+    print_fval=false)
 
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data, mu = ddpModel
     @unpack Tset, Bset, T = data
@@ -428,9 +428,12 @@ function check_for_ddp_convergence(ddpModel;
     # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
 
     if fval_change
+        @unpack k_best, fval_best, fval_best_hit = ddpModel
         @unpack PSubsCost_dollar_vs_k = ddpModel;
         PSubsCost_current = PSubsCost_dollar_vs_k[k_ddp]
         PSubsCost_previous = PSubsCost_dollar_vs_k[k_ddp-1]
+        diff_fval_best_vs_now = abs(fval_best - PSubsCost_current)
+        # if diff_fval_best_vs_now <= threshold_fval
         discrepancy = abs(PSubsCost_current - PSubsCost_previous)
         if discrepancy > threshold_fval
             all_under_threshold = false
@@ -948,6 +951,9 @@ function DDPModel(data;
         :converged => false,
         :data => data,
         :iterLimitReached => false,
+        :fval_best => Inf,
+        :fval_best_hit => 0,
+        :k_best => -1,
         :k_ddp => 1,
         :lambda_lo => lambda_lo,
         :lambda_up => lambda_up,
