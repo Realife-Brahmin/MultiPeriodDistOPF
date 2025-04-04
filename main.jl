@@ -13,7 +13,7 @@ begin
     # T0 = 1
     # T0 = 24
     # T0 = 3
-    T0 = 5
+    T0 = 6
     factor = 1
     # factor = 1/2
     linearizedModel = false
