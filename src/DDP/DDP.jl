@@ -163,6 +163,9 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
+            if j in Bset_to_print
+                myprintln(true, "FP(k_ddp): μ[j, t_ddp+1] = $(MU[j, t_ddp+1]) instead of $(μ[j, t_ddp+1, k_ddp-1])")
+            end
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
@@ -234,6 +237,9 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
+            if j in Bset_to_print
+                myprintln(true, "FP(k_ddp): μ[j, t_ddp+1] = $(MU[j, t_ddp+1]) instead of $(μ[j, t_ddp+1, k_ddp-1])")
+            end
         else
             @error "Invalid value of k_ddp: $k_ddp"
             return
