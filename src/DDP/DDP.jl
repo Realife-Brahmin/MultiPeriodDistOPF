@@ -317,8 +317,8 @@ function check_for_ddp_convergence(ddpModel;
     print_soc=true,
     mu_change=true,
     print_mu=false,
-    fval_change=false,
-    print_fval=false)
+    fval_change=true,
+    print_fval=true)
 
     @unpack k_ddp, maxiter, models_ddp_vs_t_vs_k, data, mu = ddpModel
     @unpack Tset, Bset, T = data
@@ -428,8 +428,9 @@ function check_for_ddp_convergence(ddpModel;
     # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
 
     if fval_change
-        PSubsCost_current = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp, solverCall="DDP")
-        PSubsCost_previous = FR.get_substation_power_cost(ddpModel, k_ddp=k_ddp-1, solverCall="DDP")
+        @unpack PSubsCost_dollar_vs_k = ddpModel;
+        PSubsCost_current = PSubsCost_dollar_vs_k[k_ddp]
+        PSubsCost_previous = PSubsCost_dollar_vs_k[k_ddp-1]
         discrepancy = abs(PSubsCost_current - PSubsCost_previous)
         if discrepancy > threshold_fval
             all_under_threshold = false
@@ -580,8 +581,9 @@ function forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
     @unpack outputVals_vs_k = ddpModel_k0
     # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1])
     outputVals_vs_k[k_ddp] = ddpModel_k0_with_outputVals[:data]
+    PSubsCost_dollar_vs_k = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp]
     # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp])
-    @pack! ddpModel = outputVals_vs_k
+    @pack! ddpModel = outputVals_vs_k, PSubsCost_dollar_vs_k
 
     return ddpModel
 end
