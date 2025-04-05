@@ -11,17 +11,17 @@ begin
     # systemName0 = "ieee730_1ph"
     # T0 = 8
     # T0 = 1
-    # T0 = 96
+    T0 = 96
     # T0 = 3
     # T0 = 6
     # T0 = 12
-    T0 = 24
+    # T0 = 24
     factor = 1
     # factor = 1/2
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    # temporal_decmp = true
+    temporal_decmp = true
     warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
@@ -32,8 +32,8 @@ end;
 begin
     alpha_fpi = 1.00
     # alpha_fpi = 0.001
-    gamma_fpi = 0.5    
-    # gamma_fpi = 1.0
+    # gamma_fpi = 0.5    
+    gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25
