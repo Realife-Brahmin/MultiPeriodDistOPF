@@ -5,8 +5,8 @@ Revise.track(MultiPeriodDistOPF.DDP)
 begin
     # systemName0 = "ads3_1ph"
     # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
-    # systemName0 = "ieee123_1ph-B"
+    # systemName0 = "ieee123_1ph-A"
+    systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 8
@@ -21,7 +21,7 @@ begin
     linearizedModel = false
     # linearizedModel = true
     temporal_decmp = false
-    temporal_decmp = true
+    # temporal_decmp = true
     warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
@@ -32,8 +32,8 @@ end;
 begin
     alpha_fpi = 1.00
     # alpha_fpi = 0.001
-    # gamma_fpi = 0.5    
-    gamma_fpi = 1.0
+    gamma_fpi = 0.5    
+    # gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25
