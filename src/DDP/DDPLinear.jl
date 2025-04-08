@@ -36,9 +36,6 @@ import .SolverArranger as SolverArranger
 include("../Exporter.jl")
 import .Exporter as Exporter
 
-# include("../playbook_of_mpopf.jl")
-# import .Playbook_of_MPOPF as Playbook
-
 using Crayons
 using JuMP
 using EAGO
