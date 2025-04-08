@@ -20,11 +20,13 @@ begin
     # factor = 1/2
     linearizedModel = false
     # linearizedModel = true
-    temporal_decmp = false
+    # temporal_decmp = false
     temporal_decmp = true
-    warmStart_mu = "none"
+    gamma_fpi = 0.5    
+    # gamma_fpi = 1.0
+    # warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
-    # warmStart_mu = "linear"
+    warmStart_mu = "linear"
     savePlots = false
     savePlots = true
 end;
@@ -32,8 +34,6 @@ end;
 begin
     alpha_fpi = 1.00
     # alpha_fpi = 0.001
-    # gamma_fpi = 0.5    
-    gamma_fpi = 1.0
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 25

@@ -7,7 +7,7 @@ export
     build_ForwardStep_1ph_NL_model_t_in_2toTm1,
     build_ForwardStep_1ph_NL_model_t_is_T,
     DDPModel,
-    forward_pass_1ph_NL,
+    forward_pass_1ph_L,
     ForwardStep_1ph_NL_t_is_1,
     ForwardStep_1ph_NL_t_in_2toTm1,
     ForwardStep_1ph_NL_t_is_T,
@@ -525,9 +525,9 @@ function check_for_ddp_convergence(ddpModel;
 end
 # #endregion
 
-#region forward_pass_1ph_NL
+#region forward_pass_1ph_L
 """
-    forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
+    forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 
 Perform a forward pass in the DDP algorithm.
 
@@ -539,19 +539,8 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 
 # Returns
 - `ddpModel::Dict`: The updated dictionary after performing the forward pass.
-
-# Steps
-1. **Unpack Data**: Unpacks necessary data from the DDP model dictionary.
-2. **Initialize Time Step**: Initializes the time step for the forward pass.
-3. **Iterate Over Time Steps**: Iterates over the sorted time steps in `Tset`.
-4. **Forward Step Execution**: Executes the appropriate forward step function based on the current time step:
-    - `ForwardStep_1ph_NL_t_is_1` for the first time step.
-    - `ForwardStep_1ph_NL_t_in_2toTm1` for intermediate time steps.
-    - `ForwardStep_1ph_NL_t_is_T` for the last time step.
-5. **Export Model**: Exports the optimization model after each forward step.
-6. **Return Data**: Returns the updated dictionary after performing the forward pass.
 """
-function forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
+function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
     # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
@@ -561,33 +550,28 @@ function forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
 
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
-        if t_ddp == 1
-            ddpModel = ForwardStep_1ph_NL_t_is_1(ddpModel, verbose=verbose)
-        elseif 2 <= t_ddp <= T - 1
-            ddpModel = ForwardStep_1ph_NL_t_in_2toTm1(ddpModel, verbose=verbose)
-        elseif t_ddp == T
-            ddpModel = ForwardStep_1ph_NL_t_is_T(ddpModel, verbose=verbose)
-        else
-            @error "Invalid value of t_ddp: $t_ddp"
-            return
-        end
-
-        # Exporter.export_optimization_model(ddpModel, verbose=verbose)
+        modelDict_t0_k0 = build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
+        ddpModel = reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
+        ddpModel = solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
 
-    # Compute output values without mutating the original modelDict
-    ddpModel_k0 = deepcopy(ddpModel)
-    ddpModel_k0_with_outputVals = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
-    @unpack outputVals_vs_k = ddpModel_k0
-    # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1])
-    outputVals_vs_k[k_ddp] = ddpModel_k0_with_outputVals[:data]
-    PSubsCost_dollar_vs_k = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp]
-    # println([outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp])
-    @pack! ddpModel = outputVals_vs_k, PSubsCost_dollar_vs_k
+    ddpModel = compstore_PSubsCost(ddpModel, verbose=verbose) # Forward pass done, so compute PSubsCost
 
     return ddpModel
 end
 #endregion
+
+function compstore_PSubsCost(ddpModel; verbose::Bool=false)
+    # Compute output values without mutating the original modelDict
+    ddpModel_k0 = deepcopy(ddpModel)
+    ddpModel_k0_with_outputVals = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
+    @unpack outputVals_vs_k = ddpModel_k0
+    outputVals_vs_k[k_ddp] = ddpModel_k0_with_outputVals[:data]
+    PSubsCost_dollar_vs_k = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp]
+    @pack! ddpModel = outputVals_vs_k, PSubsCost_dollar_vs_k
+
+    return ddpModel
+end
 
 function ForwardStep_1ph_NL_t_is_1(ddpModel;
     verbose::Bool=false)
@@ -860,7 +844,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel
         # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
-        ddpModel = forward_pass_1ph_NL(ddpModel,
+        ddpModel = forward_pass_1ph_L(ddpModel,
             verbose=verbose)
 
         dppModel = check_for_ddp_convergence(ddpModel)
