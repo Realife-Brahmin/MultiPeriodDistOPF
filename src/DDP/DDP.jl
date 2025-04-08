@@ -703,7 +703,6 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     return ddpModel
 end
 
-# Todo check here
 function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
 
