@@ -12,7 +12,7 @@ export
     ForwardStep_1ph_NL_t_in_2toTm1,
     ForwardStep_1ph_NL_t_is_T,
     optimize_ForwardStep_1ph_NL_model_t_is_1,
-    optimize_MPOPF_1ph_NL_DDP
+    optimize_MPOPF_1ph_L_DDP
 
 
 include("../computeOutputs.jl")
@@ -561,6 +561,18 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 end
 #endregion
 
+"""
+    compstore_PSubsCost(ddpModel; verbose::Bool=false)
+
+Compute and store the cost of power borrowed from the substation across the horizon in an dict containing values from previous DDP forward passes.
+
+# Arguments
+- `ddpModel::Dict`: A dictionary containing the current state of the DDP model.
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: The updated dictionary with computed and stored power substitution costs.
+"""
 function compstore_PSubsCost(ddpModel; verbose::Bool=false)
     # Compute output values without mutating the original modelDict
     ddpModel_k0 = deepcopy(ddpModel)
@@ -807,11 +819,11 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     return ddpModel
 end
 
-#region optimize_MPOPF_1ph_NL_DDP
+#region optimize_MPOPF_1ph_L_DDP
 """
-    optimize_MPOPF_1ph_NL_DDP(data; verbose::Bool=false)
+    optimize_MPOPF_1ph_L_DDP(data; verbose::Bool=false)
 
-Optimize the Multi-Period Optimal Power Flow (MPOPF) model for a single-phase network with nonlinear loads using DDP.
+Optimize the Multi-Period Optimal Power Flow (MPOPF) model for a single-phase network represented as the LinDistFlow model using DDP.
 
 This function optimizes the MPOPF model using the Differential Dynamic Programming (DDP) algorithm. 
 It initializes the DDP model, performs forward passes, checks for convergence, and retrieves the results.
@@ -822,18 +834,8 @@ It initializes the DDP model, performs forward passes, checks for convergence, a
 
 # Returns
 - `ddpModel::Dict`: A dictionary containing the optimized DDP model and its parameters.
-
-# Steps
-1. **Initialize DDP Model**: Initializes the DDP model using the provided data.
-2. **Forward Pass Loop**: Performs forward passes until convergence or iteration limit is reached.
-3. **Convergence Check**: Checks for convergence after each forward pass.
-4. **Update Iteration Counter**: Updates the iteration counter for the DDP algorithm.
-5. **Calculate Solve Time**: Calculates the total solve time for the optimization.
-6. **Check Solver Status**: Checks the solver status and prints the results.
-7. **Calculate Objective Value**: Calculates and prints the optimal objective function value.
-8. **Return Data**: Returns the final dictionary containing the optimized DDP model and its parameters.
 """
-function optimize_MPOPF_1ph_NL_DDP(data;
+function optimize_MPOPF_1ph_L_DDP(data;
     verbose::Bool=false,
     muDict=nothing,
     maxiter::Int=7)
@@ -874,11 +876,6 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     else
         @error "floc"
     end
-
-    # optimal_obj_value = objective_value(model)
-    @unpack Tset = data
-    optimal_obj_value = sum(modelVals[:objective_value_vs_t][t] for t ∈ Tset)
-    println("Optimal objective function value: ", optimal_obj_value)
 
     return ddpModel
 end
