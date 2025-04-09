@@ -479,7 +479,7 @@ function check_for_ddp_convergence(ddpModel;
     end
 
     # Criterion 4: Check the magnitude of updates in μ values
-    
+
     if mu_change
 
         for t in Tset
@@ -553,7 +553,7 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
-        modelDict_t0_k0 = build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
+        modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
         ddpModel = reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
         ddpModel = solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
@@ -564,6 +564,30 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 end
 #endregion
 
+function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
+    if length(Tset) != 1
+        @error "Tset should have only one element"
+        return
+    end
+    @unpack t_ddp = Tset[1]
+    @unpack k_ddp, data = ddpModel
+    @unpack T = data
+
+    if t_ddp == 1
+        # 
+    elseif t_ddp ∈ 2:T-1
+        #
+    elseif t_ddp == T
+        # 
+    else
+        @error "Invalid value of t_ddp: $t_ddp"
+        return
+    end
+
+    return ddpModel
+end
+
+#region compstore_PSubsCost
 """
     compstore_PSubsCost(ddpModel; verbose::Bool=false)
 
@@ -587,6 +611,7 @@ function compstore_PSubsCost(ddpModel; verbose::Bool=false)
 
     return ddpModel
 end
+#endregion
 
 function ForwardStep_1ph_NL_t_is_1(ddpModel;
     verbose::Bool=false)
