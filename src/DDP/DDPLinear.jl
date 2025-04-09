@@ -564,28 +564,92 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 end
 #endregion
 
-function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
-    if length(Tset) != 1
-        @error "Tset should have only one element"
+function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=nothing, verbose=verbose)
+    if isnothing(Tset) || length(Tset) != 1
+        @error "Tset seems invalid: $Tset"
         return
     end
     @unpack t_ddp = Tset[1]
-    @unpack k_ddp, data = ddpModel
+    @unpack k_ddp, data, mu = ddpModel
     @unpack T = data
+    
+    μ = mu
+    @unpack Bset, alpha_fpi, gamma_fpi = data;
+    α_fpi0 = alpha_fpi
+    γ_fpi = gamma_fpi
+    MU = Dict()
+    α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
+    myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
 
-    if t_ddp == 1
-        # 
-    elseif t_ddp ∈ 2:T-1
-        #
+    MU = compute_interpolated_mu(μ, Bset, k_ddp, t_ddp, α_fpi, verbose=verbose)
+
+    model_t0_k0 = modelDict_t0_k0[:model]
+    objfun_expr_t0_k0_base = objective_function(model_t0_k0)
+
+    # Step 1: Modify objective function required for the current time-step if applicable
+
+    if t_ddp ∈ 1:T-1
+        objfun_expr_t0_k0_appendix = sum( MU[j, t_ddp+1] * (-model_t0_k0[:B][j, t_ddp]) for j ∈ Bset )
+        objfun_expr_t0_k0_ddp = objfun_expr_t0_k0_base + objfun_expr_t0_k0_appendix
     elseif t_ddp == T
-        # 
+        objfun_expr_t0_k0_ddp = objfun_expr_t0_k0_base
     else
         @error "Invalid value of t_ddp: $t_ddp"
         return
     end
 
+    @objective(model_t0_k0, Min, objfun_expr_t0_k0_ddp)
+
+    # Step 2: Fix SOC variables for the previous time-step if applicable
+    # Todo: Disambiguate between modelVals_ddp_vs_FP and modelVals_ddp_vs_t_vs_k
+    @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+    
+    # Todo: Finish Step 2 locs
+    
+    # Step Last: Now just save the (unsolved) model in ddpModel
+    @unpack models_ddp_vs_t_vs_k = ddpModel
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0
+    @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
 end
+
+#region compute_interpolated_mu
+function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=false)
+    """
+    compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=false)
+
+    Compute the interpolated values of μ to be used for the current forward pass's latest time-step.
+
+    # Arguments
+    - `mu::Dict`: The dictionary containing μ values.
+    - `Bset::Vector`: The set of battery indices.
+    - `k_ddp::Int`: The current DDP iteration.
+    - `t_ddp::Int`: The current time step.
+    - `α_fpi::Float64`: The computed α_fpi value.
+    - `verbose::Bool`: A flag to enable verbose output (default: false).
+
+    # Returns
+    - `MU::Dict`: A dictionary containing the interpolated μ values only for usage for the latest time-step.
+    """
+    MU = Dict()
+    for j ∈ Bset
+        if k_ddp == 1
+            MU[j, t_ddp+1] = mu[j, t_ddp+1, k_ddp-1]
+        elseif k_ddp >= 2
+            MU[j, t_ddp+1] = get_interpolated_value(mu[j, t_ddp+1, k_ddp-1], mu[j, t_ddp+1, k_ddp-2], α_fpi)
+            if j in Bset[1]
+                MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+                MU_not_used_str = trim_number_for_printing(mu[j, t_ddp+1, k_ddp-1], sigdigits=2)
+                myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+            end
+        else
+            @error "Invalid value of k_ddp: $k_ddp"
+            return Dict()
+        end
+    end
+    return MU
+end
+#endregion
 
 #region compstore_PSubsCost
 """
