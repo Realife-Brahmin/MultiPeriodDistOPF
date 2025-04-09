@@ -322,9 +322,7 @@ function check_for_ddp_convergence(ddpModel;
 
     verbose = true
     
-    # Bset_to_print is just a subset of the batteries we wish to inspect (to avoid clutter)
-    # Limit to the first and last batteries if there are more than 2
-    # Bset_to_print = length(Bset) > 2 ? [Bset[1], Bset[end]] : Bset
+
     Bset_to_print = length(Bset) > 1 ? [Bset[end]] : Bset
 
     # So anyway, let's see what the μ(s) look like:
@@ -406,9 +404,6 @@ function check_for_ddp_convergence(ddpModel;
         return ddpModel
     end
 
-    # Criterion 2: Check the magnitude of updates in B and mu values
-
-    # Compare B and mu values and compute discrepancies
     max_discrepancy = 0.0
     threshold_soc = 1e-3
     threshold_mu = 1e-2
@@ -420,9 +415,7 @@ function check_for_ddp_convergence(ddpModel;
     crayon_blue = Crayon(foreground=:blue, bold=true)
     crayon_blue_neg = Crayon(foreground=:blue, bold=true, negative=true)
 
-    # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-    # modelVals_current = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
-    # modelVals_previous = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+    # Criterion 2: Check the magnitude of updates in fval
 
     if fval_change
         @unpack k_best, fval_best, fval_best_hit = ddpModel
@@ -438,10 +431,14 @@ function check_for_ddp_convergence(ddpModel;
             myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
             myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
             myprintln(true, "*******")
+        else
+            myprintln(true, "FP$(k_ddp): Objective function value update is under the threshold.")
         end
     end
 
     # println(crayon_green("Checking convergence for B values:"))
+
+    # Criterion 3: Check the magnitude of updates in SOC values
 
     if soc_change
         for t_ddp in Tset
@@ -476,11 +473,14 @@ function check_for_ddp_convergence(ddpModel;
                 end
             end
         end
+        if all_under_threshold
+            myprintln(true, "All SOC updates are under the threshold.")
+        end
     end
 
+    # Criterion 4: Check the magnitude of updates in μ values
+    
     if mu_change
-        # Check the difference between latest and previous mu values
-        # println(crayon_green("Checking convergence for μ values:"))
 
         for t in Tset
             for j in Bset[1]
@@ -506,6 +506,9 @@ function check_for_ddp_convergence(ddpModel;
                         # println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
                     end
                 end
+            end
+            if all_under_threshold
+                myprintln(true, "All μ updates are under the threshold.")
             end
         end
     end
