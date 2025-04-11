@@ -601,11 +601,18 @@ function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=n
     @objective(model_t0_k0, Min, objfun_expr_t0_k0_ddp)
 
     # Step 2: Fix SOC variables for the previous time-step if applicable
-    # Todo: Disambiguate between modelVals_ddp_vs_FP and modelVals_ddp_vs_t_vs_k
-    @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-    
-    # Todo: Finish Step 2 locs
-    
+
+    if t_ddp ∈ 2:T
+        # Related Todo: Disambiguate between modelVals_ddp_vs_FP and modelVals_ddp_vs_t_vs_k
+        @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+        modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
+        B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
+
+        for j ∈ Bset
+            fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+        end
+    end
+
     # Step Last: Now just save the (unsolved) model in ddpModel
     @unpack models_ddp_vs_t_vs_k = ddpModel
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0
