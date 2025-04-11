@@ -583,7 +583,8 @@ function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=n
 
     MU = compute_interpolated_mu(μ, Bset, k_ddp, t_ddp, α_fpi, verbose=verbose)
 
-    model_t0_k0 = modelDict_t0_k0[:model]
+    model_t0_k0 = modelDict_t0_k0[:model] # model_t0_k0 is the actual FP model for t = t_ddp, and will be directly mutated (in objective function and SOC trajectory equations) before being loaded back to models_ddp_vs_t_vs_k in ddpModel for solving
+
     objfun_expr_t0_k0_base = objective_function(model_t0_k0)
 
     # Step 1: Modify objective function required for the current time-step if applicable
