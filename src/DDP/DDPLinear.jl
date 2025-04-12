@@ -389,7 +389,7 @@ function solve_and_store_FS(ddpModel, Tset=nothing;
     optimize!(model_t0_k0)
     solverStatus = check_solver_status(model_t0_k0)
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0 # solved FS model
-    @pack ddpModel = models_ddp_vs_t_vs_k
+    @pack! ddpModel = models_ddp_vs_t_vs_k
 
     ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
     

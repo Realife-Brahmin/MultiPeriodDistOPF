@@ -217,7 +217,7 @@ function build_MPOPF_1ph_L_model_t_in_Tset(data;
     model = SolverArranger.configure_solver(solver)
 
     if isnothing(Tset)
-        @warning "Tset not provided. Using full time set from data."
+        @warn "Tset not provided. Using full time set from data."
         Tset = data[:Tset]
     end
 
