@@ -301,7 +301,7 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
-        modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
+        modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(data, Tset=[t_ddp], verbose=verbose)
         ddpModel = reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
         ddpModel = solve_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
@@ -313,7 +313,8 @@ end
 #endregion
 
 #region reformulate_model_as_FS
-function reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=nothing;
+function reformulate_model_as_FS(ddpModel, modelDict_t0_k0; 
+    Tset,
     verbose=false)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
@@ -373,7 +374,7 @@ end
 #endregion
 
 #region solve_and_store_FS
-function solve_and_store_FS(ddpModel, Tset=nothing;
+function solve_and_store_FS(ddpModel; Tset,
     verbose=false)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"

@@ -19,8 +19,8 @@ begin
     # T0 = 24
     factor = 1
     # factor = 1/2
-    linearizedModel = false
-    # linearizedModel = true
+    # linearizedModel = false
+    linearizedModel = true
     # temporal_decmp = false
     temporal_decmp = true
     gamma_fpi = 0.5    
