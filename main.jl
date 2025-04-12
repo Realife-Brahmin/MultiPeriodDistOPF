@@ -18,8 +18,8 @@ begin
     # T0 = 24
     factor = 1
     # factor = 1/2
-    linearizedModel = false
-    # linearizedModel = true
+    # linearizedModel = false
+    linearizedModel = true
     # temporal_decmp = false
     temporal_decmp = true
     gamma_fpi = 0.5    
@@ -110,16 +110,24 @@ if !temporal_decmp
     @unpack model, modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
 elseif temporal_decmp
-    if warmStart_mu == "nonlinear"     
-        modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-        muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
-    elseif warmStart_mu == "linear"
-        modelDictBF = Playbook.optimize_MPOPF_1ph_L(data)
-        muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
-    else
+    if !linearizedModel
+        if warmStart_mu == "nonlinear"     
+            modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+            muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
+        elseif warmStart_mu == "linear"
+            modelDictBF = Playbook.optimize_MPOPF_1ph_L(data)
+            muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
+        else
+            muDict = nothing
+        end
+        modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+    elseif linearizedModel
         muDict = nothing
+        modelDict = Playbook.optimize_MPOPF_1ph_L_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+    else
+        error("linearizedModel must be either true or false")
     end
-    modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+    
     @unpack modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=false)
 else

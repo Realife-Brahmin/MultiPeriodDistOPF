@@ -18,9 +18,11 @@ using Parameters: @unpack, @pack!
 # Include and use submodules
 include("./computeOutputs.jl")
 include("./DDP/DDP.jl")
+include("./DDP/DDPLinear.jl")
 include("./functionRetriever.jl")
 include("./helperFunctions.jl")
 include("./ModelBuilder/ModelBuilder.jl")
+include("./ModelCopier/ModelCopier.jl")
 include("./playbook_of_mpopf.jl")
 include("./Parser/parseOpenDSSFiles.jl")
 include("./Plotter/Plotter.jl")
@@ -30,6 +32,7 @@ include("./openDSSValidator.jl")
 # Use your own submodules
 using .computeOutputs
 using .DDP
+using .DDPLinear
 using .functionRetriever
 using .helperFunctions
 using .ModelBuilder
@@ -51,6 +54,7 @@ export @unpack, @pack!
 export optimize_MPOPF_1ph_NL_TemporallyBruteforced,
     optimize_MPOPF_1ph_L,
     optimize_MPOPF_1ph_NL_DDP,
+    optimize_MPOPF_1ph_L_DDP,
     parse_all_data,
     compute_output_values,
     export_decision_variables,
