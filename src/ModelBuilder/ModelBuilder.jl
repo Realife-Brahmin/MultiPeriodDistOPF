@@ -208,14 +208,16 @@ It handles various aspects of the model, including solver configuration, variabl
 - The function ensures that the model is properly packed and returned with all necessary components.
 """
 function build_MPOPF_1ph_L_model_t_in_Tset(data;
-    Tset=nothing)
+    Tset=nothing,
+    verbose=false)
 
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
     model = SolverArranger.configure_solver(solver)
 
-    if Tset === nothing
+    if isnothing(Tset)
+        @warning "Tset not provided. Using full time set from data."
         Tset = data[:Tset]
     end
 
