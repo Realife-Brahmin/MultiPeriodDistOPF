@@ -164,7 +164,8 @@ end
 """
     Store current forward step decision variable values
 """
-function store_FS_t_k_decvar_values(ddpModel, Tset=nothing, optModel="Linear", verbose=false)
+function store_FS_t_k_decvar_values(ddpModel, Tset=nothing;
+    optModel="Linear", verbose=false)
     
     if !optModel in ["Linear", "Nonlinear"]
         @error "Invalid optModel: $optModel. Must be 'Linear' or 'Nonlinear'."
@@ -189,18 +190,32 @@ function store_FS_t_k_decvar_values(ddpModel, Tset=nothing, optModel="Linear", v
     # Copy P_Subs[t]
     modelVals_t0_k0[:P_Subs][t_ddp] = JuMP.value(model_t0_k0[:P_Subs][t_ddp])
 
-    # Copy P[(i,j), t], Q[(i,j), t], l[(i,j), t] for (i,j) in Lset
+    # Copy P[(i,j), t], Q[(i,j), t] for (i,j) in Lset
     @unpack Lset = data
     for (i, j) in Lset
         modelVals_t0_k0[:P][(i, j), t_ddp] = JuMP.value(model_t0_k0[:P][(i, j), t_ddp])
         modelVals_t0_k0[:Q][(i, j), t_ddp] = JuMP.value(model_t0_k0[:Q][(i, j), t_ddp])
-        modelVals_t0_k0[:l][(i, j), t_ddp] = JuMP.value(model_t0_k0[:l][(i, j), t_ddp])
     end
 
     # Copy v[j, t] for j in Nset
     @unpack Nset = data
     for j in Nset
         modelVals_t0_k0[:v][j, t_ddp] = JuMP.value(model_t0_k0[:v][j, t_ddp])
+    end
+
+    if optModel == "Nonlinear"
+        # Copy l[(i,j), t] for (i,j) in Lset
+        for (i, j) in Lset
+            modelVals_t0_k0[:l][(i, j), t_ddp] = JuMP.value(model_t0_k0[:l][(i, j), t_ddp])
+        end
+    elseif optModel == "Linear"
+        # Compute (approximately) and copy l[(i,j), t] for (i,j) in Lset
+        for (i, j) in Lset
+            modelVals_t0_k0[:l][(i, j), t_ddp] = (modelVals_t0_k0[:P][(i, j), t_ddp]^2 + modelVals_t0_k0[:Q][(i, j), t_ddp]^2) / modelVals_t0_k0[:v][i, t_ddp]
+        end
+    else
+        @error "Invalid optModel: $optModel. Must be 'Linear' or 'Nonlinear'."
+        return
     end
 
     # Copy q_D[j, t] for j in Dset

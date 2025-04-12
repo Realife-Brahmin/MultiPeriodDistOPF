@@ -306,7 +306,7 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
         @pack! ddpModel = t_ddp
         modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
         ddpModel = reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
-        ddpModel = solver_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
+        ddpModel = solve_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
 
     ddpModel = compstore_PSubsCost(ddpModel, verbose=verbose) # Forward pass done, so compute PSubsCost
@@ -316,7 +316,8 @@ end
 #endregion
 
 #region reformulate_model_as_FS
-function reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=nothing, verbose=verbose)
+function reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=nothing;
+    verbose=false)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
         return
@@ -374,8 +375,9 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=nothing, verbos
 end
 #endregion
 
-#region solver_and_store_FS
-function solve_and_store_FS(ddpModel, Tset=nothing, verbose=verbose)
+#region solve_and_store_FS
+function solve_and_store_FS(ddpModel, Tset=nothing;
+    verbose=false)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
         return
