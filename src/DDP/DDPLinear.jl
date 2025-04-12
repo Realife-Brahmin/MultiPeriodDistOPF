@@ -308,6 +308,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     return ddpModel
 end
 
+#region check_for_ddp_convergence
 function check_for_ddp_convergence(ddpModel; 
     verbose::Bool=false,
     soc_change=false,
@@ -526,7 +527,7 @@ function check_for_ddp_convergence(ddpModel;
 
     return ddpModel
 end
-# #endregion
+#endregion
 
 #region forward_pass_1ph_L
 """
@@ -619,6 +620,37 @@ function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=n
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
+end
+
+function solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=nothing, verbose=verbose)
+    if isnothing(Tset) || length(Tset) != 1
+        @error "Tset seems invalid: $Tset"
+        return
+    end
+    t_ddp = Tset[1]
+
+    @unpack models_ddp_vs_t_vs_k, k_ddp = ddpModel
+    model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved FS model
+    optimize!(model_t0_k0)
+    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0 # solved FS model
+
+end
+
+function check_solver_status(model)
+    # Define crayons for colored output
+    crayon_light_green = Crayon(foreground=:light_green, bold=true)
+    crayon_red = Crayon(foreground=:red, bold=true)
+
+    # Check the solver termination status
+    if termination_status(model) == LOCALLY_SOLVED
+        # Uncomment the line below if you want to print success messages
+        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
+        return true
+    else
+        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Solver status: $(termination_status(model))"))
+        return false
+    end
 end
 
 #region compute_interpolated_mu
