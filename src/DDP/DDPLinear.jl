@@ -45,268 +45,18 @@ using Juniper
 using MadNLP
 using Parameters: @unpack, @pack!
 
-function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
-    if Tset === nothing
-        println("No Tset defined for backward pass, so using the Tset from the data")
-        @unpack data = ddpModel
-        Tset = data[:Tset]
-    end
-    @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel
-    μ = mu
-    λ_lo = lambda_lo
-    λ_up = lambda_up
-    @unpack T, Bset = data
-    # Update mu, lambda_lo, and lambda_up values post optimization
-    t_ddp = Tset[1]
-    for j in Bset
-        if t_ddp == 1
-            constraint_name = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-        elseif 2 <= t_ddp <= T
-            constraint_name = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
-        else
-            @error "Invalid value of t_ddp: $t_ddp"
-            return
-        end
-        constraint_j_t0 = constraint_by_name(model_t0, constraint_name)
-        # println("constraint_j_t0 = ", constraint_j_t0)
-        μ[j, t_ddp, k_ddp] = -dual(constraint_j_t0)
-
-        # Update lambda_lo and lambda_up
-        lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
-        lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
-        constraint_lambda_lo = constraint_by_name(model_t0, lambda_lo_name)
-        constraint_lambda_up = constraint_by_name(model_t0, lambda_up_name)
-        λ_lo[j, t_ddp, k_ddp] = -dual(constraint_lambda_lo)
-        λ_up[j, t_ddp, k_ddp] = -dual(constraint_lambda_up)
-    end
-
-    crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
-    # println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ, λ_lo, and λ_up values for t_ddp = $(t_ddp)"))
-    # for j in Bset
-    #     println(crayon_update("j = $j: μ_t_k = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
-    #     if t_ddp != T
-    #         println(crayon_update("j = $j: μ_tp1_km1 = ", trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
-    #     end
-    #     println(crayon_update("j = $j: λ_lo_t_k = ", trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
-    #     println(crayon_update("j = $j: λ_up_t_k = ", trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
-    # end
-
-    # Print KKT balance equation
-    # Todo: Insert provision of gamma term for KKT balance equation in case terminal SOC constraint is enforced
-    # println(crayon_update("KKT balance equation for t_ddp = $(t_ddp):"))
-    # for j in Bset
-    #     if t_ddp < T
-    #         balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp] - μ[j, t_ddp+1, k_ddp-1]
-    #     else
-    #         balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp]
-    #     end
-    #     println(crayon_update("j = $j: KKT balance = ", trim_number_for_printing(balance, sigdigits=2)))
-    # end
-
-    mu = μ
-    lambda_lo = λ_lo
-    lambda_up = λ_up
-    @pack! ddpModel = mu, lambda_lo, lambda_up
-
-    return ddpModel
-end
-
-# Define the function to compute α_fpi adaptively
+#region compute_alpha_fpi
 function compute_alpha_fpi(alpha_fpi0, gamma_fpi, k_ddp)
     return alpha_fpi0 * gamma_fpi^(k_ddp - 2)
 end
+#endregion
 
-# Define the function to compute the interpolated value
+#region get_interpolated_value  
 function get_interpolated_value(xn, xnm1, alpha)
     diff = xn - xnm1
     return (alpha*xnm1 + xn) / (1 + alpha)
 end
-
-function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack k_ddp, t_ddp, data, mu = ddpModel;
-
-    if t_ddp != 1
-        @error "t_ddp = $(t_ddp) is not equal to 1"
-        return
-    end
-    verbose = true
-
-    if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
-
-        Tset_t0 = [t_ddp] # should be [1]
-        modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
-        model_t0 = modelDict[:model]
-    else
-        @error "Invalid value of k_ddp: $k_ddp"
-        return
-    end
-
-    # Update the model with the solutions from the last iteration (backward pass)
-
-    objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
-    μ = mu
-    @unpack Bset, alpha_fpi, gamma_fpi = data;
-    α_fpi0 = alpha_fpi
-    γ_fpi = gamma_fpi
-    MU = Dict()
-    α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
-    myprintln(true, "FP$(k_ddp): α_fpi = $α_fpi")
-
-    for j ∈ Bset
-        if k_ddp == 1
-            MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
-        elseif k_ddp >= 2
-            MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
-            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
-            if j in Bset[1]
-                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
-            end
-        else
-            @error "Invalid value of k_ddp: $k_ddp"
-            return
-        end
-    end
-
-    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
-    @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
-
-    # B0 values are already set in the model so no need to fix them separately
-
-    # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = 1
-    @unpack models_ddp_vs_t_vs_k = ddpModel;
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-    return ddpModel
-
-end
-
-function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack k_ddp, t_ddp, modelVals, data, mu = ddpModel
-    @unpack T = data;
-    if !(2 <= t_ddp <= T-1)
-        @error "t_ddp = $(t_ddp) is not in [2, T-1]"
-        return
-    end
-
-    verbose = true
-    # if k_ddp == 1
-    if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
-
-        Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
-        modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
-        model_t0 = modelDict_t0[:model]
-    else
-        @error "Invalid value of k_ddp: $k_ddp"
-        return
-    end
-
-    # Update the model with the solutions from the last iteration (backward pass) and previous time-step's SOC values (forward pass)
-
-    B_model = modelVals[:B]
-    @unpack Bset = data;
-
-    crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
-    # println(crayon_light_red1("Printing the previous time-step's SOC values to be used for the current time-step"))
-    for j ∈ Bset
-        # println(crayon_light_red1("B_model[$j, $(t_ddp - 1)] = $(B_model[j, t_ddp - 1])"))
-        fix(model_t0[:B][j, t_ddp - 1], B_model[j, t_ddp - 1])
-    end
-
-    # Update the model with the future dual variables from the last iteration (backward pass)
-
-    objfun_expr_t0_without_mu_terms = objective_function(model_t0)
-    μ = mu
-    @unpack Bset, alpha_fpi, gamma_fpi = data
-    α_fpi0 = alpha_fpi
-    γ_fpi = gamma_fpi
-    MU = Dict()
-    α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
-    for j ∈ Bset
-        if k_ddp == 1
-            MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
-        elseif k_ddp >= 2
-            MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
-            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
-            if j in Bset[1]
-                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
-            end
-        else
-            @error "Invalid value of k_ddp: $k_ddp"
-            return
-        end
-    end
-
-    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
-    objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms +
-                                     sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
-
-    @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
-
-    # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = t_ddp ∈ [2, T-1]
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-    return ddpModel
-
-end
-
-function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
-    verbose::Bool=false)
-    
-    @unpack k_ddp, t_ddp, modelVals, data = ddpModel;
-    @unpack T = data;
-    if t_ddp != T
-        @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
-        return
-    end
-
-    # if k_ddp == 1
-    verbose = true
-    if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
-
-        Tset_t0 = [t_ddp] # should be [T]
-        modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
-        model_t0 = modelDict_t0[:model]
-    else
-        @error "Invalid value of k_ddp: $k_ddp"
-        return
-    end
-
-    # Update the model with the solutions from the previous time-step's SOC values (forward pass)
-    B_model = modelVals[:B]
-    @unpack Bset = data;
-
-    crayon_light_red1 = Crayon(background=:light_red, foreground=:white, bold=true)
-    # println(crayon_light_red1("Printing the previous time-step's SOC values to be used for the current time-step"))
-    for j ∈ Bset
-        # println(crayon_light_red1("B_model[$j, $(t_ddp - 1)] = $(B_model[j, t_ddp - 1])"))
-        fix(model_t0[:B][j, t_ddp-1], B_model[j, t_ddp-1])
-    end
-
-    # No need of updating objective function, as no μ term is present in the objective function for the terminal time-step
-
-    # Now model_t0 completely represents the (yet to be solved) Forward Step model for t = T
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-
-    return ddpModel
-end
+#endregion
 
 #region check_for_ddp_convergence
 function check_for_ddp_convergence(ddpModel; 
@@ -555,8 +305,8 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
     for t_ddp ∈ Tset # Tset is assumed sorted
         @pack! ddpModel = t_ddp
         modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
-        ddpModel = reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
-        ddpModel = solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=[t_ddp], verbose=verbose)
+        ddpModel = reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
+        ddpModel = solver_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
 
     ddpModel = compstore_PSubsCost(ddpModel, verbose=verbose) # Forward pass done, so compute PSubsCost
@@ -565,7 +315,8 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
 end
 #endregion
 
-function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=nothing, verbose=verbose)
+#region reformulate_model_as_FS
+function reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=nothing, verbose=verbose)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
         return
@@ -621,8 +372,10 @@ function reformulate_model_as_DDP_forward_step(ddpModel, modelDict_t0_k0, Tset=n
     @pack! ddpModel = models_ddp_vs_t_vs_k
     return ddpModel
 end
+#endregion
 
-function solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=nothing, verbose=verbose)
+#region solver_and_store_FS
+function solve_and_store_FS(ddpModel, Tset=nothing, verbose=verbose)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
         return
@@ -640,7 +393,9 @@ function solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=nothing, verbose=
     
     ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)
 end
+#endregion
 
+#region check_solver_status
 function check_solver_status(model)
     # Define crayons for colored output
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
@@ -655,6 +410,7 @@ function check_solver_status(model)
         return false
     end
 end
+#endregion
 
 #region compute_interpolated_mu
 function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=false)
@@ -719,301 +475,6 @@ function compstore_PSubsCost(ddpModel; verbose::Bool=false)
     return ddpModel
 end
 #endregion
-
-function ForwardStep_1ph_NL_t_is_1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack t_ddp = ddpModel
-    if t_ddp != 1
-        @error "t_ddp = $(t_ddp) is not equal to 1"
-        return
-    end
-
-    ddpModel = build_ForwardStep_1ph_NL_model_t_is_1(ddpModel)
-    ddpModel = optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel)
-
-    return ddpModel
-end
-
-function ForwardStep_1ph_NL_t_in_2toTm1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack t_ddp, data = ddpModel;
-    @unpack T = data;
-    if !(2 <= t_ddp <= T-1)
-        @error "t_ddp = $(t_ddp) is not in [2, T-1]"
-        return
-    end
-
-    ddpModel = build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel)
-    ddpModel = optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel)
-
-    return ddpModel
-end
-
-function ForwardStep_1ph_NL_t_is_T(ddpModel;
-    verbose::Bool=false)
-    @unpack t_ddp, data = ddpModel
-    @unpack T = data;
-    if t_ddp != T
-        @error "t_ddp = $(t_ddp) is not equal to T = $(T)"
-        return
-    end
-
-    ddpModel = build_ForwardStep_1ph_NL_model_t_is_T(ddpModel)
-    ddpModel = optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel)
-
-    return ddpModel
-end
-
-function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack t_ddp = ddpModel
-    if t_ddp != 1
-        @error "t_ddp = $(t_ddp) is not equal to 1"
-        return
-    end
-
-    @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel;
-
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
-
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
-
-    optimize!(model_t0)
-
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-
-    # Check solver status and retrieve results
-    crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    crayon_red = Crayon(foreground=:red, bold=true)
-
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
-    else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
-        println(crayon_red("Solver status: $(termination_status(model_t0))"))
-    end
-
-    optimal_obj_value = objective_value(model_t0)
-    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
-
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_light_red("Printing the Forward Step Battery SOC values to be used for the next time-step"))
-    # for j ∈ Bset
-    #     println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    # end
-
-    Tset = [t_ddp]
-    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
-    @unpack modelVals = ddpModel
-
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
-    # for j ∈ Bset
-    #     println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    # end
-
-    @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
-    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-
-    # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
-    # println("Backward Pass for Tset = $Tset")
-    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
-
-    return ddpModel
-end
-
-#region compute_and_store_dual_variables
-function store_FS_t_k_dual_variables(ddpModel, Tset=nothing; 
-    optModel="Linear", verbose=false)
-
-    if !optModel ∈ ["Linear", "Nonlinear"]
-        @error "optModel seems invalid: $optModel"
-        return
-    elseif isnothing(Tset) || length(Tset) != 1
-        @error "Tset seems invalid: $Tset"
-        return
-    elseif optModel == "Nonlinear"
-        @error "optModel = Nonlinear is not supported yet"
-        return
-    end
-
-    t_ddp = Tset[1]
-    @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel
-    μ = mu
-    λ_lo = lambda_lo
-    λ_up = lambda_up
-    @unpack T, Bset = data
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel
-    model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
-
-    # Now let's start working with the correct constraints and saving the dual variables
-    t_ddp = Tset[1]
-    # Predefine partial strings based on t_ddp
-    if t_ddp == 1
-        constraint_hSOC_t0_k0_partial_str = "h_SOC_j^{t=1}_Initial_SOC_Node_j_"
-    elseif t_ddp ∈ 2:T
-        constraint_hSOC_t0_k0_partial_str = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_"
-    else
-        @error "Invalid value of t_ddp: $t_ddp"
-        return
-    end
-
-    # Iterate over Bset to construct full strings and compute dual variables
-    for j in Bset
-        # Construct the full constraint string for hSOC
-        constraint_hSOC_t0_k0_j_str = "$(constraint_hSOC_t0_k0_partial_str)$(j)_t_$(t_ddp)"
-        constraint_hSOC_t0_k0_j = constraint_by_name(model_t0_k0, constraint_hSOC_t0_k0_j_str)
-        μ[j, t_ddp, k_ddp] = -dual(constraint_hSOC_t0_k0_j)
-
-        # Construct the full constraint strings for lambda_lo and lambda_up
-        lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
-        lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
-        constraint_gSOC_lo_t0_k0_j = constraint_by_name(model_t0_k0, lambda_lo_name)
-        constraint_gSOC_up_t0_k0_j = constraint_by_name(model_t0_k0, lambda_up_name)
-        λ_lo[j, t_ddp, k_ddp] = -dual(constraint_gSOC_lo_t0_k0_j)
-        λ_up[j, t_ddp, k_ddp] = -dual(constraint_gSOC_up_t0_k0_j)
-    end
-
-    # Pack them back into ddpModel
-    mu, lambda_lo, lambda_up = μ, λ_lo, λ_up
-    @pack! ddpModel = mu, lambda_lo, lambda_up
-    return ddpModel
-end
-#endregion
-
-function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
-    verbose::Bool=false)
-
-    @unpack t_ddp, data = ddpModel;
-    @unpack T = data;
-    if !(2 <= t_ddp <= T-1)
-        @error "t_ddp = $(t_ddp) is not in [2, T-1]"
-        return
-    end
-
-    @unpack k_ddp = ddpModel
-
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel;
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
-    optimize!(model_t0)
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-
-    # Check solver status and retrieve results
-    crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    crayon_red = Crayon(foreground=:red, bold=true)
-
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
-    else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
-    end
-
-    optimal_obj_value = objective_value(model_t0)
-    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal objective function value for t = $(t_ddp): $optimal_obj_value"))
-
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_light_red("Printing the Forward Step Battery SOC values to be used by the next time-step"))
-    # for j ∈ Bset
-    #     println(crayon_light_red("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    # end
-
-    Tset = [t_ddp]
-    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
-    
-    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
-
-    crayon_light_red = Crayon(foreground=:light_red, background=:white, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_light_red("Printing modelVals[:B] (should be the same)"))
-    # for j ∈ Bset
-    #     println(crayon_light_red("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    # end
-
-    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
-    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
-    # println("Backward Pass for Tset = $Tset")
-    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
-
-    return ddpModel
-end
-
-function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
-    verbose::Bool=false)
-
-    @unpack t_ddp, data = ddpModel;
-    @unpack T = data;
-    if t_ddp != T
-        @error "t_ddp = $(t_ddp) is not equal to 1"
-        return
-    end
-
-    @unpack k_ddp = ddpModel
-
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
-
-    @unpack models_ddp_vs_t_vs_k = ddpModel;
-    model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
-    optimize!(model_t0)
-    models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0 # solved
-    @pack! ddpModel = models_ddp_vs_t_vs_k
-
-    # Check solver status and retrieve results
-    crayon_light_green = Crayon(foreground=:light_green, bold=true)
-    crayon_red = Crayon(foreground=:red, bold=true)
-
-    if termination_status(model_t0) == LOCALLY_SOLVED
-        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
-    else
-        # println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
-    end
-
-    optimal_obj_value = objective_value(model_t0)
-    # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Best objective function value for t = $(t_ddp): $optimal_obj_value"))
-
-    crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_blue("Printing the Terminal Battery SOC values"))
-    # for j ∈ Bset
-    #     println(crayon_blue("B[$j, $t_ddp] =  $(value(model_t0[:B][j, t_ddp]))"))
-    # end
-
-    Tset = [t_ddp]
-    ddpModel = MC.copy_modelVals(ddpModel, model_t0, Tset=Tset)
-    @unpack modelVals, modelVals_ddp_vs_t_vs_k = ddpModel
-
-    crayon_blue = Crayon(foreground=:white, background=:blue, bold=true)
-    @unpack data = ddpModel
-    @unpack Bset = data
-    # println(crayon_blue("Printing terminal SOC values in modelVals[:B] (should be the same)"))
-    # for j ∈ Bset
-    #     println(crayon_blue("modelVals[:B][$j, $t_ddp] = $(modelVals[:B][j, t_ddp])"))
-    # end
-
-    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
-    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
-    # println("Backward Pass for Tset = $Tset")
-    ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
-
-    return ddpModel
-end
 
 #region optimize_MPOPF_1ph_L_DDP
 """
