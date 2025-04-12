@@ -164,8 +164,8 @@ end
 """
     Store current forward step decision variable values
 """
-function store_FS_t_k_decvar_values(ddpModel, Tset=nothing;
-    optModel="Linear", verbose=false)
+function store_FS_t_k_decvar_values(ddpModel;
+    Tset, optModel="Linear", verbose=false)
     
     if !optModel in ["Linear", "Nonlinear"]
         @error "Invalid optModel: $optModel. Must be 'Linear' or 'Nonlinear'."
