@@ -2,18 +2,15 @@ module DDPLinear
 
 export
     check_for_ddp_convergence,
-    compute_and_store_dual_variables, 
-    build_ForwardStep_1ph_NL_model_t_is_1,
-    build_ForwardStep_1ph_NL_model_t_in_2toTm1,
-    build_ForwardStep_1ph_NL_model_t_is_T,
+    check_solver_status,
+    compute_interpolated_mu,
+    compstore_PSubsCost,
     DDPModel,
     forward_pass_1ph_L,
-    ForwardStep_1ph_NL_t_is_1,
-    ForwardStep_1ph_NL_t_in_2toTm1,
-    ForwardStep_1ph_NL_t_is_T,
-    optimize_ForwardStep_1ph_NL_model_t_is_1,
-    optimize_MPOPF_1ph_L_DDP
-
+    get_interpolated_value,
+    optimize_MPOPF_1ph_L_DDP,
+    reformulate_model_as_FS,
+    solve_and_store_FS
 
 include("../computeOutputs.jl")
 import .computeOutputs as CO
@@ -606,4 +603,4 @@ function DDPModel(data;
 end
 #endregion
 
-end
+end # module DDPLinear
