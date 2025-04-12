@@ -638,6 +638,7 @@ function solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=nothing, verbose=
 
     ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
     
+    ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)
 end
 
 function check_solver_status(model)
@@ -828,6 +829,60 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
+    return ddpModel
+end
+
+function store_FS_t_k_dual_variables(ddpModel, Tset=nothing; 
+    optModel="Linear", verbose=false)
+
+    if !optModel ∈ ["Linear", "Nonlinear"]
+        @error "optModel seems invalid: $optModel"
+        return
+    elseif isnothing(Tset) || length(Tset) != 1
+        @error "Tset seems invalid: $Tset"
+        return
+    elseif optModel == "Nonlinear"
+        @error "optModel = Nonlinear is not supported yet"
+        return
+    end
+
+    t_ddp = Tset[1]
+    @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel
+    μ = mu
+    λ_lo = lambda_lo
+    λ_up = lambda_up
+    @unpack T, Bset = data
+
+    @unpack models_ddp_vs_t_vs_k = ddpModel
+    model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+
+    # Now let's start working with the correct constraints and saving the dual variables
+    t_ddp = Tset[1]
+    for j in Bset
+        if t_ddp == 1
+            constraint_hSOC_t0_k0_j_str = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
+        elseif t_ddp ∈ 2:T
+            constraint_hSOC_t0_k0_j_str = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
+        else
+            @error "Invalid value of t_ddp: $t_ddp"
+            return
+        end
+        
+        constraint_hSOC_t0_k0_j = constraint_by_name(model_t0_k0, constraint_hSOC_t0_k0_j_str)
+        μ[j, t_ddp, k_ddp] = -dual(constraint_hSOC_t0_k0_j)
+
+        # Update lambda_lo and lambda_up
+        lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
+        lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
+        constraint_gSOC_lo_t0_k0_j = constraint_by_name(model_t0_k0, lambda_lo_name)
+        constraint_gSOC_up_t0_k0_j = constraint_by_name(model_t0_k0, lambda_up_name)
+        λ_lo[j, t_ddp, k_ddp] = -dual(constraint_gSOC_lo_t0_k0_j)
+        λ_up[j, t_ddp, k_ddp] = -dual(constraint_gSOC_up_t0_k0_j)
+    end
+
+    # Pack them back into ddpModel
+    mu, lambda_lo, lambda_up = μ, λ_lo, λ_up
+    @pack! ddpModel = mu, lambda_lo, lambda_up
     return ddpModel
 end
 
