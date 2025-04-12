@@ -832,6 +832,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     return ddpModel
 end
 
+#region compute_and_store_dual_variables
 function store_FS_t_k_dual_variables(ddpModel, Tset=nothing; 
     optModel="Linear", verbose=false)
 
@@ -858,20 +859,24 @@ function store_FS_t_k_dual_variables(ddpModel, Tset=nothing;
 
     # Now let's start working with the correct constraints and saving the dual variables
     t_ddp = Tset[1]
+    # Predefine partial strings based on t_ddp
+    if t_ddp == 1
+        constraint_hSOC_t0_k0_partial_str = "h_SOC_j^{t=1}_Initial_SOC_Node_j_"
+    elseif t_ddp ∈ 2:T
+        constraint_hSOC_t0_k0_partial_str = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_"
+    else
+        @error "Invalid value of t_ddp: $t_ddp"
+        return
+    end
+
+    # Iterate over Bset to construct full strings and compute dual variables
     for j in Bset
-        if t_ddp == 1
-            constraint_hSOC_t0_k0_j_str = "h_SOC_j^{t=1}_Initial_SOC_Node_j_$(j)_t1"
-        elseif t_ddp ∈ 2:T
-            constraint_hSOC_t0_k0_j_str = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_$(j)_t_$(t_ddp)"
-        else
-            @error "Invalid value of t_ddp: $t_ddp"
-            return
-        end
-        
+        # Construct the full constraint string for hSOC
+        constraint_hSOC_t0_k0_j_str = "$(constraint_hSOC_t0_k0_partial_str)$(j)_t_$(t_ddp)"
         constraint_hSOC_t0_k0_j = constraint_by_name(model_t0_k0, constraint_hSOC_t0_k0_j_str)
         μ[j, t_ddp, k_ddp] = -dual(constraint_hSOC_t0_k0_j)
 
-        # Update lambda_lo and lambda_up
+        # Construct the full constraint strings for lambda_lo and lambda_up
         lambda_lo_name = "g_11_j^t_MinSOC_Node_j_$(j)_t_$(t_ddp)"
         lambda_up_name = "g_12_j^t_MaxSOC_Node_j_$(j)_t_$(t_ddp)"
         constraint_gSOC_lo_t0_k0_j = constraint_by_name(model_t0_k0, lambda_lo_name)
@@ -885,6 +890,7 @@ function store_FS_t_k_dual_variables(ddpModel, Tset=nothing;
     @pack! ddpModel = mu, lambda_lo, lambda_up
     return ddpModel
 end
+#endregion
 
 function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose::Bool=false)
