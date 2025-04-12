@@ -320,7 +320,7 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
         @error "Tset seems invalid: $Tset"
         return
     end
-    @unpack t_ddp = Tset[1]
+    t_ddp = Tset[1]
     @unpack k_ddp, data, mu = ddpModel
     @unpack T = data
     
@@ -391,6 +391,7 @@ function solve_and_store_FS(ddpModel; Tset,
 
     ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
     
+    # Todo: WTF it this function?
     ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)
 end
 #endregion
