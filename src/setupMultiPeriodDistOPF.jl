@@ -4,6 +4,7 @@ using MultiPeriodDistOPF
 # Import submodules with aliases
 import .MultiPeriodDistOPF.computeOutputs as CO
 import .MultiPeriodDistOPF.DDP as DDP
+import .MultiPeriodDistOPF.DDPLinear as DDPLinear
 import .MultiPeriodDistOPF.functionRetriever as FR
 import .MultiPeriodDistOPF.helperFunctions as HF
 import .MultiPeriodDistOPF.ModelBuilder as MB
