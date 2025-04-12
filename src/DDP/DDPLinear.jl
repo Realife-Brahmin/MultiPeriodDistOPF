@@ -632,8 +632,12 @@ function solve_and_store_forward_step_t_in_Tset(ddpModel, Tset=nothing, verbose=
     @unpack models_ddp_vs_t_vs_k, k_ddp = ddpModel
     model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved FS model
     optimize!(model_t0_k0)
+    solverStatus = check_solver_status(model_t0_k0)
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0 # solved FS model
+    @pack ddpModel = models_ddp_vs_t_vs_k
 
+    ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
+    
 end
 
 function check_solver_status(model)
@@ -643,8 +647,6 @@ function check_solver_status(model)
 
     # Check the solver termination status
     if termination_status(model) == LOCALLY_SOLVED
-        # Uncomment the line below if you want to print success messages
-        # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
         return true
     else
         println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
