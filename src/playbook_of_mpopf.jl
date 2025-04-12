@@ -16,8 +16,11 @@ import .ModelCopier as MC
 include("./helperFunctions.jl")
 using .helperFunctions
 
-include("./DDP/DDP.jl")
-using .DDP
+# include("./DDP/DDP.jl")
+# using .DDP
+
+# include("./DDP/DDPLinear.jl")
+# using .DDPLinear
 
 include("./SolverArranger/SolverArranger.jl")
 import .SolverArranger as SolverArranger
