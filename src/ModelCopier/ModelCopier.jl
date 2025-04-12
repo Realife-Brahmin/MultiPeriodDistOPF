@@ -167,7 +167,7 @@ end
 function store_FS_t_k_decvar_values(ddpModel;
     Tset, optModel="Linear", verbose=false)
     
-    if !optModel in ["Linear", "Nonlinear"]
+    if !(optModel ∈ ["Linear", "Nonlinear"])
         @error "Invalid optModel: $optModel. Must be 'Linear' or 'Nonlinear'."
         return
     elseif optModel == "Nonlinear"
