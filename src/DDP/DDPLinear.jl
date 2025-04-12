@@ -791,6 +791,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         # println(crayon_light_green("Forward Pass k_ddp = $(k_ddp) : Optimal solution found for Forward Step model for t = $(t_ddp)"))
     else
         println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        println(crayon_red("Solver status: $(termination_status(model_t0))"))
     end
 
     optimal_obj_value = objective_value(model_t0)
