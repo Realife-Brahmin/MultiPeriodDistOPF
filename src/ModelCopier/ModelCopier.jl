@@ -3,7 +3,8 @@ module ModelCopier
 export
     copy_modelVals,
     create_variable_dict,
-    ModelVals
+    ModelVals,
+    store_FS_t_k_decvar_values
 
 using JuMP
 using Ipopt
@@ -156,6 +157,75 @@ function ModelVals(data)
     modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
 
     return modelVals
+end
+#endregion
+
+#region store_FS_decvar_values_t_in_Tset
+"""
+    Store current forward step decision variable values
+"""
+function store_FS_t_k_decvar_values(ddpModel, Tset=nothing, optModel="Linear", verbose=false)
+    
+    if !optModel in ["Linear", "Nonlinear"]
+        @error "Invalid optModel: $optModel. Must be 'Linear' or 'Nonlinear'."
+        return
+    elseif optModel == "Nonlinear"
+        @error "Currently Nonlinear model is not supported."
+        return
+    elseif isnothing(Tset) || length(Tset) != 1
+        @error "Tset must be a single time step."
+        return
+    end
+
+    t_ddp = Tset[1]
+    @unpack data, k_ddp = ddpModel
+
+    @unpack modelVals_ddp_vs_t_vs_k, models_ddp_vs_t_vs_k = ddpModel
+    modelVals_t0_k0 = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
+    model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+
+    # The actual copying
+
+    # Copy P_Subs[t]
+    modelVals_t0_k0[:P_Subs][t_ddp] = JuMP.value(model_t0_k0[:P_Subs][t_ddp])
+
+    # Copy P[(i,j), t], Q[(i,j), t], l[(i,j), t] for (i,j) in Lset
+    @unpack Lset = data
+    for (i, j) in Lset
+        modelVals_t0_k0[:P][(i, j), t_ddp] = JuMP.value(model_t0_k0[:P][(i, j), t_ddp])
+        modelVals_t0_k0[:Q][(i, j), t_ddp] = JuMP.value(model_t0_k0[:Q][(i, j), t_ddp])
+        modelVals_t0_k0[:l][(i, j), t_ddp] = JuMP.value(model_t0_k0[:l][(i, j), t_ddp])
+    end
+
+    # Copy v[j, t] for j in Nset
+    @unpack Nset = data
+    for j in Nset
+        modelVals_t0_k0[:v][j, t_ddp] = JuMP.value(model_t0_k0[:v][j, t_ddp])
+    end
+
+    # Copy q_D[j, t] for j in Dset
+    @unpack Dset = data
+    for j in Dset
+        modelVals_t0_k0[:q_D][j, t_ddp] = JuMP.value(model_t0_k0[:q_D][j, t_ddp])
+    end
+
+    # Copy q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
+    @unpack Bset = data
+    for j in Bset
+        modelVals_t0_k0[:q_B][j, t_ddp] = JuMP.value(model_t0_k0[:q_B][j, t_ddp])
+        modelVals_t0_k0[:P_c][j, t_ddp] = JuMP.value(model_t0_k0[:P_c][j, t_ddp])
+        modelVals_t0_k0[:P_d][j, t_ddp] = JuMP.value(model_t0_k0[:P_d][j, t_ddp])
+        modelVals_t0_k0[:B][j, t_ddp] = JuMP.value(model_t0_k0[:B][j, t_ddp])
+    end
+
+    # Copy termination status, solve time, and objective value
+    modelVals_t0_k0[:termination_status] = JuMP.termination_status(model_t0_k0)
+    modelVals_t0_k0[:solve_time] = JuMP.solve_time(model_t0_k0)
+    modelVals_t0_k0[:objective_value] = JuMP.objective_value(model_t0_k0)
+
+    modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals_t0_k0
+    @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    return ddpModel
 end
 #endregion
 
