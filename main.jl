@@ -1,6 +1,7 @@
 # main.jl
 include("./src/setupMultiPeriodDistOPF.jl") 
 Revise.track(MultiPeriodDistOPF.DDP)
+Revise.track(MultiPeriodDistOPF.DDPLinear)
 
 begin
     systemName0 = "ads3_1ph"
@@ -18,8 +19,8 @@ begin
     # T0 = 24
     factor = 1
     # factor = 1/2
-    # linearizedModel = false
-    linearizedModel = true
+    linearizedModel = false
+    # linearizedModel = true
     # temporal_decmp = false
     temporal_decmp = true
     gamma_fpi = 0.5    
@@ -120,14 +121,14 @@ elseif temporal_decmp
         else
             muDict = nothing
         end
-        modelDict = Playbook.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+        modelDict = DDP.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
     elseif linearizedModel
         muDict = nothing
-        modelDict = Playbook.optimize_MPOPF_1ph_L_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+        modelDict = DDPLinear.optimize_MPOPF_1ph_L_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
     else
         error("linearizedModel must be either true or false")
     end
-    
+
     @unpack modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=false)
 else
