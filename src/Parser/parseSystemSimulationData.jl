@@ -173,11 +173,6 @@ function parse_system_simulation_data(systemName::String, T::Int;
 
     objfunConciseDescription = objfunPrefix*"_"*objfunAppendix 
 
-    if temporal_decmp && linearizedModel
-        @error "Cannot allow DDP in conjunction with linearized model as of now"
-        return
-    end
-
     if temporal_decmp == true
         temporalDecmpString = "Temporally Decomposed via DDP"
         temporalDecmpAppendix = "tmprl_dcmpsd"
