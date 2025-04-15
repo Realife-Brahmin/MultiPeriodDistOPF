@@ -225,7 +225,7 @@ function check_for_ddp_convergence(ddpModel;
         end
     end
     if all_under_threshold
-        myprintln(true, "All SOC updates are under the threshold.")
+        myprintln(true, "FP$(k_ddp): All SOC updates are under the threshold.")
     end
 
     # Criterion 4: Check the magnitude of updates in μ values
