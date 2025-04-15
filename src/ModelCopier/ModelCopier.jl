@@ -4,6 +4,7 @@ export
     copy_modelVals,
     create_variable_dict,
     ModelVals,
+    store_FP_k_decvar_values,
     store_FS_t_k_decvar_values
 
 using JuMP
@@ -104,6 +105,7 @@ function copy_modelVals(modelDict, model_Tset;
     return modelDict
 end
 #endregion
+
 #region create_variable_dict
 """
     create_variable_dict(model)
@@ -157,6 +159,75 @@ function ModelVals(data)
     modelVals[:objective_value_vs_t] = Dict{Int,Float64}()
 
     return modelVals
+end
+#endregion
+
+#region store_FP_k_decvar_values
+"""
+    store_FP_k_decvar_values(ddpModel; verbose=false)
+
+Aggregate per-time-step decision variable values into a multi-time-step structure for the current forward pass (indexed by k_ddp).
+"""
+function store_FP_k_decvar_values(ddpModel;
+    verbose::Bool=false)
+
+    @unpack k_ddp, data = ddpModel
+    @unpack Tset, Lset, Nset, Dset, Bset = data
+    @unpack modelVals_ddp_vs_t_vs_k, modelVals_ddp_vs_FP = ddpModel
+
+    modelVals_k0 = Dict()
+
+    # Initialize all 10 decision variable dictionaries
+    modelVals_k0[:P_Subs] = Dict{Int,Float64}()
+    modelVals_k0[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals_k0[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals_k0[:v] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_k0[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals_k0[:q_D] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_k0[:q_B] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_k0[:P_c] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_k0[:P_d] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_k0[:B] = Dict{Tuple{Int,Int},Float64}()
+
+    # Also store objective/solve status meta
+    modelVals_k0[:termination_status] = Dict{Int,TerminationStatusCode}()
+    modelVals_k0[:solve_time] = Dict{Int,Float64}()
+    modelVals_k0[:objective_value] = Dict{Int,Float64}()
+
+    for t_ddp in Tset
+        modelVals_t_k = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
+
+        modelVals_k0[:P_Subs][t_ddp] = modelVals_t_k[:P_Subs][t_ddp]
+
+        for (i, j) in Lset
+            modelVals_k0[:P][(i, j), t_ddp] = modelVals_t_k[:P][(i, j), t_ddp]
+            modelVals_k0[:Q][(i, j), t_ddp] = modelVals_t_k[:Q][(i, j), t_ddp]
+            modelVals_k0[:l][(i, j), t_ddp] = modelVals_t_k[:l][(i, j), t_ddp]
+        end
+
+        for j in Nset
+            modelVals_k0[:v][j, t_ddp] = modelVals_t_k[:v][j, t_ddp]
+        end
+
+        for j in Dset
+            modelVals_k0[:q_D][j, t_ddp] = modelVals_t_k[:q_D][j, t_ddp]
+        end
+
+        for j in Bset
+            modelVals_k0[:q_B][j, t_ddp] = modelVals_t_k[:q_B][j, t_ddp]
+            modelVals_k0[:P_c][j, t_ddp] = modelVals_t_k[:P_c][j, t_ddp]
+            modelVals_k0[:P_d][j, t_ddp] = modelVals_t_k[:P_d][j, t_ddp]
+            modelVals_k0[:B][j, t_ddp] = modelVals_t_k[:B][j, t_ddp]
+        end
+
+        modelVals_k0[:termination_status][t_ddp] = modelVals_t_k[:termination_status]
+        modelVals_k0[:solve_time][t_ddp] = modelVals_t_k[:solve_time]
+        modelVals_k0[:objective_value][t_ddp] = modelVals_t_k[:objective_value]
+    end
+
+    modelVals_ddp_vs_FP[k_ddp] = modelVals_k0
+    @pack! ddpModel = modelVals_ddp_vs_FP
+    return ddpModel
 end
 #endregion
 
@@ -253,5 +324,6 @@ function store_FS_t_k_decvar_values(ddpModel;
     return ddpModel
 end
 #endregion
+
 
 end
