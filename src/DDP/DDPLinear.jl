@@ -362,6 +362,7 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
         modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
         B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
 
+        @unpack Bset = data;
         for j ∈ Bset
             fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
         end
