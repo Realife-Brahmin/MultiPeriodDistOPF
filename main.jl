@@ -23,8 +23,8 @@ begin
     linearizedModel = true
     # temporal_decmp = false
     temporal_decmp = true
-    gamma_fpi = 0.5    
-    # gamma_fpi = 1.0
+    # gamma_fpi = 0.5    
+    gamma_fpi = 1.0
     # warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
     warmStart_mu = "linear"
