@@ -258,9 +258,9 @@ function check_for_ddp_convergence(ddpModel;
                 end
             end
         end
-        if all_under_threshold
-            myprintln(true, "All μ updates are under the threshold.")
-        end
+    end
+    if all_under_threshold
+        myprintln(true, "FP$(k_ddp): All μ updates are under the threshold.")
     end
 
     if !all_under_threshold
