@@ -498,8 +498,8 @@ function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
 
     for j in Bset
         # Build full constraint names using precomputed prefixes
-        @show soc_traj_t0_k0_j_str = soc_traj_t0_k0_str_prefix * string(j) * "_" * soc_traj_suffix
-        @show soc_lim_lo_t0_k0_j_str = soc_lim_lo_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
+        soc_traj_t0_k0_j_str = soc_traj_t0_k0_str_prefix * string(j) * "_" * soc_traj_suffix
+        soc_lim_lo_t0_k0_j_str = soc_lim_lo_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
         soc_lim_up_t0_k0_j_str = soc_lim_up_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
 
         # Fetch and store duals
