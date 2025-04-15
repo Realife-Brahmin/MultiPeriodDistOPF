@@ -21,8 +21,8 @@ begin
     # factor = 1/2
     # linearizedModel = false
     linearizedModel = true
-    # temporal_decmp = false
-    temporal_decmp = true
+    temporal_decmp = false
+    # temporal_decmp = true
     # gamma_fpi = 0.5    
     gamma_fpi = 1.0
     # warmStart_mu = "none"
