@@ -451,20 +451,21 @@ function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=f
 end
 #endregion
 
-function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
-    """
+#region store_FS_t_k_dual_variables
+"""
     store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
 
     Store the dual variable values for the given time step and iteration in the DDP model.
 
     # Arguments
     - `ddpModel::Dict`: The current state of the DDP model.
-    - `Tset::Vector`: The set of time steps to process.
+    - `Tset::Vector`: 1-element array containing the current time-step representing the Forward Step.
     - `verbose::Bool`: A flag to enable verbose output (default: false).
 
     # Returns
     - `ddpModel::Dict`: The updated DDP model with stored dual variable values.
-    """
+"""
+function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
     if isnothing(Tset) || length(Tset) != 1
         @error "Tset seems invalid: $Tset"
         return
@@ -523,6 +524,7 @@ function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
 
     return ddpModel
 end
+#endregion
 
 #region compstore_PSubsCost
 """
