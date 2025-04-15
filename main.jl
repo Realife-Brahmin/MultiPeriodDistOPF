@@ -14,9 +14,9 @@ begin
     # T0 = 1
     # T0 = 96
     # T0 = 3
-    T0 = 6
+    # T0 = 6
     # T0 = 12
-    # T0 = 24
+    T0 = 24
     factor = 1
     # factor = 1/2
     # linearizedModel = false
@@ -37,7 +37,7 @@ begin
     # alpha_fpi = 0.001
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 25
+    maxiter_ddp = 50
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
