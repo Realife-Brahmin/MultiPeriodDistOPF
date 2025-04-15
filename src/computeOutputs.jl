@@ -25,11 +25,6 @@ function compute_output_values(modelDict;
     # @unpack model, data = modelDict;
     @unpack data = modelDict
 
-    @unpack temporal_decmp = data;
-    if temporal_decmp
-        @unpack k_ddp = modelDict
-        # println("DDP FP $(k_ddp): Computing Output Values..")
-    end
     # Initialize arrays of size T
     @unpack T = data;
     fval_vs_t_1toT = zeros(Float64, T)
