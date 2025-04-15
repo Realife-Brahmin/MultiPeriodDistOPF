@@ -182,8 +182,8 @@ function store_FS_t_k_decvar_values(ddpModel;
     @unpack data, k_ddp = ddpModel
 
     @unpack modelVals_ddp_vs_t_vs_k, models_ddp_vs_t_vs_k = ddpModel
-    # modelVals_t0_k0 = modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp]
     model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+    modelVals_t0_k0 = Dict() # Will get updated with the values of the decision variables before being copied to modelVals_ddp_vs_t_vs_k
 
     # The actual copying
 
