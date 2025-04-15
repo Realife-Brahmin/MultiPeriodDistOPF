@@ -542,7 +542,7 @@ function compstore_PSubsCost(ddpModel; verbose::Bool=false)
     # Compute output values without mutating the original modelDict
     ddpModel_k0 = deepcopy(ddpModel)
     ddpModel_k0_with_outputVals = CO.compute_output_values(ddpModel_k0, verbose=verbose, forwardPass=true)
-    @unpack outputVals_vs_k = ddpModel_k0
+    @unpack outputVals_vs_k, k_ddp = ddpModel_k0
     outputVals_vs_k[k_ddp] = ddpModel_k0_with_outputVals[:data]
     PSubsCost_dollar_vs_k = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp]
     @pack! ddpModel = outputVals_vs_k, PSubsCost_dollar_vs_k
