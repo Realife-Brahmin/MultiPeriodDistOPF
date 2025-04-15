@@ -223,9 +223,9 @@ function check_for_ddp_convergence(ddpModel;
                 end
             end
         end
-        if all_under_threshold
-            myprintln(true, "All SOC updates are under the threshold.")
-        end
+    end
+    if all_under_threshold
+        myprintln(true, "All SOC updates are under the threshold.")
     end
 
     # Criterion 4: Check the magnitude of updates in μ values
@@ -257,9 +257,9 @@ function check_for_ddp_convergence(ddpModel;
                     end
                 end
             end
-            if all_under_threshold
-                myprintln(true, "All μ updates are under the threshold.")
-            end
+        end
+        if all_under_threshold
+            myprintln(true, "All μ updates are under the threshold.")
         end
     end
 
@@ -443,7 +443,7 @@ function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=f
             if j in Bset[1]
                 MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
                 MU_not_used_str = trim_number_for_printing(mu[j, t_ddp+1, k_ddp-1], sigdigits=2)
-                myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
