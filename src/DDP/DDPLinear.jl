@@ -392,7 +392,7 @@ function solve_and_store_FS(ddpModel; Tset,
     ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
     
     # Todo: WTF it this function?
-    ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)
+    ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, verbose=verbose)
 end
 #endregion
 
@@ -450,6 +450,79 @@ function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=f
     return MU
 end
 #endregion
+
+function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
+    """
+    store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
+
+    Store the dual variable values for the given time step and iteration in the DDP model.
+
+    # Arguments
+    - `ddpModel::Dict`: The current state of the DDP model.
+    - `Tset::Vector`: The set of time steps to process.
+    - `verbose::Bool`: A flag to enable verbose output (default: false).
+
+    # Returns
+    - `ddpModel::Dict`: The updated DDP model with stored dual variable values.
+    """
+    if isnothing(Tset) || length(Tset) != 1
+        @error "Tset seems invalid: $Tset"
+        return
+    end
+
+    @unpack k_ddp, data, mu, lambda_lo, lambda_up = ddpModel
+    μ = mu
+    λ_lo = lambda_lo
+    λ_up = lambda_up
+    @unpack T, Bset = data
+    t_ddp = Tset[1]
+
+    @unpack models_ddp_vs_t_vs_k = ddpModel
+    model_t_k = models_ddp_vs_t_vs_k[t_ddp, k_ddp]  # Get the solved model for this time step and iteration
+
+    # Construct partial prefixes once per t_ddp
+    if t_ddp == 1
+        soc_traj_t0_k0_str_prefix = "h_SOC_j^{t=1}_Initial_SOC_Node_j_"
+    elseif 2 <= t_ddp <= T
+        soc_traj_t0_k0_str_prefix = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_"
+    else
+        @error "Invalid value of t_ddp: $t_ddp"
+        return
+    end
+
+    soc_lim_lo_t0_k0_str_prefix = "g_11_j^t_MinSOC_Node_j_"
+    soc_lim_up_t0_k0_str_prefix = "g_12_j^t_MaxSOC_Node_j_"
+
+    for j in Bset
+        # Build full constraint names using precomputed prefixes
+        soc_traj_t0_k0_j_str = soc_traj_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
+        soc_lim_lo_t0_k0_j_str = soc_lim_lo_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
+        soc_lim_up_t0_k0_j_str = soc_lim_up_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
+
+        # Fetch and store duals
+        soc_traj_t0_k0_j = constraint_by_name(model_t_k, soc_traj_t0_k0_j_str)
+        μ[j, t_ddp, k_ddp] = -dual(soc_traj_t0_k0_j)
+
+        soc_lim_lo_t0_k0_j = constraint_by_name(model_t_k, soc_lim_lo_t0_k0_j_str)
+        soc_lim_up_t0_k0_j = constraint_by_name(model_t_k, soc_lim_up_t0_k0_j_str)
+        λ_lo[j, t_ddp, k_ddp] = -dual(soc_lim_lo_t0_k0_j)
+        λ_up[j, t_ddp, k_ddp] = -dual(soc_lim_up_t0_k0_j)
+    end
+
+
+    if verbose
+        crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
+        println(crayon_update("Forward Pass k_ddp = $(k_ddp): Stored dual variables for time steps in Tset."))
+    end
+
+    # Update the ddpModel with the modified dual variables
+    mu = μ
+    lambda_lo = λ_lo
+    lambda_up = λ_up
+    @pack! ddpModel = mu, lambda_lo, lambda_up
+
+    return ddpModel
+end
 
 #region compstore_PSubsCost
 """
