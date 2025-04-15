@@ -2,7 +2,7 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 Revise.track(MultiPeriodDistOPF.DDP)
 Revise.track(MultiPeriodDistOPF.DDPLinear)
-
+Revise.track(MultiPeriodDistOPF.ModelCopier)
 begin
     systemName0 = "ads3_1ph"
     # systemName0 = "ads10_1ph"
