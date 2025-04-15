@@ -484,8 +484,10 @@ function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
     # Construct partial prefixes once per t_ddp
     if t_ddp == 1
         soc_traj_t0_k0_str_prefix = "h_SOC_j^{t=1}_Initial_SOC_Node_j_"
+        soc_traj_suffix = "t1"
     elseif 2 <= t_ddp <= T
         soc_traj_t0_k0_str_prefix = "h_SOC_j^{t=2toT}_SOC_Trajectory_Node_j_"
+        soc_traj_suffix = "t_$(t_ddp)"
     else
         @error "Invalid value of t_ddp: $t_ddp"
         return
@@ -496,8 +498,8 @@ function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
 
     for j in Bset
         # Build full constraint names using precomputed prefixes
-        soc_traj_t0_k0_j_str = soc_traj_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
-        soc_lim_lo_t0_k0_j_str = soc_lim_lo_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
+        @show soc_traj_t0_k0_j_str = soc_traj_t0_k0_str_prefix * string(j) * "_" * soc_traj_suffix
+        @show soc_lim_lo_t0_k0_j_str = soc_lim_lo_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
         soc_lim_up_t0_k0_j_str = soc_lim_up_t0_k0_str_prefix * string(j) * "_t_$(t_ddp)"
 
         # Fetch and store duals
