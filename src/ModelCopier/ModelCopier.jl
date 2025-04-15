@@ -227,7 +227,7 @@ function store_FP_k_decvar_values(ddpModel;
 
     modelVals_ddp_vs_FP[k_ddp] = modelVals_k0
 
-    modelVals = modelVals_ddp_vs_FP_k0    
+    modelVals = modelVals_k0
     @pack! ddpModel = modelVals_ddp_vs_FP, modelVals
     return ddpModel
 end
