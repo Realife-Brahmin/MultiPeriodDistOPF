@@ -188,21 +188,26 @@ function store_FS_t_k_decvar_values(ddpModel;
     # The actual copying
 
     # Copy P_Subs[t]
+    modelVals_t0_k0[:P_Subs] = Dict{Int,Float64}()
     modelVals_t0_k0[:P_Subs][t_ddp] = JuMP.value(model_t0_k0[:P_Subs][t_ddp])
 
     # Copy P[(i,j), t], Q[(i,j), t] for (i,j) in Lset
     @unpack Lset = data
+    modelVals_t0_k0[:P] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
+    modelVals_t0_k0[:Q] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
     for (i, j) in Lset
         modelVals_t0_k0[:P][(i, j), t_ddp] = JuMP.value(model_t0_k0[:P][(i, j), t_ddp])
         modelVals_t0_k0[:Q][(i, j), t_ddp] = JuMP.value(model_t0_k0[:Q][(i, j), t_ddp])
     end
 
     # Copy v[j, t] for j in Nset
+    modelVals_t0_k0[:v] = Dict{Tuple{Int,Int},Float64}()
     @unpack Nset = data
     for j in Nset
         modelVals_t0_k0[:v][j, t_ddp] = JuMP.value(model_t0_k0[:v][j, t_ddp])
     end
 
+    modelVals_t0_k0[:l] = Dict{Tuple{Tuple{Int,Int},Int},Float64}()
     if optModel == "Nonlinear"
         # Copy l[(i,j), t] for (i,j) in Lset
         for (i, j) in Lset
@@ -219,12 +224,17 @@ function store_FS_t_k_decvar_values(ddpModel;
     end
 
     # Copy q_D[j, t] for j in Dset
+    modelVals_t0_k0[:q_D] = Dict{Tuple{Int,Int},Float64}()
     @unpack Dset = data
     for j in Dset
         modelVals_t0_k0[:q_D][j, t_ddp] = JuMP.value(model_t0_k0[:q_D][j, t_ddp])
     end
 
     # Copy q_B[j, t], P_c[j, t], P_d[j, t], B[j, t] for j in Bset
+    modelVals_t0_k0[:q_B] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_t0_k0[:P_c] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_t0_k0[:P_d] = Dict{Tuple{Int,Int},Float64}()
+    modelVals_t0_k0[:B] = Dict{Tuple{Int,Int},Float64}()
     @unpack Bset = data
     for j in Bset
         modelVals_t0_k0[:q_B][j, t_ddp] = JuMP.value(model_t0_k0[:q_B][j, t_ddp])
