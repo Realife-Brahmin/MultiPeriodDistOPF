@@ -340,7 +340,7 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
         γ_fpi = gamma_fpi
         MU = Dict()
         α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
-        myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
+        # myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
         MU = compute_interpolated_mu(μ, Bset, k_ddp, t_ddp, α_fpi, verbose=verbose)
 
         objfun_expr_t0_k0_appendix = sum( MU[j, t_ddp+1] * (-model_t0_k0[:B][j, t_ddp]) for j ∈ Bset )
