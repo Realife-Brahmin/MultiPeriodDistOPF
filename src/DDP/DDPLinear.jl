@@ -10,7 +10,9 @@ export
     get_interpolated_value,
     optimize_MPOPF_1ph_L_DDP,
     reformulate_model_as_FS,
-    solve_and_store_FS
+    solve_and_store_FS,
+    store_FP_k_decvar_values,
+    store_FS_t_k_dual_variables
 
 include("../computeOutputs.jl")
 import .computeOutputs as CO
@@ -306,6 +308,7 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
         ddpModel = solve_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
 
+    ddpModel = MC.store_FP_k_decvar_values(ddpModel, verbose=verbose) # Store the decision variable values for the current forward pass now that all the FS models have been solved
     ddpModel = compstore_PSubsCost(ddpModel, verbose=verbose) # Forward pass done, so compute PSubsCost
 
     return ddpModel
@@ -509,12 +512,6 @@ function store_FS_t_k_dual_variables(ddpModel; Tset, verbose::Bool=false)
         soc_lim_up_t0_k0_j = constraint_by_name(model_t_k, soc_lim_up_t0_k0_j_str)
         λ_lo[j, t_ddp, k_ddp] = -dual(soc_lim_lo_t0_k0_j)
         λ_up[j, t_ddp, k_ddp] = -dual(soc_lim_up_t0_k0_j)
-    end
-
-
-    if verbose
-        crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
-        println(crayon_update("Forward Pass k_ddp = $(k_ddp): Stored dual variables for time steps in Tset."))
     end
 
     # Update the ddpModel with the modified dual variables
