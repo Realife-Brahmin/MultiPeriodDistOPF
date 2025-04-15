@@ -564,6 +564,7 @@ function DDPModel(data;
     @unpack Tset, Bset, solver = data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
+    modelVals_ddp_vs_FP = Dict{Int,Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_lo = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_up = Dict{Tuple{Int,Int,Int},Float64}()
@@ -596,6 +597,7 @@ function DDPModel(data;
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :modelVals_ddp_vs_t_vs_k=>modelVals_ddp_vs_t_vs_k,
+        :modelVals_ddp_vs_FP=>modelVals_ddp_vs_FP,
         :mu=>mu,
         :outputVals_vs_k => outputVals_vs_k,
         :shouldStop => false,
