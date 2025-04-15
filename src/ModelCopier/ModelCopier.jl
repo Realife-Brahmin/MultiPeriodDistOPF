@@ -191,7 +191,7 @@ function store_FP_k_decvar_values(ddpModel;
 
     # Also store objective/solve status meta
     modelVals_k0[:termination_status] = Dict{Int,TerminationStatusCode}()
-    modelVals_k0[:solve_time] = Dict{Int,Float64}()
+    modelVals_k0[:solve_time_vs_t] = Dict{Int,Float64}()
     modelVals_k0[:objective_value] = Dict{Int,Float64}()
 
     for t_ddp in Tset
@@ -221,7 +221,7 @@ function store_FP_k_decvar_values(ddpModel;
         end
 
         modelVals_k0[:termination_status][t_ddp] = modelVals_t_k[:termination_status]
-        modelVals_k0[:solve_time][t_ddp] = modelVals_t_k[:solve_time]
+        modelVals_k0[:solve_time_vs_t][t_ddp] = modelVals_t_k[:solve_time]
         modelVals_k0[:objective_value][t_ddp] = modelVals_t_k[:objective_value]
     end
 
