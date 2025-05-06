@@ -158,6 +158,7 @@ function check_for_ddp_convergence(ddpModel;
     threshold_soc = 1e-3
     threshold_mu = 1e-2
     threshold_fval = 1e-2
+    threshold_conv_iters = 2
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
@@ -167,6 +168,7 @@ function check_for_ddp_convergence(ddpModel;
 
     # Criterion 2: Check the magnitude of updates in fval
 
+    converged_fval = true
     if fval_change
         @unpack k_best, fval_best, fval_best_hit = ddpModel
         @unpack PSubsCost_dollar_vs_k = ddpModel;
@@ -181,15 +183,23 @@ function check_for_ddp_convergence(ddpModel;
             myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
             myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
             myprintln(true, "*******")
+            converged_fval = false
         else
             myprintln(true, "FP$(k_ddp): Objective function value update is under the threshold.")
         end
+    end
+
+    if converged_fval
+        ddpModel[:conv_fval_num] += 1
+    else
+        ddpModel[:conv_fval_num] = 0
     end
 
     # println(crayon_green("Checking convergence for B values:"))
 
     # Criterion 3: Check the magnitude of updates in SOC values
 
+    converged_soc = true
     if soc_change
         for t_ddp in Tset
             model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
@@ -208,6 +218,7 @@ function check_for_ddp_convergence(ddpModel;
                 max_discrepancy = max(max_discrepancy, discrepancy)
 
                 if max_discrepancy > threshold
+                    converged_soc = false
                     all_under_threshold = false
                     if discrepancy > threshold_soc
                         # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
@@ -224,12 +235,20 @@ function check_for_ddp_convergence(ddpModel;
             end
         end
     end
+
+    if converged_soc
+        ddpModel[:conv_SOC_num] += 1
+    else
+        ddpModel[:conv_SOC_num] = 0
+    end
+
     if all_under_threshold
         myprintln(true, "FP$(k_ddp): All SOC updates are under the threshold.")
     end
 
     # Criterion 4: Check the magnitude of updates in μ values
 
+    converged_mu = true
     if mu_change
 
         for t in Tset
@@ -240,6 +259,7 @@ function check_for_ddp_convergence(ddpModel;
                     discrepancy = abs(mu_current - mu_previous)
                     max_discrepancy = max(max_discrepancy, discrepancy)
                     if discrepancy > threshold_mu
+                        converged_mu = false
                         all_under_threshold = false
                         # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                         if j in Bset_to_print
@@ -263,6 +283,18 @@ function check_for_ddp_convergence(ddpModel;
         myprintln(true, "FP$(k_ddp): All μ updates are under the threshold.")
     end
 
+    if converged_mu
+        ddpModel[:conv_mu_num] += 1
+    else
+        ddpModel[:conv_mu_num] = 0
+    end
+
+    if ddpModel[:conv_mu_num] >= threshold_conv_iters && converged_soc >= threshold_conv_iters
+        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(threshold_conv_iters) iterations."))
+        converged = true
+        shouldStop = true
+        @pack! ddpModel = converged, shouldStop
+    end
     if !all_under_threshold
         return ddpModel
     end
@@ -659,6 +691,10 @@ function DDPModel(data;
 
     ddpModel = Dict(
         :converged => false,
+        :conv_fval_num => 0,
+        :conv_SOC_num => 0,
+        :conv_mu_num => 0,
+
         :data => data,
         :iterLimitReached => false,
         :fval_best => Inf,
