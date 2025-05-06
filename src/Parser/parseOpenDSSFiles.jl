@@ -86,7 +86,8 @@ function parse_all_data(systemName::String, T::Int;
     gedDict_ud=nothing,
     alpha_fpi=0.43,
     gamma_fpi=0.8,
-    warmStart_mu=nothing)
+    warmStart_mu=nothing,
+    threshold_conv_iters=3)
 
     # Parse system simulation data
     sysSimData = parse_system_simulation_data(systemName, T,
@@ -99,7 +100,8 @@ function parse_all_data(systemName::String, T::Int;
         gedDict_ud=gedDict_ud,
         alpha_fpi=alpha_fpi,
         gamma_fpi=gamma_fpi,
-        warmStart_mu=warmStart_mu)
+        warmStart_mu=warmStart_mu,
+        threshold_conv_iters=threshold_conv_iters)
 
     @unpack kVA_B, kV_B = sysSimData
     # Parse branch data

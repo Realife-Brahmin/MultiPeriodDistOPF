@@ -158,7 +158,7 @@ function check_for_ddp_convergence(ddpModel;
     threshold_soc = 1e-2
     threshold_mu = 1e-2
     threshold_fval = 1e-1
-    threshold_conv_iters = 2
+    # threshold_conv_iters = 2
     all_under_threshold = true
 
     crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
@@ -193,7 +193,7 @@ function check_for_ddp_convergence(ddpModel;
         ddpModel[:conv_fval_num] += 1
         HF.myprintln(print_fval, "FP$(k_ddp): conv_fval_num = $(ddpModel[:conv_fval_num]).")
     else
-        ddpModel[:conv_fval_num] = 0
+        ddpModel[:conv_fval_num] = 1
     end
 
     
@@ -242,7 +242,7 @@ function check_for_ddp_convergence(ddpModel;
         ddpModel[:conv_soc_num] += 1
         HF.myprintln(print_soc, "FP$(k_ddp): conv_soc_num = $(ddpModel[:conv_soc_num]).")
     else
-        ddpModel[:conv_soc_num] = 0
+        ddpModel[:conv_soc_num] = 1
     end
 
     if all_under_threshold
@@ -290,11 +290,11 @@ function check_for_ddp_convergence(ddpModel;
         ddpModel[:conv_mu_num] += 1
         HF.myprintln(print_mu, "FP$(k_ddp): conv_mu_num = $(ddpModel[:conv_mu_num]).")
     else
-        ddpModel[:conv_mu_num] = 0
+        ddpModel[:conv_mu_num] = 1
     end
 
-    if ddpModel[:conv_fval_num] >= threshold_conv_iters && ddpModel[:conv_soc_num] >= threshold_conv_iters
-        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(threshold_conv_iters+1) Forward Passes."))
+    if ddpModel[:conv_fval_num] >= ddpModel[:threshold_conv_iters] && ddpModel[:conv_soc_num] >= ddpModel[:threshold_conv_iters]
+        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(ddpModel[:threshold_conv_iters]) Forward Passes."))
         converged = true
         shouldStop = true
         @pack! ddpModel = converged, shouldStop
@@ -695,9 +695,10 @@ function DDPModel(data;
 
     ddpModel = Dict(
         :converged => false,
-        :conv_fval_num => 0,
-        :conv_soc_num => 0,
-        :conv_mu_num => 0,
+        :conv_fval_num => 1,
+        :conv_soc_num => 1,
+        :conv_mu_num => 1,
+        :threshold_conv_iters => get(data, :threshold_conv_iters, 3),
 
         :data => data,
         :iterLimitReached => false,
