@@ -155,9 +155,9 @@ function check_for_ddp_convergence(ddpModel;
     end
 
     max_discrepancy = 0.0
-    threshold_soc = 1e-3
+    threshold_soc = 1e-2
     threshold_mu = 1e-2
-    threshold_fval = 1e-2
+    threshold_fval = 1e-1
     threshold_conv_iters = 2
     all_under_threshold = true
 
