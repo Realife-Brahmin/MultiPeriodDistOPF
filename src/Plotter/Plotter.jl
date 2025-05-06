@@ -316,14 +316,19 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
     savePlots::Bool=true,
     verbose::Bool=false)
     @unpack data, outputVals_vs_k, k_ddp = modelDict
-    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T, linearizedModelString, linearizedModelAppendix = data
+    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T, linearizedModel, linearizedModelString, linearizedModelAppendix = data
 
     yvalues = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
 
     # Compute the optimal value using the brute force solver
     dataBF = deepcopy(data)
     dataBF[:temporal_decmp] = false
-    optimal_modelDict = playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(dataBF)
+    if !linearizedModel
+        optimal_modelDict = playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(dataBF)
+    else
+        optimal_modelDict = playbook.optimize_MPOPF_1ph_L(dataBF)
+    end
+    
     optimal_modelDict = CO.compute_output_values(optimal_modelDict, verbose=verbose)
     optimal_PSubsCost_allT_dollar =  optimal_modelDict[:data][:PSubsCost_allT_dollar]
     
