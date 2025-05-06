@@ -1,13 +1,11 @@
 # main.jl
 include("./src/setupMultiPeriodDistOPF.jl") 
-Revise.track(MultiPeriodDistOPF.DDP)
-Revise.track(MultiPeriodDistOPF.DDPLinear)
-Revise.track(MultiPeriodDistOPF.ModelCopier)
+
 begin
     # systemName0 = "ads3_1ph"
     # systemName0 = "ads10_1ph"
-    systemName0 = "ieee123_1ph-A"
-    # systemName0 = "ieee123_1ph-B"
+    # systemName0 = "ieee123_1ph-A"
+    systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
     # T0 = 8
@@ -21,14 +19,14 @@ begin
     # factor = 1/2
     # linearizedModel = false
     linearizedModel = true
-    temporal_decmp = false
-    # temporal_decmp = true
+    # temporal_decmp = false
+    temporal_decmp = true
     # gamma_fpi = 0.5    
     gamma_fpi = 1.0
-    # warmStart_mu = "none"
+    warmStart_mu = "none"
     # warmStart_mu = "nonlinear"
-    warmStart_mu = "linear"
-    savePlots = false
+    # warmStart_mu = "linear"
+    # savePlots = false
     savePlots = true
 end;
 
@@ -37,7 +35,7 @@ begin
     # alpha_fpi = 0.001
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 50
+    maxiter_ddp = 25
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
