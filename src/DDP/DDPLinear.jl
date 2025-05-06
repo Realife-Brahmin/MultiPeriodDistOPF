@@ -27,7 +27,7 @@ include("../ModelCopier/ModelCopier.jl")
 import .ModelCopier as MC
 
 include("../helperFunctions.jl")
-using .helperFunctions
+import .helperFunctions as HF
 
 include("../SolverArranger/SolverArranger.jl")
 import .SolverArranger as SolverArranger
@@ -179,22 +179,24 @@ function check_for_ddp_convergence(ddpModel;
         discrepancy = abs(PSubsCost_current - PSubsCost_previous)
         if discrepancy > threshold_fval
             all_under_threshold = false
-            myprintln(print_fval, "*******")
-            myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
-            myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
-            myprintln(true, "*******")
+            HF.myprintln(print_fval, "*******")
+            HF.myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
+            HF.myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
+            HF.myprintln(true, "*******")
             converged_fval = false
         else
-            myprintln(true, "FP$(k_ddp): Objective function value update is under the threshold.")
+            HF.myprintln(true, "FP$(k_ddp): Objective function value update is under the threshold.")
         end
     end
 
     if converged_fval
         ddpModel[:conv_fval_num] += 1
+        HF.myprintln(print_fval, "FP$(k_ddp): conv_fval_num = $(ddpModel[:conv_fval_num]).")
     else
         ddpModel[:conv_fval_num] = 0
     end
 
+    
     # println(crayon_green("Checking convergence for B values:"))
 
     # Criterion 3: Check the magnitude of updates in SOC values
@@ -221,7 +223,7 @@ function check_for_ddp_convergence(ddpModel;
                     converged_soc = false
                     all_under_threshold = false
                     if discrepancy > threshold_soc
-                        # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+                        # HF.myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                         if j in Bset_to_print
                             println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
                             println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
@@ -237,13 +239,14 @@ function check_for_ddp_convergence(ddpModel;
     end
 
     if converged_soc
-        ddpModel[:conv_SOC_num] += 1
+        ddpModel[:conv_soc_num] += 1
+        HF.myprintln(print_soc, "FP$(k_ddp): conv_soc_num = $(ddpModel[:conv_soc_num]).")
     else
-        ddpModel[:conv_SOC_num] = 0
+        ddpModel[:conv_soc_num] = 0
     end
 
     if all_under_threshold
-        myprintln(true, "FP$(k_ddp): All SOC updates are under the threshold.")
+        HF.myprintln(true, "FP$(k_ddp): All SOC updates are under the threshold.")
     end
 
     # Criterion 4: Check the magnitude of updates in μ values
@@ -261,7 +264,7 @@ function check_for_ddp_convergence(ddpModel;
                     if discrepancy > threshold_mu
                         converged_mu = false
                         all_under_threshold = false
-                        # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                        # HF.myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                         if j in Bset_to_print
                         # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
                         # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
@@ -280,17 +283,18 @@ function check_for_ddp_convergence(ddpModel;
         end
     end
     if all_under_threshold
-        myprintln(true, "FP$(k_ddp): All μ updates are under the threshold.")
+        HF.myprintln(true, "FP$(k_ddp): All μ updates are under the threshold.")
     end
 
     if converged_mu
         ddpModel[:conv_mu_num] += 1
+        HF.myprintln(print_mu, "FP$(k_ddp): conv_mu_num = $(ddpModel[:conv_mu_num]).")
     else
         ddpModel[:conv_mu_num] = 0
     end
 
-    if ddpModel[:conv_mu_num] >= threshold_conv_iters && converged_soc >= threshold_conv_iters
-        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(threshold_conv_iters) iterations."))
+    if ddpModel[:conv_fval_num] >= threshold_conv_iters && ddpModel[:conv_soc_num] >= threshold_conv_iters
+        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(threshold_conv_iters+1) Forward Passes."))
         converged = true
         shouldStop = true
         @pack! ddpModel = converged, shouldStop
@@ -328,7 +332,7 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
-    # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+    # HF.myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
     t_ddp = 1
     @unpack data = ddpModel
     @unpack Tset, T = data
@@ -372,7 +376,7 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
         γ_fpi = gamma_fpi
         MU = Dict()
         α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
-        # myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
+        # HF.myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
         MU = compute_interpolated_mu(μ, Bset, k_ddp, t_ddp, α_fpi, verbose=verbose)
 
         objfun_expr_t0_k0_appendix = sum( MU[j, t_ddp+1] * (-model_t0_k0[:B][j, t_ddp]) for j ∈ Bset )
@@ -475,7 +479,7 @@ function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=f
             if j in Bset[1]
                 MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
                 MU_not_used_str = trim_number_for_printing(mu[j, t_ddp+1, k_ddp-1], sigdigits=2)
-                # myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # HF.myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -609,7 +613,7 @@ function optimize_MPOPF_1ph_L_DDP(data;
     keepForwardPassesRunning = true
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel
-        # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+        # HF.myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
         ddpModel = forward_pass_1ph_L(ddpModel,
             verbose=verbose)
 
@@ -692,7 +696,7 @@ function DDPModel(data;
     ddpModel = Dict(
         :converged => false,
         :conv_fval_num => 0,
-        :conv_SOC_num => 0,
+        :conv_soc_num => 0,
         :conv_mu_num => 0,
 
         :data => data,
