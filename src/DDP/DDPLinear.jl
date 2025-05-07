@@ -424,7 +424,7 @@ function solve_and_store_FS(ddpModel; Tset,
     @unpack models_ddp_vs_t_vs_k, k_ddp = ddpModel
     model_t0_k0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved FS model
     optimize!(model_t0_k0)
-    solverStatus = check_solver_status(model_t0_k0)
+    solverStatus = check_solver_status(model_t0_k0, k_ddp=k_ddp, t_ddp=t_ddp)
     models_ddp_vs_t_vs_k[t_ddp, k_ddp] = model_t0_k0 # solved FS model
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
@@ -436,7 +436,7 @@ end
 #endregion
 
 #region check_solver_status
-function check_solver_status(model)
+function check_solver_status(model; k_ddp=nothing, t_ddp=nothing)
     # Define crayons for colored output
     crayon_light_green = Crayon(foreground=:light_green, bold=true)
     crayon_red = Crayon(foreground=:red, bold=true)
@@ -445,7 +445,9 @@ function check_solver_status(model)
     if termination_status(model) == LOCALLY_SOLVED
         return true
     else
-        println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        if !isnothing(k_ddp) || !isnothing(t_ddp)
+            println(crayon_red("Forward Pass k_ddp = $(k_ddp) : Optimal solution not found for Forward Step model for t = $(t_ddp)"))
+        end
         println(crayon_red("Solver status: $(termination_status(model))"))
         return false
     end
