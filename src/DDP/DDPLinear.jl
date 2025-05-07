@@ -95,7 +95,7 @@ function check_for_ddp_convergence(ddpModel;
                 crayon_t = ((t_idx + line_idx) % 2 == 1) ? crayon_light_green : crayon_light_blue
 
                 # Retrieve and format the current μ value
-                mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=2)
+                mu_current = HF.trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=2)
 
                 # Print formatted μ value
                 print(crayon_t("$mu_current "))
@@ -130,7 +130,7 @@ function check_for_ddp_convergence(ddpModel;
                 var_name = Symbol("B[$j,$t]")
                 B_j_t_current = var_dict_current[var_name]
                 soc_percent_j_t_current = B_j_t_current / B_R_pu[j] * 100.0
-                soc_percent_j_t_current_str = trim_number_for_printing(soc_percent_j_t_current, sigdigits=2)
+                soc_percent_j_t_current_str = HF.trim_number_for_printing(soc_percent_j_t_current, sigdigits=2)
 
                 # Print formatted μ value
                 print(crayon_t("$soc_percent_j_t_current_str "))
@@ -477,8 +477,8 @@ function compute_interpolated_mu(mu, Bset, k_ddp, t_ddp, α_fpi; verbose::Bool=f
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(mu[j, t_ddp+1, k_ddp-1], mu[j, t_ddp+1, k_ddp-2], α_fpi)
             if j in Bset[1]
-                MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
-                MU_not_used_str = trim_number_for_printing(mu[j, t_ddp+1, k_ddp-1], sigdigits=2)
+                MU_used_str = HF.trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+                MU_not_used_str = HF.trim_number_for_printing(mu[j, t_ddp+1, k_ddp-1], sigdigits=2)
                 # HF.myprintln(verbose, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
