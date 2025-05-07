@@ -37,7 +37,7 @@ begin
     T = Int(T0*factor) 
     numAreas = 1
     maxiter_ddp = 50
-    threshold_conv_iters = 5
+    threshold_conv_iters = 3
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
     objfun2 = "scd"
