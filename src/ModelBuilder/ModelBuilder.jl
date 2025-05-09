@@ -37,7 +37,7 @@ include("Objective.jl")
 using .Objective
 
 include("Initialization.jl")
-using .Initialization
+import .Initialization as Initialization
 
 include("../ModelCopier/ModelCopier.jl")
 import .ModelCopier as MC
@@ -160,7 +160,7 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     @unpack model, data = modelDict;
 
     # Initialize variables
-    modelDict = initialize_variables_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
+    modelDict = Initialization.initialize_variables_1ph_NL_t_in_Tset(modelDict, Tset=Tset)
     
     modelVals = MC.ModelVals(data)
     @pack! modelDict = model, modelVals, data
@@ -277,7 +277,7 @@ function build_MPOPF_1ph_L_model_t_in_Tset(data;
     @unpack model, data = modelDict
 
     # Initialize variables
-    modelDict = initialize_variables_1ph_L_t_in_Tset(modelDict, Tset=Tset)
+    modelDict = Initialization.initialize_variables_1ph_L_t_in_Tset(modelDict, Tset=Tset)
 
     modelVals = MC.ModelVals(data)
     @pack! modelDict = model, modelVals, data
