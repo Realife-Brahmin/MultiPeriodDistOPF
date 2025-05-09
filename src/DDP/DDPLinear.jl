@@ -341,6 +341,7 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
         @pack! ddpModel = t_ddp
         modelDict_t0_k0 = MB.build_MPOPF_1ph_L_model_t_in_Tset(data, Tset=[t_ddp], verbose=verbose)
         ddpModel = reformulate_model_as_FS(ddpModel, modelDict_t0_k0, Tset=[t_ddp], verbose=verbose)
+        ddpModel = warm_start_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
         ddpModel = solve_and_store_FS(ddpModel, Tset=[t_ddp], verbose=verbose)
     end
 
@@ -350,6 +351,100 @@ function forward_pass_1ph_L(ddpModel; verbose::Bool=false)
     return ddpModel
 end
 #endregion
+
+"""
+    warm_start_FS(ddpModel; Tset, verbose::Bool=false)
+
+Warm start the variables for the current forward step using the values from the last time step.
+
+# Arguments
+- `ddpModel::Dict`: The current state of the DDP model.
+- `Tset::Vector`: A single-element array containing the current time-step representing the Forward Step.
+- `verbose::Bool`: A flag to enable verbose output (default: false).
+
+# Returns
+- `ddpModel::Dict`: The updated DDP model with warm-started variables.
+"""
+function warm_start_FS(ddpModel; Tset, verbose::Bool=false)
+    if isnothing(Tset) || length(Tset) != 1
+        @error "Tset seems invalid: $Tset"
+        return ddpModel
+    end
+
+    t_ddp = Tset[1]
+    @unpack k_ddp, models_ddp_vs_t_vs_k, modelVals_ddp_vs_t_vs_k, data = ddpModel
+
+    # Ensure we are not at the first time step
+    if t_ddp == 1
+        return ddpModel
+    end
+
+    # Get the current model and the variable values from the previous time step
+    model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+    model_previous_vals = modelVals_ddp_vs_t_vs_k[t_ddp - 1, k_ddp]
+
+    # Warm start substation power flow variable
+    P_Subs = model_current[:P_Subs]
+    if haskey(model_previous_vals, :P_Subs)
+        set_start_value(P_Subs[t_ddp], model_previous_vals[:P_Subs][t_ddp - 1])
+    end
+
+    # Warm start power flow variables
+    @unpack Lset = data
+    P = model_current[:P]
+    Q = model_current[:Q]
+    for (i, j) in Lset
+        if haskey(model_previous_vals[:P], (i, j)) && haskey(model_previous_vals[:Q], (i, j))
+            set_start_value(P[(i, j), t_ddp], model_previous_vals[:P][(i, j), t_ddp - 1])
+            set_start_value(Q[(i, j), t_ddp], model_previous_vals[:Q][(i, j), t_ddp - 1])
+        end
+    end
+
+    # Warm start voltage variables
+    @unpack Nset = data
+    v = model_current[:v]
+    for j in Nset
+        if haskey(model_previous_vals[:v], j)
+            set_start_value(v[j, t_ddp], model_previous_vals[:v][j, t_ddp - 1])
+        end
+    end
+
+    # Warm start PV inverter reactive dispatch variables
+    @unpack Dset = data
+    q_D = model_current[:q_D]
+    for j in Dset
+        if haskey(model_previous_vals[:q_D], j)
+            set_start_value(q_D[j, t_ddp], model_previous_vals[:q_D][j, t_ddp - 1])
+        end
+    end
+
+    # Warm start battery real and reactive dispatch variables
+    @unpack Bset = data
+    q_B = model_current[:q_B]
+    P_c = model_current[:P_c]
+    P_d = model_current[:P_d]
+    for j in Bset
+        if haskey(model_previous_vals[:q_B], j)
+            set_start_value(q_B[j, t_ddp], model_previous_vals[:q_B][j, t_ddp - 1])
+        end
+        if haskey(model_previous_vals[:P_c], j)
+            set_start_value(P_c[j, t_ddp], model_previous_vals[:P_c][j, t_ddp - 1])
+        end
+        if haskey(model_previous_vals[:P_d], j)
+            set_start_value(P_d[j, t_ddp], model_previous_vals[:P_d][j, t_ddp - 1])
+        end
+    end
+
+    # Warm start battery state of charge (SOC) variables
+    B = model_current[:B]
+    for j in Bset
+        if haskey(model_previous_vals[:B], j)
+            set_start_value(B[j, t_ddp], model_previous_vals[:B][j, t_ddp - 1])
+        end
+    end
+
+    return ddpModel
+end
 
 #region reformulate_model_as_FS
 function reformulate_model_as_FS(ddpModel, modelDict_t0_k0; 
