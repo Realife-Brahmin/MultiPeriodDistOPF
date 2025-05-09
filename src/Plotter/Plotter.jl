@@ -29,6 +29,7 @@ common_marker_stroke_width = 2.0
 # line_colour_ddp = :slateblue2
 line_colour_ddp = :darkorchid1
 line_colour_bf = :darkorange2
+line_colour_tenapp = :dodgerblue
 
 
 #region plot_battery_actions
@@ -316,7 +317,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
     savePlots::Bool=true,
     verbose::Bool=false)
     @unpack data, outputVals_vs_k, k_ddp = modelDict
-    @unpack simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T, linearizedModel, linearizedModelString, linearizedModelAppendix = data
+    @unpack algo_temporal_decmp, simNatureString, gedString, objfunString, systemName, objfunPrefix, gedAppendix, solver, T, linearizedModel, linearizedModelString, linearizedModelAppendix = data
 
     yvalues = [outputVals_vs_k[k][:PSubsCost_allT_dollar] for k in 1:k_ddp-1]
 
@@ -345,11 +346,21 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
 
     gr()
 
+    if algo_temporal_decmp == "DDP"
+        line_colour = line_colour_ddp
+        label = "DDP"
+        xlabel_prefix = "Forward Pass"
+    elseif algo_temporal_decmp == "tENApp"
+        line_colour = line_colour_tenapp
+        label = "tENApp"
+        xlabel_prefix = "Macro-iteration"
+    end
+
     outputPlot = plot(
         1:k_ddp-1, yvalues,
         dpi=600,
-        label="DDP",
-        xlabel="Forward Pass " * L"[k]",
+        label=label,
+        xlabel=xlabel_prefix * " " * L"[k]",
         ylabel="All-Time Substation Power Cost " * L"[$]",
         title="All-Time Substation Power Cost " * L"(P_{SubsCost}^{allT})" * " across Forward Passes\n" *
               "using $(simNatureString) OPF\n" *
@@ -357,7 +368,7 @@ function plot_substation_power_cost_allT_vs_k(modelDict;
             "optimizing for $(objfunString)\n" *
             "with model $(linearizedModelString)",
         legend=:topleft,
-        color=line_colour_ddp,
+        color=line_colour,
         gridstyle=:solid,
         gridlinewidth=1.0,
         gridalpha=0.2,
