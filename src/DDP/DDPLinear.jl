@@ -486,20 +486,36 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
     @objective(model_t0_k0, Min, objfun_expr_t0_k0_ddp)
 
     # Step 2: Fix SOC variables for the previous time-step if applicable
+    @unpack Bset, algo_temporal_decmp = data;
 
-    if t_ddp ∈ 2:T
-        # Related Todo: Disambiguate between modelVals_ddp_vs_FP and modelVals_ddp_vs_t_vs_k
-        @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-        # modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
-        modelVals_tm1_k0m1 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp-1]
-        # B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
-        B_Vals_tm1_k0m1 = modelVals_tm1_k0m1[:B]
+    if algo_temporal_decmp == "tENApp"
+        if t_ddp ∈ 2:T
+            @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+            if k_ddp >= 2
+                modelVals_tm1_k0m1 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp-1]
+                B_Vals_tm1_k0m1 = modelVals_tm1_k0m1[:B]
 
+                for j ∈ Bset
+                    fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_tm1_k0m1[j, t_ddp-1])
+                end
 
-        @unpack Bset = data;
-        for j ∈ Bset
-            # fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
-            fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_tm1_k0m1[j, t_ddp-1])
+            elseif k_ddp == 1
+                
+                @unpack B0_pu = data
+                for j ∈ Bset
+                    fix(model_t0_k0[:B][j, t_ddp - 1], B0_pu[j])
+                end
+            end
+        end
+    elseif algo_temporal_decmp == "DDP"
+        if t_ddp ∈ 2:T
+            @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+            modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
+            B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
+
+            for j ∈ Bset
+                fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+            end
         end
     end
 
