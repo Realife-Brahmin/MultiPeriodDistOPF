@@ -36,9 +36,10 @@ begin
 end;
 
 begin
+    alpha_fpi = 3.00
     # alpha_fpi = 1.00
     # alpha_fpi = 0.43
-    alpha_fpi = 0.75
+    # alpha_fpi = 0.75
     # alpha_fpi = 0.001
     T = Int(T0*factor) 
     numAreas = 1
