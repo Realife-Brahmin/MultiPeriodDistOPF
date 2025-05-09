@@ -12,8 +12,9 @@ begin
     # T0 = 1
     # T0 = 96
     # T0 = 3
+    T0 = 4
     # T0 = 6
-    T0 = 12
+    # T0 = 12
     # T0 = 24
     # T0 = 36
     # T0 = 48
@@ -36,7 +37,8 @@ end;
 
 begin
     # alpha_fpi = 1.00
-    alpha_fpi = 0.43
+    # alpha_fpi = 0.43
+    alpha_fpi = 0.75
     # alpha_fpi = 0.001
     T = Int(T0*factor) 
     numAreas = 1
