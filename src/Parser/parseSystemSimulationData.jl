@@ -48,6 +48,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
     objfun0 = "subsPowerCostMin",
     objfun2 = "scd",
     temporal_decmp = false,
+    algo_temporal_decmp = "DDP",
     PSubsMax_kW = Inf,
     inputForecastDescription = "nonspecific",
     solver = "Ipopt",
@@ -175,8 +176,13 @@ function parse_system_simulation_data(systemName::String, T::Int;
     objfunConciseDescription = objfunPrefix*"_"*objfunAppendix 
 
     if temporal_decmp == true
-        temporalDecmpString = "Temporally Decomposed via DDP"
-        temporalDecmpAppendix = "tmprl_dcmpsd"
+        if algo_temporal_decmp == "DDP"
+            temporalDecmpString = "Temporally Decomposed via DDP"
+            temporalDecmpAppendix = "tmprl_dcmpsd"
+        elseif algo_temporal_decmp == "tENApp"
+            temporalDecmpString = "Temporally Decomposed via tENApp"
+            temporalDecmpAppendix = "tmprl_dcmpsd_tENApp"
+        end
     elseif temporal_decmp == false
         temporalDecmpString = "Temporally Brute-forced"
         temporalDecmpAppendix = "tmprl_bruteforced"
@@ -249,6 +255,7 @@ function parse_system_simulation_data(systemName::String, T::Int;
         :tSOC_hard => tSOC_hard,
         :T => T, # user input
         :temporal_decmp => temporal_decmp,
+        :algo_temporal_decmp => algo_temporal_decmp,
         :temporalDecmpString => temporalDecmpString,
         :temporalDecmpAppendix => temporalDecmpAppendix,
         :Tset => Tset,
