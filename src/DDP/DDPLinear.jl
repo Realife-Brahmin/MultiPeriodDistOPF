@@ -490,12 +490,16 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
     if t_ddp ∈ 2:T
         # Related Todo: Disambiguate between modelVals_ddp_vs_FP and modelVals_ddp_vs_t_vs_k
         @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-        modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
-        B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
+        # modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
+        modelVals_tm1_k0m1 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp-1]
+        # B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
+        B_Vals_tm1_k0m1 = modelVals_tm1_k0m1[:B]
+
 
         @unpack Bset = data;
         for j ∈ Bset
-            fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+            # fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+            fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_tm1_k0m1[j, t_ddp-1])
         end
     end
 
