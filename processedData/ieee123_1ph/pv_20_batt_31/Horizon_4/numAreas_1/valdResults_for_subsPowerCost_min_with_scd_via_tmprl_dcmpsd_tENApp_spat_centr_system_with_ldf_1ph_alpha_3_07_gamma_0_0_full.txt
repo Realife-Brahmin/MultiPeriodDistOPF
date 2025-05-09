@@ -1,0 +1,91 @@
+---------------------------------------------
+1. Machine ID: ZEPH-ROG-G14-Aryan
+2. Solver Used: Ipopt
+3. System Name: ieee123_1ph
+4. Horizon Duration: 4
+5. Nature of Validation Simulation: Temporally Decomposed via tENApp, Spatially Centralized
+6. Optimization Model: LinDistFlow 1ph
+---------------------------------------------
+Full 4 Hour Horizon Validation Results
+7. Horizon Total Substation Power Cost: $157.27
+8. Horizon Total Line Loss: 76.06 kW
+9. Horizon Total Substation Power: 3515.84 kW + 2056.39 kVAr
+10. Horizon Total Load: 3654.77 kW + 2010.93 kVAr
+11. Horizon Total Generation: 215.0 kW + 104.33 kVAr
+12. Horizon Total Static Capacitor Reactive Power Generation: 0.0 kVAr
+13. Horizon Total PV Generation: 284.87 kW + 34.69 kVAr
+14. Horizon Total Battery Generation: -69.87 kW + 69.64 kVAr
+15. Horizon Total Battery Transaction Magnitude: 193.77 kW + 76.64 kVAr
+16. Horizon Total SCD Observed: N/A
+17. Horizon-end Battery Energy Deviation from Reference: 60.01 kWh
+18. Horizon-Total All Time Substation Power Peak: 997.48 kW
+---------------------------------------------
+Discrepancies (Maximum All Time):
+19. Maximum All Time Voltage Discrepancy: 0.001444 pu
+20. Maximum All Time Line Loss Discrepancy: 1.086008 kW
+21. Maximum All Time Substation Borrowed Real Power Discrepancy: 23.449851 kW
+22. Maximum All Time Substation Borrowed Reactive Power Discrepancy: 46.353892 kVAr
+---------------------------------------------
+23. Solution Time: Small
+
+Per-Timestep Power Flow Results:
+
+******************************
+   Time Step: 1
+******************************
+   Power Loss              : 23.46143968571739 kW
+   Substation Power        : 997.4793166018189 kW
+   Reactive Power          : 540.0664549668539 kVAr
+   Total Load Power        : 903.8006411689864 kW
+   Total Load Reactive Power: 497.2825417417078 kVAr
+   Total PV Power          : 61.59203678656337 kW
+   Total PV Reactive Power : 4.3798359508063385 kVAr
+   Total Battery Power     : -131.81700884599053 kW
+   Total Battery Reactive Power: -0.8028428530736023 kVAr
+******************************
+
+
+******************************
+   Time Step: 2
+******************************
+   Power Loss              : 16.57987213726908 kW
+   Substation Power        : 831.7926837050491 kW
+   Reactive Power          : 466.7210782958554 kVAr
+   Total Load Power        : 915.4541712177012 kW
+   Total Load Reactive Power: 503.7197470109917 kVAr
+   Total PV Power          : 69.29313662508245 kW
+   Total PV Reactive Power : 21.83969916525929 kVAr
+   Total Battery Power     : 30.976887851341587 kW
+   Total Battery Reactive Power: 47.73166439793054 kVAr
+******************************
+
+
+******************************
+   Time Step: 3
+******************************
+   Power Loss              : 18.844250604452633 kW
+   Substation Power        : 867.7293958088343 kW
+   Reactive Power          : 529.4757963716795 kVAr
+   Total Load Power        : 925.8950228425548 kW
+   Total Load Reactive Power: 509.4296868113156 kVAr
+   Total PV Power          : 76.98919959939467 kW
+   Total PV Reactive Power : 4.5373483370499725 kVAr
+   Total Battery Power     : -0.001700688283049009 kW
+   Total Battery Reactive Power: 12.533541655750648 kVAr
+******************************
+
+
+******************************
+   Time Step: 4
+******************************
+   Power Loss              : 17.169783092898825 kW
+   Substation Power        : 818.8341910592919 kW
+   Reactive Power          : 520.1308975764834 kVAr
+   Total Load Power        : 909.6243916759912 kW
+   Total Load Reactive Power: 500.4960079771805 kVAr
+   Total PV Power          : 76.99101798276543 kW
+   Total PV Reactive Power : 3.9320838886942955 kVAr
+   Total Battery Power     : 30.97534526957961 kW
+   Total Battery Reactive Power: 10.17369753964636 kVAr
+******************************
+
