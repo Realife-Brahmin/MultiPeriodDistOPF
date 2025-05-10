@@ -28,9 +28,9 @@ begin
     algo_temporal_decmp = "tENApp"
     # gamma_fpi = 1.0
     warmStart_mu = "none"
-    alpha_fpi = 3.00
-    gamma_fpi = 0.75
-    maxiter_ddp = 200
+    alpha_fpi = 4.00
+    gamma_fpi = 1.00
+    maxiter_ddp = 50
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
     # savePlots = false
@@ -108,6 +108,9 @@ end;
 
 modelDict = nothing
 opt_time = 0.0
+
+Profile.init()
+
 
 #region Optimization
 if !temporal_decmp
@@ -201,3 +204,8 @@ begin
     Exporter.export_validation_decision_variables(modelDict, verbose=verbose)
 end
 
+const PROFILE_OUT = joinpath(@__DIR__, "profile_results.txt")
+open(PROFILE_OUT, "w") do io
+    Profile.print(io)
+end
+println("Profile saved to: $PROFILE_OUT")
