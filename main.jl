@@ -106,39 +106,64 @@ begin
     @unpack kVA_B_dict, MVA_B_dict, kV_B_dict, rdict, xdict, rdict_pu, xdict_pu, Z_B_dict, Lset, Nset, NLset = data;
 end;
 
+modelDict = nothing
+opt_time = 0.0
+
 #region Optimization
 if !temporal_decmp
     if !linearizedModel
-        modelDict = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+        # brute-force NL
+        global opt_time = @elapsed @profile begin
+            global modelDict = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
+        end
     elseif linearizedModel
-        modelDict = Playbook.optimize_MPOPF_1ph_L(data)
+        # brute-force linear
+        global opt_time = @elapsed @profile begin
+            global modelDict = Playbook.optimize_MPOPF_1ph_L(data)
+        end
     else
         error("linearizedModel must be either true or false")
     end
-    
+
+    println("Brute-force optimization took $(round(opt_time, digits=3)) s")
     @unpack model, modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=true)
+
 elseif temporal_decmp
     if !linearizedModel
-        if warmStart_mu == "nonlinear"     
+        # warm-start μ
+        if warmStart_mu == "nonlinear"
             modelDictBF = Playbook.optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
-            muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
         elseif warmStart_mu == "linear"
             modelDictBF = Playbook.optimize_MPOPF_1ph_L(data)
-            muDict = Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF)
         else
-            muDict = nothing
+            modelDictBF = nothing
         end
-        modelDict = DDP.optimize_MPOPF_1ph_NL_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+
+        muDict = warmStart_mu in ("nonlinear", "linear") ?
+                Playbook.get_soc_dual_variables_fullMPOPF(modelDictBF) : nothing
+
+        # DDP step
+        global opt_time = @elapsed @profile begin
+            global modelDict = DDP.optimize_MPOPF_1ph_NL_DDP(data;
+                maxiter=maxiter_ddp, muDict=muDict)
+        end
+        println("DDP optimize took $(round(opt_time, digits=3)) s")
+
     elseif linearizedModel
-        muDict = nothing
-        modelDict = DDPLinear.optimize_MPOPF_1ph_L_DDP(data, maxiter=maxiter_ddp, muDict=muDict)
+        # linearized DDP
+        global opt_time = @elapsed @profile begin
+            global modelDict = DDPLinear.optimize_MPOPF_1ph_L_DDP(data;
+                maxiter=maxiter_ddp, muDict=nothing)
+        end
+        println("Linearized DDP optimize took $(round(opt_time, digits=3)) s")
     else
         error("linearizedModel must be either true or false")
     end
 
     @unpack modelVals, data = modelDict
     dualVariablesStateDict = Playbook.get_dual_variables_state_fullMPOPF(modelDict, verbose=false)
+
 else
     error("temporal_decmp must be either true or false")
 end
