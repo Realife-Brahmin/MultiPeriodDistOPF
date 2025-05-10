@@ -1,5 +1,7 @@
 using Revise
 using MultiPeriodDistOPF
+using Profile
+using ProfileView
 
 # Import submodules with aliases
 import .MultiPeriodDistOPF.computeOutputs as CO
