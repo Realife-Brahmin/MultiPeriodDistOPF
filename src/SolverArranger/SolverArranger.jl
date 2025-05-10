@@ -5,11 +5,8 @@ export
     configure_solver
 
 using JuMP
-using EAGO
 using Gurobi
 using Ipopt
-using Juniper
-using MadNLP
 
 #region attach_solver
 """

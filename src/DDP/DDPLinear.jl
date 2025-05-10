@@ -37,11 +37,8 @@ import .Exporter as Exporter
 
 using Crayons
 using JuMP
-using EAGO
 using Gurobi
 using Ipopt
-using Juniper
-using MadNLP
 using Parameters: @unpack, @pack!
 
 #region compute_alpha_fpi
@@ -500,7 +497,7 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
                 end
 
             elseif k_ddp == 1
-                
+
                 @unpack B0_pu = data
                 for j ∈ Bset
                     fix(model_t0_k0[:B][j, t_ddp - 1], B0_pu[j])

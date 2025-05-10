@@ -36,16 +36,10 @@ import .SolverArranger as SolverArranger
 include("../Exporter.jl")
 import .Exporter as Exporter
 
-# include("../playbook_of_mpopf.jl")
-# import .Playbook_of_MPOPF as Playbook
-
 using Crayons
 using JuMP
-using EAGO
 using Gurobi
 using Ipopt
-using Juniper
-using MadNLP
 using Parameters: @unpack, @pack!
 
 function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)

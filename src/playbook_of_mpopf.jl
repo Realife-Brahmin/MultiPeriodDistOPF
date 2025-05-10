@@ -30,11 +30,8 @@ import .Exporter as Exporter
 
 using Crayons
 using JuMP
-using EAGO
 using Gurobi
 using Ipopt
-using Juniper
-using MadNLP
 using Parameters: @unpack, @pack!
 
 function optimize_MPOPF_1ph_NL_TemporallyBruteforced(data)
