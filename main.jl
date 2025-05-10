@@ -26,9 +26,11 @@ begin
     temporal_decmp = true
     # algo_temporal_decmp = "DDP"
     algo_temporal_decmp = "tENApp"
-    gamma_fpi = 0.75    
     # gamma_fpi = 1.0
     warmStart_mu = "none"
+    alpha_fpi = 3.00
+    gamma_fpi = 0.75
+    maxiter_ddp = 200
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
     # savePlots = false
@@ -36,14 +38,12 @@ begin
 end;
 
 begin
-    alpha_fpi = 3.00
     # alpha_fpi = 1.00
     # alpha_fpi = 0.43
     # alpha_fpi = 0.75
     # alpha_fpi = 0.001
     T = Int(T0*factor) 
     numAreas = 1
-    maxiter_ddp = 20
     threshold_conv_iters = 3
     # objfun0 = "lineLossMin"
     objfun0 = "subsPowerCostMin"
