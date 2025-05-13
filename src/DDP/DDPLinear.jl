@@ -754,7 +754,7 @@ function optimize_MPOPF_1ph_L_DDP(data;
     if iterLimitReached
         println(crayon_red("Maximum iterations reached!"))
     elseif converged
-        println(crayon_final_green("Optimization via DDP converged."))
+        println(crayon_final_green("Optimization via $(data[:algo_temporal_decmp]) converged."))
     else
         @error "floc"
     end
