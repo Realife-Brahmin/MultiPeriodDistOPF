@@ -2,9 +2,9 @@
 include("./src/setupMultiPeriodDistOPF.jl") 
 
 begin
-    systemName0 = "ads3_1ph"
+    # systemName0 = "ads3_1ph"
     # systemName0 = "ads10_1ph"
-    # systemName0 = "ieee123_1ph-A"
+    systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
@@ -28,7 +28,7 @@ begin
     algo_temporal_decmp = "tENApp"
     # gamma_fpi = 1.0
     warmStart_mu = "none"
-    alpha_fpi = 3.50
+    alpha_fpi = 3.00
     gamma_fpi = 1.00
     maxiter_ddp = 100
     # warmStart_mu = "nonlinear"
