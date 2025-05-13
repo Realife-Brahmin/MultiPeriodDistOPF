@@ -28,9 +28,9 @@ begin
     algo_temporal_decmp = "tENApp"
     # gamma_fpi = 1.0
     warmStart_mu = "none"
-    alpha_fpi = 3.00
+    alpha_fpi = 3.50
     gamma_fpi = 1.00
-    maxiter_ddp = 50
+    maxiter_ddp = 100
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
     # savePlots = false
