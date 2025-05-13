@@ -28,7 +28,7 @@ begin
     algo_temporal_decmp = "tENApp"
     # gamma_fpi = 1.0
     warmStart_mu = "none"
-    alpha_fpi = 4.00
+    alpha_fpi = 3.00
     gamma_fpi = 1.00
     maxiter_ddp = 50
     # warmStart_mu = "nonlinear"
