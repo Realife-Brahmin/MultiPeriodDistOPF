@@ -316,7 +316,7 @@ function store_FS_t_k_decvar_values(ddpModel;
         modelVals_t0_k0[:P_c][j, t_ddp] = JuMP.value(model_t0_k0[:P_c][j, t_ddp])
         modelVals_t0_k0[:P_d][j, t_ddp] = JuMP.value(model_t0_k0[:P_d][j, t_ddp])
         modelVals_t0_k0[:B][j, t_ddp] = JuMP.value(model_t0_k0[:B][j, t_ddp])
-        BVals_vs_k[j, t_ddp] = modelVals_t0_k0[:B][j, t_ddp]
+        BVals_vs_k[j, t_ddp, k_ddp] = modelVals_t0_k0[:B][j, t_ddp]
     end
 
     # Copy termination status, solve time, and objective value

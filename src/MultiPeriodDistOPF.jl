@@ -6,6 +6,7 @@ export DDP
 export functionRetriever
 export helperFunctions
 export ModelBuilder
+export ModelCopier
 export Playbook_of_MPOPF
 export parseOpenDSSFiles
 export Plotter

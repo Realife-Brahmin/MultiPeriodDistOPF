@@ -484,34 +484,49 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
 
     # Step 2: Fix SOC variables for the previous time-step if applicable
     @unpack Bset, algo_temporal_decmp = data;
+    @unpack BVals_vs_k = ddpModel
 
     if algo_temporal_decmp == "tENApp"
         if t_ddp ∈ 2:T
-            @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+            # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+
             if k_ddp >= 2
-                modelVals_tm1_k0m1 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp-1]
-                B_Vals_tm1_k0m1 = modelVals_tm1_k0m1[:B]
+                # modelVals_tm1_k0m1 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp-1]
+                # B_Vals_tm1_k0m1 = modelVals_tm1_k0m1[:B]
 
                 for j ∈ Bset
-                    fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_tm1_k0m1[j, t_ddp-1])
+                    
+                    B_Vals_j_tm1_k0m1 = BVals_vs_k[j, t_ddp-1, k_ddp-1]
+
+                    fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_j_tm1_k0m1)
                 end
 
             elseif k_ddp == 1
 
                 @unpack B0_pu = data
                 for j ∈ Bset
-                    fix(model_t0_k0[:B][j, t_ddp - 1], B0_pu[j])
+
+                    B_Vals_j_tm1_k0m1 = BVals_vs_k[j, t_ddp-1, k_ddp-1]
+
+                    # fix(model_t0_k0[:B][j, t_ddp - 1], B0_pu[j])
+                    fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_j_tm1_k0m1)
                 end
             end
         end
     elseif algo_temporal_decmp == "DDP"
         if t_ddp ∈ 2:T
-            @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
-            modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
-            B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
+            # B_Vals_tm1_k0m1 = BVals_vs_k[t_ddp-1, k_ddp-1]
+
+            # @unpack modelVals_ddp_vs_t_vs_k = ddpModel;
+            # modelVals_tm1_k0 = modelVals_ddp_vs_t_vs_k[t_ddp-1, k_ddp]
+            # B_Vals_tm1_k0 = modelVals_tm1_k0[:B]
 
             for j ∈ Bset
-                fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+                B_Vals_j_tm1_k0m1 = BVals_vs_k[j, t_ddp-1, k_ddp-1]
+
+                # fix(model_t0_k0[:B][j, t_ddp - 1], B_Vals_tm1_k0[j, t_ddp - 1])
+                fix(model_t0_k0[:B][j, t_ddp-1], B_Vals_j_tm1_k0m1)
+
             end
         end
     end
@@ -805,6 +820,7 @@ function DDPModel(data;
             BVals_vs_k[j, t_ddp, 0] = B0[j]
         else
             mu[j, t_ddp, 0] = muDict[j, t_ddp]
+            BVals_vs_k[j, t_ddp, 0] = B0[j]
         end
         lambda_lo[j, t_ddp, 0] = 0.0
         lambda_up[j, t_ddp, 0] = 0.0
