@@ -10,6 +10,7 @@ import .MultiPeriodDistOPF.DDPLinear as DDPLinear
 import .MultiPeriodDistOPF.functionRetriever as FR
 import .MultiPeriodDistOPF.helperFunctions as HF
 import .MultiPeriodDistOPF.ModelBuilder as MB
+import .MultiPeriodDistOPF.ModelCopier as MC
 import .MultiPeriodDistOPF.Playbook_of_MPOPF as Playbook
 import .MultiPeriodDistOPF.parseOpenDSSFiles as Parser
 import .MultiPeriodDistOPF.Plotter as Plotter
@@ -27,6 +28,7 @@ Revise.track(MultiPeriodDistOPF.DDPLinear)
 Revise.track(MultiPeriodDistOPF.functionRetriever)
 Revise.track(MultiPeriodDistOPF.helperFunctions)
 Revise.track(MultiPeriodDistOPF.ModelBuilder)
+Revise.track(MultiPeriodDistOPF.ModelCopier)
 Revise.track(MultiPeriodDistOPF.Playbook_of_MPOPF)
 Revise.track(MultiPeriodDistOPF.parseOpenDSSFiles)
 Revise.track(MultiPeriodDistOPF.Plotter)
