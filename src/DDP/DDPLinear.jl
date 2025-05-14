@@ -786,10 +786,12 @@ function DDPModel(data;
     verbose::Bool=false)
 
     @unpack Tset, Bset, solver = data;
+    B0 = data[:B0_pu]
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
     modelVals_ddp_vs_FP = Dict{Int,Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
+    BVals_vs_k = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_lo = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_up = Dict{Tuple{Int,Int,Int},Float64}()
     outputVals_vs_k = Dict{Int, Any}()
@@ -800,6 +802,7 @@ function DDPModel(data;
     for j ∈ Bset, t_ddp ∈ Tset
         if isnothing(muDict)
             mu[j, t_ddp, 0] = 0.0
+            BVals_vs_k[j, t_ddp, 0] = B0[j]
         else
             mu[j, t_ddp, 0] = muDict[j, t_ddp]
         end
@@ -823,6 +826,8 @@ function DDPModel(data;
         :lambda_lo => lambda_lo,
         :lambda_up => lambda_up,
         :maxiter => maxiter,
+
+        :BVals_vs_k => BVals_vs_k,
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
         :modelVals_ddp_vs_t_vs_k=>modelVals_ddp_vs_t_vs_k,
