@@ -16,7 +16,7 @@ Q_L_kW = 500*0.75
 kVA_B = 1000
 kV_B = 20.00
 C_1_dollar_per_kWh = 0.50
-C_2_dollar_per_kWh = 0.25
+C_2_dollar_per_kWh = 0.50
 
 data = Dict(
     :V_1_pu => V_1_pu,
@@ -118,11 +118,11 @@ function solve_two_poi_opf(data)
     # 4. KVL2
     @constraint(model, v_j == v_2 - 2 * (r2j * P_2j + x2j * Q_2j) + (r2j^2 + x2j^2) * l_2j)
     # 5. BCPF1
-    @constraint(model, P_1j^2 + Q_1j^2 == v_1 * l_1j)
+    @constraint(model, P_1j^2 + Q_1j^2 >= v_1 * l_1j)
     # 6. BCPF2
-    @constraint(model, P_2j^2 + Q_2j^2 == v_2 * l_2j)
+    @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
     # 7. Power sharing
-    @constraint(model, P_2j == alpha * P_1j)
+    # @constraint(model, P_2j == alpha * P_1j)
     # 8. Voltage limits (already in variable bounds)
     # 9. P_1j, P_2j >= 0 (already in variable bounds)
 
