@@ -4,9 +4,9 @@ include("./src/setupMultiPeriodDistOPF.jl")
 data = Dict()
 V_1_pu = 1.07
 delta_1_deg = 0.0
-V_2_pu = 1.06
-delta_2_deg = -10.0
-alpha_share = 0.5
+V_2_pu = 1.07
+delta_2_deg = 0.0
+alpha_share = 0.0
 r1_ohm = 15.00
 x1_ohm = 10.00
 r2_ohm = 10.00
@@ -96,27 +96,27 @@ function solve_two_poi_opf(data)
     @constraint(model, v_j <= data[:Vmaxpu]^2)
 
     # Extract parameters
-    r1 = data[:r1_pu]
-    x1 = data[:x1_pu]
-    r2 = data[:r2_pu]
-    x2 = data[:x2_pu]
+    r1j = data[:r1_pu]
+    x1j = data[:x1_pu]
+    r2j = data[:r2_pu]
+    x2j = data[:x2_pu]
     v_1 = data[:V_1_pu]^2
     v_2 = data[:V_2_pu]^2
     alpha = data[:alpha_share]
-    P_L = data[:P_L_pu]
-    Q_L = data[:Q_L_pu]
+    P_L_j = data[:P_L_pu]
+    Q_L_j = data[:Q_L_pu]
     C_1 = data[:C_1_dollar_pu]
     C_2 = data[:C_2_dollar_pu]
 
     # Constraints
-    # 1. NRPB
-    @constraint(model, (P_1j - r1 * l_1j) + (P_2j - r2 * l_2j) == P_L)
-    # 2. NRCB
-    @constraint(model, (Q_1j - x1 * l_1j) + (Q_2j - x2 * l_2j) == Q_L)
+    # 1. NRealPB
+    @constraint(model, (P_1j - r1j * l_1j) + (P_2j - r2j * l_2j) == P_L_j)
+    # 2. NReacPB
+    @constraint(model, (Q_1j - x1j * l_1j) + (Q_2j - x2j * l_2j) == Q_L_j)
     # 3. KVL1
-    @constraint(model, v_j == v_1 - 2 * (r1 * P_1j + x1 * Q_1j) + (r1^2 + x1^2) * l_1j)
+    @constraint(model, v_j == v_1 - 2 * (r1j * P_1j + x1j * Q_1j) + (r1j^2 + x1j^2) * l_1j)
     # 4. KVL2
-    @constraint(model, v_j == v_2 - 2 * (r2 * P_2j + x2 * Q_2j) + (r2^2 + x2^2) * l_2j)
+    @constraint(model, v_j == v_2 - 2 * (r2j * P_2j + x2j * Q_2j) + (r2j^2 + x2j^2) * l_2j)
     # 5. BCPF1
     @constraint(model, P_1j^2 + Q_1j^2 == v_1 * l_1j)
     # 6. BCPF2
