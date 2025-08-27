@@ -4,13 +4,14 @@ include("./src/setupMultiPeriodDistOPF.jl")
 data = Dict()
 V_1_pu = 1.07
 delta_1_deg = 0.0
-V_2_pu = 1.07
+V_2_pu = 1.03
 delta_2_deg = 0.0
-alpha_share = 0.0
+alpha_share = 0.25
 r1_ohm = 15.00
 x1_ohm = 10.00
 r2_ohm = 10.00
 x2_ohm = 15.00
+r1_ohm = 0.25; r2_ohm=0.25; x1_ohm=0.05; x2_ohm=0.05;
 P_L_kW = 500
 Q_L_kW = 500*0.75
 kVA_B = 1000
@@ -122,7 +123,7 @@ function solve_two_poi_opf(data)
     # 6. BCPF2
     @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
     # 7. Power sharing
-    # @constraint(model, P_2j == alpha * P_1j)
+    @constraint(model, P_2j == alpha * P_1j)
     # 8. Voltage limits (already in variable bounds)
     # 9. P_1j, P_2j >= 0 (already in variable bounds)
 
