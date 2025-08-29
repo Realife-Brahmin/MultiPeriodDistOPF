@@ -6,12 +6,12 @@ V_1_pu = 1.07
 delta_1_deg = 0.0
 V_2_pu = 1.03
 delta_2_deg = 0.0
-alpha_share = 0.25
+alpha_share = 0.75
 r1_ohm = 15.00
 x1_ohm = 10.00
 r2_ohm = 10.00
 x2_ohm = 15.00
-r1_ohm = 0.25; r2_ohm=0.25; x1_ohm=0.05; x2_ohm=0.05;
+r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.005; x2_ohm=0.005;
 P_L_kW = 500
 Q_L_kW = 500*0.75
 kVA_B = 1000
@@ -59,7 +59,7 @@ function process_data!(data)
     delta_2_rad = data[:delta_2_deg] * pi / 180
 
     # Voltage limits
-    Vminpu = 0.75
+    Vminpu = 0.90
     Vmaxpu = 1.15
 
     # Update data dict with all required fields
