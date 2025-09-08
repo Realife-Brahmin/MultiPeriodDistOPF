@@ -1,12 +1,11 @@
 ############################################################
-# ADMM Temporal Decomposition (Copper Plate MPOPF)
-# Notation matches user spec:
-#   B[t]  : SOC (kWh)
-#   P_B[t]: Battery power (+ discharge, - charge) [kW]
-#   P_Subs[t]: Substation import [kW]
-# Dynamics: B[t] = B[t-1] - P_B[t]*Δt
-# NRPB:    P_Subs[t] + P_B[t] = P_L[t]
-# Bounds:  soc_min*E_Rated ≤ B[t] ≤ soc_max*E_Rated
+# ADMM Temporal Decomposition + Brute-Force MPOPF (Copper Plate)
+# Notation:
+#   B[t] (kWh), P_B[t] (kW), P_Subs[t] (kW)
+#   B[t] = B[t-1] - P_B[t]*Δt
+#   P_Subs[t] + P_B[t] = P_L[t]
+# Bounds:
+#   soc_min*E_Rated ≤ B[t] ≤ soc_max*E_Rated
 #
 # Requires: Julia ≥ 1.9, JuMP, Ipopt
 ############################################################
@@ -35,20 +34,17 @@ struct Instance
     bat::BatteryParams
 end
 
-# Niceties
 Bmin(b::BatteryParams) = b.soc_min * b.E_Rated
 Bmax(b::BatteryParams) = b.soc_max * b.E_Rated
 
-# ---------------- Block subproblem -----------------------
+# ---------------- Block subproblem (ADMM) ----------------
 
 """
 solve_block(inst, tidx, B̂L, B̂R, uL, uR, ρ) -> (B_L*, B_R*, P_Subs, P_B, B, obj)
-Solves one temporal block with boundary variables B_L, B_R.
-Objective: sum_t price[t]*P_Subs[t]*Δt + (ρ/2)[(B_L - B̂L + uL)^2 + (B_R - B̂R + uR)^2]
 """
 function solve_block(inst::Instance, tidx::Vector{Int},
-                     B̂L::Float64, B̂R::Float64,
-                     uL::Float64, uR::Float64, ρ::Float64)
+    B̂L::Float64, B̂R::Float64,
+    uL::Float64, uR::Float64, ρ::Float64)
 
     b = inst.bat
     Tloc = length(tidx)
@@ -57,29 +53,28 @@ function solve_block(inst::Instance, tidx::Vector{Int},
     set_silent(m)
 
     @variables(m, begin
-        -b.P_B_R <= P_B[1:Tloc] <=  b.P_B_R     # kW
-        P_Subs[1:Tloc]                          # kW (can be ±; import cost uses price)
-        Bmin(b) <= B[1:Tloc] <= Bmax(b)         # kWh (internal SOC)
-        Bmin(b) <= B_L <= Bmax(b)               # left boundary energy (kWh)
-        Bmin(b) <= B_R <= Bmax(b)               # right boundary energy (kWh)
+        -b.P_B_R <= P_B[1:Tloc] <= b.P_B_R     # kW
+        P_Subs[1:Tloc]                          # kW
+        Bmin(b) <= B[1:Tloc] <= Bmax(b)         # kWh
+        Bmin(b) <= B_L <= Bmax(b)               # kWh
+        Bmin(b) <= B_R <= Bmax(b)               # kWh
     end)
 
-    # NRPB: P_Subs + P_B = P_L
-    @constraint(m, [τ=1:Tloc], P_Subs[τ] + P_B[τ] == inst.P_L[tidx[τ]])
+    # NRPB
+    @constraint(m, [τ = 1:Tloc], P_Subs[τ] + P_B[τ] == inst.P_L[tidx[τ]])
 
-    # SOC dynamics inside block: B[t] = B[t-1] - P_B[t]*Δt
+    # SOC dynamics: B[t] = B[t-1] - P_B[t]*Δt
     if Tloc == 1
-        @constraint(m, B[1] == B_L - P_B[1]*b.Δt)
+        @constraint(m, B[1] == B_L - P_B[1] * b.Δt)
         @constraint(m, B_R == B[1])
     else
-        @constraint(m, B[1] == B_L - P_B[1]*b.Δt)
-        @constraint(m, [τ=1:Tloc-1], B[τ+1] == B[τ] - P_B[τ+1]*b.Δt)
+        @constraint(m, B[1] == B_L - P_B[1] * b.Δt)
+        @constraint(m, [τ = 1:Tloc-1], B[τ+1] == B[τ] - P_B[τ+1] * b.Δt)
         @constraint(m, B_R == B[Tloc])
     end
 
-    # Objective: substation energy cost + ADMM penalties on boundaries
-    energy_cost = sum(inst.price[tidx[τ]] * P_Subs[τ] * b.Δt for τ=1:Tloc)
-    aug = (ρ/2) * ((B_L - B̂L + uL)^2 + (B_R - B̂R + uR)^2)
+    energy_cost = sum(inst.price[tidx[τ]] * P_Subs[τ] * b.Δt for τ = 1:Tloc)
+    aug = (ρ / 2) * ((B_L - B̂L + uL)^2 + (B_R - B̂R + uR)^2)
     @objective(m, Min, energy_cost + aug)
 
     optimize!(m)
@@ -91,21 +86,19 @@ end
 
 """
 admm_solve(inst; K, ρ, max_iter, eps_pri, eps_dual)
-
-Splits the horizon into K consecutive blocks and enforces **B** continuity
-between blocks with ADMM.
-
 Returns Dict(:P_B, :P_Subs, :B, :objective_history, :consensus, :blocks)
 """
 function admm_solve(inst::Instance; K::Int=4, ρ::Float64=5.0,
-                    max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3)
+    max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3)
 
     T = inst.T
     b = inst.bat
 
-    # Partition indices into K blocks (nearly equal sizes)
+    # Partition
     sizes = fill(div(T, K), K)
-    for i in 1:rem(T, K); sizes[i] += 1 end
+    for i in 1:rem(T, K)
+        sizes[i] += 1
+    end
     blocks = Vector{Vector{Int}}()
     s = 1
     for k in 1:K
@@ -114,30 +107,29 @@ function admm_solve(inst::Instance; K::Int=4, ρ::Float64=5.0,
         s = e + 1
     end
 
-    # Consensus and duals for boundaries (K+1 boundaries)
-    B̂ = zeros(K+1)
-    uL = zeros(K)  # scaled duals for left boundary of each block
-    uR = zeros(K)  # scaled duals for right boundary of each block
+    # Consensus + duals
+    B̂ = zeros(K + 1)
+    uL = zeros(K)
+    uR = zeros(K)
 
-    # Initialize consensus by interpolating from B0 to feasible terminal
     B̂[1] = b.B0
     B̂[end] = isnothing(b.B_T_target) ? clamp(b.B0, Bmin(b), Bmax(b)) : b.B_T_target
     for j in 2:K
-        λ = (j-1)/K
-        B̂[j] = (1-λ)*B̂[1] + λ*B̂[end]
+        λ = (j - 1) / K
+        B̂[j] = (1 - λ) * B̂[1] + λ * B̂[end]
     end
     B̂ .= clamp.(B̂, Bmin(b), Bmax(b))
 
     # storage
-    BL = zeros(K); BR = zeros(K)
-    PBs   = [zeros(length(blocks[k])) for k in 1:K]
-    PSs   = [zeros(length(blocks[k])) for k in 1:K]
-    Bs    = [zeros(length(blocks[k])) for k in 1:K]
+    BL = zeros(K)
+    BR = zeros(K)
+    PBs = [zeros(length(blocks[k])) for k in 1:K]
+    PSs = [zeros(length(blocks[k])) for k in 1:K]
+    Bs = [zeros(length(blocks[k])) for k in 1:K]
     obj_hist = Float64[]
 
     @printf "ADMM(K=%d, ρ=%.3f, T=%d) starting...\n" K ρ T
     for it in 1:max_iter
-        # 1) Block solves
         total = 0.0
         for k in 1:K
             tidx = blocks[k]
@@ -146,24 +138,21 @@ function admm_solve(inst::Instance; K::Int=4, ρ::Float64=5.0,
             total += obj
         end
 
-        # 2) Consensus update on internal interfaces (ends pinned)
         B̂_old = copy(B̂)
         B̂[1] = b.B0
         B̂[end] = isnothing(b.B_T_target) ? B̂[end] : b.B_T_target
         for j in 2:K
-            kL = j-1; kR = j
-            # minimize sum of two quadratics -> simple average with duals
+            kL = j - 1
+            kR = j
             B̂[j] = 0.5 * ((BR[kL] + uR[kL]) + (BL[kR] + uL[kR]))
         end
         B̂ .= clamp.(B̂, Bmin(b), Bmax(b))
 
-        # 3) Dual updates
         for k in 1:K
             uL[k] += BL[k] - B̂[k]
             uR[k] += BR[k] - B̂[k+1]
         end
 
-        # 4) Stopping criteria
         r = vcat([BL[k] - B̂[k] for k in 1:K], [BR[k] - B̂[k+1] for k in 1:K])
         r_norm = norm(r)
         s_norm = ρ * norm(B̂ - B̂_old)
@@ -176,7 +165,6 @@ function admm_solve(inst::Instance; K::Int=4, ρ::Float64=5.0,
         end
     end
 
-    # Stitch trajectories
     P_B = reduce(vcat, PBs)
     P_Subs = reduce(vcat, PSs)
     B_traj = reduce(vcat, Bs)
@@ -191,13 +179,63 @@ function admm_solve(inst::Instance; K::Int=4, ρ::Float64=5.0,
     )
 end
 
+# ---------------- Brute-force MPOPF (monolithic) ---------
+
+"""
+brute_force_solve(inst) -> Dict(:P_B, :P_Subs, :B, :objective)
+
+Solves the *entire* horizon in one JuMP model:
+  min  Σ_t price[t]*P_Subs[t]*Δt
+  s.t. P_Subs[t] + P_B[t] = P_L[t]
+       B[t] = B[t-1] - P_B[t]*Δt
+       soc_min*E_Rated ≤ B[t] ≤ soc_max*E_Rated
+       |P_B[t]| ≤ P_B_R
+       B[0] = B0, (optional) B[T] = B_T_target
+"""
+function brute_force_solve(inst::Instance)
+    T = inst.T
+    b = inst.bat
+
+    m = Model(Ipopt.Optimizer)
+    set_silent(m)
+
+    @variables(m, begin
+        -b.P_B_R <= P_B[1:T] <= b.P_B_R
+        P_Subs[1:T]
+        Bmin(b) <= B[1:T] <= Bmax(b)
+    end)
+
+    # NRPB
+    @constraint(m, [t = 1:T], P_Subs[t] + P_B[t] == inst.P_L[t])
+
+    # SOC dynamics with fixed initial energy
+    @constraint(m, B[1] == b.B0 - P_B[1] * b.Δt)
+    @constraint(m, [t = 2:T], B[t] == B[t-1] - P_B[t] * b.Δt)
+
+    # Optional terminal energy
+    if !isnothing(b.B_T_target)
+        @constraint(m, B[T] == b.B_T_target)
+    end
+
+    @objective(m, Min, sum(inst.price[t] * P_Subs[t] * b.Δt for t in 1:T))
+
+    optimize!(m)
+
+    return Dict(
+        :P_B => value.(P_B),
+        :P_Subs => value.(P_Subs),
+        :B => value.(B),
+        :objective => objective_value(m)
+    )
+end
+
 # ----------------------- Example -------------------------
 
-if abspath(PROGRAM_FILE) == @__FILE__
+# if abspath(PROGRAM_FILE) == @__FILE__
     # Example 24h problem
     T = 24
     price = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
-    P_L   = 1000 .+ 250 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
+    P_L = 1000 .+ 250 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 
     bat = BatteryParams(
         4000.0,    # E_Rated (kWh)
@@ -205,14 +243,20 @@ if abspath(PROGRAM_FILE) == @__FILE__
         0.95,      # soc_max
         800.0,     # P_B_R (kW)
         1.0,       # Δt (h)
-        0.60*4000, # B0 (kWh) = 60% SOC
-        nothing    # B_T_target (kWh), set like 0.60*4000 to pin the terminal energy
+        0.60 * 4000, # B0 (kWh)
+        nothing    # B_T_target
     )
     inst = Instance(T, price, P_L, bat)
 
-    sol = admm_solve(inst; K=4, ρ=5.0, max_iter=200, eps_pri=1e-4, eps_dual=1e-4)
+    # Brute-force baseline
+    mono = brute_force_solve(inst)
+    @printf "\nBrute-force objective: %.4f\n" mono[:objective]
 
-    @printf "\nFinal obj: %.4f\n" last(sol[:objective_history])
-    B = sol[:B]
-    @printf "SOC (kWh) in [%.1f, %.1f]  |  P_B in [%.1f, %.1f] kW\n" minimum(B) maximum(B) minimum(sol[:P_B]) maximum(sol[:P_B])
-end
+    # ADMM (decomposed)
+    sol = admm_solve(inst; K=4, ρ=5.0, max_iter=200, eps_pri=1e-4, eps_dual=1e-4)
+    @printf "ADMM objective (last iterate): %.4f\n" last(sol[:objective_history])
+
+    # Quick consistency checks
+    @printf "BF  B[min,max]=[%.1f, %.1f] | PB[min,max]=[%.1f, %.1f]\n" minimum(mono[:B]) maximum(mono[:B]) minimum(mono[:P_B]) maximum(mono[:P_B])
+    @printf "ADM B[min,max]=[%.1f, %.1f] | PB[min,max]=[%.1f, %.1f]\n" minimum(sol[:B]) maximum(sol[:B]) minimum(sol[:P_B]) maximum(sol[:P_B])
+# end
