@@ -12,8 +12,8 @@ alpha_share = 0.75
 # r2_ohm = 10.00
 # x2_ohm = 15.00
 r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.005; x2_ohm=0.005;
-P_L_kW = 500
-Q_L_kW = 500*0.75
+P_L_kW = 2500
+Q_L_kW = P_L_kW*0.75
 kVA_B = 1000
 kV_B = 20.00
 C_1_dollar_per_kWh = 0.50
