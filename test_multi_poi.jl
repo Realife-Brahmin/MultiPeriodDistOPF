@@ -150,38 +150,46 @@ end
 # modelDict = solve_two_poi_opf(data)
 
 using OpenDSSDirect
+using Printf
 
 systemName = "small2poi_1ph"
-# systemName = "ieee123_1ph"
 rawDataFolder = "rawData/"
 systemFile = rawDataFolder * systemName * "/Master.dss"
-delta = 20
-angles = [0.0, -delta]  # Angles for the two sources in degrees
 
-dss = OpenDSSDirect
-dss.Text.Command("Clear")
-dss.Text.Command("Redirect " * systemFile)
+OpenDSSDirect.Text.Command("Clear")
+OpenDSSDirect.Text.Command("Redirect " * systemFile)
 
-# for (i, angle) in enumerate(angles)
-#     dss.Text.Command("Edit Vsource.grid$(i) angle=$(angle)")
-# end
+deltas = [0, 0.1, 0.3, 0.5, 1, 2, 3, 4, 5, 10, 15, 20]
+PSubs1 = []
+QSubs1 = []
+PSubs2 = []
+QSubs2 = []
 
-dss.Text.Command("Solve")
+for delta in deltas
+    OpenDSSDirect.Text.Command("Edit Vsource.grid2 angle=" * string(-delta))
+    OpenDSSDirect.Text.Command("Solve")
 
-# Example: print voltages at all buses
-# dss.Text.Command("Show Voltages LL")
-# dss.Text.Command("Show Powers")
+    OpenDSSDirect.Circuit.SetActiveElement("Vsource.grid1")
+    powers1 = OpenDSSDirect.CktElement.Powers()
+    push!(PSubs1, -real(powers1[1]))
+    push!(QSubs1, -imag(powers1[1]))
 
-powersMat = []
-
-for elemName in dss.Circuit.AllElementNames()
-    dss.Circuit.SetActiveElement(elemName)
-    activeElem = dss.CktElement
-    myPowers = activeElem.Powers()
-    pqPairs = [[myPowers[a], myPowers[a+1]] for a in 1:2:length(myPowers)]
-    push!(powersMat, (elemName, pqPairs))
+    OpenDSSDirect.Circuit.SetActiveElement("Vsource.grid2")
+    powers2 = OpenDSSDirect.CktElement.Powers()
+    push!(PSubs2, -real(powers2[1]))
+    push!(QSubs2, -imag(powers2[1]))
 end
 
-for (name, pq) in powersMat
-    println(name, ": ", pq)
+header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 (kW)", "QSubs1 (kvar)", "PSubs2 (kW)", "QSubs2 (kvar)")
+println(header)
+println("-"^length(header))
+
+for i in eachindex(deltas)
+    @printf("%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+        deltas[i],
+        PSubs1[i],
+        QSubs1[i],
+        PSubs2[i],
+        QSubs2[i]
+    )
 end
