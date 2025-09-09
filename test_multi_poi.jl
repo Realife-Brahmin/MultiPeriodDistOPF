@@ -179,6 +179,16 @@ for delta in deltas
     push!(PSubs2, -real(powers2[1]))
     push!(QSubs2, -imag(powers2[1]))
 end
+load_names = sort(dss.Loads.AllNames())
+global total_P = 0.0
+global total_Q = 0.0
+for lname in load_names
+    dss.Loads.Name(lname)
+    global total_P += dss.Loads.kW()
+    global total_Q += dss.Loads.kvar()
+end
+P_L_kW = total_P
+Q_L_kVAr = total_Q
 
 header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 [kW]", "PSubs2 [kW]", "QSubs1 [kVAr]", "QSubs2 [kVAr]")
 println(header)
