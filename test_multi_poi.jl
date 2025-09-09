@@ -220,8 +220,9 @@ for i in eachindex(deltas)
     p2 = PSubs2[i]
     p1_str = p1 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p1)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p1))
     p2_str = p2 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p2)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p2))
-    @printf("%-6.1f | %s | %s | %-12.2f | %-12.2f\n",
-        deltas[i],
+    delta_str = (p1 < 0 || p2 < 0) ? Crayon(foreground = :red)(@sprintf("%-6.1f", deltas[i])) : @sprintf("%-6.1f", deltas[i])
+    @printf("%s | %s | %s | %-12.2f | %-12.2f\n",
+        delta_str,
         p1_str,
         p2_str,
         QSubs1[i],
