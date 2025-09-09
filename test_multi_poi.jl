@@ -212,13 +212,18 @@ println("Substation voltages (pu): " *
 
 println(separator)
 
+using Crayons
 println(header)
 println(separator)
 for i in eachindex(deltas)
-    @printf("%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+    p1 = PSubs1[i]
+    p2 = PSubs2[i]
+    p1_str = p1 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p1)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p1))
+    p2_str = p2 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p2)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p2))
+    @printf("%-6.1f | %s | %s | %-12.2f | %-12.2f\n",
         deltas[i],
-        PSubs1[i],
-        PSubs2[i],
+        p1_str,
+        p2_str,
         QSubs1[i],
         QSubs2[i]
     )
