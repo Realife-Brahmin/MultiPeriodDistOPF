@@ -156,6 +156,13 @@ dss.Text.Command("Clear")
 dss.Text.Command("Redirect " * systemFile)
 
 deltas = [-10; -5; collect(-2:0.5:2); 5; 10]
+deltas = vcat(
+    [-10, -5],
+    collect(-2:0.5:-0.5),
+    collect(-0.5:0.1:0.5),
+    collect(0.6:0.5:2),
+    [5, 10]
+)
 PSubs1 = []
 QSubs1 = []
 PSubs2 = []
