@@ -155,8 +155,8 @@ systemName = "small2poi_1ph"
 rawDataFolder = "rawData/"
 systemFile = rawDataFolder * systemName * "/Master.dss"
 
-OpenDSSDirect.Text.Command("Clear")
-OpenDSSDirect.Text.Command("Redirect " * systemFile)
+dss.Text.Command("Clear")
+dss.Text.Command("Redirect " * systemFile)
 
 deltas = [0, 0.1, 0.3, 0.5, 1, 2, 3, 4, 5, 10, 15, 20]
 PSubs1 = []
@@ -165,16 +165,16 @@ PSubs2 = []
 QSubs2 = []
 
 for delta in deltas
-    OpenDSSDirect.Text.Command("Edit Vsource.grid2 angle=" * string(-delta))
-    OpenDSSDirect.Text.Command("Solve")
+    dss.Text.Command("Edit Vsource.grid2 angle=" * string(-delta))
+    dss.Text.Command("Solve")
 
-    OpenDSSDirect.Circuit.SetActiveElement("Vsource.grid1")
-    powers1 = OpenDSSDirect.CktElement.Powers()
+    dss.Circuit.SetActiveElement("Vsource.grid1")
+    powers1 = dss.CktElement.Powers()
     push!(PSubs1, -real(powers1[1]))
     push!(QSubs1, -imag(powers1[1]))
 
-    OpenDSSDirect.Circuit.SetActiveElement("Vsource.grid2")
-    powers2 = OpenDSSDirect.CktElement.Powers()
+    dss.Circuit.SetActiveElement("Vsource.grid2")
+    powers2 = dss.CktElement.Powers()
     push!(PSubs2, -real(powers2[1]))
     push!(QSubs2, -imag(powers2[1]))
 end
@@ -202,9 +202,18 @@ P_L_kW = total_P
 Q_L_kVAr = total_Q
 
 header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 [kW]", "PSubs2 [kW]", "QSubs1 [kVAr]", "QSubs2 [kVAr]")
-println(header)
-println("-"^length(header))
+separator = "-"^length(header)
+println(separator)
 
+# Print to console
+println("Total loading: $(round(P_L_kW, digits=2)) kW, $(round(Q_L_kVAr, digits=2)) kVAr")
+println("Substation voltages (pu): " *
+            join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+
+println(separator)
+
+println(header)
+println(separator)
 for i in eachindex(deltas)
     @printf("%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
         deltas[i],
@@ -214,6 +223,7 @@ for i in eachindex(deltas)
         QSubs2[i]
     )
 end
+println(separator)
 
 # Write to txt file
 using Printf
