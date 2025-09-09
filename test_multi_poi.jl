@@ -150,10 +150,16 @@ end
 # modelDict = solve_two_poi_opf(data)
 
 using OpenDSSDirect
+delta = 20
+angles = [0.0, -delta]  # Angles for the two sources in degrees
 
 dss = OpenDSSDirect
 dss.Text.Command("Clear")
-dss.Text.Command("Redirect rawData/small2poi_1ph/Master.dss")
+
+# for (i, angle) in enumerate(angles)
+#     dss.Text.Command("Edit Vsource.grid$(i) angle=$(angle)")
+# end
+
 dss.Text.Command("Solve")
 
 # Example: print voltages at all buses
