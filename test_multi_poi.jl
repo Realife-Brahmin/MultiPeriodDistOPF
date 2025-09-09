@@ -185,12 +185,15 @@ end
 
 
 
-# Generalized retrieval of substation voltages (pu)
+
+# Generalized retrieval of substation voltages (pu) and BasekV
 Vsource_names = sort(setdiff(dss.Vsources.AllNames(), ["source"]))
 Vsource_pus = Dict{String, Float64}()
+Vsource_basekv = Dict{String, Float64}()
 for vname in Vsource_names
     dss.Vsources.Name(vname)
     Vsource_pus[vname] = dss.Vsources.PU()
+    Vsource_basekv[vname] = dss.Vsources.BasekV()
 end
 
 # Generalized retrieval of total loading (sum of all loads)
@@ -211,8 +214,11 @@ println(separator)
 
 # Print to console
 println("Total loading: $(round(P_L_kW, digits=2)) kW, $(round(Q_L_kVAr, digits=2)) kVAr")
+
 println("Substation voltages (pu): " *
-            join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+    join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+println("Substation BasekV: " *
+    join(["$(name)=$( @sprintf("%.4f", Vsource_basekv[name]) )" for name in Vsource_names], ", "))
 
 println(separator)
 
@@ -244,7 +250,9 @@ output_file = output_dir * "substation-power-distribution-load_$(Int(round(P_L_k
 open(output_file, "w") do io
     println(io, "Total loading: $(round(P_L_kW, digits=2)) kW, $(round(Q_L_kVAr, digits=2)) kVAr")
     println(io, "Substation voltages (pu): " *
-                join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+        join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+    println(io, "Substation BasekV: " *
+        join(["$(name)=$( @sprintf("%.4f", Vsource_basekv[name]) )" for name in Vsource_names], ", "))
     println(io, header)
     println(io, separator)
     for i in eachindex(deltas)
