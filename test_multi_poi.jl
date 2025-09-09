@@ -158,7 +158,7 @@ systemFile = rawDataFolder * systemName * "/Master.dss"
 dss.Text.Command("Clear")
 dss.Text.Command("Redirect " * systemFile)
 
-deltas = [0, 0.1, 0.3, 0.5, 1, 2, 3, 4, 5, 10, 15, 20]
+deltas = [-10; -5; collect(-2:0.5:2); 5; 10]
 PSubs1 = []
 QSubs1 = []
 PSubs2 = []
