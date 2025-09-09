@@ -1,5 +1,4 @@
 # multi_poi.jl
-include("./src/setupMultiPeriodDistOPF.jl") 
 
 data = Dict()
 V_1_pu = 1.07
@@ -149,7 +148,7 @@ end
 # Example usage:
 # modelDict = solve_two_poi_opf(data)
 
-using OpenDSSDirect
+import OpenDSSDirect as dss
 using Printf
 
 systemName = "small2poi_1ph"
