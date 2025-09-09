@@ -6,15 +6,12 @@ delta_1_deg = 0.0
 V_2_pu = 1.07
 delta_2_deg = 0.0
 alpha_share = 0.75
-# r1_ohm = 15.00
-# x1_ohm = 10.00
-# r2_ohm = 10.00
-# x2_ohm = 15.00
+
 r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.005; x2_ohm=0.005;
-P_L_kW = 2500
+P_L_kW = 50000
 Q_L_kW = P_L_kW*0.75
 kVA_B = 1000
-kV_B = 20.00
+kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
 C_1_dollar_per_kWh = 0.50
 C_2_dollar_per_kWh = 0.50
 
@@ -84,7 +81,7 @@ using Ipopt
 
 function solve_two_poi_opf(data)
     model = Model(Ipopt.Optimizer)
-
+    set_silent(model)
     # Variables
     @variable(model, P_1j >= 0)
     @variable(model, Q_1j)
@@ -146,7 +143,7 @@ function solve_two_poi_opf(data)
 end
 
 # Example usage:
-# modelDict = solve_two_poi_opf(data)
+modelDict = solve_two_poi_opf(data)
 
 import OpenDSSDirect as dss
 using Printf
