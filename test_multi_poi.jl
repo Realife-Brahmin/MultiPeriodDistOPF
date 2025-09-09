@@ -180,7 +180,7 @@ for delta in deltas
     push!(QSubs2, -imag(powers2[1]))
 end
 
-header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 (kW)", "QSubs1 (kvar)", "PSubs2 (kW)", "QSubs2 (kvar)")
+header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 [kW]", "PSubs2 [kW]", "QSubs1 [kVAr]", "QSubs2 [kVAr]")
 println(header)
 println("-"^length(header))
 
@@ -188,8 +188,8 @@ for i in eachindex(deltas)
     @printf("%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
         deltas[i],
         PSubs1[i],
-        QSubs1[i],
         PSubs2[i],
+        QSubs1[i],
         QSubs2[i]
     )
 end
