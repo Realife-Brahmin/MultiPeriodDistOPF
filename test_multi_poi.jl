@@ -4,13 +4,13 @@ include("./src/setupMultiPeriodDistOPF.jl")
 data = Dict()
 V_1_pu = 1.07
 delta_1_deg = 0.0
-V_2_pu = 1.03
+V_2_pu = 1.07
 delta_2_deg = 0.0
 alpha_share = 0.75
-r1_ohm = 15.00
-x1_ohm = 10.00
-r2_ohm = 10.00
-x2_ohm = 15.00
+# r1_ohm = 15.00
+# x1_ohm = 10.00
+# r2_ohm = 10.00
+# x2_ohm = 15.00
 r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.005; x2_ohm=0.005;
 P_L_kW = 500
 Q_L_kW = 500*0.75
@@ -60,7 +60,7 @@ function process_data!(data)
 
     # Voltage limits
     Vminpu = 0.90
-    Vmaxpu = 1.15
+    Vmaxpu = 1.10
 
     # Update data dict with all required fields
     data[:P_L_pu] = P_L_pu
@@ -147,4 +147,14 @@ function solve_two_poi_opf(data)
 end
 
 # Example usage:
-modelDict = solve_two_poi_opf(data)
+# modelDict = solve_two_poi_opf(data)
+
+using OpenDSSDirect
+
+dss = OpenDSSDirect
+dss.Text.Command("Clear")
+dss.Text.Command("Redirect rawData/small2poi_1ph/Master.dss")
+dss.Text.Command("Solve")
+
+# Example: print voltages at all buses
+dss.Text.Command("Show Powers")
