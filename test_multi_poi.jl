@@ -193,3 +193,26 @@ for i in eachindex(deltas)
         QSubs2[i]
     )
 end
+
+# Write to txt file
+using Printf
+import Dates
+output_dir = "processedData/" * systemName * "/"
+isdir(output_dir) || mkpath(output_dir)
+output_file = output_dir * "substation-power-distribution-load_$(Int(round(P_L_kW)))_kW.txt"
+open(output_file, "w") do io
+    println(io, "Total loading: $(round(P_L_kW, digits=2)) kW, $(round(Q_L_kVAr, digits=2)) kVAr")
+    println(io, "Substation voltages (pu): " *
+                join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
+    println(io, header)
+    println(io, separator)
+    for i in eachindex(deltas)
+        @printf(io, "%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+            deltas[i],
+            PSubs1[i],
+            PSubs2[i],
+            QSubs1[i],
+            QSubs2[i]
+        )
+    end
+end
