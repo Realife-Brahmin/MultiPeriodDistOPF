@@ -150,11 +150,17 @@ end
 # modelDict = solve_two_poi_opf(data)
 
 using OpenDSSDirect
+
+systemName = "small2poi_1ph"
+# systemName = "ieee123_1ph"
+rawDataFolder = "rawData/"
+systemFile = rawDataFolder * systemName * "/Master.dss"
 delta = 20
 angles = [0.0, -delta]  # Angles for the two sources in degrees
 
 dss = OpenDSSDirect
 dss.Text.Command("Clear")
+dss.Text.Command("Redirect " * systemFile)
 
 # for (i, angle) in enumerate(angles)
 #     dss.Text.Command("Edit Vsource.grid$(i) angle=$(angle)")
