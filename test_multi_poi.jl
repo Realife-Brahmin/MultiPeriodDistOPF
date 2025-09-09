@@ -1,5 +1,16 @@
 # multi_poi.jl
 
+import Pkg
+Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
+Pkg.add("Crayons")
+Pkg.add("JuMP")
+Pkg.add("Ipopt")
+Pkg.add("OpenDSSDirect")
+Pkg.instantiate()
+Pkg.precompile()
+
+# ----------------------------------------------------------------------
+
 data = Dict()
 V_1_pu = 1.07
 delta_1_deg = 0.0
