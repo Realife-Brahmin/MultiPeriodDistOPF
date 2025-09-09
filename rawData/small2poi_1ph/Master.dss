@@ -2,29 +2,23 @@ Clear
 
 New Circuit.small2poi_1ph  
 
-Edit "Vsource.source" bus1=1s pu=1.07 angle=0.0 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001 Frequency=60
+// Edit "Vsource.source" bus1=1s pu=1.07 angle=0.0 phases=1 basekv=2.4018 Frequency=60
 
-// Vsource.source disabled=true
 Disable Vsource.source
 
-New Vsource.grid1 bus1=1s pu=1.07 angle=1.0 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001 Frequency=60
-New Vsource.grid2 bus1=2s pu=1.07 angle=0.0 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001 Frequency=60
+New Vsource.grid1 bus1=1s pu=1.07 angle=0.0 phases=1 basekv=2.4018 Frequency=60
+// New Vsource.grid2 bus1=2s pu=1.07 angle=-0.0 phases=1 basekv=2.4018 Frequency=60
 
 Redirect BranchData.dss
 
 // Redirect ../LoadShapeDefault.dss
 // Redirect ../LoadShapePVDefault.dss
 Redirect  Loads.dss     ! Balanced Loads
-// Redirect  Capacitor.dss
-// Redirect PVSystem.dss
-// Redirect PVSystem_50_33_33.dss
-// Redirect Storage.dss
-// Redirect Storage_50_33_33.dss
 
-Set VoltageBases = [4.16]
+// Set VoltageBases = [4.16]
+Set VoltageBases = [2.4018]
+
 Set mode = Snapshot 
-// Set stepsize = 1h
-// Set number = 1
 
 ! Let DSS estimate the voltage bases
 Calcvoltagebases     ! This also establishes the bus list
