@@ -239,6 +239,21 @@ for i in eachindex(deltas)
         QSubs2[i]
     )
 end
+# Add OpenDSS optimal row
+opt_p1 = modelDict[:P_1j] * kVA_B
+opt_p2 = modelDict[:P_2j] * kVA_B
+opt_q1 = modelDict[:Q_1j] * kVA_B
+opt_q2 = modelDict[:Q_2j] * kVA_B
+opt_delta_str = Crayon(foreground = :yellow)(@sprintf("%-6s", "Optimal"))
+opt_p1_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p1))
+opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
+@printf("%s | %s | %s | %-12.2f | %-12.2f\n",
+    opt_delta_str,
+    opt_p1_str,
+    opt_p2_str,
+    opt_q1,
+    opt_q2
+)
 println(separator)
 
 # Write to txt file
@@ -264,4 +279,12 @@ open(output_file, "w") do io
             QSubs2[i]
         )
     end
+    # Add OpenDSS optimal row
+    @printf(io, "%-6s | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+        "Optimal",
+        opt_p1,
+        opt_p2,
+        opt_q1,
+        opt_q2
+    )
 end
