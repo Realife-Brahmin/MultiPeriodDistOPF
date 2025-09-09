@@ -169,4 +169,19 @@ dss.Text.Command("Redirect " * systemFile)
 dss.Text.Command("Solve")
 
 # Example: print voltages at all buses
-dss.Text.Command("Show Powers")
+# dss.Text.Command("Show Voltages LL")
+# dss.Text.Command("Show Powers")
+
+powersMat = []
+
+for elemName in dss.Circuit.AllElementNames()
+    dss.Circuit.SetActiveElement(elemName)
+    activeElem = dss.CktElement
+    myPowers = activeElem.Powers()
+    pqPairs = [[myPowers[a], myPowers[a+1]] for a in 1:2:length(myPowers)]
+    push!(powersMat, (elemName, pqPairs))
+end
+
+for (name, pq) in powersMat
+    println(name, ": ", pq)
+end
