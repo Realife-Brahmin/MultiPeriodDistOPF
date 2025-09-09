@@ -178,6 +178,18 @@ for delta in deltas
     push!(PSubs2, -real(powers2[1]))
     push!(QSubs2, -imag(powers2[1]))
 end
+
+
+
+# Generalized retrieval of substation voltages (pu)
+Vsource_names = sort(setdiff(dss.Vsources.AllNames(), ["source"]))
+Vsource_pus = Dict{String, Float64}()
+for vname in Vsource_names
+    dss.Vsources.Name(vname)
+    Vsource_pus[vname] = dss.Vsources.PU()
+end
+
+# Generalized retrieval of total loading (sum of all loads)
 load_names = sort(dss.Loads.AllNames())
 global total_P = 0.0
 global total_Q = 0.0
