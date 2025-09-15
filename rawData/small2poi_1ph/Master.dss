@@ -8,6 +8,10 @@ Disable Vsource.source
 
 New Vsource.grid1 bus1=1s pu=1.07 angle=0.0 phases=1 basekv=11.547 Frequency=60
 New Vsource.grid2 bus1=2s pu=1.07 angle=-0.0 phases=1 basekv=11.547 Frequency=60
+// New Generator.gen2 bus1=2s phases=1 kv=11.547 kW=500 kvar=425 model=4 enabled=false
+// New Generator.gen2 bus1=2s phases=1 kv=12.35529 kW=500 kvar=425 model=4 enabled=false
+New Generator.gen2 bus1=2s phases=1 kv=12.35529 kW=500 model=3 enabled=false
+
 
 Redirect BranchData.dss
 
