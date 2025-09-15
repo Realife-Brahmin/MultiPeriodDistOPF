@@ -299,3 +299,40 @@ open(output_file, "w") do io
         opt_q2
     )
 end
+
+    # --- Additional simulation: gen2 as fixed generator, Vsource.grid2 disabled ---
+
+    # Set up OpenDSS for gen2 simulation
+    dss.Text.Command("Edit Vsource.grid2 enabled=no")
+    dss.Text.Command("Edit Generator.gen2 enabled=yes")
+    # dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
+    dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
+    dss.Text.Command("Solve")
+
+    # Retrieve delta at bus 2s (angle of bus 2s w.r.t. reference)
+    println("\n--- Simulation with gen2 as fixed generator (P,Q from OPF) ---")
+    # println(@sprintf("gen2 set to: P = %.2f kW, Q = %.2f kVAr", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
+    println(@sprintf("gen2 set to: P = %.2f kW", modelDict[:P_2j] * kVA_B))
+
+
+    # --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
+    dss.Vsources.Name("grid1")
+    dss.Circuit.SetActiveElement("Vsource.grid1")
+    vmang_grid1 = dss.CktElement.VoltagesMagAng()
+    angle_1s = vmang_grid1[2,1]  # 2nd row, 1st col: angle at terminal 1 of grid1
+
+    dss.Generators.Name("gen2")
+    dss.Circuit.SetActiveElement("Generator.gen2")
+    vmang_gen2 = dss.CktElement.VoltagesMagAng()
+    angle_2s = vmang_gen2[2,1]   # 2nd row, 1st col: angle at terminal 1 of gen2
+
+    delta_12 = angle_1s - angle_2s
+
+    delta_crayon = Crayon(foreground = :blue, bold = true)
+    delta_str = delta_crayon(@sprintf("%.4f deg", delta_12))
+    println(delta_str)
+
+    # Also write to txt file
+    open(output_file, "a") do io
+        println(io, "$(round(delta_12, digits=2)) deg")
+    end
