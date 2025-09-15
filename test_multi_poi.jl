@@ -241,7 +241,7 @@ for i in eachindex(deltas)
     p2 = PSubs2[i]
     p1_str = p1 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p1)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p1))
     p2_str = p2 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p2)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p2))
-    delta_str = (p1 < 0 || p2 < 0) ? Crayon(foreground = :red)(@sprintf("%-6.1f", deltas[i])) : @sprintf("%-6.1f", deltas[i])
+    local delta_str = (p1 < 0 || p2 < 0) ? Crayon(foreground = :red)(@sprintf("%-6.1f", deltas[i])) : @sprintf("%-6.1f", deltas[i])
     @printf("%s | %s | %s | %-12.2f | %-12.2f\n",
         delta_str,
         p1_str,
@@ -305,14 +305,14 @@ end
     # Set up OpenDSS for gen2 simulation
     dss.Text.Command("Edit Vsource.grid2 enabled=no")
     dss.Text.Command("Edit Generator.gen2 enabled=yes")
-    # dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
-    dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
+    dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
+    # dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
     dss.Text.Command("Solve")
 
     # Retrieve delta at bus 2s (angle of bus 2s w.r.t. reference)
     println("\n--- Simulation with gen2 as fixed generator (P,Q from OPF) ---")
-    # println(@sprintf("gen2 set to: P = %.2f kW, Q = %.2f kVAr", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
-    println(@sprintf("gen2 set to: P = %.2f kW", modelDict[:P_2j] * kVA_B))
+    println(@sprintf("gen2 set to: P = %.2f kW, Q = %.2f kVAr", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
+    # println(@sprintf("gen2 set to: P = %.2f kW", modelDict[:P_2j] * kVA_B))
 
 
     # --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
