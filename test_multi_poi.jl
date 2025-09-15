@@ -267,9 +267,7 @@ opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
 )
 println(separator)
 
-# Write to txt file
-using Printf
-import Dates
+
 output_dir = "processedData/" * systemName * "/"
 isdir(output_dir) || mkpath(output_dir)
 output_file = output_dir * "substation-power-distribution-load_$(Int(round(P_L_kW)))_kW.txt"
@@ -335,4 +333,27 @@ end
     # Also write to txt file
     open(output_file, "a") do io
         println(io, "$(round(delta_12, digits=2)) deg")
+    end
+
+    # --- Retrieve and print dispatches from Substation 1 (grid1) and Gen 2 (gen2) ---
+    dss.Circuit.SetActiveElement("Vsource.grid1")
+    powers_grid1 = dss.CktElement.Powers()
+    p_grid1 = -real(powers_grid1[1])
+    q_grid1 = -imag(powers_grid1[1])
+
+    dss.Circuit.SetActiveElement("Generator.gen2")
+    powers_gen2 = dss.CktElement.Powers()
+    p_gen2 = -real(powers_gen2[1])
+    q_gen2 = -imag(powers_gen2[1])
+
+    using Crayons
+    p1q1_crayon = Crayon(foreground = :magenta, bold = true)
+    p2q2_crayon = Crayon(foreground = :cyan, bold = true)
+    println(p1q1_crayon(@sprintf("Substation 1 dispatch: P = %.2f kW, Q = %.2f kVAr", p_grid1, q_grid1)))
+    println(p2q2_crayon(@sprintf("Gen2 dispatch:         P = %.2f kW, Q = %.2f kVAr", p_gen2, q_gen2)))
+
+    # Also write to txt file
+    open(output_file, "a") do io
+        println(io, "Substation 1 dispatch: P = $(round(p_grid1, digits=2)) kW, Q = $(round(q_grid1, digits=2)) kVAr")
+        println(io, "Gen2 dispatch:         P = $(round(p_gen2, digits=2)) kW, Q = $(round(q_gen2, digits=2)) kVAr")
     end
