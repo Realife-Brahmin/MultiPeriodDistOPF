@@ -165,13 +165,14 @@ systemFile = rawDataFolder * systemName * "/Master.dss"
 dss.Text.Command("Clear")
 dss.Text.Command("Redirect " * systemFile)
 
-deltas = [-10; -5; collect(-2:0.5:2); 5; 10]
+# deltas = [-10; -5; collect(-2:0.5:2); 5; 10]
 deltas = vcat(
-    [-10, -5],
+    [-8, -5],
     collect(-2:0.5:-0.5),
     collect(-0.4:0.1:0.4),
     collect(0.5:0.5:2),
-    [5, 10]
+    [5, 8],
+    [0.12452868971865128],
 )
 PSubs1 = []
 QSubs1 = []
@@ -237,7 +238,7 @@ for i in eachindex(deltas)
     p2 = PSubs2[i]
     p1_str = p1 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p1)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p1))
     p2_str = p2 > 0 ? Crayon(foreground = :green)(@sprintf("%-12.2f", p2)) : Crayon(foreground = :red)(@sprintf("%-12.2f", p2))
-    local delta_str = (p1 < 0 || p2 < 0) ? Crayon(foreground = :red)(@sprintf("%-6.1f", deltas[i])) : @sprintf("%-6.1f", deltas[i])
+    local delta_str = (p1 < 0 || p2 < 0) ? Crayon(foreground = :red)(@sprintf("%-6.4f", deltas[i])) : @sprintf("%-6.4f", deltas[i])
     @printf("%s | %s | %s | %-12.2f | %-12.2f\n",
         delta_str,
         p1_str,
@@ -330,7 +331,7 @@ open(output_file, "w") do io
     println(io, header)
     println(io, separator)
     for i in eachindex(deltas)
-        @printf(io, "%-6.1f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+        @printf(io, "%-6.4f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
             deltas[i],
             PSubs1[i],
             PSubs2[i],
