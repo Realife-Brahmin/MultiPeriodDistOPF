@@ -252,15 +252,20 @@ opt_p1 = modelDict[:P_1j] * kVA_B
 opt_p2 = modelDict[:P_2j] * kVA_B
 opt_q1 = modelDict[:Q_1j] * kVA_B
 opt_q2 = modelDict[:Q_2j] * kVA_B
-opt_delta_str = Crayon(foreground = :yellow)(@sprintf("%-6s", "'BFM-NL'"))
-opt_p1_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p1))
-opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
-@printf("%s | %s | %s | %-12.2f | %-12.2f\n",
+
+# Use bold white for authority
+opt_crayon = Crayon(foreground = :white, bold = true)
+opt_delta_str = opt_crayon(@sprintf("%-6s", "'BFM-NL'"))
+opt_p1_str = opt_crayon(@sprintf("%-12.2f", opt_p1))
+opt_p2_str = opt_crayon(@sprintf("%-12.2f", opt_p2))
+opt_q1_str = opt_crayon(@sprintf("%-12.2f", opt_q1))
+opt_q2_str = opt_crayon(@sprintf("%-12.2f", opt_q2))
+@printf("%s | %s | %s | %s | %s\n",
     opt_delta_str,
     opt_p1_str,
     opt_p2_str,
-    opt_q1,
-    opt_q2
+    opt_q1_str,
+    opt_q2_str
 )
 
 # Print a transient separator to close the main table
@@ -305,13 +310,18 @@ header_gen2 = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs
 println(header_gen2)
 println("-"^length(header_gen2))
 # Print the gen2 simulation row
-gen2_row_crayon = Crayon(foreground = :blue, bold = true)
-@printf("%s | %s | %s | %-12.2f | %-12.2f\n",
-    gen2_row_crayon(@sprintf("%-6.4f", delta_12)),
-    gen2_row_crayon(@sprintf("%-12.2f", p_grid1)),
-    gen2_row_crayon(@sprintf("%-12.2f", p_gen2)),
-    q_grid1,
-    q_gen2
+gen2_row_crayon = Crayon(foreground = :cyan, bold = true)
+gen2_delta_str = gen2_row_crayon(@sprintf("%-6.4f", delta_12))
+gen2_p1_str = gen2_row_crayon(@sprintf("%-12.2f", p_grid1))
+gen2_p2_str = gen2_row_crayon(@sprintf("%-12.2f", p_gen2))
+gen2_q1_str = gen2_row_crayon(@sprintf("%-12.2f", q_grid1))
+gen2_q2_str = gen2_row_crayon(@sprintf("%-12.2f", q_gen2))
+@printf("%s | %s | %s | %s | %s\n",
+    gen2_delta_str,
+    gen2_p1_str,
+    gen2_p2_str,
+    gen2_q1_str,
+    gen2_q2_str
 )
 println(separator)
 
@@ -361,18 +371,11 @@ open(output_file, "w") do io
     println(io, separator)
 end
 
-    
-    delta_crayon = Crayon(foreground = :blue, bold = true)
-    delta_str = delta_crayon(@sprintf("%.4f deg", delta_12))
 
-    # Also write to txt file
-    open(output_file, "a") do io
-        println(io, "$(round(delta_12, digits=2)) deg")
-    end
+delta_crayon = Crayon(foreground = :blue, bold = true)
+delta_str = delta_crayon(@sprintf("%.4f deg", delta_12))
 
-
-    # # Also write to txt file
-    # open(output_file, "a") do io
-    #     println(io, "Substation 1 dispatch: P = $(round(p_grid1, digits=2)) kW, Q = $(round(q_grid1, digits=2)) kVAr")
-    #     println(io, "Gen2 dispatch:         P = $(round(p_gen2, digits=2)) kW, Q = $(round(q_gen2, digits=2)) kVAr")
-    # end
+# Also write to txt file
+open(output_file, "a") do io
+    println(io, "$(round(delta_12, digits=2)) deg")
+end
