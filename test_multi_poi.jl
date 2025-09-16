@@ -220,18 +220,18 @@ header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW
 separator = "-"^length(header)
 println(separator)
 
-# Print to console
+# -------------------- PRINTING MAIN TABLE (delta sweep) --------------------
+# Print summary and table header
 println("Total loading: $(round(P_L_kW, digits=2)) kW, $(round(Q_L_kVAr, digits=2)) kVAr")
-
 println("Substation voltages (pu): " *
     join(["$(name)=$( @sprintf("%.2f", Vsource_pus[name]) )" for name in Vsource_names], ", "))
 println("Substation BasekV: " *
     join(["$(name)=$( @sprintf("%.4f", Vsource_basekv[name]) )" for name in Vsource_names], ", "))
-
 println(separator)
-
 println(header)
 println(separator)
+
+# Print each row for the delta sweep
 for i in eachindex(deltas)
     p1 = PSubs1[i]
     p2 = PSubs2[i]
@@ -247,13 +247,11 @@ for i in eachindex(deltas)
     )
 end
 
-# Add OpenDSS optimal row
+# Print the optimization (BFM-NL) row in bold white for authority
 opt_p1 = modelDict[:P_1j] * kVA_B
 opt_p2 = modelDict[:P_2j] * kVA_B
 opt_q1 = modelDict[:Q_1j] * kVA_B
 opt_q2 = modelDict[:Q_2j] * kVA_B
-
-# Use bold white for authority
 opt_crayon = Crayon(foreground = :white, bold = true)
 opt_delta_str = opt_crayon(@sprintf("%-6s", "'BFM-NL'"))
 opt_p1_str = opt_crayon(@sprintf("%-12.2f", opt_p1))
@@ -271,45 +269,39 @@ opt_q2_str = opt_crayon(@sprintf("%-12.2f", opt_q2))
 # Print a transient separator to close the main table
 println("-"^length(header))
 
-# --- Additional simulation: gen2 as fixed generator, Vsource.grid2 disabled ---
-
-# Set up OpenDSS for gen2 simulation
+# -------------------- GEN2 SIMULATION (OpenDSS verification) --------------------
+# Set up OpenDSS for gen2 simulation (disable grid2, enable gen2, set PQ)
 dss.Text.Command("Edit Vsource.grid2 enabled=no")
 dss.Text.Command("Edit Generator.gen2 enabled=yes")
 dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j] * kVA_B, modelDict[:Q_2j] * kVA_B))
-# dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
 dss.Text.Command("Solve")
 
-# --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
+# Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng()
 dss.Vsources.Name("grid1")
 dss.Circuit.SetActiveElement("Vsource.grid1")
 vmang_grid1 = dss.CktElement.VoltagesMagAng()
 angle_1s = vmang_grid1[2, 1]  # 2nd row, 1st col: angle at terminal 1 of grid1
-
 dss.Generators.Name("gen2")
 dss.Circuit.SetActiveElement("Generator.gen2")
 vmang_gen2 = dss.CktElement.VoltagesMagAng()
 angle_2s = vmang_gen2[2, 1]   # 2nd row, 1st col: angle at terminal 1 of gen2
-
 delta_12 = angle_1s - angle_2s
 
-
-# --- Retrieve and print dispatches from Substation 1 (grid1) and Gen 2 (gen2) ---
+# Retrieve dispatches from grid1 and gen2 after powerflow
 dss.Circuit.SetActiveElement("Vsource.grid1")
 powers_grid1 = dss.CktElement.Powers()
 p_grid1 = -real(powers_grid1[1])
 q_grid1 = -imag(powers_grid1[1])
-
 dss.Circuit.SetActiveElement("Generator.gen2")
 powers_gen2 = dss.CktElement.Powers()
 p_gen2 = -real(powers_gen2[1])
 q_gen2 = -imag(powers_gen2[1])
 
-# Print new header for gen2 simulation
+# Print new header for gen2 simulation (verification/final judgement)
 header_gen2 = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW]", "PGen2 [kW]", "QSubs1 [kVAr]", "QGen2 [kVAr]")
 println(header_gen2)
 println("-"^length(header_gen2))
-# Print the gen2 simulation row
+# Print the gen2 simulation row in bold cyan
 gen2_row_crayon = Crayon(foreground = :cyan, bold = true)
 gen2_delta_str = gen2_row_crayon(@sprintf("%-6.4f", delta_12))
 gen2_p1_str = gen2_row_crayon(@sprintf("%-12.2f", p_grid1))
