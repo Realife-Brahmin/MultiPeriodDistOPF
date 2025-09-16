@@ -8,7 +8,11 @@ Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
 # Pkg.add("OpenDSSDirect")
 # Pkg.instantiate()
 # Pkg.precompile()
-
+using JuMP
+using Ipopt
+using Crayons
+import OpenDSSDirect as dss
+using Printf
 # ----------------------------------------------------------------------
 
 data = Dict()
@@ -87,8 +91,6 @@ end
 
 process_data!(data)
 
-using JuMP
-using Ipopt
 
 function solve_two_poi_opf(data)
     model = Model(Ipopt.Optimizer)
@@ -156,9 +158,6 @@ end
 # Example usage:
 modelDict = solve_two_poi_opf(data)
 
-import OpenDSSDirect as dss
-using Printf
-
 systemName = "small2poi_1ph"
 rawDataFolder = "rawData/"
 systemFile = rawDataFolder * systemName * "/Master.dss"
@@ -193,8 +192,6 @@ for delta in deltas
     push!(PSubs2, -real(powers2[1]))
     push!(QSubs2, -imag(powers2[1]))
 end
-
-
 
 
 # Generalized retrieval of substation voltages (pu) and BasekV
@@ -233,7 +230,6 @@ println("Substation BasekV: " *
 
 println(separator)
 
-using Crayons
 println(header)
 println(separator)
 for i in eachindex(deltas)
@@ -250,6 +246,7 @@ for i in eachindex(deltas)
         QSubs2[i]
     )
 end
+
 # Add OpenDSS optimal row
 opt_p1 = modelDict[:P_1j] * kVA_B
 opt_p2 = modelDict[:P_2j] * kVA_B
@@ -265,8 +262,44 @@ opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
     opt_q1,
     opt_q2
 )
+
 # Print a transient separator to close the main table
 println("-"^length(header))
+
+# --- Additional simulation: gen2 as fixed generator, Vsource.grid2 disabled ---
+
+# Set up OpenDSS for gen2 simulation
+dss.Text.Command("Edit Vsource.grid2 enabled=no")
+dss.Text.Command("Edit Generator.gen2 enabled=yes")
+dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j] * kVA_B, modelDict[:Q_2j] * kVA_B))
+# dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
+dss.Text.Command("Solve")
+
+# --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
+dss.Vsources.Name("grid1")
+dss.Circuit.SetActiveElement("Vsource.grid1")
+vmang_grid1 = dss.CktElement.VoltagesMagAng()
+angle_1s = vmang_grid1[2, 1]  # 2nd row, 1st col: angle at terminal 1 of grid1
+
+dss.Generators.Name("gen2")
+dss.Circuit.SetActiveElement("Generator.gen2")
+vmang_gen2 = dss.CktElement.VoltagesMagAng()
+angle_2s = vmang_gen2[2, 1]   # 2nd row, 1st col: angle at terminal 1 of gen2
+
+delta_12 = angle_1s - angle_2s
+
+
+# --- Retrieve and print dispatches from Substation 1 (grid1) and Gen 2 (gen2) ---
+dss.Circuit.SetActiveElement("Vsource.grid1")
+powers_grid1 = dss.CktElement.Powers()
+p_grid1 = -real(powers_grid1[1])
+q_grid1 = -imag(powers_grid1[1])
+
+dss.Circuit.SetActiveElement("Generator.gen2")
+powers_gen2 = dss.CktElement.Powers()
+p_gen2 = -real(powers_gen2[1])
+q_gen2 = -imag(powers_gen2[1])
+
 # Print new header for gen2 simulation
 header_gen2 = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW]", "PGen2 [kW]", "QSubs1 [kVAr]", "QGen2 [kVAr]")
 println(header_gen2)
@@ -280,8 +313,6 @@ gen2_row_crayon = Crayon(foreground = :blue, bold = true)
     q_grid1,
     q_gen2
 )
-# delta_str = gen2_row_crayon(@sprintf("delta_1s_2s (grid1 - gen2): %.4f deg", delta_12))
-# println(delta_str)
 println(separator)
 
 
@@ -320,7 +351,7 @@ open(output_file, "w") do io
     println(io, header_gen2)
     println(io, "-"^length(header_gen2))
     # Add gen2 simulation row
-    @printf(io, "%-6s | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+    @printf(io, "%-6.4f | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
         delta_12,
         p_grid1,
         p_gen2,
@@ -328,31 +359,9 @@ open(output_file, "w") do io
         q_gen2
     )
     println(io, separator)
-    # println(io, "delta_1s_2s (grid1 - gen2): $(round(delta_12, digits=4)) deg")
 end
 
-    # --- Additional simulation: gen2 as fixed generator, Vsource.grid2 disabled ---
-
-    # Set up OpenDSS for gen2 simulation
-    dss.Text.Command("Edit Vsource.grid2 enabled=no")
-    dss.Text.Command("Edit Generator.gen2 enabled=yes")
-    dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
-    # dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
-    dss.Text.Command("Solve")
-
-    # --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
-    dss.Vsources.Name("grid1")
-    dss.Circuit.SetActiveElement("Vsource.grid1")
-    vmang_grid1 = dss.CktElement.VoltagesMagAng()
-    angle_1s = vmang_grid1[2,1]  # 2nd row, 1st col: angle at terminal 1 of grid1
-
-    dss.Generators.Name("gen2")
-    dss.Circuit.SetActiveElement("Generator.gen2")
-    vmang_gen2 = dss.CktElement.VoltagesMagAng()
-    angle_2s = vmang_gen2[2,1]   # 2nd row, 1st col: angle at terminal 1 of gen2
-
-    delta_12 = angle_1s - angle_2s
-
+    
     delta_crayon = Crayon(foreground = :blue, bold = true)
     delta_str = delta_crayon(@sprintf("%.4f deg", delta_12))
 
@@ -361,19 +370,9 @@ end
         println(io, "$(round(delta_12, digits=2)) deg")
     end
 
-    # --- Retrieve and print dispatches from Substation 1 (grid1) and Gen 2 (gen2) ---
-    dss.Circuit.SetActiveElement("Vsource.grid1")
-    powers_grid1 = dss.CktElement.Powers()
-    p_grid1 = -real(powers_grid1[1])
-    q_grid1 = -imag(powers_grid1[1])
 
-    dss.Circuit.SetActiveElement("Generator.gen2")
-    powers_gen2 = dss.CktElement.Powers()
-    p_gen2 = -real(powers_gen2[1])
-    q_gen2 = -imag(powers_gen2[1])
-
-    # Also write to txt file
-    open(output_file, "a") do io
-        println(io, "Substation 1 dispatch: P = $(round(p_grid1, digits=2)) kW, Q = $(round(q_grid1, digits=2)) kVAr")
-        println(io, "Gen2 dispatch:         P = $(round(p_gen2, digits=2)) kW, Q = $(round(q_gen2, digits=2)) kVAr")
-    end
+    # # Also write to txt file
+    # open(output_file, "a") do io
+    #     println(io, "Substation 1 dispatch: P = $(round(p_grid1, digits=2)) kW, Q = $(round(q_grid1, digits=2)) kVAr")
+    #     println(io, "Gen2 dispatch:         P = $(round(p_gen2, digits=2)) kW, Q = $(round(q_gen2, digits=2)) kVAr")
+    # end
