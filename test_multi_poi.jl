@@ -219,7 +219,7 @@ end
 P_L_kW = total_P
 Q_L_kVAr = total_Q
 
-header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "delta", "PSubs1 [kW]", "PSubs2 [kW]", "QSubs1 [kVAr]", "QSubs2 [kVAr]")
+header = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW]", "PSubs2 [kW]", "QSubs1 [kVAr]", "QSubs2 [kVAr]")
 separator = "-"^length(header)
 println(separator)
 
@@ -255,7 +255,7 @@ opt_p1 = modelDict[:P_1j] * kVA_B
 opt_p2 = modelDict[:P_2j] * kVA_B
 opt_q1 = modelDict[:Q_1j] * kVA_B
 opt_q2 = modelDict[:Q_2j] * kVA_B
-opt_delta_str = Crayon(foreground = :yellow)(@sprintf("%-6s", "'Optimal'"))
+opt_delta_str = Crayon(foreground = :yellow)(@sprintf("%-6s", "'BFM-NL'"))
 opt_p1_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p1))
 opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
 @printf("%s | %s | %s | %-12.2f | %-12.2f\n",
@@ -265,6 +265,23 @@ opt_p2_str = Crayon(foreground = :yellow)(@sprintf("%-12.2f", opt_p2))
     opt_q1,
     opt_q2
 )
+# Print a transient separator to close the main table
+println("-"^length(header))
+# Print new header for gen2 simulation
+header_gen2 = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW]", "PGen2 [kW]", "QSubs1 [kVAr]", "QGen2 [kVAr]")
+println(header_gen2)
+println("-"^length(header_gen2))
+# Print the gen2 simulation row
+gen2_row_crayon = Crayon(foreground = :blue, bold = true)
+@printf("%s | %s | %s | %-12.2f | %-12.2f\n",
+    gen2_row_crayon(@sprintf("%-6.4f", delta_12)),
+    gen2_row_crayon(@sprintf("%-12.2f", p_grid1)),
+    gen2_row_crayon(@sprintf("%-12.2f", p_gen2)),
+    q_grid1,
+    q_gen2
+)
+# delta_str = gen2_row_crayon(@sprintf("delta_1s_2s (grid1 - gen2): %.4f deg", delta_12))
+# println(delta_str)
 println(separator)
 
 
@@ -290,12 +307,28 @@ open(output_file, "w") do io
     end
     # Add OpenDSS optimal row
     @printf(io, "%-6s | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
-        "'Optimal'",
+        "'BFM-NL'",
         opt_p1,
         opt_p2,
         opt_q1,
         opt_q2
     )
+    # Print a transient separator to close the main table
+    println(io, "-"^length(header))
+    # Print new header for gen2 simulation
+    header_gen2 = @sprintf("%-6s | %-12s | %-12s | %-12s | %-12s", "δ [°]", "PSubs1 [kW]", "PGen2 [kW]", "QSubs1 [kVAr]", "QGen2 [kVAr]")
+    println(io, header_gen2)
+    println(io, "-"^length(header_gen2))
+    # Add gen2 simulation row
+    @printf(io, "%-6s | %-12.2f | %-12.2f | %-12.2f | %-12.2f\n",
+        delta_12,
+        p_grid1,
+        p_gen2,
+        q_grid1,
+        q_gen2
+    )
+    println(io, separator)
+    # println(io, "delta_1s_2s (grid1 - gen2): $(round(delta_12, digits=4)) deg")
 end
 
     # --- Additional simulation: gen2 as fixed generator, Vsource.grid2 disabled ---
@@ -306,12 +339,6 @@ end
     dss.Text.Command(@sprintf("Edit Generator.gen2 enabled=yes kW=%.6f kvar=%.6f", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
     # dss.Text.Command("Edit Generator.gen2 enabled=yes kW=$(modelDict[:P_2j] * kVA_B)")
     dss.Text.Command("Solve")
-
-    # Retrieve delta at bus 2s (angle of bus 2s w.r.t. reference)
-    println("\n--- Simulation with gen2 as fixed generator (P,Q from OPF) ---")
-    println(@sprintf("gen2 set to: P = %.2f kW, Q = %.2f kVAr", modelDict[:P_2j]*kVA_B, modelDict[:Q_2j]*kVA_B))
-    # println(@sprintf("gen2 set to: P = %.2f kW", modelDict[:P_2j] * kVA_B))
-
 
     # --- Retrieve angle at bus 1s and 2s using CktElement.VoltagesMagAng() ---
     dss.Vsources.Name("grid1")
@@ -328,7 +355,6 @@ end
 
     delta_crayon = Crayon(foreground = :blue, bold = true)
     delta_str = delta_crayon(@sprintf("%.4f deg", delta_12))
-    println(delta_str)
 
     # Also write to txt file
     open(output_file, "a") do io
@@ -345,12 +371,6 @@ end
     powers_gen2 = dss.CktElement.Powers()
     p_gen2 = -real(powers_gen2[1])
     q_gen2 = -imag(powers_gen2[1])
-
-    using Crayons
-    p1q1_crayon = Crayon(foreground = :magenta, bold = true)
-    p2q2_crayon = Crayon(foreground = :cyan, bold = true)
-    println(p1q1_crayon(@sprintf("Substation 1 dispatch: P = %.2f kW, Q = %.2f kVAr", p_grid1, q_grid1)))
-    println(p2q2_crayon(@sprintf("Gen2 dispatch:         P = %.2f kW, Q = %.2f kVAr", p_gen2, q_gen2)))
 
     # Also write to txt file
     open(output_file, "a") do io
