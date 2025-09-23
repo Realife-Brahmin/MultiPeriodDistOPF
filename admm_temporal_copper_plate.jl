@@ -143,13 +143,6 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     # P_subs_t0 + P_B_t0 = P_L[t0]
     @constraint(m, P_subs_t0 + P_B_t0 == inst.P_L_pu[t0])
 
-    # 🔵 Fix all other B_t0_var[t] where t ≠ t0 to current values (no optimization)
-    for t in 1:inst.T
-        if t != t0
-            @constraint(m, B_t0_var[t] == B_t0[t])
-        end
-    end
-
     # 🎯 OBJECTIVE: Economic cost + ADMM penalty
     # C_t0 * P_subs_t0 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
     energy_cost = inst.price[t0] * (P_subs_t0 * P_BASE) * b.Δt
@@ -163,7 +156,10 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     optimize!(m)
 
     # 📥 Extract results and update 🔵B_t0
-    B_t0[t0] = value(B_t0_var[t0])  # Only update the t0-th component
+    # B_t0[t0] = value(B_t0_var[t0])  # Only update the t0-th component
+    for t in 1:inst.T
+        B_t0[t] = value(B_t0_var[t])  # Update ALL components
+    end
     P_B_val = value(P_B_t0)
     P_subs_val = value(P_subs_t0)
     
@@ -203,6 +199,8 @@ function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::Instanc
     b = inst.bat
     violations = Int[]
     
+    violation_tolerance = 1e-4  # Only warn if violation is > 1e-6
+
     # � Update consensus variables: B̂[t] for t = 1, 2, ..., T-1  
     # Note: B̂[t] represents SOC at END of time period t
     # B0 (initial SOC) is handled separately in primal updates
@@ -213,9 +211,14 @@ function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::Instanc
         Bhat_new = consensus_sum / T
         
         # Check if projection is needed and track violations
-        if Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
+        violation_amount = max(Bmin(b) - Bhat_new, Bhat_new - Bmax(b), 0.0)
+
+        if violation_amount > violation_tolerance
             push!(violations, t)
-            @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))]. Clamping applied."
+            @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))] by $(violation_amount). Clamping applied."
+        elseif Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
+            # Still track minor violations for statistics, but don't warn
+            push!(violations, t)
         end
         
         # Project onto feasible set
@@ -232,8 +235,14 @@ function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::Instanc
         Bhat_new = consensus_sum / T
         
         if Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
-            push!(violations, t)
-            @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))]. Clamping applied."
+            violation_amount = max(Bmin(b) - Bhat_new, Bhat_new - Bmax(b), 0.0)
+
+            if violation_amount > violation_tolerance
+                push!(violations, t)
+                @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))] by $(violation_amount). Clamping applied."
+            else
+                push!(violations, t)
+            end
         end
         
         Bhat[T] = clamp(Bhat_new, Bmin(b), Bmax(b))
@@ -310,7 +319,7 @@ Algorithm:
 
 Returns Dict(:P_B, :P_Subs, :B, :objective_history, :consensus_trajectory, :convergence_history)
 """
-function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
+function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3)
     T = inst.T
     b = inst.bat
@@ -475,7 +484,7 @@ sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=max_iter, eps_pri=1e-
 @printf "tADMM objective: %.4f\n" sol_tadmm[:objective]
 
 # Quick pu checks - compare all methods
-@printf "BF     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(mono[:B]) maximum(mono[:B]) minimum(mono[:P_B]) maximum(mono[:P_B])
+@printf "BruteForced     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(mono[:B]) maximum(mono[:B]) minimum(mono[:P_B]) maximum(mono[:P_B])
 
 @printf "tADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
 
