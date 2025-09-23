@@ -179,7 +179,7 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
 end
 
 """
-    consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst, ρ)
+    consensus_update_tadmm!(Bhat, B_collection, u_collection, inst, ρ)
 
 🔴 CONSENSUS UPDATE for TADMM 🔴  
 
@@ -188,7 +188,7 @@ Updates global consensus variables 🔴B̂ using averaging of local solutions:
 
 Arguments:
 - Bhat: Global consensus SOC trajectory (🔴B̂ - modified in-place)
-- B_t_collection: Collection of all local SOC variables {🔵B_t0} for t0=1:T
+- B_collection: Collection of all local SOC variables {🔵B_t0} for t0=1:T
 - u_collection: Collection of all local scaled duals {🟢u_t0} for t0=1:T  
 - inst: Problem instance
 - ρ: Penalty parameter (unused in consensus update but kept for interface consistency)
@@ -198,7 +198,7 @@ Returns: Dict with keys:
     - :bounds_violations => number of times clamping was needed
     - :violation_indices => time indices where bounds violations occurred
 """
-function consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst::InstancePU, ρ::Float64)
+function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::InstancePU, ρ::Float64)
     T = inst.T
     b = inst.bat
     violations = Int[]
@@ -209,7 +209,7 @@ function consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst::Insta
     for t in 1:T-1  # Don't update the last time step if it has terminal constraint
         # Average across all T subproblems with dual adjustments
         # 🔴B̂[t] = (1/T) * Σ_{t0=1}^T (🔵B_t0[t] + 🟢u_t0[t])
-        consensus_sum = sum(B_t_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
+        consensus_sum = sum(B_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
         Bhat_new = consensus_sum / T
         
         # Check if projection is needed and track violations
@@ -228,7 +228,7 @@ function consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst::Insta
     else
         # If no terminal constraint, update the last time step too
         t = T
-        consensus_sum = sum(B_t_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
+        consensus_sum = sum(B_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
         Bhat_new = consensus_sum / T
         
         if Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
@@ -249,7 +249,7 @@ function consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst::Insta
 end
 
 """
-    dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ)
+    dual_update_tadmm!(u_collection, B_collection, Bhat, ρ)
 
 🟢 DUAL UPDATE for TADMM 🟢
 
@@ -258,7 +258,7 @@ Updates scaled dual variables for each subproblem:
 
 Arguments:
 - u_collection: Collection of local scaled dual variables {🟢u_t0} (modified in-place)
-- B_t_collection: Collection of local SOC variables {🔵B_t0} (read-only)
+- B_collection: Collection of local SOC variables {🔵B_t0} (read-only)
 - Bhat: Global consensus SOC trajectory (🔴B̂ - read-only)
 - ρ: Penalty parameter (ρ scaling absorbed into u)
 
@@ -267,7 +267,7 @@ Returns: Dict with keys:
     - :max_dual_change => maximum absolute change in any dual variable
     - :total_updates => total number of dual variables updated (T²)
 """
-function dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ::Float64)
+function dual_update_tadmm!(u_collection, B_collection, Bhat, ρ::Float64)
     T = length(Bhat)
     max_change = 0.0
     
@@ -276,7 +276,7 @@ function dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ::Float64)
         for t in 1:T
             # Dual ascent step: 🟢u_t0[t] += (🔵B_t0[t] - 🔴B̂[t])
             old_u = u_collection[t0][t]
-            u_collection[t0][t] += (B_t_collection[t0][t] - Bhat[t])
+            u_collection[t0][t] += (B_collection[t0][t] - Bhat[t])
             
             # Track maximum change for diagnostics
             max_change = max(max_change, abs(u_collection[t0][t] - old_u))
@@ -299,9 +299,9 @@ solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=200, eps_pri=1e-3, eps_dual=1e-3)
 🎯 tADMM SOLVER using PDF formulation notation 🎯
 
 Variables:
-- 🔵B_t: Local SOC variables {B_t0[t]} for each subproblem t0=1:T
+- 🔵B: Local SOC variables {B_t0[t]} for each subproblem t0=1:T
 - 🔴B̂: Global consensus SOC trajectory  
-- 🟢u_t: Local scaled dual variables {u_t0[t]} for each subproblem t0=1:T
+- 🟢u: Local scaled dual variables {u_t0[t]} for each subproblem t0=1:T
 
 Algorithm:
 1. 🔵 Primal Update: Solve T subproblems in parallel
@@ -321,7 +321,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
     Bhat .= clamp.(Bhat, Bmin(b), Bmax(b))
 
     # 🔵 Initialize local SOC variables {B_t0} for each subproblem
-    B_t_collection = [copy(Bhat) for t0 in 1:T]  # T copies of T-length vectors
+    B_collection = [copy(Bhat) for t0 in 1:T]  # T copies of T-length vectors
 
     # 🟢 Initialize scaled dual variables {u_t0} for each subproblem  
     u_collection = [zeros(T) for t0 in 1:T]  # T copies of T-length vectors
@@ -336,7 +336,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
 
     # Store initial states
     push!(Bhat_history, copy(Bhat))
-    push!(B_collection_history, deepcopy(B_t_collection))
+    push!(B_collection_history, deepcopy(B_collection))
     push!(u_collection_history, deepcopy(u_collection))
 
     @printf "🎯 tADMM[PDF-formulation]: T=%d, ρ=%.3f\n" T ρ
@@ -346,7 +346,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
         @printf "  🔵 Primal updates: "
         total_obj = 0.0
         for t0 in 1:T
-            result = primal_update_tadmm!(B_t_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
+            result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
             total_obj += result[:objective]
             @printf "%d " t0
         end
@@ -355,21 +355,21 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
 
         # 🔴 STEP 2: Consensus Update  
         Bhat_old = copy(Bhat)
-        consensus_result = consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst, ρ)
+        consensus_result = consensus_update_tadmm!(Bhat, B_collection, u_collection, inst, ρ)
 
         # 🟢 STEP 3: Dual Update
-        dual_result = dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ)
+        dual_result = dual_update_tadmm!(u_collection, B_collection, Bhat, ρ)
 
         # 📊 Store iteration history
         push!(Bhat_history, copy(Bhat))
-        push!(B_collection_history, deepcopy(B_t_collection))
+        push!(B_collection_history, deepcopy(B_collection))
         push!(u_collection_history, deepcopy(u_collection))
 
         # 📏 STEP 4: Compute residuals using vector norms
         # Primal residual: measure consensus violation using 2-norm
         r_vectors = []
         for t0 in 1:T
-            push!(r_vectors, B_t_collection[t0] - Bhat)
+            push!(r_vectors, B_collection[t0] - Bhat)
         end
         r_norm = norm(vcat(r_vectors...))  # Concatenate all residual vectors and take 2-norm
 
@@ -408,7 +408,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
         :objective => last(obj_history),
         :objective_history => obj_history,
         :consensus_trajectory => Bhat,  # 🔴B̂ final trajectory
-        :local_solutions => B_t_collection,  # All 🔵B_t0 solutions
+        :local_solutions => B_collection,  # All 🔵B_t0 solutions
         :dual_variables => u_collection,  # All 🟢u_t0 variables
         :convergence_history => Dict(
             :Bhat_history => Bhat_history,
