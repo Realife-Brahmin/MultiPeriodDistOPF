@@ -69,42 +69,6 @@ function build_instance_pu(T::Int, price::Vector{Float64}, P_L_kW::Vector{Float6
     return InstancePU(T, price, P_L_pu, bat)
 end
 
-# ---------------- Single-step block solve ----------------
-# For a single time step t (i.e., Tloc = 1).
-# Decision vars: P_B, P_Subs, B_t, B_L, B_R (scalars).
-# Todo Check for SOC Trajectory constraints again (Name the variables as per agreed upon formulation)
-function solve_single_step_block(inst::InstancePU, t::Int,
-    Bhat_L::Float64, Bhat_R::Float64,
-    uL::Float64, uR::Float64, ρ::Float64)
-    b = inst.bat
-    m = Model(Ipopt.Optimizer)
-    set_silent(m)
-
-    @variables(m, begin
-        -b.P_B_R_pu <= P_B <= b.P_B_R_pu         # pu
-        P_Subs                                     # pu (can be ±)
-        Bmin(b) <= B_t <= Bmax(b)                  # puh at time t
-        Bmin(b) <= B_L <= Bmax(b)                  # left boundary puh (B at t-1)
-        Bmin(b) <= B_R <= Bmax(b)                  # right boundary puh (B at t)
-    end)
-
-    # NRPB (pu)
-    @constraint(m, P_Subs + P_B == inst.P_L_pu[t])
-
-    # SOC for single step: B_t = B_L - P_B*Δt, and B_R = B_t
-    @constraint(m, B_t == B_L - P_B * b.Δt)
-    @constraint(m, B_R == B_t)
-
-    # Economic cost + ADMM penalties on boundaries
-    energy_cost = inst.price[t] * (P_Subs * P_BASE) * b.Δt
-    aug = (ρ / 2) * ((B_L - Bhat_L + uL)^2 + (B_R - Bhat_R + uR)^2)
-    @objective(m, Min, energy_cost + aug)
-
-    optimize!(m)
-
-    return value(B_L), value(B_R), value(P_Subs), value(P_B), value(B_t), objective_value(m)
-end
-
 # ------------------- TADMM Update Functions --------------
 
 """
