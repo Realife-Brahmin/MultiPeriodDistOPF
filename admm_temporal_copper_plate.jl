@@ -90,11 +90,11 @@ Fixed parameters from previous iteration:
 
 Constraints in this subproblem:
 📊 CONSTRAINT COUNT:
-  ✅ Equality constraints: 2
+    ✅ Equality constraints: 2
     1. SOC trajectory: 🔵B_t0[t0] = 🔴B̂[t0-1] - P_B_t0 * Δt  (1 constraint)
     2. NRPB: P_subs_t0 + P_B_t0 = P_L[t0]  (1 constraint)
-  
-  🚧 Inequality constraints: T + 1  
+
+    🚧 Inequality constraints: T + 1  
     1. SOC bounds: 🔵B_t0[t] ∈ [B_lower, B_upper] ∀t ∈ {1,...,T}  (T constraints)
     2. Battery power bounds: P_B_t0 ∈ [-P_B_R, P_B_R]  (1 constraint)
 
