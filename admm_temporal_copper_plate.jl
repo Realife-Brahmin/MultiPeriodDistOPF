@@ -406,7 +406,7 @@ function brute_force_solve(inst::InstancePU)
     end)
 
     @constraint(m, [t = 1:T], P_Subs[t] + P_B[t] == inst.P_L_pu[t])
-    @constraint(m, B[1] == b.B0_pu - P_B[1] * b.Δt) # Todo: Check for left SOC in ADMM t=1 problem
+    @constraint(m, B[1] == b.B0_pu - P_B[1] * b.Δt)
     @constraint(m, [t = 2:T], B[t] == B[t-1] - P_B[t] * b.Δt)
     if !isnothing(b.B_T_target_pu)
         @constraint(m, B[T] == b.B_T_target_pu)
