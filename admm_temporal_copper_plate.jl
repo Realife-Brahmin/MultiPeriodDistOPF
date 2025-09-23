@@ -348,7 +348,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
         for t0 in 1:T
             result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
             total_obj += result[:objective]
-            @printf "%d " t0
+            # @printf "%d " t0
         end
         @printf "\n"
         push!(obj_history, total_obj)
@@ -480,8 +480,8 @@ sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=max_iter, eps_pri=1e-
 @printf "tADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
 
 # Convert tADMM results back to physical for sanity checks
-PB_kW = sol_tadmm[:P_B] .* P_BASE
-PS_kW = sol_tadmm[:P_Subs] .* P_BASE
+P_B_kW = sol_tadmm[:P_B] .* P_BASE
+PSubs_kW = sol_tadmm[:P_Subs] .* P_BASE
 B_kWh = sol_tadmm[:B] .* E_BASE
-@printf "(tADMM) PB[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(PB_kW) maximum(PB_kW) minimum(B_kWh) maximum(B_kWh)
+@printf "(tADMM) P_B[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(P_B_kW) maximum(P_B_kW) minimum(B_kWh) maximum(B_kWh)
 
