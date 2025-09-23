@@ -261,19 +261,6 @@ Arguments:
 - B_t_collection: Collection of local SOC variables {🔵B_t0} (read-only)
 - Bhat: Global consensus SOC trajectory (🔴B̂ - read-only)
 - ρ: Penalty parameter (ρ scaling absorbed into u)
-"""
-    dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ)
-
-🟢 DUAL UPDATE for TADMM 🟢
-
-Updates scaled dual variables for each subproblem:
-    🟢u_t0[t] := 🟢u_t0[t] + (🔵B_t0[t] - 🔴B̂[t])
-
-Arguments:
-- u_collection: Collection of local scaled dual variables {🟢u_t0} (modified in-place)
-- B_t_collection: Collection of local SOC variables {🔵B_t0} (read-only)
-- Bhat: Global consensus SOC trajectory (🔴B̂ - read-only)
-- ρ: Penalty parameter (ρ scaling absorbed into u)
 
 Returns: Dict with keys:
     - :u_collection => updated dual variable collection {🟢u_t0}
