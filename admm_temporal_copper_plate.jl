@@ -292,11 +292,11 @@ function dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ::Float64)
     )
 end
 
-# ------------------- TADMM (T single-step blocks) --------
+# ------------------- tADMM (T single-step blocks) --------
 """
-tadmm_solve_Tblocks(inst; ρ=5.0, max_iter=200, eps_pri=1e-3, eps_dual=1e-3)
+solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=200, eps_pri=1e-3, eps_dual=1e-3)
 
-🎯 TADMM SOLVER using PDF formulation notation 🎯
+🎯 tADMM SOLVER using PDF formulation notation 🎯
 
 Variables:
 - 🔵B_t: Local SOC variables {B_t0[t]} for each subproblem t0=1:T
@@ -308,21 +308,16 @@ Algorithm:
 2. 🔴 Consensus Update: Average local solutions  
 3. 🟢 Dual Update: Update scaled dual variables
 
-Returns Dict(:P_B, :P_Subs, :B, :objective_history, :consensus_trajectory)
+Returns Dict(:P_B, :P_Subs, :B, :objective_history, :consensus_trajectory, :convergence_history)
 """
-function tadmm_solve_Tblocks(inst::InstancePU; ρ::Float64=5.0,
+function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=5.0,
     max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3)
     T = inst.T
     b = inst.bat
 
-    # 🔴 Initialize global consensus trajectory B̂
-    Bhat = zeros(T)  # B̂[1..T] correspond to B(1), B(2), ..., B(T)
-    # Initialize by linear interpolation between B0 and target
-    B_end = isnothing(b.B_T_target_pu) ? b.B0_pu : b.B_T_target_pu
-    for t in 1:T
-        λ = t / T
-        Bhat[t] = (1 - λ) * b.B0_pu + λ * B_end
-    end
+    # 🔴 Initialize global consensus trajectory B̂ with B0
+    Bhat = fill(b.B0_pu, T)  # Initialize all time steps with B0
+    # Clamp to ensure feasibility
     Bhat .= clamp.(Bhat, Bmin(b), Bmax(b))
 
     # 🔵 Initialize local SOC variables {B_t0} for each subproblem
@@ -331,68 +326,102 @@ function tadmm_solve_Tblocks(inst::InstancePU; ρ::Float64=5.0,
     # 🟢 Initialize scaled dual variables {u_t0} for each subproblem  
     u_collection = [zeros(T) for t0 in 1:T]  # T copies of T-length vectors
 
-    # 📊 Track additional variables for output
-    P_B_collection = [zeros(T) for t0 in 1:T]
-    P_subs_collection = [zeros(T) for t0 in 1:T]
-    
-    obj_hist = Float64[]
+    # 📊 History tracking
+    obj_history = Float64[]
+    Bhat_history = Vector{Vector{Float64}}()
+    B_collection_history = Vector{Vector{Vector{Float64}}}()
+    u_collection_history = Vector{Vector{Vector{Float64}}}()
+    r_norm_history = Float64[]
+    s_norm_history = Float64[]
 
-    @printf "🎯 TADMM[PDF-formulation]: T=%d, ρ=%.3f\n" T ρ
-    for it in 1:max_iter
-        total_obj = 0.0
+    # Store initial states
+    push!(Bhat_history, copy(Bhat))
+    push!(B_collection_history, deepcopy(B_t_collection))
+    push!(u_collection_history, deepcopy(u_collection))
 
+    @printf "🎯 tADMM[PDF-formulation]: T=%d, ρ=%.3f\n" T ρ
+
+    for k in 1:max_iter
         # 🔵 STEP 1: Primal Update - Solve T subproblems
         @printf "  🔵 Primal updates: "
+        total_obj = 0.0
         for t0 in 1:T
-            obj = primal_update_tadmm!(B_t_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
-            total_obj += obj
+            result = primal_update_tadmm!(B_t_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
+            total_obj += result[:objective]
             @printf "%d " t0
         end
         @printf "\n"
+        push!(obj_history, total_obj)
 
         # 🔴 STEP 2: Consensus Update  
         Bhat_old = copy(Bhat)
-        consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst, ρ)
+        consensus_result = consensus_update_tadmm!(Bhat, B_t_collection, u_collection, inst, ρ)
 
         # 🟢 STEP 3: Dual Update
-        dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ)
+        dual_result = dual_update_tadmm!(u_collection, B_t_collection, Bhat, ρ)
 
-        # 📏 STEP 4: Compute residuals
-        # Primal residual: measure consensus violation
-        r_pri = 0.0
+        # 📊 Store iteration history
+        push!(Bhat_history, copy(Bhat))
+        push!(B_collection_history, deepcopy(B_t_collection))
+        push!(u_collection_history, deepcopy(u_collection))
+
+        # 📏 STEP 4: Compute residuals using vector norms
+        # Primal residual: measure consensus violation using 2-norm
+        r_vectors = []
         for t0 in 1:T
-            for t in 1:T
-                r_pri += (B_t_collection[t0][t] - Bhat[t])^2
-            end
+            push!(r_vectors, B_t_collection[t0] - Bhat)
         end
-        r_norm = sqrt(r_pri)
-        
+        r_norm = norm(vcat(r_vectors...))  # Concatenate all residual vectors and take 2-norm
+
         # Dual residual: measure change in consensus
         s_norm = ρ * norm(Bhat - Bhat_old)
 
-        push!(obj_hist, total_obj)
-        @printf "it=%3d  obj=%10.4f  ‖r‖=%.2e  ‖s‖=%.2e\n" it total_obj r_norm s_norm
-        
+        push!(r_norm_history, r_norm)
+        push!(s_norm_history, s_norm)
+
+        @printf "k=%3d  obj=%10.4f  ‖r‖=%.2e  ‖s‖=%.2e\n" k total_obj r_norm s_norm
+
         if r_norm ≤ eps_pri && s_norm ≤ eps_dual
-            @printf "🎉 TADMM converged at iteration %d\n" it
+            @printf "🎉 tADMM converged at iteration %d\n" k
             break
         end
     end
 
-    # 📤 Prepare output using consensus solution
+    # 📤 Compute final P_B and P_Subs from consensus solution
+    # Reconstruct power schedules from final consensus trajectory
+    P_B_final = zeros(T)
+    P_Subs_final = zeros(T)
+
+    for t in 1:T
+        if t == 1
+            P_B_final[t] = (b.B0_pu - Bhat[t]) / b.Δt
+        else
+            P_B_final[t] = (Bhat[t-1] - Bhat[t]) / b.Δt
+        end
+        P_Subs_final[t] = inst.P_L_pu[t] - P_B_final[t]
+    end
+
     return Dict(
-        :P_B => [NaN for t in 1:T],  # Would need to recompute from final consensus
-        :P_Subs => [NaN for t in 1:T],  # Would need to recompute from final consensus
+        :P_B => P_B_final,
+        :P_Subs => P_Subs_final,
         :B => Bhat,  # Use consensus SOC trajectory
-        :objective_history => obj_hist,
+        :objective => last(obj_history),
+        :objective_history => obj_history,
         :consensus_trajectory => Bhat,  # 🔴B̂ final trajectory
         :local_solutions => B_t_collection,  # All 🔵B_t0 solutions
         :dual_variables => u_collection,  # All 🟢u_t0 variables
+        :convergence_history => Dict(
+            :Bhat_history => Bhat_history,
+            :B_collection_history => B_collection_history,
+            :u_collection_history => u_collection_history,
+            :r_norm_history => r_norm_history,
+            :s_norm_history => s_norm_history,
+            :obj_history => obj_history
+        )
     )
 end
 
 # ---------------- Brute-force (monolithic, pu) -----------
-
 function brute_force_solve(inst::InstancePU)
     T = inst.T
     b = inst.bat
@@ -419,8 +448,8 @@ function brute_force_solve(inst::InstancePU)
         :objective => objective_value(m))
 end
 
-# ----------------------- Example -------------------------
 
+# ----------------------- Example -------------------------
 T = 24
 price_dollars_per_kWh = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
 P_L_kW = 1000 .+ 250 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
@@ -441,18 +470,18 @@ inst = build_instance_pu(T, price_dollars_per_kWh, P_L_kW,
 mono = brute_force_solve(inst)
 @printf "\nBrute-force objective: %.4f\n" mono[:objective]
 
-# TADMM with PDF formulation variable names 
-sol_tadmm = tadmm_solve_Tblocks(inst; ρ=5.0, max_iter=max_iter, eps_pri=1e-3, eps_dual=1e-3)
-@printf "TADMM objective (last iterate): %.4f\n" last(sol_tadmm[:objective_history])
+# tADMM with PDF formulation variable names 
+sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=max_iter, eps_pri=1e-3, eps_dual=1e-3)
+@printf "tADMM objective: %.4f\n" sol_tadmm[:objective]
 
 # Quick pu checks - compare all methods
 @printf "BF     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(mono[:B]) maximum(mono[:B]) minimum(mono[:P_B]) maximum(mono[:P_B])
 
-@printf "TADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
+@printf "tADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
 
-# Convert TADMM results back to physical for sanity checks
+# Convert tADMM results back to physical for sanity checks
 PB_kW = sol_tadmm[:P_B] .* P_BASE
 PS_kW = sol_tadmm[:P_Subs] .* P_BASE
 B_kWh = sol_tadmm[:B] .* E_BASE
-@printf "(TADMM) PB[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(PB_kW) maximum(PB_kW) minimum(B_kWh) maximum(B_kWh)
+@printf "(tADMM) PB[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(PB_kW) maximum(PB_kW) minimum(B_kWh) maximum(B_kWh)
 
