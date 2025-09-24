@@ -28,7 +28,8 @@ const KV_B = 4.16 / sqrt(3)   # kV (unused here)
 const KVA_B = 1000.0           # kVA
 const P_BASE = KVA_B            # kW
 const E_BASE = P_BASE * 1.0     # kWh per 1 hour
-max_iter = 200
+max_iter = 1000
+rho = 5.0                       # ADMM penalty parameter
 # ----------------------- Data ----------------------------
 
 struct BatteryParamsPU
@@ -480,7 +481,7 @@ mono = brute_force_solve(inst)
 @printf "\nBrute-force objective: %.4f\n" mono[:objective]
 
 # tADMM with PDF formulation variable names 
-sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=5.0, max_iter=max_iter, eps_pri=1e-3, eps_dual=1e-3)
+sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=1e-3, eps_dual=1e-3)
 @printf "tADMM objective: %.4f\n" sol_tadmm[:objective]
 
 # Quick pu checks - compare all methods
