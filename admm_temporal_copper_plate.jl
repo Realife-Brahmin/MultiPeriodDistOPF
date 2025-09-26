@@ -503,3 +503,92 @@ PSubs_kW = sol_tadmm[:P_Subs] .* P_BASE
 B_kWh = sol_tadmm[:B] .* E_BASE
 @printf "(tADMM) P_B[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(P_B_kW) maximum(P_B_kW) minimum(B_kWh) maximum(B_kWh)
 
+# ----------------------- Plotting Functions --------------
+using Plots
+
+"""
+    plot_load_and_cost_curves(; showPlots::Bool=true, savePlots::Bool=false, filename::String="load_cost_curves.png")
+
+Plot LoadShape and cost curves using dark yellow and dark green themes on the same plot.
+Uses the global variables T, LoadShapeLoad, and LoadShapeCost from the current file.
+"""
+function plot_load_and_cost_curves(; showPlots::Bool=true, savePlots::Bool=false, filename::String="load_cost_curves.png")
+    # Prepare data for plotting
+    time_steps = 1:T
+    load_cost_cents = LoadShapeCost .* 100  # Convert from $/kWh to cents/kWh
+    
+    # Calculate y-axis limits
+    left_min = -0.05
+    left_max = 1.05 * maximum(LoadShapeLoad)
+    right_min = floor(0.95 * minimum(load_cost_cents))
+    right_max = ceil(1.05 * maximum(load_cost_cents))
+
+    # Set theme and backend
+    gr()
+    theme(:mute)
+    
+    # Create main plot with LoadShape (dark yellow theme)
+    p = plot(
+        time_steps, LoadShapeLoad,
+        dpi=600,
+        label="Loading Factor (λᵗ)",
+        xlabel="Time Period (t)",
+        ylabel="Loading Factor [Dimensionless]",
+        legend=:topleft,
+        lw=4,
+        color=:darkgoldenrod2,  # Dark yellow theme
+        markershape=:square,
+        markersize=6,
+        markerstrokecolor=:black,
+        markerstrokewidth=2.0,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        ylims=(left_min, left_max),
+        xticks=1:T,
+        title="Load Shape and Cost Curves",
+        titlefont=font(14, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        right_margin=10Plots.mm
+    )
+
+    # Add secondary y-axis for cost curve (dark green theme)
+    ax2 = twinx()
+    plot!(
+        ax2, time_steps, load_cost_cents,
+        label="Substation Power Cost (Cᵗ)",
+        lw=4,
+        color=:darkgreen,  # Dark green theme
+        linestyle=:solid,
+        markershape=:diamond,
+        markersize=7,
+        markerstrokecolor=:black,
+        markerstrokewidth=2.0,
+        ylabel="Cost [cents/kWh]",
+        ylims=(right_min, right_max),
+        legend=:topright,
+        titlefont=font(14, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+
+    # Show the plot if requested
+    if showPlots
+        display(p)
+    end
+
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving plot to: %s\n" filename
+        savefig(p, filename)
+    end
+    
+    return p
+end
+
+# Create and display the plot
+plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
+
