@@ -25,7 +25,7 @@ using Printf
 
 # ----------------------- Bases ---------------------------
 max_iter = 1000
-rho = 5.0                       # ADMM penalty parameter
+rho = 0.1                       # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
 # ----------------------- Scenario ---------------------------
@@ -589,6 +589,145 @@ function plot_load_and_cost_curves(; showPlots::Bool=true, savePlots::Bool=false
     return p
 end
 
-# Create and display the plot
+"""
+    plot_battery_actions_single(solution, inst, method_name; showPlots::Bool=true, savePlots::Bool=false, filename_prefix::String="battery_actions", rho_val::Union{Nothing,Float64}=nothing)
+
+Plot battery charging/discharging power and SOC for a single solution method.
+Creates separate charging/discharging bars and SOC plot in the same style as Plotter.jl.
+If rho_val is provided and method_name contains "tADMM", includes rho value in the title.
+"""
+function plot_battery_actions_single(solution, inst::InstancePU, method_name::String; 
+    showPlots::Bool=true, savePlots::Bool=false, filename_prefix::String="battery_actions", rho_val::Union{Nothing,Float64}=nothing)
+    
+    T = inst.T
+    b = inst.bat
+    time_steps = 1:T
+    
+    # Convert to physical units for plotting
+    P_B_kW = solution[:P_B] .* P_BASE
+    B_kWh = [b.B0_pu * E_BASE; solution[:B] .* E_BASE]  # Include initial SOC
+    
+    # Separate charging and discharging
+    charging_power_kW = max.(P_B_kW, 0.0)  # Positive values only
+    discharging_power_kW = -min.(P_B_kW, 0.0)  # Negative values made positive
+    
+    # Calculate SOC percentages
+    E_Rated_kWh = b.E_Rated_pu * E_BASE
+    soc_percent = B_kWh ./ E_Rated_kWh .* 100
+    
+    # Physical limits
+    P_B_R_kW = b.P_B_R_pu * P_BASE
+    ylimit = (-P_B_R_kW, P_B_R_kW)
+    
+    # Set theme
+    gr()
+    theme(:mute)
+    
+    # Create title with rho value if applicable
+    title_text = if !isnothing(rho_val) && occursin("tADMM", method_name)
+        "Battery Actions - $(method_name) (ρ=$(rho_val))\nCharging and Discharging"
+    else
+        "Battery Actions - $(method_name)\nCharging and Discharging"
+    end
+    
+    # Create charging/discharging bar plot
+    charging_discharge_plot = bar(
+        time_steps, charging_power_kW,
+        dpi=600,
+        label="Charging",
+        color=:green,
+        legend=:bottomleft,
+        xlabel="Time Interval (t)",
+        ylabel="P_c/P_d [kW]",
+        ylim=ylimit,
+        xticks=1:T,
+        gridstyle=:solid,
+        gridlinewidth=1.0,
+        gridalpha=0.2,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        title=title_text,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(15, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        top_margin=5Plots.mm
+    )
+    
+    bar!(charging_discharge_plot,
+        time_steps, -discharging_power_kW,
+        dpi=600,
+        label="Discharging", 
+        color=:darkred
+    )
+    
+    hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)
+    
+    # Create SOC bar plot
+    soc_plot = bar(
+        0:T, soc_percent,
+        dpi=600,
+        label="SOC",
+        color=:purple,
+        legend=:bottomleft,
+        xlabel="Time Interval (t)",
+        ylabel="SOC [%]",
+        ylim=(b.soc_min * 100 * 0.95, b.soc_max * 100 * 1.10),
+        xticks=0:T,
+        yticks=5*(div(b.soc_min * 100 * 0.95, 5)-1):10:5*(div(b.soc_max * 100 * 1.05, 5)+1),
+        gridstyle=:solid,
+        gridlinewidth=1.0,
+        gridalpha=0.2,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.05,
+        title="SOC",
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(15, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        top_margin=0Plots.mm
+    )
+    
+    # Combine the two plots in vertical layout
+    plot_combined = plot(charging_discharge_plot, soc_plot, layout=(2,1))
+    
+    # Show the plot if requested
+    if showPlots
+        display(plot_combined)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        filename = "$(filename_prefix)_$(lowercase(replace(method_name, " " => "_"))).png"
+        @printf "Saving %s battery actions plot to: %s\n" method_name filename
+        savefig(plot_combined, filename)
+    end
+    
+    return plot_combined
+end
+
+"""
+    plot_battery_actions_both(sol_bf, sol_tadmm, inst; showPlots::Bool=true, savePlots::Bool=false, rho_val::Union{Nothing,Float64}=nothing)
+
+Plot battery actions for both Brute Force and tADMM solutions as separate plots.
+Uses the same styling as the original Plotter.jl battery actions function.
+Includes rho value in tADMM plot title if rho_val is provided.
+"""
+function plot_battery_actions_both(sol_bf, sol_tadmm, inst::InstancePU; 
+    showPlots::Bool=true, savePlots::Bool=false, rho_val::Union{Nothing,Float64}=nothing)
+    
+    # Plot Brute Force solution
+    plot_bf = plot_battery_actions_single(sol_bf, inst, "Brute Force", 
+        showPlots=showPlots, savePlots=savePlots, filename_prefix="battery_actions")
+    
+    # Plot tADMM solution with rho value in title
+    plot_tadmm = plot_battery_actions_single(sol_tadmm, inst, "tADMM",
+        showPlots=showPlots, savePlots=savePlots, filename_prefix="battery_actions", rho_val=rho_val)
+    
+    return plot_bf, plot_tadmm
+end
+
+# Create and display the plots
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
+plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
 
