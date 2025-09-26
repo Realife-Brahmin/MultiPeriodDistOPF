@@ -24,12 +24,18 @@ using LinearAlgebra
 using Printf
 
 # ----------------------- Bases ---------------------------
+max_iter = 1000
+rho = 5.0                       # ADMM penalty parameter
+eps_pri = 1e-3
+eps_dual = 1e-3
+# ----------------------- Scenario ---------------------------
+T = 24
+LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
 const KV_B = 4.16 / sqrt(3)   # kV (unused here)
 const KVA_B = 1000.0           # kVA
 const P_BASE = KVA_B            # kW
 const E_BASE = P_BASE * 1.0     # kWh per 1 hour
-max_iter = 1000
-rho = 5.0                       # ADMM penalty parameter
 # ----------------------- Data ----------------------------
 
 struct BatteryParamsPU
@@ -432,7 +438,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
 end
 
 # ---------------- Brute-force (monolithic, pu) -----------
-function brute_force_solve(inst::InstancePU)
+function solve_MPOPF_using_BruteForce(inst::InstancePU)
     T = inst.T
     b = inst.bat
     m = Model(Ipopt.Optimizer)
@@ -460,9 +466,11 @@ end
 
 
 # ----------------------- Example -------------------------
-T = 24
-price_dollars_per_kWh = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
-P_L_kW = 1000 .+ 250 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
+
+
+# Load profile definition
+P_L_R_kW = 1250.0  # Rated load power (kW) - maximum possible load
+P_L_kW = P_L_R_kW .* LoadShapeLoad  # Actual load profile (kW)
 
 E_Rated_kWh = 4000.0
 soc_min, soc_max = 0.30, 0.95
@@ -471,21 +479,21 @@ P_B_R_kW = 800.0
 B0_kWh = 0.60 * E_Rated_kWh
 # B_T_target_kWh = 0.60 * E_Rated_kWh
 
-inst = build_instance_pu(T, price_dollars_per_kWh, P_L_kW,
+inst = build_instance_pu(T, LoadShapeCost, P_L_kW,
     E_Rated_kWh, soc_min, soc_max,
     P_B_R_kW, Δt_h, B0_kWh;
     B_T_target_kWh=nothing)
 
 # Brute-force baseline (unchanged)
-mono = brute_force_solve(inst)
-@printf "\nBrute-force objective: %.4f\n" mono[:objective]
+sol_bf = solve_MPOPF_using_BruteForce(inst)
+@printf "\nBrute-force objective: %.4f\n" sol_bf[:objective]
 
 # tADMM with PDF formulation variable names 
-sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=1e-3, eps_dual=1e-3)
+sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=eps_pri, eps_dual=eps_dual)
 @printf "tADMM objective: %.4f\n" sol_tadmm[:objective]
 
 # Quick pu checks - compare all methods
-@printf "BruteForced     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(mono[:B]) maximum(mono[:B]) minimum(mono[:P_B]) maximum(mono[:P_B])
+@printf "BruteForced     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_bf[:B]) maximum(sol_bf[:B]) minimum(sol_bf[:P_B]) maximum(sol_bf[:P_B])
 
 @printf "tADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
 
