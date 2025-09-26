@@ -25,7 +25,7 @@ using Printf
 
 # ----------------------- Bases ---------------------------
 max_iter = 1000
-rho = 0.1                       # ADMM penalty parameter
+rho = 0.1                      # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
 # ----------------------- Scenario ---------------------------
@@ -727,7 +727,181 @@ function plot_battery_actions_both(sol_bf, sol_tadmm, inst::InstancePU;
     return plot_bf, plot_tadmm
 end
 
+"""
+    plot_power_balance_verification(sol_bf, sol_tadmm, inst; showPlots::Bool=true, savePlots::Bool=false, filename::String="power_balance_verification.png")
+
+Plot power balance verification: P_B + P_Subs = P_L for both Brute Force and tADMM solutions.
+Shows all three power components (P_B, P_Subs, P_L) in kW across all time steps for both models.
+"""
+function plot_power_balance_verification(sol_bf, sol_tadmm, inst::InstancePU; 
+    showPlots::Bool=true, savePlots::Bool=false, filename::String="power_balance_verification.png")
+    
+    T = inst.T
+    time_steps = 1:T
+    
+    # Convert to physical units (kW)
+    P_B_bf_kW = sol_bf[:P_B] .* P_BASE
+    P_Subs_bf_kW = sol_bf[:P_Subs] .* P_BASE
+    P_L_kW = inst.P_L_pu .* P_BASE
+    
+    P_B_tadmm_kW = sol_tadmm[:P_B] .* P_BASE
+    P_Subs_tadmm_kW = sol_tadmm[:P_Subs] .* P_BASE
+    
+    # Calculate power balance check: P_B + P_Subs (should equal P_L)
+    P_total_bf_kW = P_B_bf_kW .+ P_Subs_bf_kW
+    P_total_tadmm_kW = P_B_tadmm_kW .+ P_Subs_tadmm_kW
+    
+    # Set theme and colors
+    gr()
+    theme(:mute)
+    line_colour_bf = :darkorange2
+    line_colour_tadmm = :darkorchid1
+    line_colour_load = :darkgoldenrod2  # Dark yellow (consistent with input curve plotter)
+    line_colour_balance = :crimson      # Complementary red to dark yellow
+    
+    # Create Brute Force power balance plot
+    bf_plot = plot(
+        time_steps, P_B_bf_kW,
+        dpi=600,
+        label="P_B (Battery)",
+        xlabel="Time Period (t)",
+        ylabel="Power [kW]",
+        legend=:topleft,
+        lw=3,
+        color=:purple,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, T + 0.5),
+        xticks=1:T,
+        title="Power Balance Verification - Brute Force\nP_B + P_Subs = P_L",
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    plot!(bf_plot, time_steps, P_Subs_bf_kW,
+        label="P_Subs (Substation)",
+        lw=3,
+        color=line_colour_bf,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    plot!(bf_plot, time_steps, P_L_kW,
+        label="P_L (Load)",
+        lw=3,
+        color=line_colour_load,
+        markershape=:diamond,
+        markersize=5,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    plot!(bf_plot, time_steps, P_total_bf_kW,
+        label="P_B + P_Subs (Total)",
+        lw=2,
+        color=line_colour_balance,
+        linestyle=:dash,
+        markershape=:utriangle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    # Create tADMM power balance plot
+    tadmm_plot = plot(
+        time_steps, P_B_tadmm_kW,
+        dpi=600,
+        label="P_B (Battery)",
+        xlabel="Time Period (t)",
+        ylabel="Power [kW]",
+        legend=:topleft,
+        lw=3,
+        color=:purple,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, T + 0.5),
+        xticks=1:T,
+        title="Power Balance Verification - tADMM (ρ=$(rho))\nP_B + P_Subs = P_L",
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    plot!(tadmm_plot, time_steps, P_Subs_tadmm_kW,
+        label="P_Subs (Substation)",
+        lw=3,
+        color=line_colour_tadmm,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    plot!(tadmm_plot, time_steps, P_L_kW,
+        label="P_L (Load)",
+        lw=3,
+        color=line_colour_load,
+        markershape=:diamond,
+        markersize=5,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    plot!(tadmm_plot, time_steps, P_total_tadmm_kW,
+        label="P_B + P_Subs (Total)",
+        lw=2,
+        color=line_colour_balance,
+        linestyle=:dash,
+        markershape=:utriangle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5
+    )
+    
+    # Combine plots in vertical layout
+    combined_plot = plot(bf_plot, tadmm_plot, layout=(2,1), size=(900, 700))
+    
+    # Calculate and print power balance errors
+    bf_error = maximum(abs.(P_total_bf_kW .- P_L_kW))
+    tadmm_error = maximum(abs.(P_total_tadmm_kW .- P_L_kW))
+    
+    @printf "Power Balance Verification:\n"
+    @printf "  Brute Force max error: %.6f kW\n" bf_error
+    @printf "  tADMM max error:       %.6f kW\n" tadmm_error
+    
+    # Show the plot if requested
+    if showPlots
+        display(combined_plot)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving power balance verification plot to: %s\n" filename
+        savefig(combined_plot, filename)
+    end
+    
+    return combined_plot
+end
+
 # Create and display the plots
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
+plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
 
