@@ -22,7 +22,7 @@ using JuMP
 using Ipopt
 using LinearAlgebra
 using Printf
-
+using Gurobi
 # ----------------------- Bases ---------------------------
 max_iter = 1000
 rho = 0.1                      # ADMM penalty parameter
@@ -30,8 +30,10 @@ eps_pri = 1e-3
 eps_dual = 1e-3
 # ----------------------- Scenario ---------------------------
 T = 24
-LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
-LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
+# LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+LoadShapeCost = 0.08*ones(T)
+# LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
+LoadShapeLoad = 1 * ones(T)  # Normalized load shape [0, 1]
 const KV_B = 4.16 / sqrt(3)   # kV (unused here)
 const KVA_B = 1000.0           # kVA
 const P_BASE = KVA_B            # kW
@@ -124,7 +126,8 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     b = inst.bat
     
     # 🎯 Setup optimization model for subproblem t0
-    m = Model(Ipopt.Optimizer)
+    # m = Model(Ipopt.Optimizer)
+    m = Model(Gurobi.Optimizer)
     set_silent(m)
 
     # 🔵 Decision variables for time t0
@@ -441,7 +444,7 @@ end
 function solve_MPOPF_using_BruteForce(inst::InstancePU)
     T = inst.T
     b = inst.bat
-    m = Model(Ipopt.Optimizer)
+    m = Model(Gurobi.Optimizer)
     set_silent(m)
 
     @variables(m, begin
@@ -607,9 +610,9 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
     P_B_kW = solution[:P_B] .* P_BASE
     B_kWh = [b.B0_pu * E_BASE; solution[:B] .* E_BASE]  # Include initial SOC
     
-    # Separate charging and discharging
-    charging_power_kW = max.(P_B_kW, 0.0)  # Positive values only
-    discharging_power_kW = -min.(P_B_kW, 0.0)  # Negative values made positive
+    # Separate charging and discharging (P_B > 0 is discharging, P_B < 0 is charging)
+    charging_power_kW = -min.(P_B_kW, 0.0)  # P_B < 0 made positive for green bars
+    discharging_power_kW = max.(P_B_kW, 0.0)  # P_B > 0 kept positive for wine red bars
     
     # Calculate SOC percentages
     E_Rated_kWh = b.E_Rated_pu * E_BASE
@@ -634,7 +637,7 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
     charging_discharge_plot = bar(
         time_steps, charging_power_kW,
         dpi=600,
-        label="Charging",
+        label="Charging (P_c)",
         color=:green,
         legend=:bottomleft,
         xlabel="Time Interval (t)",
@@ -657,8 +660,8 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
     bar!(charging_discharge_plot,
         time_steps, -discharging_power_kW,
         dpi=600,
-        label="Discharging", 
-        color=:darkred
+        label="Discharging (P_d)", 
+        color=:maroon  # Wine red color
     )
     
     hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)
@@ -900,8 +903,151 @@ function plot_power_balance_verification(sol_bf, sol_tadmm, inst::InstancePU;
     return combined_plot
 end
 
+"""
+    plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
+
+Plot tADMM convergence showing objective function value, primal residual (r_norm), and dual residual (s_norm) across iterations.
+Uses convergence history from the tADMM solution dictionary.
+"""
+function plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
+    
+    # Extract convergence history
+    conv_hist = sol_tadmm[:convergence_history]
+    obj_history = conv_hist[:obj_history]
+    r_norm_history = conv_hist[:r_norm_history]
+    s_norm_history = conv_hist[:s_norm_history]
+    
+    iterations = 1:length(obj_history)
+    
+    # Set theme and colors
+    gr()
+    theme(:mute)
+    line_colour_obj = :dodgerblue       # Blue for tADMM (magenta reserved for DDP)
+    line_colour_primal = :darkgreen     # Green for primal residual
+    line_colour_dual = :darkorange2     # Orange for dual residual
+    
+    # Create objective function plot
+    obj_plot = plot(
+        iterations, obj_history,
+        dpi=600,
+        label="Objective Value",
+        xlabel="Iteration (k)",
+        ylabel="Objective Function [\$]",
+        legend=:topright,
+        lw=3,
+        color=line_colour_obj,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, length(obj_history) + 0.5),
+        xticks=1:length(obj_history),
+        title="tADMM Convergence - Objective Function (ρ=$(rho))",
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(11, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Create primal residual plot (log scale)
+    primal_plot = plot(
+        iterations, r_norm_history,
+        dpi=600,
+        label="Primal Residual (‖r‖)",
+        xlabel="Iteration (k)",
+        ylabel="Primal Residual ‖r‖ [log scale]",
+        legend=:topright,
+        lw=3,
+        color=line_colour_primal,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, length(r_norm_history) + 0.5),
+        xticks=1:length(r_norm_history),
+        yscale=:log10,
+        title="Primal Residual Convergence",
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(11, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add convergence threshold line for primal residual
+    hline!(primal_plot, [eps_pri], color=:red, lw=2, linestyle=:dash, alpha=0.7, label="ε_pri = $(eps_pri)")
+    
+    # Create dual residual plot (log scale)
+    dual_plot = plot(
+        iterations, s_norm_history,
+        dpi=600,
+        label="Dual Residual (‖s‖)",
+        xlabel="Iteration (k)",
+        ylabel="Dual Residual ‖s‖ [log scale]",
+        legend=:topright,
+        lw=3,
+        color=line_colour_dual,
+        markershape=:diamond,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, length(s_norm_history) + 0.5),
+        xticks=1:length(s_norm_history),
+        yscale=:log10,
+        title="Dual Residual Convergence",
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(11, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add convergence threshold line for dual residual
+    hline!(dual_plot, [eps_dual], color=:red, lw=2, linestyle=:dash, alpha=0.7, label="ε_dual = $(eps_dual)")
+    
+    # Combine plots in vertical layout (3x1)
+    combined_plot = plot(obj_plot, primal_plot, dual_plot, layout=(3,1), size=(800, 900))
+    
+    # Print convergence summary
+    final_obj = last(obj_history)
+    final_r_norm = last(r_norm_history)
+    final_s_norm = last(s_norm_history)
+    converged = (final_r_norm ≤ eps_pri) && (final_s_norm ≤ eps_dual)
+    
+    @printf "tADMM Convergence Summary:\n"
+    @printf "  Total iterations: %d\n" length(obj_history)
+    @printf "  Final objective:  %.6f \$\n" final_obj
+    @printf "  Final ‖r‖:        %.2e (threshold: %.1e)\n" final_r_norm eps_pri
+    @printf "  Final ‖s‖:        %.2e (threshold: %.1e)\n" final_s_norm eps_dual
+    @printf "  Converged:        %s\n" converged ? "✅ YES" : "❌ NO"
+    
+    # Show the plot if requested
+    if showPlots
+        display(combined_plot)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving tADMM convergence plot to: %s\n" filename
+        savefig(combined_plot, filename)
+    end
+    
+    return combined_plot
+end
+
 # Create and display the plots
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
 plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
+plot_tadmm_convergence(sol_tadmm, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
 
