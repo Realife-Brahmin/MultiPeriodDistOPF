@@ -29,11 +29,11 @@
 The Temporal ADMM (tADMM) algorithm decomposes the multi-period optimal power flow problem into $T$ single-step subproblems, each corresponding to one time period. The hope is to enable parallel computation and improved scalability while still retaining solution optimality.
 
 \subsection{Variable Color Coding}
-For convenience, we I'm using color coding for the variables to match the handwritten PDF formulation:
+Following the handwritten PDF formulation:
 \begin{itemize}
-    \item $\blueB{B_{t_0}}$: Local SOC variables for subproblem $t_0$ (blue)
+    \item $\blueB{B^{t_0}}$: Local SOC variables for subproblem $t_0$ (blue)
     \item $\redBhat{\hat{B}}$: Global consensus SOC trajectory (red)
-    \item $\greenu{u_{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
+    \item $\greenu{u^{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
 \end{itemize}
 
 \subsection{SOC Bound Definitions}
@@ -50,33 +50,33 @@ The algorithm alternates between three update steps:
 For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \begin{align}
-\min_{P_{\text{subs},t_0}, P_{B,t_0}, \blueB{B_{t_0}}} \quad & C_{t_0} \cdot P_{\text{subs},t_0} + \frac{\rho}{2} \left\| \blueB{B_{t_0}} - \redBhat{\hat{B}} + \greenu{u_{t_0}} \right\|_2^2
+\min_{P_{\text{subs},t_0}, P_{B,t_0}, \blueB{B^{t_0}}} \quad & C_{t_0} \cdot P_{\text{subs},t_0} + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
 \end{align}
 
 \begin{align}
-\text{s.t.} \quad \blueB{B_{t_0}[t_0]} - B_0 + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
-\blueB{B_{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
+\text{s.t.} \quad \blueB{B^{t_0}[t_0]} - B_0 + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
+\blueB{B^{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
 P_{\text{subs},t_0} + P_{B,t_0} - P_L[t_0] &= 0 \\
 -P_{B,R} \leq P_{B,t_0} &\leq P_{B,R} \\
-\underline{B} \leq \blueB{B_{t_0}[t]} &\leq \overline{B}, \quad \forall t \in \{1, \ldots, T\}
+\underline{B} \leq \blueB{B^{t_0}[t]} &\leq \overline{B}, \quad \forall t \in \{1, \ldots, T\}
 \end{align}
 
 % Original pedantic inequality constraints (commented out):
 % -P_{B,R} - P_{B,t_0} \leq 0
 % P_{B,t_0} - P_{B,R} \leq 0 
-% \text{SOC}_{\min} \cdot E_{\text{Rated}} - \blueB{B_{t_0}[t]} \leq 0, \forall t \in \{1, \ldots, T\}
-% \blueB{B_{t_0}[t]} - \text{SOC}_{\max} \cdot E_{\text{Rated}} \leq 0, \forall t \in \{1, \ldots, T\}
+% \text{SOC}_{\min} \cdot E_{\text{Rated}} - \blueB{B^{t_0}[t]} \leq 0, \forall t \in \{1, \ldots, T\}
+% \blueB{B^{t_0}[t]} - \text{SOC}_{\max} \cdot E_{\text{Rated}} \leq 0, \forall t \in \{1, \ldots, T\}
 
 \subsection{Step 2: Consensus Update (Red Variables)}
 \begin{align}
-\redBhat{\hat{B}[t]} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B_{t_0}[t]} + \greenu{u_{t_0}[t]} \right), \underline{B}, \overline{B} \right) \\
+\redBhat{\hat{B}[t]} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B^{t_0}[t]} + \greenu{u^{t_0}[t]} \right), \underline{B}, \overline{B} \right) \\
 &\quad \forall t \in \{1, 2, \ldots, T-1\} \\
 \redBhat{\hat{B}[T]} &= B_{T,\text{target}} \quad \text{(if terminal constraint exists)}
 \end{align}
 
 \subsection{Step 3: Dual Update (Green Variables)}
 \begin{align}
-\greenu{u_{t_0}[t]} &:= \greenu{u_{t_0}[t]} + \left( \blueB{B_{t_0}[t]} - \redBhat{\hat{B}[t]} \right) \\
+\greenu{u^{t_0}[t]} &:= \greenu{u^{t_0}[t]} + \left( \blueB{B^{t_0}[t]} - \redBhat{\hat{B}[t]} \right) \\
 &\quad \forall t_0 \in \{1, \ldots, T\}, \, \forall t \in \{1, \ldots, T\}
 \end{align}
 
@@ -86,7 +86,7 @@ The algorithm terminates when both residuals fall below specified thresholds:
 
 \subsection{Primal Residual (Consensus Violation)}
 \begin{align}
-\|r^k\|_2 &= \left\| \text{vec}\left( \left\{ \blueB{B_{t_0}} - \redBhat{\hat{B}} \right\}_{t_0=1}^T \right) \right\|_2 \leq \epsilon_{\text{pri}}
+\|r^k\|_2 &= \left\| \text{vec}\left( \left\{ \blueB{B^{t_0}} - \redBhat{\hat{B}} \right\}_{t_0=1}^T \right) \right\|_2 \leq \epsilon_{\text{pri}}
 \end{align}
 
 \subsection{Dual Residual (Consensus Change)}
