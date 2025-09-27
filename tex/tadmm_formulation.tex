@@ -1,0 +1,109 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+
+% Define colors for variables (matching your PDF formulation)
+\definecolor{bluevar}{RGB}{0,100,200}     % Blue for B_t0
+\definecolor{redvar}{RGB}{200,0,0}        % Red for B̂
+\definecolor{greenvar}{RGB}{0,128,0}      % Darker green for u_t0 (matching battery charging color)
+
+\newcommand{\blueB}[1]{\textcolor{bluevar}{\mathbf{#1}}}      % Blue B_t0
+\newcommand{\redBhat}[1]{\textcolor{redvar}{\mathbf{#1}}}     % Red B̂
+\newcommand{\greenu}[1]{\textcolor{greenvar}{\mathbf{#1}}}    % Green u_t0
+
+\title{Multi-Period Optimal Power Flow:\\Temporal ADMM (tADMM) Formulation\\[0.5em] \large Decomposition with T Single-Step Blocks}
+\author{}
+\date{}
+% \date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Problem Overview}
+
+The Temporal ADMM (tADMM) algorithm decomposes the multi-period optimal power flow problem into $T$ single-step subproblems, each corresponding to one time period. This approach enables parallel computation and improved scalability.
+
+\subsection{Variable Color Coding}
+Following the handwritten PDF formulation:
+\begin{itemize}
+    \item $\blueB{B_{t_0}}$: Local SOC variables for subproblem $t_0$ (blue)
+    \item $\redBhat{\hat{B}}$: Global consensus SOC trajectory (red)
+    \item $\greenu{u_{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
+\end{itemize}
+
+\section{tADMM Algorithm Structure}
+
+The algorithm alternates between three update steps:
+
+\subsection{Step 1: Primal Update (Blue Variables)}
+For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
+
+\begin{align}
+\min_{P_{\text{subs},t_0}, P_{B,t_0}, \blueB{B_{t_0}}} \quad & C_{t_0} \cdot P_{\text{subs},t_0} + \frac{\rho}{2} \left\| \blueB{B_{t_0}} - \redBhat{\hat{B}} + \greenu{u_{t_0}} \right\|_2^2
+\end{align}
+
+\begin{align}
+\text{s.t.} \quad \blueB{B_{t_0}[t_0]} - B_0 + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
+\blueB{B_{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
+P_{\text{subs},t_0} + P_{B,t_0} - P_L[t_0] &= 0 \\
+-P_{B,R} - P_{B,t_0} &\leq 0 \\
+P_{B,t_0} - P_{B,R} &\leq 0 \\
+\text{SOC}_{\min} \cdot E_{\text{Rated}} - \blueB{B_{t_0}[t]} &\leq 0, \quad \forall t \in \{1, \ldots, T\} \\
+\blueB{B_{t_0}[t]} - \text{SOC}_{\max} \cdot E_{\text{Rated}} &\leq 0, \quad \forall t \in \{1, \ldots, T\}
+\end{align}
+
+\subsection{Step 2: Consensus Update (Red Variables)}
+\begin{align}
+\redBhat{\hat{B}[t]} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B_{t_0}[t]} + \greenu{u_{t_0}[t]} \right), \text{SOC}_{\min} \cdot E_{\text{Rated}}, \text{SOC}_{\max} \cdot E_{\text{Rated}} \right) \\
+&\quad \forall t \in \{1, 2, \ldots, T-1\} \\
+\redBhat{\hat{B}[T]} &= B_{T,\text{target}} \quad \text{(if terminal constraint exists)}
+\end{align}
+
+\subsection{Step 3: Dual Update (Green Variables)}
+\begin{align}
+\greenu{u_{t_0}[t]} &:= \greenu{u_{t_0}[t]} + \left( \blueB{B_{t_0}[t]} - \redBhat{\hat{B}[t]} \right) \\
+&\quad \forall t_0 \in \{1, \ldots, T\}, \, \forall t \in \{1, \ldots, T\}
+\end{align}
+
+\section{Convergence Criteria}
+
+The algorithm terminates when both residuals fall below specified thresholds:
+
+\subsection{Primal Residual (Consensus Violation)}
+\begin{align}
+\|r^k\|_2 &= \left\| \text{vec}\left( \left\{ \blueB{B_{t_0}} - \redBhat{\hat{B}} \right\}_{t_0=1}^T \right) \right\|_2 \leq \epsilon_{\text{pri}}
+\end{align}
+
+\subsection{Dual Residual (Consensus Change)}
+\begin{align}
+\|s^k\|_2 &= \rho \left\| \redBhat{\hat{B}^k} - \redBhat{\hat{B}^{k-1}} \right\|_2 \leq \epsilon_{\text{dual}}
+\end{align}
+
+\section{Final Solution Recovery}
+
+After convergence, the final power schedules are reconstructed from the consensus trajectory:
+
+\begin{align}
+P_{B}^*[t] &= 
+\begin{cases}
+\frac{-\left(\redBhat{\hat{B}[t]} - B_0\right)}{\Delta t} & \text{if } t = 1 \\
+\frac{-\left(\redBhat{\hat{B}[t]} - \redBhat{\hat{B}[t-1]}\right)}{\Delta t} & \text{if } t > 1
+\end{cases} \\
+P_{\text{Subs}}^*[t] &= P_L[t] - P_{B}^*[t]
+\end{align}
+
+\section{Algorithm Parameters}
+
+\begin{itemize}
+    \item \textbf{Penalty Parameter}: $\rho$ (typically 1.0 to 10.0)
+    \item \textbf{Primal Tolerance}: $\epsilon_{\text{pri}} = 10^{-3}$
+    \item \textbf{Dual Tolerance}: $\epsilon_{\text{dual}} = 10^{-3}$
+    \item \textbf{Maximum Iterations}: 1000
+\end{itemize}
+
+\end{document}
