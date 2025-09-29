@@ -351,6 +351,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         @printf "  🔵 Primal updates: "
         total_obj = 0.0
         for t0 in 1:T
+            #Todo: Fix update 1 (make sure happens for all time steps)
             result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
             total_obj += result[:objective]
             # @printf "%d " t0
