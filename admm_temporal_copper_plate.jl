@@ -891,12 +891,13 @@ function plot_power_balance_verification(sol_bf, sol_tadmm, inst::InstancePU;
 end
 
 """
-    plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
+    plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
 
 Plot tADMM convergence showing objective function value, primal residual (r_norm), and dual residual (s_norm) across iterations.
+Includes horizontal orange line showing Brute Force objective value for comparison.
 Uses convergence history from the tADMM solution dictionary.
 """
-function plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
+function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
     
     # Extract convergence history
     conv_hist = sol_tadmm[:convergence_history]
@@ -920,7 +921,7 @@ function plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool
         label="Objective Value",
         xlabel="Iteration (k)",
         ylabel="Objective Function [\$]",
-        legend=:topright,
+        legend=:bottomleft,
         lw=3,
         color=line_colour_obj,
         markershape=:circle,
@@ -939,6 +940,9 @@ function plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool
         guidefont=font(11, "Computer Modern"),
         tickfontfamily="Computer Modern"
     )
+    
+    # Add horizontal line for Brute Force objective value
+    hline!(obj_plot, [sol_bf[:objective]], color=:darkorange, lw=2, linestyle=:dash, alpha=0.8, label="BF Objective = \$ $(round(sol_bf[:objective], digits=4))")
     
     # Create primal residual plot (log scale)
     primal_plot = plot(
@@ -1036,5 +1040,5 @@ end
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
 plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
-plot_tadmm_convergence(sol_tadmm, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
+plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
 
