@@ -16,7 +16,7 @@
 \newcommand{\redBhat}[1]{\textcolor{redvar}{\mathbf{#1}}}     % Red B̂
 \newcommand{\greenu}[1]{\textcolor{greenvar}{\mathbf{#1}}}    % Green u_t0
 
-\title{Multi-Period Optimal Power Flow:\\Temporal ADMM (tADMM) Formulation\\[0.5em] \large Decomposition with T Single-Step Blocks}
+\title{Multi-Period Optimal Power Flow:\\Brute Force \& Temporal ADMM Formulations}
 \author{}
 \date{}
 % \date{\today}
@@ -36,28 +36,22 @@ Following the handwritten PDF formulation:
     \item $\greenu{u^{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
 \end{itemize}
 
-\subsection{SOC Bound Definitions}
-\begin{align}
-\underline{B} &= \text{SOC}_{\min} \cdot E_{\text{Rated}} \\
-\overline{B} &= \text{SOC}_{\max} \cdot E_{\text{Rated}}
-\end{align}
-
-\section{tADMM Algorithm Structure}
+\subsection{tADMM Algorithm Structure}
 
 The algorithm alternates between three update steps:
 
-\subsection{Step 1: Primal Update (Blue Variables)}
+\subsection{Step 1: Primal Update (Blue Variables) tADMM Optimization Model}
 For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \begin{align}
-\min_{P_{\text{subs},t_0}, P_{B,t_0}, \blueB{B^{t_0}}} \quad & C_{t_0} \cdot P_{\text{subs},t_0} + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
+\min_{P_{\text{subs}}^{t_0}, P_{B}^{t_0}, \blueB{B^{t_0}}} \quad & C^{t_0} \cdot P_{\text{subs}}^{t_0} + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
 \end{align}
 
 \begin{align}
-\text{s.t.} \quad \blueB{B^{t_0}[t_0]} - B_0 + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
-\blueB{B^{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B,t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
-P_{\text{subs},t_0} + P_{B,t_0} - P_L[t_0] &= 0 \\
--P_{B,R} \leq P_{B,t_0} &\leq P_{B,R} \\
+\text{s.t.} \quad \blueB{B^{t_0}[t_0]} - B_0 + P_{B}^{t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
+\blueB{B^{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B}^{t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
+P_{\text{subs}}^{t_0} + P_{B}^{t_0} - P_L[t_0] &= 0 \\
+-P_{B,R} \leq P_{B}^{t_0} &\leq P_{B,R} \\
 \underline{B} \leq \blueB{B^{t_0}[t]} &\leq \overline{B}, \quad \forall t \in \{1, \ldots, T\}
 \end{align}
 
@@ -99,21 +93,46 @@ The algorithm terminates when both residuals fall below specified thresholds:
 After convergence, the final power schedules are reconstructed from the consensus trajectory:
 
 \begin{align}
-P_{B}^*[t] &= 
+P_{B}^{t} &= 
 \begin{cases}
 \frac{-\left(\redBhat{\hat{B}[t]} - B_0\right)}{\Delta t} & \text{if } t = 1 \\
 \frac{-\left(\redBhat{\hat{B}[t]} - \redBhat{\hat{B}[t-1]}\right)}{\Delta t} & \text{if } t > 1
 \end{cases} \\
-P_{\text{Subs}}^*[t] &= P_L[t] - P_{B}^*[t]
+P_{\text{Subs}}^{t} &= P_L[t] - P_{B}^{t}
 \end{align}
 
 \section{Algorithm Parameters}
 
 \begin{itemize}
-    \item \textbf{Penalty Parameter}: $\rho$ (typically 1.0 to 10.0)
+    \item \textbf{Penalty Parameter}: $\rho$ (typically 0.1 to 10.0)
     \item \textbf{Primal Tolerance}: $\epsilon_{\text{pri}} = 10^{-3}$
     \item \textbf{Dual Tolerance}: $\epsilon_{\text{dual}} = 10^{-3}$
     \item \textbf{Maximum Iterations}: 1000
+\end{itemize}
+
+\section{Appendix: Full Variable and Parameter Definitions}
+
+\subsection{System Bases}
+\begin{align}
+\text{kV}_B &= \frac{4.16}{\sqrt{3}} \text{ kV (phase-to-neutral)} \\
+\text{kVA}_B &= 1000 \text{ kVA} \\
+P_{\text{BASE}} &= 1000 \text{ kW} \\
+E_{\text{BASE}} &= 1000 \text{ kWh per hour}
+\end{align}
+
+\subsection{SOC Bound Definitions}
+\begin{align}
+\underline{B} &= \text{SOC}_{\min} \cdot E_{\text{Rated}} \\
+\overline{B} &= \text{SOC}_{\max} \cdot E_{\text{Rated}}
+\end{align}
+
+\subsection{Physical Interpretation}
+\begin{itemize}
+    \item $P_B[t] > 0$: Battery discharging (providing power to the system)
+    \item $P_B[t] < 0$: Battery charging (consuming power from the system)
+    \item $B[t]$: Battery state of charge at the end of period $t$
+    \item $\underline{B} = \text{SOC}_{\min} \cdot E_{\text{Rated}}$: Lower SOC bound
+    \item $\overline{B} = \text{SOC}_{\max} \cdot E_{\text{Rated}}$: Upper SOC bound
 \end{itemize}
 
 \end{document}
