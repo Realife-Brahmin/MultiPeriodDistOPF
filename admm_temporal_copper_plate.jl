@@ -1,23 +1,3 @@
-############################################################
-# Copper-Plate MPOPF in per-unit
-# - ADMM with exactly T single-step blocks (no K)
-# - Brute-force (monolithic) baseline
-#
-# Bases:
-#   kV_B = 4.16/sqrt(3)  (phase-to-neutral; not used in power-only)
-#   kVA_B = 1000  => P_BASE = 1000 kW, E_BASE = 1000 kWh (per 1h)
-#
-# Variables (optimization; all per-unit):
-#   P_Subs[t], P_B[t] on P_BASE;  B[t] on E_BASE  (puh)
-# Constraints:
-#   B[t] = B[t-1] - P_B[t]*Δt
-#   P_Subs[t] + P_B[t] = P_L[t]
-#   soc_min*E_Rated_pu ≤ B[t] ≤ soc_max*E_Rated_pu
-# Objective ($):  sum_t price[t] * (P_Subs_pu[t]*P_BASE) * Δt
-#
-# Requires: Julia ≥ 1.9, JuMP, Ipopt
-############################################################
-
 using JuMP
 using Ipopt
 using LinearAlgebra
@@ -29,9 +9,14 @@ rho = 0.1                      # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
 # ----------------------- Scenario ---------------------------
-T = 24
+# T = 24
+T = 4
 # LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
-LoadShapeCost = 0.08*ones(T)
+# LoadShapeCost = 0.08*ones(T)
+LoadShapeCost = [mod(t-1, 2) == 0 ? 0.05 : 0.15 for t in 1:T]  # Square wave: 0.05 $/kWh (low) and 0.15 $/kWh (high)
+# Battery quadratic cost coefficient
+# C_B = 0
+C_B = 1e-6 * minimum(LoadShapeCost)  # Quadratic cost coefficient for battery power: C_B * P_B^2
 # LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
 LoadShapeLoad = 1 * ones(T)  # Normalized load shape [0, 1]
 const KV_B = 4.16 / sqrt(3)   # kV (unused here)
@@ -153,14 +138,15 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     # P_subs_t0 + P_B_t0 = P_L[t0]
     @constraint(m, P_subs_t0 + P_B_t0 == inst.P_L_pu[t0])
 
-    # 🎯 OBJECTIVE: Economic cost + ADMM penalty
-    # C_t0 * P_subs_t0 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
+    # 🎯 OBJECTIVE: Economic cost + Battery quadratic cost + ADMM penalty
+    # C_t0 * P_subs_t0 + C_B * P_B_t0^2 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
     energy_cost = inst.price[t0] * (P_subs_t0 * P_BASE) * b.Δt
+    battery_quad_cost = C_B * (P_B_t0 * P_BASE)^2 * b.Δt  # Quadratic battery cost
     
     # ADMM penalty: (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
     penalty = (ρ / 2) * sum((B_t0_var[t] - Bhat[t] + u_t0[t])^2 for t in 1:inst.T)
     
-    @objective(m, Min, energy_cost + penalty)
+    @objective(m, Min, energy_cost + battery_quad_cost + penalty)
 
     # 🚀 Solve subproblem
     optimize!(m)
@@ -460,7 +446,7 @@ function solve_MPOPF_using_BruteForce(inst::InstancePU)
         @constraint(m, B[T] == b.B_T_target_pu)
     end
 
-    @objective(m, Min, sum(inst.price[t] * (P_Subs[t] * P_BASE) * b.Δt for t in 1:T))
+    @objective(m, Min, sum(inst.price[t] * (P_Subs[t] * P_BASE) * b.Δt + C_B * (P_B[t] * P_BASE)^2 * b.Δt for t in 1:T))
     optimize!(m)
 
     return Dict(:P_B => value.(P_B), :P_Subs => value.(P_Subs), :B => value.(B),
@@ -1026,7 +1012,7 @@ function plot_tadmm_convergence(sol_tadmm; showPlots::Bool=true, savePlots::Bool
     
     @printf "tADMM Convergence Summary:\n"
     @printf "  Total iterations: %d\n" length(obj_history)
-    @printf "  Final objective:  %.6f \$\n" final_obj
+    @printf "  Final objective:  \$%.6f \n" final_obj
     @printf "  Final ‖r‖:        %.2e (threshold: %.1e)\n" final_r_norm eps_pri
     @printf "  Final ‖s‖:        %.2e (threshold: %.1e)\n" final_s_norm eps_dual
     @printf "  Converged:        %s\n" converged ? "✅ YES" : "❌ NO"
