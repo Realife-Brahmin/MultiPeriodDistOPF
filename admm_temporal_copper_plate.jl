@@ -4,7 +4,7 @@ using LinearAlgebra
 using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
-max_iter = 5
+max_iter = 500
 rho = 0.1                      # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
