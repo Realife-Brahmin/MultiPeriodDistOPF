@@ -4,8 +4,8 @@ using LinearAlgebra
 using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
-max_iter = 500
-rho = 1.0                      # ADMM penalty parameter
+max_iter = 10000
+rho = 10.0                     # ADMM penalty parameter
 eps_pri = 1e-5
 eps_dual = 1e-5
 # ----------------------- Scenario ---------------------------
@@ -115,33 +115,32 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     m = Model(Gurobi.Optimizer)
     set_silent(m)
 
-    # 🔵 Decision variables for time t0
+    # 🔵 Decision variables for time t0 (INCREMENTAL: P_B as full vector)
     @variables(m, begin
-        # Battery power at time t0 (scalar)
-        -b.P_B_R_pu <= P_B_t0 <= b.P_B_R_pu         
+        # Battery power for ALL time steps (T-length vector with box constraints)
+        -b.P_B_R_pu <= P_B_var[1:inst.T] <= b.P_B_R_pu         
         # Substation power at time t0 (scalar)  
         P_subs_t0                                     
         # 🔵 Local SOC trajectory (T-length vector, but only B_t0[t0] is truly optimized)
         Bmin(b) <= B_t0_var[1:inst.T] <= Bmax(b)                  
     end)
 
-    # 📌 CONSTRAINT 1: SOC Trajectory (1 equality constraint)
-    # 🔵B_t0[t0] = 🔴B̂[t0-1] - P_B_t0 * Δt
-    if t0 == 1
-        # Special case: use B0 for t0-1
-        @constraint(m, B_t0_var[t0] == b.B0_pu - P_B_t0 * b.Δt)
-    else
-        @constraint(m, B_t0_var[t0] == Bhat[t0-1] - P_B_t0 * b.Δt)
+    # 📌 CONSTRAINT 1: SOC Dynamics for ALL time steps (T equality constraints)
+    # B[1] = B0 - P_B[1] * Δt
+    # B[t] = B[t-1] - P_B[t] * Δt  for t = 2, ..., T
+    @constraint(m, B_t0_var[1] == b.B0_pu - P_B_var[1] * b.Δt)
+    for t in 2:inst.T
+        @constraint(m, B_t0_var[t] == B_t0_var[t-1] - P_B_var[t] * b.Δt)
     end
     
-    # 📌 CONSTRAINT 2: Nodal Real Power Balance (1 equality constraint)
-    # P_subs_t0 + P_B_t0 = P_L[t0]
-    @constraint(m, P_subs_t0 + P_B_t0 == inst.P_L_pu[t0])
+    # 📌 CONSTRAINT 2: Nodal Real Power Balance ONLY for time t0 (1 equality constraint)
+    # P_subs_t0 + P_B[t0] = P_L[t0]
+    @constraint(m, P_subs_t0 + P_B_var[t0] == inst.P_L_pu[t0])
 
     # 🎯 OBJECTIVE: Economic cost + Battery quadratic cost + ADMM penalty
-    # C_t0 * P_subs_t0 + C_B * P_B_t0^2 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
+    # C_t0 * P_subs_t0 + C_B * P_B[t0]^2 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
     energy_cost = inst.price[t0] * (P_subs_t0 * P_BASE) * b.Δt
-    battery_quad_cost = C_B * (P_B_t0 * P_BASE)^2 * b.Δt  # Quadratic battery cost
+    battery_quad_cost = C_B * (P_B_var[t0] * P_BASE)^2 * b.Δt  # Quadratic cost for t0
     
     # ADMM penalty: (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
     penalty = (ρ / 2) * sum((B_t0_var[t] - Bhat[t] + u_t0[t])^2 for t in 1:inst.T)
@@ -156,7 +155,7 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     for t in 1:inst.T
         B_t0[t] = value(B_t0_var[t])  # Update ALL components
     end
-    P_B_val = value(P_B_t0)
+    P_B_val = value(P_B_var[t0])    # Extract t0-th P_B value
     P_subs_val = value(P_subs_t0)
     
     # 📦 Return results as extensible dictionary
