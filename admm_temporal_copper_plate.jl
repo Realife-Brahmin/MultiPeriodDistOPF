@@ -4,7 +4,7 @@ using LinearAlgebra
 using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
-max_iter = 1
+max_iter = 5
 rho = 0.1                      # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
@@ -618,17 +618,27 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
         "Battery Actions - $(method_name)\nCharging and Discharging"
     end
     
-    # Create charging/discharging bar plot
+    # Create charging/discharging bar plot with exact positioning
+    # P_B bars: positioned at interval boundaries [0.5, 1.5, 2.5, 3.5] for intervals [0,1), [1,2), [2,3), [3,4)
+    power_x_positions = collect(0.5:1.0:(T-0.5))  # [0.5, 1.5, 2.5, 3.5] for T=4
+    
+    # Set common x-axis limits for both plots
+    x_min, x_max = -1.0, T + 0.5
+    
     charging_discharge_plot = bar(
-        time_steps, charging_power_kW,
+        power_x_positions, charging_power_kW,
         dpi=600,
         label="Charging (P_c)",
         color=:green,
-        legend=:bottomleft,
+        bar_width=1.0,  # Full width bars to exactly touch
+        legend=:top,
+        legendfontsize=8,
+        legend_background_color=RGBA(1,1,1,0.7),  # Semi-transparent white background
         xlabel="Time Interval (t)",
         ylabel="P_c/P_d [kW]",
         ylim=ylimit,
-        xticks=1:T,
+        xlim=(x_min, x_max),  # Common x-axis range
+        xticks=0:T,  # Show ticks at integer positions
         gridstyle=:solid,
         gridlinewidth=1.0,
         gridalpha=0.2,
@@ -643,25 +653,37 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
     )
     
     bar!(charging_discharge_plot,
-        time_steps, -discharging_power_kW,
+        power_x_positions, -discharging_power_kW,
         dpi=600,
         label="Discharging (P_d)", 
-        color=:maroon  # Wine red color
+        color=:maroon,  # Wine red color
+        bar_width=1.0  # Full width bars to exactly touch
     )
     
     hline!(charging_discharge_plot, [0], color=:black, lw=2, label=false)
     
-    # Create SOC bar plot
+    # Create SOC bar plot with exact positioning
+    # B bars: each covering exactly [t-0.5, t+0.5] for t = 0,1,2,3,4
+    # B₀ at x=0: covers [-0.5, 0.5], B₁ at x=1: covers [0.5, 1.5], etc.
+    soc_x_positions = [0.0; collect(1.0:T)]  # [0, 1, 2, 3, 4] for T=4
+    
+    # Plot B0 (initial SOC) with dark plum color to distinguish it as fixed
     soc_plot = bar(
-        0:T, soc_percent,
+        [soc_x_positions[1]], [soc_percent[1]],  # B0 at x = 0
         dpi=600,
-        label="SOC",
-        color=:purple,
-        legend=:bottomleft,
+        label="Initial SOC B₀ (Fixed)",
+        color=:indigo,  # Much darker color for B₀
+        alpha=0.9,
+        bar_width=1.0,  # Full width bars to exactly touch
+        linewidth=0,
+        legend=:top,
+        legendfontsize=8,
+        legend_background_color=RGBA(1,1,1,0.7),  # Semi-transparent white background
         xlabel="Time Interval (t)",
         ylabel="SOC [%]",
         ylim=(b.soc_min * 100 * 0.95, b.soc_max * 100 * 1.10),
-        xticks=0:T,
+        xlim=(x_min, x_max),  # Same x-axis range as power plot
+        xticks=0:T,  # Show ticks at integer positions
         yticks=5*(div(b.soc_min * 100 * 0.95, 5)-1):10:5*(div(b.soc_max * 100 * 1.05, 5)+1),
         gridstyle=:solid,
         gridlinewidth=1.0,
@@ -675,6 +697,18 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
         tickfontfamily="Computer Modern",
         top_margin=0Plots.mm
     )
+    
+    # Add B1, B2, B3, B4 (optimized SOC values) with normal styling and exact positioning
+    if length(soc_percent) > 1
+        bar!(soc_plot,
+            soc_x_positions[2:end], soc_percent[2:end],  # B1, B2, B3, B4 at x = 1, 2, 3, 4
+            dpi=600,
+            label="SOC (B)",
+            color=:purple,
+            alpha=1.0,
+            bar_width=1.0  # Full width bars to exactly touch
+        )
+    end
     
     # Combine the two plots in vertical layout
     plot_combined = plot(charging_discharge_plot, soc_plot, layout=(2,1))
