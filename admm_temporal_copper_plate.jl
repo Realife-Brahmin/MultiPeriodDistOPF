@@ -1039,6 +1039,6 @@ end
 # Create and display the plots
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
-plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
+# plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
 plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
 
