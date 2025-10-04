@@ -4,7 +4,7 @@ using LinearAlgebra
 using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
-max_iter = 1000
+max_iter = 1
 rho = 0.1                      # ADMM penalty parameter
 eps_pri = 1e-3
 eps_dual = 1e-3
@@ -334,6 +334,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     # 📊 Initialize power collections to store results from each subproblem
     P_B_collection = zeros(T)   # P_B[t] from subproblem t
     P_Subs_collection = zeros(T)  # P_Subs[t] from subproblem t
+    B_local_collection = zeros(T)  # B[t] from subproblem t (local blue solutions)
 
     # 📊 History tracking
     obj_history = Float64[]
@@ -361,6 +362,8 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
             # Store power results from each subproblem t0
             P_B_collection[t0] = result[:P_B]
             P_Subs_collection[t0] = result[:P_subs]
+            # Store local SOC from each subproblem t0 (the actual optimized SOC at time t0)
+            B_local_collection[t0] = B_collection[t0][t0]
             total_obj += result[:objective]
             # @printf "%d " t0
         end
@@ -405,7 +408,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     return Dict(
         :P_B => P_B_collection,  # From latest subproblem optimizations
         :P_Subs => P_Subs_collection,  # From latest subproblem optimizations
-        :B => Bhat,  # Use consensus SOC trajectory
+        :B => B_local_collection,  # Use local SOC solutions (🔵 blue variables)
         :objective => last(obj_history),
         :objective_history => obj_history,
         :consensus_trajectory => Bhat,  # 🔴B̂ final trajectory
