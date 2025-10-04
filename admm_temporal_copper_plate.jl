@@ -5,9 +5,9 @@ using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
 max_iter = 500
-rho = 0.1                      # ADMM penalty parameter
-eps_pri = 1e-3
-eps_dual = 1e-3
+rho = 1.0                      # ADMM penalty parameter
+eps_pri = 1e-5
+eps_dual = 1e-5
 # ----------------------- Scenario ---------------------------
 # T = 24
 T = 4
