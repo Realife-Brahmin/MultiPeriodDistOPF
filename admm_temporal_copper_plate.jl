@@ -331,6 +331,10 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     # 🟢 Initialize scaled dual variables {u_t0} for each subproblem  
     u_collection = [zeros(T) for t0 in 1:T]  # T copies of T-length vectors
 
+    # 📊 Initialize power collections to store results from each subproblem
+    P_B_collection = zeros(T)   # P_B[t] from subproblem t
+    P_Subs_collection = zeros(T)  # P_Subs[t] from subproblem t
+
     # 📊 History tracking
     obj_history = Float64[]
     Bhat_history = Vector{Vector{Float64}}()
@@ -355,6 +359,8 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
             # Ensure B_collection[t0] is updated with the result
             B_collection[t0] = copy(result[:B_t0])
             # Store power results from each subproblem t0
+            P_B_collection[t0] = result[:P_B]
+            P_Subs_collection[t0] = result[:P_subs]
             total_obj += result[:objective]
             # @printf "%d " t0
         end
@@ -395,23 +401,10 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         end
     end
 
-    # 📤 Compute final P_B and P_Subs from consensus solution
-    # Reconstruct power schedules from final consensus trajectory
-    P_B_final = zeros(T)
-    P_Subs_final = zeros(T)
-
-    for t in 1:T
-        if t == 1
-            P_B_final[t] = (b.B0_pu - Bhat[t]) / b.Δt
-        else
-            P_B_final[t] = (Bhat[t-1] - Bhat[t]) / b.Δt
-        end
-        P_Subs_final[t] = inst.P_L_pu[t] - P_B_final[t]
-    end
-
+    # 📤 Return results using power values from latest subproblem optimizations
     return Dict(
-        :P_B => P_B_final,
-        :P_Subs => P_Subs_final,
+        :P_B => P_B_collection,  # From latest subproblem optimizations
+        :P_Subs => P_Subs_collection,  # From latest subproblem optimizations
         :B => Bhat,  # Use consensus SOC trajectory
         :objective => last(obj_history),
         :objective_history => obj_history,
