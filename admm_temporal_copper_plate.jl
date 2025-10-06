@@ -114,6 +114,7 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     # m = Model(Ipopt.Optimizer)
     m = Model(Gurobi.Optimizer)
     set_silent(m)
+    set_optimizer_attribute(m, "OutputFlag", 0)  # Disable all Gurobi output including license messages
 
     # 🔵 Decision variables for time t0 (INCREMENTAL: P_B as full vector)
     @variables(m, begin
@@ -456,6 +457,7 @@ function solve_MPOPF_using_BruteForce(inst::InstancePU)
     b = inst.bat
     m = Model(Gurobi.Optimizer)
     set_silent(m)
+    set_optimizer_attribute(m, "OutputFlag", 0)  # Disable all Gurobi output including license messages
 
     @variables(m, begin
         -b.P_B_R_pu <= P_B[1:T] <= b.P_B_R_pu
@@ -518,6 +520,46 @@ B_kWh = sol_tadmm[:B] .* E_BASE
 
 # ----------------------- Plotting Functions --------------
 using Plots
+
+"""
+    downsample_for_plotting(data_vectors...; max_points::Int=25)
+
+Downsample multiple data vectors to at most max_points for cleaner plotting.
+Always includes first and last points, then evenly spaces the rest.
+Returns tuple of (downsampled_indices, downsampled_vectors...)
+"""
+function downsample_for_plotting(data_vectors...; max_points::Int=25)
+    n_points = length(data_vectors[1])
+    
+    # If we have fewer points than max_points, return all data
+    if n_points <= max_points
+        return (1:n_points, data_vectors...)
+    end
+    
+    # Create indices that include first, last, and evenly spaced points in between
+    # Always include iteration 1 and final iteration
+    indices = [1]  # Always include first point
+    
+    if max_points > 2
+        # Add evenly spaced intermediate points
+        intermediate_count = max_points - 2
+        step = (n_points - 1) / (intermediate_count + 1)
+        for i in 1:intermediate_count
+            idx = round(Int, 1 + i * step)
+            if idx != 1 && idx != n_points  # Avoid duplicates
+                push!(indices, idx)
+            end
+        end
+    end
+    
+    push!(indices, n_points)  # Always include last point
+    indices = sort(unique(indices))  # Remove any duplicates and sort
+    
+    # Downsample all data vectors
+    downsampled_vectors = tuple([vec[indices] for vec in data_vectors]...)
+    
+    return (indices, downsampled_vectors...)
+end
 
 """
     plot_load_and_cost_curves(; showPlots::Bool=true, savePlots::Bool=false, filename::String="load_cost_curves.png")
@@ -962,7 +1004,12 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     r_norm_history = conv_hist[:r_norm_history]
     s_norm_history = conv_hist[:s_norm_history]
     
-    iterations = 1:length(obj_history)
+    # Downsample data for cleaner plotting (keep all data, just plot subset)
+    plot_indices, obj_plot, r_norm_plot, s_norm_plot = downsample_for_plotting(
+        obj_history, r_norm_history, s_norm_history; max_points=25)
+    
+    iterations = 1:length(obj_history)  # Full range for x-axis limits
+    plot_iterations = plot_indices      # Downsampled points for plotting
     
     # Set theme and colors
     gr()
@@ -971,9 +1018,9 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     
-    # Create objective function plot
+    # Create objective function plot (using downsampled data)
     obj_plot = plot(
-        iterations, obj_history,
+        plot_iterations, obj_plot,
         dpi=600,
         label="Objective Value",
         xlabel="Iteration (k)",
@@ -991,7 +1038,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
         minorgridstyle=:solid,
         minorgridalpha=0.15,
         xlims=(0.5, length(obj_history) + 0.5),
-        xticks=1:length(obj_history),
+        xticks=1:max(1, div(length(obj_history), 5)):length(obj_history),  # Smart x-ticks
         title="tADMM Convergence - Objective Function (ρ=$(rho))",
         titlefont=font(11, "Computer Modern"),
         guidefont=font(11, "Computer Modern"),
@@ -1003,7 +1050,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     
     # Create primal residual plot (log scale)
     primal_plot = plot(
-        iterations, r_norm_history,
+        plot_iterations, r_norm_plot,
         dpi=600,
         label="Primal Residual (‖r‖)",
         xlabel="Iteration (k)",
@@ -1021,7 +1068,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
         minorgridstyle=:solid,
         minorgridalpha=0.15,
         xlims=(0.5, length(r_norm_history) + 0.5),
-        xticks=1:length(r_norm_history),
+        xticks=1:max(1, div(length(r_norm_history), 5)):length(r_norm_history),
         yscale=:log10,
         title="Primal Residual Convergence",
         titlefont=font(11, "Computer Modern"),
@@ -1034,7 +1081,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     
     # Create dual residual plot (log scale)
     dual_plot = plot(
-        iterations, s_norm_history,
+        plot_iterations, s_norm_plot,
         dpi=600,
         label="Dual Residual (‖s‖)",
         xlabel="Iteration (k)",
@@ -1052,7 +1099,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
         minorgridstyle=:solid,
         minorgridalpha=0.15,
         xlims=(0.5, length(s_norm_history) + 0.5),
-        xticks=1:length(s_norm_history),
+        xticks=1:max(1, div(length(s_norm_history), 5)):length(s_norm_history),
         yscale=:log10,
         title="Dual Residual Convergence",
         titlefont=font(11, "Computer Modern"),
@@ -1110,13 +1157,30 @@ function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bo
     
     iterations = 1:length(obj_history)
     
+    # Downsample for plotting
+    plot_iterations, obj_plot = downsample_for_plotting(iterations, obj_history)
+    _, energy_plot = downsample_for_plotting(iterations, energy_history)
+    _, battery_plot = downsample_for_plotting(iterations, battery_history)
+    _, penalty_plot = downsample_for_plotting(iterations, penalty_history)
+    
+    # Smart x-tick spacing based on downsampled data
+    n_plot_points = length(plot_iterations)
+    if n_plot_points <= 10
+        x_tick_spacing = 1
+    elseif n_plot_points <= 25
+        x_tick_spacing = max(1, div(n_plot_points, 5))
+    else
+        x_tick_spacing = max(1, div(n_plot_points, 8))
+    end
+    x_ticks = plot_iterations[1:x_tick_spacing:end]
+    
     # Set theme and colors
     gr()
     theme(:mute)
     
     # Create objective breakdown plot
     breakdown_plot = plot(
-        iterations, obj_history,
+        plot_iterations, obj_plot,
         dpi=600,
         label="Total Objective (Energy + Battery)",
         xlabel="Iteration (k)",
@@ -1133,15 +1197,15 @@ function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bo
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.15,
-        xlims=(0.5, length(obj_history) + 0.5),
-        xticks=1:length(obj_history),
+        xlims=(0.5, last(iterations) + 0.5),
+        xticks=x_ticks,
         title="tADMM Objective Function Breakdown (ρ=$(rho))",
         titlefont=font(12, "Computer Modern"),
         guidefont=font(11, "Computer Modern"),
         tickfontfamily="Computer Modern"
     )
     
-    plot!(breakdown_plot, iterations, energy_history,
+    plot!(breakdown_plot, plot_iterations, energy_plot,
         label="Energy Cost",
         lw=2,
         color=:green,
@@ -1151,7 +1215,7 @@ function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bo
         markerstrokewidth=1.0
     )
     
-    plot!(breakdown_plot, iterations, battery_history,
+    plot!(breakdown_plot, plot_iterations, battery_plot,
         label="Battery Quadratic Cost",
         lw=2,
         color=:purple,
@@ -1161,7 +1225,7 @@ function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bo
         markerstrokewidth=1.0
     )
     
-    plot!(breakdown_plot, iterations, penalty_history,
+    plot!(breakdown_plot, plot_iterations, penalty_plot,
         label="ADMM Penalty (should → 0)",
         lw=2,
         color=:red,
