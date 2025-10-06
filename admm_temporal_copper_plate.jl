@@ -5,7 +5,7 @@ using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
 max_iter = 10000
-rho = 10.0                     # ADMM penalty parameter
+rho = 1.0                     # ADMM penalty parameter
 eps_pri = 1e-5
 eps_dual = 1e-5
 # ----------------------- Scenario ---------------------------
@@ -158,9 +158,17 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     P_B_val = value(P_B_var[t0])    # Extract t0-th P_B value
     P_subs_val = value(P_subs_t0)
     
-    # 📦 Return results as extensible dictionary
+    #  Compute objective components using solved values (not symbolic expressions)
+    energy_cost_val = inst.price[t0] * (P_subs_val * P_BASE) * b.Δt
+    battery_quad_cost_val = C_B * (P_B_val * P_BASE)^2 * b.Δt
+    penalty_val = (ρ / 2) * sum((value(B_t0_var[t]) - Bhat[t] + u_t0[t])^2 for t in 1:inst.T)
+    
+    # 📦 Return results as extensible dictionary with objective breakdown
     return Dict(
-        :objective => objective_value(m),
+        :total_objective => objective_value(m),
+        :energy_cost => energy_cost_val,
+        :battery_quad_cost => battery_quad_cost_val, 
+        :penalty => penalty_val,
         :P_B => P_B_val,
         :P_subs => P_subs_val,
         :B_t0 => B_t0,
@@ -196,7 +204,7 @@ function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::Instanc
     
     violation_tolerance = 1e-4  # Only warn if violation is > 1e-6
 
-    # � Update consensus variables: B̂[t] for t = 1, 2, ..., T-1  
+    #  Update consensus variables: B̂[t] for t = 1, 2, ..., T-1  
     # Note: B̂[t] represents SOC at END of time period t
     # B0 (initial SOC) is handled separately in primal updates
     for t in 1:T-1  # Don't update the last time step if it has terminal constraint
@@ -335,8 +343,11 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     P_Subs_collection = zeros(T)  # P_Subs[t] from subproblem t
     B_local_collection = zeros(T)  # B[t] from subproblem t (local blue solutions)
 
-    # 📊 History tracking
-    obj_history = Float64[]
+    # 📊 History tracking with objective breakdown
+    obj_history = Float64[]  # True objective (energy + battery costs only)
+    energy_cost_history = Float64[]
+    battery_cost_history = Float64[]
+    penalty_history = Float64[]
     Bhat_history = Vector{Vector{Float64}}()
     B_collection_history = Vector{Vector{Vector{Float64}}}()
     u_collection_history = Vector{Vector{Vector{Float64}}}()
@@ -353,7 +364,9 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     for k in 1:max_iter
         # 🔵 STEP 1: Primal Update - Solve T subproblems
         @printf "  🔵 Primal updates: "
-        total_obj = 0.0
+        total_energy_cost = 0.0
+        total_battery_cost = 0.0
+        total_penalty = 0.0
         for t0 in 1:T
             result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
             # Ensure B_collection[t0] is updated with the result
@@ -363,11 +376,21 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
             P_Subs_collection[t0] = result[:P_subs]
             # Store local SOC from each subproblem t0 (the actual optimized SOC at time t0)
             B_local_collection[t0] = B_collection[t0][t0]
-            total_obj += result[:objective]
+            
+            # Accumulate ONLY the primary objective components (not ADMM penalty)
+            total_energy_cost += result[:energy_cost]
+            total_battery_cost += result[:battery_quad_cost]
+            total_penalty += result[:penalty]  # Track penalty separately
             # @printf "%d " t0
         end
         @printf "\n"
-        push!(obj_history, total_obj)
+        
+        # True objective is energy + battery costs (penalty is just for convergence)
+        true_objective = total_energy_cost + total_battery_cost
+        push!(obj_history, true_objective)
+        push!(energy_cost_history, total_energy_cost)
+        push!(battery_cost_history, total_battery_cost)
+        push!(penalty_history, total_penalty)
 
         # 🔴 STEP 2: Consensus Update  
         Bhat_old = copy(Bhat)
@@ -395,7 +418,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         push!(r_norm_history, r_norm)
         push!(s_norm_history, s_norm)
 
-        @printf "k=%3d  obj=%10.4f  ‖r‖=%.2e  ‖s‖=%.2e\n" k total_obj r_norm s_norm
+        @printf "k=%3d  obj=%.4f (energy=%.4f, battery=%.4f, penalty=%.4f)  ‖r‖=%.2e  ‖s‖=%.2e\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm
 
         if r_norm ≤ eps_pri && s_norm ≤ eps_dual
             @printf "🎉 tADMM converged at iteration %d\n" k
@@ -419,7 +442,10 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
             :u_collection_history => u_collection_history,
             :r_norm_history => r_norm_history,
             :s_norm_history => s_norm_history,
-            :obj_history => obj_history
+            :obj_history => obj_history,
+            :energy_cost_history => energy_cost_history,
+            :battery_cost_history => battery_cost_history,
+            :penalty_history => penalty_history
         )
     )
 end
@@ -1067,9 +1093,115 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     return combined_plot
 end
 
+"""
+    plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="objective_breakdown.png")
+
+Plot breakdown of tADMM objective function showing energy costs, battery costs, and ADMM penalty across iterations.
+This helps identify if penalty terms are dominating the primary objective.
+"""
+function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="objective_breakdown.png")
+    
+    # Extract convergence history
+    conv_hist = sol_tadmm[:convergence_history]
+    obj_history = conv_hist[:obj_history]
+    energy_history = conv_hist[:energy_cost_history]
+    battery_history = conv_hist[:battery_cost_history]
+    penalty_history = conv_hist[:penalty_history]
+    
+    iterations = 1:length(obj_history)
+    
+    # Set theme and colors
+    gr()
+    theme(:mute)
+    
+    # Create objective breakdown plot
+    breakdown_plot = plot(
+        iterations, obj_history,
+        dpi=600,
+        label="Total Objective (Energy + Battery)",
+        xlabel="Iteration (k)",
+        ylabel="Cost [\$]",
+        legend=:topright,
+        lw=3,
+        color=:blue,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, length(obj_history) + 0.5),
+        xticks=1:length(obj_history),
+        title="tADMM Objective Function Breakdown (ρ=$(rho))",
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(11, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    plot!(breakdown_plot, iterations, energy_history,
+        label="Energy Cost",
+        lw=2,
+        color=:green,
+        markershape=:square,
+        markersize=3,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.0
+    )
+    
+    plot!(breakdown_plot, iterations, battery_history,
+        label="Battery Quadratic Cost",
+        lw=2,
+        color=:purple,
+        markershape=:diamond,
+        markersize=3,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.0
+    )
+    
+    plot!(breakdown_plot, iterations, penalty_history,
+        label="ADMM Penalty (should → 0)",
+        lw=2,
+        color=:red,
+        linestyle=:dash,
+        markershape=:utriangle,
+        markersize=3,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.0
+    )
+    
+    # Print final breakdown
+    final_total = last(obj_history)
+    final_energy = last(energy_history)
+    final_battery = last(battery_history)
+    final_penalty = last(penalty_history)
+    
+    @printf "Final Objective Breakdown:\n"
+    @printf "  Total Objective:    \$%.6f\n" final_total
+    @printf "  Energy Cost:        \$%.6f (%.1f%%)\n" final_energy (final_energy/final_total*100)
+    @printf "  Battery Cost:       \$%.6f (%.1f%%)\n" final_battery (final_battery/final_total*100)
+    @printf "  ADMM Penalty:       \$%.6f (%.1f%%) ← should be ~0\n" final_penalty (final_penalty/final_total*100)
+    
+    # Show the plot if requested
+    if showPlots
+        display(breakdown_plot)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving objective breakdown plot to: %s\n" filename
+        savefig(breakdown_plot, filename)
+    end
+    
+    return breakdown_plot
+end
+
 # Create and display the plots
 plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
 # plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
+plot_objective_breakdown(sol_tadmm, showPlots=true, savePlots=true, filename="objective_breakdown.png")
 plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
 
