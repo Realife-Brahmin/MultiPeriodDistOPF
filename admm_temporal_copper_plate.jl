@@ -4,21 +4,22 @@ using LinearAlgebra
 using Printf
 using Gurobi
 # ----------------------- Bases ---------------------------
-max_iter = 10000
-rho = 1.0                     # ADMM penalty parameter
+# max_iter = 10000
+max_iter = 1000
+rho = 10.0                     # ADMM penalty parameter
 eps_pri = 1e-5
-eps_dual = 1e-5
+eps_dual = 1e-4
 # ----------------------- Scenario ---------------------------
 # T = 24
-T = 4
-# LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+T = 24
+LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
 # LoadShapeCost = 0.08*ones(T)
-LoadShapeCost = [mod(t-1, 2) == 0 ? 0.05 : 0.15 for t in 1:T]  # Square wave: 0.05 $/kWh (low) and 0.15 $/kWh (high)
+# LoadShapeCost = [mod(t-1, 2) == 0 ? 0.05 : 0.15 for t in 1:T]  # Square wave: 0.05 $/kWh (low) and 0.15 $/kWh (high)
 # Battery quadratic cost coefficient
 # C_B = 0
 C_B = 1e-6 * minimum(LoadShapeCost)  # Quadratic cost coefficient for battery power: C_B * P_B^2
-# LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
-LoadShapeLoad = 1 * ones(T)  # Normalized load shape [0, 1]
+LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
+# LoadShapeLoad = 1 * ones(T)  # Normalized load shape [0, 1]
 const KV_B = 4.16 / sqrt(3)   # kV (unused here)
 const KVA_B = 1000.0           # kVA
 const P_BASE = KVA_B            # kW
@@ -115,6 +116,7 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     m = Model(Gurobi.Optimizer)
     set_silent(m)
     set_optimizer_attribute(m, "OutputFlag", 0)  # Disable all Gurobi output including license messages
+    # set_optimizer_attribute(m, "verbose", 0)  # Disable all Gurobi output including license messages
 
     # 🔵 Decision variables for time t0 (INCREMENTAL: P_B as full vector)
     @variables(m, begin
@@ -370,6 +372,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         total_penalty = 0.0
         for t0 in 1:T
             result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
+            # print(Bhat)
             # Ensure B_collection[t0] is updated with the result
             B_collection[t0] = copy(result[:B_t0])
             # Store power results from each subproblem t0
