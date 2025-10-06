@@ -44,13 +44,14 @@ The algorithm alternates between three update steps:
 For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \begin{align}
-\min_{P_{\text{subs}}^{t_0}, P_{B}^{t_0}, \blueB{B^{t_0}}} \quad & C^{t_0} \cdot P_{\text{subs}}^{t_0} + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
+\min_{P_{\text{subs}}^{t_0}, P_{B}^{t_0}, \blueB{B^{t_0}}} \quad & C^{t_0} \cdot P_{\text{subs}}^{t_0} + C_B \cdot \left(P_{B}^{t_0}\right)^2 + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
 \end{align}
 
+\textbf{Subject to SOC Dynamics for Entire Trajectory:}
 \begin{align}
-\text{s.t.} \quad \blueB{B^{t_0}[t_0]} - B_0 + P_{B}^{t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 = 1 \\
-\blueB{B^{t_0}[t_0]} - \redBhat{\hat{B}[t_0-1]} + P_{B}^{t_0} \cdot \Delta t &= 0 \quad \text{if } t_0 > 1 \\
-P_{\text{subs}}^{t_0} + P_{B}^{t_0} - P_L[t_0] &= 0 \\
+\blueB{B^{t_0}[1]} &= B_0 - P_{B}^{t_0} \cdot \Delta t \\
+\blueB{B^{t_0}[t]} &= \blueB{B^{t_0}[t-1]} - P_{B}^{t_0} \cdot \Delta t, \quad \forall t \in \{2, \ldots, T\} \\
+P_{\text{subs}}^{t_0} + P_{B}^{t_0} &= P_L[t_0] \\
 -P_{B,R} \leq P_{B}^{t_0} &\leq P_{B,R} \\
 \underline{B} \leq \blueB{B^{t_0}[t]} &\leq \overline{B}, \quad \forall t \in \{1, \ldots, T\}
 \end{align}
@@ -60,6 +61,14 @@ P_{\text{subs}}^{t_0} + P_{B}^{t_0} - P_L[t_0] &= 0 \\
 % P_{B,t_0} - P_{B,R} \leq 0 
 % \text{SOC}_{\min} \cdot E_{\text{Rated}} - \blueB{B^{t_0}[t]} \leq 0, \forall t \in \{1, \ldots, T\}
 % \blueB{B^{t_0}[t]} - \text{SOC}_{\max} \cdot E_{\text{Rated}} \leq 0, \forall t \in \{1, \ldots, T\}
+
+\textbf{Key Formulation Notes:}
+\begin{itemize}
+    \item Each subproblem $t_0$ optimizes the battery power $P_{B}^{t_0}$ for \textit{only} time step $t_0$
+    \item However, the SOC trajectory $\blueB{B^{t_0}[t]}$ is computed for \textit{all} time steps $t \in \{1, \ldots, T\}$
+    \item This ensures that the ADMM penalty term can compare the full trajectory $\blueB{B^{t_0}}$ with the consensus $\redBhat{\hat{B}}$
+    \item The power balance constraint is enforced only for the specific time $t_0$
+\end{itemize}
 
 \subsection{Step 2: Consensus Update (Red Variables)}
 \begin{align}
@@ -101,7 +110,38 @@ P_{B}^{t} &=
 P_{\text{Subs}}^{t} &= P_L[t] - P_{B}^{t}
 \end{align}
 
+The final objective value includes both energy and battery costs:
+\begin{align}
+J_{\text{total}} &= \sum_{t=1}^{T} \left[ C^{t} \cdot P_{\text{Subs}}^{t} \cdot \Delta t + C_B \cdot \left(P_{B}^{t}\right)^2 \cdot \Delta t \right]
+\end{align}
+
 \section{Algorithm Parameters}
+
+\subsection{Objective Function Components}
+
+The tADMM objective function for each subproblem $t_0$ consists of three terms:
+
+\begin{align}
+\text{Energy Cost:} \quad & C^{t_0} \cdot P_{\text{subs}}^{t_0} \cdot \Delta t \\
+\text{Battery Quadratic Cost:} \quad & C_B \cdot \left(P_{B}^{t_0}\right)^2 \cdot \Delta t \\
+\text{ADMM Penalty:} \quad & \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
+\end{align}
+
+Where:
+\begin{itemize}
+    \item $C^{t_0}$: Energy price at time $t_0$ [\$/kWh]
+    \item $C_B$: Battery quadratic cost coefficient [\$/kW$^2$/h] (typically $10^{-6} \times \min(C^t)$)
+    \item $\rho$: ADMM penalty parameter
+\end{itemize}
+
+The battery quadratic cost term $C_B \cdot \left(P_{B}^{t_0}\right)^2$ serves as a regularization to:
+\begin{enumerate}
+    \item Prevent excessive battery cycling
+    \item Encourage smoother power trajectories
+    \item Improve numerical conditioning of the optimization problem
+\end{enumerate}
+
+\subsection{Algorithmic Parameters}
 
 \begin{itemize}
     \item \textbf{Penalty Parameter}: $\rho$ (typically 0.1 to 10.0)
