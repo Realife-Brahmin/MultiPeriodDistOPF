@@ -411,10 +411,10 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         for t0 in 1:T
             push!(r_vectors, B_collection[t0] - Bhat)
         end
-        r_norm = norm(vcat(r_vectors...))  # Concatenate all residual vectors and take 2-norm
+        r_norm = 1/(inst.T) * norm(vcat(r_vectors...))  # Concatenate all residual vectors and take 2-norm
 
         # Dual residual: measure change in consensus
-        s_norm = ρ * norm(Bhat - Bhat_old)
+        s_norm = 1/(inst.T)* ρ * norm(Bhat - Bhat_old)
 
         push!(r_norm_history, r_norm)
         push!(s_norm_history, s_norm)
