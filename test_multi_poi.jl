@@ -2,12 +2,12 @@
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
-# Pkg.add("Crayons")
-# Pkg.add("JuMP")
-# Pkg.add("Ipopt")
-# Pkg.add("OpenDSSDirect")
-# Pkg.instantiate()
-# Pkg.precompile()
+Pkg.add("Crayons")
+Pkg.add("JuMP")
+Pkg.add("Ipopt")
+Pkg.add("OpenDSSDirect")
+Pkg.instantiate()
+Pkg.precompile()
 using JuMP
 using Ipopt
 using Crayons
