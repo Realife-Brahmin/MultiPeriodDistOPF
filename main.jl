@@ -3,7 +3,8 @@ include("./src/setupMultiPeriodDistOPF.jl")
 
 begin
     # systemName0 = "ads3_1ph"
-    systemName0 = "ads10_1ph"
+    # systemName0 = "ads10_1ph"
+    systemName0 = "ads10_1batt_1ph";
     # systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
@@ -86,6 +87,12 @@ begin
         DER_Rating_factor_ud = 1/3
         Batt_Percent_ud = 25
         Batt_Rating_factor_ud = 1/3
+    elseif systemName0 == "ads10_1batt_1ph"
+        systemName = "ads10_1ph"
+        DER_Percent_ud = 25
+        DER_Rating_factor_ud = 1 / 3
+        Batt_Percent_ud = 13
+        Batt_Rating_factor_ud = 1 / 3
     elseif systemName0 == "ads3_1ph"
         systemName = "ads3_1ph"
         DER_Percent_ud = 50
