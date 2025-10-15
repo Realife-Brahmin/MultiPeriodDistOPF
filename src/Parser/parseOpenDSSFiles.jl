@@ -10,10 +10,15 @@ export
     parse_load_data, 
     parse_pv_data,  
     post_process_data,
-    parse_system_simulation_data
+    parse_system_simulation_data,
+    load_system_in_dss,
+    get_system_config_from_dss
 
 include("parseSystemSimulationData.jl")
 using .parseSystemSimulationData
+
+include("parseFromDSS.jl")
+using .parseFromDSS
 
 include("parseBranchData.jl")
 using .parseBranchData
