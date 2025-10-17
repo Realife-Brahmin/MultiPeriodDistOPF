@@ -1,11 +1,14 @@
 #! Activate project environment
+
 import Pkg; Pkg.activate(".")
 using Revise
 using JuMP
 import OpenDSSDirect as dss
+using OpenDSSDirect
 using Dates
 using Printf
 using Random
+using Parameters: @unpack
 
 # Import the ODD parser
 Revise.includet("src/Parser/parseFromDSS.jl")
@@ -45,15 +48,23 @@ user_overrides = Dict(
 )
 update_data_with_kwargs!(data; user_overrides...)
 
-# --- BRUTE-FORCE LDF MPOPF SOLUTION (at end) ---
-include("solve_MPOPF_with_LDF_BruteForced.jl")
 
+
+# --- Print basic OpenDSS powerflow stats for quick validation ---
+include("src/openDSSValidator.jl")
+using .openDSSValidator
+print_basic_powerflow_stats(data)
+
+
+# --- BRUTE-FORCE LDF MPOPF SOLUTION (at end) ---
+# include("solve_MPOPF_with_LDF_BruteForced.jl")
+#
 # println("\nSolving MPOPF with LDF Brute-Forced approach...")
 # brute_result = solve_MPOPF_with_LDF_BruteForced(data; solver=:gurobi)
 # println("Brute-force solution status: ", brute_result[:status])
 # println("Brute-force objective value: ", brute_result[:objective])
-
-# # Save battery actions (SOC and P_B) for plotting
+#
+# Save battery actions (SOC and P_B) for plotting
 # using Serialization
 # Serialization.serialize("brute_battery_SOC.jls", brute_result[:soc])
 # Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
