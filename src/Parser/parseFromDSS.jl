@@ -591,49 +591,51 @@ function extract_batteries_from_dss(baseValuesDict)
     # Get all battery names
     all_names = OpenDSSDirect.Storages.AllNames()
     for batt_name in all_names
-        # Select the storage element
-        OpenDSSDirect.Storages.Name(batt_name)
-        bus_names = OpenDSSDirect.CktElement.BusNames()
-        bus = parse(Int, split(bus_names[1], ".")[1])
-        push!(Bset, bus)
+        redirect_stderr(devnull) do
+            # Select the storage element
+            OpenDSSDirect.Storages.Name(batt_name)
+            bus_names = OpenDSSDirect.CktElement.BusNames()
+            bus = parse(Int, split(bus_names[1], ".")[1])
+            push!(Bset, bus)
 
-        # Retrieve parameters using Text.Command
-        # kWh rated
-        kWhRated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$batt_name.kWhrated"))
-        B_R[bus] = kWhRated
-        B_R_pu[bus] = kWhRated / kVA_B_dict[bus]
+            # Retrieve parameters using Text.Command
+            # kWh rated
+            kWhRated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$batt_name.kWhrated"))
+            B_R[bus] = kWhRated
+            B_R_pu[bus] = kWhRated / kVA_B_dict[bus]
 
-        # kW rated
-        kWRated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$batt_name.kWrated"))
-        P_B_R[bus] = kWRated
-        P_B_R_pu[bus] = kWRated / kVA_B_dict[bus]
+            # kW rated
+            kWRated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$batt_name.kWrated"))
+            P_B_R[bus] = kWRated
+            P_B_R_pu[bus] = kWRated / kVA_B_dict[bus]
 
-        # kVA (if available, else approximate)
-        kVA_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.kva")
-        S_B_R[bus] = isnothing(tryparse(Float64, kVA_str)) ? kWRated * 1.1 : parse(Float64, kVA_str)
-        S_B_R_pu[bus] = S_B_R[bus] / kVA_B_dict[bus]
+            # kVA (if available, else approximate)
+            kVA_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.kva")
+            S_B_R[bus] = isnothing(tryparse(Float64, kVA_str)) ? kWRated * 1.1 : parse(Float64, kVA_str)
+            S_B_R_pu[bus] = S_B_R[bus] / kVA_B_dict[bus]
 
-        # Efficiencies
-        eff_charge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effcharge")
-        eta_C[bus] = isnothing(tryparse(Float64, eff_charge_str)) ? 0.95 : parse(Float64, eff_charge_str) / 100
-        eff_discharge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effdischarge")
-        eta_D[bus] = isnothing(tryparse(Float64, eff_discharge_str)) ? 0.95 : parse(Float64, eff_discharge_str) / 100
+            # Efficiencies
+            eff_charge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effcharge")
+            eta_C[bus] = isnothing(tryparse(Float64, eff_charge_str)) ? 0.95 : parse(Float64, eff_charge_str) / 100
+            eff_discharge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effdischarge")
+            eta_D[bus] = isnothing(tryparse(Float64, eff_discharge_str)) ? 0.95 : parse(Float64, eff_discharge_str) / 100
 
-        # SOC parameters
-        soc_0_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%stored")
-        soc_0[bus] = isnothing(tryparse(Float64, soc_0_str)) ? 0.625 : parse(Float64, soc_0_str) / 100
-        soc_min_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%reserve")
-        soc_min[bus] = isnothing(tryparse(Float64, soc_min_str)) ? 0.3 : parse(Float64, soc_min_str) / 100
-        soc_max[bus] = 0.95  # Default max
+            # SOC parameters
+            soc_0_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%stored")
+            soc_0[bus] = isnothing(tryparse(Float64, soc_0_str)) ? 0.625 : parse(Float64, soc_0_str) / 100
+            soc_min_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%reserve")
+            soc_min[bus] = isnothing(tryparse(Float64, soc_min_str)) ? 0.3 : parse(Float64, soc_min_str) / 100
+            soc_max[bus] = 0.95  # Default max
 
-        B0[bus] = soc_0[bus] * B_R[bus]
-        B0_pu[bus] = B0[bus] / kVA_B_dict[bus]
+            B0[bus] = soc_0[bus] * B_R[bus]
+            B0_pu[bus] = B0[bus] / kVA_B_dict[bus]
 
-        # Voltage limits
-        vminpu_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.vminpu")
-        Vminpu_B[bus] = isnothing(tryparse(Float64, vminpu_str)) ? 0.90 : parse(Float64, vminpu_str)
-        vmaxpu_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.vmaxpu")
-        Vmaxpu_B[bus] = isnothing(tryparse(Float64, vmaxpu_str)) ? 1.10 : parse(Float64, vmaxpu_str)
+            # Voltage limits
+            vminpu_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.vminpu")
+            Vminpu_B[bus] = isnothing(tryparse(Float64, vminpu_str)) ? 0.90 : parse(Float64, vminpu_str)
+            vmaxpu_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.vmaxpu")
+            Vmaxpu_B[bus] = isnothing(tryparse(Float64, vmaxpu_str)) ? 1.10 : parse(Float64, vmaxpu_str)
+        end
     end
 
     Bset = sort(collect(Bset))
