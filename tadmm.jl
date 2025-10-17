@@ -38,50 +38,65 @@ let orig_cmd = OpenDSSDirect.Text.Command
     end
 end
 
-# --- SAVE DATA DICT KEYS (CONTEXTUAL + LEX SORT) ---
-function contextual_sort(keysarr)
-    context_order = [
-        :meta, :network, :loads, :pvs, :batteries, :voltages, :impedances, :costs, :shapes, :solver, :misc
-    ]
-    context_map = Dict(
-        :meta => r"^(systemName|T(set)?|numAreas|objfun|temporal|algo|PSubsMax|inputForecast|solver|tSOC|relax|linearized|ged|alpha|gamma|warmStart|threshold|machine_ID|macroItrs|solution_time|simNature|spatial|root|src|processed|rawData)",
-        :network => r"^(N(set|1set|m1set|c1set|nc1set)?|L(set|1set|m1set|Tset|notTset)?|parent|children|m|N1|Nm1|Nc1|Nnc1|m1|mm1)",
-        :loads => r"^(NLset|N_L|p_L(_R|_pu)?|q_L(_R|_pu)?|Vminpu_L|Vmaxpu_L|LoadShapeLoad)",
-        :pvs => r"^(Dset|n_D|DER_percent|p_D(_R|_pu)?|S_D(_R|_pu)?|irrad|Vminpu_D|Vmaxpu_D|LoadShapePV)",
-        :batteries => r"^(Bset|n_B|Batt_percent|B0(_pu)?|Bref(_pu|_percent)?|B_R(_pu)?|P_B_R(_pu)?|S_B_R(_pu)?|eta_[CD]|soc_(min|max|0)|Vminpu_B|Vmaxpu_B)",
-        :voltages => r"^(Vminpu|Vmaxpu|V_Subs_pu|substationBus|delta_t)",
-        :impedances => r"^(rdict(_pu)?|xdict(_pu)?|Z_B(_dict)?|kVA_B(_dict)?|kV_B(_dict)?|MVA_B(_dict)?|Z_B|kVA_B|kV_B|MVA_B)",
-        :costs => r"^(peakCost|offPeakCost|peakHoursFraction|LoadShapeCost)",
-        :shapes => r"Shape",
-        :solver => r"^(solver|warmStart_mu|threshold_conv_iters)",
-        :misc => r"."
-    )
-    grouped = Dict(c => String[] for c in context_order)
-    for k in keysarr
-        for c in context_order
-            if occursin(context_map[c], String(k))
-                push!(grouped[c], String(k))
-                break
+
+# --- SAVE DATA DICT KEYS (GROUPED BY CONTEXT WITH HEADERS) ---
+const context_map = Dict(
+    "Substation" => ["PSubsMax_kW", "V_Subs_pu", "substationBus"],
+    "Simulation_Problem" => ["T", "Tset", "gedAppendix", "gedString", "inputForecastDescription", "objfun0", "objfun2", "objfunSense", "objfunString", "objfunPrefix", "objfunUnit", "objfunAppendix", "objfunConciseDescription", "tSOC_hard", "relax_terminal_soc_constraint", "LoadShapeLoad", "LoadShapePV", "LoadShapeCost", "offPeakCost", "peakCost", "peakHoursFraction"],
+    "Simulation_Algorithm_Params" => ["solver", "linearizedModel", "linearizedModelAppendix", "linearizedModelString", "algo_temporal_decmp", "alpha_fpi", "gamma_fpi", "numAreas", "threshold_conv_iters", "warmStart_mu", "temporal_decmp", "temporalDecmpAppendix", "temporalDecmpString"],
+    "Simulation_Machine" => ["machine_ID"],
+    "Simulation_Run" => ["macroItrsCompleted", "solution_time"],
+    "Directories" => ["processedDataFolderPath", "rawDataFolderPath", "rootFolderPath", "srcFolderPath"],
+    "System_Topology" => ["kVA_B", "kVA_B_dict", "kV_B", "kV_B_dict", "MVA_B", "MVA_B_dict", "Z_B", "Z_B_dict", "rdict", "rdict_pu", "xdict", "xdict_pu", "L1set", "LTset", "Lm1set", "LnotTset", "Lset", "N", "N1", "N1set", "NLset", "N_L", "Nc1", "Nc1set", "Nm1", "Nm1set", "Nnc1", "Nnc1set", "Nset", "children", "m", "m1", "mm1", "parent"],
+    "System_Storage_Data" => ["B0", "B0_pu", "B_R", "B_R_pu", "Batt_percent", "Bref", "Bref_percent", "Bref_pu", "Bset", "P_B_R", "P_B_R_pu", "S_B_R", "S_B_R_pu", "Vmaxpu_B", "Vminpu_B", "eta_C", "eta_D", "n_B", "soc_0", "soc_max", "soc_min"],
+    "System_DER_Data" => ["Dset", "n_D", "DER_percent", "p_D", "p_D_R", "p_D_R_pu", "p_D_pu", "S_D_R", "S_D_R_pu", "Vmaxpu_D", "Vminpu_D", "irrad"],
+    "System_Load_Data" => ["NLset", "N_L", "p_L", "p_L_R", "p_L_R_pu", "p_L_pu", "q_L", "q_L_R", "q_L_R_pu", "q_L_pu", "Vmaxpu_L", "Vminpu_L"],
+    "Voltage_Limits" => ["Vmaxpu", "Vminpu", "delta_t"],
+    "Other_Misc" => ["simNatureAppendix", "simNatureString", "spatialDecAppendix", "spatialDecString", "systemName", "gedDict_ud"]
+)
+
+all_keys_str = Set(string(k) for k in keys(data))
+open("tadmm_data_keys.txt", "w") do io
+    for (section, keyslist) in context_map
+        println(io, "==== $section ====")
+        for k in sort(keyslist)
+            if k in all_keys_str
+                println(io, k)
             end
         end
+        println(io)
     end
-    out = String[]
-    for c in context_order
-        append!(out, sort(grouped[c]))
-    end
-    return out
-end
-
-sorted_keys = contextual_sort(collect(keys(data)))
-open("tadmm_data_keys.txt", "w") do io
-    for k in sorted_keys
-        println(io, k)
+    # Print any keys not matched
+    matched_keys = reduce(vcat, values(context_map))
+    unmatched = setdiff(all_keys_str, Set(matched_keys))
+    if !isempty(unmatched)
+        println(io, "==== Unmatched ====")
+        for k in sort(unmatched)
+            println(io, k)
+        end
     end
 end
 
-# --- SAVE ALL DATA VALUES (CONTEXTUAL + LEX SORT) ---
+# --- SAVE ALL DATA VALUES (GROUPED BY CONTEXT WITH HEADERS) ---
 open("tadmm_data_values.txt", "w") do io
-    for k in sorted_keys
-        println(io, "[", k, "] => ", data[Symbol(k)])
+    for (section, keyslist) in context_map
+        println(io, "==== $section ====")
+        for k in sort(keyslist)
+            if k in all_keys_str
+                val = get(data, Symbol(k), "<missing>")
+                println(io, "[", k, "] => ", val)
+            end
+        end
+        println(io)
+    end
+    # Print any keys not matched
+    matched_keys = reduce(vcat, values(context_map))
+    unmatched = setdiff(all_keys_str, Set(matched_keys))
+    if !isempty(unmatched)
+        println(io, "==== Unmatched ====")
+        for k in sort(unmatched)
+            val = get(data, Symbol(k), "<missing>")
+            println(io, "[", k, "] => ", val)
+        end
     end
 end
