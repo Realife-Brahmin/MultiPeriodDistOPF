@@ -72,12 +72,6 @@ xdict
 xdict_pu
 
 ==== Other_Misc ====
-gedDict_ud
-simNatureAppendix
-simNatureString
-spatialDecAppendix
-spatialDecString
-systemName
 
 ==== Simulation_Algorithm_Params ====
 algo_temporal_decmp
@@ -87,7 +81,11 @@ linearizedModel
 linearizedModelAppendix
 linearizedModelString
 numAreas
+simNatureAppendix
+simNatureString
 solver
+spatialDecAppendix
+spatialDecString
 temporalDecmpAppendix
 temporalDecmpString
 temporal_decmp
@@ -97,7 +95,6 @@ warmStart_mu
 ==== Voltage_Limits ====
 Vmaxpu
 Vminpu
-delta_t
 
 ==== Substation ====
 PSubsMax_kW
@@ -131,7 +128,9 @@ LoadShapeLoad
 LoadShapePV
 T
 Tset
+delta_t
 gedAppendix
+gedDict_ud
 gedString
 inputForecastDescription
 objfun0
@@ -146,6 +145,7 @@ offPeakCost
 peakCost
 peakHoursFraction
 relax_terminal_soc_constraint
+systemName
 tSOC_hard
 
 ==== Directories ====
