@@ -1,6 +1,7 @@
 #! Activate project environment
 import Pkg; Pkg.activate(".")
 using Revise
+using JuMP
 using OpenDSSDirect
 using Dates
 using Printf
@@ -10,18 +11,39 @@ using Random
 Revise.includet("src/Parser/parseFromDSS.jl")
 using .parseFromDSS
 
+
 # --- USER DEFINED META VARIABLES ---
-# System and simulation parameters
+# System and simulation parameters (match copper plate example)
 systemName = "ads10A_1ph"   # Change as needed
 T = 24                      # Number of time steps
 
-# Example: user can define LoadShape, PVShape, etc. here if needed
-# For now, just placeholders
-LoadShape = ones(T)         # Placeholder, replace with actual shape if needed
-PVShape = ones(T)           # Placeholder
 
-# --- PARSE SYSTEM ---
+# --- COPPER PLATE VALUES (from admm_temporal_copper_plate.jl) ---
+LoadShape = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
+LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2   # $/kWh
+C_B = 1e-6 * minimum(LoadShapeCost)  # Quadratic cost coefficient for battery power: C_B * P_B^2
+
+# If you want to keep PVShape, you can set it to zeros or as needed
+PVShape = zeros(T)
+
+# --- Helper: update data dict with user-supplied kwargs ---
+function update_data_with_kwargs!(data::Dict; kwargs...)
+    for (k, v) in kwargs
+        data[k] = v
+    end
+    return data
+end
+
+# --- PARSE SYSTEM AND APPLY USER OVERRIDES ---
 data = get_system_config_from_dss(systemName, T)
+
+user_overrides = Dict(
+    :LoadShapeLoad => LoadShape,
+    :LoadShapeCost => LoadShapeCost,
+    :C_B => C_B,
+    :LoadShapePV => PVShape,
+)
+update_data_with_kwargs!(data; user_overrides...)
 
 # --- PATCH OpenDSSDirect.Text.Command to suppress warnings unless 'Unknown Property' ---
 let orig_cmd = OpenDSSDirect.Text.Command
@@ -37,6 +59,21 @@ let orig_cmd = OpenDSSDirect.Text.Command
         end
     end
 end
+
+# --- BRUTE-FORCE LDF MPOPF SOLUTION (at end) ---
+include("solve_MPOPF_with_LDF_BruteForced.jl")
+
+println("\nSolving MPOPF with LDF Brute-Forced approach...")
+brute_result = solve_MPOPF_with_LDF_BruteForced(data; solver=:gurobi)
+println("Brute-force solution status: ", brute_result[:status])
+println("Brute-force objective value: ", brute_result[:objective])
+
+# Save battery actions (SOC and P_B) for plotting
+using Serialization
+Serialization.serialize("brute_battery_SOC.jls", brute_result[:soc])
+Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
+
+# (Later: add plotting and tadmm implementation here)
 
 
 # --- SAVE DATA DICT KEYS (GROUPED BY CONTEXT WITH HEADERS) ---
