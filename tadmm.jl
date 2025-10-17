@@ -2,7 +2,7 @@
 import Pkg; Pkg.activate(".")
 using Revise
 using JuMP
-using OpenDSSDirect
+import OpenDSSDirect as dss
 using Dates
 using Printf
 using Random
@@ -24,7 +24,7 @@ LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2   # $/
 C_B = 1e-6 * minimum(LoadShapeCost)  # Quadratic cost coefficient for battery power: C_B * P_B^2
 
 # If you want to keep PVShape, you can set it to zeros or as needed
-PVShape = zeros(T)
+# PVShape = zeros(T)
 
 # --- Helper: update data dict with user-supplied kwargs ---
 function update_data_with_kwargs!(data::Dict; kwargs...)
@@ -41,37 +41,22 @@ user_overrides = Dict(
     :LoadShapeLoad => LoadShape,
     :LoadShapeCost => LoadShapeCost,
     :C_B => C_B,
-    :LoadShapePV => PVShape,
+    # :LoadShapePV => PVShape,
 )
 update_data_with_kwargs!(data; user_overrides...)
-
-# --- PATCH OpenDSSDirect.Text.Command to suppress warnings unless 'Unknown Property' ---
-let orig_cmd = OpenDSSDirect.Text.Command
-    function OpenDSSDirect.Text.Command(cmd::AbstractString)
-        io = IOBuffer()
-        redirect_stderr(io) do
-            res = orig_cmd(cmd)
-            msg = String(take!(io))
-            if occursin("Unknown Property", res)
-                @warn "Result of running OpenDSS Command $cmd is: $res"
-            end
-            return res
-        end
-    end
-end
 
 # --- BRUTE-FORCE LDF MPOPF SOLUTION (at end) ---
 include("solve_MPOPF_with_LDF_BruteForced.jl")
 
-println("\nSolving MPOPF with LDF Brute-Forced approach...")
-brute_result = solve_MPOPF_with_LDF_BruteForced(data; solver=:gurobi)
-println("Brute-force solution status: ", brute_result[:status])
-println("Brute-force objective value: ", brute_result[:objective])
+# println("\nSolving MPOPF with LDF Brute-Forced approach...")
+# brute_result = solve_MPOPF_with_LDF_BruteForced(data; solver=:gurobi)
+# println("Brute-force solution status: ", brute_result[:status])
+# println("Brute-force objective value: ", brute_result[:objective])
 
-# Save battery actions (SOC and P_B) for plotting
-using Serialization
-Serialization.serialize("brute_battery_SOC.jls", brute_result[:soc])
-Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
+# # Save battery actions (SOC and P_B) for plotting
+# using Serialization
+# Serialization.serialize("brute_battery_SOC.jls", brute_result[:soc])
+# Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
 
 # (Later: add plotting and tadmm implementation here)
 
@@ -79,7 +64,7 @@ Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
 # --- SAVE DATA DICT KEYS (GROUPED BY CONTEXT WITH HEADERS) ---
 const context_map = Dict(
     "Substation" => ["PSubsMax_kW", "V_Subs_pu", "substationBus"],
-    "Simulation_Problem" => ["T", "Tset", "gedAppendix", "gedString", "inputForecastDescription", "objfun0", "objfun2", "objfunSense", "objfunString", "objfunPrefix", "objfunUnit", "objfunAppendix", "objfunConciseDescription", "tSOC_hard", "relax_terminal_soc_constraint", "LoadShapeLoad", "LoadShapePV", "LoadShapeCost", "offPeakCost", "peakCost", "peakHoursFraction", "delta_t", "gedDict_ud", "systemName"],
+    "Simulation_Problem" => ["T", "Tset", "gedAppendix", "gedString", "inputForecastDescription", "objfun0", "objfun2", "objfunSense", "objfunString", "objfunPrefix", "objfunUnit", "objfunAppendix", "objfunConciseDescription", "tSOC_hard", "relax_terminal_soc_constraint", "LoadShapeLoad", "LoadShapePV", "LoadShapeCost", "C_B", "offPeakCost", "peakCost", "peakHoursFraction", "delta_t", "gedDict_ud", "systemName"],
     "Simulation_Algorithm_Params" => ["solver", "linearizedModel", "linearizedModelAppendix", "linearizedModelString", "algo_temporal_decmp", "alpha_fpi", "gamma_fpi", "numAreas", "threshold_conv_iters", "warmStart_mu", "temporal_decmp", "temporalDecmpAppendix", "temporalDecmpString", "simNatureAppendix", "simNatureString", "spatialDecAppendix", "spatialDecString"],
     "Simulation_Machine" => ["machine_ID"],
     "Simulation_Run" => ["macroItrsCompleted", "solution_time"],
@@ -91,6 +76,7 @@ const context_map = Dict(
     "Voltage_Limits" => ["Vmaxpu", "Vminpu"],
     "Other_Misc" => []
 )
+
 
 all_keys_str = Set(string(k) for k in keys(data))
 open("tadmm_data_keys.txt", "w") do io
@@ -108,7 +94,7 @@ open("tadmm_data_keys.txt", "w") do io
     unmatched = setdiff(all_keys_str, Set(matched_keys))
     if !isempty(unmatched)
         println(io, "==== Unmatched ====")
-        for k in sort(unmatched)
+        for k in sort(collect(unmatched))
             println(io, k)
         end
     end
@@ -131,7 +117,7 @@ open("tadmm_data_values.txt", "w") do io
     unmatched = setdiff(all_keys_str, Set(matched_keys))
     if !isempty(unmatched)
         println(io, "==== Unmatched ====")
-        for k in sort(unmatched)
+        for k in sort(collect(unmatched))
             val = get(data, Symbol(k), "<missing>")
             println(io, "[", k, "] => ", val)
         end
