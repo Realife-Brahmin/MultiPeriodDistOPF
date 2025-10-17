@@ -614,15 +614,15 @@ function extract_batteries_from_dss(baseValuesDict)
         S_B_R_pu[bus] = S_B_R[bus] / kVA_B_dict[bus]
 
         # Efficiencies
-        eff_charge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.effcharge")
+        eff_charge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effcharge")
         eta_C[bus] = isnothing(tryparse(Float64, eff_charge_str)) ? 0.95 : parse(Float64, eff_charge_str) / 100
-        eff_discharge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.effdischarge")
+        eff_discharge_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%effdischarge")
         eta_D[bus] = isnothing(tryparse(Float64, eff_discharge_str)) ? 0.95 : parse(Float64, eff_discharge_str) / 100
 
         # SOC parameters
-        soc_0_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.stored")
+        soc_0_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%stored")
         soc_0[bus] = isnothing(tryparse(Float64, soc_0_str)) ? 0.625 : parse(Float64, soc_0_str) / 100
-        soc_min_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.reserve")
+        soc_min_str = OpenDSSDirect.Text.Command("? Storage.$batt_name.%reserve")
         soc_min[bus] = isnothing(tryparse(Float64, soc_min_str)) ? 0.3 : parse(Float64, soc_min_str) / 100
         soc_max[bus] = 0.95  # Default max
 
