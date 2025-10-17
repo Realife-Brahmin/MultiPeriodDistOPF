@@ -1,13 +1,13 @@
 #! Activate project environment
 import Pkg; Pkg.activate(".")
-
+using Revise
 using OpenDSSDirect
 using Dates
 using Printf
 using Random
 
 # Import the ODD parser
-include("src/Parser/parseFromDSS.jl")
+Revise.includet("src/Parser/parseFromDSS.jl")
 using .parseFromDSS
 
 # --- USER DEFINED META VARIABLES ---
