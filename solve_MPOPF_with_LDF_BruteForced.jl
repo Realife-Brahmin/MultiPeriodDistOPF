@@ -1,5 +1,7 @@
 # Import JuMP and solver
 import JuMP
+import Gurobi
+import Ipopt
 
 # solve_MPOPF_with_LDF_BruteForced.jl
 """
@@ -23,12 +25,6 @@ problem for the given data and returns the solution.
 - Only standard JuMP and solver packages are used.
 """
 function solve_MPOPF_with_LDF_BruteForced(data; Tset=nothing, verbose=false, solver=:gurobi)
-
-    if solver == :gurobi
-        import Gurobi
-    else
-        import Ipopt
-    end
 
     # Get time set
     if Tset === nothing
