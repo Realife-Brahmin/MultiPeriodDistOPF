@@ -1,11 +1,9 @@
 ! Loads.dss
-! Just like in an OpenDSS config
-! Specifying Loads as Model 1 and 2 type loads. For no CVR, Model 2 loads will be blank
-New load.S2P Bus=2.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S3P Bus=3.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S10P Bus=10.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S4P Bus=4.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S5P Bus=5.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S6P Bus=6.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S7P Bus=7.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
-New load.S9P Bus=9.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily = LoadShapeLoadDefault
+New load.S2P Bus=2.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S3P Bus=3.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S10P Bus=10.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S4P Bus=4.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S5P Bus=5.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S6P Bus=6.1 Phases=1 Model=1 kV=2.4018 kW=13.33 kVAr=6.667 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S7P Bus=7.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault
+New load.S9P Bus=9.1 Phases=1 Model=1 kV=2.4018 kW=6.667 kVAr=3.333 Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault

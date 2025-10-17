@@ -11,9 +11,7 @@ Redirect ../LoadShapePVDefault.dss
 Redirect  Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
 Redirect PVSystem.dss
-// Redirect PVSystem_25_33_33.dss
 Redirect Storage.dss
-// Redirect Storage_25_33_33.dss
 
 Set VoltageBases = [4.16]
 Set mode = Daily 
@@ -22,3 +20,4 @@ Set number = 1
 
 ! Let DSS estimate the voltage bases
 Calcvoltagebases     ! This also establishes the bus list
+Solve
