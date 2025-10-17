@@ -1,3 +1,73 @@
+using Crayons
+
+# Define color schemes
+const GOOD = Crayon(foreground=:green, bold=true)
+const BAD = Crayon(foreground=:red, bold=true)
+const INFO = Crayon(foreground=:cyan, bold=true)
+const WARNING = Crayon(foreground=:yellow, bold=true)
+const RESET = Crayon(reset=true)
+"""
+    print_basic_powerflow_stats(data)
+
+Run OpenDSS powerflow and print total system load and substation power for the current timestep.
+Useful for quick validation and debugging.
+"""
+
+function print_basic_powerflow_stats(data)
+    # Clear and load system
+    @unpack systemName, rawDataFolderPath = data
+    dss_dir = joinpath(rawDataFolderPath, systemName)
+    dss_file = joinpath(dss_dir, "Master.dss")
+    OpenDSSDirect.Text.Command("Clear")
+    OpenDSSDirect.Text.Command("Redirect \"$dss_file\"")
+
+    # Run powerflow
+    OpenDSSDirect.Text.Command("Solve")
+
+    # Get total system load
+    total_load_kW = 0.0
+    load_names = OpenDSSDirect.Loads.AllNames()
+    for load_name in load_names
+        OpenDSSDirect.Circuit.SetActiveElement("Load.$load_name")
+        load_powers = OpenDSSDirect.CktElement.Powers()
+        total_load_kW += real(load_powers[1])
+    end
+
+    # Get substation power (using Vsource)
+    OpenDSSDirect.Circuit.SetActiveElement("Vsource.source")
+    vsource_powers = -OpenDSSDirect.CktElement.Powers()
+    substation_kW = real(vsource_powers[1])
+
+    # Get total PV dispatch
+    total_pv_kW = 0.0
+    pv_names = OpenDSSDirect.PVsystems.AllNames()
+    for pv_name in pv_names
+        OpenDSSDirect.Circuit.SetActiveElement("PVSystem.$pv_name")
+        pv_powers = OpenDSSDirect.CktElement.Powers()
+        total_pv_kW -= real(pv_powers[1])  # injected
+    end
+
+    # Get total battery dispatch
+    total_batt_kW = 0.0
+    batt_names = OpenDSSDirect.Storages.AllNames()
+    for batt_name in batt_names
+        OpenDSSDirect.Circuit.SetActiveElement("Storage.$batt_name")
+        batt_powers = OpenDSSDirect.CktElement.Powers()
+        total_batt_kW -= real(batt_powers[1])  # injected
+    end
+
+    # Get total system losses (kW)
+    losses = OpenDSSDirect.Circuit.Losses()
+    total_loss_kW = real(losses[1]) / 1000  # convert W to kW
+
+    println(INFO, "\n========== Initial Powerflow ==========", RESET)
+    println(GOOD, "Powerflow completed successfully!\n", RESET)
+    println(INFO, "[OpenDSS] Total system load: ", RESET, GOOD, "$(round(total_load_kW, digits=2)) kW", RESET)
+    println(INFO, "[OpenDSS] Substation power: ", RESET, GOOD, "$(round(substation_kW, digits=2)) kW", RESET)
+    println(INFO, "[OpenDSS] Total PV dispatch: ", RESET, INFO, "$(round(total_pv_kW, digits=2)) kW", RESET)
+    println(INFO, "[OpenDSS] Total battery dispatch: ", RESET, INFO, "$(round(total_batt_kW, digits=2)) kW", RESET)
+    println(INFO, "[OpenDSS] Total system losses: ", RESET, WARNING, "$(round(total_loss_kW, digits=2)) kW", RESET)
+end
 module openDSSValidator
 
 export 
