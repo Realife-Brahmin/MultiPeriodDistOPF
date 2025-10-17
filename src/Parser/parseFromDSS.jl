@@ -732,7 +732,7 @@ function extract_simulation_parameters_from_dss()
     # Try to get vsource information
     vsource_id = OpenDSSDirect.Vsources.First()
     if vsource_id > 0
-        V_Subs_pu = OpenDSSDirect.Vsources.pu()
+        V_Subs_pu = OpenDSSDirect.Vsources.PU()
     end
     
     return Dict(
