@@ -21,7 +21,7 @@ import .parseFromDSS as Parser
 # System and simulation parameters (match copper plate example)
 systemName = "ads10A_1ph"   # Change as needed
 T = 24                      # Number of time steps
-
+delta_t_h = 1.0               # Time step duration in hours
 
 # --- COPPER PLATE VALUES (from admm_temporal_copper_plate.jl) ---
 LoadShape = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2  # Normalized load shape [0, 1]
@@ -46,6 +46,7 @@ user_overrides = Dict(
     :LoadShapeLoad => LoadShape,
     :LoadShapeCost => LoadShapeCost,
     :C_B => C_B,
+    :delta_t_h => delta_t_h,
     # :LoadShapePV => PVShape,
 )
 update_data_with_kwargs!(data; user_overrides...)
@@ -56,22 +57,6 @@ update_data_with_kwargs!(data; user_overrides...)
 include("src/openDSSValidator.jl")
 using .openDSSValidator
 print_basic_powerflow_stats(data)
-
-
-# --- BRUTE-FORCE LDF MPOPF SOLUTION (at end) ---
-# include("solve_MPOPF_with_LDF_BruteForced.jl")
-#
-# println("\nSolving MPOPF with LDF Brute-Forced approach...")
-# brute_result = solve_MPOPF_with_LDF_BruteForced(data; solver=:gurobi)
-# println("Brute-force solution status: ", brute_result[:status])
-# println("Brute-force objective value: ", brute_result[:objective])
-#
-# Save battery actions (SOC and P_B) for plotting
-# using Serialization
-# Serialization.serialize("brute_battery_SOC.jls", brute_result[:soc])
-# Serialization.serialize("brute_battery_P_B.jls", brute_result[:P_B])
-
-# (Later: add plotting and tadmm implementation here)
 
 
 # --- SAVE DATA DICT KEYS (GROUPED BY CONTEXT WITH HEADERS) ---
@@ -143,8 +128,10 @@ end
 
 # --- MPOPF LinDistFlow Brute-Force Builder (P_B only, copper plate style) ---
 function build_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
+
     @unpack Nset, Lset, Dset, Bset, Tset, NLset = data
-    @unpack p_L, p_D, P_B_R, B_R, eta_C, eta_D, kVA_B, kV_B, rdict, xdict, Vminpu, Vmaxpu, LoadShapeCost, C_B = data
+    @unpack p_L, p_D, P_B_R, B_R, kVA_B, kV_B, rdict_pu, xdict_pu, Vminpu, Vmaxpu, LoadShapeCost, C_B, delta_t_h, soc_min, soc_max = data
+    Δt = delta_t_h  # Time step duration in hours
     model = Model()
     if solver == :gurobi
         set_optimizer(model, Gurobi.Optimizer)
@@ -156,10 +143,9 @@ function build_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
     @variable(model, P[(i, j) in Lset, t in Tset])
     @variable(model, Q[(i, j) in Lset, t in Tset])
     @variable(model, v[n in Nset, t in Tset])
-    @variable(model, q_D[d in Dset, t in Tset])
-    @variable(model, q_B[b in Bset, t in Tset])
     @variable(model, P_B[b in Bset, t in Tset])
-    @variable(model, B[b in Bset, t in Tset] >= 0)
+    @variable(model, B[b in Bset, t in Tset])
+    @variable(model, P_Subs[t in Tset])
 
     # Objective: substation cost + battery cost
     @expression(model, sub_cost, sum(LoadShapeCost[t] * P_Subs[t] for t in Tset))
@@ -168,33 +154,54 @@ function build_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
 
     # Constraints
     for t in Tset
-        # Power balance at substation (bus 1)
-        @constraint(model, P_Subs[t] == sum(p_L[(n, t)] for n in NLset) - sum(p_D[(d, t)] for d in Dset) + sum(P_B[b, t] for b in Bset))
-        # Voltage at substation
-        @constraint(model, v[1, t] == 1.0)
-        # Voltage limits
-        for n in Nset
-            @constraint(model, Vminpu[n] <= v[n, t] <= Vmaxpu[n])
+        # Substation node real power balance (bus 1)
+        @constraint(model, P_Subs[t] + sum(P[(1, j), t] for (i, j) in Lset if i == 1) == 0)
+
+        # Non-substation node real power balance
+        for n in NLset
+            incoming = sum(P[(i, n), t] for (i, j) in Lset if j == n)
+            outgoing = sum(P[(n, j), t] for (i, j) in Lset if i == n)
+            p_load = get(p_L, (n, t), 0.0)
+            p_pv = get(p_D, (n, t), 0.0)
+            p_batt = sum(P_B[b, t] for b in Bset if b == n)
+            @constraint(model, incoming - outgoing + p_load - p_pv + p_batt == 0)
         end
-        # LinDistFlow branch equations
+
+        # Substation node reactive power balance (bus 1)
+        @constraint(model, sum(Q[(1, j), t] for (i, j) in Lset if i == 1) == 0)
+
+        # Non-substation node reactive power balance
+        for n in NLset
+            incoming = sum(Q[(i, n), t] for (i, j) in Lset if j == n)
+            outgoing = sum(Q[(n, j), t] for (i, j) in Lset if i == n)
+            # For now, assume no q_D or q_B (can be extended)
+            @constraint(model, incoming - outgoing == 0)
+        end
+
+        # KVL constraints (LinDistFlow, using pu values)
         for (i, j) in Lset
-            r = get(rdict, (i, j), 0.0)
-            x = get(xdict, (i, j), 0.0)
+            r = get(rdict_pu, (i, j), 0.0)
+            x = get(xdict_pu, (i, j), 0.0)
             @constraint(model, v[j, t] == v[i, t] - 2 * (r * P[(i, j), t] + x * Q[(i, j), t]))
         end
-        # Battery SOC
+
+        # Substation voltage (squared, 1.07^2)
+        @constraint(model, v[1, t] == 1.07^2)
+
+        # Voltage limits (squared)
+        for n in Nset
+            @constraint(model, Vminpu[n]^2 <= v[n, t] <= Vmaxpu[n]^2)
+        end
+
+        # Battery SOC update and limits (no efficiency)
         for b in Bset
             if t == 1
                 @constraint(model, B[b, t] == 0.5 * B_R[b])
             else
-                @constraint(model, B[b, t] == B[b, t-1] + eta_C[b] * max(P_B[b, t], 0) - (1 / eta_D[b]) * max(-P_B[b, t], 0))
+                @constraint(model, B[b, t] == B[b, t-1] - P_B[b, t-1] * Δt)
             end
-            @constraint(model, 0.2 * B_R[b] <= B[b, t] <= 0.95 * B_R[b])
+            @constraint(model, soc_min * B_R[b] <= B[b, t] <= soc_max * B_R[b])
             @constraint(model, -P_B_R[b] <= P_B[b, t] <= P_B_R[b])
-        end
-        # PV output limits (real power only, no q_D for now)
-        for d in Dset
-            @constraint(model, 0 <= p_D[(d, t)])
         end
     end
 
