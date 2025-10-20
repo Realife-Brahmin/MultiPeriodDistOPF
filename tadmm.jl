@@ -9,10 +9,12 @@ using Dates
 using Printf
 using Random
 using Parameters: @unpack
+using Gurobi
+using Ipopt
 
 # Import the ODD parser
 Revise.includet("src/Parser/parseFromDSS.jl")
-using .parseFromDSS
+import .parseFromDSS as Parser
 
 
 # --- USER DEFINED META VARIABLES ---
@@ -38,7 +40,7 @@ function update_data_with_kwargs!(data::Dict; kwargs...)
 end
 
 # --- PARSE SYSTEM AND APPLY USER OVERRIDES ---
-data = get_system_config_from_dss(systemName, T)
+data = Parser.get_system_config_from_dss(systemName, T)
 
 user_overrides = Dict(
     :LoadShapeLoad => LoadShape,
@@ -134,3 +136,76 @@ open("tadmm_data_values.txt", "w") do io
         end
     end
 end
+
+# --- MPOPF LinDistFlow Brute-Force Builder ---
+
+# --- MPOPF LinDistFlow Brute-Force Builder (ModelBuilder-style variable convention) ---
+
+# --- MPOPF LinDistFlow Brute-Force Builder (P_B only, copper plate style) ---
+function build_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
+    @unpack Nset, Lset, Dset, Bset, Tset, NLset = data
+    @unpack p_L, p_D, P_B_R, B_R, eta_C, eta_D, kVA_B, kV_B, rdict, xdict, Vminpu, Vmaxpu, LoadShapeCost, C_B = data
+    model = Model()
+    if solver == :gurobi
+        set_optimizer(model, Gurobi.Optimizer)
+    elseif solver == :ipopt
+        set_optimizer(model, Ipopt.Optimizer)
+    end
+    # Variable definitions (P_B only)
+    @variable(model, P_Subs[t in Tset] >= 0)
+    @variable(model, P[(i, j) in Lset, t in Tset])
+    @variable(model, Q[(i, j) in Lset, t in Tset])
+    @variable(model, v[n in Nset, t in Tset])
+    @variable(model, q_D[d in Dset, t in Tset])
+    @variable(model, q_B[b in Bset, t in Tset])
+    @variable(model, P_B[b in Bset, t in Tset])
+    @variable(model, B[b in Bset, t in Tset] >= 0)
+
+    # Objective: substation cost + battery cost
+    @expression(model, sub_cost, sum(LoadShapeCost[t] * P_Subs[t] for t in Tset))
+    @expression(model, batt_cost, sum(C_B * P_B[b, t]^2 for b in Bset, t in Tset))
+    @objective(model, Min, sub_cost + batt_cost)
+
+    # Constraints
+    for t in Tset
+        # Power balance at substation (bus 1)
+        @constraint(model, P_Subs[t] == sum(p_L[(n, t)] for n in NLset) - sum(p_D[(d, t)] for d in Dset) + sum(P_B[b, t] for b in Bset))
+        # Voltage at substation
+        @constraint(model, v[1, t] == 1.0)
+        # Voltage limits
+        for n in Nset
+            @constraint(model, Vminpu[n] <= v[n, t] <= Vmaxpu[n])
+        end
+        # LinDistFlow branch equations
+        for (i, j) in Lset
+            r = get(rdict, (i, j), 0.0)
+            x = get(xdict, (i, j), 0.0)
+            @constraint(model, v[j, t] == v[i, t] - 2 * (r * P[(i, j), t] + x * Q[(i, j), t]))
+        end
+        # Battery SOC
+        for b in Bset
+            if t == 1
+                @constraint(model, B[b, t] == 0.5 * B_R[b])
+            else
+                @constraint(model, B[b, t] == B[b, t-1] + eta_C[b] * max(P_B[b, t], 0) - (1 / eta_D[b]) * max(-P_B[b, t], 0))
+            end
+            @constraint(model, 0.2 * B_R[b] <= B[b, t] <= 0.95 * B_R[b])
+            @constraint(model, -P_B_R[b] <= P_B[b, t] <= P_B_R[b])
+        end
+        # PV output limits (real power only, no q_D for now)
+        for d in Dset
+            @constraint(model, 0 <= p_D[(d, t)])
+        end
+    end
+
+    optimize!(model)
+    status = termination_status(model)
+    obj = objective_value(model)
+    return Dict(:model => model, :status => status, :objective => obj, :P_Subs => P_Subs, :B => B, :P_B => P_B)
+end
+
+# --- CALL LIN DISTFLOW MPOPF BUILDER ---
+println("\nSolving MPOPF with LinDistFlow Brute-Forced approach...")
+modelDict = build_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
+println("LinDistFlow solution status: ", modelDict[:status])
+println("LinDistFlow objective value: ", modelDict[:objective])
