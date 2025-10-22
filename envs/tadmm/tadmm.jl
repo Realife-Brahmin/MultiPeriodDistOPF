@@ -218,8 +218,14 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     
     # ========== 6. SOLVE ==========
     
+    # Create output directory for system-specific files
+    processedData_dir = joinpath(@__DIR__, "processedData")
+    system_folder = "$(systemName)_T$(T)"
+    system_dir = joinpath(processedData_dir, system_folder)
+    mkpath(system_dir)
+    
     # Save model summary to file (with full constraint listing)
-    model_file = joinpath(@__DIR__, "model_summary.txt")
+    model_file = joinpath(system_dir, "model_summary.txt")
     open(model_file, "w") do io
         println(io, "="^80)
         println(io, "MODEL SUMMARY")
@@ -437,11 +443,12 @@ println("\n" * "="^80)
 println("GENERATING PLOTS")
 println("="^80)
 
-# Create output directories
+# Create output directories (reuse from model writing section)
 processedData_dir = "processedData"
-system_dir = joinpath(processedData_dir, systemName)
+system_folder = "$(systemName)_T$(T)"
+system_dir = joinpath(processedData_dir, system_folder)
 mkpath(processedData_dir)  # Create processedData folder
-mkpath(system_dir)  # Create system-specific subfolder
+mkpath(system_dir)  # Create system-specific subfolder with horizon
 
 # Plot input curves (load, PV, cost) - save in processedData folder
 input_curves_path = joinpath(processedData_dir, "input_curves.png")
