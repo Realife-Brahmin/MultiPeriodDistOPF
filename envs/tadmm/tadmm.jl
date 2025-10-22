@@ -147,7 +147,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
                 base_name = "RealPowerBalance_Node$(j)_t$(t)")
         end
         
-        # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
+        # # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
         # # Substation node
         # @constraint(model,
         #     sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
@@ -362,6 +362,29 @@ else
     if isempty(data[:Bset])
         println("No batteries in system, skipping battery actions plot")
     end
+end
+
+# Plot substation power and cost (only if optimization was successful)
+if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED)
+    subs_power_cost_path = joinpath(system_dir, "substation_power_cost.png")
+    plot_substation_power_and_cost(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+                                   showPlots=showPlots, savePlots=true,
+                                   filename=subs_power_cost_path)
+    
+    # Plot voltage profile for last bus
+    voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus.png")
+    plot_voltage_profile_one_bus(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+                                showPlots=showPlots, savePlots=true,
+                                filename=voltage_one_bus_path)
+    
+    # Plot voltage profile for all buses at middle time step + create GIF
+    voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses.png")
+    voltage_gif_path = joinpath(system_dir, "voltage_animation.gif")
+    plot_voltage_profile_all_buses(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+                                   showPlots=showPlots, savePlots=true,
+                                   filename=voltage_all_buses_path,
+                                   create_gif=true,
+                                   gif_filename=voltage_gif_path)
 end
 
 println("\n" * "="^80)
