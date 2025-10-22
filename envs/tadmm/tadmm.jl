@@ -424,3 +424,32 @@ end
 println("\n" * "="^80)
 println("MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE")
 println("="^80)
+
+# =============================================================================
+# PLOTTING
+# =============================================================================
+
+# Include plotting utilities
+include("Plotter.jl")
+
+println("\n" * "="^80)
+println("GENERATING PLOTS")
+println("="^80)
+
+# Plot input curves (load, PV, cost)
+plot_input_curves(data, showPlots=true, savePlots=true, filename="input_curves.png")
+
+# Plot battery actions (only if optimization was successful and batteries exist)
+if (sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
+    plot_battery_actions(sol_ldf, data, "LinDistFlow-Gurobi", 
+                        showPlots=true, savePlots=true, 
+                        filename="battery_actions_lindistflow.png")
+else
+    if isempty(data[:Bset])
+        println("No batteries in system, skipping battery actions plot")
+    end
+end
+
+println("\n" * "="^80)
+println("PLOTTING COMPLETE")
+println("="^80)
