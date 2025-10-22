@@ -226,7 +226,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
                 @constraint(model, B[b, t] == B0_pu[b] - P_B[b, t] * Δt,
                     base_name = "BatterySOC_Init_$(b)_t$(t)")
             else
-                @constraint(model, B[b, t] == B[b, t-1] - P_B[b, t-1] * Δt,
+                @constraint(model, B[j, t] == B[j, t-1] - P_B[j, t] * Δt,
                     base_name = "BatterySOC_$(b)_t$(t)")
             end
             
