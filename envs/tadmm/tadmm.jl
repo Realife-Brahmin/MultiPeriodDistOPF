@@ -18,6 +18,7 @@ using OpenDSSDirect
 using Printf
 using Statistics
 using Parameters: @unpack
+using Plots
 
 # Include standalone utilities
 includet("parse_opendss.jl")
