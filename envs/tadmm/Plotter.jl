@@ -368,3 +368,311 @@ function plot_battery_actions_comparison(solutions::Vector{Dict}, data::Dict, me
     
     return combined_plot
 end
+
+"""
+    plot_substation_power_and_cost(solution, data, method_name; showPlots=true, savePlots=false, filename="substation_power_cost.png")
+
+Plot substation power (black) and substation power cost (green) vs time on dual y-axes.
+Power cost is the actual objective function contribution: P_Subs * Cost * dt
+
+# Arguments
+- solution: Solution dictionary containing :P_Subs and :status
+- data: Dictionary containing :T, :LoadShapeCost, :kVA_B, :delta_t_h
+- method_name: Name of the optimization method (for title)
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+"""
+function plot_substation_power_and_cost(solution, data, method_name; 
+                                       showPlots::Bool=true, savePlots::Bool=false, 
+                                       filename::String="substation_power_cost.png")
+    
+    T = data[:T]
+    LoadShapeCost = data[:LoadShapeCost]
+    P_BASE = data[:kVA_B]
+    delta_t_h = data[:delta_t_h]
+    
+    # Extract substation power
+    P_Subs_var = solution[:P_Subs]
+    
+    # Convert to actual values
+    try
+        P_Subs_kW = [P_Subs_var[t] * P_BASE for t in 1:T]
+        
+        # Calculate actual power cost: P_Subs (kW) * Cost ($/kWh) * dt (h) = $ per time step
+        power_cost_dollars = [P_Subs_kW[t] * LoadShapeCost[t] * delta_t_h for t in 1:T]
+        
+        # Set theme and backend
+        gr()
+        theme(:mute)
+        
+        # Set up x-axis ticks (all time steps if T=24)
+        xtick_vals = T == 24 ? (1:T) : :auto
+        
+        # Create plot with dual y-axes
+        p = plot(
+            1:T, P_Subs_kW,
+            dpi=600,
+            label="Substation Power",
+            xlabel="Time Period (t)",
+            ylabel="Substation Power (kW)",
+            legend=:topright,
+            color=:black,
+            linewidth=3,
+            fontfamily="Computer Modern",
+            grid=true,
+            gridstyle=:dot,
+            gridalpha=0.5,
+            minorgrid=true,
+            minorgridstyle=:dot,
+            minorgridalpha=0.2,
+            title="$method_name: Substation Power & Cost",
+            size=(900, 500),
+            xticks=xtick_vals
+        )
+        
+        # Add cost on secondary y-axis
+        plot!(twinx(), 1:T, power_cost_dollars,
+            label="Power Cost",
+            ylabel="Power Cost (\$/period)",
+            legend=:topleft,
+            color=:darkgreen,
+            linewidth=3,
+            linestyle=:solid,
+            xticks=xtick_vals
+        )
+        
+        # Show the plot if requested
+        if showPlots
+            display(p)
+        end
+        
+        # Save the plot if requested
+        if savePlots
+            @printf "Saving substation power & cost plot to: %s\n" filename
+            savefig(p, filename)
+        end
+        
+        return p
+        
+    catch e
+        @warn "Could not create substation power & cost plot" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+"""
+    plot_voltage_profile_one_bus(solution, data, method_name; bus=nothing, showPlots=true, savePlots=false, filename="voltage_one_bus.png")
+
+Plot voltage magnitude vs time for a single bus (default: last bus in the system).
+
+# Arguments
+- solution: Solution dictionary containing :v (voltage squared)
+- data: Dictionary containing :T, :Nset
+- method_name: Name of the optimization method (for title)
+- bus: Bus number to plot (default: last bus in Nset)
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+"""
+function plot_voltage_profile_one_bus(solution, data, method_name; 
+                                      bus::Union{Int,Nothing}=nothing,
+                                      showPlots::Bool=true, savePlots::Bool=false, 
+                                      filename::String="voltage_one_bus.png")
+    
+    T = data[:T]
+    Nset = data[:Nset]
+    
+    # Select bus (default: last bus)
+    selected_bus = isnothing(bus) ? maximum(Nset) : bus
+    
+    if !(selected_bus in Nset)
+        @warn "Bus $selected_bus not found in system. Available buses: $Nset"
+        return nothing
+    end
+    
+    # Extract voltage (squared)
+    v_var = solution[:v]
+    
+    try
+        # Convert v (squared) to voltage magnitude in p.u.
+        V_pu = [sqrt(v_var[selected_bus, t]) for t in 1:T]
+        
+        # Set theme and backend
+        gr()
+        theme(:mute)
+        
+        # Set up x-axis ticks (all time steps if T=24)
+        xtick_vals = T == 24 ? (1:T) : :auto
+        
+        # Create plot
+        p = plot(
+            1:T, V_pu,
+            dpi=600,
+            label="Bus $selected_bus",
+            xlabel="Time Period (t)",
+            ylabel="Voltage Magnitude (p.u.)",
+            legend=:topright,
+            color=:blue,
+            linewidth=3,
+            fontfamily="Computer Modern",
+            grid=true,
+            gridstyle=:dot,
+            gridalpha=0.5,
+            minorgrid=true,
+            minorgridstyle=:dot,
+            minorgridalpha=0.2,
+            title="$method_name: Voltage Profile - Bus $selected_bus",
+            size=(900, 500),
+            ylims=(0.92, 1.08),
+            xticks=xtick_vals
+        )
+        
+        # Add voltage limit lines (typically 0.95 and 1.05)
+        hline!([0.95, 1.05], color=:red, linestyle=:dash, linewidth=2, label="Limits (0.95/1.05 p.u.)")
+        
+        # Show the plot if requested
+        if showPlots
+            display(p)
+        end
+        
+        # Save the plot if requested
+        if savePlots
+            @printf "Saving voltage profile (bus %d) plot to: %s\n" selected_bus filename
+            savefig(p, filename)
+        end
+        
+        return p
+        
+    catch e
+        @warn "Could not create voltage profile plot for bus $selected_bus" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+"""
+    plot_voltage_profile_all_buses(solution, data, method_name; time_step=nothing, showPlots=true, savePlots=false, filename="voltage_all_buses.png", create_gif=false, gif_filename="voltage_animation.gif")
+
+Plot voltage magnitude for all buses at a specific time step (default: T÷2).
+Optionally create an animated GIF showing voltage evolution over all time steps.
+
+# Arguments
+- solution: Solution dictionary containing :v (voltage squared)
+- data: Dictionary containing :T, :Nset
+- method_name: Name of the optimization method (for title)
+- time_step: Time step to plot (default: T÷2)
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the static plot
+- create_gif: Whether to create an animated GIF
+- gif_filename: Filename for the animated GIF
+"""
+function plot_voltage_profile_all_buses(solution, data, method_name; 
+                                       time_step::Union{Int,Nothing}=nothing,
+                                       showPlots::Bool=true, savePlots::Bool=false, 
+                                       filename::String="voltage_all_buses.png",
+                                       create_gif::Bool=false,
+                                       gif_filename::String="voltage_animation.gif")
+    
+    T = data[:T]
+    Nset = sort(collect(data[:Nset]))  # Sort buses for consistent plotting
+    
+    # Select time step (default: middle of horizon)
+    selected_t = isnothing(time_step) ? T ÷ 2 : time_step
+    
+    if !(1 <= selected_t <= T)
+        @warn "Time step $selected_t out of range [1, $T]"
+        return nothing
+    end
+    
+    # Extract voltage (squared)
+    v_var = solution[:v]
+    
+    try
+        if create_gif
+            # Create animation
+            anim = @animate for t in 1:T
+                V_pu = [sqrt(v_var[bus, t]) for bus in Nset]
+                
+                plot(
+                    Nset, V_pu,
+                    dpi=300,
+                    xlabel="Bus Number",
+                    ylabel="Voltage Magnitude (p.u.)",
+                    legend=false,
+                    color=:blue,
+                    linewidth=3,
+                    marker=:circle,
+                    markersize=5,
+                    fontfamily="Computer Modern",
+                    grid=true,
+                    gridstyle=:dot,
+                    gridalpha=0.5,
+                    minorgrid=true,
+                    minorgridstyle=:dot,
+                    minorgridalpha=0.2,
+                    title="$method_name: Voltage Profile (t=$t/$T)",
+                    size=(900, 500),
+                    ylims=(0.92, 1.08)
+                )
+                
+                # Add voltage limit lines
+                hline!([0.95, 1.05], color=:red, linestyle=:dash, linewidth=2, alpha=0.7)
+            end
+            
+            # Save the GIF
+            @printf "Creating voltage animation GIF: %s\n" gif_filename
+            gif(anim, gif_filename, fps=2)
+            println("Animation saved!")
+        end
+        
+        # Create static plot for selected time step
+        V_pu = [sqrt(v_var[bus, selected_t]) for bus in Nset]
+        
+        gr()
+        theme(:mute)
+        
+        p = plot(
+            Nset, V_pu,
+            dpi=600,
+            xlabel="Bus Number",
+            ylabel="Voltage Magnitude (p.u.)",
+            legend=false,
+            color=:blue,
+            linewidth=3,
+            marker=:circle,
+            markersize=6,
+            fontfamily="Computer Modern",
+            grid=true,
+            gridstyle=:dot,
+            gridalpha=0.5,
+            minorgrid=true,
+            minorgridstyle=:dot,
+            minorgridalpha=0.2,
+            title="$method_name: Voltage Profile (t=$selected_t/$T)",
+            size=(900, 500),
+            ylims=(0.92, 1.08)
+        )
+        
+        # Add voltage limit lines
+        hline!([0.95, 1.05], color=:red, linestyle=:dash, linewidth=2, label="Limits")
+        
+        # Show the plot if requested
+        if showPlots
+            display(p)
+        end
+        
+        # Save the plot if requested
+        if savePlots
+            @printf "Saving voltage profile (all buses, t=%d) plot to: %s\n" selected_t filename
+            savefig(p, filename)
+        end
+        
+        return p
+        
+    catch e
+        @warn "Could not create voltage profile plot for all buses" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
