@@ -69,7 +69,7 @@ end
 # =============================================================================
 # MPOPF SOLVER WITH LINDISTFLOW
 # =============================================================================
-function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
+function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     
     # ========== 1. UNPACK DATA ==========
     @unpack Nset, Lset, Dset, Bset, Tset, NLset, Nm1set = data
@@ -111,6 +111,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         sum(LoadShapeCost[t] * P_Subs[t] * P_BASE * Δt for t in Tset))
     @expression(model, battery_cost, 
         sum(C_B * (P_B[j, t] * P_BASE)^2 * Δt for j in Bset, t in Tset))
+    # @expression(model, battery_cost,
+    #     0.0)  # Temporarily set to zero for debugging
     @objective(model, Min, energy_cost + battery_cost)
     
     # ========== 5. CONSTRAINTS ==========
@@ -140,25 +142,25 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         end
         
         # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
-        # Substation node
-        @constraint(model,
-            sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
-            base_name = "ReactivePowerBalance_Substation_t$(t)")
+        # # Substation node
+        # @constraint(model,
+        #     sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
+        #     base_name = "ReactivePowerBalance_Substation_t$(t)")
         
-        # Non-substation nodes
-        for j in Nm1set
-            i = parent[j]
-            Q_ij_t = Q[(i, j), t]
-            sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+        # # Non-substation nodes
+        # for j in Nm1set
+        #     i = parent[j]
+        #     Q_ij_t = Q[(i, j), t]
+        #     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
             
-            q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
-            q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
+        #     q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
+        #     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
             
-            @constraint(model,
-                sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
-                # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
-                base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
-        end
+        #     @constraint(model,
+        #         sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
+        #         # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
+        #         base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
+        # end
         
         # ----- 5.3 KVL CONSTRAINTS (LinDistFlow) -----
         for (i, j) in Lset
@@ -171,7 +173,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         
         # ----- 5.4 VOLTAGE CONSTRAINTS -----
         # Fixed substation voltage (1.05 pu, squared)
-        @constraint(model, v[j1, t] == 1.05^2,
+        @constraint(model, v[j1, t] == 1.00^2,
             base_name = "FixedSubstationVoltage_t$(t)")
         
         # Voltage limits (all nodes)
@@ -182,9 +184,9 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         
         # ----- 5.5 PV REACTIVE POWER LIMITS -----
         for j in Dset
-            p_D_val = p_D_pu[j, t]
-            S_D_R_val = S_D_R[j]
-            q_max_t = sqrt(S_D_R_val^2 - p_D_val^2)
+            p_D_val = p_D_pu[j, t] # not DV
+            S_D_R_val = S_D_R[j] # not DV
+            q_max_t = sqrt(S_D_R_val^2 - p_D_val^2) # fixed as well
             @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
                 base_name = "PVReactiveLimits_DER$(j)_t$(t)")
         end
@@ -295,7 +297,7 @@ println("\n" * "="^80)
 println("SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)")
 println("="^80)
 
-sol_ldf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
+sol_ldf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
 
 # Report results
 println("\n--- SOLUTION STATUS ---")
