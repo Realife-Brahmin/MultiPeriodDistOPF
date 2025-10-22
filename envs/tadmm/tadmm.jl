@@ -153,27 +153,27 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
                 base_name = "RealPowerBalance_Node$(j)_t$(t)")
         end
         
-        # # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
-        # # Substation node
-        # @constraint(model,
-        #     sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
-        #     base_name = "ReactivePowerBalance_Substation_t$(t)")
+        # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
+        # Substation node
+        @constraint(model,
+            sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
+            base_name = "ReactivePowerBalance_Substation_t$(t)")
         
-        # # Non-substation nodes
-        # for j in Nm1set
-        #     i = parent[j]
-        #     Q_ij_t = Q[(i, j), t]
-        #     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+        # Non-substation nodes
+        for j in Nm1set
+            i = parent[j]
+            Q_ij_t = Q[(i, j), t]
+            sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
             
-        #     q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
-        #     # q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
-        #     q_D_j_t = 0.0  # PV operates at unity power factor
+            q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
+            # q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
+            q_D_j_t = 0.0  # PV operates at unity power factor
             
-        #     @constraint(model,
-        #         sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
-        #         # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
-        #         base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
-        # end
+            @constraint(model,
+                sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
+                # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
+                base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
+        end
         
         # ----- 5.3 KVL CONSTRAINTS (LinDistFlow) -----
         for (i, j) in Lset
