@@ -1,0 +1,108 @@
+Set parameter Username
+Set parameter LicenseID to value 2612288
+Academic license - for non-commercial use only - expires 2026-01-20
+Set parameter NonConvex to value 2
+Set parameter OutputFlag to value 1
+Set parameter NonConvex to value 2
+Set parameter OutputFlag to value 1
+Gurobi Optimizer version 12.0.3 build v12.0.3rc0 (win64 - Windows 11.0 (26100.2))
+
+CPU model: AMD Ryzen 9 4900HS with Radeon Graphics, instruction set [SSE2|AVX|AVX2]
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+
+Non-default parameters:
+NonConvex  2
+
+Optimize a model with 816 rows, 1080 columns and 2063 nonzeros
+Model fingerprint: 0x8c8272d1
+Model has 24 quadratic objective terms
+Coefficient statistics:
+  Matrix range     [4e-03, 1e+00]
+  Objective range  [8e+01, 2e+02]
+  QObjective range [2e-01, 2e-01]
+  Bounds range     [3e-03, 1e+00]
+  RHS range        [5e-03, 1e+00]
+Presolve removed 793 rows and 1033 columns
+Presolve time: 0.00s
+Presolved: 23 rows, 47 columns, 69 nonzeros
+Presolved model has 24 quadratic objective terms
+Ordering time: 0.00s
+
+Barrier statistics:
+ AA' NZ     : 2.200e+01
+ Factor NZ  : 2.760e+02
+ Factor Ops : 4.324e+03 (less than 1 second per iteration)
+ Threads    : 1
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.73339717e+07 -3.07745134e+07  3.00e+03 2.80e+02  1.00e+06     0s
+   1  -2.84078203e+04 -8.88005074e+02  6.30e+00 5.89e-01  2.10e+03     0s
+   2   2.45376240e+02 -7.44813534e+02  3.14e-03 2.94e-04  2.38e+00     0s
+   3   2.59748533e+02  5.18549266e+01  3.14e-09 2.94e-10  2.76e-01     0s
+   4   2.59558067e+02  2.57106182e+02  1.09e-11 1.09e-12  3.26e-03     0s
+   5   2.58234446e+02  2.57851367e+02  7.19e-13 7.11e-14  5.09e-04     0s
+   6   2.58107337e+02  2.57965106e+02  1.29e-13 1.68e-14  1.89e-04     0s
+   7   2.58062283e+02  2.58044079e+02  1.26e-14 8.63e-15  2.42e-05     0s
+   8   2.58056006e+02  2.58055869e+02  7.81e-17 8.88e-15  1.82e-07     0s
+   9   2.58055964e+02  2.58055964e+02  1.08e-18 7.63e-15  1.82e-10     0s
+  10   2.58055964e+02  2.58055964e+02  1.08e-18 9.99e-15  1.82e-13     0s
+
+Barrier solved model in 10 iterations and 0.00 seconds (0.00 work units)
+Optimal objective 2.58055964e+02
+
+
+User-callback calls 95, time in user-callback 0.00 sec
+  Activating project at `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm`
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+
+================================================================================
+PARSING SYSTEM DATA
+================================================================================
+Loaded system: ads10A_1ph from C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\..\..\rawData\ads10A_1ph\Master.dss
+
+========================================
+Initial Powerflow
+========================================
+Powerflow completed successfully!
+
+[OpenDSS] Total system load: 59.87 kW
+[OpenDSS] Substation power: 59.88 kW
+[OpenDSS] Total PV dispatch: 0.00 kW
+[OpenDSS] Total battery dispatch: 0.00 kW
+[OpenDSS] Total system losses: 0.01 kW
+
+
+================================================================================
+SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)
+================================================================================
+Model summary saved to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\model_summary.txt
+
+================================================================================
+STARTING OPTIMIZATION
+================================================================================
+
+--- SOLUTION STATUS ---
+Status: OPTIMAL
+✓ Optimization successful!
+
+--- OBJECTIVE VALUE ---
+Total Cost: $258.06
+
+--- POWER SUMMARY ---
+Substation Power (kW): min=65.7, max=83.2, avg=76.0
+
+--- VOLTAGE SUMMARY ---
+
+================================================================================
+MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE
+================================================================================
