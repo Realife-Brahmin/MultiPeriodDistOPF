@@ -35,6 +35,9 @@ systemName = "ads10_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
+# Plotting settings
+showPlots = false  # Set to true to display plots interactively
+
 # Load shapes
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
@@ -443,8 +446,8 @@ println("\n" * "="^80)
 println("GENERATING PLOTS")
 println("="^80)
 
-# Create output directories (reuse from model writing section)
-processedData_dir = "processedData"
+# Create output directories (use absolute path like model writing section)
+processedData_dir = joinpath(@__DIR__, "processedData")
 system_folder = "$(systemName)_T$(T)"
 system_dir = joinpath(processedData_dir, system_folder)
 mkpath(processedData_dir)  # Create processedData folder
@@ -452,14 +455,14 @@ mkpath(system_dir)  # Create system-specific subfolder with horizon
 
 # Plot input curves (load, PV, cost) - save in processedData folder
 input_curves_path = joinpath(processedData_dir, "input_curves.png")
-plot_input_curves(data, showPlots=true, savePlots=true, filename=input_curves_path)
+plot_input_curves(data, showPlots=showPlots, savePlots=true, filename=input_curves_path)
 
 # Plot battery actions (only if optimization was successful and batteries exist)
 # Save in system-specific subfolder
 if (sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
     battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow.png")
     plot_battery_actions(sol_ldf, data, "LinDistFlow-Gurobi", 
-                        showPlots=true, savePlots=true, 
+                        showPlots=showPlots, savePlots=true, 
                         filename=battery_actions_path)
 else
     if isempty(data[:Bset])
