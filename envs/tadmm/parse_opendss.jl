@@ -123,18 +123,14 @@ function parse_network_topology!(data::Dict)
     circuit_name = OpenDSSDirect.Circuit.Name()
     data[:substationBus] = 1  # Assume bus 1 is substation
     
-    # Get all bus names
+    # Get all bus names and extract bus numbers
     bus_names = OpenDSSDirect.Circuit.AllBusNames()
-    N = length(bus_names)
-    
-    # Create bus name to number mapping
-    bus_to_num = Dict(name => i for (i, name) in enumerate(bus_names))
-    data[:bus_to_num] = bus_to_num
-    data[:bus_names] = bus_names
+    bus_numbers = [parse(Int, split(name, ".")[1]) for name in bus_names]
+    N = maximum(bus_numbers)
     
     # Node sets
     data[:N] = N
-    data[:Nset] = collect(1:N)
+    data[:Nset] = sort(unique(bus_numbers))
     
     # Get all line/branch names
     line_names = OpenDSSDirect.Lines.AllNames()
@@ -161,13 +157,9 @@ function parse_network_topology!(data::Dict)
         bus1_full = OpenDSSDirect.CktElement.BusNames()[1]
         bus2_full = OpenDSSDirect.CktElement.BusNames()[2]
         
-        # Remove phase information (e.g., "bus1.1" -> "bus1")
-        bus1_name = split(bus1_full, ".")[1]
-        bus2_name = split(bus2_full, ".")[1]
-        
-        # Get bus numbers
-        i = bus_to_num[bus1_name]
-        j = bus_to_num[bus2_name]
+        # Extract bus numbers (e.g., "7.1" -> 7)
+        i = parse(Int, split(bus1_full, ".")[1])
+        j = parse(Int, split(bus2_full, ".")[1])
         
         # Add to branch set
         push!(Lset, (i, j))
@@ -231,13 +223,10 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
     for line_name in line_names
         OpenDSSDirect.Lines.Name(line_name)
         
-        # Get bus names
+        # Get bus numbers from bus names (e.g., "7.1" -> 7)
         buses = OpenDSSDirect.CktElement.BusNames()
-        bus1_name = split(buses[1], ".")[1]
-        bus2_name = split(buses[2], ".")[1]
-        
-        i = data[:bus_to_num][bus1_name]
-        j = data[:bus_to_num][bus2_name]
+        i = parse(Int, split(buses[1], ".")[1])
+        j = parse(Int, split(buses[2], ".")[1])
         
         # Get R and X (Ohms)
         R_ohm = OpenDSSDirect.Lines.RMatrix()[1]  # First element of R matrix
@@ -273,10 +262,9 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     for load_name in load_names
         OpenDSSDirect.Loads.Name(load_name)
         
-        # Get bus
+        # Get bus number (e.g., "7.1" -> 7)
         bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-        bus_name = split(bus_full, ".")[1]
-        bus_num = data[:bus_to_num][bus_name]
+        bus_num = parse(Int, split(bus_full, ".")[1])
         
         # Get load power (kW, kVAR)
         kW = OpenDSSDirect.Loads.kW()
@@ -332,10 +320,9 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
         for gen_name in gen_names
             OpenDSSDirect.PVsystems.Name(gen_name)
 
-            # Get bus
+            # Get bus number (e.g., "7.1" -> 7)
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-            bus_name = split(bus_full, ".")[1]
-            bus_num = data[:bus_to_num][bus_name]
+            bus_num = parse(Int, split(bus_full, ".")[1])
             
             # Get generator rating
             kW_rated = OpenDSSDirect.PVsystems.kW()
@@ -391,10 +378,9 @@ function parse_batteries!(data::Dict, T::Int, kVA_B::Float64)
         for storage_name in storage_names
             OpenDSSDirect.Storages.Name(storage_name)
             
-            # Get bus
+            # Get bus number (e.g., "7.1" -> 7)
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-            bus_name = split(bus_full, ".")[1]
-            bus_num = data[:bus_to_num][bus_name]
+            bus_num = parse(Int, split(bus_full, ".")[1])
             
             # Get storage parameters using Text.Command
             kWh_rated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.kWhrated"))
