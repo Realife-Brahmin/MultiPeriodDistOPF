@@ -29,7 +29,8 @@ includet("opendss_validator.jl")
 # =============================================================================
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
+# systemName = "ads10A_1ph"
+systemName = "ads10_1ph"
 # systemName = "ieee123_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
@@ -436,14 +437,23 @@ println("\n" * "="^80)
 println("GENERATING PLOTS")
 println("="^80)
 
-# Plot input curves (load, PV, cost)
-plot_input_curves(data, showPlots=true, savePlots=true, filename="input_curves.png")
+# Create output directories
+processedData_dir = "processedData"
+system_dir = joinpath(processedData_dir, systemName)
+mkpath(processedData_dir)  # Create processedData folder
+mkpath(system_dir)  # Create system-specific subfolder
+
+# Plot input curves (load, PV, cost) - save in processedData folder
+input_curves_path = joinpath(processedData_dir, "input_curves.png")
+plot_input_curves(data, showPlots=true, savePlots=true, filename=input_curves_path)
 
 # Plot battery actions (only if optimization was successful and batteries exist)
+# Save in system-specific subfolder
 if (sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
+    battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow.png")
     plot_battery_actions(sol_ldf, data, "LinDistFlow-Gurobi", 
                         showPlots=true, savePlots=true, 
-                        filename="battery_actions_lindistflow.png")
+                        filename=battery_actions_path)
 else
     if isempty(data[:Bset])
         println("No batteries in system, skipping battery actions plot")
