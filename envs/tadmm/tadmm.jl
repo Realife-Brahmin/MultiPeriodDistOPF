@@ -223,9 +223,9 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
             base_name = "FixedSubstationVoltage_t$(t)")
         
         # Voltage limits (all nodes)
-        for n in Nset
-            @constraint(model, Vminpu[n]^2 <= v[n, t] <= Vmaxpu[n]^2,
-                base_name = "VoltageLimits_Node$(n)_t$(t)")
+        for j in Nset
+            @constraint(model, Vminpu[j]^2 <= v[j, t] <= Vmaxpu[j]^2,
+                base_name = "VoltageLimits_Node$(j)_t$(t)")
         end
         
         # ----- 5.5 PV REACTIVE POWER LIMITS -----
