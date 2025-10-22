@@ -372,22 +372,22 @@ println("\n" * "="^80)
 println("SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)")
 println("="^80)
 
-sol_ldf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
+sol_ldf_bf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
 
 # Report results
 println("\n--- SOLUTION STATUS ---")
-println("Status: ", sol_ldf[:status])
+println("Status: ", sol_ldf_bf[:status])
 
-if sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED
+if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED
     println("✓ Optimization successful!")
     println("\n--- OBJECTIVE VALUE ---")
-    @printf "Total Cost: \$%.2f\n" sol_ldf[:objective]
+    @printf "Total Cost: \$%.2f\n" sol_ldf_bf[:objective]
     
     # Extract solution arrays
-    P_Subs_vals = sol_ldf[:P_Subs]
-    P_B_vals = sol_ldf[:P_B]
-    B_vals = sol_ldf[:B]
-    v_vals = sol_ldf[:v]
+    P_Subs_vals = sol_ldf_bf[:P_Subs]
+    P_B_vals = sol_ldf_bf[:P_B]
+    B_vals = sol_ldf_bf[:B]
+    v_vals = sol_ldf_bf[:v]
     
     # Convert to physical units
     P_BASE = data[:kVA_B]
@@ -428,7 +428,7 @@ if sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED
     end
 else
     println("⚠ Optimization failed or did not converge to optimality")
-    println("Status: ", sol_ldf[:status])
+    println("Status: ", sol_ldf_bf[:status])
 end
 
 println("\n" * "="^80)
@@ -459,9 +459,9 @@ plot_input_curves(data, showPlots=showPlots, savePlots=true, filename=input_curv
 
 # Plot battery actions (only if optimization was successful and batteries exist)
 # Save in system-specific subfolder
-if (sol_ldf[:status] == MOI.OPTIMAL || sol_ldf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
+if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
     battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow.png")
-    plot_battery_actions(sol_ldf, data, "LinDistFlow-Gurobi", 
+    plot_battery_actions(sol_ldf_bf, data, "LinDistFlow-Gurobi", 
                         showPlots=showPlots, savePlots=true, 
                         filename=battery_actions_path)
 else
