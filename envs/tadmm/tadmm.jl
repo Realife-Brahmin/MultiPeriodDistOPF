@@ -198,24 +198,6 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
                 v[i, t] - v[j, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) == 0,
                 base_name = "KVL_Branch_$(i)_$(j)_t$(t)")
         end
-
-        # Substation branches
-        # for (i, j) in L1set
-        #     r_ij = rdict_pu[(i, j)]
-        #     x_ij = xdict_pu[(i, j)]
-        #     @constraint(model,
-        #         v[i, t] - v[j, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) == 0,
-        #         base_name = "KVL_SubstationBranch_$(i)_$(j)_t$(t)")
-        # end
-        
-        # # Non-substation branches
-        # for (i, j) in Lm1set
-        #     r_ij = rdict_pu[(i, j)]
-        #     x_ij = xdict_pu[(i, j)]
-        #     @constraint(model,
-        #         v[i, t] - v[j, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) == 0,
-        #         base_name = "KVL_NonSubstationBranch_$(i)_$(j)_t$(t)")
-        # end
         
         # ----- 5.4 VOLTAGE CONSTRAINTS -----
         # Fixed substation voltage (1.05 pu, squared)
