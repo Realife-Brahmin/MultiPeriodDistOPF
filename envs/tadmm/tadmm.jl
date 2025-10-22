@@ -29,6 +29,7 @@ includet("opendss_validator.jl")
 
 # System and simulation parameters
 systemName = "ads10A_1ph"
+# systemName = "ieee123_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
@@ -68,37 +69,6 @@ end
 # =============================================================================
 # MPOPF SOLVER WITH LINDISTFLOW
 # =============================================================================
-
-"""
-    solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
-
-Solve the Multi-Period OPF problem using LinDistFlow approximation.
-
-# Formulation
-- Objective: Minimize energy cost + battery quadratic cost
-- Constraints:
-  * Nodal real & reactive power balance (all non-substation nodes)
-  * KVL constraints using LinDistFlow approximation
-  * Voltage box limits
-  * PV reactive power limits
-  * Battery SOC trajectory and limits
-
-# Arguments
-- data: Dictionary with all system data
-- solver: :ipopt (default) or :gurobi
-
-# Returns
-Dictionary with solution including:
-- :status => termination status
-- :objective => objective value
-- :P_Subs => substation power [t]
-- :P => branch real power [(i,j), t]
-- :Q => branch reactive power [(i,j), t]
-- :v => squared voltage [n, t]
-- :P_B => battery power [b, t] (signed)
-- :B => battery SOC [b, t]
-- :q_D => PV reactive power [d, t]
-"""
 function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
     
     # ========== 1. UNPACK DATA ==========
@@ -222,6 +192,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         # ----- 5.6 BATTERY CONSTRAINTS -----
         for j in Bset
             # SOC trajectory
+            # P_B > 0: discharging (battery supplies power like generator) → SOC decreases
+            # P_B < 0: charging (battery absorbs power like load) → SOC increases
             if t == 1
                 @constraint(model, B[j, t] == B0_pu[j] - P_B[j, t] * Δt,
                     base_name = "BatterySOC_Init_$(j)_t$(t)")
@@ -241,6 +213,58 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
     end
     
     # ========== 6. SOLVE ==========
+    
+    # Save model summary to file
+    model_file = joinpath(@__DIR__, "model_summary.txt")
+    open(model_file, "w") do io
+        println(io, "="^80)
+        println(io, "MODEL SUMMARY")
+        println(io, "="^80)
+        println(io, model)
+        
+        println(io, "\n--- VARIABLE BOUNDS CHECK ---")
+        println(io, "Number of variables: ", num_variables(model))
+        println(io, "Number of constraints: ", num_constraints(model; count_variable_in_set_constraints=true))
+        
+        # Check for potential issues
+        println(io, "\n--- DATA VALIDATION ---")
+        println(io, "Load nodes (NLset): ", NLset)
+        println(io, "PV nodes (Dset): ", Dset)
+        println(io, "Battery nodes (Bset): ", Bset)
+        println(io, "All nodes (Nset): ", Nset)
+        println(io, "Non-substation nodes (Nm1set): ", Nm1set)
+        println(io, "Substation branches (L1set): ", L1set)
+        println(io, "Other branches (Lm1set): ", Lm1set)
+        
+        # Check power balance feasibility
+        println(io, "\n--- POWER BALANCE CHECK (t=1) ---")
+        total_load_t1 = sum(p_L_pu[j, 1] for j in NLset)
+        total_pv_t1 = sum(p_D_pu[j, 1] for j in Dset)
+        println(io, "Total load at t=1: $(total_load_t1 * P_BASE) kW")
+        println(io, "Total PV at t=1: $(total_pv_t1 * P_BASE) kW")
+        println(io, "Net demand: $((total_load_t1 - total_pv_t1) * P_BASE) kW")
+        
+        # Check battery parameters
+        if !isempty(Bset)
+            println(io, "\n--- BATTERY PARAMETERS ---")
+            for b in Bset
+                println(io, "Battery $b:")
+                println(io, "  Initial SOC: $(B0_pu[b] * P_BASE) kWh")
+                println(io, "  Capacity: $(B_R_pu[b] * P_BASE) kWh")
+                println(io, "  Power rating: $(P_B_R_pu[b] * P_BASE) kW")
+                println(io, "  SOC min: $(soc_min[b] * 100)%")
+                println(io, "  SOC max: $(soc_max[b] * 100)%")
+                println(io, "  Min energy: $(soc_min[b] * B_R_pu[b] * P_BASE) kWh")
+                println(io, "  Max energy: $(soc_max[b] * B_R_pu[b] * P_BASE) kWh")
+            end
+        end
+    end
+    println("Model summary saved to: $model_file")
+    
+    println("\n" * "="^80)
+    println("STARTING OPTIMIZATION")
+    println("="^80)
+    
     optimize!(model)
     
     # ========== 7. EXTRACT RESULTS ==========
