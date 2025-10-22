@@ -1,0 +1,1150 @@
+================================================================================
+MODEL SUMMARY
+================================================================================
+
+================================================================================
+ALL CONSTRAINTS (ORGANIZED BY TYPE AND TIME)
+================================================================================
+
+--------------------------------------------------------------------------------
+SUBSTATION POWER BALANCE
+--------------------------------------------------------------------------------
+RealPowerBalance_Substation_t1: RealPowerBalance_Substation_t1 : P_Subs[1] - P[(1, 2),1] - P[(1, 3),1] - P[(1, 10),1] == 0
+RealPowerBalance_Substation_t10: RealPowerBalance_Substation_t10 : P_Subs[10] - P[(1, 2),10] - P[(1, 3),10] - P[(1, 10),10] == 0
+RealPowerBalance_Substation_t11: RealPowerBalance_Substation_t11 : P_Subs[11] - P[(1, 2),11] - P[(1, 3),11] - P[(1, 10),11] == 0
+RealPowerBalance_Substation_t12: RealPowerBalance_Substation_t12 : P_Subs[12] - P[(1, 2),12] - P[(1, 3),12] - P[(1, 10),12] == 0
+RealPowerBalance_Substation_t13: RealPowerBalance_Substation_t13 : P_Subs[13] - P[(1, 2),13] - P[(1, 3),13] - P[(1, 10),13] == 0
+RealPowerBalance_Substation_t14: RealPowerBalance_Substation_t14 : P_Subs[14] - P[(1, 2),14] - P[(1, 3),14] - P[(1, 10),14] == 0
+RealPowerBalance_Substation_t15: RealPowerBalance_Substation_t15 : P_Subs[15] - P[(1, 2),15] - P[(1, 3),15] - P[(1, 10),15] == 0
+RealPowerBalance_Substation_t16: RealPowerBalance_Substation_t16 : P_Subs[16] - P[(1, 2),16] - P[(1, 3),16] - P[(1, 10),16] == 0
+RealPowerBalance_Substation_t17: RealPowerBalance_Substation_t17 : P_Subs[17] - P[(1, 2),17] - P[(1, 3),17] - P[(1, 10),17] == 0
+RealPowerBalance_Substation_t18: RealPowerBalance_Substation_t18 : P_Subs[18] - P[(1, 2),18] - P[(1, 3),18] - P[(1, 10),18] == 0
+RealPowerBalance_Substation_t19: RealPowerBalance_Substation_t19 : P_Subs[19] - P[(1, 2),19] - P[(1, 3),19] - P[(1, 10),19] == 0
+RealPowerBalance_Substation_t2: RealPowerBalance_Substation_t2 : P_Subs[2] - P[(1, 2),2] - P[(1, 3),2] - P[(1, 10),2] == 0
+RealPowerBalance_Substation_t20: RealPowerBalance_Substation_t20 : P_Subs[20] - P[(1, 2),20] - P[(1, 3),20] - P[(1, 10),20] == 0
+RealPowerBalance_Substation_t21: RealPowerBalance_Substation_t21 : P_Subs[21] - P[(1, 2),21] - P[(1, 3),21] - P[(1, 10),21] == 0
+RealPowerBalance_Substation_t22: RealPowerBalance_Substation_t22 : P_Subs[22] - P[(1, 2),22] - P[(1, 3),22] - P[(1, 10),22] == 0
+RealPowerBalance_Substation_t23: RealPowerBalance_Substation_t23 : P_Subs[23] - P[(1, 2),23] - P[(1, 3),23] - P[(1, 10),23] == 0
+RealPowerBalance_Substation_t24: RealPowerBalance_Substation_t24 : P_Subs[24] - P[(1, 2),24] - P[(1, 3),24] - P[(1, 10),24] == 0
+RealPowerBalance_Substation_t3: RealPowerBalance_Substation_t3 : P_Subs[3] - P[(1, 2),3] - P[(1, 3),3] - P[(1, 10),3] == 0
+RealPowerBalance_Substation_t4: RealPowerBalance_Substation_t4 : P_Subs[4] - P[(1, 2),4] - P[(1, 3),4] - P[(1, 10),4] == 0
+RealPowerBalance_Substation_t5: RealPowerBalance_Substation_t5 : P_Subs[5] - P[(1, 2),5] - P[(1, 3),5] - P[(1, 10),5] == 0
+RealPowerBalance_Substation_t6: RealPowerBalance_Substation_t6 : P_Subs[6] - P[(1, 2),6] - P[(1, 3),6] - P[(1, 10),6] == 0
+RealPowerBalance_Substation_t7: RealPowerBalance_Substation_t7 : P_Subs[7] - P[(1, 2),7] - P[(1, 3),7] - P[(1, 10),7] == 0
+RealPowerBalance_Substation_t8: RealPowerBalance_Substation_t8 : P_Subs[8] - P[(1, 2),8] - P[(1, 3),8] - P[(1, 10),8] == 0
+RealPowerBalance_Substation_t9: RealPowerBalance_Substation_t9 : P_Subs[9] - P[(1, 2),9] - P[(1, 3),9] - P[(1, 10),9] == 0
+Total: 24 constraints
+
+--------------------------------------------------------------------------------
+NODAL REAL POWER BALANCE
+--------------------------------------------------------------------------------
+RealPowerBalance_Node10_t1: RealPowerBalance_Node10_t1 : -P[(1, 10),1] == -0.011040764330830937
+RealPowerBalance_Node10_t10: RealPowerBalance_Node10_t10 : -P[(1, 10),10] == -0.013324860517413835
+RealPowerBalance_Node10_t11: RealPowerBalance_Node10_t11 : -P[(1, 10),11] == -0.013244069256169859
+RealPowerBalance_Node10_t12: RealPowerBalance_Node10_t12 : -P[(1, 10),12] == -0.013070788573158002
+RealPowerBalance_Node10_t13: RealPowerBalance_Node10_t13 : -P[(1, 10),13] == -0.012817869903930874
+RealPowerBalance_Node10_t14: RealPowerBalance_Node10_t14 : -P[(1, 10),14] == -0.012504071069159132
+RealPowerBalance_Node10_t15: RealPowerBalance_Node10_t15 : -P[(1, 10),15] == -0.012152665092883645
+RealPowerBalance_Node10_t16: RealPowerBalance_Node10_t16 : -P[(1, 10),16] == -0.011789714148789392
+RealPowerBalance_Node10_t17: RealPowerBalance_Node10_t17 : -P[(1, 10),17] == -0.011442136648009759
+RealPowerBalance_Node10_t18: RealPowerBalance_Node10_t18 : -P[(1, 10),18] == -0.011135710823716309
+RealPowerBalance_Node10_t19: RealPowerBalance_Node10_t19 : -P[(1, 10),19] == -0.010893162877492016
+RealPowerBalance_Node10_t2: RealPowerBalance_Node10_t2 : -P[(1, 10),2] == -0.011326787114472044
+RealPowerBalance_Node10_t20: RealPowerBalance_Node10_t20 : -P[(1, 10),20] == -0.010732481480925314
+RealPowerBalance_Node10_t21: RealPowerBalance_Node10_t21 : -P[(1, 10),21] == -0.010665583638131079
+RealPowerBalance_Node10_t22: RealPowerBalance_Node10_t22 : -P[(1, 10),22] == -0.01069743085607209
+RealPowerBalance_Node10_t23: RealPowerBalance_Node10_t23 : -P[(1, 10),23] == -0.010825661172284992
+RealPowerBalance_Node10_t24: RealPowerBalance_Node10_t24 : -P[(1, 10),24] == -0.011040764330830937
+RealPowerBalance_Node10_t3: RealPowerBalance_Node10_t3 : -P[(1, 10),3] == -0.011662516521812822
+RealPowerBalance_Node10_t4: RealPowerBalance_Node10_t4 : -P[(1, 10),4] == -0.012023053038570647
+RealPowerBalance_Node10_t5: RealPowerBalance_Node10_t5 : -P[(1, 10),5] == -0.01238165732064241
+RealPowerBalance_Node10_t6: RealPowerBalance_Node10_t6 : -P[(1, 10),6] == -0.012711733328932275
+RealPowerBalance_Node10_t7: RealPowerBalance_Node10_t7 : -P[(1, 10),7] == -0.012988800835902647
+RealPowerBalance_Node10_t8: RealPowerBalance_Node10_t8 : -P[(1, 10),8] == -0.013192311012061041
+RealPowerBalance_Node10_t9: RealPowerBalance_Node10_t9 : -P[(1, 10),9] == -0.013307170438638891
+RealPowerBalance_Node2_t1: RealPowerBalance_Node2_t1 : -P[(1, 2),1] + P[(2, 4),1] + P[(2, 5),1] + P[(2, 6),1] == -0.011040764330830937
+RealPowerBalance_Node2_t10: RealPowerBalance_Node2_t10 : -P[(1, 2),10] + P[(2, 4),10] + P[(2, 5),10] + P[(2, 6),10] == -0.013324860517413835
+RealPowerBalance_Node2_t11: RealPowerBalance_Node2_t11 : -P[(1, 2),11] + P[(2, 4),11] + P[(2, 5),11] + P[(2, 6),11] == -0.013244069256169859
+RealPowerBalance_Node2_t12: RealPowerBalance_Node2_t12 : -P[(1, 2),12] + P[(2, 4),12] + P[(2, 5),12] + P[(2, 6),12] == -0.013070788573158002
+RealPowerBalance_Node2_t13: RealPowerBalance_Node2_t13 : -P[(1, 2),13] + P[(2, 4),13] + P[(2, 5),13] + P[(2, 6),13] == -0.012817869903930874
+RealPowerBalance_Node2_t14: RealPowerBalance_Node2_t14 : -P[(1, 2),14] + P[(2, 4),14] + P[(2, 5),14] + P[(2, 6),14] == -0.012504071069159132
+RealPowerBalance_Node2_t15: RealPowerBalance_Node2_t15 : -P[(1, 2),15] + P[(2, 4),15] + P[(2, 5),15] + P[(2, 6),15] == -0.012152665092883645
+RealPowerBalance_Node2_t16: RealPowerBalance_Node2_t16 : -P[(1, 2),16] + P[(2, 4),16] + P[(2, 5),16] + P[(2, 6),16] == -0.011789714148789392
+RealPowerBalance_Node2_t17: RealPowerBalance_Node2_t17 : -P[(1, 2),17] + P[(2, 4),17] + P[(2, 5),17] + P[(2, 6),17] == -0.011442136648009759
+RealPowerBalance_Node2_t18: RealPowerBalance_Node2_t18 : -P[(1, 2),18] + P[(2, 4),18] + P[(2, 5),18] + P[(2, 6),18] == -0.011135710823716309
+RealPowerBalance_Node2_t19: RealPowerBalance_Node2_t19 : -P[(1, 2),19] + P[(2, 4),19] + P[(2, 5),19] + P[(2, 6),19] == -0.010893162877492016
+RealPowerBalance_Node2_t2: RealPowerBalance_Node2_t2 : -P[(1, 2),2] + P[(2, 4),2] + P[(2, 5),2] + P[(2, 6),2] == -0.011326787114472044
+RealPowerBalance_Node2_t20: RealPowerBalance_Node2_t20 : -P[(1, 2),20] + P[(2, 4),20] + P[(2, 5),20] + P[(2, 6),20] == -0.010732481480925314
+RealPowerBalance_Node2_t21: RealPowerBalance_Node2_t21 : -P[(1, 2),21] + P[(2, 4),21] + P[(2, 5),21] + P[(2, 6),21] == -0.010665583638131079
+RealPowerBalance_Node2_t22: RealPowerBalance_Node2_t22 : -P[(1, 2),22] + P[(2, 4),22] + P[(2, 5),22] + P[(2, 6),22] == -0.01069743085607209
+RealPowerBalance_Node2_t23: RealPowerBalance_Node2_t23 : -P[(1, 2),23] + P[(2, 4),23] + P[(2, 5),23] + P[(2, 6),23] == -0.010825661172284992
+RealPowerBalance_Node2_t24: RealPowerBalance_Node2_t24 : -P[(1, 2),24] + P[(2, 4),24] + P[(2, 5),24] + P[(2, 6),24] == -0.011040764330830937
+RealPowerBalance_Node2_t3: RealPowerBalance_Node2_t3 : -P[(1, 2),3] + P[(2, 4),3] + P[(2, 5),3] + P[(2, 6),3] == -0.011662516521812822
+RealPowerBalance_Node2_t4: RealPowerBalance_Node2_t4 : -P[(1, 2),4] + P[(2, 4),4] + P[(2, 5),4] + P[(2, 6),4] == -0.012023053038570647
+RealPowerBalance_Node2_t5: RealPowerBalance_Node2_t5 : -P[(1, 2),5] + P[(2, 4),5] + P[(2, 5),5] + P[(2, 6),5] == -0.01238165732064241
+RealPowerBalance_Node2_t6: RealPowerBalance_Node2_t6 : -P[(1, 2),6] + P[(2, 4),6] + P[(2, 5),6] + P[(2, 6),6] == -0.012711733328932275
+RealPowerBalance_Node2_t7: RealPowerBalance_Node2_t7 : -P[(1, 2),7] + P[(2, 4),7] + P[(2, 5),7] + P[(2, 6),7] == -0.012988800835902647
+RealPowerBalance_Node2_t8: RealPowerBalance_Node2_t8 : -P[(1, 2),8] + P[(2, 4),8] + P[(2, 5),8] + P[(2, 6),8] == -0.013192311012061041
+RealPowerBalance_Node2_t9: RealPowerBalance_Node2_t9 : -P[(1, 2),9] + P[(2, 4),9] + P[(2, 5),9] + P[(2, 6),9] == -0.013307170438638891
+RealPowerBalance_Node3_t1: RealPowerBalance_Node3_t1 : -P[(1, 3),1] == -0.011040764330830937
+RealPowerBalance_Node3_t10: RealPowerBalance_Node3_t10 : -P[(1, 3),10] == -0.013324860517413835
+RealPowerBalance_Node3_t11: RealPowerBalance_Node3_t11 : -P[(1, 3),11] == -0.013244069256169859
+RealPowerBalance_Node3_t12: RealPowerBalance_Node3_t12 : -P[(1, 3),12] == -0.013070788573158002
+RealPowerBalance_Node3_t13: RealPowerBalance_Node3_t13 : -P[(1, 3),13] == -0.012817869903930874
+RealPowerBalance_Node3_t14: RealPowerBalance_Node3_t14 : -P[(1, 3),14] == -0.012504071069159132
+RealPowerBalance_Node3_t15: RealPowerBalance_Node3_t15 : -P[(1, 3),15] == -0.012152665092883645
+RealPowerBalance_Node3_t16: RealPowerBalance_Node3_t16 : -P[(1, 3),16] == -0.011789714148789392
+RealPowerBalance_Node3_t17: RealPowerBalance_Node3_t17 : -P[(1, 3),17] == -0.011442136648009759
+RealPowerBalance_Node3_t18: RealPowerBalance_Node3_t18 : -P[(1, 3),18] == -0.011135710823716309
+RealPowerBalance_Node3_t19: RealPowerBalance_Node3_t19 : -P[(1, 3),19] == -0.010893162877492016
+RealPowerBalance_Node3_t2: RealPowerBalance_Node3_t2 : -P[(1, 3),2] == -0.011326787114472044
+RealPowerBalance_Node3_t20: RealPowerBalance_Node3_t20 : -P[(1, 3),20] == -0.010732481480925314
+RealPowerBalance_Node3_t21: RealPowerBalance_Node3_t21 : -P[(1, 3),21] == -0.010665583638131079
+RealPowerBalance_Node3_t22: RealPowerBalance_Node3_t22 : -P[(1, 3),22] == -0.01069743085607209
+RealPowerBalance_Node3_t23: RealPowerBalance_Node3_t23 : -P[(1, 3),23] == -0.010825661172284992
+RealPowerBalance_Node3_t24: RealPowerBalance_Node3_t24 : -P[(1, 3),24] == -0.011040764330830937
+RealPowerBalance_Node3_t3: RealPowerBalance_Node3_t3 : -P[(1, 3),3] == -0.011662516521812822
+RealPowerBalance_Node3_t4: RealPowerBalance_Node3_t4 : -P[(1, 3),4] == -0.012023053038570647
+RealPowerBalance_Node3_t5: RealPowerBalance_Node3_t5 : -P[(1, 3),5] == -0.01238165732064241
+RealPowerBalance_Node3_t6: RealPowerBalance_Node3_t6 : -P[(1, 3),6] == -0.012711733328932275
+RealPowerBalance_Node3_t7: RealPowerBalance_Node3_t7 : -P[(1, 3),7] == -0.012988800835902647
+RealPowerBalance_Node3_t8: RealPowerBalance_Node3_t8 : -P[(1, 3),8] == -0.013192311012061041
+RealPowerBalance_Node3_t9: RealPowerBalance_Node3_t9 : -P[(1, 3),9] == -0.013307170438638891
+RealPowerBalance_Node4_t1: RealPowerBalance_Node4_t1 : -P[(2, 4),1] == -0.005522038694197289
+RealPowerBalance_Node4_t10: RealPowerBalance_Node4_t10 : -P[(2, 4),10] == -0.006664429487591751
+RealPowerBalance_Node4_t11: RealPowerBalance_Node4_t11 : -P[(2, 4),11] == -0.006624021735250146
+RealPowerBalance_Node4_t12: RealPowerBalance_Node4_t12 : -P[(2, 4),12] == -0.006537355395142116
+RealPowerBalance_Node4_t13: RealPowerBalance_Node4_t13 : -P[(2, 4),13] == -0.006410858113241346
+RealPowerBalance_Node4_t14: RealPowerBalance_Node4_t14 : -P[(2, 4),14] == -0.00625391161425986
+RealPowerBalance_Node4_t15: RealPowerBalance_Node4_t15 : -P[(2, 4),15] == -0.006078155902044656
+RealPowerBalance_Node4_t16: RealPowerBalance_Node4_t16 : -P[(2, 4),16] == -0.005896625973741852
+RealPowerBalance_Node4_t17: RealPowerBalance_Node4_t17 : -P[(2, 4),17] == -0.005722785073689503
+RealPowerBalance_Node4_t18: RealPowerBalance_Node4_t18 : -P[(2, 4),18] == -0.005569526186175291
+RealPowerBalance_Node4_t19: RealPowerBalance_Node4_t19 : -P[(2, 4),19] == -0.005448215821773389
+RealPowerBalance_Node4_t2: RealPowerBalance_Node4_t2 : -P[(2, 4),2] == -0.005665093000163925
+RealPowerBalance_Node4_t20: RealPowerBalance_Node4_t20 : -P[(2, 4),20] == -0.005367851015253494
+RealPowerBalance_Node4_t21: RealPowerBalance_Node4_t21 : -P[(2, 4),21] == -0.005334392056670661
+RealPowerBalance_Node4_t22: RealPowerBalance_Node4_t22 : -P[(2, 4),22] == -0.005350320443918427
+RealPowerBalance_Node4_t23: RealPowerBalance_Node4_t23 : -P[(2, 4),23] == -0.005414454841382149
+RealPowerBalance_Node4_t24: RealPowerBalance_Node4_t24 : -P[(2, 4),24] == -0.005522038694197289
+RealPowerBalance_Node4_t3: RealPowerBalance_Node4_t3 : -P[(2, 4),3] == -0.005833008075838416
+RealPowerBalance_Node4_t4: RealPowerBalance_Node4_t4 : -P[(2, 4),4] == -0.006013330428218343
+RealPowerBalance_Node4_t5: RealPowerBalance_Node4_t5 : -P[(2, 4),5] == -0.006192686373347557
+RealPowerBalance_Node4_t6: RealPowerBalance_Node4_t6 : -P[(2, 4),6] == -0.00635777390127468
+RealPowerBalance_Node4_t7: RealPowerBalance_Node4_t7 : -P[(2, 4),7] == -0.006496349225278542
+RealPowerBalance_Node4_t8: RealPowerBalance_Node4_t8 : -P[(2, 4),8] == -0.006598134847517701
+RealPowerBalance_Node4_t9: RealPowerBalance_Node4_t9 : -P[(2, 4),9] == -0.006655581794028919
+RealPowerBalance_Node5_t1: RealPowerBalance_Node5_t1 : -P[(2, 5),1] - P_B[5,1] == -0.011040764330830937
+RealPowerBalance_Node5_t10: RealPowerBalance_Node5_t10 : -P[(2, 5),10] - P_B[5,10] == -0.013324860517413835
+RealPowerBalance_Node5_t11: RealPowerBalance_Node5_t11 : -P[(2, 5),11] - P_B[5,11] == -0.013244069256169859
+RealPowerBalance_Node5_t12: RealPowerBalance_Node5_t12 : -P[(2, 5),12] - P_B[5,12] == -0.013070788573158002
+RealPowerBalance_Node5_t13: RealPowerBalance_Node5_t13 : -P[(2, 5),13] - P_B[5,13] == -0.012817869903930874
+RealPowerBalance_Node5_t14: RealPowerBalance_Node5_t14 : -P[(2, 5),14] - P_B[5,14] == -0.012504071069159132
+RealPowerBalance_Node5_t15: RealPowerBalance_Node5_t15 : -P[(2, 5),15] - P_B[5,15] == -0.012152665092883645
+RealPowerBalance_Node5_t16: RealPowerBalance_Node5_t16 : -P[(2, 5),16] - P_B[5,16] == -0.011789714148789392
+RealPowerBalance_Node5_t17: RealPowerBalance_Node5_t17 : -P[(2, 5),17] - P_B[5,17] == -0.011442136648009759
+RealPowerBalance_Node5_t18: RealPowerBalance_Node5_t18 : -P[(2, 5),18] - P_B[5,18] == -0.011135710823716309
+RealPowerBalance_Node5_t19: RealPowerBalance_Node5_t19 : -P[(2, 5),19] - P_B[5,19] == -0.010893162877492016
+RealPowerBalance_Node5_t2: RealPowerBalance_Node5_t2 : -P[(2, 5),2] - P_B[5,2] == -0.011326787114472044
+RealPowerBalance_Node5_t20: RealPowerBalance_Node5_t20 : -P[(2, 5),20] - P_B[5,20] == -0.010732481480925314
+RealPowerBalance_Node5_t21: RealPowerBalance_Node5_t21 : -P[(2, 5),21] - P_B[5,21] == -0.010665583638131079
+RealPowerBalance_Node5_t22: RealPowerBalance_Node5_t22 : -P[(2, 5),22] - P_B[5,22] == -0.01069743085607209
+RealPowerBalance_Node5_t23: RealPowerBalance_Node5_t23 : -P[(2, 5),23] - P_B[5,23] == -0.010825661172284992
+RealPowerBalance_Node5_t24: RealPowerBalance_Node5_t24 : -P[(2, 5),24] - P_B[5,24] == -0.011040764330830937
+RealPowerBalance_Node5_t3: RealPowerBalance_Node5_t3 : -P[(2, 5),3] - P_B[5,3] == -0.011662516521812822
+RealPowerBalance_Node5_t4: RealPowerBalance_Node5_t4 : -P[(2, 5),4] - P_B[5,4] == -0.012023053038570647
+RealPowerBalance_Node5_t5: RealPowerBalance_Node5_t5 : -P[(2, 5),5] - P_B[5,5] == -0.01238165732064241
+RealPowerBalance_Node5_t6: RealPowerBalance_Node5_t6 : -P[(2, 5),6] - P_B[5,6] == -0.012711733328932275
+RealPowerBalance_Node5_t7: RealPowerBalance_Node5_t7 : -P[(2, 5),7] - P_B[5,7] == -0.012988800835902647
+RealPowerBalance_Node5_t8: RealPowerBalance_Node5_t8 : -P[(2, 5),8] - P_B[5,8] == -0.013192311012061041
+RealPowerBalance_Node5_t9: RealPowerBalance_Node5_t9 : -P[(2, 5),9] - P_B[5,9] == -0.013307170438638891
+RealPowerBalance_Node6_t1: RealPowerBalance_Node6_t1 : -P[(2, 6),1] + P[(6, 7),1] + P[(6, 8),1] == -0.011040764330830937
+RealPowerBalance_Node6_t10: RealPowerBalance_Node6_t10 : -P[(2, 6),10] + P[(6, 7),10] + P[(6, 8),10] == -0.009284418996057538
+RealPowerBalance_Node6_t11: RealPowerBalance_Node6_t11 : -P[(2, 6),11] + P[(6, 7),11] + P[(6, 8),11] == -0.00873754231361821
+RealPowerBalance_Node6_t12: RealPowerBalance_Node6_t12 : -P[(2, 6),12] + P[(6, 7),12] + P[(6, 8),12] == -0.008405288573158002
+RealPowerBalance_Node6_t13: RealPowerBalance_Node6_t13 : -P[(2, 6),13] + P[(6, 7),13] + P[(6, 8),13] == -0.008311342961379226
+RealPowerBalance_Node6_t14: RealPowerBalance_Node6_t14 : -P[(2, 6),14] + P[(6, 7),14] + P[(6, 8),14] == -0.008463629547802835
+RealPowerBalance_Node6_t15: RealPowerBalance_Node6_t15 : -P[(2, 6),15] + P[(6, 7),15] + P[(6, 8),15] == -0.008853658405257807
+RealPowerBalance_Node6_t16: RealPowerBalance_Node6_t16 : -P[(2, 6),16] + P[(6, 7),16] + P[(6, 8),16] == -0.009456964148789392
+RealPowerBalance_Node6_t17: RealPowerBalance_Node6_t17 : -P[(2, 6),17] + P[(6, 7),17] + P[(6, 8),17] == -0.010234616393083948
+RealPowerBalance_Node6_t18: RealPowerBalance_Node6_t18 : -P[(2, 6),18] + P[(6, 7),18] + P[(6, 8),18] == -0.011135710823716309
+RealPowerBalance_Node6_t19: RealPowerBalance_Node6_t19 : -P[(2, 6),19] + P[(6, 7),19] + P[(6, 8),19] == -0.010893162877492016
+RealPowerBalance_Node6_t2: RealPowerBalance_Node6_t2 : -P[(2, 6),2] + P[(6, 7),2] + P[(6, 8),2] == -0.011326787114472044
+RealPowerBalance_Node6_t20: RealPowerBalance_Node6_t20 : -P[(2, 6),20] + P[(6, 7),20] + P[(6, 8),20] == -0.010732481480925314
+RealPowerBalance_Node6_t21: RealPowerBalance_Node6_t21 : -P[(2, 6),21] + P[(6, 7),21] + P[(6, 8),21] == -0.010665583638131079
+RealPowerBalance_Node6_t22: RealPowerBalance_Node6_t22 : -P[(2, 6),22] + P[(6, 7),22] + P[(6, 8),22] == -0.01069743085607209
+RealPowerBalance_Node6_t23: RealPowerBalance_Node6_t23 : -P[(2, 6),23] + P[(6, 7),23] + P[(6, 8),23] == -0.010825661172284992
+RealPowerBalance_Node6_t24: RealPowerBalance_Node6_t24 : -P[(2, 6),24] + P[(6, 7),24] + P[(6, 8),24] == -0.011040764330830937
+RealPowerBalance_Node6_t3: RealPowerBalance_Node6_t3 : -P[(2, 6),3] + P[(6, 7),3] + P[(6, 8),3] == -0.011662516521812822
+RealPowerBalance_Node6_t4: RealPowerBalance_Node6_t4 : -P[(2, 6),4] + P[(6, 7),4] + P[(6, 8),4] == -0.012023053038570647
+RealPowerBalance_Node6_t5: RealPowerBalance_Node6_t5 : -P[(2, 6),5] + P[(6, 7),5] + P[(6, 8),5] == -0.01238165732064241
+RealPowerBalance_Node6_t6: RealPowerBalance_Node6_t6 : -P[(2, 6),6] + P[(6, 7),6] + P[(6, 8),6] == -0.012711733328932275
+RealPowerBalance_Node6_t7: RealPowerBalance_Node6_t7 : -P[(2, 6),7] + P[(6, 7),7] + P[(6, 8),7] == -0.011781280580976838
+RealPowerBalance_Node6_t8: RealPowerBalance_Node6_t8 : -P[(2, 6),8] + P[(6, 7),8] + P[(6, 8),8] == -0.010859561012061042
+RealPowerBalance_Node6_t9: RealPowerBalance_Node6_t9 : -P[(2, 6),9] + P[(6, 7),9] + P[(6, 8),9] == -0.010008163751013054
+RealPowerBalance_Node7_t1: RealPowerBalance_Node7_t1 : -P[(6, 7),1] == -0.005522038694197289
+RealPowerBalance_Node7_t10: RealPowerBalance_Node7_t10 : -P[(6, 7),10] == -0.006664429487591751
+RealPowerBalance_Node7_t11: RealPowerBalance_Node7_t11 : -P[(6, 7),11] == -0.006624021735250146
+RealPowerBalance_Node7_t12: RealPowerBalance_Node7_t12 : -P[(6, 7),12] == -0.006537355395142116
+RealPowerBalance_Node7_t13: RealPowerBalance_Node7_t13 : -P[(6, 7),13] == -0.006410858113241346
+RealPowerBalance_Node7_t14: RealPowerBalance_Node7_t14 : -P[(6, 7),14] == -0.00625391161425986
+RealPowerBalance_Node7_t15: RealPowerBalance_Node7_t15 : -P[(6, 7),15] == -0.006078155902044656
+RealPowerBalance_Node7_t16: RealPowerBalance_Node7_t16 : -P[(6, 7),16] == -0.005896625973741852
+RealPowerBalance_Node7_t17: RealPowerBalance_Node7_t17 : -P[(6, 7),17] == -0.005722785073689503
+RealPowerBalance_Node7_t18: RealPowerBalance_Node7_t18 : -P[(6, 7),18] == -0.005569526186175291
+RealPowerBalance_Node7_t19: RealPowerBalance_Node7_t19 : -P[(6, 7),19] == -0.005448215821773389
+RealPowerBalance_Node7_t2: RealPowerBalance_Node7_t2 : -P[(6, 7),2] == -0.005665093000163925
+RealPowerBalance_Node7_t20: RealPowerBalance_Node7_t20 : -P[(6, 7),20] == -0.005367851015253494
+RealPowerBalance_Node7_t21: RealPowerBalance_Node7_t21 : -P[(6, 7),21] == -0.005334392056670661
+RealPowerBalance_Node7_t22: RealPowerBalance_Node7_t22 : -P[(6, 7),22] == -0.005350320443918427
+RealPowerBalance_Node7_t23: RealPowerBalance_Node7_t23 : -P[(6, 7),23] == -0.005414454841382149
+RealPowerBalance_Node7_t24: RealPowerBalance_Node7_t24 : -P[(6, 7),24] == -0.005522038694197289
+RealPowerBalance_Node7_t3: RealPowerBalance_Node7_t3 : -P[(6, 7),3] == -0.005833008075838416
+RealPowerBalance_Node7_t4: RealPowerBalance_Node7_t4 : -P[(6, 7),4] == -0.006013330428218343
+RealPowerBalance_Node7_t5: RealPowerBalance_Node7_t5 : -P[(6, 7),5] == -0.006192686373347557
+RealPowerBalance_Node7_t6: RealPowerBalance_Node7_t6 : -P[(6, 7),6] == -0.00635777390127468
+RealPowerBalance_Node7_t7: RealPowerBalance_Node7_t7 : -P[(6, 7),7] == -0.006496349225278542
+RealPowerBalance_Node7_t8: RealPowerBalance_Node7_t8 : -P[(6, 7),8] == -0.006598134847517701
+RealPowerBalance_Node7_t9: RealPowerBalance_Node7_t9 : -P[(6, 7),9] == -0.006655581794028919
+RealPowerBalance_Node8_t1: RealPowerBalance_Node8_t1 : -P[(6, 8),1] + P[(8, 9),1] == 0
+RealPowerBalance_Node8_t10: RealPowerBalance_Node8_t10 : -P[(6, 8),10] + P[(8, 9),10] == 0
+RealPowerBalance_Node8_t11: RealPowerBalance_Node8_t11 : -P[(6, 8),11] + P[(8, 9),11] == 0
+RealPowerBalance_Node8_t12: RealPowerBalance_Node8_t12 : -P[(6, 8),12] + P[(8, 9),12] == 0
+RealPowerBalance_Node8_t13: RealPowerBalance_Node8_t13 : -P[(6, 8),13] + P[(8, 9),13] == 0
+RealPowerBalance_Node8_t14: RealPowerBalance_Node8_t14 : -P[(6, 8),14] + P[(8, 9),14] == 0
+RealPowerBalance_Node8_t15: RealPowerBalance_Node8_t15 : -P[(6, 8),15] + P[(8, 9),15] == 0
+RealPowerBalance_Node8_t16: RealPowerBalance_Node8_t16 : -P[(6, 8),16] + P[(8, 9),16] == 0
+RealPowerBalance_Node8_t17: RealPowerBalance_Node8_t17 : -P[(6, 8),17] + P[(8, 9),17] == 0
+RealPowerBalance_Node8_t18: RealPowerBalance_Node8_t18 : -P[(6, 8),18] + P[(8, 9),18] == 0
+RealPowerBalance_Node8_t19: RealPowerBalance_Node8_t19 : -P[(6, 8),19] + P[(8, 9),19] == 0
+RealPowerBalance_Node8_t2: RealPowerBalance_Node8_t2 : -P[(6, 8),2] + P[(8, 9),2] == 0
+RealPowerBalance_Node8_t20: RealPowerBalance_Node8_t20 : -P[(6, 8),20] + P[(8, 9),20] == 0
+RealPowerBalance_Node8_t21: RealPowerBalance_Node8_t21 : -P[(6, 8),21] + P[(8, 9),21] == 0
+RealPowerBalance_Node8_t22: RealPowerBalance_Node8_t22 : -P[(6, 8),22] + P[(8, 9),22] == 0
+RealPowerBalance_Node8_t23: RealPowerBalance_Node8_t23 : -P[(6, 8),23] + P[(8, 9),23] == 0
+RealPowerBalance_Node8_t24: RealPowerBalance_Node8_t24 : -P[(6, 8),24] + P[(8, 9),24] == 0
+RealPowerBalance_Node8_t3: RealPowerBalance_Node8_t3 : -P[(6, 8),3] + P[(8, 9),3] == 0
+RealPowerBalance_Node8_t4: RealPowerBalance_Node8_t4 : -P[(6, 8),4] + P[(8, 9),4] == 0
+RealPowerBalance_Node8_t5: RealPowerBalance_Node8_t5 : -P[(6, 8),5] + P[(8, 9),5] == 0
+RealPowerBalance_Node8_t6: RealPowerBalance_Node8_t6 : -P[(6, 8),6] + P[(8, 9),6] == 0
+RealPowerBalance_Node8_t7: RealPowerBalance_Node8_t7 : -P[(6, 8),7] + P[(8, 9),7] == 0
+RealPowerBalance_Node8_t8: RealPowerBalance_Node8_t8 : -P[(6, 8),8] + P[(8, 9),8] == 0
+RealPowerBalance_Node8_t9: RealPowerBalance_Node8_t9 : -P[(6, 8),9] + P[(8, 9),9] == 0
+RealPowerBalance_Node9_t1: RealPowerBalance_Node9_t1 : -P[(8, 9),1] == -0.005522038694197289
+RealPowerBalance_Node9_t10: RealPowerBalance_Node9_t10 : -P[(8, 9),10] == -0.006664429487591751
+RealPowerBalance_Node9_t11: RealPowerBalance_Node9_t11 : -P[(8, 9),11] == -0.006624021735250146
+RealPowerBalance_Node9_t12: RealPowerBalance_Node9_t12 : -P[(8, 9),12] == -0.006537355395142116
+RealPowerBalance_Node9_t13: RealPowerBalance_Node9_t13 : -P[(8, 9),13] == -0.006410858113241346
+RealPowerBalance_Node9_t14: RealPowerBalance_Node9_t14 : -P[(8, 9),14] == -0.00625391161425986
+RealPowerBalance_Node9_t15: RealPowerBalance_Node9_t15 : -P[(8, 9),15] == -0.006078155902044656
+RealPowerBalance_Node9_t16: RealPowerBalance_Node9_t16 : -P[(8, 9),16] == -0.005896625973741852
+RealPowerBalance_Node9_t17: RealPowerBalance_Node9_t17 : -P[(8, 9),17] == -0.005722785073689503
+RealPowerBalance_Node9_t18: RealPowerBalance_Node9_t18 : -P[(8, 9),18] == -0.005569526186175291
+RealPowerBalance_Node9_t19: RealPowerBalance_Node9_t19 : -P[(8, 9),19] == -0.005448215821773389
+RealPowerBalance_Node9_t2: RealPowerBalance_Node9_t2 : -P[(8, 9),2] == -0.005665093000163925
+RealPowerBalance_Node9_t20: RealPowerBalance_Node9_t20 : -P[(8, 9),20] == -0.005367851015253494
+RealPowerBalance_Node9_t21: RealPowerBalance_Node9_t21 : -P[(8, 9),21] == -0.005334392056670661
+RealPowerBalance_Node9_t22: RealPowerBalance_Node9_t22 : -P[(8, 9),22] == -0.005350320443918427
+RealPowerBalance_Node9_t23: RealPowerBalance_Node9_t23 : -P[(8, 9),23] == -0.005414454841382149
+RealPowerBalance_Node9_t24: RealPowerBalance_Node9_t24 : -P[(8, 9),24] == -0.005522038694197289
+RealPowerBalance_Node9_t3: RealPowerBalance_Node9_t3 : -P[(8, 9),3] == -0.005833008075838416
+RealPowerBalance_Node9_t4: RealPowerBalance_Node9_t4 : -P[(8, 9),4] == -0.006013330428218343
+RealPowerBalance_Node9_t5: RealPowerBalance_Node9_t5 : -P[(8, 9),5] == -0.006192686373347557
+RealPowerBalance_Node9_t6: RealPowerBalance_Node9_t6 : -P[(8, 9),6] == -0.00635777390127468
+RealPowerBalance_Node9_t7: RealPowerBalance_Node9_t7 : -P[(8, 9),7] == -0.006496349225278542
+RealPowerBalance_Node9_t8: RealPowerBalance_Node9_t8 : -P[(8, 9),8] == -0.006598134847517701
+RealPowerBalance_Node9_t9: RealPowerBalance_Node9_t9 : -P[(8, 9),9] == -0.006655581794028919
+Total: 216 constraints
+
+--------------------------------------------------------------------------------
+NODAL REACTIVE POWER BALANCE (Substation)
+--------------------------------------------------------------------------------
+Total: 0 constraints
+
+--------------------------------------------------------------------------------
+NODAL REACTIVE POWER BALANCE
+--------------------------------------------------------------------------------
+Total: 0 constraints
+
+--------------------------------------------------------------------------------
+KVL CONSTRAINTS
+--------------------------------------------------------------------------------
+KVL_Branch_1_10_t1: KVL_Branch_1_10_t1 : -0.015289557064028106 P[(1, 10),1] - 0.015497578248572706 Q[(1, 10),1] + v[1,1] - v[10,1] == 0
+KVL_Branch_1_10_t10: KVL_Branch_1_10_t10 : -0.015289557064028106 P[(1, 10),10] - 0.015497578248572706 Q[(1, 10),10] + v[1,10] - v[10,10] == 0
+KVL_Branch_1_10_t11: KVL_Branch_1_10_t11 : -0.015289557064028106 P[(1, 10),11] - 0.015497578248572706 Q[(1, 10),11] + v[1,11] - v[10,11] == 0
+KVL_Branch_1_10_t12: KVL_Branch_1_10_t12 : -0.015289557064028106 P[(1, 10),12] - 0.015497578248572706 Q[(1, 10),12] + v[1,12] - v[10,12] == 0
+KVL_Branch_1_10_t13: KVL_Branch_1_10_t13 : -0.015289557064028106 P[(1, 10),13] - 0.015497578248572706 Q[(1, 10),13] + v[1,13] - v[10,13] == 0
+KVL_Branch_1_10_t14: KVL_Branch_1_10_t14 : -0.015289557064028106 P[(1, 10),14] - 0.015497578248572706 Q[(1, 10),14] + v[1,14] - v[10,14] == 0
+KVL_Branch_1_10_t15: KVL_Branch_1_10_t15 : -0.015289557064028106 P[(1, 10),15] - 0.015497578248572706 Q[(1, 10),15] + v[1,15] - v[10,15] == 0
+KVL_Branch_1_10_t16: KVL_Branch_1_10_t16 : -0.015289557064028106 P[(1, 10),16] - 0.015497578248572706 Q[(1, 10),16] + v[1,16] - v[10,16] == 0
+KVL_Branch_1_10_t17: KVL_Branch_1_10_t17 : -0.015289557064028106 P[(1, 10),17] - 0.015497578248572706 Q[(1, 10),17] + v[1,17] - v[10,17] == 0
+KVL_Branch_1_10_t18: KVL_Branch_1_10_t18 : -0.015289557064028106 P[(1, 10),18] - 0.015497578248572706 Q[(1, 10),18] + v[1,18] - v[10,18] == 0
+KVL_Branch_1_10_t19: KVL_Branch_1_10_t19 : -0.015289557064028106 P[(1, 10),19] - 0.015497578248572706 Q[(1, 10),19] + v[1,19] - v[10,19] == 0
+KVL_Branch_1_10_t2: KVL_Branch_1_10_t2 : -0.015289557064028106 P[(1, 10),2] - 0.015497578248572706 Q[(1, 10),2] + v[1,2] - v[10,2] == 0
+KVL_Branch_1_10_t20: KVL_Branch_1_10_t20 : -0.015289557064028106 P[(1, 10),20] - 0.015497578248572706 Q[(1, 10),20] + v[1,20] - v[10,20] == 0
+KVL_Branch_1_10_t21: KVL_Branch_1_10_t21 : -0.015289557064028106 P[(1, 10),21] - 0.015497578248572706 Q[(1, 10),21] + v[1,21] - v[10,21] == 0
+KVL_Branch_1_10_t22: KVL_Branch_1_10_t22 : -0.015289557064028106 P[(1, 10),22] - 0.015497578248572706 Q[(1, 10),22] + v[1,22] - v[10,22] == 0
+KVL_Branch_1_10_t23: KVL_Branch_1_10_t23 : -0.015289557064028106 P[(1, 10),23] - 0.015497578248572706 Q[(1, 10),23] + v[1,23] - v[10,23] == 0
+KVL_Branch_1_10_t24: KVL_Branch_1_10_t24 : -0.015289557064028106 P[(1, 10),24] - 0.015497578248572706 Q[(1, 10),24] + v[1,24] - v[10,24] == 0
+KVL_Branch_1_10_t3: KVL_Branch_1_10_t3 : -0.015289557064028106 P[(1, 10),3] - 0.015497578248572706 Q[(1, 10),3] + v[1,3] - v[10,3] == 0
+KVL_Branch_1_10_t4: KVL_Branch_1_10_t4 : -0.015289557064028106 P[(1, 10),4] - 0.015497578248572706 Q[(1, 10),4] + v[1,4] - v[10,4] == 0
+KVL_Branch_1_10_t5: KVL_Branch_1_10_t5 : -0.015289557064028106 P[(1, 10),5] - 0.015497578248572706 Q[(1, 10),5] + v[1,5] - v[10,5] == 0
+KVL_Branch_1_10_t6: KVL_Branch_1_10_t6 : -0.015289557064028106 P[(1, 10),6] - 0.015497578248572706 Q[(1, 10),6] + v[1,6] - v[10,6] == 0
+KVL_Branch_1_10_t7: KVL_Branch_1_10_t7 : -0.015289557064028106 P[(1, 10),7] - 0.015497578248572706 Q[(1, 10),7] + v[1,7] - v[10,7] == 0
+KVL_Branch_1_10_t8: KVL_Branch_1_10_t8 : -0.015289557064028106 P[(1, 10),8] - 0.015497578248572706 Q[(1, 10),8] + v[1,8] - v[10,8] == 0
+KVL_Branch_1_10_t9: KVL_Branch_1_10_t9 : -0.015289557064028106 P[(1, 10),9] - 0.015497578248572706 Q[(1, 10),9] + v[1,9] - v[10,9] == 0
+KVL_Branch_1_2_t1: KVL_Branch_1_2_t1 : -0.006032614351793402 P[(1, 2),1] - 0.012342590282979606 Q[(1, 2),1] + v[1,1] - v[2,1] == 0
+KVL_Branch_1_2_t10: KVL_Branch_1_2_t10 : -0.006032614351793402 P[(1, 2),10] - 0.012342590282979606 Q[(1, 2),10] + v[1,10] - v[2,10] == 0
+KVL_Branch_1_2_t11: KVL_Branch_1_2_t11 : -0.006032614351793402 P[(1, 2),11] - 0.012342590282979606 Q[(1, 2),11] + v[1,11] - v[2,11] == 0
+KVL_Branch_1_2_t12: KVL_Branch_1_2_t12 : -0.006032614351793402 P[(1, 2),12] - 0.012342590282979606 Q[(1, 2),12] + v[1,12] - v[2,12] == 0
+KVL_Branch_1_2_t13: KVL_Branch_1_2_t13 : -0.006032614351793402 P[(1, 2),13] - 0.012342590282979606 Q[(1, 2),13] + v[1,13] - v[2,13] == 0
+KVL_Branch_1_2_t14: KVL_Branch_1_2_t14 : -0.006032614351793402 P[(1, 2),14] - 0.012342590282979606 Q[(1, 2),14] + v[1,14] - v[2,14] == 0
+KVL_Branch_1_2_t15: KVL_Branch_1_2_t15 : -0.006032614351793402 P[(1, 2),15] - 0.012342590282979606 Q[(1, 2),15] + v[1,15] - v[2,15] == 0
+KVL_Branch_1_2_t16: KVL_Branch_1_2_t16 : -0.006032614351793402 P[(1, 2),16] - 0.012342590282979606 Q[(1, 2),16] + v[1,16] - v[2,16] == 0
+KVL_Branch_1_2_t17: KVL_Branch_1_2_t17 : -0.006032614351793402 P[(1, 2),17] - 0.012342590282979606 Q[(1, 2),17] + v[1,17] - v[2,17] == 0
+KVL_Branch_1_2_t18: KVL_Branch_1_2_t18 : -0.006032614351793402 P[(1, 2),18] - 0.012342590282979606 Q[(1, 2),18] + v[1,18] - v[2,18] == 0
+KVL_Branch_1_2_t19: KVL_Branch_1_2_t19 : -0.006032614351793402 P[(1, 2),19] - 0.012342590282979606 Q[(1, 2),19] + v[1,19] - v[2,19] == 0
+KVL_Branch_1_2_t2: KVL_Branch_1_2_t2 : -0.006032614351793402 P[(1, 2),2] - 0.012342590282979606 Q[(1, 2),2] + v[1,2] - v[2,2] == 0
+KVL_Branch_1_2_t20: KVL_Branch_1_2_t20 : -0.006032614351793402 P[(1, 2),20] - 0.012342590282979606 Q[(1, 2),20] + v[1,20] - v[2,20] == 0
+KVL_Branch_1_2_t21: KVL_Branch_1_2_t21 : -0.006032614351793402 P[(1, 2),21] - 0.012342590282979606 Q[(1, 2),21] + v[1,21] - v[2,21] == 0
+KVL_Branch_1_2_t22: KVL_Branch_1_2_t22 : -0.006032614351793402 P[(1, 2),22] - 0.012342590282979606 Q[(1, 2),22] + v[1,22] - v[2,22] == 0
+KVL_Branch_1_2_t23: KVL_Branch_1_2_t23 : -0.006032614351793402 P[(1, 2),23] - 0.012342590282979606 Q[(1, 2),23] + v[1,23] - v[2,23] == 0
+KVL_Branch_1_2_t24: KVL_Branch_1_2_t24 : -0.006032614351793402 P[(1, 2),24] - 0.012342590282979606 Q[(1, 2),24] + v[1,24] - v[2,24] == 0
+KVL_Branch_1_2_t3: KVL_Branch_1_2_t3 : -0.006032614351793402 P[(1, 2),3] - 0.012342590282979606 Q[(1, 2),3] + v[1,3] - v[2,3] == 0
+KVL_Branch_1_2_t4: KVL_Branch_1_2_t4 : -0.006032614351793402 P[(1, 2),4] - 0.012342590282979606 Q[(1, 2),4] + v[1,4] - v[2,4] == 0
+KVL_Branch_1_2_t5: KVL_Branch_1_2_t5 : -0.006032614351793402 P[(1, 2),5] - 0.012342590282979606 Q[(1, 2),5] + v[1,5] - v[2,5] == 0
+KVL_Branch_1_2_t6: KVL_Branch_1_2_t6 : -0.006032614351793402 P[(1, 2),6] - 0.012342590282979606 Q[(1, 2),6] + v[1,6] - v[2,6] == 0
+KVL_Branch_1_2_t7: KVL_Branch_1_2_t7 : -0.006032614351793402 P[(1, 2),7] - 0.012342590282979606 Q[(1, 2),7] + v[1,7] - v[2,7] == 0
+KVL_Branch_1_2_t8: KVL_Branch_1_2_t8 : -0.006032614351793402 P[(1, 2),8] - 0.012342590282979606 Q[(1, 2),8] + v[1,8] - v[2,8] == 0
+KVL_Branch_1_2_t9: KVL_Branch_1_2_t9 : -0.006032614351793402 P[(1, 2),9] - 0.012342590282979606 Q[(1, 2),9] + v[1,9] - v[2,9] == 0
+KVL_Branch_1_3_t1: KVL_Branch_1_3_t1 : -0.008043485802391203 P[(1, 3),1] - 0.01646834377644751 Q[(1, 3),1] + v[1,1] - v[3,1] == 0
+KVL_Branch_1_3_t10: KVL_Branch_1_3_t10 : -0.008043485802391203 P[(1, 3),10] - 0.01646834377644751 Q[(1, 3),10] + v[1,10] - v[3,10] == 0
+KVL_Branch_1_3_t11: KVL_Branch_1_3_t11 : -0.008043485802391203 P[(1, 3),11] - 0.01646834377644751 Q[(1, 3),11] + v[1,11] - v[3,11] == 0
+KVL_Branch_1_3_t12: KVL_Branch_1_3_t12 : -0.008043485802391203 P[(1, 3),12] - 0.01646834377644751 Q[(1, 3),12] + v[1,12] - v[3,12] == 0
+KVL_Branch_1_3_t13: KVL_Branch_1_3_t13 : -0.008043485802391203 P[(1, 3),13] - 0.01646834377644751 Q[(1, 3),13] + v[1,13] - v[3,13] == 0
+KVL_Branch_1_3_t14: KVL_Branch_1_3_t14 : -0.008043485802391203 P[(1, 3),14] - 0.01646834377644751 Q[(1, 3),14] + v[1,14] - v[3,14] == 0
+KVL_Branch_1_3_t15: KVL_Branch_1_3_t15 : -0.008043485802391203 P[(1, 3),15] - 0.01646834377644751 Q[(1, 3),15] + v[1,15] - v[3,15] == 0
+KVL_Branch_1_3_t16: KVL_Branch_1_3_t16 : -0.008043485802391203 P[(1, 3),16] - 0.01646834377644751 Q[(1, 3),16] + v[1,16] - v[3,16] == 0
+KVL_Branch_1_3_t17: KVL_Branch_1_3_t17 : -0.008043485802391203 P[(1, 3),17] - 0.01646834377644751 Q[(1, 3),17] + v[1,17] - v[3,17] == 0
+KVL_Branch_1_3_t18: KVL_Branch_1_3_t18 : -0.008043485802391203 P[(1, 3),18] - 0.01646834377644751 Q[(1, 3),18] + v[1,18] - v[3,18] == 0
+KVL_Branch_1_3_t19: KVL_Branch_1_3_t19 : -0.008043485802391203 P[(1, 3),19] - 0.01646834377644751 Q[(1, 3),19] + v[1,19] - v[3,19] == 0
+KVL_Branch_1_3_t2: KVL_Branch_1_3_t2 : -0.008043485802391203 P[(1, 3),2] - 0.01646834377644751 Q[(1, 3),2] + v[1,2] - v[3,2] == 0
+KVL_Branch_1_3_t20: KVL_Branch_1_3_t20 : -0.008043485802391203 P[(1, 3),20] - 0.01646834377644751 Q[(1, 3),20] + v[1,20] - v[3,20] == 0
+KVL_Branch_1_3_t21: KVL_Branch_1_3_t21 : -0.008043485802391203 P[(1, 3),21] - 0.01646834377644751 Q[(1, 3),21] + v[1,21] - v[3,21] == 0
+KVL_Branch_1_3_t22: KVL_Branch_1_3_t22 : -0.008043485802391203 P[(1, 3),22] - 0.01646834377644751 Q[(1, 3),22] + v[1,22] - v[3,22] == 0
+KVL_Branch_1_3_t23: KVL_Branch_1_3_t23 : -0.008043485802391203 P[(1, 3),23] - 0.01646834377644751 Q[(1, 3),23] + v[1,23] - v[3,23] == 0
+KVL_Branch_1_3_t24: KVL_Branch_1_3_t24 : -0.008043485802391203 P[(1, 3),24] - 0.01646834377644751 Q[(1, 3),24] + v[1,24] - v[3,24] == 0
+KVL_Branch_1_3_t3: KVL_Branch_1_3_t3 : -0.008043485802391203 P[(1, 3),3] - 0.01646834377644751 Q[(1, 3),3] + v[1,3] - v[3,3] == 0
+KVL_Branch_1_3_t4: KVL_Branch_1_3_t4 : -0.008043485802391203 P[(1, 3),4] - 0.01646834377644751 Q[(1, 3),4] + v[1,4] - v[3,4] == 0
+KVL_Branch_1_3_t5: KVL_Branch_1_3_t5 : -0.008043485802391203 P[(1, 3),5] - 0.01646834377644751 Q[(1, 3),5] + v[1,5] - v[3,5] == 0
+KVL_Branch_1_3_t6: KVL_Branch_1_3_t6 : -0.008043485802391203 P[(1, 3),6] - 0.01646834377644751 Q[(1, 3),6] + v[1,6] - v[3,6] == 0
+KVL_Branch_1_3_t7: KVL_Branch_1_3_t7 : -0.008043485802391203 P[(1, 3),7] - 0.01646834377644751 Q[(1, 3),7] + v[1,7] - v[3,7] == 0
+KVL_Branch_1_3_t8: KVL_Branch_1_3_t8 : -0.008043485802391203 P[(1, 3),8] - 0.01646834377644751 Q[(1, 3),8] + v[1,8] - v[3,8] == 0
+KVL_Branch_1_3_t9: KVL_Branch_1_3_t9 : -0.008043485802391203 P[(1, 3),9] - 0.01646834377644751 Q[(1, 3),9] + v[1,9] - v[3,9] == 0
+KVL_Branch_2_4_t1: KVL_Branch_2_4_t1 : -0.02180755417975891 P[(2, 4),1] - 0.02211958595657581 Q[(2, 4),1] + v[2,1] - v[4,1] == 0
+KVL_Branch_2_4_t10: KVL_Branch_2_4_t10 : -0.02180755417975891 P[(2, 4),10] - 0.02211958595657581 Q[(2, 4),10] + v[2,10] - v[4,10] == 0
+KVL_Branch_2_4_t11: KVL_Branch_2_4_t11 : -0.02180755417975891 P[(2, 4),11] - 0.02211958595657581 Q[(2, 4),11] + v[2,11] - v[4,11] == 0
+KVL_Branch_2_4_t12: KVL_Branch_2_4_t12 : -0.02180755417975891 P[(2, 4),12] - 0.02211958595657581 Q[(2, 4),12] + v[2,12] - v[4,12] == 0
+KVL_Branch_2_4_t13: KVL_Branch_2_4_t13 : -0.02180755417975891 P[(2, 4),13] - 0.02211958595657581 Q[(2, 4),13] + v[2,13] - v[4,13] == 0
+KVL_Branch_2_4_t14: KVL_Branch_2_4_t14 : -0.02180755417975891 P[(2, 4),14] - 0.02211958595657581 Q[(2, 4),14] + v[2,14] - v[4,14] == 0
+KVL_Branch_2_4_t15: KVL_Branch_2_4_t15 : -0.02180755417975891 P[(2, 4),15] - 0.02211958595657581 Q[(2, 4),15] + v[2,15] - v[4,15] == 0
+KVL_Branch_2_4_t16: KVL_Branch_2_4_t16 : -0.02180755417975891 P[(2, 4),16] - 0.02211958595657581 Q[(2, 4),16] + v[2,16] - v[4,16] == 0
+KVL_Branch_2_4_t17: KVL_Branch_2_4_t17 : -0.02180755417975891 P[(2, 4),17] - 0.02211958595657581 Q[(2, 4),17] + v[2,17] - v[4,17] == 0
+KVL_Branch_2_4_t18: KVL_Branch_2_4_t18 : -0.02180755417975891 P[(2, 4),18] - 0.02211958595657581 Q[(2, 4),18] + v[2,18] - v[4,18] == 0
+KVL_Branch_2_4_t19: KVL_Branch_2_4_t19 : -0.02180755417975891 P[(2, 4),19] - 0.02211958595657581 Q[(2, 4),19] + v[2,19] - v[4,19] == 0
+KVL_Branch_2_4_t2: KVL_Branch_2_4_t2 : -0.02180755417975891 P[(2, 4),2] - 0.02211958595657581 Q[(2, 4),2] + v[2,2] - v[4,2] == 0
+KVL_Branch_2_4_t20: KVL_Branch_2_4_t20 : -0.02180755417975891 P[(2, 4),20] - 0.02211958595657581 Q[(2, 4),20] + v[2,20] - v[4,20] == 0
+KVL_Branch_2_4_t21: KVL_Branch_2_4_t21 : -0.02180755417975891 P[(2, 4),21] - 0.02211958595657581 Q[(2, 4),21] + v[2,21] - v[4,21] == 0
+KVL_Branch_2_4_t22: KVL_Branch_2_4_t22 : -0.02180755417975891 P[(2, 4),22] - 0.02211958595657581 Q[(2, 4),22] + v[2,22] - v[4,22] == 0
+KVL_Branch_2_4_t23: KVL_Branch_2_4_t23 : -0.02180755417975891 P[(2, 4),23] - 0.02211958595657581 Q[(2, 4),23] + v[2,23] - v[4,23] == 0
+KVL_Branch_2_4_t24: KVL_Branch_2_4_t24 : -0.02180755417975891 P[(2, 4),24] - 0.02211958595657581 Q[(2, 4),24] + v[2,24] - v[4,24] == 0
+KVL_Branch_2_4_t3: KVL_Branch_2_4_t3 : -0.02180755417975891 P[(2, 4),3] - 0.02211958595657581 Q[(2, 4),3] + v[2,3] - v[4,3] == 0
+KVL_Branch_2_4_t4: KVL_Branch_2_4_t4 : -0.02180755417975891 P[(2, 4),4] - 0.02211958595657581 Q[(2, 4),4] + v[2,4] - v[4,4] == 0
+KVL_Branch_2_4_t5: KVL_Branch_2_4_t5 : -0.02180755417975891 P[(2, 4),5] - 0.02211958595657581 Q[(2, 4),5] + v[2,5] - v[4,5] == 0
+KVL_Branch_2_4_t6: KVL_Branch_2_4_t6 : -0.02180755417975891 P[(2, 4),6] - 0.02211958595657581 Q[(2, 4),6] + v[2,6] - v[4,6] == 0
+KVL_Branch_2_4_t7: KVL_Branch_2_4_t7 : -0.02180755417975891 P[(2, 4),7] - 0.02211958595657581 Q[(2, 4),7] + v[2,7] - v[4,7] == 0
+KVL_Branch_2_4_t8: KVL_Branch_2_4_t8 : -0.02180755417975891 P[(2, 4),8] - 0.02211958595657581 Q[(2, 4),8] + v[2,8] - v[4,8] == 0
+KVL_Branch_2_4_t9: KVL_Branch_2_4_t9 : -0.02180755417975891 P[(2, 4),9] - 0.02211958595657581 Q[(2, 4),9] + v[2,9] - v[4,9] == 0
+KVL_Branch_2_5_t1: KVL_Branch_2_5_t1 : -0.006032614351793402 P[(2, 5),1] - 0.012342590282979606 Q[(2, 5),1] + v[2,1] - v[5,1] == 0
+KVL_Branch_2_5_t10: KVL_Branch_2_5_t10 : -0.006032614351793402 P[(2, 5),10] - 0.012342590282979606 Q[(2, 5),10] + v[2,10] - v[5,10] == 0
+KVL_Branch_2_5_t11: KVL_Branch_2_5_t11 : -0.006032614351793402 P[(2, 5),11] - 0.012342590282979606 Q[(2, 5),11] + v[2,11] - v[5,11] == 0
+KVL_Branch_2_5_t12: KVL_Branch_2_5_t12 : -0.006032614351793402 P[(2, 5),12] - 0.012342590282979606 Q[(2, 5),12] + v[2,12] - v[5,12] == 0
+KVL_Branch_2_5_t13: KVL_Branch_2_5_t13 : -0.006032614351793402 P[(2, 5),13] - 0.012342590282979606 Q[(2, 5),13] + v[2,13] - v[5,13] == 0
+KVL_Branch_2_5_t14: KVL_Branch_2_5_t14 : -0.006032614351793402 P[(2, 5),14] - 0.012342590282979606 Q[(2, 5),14] + v[2,14] - v[5,14] == 0
+KVL_Branch_2_5_t15: KVL_Branch_2_5_t15 : -0.006032614351793402 P[(2, 5),15] - 0.012342590282979606 Q[(2, 5),15] + v[2,15] - v[5,15] == 0
+KVL_Branch_2_5_t16: KVL_Branch_2_5_t16 : -0.006032614351793402 P[(2, 5),16] - 0.012342590282979606 Q[(2, 5),16] + v[2,16] - v[5,16] == 0
+KVL_Branch_2_5_t17: KVL_Branch_2_5_t17 : -0.006032614351793402 P[(2, 5),17] - 0.012342590282979606 Q[(2, 5),17] + v[2,17] - v[5,17] == 0
+KVL_Branch_2_5_t18: KVL_Branch_2_5_t18 : -0.006032614351793402 P[(2, 5),18] - 0.012342590282979606 Q[(2, 5),18] + v[2,18] - v[5,18] == 0
+KVL_Branch_2_5_t19: KVL_Branch_2_5_t19 : -0.006032614351793402 P[(2, 5),19] - 0.012342590282979606 Q[(2, 5),19] + v[2,19] - v[5,19] == 0
+KVL_Branch_2_5_t2: KVL_Branch_2_5_t2 : -0.006032614351793402 P[(2, 5),2] - 0.012342590282979606 Q[(2, 5),2] + v[2,2] - v[5,2] == 0
+KVL_Branch_2_5_t20: KVL_Branch_2_5_t20 : -0.006032614351793402 P[(2, 5),20] - 0.012342590282979606 Q[(2, 5),20] + v[2,20] - v[5,20] == 0
+KVL_Branch_2_5_t21: KVL_Branch_2_5_t21 : -0.006032614351793402 P[(2, 5),21] - 0.012342590282979606 Q[(2, 5),21] + v[2,21] - v[5,21] == 0
+KVL_Branch_2_5_t22: KVL_Branch_2_5_t22 : -0.006032614351793402 P[(2, 5),22] - 0.012342590282979606 Q[(2, 5),22] + v[2,22] - v[5,22] == 0
+KVL_Branch_2_5_t23: KVL_Branch_2_5_t23 : -0.006032614351793402 P[(2, 5),23] - 0.012342590282979606 Q[(2, 5),23] + v[2,23] - v[5,23] == 0
+KVL_Branch_2_5_t24: KVL_Branch_2_5_t24 : -0.006032614351793402 P[(2, 5),24] - 0.012342590282979606 Q[(2, 5),24] + v[2,24] - v[5,24] == 0
+KVL_Branch_2_5_t3: KVL_Branch_2_5_t3 : -0.006032614351793402 P[(2, 5),3] - 0.012342590282979606 Q[(2, 5),3] + v[2,3] - v[5,3] == 0
+KVL_Branch_2_5_t4: KVL_Branch_2_5_t4 : -0.006032614351793402 P[(2, 5),4] - 0.012342590282979606 Q[(2, 5),4] + v[2,4] - v[5,4] == 0
+KVL_Branch_2_5_t5: KVL_Branch_2_5_t5 : -0.006032614351793402 P[(2, 5),5] - 0.012342590282979606 Q[(2, 5),5] + v[2,5] - v[5,5] == 0
+KVL_Branch_2_5_t6: KVL_Branch_2_5_t6 : -0.006032614351793402 P[(2, 5),6] - 0.012342590282979606 Q[(2, 5),6] + v[2,6] - v[5,6] == 0
+KVL_Branch_2_5_t7: KVL_Branch_2_5_t7 : -0.006032614351793402 P[(2, 5),7] - 0.012342590282979606 Q[(2, 5),7] + v[2,7] - v[5,7] == 0
+KVL_Branch_2_5_t8: KVL_Branch_2_5_t8 : -0.006032614351793402 P[(2, 5),8] - 0.012342590282979606 Q[(2, 5),8] + v[2,8] - v[5,8] == 0
+KVL_Branch_2_5_t9: KVL_Branch_2_5_t9 : -0.006032614351793402 P[(2, 5),9] - 0.012342590282979606 Q[(2, 5),9] + v[2,9] - v[5,9] == 0
+KVL_Branch_2_6_t1: KVL_Branch_2_6_t1 : -0.017439109304322305 P[(2, 6),1] - 0.017681800686291008 Q[(2, 6),1] + v[2,1] - v[6,1] == 0
+KVL_Branch_2_6_t10: KVL_Branch_2_6_t10 : -0.017439109304322305 P[(2, 6),10] - 0.017681800686291008 Q[(2, 6),10] + v[2,10] - v[6,10] == 0
+KVL_Branch_2_6_t11: KVL_Branch_2_6_t11 : -0.017439109304322305 P[(2, 6),11] - 0.017681800686291008 Q[(2, 6),11] + v[2,11] - v[6,11] == 0
+KVL_Branch_2_6_t12: KVL_Branch_2_6_t12 : -0.017439109304322305 P[(2, 6),12] - 0.017681800686291008 Q[(2, 6),12] + v[2,12] - v[6,12] == 0
+KVL_Branch_2_6_t13: KVL_Branch_2_6_t13 : -0.017439109304322305 P[(2, 6),13] - 0.017681800686291008 Q[(2, 6),13] + v[2,13] - v[6,13] == 0
+KVL_Branch_2_6_t14: KVL_Branch_2_6_t14 : -0.017439109304322305 P[(2, 6),14] - 0.017681800686291008 Q[(2, 6),14] + v[2,14] - v[6,14] == 0
+KVL_Branch_2_6_t15: KVL_Branch_2_6_t15 : -0.017439109304322305 P[(2, 6),15] - 0.017681800686291008 Q[(2, 6),15] + v[2,15] - v[6,15] == 0
+KVL_Branch_2_6_t16: KVL_Branch_2_6_t16 : -0.017439109304322305 P[(2, 6),16] - 0.017681800686291008 Q[(2, 6),16] + v[2,16] - v[6,16] == 0
+KVL_Branch_2_6_t17: KVL_Branch_2_6_t17 : -0.017439109304322305 P[(2, 6),17] - 0.017681800686291008 Q[(2, 6),17] + v[2,17] - v[6,17] == 0
+KVL_Branch_2_6_t18: KVL_Branch_2_6_t18 : -0.017439109304322305 P[(2, 6),18] - 0.017681800686291008 Q[(2, 6),18] + v[2,18] - v[6,18] == 0
+KVL_Branch_2_6_t19: KVL_Branch_2_6_t19 : -0.017439109304322305 P[(2, 6),19] - 0.017681800686291008 Q[(2, 6),19] + v[2,19] - v[6,19] == 0
+KVL_Branch_2_6_t2: KVL_Branch_2_6_t2 : -0.017439109304322305 P[(2, 6),2] - 0.017681800686291008 Q[(2, 6),2] + v[2,2] - v[6,2] == 0
+KVL_Branch_2_6_t20: KVL_Branch_2_6_t20 : -0.017439109304322305 P[(2, 6),20] - 0.017681800686291008 Q[(2, 6),20] + v[2,20] - v[6,20] == 0
+KVL_Branch_2_6_t21: KVL_Branch_2_6_t21 : -0.017439109304322305 P[(2, 6),21] - 0.017681800686291008 Q[(2, 6),21] + v[2,21] - v[6,21] == 0
+KVL_Branch_2_6_t22: KVL_Branch_2_6_t22 : -0.017439109304322305 P[(2, 6),22] - 0.017681800686291008 Q[(2, 6),22] + v[2,22] - v[6,22] == 0
+KVL_Branch_2_6_t23: KVL_Branch_2_6_t23 : -0.017439109304322305 P[(2, 6),23] - 0.017681800686291008 Q[(2, 6),23] + v[2,23] - v[6,23] == 0
+KVL_Branch_2_6_t24: KVL_Branch_2_6_t24 : -0.017439109304322305 P[(2, 6),24] - 0.017681800686291008 Q[(2, 6),24] + v[2,24] - v[6,24] == 0
+KVL_Branch_2_6_t3: KVL_Branch_2_6_t3 : -0.017439109304322305 P[(2, 6),3] - 0.017681800686291008 Q[(2, 6),3] + v[2,3] - v[6,3] == 0
+KVL_Branch_2_6_t4: KVL_Branch_2_6_t4 : -0.017439109304322305 P[(2, 6),4] - 0.017681800686291008 Q[(2, 6),4] + v[2,4] - v[6,4] == 0
+KVL_Branch_2_6_t5: KVL_Branch_2_6_t5 : -0.017439109304322305 P[(2, 6),5] - 0.017681800686291008 Q[(2, 6),5] + v[2,5] - v[6,5] == 0
+KVL_Branch_2_6_t6: KVL_Branch_2_6_t6 : -0.017439109304322305 P[(2, 6),6] - 0.017681800686291008 Q[(2, 6),6] + v[2,6] - v[6,6] == 0
+KVL_Branch_2_6_t7: KVL_Branch_2_6_t7 : -0.017439109304322305 P[(2, 6),7] - 0.017681800686291008 Q[(2, 6),7] + v[2,7] - v[6,7] == 0
+KVL_Branch_2_6_t8: KVL_Branch_2_6_t8 : -0.017439109304322305 P[(2, 6),8] - 0.017681800686291008 Q[(2, 6),8] + v[2,8] - v[6,8] == 0
+KVL_Branch_2_6_t9: KVL_Branch_2_6_t9 : -0.017439109304322305 P[(2, 6),9] - 0.017681800686291008 Q[(2, 6),9] + v[2,9] - v[6,9] == 0
+KVL_Branch_6_7_t1: KVL_Branch_6_7_t1 : -0.028360221492913812 P[(6, 7),1] - 0.028741593664578912 Q[(6, 7),1] + v[6,1] - v[7,1] == 0
+KVL_Branch_6_7_t10: KVL_Branch_6_7_t10 : -0.028360221492913812 P[(6, 7),10] - 0.028741593664578912 Q[(6, 7),10] + v[6,10] - v[7,10] == 0
+KVL_Branch_6_7_t11: KVL_Branch_6_7_t11 : -0.028360221492913812 P[(6, 7),11] - 0.028741593664578912 Q[(6, 7),11] + v[6,11] - v[7,11] == 0
+KVL_Branch_6_7_t12: KVL_Branch_6_7_t12 : -0.028360221492913812 P[(6, 7),12] - 0.028741593664578912 Q[(6, 7),12] + v[6,12] - v[7,12] == 0
+KVL_Branch_6_7_t13: KVL_Branch_6_7_t13 : -0.028360221492913812 P[(6, 7),13] - 0.028741593664578912 Q[(6, 7),13] + v[6,13] - v[7,13] == 0
+KVL_Branch_6_7_t14: KVL_Branch_6_7_t14 : -0.028360221492913812 P[(6, 7),14] - 0.028741593664578912 Q[(6, 7),14] + v[6,14] - v[7,14] == 0
+KVL_Branch_6_7_t15: KVL_Branch_6_7_t15 : -0.028360221492913812 P[(6, 7),15] - 0.028741593664578912 Q[(6, 7),15] + v[6,15] - v[7,15] == 0
+KVL_Branch_6_7_t16: KVL_Branch_6_7_t16 : -0.028360221492913812 P[(6, 7),16] - 0.028741593664578912 Q[(6, 7),16] + v[6,16] - v[7,16] == 0
+KVL_Branch_6_7_t17: KVL_Branch_6_7_t17 : -0.028360221492913812 P[(6, 7),17] - 0.028741593664578912 Q[(6, 7),17] + v[6,17] - v[7,17] == 0
+KVL_Branch_6_7_t18: KVL_Branch_6_7_t18 : -0.028360221492913812 P[(6, 7),18] - 0.028741593664578912 Q[(6, 7),18] + v[6,18] - v[7,18] == 0
+KVL_Branch_6_7_t19: KVL_Branch_6_7_t19 : -0.028360221492913812 P[(6, 7),19] - 0.028741593664578912 Q[(6, 7),19] + v[6,19] - v[7,19] == 0
+KVL_Branch_6_7_t2: KVL_Branch_6_7_t2 : -0.028360221492913812 P[(6, 7),2] - 0.028741593664578912 Q[(6, 7),2] + v[6,2] - v[7,2] == 0
+KVL_Branch_6_7_t20: KVL_Branch_6_7_t20 : -0.028360221492913812 P[(6, 7),20] - 0.028741593664578912 Q[(6, 7),20] + v[6,20] - v[7,20] == 0
+KVL_Branch_6_7_t21: KVL_Branch_6_7_t21 : -0.028360221492913812 P[(6, 7),21] - 0.028741593664578912 Q[(6, 7),21] + v[6,21] - v[7,21] == 0
+KVL_Branch_6_7_t22: KVL_Branch_6_7_t22 : -0.028360221492913812 P[(6, 7),22] - 0.028741593664578912 Q[(6, 7),22] + v[6,22] - v[7,22] == 0
+KVL_Branch_6_7_t23: KVL_Branch_6_7_t23 : -0.028360221492913812 P[(6, 7),23] - 0.028741593664578912 Q[(6, 7),23] + v[6,23] - v[7,23] == 0
+KVL_Branch_6_7_t24: KVL_Branch_6_7_t24 : -0.028360221492913812 P[(6, 7),24] - 0.028741593664578912 Q[(6, 7),24] + v[6,24] - v[7,24] == 0
+KVL_Branch_6_7_t3: KVL_Branch_6_7_t3 : -0.028360221492913812 P[(6, 7),3] - 0.028741593664578912 Q[(6, 7),3] + v[6,3] - v[7,3] == 0
+KVL_Branch_6_7_t4: KVL_Branch_6_7_t4 : -0.028360221492913812 P[(6, 7),4] - 0.028741593664578912 Q[(6, 7),4] + v[6,4] - v[7,4] == 0
+KVL_Branch_6_7_t5: KVL_Branch_6_7_t5 : -0.028360221492913812 P[(6, 7),5] - 0.028741593664578912 Q[(6, 7),5] + v[6,5] - v[7,5] == 0
+KVL_Branch_6_7_t6: KVL_Branch_6_7_t6 : -0.028360221492913812 P[(6, 7),6] - 0.028741593664578912 Q[(6, 7),6] + v[6,6] - v[7,6] == 0
+KVL_Branch_6_7_t7: KVL_Branch_6_7_t7 : -0.028360221492913812 P[(6, 7),7] - 0.028741593664578912 Q[(6, 7),7] + v[6,7] - v[7,7] == 0
+KVL_Branch_6_7_t8: KVL_Branch_6_7_t8 : -0.028360221492913812 P[(6, 7),8] - 0.028741593664578912 Q[(6, 7),8] + v[6,8] - v[7,8] == 0
+KVL_Branch_6_7_t9: KVL_Branch_6_7_t9 : -0.028360221492913812 P[(6, 7),9] - 0.028741593664578912 Q[(6, 7),9] + v[6,9] - v[7,9] == 0
+KVL_Branch_6_8_t1: KVL_Branch_6_8_t1 : -0.02180755417975891 P[(6, 8),1] - 0.02211958595657581 Q[(6, 8),1] + v[6,1] - v[8,1] == 0
+KVL_Branch_6_8_t10: KVL_Branch_6_8_t10 : -0.02180755417975891 P[(6, 8),10] - 0.02211958595657581 Q[(6, 8),10] + v[6,10] - v[8,10] == 0
+KVL_Branch_6_8_t11: KVL_Branch_6_8_t11 : -0.02180755417975891 P[(6, 8),11] - 0.02211958595657581 Q[(6, 8),11] + v[6,11] - v[8,11] == 0
+KVL_Branch_6_8_t12: KVL_Branch_6_8_t12 : -0.02180755417975891 P[(6, 8),12] - 0.02211958595657581 Q[(6, 8),12] + v[6,12] - v[8,12] == 0
+KVL_Branch_6_8_t13: KVL_Branch_6_8_t13 : -0.02180755417975891 P[(6, 8),13] - 0.02211958595657581 Q[(6, 8),13] + v[6,13] - v[8,13] == 0
+KVL_Branch_6_8_t14: KVL_Branch_6_8_t14 : -0.02180755417975891 P[(6, 8),14] - 0.02211958595657581 Q[(6, 8),14] + v[6,14] - v[8,14] == 0
+KVL_Branch_6_8_t15: KVL_Branch_6_8_t15 : -0.02180755417975891 P[(6, 8),15] - 0.02211958595657581 Q[(6, 8),15] + v[6,15] - v[8,15] == 0
+KVL_Branch_6_8_t16: KVL_Branch_6_8_t16 : -0.02180755417975891 P[(6, 8),16] - 0.02211958595657581 Q[(6, 8),16] + v[6,16] - v[8,16] == 0
+KVL_Branch_6_8_t17: KVL_Branch_6_8_t17 : -0.02180755417975891 P[(6, 8),17] - 0.02211958595657581 Q[(6, 8),17] + v[6,17] - v[8,17] == 0
+KVL_Branch_6_8_t18: KVL_Branch_6_8_t18 : -0.02180755417975891 P[(6, 8),18] - 0.02211958595657581 Q[(6, 8),18] + v[6,18] - v[8,18] == 0
+KVL_Branch_6_8_t19: KVL_Branch_6_8_t19 : -0.02180755417975891 P[(6, 8),19] - 0.02211958595657581 Q[(6, 8),19] + v[6,19] - v[8,19] == 0
+KVL_Branch_6_8_t2: KVL_Branch_6_8_t2 : -0.02180755417975891 P[(6, 8),2] - 0.02211958595657581 Q[(6, 8),2] + v[6,2] - v[8,2] == 0
+KVL_Branch_6_8_t20: KVL_Branch_6_8_t20 : -0.02180755417975891 P[(6, 8),20] - 0.02211958595657581 Q[(6, 8),20] + v[6,20] - v[8,20] == 0
+KVL_Branch_6_8_t21: KVL_Branch_6_8_t21 : -0.02180755417975891 P[(6, 8),21] - 0.02211958595657581 Q[(6, 8),21] + v[6,21] - v[8,21] == 0
+KVL_Branch_6_8_t22: KVL_Branch_6_8_t22 : -0.02180755417975891 P[(6, 8),22] - 0.02211958595657581 Q[(6, 8),22] + v[6,22] - v[8,22] == 0
+KVL_Branch_6_8_t23: KVL_Branch_6_8_t23 : -0.02180755417975891 P[(6, 8),23] - 0.02211958595657581 Q[(6, 8),23] + v[6,23] - v[8,23] == 0
+KVL_Branch_6_8_t24: KVL_Branch_6_8_t24 : -0.02180755417975891 P[(6, 8),24] - 0.02211958595657581 Q[(6, 8),24] + v[6,24] - v[8,24] == 0
+KVL_Branch_6_8_t3: KVL_Branch_6_8_t3 : -0.02180755417975891 P[(6, 8),3] - 0.02211958595657581 Q[(6, 8),3] + v[6,3] - v[8,3] == 0
+KVL_Branch_6_8_t4: KVL_Branch_6_8_t4 : -0.02180755417975891 P[(6, 8),4] - 0.02211958595657581 Q[(6, 8),4] + v[6,4] - v[8,4] == 0
+KVL_Branch_6_8_t5: KVL_Branch_6_8_t5 : -0.02180755417975891 P[(6, 8),5] - 0.02211958595657581 Q[(6, 8),5] + v[6,5] - v[8,5] == 0
+KVL_Branch_6_8_t6: KVL_Branch_6_8_t6 : -0.02180755417975891 P[(6, 8),6] - 0.02211958595657581 Q[(6, 8),6] + v[6,6] - v[8,6] == 0
+KVL_Branch_6_8_t7: KVL_Branch_6_8_t7 : -0.02180755417975891 P[(6, 8),7] - 0.02211958595657581 Q[(6, 8),7] + v[6,7] - v[8,7] == 0
+KVL_Branch_6_8_t8: KVL_Branch_6_8_t8 : -0.02180755417975891 P[(6, 8),8] - 0.02211958595657581 Q[(6, 8),8] + v[6,8] - v[8,8] == 0
+KVL_Branch_6_8_t9: KVL_Branch_6_8_t9 : -0.02180755417975891 P[(6, 8),9] - 0.02211958595657581 Q[(6, 8),9] + v[6,9] - v[8,9] == 0
+KVL_Branch_8_9_t1: KVL_Branch_8_9_t1 : -0.004021742901195602 P[(8, 9),1] - 0.008251506986935804 Q[(8, 9),1] + v[8,1] - v[9,1] == 0
+KVL_Branch_8_9_t10: KVL_Branch_8_9_t10 : -0.004021742901195602 P[(8, 9),10] - 0.008251506986935804 Q[(8, 9),10] + v[8,10] - v[9,10] == 0
+KVL_Branch_8_9_t11: KVL_Branch_8_9_t11 : -0.004021742901195602 P[(8, 9),11] - 0.008251506986935804 Q[(8, 9),11] + v[8,11] - v[9,11] == 0
+KVL_Branch_8_9_t12: KVL_Branch_8_9_t12 : -0.004021742901195602 P[(8, 9),12] - 0.008251506986935804 Q[(8, 9),12] + v[8,12] - v[9,12] == 0
+KVL_Branch_8_9_t13: KVL_Branch_8_9_t13 : -0.004021742901195602 P[(8, 9),13] - 0.008251506986935804 Q[(8, 9),13] + v[8,13] - v[9,13] == 0
+KVL_Branch_8_9_t14: KVL_Branch_8_9_t14 : -0.004021742901195602 P[(8, 9),14] - 0.008251506986935804 Q[(8, 9),14] + v[8,14] - v[9,14] == 0
+KVL_Branch_8_9_t15: KVL_Branch_8_9_t15 : -0.004021742901195602 P[(8, 9),15] - 0.008251506986935804 Q[(8, 9),15] + v[8,15] - v[9,15] == 0
+KVL_Branch_8_9_t16: KVL_Branch_8_9_t16 : -0.004021742901195602 P[(8, 9),16] - 0.008251506986935804 Q[(8, 9),16] + v[8,16] - v[9,16] == 0
+KVL_Branch_8_9_t17: KVL_Branch_8_9_t17 : -0.004021742901195602 P[(8, 9),17] - 0.008251506986935804 Q[(8, 9),17] + v[8,17] - v[9,17] == 0
+KVL_Branch_8_9_t18: KVL_Branch_8_9_t18 : -0.004021742901195602 P[(8, 9),18] - 0.008251506986935804 Q[(8, 9),18] + v[8,18] - v[9,18] == 0
+KVL_Branch_8_9_t19: KVL_Branch_8_9_t19 : -0.004021742901195602 P[(8, 9),19] - 0.008251506986935804 Q[(8, 9),19] + v[8,19] - v[9,19] == 0
+KVL_Branch_8_9_t2: KVL_Branch_8_9_t2 : -0.004021742901195602 P[(8, 9),2] - 0.008251506986935804 Q[(8, 9),2] + v[8,2] - v[9,2] == 0
+KVL_Branch_8_9_t20: KVL_Branch_8_9_t20 : -0.004021742901195602 P[(8, 9),20] - 0.008251506986935804 Q[(8, 9),20] + v[8,20] - v[9,20] == 0
+KVL_Branch_8_9_t21: KVL_Branch_8_9_t21 : -0.004021742901195602 P[(8, 9),21] - 0.008251506986935804 Q[(8, 9),21] + v[8,21] - v[9,21] == 0
+KVL_Branch_8_9_t22: KVL_Branch_8_9_t22 : -0.004021742901195602 P[(8, 9),22] - 0.008251506986935804 Q[(8, 9),22] + v[8,22] - v[9,22] == 0
+KVL_Branch_8_9_t23: KVL_Branch_8_9_t23 : -0.004021742901195602 P[(8, 9),23] - 0.008251506986935804 Q[(8, 9),23] + v[8,23] - v[9,23] == 0
+KVL_Branch_8_9_t24: KVL_Branch_8_9_t24 : -0.004021742901195602 P[(8, 9),24] - 0.008251506986935804 Q[(8, 9),24] + v[8,24] - v[9,24] == 0
+KVL_Branch_8_9_t3: KVL_Branch_8_9_t3 : -0.004021742901195602 P[(8, 9),3] - 0.008251506986935804 Q[(8, 9),3] + v[8,3] - v[9,3] == 0
+KVL_Branch_8_9_t4: KVL_Branch_8_9_t4 : -0.004021742901195602 P[(8, 9),4] - 0.008251506986935804 Q[(8, 9),4] + v[8,4] - v[9,4] == 0
+KVL_Branch_8_9_t5: KVL_Branch_8_9_t5 : -0.004021742901195602 P[(8, 9),5] - 0.008251506986935804 Q[(8, 9),5] + v[8,5] - v[9,5] == 0
+KVL_Branch_8_9_t6: KVL_Branch_8_9_t6 : -0.004021742901195602 P[(8, 9),6] - 0.008251506986935804 Q[(8, 9),6] + v[8,6] - v[9,6] == 0
+KVL_Branch_8_9_t7: KVL_Branch_8_9_t7 : -0.004021742901195602 P[(8, 9),7] - 0.008251506986935804 Q[(8, 9),7] + v[8,7] - v[9,7] == 0
+KVL_Branch_8_9_t8: KVL_Branch_8_9_t8 : -0.004021742901195602 P[(8, 9),8] - 0.008251506986935804 Q[(8, 9),8] + v[8,8] - v[9,8] == 0
+KVL_Branch_8_9_t9: KVL_Branch_8_9_t9 : -0.004021742901195602 P[(8, 9),9] - 0.008251506986935804 Q[(8, 9),9] + v[8,9] - v[9,9] == 0
+Total: 216 constraints
+
+--------------------------------------------------------------------------------
+FIXED SUBSTATION VOLTAGE
+--------------------------------------------------------------------------------
+FixedSubstationVoltage_t1: FixedSubstationVoltage_t1 : v[1,1] == 1
+FixedSubstationVoltage_t10: FixedSubstationVoltage_t10 : v[1,10] == 1
+FixedSubstationVoltage_t11: FixedSubstationVoltage_t11 : v[1,11] == 1
+FixedSubstationVoltage_t12: FixedSubstationVoltage_t12 : v[1,12] == 1
+FixedSubstationVoltage_t13: FixedSubstationVoltage_t13 : v[1,13] == 1
+FixedSubstationVoltage_t14: FixedSubstationVoltage_t14 : v[1,14] == 1
+FixedSubstationVoltage_t15: FixedSubstationVoltage_t15 : v[1,15] == 1
+FixedSubstationVoltage_t16: FixedSubstationVoltage_t16 : v[1,16] == 1
+FixedSubstationVoltage_t17: FixedSubstationVoltage_t17 : v[1,17] == 1
+FixedSubstationVoltage_t18: FixedSubstationVoltage_t18 : v[1,18] == 1
+FixedSubstationVoltage_t19: FixedSubstationVoltage_t19 : v[1,19] == 1
+FixedSubstationVoltage_t2: FixedSubstationVoltage_t2 : v[1,2] == 1
+FixedSubstationVoltage_t20: FixedSubstationVoltage_t20 : v[1,20] == 1
+FixedSubstationVoltage_t21: FixedSubstationVoltage_t21 : v[1,21] == 1
+FixedSubstationVoltage_t22: FixedSubstationVoltage_t22 : v[1,22] == 1
+FixedSubstationVoltage_t23: FixedSubstationVoltage_t23 : v[1,23] == 1
+FixedSubstationVoltage_t24: FixedSubstationVoltage_t24 : v[1,24] == 1
+FixedSubstationVoltage_t3: FixedSubstationVoltage_t3 : v[1,3] == 1
+FixedSubstationVoltage_t4: FixedSubstationVoltage_t4 : v[1,4] == 1
+FixedSubstationVoltage_t5: FixedSubstationVoltage_t5 : v[1,5] == 1
+FixedSubstationVoltage_t6: FixedSubstationVoltage_t6 : v[1,6] == 1
+FixedSubstationVoltage_t7: FixedSubstationVoltage_t7 : v[1,7] == 1
+FixedSubstationVoltage_t8: FixedSubstationVoltage_t8 : v[1,8] == 1
+FixedSubstationVoltage_t9: FixedSubstationVoltage_t9 : v[1,9] == 1
+Total: 24 constraints
+
+--------------------------------------------------------------------------------
+BATTERY SOC TRAJECTORY
+--------------------------------------------------------------------------------
+BatterySOCLimits_5_t1: BatterySOCLimits_5_t1 : B[5,1] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t10: BatterySOCLimits_5_t10 : B[5,10] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t11: BatterySOCLimits_5_t11 : B[5,11] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t12: BatterySOCLimits_5_t12 : B[5,12] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t13: BatterySOCLimits_5_t13 : B[5,13] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t14: BatterySOCLimits_5_t14 : B[5,14] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t15: BatterySOCLimits_5_t15 : B[5,15] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t16: BatterySOCLimits_5_t16 : B[5,16] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t17: BatterySOCLimits_5_t17 : B[5,17] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t18: BatterySOCLimits_5_t18 : B[5,18] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t19: BatterySOCLimits_5_t19 : B[5,19] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t2: BatterySOCLimits_5_t2 : B[5,2] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t20: BatterySOCLimits_5_t20 : B[5,20] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t21: BatterySOCLimits_5_t21 : B[5,21] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t22: BatterySOCLimits_5_t22 : B[5,22] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t23: BatterySOCLimits_5_t23 : B[5,23] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t24: BatterySOCLimits_5_t24 : B[5,24] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t3: BatterySOCLimits_5_t3 : B[5,3] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t4: BatterySOCLimits_5_t4 : B[5,4] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t5: BatterySOCLimits_5_t5 : B[5,5] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t6: BatterySOCLimits_5_t6 : B[5,6] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t7: BatterySOCLimits_5_t7 : B[5,7] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t8: BatterySOCLimits_5_t8 : B[5,8] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t9: BatterySOCLimits_5_t9 : B[5,9] in [0.0055986, 0.0177289]
+BatterySOC_5_t10: BatterySOC_5_t10 : P_B[5,10] - B[5,9] + B[5,10] == 0
+BatterySOC_5_t11: BatterySOC_5_t11 : P_B[5,11] - B[5,10] + B[5,11] == 0
+BatterySOC_5_t12: BatterySOC_5_t12 : P_B[5,12] - B[5,11] + B[5,12] == 0
+BatterySOC_5_t13: BatterySOC_5_t13 : P_B[5,13] - B[5,12] + B[5,13] == 0
+BatterySOC_5_t14: BatterySOC_5_t14 : P_B[5,14] - B[5,13] + B[5,14] == 0
+BatterySOC_5_t15: BatterySOC_5_t15 : P_B[5,15] - B[5,14] + B[5,15] == 0
+BatterySOC_5_t16: BatterySOC_5_t16 : P_B[5,16] - B[5,15] + B[5,16] == 0
+BatterySOC_5_t17: BatterySOC_5_t17 : P_B[5,17] - B[5,16] + B[5,17] == 0
+BatterySOC_5_t18: BatterySOC_5_t18 : P_B[5,18] - B[5,17] + B[5,18] == 0
+BatterySOC_5_t19: BatterySOC_5_t19 : P_B[5,19] - B[5,18] + B[5,19] == 0
+BatterySOC_5_t2: BatterySOC_5_t2 : P_B[5,2] - B[5,1] + B[5,2] == 0
+BatterySOC_5_t20: BatterySOC_5_t20 : P_B[5,20] - B[5,19] + B[5,20] == 0
+BatterySOC_5_t21: BatterySOC_5_t21 : P_B[5,21] - B[5,20] + B[5,21] == 0
+BatterySOC_5_t22: BatterySOC_5_t22 : P_B[5,22] - B[5,21] + B[5,22] == 0
+BatterySOC_5_t23: BatterySOC_5_t23 : P_B[5,23] - B[5,22] + B[5,23] == 0
+BatterySOC_5_t24: BatterySOC_5_t24 : P_B[5,24] - B[5,23] + B[5,24] == 0
+BatterySOC_5_t3: BatterySOC_5_t3 : P_B[5,3] - B[5,2] + B[5,3] == 0
+BatterySOC_5_t4: BatterySOC_5_t4 : P_B[5,4] - B[5,3] + B[5,4] == 0
+BatterySOC_5_t5: BatterySOC_5_t5 : P_B[5,5] - B[5,4] + B[5,5] == 0
+BatterySOC_5_t6: BatterySOC_5_t6 : P_B[5,6] - B[5,5] + B[5,6] == 0
+BatterySOC_5_t7: BatterySOC_5_t7 : P_B[5,7] - B[5,6] + B[5,7] == 0
+BatterySOC_5_t8: BatterySOC_5_t8 : P_B[5,8] - B[5,7] + B[5,8] == 0
+BatterySOC_5_t9: BatterySOC_5_t9 : P_B[5,9] - B[5,8] + B[5,9] == 0
+BatterySOC_Init_5_t1: BatterySOC_Init_5_t1 : P_B[5,1] + B[5,1] == 0.01166375
+Total: 48 constraints
+
+--------------------------------------------------------------------------------
+VOLTAGE LIMITS
+--------------------------------------------------------------------------------
+VoltageLimits_Node10_t1: VoltageLimits_Node10_t1 : v[10,1] in [0.9025, 1.1025]
+VoltageLimits_Node10_t10: VoltageLimits_Node10_t10 : v[10,10] in [0.9025, 1.1025]
+VoltageLimits_Node10_t11: VoltageLimits_Node10_t11 : v[10,11] in [0.9025, 1.1025]
+VoltageLimits_Node10_t12: VoltageLimits_Node10_t12 : v[10,12] in [0.9025, 1.1025]
+VoltageLimits_Node10_t13: VoltageLimits_Node10_t13 : v[10,13] in [0.9025, 1.1025]
+VoltageLimits_Node10_t14: VoltageLimits_Node10_t14 : v[10,14] in [0.9025, 1.1025]
+VoltageLimits_Node10_t15: VoltageLimits_Node10_t15 : v[10,15] in [0.9025, 1.1025]
+VoltageLimits_Node10_t16: VoltageLimits_Node10_t16 : v[10,16] in [0.9025, 1.1025]
+VoltageLimits_Node10_t17: VoltageLimits_Node10_t17 : v[10,17] in [0.9025, 1.1025]
+VoltageLimits_Node10_t18: VoltageLimits_Node10_t18 : v[10,18] in [0.9025, 1.1025]
+VoltageLimits_Node10_t19: VoltageLimits_Node10_t19 : v[10,19] in [0.9025, 1.1025]
+VoltageLimits_Node10_t2: VoltageLimits_Node10_t2 : v[10,2] in [0.9025, 1.1025]
+VoltageLimits_Node10_t20: VoltageLimits_Node10_t20 : v[10,20] in [0.9025, 1.1025]
+VoltageLimits_Node10_t21: VoltageLimits_Node10_t21 : v[10,21] in [0.9025, 1.1025]
+VoltageLimits_Node10_t22: VoltageLimits_Node10_t22 : v[10,22] in [0.9025, 1.1025]
+VoltageLimits_Node10_t23: VoltageLimits_Node10_t23 : v[10,23] in [0.9025, 1.1025]
+VoltageLimits_Node10_t24: VoltageLimits_Node10_t24 : v[10,24] in [0.9025, 1.1025]
+VoltageLimits_Node10_t3: VoltageLimits_Node10_t3 : v[10,3] in [0.9025, 1.1025]
+VoltageLimits_Node10_t4: VoltageLimits_Node10_t4 : v[10,4] in [0.9025, 1.1025]
+VoltageLimits_Node10_t5: VoltageLimits_Node10_t5 : v[10,5] in [0.9025, 1.1025]
+VoltageLimits_Node10_t6: VoltageLimits_Node10_t6 : v[10,6] in [0.9025, 1.1025]
+VoltageLimits_Node10_t7: VoltageLimits_Node10_t7 : v[10,7] in [0.9025, 1.1025]
+VoltageLimits_Node10_t8: VoltageLimits_Node10_t8 : v[10,8] in [0.9025, 1.1025]
+VoltageLimits_Node10_t9: VoltageLimits_Node10_t9 : v[10,9] in [0.9025, 1.1025]
+VoltageLimits_Node1_t1: VoltageLimits_Node1_t1 : v[1,1] in [0.9025, 1.1025]
+VoltageLimits_Node1_t10: VoltageLimits_Node1_t10 : v[1,10] in [0.9025, 1.1025]
+VoltageLimits_Node1_t11: VoltageLimits_Node1_t11 : v[1,11] in [0.9025, 1.1025]
+VoltageLimits_Node1_t12: VoltageLimits_Node1_t12 : v[1,12] in [0.9025, 1.1025]
+VoltageLimits_Node1_t13: VoltageLimits_Node1_t13 : v[1,13] in [0.9025, 1.1025]
+VoltageLimits_Node1_t14: VoltageLimits_Node1_t14 : v[1,14] in [0.9025, 1.1025]
+VoltageLimits_Node1_t15: VoltageLimits_Node1_t15 : v[1,15] in [0.9025, 1.1025]
+VoltageLimits_Node1_t16: VoltageLimits_Node1_t16 : v[1,16] in [0.9025, 1.1025]
+VoltageLimits_Node1_t17: VoltageLimits_Node1_t17 : v[1,17] in [0.9025, 1.1025]
+VoltageLimits_Node1_t18: VoltageLimits_Node1_t18 : v[1,18] in [0.9025, 1.1025]
+VoltageLimits_Node1_t19: VoltageLimits_Node1_t19 : v[1,19] in [0.9025, 1.1025]
+VoltageLimits_Node1_t2: VoltageLimits_Node1_t2 : v[1,2] in [0.9025, 1.1025]
+VoltageLimits_Node1_t20: VoltageLimits_Node1_t20 : v[1,20] in [0.9025, 1.1025]
+VoltageLimits_Node1_t21: VoltageLimits_Node1_t21 : v[1,21] in [0.9025, 1.1025]
+VoltageLimits_Node1_t22: VoltageLimits_Node1_t22 : v[1,22] in [0.9025, 1.1025]
+VoltageLimits_Node1_t23: VoltageLimits_Node1_t23 : v[1,23] in [0.9025, 1.1025]
+VoltageLimits_Node1_t24: VoltageLimits_Node1_t24 : v[1,24] in [0.9025, 1.1025]
+VoltageLimits_Node1_t3: VoltageLimits_Node1_t3 : v[1,3] in [0.9025, 1.1025]
+VoltageLimits_Node1_t4: VoltageLimits_Node1_t4 : v[1,4] in [0.9025, 1.1025]
+VoltageLimits_Node1_t5: VoltageLimits_Node1_t5 : v[1,5] in [0.9025, 1.1025]
+VoltageLimits_Node1_t6: VoltageLimits_Node1_t6 : v[1,6] in [0.9025, 1.1025]
+VoltageLimits_Node1_t7: VoltageLimits_Node1_t7 : v[1,7] in [0.9025, 1.1025]
+VoltageLimits_Node1_t8: VoltageLimits_Node1_t8 : v[1,8] in [0.9025, 1.1025]
+VoltageLimits_Node1_t9: VoltageLimits_Node1_t9 : v[1,9] in [0.9025, 1.1025]
+VoltageLimits_Node2_t1: VoltageLimits_Node2_t1 : v[2,1] in [0.9025, 1.1025]
+VoltageLimits_Node2_t10: VoltageLimits_Node2_t10 : v[2,10] in [0.9025, 1.1025]
+VoltageLimits_Node2_t11: VoltageLimits_Node2_t11 : v[2,11] in [0.9025, 1.1025]
+VoltageLimits_Node2_t12: VoltageLimits_Node2_t12 : v[2,12] in [0.9025, 1.1025]
+VoltageLimits_Node2_t13: VoltageLimits_Node2_t13 : v[2,13] in [0.9025, 1.1025]
+VoltageLimits_Node2_t14: VoltageLimits_Node2_t14 : v[2,14] in [0.9025, 1.1025]
+VoltageLimits_Node2_t15: VoltageLimits_Node2_t15 : v[2,15] in [0.9025, 1.1025]
+VoltageLimits_Node2_t16: VoltageLimits_Node2_t16 : v[2,16] in [0.9025, 1.1025]
+VoltageLimits_Node2_t17: VoltageLimits_Node2_t17 : v[2,17] in [0.9025, 1.1025]
+VoltageLimits_Node2_t18: VoltageLimits_Node2_t18 : v[2,18] in [0.9025, 1.1025]
+VoltageLimits_Node2_t19: VoltageLimits_Node2_t19 : v[2,19] in [0.9025, 1.1025]
+VoltageLimits_Node2_t2: VoltageLimits_Node2_t2 : v[2,2] in [0.9025, 1.1025]
+VoltageLimits_Node2_t20: VoltageLimits_Node2_t20 : v[2,20] in [0.9025, 1.1025]
+VoltageLimits_Node2_t21: VoltageLimits_Node2_t21 : v[2,21] in [0.9025, 1.1025]
+VoltageLimits_Node2_t22: VoltageLimits_Node2_t22 : v[2,22] in [0.9025, 1.1025]
+VoltageLimits_Node2_t23: VoltageLimits_Node2_t23 : v[2,23] in [0.9025, 1.1025]
+VoltageLimits_Node2_t24: VoltageLimits_Node2_t24 : v[2,24] in [0.9025, 1.1025]
+VoltageLimits_Node2_t3: VoltageLimits_Node2_t3 : v[2,3] in [0.9025, 1.1025]
+VoltageLimits_Node2_t4: VoltageLimits_Node2_t4 : v[2,4] in [0.9025, 1.1025]
+VoltageLimits_Node2_t5: VoltageLimits_Node2_t5 : v[2,5] in [0.9025, 1.1025]
+VoltageLimits_Node2_t6: VoltageLimits_Node2_t6 : v[2,6] in [0.9025, 1.1025]
+VoltageLimits_Node2_t7: VoltageLimits_Node2_t7 : v[2,7] in [0.9025, 1.1025]
+VoltageLimits_Node2_t8: VoltageLimits_Node2_t8 : v[2,8] in [0.9025, 1.1025]
+VoltageLimits_Node2_t9: VoltageLimits_Node2_t9 : v[2,9] in [0.9025, 1.1025]
+VoltageLimits_Node3_t1: VoltageLimits_Node3_t1 : v[3,1] in [0.9025, 1.1025]
+VoltageLimits_Node3_t10: VoltageLimits_Node3_t10 : v[3,10] in [0.9025, 1.1025]
+VoltageLimits_Node3_t11: VoltageLimits_Node3_t11 : v[3,11] in [0.9025, 1.1025]
+VoltageLimits_Node3_t12: VoltageLimits_Node3_t12 : v[3,12] in [0.9025, 1.1025]
+VoltageLimits_Node3_t13: VoltageLimits_Node3_t13 : v[3,13] in [0.9025, 1.1025]
+VoltageLimits_Node3_t14: VoltageLimits_Node3_t14 : v[3,14] in [0.9025, 1.1025]
+VoltageLimits_Node3_t15: VoltageLimits_Node3_t15 : v[3,15] in [0.9025, 1.1025]
+VoltageLimits_Node3_t16: VoltageLimits_Node3_t16 : v[3,16] in [0.9025, 1.1025]
+VoltageLimits_Node3_t17: VoltageLimits_Node3_t17 : v[3,17] in [0.9025, 1.1025]
+VoltageLimits_Node3_t18: VoltageLimits_Node3_t18 : v[3,18] in [0.9025, 1.1025]
+VoltageLimits_Node3_t19: VoltageLimits_Node3_t19 : v[3,19] in [0.9025, 1.1025]
+VoltageLimits_Node3_t2: VoltageLimits_Node3_t2 : v[3,2] in [0.9025, 1.1025]
+VoltageLimits_Node3_t20: VoltageLimits_Node3_t20 : v[3,20] in [0.9025, 1.1025]
+VoltageLimits_Node3_t21: VoltageLimits_Node3_t21 : v[3,21] in [0.9025, 1.1025]
+VoltageLimits_Node3_t22: VoltageLimits_Node3_t22 : v[3,22] in [0.9025, 1.1025]
+VoltageLimits_Node3_t23: VoltageLimits_Node3_t23 : v[3,23] in [0.9025, 1.1025]
+VoltageLimits_Node3_t24: VoltageLimits_Node3_t24 : v[3,24] in [0.9025, 1.1025]
+VoltageLimits_Node3_t3: VoltageLimits_Node3_t3 : v[3,3] in [0.9025, 1.1025]
+VoltageLimits_Node3_t4: VoltageLimits_Node3_t4 : v[3,4] in [0.9025, 1.1025]
+VoltageLimits_Node3_t5: VoltageLimits_Node3_t5 : v[3,5] in [0.9025, 1.1025]
+VoltageLimits_Node3_t6: VoltageLimits_Node3_t6 : v[3,6] in [0.9025, 1.1025]
+VoltageLimits_Node3_t7: VoltageLimits_Node3_t7 : v[3,7] in [0.9025, 1.1025]
+VoltageLimits_Node3_t8: VoltageLimits_Node3_t8 : v[3,8] in [0.9025, 1.1025]
+VoltageLimits_Node3_t9: VoltageLimits_Node3_t9 : v[3,9] in [0.9025, 1.1025]
+VoltageLimits_Node4_t1: VoltageLimits_Node4_t1 : v[4,1] in [0.9025, 1.1025]
+VoltageLimits_Node4_t10: VoltageLimits_Node4_t10 : v[4,10] in [0.9025, 1.1025]
+VoltageLimits_Node4_t11: VoltageLimits_Node4_t11 : v[4,11] in [0.9025, 1.1025]
+VoltageLimits_Node4_t12: VoltageLimits_Node4_t12 : v[4,12] in [0.9025, 1.1025]
+VoltageLimits_Node4_t13: VoltageLimits_Node4_t13 : v[4,13] in [0.9025, 1.1025]
+VoltageLimits_Node4_t14: VoltageLimits_Node4_t14 : v[4,14] in [0.9025, 1.1025]
+VoltageLimits_Node4_t15: VoltageLimits_Node4_t15 : v[4,15] in [0.9025, 1.1025]
+VoltageLimits_Node4_t16: VoltageLimits_Node4_t16 : v[4,16] in [0.9025, 1.1025]
+VoltageLimits_Node4_t17: VoltageLimits_Node4_t17 : v[4,17] in [0.9025, 1.1025]
+VoltageLimits_Node4_t18: VoltageLimits_Node4_t18 : v[4,18] in [0.9025, 1.1025]
+VoltageLimits_Node4_t19: VoltageLimits_Node4_t19 : v[4,19] in [0.9025, 1.1025]
+VoltageLimits_Node4_t2: VoltageLimits_Node4_t2 : v[4,2] in [0.9025, 1.1025]
+VoltageLimits_Node4_t20: VoltageLimits_Node4_t20 : v[4,20] in [0.9025, 1.1025]
+VoltageLimits_Node4_t21: VoltageLimits_Node4_t21 : v[4,21] in [0.9025, 1.1025]
+VoltageLimits_Node4_t22: VoltageLimits_Node4_t22 : v[4,22] in [0.9025, 1.1025]
+VoltageLimits_Node4_t23: VoltageLimits_Node4_t23 : v[4,23] in [0.9025, 1.1025]
+VoltageLimits_Node4_t24: VoltageLimits_Node4_t24 : v[4,24] in [0.9025, 1.1025]
+VoltageLimits_Node4_t3: VoltageLimits_Node4_t3 : v[4,3] in [0.9025, 1.1025]
+VoltageLimits_Node4_t4: VoltageLimits_Node4_t4 : v[4,4] in [0.9025, 1.1025]
+VoltageLimits_Node4_t5: VoltageLimits_Node4_t5 : v[4,5] in [0.9025, 1.1025]
+VoltageLimits_Node4_t6: VoltageLimits_Node4_t6 : v[4,6] in [0.9025, 1.1025]
+VoltageLimits_Node4_t7: VoltageLimits_Node4_t7 : v[4,7] in [0.9025, 1.1025]
+VoltageLimits_Node4_t8: VoltageLimits_Node4_t8 : v[4,8] in [0.9025, 1.1025]
+VoltageLimits_Node4_t9: VoltageLimits_Node4_t9 : v[4,9] in [0.9025, 1.1025]
+VoltageLimits_Node5_t1: VoltageLimits_Node5_t1 : v[5,1] in [0.9025, 1.1025]
+VoltageLimits_Node5_t10: VoltageLimits_Node5_t10 : v[5,10] in [0.9025, 1.1025]
+VoltageLimits_Node5_t11: VoltageLimits_Node5_t11 : v[5,11] in [0.9025, 1.1025]
+VoltageLimits_Node5_t12: VoltageLimits_Node5_t12 : v[5,12] in [0.9025, 1.1025]
+VoltageLimits_Node5_t13: VoltageLimits_Node5_t13 : v[5,13] in [0.9025, 1.1025]
+VoltageLimits_Node5_t14: VoltageLimits_Node5_t14 : v[5,14] in [0.9025, 1.1025]
+VoltageLimits_Node5_t15: VoltageLimits_Node5_t15 : v[5,15] in [0.9025, 1.1025]
+VoltageLimits_Node5_t16: VoltageLimits_Node5_t16 : v[5,16] in [0.9025, 1.1025]
+VoltageLimits_Node5_t17: VoltageLimits_Node5_t17 : v[5,17] in [0.9025, 1.1025]
+VoltageLimits_Node5_t18: VoltageLimits_Node5_t18 : v[5,18] in [0.9025, 1.1025]
+VoltageLimits_Node5_t19: VoltageLimits_Node5_t19 : v[5,19] in [0.9025, 1.1025]
+VoltageLimits_Node5_t2: VoltageLimits_Node5_t2 : v[5,2] in [0.9025, 1.1025]
+VoltageLimits_Node5_t20: VoltageLimits_Node5_t20 : v[5,20] in [0.9025, 1.1025]
+VoltageLimits_Node5_t21: VoltageLimits_Node5_t21 : v[5,21] in [0.9025, 1.1025]
+VoltageLimits_Node5_t22: VoltageLimits_Node5_t22 : v[5,22] in [0.9025, 1.1025]
+VoltageLimits_Node5_t23: VoltageLimits_Node5_t23 : v[5,23] in [0.9025, 1.1025]
+VoltageLimits_Node5_t24: VoltageLimits_Node5_t24 : v[5,24] in [0.9025, 1.1025]
+VoltageLimits_Node5_t3: VoltageLimits_Node5_t3 : v[5,3] in [0.9025, 1.1025]
+VoltageLimits_Node5_t4: VoltageLimits_Node5_t4 : v[5,4] in [0.9025, 1.1025]
+VoltageLimits_Node5_t5: VoltageLimits_Node5_t5 : v[5,5] in [0.9025, 1.1025]
+VoltageLimits_Node5_t6: VoltageLimits_Node5_t6 : v[5,6] in [0.9025, 1.1025]
+VoltageLimits_Node5_t7: VoltageLimits_Node5_t7 : v[5,7] in [0.9025, 1.1025]
+VoltageLimits_Node5_t8: VoltageLimits_Node5_t8 : v[5,8] in [0.9025, 1.1025]
+VoltageLimits_Node5_t9: VoltageLimits_Node5_t9 : v[5,9] in [0.9025, 1.1025]
+VoltageLimits_Node6_t1: VoltageLimits_Node6_t1 : v[6,1] in [0.9025, 1.1025]
+VoltageLimits_Node6_t10: VoltageLimits_Node6_t10 : v[6,10] in [0.9025, 1.1025]
+VoltageLimits_Node6_t11: VoltageLimits_Node6_t11 : v[6,11] in [0.9025, 1.1025]
+VoltageLimits_Node6_t12: VoltageLimits_Node6_t12 : v[6,12] in [0.9025, 1.1025]
+VoltageLimits_Node6_t13: VoltageLimits_Node6_t13 : v[6,13] in [0.9025, 1.1025]
+VoltageLimits_Node6_t14: VoltageLimits_Node6_t14 : v[6,14] in [0.9025, 1.1025]
+VoltageLimits_Node6_t15: VoltageLimits_Node6_t15 : v[6,15] in [0.9025, 1.1025]
+VoltageLimits_Node6_t16: VoltageLimits_Node6_t16 : v[6,16] in [0.9025, 1.1025]
+VoltageLimits_Node6_t17: VoltageLimits_Node6_t17 : v[6,17] in [0.9025, 1.1025]
+VoltageLimits_Node6_t18: VoltageLimits_Node6_t18 : v[6,18] in [0.9025, 1.1025]
+VoltageLimits_Node6_t19: VoltageLimits_Node6_t19 : v[6,19] in [0.9025, 1.1025]
+VoltageLimits_Node6_t2: VoltageLimits_Node6_t2 : v[6,2] in [0.9025, 1.1025]
+VoltageLimits_Node6_t20: VoltageLimits_Node6_t20 : v[6,20] in [0.9025, 1.1025]
+VoltageLimits_Node6_t21: VoltageLimits_Node6_t21 : v[6,21] in [0.9025, 1.1025]
+VoltageLimits_Node6_t22: VoltageLimits_Node6_t22 : v[6,22] in [0.9025, 1.1025]
+VoltageLimits_Node6_t23: VoltageLimits_Node6_t23 : v[6,23] in [0.9025, 1.1025]
+VoltageLimits_Node6_t24: VoltageLimits_Node6_t24 : v[6,24] in [0.9025, 1.1025]
+VoltageLimits_Node6_t3: VoltageLimits_Node6_t3 : v[6,3] in [0.9025, 1.1025]
+VoltageLimits_Node6_t4: VoltageLimits_Node6_t4 : v[6,4] in [0.9025, 1.1025]
+VoltageLimits_Node6_t5: VoltageLimits_Node6_t5 : v[6,5] in [0.9025, 1.1025]
+VoltageLimits_Node6_t6: VoltageLimits_Node6_t6 : v[6,6] in [0.9025, 1.1025]
+VoltageLimits_Node6_t7: VoltageLimits_Node6_t7 : v[6,7] in [0.9025, 1.1025]
+VoltageLimits_Node6_t8: VoltageLimits_Node6_t8 : v[6,8] in [0.9025, 1.1025]
+VoltageLimits_Node6_t9: VoltageLimits_Node6_t9 : v[6,9] in [0.9025, 1.1025]
+VoltageLimits_Node7_t1: VoltageLimits_Node7_t1 : v[7,1] in [0.9025, 1.1025]
+VoltageLimits_Node7_t10: VoltageLimits_Node7_t10 : v[7,10] in [0.9025, 1.1025]
+VoltageLimits_Node7_t11: VoltageLimits_Node7_t11 : v[7,11] in [0.9025, 1.1025]
+VoltageLimits_Node7_t12: VoltageLimits_Node7_t12 : v[7,12] in [0.9025, 1.1025]
+VoltageLimits_Node7_t13: VoltageLimits_Node7_t13 : v[7,13] in [0.9025, 1.1025]
+VoltageLimits_Node7_t14: VoltageLimits_Node7_t14 : v[7,14] in [0.9025, 1.1025]
+VoltageLimits_Node7_t15: VoltageLimits_Node7_t15 : v[7,15] in [0.9025, 1.1025]
+VoltageLimits_Node7_t16: VoltageLimits_Node7_t16 : v[7,16] in [0.9025, 1.1025]
+VoltageLimits_Node7_t17: VoltageLimits_Node7_t17 : v[7,17] in [0.9025, 1.1025]
+VoltageLimits_Node7_t18: VoltageLimits_Node7_t18 : v[7,18] in [0.9025, 1.1025]
+VoltageLimits_Node7_t19: VoltageLimits_Node7_t19 : v[7,19] in [0.9025, 1.1025]
+VoltageLimits_Node7_t2: VoltageLimits_Node7_t2 : v[7,2] in [0.9025, 1.1025]
+VoltageLimits_Node7_t20: VoltageLimits_Node7_t20 : v[7,20] in [0.9025, 1.1025]
+VoltageLimits_Node7_t21: VoltageLimits_Node7_t21 : v[7,21] in [0.9025, 1.1025]
+VoltageLimits_Node7_t22: VoltageLimits_Node7_t22 : v[7,22] in [0.9025, 1.1025]
+VoltageLimits_Node7_t23: VoltageLimits_Node7_t23 : v[7,23] in [0.9025, 1.1025]
+VoltageLimits_Node7_t24: VoltageLimits_Node7_t24 : v[7,24] in [0.9025, 1.1025]
+VoltageLimits_Node7_t3: VoltageLimits_Node7_t3 : v[7,3] in [0.9025, 1.1025]
+VoltageLimits_Node7_t4: VoltageLimits_Node7_t4 : v[7,4] in [0.9025, 1.1025]
+VoltageLimits_Node7_t5: VoltageLimits_Node7_t5 : v[7,5] in [0.9025, 1.1025]
+VoltageLimits_Node7_t6: VoltageLimits_Node7_t6 : v[7,6] in [0.9025, 1.1025]
+VoltageLimits_Node7_t7: VoltageLimits_Node7_t7 : v[7,7] in [0.9025, 1.1025]
+VoltageLimits_Node7_t8: VoltageLimits_Node7_t8 : v[7,8] in [0.9025, 1.1025]
+VoltageLimits_Node7_t9: VoltageLimits_Node7_t9 : v[7,9] in [0.9025, 1.1025]
+VoltageLimits_Node8_t1: VoltageLimits_Node8_t1 : v[8,1] in [0.9025, 1.1025]
+VoltageLimits_Node8_t10: VoltageLimits_Node8_t10 : v[8,10] in [0.9025, 1.1025]
+VoltageLimits_Node8_t11: VoltageLimits_Node8_t11 : v[8,11] in [0.9025, 1.1025]
+VoltageLimits_Node8_t12: VoltageLimits_Node8_t12 : v[8,12] in [0.9025, 1.1025]
+VoltageLimits_Node8_t13: VoltageLimits_Node8_t13 : v[8,13] in [0.9025, 1.1025]
+VoltageLimits_Node8_t14: VoltageLimits_Node8_t14 : v[8,14] in [0.9025, 1.1025]
+VoltageLimits_Node8_t15: VoltageLimits_Node8_t15 : v[8,15] in [0.9025, 1.1025]
+VoltageLimits_Node8_t16: VoltageLimits_Node8_t16 : v[8,16] in [0.9025, 1.1025]
+VoltageLimits_Node8_t17: VoltageLimits_Node8_t17 : v[8,17] in [0.9025, 1.1025]
+VoltageLimits_Node8_t18: VoltageLimits_Node8_t18 : v[8,18] in [0.9025, 1.1025]
+VoltageLimits_Node8_t19: VoltageLimits_Node8_t19 : v[8,19] in [0.9025, 1.1025]
+VoltageLimits_Node8_t2: VoltageLimits_Node8_t2 : v[8,2] in [0.9025, 1.1025]
+VoltageLimits_Node8_t20: VoltageLimits_Node8_t20 : v[8,20] in [0.9025, 1.1025]
+VoltageLimits_Node8_t21: VoltageLimits_Node8_t21 : v[8,21] in [0.9025, 1.1025]
+VoltageLimits_Node8_t22: VoltageLimits_Node8_t22 : v[8,22] in [0.9025, 1.1025]
+VoltageLimits_Node8_t23: VoltageLimits_Node8_t23 : v[8,23] in [0.9025, 1.1025]
+VoltageLimits_Node8_t24: VoltageLimits_Node8_t24 : v[8,24] in [0.9025, 1.1025]
+VoltageLimits_Node8_t3: VoltageLimits_Node8_t3 : v[8,3] in [0.9025, 1.1025]
+VoltageLimits_Node8_t4: VoltageLimits_Node8_t4 : v[8,4] in [0.9025, 1.1025]
+VoltageLimits_Node8_t5: VoltageLimits_Node8_t5 : v[8,5] in [0.9025, 1.1025]
+VoltageLimits_Node8_t6: VoltageLimits_Node8_t6 : v[8,6] in [0.9025, 1.1025]
+VoltageLimits_Node8_t7: VoltageLimits_Node8_t7 : v[8,7] in [0.9025, 1.1025]
+VoltageLimits_Node8_t8: VoltageLimits_Node8_t8 : v[8,8] in [0.9025, 1.1025]
+VoltageLimits_Node8_t9: VoltageLimits_Node8_t9 : v[8,9] in [0.9025, 1.1025]
+VoltageLimits_Node9_t1: VoltageLimits_Node9_t1 : v[9,1] in [0.9025, 1.1025]
+VoltageLimits_Node9_t10: VoltageLimits_Node9_t10 : v[9,10] in [0.9025, 1.1025]
+VoltageLimits_Node9_t11: VoltageLimits_Node9_t11 : v[9,11] in [0.9025, 1.1025]
+VoltageLimits_Node9_t12: VoltageLimits_Node9_t12 : v[9,12] in [0.9025, 1.1025]
+VoltageLimits_Node9_t13: VoltageLimits_Node9_t13 : v[9,13] in [0.9025, 1.1025]
+VoltageLimits_Node9_t14: VoltageLimits_Node9_t14 : v[9,14] in [0.9025, 1.1025]
+VoltageLimits_Node9_t15: VoltageLimits_Node9_t15 : v[9,15] in [0.9025, 1.1025]
+VoltageLimits_Node9_t16: VoltageLimits_Node9_t16 : v[9,16] in [0.9025, 1.1025]
+VoltageLimits_Node9_t17: VoltageLimits_Node9_t17 : v[9,17] in [0.9025, 1.1025]
+VoltageLimits_Node9_t18: VoltageLimits_Node9_t18 : v[9,18] in [0.9025, 1.1025]
+VoltageLimits_Node9_t19: VoltageLimits_Node9_t19 : v[9,19] in [0.9025, 1.1025]
+VoltageLimits_Node9_t2: VoltageLimits_Node9_t2 : v[9,2] in [0.9025, 1.1025]
+VoltageLimits_Node9_t20: VoltageLimits_Node9_t20 : v[9,20] in [0.9025, 1.1025]
+VoltageLimits_Node9_t21: VoltageLimits_Node9_t21 : v[9,21] in [0.9025, 1.1025]
+VoltageLimits_Node9_t22: VoltageLimits_Node9_t22 : v[9,22] in [0.9025, 1.1025]
+VoltageLimits_Node9_t23: VoltageLimits_Node9_t23 : v[9,23] in [0.9025, 1.1025]
+VoltageLimits_Node9_t24: VoltageLimits_Node9_t24 : v[9,24] in [0.9025, 1.1025]
+VoltageLimits_Node9_t3: VoltageLimits_Node9_t3 : v[9,3] in [0.9025, 1.1025]
+VoltageLimits_Node9_t4: VoltageLimits_Node9_t4 : v[9,4] in [0.9025, 1.1025]
+VoltageLimits_Node9_t5: VoltageLimits_Node9_t5 : v[9,5] in [0.9025, 1.1025]
+VoltageLimits_Node9_t6: VoltageLimits_Node9_t6 : v[9,6] in [0.9025, 1.1025]
+VoltageLimits_Node9_t7: VoltageLimits_Node9_t7 : v[9,7] in [0.9025, 1.1025]
+VoltageLimits_Node9_t8: VoltageLimits_Node9_t8 : v[9,8] in [0.9025, 1.1025]
+VoltageLimits_Node9_t9: VoltageLimits_Node9_t9 : v[9,9] in [0.9025, 1.1025]
+Total: 240 constraints
+
+--------------------------------------------------------------------------------
+PV REACTIVE POWER LIMITS
+--------------------------------------------------------------------------------
+Total: 0 constraints
+
+--------------------------------------------------------------------------------
+BATTERY SOC LIMITS
+--------------------------------------------------------------------------------
+BatterySOCLimits_5_t1: BatterySOCLimits_5_t1 : B[5,1] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t10: BatterySOCLimits_5_t10 : B[5,10] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t11: BatterySOCLimits_5_t11 : B[5,11] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t12: BatterySOCLimits_5_t12 : B[5,12] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t13: BatterySOCLimits_5_t13 : B[5,13] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t14: BatterySOCLimits_5_t14 : B[5,14] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t15: BatterySOCLimits_5_t15 : B[5,15] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t16: BatterySOCLimits_5_t16 : B[5,16] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t17: BatterySOCLimits_5_t17 : B[5,17] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t18: BatterySOCLimits_5_t18 : B[5,18] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t19: BatterySOCLimits_5_t19 : B[5,19] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t2: BatterySOCLimits_5_t2 : B[5,2] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t20: BatterySOCLimits_5_t20 : B[5,20] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t21: BatterySOCLimits_5_t21 : B[5,21] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t22: BatterySOCLimits_5_t22 : B[5,22] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t23: BatterySOCLimits_5_t23 : B[5,23] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t24: BatterySOCLimits_5_t24 : B[5,24] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t3: BatterySOCLimits_5_t3 : B[5,3] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t4: BatterySOCLimits_5_t4 : B[5,4] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t5: BatterySOCLimits_5_t5 : B[5,5] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t6: BatterySOCLimits_5_t6 : B[5,6] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t7: BatterySOCLimits_5_t7 : B[5,7] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t8: BatterySOCLimits_5_t8 : B[5,8] in [0.0055986, 0.0177289]
+BatterySOCLimits_5_t9: BatterySOCLimits_5_t9 : B[5,9] in [0.0055986, 0.0177289]
+Total: 24 constraints
+
+--------------------------------------------------------------------------------
+BATTERY POWER LIMITS
+--------------------------------------------------------------------------------
+BatteryPowerLimits_5_t1: BatteryPowerLimits_5_t1 : P_B[5,1] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t10: BatteryPowerLimits_5_t10 : P_B[5,10] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t11: BatteryPowerLimits_5_t11 : P_B[5,11] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t12: BatteryPowerLimits_5_t12 : P_B[5,12] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t13: BatteryPowerLimits_5_t13 : P_B[5,13] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t14: BatteryPowerLimits_5_t14 : P_B[5,14] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t15: BatteryPowerLimits_5_t15 : P_B[5,15] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t16: BatteryPowerLimits_5_t16 : P_B[5,16] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t17: BatteryPowerLimits_5_t17 : P_B[5,17] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t18: BatteryPowerLimits_5_t18 : P_B[5,18] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t19: BatteryPowerLimits_5_t19 : P_B[5,19] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t2: BatteryPowerLimits_5_t2 : P_B[5,2] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t20: BatteryPowerLimits_5_t20 : P_B[5,20] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t21: BatteryPowerLimits_5_t21 : P_B[5,21] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t22: BatteryPowerLimits_5_t22 : P_B[5,22] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t23: BatteryPowerLimits_5_t23 : P_B[5,23] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t24: BatteryPowerLimits_5_t24 : P_B[5,24] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t3: BatteryPowerLimits_5_t3 : P_B[5,3] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t4: BatteryPowerLimits_5_t4 : P_B[5,4] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t5: BatteryPowerLimits_5_t5 : P_B[5,5] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t6: BatteryPowerLimits_5_t6 : P_B[5,6] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t7: BatteryPowerLimits_5_t7 : P_B[5,7] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t8: BatteryPowerLimits_5_t8 : P_B[5,8] in [-0.0046654999999999995, 0.0046654999999999995]
+BatteryPowerLimits_5_t9: BatteryPowerLimits_5_t9 : P_B[5,9] in [-0.0046654999999999995, 0.0046654999999999995]
+Total: 24 constraints
+
+--------------------------------------------------------------------------------
+OTHER CONSTRAINTS
+--------------------------------------------------------------------------------
+ZeroQ_Branch_1_2_t1: ZeroQ_Branch_1_2_t1 : Q[(1, 2),1] == 0
+ZeroQ_Branch_1_3_t1: ZeroQ_Branch_1_3_t1 : Q[(1, 3),1] == 0
+ZeroQ_Branch_1_10_t1: ZeroQ_Branch_1_10_t1 : Q[(1, 10),1] == 0
+ZeroQ_Branch_2_4_t1: ZeroQ_Branch_2_4_t1 : Q[(2, 4),1] == 0
+ZeroQ_Branch_2_5_t1: ZeroQ_Branch_2_5_t1 : Q[(2, 5),1] == 0
+ZeroQ_Branch_2_6_t1: ZeroQ_Branch_2_6_t1 : Q[(2, 6),1] == 0
+ZeroQ_Branch_6_7_t1: ZeroQ_Branch_6_7_t1 : Q[(6, 7),1] == 0
+ZeroQ_Branch_6_8_t1: ZeroQ_Branch_6_8_t1 : Q[(6, 8),1] == 0
+ZeroQ_Branch_8_9_t1: ZeroQ_Branch_8_9_t1 : Q[(8, 9),1] == 0
+ZeroQ_Branch_1_2_t2: ZeroQ_Branch_1_2_t2 : Q[(1, 2),2] == 0
+ZeroQ_Branch_1_3_t2: ZeroQ_Branch_1_3_t2 : Q[(1, 3),2] == 0
+ZeroQ_Branch_1_10_t2: ZeroQ_Branch_1_10_t2 : Q[(1, 10),2] == 0
+ZeroQ_Branch_2_4_t2: ZeroQ_Branch_2_4_t2 : Q[(2, 4),2] == 0
+ZeroQ_Branch_2_5_t2: ZeroQ_Branch_2_5_t2 : Q[(2, 5),2] == 0
+ZeroQ_Branch_2_6_t2: ZeroQ_Branch_2_6_t2 : Q[(2, 6),2] == 0
+ZeroQ_Branch_6_7_t2: ZeroQ_Branch_6_7_t2 : Q[(6, 7),2] == 0
+ZeroQ_Branch_6_8_t2: ZeroQ_Branch_6_8_t2 : Q[(6, 8),2] == 0
+ZeroQ_Branch_8_9_t2: ZeroQ_Branch_8_9_t2 : Q[(8, 9),2] == 0
+ZeroQ_Branch_1_2_t3: ZeroQ_Branch_1_2_t3 : Q[(1, 2),3] == 0
+ZeroQ_Branch_1_3_t3: ZeroQ_Branch_1_3_t3 : Q[(1, 3),3] == 0
+ZeroQ_Branch_1_10_t3: ZeroQ_Branch_1_10_t3 : Q[(1, 10),3] == 0
+ZeroQ_Branch_2_4_t3: ZeroQ_Branch_2_4_t3 : Q[(2, 4),3] == 0
+ZeroQ_Branch_2_5_t3: ZeroQ_Branch_2_5_t3 : Q[(2, 5),3] == 0
+ZeroQ_Branch_2_6_t3: ZeroQ_Branch_2_6_t3 : Q[(2, 6),3] == 0
+ZeroQ_Branch_6_7_t3: ZeroQ_Branch_6_7_t3 : Q[(6, 7),3] == 0
+ZeroQ_Branch_6_8_t3: ZeroQ_Branch_6_8_t3 : Q[(6, 8),3] == 0
+ZeroQ_Branch_8_9_t3: ZeroQ_Branch_8_9_t3 : Q[(8, 9),3] == 0
+ZeroQ_Branch_1_2_t4: ZeroQ_Branch_1_2_t4 : Q[(1, 2),4] == 0
+ZeroQ_Branch_1_3_t4: ZeroQ_Branch_1_3_t4 : Q[(1, 3),4] == 0
+ZeroQ_Branch_1_10_t4: ZeroQ_Branch_1_10_t4 : Q[(1, 10),4] == 0
+ZeroQ_Branch_2_4_t4: ZeroQ_Branch_2_4_t4 : Q[(2, 4),4] == 0
+ZeroQ_Branch_2_5_t4: ZeroQ_Branch_2_5_t4 : Q[(2, 5),4] == 0
+ZeroQ_Branch_2_6_t4: ZeroQ_Branch_2_6_t4 : Q[(2, 6),4] == 0
+ZeroQ_Branch_6_7_t4: ZeroQ_Branch_6_7_t4 : Q[(6, 7),4] == 0
+ZeroQ_Branch_6_8_t4: ZeroQ_Branch_6_8_t4 : Q[(6, 8),4] == 0
+ZeroQ_Branch_8_9_t4: ZeroQ_Branch_8_9_t4 : Q[(8, 9),4] == 0
+ZeroQ_Branch_1_2_t5: ZeroQ_Branch_1_2_t5 : Q[(1, 2),5] == 0
+ZeroQ_Branch_1_3_t5: ZeroQ_Branch_1_3_t5 : Q[(1, 3),5] == 0
+ZeroQ_Branch_1_10_t5: ZeroQ_Branch_1_10_t5 : Q[(1, 10),5] == 0
+ZeroQ_Branch_2_4_t5: ZeroQ_Branch_2_4_t5 : Q[(2, 4),5] == 0
+ZeroQ_Branch_2_5_t5: ZeroQ_Branch_2_5_t5 : Q[(2, 5),5] == 0
+ZeroQ_Branch_2_6_t5: ZeroQ_Branch_2_6_t5 : Q[(2, 6),5] == 0
+ZeroQ_Branch_6_7_t5: ZeroQ_Branch_6_7_t5 : Q[(6, 7),5] == 0
+ZeroQ_Branch_6_8_t5: ZeroQ_Branch_6_8_t5 : Q[(6, 8),5] == 0
+ZeroQ_Branch_8_9_t5: ZeroQ_Branch_8_9_t5 : Q[(8, 9),5] == 0
+ZeroQ_Branch_1_2_t6: ZeroQ_Branch_1_2_t6 : Q[(1, 2),6] == 0
+ZeroQ_Branch_1_3_t6: ZeroQ_Branch_1_3_t6 : Q[(1, 3),6] == 0
+ZeroQ_Branch_1_10_t6: ZeroQ_Branch_1_10_t6 : Q[(1, 10),6] == 0
+ZeroQ_Branch_2_4_t6: ZeroQ_Branch_2_4_t6 : Q[(2, 4),6] == 0
+ZeroQ_Branch_2_5_t6: ZeroQ_Branch_2_5_t6 : Q[(2, 5),6] == 0
+ZeroQ_Branch_2_6_t6: ZeroQ_Branch_2_6_t6 : Q[(2, 6),6] == 0
+ZeroQ_Branch_6_7_t6: ZeroQ_Branch_6_7_t6 : Q[(6, 7),6] == 0
+ZeroQ_Branch_6_8_t6: ZeroQ_Branch_6_8_t6 : Q[(6, 8),6] == 0
+ZeroQ_Branch_8_9_t6: ZeroQ_Branch_8_9_t6 : Q[(8, 9),6] == 0
+ZeroQ_Branch_1_2_t7: ZeroQ_Branch_1_2_t7 : Q[(1, 2),7] == 0
+ZeroQ_Branch_1_3_t7: ZeroQ_Branch_1_3_t7 : Q[(1, 3),7] == 0
+ZeroQ_Branch_1_10_t7: ZeroQ_Branch_1_10_t7 : Q[(1, 10),7] == 0
+ZeroQ_Branch_2_4_t7: ZeroQ_Branch_2_4_t7 : Q[(2, 4),7] == 0
+ZeroQ_Branch_2_5_t7: ZeroQ_Branch_2_5_t7 : Q[(2, 5),7] == 0
+ZeroQ_Branch_2_6_t7: ZeroQ_Branch_2_6_t7 : Q[(2, 6),7] == 0
+ZeroQ_Branch_6_7_t7: ZeroQ_Branch_6_7_t7 : Q[(6, 7),7] == 0
+ZeroQ_Branch_6_8_t7: ZeroQ_Branch_6_8_t7 : Q[(6, 8),7] == 0
+ZeroQ_Branch_8_9_t7: ZeroQ_Branch_8_9_t7 : Q[(8, 9),7] == 0
+ZeroQ_Branch_1_2_t8: ZeroQ_Branch_1_2_t8 : Q[(1, 2),8] == 0
+ZeroQ_Branch_1_3_t8: ZeroQ_Branch_1_3_t8 : Q[(1, 3),8] == 0
+ZeroQ_Branch_1_10_t8: ZeroQ_Branch_1_10_t8 : Q[(1, 10),8] == 0
+ZeroQ_Branch_2_4_t8: ZeroQ_Branch_2_4_t8 : Q[(2, 4),8] == 0
+ZeroQ_Branch_2_5_t8: ZeroQ_Branch_2_5_t8 : Q[(2, 5),8] == 0
+ZeroQ_Branch_2_6_t8: ZeroQ_Branch_2_6_t8 : Q[(2, 6),8] == 0
+ZeroQ_Branch_6_7_t8: ZeroQ_Branch_6_7_t8 : Q[(6, 7),8] == 0
+ZeroQ_Branch_6_8_t8: ZeroQ_Branch_6_8_t8 : Q[(6, 8),8] == 0
+ZeroQ_Branch_8_9_t8: ZeroQ_Branch_8_9_t8 : Q[(8, 9),8] == 0
+ZeroQ_Branch_1_2_t9: ZeroQ_Branch_1_2_t9 : Q[(1, 2),9] == 0
+ZeroQ_Branch_1_3_t9: ZeroQ_Branch_1_3_t9 : Q[(1, 3),9] == 0
+ZeroQ_Branch_1_10_t9: ZeroQ_Branch_1_10_t9 : Q[(1, 10),9] == 0
+ZeroQ_Branch_2_4_t9: ZeroQ_Branch_2_4_t9 : Q[(2, 4),9] == 0
+ZeroQ_Branch_2_5_t9: ZeroQ_Branch_2_5_t9 : Q[(2, 5),9] == 0
+ZeroQ_Branch_2_6_t9: ZeroQ_Branch_2_6_t9 : Q[(2, 6),9] == 0
+ZeroQ_Branch_6_7_t9: ZeroQ_Branch_6_7_t9 : Q[(6, 7),9] == 0
+ZeroQ_Branch_6_8_t9: ZeroQ_Branch_6_8_t9 : Q[(6, 8),9] == 0
+ZeroQ_Branch_8_9_t9: ZeroQ_Branch_8_9_t9 : Q[(8, 9),9] == 0
+ZeroQ_Branch_1_2_t10: ZeroQ_Branch_1_2_t10 : Q[(1, 2),10] == 0
+ZeroQ_Branch_1_3_t10: ZeroQ_Branch_1_3_t10 : Q[(1, 3),10] == 0
+ZeroQ_Branch_1_10_t10: ZeroQ_Branch_1_10_t10 : Q[(1, 10),10] == 0
+ZeroQ_Branch_2_4_t10: ZeroQ_Branch_2_4_t10 : Q[(2, 4),10] == 0
+ZeroQ_Branch_2_5_t10: ZeroQ_Branch_2_5_t10 : Q[(2, 5),10] == 0
+ZeroQ_Branch_2_6_t10: ZeroQ_Branch_2_6_t10 : Q[(2, 6),10] == 0
+ZeroQ_Branch_6_7_t10: ZeroQ_Branch_6_7_t10 : Q[(6, 7),10] == 0
+ZeroQ_Branch_6_8_t10: ZeroQ_Branch_6_8_t10 : Q[(6, 8),10] == 0
+ZeroQ_Branch_8_9_t10: ZeroQ_Branch_8_9_t10 : Q[(8, 9),10] == 0
+ZeroQ_Branch_1_2_t11: ZeroQ_Branch_1_2_t11 : Q[(1, 2),11] == 0
+ZeroQ_Branch_1_3_t11: ZeroQ_Branch_1_3_t11 : Q[(1, 3),11] == 0
+ZeroQ_Branch_1_10_t11: ZeroQ_Branch_1_10_t11 : Q[(1, 10),11] == 0
+ZeroQ_Branch_2_4_t11: ZeroQ_Branch_2_4_t11 : Q[(2, 4),11] == 0
+ZeroQ_Branch_2_5_t11: ZeroQ_Branch_2_5_t11 : Q[(2, 5),11] == 0
+ZeroQ_Branch_2_6_t11: ZeroQ_Branch_2_6_t11 : Q[(2, 6),11] == 0
+ZeroQ_Branch_6_7_t11: ZeroQ_Branch_6_7_t11 : Q[(6, 7),11] == 0
+ZeroQ_Branch_6_8_t11: ZeroQ_Branch_6_8_t11 : Q[(6, 8),11] == 0
+ZeroQ_Branch_8_9_t11: ZeroQ_Branch_8_9_t11 : Q[(8, 9),11] == 0
+ZeroQ_Branch_1_2_t12: ZeroQ_Branch_1_2_t12 : Q[(1, 2),12] == 0
+ZeroQ_Branch_1_3_t12: ZeroQ_Branch_1_3_t12 : Q[(1, 3),12] == 0
+ZeroQ_Branch_1_10_t12: ZeroQ_Branch_1_10_t12 : Q[(1, 10),12] == 0
+ZeroQ_Branch_2_4_t12: ZeroQ_Branch_2_4_t12 : Q[(2, 4),12] == 0
+ZeroQ_Branch_2_5_t12: ZeroQ_Branch_2_5_t12 : Q[(2, 5),12] == 0
+ZeroQ_Branch_2_6_t12: ZeroQ_Branch_2_6_t12 : Q[(2, 6),12] == 0
+ZeroQ_Branch_6_7_t12: ZeroQ_Branch_6_7_t12 : Q[(6, 7),12] == 0
+ZeroQ_Branch_6_8_t12: ZeroQ_Branch_6_8_t12 : Q[(6, 8),12] == 0
+ZeroQ_Branch_8_9_t12: ZeroQ_Branch_8_9_t12 : Q[(8, 9),12] == 0
+ZeroQ_Branch_1_2_t13: ZeroQ_Branch_1_2_t13 : Q[(1, 2),13] == 0
+ZeroQ_Branch_1_3_t13: ZeroQ_Branch_1_3_t13 : Q[(1, 3),13] == 0
+ZeroQ_Branch_1_10_t13: ZeroQ_Branch_1_10_t13 : Q[(1, 10),13] == 0
+ZeroQ_Branch_2_4_t13: ZeroQ_Branch_2_4_t13 : Q[(2, 4),13] == 0
+ZeroQ_Branch_2_5_t13: ZeroQ_Branch_2_5_t13 : Q[(2, 5),13] == 0
+ZeroQ_Branch_2_6_t13: ZeroQ_Branch_2_6_t13 : Q[(2, 6),13] == 0
+ZeroQ_Branch_6_7_t13: ZeroQ_Branch_6_7_t13 : Q[(6, 7),13] == 0
+ZeroQ_Branch_6_8_t13: ZeroQ_Branch_6_8_t13 : Q[(6, 8),13] == 0
+ZeroQ_Branch_8_9_t13: ZeroQ_Branch_8_9_t13 : Q[(8, 9),13] == 0
+ZeroQ_Branch_1_2_t14: ZeroQ_Branch_1_2_t14 : Q[(1, 2),14] == 0
+ZeroQ_Branch_1_3_t14: ZeroQ_Branch_1_3_t14 : Q[(1, 3),14] == 0
+ZeroQ_Branch_1_10_t14: ZeroQ_Branch_1_10_t14 : Q[(1, 10),14] == 0
+ZeroQ_Branch_2_4_t14: ZeroQ_Branch_2_4_t14 : Q[(2, 4),14] == 0
+ZeroQ_Branch_2_5_t14: ZeroQ_Branch_2_5_t14 : Q[(2, 5),14] == 0
+ZeroQ_Branch_2_6_t14: ZeroQ_Branch_2_6_t14 : Q[(2, 6),14] == 0
+ZeroQ_Branch_6_7_t14: ZeroQ_Branch_6_7_t14 : Q[(6, 7),14] == 0
+ZeroQ_Branch_6_8_t14: ZeroQ_Branch_6_8_t14 : Q[(6, 8),14] == 0
+ZeroQ_Branch_8_9_t14: ZeroQ_Branch_8_9_t14 : Q[(8, 9),14] == 0
+ZeroQ_Branch_1_2_t15: ZeroQ_Branch_1_2_t15 : Q[(1, 2),15] == 0
+ZeroQ_Branch_1_3_t15: ZeroQ_Branch_1_3_t15 : Q[(1, 3),15] == 0
+ZeroQ_Branch_1_10_t15: ZeroQ_Branch_1_10_t15 : Q[(1, 10),15] == 0
+ZeroQ_Branch_2_4_t15: ZeroQ_Branch_2_4_t15 : Q[(2, 4),15] == 0
+ZeroQ_Branch_2_5_t15: ZeroQ_Branch_2_5_t15 : Q[(2, 5),15] == 0
+ZeroQ_Branch_2_6_t15: ZeroQ_Branch_2_6_t15 : Q[(2, 6),15] == 0
+ZeroQ_Branch_6_7_t15: ZeroQ_Branch_6_7_t15 : Q[(6, 7),15] == 0
+ZeroQ_Branch_6_8_t15: ZeroQ_Branch_6_8_t15 : Q[(6, 8),15] == 0
+ZeroQ_Branch_8_9_t15: ZeroQ_Branch_8_9_t15 : Q[(8, 9),15] == 0
+ZeroQ_Branch_1_2_t16: ZeroQ_Branch_1_2_t16 : Q[(1, 2),16] == 0
+ZeroQ_Branch_1_3_t16: ZeroQ_Branch_1_3_t16 : Q[(1, 3),16] == 0
+ZeroQ_Branch_1_10_t16: ZeroQ_Branch_1_10_t16 : Q[(1, 10),16] == 0
+ZeroQ_Branch_2_4_t16: ZeroQ_Branch_2_4_t16 : Q[(2, 4),16] == 0
+ZeroQ_Branch_2_5_t16: ZeroQ_Branch_2_5_t16 : Q[(2, 5),16] == 0
+ZeroQ_Branch_2_6_t16: ZeroQ_Branch_2_6_t16 : Q[(2, 6),16] == 0
+ZeroQ_Branch_6_7_t16: ZeroQ_Branch_6_7_t16 : Q[(6, 7),16] == 0
+ZeroQ_Branch_6_8_t16: ZeroQ_Branch_6_8_t16 : Q[(6, 8),16] == 0
+ZeroQ_Branch_8_9_t16: ZeroQ_Branch_8_9_t16 : Q[(8, 9),16] == 0
+ZeroQ_Branch_1_2_t17: ZeroQ_Branch_1_2_t17 : Q[(1, 2),17] == 0
+ZeroQ_Branch_1_3_t17: ZeroQ_Branch_1_3_t17 : Q[(1, 3),17] == 0
+ZeroQ_Branch_1_10_t17: ZeroQ_Branch_1_10_t17 : Q[(1, 10),17] == 0
+ZeroQ_Branch_2_4_t17: ZeroQ_Branch_2_4_t17 : Q[(2, 4),17] == 0
+ZeroQ_Branch_2_5_t17: ZeroQ_Branch_2_5_t17 : Q[(2, 5),17] == 0
+ZeroQ_Branch_2_6_t17: ZeroQ_Branch_2_6_t17 : Q[(2, 6),17] == 0
+ZeroQ_Branch_6_7_t17: ZeroQ_Branch_6_7_t17 : Q[(6, 7),17] == 0
+ZeroQ_Branch_6_8_t17: ZeroQ_Branch_6_8_t17 : Q[(6, 8),17] == 0
+ZeroQ_Branch_8_9_t17: ZeroQ_Branch_8_9_t17 : Q[(8, 9),17] == 0
+ZeroQ_Branch_1_2_t18: ZeroQ_Branch_1_2_t18 : Q[(1, 2),18] == 0
+ZeroQ_Branch_1_3_t18: ZeroQ_Branch_1_3_t18 : Q[(1, 3),18] == 0
+ZeroQ_Branch_1_10_t18: ZeroQ_Branch_1_10_t18 : Q[(1, 10),18] == 0
+ZeroQ_Branch_2_4_t18: ZeroQ_Branch_2_4_t18 : Q[(2, 4),18] == 0
+ZeroQ_Branch_2_5_t18: ZeroQ_Branch_2_5_t18 : Q[(2, 5),18] == 0
+ZeroQ_Branch_2_6_t18: ZeroQ_Branch_2_6_t18 : Q[(2, 6),18] == 0
+ZeroQ_Branch_6_7_t18: ZeroQ_Branch_6_7_t18 : Q[(6, 7),18] == 0
+ZeroQ_Branch_6_8_t18: ZeroQ_Branch_6_8_t18 : Q[(6, 8),18] == 0
+ZeroQ_Branch_8_9_t18: ZeroQ_Branch_8_9_t18 : Q[(8, 9),18] == 0
+ZeroQ_Branch_1_2_t19: ZeroQ_Branch_1_2_t19 : Q[(1, 2),19] == 0
+ZeroQ_Branch_1_3_t19: ZeroQ_Branch_1_3_t19 : Q[(1, 3),19] == 0
+ZeroQ_Branch_1_10_t19: ZeroQ_Branch_1_10_t19 : Q[(1, 10),19] == 0
+ZeroQ_Branch_2_4_t19: ZeroQ_Branch_2_4_t19 : Q[(2, 4),19] == 0
+ZeroQ_Branch_2_5_t19: ZeroQ_Branch_2_5_t19 : Q[(2, 5),19] == 0
+ZeroQ_Branch_2_6_t19: ZeroQ_Branch_2_6_t19 : Q[(2, 6),19] == 0
+ZeroQ_Branch_6_7_t19: ZeroQ_Branch_6_7_t19 : Q[(6, 7),19] == 0
+ZeroQ_Branch_6_8_t19: ZeroQ_Branch_6_8_t19 : Q[(6, 8),19] == 0
+ZeroQ_Branch_8_9_t19: ZeroQ_Branch_8_9_t19 : Q[(8, 9),19] == 0
+ZeroQ_Branch_1_2_t20: ZeroQ_Branch_1_2_t20 : Q[(1, 2),20] == 0
+ZeroQ_Branch_1_3_t20: ZeroQ_Branch_1_3_t20 : Q[(1, 3),20] == 0
+ZeroQ_Branch_1_10_t20: ZeroQ_Branch_1_10_t20 : Q[(1, 10),20] == 0
+ZeroQ_Branch_2_4_t20: ZeroQ_Branch_2_4_t20 : Q[(2, 4),20] == 0
+ZeroQ_Branch_2_5_t20: ZeroQ_Branch_2_5_t20 : Q[(2, 5),20] == 0
+ZeroQ_Branch_2_6_t20: ZeroQ_Branch_2_6_t20 : Q[(2, 6),20] == 0
+ZeroQ_Branch_6_7_t20: ZeroQ_Branch_6_7_t20 : Q[(6, 7),20] == 0
+ZeroQ_Branch_6_8_t20: ZeroQ_Branch_6_8_t20 : Q[(6, 8),20] == 0
+ZeroQ_Branch_8_9_t20: ZeroQ_Branch_8_9_t20 : Q[(8, 9),20] == 0
+ZeroQ_Branch_1_2_t21: ZeroQ_Branch_1_2_t21 : Q[(1, 2),21] == 0
+ZeroQ_Branch_1_3_t21: ZeroQ_Branch_1_3_t21 : Q[(1, 3),21] == 0
+ZeroQ_Branch_1_10_t21: ZeroQ_Branch_1_10_t21 : Q[(1, 10),21] == 0
+ZeroQ_Branch_2_4_t21: ZeroQ_Branch_2_4_t21 : Q[(2, 4),21] == 0
+ZeroQ_Branch_2_5_t21: ZeroQ_Branch_2_5_t21 : Q[(2, 5),21] == 0
+ZeroQ_Branch_2_6_t21: ZeroQ_Branch_2_6_t21 : Q[(2, 6),21] == 0
+ZeroQ_Branch_6_7_t21: ZeroQ_Branch_6_7_t21 : Q[(6, 7),21] == 0
+ZeroQ_Branch_6_8_t21: ZeroQ_Branch_6_8_t21 : Q[(6, 8),21] == 0
+ZeroQ_Branch_8_9_t21: ZeroQ_Branch_8_9_t21 : Q[(8, 9),21] == 0
+ZeroQ_Branch_1_2_t22: ZeroQ_Branch_1_2_t22 : Q[(1, 2),22] == 0
+ZeroQ_Branch_1_3_t22: ZeroQ_Branch_1_3_t22 : Q[(1, 3),22] == 0
+ZeroQ_Branch_1_10_t22: ZeroQ_Branch_1_10_t22 : Q[(1, 10),22] == 0
+ZeroQ_Branch_2_4_t22: ZeroQ_Branch_2_4_t22 : Q[(2, 4),22] == 0
+ZeroQ_Branch_2_5_t22: ZeroQ_Branch_2_5_t22 : Q[(2, 5),22] == 0
+ZeroQ_Branch_2_6_t22: ZeroQ_Branch_2_6_t22 : Q[(2, 6),22] == 0
+ZeroQ_Branch_6_7_t22: ZeroQ_Branch_6_7_t22 : Q[(6, 7),22] == 0
+ZeroQ_Branch_6_8_t22: ZeroQ_Branch_6_8_t22 : Q[(6, 8),22] == 0
+ZeroQ_Branch_8_9_t22: ZeroQ_Branch_8_9_t22 : Q[(8, 9),22] == 0
+ZeroQ_Branch_1_2_t23: ZeroQ_Branch_1_2_t23 : Q[(1, 2),23] == 0
+ZeroQ_Branch_1_3_t23: ZeroQ_Branch_1_3_t23 : Q[(1, 3),23] == 0
+ZeroQ_Branch_1_10_t23: ZeroQ_Branch_1_10_t23 : Q[(1, 10),23] == 0
+ZeroQ_Branch_2_4_t23: ZeroQ_Branch_2_4_t23 : Q[(2, 4),23] == 0
+ZeroQ_Branch_2_5_t23: ZeroQ_Branch_2_5_t23 : Q[(2, 5),23] == 0
+ZeroQ_Branch_2_6_t23: ZeroQ_Branch_2_6_t23 : Q[(2, 6),23] == 0
+ZeroQ_Branch_6_7_t23: ZeroQ_Branch_6_7_t23 : Q[(6, 7),23] == 0
+ZeroQ_Branch_6_8_t23: ZeroQ_Branch_6_8_t23 : Q[(6, 8),23] == 0
+ZeroQ_Branch_8_9_t23: ZeroQ_Branch_8_9_t23 : Q[(8, 9),23] == 0
+ZeroQ_Branch_1_2_t24: ZeroQ_Branch_1_2_t24 : Q[(1, 2),24] == 0
+ZeroQ_Branch_1_3_t24: ZeroQ_Branch_1_3_t24 : Q[(1, 3),24] == 0
+ZeroQ_Branch_1_10_t24: ZeroQ_Branch_1_10_t24 : Q[(1, 10),24] == 0
+ZeroQ_Branch_2_4_t24: ZeroQ_Branch_2_4_t24 : Q[(2, 4),24] == 0
+ZeroQ_Branch_2_5_t24: ZeroQ_Branch_2_5_t24 : Q[(2, 5),24] == 0
+ZeroQ_Branch_2_6_t24: ZeroQ_Branch_2_6_t24 : Q[(2, 6),24] == 0
+ZeroQ_Branch_6_7_t24: ZeroQ_Branch_6_7_t24 : Q[(6, 7),24] == 0
+ZeroQ_Branch_6_8_t24: ZeroQ_Branch_6_8_t24 : Q[(6, 8),24] == 0
+ZeroQ_Branch_8_9_t24: ZeroQ_Branch_8_9_t24 : Q[(8, 9),24] == 0
+: P_Subs[1] >= 0
+: P_Subs[2] >= 0
+: P_Subs[3] >= 0
+: P_Subs[4] >= 0
+: P_Subs[5] >= 0
+: P_Subs[6] >= 0
+: P_Subs[7] >= 0
+: P_Subs[8] >= 0
+: P_Subs[9] >= 0
+: P_Subs[10] >= 0
+: P_Subs[11] >= 0
+: P_Subs[12] >= 0
+: P_Subs[13] >= 0
+: P_Subs[14] >= 0
+: P_Subs[15] >= 0
+: P_Subs[16] >= 0
+: P_Subs[17] >= 0
+: P_Subs[18] >= 0
+: P_Subs[19] >= 0
+: P_Subs[20] >= 0
+: P_Subs[21] >= 0
+: P_Subs[22] >= 0
+: P_Subs[23] >= 0
+: P_Subs[24] >= 0
+
+--- VARIABLE BOUNDS CHECK ---
+Number of variables: 744
+Number of constraints: 1032
+
+--- DATA VALIDATION ---
+Load nodes (NLset): [2, 3, 4, 5, 6, 7, 9, 10]
+PV nodes (Dset): [6]
+Battery nodes (Bset): [5]
+All nodes (Nset): [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+Non-substation nodes (Nm1set): [2, 3, 4, 5, 6, 7, 8, 9, 10]
+Substation branches (L1set): [(1, 2), (1, 3), (1, 10)]
+Other branches (Lm1set): [(2, 4), (2, 5), (2, 6), (6, 7), (6, 8), (8, 9)]
+
+--- POWER BALANCE CHECK (t=1) ---
+Total load at t=1: 71.76993773674656 kW
+Total PV at t=1: 0.0 kW
+Net demand: 71.76993773674656 kW
+
+--- BATTERY PARAMETERS ---
+Battery 5:
+  Initial SOC: 11.66375 kWh
+  Capacity: 18.662 kWh
+  Power rating: 4.6655 kW
+  SOC min: 30.0%
+  SOC max: 95.0%
+  Min energy: 5.598599999999999 kWh
+  Max energy: 17.7289 kWh
