@@ -218,8 +218,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         # end
         
         # ----- 5.4 VOLTAGE CONSTRAINTS -----
-        # Fixed substation voltage (1.07 pu, squared)
-        @constraint(model, v[j1, t] == 1.07^2,
+        # Fixed substation voltage (1.05 pu, squared)
+        @constraint(model, v[j1, t] == 1.05^2,
             base_name = "FixedSubstationVoltage_t$(t)")
         
         # Voltage limits (all nodes)
