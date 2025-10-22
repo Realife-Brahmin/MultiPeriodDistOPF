@@ -91,6 +91,11 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     P_BASE = kVA_B
     j1 = substationBus
     
+    # ZERO REACTIVE POWER MODEL (comment these 3 lines to enable reactive power)
+    q_L_pu = zeros(size(q_L_pu))  # All loads at unity power factor
+    # Q[(i,j),t] will be fixed to 0 via constraints
+    # q_D will be fixed to 0 via constraints (PV at unity power factor)
+    
     # ========== 2. CREATE MODEL ==========
     model = Model()
     if solver == :gurobi
@@ -177,6 +182,13 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
             @constraint(model,
                 v[i, t] - v[j, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) == 0,
                 base_name = "KVL_Branch_$(i)_$(j)_t$(t)")
+        end
+        
+        # ----- 5.4 ZERO REACTIVE POWER MODEL -----
+        # Fix all branch reactive power flows to zero (comment to enable reactive power)
+        for (i, j) in Lset
+            @constraint(model, Q[(i, j), t] == 0.0,
+                base_name = "ZeroQ_Branch_$(i)_$(j)_t$(t)")
         end
         
         # ----- 5.4 VOLTAGE CONSTRAINTS -----
@@ -315,37 +327,77 @@ if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLV
     end
     
     println("\n--- VOLTAGE SUMMARY ---")
-    if isa(v_vals, AbstractDict)
-        v_mag = Dict()
-        for n in data[:Nset], t in data[:Tset]
-            v_mag[(n,t)] = sqrt(v_vals[n, t])
-        end
-        v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
-        @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
-        
-        # Detailed voltage and KVL diagnostics at t=1
-        println("\nVoltage magnitudes (p.u.) at t=1:")
-        for j in sort(collect(data[:Nset]))
-            V_pu = sqrt(v_vals[j, 1])
-            @printf "  Bus %2d: %.6f p.u.\n" j V_pu
-        end
-        
-        # Check voltage drops and power flows
-        P_vals = sol_ldf_bf[:P]
-        Q_vals = sol_ldf_bf[:Q]
-        println("\nKVL Analysis at t=1:")
-        println("Branch  | P(kW)  | Q(kvar) |  r(pu)   |  x(pu)   | V_drop(pu)  | V_i-V_j")
-        println("-" ^ 80)
-        for (i, j) in sort(collect(data[:Lset]))
-            P_ij = P_vals[(i, j), 1] * P_BASE
-            Q_ij = Q_vals[(i, j), 1] * P_BASE
+    # Always run voltage diagnostics (v_vals is a JuMP container, not AbstractDict)
+    v_mag = Dict()
+    for n in data[:Nset], t in data[:Tset]
+        v_mag[(n,t)] = sqrt(v_vals[n, t])
+    end
+    v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
+    @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
+    
+    # Detailed voltage and KVL diagnostics at t=1
+    println("\nVoltage magnitudes (p.u.) at t=1:")
+    for j in sort(collect(data[:Nset]))
+        V_pu = sqrt(v_vals[j, 1])
+        @printf "  Bus %2d: %.6f p.u.\n" j V_pu
+    end
+    
+    # Check voltage drops and power flows
+    P_vals = sol_ldf_bf[:P]
+    Q_vals = sol_ldf_bf[:Q]
+    println("\nKVL Analysis at t=1:")
+    println("Branch  | P(kW)  | Q(kvar) |  r(pu)   |  x(pu)   | V_drop(pu)  | V_i-V_j")
+    println("-" ^ 80)
+    for (i, j) in sort(collect(data[:Lset]))
+        P_ij = P_vals[(i, j), 1] * P_BASE
+        Q_ij = Q_vals[(i, j), 1] * P_BASE
+        r_ij = data[:rdict_pu][(i, j)]
+        x_ij = data[:xdict_pu][(i, j)]
+        v_drop_calc = 2 * (r_ij * P_vals[(i, j), 1] + x_ij * Q_vals[(i, j), 1])
+        v_diff_actual = v_vals[i, 1] - v_vals[j, 1]
+        @printf "(%2d,%2d) | %6.2f | %7.2f | %.6f | %.6f | %11.8f | %11.8f\n" i j P_ij Q_ij r_ij x_ij v_drop_calc v_diff_actual
+    end
+    
+    # KVL VERIFICATION: Check if KVL constraints are satisfied post-optimization
+    println("\n" * "="^80)
+    println("KVL CONSTRAINT VERIFICATION (across all time periods)")
+    println("="^80)
+    local max_kvl_violation = 0.0
+    local total_violations = 0
+    violation_threshold = 1e-6
+    
+    for t in data[:Tset]
+        for (i, j) in data[:Lset]
             r_ij = data[:rdict_pu][(i, j)]
             x_ij = data[:xdict_pu][(i, j)]
-            v_drop_calc = 2 * (r_ij * P_vals[(i, j), 1] + x_ij * Q_vals[(i, j), 1])
-            v_diff_actual = v_vals[i, 1] - v_vals[j, 1]
-            @printf "(%2d,%2d) | %6.2f | %7.2f | %.6f | %.6f | %11.8f | %11.8f\n" i j P_ij Q_ij r_ij x_ij v_drop_calc v_diff_actual
+            # LHS: v[i,t] - v[j,t]
+            lhs = v_vals[i, t] - v_vals[j, t]
+            # RHS: 2*(r*P + x*Q)
+            rhs = 2 * (r_ij * P_vals[(i, j), t] + x_ij * Q_vals[(i, j), t])
+            # Violation: |LHS - RHS|
+            violation = abs(lhs - rhs)
+            
+            if violation > max_kvl_violation
+                max_kvl_violation = violation
+            end
+            
+            if violation > violation_threshold
+                total_violations += 1
+                if total_violations <= 10  # Print first 10 violations
+                    @printf "  ⚠ KVL violation at t=%d, branch (%d,%d): |%.8f - %.8f| = %.2e\n" t i j lhs rhs violation
+                end
+            end
         end
     end
+    
+    if total_violations == 0
+        println("✓ All KVL constraints satisfied (max violation: $(max_kvl_violation))")
+    else
+        println("⚠ Total KVL violations (>$(violation_threshold)): $(total_violations)")
+        println("  Maximum violation: $(max_kvl_violation)")
+    end
+    println("="^80)
+    
 else
     println("⚠ Optimization failed or did not converge to optimality")
     println("Status: ", sol_ldf_bf[:status])

@@ -1,0 +1,134 @@
+Set parameter Username
+Set parameter LicenseID to value 2612288
+Academic license - for non-commercial use only - expires 2026-01-20
+Set parameter NonConvex to value 2
+Set parameter OutputFlag to value 1
+Set parameter NonConvex to value 2
+Set parameter OutputFlag to value 1
+Gurobi Optimizer version 12.0.3 build v12.0.3rc0 (win64 - Windows 11.0 (26100.2))
+
+CPU model: AMD Ryzen 9 4900HS with Radeon Graphics, instruction set [SSE2|AVX|AVX2]
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+
+Non-default parameters:
+NonConvex  2
+
+Optimize a model with 1080 rows, 1128 columns and 2422 nonzeros
+Model fingerprint: 0x40bc59d1
+Model has 48 quadratic objective terms
+Coefficient statistics:
+  Matrix range     [4e-03, 1e+00]
+  Objective range  [8e+01, 2e+02]
+  QObjective range [2e-01, 2e-01]
+  Bounds range     [2e-03, 1e+00]
+  RHS range        [5e-03, 1e+00]
+Presolve removed 1034 rows and 1034 columns
+Presolve time: 0.00s
+Presolved: 46 rows, 94 columns, 138 nonzeros
+Presolved model has 48 quadratic objective terms
+Ordering time: 0.00s
+
+Barrier statistics:
+ AA' NZ     : 4.400e+01
+ Factor NZ  : 5.520e+02
+ Factor Ops : 8.648e+03 (less than 1 second per iteration)
+ Threads    : 1
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   3.46676807e+07 -6.15487587e+07  3.00e+03 2.80e+02  1.00e+06     0s
+   1  -5.70933625e+04 -1.53604054e+03  6.30e+00 5.89e-01  2.10e+03     0s
+   2   2.14434446e+02 -1.25053060e+03  4.65e-03 4.35e-04  2.55e+00     0s
+   3   2.56966352e+02 -2.92928260e+02  4.65e-09 4.35e-10  3.66e-01     0s
+   4   2.56791793e+02  2.52680023e+02  9.57e-12 1.05e-12  2.73e-03     0s
+   5   2.54787472e+02  2.54030923e+02  9.89e-13 1.10e-13  5.03e-04     0s
+   6   2.54503480e+02  2.54287801e+02  1.53e-13 2.00e-14  1.43e-04     0s
+   7   2.54428428e+02  2.54403069e+02  1.47e-14 1.30e-14  1.69e-05     0s
+   8   2.54418928e+02  2.54418619e+02  1.47e-16 2.40e-14  2.06e-07     0s
+   9   2.54418822e+02  2.54418821e+02  1.52e-18 9.77e-15  2.06e-10     0s
+  10   2.54418821e+02  2.54418821e+02  8.67e-19 1.93e-14  2.06e-13     0s
+
+Barrier solved model in 10 iterations and 0.00 seconds (0.00 work units)
+Optimal objective 2.54418821e+02
+
+
+User-callback calls 97, time in user-callback 0.00 sec
+  Activating project at `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm`
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery6.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery6.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery6.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery6.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery6.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+[ Info: Saved animation to C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\voltage_animation.gif
+
+================================================================================
+PARSING SYSTEM DATA
+================================================================================
+Loaded system: ads10_1ph from C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\..\..\rawData\ads10_1ph\Master.dss
+
+========================================
+Initial Powerflow
+========================================
+Powerflow completed successfully!
+
+[OpenDSS] Total system load: 63.65 kW
+[OpenDSS] Substation power: 63.66 kW
+[OpenDSS] Total PV dispatch: 0.00 kW
+[OpenDSS] Total battery dispatch: 0.00 kW
+[OpenDSS] Total system losses: 0.01 kW
+
+
+================================================================================
+SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)
+================================================================================
+Model summary saved to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\model_summary.txt
+
+================================================================================
+STARTING OPTIMIZATION
+================================================================================
+
+--- SOLUTION STATUS ---
+Status: OPTIMAL
+✓ Optimization successful!
+
+--- OBJECTIVE VALUE ---
+Total Cost: $254.42
+
+--- POWER SUMMARY ---
+Substation Power (kW): min=63.4, max=81.6, avg=75.1
+
+--- VOLTAGE SUMMARY ---
+
+================================================================================
+MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE
+================================================================================
+
+================================================================================
+GENERATING PLOTS
+================================================================================
+Saving input curves plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\input_curves.png
+Saving LinDistFlow-Gurobi battery actions plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\battery_actions_lindistflow.png
+Saving substation power & cost plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\substation_power_cost.png
+Saving voltage profile (bus 10) plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\voltage_profile_last_bus.png
+Creating voltage animation GIF: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\voltage_animation.gif
+Animation saved!
+Saving voltage profile (all buses, t=12) plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10_1ph_T24\voltage_profile_all_buses.png
+
+================================================================================
+PLOTTING COMPLETE
+================================================================================
