@@ -238,6 +238,7 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
         xdict_pu[(i,j)] = X_ohm / Z_B
     end
     
+    data[:Z_B] = Z_B
     data[:rdict] = rdict
     data[:xdict] = xdict
     data[:rdict_pu] = rdict_pu
