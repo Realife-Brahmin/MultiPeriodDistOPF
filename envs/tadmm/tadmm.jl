@@ -220,23 +220,23 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         end
         
         # ----- 5.6 BATTERY CONSTRAINTS -----
-        for b in Bset
+        for j in Bset
             # SOC trajectory
             if t == 1
-                @constraint(model, B[b, t] == B0_pu[b] - P_B[b, t] * Δt,
-                    base_name = "BatterySOC_Init_$(b)_t$(t)")
+                @constraint(model, B[j, t] == B0_pu[j] - P_B[j, t] * Δt,
+                    base_name = "BatterySOC_Init_$(j)_t$(t)")
             else
                 @constraint(model, B[j, t] == B[j, t-1] - P_B[j, t] * Δt,
-                    base_name = "BatterySOC_$(b)_t$(t)")
+                    base_name = "BatterySOC_$(j)_t$(t)")
             end
             
             # SOC limits (use per-unit values)
-            @constraint(model, soc_min[b] * B_R_pu[b] <= B[b, t] <= soc_max[b] * B_R_pu[b],
-                base_name = "BatterySOCLimits_$(b)_t$(t)")
-            
+            @constraint(model, soc_min[j] * B_R_pu[j] <= B[j, t] <= soc_max[j] * B_R_pu[j],
+                base_name = "BatterySOCLimits_$(j)_t$(t)")
+
             # Power limits (use per-unit values)
-            @constraint(model, -P_B_R_pu[b] <= P_B[b, t] <= P_B_R_pu[b],
-                base_name = "BatteryPowerLimits_$(b)_t$(t)")
+            @constraint(model, -P_B_R_pu[j] <= P_B[j, t] <= P_B_R_pu[j],
+                base_name = "BatteryPowerLimits_$(j)_t$(t)")
         end
     end
     
