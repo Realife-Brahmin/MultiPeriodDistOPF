@@ -229,12 +229,12 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         end
         
         # ----- 5.5 PV REACTIVE POWER LIMITS -----
-        for d in Dset
-            p_D_val = p_D_pu[d, t]
-            S_D_R_val = S_D_R[d]
-            q_max = sqrt(max(0, S_D_R_val^2 - p_D_val^2))
-            @constraint(model, -q_max <= q_D[d, t] <= q_max,
-                base_name = "PVReactiveLimits_DER$(d)_t$(t)")
+        for j in Dset
+            p_D_val = p_D_pu[j, t]
+            S_D_R_val = S_D_R[j]
+            q_max_t = sqrt(S_D_R_val^2 - p_D_val^2)
+            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
+                base_name = "PVReactiveLimits_DER$(j)_t$(t)")
         end
         
         # ----- 5.6 BATTERY CONSTRAINTS -----
