@@ -217,13 +217,80 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     
     # ========== 6. SOLVE ==========
     
-    # Save model summary to file
+    # Save model summary to file (with full constraint listing)
     model_file = joinpath(@__DIR__, "model_summary.txt")
     open(model_file, "w") do io
         println(io, "="^80)
         println(io, "MODEL SUMMARY")
         println(io, "="^80)
-        println(io, model)
+        
+        # Set display limit to show all constraints
+        print(io, model)
+        
+        # Manually print all constraints in organized order
+        println(io, "\n\n" * "="^80)
+        println(io, "ALL CONSTRAINTS (ORGANIZED BY TYPE AND TIME)")
+        println(io, "="^80)
+        
+        # Define constraint name patterns in desired order
+        constraint_groups = [
+            ("SUBSTATION POWER BALANCE", r"RealPowerBalance_Substation_t\d+"),
+            ("NODAL REAL POWER BALANCE", r"RealPowerBalance_Node\d+_t\d+"),
+            ("NODAL REACTIVE POWER BALANCE (Substation)", r"ReactivePowerBalance_Substation_t\d+"),
+            ("NODAL REACTIVE POWER BALANCE", r"ReactivePowerBalance_Node\d+_t\d+"),
+            ("KVL CONSTRAINTS", r"KVL_Branch_\d+_\d+_t\d+"),
+            ("FIXED SUBSTATION VOLTAGE", r"FixedSubstationVoltage_t\d+"),
+            ("BATTERY SOC TRAJECTORY", r"BatterySOC.*_t\d+"),
+            ("VOLTAGE LIMITS", r"VoltageLimits_Node\d+_t\d+"),
+            ("PV REACTIVE POWER LIMITS", r"PVReactiveLimits_DER\d+_t\d+"),
+            ("BATTERY SOC LIMITS", r"BatterySOCLimits_\d+_t\d+"),
+            ("BATTERY POWER LIMITS", r"BatteryPowerLimits_\d+_t\d+"),
+        ]
+        
+        # Collect all constraint references
+        all_constraint_refs = []
+        for (F, S) in list_of_constraint_types(model)
+            for con in all_constraints(model, F, S)
+                push!(all_constraint_refs, (name(con), con))
+            end
+        end
+        
+        # Print constraints by group
+        for (group_name, pattern) in constraint_groups
+            println(io, "\n" * "-"^80)
+            println(io, group_name)
+            println(io, "-"^80)
+            
+            # Filter and sort constraints matching this pattern
+            matching_cons = filter(x -> occursin(pattern, x[1]), all_constraint_refs)
+            sort!(matching_cons, by=x -> x[1])  # Alphabetical sort within group
+            
+            for (con_name, con) in matching_cons
+                println(io, con_name, ": ", con)
+            end
+            
+            println(io, "Total: $(length(matching_cons)) constraints")
+        end
+        
+        # Print any remaining constraints not captured above
+        printed_names = Set{String}()
+        for (group_name, pattern) in constraint_groups
+            for (con_name, con) in all_constraint_refs
+                if occursin(pattern, con_name)
+                    push!(printed_names, con_name)
+                end
+            end
+        end
+        
+        remaining = filter(x -> !(x[1] in printed_names), all_constraint_refs)
+        if !isempty(remaining)
+            println(io, "\n" * "-"^80)
+            println(io, "OTHER CONSTRAINTS")
+            println(io, "-"^80)
+            for (con_name, con) in remaining
+                println(io, con_name, ": ", con)
+            end
+        end
         
         println(io, "\n--- VARIABLE BOUNDS CHECK ---")
         println(io, "Number of variables: ", num_variables(model))
