@@ -39,14 +39,14 @@ Total: 24 constraints
 NODAL REAL POWER BALANCE
 --------------------------------------------------------------------------------
 RealPowerBalance_Node10_t1: RealPowerBalance_Node10_t1 : -P[(1, 10),1] == -0.011040764330830937
-RealPowerBalance_Node10_t10: RealPowerBalance_Node10_t10 : -P[(1, 10),10] == -0.013324860517413835
-RealPowerBalance_Node10_t11: RealPowerBalance_Node10_t11 : -P[(1, 10),11] == -0.013244069256169859
-RealPowerBalance_Node10_t12: RealPowerBalance_Node10_t12 : -P[(1, 10),12] == -0.013070788573158002
-RealPowerBalance_Node10_t13: RealPowerBalance_Node10_t13 : -P[(1, 10),13] == -0.012817869903930874
-RealPowerBalance_Node10_t14: RealPowerBalance_Node10_t14 : -P[(1, 10),14] == -0.012504071069159132
-RealPowerBalance_Node10_t15: RealPowerBalance_Node10_t15 : -P[(1, 10),15] == -0.012152665092883645
-RealPowerBalance_Node10_t16: RealPowerBalance_Node10_t16 : -P[(1, 10),16] == -0.011789714148789392
-RealPowerBalance_Node10_t17: RealPowerBalance_Node10_t17 : -P[(1, 10),17] == -0.011442136648009759
+RealPowerBalance_Node10_t10: RealPowerBalance_Node10_t10 : -P[(1, 10),10] == -0.011303990237682847
+RealPowerBalance_Node10_t11: RealPowerBalance_Node10_t11 : -P[(1, 10),11] == -0.010990081340524318
+RealPowerBalance_Node10_t12: RealPowerBalance_Node10_t12 : -P[(1, 10),12] == -0.010737288573158001
+RealPowerBalance_Node10_t13: RealPowerBalance_Node10_t13 : -P[(1, 10),13] == -0.010563881988285333
+RealPowerBalance_Node10_t14: RealPowerBalance_Node10_t14 : -P[(1, 10),14] == -0.010483200789428144
+RealPowerBalance_Node10_t15: RealPowerBalance_Node10_t15 : -P[(1, 10),15] == -0.010502631418984837
+RealPowerBalance_Node10_t16: RealPowerBalance_Node10_t16 : -P[(1, 10),16] == -0.010622964148789393
+RealPowerBalance_Node10_t17: RealPowerBalance_Node10_t17 : -P[(1, 10),17] == -0.010838182406263027
 RealPowerBalance_Node10_t18: RealPowerBalance_Node10_t18 : -P[(1, 10),18] == -0.011135710823716309
 RealPowerBalance_Node10_t19: RealPowerBalance_Node10_t19 : -P[(1, 10),19] == -0.010893162877492016
 RealPowerBalance_Node10_t2: RealPowerBalance_Node10_t2 : -P[(1, 10),2] == -0.011326787114472044
@@ -59,9 +59,9 @@ RealPowerBalance_Node10_t3: RealPowerBalance_Node10_t3 : -P[(1, 10),3] == -0.011
 RealPowerBalance_Node10_t4: RealPowerBalance_Node10_t4 : -P[(1, 10),4] == -0.012023053038570647
 RealPowerBalance_Node10_t5: RealPowerBalance_Node10_t5 : -P[(1, 10),5] == -0.01238165732064241
 RealPowerBalance_Node10_t6: RealPowerBalance_Node10_t6 : -P[(1, 10),6] == -0.012711733328932275
-RealPowerBalance_Node10_t7: RealPowerBalance_Node10_t7 : -P[(1, 10),7] == -0.012988800835902647
-RealPowerBalance_Node10_t8: RealPowerBalance_Node10_t8 : -P[(1, 10),8] == -0.013192311012061041
-RealPowerBalance_Node10_t9: RealPowerBalance_Node10_t9 : -P[(1, 10),9] == -0.013307170438638891
+RealPowerBalance_Node10_t7: RealPowerBalance_Node10_t7 : -P[(1, 10),7] == -0.012384846594155915
+RealPowerBalance_Node10_t8: RealPowerBalance_Node10_t8 : -P[(1, 10),8] == -0.012025561012061042
+RealPowerBalance_Node10_t9: RealPowerBalance_Node10_t9 : -P[(1, 10),9] == -0.011657136764740082
 RealPowerBalance_Node2_t1: RealPowerBalance_Node2_t1 : -P[(1, 2),1] + P[(2, 4),1] + P[(2, 5),1] + P[(2, 6),1] == -0.011040764330830937
 RealPowerBalance_Node2_t10: RealPowerBalance_Node2_t10 : -P[(1, 2),10] + P[(2, 4),10] + P[(2, 5),10] + P[(2, 6),10] == -0.013324860517413835
 RealPowerBalance_Node2_t11: RealPowerBalance_Node2_t11 : -P[(1, 2),11] + P[(2, 4),11] + P[(2, 5),11] + P[(2, 6),11] == -0.013244069256169859
@@ -158,30 +158,30 @@ RealPowerBalance_Node5_t6: RealPowerBalance_Node5_t6 : -P[(2, 5),6] - P_B[5,6] =
 RealPowerBalance_Node5_t7: RealPowerBalance_Node5_t7 : -P[(2, 5),7] - P_B[5,7] == -0.012988800835902647
 RealPowerBalance_Node5_t8: RealPowerBalance_Node5_t8 : -P[(2, 5),8] - P_B[5,8] == -0.013192311012061041
 RealPowerBalance_Node5_t9: RealPowerBalance_Node5_t9 : -P[(2, 5),9] - P_B[5,9] == -0.013307170438638891
-RealPowerBalance_Node6_t1: RealPowerBalance_Node6_t1 : -P[(2, 6),1] + P[(6, 7),1] + P[(6, 8),1] == -0.011040764330830937
-RealPowerBalance_Node6_t10: RealPowerBalance_Node6_t10 : -P[(2, 6),10] + P[(6, 7),10] + P[(6, 8),10] == -0.009284418996057538
-RealPowerBalance_Node6_t11: RealPowerBalance_Node6_t11 : -P[(2, 6),11] + P[(6, 7),11] + P[(6, 8),11] == -0.00873754231361821
-RealPowerBalance_Node6_t12: RealPowerBalance_Node6_t12 : -P[(2, 6),12] + P[(6, 7),12] + P[(6, 8),12] == -0.008405288573158002
-RealPowerBalance_Node6_t13: RealPowerBalance_Node6_t13 : -P[(2, 6),13] + P[(6, 7),13] + P[(6, 8),13] == -0.008311342961379226
-RealPowerBalance_Node6_t14: RealPowerBalance_Node6_t14 : -P[(2, 6),14] + P[(6, 7),14] + P[(6, 8),14] == -0.008463629547802835
-RealPowerBalance_Node6_t15: RealPowerBalance_Node6_t15 : -P[(2, 6),15] + P[(6, 7),15] + P[(6, 8),15] == -0.008853658405257807
-RealPowerBalance_Node6_t16: RealPowerBalance_Node6_t16 : -P[(2, 6),16] + P[(6, 7),16] + P[(6, 8),16] == -0.009456964148789392
-RealPowerBalance_Node6_t17: RealPowerBalance_Node6_t17 : -P[(2, 6),17] + P[(6, 7),17] + P[(6, 8),17] == -0.010234616393083948
-RealPowerBalance_Node6_t18: RealPowerBalance_Node6_t18 : -P[(2, 6),18] + P[(6, 7),18] + P[(6, 8),18] == -0.011135710823716309
-RealPowerBalance_Node6_t19: RealPowerBalance_Node6_t19 : -P[(2, 6),19] + P[(6, 7),19] + P[(6, 8),19] == -0.010893162877492016
-RealPowerBalance_Node6_t2: RealPowerBalance_Node6_t2 : -P[(2, 6),2] + P[(6, 7),2] + P[(6, 8),2] == -0.011326787114472044
-RealPowerBalance_Node6_t20: RealPowerBalance_Node6_t20 : -P[(2, 6),20] + P[(6, 7),20] + P[(6, 8),20] == -0.010732481480925314
-RealPowerBalance_Node6_t21: RealPowerBalance_Node6_t21 : -P[(2, 6),21] + P[(6, 7),21] + P[(6, 8),21] == -0.010665583638131079
-RealPowerBalance_Node6_t22: RealPowerBalance_Node6_t22 : -P[(2, 6),22] + P[(6, 7),22] + P[(6, 8),22] == -0.01069743085607209
-RealPowerBalance_Node6_t23: RealPowerBalance_Node6_t23 : -P[(2, 6),23] + P[(6, 7),23] + P[(6, 8),23] == -0.010825661172284992
-RealPowerBalance_Node6_t24: RealPowerBalance_Node6_t24 : -P[(2, 6),24] + P[(6, 7),24] + P[(6, 8),24] == -0.011040764330830937
-RealPowerBalance_Node6_t3: RealPowerBalance_Node6_t3 : -P[(2, 6),3] + P[(6, 7),3] + P[(6, 8),3] == -0.011662516521812822
-RealPowerBalance_Node6_t4: RealPowerBalance_Node6_t4 : -P[(2, 6),4] + P[(6, 7),4] + P[(6, 8),4] == -0.012023053038570647
-RealPowerBalance_Node6_t5: RealPowerBalance_Node6_t5 : -P[(2, 6),5] + P[(6, 7),5] + P[(6, 8),5] == -0.01238165732064241
-RealPowerBalance_Node6_t6: RealPowerBalance_Node6_t6 : -P[(2, 6),6] + P[(6, 7),6] + P[(6, 8),6] == -0.012711733328932275
-RealPowerBalance_Node6_t7: RealPowerBalance_Node6_t7 : -P[(2, 6),7] + P[(6, 7),7] + P[(6, 8),7] == -0.011781280580976838
-RealPowerBalance_Node6_t8: RealPowerBalance_Node6_t8 : -P[(2, 6),8] + P[(6, 7),8] + P[(6, 8),8] == -0.010859561012061042
-RealPowerBalance_Node6_t9: RealPowerBalance_Node6_t9 : -P[(2, 6),9] + P[(6, 7),9] + P[(6, 8),9] == -0.010008163751013054
+RealPowerBalance_Node6_t1: RealPowerBalance_Node6_t1 : -P[(2, 6),1] + P[(6, 7),1] + P[(6, 8),1] - P_B[6,1] == -0.011040764330830937
+RealPowerBalance_Node6_t10: RealPowerBalance_Node6_t10 : -P[(2, 6),10] + P[(6, 7),10] + P[(6, 8),10] - P_B[6,10] == -0.009284418996057538
+RealPowerBalance_Node6_t11: RealPowerBalance_Node6_t11 : -P[(2, 6),11] + P[(6, 7),11] + P[(6, 8),11] - P_B[6,11] == -0.00873754231361821
+RealPowerBalance_Node6_t12: RealPowerBalance_Node6_t12 : -P[(2, 6),12] + P[(6, 7),12] + P[(6, 8),12] - P_B[6,12] == -0.008405288573158002
+RealPowerBalance_Node6_t13: RealPowerBalance_Node6_t13 : -P[(2, 6),13] + P[(6, 7),13] + P[(6, 8),13] - P_B[6,13] == -0.008311342961379226
+RealPowerBalance_Node6_t14: RealPowerBalance_Node6_t14 : -P[(2, 6),14] + P[(6, 7),14] + P[(6, 8),14] - P_B[6,14] == -0.008463629547802835
+RealPowerBalance_Node6_t15: RealPowerBalance_Node6_t15 : -P[(2, 6),15] + P[(6, 7),15] + P[(6, 8),15] - P_B[6,15] == -0.008853658405257807
+RealPowerBalance_Node6_t16: RealPowerBalance_Node6_t16 : -P[(2, 6),16] + P[(6, 7),16] + P[(6, 8),16] - P_B[6,16] == -0.009456964148789392
+RealPowerBalance_Node6_t17: RealPowerBalance_Node6_t17 : -P[(2, 6),17] + P[(6, 7),17] + P[(6, 8),17] - P_B[6,17] == -0.010234616393083948
+RealPowerBalance_Node6_t18: RealPowerBalance_Node6_t18 : -P[(2, 6),18] + P[(6, 7),18] + P[(6, 8),18] - P_B[6,18] == -0.011135710823716309
+RealPowerBalance_Node6_t19: RealPowerBalance_Node6_t19 : -P[(2, 6),19] + P[(6, 7),19] + P[(6, 8),19] - P_B[6,19] == -0.010893162877492016
+RealPowerBalance_Node6_t2: RealPowerBalance_Node6_t2 : -P[(2, 6),2] + P[(6, 7),2] + P[(6, 8),2] - P_B[6,2] == -0.011326787114472044
+RealPowerBalance_Node6_t20: RealPowerBalance_Node6_t20 : -P[(2, 6),20] + P[(6, 7),20] + P[(6, 8),20] - P_B[6,20] == -0.010732481480925314
+RealPowerBalance_Node6_t21: RealPowerBalance_Node6_t21 : -P[(2, 6),21] + P[(6, 7),21] + P[(6, 8),21] - P_B[6,21] == -0.010665583638131079
+RealPowerBalance_Node6_t22: RealPowerBalance_Node6_t22 : -P[(2, 6),22] + P[(6, 7),22] + P[(6, 8),22] - P_B[6,22] == -0.01069743085607209
+RealPowerBalance_Node6_t23: RealPowerBalance_Node6_t23 : -P[(2, 6),23] + P[(6, 7),23] + P[(6, 8),23] - P_B[6,23] == -0.010825661172284992
+RealPowerBalance_Node6_t24: RealPowerBalance_Node6_t24 : -P[(2, 6),24] + P[(6, 7),24] + P[(6, 8),24] - P_B[6,24] == -0.011040764330830937
+RealPowerBalance_Node6_t3: RealPowerBalance_Node6_t3 : -P[(2, 6),3] + P[(6, 7),3] + P[(6, 8),3] - P_B[6,3] == -0.011662516521812822
+RealPowerBalance_Node6_t4: RealPowerBalance_Node6_t4 : -P[(2, 6),4] + P[(6, 7),4] + P[(6, 8),4] - P_B[6,4] == -0.012023053038570647
+RealPowerBalance_Node6_t5: RealPowerBalance_Node6_t5 : -P[(2, 6),5] + P[(6, 7),5] + P[(6, 8),5] - P_B[6,5] == -0.01238165732064241
+RealPowerBalance_Node6_t6: RealPowerBalance_Node6_t6 : -P[(2, 6),6] + P[(6, 7),6] + P[(6, 8),6] - P_B[6,6] == -0.012711733328932275
+RealPowerBalance_Node6_t7: RealPowerBalance_Node6_t7 : -P[(2, 6),7] + P[(6, 7),7] + P[(6, 8),7] - P_B[6,7] == -0.011781280580976838
+RealPowerBalance_Node6_t8: RealPowerBalance_Node6_t8 : -P[(2, 6),8] + P[(6, 7),8] + P[(6, 8),8] - P_B[6,8] == -0.010859561012061042
+RealPowerBalance_Node6_t9: RealPowerBalance_Node6_t9 : -P[(2, 6),9] + P[(6, 7),9] + P[(6, 8),9] - P_B[6,9] == -0.010008163751013054
 RealPowerBalance_Node7_t1: RealPowerBalance_Node7_t1 : -P[(6, 7),1] == -0.005522038694197289
 RealPowerBalance_Node7_t10: RealPowerBalance_Node7_t10 : -P[(6, 7),10] == -0.006664429487591751
 RealPowerBalance_Node7_t11: RealPowerBalance_Node7_t11 : -P[(6, 7),11] == -0.006624021735250146
@@ -543,6 +543,30 @@ BatterySOCLimits_5_t6: BatterySOCLimits_5_t6 : B[5,6] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t7: BatterySOCLimits_5_t7 : B[5,7] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t8: BatterySOCLimits_5_t8 : B[5,8] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t9: BatterySOCLimits_5_t9 : B[5,9] in [0.0055986, 0.0177289]
+BatterySOCLimits_6_t1: BatterySOCLimits_6_t1 : B[6,1] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t10: BatterySOCLimits_6_t10 : B[6,10] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t11: BatterySOCLimits_6_t11 : B[6,11] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t12: BatterySOCLimits_6_t12 : B[6,12] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t13: BatterySOCLimits_6_t13 : B[6,13] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t14: BatterySOCLimits_6_t14 : B[6,14] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t15: BatterySOCLimits_6_t15 : B[6,15] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t16: BatterySOCLimits_6_t16 : B[6,16] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t17: BatterySOCLimits_6_t17 : B[6,17] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t18: BatterySOCLimits_6_t18 : B[6,18] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t19: BatterySOCLimits_6_t19 : B[6,19] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t2: BatterySOCLimits_6_t2 : B[6,2] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t20: BatterySOCLimits_6_t20 : B[6,20] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t21: BatterySOCLimits_6_t21 : B[6,21] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t22: BatterySOCLimits_6_t22 : B[6,22] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t23: BatterySOCLimits_6_t23 : B[6,23] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t24: BatterySOCLimits_6_t24 : B[6,24] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t3: BatterySOCLimits_6_t3 : B[6,3] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t4: BatterySOCLimits_6_t4 : B[6,4] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t5: BatterySOCLimits_6_t5 : B[6,5] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t6: BatterySOCLimits_6_t6 : B[6,6] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t7: BatterySOCLimits_6_t7 : B[6,7] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t8: BatterySOCLimits_6_t8 : B[6,8] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t9: BatterySOCLimits_6_t9 : B[6,9] in [0.00280014, 0.00886711]
 BatterySOC_5_t10: BatterySOC_5_t10 : P_B[5,10] - B[5,9] + B[5,10] == 0
 BatterySOC_5_t11: BatterySOC_5_t11 : P_B[5,11] - B[5,10] + B[5,11] == 0
 BatterySOC_5_t12: BatterySOC_5_t12 : P_B[5,12] - B[5,11] + B[5,12] == 0
@@ -566,8 +590,32 @@ BatterySOC_5_t6: BatterySOC_5_t6 : P_B[5,6] - B[5,5] + B[5,6] == 0
 BatterySOC_5_t7: BatterySOC_5_t7 : P_B[5,7] - B[5,6] + B[5,7] == 0
 BatterySOC_5_t8: BatterySOC_5_t8 : P_B[5,8] - B[5,7] + B[5,8] == 0
 BatterySOC_5_t9: BatterySOC_5_t9 : P_B[5,9] - B[5,8] + B[5,9] == 0
+BatterySOC_6_t10: BatterySOC_6_t10 : P_B[6,10] - B[6,9] + B[6,10] == 0
+BatterySOC_6_t11: BatterySOC_6_t11 : P_B[6,11] - B[6,10] + B[6,11] == 0
+BatterySOC_6_t12: BatterySOC_6_t12 : P_B[6,12] - B[6,11] + B[6,12] == 0
+BatterySOC_6_t13: BatterySOC_6_t13 : P_B[6,13] - B[6,12] + B[6,13] == 0
+BatterySOC_6_t14: BatterySOC_6_t14 : P_B[6,14] - B[6,13] + B[6,14] == 0
+BatterySOC_6_t15: BatterySOC_6_t15 : P_B[6,15] - B[6,14] + B[6,15] == 0
+BatterySOC_6_t16: BatterySOC_6_t16 : P_B[6,16] - B[6,15] + B[6,16] == 0
+BatterySOC_6_t17: BatterySOC_6_t17 : P_B[6,17] - B[6,16] + B[6,17] == 0
+BatterySOC_6_t18: BatterySOC_6_t18 : P_B[6,18] - B[6,17] + B[6,18] == 0
+BatterySOC_6_t19: BatterySOC_6_t19 : P_B[6,19] - B[6,18] + B[6,19] == 0
+BatterySOC_6_t2: BatterySOC_6_t2 : P_B[6,2] - B[6,1] + B[6,2] == 0
+BatterySOC_6_t20: BatterySOC_6_t20 : P_B[6,20] - B[6,19] + B[6,20] == 0
+BatterySOC_6_t21: BatterySOC_6_t21 : P_B[6,21] - B[6,20] + B[6,21] == 0
+BatterySOC_6_t22: BatterySOC_6_t22 : P_B[6,22] - B[6,21] + B[6,22] == 0
+BatterySOC_6_t23: BatterySOC_6_t23 : P_B[6,23] - B[6,22] + B[6,23] == 0
+BatterySOC_6_t24: BatterySOC_6_t24 : P_B[6,24] - B[6,23] + B[6,24] == 0
+BatterySOC_6_t3: BatterySOC_6_t3 : P_B[6,3] - B[6,2] + B[6,3] == 0
+BatterySOC_6_t4: BatterySOC_6_t4 : P_B[6,4] - B[6,3] + B[6,4] == 0
+BatterySOC_6_t5: BatterySOC_6_t5 : P_B[6,5] - B[6,4] + B[6,5] == 0
+BatterySOC_6_t6: BatterySOC_6_t6 : P_B[6,6] - B[6,5] + B[6,6] == 0
+BatterySOC_6_t7: BatterySOC_6_t7 : P_B[6,7] - B[6,6] + B[6,7] == 0
+BatterySOC_6_t8: BatterySOC_6_t8 : P_B[6,8] - B[6,7] + B[6,8] == 0
+BatterySOC_6_t9: BatterySOC_6_t9 : P_B[6,9] - B[6,8] + B[6,9] == 0
 BatterySOC_Init_5_t1: BatterySOC_Init_5_t1 : P_B[5,1] + B[5,1] == 0.01166375
-Total: 48 constraints
+BatterySOC_Init_6_t1: BatterySOC_Init_6_t1 : P_B[6,1] + B[6,1] == 0.005833624999999999
+Total: 96 constraints
 
 --------------------------------------------------------------------------------
 VOLTAGE LIMITS
@@ -817,6 +865,30 @@ Total: 240 constraints
 --------------------------------------------------------------------------------
 PV REACTIVE POWER LIMITS
 --------------------------------------------------------------------------------
+PVReactiveLimits_DER10_t1: PVReactiveLimits_DER10_t1 : q_D[10,1] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t10: PVReactiveLimits_DER10_t10 : q_D[10,10] in [-0.001938206212584203, 0.001938206212584203]
+PVReactiveLimits_DER10_t11: PVReactiveLimits_DER10_t11 : q_D[10,11] in [-0.0016613544131592966, 0.0016613544131592966]
+PVReactiveLimits_DER10_t12: PVReactiveLimits_DER10_t12 : q_D[10,12] in [-0.001547687875509788, 0.001547687875509788]
+PVReactiveLimits_DER10_t13: PVReactiveLimits_DER10_t13 : q_D[10,13] in [-0.0016613544131592966, 0.0016613544131592966]
+PVReactiveLimits_DER10_t14: PVReactiveLimits_DER10_t14 : q_D[10,14] in [-0.001938206212584203, 0.001938206212584203]
+PVReactiveLimits_DER10_t15: PVReactiveLimits_DER10_t15 : q_D[10,15] in [-0.002262288417731037, 0.002262288417731037]
+PVReactiveLimits_DER10_t16: PVReactiveLimits_DER10_t16 : q_D[10,16] in [-0.002545437967717933, 0.002545437967717933]
+PVReactiveLimits_DER10_t17: PVReactiveLimits_DER10_t17 : q_D[10,17] in [-0.002734190791418209, 0.002734190791418209]
+PVReactiveLimits_DER10_t18: PVReactiveLimits_DER10_t18 : q_D[10,18] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t19: PVReactiveLimits_DER10_t19 : q_D[10,19] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t2: PVReactiveLimits_DER10_t2 : q_D[10,2] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t20: PVReactiveLimits_DER10_t20 : q_D[10,20] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t21: PVReactiveLimits_DER10_t21 : q_D[10,21] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t22: PVReactiveLimits_DER10_t22 : q_D[10,22] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t23: PVReactiveLimits_DER10_t23 : q_D[10,23] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t24: PVReactiveLimits_DER10_t24 : q_D[10,24] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t3: PVReactiveLimits_DER10_t3 : q_D[10,3] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t4: PVReactiveLimits_DER10_t4 : q_D[10,4] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t5: PVReactiveLimits_DER10_t5 : q_D[10,5] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t6: PVReactiveLimits_DER10_t6 : q_D[10,6] in [-0.0028001000000000002, 0.0028001000000000002]
+PVReactiveLimits_DER10_t7: PVReactiveLimits_DER10_t7 : q_D[10,7] in [-0.002734190791418209, 0.002734190791418209]
+PVReactiveLimits_DER10_t8: PVReactiveLimits_DER10_t8 : q_D[10,8] in [-0.002545437967717933, 0.002545437967717933]
+PVReactiveLimits_DER10_t9: PVReactiveLimits_DER10_t9 : q_D[10,9] in [-0.0022622884177310376, 0.0022622884177310376]
 PVReactiveLimits_DER6_t1: PVReactiveLimits_DER6_t1 : q_D[6,1] in [-0.0055986000000000005, 0.0055986000000000005]
 PVReactiveLimits_DER6_t10: PVReactiveLimits_DER6_t10 : q_D[6,10] in [-0.0038754553632444288, 0.0038754553632444288]
 PVReactiveLimits_DER6_t11: PVReactiveLimits_DER6_t11 : q_D[6,11] in [-0.0033219778560454162, 0.0033219778560454162]
@@ -841,7 +913,7 @@ PVReactiveLimits_DER6_t6: PVReactiveLimits_DER6_t6 : q_D[6,6] in [-0.00559860000
 PVReactiveLimits_DER6_t7: PVReactiveLimits_DER6_t7 : q_D[6,7] in [-0.005466828769400402, 0.005466828769400402]
 PVReactiveLimits_DER6_t8: PVReactiveLimits_DER6_t8 : q_D[6,8] in [-0.005089459637083293, 0.005089459637083293]
 PVReactiveLimits_DER6_t9: PVReactiveLimits_DER6_t9 : q_D[6,9] in [-0.004523370074955178, 0.004523370074955178]
-Total: 24 constraints
+Total: 48 constraints
 
 --------------------------------------------------------------------------------
 BATTERY SOC LIMITS
@@ -870,7 +942,31 @@ BatterySOCLimits_5_t6: BatterySOCLimits_5_t6 : B[5,6] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t7: BatterySOCLimits_5_t7 : B[5,7] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t8: BatterySOCLimits_5_t8 : B[5,8] in [0.0055986, 0.0177289]
 BatterySOCLimits_5_t9: BatterySOCLimits_5_t9 : B[5,9] in [0.0055986, 0.0177289]
-Total: 24 constraints
+BatterySOCLimits_6_t1: BatterySOCLimits_6_t1 : B[6,1] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t10: BatterySOCLimits_6_t10 : B[6,10] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t11: BatterySOCLimits_6_t11 : B[6,11] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t12: BatterySOCLimits_6_t12 : B[6,12] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t13: BatterySOCLimits_6_t13 : B[6,13] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t14: BatterySOCLimits_6_t14 : B[6,14] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t15: BatterySOCLimits_6_t15 : B[6,15] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t16: BatterySOCLimits_6_t16 : B[6,16] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t17: BatterySOCLimits_6_t17 : B[6,17] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t18: BatterySOCLimits_6_t18 : B[6,18] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t19: BatterySOCLimits_6_t19 : B[6,19] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t2: BatterySOCLimits_6_t2 : B[6,2] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t20: BatterySOCLimits_6_t20 : B[6,20] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t21: BatterySOCLimits_6_t21 : B[6,21] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t22: BatterySOCLimits_6_t22 : B[6,22] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t23: BatterySOCLimits_6_t23 : B[6,23] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t24: BatterySOCLimits_6_t24 : B[6,24] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t3: BatterySOCLimits_6_t3 : B[6,3] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t4: BatterySOCLimits_6_t4 : B[6,4] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t5: BatterySOCLimits_6_t5 : B[6,5] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t6: BatterySOCLimits_6_t6 : B[6,6] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t7: BatterySOCLimits_6_t7 : B[6,7] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t8: BatterySOCLimits_6_t8 : B[6,8] in [0.00280014, 0.00886711]
+BatterySOCLimits_6_t9: BatterySOCLimits_6_t9 : B[6,9] in [0.00280014, 0.00886711]
+Total: 48 constraints
 
 --------------------------------------------------------------------------------
 BATTERY POWER LIMITS
@@ -899,7 +995,31 @@ BatteryPowerLimits_5_t6: BatteryPowerLimits_5_t6 : P_B[5,6] in [-0.0046654999999
 BatteryPowerLimits_5_t7: BatteryPowerLimits_5_t7 : P_B[5,7] in [-0.0046654999999999995, 0.0046654999999999995]
 BatteryPowerLimits_5_t8: BatteryPowerLimits_5_t8 : P_B[5,8] in [-0.0046654999999999995, 0.0046654999999999995]
 BatteryPowerLimits_5_t9: BatteryPowerLimits_5_t9 : P_B[5,9] in [-0.0046654999999999995, 0.0046654999999999995]
-Total: 24 constraints
+BatteryPowerLimits_6_t1: BatteryPowerLimits_6_t1 : P_B[6,1] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t10: BatteryPowerLimits_6_t10 : P_B[6,10] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t11: BatteryPowerLimits_6_t11 : P_B[6,11] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t12: BatteryPowerLimits_6_t12 : P_B[6,12] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t13: BatteryPowerLimits_6_t13 : P_B[6,13] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t14: BatteryPowerLimits_6_t14 : P_B[6,14] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t15: BatteryPowerLimits_6_t15 : P_B[6,15] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t16: BatteryPowerLimits_6_t16 : P_B[6,16] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t17: BatteryPowerLimits_6_t17 : P_B[6,17] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t18: BatteryPowerLimits_6_t18 : P_B[6,18] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t19: BatteryPowerLimits_6_t19 : P_B[6,19] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t2: BatteryPowerLimits_6_t2 : P_B[6,2] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t20: BatteryPowerLimits_6_t20 : P_B[6,20] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t21: BatteryPowerLimits_6_t21 : P_B[6,21] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t22: BatteryPowerLimits_6_t22 : P_B[6,22] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t23: BatteryPowerLimits_6_t23 : P_B[6,23] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t24: BatteryPowerLimits_6_t24 : P_B[6,24] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t3: BatteryPowerLimits_6_t3 : P_B[6,3] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t4: BatteryPowerLimits_6_t4 : P_B[6,4] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t5: BatteryPowerLimits_6_t5 : P_B[6,5] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t6: BatteryPowerLimits_6_t6 : P_B[6,6] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t7: BatteryPowerLimits_6_t7 : P_B[6,7] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t8: BatteryPowerLimits_6_t8 : P_B[6,8] in [-0.0023335, 0.0023335]
+BatteryPowerLimits_6_t9: BatteryPowerLimits_6_t9 : P_B[6,9] in [-0.0023335, 0.0023335]
+Total: 48 constraints
 
 --------------------------------------------------------------------------------
 OTHER CONSTRAINTS
@@ -930,13 +1050,13 @@ OTHER CONSTRAINTS
 : P_Subs[24] >= 0
 
 --- VARIABLE BOUNDS CHECK ---
-Number of variables: 768
-Number of constraints: 840
+Number of variables: 840
+Number of constraints: 936
 
 --- DATA VALIDATION ---
 Load nodes (NLset): [2, 3, 4, 5, 6, 7, 9, 10]
-PV nodes (Dset): [6]
-Battery nodes (Bset): [5]
+PV nodes (Dset): [6, 10]
+Battery nodes (Bset): [5, 6]
 All nodes (Nset): [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 Non-substation nodes (Nm1set): [2, 3, 4, 5, 6, 7, 8, 9, 10]
 Substation branches (L1set): [(1, 2), (1, 3), (1, 10)]
@@ -956,3 +1076,11 @@ Battery 5:
   SOC max: 95.0%
   Min energy: 5.598599999999999 kWh
   Max energy: 17.7289 kWh
+Battery 6:
+  Initial SOC: 5.833625 kWh
+  Capacity: 9.3338 kWh
+  Power rating: 2.3335 kW
+  SOC min: 30.0%
+  SOC max: 95.0%
+  Min energy: 2.80014 kWh
+  Max energy: 8.867109999999998 kWh
