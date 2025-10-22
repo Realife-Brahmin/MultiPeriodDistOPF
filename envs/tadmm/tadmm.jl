@@ -149,7 +149,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
         # ----- 5.1 NODAL REAL POWER BALANCE -----
         # Substation node
         @constraint(model, 
-            P_Subs[t] - sum(P[(j1, j), t] for (i, j) in L1set) == 0,
+            P_Subs[t] - sum(P[(j1, j), t] for (j1, j) in L1set) == 0,
             base_name = "RealPowerBalance_Substation_t$(t)")
         
         # Non-substation nodes (ALL nodes in Nm1set, not just load nodes)
@@ -164,14 +164,15 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
             
             # Power balance: Incoming = Outgoing + Load - PV - Battery
             @constraint(model,
-                P_ij_t - sum_Pjk - p_L_j_t + p_D_j_t + P_B_j_t == 0,
+                sum_Pjk - P_ij_t == P_B_j_t + p_D_j_t - p_L_j_t,
+                # P_ij_t - sum_Pjk - p_L_j_t + p_D_j_t + P_B_j_t == 0,
                 base_name = "RealPowerBalance_Node$(j)_t$(t)")
         end
         
         # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
         # Substation node
         @constraint(model,
-            sum(Q[(j1, j), t] for (i, j) in L1set) == 0,
+            sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
             base_name = "ReactivePowerBalance_Substation_t$(t)")
         
         # Non-substation nodes
@@ -184,7 +185,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
             q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
             
             @constraint(model,
-                Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
+                sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
+                # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
                 base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
         end
         
