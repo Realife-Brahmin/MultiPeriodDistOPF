@@ -5,6 +5,7 @@ Standalone plotting functions for battery actions and input curves
 
 using Plots
 using Printf
+using LaTeXStrings
 
 """
     plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=false, filename::String="input_curves.png")
@@ -505,13 +506,13 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
         # Set up x-axis ticks (all time steps if T=24)
         xtick_vals = T == 24 ? (1:T) : :auto
         
-        # Create plot
+        # Create plot with LaTeX notation
         p = plot(
             1:T, V_pu,
             dpi=600,
-            label="Bus $selected_bus",
-            xlabel="Time Period (t)",
-            ylabel="Voltage Magnitude (p.u.)",
+            label=L"V^t_{%$selected_bus}",
+            xlabel=L"t",
+            ylabel=L"V^t_j \textrm{ [p.u.]}",
             legend=:topright,
             color=:blue,
             linewidth=3,
@@ -522,7 +523,7 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
             minorgrid=true,
             minorgridstyle=:dot,
             minorgridalpha=0.2,
-            title="$method_name: Voltage Profile - Bus $selected_bus",
+            title="$method_name: " * L"V^t_j" * " vs " * L"t" * " for Bus $selected_bus",
             size=(900, 500),
             ylims=(0.92, 1.08),
             xticks=xtick_vals
@@ -590,15 +591,15 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
     
     try
         if create_gif
-            # Create animation
+            # Create animation with LaTeX notation
             anim = @animate for t in 1:T
                 V_pu = [sqrt(v_var[bus, t]) for bus in Nset]
                 
                 plot(
                     Nset, V_pu,
                     dpi=300,
-                    xlabel="Bus Number",
-                    ylabel="Voltage Magnitude (p.u.)",
+                    xlabel=L"j",
+                    ylabel=L"V^t_j \textrm{ [p.u.]}",
                     legend=false,
                     color=:blue,
                     linewidth=3,
@@ -611,7 +612,7 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
                     minorgrid=true,
                     minorgridstyle=:dot,
                     minorgridalpha=0.2,
-                    title="$method_name: Voltage Profile (t=$t/$T)",
+                    title="$method_name: " * L"V^t_j" * " vs " * L"j" * " at t=$t/$T",
                     size=(900, 500),
                     ylims=(0.92, 1.08)
                 )
@@ -626,7 +627,7 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
             println("Animation saved!")
         end
         
-        # Create static plot for selected time step
+        # Create static plot for selected time step with LaTeX notation
         V_pu = [sqrt(v_var[bus, selected_t]) for bus in Nset]
         
         gr()
@@ -635,8 +636,8 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
         p = plot(
             Nset, V_pu,
             dpi=600,
-            xlabel="Bus Number",
-            ylabel="Voltage Magnitude (p.u.)",
+            xlabel=L"j",
+            ylabel=L"V^t_j \textrm{ [p.u.]}",
             legend=false,
             color=:blue,
             linewidth=3,
@@ -649,7 +650,7 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
             minorgrid=true,
             minorgridstyle=:dot,
             minorgridalpha=0.2,
-            title="$method_name: Voltage Profile (t=$selected_t/$T)",
+            title="$method_name: " * L"V^t_j" * " vs " * L"j" * " at t=$selected_t/$T",
             size=(900, 500),
             ylims=(0.92, 1.08)
         )
