@@ -131,9 +131,9 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
     @variable(model, P_Subs[t in Tset] >= 0)
     @variable(model, P[(i, j) in Lset, t in Tset])
     @variable(model, Q[(i, j) in Lset, t in Tset])
-    @variable(model, v[j in Nset, t in Tset] >= 0)
+    @variable(model, v[j in Nset, t in Tset])
     @variable(model, P_B[j in Bset, t in Tset])
-    @variable(model, B[j in Bset, t in Tset] >= 0)
+    @variable(model, B[j in Bset, t in Tset])
     @variable(model, q_D[j in Dset, t in Tset])
     
     # ========== 4. OBJECTIVE FUNCTION ==========
