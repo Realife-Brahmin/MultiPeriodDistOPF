@@ -35,6 +35,13 @@ delta_t_h = 1.0  # Time step duration in hours
 # Load shapes
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
+
+# Solar PV profile: peaks at noon (t=12), zero at night
+# t=1 is 1AM, t=12 is 12PM (noon), t=24 is 12AM (midnight)
+# Solar generation from roughly 6AM (t=6) to 6PM (t=18)
+LoadShapePV = [max(0.0, sin(π * (t - 6) / 12)) for t in 1:T]  # Sine curve from 6AM to 6PM
+LoadShapePV = LoadShapePV ./ maximum(LoadShapePV)  # Normalize to [0, 1]
+
 C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
 
 # =============================================================================
@@ -50,6 +57,7 @@ data = parse_system_from_dss(
     T;
     LoadShapeLoad=LoadShapeLoad,
     LoadShapeCost=LoadShapeCost,
+    LoadShapePV=LoadShapePV,
     C_B=C_B,
     delta_t_h=delta_t_h
 )
