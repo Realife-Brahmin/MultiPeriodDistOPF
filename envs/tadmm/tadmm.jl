@@ -224,11 +224,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         println(io, "MODEL SUMMARY")
         println(io, "="^80)
         
-        # Set display limit to show all constraints
-        print(io, model)
-        
         # Manually print all constraints in organized order
-        println(io, "\n\n" * "="^80)
+        println(io, "\n" * "="^80)
         println(io, "ALL CONSTRAINTS (ORGANIZED BY TYPE AND TIME)")
         println(io, "="^80)
         
