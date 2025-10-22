@@ -110,7 +110,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     @variable(model, v[j in Nset, t in Tset])
     @variable(model, P_B[j in Bset, t in Tset])
     @variable(model, B[j in Bset, t in Tset])
-    @variable(model, q_D[j in Dset, t in Tset])
+    # PV operates at unity power factor (q_D = 0)
+    # @variable(model, q_D[j in Dset, t in Tset])
     
     # ========== 4. OBJECTIVE FUNCTION ==========
     @expression(model, energy_cost, 
@@ -160,7 +161,8 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         #     sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
             
         #     q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
-        #     q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
+        #     # q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
+        #     q_D_j_t = 0.0  # PV operates at unity power factor
             
         #     @constraint(model,
         #         sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
@@ -189,13 +191,14 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         end
         
         # ----- 5.5 PV REACTIVE POWER LIMITS -----
-        for j in Dset
-            p_D_val = p_D_pu[j, t] # not DV
-            S_D_R_val = S_D_R[j] # not DV
-            q_max_t = sqrt(S_D_R_val^2 - p_D_val^2) # fixed as well
-            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
-                base_name = "PVReactiveLimits_DER$(j)_t$(t)")
-        end
+        # Commented out - PV operates at unity power factor (q_D = 0)
+        # for j in Dset
+        #     p_D_val = p_D_pu[j, t] # not DV
+        #     S_D_R_val = S_D_R[j] # not DV
+        #     q_max_t = sqrt(S_D_R_val^2 - p_D_val^2) # fixed as well
+        #     @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
+        #         base_name = "PVReactiveLimits_DER$(j)_t$(t)")
+        # end
         
         # ----- 5.6 BATTERY CONSTRAINTS -----
         for j in Bset
@@ -252,7 +255,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         :v => has_values(model) ? value.(v) : v,
         :P_B => has_values(model) ? value.(P_B) : P_B,
         :B => has_values(model) ? value.(B) : B,
-        :q_D => has_values(model) ? value.(q_D) : q_D,
+        # :q_D => has_values(model) ? value.(q_D) : q_D,  # PV unity power factor
     )
     
     return result
@@ -319,6 +322,29 @@ if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLV
         end
         v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
         @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
+        
+        # Detailed voltage and KVL diagnostics at t=1
+        println("\nVoltage magnitudes (p.u.) at t=1:")
+        for j in sort(collect(data[:Nset]))
+            V_pu = sqrt(v_vals[j, 1])
+            @printf "  Bus %2d: %.6f p.u.\n" j V_pu
+        end
+        
+        # Check voltage drops and power flows
+        P_vals = sol_ldf_bf[:P]
+        Q_vals = sol_ldf_bf[:Q]
+        println("\nKVL Analysis at t=1:")
+        println("Branch  | P(kW)  | Q(kvar) |  r(pu)   |  x(pu)   | V_drop(pu)  | V_i-V_j")
+        println("-" ^ 80)
+        for (i, j) in sort(collect(data[:Lset]))
+            P_ij = P_vals[(i, j), 1] * P_BASE
+            Q_ij = Q_vals[(i, j), 1] * P_BASE
+            r_ij = data[:rdict_pu][(i, j)]
+            x_ij = data[:xdict_pu][(i, j)]
+            v_drop_calc = 2 * (r_ij * P_vals[(i, j), 1] + x_ij * Q_vals[(i, j), 1])
+            v_diff_actual = v_vals[i, 1] - v_vals[j, 1]
+            @printf "(%2d,%2d) | %6.2f | %7.2f | %.6f | %.6f | %11.8f | %11.8f\n" i j P_ij Q_ij r_ij x_ij v_drop_calc v_diff_actual
+        end
     end
 else
     println("⚠ Optimization failed or did not converge to optimality")

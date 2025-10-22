@@ -255,8 +255,6 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     load_names = OpenDSSDirect.Loads.AllNames()
     
     NLset = Int[]  # Set of buses with loads
-    p_L_pu = Dict{Tuple{Int,Int}, Float64}()  # (bus, time) => power
-    q_L_pu = Dict{Tuple{Int,Int}, Float64}()
     p_L_R_pu = Dict{Int, Float64}()  # Base load per bus
     q_L_R_pu = Dict{Int, Float64}()
     
@@ -286,11 +284,18 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
         end
     end
     
+    # Create 2D arrays for time-varying load (indexed by [bus, time])
+    # Get max bus number from already-parsed data
+    Nset = data[:Nset]
+    max_bus = maximum(Nset)
+    p_L_pu = zeros(max_bus, T)
+    q_L_pu = zeros(max_bus, T)
+    
     # Apply time-varying load shape
     for bus in NLset
         for t in 1:T
-            p_L_pu[(bus, t)] = p_L_R_pu[bus] * LoadShapeLoad[t]
-            q_L_pu[(bus, t)] = q_L_R_pu[bus] * LoadShapeLoad[t]
+            p_L_pu[bus, t] = p_L_R_pu[bus] * LoadShapeLoad[t]
+            q_L_pu[bus, t] = q_L_R_pu[bus] * LoadShapeLoad[t]
         end
     end
     
@@ -312,9 +317,15 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
     gen_names = OpenDSSDirect.PVsystems.AllNames()
     
     Dset = Int[]  # Set of buses with PV
-    p_D_pu = Dict{Tuple{Int,Int}, Float64}()
     p_D_R_pu = Dict{Int, Float64}()
     S_D_R = Dict{Int, Float64}()  # Apparent power rating (pu)
+    
+    # Get max bus number for array sizing
+    Nset = data[:Nset]
+    max_bus = maximum(Nset)
+    
+    # Initialize 2D array for time-varying PV (indexed by [bus, time])
+    p_D_pu = zeros(max_bus, T)
     
     # Only parse if generators exist (check for "NONE" which indicates no generators)
     if !isempty(gen_names) && gen_names[1] != "NONE"
@@ -341,7 +352,7 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
         # Apply time-varying PV shape
         for bus in Dset
             for t in 1:T
-                p_D_pu[(bus, t)] = p_D_R_pu[bus] * LoadShapePV[t]
+                p_D_pu[bus, t] = p_D_R_pu[bus] * LoadShapePV[t]
             end
         end
     end
