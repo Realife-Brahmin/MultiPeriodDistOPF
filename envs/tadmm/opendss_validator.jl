@@ -67,6 +67,8 @@ function print_powerflow_summary(data::Dict)
     # Calculate substation power: load + losses - generation - battery
     subs_power_kW = abs(total_power_kW) + loss_kW - pv_power_kW - batt_power_kW
     
+    voltages = OpenDSSDirect.Circuit.AllBusMagPu()
+
     # Print summary
     println()
     @printf "[OpenDSS] Total system load: %.2f kW\n" abs(total_power_kW)
@@ -74,5 +76,9 @@ function print_powerflow_summary(data::Dict)
     @printf "[OpenDSS] Total PV dispatch: %.2f kW\n" pv_power_kW
     @printf "[OpenDSS] Total battery dispatch: %.2f kW\n" batt_power_kW
     @printf "[OpenDSS] Total system losses: %.2f kW\n" loss_kW
+    # @printf "[OpenDSS] Voltage magnitudes: \n" voltages
+    # for (bus, v) in zip(OpenDSSDirect.Circuit.AllBusNames(), voltages)
+    #     @printf "  - %s: %.4f pu\n" bus v
+    # end
     println()
 end
