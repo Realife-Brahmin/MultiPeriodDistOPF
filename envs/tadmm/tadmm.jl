@@ -3,11 +3,14 @@ tADMM: Temporal ADMM for Multi-Period Optimal Power Flow
 Standalone implementation with minimal dependencies
 =#
 
+# %%
+begin
 # Activate the tadmm environment
 import Pkg
 env_path = @__DIR__
 Pkg.activate(env_path)
 
+using Revise
 using JuMP
 using Ipopt
 using Gurobi
@@ -17,8 +20,8 @@ using Statistics
 using Parameters: @unpack
 
 # Include standalone utilities
-include("parse_opendss.jl")
-include("opendss_validator.jl")
+includet("parse_opendss.jl")
+includet("opendss_validator.jl")
 
 # =============================================================================
 # USER CONFIGURATION
@@ -31,7 +34,7 @@ delta_t_h = 1.0  # Time step duration in hours
 
 # Load shapes
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
-LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
 C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
 
 # =============================================================================
@@ -53,7 +56,7 @@ data = parse_system_from_dss(
 
 # Validate with OpenDSS powerflow
 print_powerflow_summary(data)
-
+end
 # =============================================================================
 # MPOPF SOLVER WITH LINDISTFLOW
 # =============================================================================
@@ -120,16 +123,16 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:ipopt)
     @variable(model, P_Subs[t in Tset] >= 0)
     @variable(model, P[(i, j) in Lset, t in Tset])
     @variable(model, Q[(i, j) in Lset, t in Tset])
-    @variable(model, v[n in Nset, t in Tset] >= 0)
-    @variable(model, P_B[b in Bset, t in Tset])
-    @variable(model, B[b in Bset, t in Tset] >= 0)
-    @variable(model, q_D[d in Dset, t in Tset])
+    @variable(model, v[j in Nset, t in Tset] >= 0)
+    @variable(model, P_B[j in Bset, t in Tset])
+    @variable(model, B[j in Bset, t in Tset] >= 0)
+    @variable(model, q_D[j in Dset, t in Tset])
     
     # ========== 4. OBJECTIVE FUNCTION ==========
     @expression(model, energy_cost, 
         sum(LoadShapeCost[t] * P_Subs[t] * P_BASE * Δt for t in Tset))
     @expression(model, battery_cost, 
-        sum(C_B * (P_B[b, t] * P_BASE)^2 * Δt for b in Bset, t in Tset))
+        sum(C_B * (P_B[j, t] * P_BASE)^2 * Δt for j in Bset, t in Tset))
     @objective(model, Min, energy_cost + battery_cost)
     
     # ========== 5. CONSTRAINTS ==========
