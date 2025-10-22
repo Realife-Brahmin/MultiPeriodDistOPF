@@ -320,7 +320,7 @@ end
 Parse PV/generator data.
 """
 function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Float64)
-    gen_names = OpenDSSDirect.Generators.AllNames()
+    gen_names = OpenDSSDirect.PVsystems.AllNames()
     
     Dset = Int[]  # Set of buses with PV
     p_D_pu = Dict{Tuple{Int,Int}, Float64}()
@@ -330,17 +330,17 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
     # Only parse if generators exist (check for "NONE" which indicates no generators)
     if !isempty(gen_names) && gen_names[1] != "NONE"
         for gen_name in gen_names
-            OpenDSSDirect.Generators.Name(gen_name)
-            
+            OpenDSSDirect.PVsystems.Name(gen_name)
+
             # Get bus
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
             bus_name = split(bus_full, ".")[1]
             bus_num = data[:bus_to_num][bus_name]
             
             # Get generator rating
-            kW_rated = OpenDSSDirect.Generators.kW()
-            kVA_rated = OpenDSSDirect.Generators.kva()
-            
+            kW_rated = OpenDSSDirect.PVsystems.kW()
+            kVA_rated = OpenDSSDirect.PVsystems.kVARated()
+
             # Convert to per-unit
             p_rated_pu = kW_rated / kVA_B
             S_rated_pu = kVA_rated / kVA_B
