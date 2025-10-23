@@ -109,7 +109,6 @@ function plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=fal
 
     # Save the plot if requested
     if savePlots
-        @printf "Saving input curves plot to: %s\n" filename
         savefig(p, filename)
     end
     
@@ -306,7 +305,6 @@ function plot_battery_actions(solution::Dict, data::Dict, method_name::String;
     
     # Save the plot if requested
     if savePlots
-        @printf "Saving %s battery actions plot to: %s\n" method_name filename
         savefig(plot_combined, filename)
     end
     
@@ -363,7 +361,6 @@ function plot_battery_actions_comparison(solutions::Vector{Dict}, data::Dict, me
     
     # Save the plot if requested
     if savePlots
-        @printf "Saving battery actions comparison plot to: %s\n" filename
         savefig(combined_plot, filename)
     end
     
@@ -450,7 +447,6 @@ function plot_substation_power_and_cost(solution, data, method_name;
         
         # Save the plot if requested
         if savePlots
-            @printf "Saving substation power & cost plot to: %s\n" filename
             savefig(p, filename)
         end
         
@@ -539,7 +535,6 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
         
         # Save the plot if requested
         if savePlots
-            @printf "Saving voltage profile (bus %d) plot to: %s\n" selected_bus filename
             savefig(p, filename)
         end
         
@@ -622,9 +617,7 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
             end
             
             # Save the GIF
-            @printf "Creating voltage animation GIF: %s\n" gif_filename
             gif(anim, gif_filename, fps=2)
-            println("Animation saved!")
         end
         
         # Create static plot for selected time step with LaTeX notation
@@ -665,7 +658,6 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
         
         # Save the plot if requested
         if savePlots
-            @printf "Saving voltage profile (all buses, t=%d) plot to: %s\n" selected_t filename
             savefig(p, filename)
         end
         
@@ -783,7 +775,6 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
         # Save and/or show
         if savePlots
             savefig(p, filename)
-            println("Saving PV power plot to: $filename")
         end
         
         if showPlots
@@ -917,8 +908,6 @@ function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="M
         # Save GIF
         if savePlots
             gif(anim, filename, fps=2)
-            println("Creating PV power circle animation GIF: $filename")
-            println("Animation saved!")
         end
         
         if showPlots && T > 0
