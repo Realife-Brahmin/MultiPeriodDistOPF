@@ -616,8 +616,12 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
                 hline!([0.95, 1.05], color=:red, linestyle=:dash, linewidth=2, alpha=0.7)
             end
             
-            # Save the GIF
-            gif(anim, gif_filename, fps=2)
+            # Save the GIF (suppress output messages)
+            redirect_stdout(devnull) do
+                redirect_stderr(devnull) do
+                    gif(anim, gif_filename, fps=2)
+                end
+            end
         end
         
         # Create static plot for selected time step with LaTeX notation
@@ -905,9 +909,13 @@ function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="M
                           :left, 10))
         end
         
-        # Save GIF
+        # Save GIF (suppress output messages)
         if savePlots
-            gif(anim, filename, fps=2)
+            redirect_stdout(devnull) do
+                redirect_stderr(devnull) do
+                    gif(anim, filename, fps=2)
+                end
+            end
         end
         
         if showPlots && T > 0
