@@ -39,9 +39,9 @@ const COLOR_RESET = Crayon(reset = true)
 # =============================================================================
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
+# systemName = "ads10A_1ph"
 # systemName = "ads10_1ph"
-# systemName = "ieee123_1ph"
+systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
