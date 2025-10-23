@@ -92,7 +92,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     j1 = substationBus
     
     # ZERO REACTIVE POWER MODEL (comment these 3 lines to enable reactive power)
-    q_L_pu = zeros(size(q_L_pu))  # All loads at unity power factor
+    # q_L_pu = zeros(size(q_L_pu))  # All loads at unity power factor
     # Q[(i,j),t] will be fixed to 0 via constraints
     # q_D will be fixed to 0 via constraints (PV at unity power factor)
     
@@ -102,6 +102,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         set_optimizer(model, Gurobi.Optimizer)
         set_optimizer_attribute(model, "NonConvex", 2)
         set_optimizer_attribute(model, "OutputFlag", 1)
+        set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
     else
         set_optimizer(model, Ipopt.Optimizer)
         set_optimizer_attribute(model, "print_level", 3)
@@ -187,12 +188,12 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         
         # ----- 5.4 ZERO REACTIVE POWER MODEL -----
         # Fix all branch reactive power flows to zero (comment to enable reactive power)
-        for (i, j) in Lset
-            @constraint(model, Q[(i, j), t] == 0.0,
-                base_name = "ZeroQ_Branch_$(i)_$(j)_t$(t)")
-        end
+        # for (i, j) in Lset
+        #     @constraint(model, Q[(i, j), t] == 0.0,
+        #         base_name = "ZeroQ_Branch_$(i)_$(j)_t$(t)")
+        # end
         
-        # ----- 5.4 VOLTAGE CONSTRAINTS -----
+        # ----- 5.5 VOLTAGE CONSTRAINTS -----
         # Fixed substation voltage (1.05 pu, squared)
         @constraint(model, v[j1, t] == 1.00^2,
             base_name = "FixedSubstationVoltage_t$(t)")
