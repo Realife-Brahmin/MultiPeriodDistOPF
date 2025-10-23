@@ -677,3 +677,275 @@ function plot_voltage_profile_all_buses(solution, data, method_name;
     end
 end
 
+"""
+    plot_pv_power(sol::Dict, data::Dict, method_label::String="Method"; 
+                  pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false, 
+                  filename::String="pv_power.png")
+
+Plot PV real and reactive power output over time for a single PV unit.
+- Top subplot: p_D (real power) in orange
+- Bottom subplot: q_D (reactive power) in purple (bidirectional)
+
+# Arguments
+- sol: Solution dictionary containing :p_D (from data) and :q_D (from optimization)
+- data: Data dictionary containing :Dset, :p_D_pu, :T, :kVA_B
+- method_label: Label for the method used
+- pv_index: Index of PV to plot (1 = first PV, -1 = last PV)
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+
+# Returns
+- Plot object
+"""
+function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method"; 
+                       pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false, 
+                       filename::String="pv_power.png")
+    try
+        Dset = data[:Dset]
+        
+        if isempty(Dset)
+            @warn "No PV units in system, cannot plot PV power"
+            return nothing
+        end
+        
+        # Select PV unit
+        pv_bus = pv_index == -1 ? maximum(Dset) : minimum(Dset)
+        if pv_index > 0 && length(Dset) >= pv_index
+            pv_bus = sort(collect(Dset))[pv_index]
+        end
+        
+        T = data[:T]
+        P_BASE = data[:kVA_B]
+        p_D_pu = data[:p_D_pu]
+        q_D_vals = sol[:q_D]
+        
+        time_steps = 1:T
+        
+        # Extract p_D (from data) and q_D (from solution) for the selected PV
+        p_D_kW = [p_D_pu[pv_bus, t] * P_BASE for t in 1:T]
+        q_D_kvar = [q_D_vals[pv_bus, t] * P_BASE for t in 1:T]
+        
+        # Set theme and backend
+        gr()
+        theme(:mute)
+        
+        # Create subplot layout
+        p1 = plot(
+            time_steps, p_D_kW,
+            dpi=600,
+            label=L"p_D^t (Real Power)",
+            xlabel="",
+            ylabel="PV Real Power (kW)",
+            title="PV Power Output at Bus $pv_bus - $method_label",
+            linewidth=3,
+            linecolor=:orange,
+            legend=:topright,
+            size=(900, 700),
+            grid=:on,
+            minorgrid=:on,
+            gridlinewidth=1,
+            gridalpha=0.3,
+            minorgridalpha=0.15,
+            framestyle=:box,
+            ylims=(0, 1.1 * maximum(p_D_kW))
+        )
+        
+        # Add zero line for q_D subplot
+        y_max = maximum(abs.(q_D_kvar))
+        y_lim = y_max > 0 ? 1.2 * y_max : 1.0
+        
+        p2 = plot(
+            time_steps, q_D_kvar,
+            dpi=600,
+            label=L"q_D^t (Reactive Power)",
+            xlabel="Time Period (t)",
+            ylabel="PV Reactive Power (kvar)",
+            linewidth=3,
+            linecolor=:purple,
+            legend=:topright,
+            size=(900, 700),
+            grid=:on,
+            minorgrid=:on,
+            gridlinewidth=1,
+            gridalpha=0.3,
+            minorgridalpha=0.15,
+            framestyle=:box,
+            ylims=(-y_lim, y_lim)
+        )
+        
+        # Add zero reference line
+        hline!(p2, [0], linestyle=:dash, linecolor=:gray, linewidth=1, label="", alpha=0.5)
+        
+        # Combine subplots
+        p = plot(p1, p2, layout=(2, 1), size=(900, 700))
+        
+        # Save and/or show
+        if savePlots
+            savefig(p, filename)
+            println("Saving PV power plot to: $filename")
+        end
+        
+        if showPlots
+            display(p)
+        end
+        
+        return p
+        
+    catch e
+        @warn "Could not create PV power plot" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+"""
+    plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="Method";
+                             pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false,
+                             filename::String="pv_power_circle.gif")
+
+Create an animated GIF showing PV power as a point moving in the P-Q plane.
+- X-axis: p_D (real power) >= 0
+- Y-axis: q_D (reactive power), bidirectional
+- Circle shows the apparent power limit S_D_R
+- Point traces path over time
+
+# Arguments
+- sol: Solution dictionary containing :q_D
+- data: Data dictionary containing :Dset, :p_D_pu, :S_D_R, :T, :kVA_B
+- method_label: Label for the method used
+- pv_index: Index of PV to plot
+- showPlots: Whether to display the final frame
+- savePlots: Whether to save the GIF
+- filename: Filename for the GIF
+
+# Returns
+- Animation object
+"""
+function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="Method";
+                                  pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false,
+                                  filename::String="pv_power_circle.gif")
+    try
+        Dset = data[:Dset]
+        
+        if isempty(Dset)
+            @warn "No PV units in system, cannot create PV power circle GIF"
+            return nothing
+        end
+        
+        # Select PV unit
+        pv_bus = pv_index == -1 ? maximum(Dset) : minimum(Dset)
+        if pv_index > 0 && length(Dset) >= pv_index
+            pv_bus = sort(collect(Dset))[pv_index]
+        end
+        
+        T = data[:T]
+        P_BASE = data[:kVA_B]
+        p_D_pu = data[:p_D_pu]
+        S_D_R = data[:S_D_R]
+        q_D_vals = sol[:q_D]
+        
+        # Extract PV power trajectory
+        p_D_kW = [p_D_pu[pv_bus, t] * P_BASE for t in 1:T]
+        q_D_kvar = [q_D_vals[pv_bus, t] * P_BASE for t in 1:T]
+        
+        # Apparent power rating
+        S_rating_kVA = S_D_R[pv_bus] * P_BASE
+        
+        # Set theme
+        gr()
+        theme(:mute)
+        
+        # Create capability circle (semicircle for p_D >= 0)
+        θ = range(-π/2, π/2, length=100)
+        circle_p = S_rating_kVA .* cos.(θ)
+        circle_q = S_rating_kVA .* sin.(θ)
+        
+        # Determine axis limits
+        p_max = 1.1 * S_rating_kVA
+        q_max = 1.1 * S_rating_kVA
+        
+        # Create animation
+        anim = @animate for t in 1:T
+            # Plot capability circle
+            p = plot(
+                circle_p, circle_q,
+                dpi=300,
+                label="PV Capability (S = $(round(S_rating_kVA, digits=1)) kVA)",
+                xlabel=L"p_D (Real Power, kW)",
+                ylabel=L"q_D (Reactive Power, kvar)",
+                title="PV Power at Bus $pv_bus - Time t=$t/$T",
+                linewidth=2,
+                linecolor=:gray,
+                linestyle=:dash,
+                legend=:topright,
+                size=(700, 700),
+                grid=:on,
+                minorgrid=:on,
+                gridlinewidth=1,
+                gridalpha=0.3,
+                minorgridalpha=0.15,
+                framestyle=:box,
+                xlims=(0, p_max),
+                ylims=(-q_max, q_max),
+                aspect_ratio=:equal
+            )
+            
+            # Add zero reference lines
+            hline!(p, [0], linestyle=:solid, linecolor=:black, linewidth=1, label="", alpha=0.3)
+            vline!(p, [0], linestyle=:solid, linecolor=:black, linewidth=1, label="", alpha=0.3)
+            
+            # Plot trajectory up to current time (trail)
+            if t > 1
+                plot!(p, p_D_kW[1:t], q_D_kvar[1:t],
+                      linewidth=2, linecolor=:blue, alpha=0.5, label="Trajectory")
+            end
+            
+            # Plot current point (larger marker)
+            scatter!(p, [p_D_kW[t]], [q_D_kvar[t]],
+                    markersize=8, markercolor=:red, markerstrokewidth=2,
+                    markerstrokecolor=:darkred, label="Current (t=$t)",
+                    marker=:circle)
+            
+            # Add text annotation with values
+            annotate!(p, p_max * 0.7, -q_max * 0.9,
+                     text(@sprintf("p_D = %.2f kW\nq_D = %.2f kvar\nS = %.2f kVA",
+                                   p_D_kW[t], q_D_kvar[t],
+                                   sqrt(p_D_kW[t]^2 + q_D_kvar[t]^2)),
+                          :left, 10))
+        end
+        
+        # Save GIF
+        if savePlots
+            gif(anim, filename, fps=2)
+            println("Creating PV power circle animation GIF: $filename")
+            println("Animation saved!")
+        end
+        
+        if showPlots && T > 0
+            # Show final frame
+            display(plot(
+                circle_p, circle_q,
+                dpi=300,
+                label="PV Capability",
+                xlabel=L"p_D (Real Power, kW)",
+                ylabel=L"q_D (Reactive Power, kvar)",
+                title="PV Power at Bus $pv_bus - Full Trajectory",
+                linewidth=2,
+                linecolor=:gray,
+                linestyle=:dash,
+                size=(700, 700),
+                aspect_ratio=:equal
+            ))
+            plot!(p_D_kW, q_D_kvar, linewidth=3, linecolor=:blue, label="Trajectory")
+            scatter!([p_D_kW[1]], [q_D_kvar[1]], markersize=8, markercolor=:green, label="Start")
+            scatter!([p_D_kW[end]], [q_D_kvar[end]], markersize=8, markercolor=:red, label="End")
+        end
+        
+        return anim
+        
+    catch e
+        @warn "Could not create PV power circle GIF" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
