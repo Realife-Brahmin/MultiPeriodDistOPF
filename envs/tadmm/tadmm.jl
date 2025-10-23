@@ -592,6 +592,24 @@ if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOL
                                    filename=voltage_all_buses_path,
                                    create_gif=true,
                                    gif_filename=voltage_gif_path)
+    
+    # Plot PV power (p_D and q_D) if PV exists
+    if !isempty(data[:Dset])
+        pv_power_path = joinpath(system_dir, "pv_power.png")
+        plot_pv_power(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+                     pv_index=1,  # Plot first PV (or only PV)
+                     showPlots=showPlots, savePlots=true,
+                     filename=pv_power_path)
+        
+        # Create PV power circle GIF
+        pv_circle_gif_path = joinpath(system_dir, "pv_power_circle.gif")
+        plot_pv_power_circle_gif(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+                                pv_index=1,
+                                showPlots=showPlots, savePlots=true,
+                                filename=pv_circle_gif_path)
+    else
+        println("No PV units in system, skipping PV power plots")
+    end
 end
 
 println("\n" * "="^80)
