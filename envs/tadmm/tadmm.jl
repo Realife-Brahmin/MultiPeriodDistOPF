@@ -19,11 +19,20 @@ using Printf
 using Statistics
 using Parameters: @unpack
 using Plots
+using Crayons
 
 # Include standalone utilities
 includet("parse_opendss.jl")
 includet("opendss_validator.jl")
 includet("logger.jl")
+
+# Define color schemes
+const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
+const COLOR_WARNING = Crayon(foreground = :yellow, bold = true)
+const COLOR_ERROR = Crayon(foreground = :red, bold = true)
+const COLOR_INFO = Crayon(foreground = :cyan, bold = true)
+const COLOR_HIGHLIGHT = Crayon(foreground = :magenta, bold = true)
+const COLOR_RESET = Crayon(reset = true)
 
 # =============================================================================
 # USER CONFIGURATION
@@ -118,7 +127,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     @variable(model, P_B[j in Bset, t in Tset])
     @variable(model, B[j in Bset, t in Tset])
     # PV operates at unity power factor (q_D = 0)
-    # @variable(model, q_D[j in Dset, t in Tset])
+    @variable(model, q_D[j in Dset, t in Tset])
     
     # ========== 4. OBJECTIVE FUNCTION ==========
     @expression(model, energy_cost, 
@@ -206,13 +215,13 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         
         # ----- 5.5 PV REACTIVE POWER LIMITS -----
         # Commented out - PV operates at unity power factor (q_D = 0)
-        # for j in Dset
-        #     p_D_val = p_D_pu[j, t] # not DV
-        #     S_D_R_val = S_D_R[j] # not DV
-        #     q_max_t = sqrt(S_D_R_val^2 - p_D_val^2) # fixed as well
-        #     @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
-        #         base_name = "PVReactiveLimits_DER$(j)_t$(t)")
-        # end
+        for j in Dset
+            p_D_val = p_D_pu[j, t] # not DV
+            S_D_R_val = S_D_R[j] # not DV
+            q_max_t = sqrt(S_D_R_val^2 - p_D_val^2) # fixed as well
+            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
+                base_name = "PVReactiveLimits_DER$(j)_t$(t)")
+        end
         
         # ----- 5.6 BATTERY CONSTRAINTS -----
         for j in Bset
@@ -269,8 +278,115 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         :v => has_values(model) ? value.(v) : v,
         :P_B => has_values(model) ? value.(P_B) : P_B,
         :B => has_values(model) ? value.(B) : B,
-        # :q_D => has_values(model) ? value.(q_D) : q_D,  # PV unity power factor
+        :q_D => has_values(model) ? value.(q_D) : q_D,
     )
+    
+    # ========== 8. COMPUTE NODAL INJECTIONS ==========
+    # Compute nodal injections p_j, q_j using two methods and verify they match
+    if has_values(model)
+        println("\n" * "="^80)
+        println(COLOR_INFO, "COMPUTING AND VERIFYING NODAL INJECTIONS", COLOR_RESET)
+        println("="^80)
+        
+        # Initialize storage for nodal injections (all nodes, all times)
+        p_j_flow = Dict{Tuple{Int, Int}, Float64}()  # Flow-based: sum(P_jk) - P_ij
+        p_j_gen = Dict{Tuple{Int, Int}, Float64}()   # Generation-based: P_B + p_D - p_L
+        q_j_flow = Dict{Tuple{Int, Int}, Float64}()  # Flow-based: sum(Q_jk) - Q_ij
+        q_j_gen = Dict{Tuple{Int, Int}, Float64}()   # Generation-based: Q_B + q_D - q_L
+        
+        P_vals = value.(P)
+        Q_vals = value.(Q)
+        P_B_vals = value.(P_B)
+        q_D_vals = value.(q_D)
+        
+        max_p_diff = 0.0
+        max_q_diff = 0.0
+        
+        for t in Tset
+            # Substation node (j=1)
+            j = 1
+            # Flow-based: outgoing flows (no incoming to substation)
+            p_j_flow[(j, t)] = -sum(P_vals[(j, k), t] for k in children[j])
+            q_j_flow[(j, t)] = -sum(Q_vals[(j, k), t] for k in children[j])
+            
+            # Generation-based: substation supplies what's needed
+            # For substation: P_Subs - (negative sign because it's supplying)
+            p_j_gen[(j, t)] = -value(P_Subs[t])
+            q_j_gen[(j, t)] = -value(Q_Subs[t])
+            
+            # Non-substation nodes
+            for j in Nm1set
+                i = parent[j]
+                
+                # Flow-based injection: sum(outgoing) - incoming
+                # Positive injection = net power leaving node (generation > consumption)
+                P_jk_sum = isempty(children[j]) ? 0.0 : sum(P_vals[(j, k), t] for k in children[j])
+                Q_jk_sum = isempty(children[j]) ? 0.0 : sum(Q_vals[(j, k), t] for k in children[j])
+                
+                p_j_flow[(j, t)] = P_jk_sum - P_vals[(i, j), t]
+                q_j_flow[(j, t)] = Q_jk_sum - Q_vals[(i, j), t]
+                
+                # Generation-based injection: generation - consumption
+                # P_B > 0: discharging (generation), P_B < 0: charging (consumption)
+                # p_D > 0: PV generation
+                # p_L > 0: load consumption
+                p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0
+                q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
+                p_D_j_t = (j in Dset) ? p_D_pu[j, t] : 0.0
+                q_D_j_t = (j in Dset) ? q_D_vals[j, t] : 0.0
+                P_B_j_t = (j in Bset) ? P_B_vals[j, t] : 0.0
+                # Q_B = 0 (batteries don't provide reactive power)
+                
+                p_j_gen[(j, t)] = P_B_j_t + p_D_j_t - p_L_j_t
+                q_j_gen[(j, t)] = q_D_j_t - q_L_j_t
+            end
+        end
+        
+        # Verify that both methods match
+        println("\nVerifying nodal injection calculations...")
+        all_match = true
+        tolerance = 1e-6
+        
+        for j in Nset, t in Tset
+            p_diff = abs(p_j_flow[(j, t)] - p_j_gen[(j, t)])
+            q_diff = abs(q_j_flow[(j, t)] - q_j_gen[(j, t)])
+            
+            max_p_diff = max(max_p_diff, p_diff)
+            max_q_diff = max(max_q_diff, q_diff)
+            
+            if p_diff > tolerance || q_diff > tolerance
+                all_match = false
+                print(COLOR_WARNING)
+                @printf "  ⚠ Mismatch at node %d, t=%d: Δp=%.6e, Δq=%.6e\n" j t p_diff q_diff
+                print(COLOR_RESET)
+            end
+        end
+        
+        if all_match
+            print(COLOR_SUCCESS)
+            println("✓ All nodal injections verified! Both methods match.")
+            print(COLOR_RESET)
+            @printf "  Max real power difference: %.6e pu\n" max_p_diff
+            @printf "  Max reactive power difference: %.6e pu\n" max_q_diff
+            
+            # Since they match, add to solution dictionary (use flow-based values)
+            result[:p_j] = p_j_flow
+            result[:q_j] = q_j_flow
+            
+            print(COLOR_INFO)
+            println("\nNodal injections added to solution dictionary.")
+            print(COLOR_RESET)
+        else
+            print(COLOR_ERROR)
+            println("✗ WARNING: Nodal injection methods DO NOT match!")
+            println("  Not adding p_j and q_j to solution dictionary.")
+            print(COLOR_RESET)
+            @printf "  Max real power difference: %.6e pu\n" max_p_diff
+            @printf "  Max reactive power difference: %.6e pu\n" max_q_diff
+        end
+        
+        println("="^80)
+    end
     
     return result
 end
@@ -280,17 +396,20 @@ end
 # =============================================================================
 
 println("\n" * "="^80)
-println("SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)")
+println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)", COLOR_RESET)
 println("="^80)
 
 sol_ldf_bf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
 
 # Report results
 println("\n--- SOLUTION STATUS ---")
-println("Status: ", sol_ldf_bf[:status])
+print("Status: ")
 
 if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED
+    print(COLOR_SUCCESS)
+    println(sol_ldf_bf[:status])
     println("✓ Optimization successful!")
+    print(COLOR_RESET)
     println("\n--- OBJECTIVE VALUE ---")
     @printf "Total Cost: \$%.2f\n" sol_ldf_bf[:objective]
     
@@ -362,7 +481,7 @@ if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLV
     
     # KVL VERIFICATION: Check if KVL constraints are satisfied post-optimization
     println("\n" * "="^80)
-    println("KVL CONSTRAINT VERIFICATION (across all time periods)")
+    println(COLOR_INFO, "KVL CONSTRAINT VERIFICATION (across all time periods)", COLOR_RESET)
     println("="^80)
     local max_kvl_violation = 0.0
     local total_violations = 0
@@ -386,27 +505,35 @@ if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLV
             if violation > violation_threshold
                 total_violations += 1
                 if total_violations <= 10  # Print first 10 violations
+                    print(COLOR_WARNING)
                     @printf "  ⚠ KVL violation at t=%d, branch (%d,%d): |%.8f - %.8f| = %.2e\n" t i j lhs rhs violation
+                    print(COLOR_RESET)
                 end
             end
         end
     end
     
     if total_violations == 0
+        print(COLOR_SUCCESS)
         println("✓ All KVL constraints satisfied (max violation: $(max_kvl_violation))")
+        print(COLOR_RESET)
     else
+        print(COLOR_WARNING)
         println("⚠ Total KVL violations (>$(violation_threshold)): $(total_violations)")
         println("  Maximum violation: $(max_kvl_violation)")
+        print(COLOR_RESET)
     end
     println("="^80)
     
 else
+    print(COLOR_ERROR)
     println("⚠ Optimization failed or did not converge to optimality")
     println("Status: ", sol_ldf_bf[:status])
+    print(COLOR_RESET)
 end
 
 println("\n" * "="^80)
-println("MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE")
+println(COLOR_HIGHLIGHT, "MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
 println("="^80)
 
 # =============================================================================
@@ -417,7 +544,7 @@ println("="^80)
 include("Plotter.jl")
 
 println("\n" * "="^80)
-println("GENERATING PLOTS")
+println(COLOR_INFO, "GENERATING PLOTS", COLOR_RESET)
 println("="^80)
 
 # Create output directories (use absolute path like model writing section)
@@ -468,5 +595,5 @@ if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOL
 end
 
 println("\n" * "="^80)
-println("PLOTTING COMPLETE")
+println(COLOR_SUCCESS, "PLOTTING COMPLETE", COLOR_RESET)
 println("="^80)
