@@ -456,30 +456,10 @@ if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLV
     v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
     @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
     
-    # Detailed voltage and KVL diagnostics at t=1
-    println("\nVoltage magnitudes (p.u.) at t=1:")
-    for j in sort(collect(data[:Nset]))
-        V_pu = sqrt(v_vals[j, 1])
-        @printf "  Bus %2d: %.6f p.u.\n" j V_pu
-    end
-    
-    # Check voltage drops and power flows
+    # KVL VERIFICATION: Check if KVL constraints are satisfied post-optimization
     P_vals = sol_ldf_bf[:P]
     Q_vals = sol_ldf_bf[:Q]
-    println("\nKVL Analysis at t=1:")
-    println("Branch  | P(kW)  | Q(kvar) |  r(pu)   |  x(pu)   | V_drop(pu)  | V_i-V_j")
-    println("-" ^ 80)
-    for (i, j) in sort(collect(data[:Lset]))
-        P_ij = P_vals[(i, j), 1] * P_BASE
-        Q_ij = Q_vals[(i, j), 1] * P_BASE
-        r_ij = data[:rdict_pu][(i, j)]
-        x_ij = data[:xdict_pu][(i, j)]
-        v_drop_calc = 2 * (r_ij * P_vals[(i, j), 1] + x_ij * Q_vals[(i, j), 1])
-        v_diff_actual = v_vals[i, 1] - v_vals[j, 1]
-        @printf "(%2d,%2d) | %6.2f | %7.2f | %.6f | %.6f | %11.8f | %11.8f\n" i j P_ij Q_ij r_ij x_ij v_drop_calc v_diff_actual
-    end
     
-    # KVL VERIFICATION: Check if KVL constraints are satisfied post-optimization
     println("\n" * "="^80)
     println(COLOR_INFO, "KVL CONSTRAINT VERIFICATION (across all time periods)", COLOR_RESET)
     println("="^80)
