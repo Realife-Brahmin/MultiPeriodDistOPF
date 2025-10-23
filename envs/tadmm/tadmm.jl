@@ -110,6 +110,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
     
     # ========== 3. DEFINE VARIABLES ==========
     @variable(model, P_Subs[t in Tset] >= 0)
+    @variable(model, Q_Subs[t in Tset])  # Substation reactive power
     @variable(model, P[(i, j) in Lset, t in Tset])
     @variable(model, Q[(i, j) in Lset, t in Tset])
     @variable(model, v[j in Nset, t in Tset])
@@ -156,7 +157,7 @@ function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
         # ----- 5.2 NODAL REACTIVE POWER BALANCE -----
         # Substation node
         @constraint(model,
-            sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
+            Q_Subs[t] - sum(Q[(j1, j), t] for (j1, j) in L1set) == 0,
             base_name = "ReactivePowerBalance_Substation_t$(t)")
         
         # Non-substation nodes
