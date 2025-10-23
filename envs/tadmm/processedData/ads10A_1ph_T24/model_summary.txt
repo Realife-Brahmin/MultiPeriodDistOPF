@@ -1057,7 +1057,31 @@ Total: 240 constraints
 --------------------------------------------------------------------------------
 PV REACTIVE POWER LIMITS
 --------------------------------------------------------------------------------
-Total: 0 constraints
+PVReactiveLimits_DER6_t1: PVReactiveLimits_DER6_t1 : q_D[6,1] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t10: PVReactiveLimits_DER6_t10 : q_D[6,10] in [-0.0038754553632444288, 0.0038754553632444288]
+PVReactiveLimits_DER6_t11: PVReactiveLimits_DER6_t11 : q_D[6,11] in [-0.0033219778560454162, 0.0033219778560454162]
+PVReactiveLimits_DER6_t12: PVReactiveLimits_DER6_t12 : q_D[6,12] in [-0.0030947425918806254, 0.0030947425918806254]
+PVReactiveLimits_DER6_t13: PVReactiveLimits_DER6_t13 : q_D[6,13] in [-0.0033219778560454162, 0.0033219778560454162]
+PVReactiveLimits_DER6_t14: PVReactiveLimits_DER6_t14 : q_D[6,14] in [-0.0038754553632444288, 0.0038754553632444288]
+PVReactiveLimits_DER6_t15: PVReactiveLimits_DER6_t15 : q_D[6,15] in [-0.004523370074955177, 0.004523370074955177]
+PVReactiveLimits_DER6_t16: PVReactiveLimits_DER6_t16 : q_D[6,16] in [-0.005089459637083293, 0.005089459637083293]
+PVReactiveLimits_DER6_t17: PVReactiveLimits_DER6_t17 : q_D[6,17] in [-0.005466828769400401, 0.005466828769400401]
+PVReactiveLimits_DER6_t18: PVReactiveLimits_DER6_t18 : q_D[6,18] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t19: PVReactiveLimits_DER6_t19 : q_D[6,19] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t2: PVReactiveLimits_DER6_t2 : q_D[6,2] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t20: PVReactiveLimits_DER6_t20 : q_D[6,20] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t21: PVReactiveLimits_DER6_t21 : q_D[6,21] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t22: PVReactiveLimits_DER6_t22 : q_D[6,22] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t23: PVReactiveLimits_DER6_t23 : q_D[6,23] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t24: PVReactiveLimits_DER6_t24 : q_D[6,24] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t3: PVReactiveLimits_DER6_t3 : q_D[6,3] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t4: PVReactiveLimits_DER6_t4 : q_D[6,4] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t5: PVReactiveLimits_DER6_t5 : q_D[6,5] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t6: PVReactiveLimits_DER6_t6 : q_D[6,6] in [-0.0055986000000000005, 0.0055986000000000005]
+PVReactiveLimits_DER6_t7: PVReactiveLimits_DER6_t7 : q_D[6,7] in [-0.005466828769400402, 0.005466828769400402]
+PVReactiveLimits_DER6_t8: PVReactiveLimits_DER6_t8 : q_D[6,8] in [-0.005089459637083293, 0.005089459637083293]
+PVReactiveLimits_DER6_t9: PVReactiveLimits_DER6_t9 : q_D[6,9] in [-0.004523370074955178, 0.004523370074955178]
+Total: 24 constraints
 
 --------------------------------------------------------------------------------
 BATTERY SOC LIMITS
@@ -1146,8 +1170,8 @@ OTHER CONSTRAINTS
 : P_Subs[24] >= 0
 
 --- VARIABLE BOUNDS CHECK ---
-Number of variables: 768
-Number of constraints: 1056
+Number of variables: 792
+Number of constraints: 1080
 
 --- DATA VALIDATION ---
 Load nodes (NLset): [2, 3, 4, 5, 6, 7, 9, 10]
