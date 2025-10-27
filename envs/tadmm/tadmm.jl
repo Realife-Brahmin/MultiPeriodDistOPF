@@ -11,6 +11,7 @@ env_path = @__DIR__
 Pkg.activate(env_path)
 
 using Revise
+using LinearAlgebra
 using JuMP
 using Ipopt
 using Gurobi
@@ -39,9 +40,8 @@ const COLOR_RESET = Crayon(reset = true)
 # =============================================================================
 
 # System and simulation parameters
-# systemName = "ads10A_1ph"
-# systemName = "ads10_1ph"
-systemName = "ieee123A_1ph"
+systemName = "ads10A_1ph"
+# systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
@@ -514,6 +514,449 @@ end
 println("\n" * "="^80)
 println(COLOR_HIGHLIGHT, "MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
 println("="^80)
+
+# =============================================================================
+# tADMM SOLVER FOR LINDISTFLOW
+# =============================================================================
+
+# tADMM algorithm parameters
+rho_tadmm = 1.0
+max_iter_tadmm = 1000
+eps_pri_tadmm = 1e-5
+eps_dual_tadmm = 1e-4
+
+"""
+🔵 PRIMAL UPDATE for tADMM LinDistFlow - Subproblem t0
+
+Solves the t0-th subproblem with:
+- Network constraints (power balance, KVL, voltage limits) for time t0 ONLY
+- Battery constraints (SOC trajectory, limits) for ENTIRE horizon t ∈ {1,...,T}
+- ADMM penalty: (ρ/2)∑ⱼ∑ₜ(Bⱼᵗ'ᵗ⁰ - B̂ⱼᵗ + uⱼᵗ'ᵗ⁰)²
+"""
+function primal_update_tadmm_lindistflow!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int)
+    @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
+    @unpack substationBus, parent, children = data
+    @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
+    @unpack p_L_pu, q_L_pu, p_D_pu, S_D_R = data
+    @unpack B0_pu, B_R_pu, P_B_R_pu, soc_min, soc_max = data
+    @unpack LoadShapeCost, C_B, delta_t_h, kVA_B = data
+    
+    j1 = substationBus
+    Δt = delta_t_h
+    P_BASE = kVA_B
+    
+    # Create model for subproblem t0
+    model = Model(Gurobi.Optimizer)
+    set_silent(model)
+    set_optimizer_attribute(model, "OutputFlag", 0)
+    
+    # ===== NETWORK VARIABLES (time t0 ONLY) =====
+    @variable(model, P_Subs_t0 >= 0)
+    @variable(model, Q_Subs_t0)
+    @variable(model, P_t0[(i, j) in Lset])
+    @variable(model, Q_t0[(i, j) in Lset])
+    @variable(model, v_t0[j in Nset])
+    @variable(model, q_D_t0[j in Dset])
+    
+    # ===== BATTERY VARIABLES (ENTIRE horizon) =====
+    @variable(model, P_B_var[j in Bset, t in Tset])
+    @variable(model, B_var[j in Bset, t in Tset])
+    
+    # ===== OBJECTIVE =====
+    # Energy cost at t0
+    energy_cost = LoadShapeCost[t0] * P_Subs_t0 * P_BASE * Δt
+    
+    # Battery quadratic cost at t0
+    battery_cost = sum(C_B * (P_B_var[j, t0] * P_BASE)^2 * Δt for j in Bset)
+    
+    # ADMM penalty (full horizon)
+    penalty = (ρ / 2) * sum(sum((B_var[j, t] - Bhat[j][t] + u_local[j][t])^2 
+                                 for t in Tset) for j in Bset)
+    
+    @objective(model, Min, energy_cost + battery_cost + penalty)
+    
+    # ===== SPATIAL CONSTRAINTS (time t0 ONLY) =====
+    
+    # Real power balance - substation
+    @constraint(model, P_Subs_t0 - sum(P_t0[(j1, j)] for (j1, j) in L1set) == 0)
+    
+    # Real power balance - non-substation nodes
+    for j in Nm1set
+        i = parent[j]
+        sum_Pjk = isempty(children[j]) ? 0.0 : sum(P_t0[(j, k)] for k in children[j])
+        p_L_j = (j in NLset) ? p_L_pu[j, t0] : 0.0
+        p_D_j = (j in Dset) ? p_D_pu[j, t0] : 0.0
+        P_B_j = (j in Bset) ? P_B_var[j, t0] : 0.0
+        @constraint(model, sum_Pjk - P_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+    end
+    
+    # Reactive power balance - substation
+    @constraint(model, Q_Subs_t0 - sum(Q_t0[(j1, j)] for (j1, j) in L1set) == 0)
+    
+    # Reactive power balance - non-substation nodes
+    for j in Nm1set
+        i = parent[j]
+        sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q_t0[(j, k)] for k in children[j])
+        q_L_j = (j in NLset) ? q_L_pu[j, t0] : 0.0
+        q_D_j = (j in Dset) ? q_D_t0[j] : 0.0
+        @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
+    end
+    
+    # KVL constraints
+    for (i, j) in Lset
+        r_ij = rdict_pu[(i, j)]
+        x_ij = xdict_pu[(i, j)]
+        @constraint(model, v_t0[i] - v_t0[j] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]) == 0)
+    end
+    
+    # Fixed substation voltage
+    @constraint(model, v_t0[j1] == 1.05^2)
+    
+    # Voltage limits
+    for j in Nset
+        @constraint(model, Vminpu[j]^2 <= v_t0[j] <= Vmaxpu[j]^2)
+    end
+    
+    # PV reactive power limits
+    for j in Dset
+        p_D_val = p_D_pu[j, t0]
+        S_D_R_val = S_D_R[j]
+        q_max = sqrt(S_D_R_val^2 - p_D_val^2)
+        @constraint(model, -q_max <= q_D_t0[j] <= q_max)
+    end
+    
+    # ===== TEMPORAL CONSTRAINTS (ENTIRE horizon) =====
+    
+    for j in Bset
+        # Battery SOC trajectory (all time periods)
+        for t in Tset
+            if t == 1
+                @constraint(model, B_var[j, t] == B0_pu[j] - P_B_var[j, t] * Δt)
+            else
+                @constraint(model, B_var[j, t] == B_var[j, t-1] - P_B_var[j, t] * Δt)
+            end
+        end
+        
+        # SOC and power limits (all time periods)
+        for t in Tset
+            @constraint(model, soc_min[j] * B_R_pu[j] <= B_var[j, t] <= soc_max[j] * B_R_pu[j])
+            @constraint(model, -P_B_R_pu[j] <= P_B_var[j, t] <= P_B_R_pu[j])
+        end
+    end
+    
+    # Solve subproblem
+    optimize!(model)
+    
+    # Extract results and update local copies
+    for j in Bset
+        for t in Tset
+            B_local[j][t] = value(B_var[j, t])
+        end
+    end
+    
+    P_B_vals = Dict(j => value(P_B_var[j, t0]) for j in Bset)
+    
+    # Compute objective components
+    energy_cost_val = LoadShapeCost[t0] * value(P_Subs_t0) * P_BASE * Δt
+    battery_cost_val = sum(C_B * (value(P_B_var[j, t0]) * P_BASE)^2 * Δt for j in Bset)
+    penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 
+                                     for t in Tset) for j in Bset)
+    
+    return Dict(
+        :total_objective => objective_value(model),
+        :energy_cost => energy_cost_val,
+        :battery_cost => battery_cost_val,
+        :penalty => penalty_val,
+        :P_B => P_B_vals,
+        :P_Subs => value(P_Subs_t0),
+        :B_local => B_local,
+        :t0 => t0
+    )
+end
+
+"""
+🔴 CONSENSUS UPDATE for tADMM LinDistFlow
+
+Updates global consensus variables B̂ⱼᵗ by averaging local solutions with clamping
+"""
+function consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ::Float64)
+    @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
+    
+    violations = Tuple{Int,Int}[]  # Store (battery, time) pairs with violations
+    violation_tolerance = 1e-4
+    
+    for j in Bset
+        for t in Tset
+            # Average across all T subproblems
+            consensus_sum = sum(B_collection[t0][j][t] + u_collection[t0][j][t] for t0 in Tset)
+            Bhat_new = consensus_sum / length(Tset)
+            
+            # Clamp to feasible range
+            B_min = soc_min[j] * B_R_pu[j]
+            B_max = soc_max[j] * B_R_pu[j]
+            
+            violation_amount = max(B_min - Bhat_new, Bhat_new - B_max, 0.0)
+            
+            if violation_amount > violation_tolerance
+                push!(violations, (j, t))
+            end
+            
+            Bhat[j][t] = clamp(Bhat_new, B_min, B_max)
+        end
+    end
+    
+    return Dict(
+        :Bhat => Bhat,
+        :bounds_violations => length(violations),
+        :violation_indices => violations
+    )
+end
+
+"""
+🟢 DUAL UPDATE for tADMM LinDistFlow
+
+Updates scaled dual variables uⱼᵗ'ᵗ⁰ for each subproblem
+"""
+function dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ::Float64, data)
+    @unpack Bset, Tset = data
+    max_change = 0.0
+    
+    for t0 in Tset
+        for j in Bset
+            for t in Tset
+                old_u = u_collection[t0][j][t]
+                u_collection[t0][j][t] += (B_collection[t0][j][t] - Bhat[j][t])
+                max_change = max(max_change, abs(u_collection[t0][j][t] - old_u))
+            end
+        end
+    end
+    
+    return Dict(
+        :u_collection => u_collection,
+        :max_dual_change => max_change,
+        :total_updates => length(Tset) * length(Bset) * length(Tset)
+    )
+end
+
+"""
+Solve LinDistFlow MPOPF using tADMM decomposition
+"""
+function solve_MPOPF_LinDistFlow_tADMM(data; ρ::Float64=1.0, 
+                                       max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4)
+    @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
+    
+    # Initialize global consensus variables B̂ⱼᵗ
+    Bhat = Dict(j => fill(B0_pu[j], length(Tset)) for j in Bset)
+    for j in Bset
+        Bhat[j] .= clamp.(Bhat[j], soc_min[j] * B_R_pu[j], soc_max[j] * B_R_pu[j])
+    end
+    
+    # Initialize local SOC variables Bⱼᵗ'ᵗ⁰ for each subproblem
+    B_collection = Dict(t0 => Dict(j => copy(Bhat[j]) for j in Bset) for t0 in Tset)
+    
+    # Initialize scaled dual variables uⱼᵗ'ᵗ⁰
+    u_collection = Dict(t0 => Dict(j => zeros(length(Tset)) for j in Bset) for t0 in Tset)
+    
+    # Storage for power dispatch results
+    P_B_collection = Dict(t => Dict{Int,Float64}() for t in Tset)
+    P_Subs_collection = zeros(length(Tset))
+    
+    # History tracking
+    obj_history = Float64[]
+    energy_cost_history = Float64[]
+    battery_cost_history = Float64[]
+    penalty_history = Float64[]
+    r_norm_history = Float64[]
+    s_norm_history = Float64[]
+    Bhat_history = Dict(j => Vector{Vector{Float64}}() for j in Bset)
+    
+    # Store initial state
+    for j in Bset
+        push!(Bhat_history[j], copy(Bhat[j]))
+    end
+    
+    println("\n" * "="^80)
+    print(COLOR_INFO)
+    @printf "🎯 tADMM[LinDistFlow]: T=%d, ρ=%.3f, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ length(Bset) length(data[:Nset]) length(data[:Lset])
+    print(COLOR_RESET)
+    println("="^80)
+    
+    for k in 1:max_iter
+        # 🔵 STEP 1: Primal Update - Solve T subproblems
+        print(COLOR_INFO)
+        @printf "  🔵 Iteration %3d: Primal updates" k
+        print(COLOR_RESET)
+        total_energy_cost = 0.0
+        total_battery_cost = 0.0
+        total_penalty = 0.0
+        
+        for t0 in Tset
+            result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ, t0)
+            
+            # Update collections
+            B_collection[t0] = result[:B_local]
+            P_Subs_collection[t0] = result[:P_Subs]
+            for j in Bset
+                P_B_collection[t0][j] = result[:P_B][j]
+            end
+            
+            # Accumulate costs
+            total_energy_cost += result[:energy_cost]
+            total_battery_cost += result[:battery_cost]
+            total_penalty += result[:penalty]
+        end
+        print(COLOR_SUCCESS)
+        println(" ✓")
+        print(COLOR_RESET)
+        
+        true_objective = total_energy_cost + total_battery_cost
+        push!(obj_history, true_objective)
+        push!(energy_cost_history, total_energy_cost)
+        push!(battery_cost_history, total_battery_cost)
+        push!(penalty_history, total_penalty)
+        
+        # 🔴 STEP 2: Consensus Update
+        Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
+        consensus_result = consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ)
+        
+        # 🟢 STEP 3: Dual Update
+        dual_result = dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ, data)
+        
+        # Store history
+        for j in Bset
+            push!(Bhat_history[j], copy(Bhat[j]))
+        end
+        
+        # 📏 STEP 4: Compute residuals
+        r_vectors = []
+        for t0 in Tset
+            for j in Bset
+                push!(r_vectors, B_collection[t0][j] - Bhat[j])
+            end
+        end
+        r_norm = norm(vcat(r_vectors...)) / length(Tset)
+        
+        s_vectors = []
+        for j in Bset
+            push!(s_vectors, Bhat[j] - Bhat_old[j])
+        end
+        s_norm = ρ * norm(vcat(s_vectors...)) / length(Tset)
+        
+        push!(r_norm_history, r_norm)
+        push!(s_norm_history, s_norm)
+        
+        @printf "k=%3d  obj=\$%.4f (energy=\$%.4f, battery=\$%.4f, penalty=\$%.4f)  ‖r‖=%.2e  ‖s‖=%.2e\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm
+        
+        # Check convergence
+        if r_norm ≤ eps_pri && s_norm ≤ eps_dual
+            print(COLOR_SUCCESS)
+            @printf "🎉 tADMM converged at iteration %d\n" k
+            print(COLOR_RESET)
+            break
+        end
+    end
+    
+    # Extract final battery power and SOC trajectories
+    P_B_final = Dict()
+    for j in Bset
+        P_B_final[j, :] = [P_B_collection[t][j] for t in Tset]
+    end
+    
+    B_final = Dict()
+    for j in Bset
+        B_final[j, :] = [B_collection[t0][j][t0] for t0 in Tset]  # Use local solutions
+    end
+    
+    return Dict(
+        :status => MOI.OPTIMAL,  # Assume converged
+        :P_B => P_B_final,
+        :P_Subs => P_Subs_collection,
+        :B => B_final,
+        :objective => last(obj_history),
+        :consensus_trajectory => Bhat,
+        :local_solutions => B_collection,
+        :dual_variables => u_collection,
+        :convergence_history => Dict(
+            :obj_history => obj_history,
+            :energy_cost_history => energy_cost_history,
+            :battery_cost_history => battery_cost_history,
+            :penalty_history => penalty_history,
+            :r_norm_history => r_norm_history,
+            :s_norm_history => s_norm_history,
+            :Bhat_history => Bhat_history
+        )
+    )
+end
+
+# =============================================================================
+# SOLVE WITH tADMM
+# =============================================================================
+
+if !isempty(data[:Bset])  # Only run tADMM if there are batteries
+    println("\n" * "="^80)
+    println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH LINDISTFLOW (tADMM)", COLOR_RESET)
+    println("="^80)
+    
+    sol_ldf_tadmm = solve_MPOPF_LinDistFlow_tADMM(data; ρ=rho_tadmm, 
+                                                   max_iter=max_iter_tadmm, 
+                                                   eps_pri=eps_pri_tadmm, 
+                                                   eps_dual=eps_dual_tadmm)
+    
+    # Report results
+    println("\n--- tADMM SOLUTION STATUS ---")
+    print(COLOR_SUCCESS)
+    @printf "Objective: \$%.2f\n" sol_ldf_tadmm[:objective]
+    print(COLOR_RESET)
+    
+    # Compare with brute force
+    if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED
+        println("\n--- COMPARISON WITH BRUTE FORCE ---")
+        obj_diff = abs(sol_ldf_tadmm[:objective] - sol_ldf_bf[:objective])
+        obj_rel_diff = obj_diff / sol_ldf_bf[:objective] * 100
+        
+        @printf "Brute Force objective: \$%.4f\n" sol_ldf_bf[:objective]
+        @printf "tADMM objective:       \$%.4f\n" sol_ldf_tadmm[:objective]
+        @printf "Absolute difference:   \$%.4f\n" obj_diff
+        @printf "Relative difference:   %.4f%%\n" obj_rel_diff
+        
+        # Compare battery schedules
+        println("\n--- BATTERY SCHEDULE COMPARISON ---")
+        P_BASE = data[:kVA_B]
+        E_BASE = P_BASE * 1.0
+        
+        for j in data[:Bset]
+            println("Battery $j:")
+            
+            # Brute force
+            P_B_bf_kW = [sol_ldf_bf[:P_B][j, t] * P_BASE for t in data[:Tset]]
+            B_bf_kWh = [sol_ldf_bf[:B][j, t] * E_BASE for t in data[:Tset]]
+            
+            # tADMM
+            P_B_tadmm_kW = sol_ldf_tadmm[:P_Subs] .* 0  # Initialize with zeros
+            B_tadmm_kWh = sol_ldf_tadmm[:P_Subs] .* 0
+            for t in data[:Tset]
+                P_B_tadmm_kW[t] = sol_ldf_tadmm[:P_B][j, :][t] * P_BASE
+                B_tadmm_kWh[t] = sol_ldf_tadmm[:B][j, :][t] * E_BASE
+            end
+            
+            @printf "  BF P_B (kW):    min=%.1f, max=%.1f\n" minimum(P_B_bf_kW) maximum(P_B_bf_kW)
+            @printf "  tADMM P_B (kW): min=%.1f, max=%.1f\n" minimum(P_B_tadmm_kW) maximum(P_B_tadmm_kW)
+            @printf "  BF B (kWh):     min=%.1f, max=%.1f\n" minimum(B_bf_kWh) maximum(B_bf_kWh)
+            @printf "  tADMM B (kWh):  min=%.1f, max=%.1f\n" minimum(B_tadmm_kWh) maximum(B_tadmm_kWh)
+        end
+    end
+    
+    println("\n" * "="^80)
+    println(COLOR_HIGHLIGHT, "MPOPF LINDISTFLOW tADMM SOLUTION COMPLETE", COLOR_RESET)
+    println("="^80)
+else
+    println("\n" * "="^80)
+    print(COLOR_WARNING)
+    println("⚠ No batteries in system - skipping tADMM solution")
+    print(COLOR_RESET)
+    println("="^80)
+    sol_ldf_tadmm = nothing
+end
 
 # =============================================================================
 # PLOTTING
