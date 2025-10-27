@@ -16,7 +16,7 @@
 \newcommand{\redBhat}[1]{\textcolor{redvar}{\mathbf{#1}}}     % Red B̂
 \newcommand{\greenu}[1]{\textcolor{greenvar}{\mathbf{#1}}}    % Green u_t0
 
-\title{Multi-Period Optimal Power Flow:\\LinDistFlow \& Copper Plate tADMM Formulations}
+\title{Multi-Period Optimal Power Flow:\\Brute Force \& Temporal ADMM Formulations}
 \author{}
 \date{}
 % \date{\today}
@@ -31,23 +31,23 @@
 The Temporal ADMM (tADMM) algorithm decomposes the multi-period optimal power flow problem for distribution networks into $T$ subproblems, each corresponding to one time period. This formulation uses the linearized DistFlow model to capture network physics including voltage drops and reactive power flows.
 
 \subsection{Variable Color Coding}
+Following the handwritten PDF formulation:
 \begin{itemize}
-    \item $\blueB{B_j^{t,t_0}}$: Local SOC variables for battery $j$, time $t$, in subproblem $t_0$ (blue)
-    \item $\redBhat{\hat{B}_j^t}$: Global consensus SOC for battery $j$ at time $t$ (red)
-    \item $\greenu{u_j^{t,t_0}}$: Local scaled dual variables for battery $j$, time $t$, in subproblem $t_0$ (green)
+    \item $\blueB{B^{t_0}}$: Local SOC variables for subproblem $t_0$ (blue)
+    \item $\redBhat{\hat{B}}$: Global consensus SOC trajectory (red)
+    \item $\greenu{u^{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
 \end{itemize}
 
 \subsection{Sets and Indices}
 \begin{itemize}
     \item $\mathcal{N}$: Set of all nodes (buses)
     \item $\mathcal{L}$: Set of all branches (lines)
-    \item $\mathcal{L}_1$: Set of branches connected to substation (node 1)
     \item $\mathcal{B}$: Set of nodes with batteries
     \item $\mathcal{D}$: Set of nodes with PV (DER)
     \item $\mathcal{T} = \{1, 2, \ldots, T\}$: Set of time periods
-    \item $t_0 \in \mathcal{T}$: Index for a specific time period in tADMM decomposition
-    \item $j \in \mathcal{N}$: Node index
-    \item $(i,j) \in \mathcal{L}$: Branch from node $i$ to node $j$
+    \item $t_0$: Index for a specific time period in tADMM decomposition
+    \item $j$: Node index
+    \item $(i,j)$: Branch from node $i$ to node $j$
 \end{itemize}
 
 \subsection{tADMM Algorithm Structure}
@@ -66,12 +66,12 @@ For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \textbf{Spatial Network Constraints (only for time $t_0$):}
 \begin{align}
-\text{Real power balance (substation):} \quad & P_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} P_{1j}^{t_0} = 0 \\
-\text{Real power balance (nodes):} \quad & P_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} P_{jk}^{t_0} = P_{B,j}^{t_0} + p_{D,j}^{t_0} - p_{L,j}^{t_0}, \notag \\
-& \quad \forall (i,j) \in \mathcal{L}, \, j \neq 1 \\
-\text{Reactive power balance (substation):} \quad & Q_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} Q_{1j}^{t_0} = 0 \\
-\text{Reactive power balance (nodes):} \quad & Q_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} Q_{jk}^{t_0} = q_{D,j}^{t_0} - q_{L,j}^{t_0}, \notag \\
-& \quad \forall (i,j) \in \mathcal{L}, \, j \neq 1 \\
+\text{Real power balance (substation):} \quad & P_{\text{Subs}}^{t_0} - \sum_{j \in \text{children}(1)} P_{1j}^{t_0} = 0 \\
+\text{Real power balance (nodes):} \quad & P_{ij}^{t_0} - \sum_{k \in \text{children}(j)} P_{jk}^{t_0} = P_{B,j}^{t_0} + p_{D,j}^{t_0} - p_{L,j}^{t_0}, \notag \\
+& \quad \forall j \in \mathcal{N} \setminus \{1\} \\
+\text{Reactive power balance (substation):} \quad & Q_{\text{Subs}}^{t_0} - \sum_{j \in \text{children}(1)} Q_{1j}^{t_0} = 0 \\
+\text{Reactive power balance (nodes):} \quad & Q_{ij}^{t_0} - \sum_{k \in \text{children}(j)} Q_{jk}^{t_0} = q_{D,j}^{t_0} - q_{L,j}^{t_0}, \notag \\
+& \quad \forall j \in \mathcal{N} \setminus \{1\} \\
 \text{KVL constraints:} \quad & v_i^{t_0} - v_j^{t_0} = 2(r_{ij} P_{ij}^{t_0} + x_{ij} Q_{ij}^{t_0}), \quad \forall (i,j) \in \mathcal{L} \\
 \text{Voltage limits:} \quad & (V_{\min,j})^2 \leq v_j^{t_0} \leq (V_{\max,j})^2, \quad \forall j \in \mathcal{N} \\
 \text{PV reactive limits:} \quad & -\sqrt{(S_{D,j})^2 - (p_{D,j}^{t_0})^2} \leq q_{D,j}^{t_0} \leq \sqrt{(S_{D,j})^2 - (p_{D,j}^{t_0})^2}, \notag \\
@@ -104,85 +104,12 @@ For each battery $j \in \mathcal{B}$ and each time period $t \in \mathcal{T}$:
 
 where $\underline{B}_j = \text{SOC}_{\min,j} \cdot B_{\text{rated},j}$ and $\overline{B}_j = \text{SOC}_{\max,j} \cdot B_{\text{rated},j}$.
 
+\textbf{Note:} The consensus averages over all $T$ subproblem copies of the SOC at time $t$, with projection onto the feasible SOC range.
+
 \subsection{Step 3: Dual Update (Green Variables)}
 For each battery $j \in \mathcal{B}$, each subproblem $t_0 \in \mathcal{T}$, and each time period $t \in \mathcal{T}$:
 \begin{align}
 \greenu{u_j^{t,t_0}} &:= \greenu{u_j^{t,t_0}} + \left( \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} \right)
-\end{align}
-
-\subsection{Convergence Criteria}
-
-\textbf{Primal Residual (Consensus Violation):}
-\begin{align}
-\|r^k\|_2 &= \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \frac{1}{T} \sum_{t_0=1}^T \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} \right)^2} \leq \epsilon_{\text{pri}}
-\end{align}
-
-\textbf{Dual Residual (Consensus Change):}
-\begin{align}
-\|s^k\|_2 &= \rho \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^{t,k}} - \redBhat{\hat{B}_j^{t,k-1}} \right)^2} \leq \epsilon_{\text{dual}}
-\end{align}
-
-\newpage
-
-\section{Copper Plate MPOPF with tADMM (Simplified Case)}
-
-\subsection{Problem Overview}
-
-The Temporal ADMM (tADMM) algorithm decomposes the multi-period optimal power flow problem into $T$ single-step subproblems, each corresponding to one time period. The hope is to enable parallel computation and improved scalability while still retaining solution optimality.
-
-\subsection{Variable Color Coding}
-Following the handwritten PDF formulation:
-\begin{itemize}
-    \item $\blueB{B^{t_0}}$: Local SOC variables for subproblem $t_0$ (blue)
-    \item $\redBhat{\hat{B}}$: Global consensus SOC trajectory (red)
-    \item $\greenu{u^{t_0}}$: Local scaled dual variables for subproblem $t_0$ (green)
-\end{itemize}
-
-\subsection{tADMM Algorithm Structure}
-
-The algorithm alternates between three update steps:
-
-\subsection{Step 1: Primal Update (Blue Variables) tADMM Optimization Model}
-For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
-
-\begin{align}
-\min_{P_{\text{subs}}^{t_0}, P_{B}^{t_0}, \blueB{B^{t_0}}} \quad & C^{t_0} \cdot P_{\text{subs}}^{t_0} + C_B \cdot \left(P_{B}^{t_0}\right)^2 + \frac{\rho}{2} \left\| \blueB{B^{t_0}} - \redBhat{\hat{B}} + \greenu{u^{t_0}} \right\|_2^2
-\end{align}
-
-\textbf{Subject to SOC Dynamics for Entire Trajectory:}
-\begin{align}
-\blueB{B^{t_0}[1]} &= B_0 - P_{B}^{t_0} \cdot \Delta t \\
-\blueB{B^{t_0}[t]} &= \blueB{B^{t_0}[t-1]} - P_{B}^{t_0} \cdot \Delta t, \quad \forall t \in \{2, \ldots, T\} \\
-P_{\text{subs}}^{t_0} + P_{B}^{t_0} &= P_L[t_0] \\
--P_{B,R} \leq P_{B}^{t_0} &\leq P_{B,R} \\
-\underline{B} \leq \blueB{B^{t_0}[t]} &\leq \overline{B}, \quad \forall t \in \{1, \ldots, T\}
-\end{align}
-
-% Original pedantic inequality constraints (commented out):
-% -P_{B,R} - P_{B,t_0} \leq 0
-% P_{B,t_0} - P_{B,R} \leq 0 
-% \text{SOC}_{\min} \cdot E_{\text{Rated}} - \blueB{B^{t_0}[t]} \leq 0, \forall t \in \{1, \ldots, T\}
-% \blueB{B^{t_0}[t]} - \text{SOC}_{\max} \cdot E_{\text{Rated}} \leq 0, \forall t \in \{1, \ldots, T\}
-
-\textbf{Key Formulation Notes:}
-\begin{itemize}
-    \item Each subproblem $t_0$ optimizes the battery power $P_{B}^{t_0}$ for \textit{only} time step $t_0$
-    \item However, the SOC trajectory $\blueB{B^{t_0}[t]}$ is computed for \textit{all} time steps $t \in \{1, \ldots, T\}$
-    \item This ensures that the ADMM penalty term can compare the full trajectory $\blueB{B^{t_0}}$ with the consensus $\redBhat{\hat{B}}$
-    \item The power balance constraint is enforced only for the specific time $t_0$
-\end{itemize}
-
-\subsection{Step 2: Consensus Update (Red Variables)}
-\begin{align}
-\redBhat{\hat{B}[t]} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B^{t_0}[t]} + \greenu{u^{t_0}[t]} \right), \underline{B}, \overline{B} \right) \\
-&\quad \forall t \in \{1, 2, \ldots, T-1\} \\
-\redBhat{\hat{B}[T]} &= B_{T,\text{target}} \quad \text{(if terminal constraint exists)}
-\end{align}
-
-\subsection{Step 3: Dual Update (Green Variables)}
-\begin{align}
-\greenu{u^{t_0}[t]} &:= \greenu{u^{t_0}[t]} + \left( \blueB{B^{t_0}[t]} - \redBhat{\hat{B}[t]} \right) \\
-&\quad \forall t_0 \in \{1, \ldots, T\}, \, \forall t \in \{1, \ldots, T\}
 \end{align}
 
 \section{Convergence Criteria}
@@ -191,15 +118,17 @@ The algorithm terminates when both residuals fall below specified thresholds:
 
 \subsection{Primal Residual (Consensus Violation)}
 \begin{align}
-\|r^k\|_2 &= \left\| \text{vec}\left( \left\{ \blueB{B^{t_0}} - \redBhat{\hat{B}} \right\}_{t_0=1}^T \right) \right\|_2 \leq \epsilon_{\text{pri}}
+\|r^k\|_2 &= \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \frac{1}{T} \sum_{t_0=1}^T \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} \right)^2} \leq \epsilon_{\text{pri}}
 \end{align}
 
 \subsection{Dual Residual (Consensus Change)}
 \begin{align}
-\|s^k\|_2 &= \rho \left\| \redBhat{\hat{B}^k} - \redBhat{\hat{B}^{k-1}} \right\|_2 \leq \epsilon_{\text{dual}}
+\|s^k\|_2 &= \rho \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^{t,k}} - \redBhat{\hat{B}_j^{t,k-1}} \right)^2} \leq \epsilon_{\text{dual}}
 \end{align}
 
-\section{Final Solution Recovery}
+\section{Copper Plate Formulation (Simple Case)}
+
+This section presents a simplified copper plate model (no network constraints) for reference.
 
 After convergence, the final power schedules are reconstructed from the consensus trajectory:
 
