@@ -28,12 +28,12 @@ includet("Plotter.jl")
 # System and simulation parameters
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-T = 24  # Number of time steps
+T = 4  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
 # tADMM algorithm parameters
-rho_tadmm = 1.0
-max_iter_tadmm = 2
+rho_tadmm = 10000.0
+max_iter_tadmm = 3
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
 
@@ -776,8 +776,33 @@ begin # function solve MPOPF tadmm lindistflow
             total_battery_cost = 0.0
             total_penalty = 0.0
             
+            # DIAGNOSTIC: Show what we're feeding into primal updates
+            if k <= 3 && k > 1  # Skip k=1 since it's initial
+                println("\n  📊 INPUT to Primal Updates (k=$k):")
+                for j in Bset
+                    println("    Bhat[$j] = ", round.(Bhat[j], digits=6))
+                    # Show dual variables too
+                    for t0 in Tset
+                        println("      u[t0=$t0][$j] = ", round.(u_collection[t0][j], digits=6))
+                    end
+                end
+            end
+            
             for t0 in Tset
                 result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ, t0)
+                
+                # DIAGNOSTIC: Show what each primal subproblem produced
+                if k <= 3
+                    println("\n    🔹 Subproblem t0=$t0 results:")
+                    println("      P_Subs = ", round(result[:P_Subs] * data[:kVA_B], digits=3), " kW")
+                    for j in Bset
+                        println("      P_B[$j] = ", round(result[:P_B][j] * data[:kVA_B], digits=3), " kW")
+                        println("      B_local[$j] = ", round.(result[:B_local][j], digits=6))
+                    end
+                    println("      energy_cost=\$", round(result[:energy_cost], digits=4))
+                    println("      battery_cost=\$", round(result[:battery_cost], digits=6))
+                    println("      penalty=\$", round(result[:penalty], digits=4))
+                end
                 
                 # Update collections
                 B_collection[t0] = result[:B_local]
@@ -803,11 +828,44 @@ begin # function solve MPOPF tadmm lindistflow
             
             # 🔴 STEP 2: Consensus Update
             Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
+            
+            # DIAGNOSTIC: Print Bhat before consensus update (first 3 iterations only)
+            if k <= 3
+                println("\n  📊 BEFORE Consensus Update (k=$k):")
+                for j in Bset
+                    println("    Bhat[$j][1:3] = ", round.(Bhat[j][1:min(3,end)], digits=6))
+                    # Print local solutions from each subproblem for first few times
+                    for t0 in 1:min(3, length(Tset))
+                        println("      B_local[t0=$t0][$j][1:3] = ", round.(B_collection[t0][j][1:min(3,end)], digits=6))
+                    end
+                end
+            end
+            
             consensus_result = consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ)
             
-            # 🟢 STEP 3: Dual Update
+            # DIAGNOSTIC: Print Bhat after consensus update
+            if k <= 3
+                println(" 📊 AFTER Consensus Update (k=$k):")
+                for j in Bset
+                    println("    Bhat[$j][1:3] = ", round.(Bhat[j][1:min(3,end)], digits=6))
+                    delta_Bhat = Bhat[j] - Bhat_old[j]
+                    println("    ΔBhat[$j][1:3] = ", round.(delta_Bhat[1:min(3,end)], digits=6))
+                end
+            end
+            
+            # STEP 3: Dual Update
             dual_result = dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ, data)
             
+            # DIAGNOSTIC: Print dual variables after update
+            if k <= 3
+                println("  📊 AFTER Dual Update (k=$k):")
+                for j in Bset
+                    for t0 in 1:min(3, length(Tset))
+                        println("    u[t0=$t0][$j][1:3] = ", round.(u_collection[t0][j][1:min(3,end)], digits=6))
+                    end
+                end
+                println()
+            end            
             # Store history
             for j in Bset
                 push!(Bhat_history[j], copy(Bhat[j]))
@@ -820,13 +878,13 @@ begin # function solve MPOPF tadmm lindistflow
                     push!(r_vectors, B_collection[t0][j] - Bhat[j])
                 end
             end
-            r_norm = norm(vcat(r_vectors...)) / length(Tset)
+            r_norm = norm(vcat(r_vectors...)) / (length(Tset) * length(Bset))
             
             s_vectors = []
             for j in Bset
                 push!(s_vectors, Bhat[j] - Bhat_old[j])
             end
-            s_norm = ρ * norm(vcat(s_vectors...)) / length(Tset)
+            s_norm = ρ * norm(vcat(s_vectors...)) / length(Bset)
             
             push!(r_norm_history, r_norm)
             push!(s_norm_history, s_norm)
