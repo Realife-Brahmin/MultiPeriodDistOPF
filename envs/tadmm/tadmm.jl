@@ -33,7 +33,7 @@ delta_t_h = 1.0  # Time step duration in hours
 
 # tADMM algorithm parameters
 rho_tadmm = 1.0
-max_iter_tadmm = 1
+max_iter_tadmm = 2
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
 
@@ -763,7 +763,11 @@ begin # function solve MPOPF tadmm lindistflow
         print(COLOR_RESET)
         println("="^80)
         
-        for k in 1:max_iter
+        converged = false
+        final_iter = max_iter
+        
+        try
+            for k in 1:max_iter
             # 🔵 STEP 1: Primal Update - Solve T subproblems
             print(COLOR_INFO)
             @printf "  🔵 Iteration %3d: Primal updates" k
@@ -831,11 +835,30 @@ begin # function solve MPOPF tadmm lindistflow
             
             # Check convergence
             if r_norm ≤ eps_pri && s_norm ≤ eps_dual
+                converged = true
                 print(COLOR_SUCCESS)
                 @printf "🎉 tADMM converged at iteration %d\n" k
                 print(COLOR_RESET)
                 break
             end
+            
+            final_iter = k  # Track last completed iteration
+        end
+        catch e
+            if isa(e, InterruptException)
+                print(COLOR_WARNING)
+                @printf "\n⚠ tADMM interrupted at iteration %d\n" final_iter
+                print(COLOR_RESET)
+            else
+                rethrow(e)
+            end
+        end
+        
+        # Report convergence status
+        if !converged
+            print(COLOR_WARNING)
+            @printf "⚠ tADMM did NOT converge after %d iterations (‖r‖=%.2e > %.2e or ‖s‖=%.2e > %.2e)\n" max_iter r_norm_history[end] eps_pri s_norm_history[end] eps_dual
+            print(COLOR_RESET)
         end
         
         # Extract final battery power and SOC trajectories
