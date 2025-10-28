@@ -199,24 +199,6 @@ The algorithm terminates when both residuals fall below specified thresholds:
 \|s^k\|_2 &= \rho \left\| \redBhat{\hat{B}^k} - \redBhat{\hat{B}^{k-1}} \right\|_2 \leq \epsilon_{\text{dual}}
 \end{align}
 
-\section{Final Solution Recovery}
-
-After convergence, the final power schedules are reconstructed from the consensus trajectory:
-
-\begin{align}
-P_{B}^{t} &= 
-\begin{cases}
-\frac{-\left(\redBhat{\hat{B}[t]} - B_0\right)}{\Delta t} & \text{if } t = 1 \\
-\frac{-\left(\redBhat{\hat{B}[t]} - \redBhat{\hat{B}[t-1]}\right)}{\Delta t} & \text{if } t > 1
-\end{cases} \\
-P_{\text{Subs}}^{t} &= P_L[t] - P_{B}^{t}
-\end{align}
-
-The final objective value includes both energy and battery costs:
-\begin{align}
-J_{\text{total}} &= \sum_{t=1}^{T} \left[ C^{t} \cdot P_{\text{Subs}}^{t} \cdot \Delta t + C_B \cdot \left(P_{B}^{t}\right)^2 \cdot \Delta t \right]
-\end{align}
-
 \section{Algorithm Parameters}
 
 \subsection{Objective Function Components}
