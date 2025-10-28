@@ -571,7 +571,7 @@ function primal_update_tadmm_lindistflow!(B_local, Bhat, u_local, data, ρ::Floa
     
     # ADMM penalty (full horizon)
     penalty = (ρ / 2) * sum(sum((B_var[j, t] - Bhat[j][t] + u_local[j][t])^2 
-                                 for t in Tset) for j in Bset)
+                                for t in Tset) for j in Bset)
     
     @objective(model, Min, energy_cost + battery_cost + penalty)
     
@@ -660,7 +660,7 @@ function primal_update_tadmm_lindistflow!(B_local, Bhat, u_local, data, ρ::Floa
     energy_cost_val = LoadShapeCost[t0] * value(P_Subs_t0) * P_BASE * Δt
     battery_cost_val = sum(C_B * (value(P_B_var[j, t0]) * P_BASE)^2 * Δt for j in Bset)
     penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 
-                                     for t in Tset) for j in Bset)
+                                    for t in Tset) for j in Bset)
     
     return Dict(
         :total_objective => objective_value(model),
@@ -742,7 +742,7 @@ end
 Solve LinDistFlow MPOPF using tADMM decomposition
 """
 function solve_MPOPF_LinDistFlow_tADMM(data; ρ::Float64=1.0, 
-                                       max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4)
+                                    max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4)
     @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
     
     # Initialize global consensus variables B̂ⱼᵗ
@@ -989,8 +989,8 @@ if !isempty(data[:Bset]) && !isnothing(sol_ldf_tadmm)
     # Use Plotter.jl function for consistent styling
     conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence.png")
     plot_tadmm_ldf_convergence(sol_ldf_tadmm, sol_ldf_bf, eps_pri_tadmm, eps_dual_tadmm,
-                               showPlots=showPlots, savePlots=true, 
-                               filename=conv_plot_path)
+                            showPlots=showPlots, savePlots=true, 
+                            filename=conv_plot_path)
     
     println(COLOR_SUCCESS, "✓ Convergence plots saved to $(conv_plots_dir)", COLOR_RESET)
 end
@@ -1026,15 +1026,15 @@ end
 if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED)
     subs_power_cost_path = joinpath(system_dir, "substation_power_cost_bf.png")
     plot_substation_power_and_cost(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
-                                   showPlots=showPlots, savePlots=true,
-                                   filename=subs_power_cost_path)
+                                showPlots=showPlots, savePlots=true,
+                                filename=subs_power_cost_path)
     
     # Plot tADMM substation power if available
     if !isnothing(sol_ldf_tadmm)
         subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_tadmm.png")
         plot_substation_power_and_cost(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
-                                       showPlots=showPlots, savePlots=true,
-                                       filename=subs_power_cost_tadmm_path)
+                                    showPlots=showPlots, savePlots=true,
+                                    filename=subs_power_cost_tadmm_path)
     end
     
     # Plot voltage profile for last bus
