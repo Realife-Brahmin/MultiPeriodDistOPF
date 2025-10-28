@@ -946,3 +946,155 @@ function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="M
     end
 end
 
+"""
+    plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri, eps_dual; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_convergence.png")
+
+Plot tADMM convergence with 3 horizontal subplots matching copper plate example style:
+1. Objective function value
+2. Primal residual (log scale)  
+3. Dual residual (log scale)
+
+Includes BF optimal line and tolerance thresholds.
+
+# Arguments
+- sol_tadmm: tADMM solution dictionary with :convergence_history
+- sol_bf: Brute force solution dictionary with :objective
+- eps_pri: Primal residual tolerance
+- eps_dual: Dual residual tolerance
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+
+# Returns
+- Combined plot object with 3 subplots
+"""
+function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dual::Float64; 
+                                    showPlots::Bool=true, savePlots::Bool=false, 
+                                    filename::String="tadmm_convergence.png")
+    
+    # Extract convergence history
+    hist = sol_tadmm[:convergence_history]
+    obj_history = hist[:obj_history]
+    r_norm_history = hist[:r_norm_history]
+    s_norm_history = hist[:s_norm_history]
+    
+    # Set theme and colors (matching copper plate example)
+    gr()
+    theme(:mute)
+    line_colour_obj = :dodgerblue       # Blue for objective
+    line_colour_primal = :darkgreen     # Green for primal residual
+    line_colour_dual = :darkorange2     # Orange for dual residual
+    
+    # Subplot 1: Objective function
+    p1 = plot(
+        obj_history,
+        dpi=600,
+        xlabel="Iteration",
+        ylabel="Cost (\$)",
+        title="Objective",
+        lw=2,
+        color=line_colour_obj,
+        marker=:circle,
+        markersize=2,
+        markerstrokewidth=0,
+        legend=false,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add BF optimal line if available (check for successful optimization)
+    if haskey(sol_bf, :objective)
+        bf_obj = sol_bf[:objective]
+        # Only add line if objective is finite (successful solve)
+        if isfinite(bf_obj)
+            hline!(p1, [bf_obj], 
+                   color=:darkorange, lw=2, linestyle=:dash, alpha=0.7)
+        end
+    end
+    
+    # Subplot 2: Primal residual (log scale)
+    p2 = plot(
+        r_norm_history,
+        dpi=600,
+        xlabel="Iteration",
+        ylabel="‖r‖",
+        title="Primal Residual",
+        lw=2,
+        color=line_colour_primal,
+        marker=:circle,
+        markersize=2,
+        markerstrokewidth=0,
+        yscale=:log10,
+        legend=false,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add tolerance threshold line
+    hline!(p2, [eps_pri], 
+           color=:red, lw=2, linestyle=:dash, alpha=0.7)
+    
+    # Subplot 3: Dual residual (log scale)
+    p3 = plot(
+        s_norm_history,
+        dpi=600,
+        xlabel="Iteration",
+        ylabel="‖s‖",
+        title="Dual Residual",
+        lw=2,
+        color=line_colour_dual,
+        marker=:circle,
+        markersize=2,
+        markerstrokewidth=0,
+        yscale=:log10,
+        legend=false,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add tolerance threshold line
+    hline!(p3, [eps_dual], 
+           color=:red, lw=2, linestyle=:dash, alpha=0.7)
+    
+    # Combine into horizontal layout (1 row, 3 columns)
+    p_combined = plot(p1, p2, p3, 
+                     layout=(1, 3), 
+                     size=(1200, 400),
+                     plot_title="tADMM Convergence Summary",
+                     plot_titlefont=font(14, "Computer Modern"))
+    
+    # Show the plot if requested
+    if showPlots
+        display(p_combined)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving tADMM convergence plot to: %s\n" filename
+        savefig(p_combined, filename)
+    end
+    
+    return p_combined
+end
+

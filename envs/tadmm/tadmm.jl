@@ -42,7 +42,7 @@ const COLOR_RESET = Crayon(reset = true)
 # System and simulation parameters
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-T = 24  # Number of time steps
+T = 4  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
 # Plotting settings
@@ -52,10 +52,10 @@ showPlots = false  # Set to true to display plots interactively
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
 
-# Solar PV profile: peaks at noon (t=12), zero at night
-# t=1 is 1AM, t=12 is 12PM (noon), t=24 is 12AM (midnight)
-# Solar generation from roughly 6AM (t=6) to 6PM (t=18)
-LoadShapePV = [max(0.0, sin(π * (t - 6) / 12)) for t in 1:T]  # Sine curve from 6AM to 6PM
+# Solar PV profile: peaks at middle of horizon, zero at start/end
+# Normalized sine curve that works for any T
+t_normalized = range(0, 2π, length=T)  # Normalize time to [0, 2π]
+LoadShapePV = [max(0.0, sin(t_norm)) for t_norm in t_normalized]
 LoadShapePV = LoadShapePV ./ maximum(LoadShapePV)  # Normalize to [0, 1]
 
 C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
@@ -545,10 +545,10 @@ function primal_update_tadmm_lindistflow!(B_local, Bhat, u_local, data, ρ::Floa
     Δt = delta_t_h
     P_BASE = kVA_B
     
-    # Create model for subproblem t0
-    model = Model(Gurobi.Optimizer)
+    # Create model for subproblem t0 (use Ipopt for quieter operation)
+    model = Model(Ipopt.Optimizer)
     set_silent(model)
-    set_optimizer_attribute(model, "OutputFlag", 0)
+    set_optimizer_attribute(model, "print_level", 0)
     
     # ===== NETWORK VARIABLES (time t0 ONLY) =====
     @variable(model, P_Subs_t0 >= 0)
@@ -859,12 +859,16 @@ function solve_MPOPF_LinDistFlow_tADMM(data; ρ::Float64=1.0,
     # Extract final battery power and SOC trajectories
     P_B_final = Dict()
     for j in Bset
-        P_B_final[j, :] = [P_B_collection[t][j] for t in Tset]
+        for t in Tset
+            P_B_final[j, t] = P_B_collection[t][j]
+        end
     end
     
     B_final = Dict()
     for j in Bset
-        B_final[j, :] = [B_collection[t0][j][t0] for t0 in Tset]  # Use local solutions
+        for t in Tset
+            B_final[j, t] = B_collection[t][j][t]  # Use local solutions from diagonal
+        end
     end
     
     return Dict(
@@ -932,12 +936,8 @@ if !isempty(data[:Bset])  # Only run tADMM if there are batteries
             B_bf_kWh = [sol_ldf_bf[:B][j, t] * E_BASE for t in data[:Tset]]
             
             # tADMM
-            P_B_tadmm_kW = sol_ldf_tadmm[:P_Subs] .* 0  # Initialize with zeros
-            B_tadmm_kWh = sol_ldf_tadmm[:P_Subs] .* 0
-            for t in data[:Tset]
-                P_B_tadmm_kW[t] = sol_ldf_tadmm[:P_B][j, :][t] * P_BASE
-                B_tadmm_kWh[t] = sol_ldf_tadmm[:B][j, :][t] * E_BASE
-            end
+            P_B_tadmm_kW = [sol_ldf_tadmm[:P_B][j, t] * P_BASE for t in data[:Tset]]
+            B_tadmm_kWh = [sol_ldf_tadmm[:B][j, t] * E_BASE for t in data[:Tset]]
             
             @printf "  BF P_B (kW):    min=%.1f, max=%.1f\n" minimum(P_B_bf_kW) maximum(P_B_bf_kW)
             @printf "  tADMM P_B (kW): min=%.1f, max=%.1f\n" minimum(P_B_tadmm_kW) maximum(P_B_tadmm_kW)
@@ -976,17 +976,46 @@ system_dir = joinpath(processedData_dir, system_folder)
 mkpath(processedData_dir)  # Create processedData folder
 mkpath(system_dir)  # Create system-specific subfolder with horizon
 
-# Plot input curves (load, PV, cost) - save in processedData folder
-input_curves_path = joinpath(processedData_dir, "input_curves.png")
+# Plot tADMM convergence history (MOVED HERE - after Plotter.jl is included)
+if !isempty(data[:Bset]) && !isnothing(sol_ldf_tadmm)
+    println("\n" * "="^80)
+    println(COLOR_INFO, "PLOTTING tADMM CONVERGENCE", COLOR_RESET)
+    println("="^80)
+    
+    # Create convergence plots directory
+    conv_plots_dir = joinpath(system_dir, "convergence")
+    mkpath(conv_plots_dir)
+    
+    # Use Plotter.jl function for consistent styling
+    conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence.png")
+    plot_tadmm_ldf_convergence(sol_ldf_tadmm, sol_ldf_bf, eps_pri_tadmm, eps_dual_tadmm,
+                               showPlots=showPlots, savePlots=true, 
+                               filename=conv_plot_path)
+    
+    println(COLOR_SUCCESS, "✓ Convergence plots saved to $(conv_plots_dir)", COLOR_RESET)
+end
+
+println("\n")
+
+# Plot input curves (load, PV, cost) - save in system-specific folder (not processedData root)
+input_curves_path = joinpath(system_dir, "input_curves.png")
 plot_input_curves(data, showPlots=showPlots, savePlots=true, filename=input_curves_path)
 
 # Plot battery actions (only if optimization was successful and batteries exist)
 # Save in system-specific subfolder
 if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
-    battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow.png")
-    plot_battery_actions(sol_ldf_bf, data, "LinDistFlow-Gurobi", 
+    battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow_bf.png")
+    plot_battery_actions(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)", 
                         showPlots=showPlots, savePlots=true, 
                         filename=battery_actions_path)
+    
+    # Plot tADMM battery actions if available
+    if !isnothing(sol_ldf_tadmm)
+        battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_lindistflow_tadmm.png")
+        plot_battery_actions(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)", 
+                            showPlots=showPlots, savePlots=true, 
+                            filename=battery_actions_tadmm_path)
+    end
 else
     if isempty(data[:Bset])
         println("No batteries in system, skipping battery actions plot")
@@ -995,21 +1024,29 @@ end
 
 # Plot substation power and cost (only if optimization was successful)
 if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED)
-    subs_power_cost_path = joinpath(system_dir, "substation_power_cost.png")
-    plot_substation_power_and_cost(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+    subs_power_cost_path = joinpath(system_dir, "substation_power_cost_bf.png")
+    plot_substation_power_and_cost(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
                                    showPlots=showPlots, savePlots=true,
                                    filename=subs_power_cost_path)
     
+    # Plot tADMM substation power if available
+    if !isnothing(sol_ldf_tadmm)
+        subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_tadmm.png")
+        plot_substation_power_and_cost(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+                                       showPlots=showPlots, savePlots=true,
+                                       filename=subs_power_cost_tadmm_path)
+    end
+    
     # Plot voltage profile for last bus
-    voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus.png")
-    plot_voltage_profile_one_bus(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+    voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus_bf.png")
+    plot_voltage_profile_one_bus(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
                                 showPlots=showPlots, savePlots=true,
                                 filename=voltage_one_bus_path)
     
     # Plot voltage profile for all buses at middle time step + create GIF
-    voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses.png")
-    voltage_gif_path = joinpath(system_dir, "voltage_animation.gif")
-    plot_voltage_profile_all_buses(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+    voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_bf.png")
+    voltage_gif_path = joinpath(system_dir, "voltage_animation_bf.gif")
+    plot_voltage_profile_all_buses(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
                                    showPlots=showPlots, savePlots=true,
                                    filename=voltage_all_buses_path,
                                    create_gif=true,
@@ -1017,15 +1054,15 @@ if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOL
     
     # Plot PV power (p_D and q_D) if PV exists
     if !isempty(data[:Dset])
-        pv_power_path = joinpath(system_dir, "pv_power.png")
-        plot_pv_power(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+        pv_power_path = joinpath(system_dir, "pv_power_bf.png")
+        plot_pv_power(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
                      pv_index=1,  # Plot first PV (or only PV)
                      showPlots=showPlots, savePlots=true,
                      filename=pv_power_path)
         
         # Create PV power circle GIF
-        pv_circle_gif_path = joinpath(system_dir, "pv_power_circle.gif")
-        plot_pv_power_circle_gif(sol_ldf_bf, data, "LinDistFlow-Gurobi",
+        pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bf.gif")
+        plot_pv_power_circle_gif(sol_ldf_bf, data, "LinDistFlow-BF",
                                 pv_index=1,
                                 showPlots=showPlots, savePlots=true,
                                 filename=pv_circle_gif_path)
