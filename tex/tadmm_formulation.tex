@@ -32,9 +32,9 @@ The Temporal ADMM (tADMM) algorithm decomposes the multi-period optimal power fl
 
 \subsection{Variable Color Coding}
 \begin{itemize}
-    \item $\blueB{B_j^{t,t_0}}$: Local SOC variables for battery $j$, time $t$, in subproblem $t_0$ (blue)
-    \item $\redBhat{\hat{B}_j^t}$: Global consensus SOC for battery $j$ at time $t$ (red)
-    \item $\greenu{u_j^{t,t_0}}$: Local scaled dual variables for battery $j$, time $t$, in subproblem $t_0$ (green)
+    \item $\blueB{B_j^{t_0}[t]}$: Local SOC variables for battery $j$ in subproblem $t_0$, evaluated at time $t$ (blue)
+    \item $\redBhat{\hat{B}_j[t]}$: Global consensus SOC for battery $j$ at time $t$ (red)
+    \item $\greenu{u_j^{t_0}[t]}$: Local scaled dual variables for battery $j$ in subproblem $t_0$, for time $t$ (green)
 \end{itemize}
 
 \subsection{Sets and Indices}
@@ -58,8 +58,8 @@ The algorithm alternates between three update steps:
 For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \begin{align}
-\min_{\substack{P_{\text{Subs}}^{t_0}, Q_{\text{Subs}}^{t_0}, \\ P_{ij}^{t_0}, Q_{ij}^{t_0}, v_j^{t_0}, q_{D,j}^{t_0}, \\ P_{B,j}^t, \blueB{B_j^{t,t_0}} \\ \forall j \in \mathcal{B}, \, t \in \mathcal{T}}} \quad & c^{t_0} \cdot P_{\text{Subs}}^{t_0} \cdot P_{\text{BASE}} \cdot \Delta t + C_B \sum_{j \in \mathcal{B}} \left(P_{B,j}^{t_0}\right)^2 \cdot P_{\text{BASE}}^2 \cdot \Delta t \notag \\
-& + \frac{\rho}{2} \sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} + \greenu{u_j^{t,t_0}} \right)^2
+\min_{\substack{P_{\text{Subs}}^{t_0}, Q_{\text{Subs}}^{t_0}, \\ P_{ij}^{t_0}, Q_{ij}^{t_0}, v_j^{t_0}, q_{D,j}^{t_0}, \\ P_{B,j}^t, \blueB{B_j^{t_0}[t]} \\ \forall j \in \mathcal{B}, \, t \in \mathcal{T}}} \quad & c^{t_0} \cdot P_{\text{Subs}}^{t_0} \cdot P_{\text{BASE}} \cdot \Delta t + C_B \sum_{j \in \mathcal{B}} \left(P_{B,j}^{t_0}\right)^2 \cdot P_{\text{BASE}}^2 \cdot \Delta t \notag \\
+& + \frac{\rho}{2} \sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} + \greenu{u_j^{t_0}[t]} \right)^2
 \end{align}
 
 \textbf{Subject to:}
@@ -68,10 +68,10 @@ For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 \begin{align}
 \text{Real power balance (substation):} \quad & P_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} P_{1j}^{t_0} = 0 \\
 \text{Real power balance (nodes):} \quad & P_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} P_{jk}^{t_0} = P_{B,j}^{t_0} + p_{D,j}^{t_0} - p_{L,j}^{t_0}, \notag \\
-& \quad \forall (i,j) \in \mathcal{L}, \, j \neq 1 \\
+& \quad \forall (i,j) \in \mathcal{L}, \\
 \text{Reactive power balance (substation):} \quad & Q_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} Q_{1j}^{t_0} = 0 \\
 \text{Reactive power balance (nodes):} \quad & Q_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} Q_{jk}^{t_0} = q_{D,j}^{t_0} - q_{L,j}^{t_0}, \notag \\
-& \quad \forall (i,j) \in \mathcal{L}, \, j \neq 1 \\
+& \quad \forall (i,j) \in \mathcal{L}, \\
 \text{KVL constraints:} \quad & v_i^{t_0} - v_j^{t_0} = 2(r_{ij} P_{ij}^{t_0} + x_{ij} Q_{ij}^{t_0}), \quad \forall (i,j) \in \mathcal{L} \\
 \text{Voltage limits:} \quad & (V_{\min,j})^2 \leq v_j^{t_0} \leq (V_{\max,j})^2, \quad \forall j \in \mathcal{N} \\
 \text{PV reactive limits:} \quad & -\sqrt{(S_{D,j})^2 - (p_{D,j}^{t_0})^2} \leq q_{D,j}^{t_0} \leq \sqrt{(S_{D,j})^2 - (p_{D,j}^{t_0})^2}, \notag \\
@@ -80,9 +80,9 @@ For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 
 \textbf{Temporal Battery Constraints (entire horizon $t \in \{1, \ldots, T\}$):}
 \begin{align}
-\text{Initial SOC:} \quad & \blueB{B_j^{1,t_0}} = B_{0,j} - P_{B,j}^1 \cdot \Delta t, \quad \forall j \in \mathcal{B} \\
-\text{SOC trajectory:} \quad & \blueB{B_j^{t,t_0}} = \blueB{B_j^{t-1,t_0}} - P_{B,j}^t \cdot \Delta t, \quad \forall t \in \{2, \ldots, T\}, \, j \in \mathcal{B} \\
-\text{SOC limits:} \quad & \text{SOC}_{\min,j} \cdot B_{\text{rated},j} \leq \blueB{B_j^{t,t_0}} \leq \text{SOC}_{\max,j} \cdot B_{\text{rated},j}, \notag \\
+\text{Initial SOC:} \quad & \blueB{B_j^{t_0}[1]} = B_{0,j} - P_{B,j}^1 \cdot \Delta t, \quad \forall j \in \mathcal{B} \\
+\text{SOC trajectory:} \quad & \blueB{B_j^{t_0}[t]} = \blueB{B_j^{t_0}[t-1]} - P_{B,j}^t \cdot \Delta t, \quad \forall t \in \{2, \ldots, T\}, \, j \in \mathcal{B} \\
+\text{SOC limits:} \quad & \text{SOC}_{\min,j} \cdot B_{\text{rated},j} \leq \blueB{B_j^{t_0}[t]} \leq \text{SOC}_{\max,j} \cdot B_{\text{rated},j}, \notag \\
 & \quad \forall t \in \mathcal{T}, \, j \in \mathcal{B} \\
 \text{Power limits:} \quad & -P_{B,\text{rated},j} \leq P_{B,j}^t \leq P_{B,\text{rated},j}, \quad \forall t \in \mathcal{T}, \, j \in \mathcal{B}
 \end{align}
@@ -91,15 +91,15 @@ For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 \begin{itemize}
     \item \textbf{Network variables} $(P_{\text{Subs}}^{t_0}, Q_{\text{Subs}}^{t_0}, P_{ij}^{t_0}, Q_{ij}^{t_0}, v_j^{t_0}, q_{D,j}^{t_0})$ are optimized \textit{only} for time step $t_0$
     \item \textbf{Battery power} $P_{B,j}^t$ is optimized for the \textit{entire} horizon $t \in \{1, \ldots, T\}$
-    \item \textbf{Local SOC trajectory} $\blueB{B_j^{t,t_0}}$ (blue) is computed for \textit{all} time steps $t \in \{1, \ldots, T\}$
-    \item The ADMM consensus penalty compares the full local trajectory $\blueB{B_j^{t,t_0}}$ with the global master copy $\redBhat{\hat{B}_j^t}$ (red)
+    \item \textbf{Local SOC trajectory} $\blueB{B_j^{t_0}[t]}$ (blue) is computed for \textit{all} time steps $t \in \{1, \ldots, T\}$
+    \item The ADMM consensus penalty compares the full local trajectory $\blueB{B_j^{t_0}[t]}$ with the global master copy $\redBhat{\hat{B}_j[t]}$ (red)
     \item Each battery $j \in \mathcal{B}$ has its own local/global SOC variables and dual variables
 \end{itemize}
 
 \subsection{Step 2: Consensus Update (Red Variables)}
 For each battery $j \in \mathcal{B}$ and each time period $t \in \mathcal{T}$:
 \begin{align}
-\redBhat{\hat{B}_j^t} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B_j^{t,t_0}} + \greenu{u_j^{t,t_0}} \right), \underline{B}_j, \overline{B}_j \right)
+\redBhat{\hat{B}_j[t]} &= \text{clamp}\left( \frac{1}{T} \sum_{t_0=1}^{T} \left( \blueB{B_j^{t_0}[t]} + \greenu{u_j^{t_0}[t]} \right), \underline{B}_j, \overline{B}_j \right)
 \end{align}
 
 where $\underline{B}_j = \text{SOC}_{\min,j} \cdot B_{\text{rated},j}$ and $\overline{B}_j = \text{SOC}_{\max,j} \cdot B_{\text{rated},j}$.
@@ -107,19 +107,19 @@ where $\underline{B}_j = \text{SOC}_{\min,j} \cdot B_{\text{rated},j}$ and $\ove
 \subsection{Step 3: Dual Update (Green Variables)}
 For each battery $j \in \mathcal{B}$, each subproblem $t_0 \in \mathcal{T}$, and each time period $t \in \mathcal{T}$:
 \begin{align}
-\greenu{u_j^{t,t_0}} &:= \greenu{u_j^{t,t_0}} + \left( \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} \right)
+\greenu{u_j^{t_0}[t]} &:= \greenu{u_j^{t_0}[t]} + \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} \right)
 \end{align}
 
 \subsection{Convergence Criteria}
 
 \textbf{Primal Residual (Consensus Violation):}
 \begin{align}
-\|r^k\|_2 &= \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \frac{1}{T} \sum_{t_0=1}^T \blueB{B_j^{t,t_0}} - \redBhat{\hat{B}_j^t} \right)^2} \leq \epsilon_{\text{pri}}
+\|r^k\|_2 &= \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \frac{1}{T} \sum_{t_0=1}^T \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} \right)^2} \leq \epsilon_{\text{pri}}
 \end{align}
 
 \textbf{Dual Residual (Consensus Change):}
 \begin{align}
-\|s^k\|_2 &= \rho \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^{t,k}} - \redBhat{\hat{B}_j^{t,k-1}} \right)^2} \leq \epsilon_{\text{dual}}
+\|s^k\|_2 &= \rho \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^k[t]} - \redBhat{\hat{B}_j^{k-1}[t]} \right)^2} \leq \epsilon_{\text{dual}}
 \end{align}
 
 \newpage
