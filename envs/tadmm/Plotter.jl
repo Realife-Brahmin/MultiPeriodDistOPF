@@ -137,7 +137,9 @@ Creates separate charging/discharging bars and SOC plot.
 """
 function plot_battery_actions(solution::Dict, data::Dict, method_name::String; 
                                showPlots::Bool=true, savePlots::Bool=false, 
-                               filename::String="battery_actions_lindistflow.png")
+                               filename::String="battery_actions_lindistflow.png",
+                               battery_index::Union{Int,Nothing}=nothing,
+                               plot_all_batteries::Bool=false)
     
     T = data[:T]
     P_BASE = data[:kVA_B]
@@ -151,8 +153,28 @@ function plot_battery_actions(solution::Dict, data::Dict, method_name::String;
         return nothing
     end
     
-    # For now, plot only the first battery (can be extended for multiple batteries)
-    b = first(Bset)
+    # Determine which battery to plot
+    if plot_all_batteries
+        # Plot all batteries - save separate files
+        for (idx, b) in enumerate(Bset)
+            # Modify filename to include battery index
+            base, ext = splitext(filename)
+            battery_filename = "$(base)_battery$(b)$(ext)"
+            _plot_single_battery(solution, data, method_name, b, T, P_BASE, E_BASE, 
+                               showPlots, savePlots, battery_filename)
+        end
+        return nothing
+    else
+        # Plot single battery (first or specified)
+        b = battery_index === nothing ? first(Bset) : battery_index
+        return _plot_single_battery(solution, data, method_name, b, T, P_BASE, E_BASE, 
+                                   showPlots, savePlots, filename)
+    end
+end
+
+function _plot_single_battery(solution::Dict, data::Dict, method_name::String, b::Int,
+                              T::Int, P_BASE::Float64, E_BASE::Float64,
+                              showPlots::Bool, savePlots::Bool, filename::String)
     
     # Convert to physical units for plotting
     P_B_pu = nothing
