@@ -648,11 +648,20 @@ begin # function primal update (update 1) tadmm lindistflow
             end
         end
         
-        P_B_vals = Dict(j => value(P_B_var[j, t0]) for j in Bset)
+        # Extract ALL decision variables at time t0
+        P_Subs_val = value(P_Subs_t0)
+        Q_Subs_val = value(Q_Subs_t0)
+        P_vals = Dict((i, j) => value(P_t0[(i, j)]) for (i, j) in Lset)
+        Q_vals = Dict((i, j) => value(Q_t0[(i, j)]) for (i, j) in Lset)
+        v_vals = Dict(j => value(v_t0[j]) for j in Nset)
+        q_D_vals = Dict(j => value(q_D_t0[j]) for j in Dset)
+        # Extract P_B for ALL times (full trajectory)
+        P_B_vals_all_times = Dict(j => Dict(t => value(P_B_var[j, t]) for t in Tset) for j in Bset)
+        P_B_val_t0 = Dict(j => value(P_B_var[j, t0]) for j in Bset)
         
         # Compute objective components
-        energy_cost_val = LoadShapeCost[t0] * value(P_Subs_t0) * P_BASE * Δt
-        battery_cost_val = sum(C_B * (value(P_B_var[j, t0]) * P_BASE)^2 * Δt for j in Bset)
+        energy_cost_val = LoadShapeCost[t0] * P_Subs_val * P_BASE * Δt
+        battery_cost_val = sum(C_B * (P_B_val_t0[j] * P_BASE)^2 * Δt for j in Bset)
         penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 
                                         for t in Tset) for j in Bset)
         
@@ -661,8 +670,13 @@ begin # function primal update (update 1) tadmm lindistflow
             :energy_cost => energy_cost_val,
             :battery_cost => battery_cost_val,
             :penalty => penalty_val,
-            :P_B => P_B_vals,
-            :P_Subs => value(P_Subs_t0),
+            :P_Subs => P_Subs_val,
+            :Q_Subs => Q_Subs_val,
+            :P => P_vals,
+            :Q => Q_vals,
+            :v => v_vals,
+            :q_D => q_D_vals,
+            :P_B => P_B_vals_all_times,  # Full trajectory for all times
             :B_local => B_local,
             :t0 => t0
         )
@@ -744,9 +758,31 @@ begin # function solve MPOPF tadmm lindistflow
         # Initialize scaled dual variables uⱼᵗ'ᵗ⁰
         u_collection = Dict(t0 => Dict(j => zeros(length(Tset)) for j in Bset) for t0 in Tset)
         
-        # Storage for power dispatch results
-        P_B_collection = Dict(t => Dict{Int,Float64}() for t in Tset)
-        P_Subs_collection = zeros(length(Tset))
+        # Storage for ALL decision variables from each subproblem
+        P_Subs_collection = Dict{Int,Float64}()
+        Q_Subs_collection = Dict{Int,Float64}()
+        P_collection = Dict{Tuple{Int,Int},Dict{Int,Float64}}()
+        Q_collection = Dict{Tuple{Int,Int},Dict{Int,Float64}}()
+        v_collection = Dict{Int,Dict{Int,Float64}}()
+        q_D_collection = Dict{Int,Dict{Int,Float64}}()
+        # P_B_collection[j][t0][t] = P_B value at time t from subproblem t0 for battery j
+        P_B_collection = Dict{Int,Dict{Int,Dict{Int,Float64}}}()
+        
+        # Initialize dictionaries for branches and nodes
+        for (i, j) in data[:Lset]
+            P_collection[(i, j)] = Dict{Int,Float64}()
+            Q_collection[(i, j)] = Dict{Int,Float64}()
+        end
+        for j in data[:Nset]
+            v_collection[j] = Dict{Int,Float64}()
+        end
+        for j in data[:Dset]
+            q_D_collection[j] = Dict{Int,Float64}()
+        end
+        for j in Bset
+            # Initialize P_B_collection[j][t0] for each subproblem t0
+            P_B_collection[j] = Dict{Int,Dict{Int,Float64}}()
+        end
         
         # History tracking
         obj_history = Float64[]
@@ -801,7 +837,8 @@ begin # function solve MPOPF tadmm lindistflow
                     println("\n    🔹 Subproblem t0=$t0 results:")
                     println("      P_Subs = ", round(result[:P_Subs] * data[:kVA_B], digits=3), " kW")
                     for j in Bset
-                        println("      P_B[$j] = ", round(result[:P_B][j] * data[:kVA_B], digits=3), " kW")
+                        P_B_traj = [round(result[:P_B][j][t] * data[:kVA_B], digits=3) for t in Tset]
+                        println("      P_B[$j] trajectory = ", P_B_traj, " kW")
                         println("      B_local[$j] = ", round.(result[:B_local][j], digits=6))
                     end
                     println("      energy_cost=\$", round(result[:energy_cost], digits=4))
@@ -809,11 +846,29 @@ begin # function solve MPOPF tadmm lindistflow
                     println("      penalty=\$", round(result[:penalty], digits=4))
                 end
                 
-                # Update collections
+                # Update collections - Store ALL decision variables
                 B_collection[t0] = result[:B_local]
                 P_Subs_collection[t0] = result[:P_Subs]
+                Q_Subs_collection[t0] = result[:Q_Subs]
+                
+                for (i, j) in data[:Lset]
+                    P_collection[(i, j)][t0] = result[:P][(i, j)]
+                    Q_collection[(i, j)][t0] = result[:Q][(i, j)]
+                end
+                
+                for j in data[:Nset]
+                    v_collection[j][t0] = result[:v][j]
+                end
+                
+                for j in data[:Dset]
+                    q_D_collection[j][t0] = result[:q_D][j]
+                end
+                
                 for j in Bset
-                    P_B_collection[t0][j] = result[:P_B][j]
+                    # Store the full P_B trajectory from this subproblem
+                    # P_B_collection[j] is a Dict{Int, Dict{Int, Float64}}
+                    # where P_B_collection[j][t0][t] = P_B value at time t from subproblem t0
+                    P_B_collection[j][t0] = result[:P_B][j]  # This is already a Dict(t => value)
                 end
                 
                 # Accumulate costs
@@ -924,25 +979,58 @@ begin # function solve MPOPF tadmm lindistflow
             print(COLOR_RESET)
         end
         
-        # Extract final battery power and SOC trajectories
-        P_B_final = Dict()
-        for j in Bset
+        # Extract final solution from blue decision variables (local subproblem solutions)
+        # Use the diagonal: subproblem t0 provides the solution for time t0
+        P_Subs_final = Dict()
+        Q_Subs_final = Dict()
+        for t in Tset
+            P_Subs_final[t] = P_Subs_collection[t]
+            Q_Subs_final[t] = Q_Subs_collection[t]
+        end
+        
+        P_final = Dict()
+        Q_final = Dict()
+        for (i, j) in data[:Lset]
             for t in Tset
-                P_B_final[j, t] = P_B_collection[t][j]
+                P_final[(i, j), t] = P_collection[(i, j)][t]
+                Q_final[(i, j), t] = Q_collection[(i, j)][t]
             end
         end
         
+        v_final = Dict()
+        for j in data[:Nset]
+            for t in Tset
+                v_final[j, t] = v_collection[j][t]
+            end
+        end
+        
+        q_D_final = Dict()
+        for j in data[:Dset]
+            for t in Tset
+                q_D_final[j, t] = q_D_collection[j][t]
+            end
+        end
+        
+        P_B_final = Dict()
         B_final = Dict()
         for j in Bset
             for t in Tset
-                B_final[j, t] = B_collection[t][j][t]  # Use local solutions from diagonal
+                # Use the diagonal: subproblem t provides solution at time t
+                # P_B_collection[j][t0][t] where we want t0=t (diagonal)
+                P_B_final[j, t] = P_B_collection[j][t][t]
+                B_final[j, t] = B_collection[t][j][t]
             end
         end
         
         return Dict(
             :status => MOI.OPTIMAL,  # Assume converged
+            :P_Subs => P_Subs_final,
+            :Q_Subs => Q_Subs_final,
+            :P => P_final,
+            :Q => Q_final,
+            :v => v_final,
+            :q_D => q_D_final,
             :P_B => P_B_final,
-            :P_Subs => P_Subs_collection,
             :B => B_final,
             :objective => last(obj_history),
             :consensus_trajectory => Bhat,
