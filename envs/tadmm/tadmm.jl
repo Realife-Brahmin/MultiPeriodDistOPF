@@ -50,6 +50,8 @@ begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
     saveAllBatteryPlots = false  # Set to true to save plots for ALL batteries (time-consuming)
+    # saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
+
 
     # Load shapes
     LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
