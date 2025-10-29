@@ -28,7 +28,7 @@ includet("Plotter.jl")
 # System and simulation parameters
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-T = 4  # Number of time steps
+T = 2  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
 # tADMM algorithm parameters
@@ -57,7 +57,12 @@ begin # scenario config
     # Normalized sine curve that works for any T
     t_normalized = range(0, 2π, length=T)  # Normalize time to [0, 2π]
     LoadShapePV = [max(0.0, sin(t_norm)) for t_norm in t_normalized]
-    LoadShapePV = LoadShapePV ./ maximum(LoadShapePV)  # Normalize to [0, 1]
+    max_pv = maximum(LoadShapePV)
+    if max_pv > 0
+        LoadShapePV = LoadShapePV ./ max_pv  # Normalize to [0, 1]
+    else
+        LoadShapePV = ones(T)  # If all zeros, set to ones (no PV variation)
+    end
 
     C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
 end # scenario config
