@@ -49,20 +49,25 @@ const COLOR_RESET = Crayon(reset = true)
 begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
+    saveAllBatteryPlots = false  # Set to true to save plots for ALL batteries (time-consuming)
 
     # Load shapes
     LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
     LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
 
     # Solar PV profile: peaks at middle of horizon, zero at start/end
-    # Normalized sine curve that works for any T
-    t_normalized = range(0, 2π, length=T)  # Normalize time to [0, 2π]
-    LoadShapePV = [max(0.0, sin(t_norm)) for t_norm in t_normalized]
-    max_pv = maximum(LoadShapePV)
-    if max_pv > 0
-        LoadShapePV = LoadShapePV ./ max_pv  # Normalize to [0, 1]
+    # Use sine curve from 0 to π (half period) to ensure zeros at boundaries
+    if T >= 2
+        t_normalized = range(0, π, length=T)  # From 0 to π for half sine wave
+        LoadShapePV = [sin(t_norm) for t_norm in t_normalized]  # All positive, zeros at boundaries
+        max_pv = maximum(LoadShapePV)
+        if max_pv > 1e-10  # Avoid division by very small numbers
+            LoadShapePV = LoadShapePV ./ max_pv  # Normalize to [0, 1]
+        else
+            LoadShapePV = ones(T)  # Fallback if all near-zero
+        end
     else
-        LoadShapePV = ones(T)  # If all zeros, set to ones (no PV variation)
+        LoadShapePV = ones(T)  # For T=1, just use constant
     end
 
     C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
@@ -828,34 +833,8 @@ begin # function solve MPOPF tadmm lindistflow
             total_battery_cost = 0.0
             total_penalty = 0.0
             
-            # DIAGNOSTIC: Show what we're feeding into primal updates
-            if k <= 3 && k > 1  # Skip k=1 since it's initial
-                println("\n  📊 INPUT to Primal Updates (k=$k):")
-                for j in Bset
-                    println("    Bhat[$j] = ", round.(Bhat[j], digits=6))
-                    # Show dual variables too
-                    for t0 in Tset
-                        println("      u[t0=$t0][$j] = ", round.(u_collection[t0][j], digits=6))
-                    end
-                end
-            end
-            
             for t0 in Tset
                 result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
-                
-                # DIAGNOSTIC: Show what each primal subproblem produced
-                if k <= 3
-                    println("\n    🔹 Subproblem t0=$t0 results:")
-                    println("      P_Subs = ", round(result[:P_Subs] * data[:kVA_B], digits=3), " kW")
-                    for j in Bset
-                        P_B_traj = [round(result[:P_B][j][t] * data[:kVA_B], digits=3) for t in Tset]
-                        println("      P_B[$j] trajectory = ", P_B_traj, " kW")
-                        println("      B_local[$j] = ", round.(result[:B_local][j], digits=6))
-                    end
-                    println("      energy_cost=\$", round(result[:energy_cost], digits=4))
-                    println("      battery_cost=\$", round(result[:battery_cost], digits=6))
-                    println("      penalty=\$", round(result[:penalty], digits=4))
-                end
                 
                 # Update collections - Store ALL decision variables
                 B_collection[t0] = result[:B_local]
@@ -900,43 +879,10 @@ begin # function solve MPOPF tadmm lindistflow
             # 🔴 STEP 2: Consensus Update
             Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
             
-            # DIAGNOSTIC: Print Bhat before consensus update (first 3 iterations only)
-            if k <= 3
-                println("\n  📊 BEFORE Consensus Update (k=$k):")
-                for j in Bset
-                    println("    Bhat[$j][1:3] = ", round.(Bhat[j][1:min(3,end)], digits=6))
-                    # Print local solutions from each subproblem for first few times
-                    for t0 in 1:min(3, length(Tset))
-                        println("      B_local[t0=$t0][$j][1:3] = ", round.(B_collection[t0][j][1:min(3,end)], digits=6))
-                    end
-                end
-            end
-            
             consensus_result = consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ)
             
-            # DIAGNOSTIC: Print Bhat after consensus update
-            if k <= 3
-                println(" 📊 AFTER Consensus Update (k=$k):")
-                for j in Bset
-                    println("    Bhat[$j][1:3] = ", round.(Bhat[j][1:min(3,end)], digits=6))
-                    delta_Bhat = Bhat[j] - Bhat_old[j]
-                    println("    ΔBhat[$j][1:3] = ", round.(delta_Bhat[1:min(3,end)], digits=6))
-                end
-            end
-            
             # STEP 3: Dual Update
-            dual_result = dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ, data)
-            
-            # DIAGNOSTIC: Print dual variables after update
-            if k <= 3
-                println("  📊 AFTER Dual Update (k=$k):")
-                for j in Bset
-                    for t0 in 1:min(3, length(Tset))
-                        println("    u[t0=$t0][$j][1:3] = ", round.(u_collection[t0][j][1:min(3,end)], digits=6))
-                    end
-                end
-                println()
-            end            
+            dual_result = dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ, data)            
             # Store history
             for j in Bset
                 push!(Bhat_history[j], copy(Bhat[j]))
@@ -1195,14 +1141,16 @@ begin # plotting results
         battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow_bf.png")
         plot_battery_actions(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)", 
                             showPlots=showPlots, savePlots=true, 
-                            filename=battery_actions_path)
+                            filename=battery_actions_path,
+                            plot_all_batteries=saveAllBatteryPlots)
         
         # Plot tADMM battery actions if available
         if !isnothing(sol_ldf_tadmm)
             battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_lindistflow_tadmm.png")
             plot_battery_actions(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)", 
                                 showPlots=showPlots, savePlots=true, 
-                                filename=battery_actions_tadmm_path)
+                                filename=battery_actions_tadmm_path,
+                                plot_all_batteries=saveAllBatteryPlots)
         end
     else
         if isempty(data[:Bset])
