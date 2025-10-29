@@ -55,19 +55,33 @@ begin # scenario config
     LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
     LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2 # $/kWh time-varying energy cost
 
-    # Solar PV profile: peaks at middle of horizon, zero at start/end
-    # Use sine curve from 0 to π (half period) to ensure zeros at boundaries
-    if T >= 2
-        t_normalized = range(0, π, length=T)  # From 0 to π for half sine wave
-        LoadShapePV = [sin(t_norm) for t_norm in t_normalized]  # All positive, zeros at boundaries
-        max_pv = maximum(LoadShapePV)
-        if max_pv > 1e-10  # Avoid division by very small numbers
-            LoadShapePV = LoadShapePV ./ max_pv  # Normalize to [0, 1]
+    # Solar PV profile: zeros at start/end (25% each), bell curve in middle (50%)
+    # This mimics solar generation that starts at sunrise, peaks at noon, ends at sunset
+    LoadShapePV = zeros(T)
+    if T >= 4
+        # Determine active region: middle 50% of horizon
+        t_start = max(1, round(Int, 0.25 * T))
+        t_end = min(T, round(Int, 0.75 * T))
+        n_active = t_end - t_start + 1
+        
+        if n_active >= 2
+            # Create bell curve in active region using half sine wave
+            # sin(0) = 0, sin(π) = 0, sin(π/2) = 1 → natural [0, 1] range
+            t_normalized = range(0, π, length=n_active)
+            LoadShapePV[t_start:t_end] = [sin(t_norm) for t_norm in t_normalized]
         else
-            LoadShapePV = ones(T)  # Fallback if all near-zero
+            # Very few active periods, just use constant
+            LoadShapePV[t_start:t_end] .= 1.0
         end
+    elseif T == 3
+        # For T=3: [0, 1, 0] pattern
+        LoadShapePV[2] = 1.0
+    elseif T == 2
+        # For T=2: [0.5, 0.5] to avoid zeros everywhere
+        LoadShapePV .= 0.5
     else
-        LoadShapePV = ones(T)  # For T=1, just use constant
+        # T=1: constant
+        LoadShapePV .= 1.0
     end
 
     C_B = 1e-6 * minimum(LoadShapeCost)  # Battery quadratic cost coefficient
