@@ -28,12 +28,12 @@ includet("Plotter.jl")
 # System and simulation parameters
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-T = 2  # Number of time steps
+T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
 # tADMM algorithm parameters
 rho_tadmm = 10000.0
-max_iter_tadmm = 3
+max_iter_tadmm = 1000
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
 
