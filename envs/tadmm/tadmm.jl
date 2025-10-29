@@ -26,16 +26,17 @@ includet("logger.jl")
 includet("Plotter.jl")
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
+# systemName = "ads10A_1ph"
+systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
 # tADMM algorithm parameters
 rho_tadmm = 10000.0
-max_iter_tadmm = 1000
+max_iter_tadmm = 3000
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
+adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -743,7 +744,8 @@ end # function dual update (update 3) tadmm lindistflow
 
 begin # function solve MPOPF tadmm lindistflow
     function solve_MPOPF_LinDistFlow_tADMM(data; ρ::Float64=1.0, 
-                                        max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4)
+                                        max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4,
+                                        adaptive_rho::Bool=false)
         @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
         
         # Initialize global consensus variables B̂ⱼᵗ
@@ -798,9 +800,18 @@ begin # function solve MPOPF tadmm lindistflow
             push!(Bhat_history[j], copy(Bhat[j]))
         end
         
+        # Adaptive ρ parameters
+        ρ_current = ρ  # Track current ρ value
+        μ_balance = 10.0  # Threshold for imbalance between primal/dual residuals
+        τ_incr = 2.0      # Factor to increase ρ
+        τ_decr = 2.0      # Factor to decrease ρ
+        ρ_min = 1.0       # Minimum ρ value
+        ρ_max = 1e6       # Maximum ρ value
+        update_interval = 10  # Update ρ every N iterations
+        
         println("\n" * "="^80)
         print(COLOR_INFO)
-        @printf "🎯 tADMM[LinDistFlow]: T=%d, ρ=%.3f, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ length(Bset) length(data[:Nset]) length(data[:Lset])
+        @printf "🎯 tADMM[LinDistFlow]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
         print(COLOR_RESET)
         println("="^80)
         
@@ -830,7 +841,7 @@ begin # function solve MPOPF tadmm lindistflow
             end
             
             for t0 in Tset
-                result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ, t0)
+                result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
                 
                 # DIAGNOSTIC: Show what each primal subproblem produced
                 if k <= 3
@@ -944,12 +955,39 @@ begin # function solve MPOPF tadmm lindistflow
             for j in Bset
                 push!(s_vectors, Bhat[j] - Bhat_old[j])
             end
-            s_norm = ρ * norm(vcat(s_vectors...)) / length(Bset)
+            s_norm = ρ_current * norm(vcat(s_vectors...)) / length(Bset)
             
             push!(r_norm_history, r_norm)
             push!(s_norm_history, s_norm)
             
-            @printf "k=%3d  obj=\$%.4f (energy=\$%.4f, battery=\$%.4f, penalty=\$%.4f)  ‖r‖=%.2e  ‖s‖=%.2e\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm
+            # 🔧 STEP 5: Adaptive ρ Update (optional)
+            if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
+                ρ_old = ρ_current
+                
+                if r_norm > μ_balance * s_norm
+                    # Primal residual too large → increase ρ
+                    ρ_current = min(ρ_max, τ_incr * ρ_current)
+                    print(COLOR_WARNING)
+                    @printf "  📈 ρ: %.1f → %.1f (primal lagging)\n" ρ_old ρ_current
+                    print(COLOR_RESET)
+                elseif s_norm > μ_balance * r_norm
+                    # Dual residual too large → decrease ρ
+                    ρ_current = max(ρ_min, ρ_current / τ_decr)
+                    print(COLOR_WARNING)
+                    @printf "  📉 ρ: %.1f → %.1f (dual lagging)\n" ρ_old ρ_current
+                    print(COLOR_RESET)
+                end
+                
+                # CRITICAL: Rescale dual variables when ρ changes
+                if ρ_current != ρ_old
+                    scale_factor = ρ_old / ρ_current
+                    for t0 in Tset, j in Bset
+                        u_collection[t0][j] .*= scale_factor
+                    end
+                end
+            end
+            
+            @printf "k=%3d  obj=\$%.4f (energy=\$%.4f, battery=\$%.4f, penalty=\$%.4f)  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm ρ_current
             
             # Check convergence
             if r_norm ≤ eps_pri && s_norm ≤ eps_dual
@@ -1058,7 +1096,8 @@ begin # tadmm lindistflow solve
         sol_ldf_tadmm = solve_MPOPF_LinDistFlow_tADMM(data; ρ=rho_tadmm, 
                                                     max_iter=max_iter_tadmm, 
                                                     eps_pri=eps_pri_tadmm, 
-                                                    eps_dual=eps_dual_tadmm)
+                                                    eps_dual=eps_dual_tadmm,
+                                                    adaptive_rho=adaptive_rho_tadmm)
         
         # Report results
         println("\n--- tADMM SOLUTION STATUS ---")
@@ -1192,6 +1231,14 @@ begin # plotting results
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_one_bus_path)
         
+        # Plot tADMM voltage profile for last bus
+        if !isnothing(sol_ldf_tadmm)
+            voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_last_bus_tadmm.png")
+            plot_voltage_profile_one_bus(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+                                        showPlots=showPlots, savePlots=true,
+                                        filename=voltage_one_bus_tadmm_path)
+        end
+        
         # Plot voltage profile for all buses at middle time step + create GIF
         voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_bf.png")
         voltage_gif_path = joinpath(system_dir, "voltage_animation_bf.gif")
@@ -1200,6 +1247,17 @@ begin # plotting results
                                     filename=voltage_all_buses_path,
                                     create_gif=true,
                                     gif_filename=voltage_gif_path)
+        
+        # Plot tADMM voltage profile for all buses + create GIF
+        if !isnothing(sol_ldf_tadmm)
+            voltage_all_buses_tadmm_path = joinpath(system_dir, "voltage_profile_all_buses_tadmm.png")
+            voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_tadmm.gif")
+            plot_voltage_profile_all_buses(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+                                        showPlots=showPlots, savePlots=true,
+                                        filename=voltage_all_buses_tadmm_path,
+                                        create_gif=true,
+                                        gif_filename=voltage_gif_tadmm_path)
+        end
         
         # Plot PV power (p_D and q_D) if PV exists
         if !isempty(data[:Dset])
@@ -1215,6 +1273,22 @@ begin # plotting results
                                     pv_index=1,
                                     showPlots=showPlots, savePlots=true,
                                     filename=pv_circle_gif_path)
+            
+            # Plot tADMM PV power if available
+            if !isnothing(sol_ldf_tadmm)
+                pv_power_tadmm_path = joinpath(system_dir, "pv_power_tadmm.png")
+                plot_pv_power(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+                            pv_index=1,
+                            showPlots=showPlots, savePlots=true,
+                            filename=pv_power_tadmm_path)
+                
+                # Create tADMM PV power circle GIF
+                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_tadmm.gif")
+                plot_pv_power_circle_gif(sol_ldf_tadmm, data, "LinDistFlow-tADMM",
+                                        pv_index=1,
+                                        showPlots=showPlots, savePlots=true,
+                                        filename=pv_circle_gif_tadmm_path)
+            end
         else
             println("No PV units in system, skipping PV power plots")
         end
