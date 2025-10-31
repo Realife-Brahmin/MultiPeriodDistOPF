@@ -20,10 +20,10 @@ using Crayons
 begin # entire script including environment setup
 
 # Include standalone utilities
-includet("parse_opendss.jl")
-includet("opendss_validator.jl")
-includet("logger.jl")
-includet("Plotter.jl")
+includet(joinpath(env_path, "parse_opendss.jl"))
+includet(joinpath(env_path, "opendss_validator.jl"))
+includet(joinpath(env_path, "logger.jl"))
+includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
