@@ -28,7 +28,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 96  # Number of time steps
+T = 6  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -772,6 +772,12 @@ begin # function primal update (update 1) tadmm socp
         # Solve subproblem
         optimize!(model)
         
+        # Check if solution exists
+        status = termination_status(model)
+        if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
+            error("Subproblem t0=$t0 failed with status: $status. Try reducing ρ or check problem feasibility.")
+        end
+        
         # Get pure solver time
         solver_time_t0 = solve_time(model)
         
@@ -943,7 +949,7 @@ begin # function solve MPOPF tadmm socp
         
         # Adaptive ρ parameters
         ρ_current = ρ  # Track current ρ value
-        μ_balance = 10.0  # Threshold for imbalance between primal/dual residuals
+        μ_balance = 5.0   # Threshold for imbalance (standard: 2-5, was 10 - too conservative!)
         τ_incr = 2.0      # Factor to increase ρ
         τ_decr = 2.0      # Factor to decrease ρ
         ρ_min = 1.0       # Minimum ρ value
@@ -1056,21 +1062,17 @@ begin # function solve MPOPF tadmm socp
             if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
                 ρ_old = ρ_current
                 
-                if r_norm > μ_balance * s_norm
-                    # Primal residual too large → increase ρ
+                if r_norm > 5.0 * s_norm
+                    # Primal residual too large -> INCREASE rho to enforce consensus
                     ρ_current = min(ρ_max, τ_incr * ρ_current)
-                    print(COLOR_WARNING)
-                    @printf "  📈 ρ: %.1f → %.1f (primal lagging)\n" ρ_old ρ_current
-                    print(COLOR_RESET)
-                elseif s_norm > μ_balance * r_norm
-                    # Dual residual too large → decrease ρ
+                    @printf "  [UP] rho: %.1f -> %.1f (r/s=%.1f > 5.0 primal lagging)\n" ρ_old ρ_current (r_norm/s_norm)
+                elseif s_norm > 5.0 * r_norm
+                    # Dual residual too large -> DECREASE rho to allow flexibility
                     ρ_current = max(ρ_min, ρ_current / τ_decr)
-                    print(COLOR_WARNING)
-                    @printf "  📉 ρ: %.1f → %.1f (dual lagging)\n" ρ_old ρ_current
-                    print(COLOR_RESET)
+                    @printf "  [DOWN] rho: %.1f -> %.1f (s/r=%.1f > 5.0 dual lagging)\n" ρ_old ρ_current (s_norm/r_norm)
                 end
                 
-                # CRITICAL: Rescale dual variables when ρ changes
+                # CRITICAL: Rescale dual variables when rho changes  
                 if ρ_current != ρ_old
                     scale_factor = ρ_old / ρ_current
                     for t0 in Tset, j in Bset
@@ -1091,7 +1093,7 @@ begin # function solve MPOPF tadmm socp
             end
             
             final_iter = k  # Track last completed iteration
-        end
+        end  # end for loop
         catch e
             if isa(e, InterruptException)
                 print(COLOR_WARNING)
@@ -1193,6 +1195,14 @@ begin # tadmm socp solve
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (tADMM)", COLOR_RESET)
         println("="^80)
+        
+        # Print ρ scaling info
+        if rho_scaling_with_T
+            scaling_factor = sqrt(T / 24.0)
+            println(COLOR_INFO, "ρ scaled with T: $(rho_base) × √($(T)/24) = $(round(rho_tadmm, digits=1))", COLOR_RESET)
+        else
+            println(COLOR_INFO, "Using fixed ρ = $(rho_tadmm)", COLOR_RESET)
+        end
         
         solver_tadmm_choice = use_gurobi_for_tadmm ? :gurobi : :ipopt
         sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm, 
