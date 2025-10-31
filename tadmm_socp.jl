@@ -49,8 +49,8 @@ const COLOR_RESET = Crayon(reset = true)
 begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
-    saveAllBatteryPlots = false  # Set to true to save plots for ALL batteries (time-consuming)
-    # saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
+    # saveAllBatteryPlots = false  # Set to true to save plots for ALL batteries (time-consuming)
+    saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
 
 
     # Load shapes
@@ -278,7 +278,7 @@ begin # function mpopf socp bruteforced
         mkpath(system_dir)
         
         # Save model summary to file (with full constraint listing)
-        model_file = joinpath(system_dir, "model_summary.txt")
+        model_file = joinpath(system_dir, "model_summary_socp_bf.txt")
         write_model_summary(model, data, model_file)
         
         println("\n" * "="^80)
@@ -425,7 +425,9 @@ begin # socp brute-forced solve
     println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
     println("="^80)
 
+    time_bf_start = time()
     sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=:gurobi)
+    time_bf_elapsed = time() - time_bf_start
 
     # Report results
     println("\n--- SOLUTION STATUS ---")
@@ -438,6 +440,8 @@ begin # socp brute-forced solve
         print(COLOR_RESET)
         println("\n--- OBJECTIVE VALUE ---")
         @printf "Total Cost: \$%.2f\n" sol_socp_bf[:objective]
+        println("\n--- COMPUTATION TIME ---")
+        @printf "Wall clock time: %.2f seconds\n" time_bf_elapsed
         
         # Extract solution arrays
         P_Subs_vals = sol_socp_bf[:P_Subs]
@@ -864,6 +868,9 @@ begin # function solve MPOPF tadmm socp
         r_norm_history = Float64[]
         s_norm_history = Float64[]
         Bhat_history = Dict(j => Vector{Vector{Float64}}() for j in Bset)
+        # Timing tracking: subproblem_times_history[k] = [t1, t2, ..., tT] for iteration k
+        subproblem_times_history = Vector{Vector{Float64}}()
+        iteration_effective_times = Float64[]  # max(subproblem times) per iteration
         
         # Store initial state
         for j in Bset
@@ -898,8 +905,14 @@ begin # function solve MPOPF tadmm socp
             total_battery_cost = 0.0
             total_penalty = 0.0
             
+            # Track subproblem solve times for this iteration
+            subproblem_times_k = Float64[]
+            
             for t0 in Tset
+                t0_start = time()
                 result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
+                t0_elapsed = time() - t0_start
+                push!(subproblem_times_k, t0_elapsed)
                 
                 # Update collections - Store ALL decision variables
                 B_collection[t0] = result[:B_local]
@@ -1190,7 +1203,7 @@ begin # plotting results
         mkpath(conv_plots_dir)
         
         # Use Plotter.jl function for consistent styling
-        conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence.png")
+        conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence_socp.png")
         plot_tadmm_ldf_convergence(sol_socp_tadmm, sol_socp_bf, eps_pri_tadmm, eps_dual_tadmm,
                                 showPlots=showPlots, savePlots=true, 
                                 filename=conv_plot_path)
@@ -1201,7 +1214,7 @@ begin # plotting results
     println("\n")
 
     # Plot input curves (load, PV, cost) - save in system-specific folder (not processedData root)
-    input_curves_path = joinpath(system_dir, "input_curves.png")
+    input_curves_path = joinpath(system_dir, "input_curves_socp.png")
     plot_input_curves(data, showPlots=showPlots, savePlots=true, filename=input_curves_path)
 
     # Plot battery actions (only if optimization was successful and batteries exist)
@@ -1229,36 +1242,36 @@ begin # plotting results
 
     # Plot substation power and cost (only if optimization was successful)
     if (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
-        subs_power_cost_path = joinpath(system_dir, "substation_power_cost_bf.png")
+        subs_power_cost_path = joinpath(system_dir, "substation_power_cost_socp_bf.png")
         plot_substation_power_and_cost(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=subs_power_cost_path)
         
         # Plot tADMM substation power if available
         if !isnothing(sol_socp_tadmm)
-            subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_tadmm.png")
+            subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_socp_tadmm.png")
             plot_substation_power_and_cost(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=subs_power_cost_tadmm_path)
         end
         
         # Plot voltage profile for last bus
-        voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus_bf.png")
+        voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus_socp_bf.png")
         plot_voltage_profile_one_bus(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_one_bus_path)
         
         # Plot tADMM voltage profile for last bus
         if !isnothing(sol_socp_tadmm)
-            voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_last_bus_tadmm.png")
+            voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_last_bus_socp_tadmm.png")
             plot_voltage_profile_one_bus(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=voltage_one_bus_tadmm_path)
         end
         
         # Plot voltage profile for all buses at middle time step + create GIF
-        voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_bf.png")
-        voltage_gif_path = joinpath(system_dir, "voltage_animation_bf.gif")
+        voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_socp_bf.png")
+        voltage_gif_path = joinpath(system_dir, "voltage_animation_socp_bf.gif")
         plot_voltage_profile_all_buses(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_all_buses_path,
@@ -1267,8 +1280,8 @@ begin # plotting results
         
         # Plot tADMM voltage profile for all buses + create GIF
         if !isnothing(sol_socp_tadmm)
-            voltage_all_buses_tadmm_path = joinpath(system_dir, "voltage_profile_all_buses_tadmm.png")
-            voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_tadmm.gif")
+            voltage_all_buses_tadmm_path = joinpath(system_dir, "voltage_profile_all_buses_socp_tadmm.png")
+            voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_socp_tadmm.gif")
             plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=voltage_all_buses_tadmm_path,
@@ -1278,14 +1291,14 @@ begin # plotting results
         
         # Plot PV power (p_D and q_D) if PV exists
         if !isempty(data[:Dset])
-            pv_power_path = joinpath(system_dir, "pv_power_bf.png")
+            pv_power_path = joinpath(system_dir, "pv_power_socp_bf.png")
             plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                         pv_index=1,  # Plot first PV (or only PV)
                         showPlots=showPlots, savePlots=true,
                         filename=pv_power_path)
             
             # Create PV power circle GIF
-            pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bf.gif")
+            pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_socp_bf.gif")
             plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
                                     pv_index=1,
                                     showPlots=showPlots, savePlots=true,
@@ -1293,14 +1306,14 @@ begin # plotting results
             
             # Plot tADMM PV power if available
             if !isnothing(sol_socp_tadmm)
-                pv_power_tadmm_path = joinpath(system_dir, "pv_power_tadmm.png")
+                pv_power_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
                 plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                             pv_index=1,
                             showPlots=showPlots, savePlots=true,
                             filename=pv_power_tadmm_path)
                 
                 # Create tADMM PV power circle GIF
-                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_tadmm.gif")
+                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
                 plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
                                         pv_index=1,
                                         showPlots=showPlots, savePlots=true,
