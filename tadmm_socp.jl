@@ -31,6 +31,10 @@ systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
+# Solver selection
+use_gurobi_for_bf = true       # Use Gurobi for brute force (SOCP)
+use_gurobi_for_tadmm = true    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
+
 # tADMM algorithm parameters
 rho_tadmm = 10000.0
 max_iter_tadmm = 3000
@@ -135,7 +139,7 @@ begin # function mpopf socp bruteforced
         if solver == :gurobi
             set_optimizer(model, Gurobi.Optimizer)
             set_optimizer_attribute(model, "NonConvex", 2)
-            set_optimizer_attribute(model, "OutputFlag", 1)
+            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
             set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
         else
             set_optimizer(model, Ipopt.Optimizer)
@@ -428,7 +432,8 @@ begin # socp brute-forced solve
     println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
     println("="^80)
 
-    sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=:gurobi)
+    solver_bf_choice = use_gurobi_for_bf ? :gurobi : :ipopt
+    sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=solver_bf_choice)
 
     # Report results
     println("\n--- SOLUTION STATUS ---")
@@ -615,7 +620,8 @@ begin # socp brute-forced solve
             println(io, "\n--- COMPUTATION TIME ---")
             @printf(io, "Solver time: %.4f seconds\n", sol_socp_bf[:solve_time])
             println(io, "\n--- SOLVER ---")
-            println(io, "Solver: Gurobi")
+            solver_name_bf = use_gurobi_for_bf ? "Gurobi" : "Ipopt"
+            println(io, "Solver: $(solver_name_bf)")
             println(io, "Formulation: SOCP (BFM-NL)")
             println(io, "="^80)
         end
@@ -626,7 +632,7 @@ begin # socp brute-forced solve
 end # socp brute-forced solve
 
 begin # function primal update (update 1) tadmm socp
-    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int)
+    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int; solver::Symbol=:ipopt)
         @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
         @unpack substationBus, parent, children = data
         @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -638,17 +644,26 @@ begin # function primal update (update 1) tadmm socp
         Δt = delta_t_h
         P_BASE = kVA_B
         
-        # Create model for subproblem t0 (use Ipopt with robust settings)
-        model = Model(Ipopt.Optimizer)
-        set_silent(model)
-        set_optimizer_attribute(model, "print_level", 0)
-        set_optimizer_attribute(model, "max_iter", 3000)
-        set_optimizer_attribute(model, "tol", 1e-6)
-        set_optimizer_attribute(model, "acceptable_tol", 1e-4)
-        set_optimizer_attribute(model, "mu_strategy", "adaptive")
-        set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
-        set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
-        set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
+        # Create model for subproblem t0 (solver choice: Gurobi for SOCP or Ipopt for NLP)
+        model = Model()
+        if solver == :gurobi
+            set_optimizer(model, Gurobi.Optimizer)
+            set_silent(model)
+            set_optimizer_attribute(model, "NonConvex", 2)
+            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+            set_optimizer_attribute(model, "DualReductions", 0)
+        else  # :ipopt
+            set_optimizer(model, Ipopt.Optimizer)
+            set_silent(model)
+            set_optimizer_attribute(model, "print_level", 0)
+            set_optimizer_attribute(model, "max_iter", 3000)
+            set_optimizer_attribute(model, "tol", 1e-6)
+            set_optimizer_attribute(model, "acceptable_tol", 1e-4)
+            set_optimizer_attribute(model, "mu_strategy", "adaptive")
+            set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
+            set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+            set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
+        end
         
         # ===== NETWORK VARIABLES (time t0 ONLY) =====
         @variable(model, P_Subs_t0 >= 0)
@@ -862,7 +877,7 @@ end # function dual update (update 3) tadmm socp
 begin # function solve MPOPF tadmm socp
     function solve_MPOPF_SOCP_tADMM(data; ρ::Float64=1.0, 
                                         max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4,
-                                        adaptive_rho::Bool=false)
+                                        adaptive_rho::Bool=false, solver::Symbol=:ipopt)
         @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
         
         # Initialize global consensus variables B̂ⱼᵗ
@@ -954,7 +969,7 @@ begin # function solve MPOPF tadmm socp
             subproblem_times_k = Float64[]
             
             for t0 in Tset
-                result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
+                result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
                 # Use pure solver time from the subproblem
                 push!(subproblem_times_k, result[:solve_time])
                 
@@ -1175,11 +1190,13 @@ begin # tadmm socp solve
         println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (tADMM)", COLOR_RESET)
         println("="^80)
         
+        solver_tadmm_choice = use_gurobi_for_tadmm ? :gurobi : :ipopt
         sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm, 
                                                     max_iter=max_iter_tadmm, 
                                                     eps_pri=eps_pri_tadmm, 
                                                     eps_dual=eps_dual_tadmm,
-                                                    adaptive_rho=adaptive_rho_tadmm)
+                                                    adaptive_rho=adaptive_rho_tadmm,
+                                                    solver=solver_tadmm_choice)
         
         # Report results
         println("\n--- tADMM SOLUTION STATUS ---")
@@ -1270,7 +1287,8 @@ begin # tadmm socp solve
                 @printf(io, "Speedup vs Brute Force: %.2fx\n", speedup)
             end
             println(io, "\n--- SOLVER ---")
-            println(io, "Subproblem solver: Ipopt")
+            solver_name_tadmm = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
+            println(io, "Subproblem solver: $(solver_name_tadmm)")
             println(io, "Formulation: SOCP (BFM-NL)")
             println(io, "Decomposition: Temporal ADMM")
             println(io, "="^80)
