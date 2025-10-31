@@ -1065,11 +1065,15 @@ begin # function solve MPOPF tadmm socp
                 if r_norm > 5.0 * s_norm
                     # Primal residual too large -> INCREASE rho to enforce consensus
                     ρ_current = min(ρ_max, τ_incr * ρ_current)
+                    print(COLOR_WARNING)
                     @printf "  [UP] rho: %.1f -> %.1f (r/s=%.1f > 5.0 primal lagging)\n" ρ_old ρ_current (r_norm/s_norm)
+                    print(COLOR_RESET)
                 elseif s_norm > 5.0 * r_norm
                     # Dual residual too large -> DECREASE rho to allow flexibility
                     ρ_current = max(ρ_min, ρ_current / τ_decr)
+                    print(COLOR_WARNING)
                     @printf "  [DOWN] rho: %.1f -> %.1f (s/r=%.1f > 5.0 dual lagging)\n" ρ_old ρ_current (s_norm/r_norm)
+                    print(COLOR_RESET)
                 end
                 
                 # CRITICAL: Rescale dual variables when rho changes  
