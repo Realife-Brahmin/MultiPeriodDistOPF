@@ -2,7 +2,7 @@
 
 # Activate the tadmm environment
 import Pkg
-env_path = @__DIR__
+env_path = joinpath(@__DIR__, "envs", "tadmm")
 Pkg.activate(env_path)
 
 using Revise
@@ -20,10 +20,10 @@ using Crayons
 begin # entire script including environment setup
 
 # Include standalone utilities
-includet("parse_opendss.jl")
-includet("opendss_validator.jl")
-includet("logger.jl")
-includet("Plotter.jl")
+includet(joinpath(env_path, "parse_opendss.jl"))
+includet(joinpath(env_path, "opendss_validator.jl"))
+includet(joinpath(env_path, "logger.jl"))
+includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
@@ -112,8 +112,8 @@ begin # parse system data
     print_powerflow_summary(data)
 end # parse system data
 
-begin # function mpopf lindistflow bruteforced
-    function solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
+begin # function mpopf socp bruteforced
+    function solve_MPOPF_with_SOCP_BruteForced(data; solver=:gurobi)
         
         # ========== 1. UNPACK DATA ==========
         @unpack Nset, Lset, Dset, Bset, Tset, NLset, Nm1set = data
@@ -128,11 +128,6 @@ begin # function mpopf lindistflow bruteforced
         Δt = delta_t_h
         P_BASE = kVA_B
         j1 = substationBus
-        
-        # ZERO REACTIVE POWER MODEL (comment these 3 lines to enable reactive power)
-        # q_L_pu = zeros(size(q_L_pu))  # All loads at unity power factor
-        # Q[(i,j),t] will be fixed to 0 via constraints
-        # q_D will be fixed to 0 via constraints (PV at unity power factor)
         
         # ========== 2. CREATE MODEL ==========
         model = Model()
@@ -153,9 +148,10 @@ begin # function mpopf lindistflow bruteforced
         @variable(model, P[(i, j) in Lset, t in Tset])
         @variable(model, Q[(i, j) in Lset, t in Tset])
         @variable(model, v[j in Nset, t in Tset])
+        @variable(model, ℓ[(i, j) in Lset, t in Tset] >= 0)  # Current squared magnitude
         @variable(model, P_B[j in Bset, t in Tset])
         @variable(model, B[j in Bset, t in Tset])
-        # PV operates at unity power factor (q_D = 0)
+        # PV reactive power (can be optimized within capability curve)
         @variable(model, q_D[j in Dset, t in Tset])
         
         # ========== 4. OBJECTIVE FUNCTION ==========
@@ -214,21 +210,21 @@ begin # function mpopf lindistflow bruteforced
                     base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
             end
             
-            # ----- 5.3 KVL CONSTRAINTS (LinDistFlow) -----
+            # ----- 5.3 VOLTAGE DROP CONSTRAINTS (BFM-NL) -----
             for (i, j) in Lset
                 r_ij = rdict_pu[(i, j)]
                 x_ij = xdict_pu[(i, j)]
                 @constraint(model,
-                    v[i, t] - v[j, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) == 0,
-                    base_name = "KVL_Branch_$(i)_$(j)_t$(t)")
+                    v[j, t] == v[i, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) + (r_ij^2 + x_ij^2) * ℓ[(i, j), t],
+                    base_name = "VoltageDrop_Branch_$(i)_$(j)_t$(t)")
             end
             
-            # ----- 5.4 ZERO REACTIVE POWER MODEL -----
-            # Fix all branch reactive power flows to zero (comment to enable reactive power)
-            # for (i, j) in Lset
-            #     @constraint(model, Q[(i, j), t] == 0.0,
-            #         base_name = "ZeroQ_Branch_$(i)_$(j)_t$(t)")
-            # end
+            # ----- 5.4 SOC RELAXATION CONSTRAINTS -----
+            for (i, j) in Lset
+                @constraint(model,
+                    P[(i, j), t]^2 + Q[(i, j), t]^2 <= v[i, t] * ℓ[(i, j), t],
+                    base_name = "SOC_Branch_$(i)_$(j)_t$(t)")
+            end
             
             # ----- 5.5 VOLTAGE CONSTRAINTS -----
             # Fixed substation voltage (1.05 pu, squared)
@@ -241,8 +237,7 @@ begin # function mpopf lindistflow bruteforced
                     base_name = "VoltageLimits_Node$(j)_t$(t)")
             end
             
-            # ----- 5.5 PV REACTIVE POWER LIMITS -----
-            # Commented out - PV operates at unity power factor (q_D = 0)
+            # ----- 5.6 PV REACTIVE POWER LIMITS -----
             for j in Dset
                 p_D_val = p_D_pu[j, t] # not DV
                 S_D_R_val = S_D_R[j] # not DV
@@ -251,7 +246,7 @@ begin # function mpopf lindistflow bruteforced
                     base_name = "PVReactiveLimits_DER$(j)_t$(t)")
             end
             
-            # ----- 5.6 BATTERY CONSTRAINTS -----
+            # ----- 5.7 BATTERY CONSTRAINTS -----
             for j in Bset
                 # SOC trajectory
                 # P_B > 0: discharging (battery supplies power like generator) → SOC decreases
@@ -304,6 +299,7 @@ begin # function mpopf lindistflow bruteforced
             :P => has_values(model) ? value.(P) : P,
             :Q => has_values(model) ? value.(Q) : Q,
             :v => has_values(model) ? value.(v) : v,
+            :ℓ => has_values(model) ? value.(ℓ) : ℓ,
             :P_B => has_values(model) ? value.(P_B) : P_B,
             :B => has_values(model) ? value.(B) : B,
             :q_D => has_values(model) ? value.(q_D) : q_D,
@@ -418,36 +414,36 @@ begin # function mpopf lindistflow bruteforced
         
         return result
     end
-end # function mpopf lindistflow bruteforced
+end # function mpopf socp bruteforced
 
-begin # ldf brute-forced solve
+begin # socp brute-forced solve
     # =============================================================================
     # SOLVE AND REPORT
     # =============================================================================
 
     println("\n" * "="^80)
-    println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)", COLOR_RESET)
+    println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
     println("="^80)
 
-    sol_ldf_bf = solve_MPOPF_with_LinDistFlow_BruteForced(data; solver=:gurobi)
+    sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=:gurobi)
 
     # Report results
     println("\n--- SOLUTION STATUS ---")
     print("Status: ")
 
-    if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED
+    if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
         print(COLOR_SUCCESS)
-        println(sol_ldf_bf[:status])
+        println(sol_socp_bf[:status])
         println("✓ Optimization successful!")
         print(COLOR_RESET)
         println("\n--- OBJECTIVE VALUE ---")
-        @printf "Total Cost: \$%.2f\n" sol_ldf_bf[:objective]
+        @printf "Total Cost: \$%.2f\n" sol_socp_bf[:objective]
         
         # Extract solution arrays
-        P_Subs_vals = sol_ldf_bf[:P_Subs]
-        P_B_vals = sol_ldf_bf[:P_B]
-        B_vals = sol_ldf_bf[:B]
-        v_vals = sol_ldf_bf[:v]
+        P_Subs_vals = sol_socp_bf[:P_Subs]
+        P_B_vals = sol_socp_bf[:P_B]
+        B_vals = sol_socp_bf[:B]
+        v_vals = sol_socp_bf[:v]
         
         # Convert to physical units
         P_BASE = data[:kVA_B]
@@ -486,14 +482,15 @@ begin # ldf brute-forced solve
         v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
         @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
         
-        # KVL VERIFICATION: Check if KVL constraints are satisfied post-optimization
-        P_vals = sol_ldf_bf[:P]
-        Q_vals = sol_ldf_bf[:Q]
+        # VOLTAGE DROP VERIFICATION: Check if voltage drop constraints are satisfied
+        P_vals = sol_socp_bf[:P]
+        Q_vals = sol_socp_bf[:Q]
+        ℓ_vals = sol_socp_bf[:ℓ]
         
         println("\n" * "="^80)
-        println(COLOR_INFO, "KVL CONSTRAINT VERIFICATION (across all time periods)", COLOR_RESET)
+        println(COLOR_INFO, "VOLTAGE DROP CONSTRAINT VERIFICATION (across all time periods)", COLOR_RESET)
         println("="^80)
-        local max_kvl_violation = 0.0
+        local max_voltage_drop_violation = 0.0
         local total_violations = 0
         violation_threshold = 1e-6
         
@@ -501,22 +498,22 @@ begin # ldf brute-forced solve
             for (i, j) in data[:Lset]
                 r_ij = data[:rdict_pu][(i, j)]
                 x_ij = data[:xdict_pu][(i, j)]
-                # LHS: v[i,t] - v[j,t]
-                lhs = v_vals[i, t] - v_vals[j, t]
-                # RHS: 2*(r*P + x*Q)
-                rhs = 2 * (r_ij * P_vals[(i, j), t] + x_ij * Q_vals[(i, j), t])
+                # LHS: v[j,t]
+                lhs = v_vals[j, t]
+                # RHS: v[i,t] - 2*(r*P + x*Q) + (r²+x²)*ℓ
+                rhs = v_vals[i, t] - 2 * (r_ij * P_vals[(i, j), t] + x_ij * Q_vals[(i, j), t]) + (r_ij^2 + x_ij^2) * ℓ_vals[(i, j), t]
                 # Violation: |LHS - RHS|
                 violation = abs(lhs - rhs)
                 
-                if violation > max_kvl_violation
-                    max_kvl_violation = violation
+                if violation > max_voltage_drop_violation
+                    max_voltage_drop_violation = violation
                 end
                 
                 if violation > violation_threshold
                     total_violations += 1
                     if total_violations <= 10  # Print first 10 violations
                         print(COLOR_WARNING)
-                        @printf "  ⚠ KVL violation at t=%d, branch (%d,%d): |%.8f - %.8f| = %.2e\n" t i j lhs rhs violation
+                        @printf "  ⚠ Voltage drop violation at t=%d, branch (%d,%d): |%.8f - %.8f| = %.2e\n" t i j lhs rhs violation
                         print(COLOR_RESET)
                     end
                 end
@@ -525,12 +522,54 @@ begin # ldf brute-forced solve
         
         if total_violations == 0
             print(COLOR_SUCCESS)
-            println("✓ All KVL constraints satisfied (max violation: $(max_kvl_violation))")
+            println("✓ All voltage drop constraints satisfied (max violation: $(max_voltage_drop_violation))")
             print(COLOR_RESET)
         else
             print(COLOR_WARNING)
-            println("⚠ Total KVL violations (>$(violation_threshold)): $(total_violations)")
-            println("  Maximum violation: $(max_kvl_violation)")
+            println("⚠ Total voltage drop violations (>$(violation_threshold)): $(total_violations)")
+            println("  Maximum violation: $(max_voltage_drop_violation)")
+            print(COLOR_RESET)
+        end
+        
+        # SOC RELAXATION VERIFICATION
+        println("\n" * "="^80)
+        println(COLOR_INFO, "SOC RELAXATION VERIFICATION (across all time periods)", COLOR_RESET)
+        println("="^80)
+        local max_soc_violation = 0.0
+        local total_soc_violations = 0
+        
+        for t in data[:Tset]
+            for (i, j) in data[:Lset]
+                # LHS: P² + Q²
+                lhs = P_vals[(i, j), t]^2 + Q_vals[(i, j), t]^2
+                # RHS: v[i,t] * ℓ[(i,j),t]
+                rhs = v_vals[i, t] * ℓ_vals[(i, j), t]
+                # Violation: max(LHS - RHS, 0)
+                violation = max(lhs - rhs, 0.0)
+                
+                if violation > max_soc_violation
+                    max_soc_violation = violation
+                end
+                
+                if violation > violation_threshold
+                    total_soc_violations += 1
+                    if total_soc_violations <= 10
+                        print(COLOR_WARNING)
+                        @printf "  ⚠ SOC violation at t=%d, branch (%d,%d): %.8f > %.8f (Δ=%.2e)\n" t i j lhs rhs violation
+                        print(COLOR_RESET)
+                    end
+                end
+            end
+        end
+        
+        if total_soc_violations == 0
+            print(COLOR_SUCCESS)
+            println("✓ All SOC relaxation constraints satisfied (max violation: $(max_soc_violation))")
+            print(COLOR_RESET)
+        else
+            print(COLOR_WARNING)
+            println("⚠ Total SOC violations (>$(violation_threshold)): $(total_soc_violations)")
+            println("  Maximum violation: $(max_soc_violation)")
             print(COLOR_RESET)
         end
         println("="^80)
@@ -538,18 +577,18 @@ begin # ldf brute-forced solve
     else
         print(COLOR_ERROR)
         println("⚠ Optimization failed or did not converge to optimality")
-        println("Status: ", sol_ldf_bf[:status])
+        println("Status: ", sol_socp_bf[:status])
         print(COLOR_RESET)
     end
 
     println("\n" * "="^80)
-    println(COLOR_HIGHLIGHT, "MPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
+    println(COLOR_HIGHLIGHT, "MPOPF SOCP BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
     println("="^80)
 
-end # ldf brute-forced solve
+end # socp brute-forced solve
 
-begin # function primal update (update 1) tadmm lindistflow
-    function primal_update_tadmm_lindistflow!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int)
+begin # function primal update (update 1) tadmm socp
+    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int)
         @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
         @unpack substationBus, parent, children = data
         @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -572,6 +611,7 @@ begin # function primal update (update 1) tadmm lindistflow
         @variable(model, P_t0[(i, j) in Lset])
         @variable(model, Q_t0[(i, j) in Lset])
         @variable(model, v_t0[j in Nset])
+        @variable(model, ℓ_t0[(i, j) in Lset] >= 0)  # Current squared magnitude
         @variable(model, q_D_t0[j in Dset])
         
         # ===== BATTERY VARIABLES (ENTIRE horizon) =====
@@ -618,11 +658,16 @@ begin # function primal update (update 1) tadmm lindistflow
             @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
         end
         
-        # KVL constraints
+        # Voltage drop constraints (BFM-NL)
         for (i, j) in Lset
             r_ij = rdict_pu[(i, j)]
             x_ij = xdict_pu[(i, j)]
-            @constraint(model, v_t0[i] - v_t0[j] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]) == 0)
+            @constraint(model, v_t0[j] == v_t0[i] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]) + (r_ij^2 + x_ij^2)*ℓ_t0[(i,j)])
+        end
+        
+        # SOC relaxation constraints
+        for (i, j) in Lset
+            @constraint(model, P_t0[(i,j)]^2 + Q_t0[(i,j)]^2 <= v_t0[i] * ℓ_t0[(i,j)])
         end
         
         # Fixed substation voltage
@@ -676,6 +721,7 @@ begin # function primal update (update 1) tadmm lindistflow
         P_vals = Dict((i, j) => value(P_t0[(i, j)]) for (i, j) in Lset)
         Q_vals = Dict((i, j) => value(Q_t0[(i, j)]) for (i, j) in Lset)
         v_vals = Dict(j => value(v_t0[j]) for j in Nset)
+        ℓ_vals = Dict((i, j) => value(ℓ_t0[(i, j)]) for (i, j) in Lset)
         q_D_vals = Dict(j => value(q_D_t0[j]) for j in Dset)
         # Extract P_B for ALL times (full trajectory)
         P_B_vals_all_times = Dict(j => Dict(t => value(P_B_var[j, t]) for t in Tset) for j in Bset)
@@ -697,16 +743,17 @@ begin # function primal update (update 1) tadmm lindistflow
             :P => P_vals,
             :Q => Q_vals,
             :v => v_vals,
+            :ℓ => ℓ_vals,
             :q_D => q_D_vals,
             :P_B => P_B_vals_all_times,  # Full trajectory for all times
             :B_local => B_local,
             :t0 => t0
         )
     end
-end # function primal update (update 1) tadmm lindistflow
+end # function primal update (update 1) tadmm socp
 
-begin # function consensus update (update 2) tadmm lindistflow
-    function consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ::Float64)
+begin # function consensus update (update 2) tadmm socp
+    function consensus_update_tadmm_socp!(Bhat, B_collection, u_collection, data, ρ::Float64)
         @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
         
         violations = Tuple{Int,Int}[]  # Store (battery, time) pairs with violations
@@ -738,10 +785,10 @@ begin # function consensus update (update 2) tadmm lindistflow
             :violation_indices => violations
         )
     end
-end # function consensus update (update 2) tadmm lindistflow
+end # function consensus update (update 2) tadmm socp
 
-begin # function dual update (update 3) tadmm lindistflow
-    function dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ::Float64, data)
+begin # function dual update (update 3) tadmm socp
+    function dual_update_tadmm_socp!(u_collection, B_collection, Bhat, ρ::Float64, data)
         @unpack Bset, Tset = data
         max_change = 0.0
         
@@ -761,10 +808,10 @@ begin # function dual update (update 3) tadmm lindistflow
             :total_updates => length(Tset) * length(Bset) * length(Tset)
         )
     end
-end # function dual update (update 3) tadmm lindistflow
+end # function dual update (update 3) tadmm socp
 
-begin # function solve MPOPF tadmm lindistflow
-    function solve_MPOPF_LinDistFlow_tADMM(data; ρ::Float64=1.0, 
+begin # function solve MPOPF tadmm socp
+    function solve_MPOPF_SOCP_tADMM(data; ρ::Float64=1.0, 
                                         max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4,
                                         adaptive_rho::Bool=false)
         @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
@@ -787,6 +834,7 @@ begin # function solve MPOPF tadmm lindistflow
         P_collection = Dict{Tuple{Int,Int},Dict{Int,Float64}}()
         Q_collection = Dict{Tuple{Int,Int},Dict{Int,Float64}}()
         v_collection = Dict{Int,Dict{Int,Float64}}()
+        ℓ_collection = Dict{Tuple{Int,Int},Dict{Int,Float64}}()
         q_D_collection = Dict{Int,Dict{Int,Float64}}()
         # P_B_collection[j][t0][t] = P_B value at time t from subproblem t0 for battery j
         P_B_collection = Dict{Int,Dict{Int,Dict{Int,Float64}}}()
@@ -795,6 +843,7 @@ begin # function solve MPOPF tadmm lindistflow
         for (i, j) in data[:Lset]
             P_collection[(i, j)] = Dict{Int,Float64}()
             Q_collection[(i, j)] = Dict{Int,Float64}()
+            ℓ_collection[(i, j)] = Dict{Int,Float64}()
         end
         for j in data[:Nset]
             v_collection[j] = Dict{Int,Float64}()
@@ -832,7 +881,7 @@ begin # function solve MPOPF tadmm lindistflow
         
         println("\n" * "="^80)
         print(COLOR_INFO)
-        @printf "🎯 tADMM[LinDistFlow]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
+        @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
         print(COLOR_RESET)
         println("="^80)
         
@@ -850,7 +899,7 @@ begin # function solve MPOPF tadmm lindistflow
             total_penalty = 0.0
             
             for t0 in Tset
-                result = primal_update_tadmm_lindistflow!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
+                result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
                 
                 # Update collections - Store ALL decision variables
                 B_collection[t0] = result[:B_local]
@@ -860,6 +909,7 @@ begin # function solve MPOPF tadmm lindistflow
                 for (i, j) in data[:Lset]
                     P_collection[(i, j)][t0] = result[:P][(i, j)]
                     Q_collection[(i, j)][t0] = result[:Q][(i, j)]
+                    ℓ_collection[(i, j)][t0] = result[:ℓ][(i, j)]
                 end
                 
                 for j in data[:Nset]
@@ -895,10 +945,10 @@ begin # function solve MPOPF tadmm lindistflow
             # 🔴 STEP 2: Consensus Update
             Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
             
-            consensus_result = consensus_update_tadmm_lindistflow!(Bhat, B_collection, u_collection, data, ρ)
+            consensus_result = consensus_update_tadmm_socp!(Bhat, B_collection, u_collection, data, ρ)
             
             # STEP 3: Dual Update
-            dual_result = dual_update_tadmm_lindistflow!(u_collection, B_collection, Bhat, ρ, data)            
+            dual_result = dual_update_tadmm_socp!(u_collection, B_collection, Bhat, ρ, data)            
             # Store history
             for j in Bset
                 push!(Bhat_history[j], copy(Bhat[j]))
@@ -990,10 +1040,12 @@ begin # function solve MPOPF tadmm lindistflow
         
         P_final = Dict()
         Q_final = Dict()
+        ℓ_final = Dict()
         for (i, j) in data[:Lset]
             for t in Tset
                 P_final[(i, j), t] = P_collection[(i, j)][t]
                 Q_final[(i, j), t] = Q_collection[(i, j)][t]
+                ℓ_final[(i, j), t] = ℓ_collection[(i, j)][t]
             end
         end
         
@@ -1029,6 +1081,7 @@ begin # function solve MPOPF tadmm lindistflow
             :P => P_final,
             :Q => Q_final,
             :v => v_final,
+            :ℓ => ℓ_final,
             :q_D => q_D_final,
             :P_B => P_B_final,
             :B => B_final,
@@ -1047,15 +1100,15 @@ begin # function solve MPOPF tadmm lindistflow
             )
         )
     end
-end # function solve MPOPF tadmm lindistflow
+end # function solve MPOPF tadmm socp
 
-begin # tadmm lindistflow solve
+begin # tadmm socp solve
     if !isempty(data[:Bset])  # Only run tADMM if there are batteries
         println("\n" * "="^80)
-        println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH LINDISTFLOW (tADMM)", COLOR_RESET)
+        println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (tADMM)", COLOR_RESET)
         println("="^80)
         
-        sol_ldf_tadmm = solve_MPOPF_LinDistFlow_tADMM(data; ρ=rho_tadmm, 
+        sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm, 
                                                     max_iter=max_iter_tadmm, 
                                                     eps_pri=eps_pri_tadmm, 
                                                     eps_dual=eps_dual_tadmm,
@@ -1064,17 +1117,17 @@ begin # tadmm lindistflow solve
         # Report results
         println("\n--- tADMM SOLUTION STATUS ---")
         print(COLOR_SUCCESS)
-        @printf "Objective: \$%.2f\n" sol_ldf_tadmm[:objective]
+        @printf "Objective: \$%.2f\n" sol_socp_tadmm[:objective]
         print(COLOR_RESET)
         
         # Compare with brute force
-        if sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED
+        if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
             println("\n--- COMPARISON WITH BRUTE FORCE ---")
-            obj_diff = abs(sol_ldf_tadmm[:objective] - sol_ldf_bf[:objective])
-            obj_rel_diff = obj_diff / sol_ldf_bf[:objective] * 100
+            obj_diff = abs(sol_socp_tadmm[:objective] - sol_socp_bf[:objective])
+            obj_rel_diff = obj_diff / sol_socp_bf[:objective] * 100
             
-            @printf "Brute Force objective: \$%.4f\n" sol_ldf_bf[:objective]
-            @printf "tADMM objective:       \$%.4f\n" sol_ldf_tadmm[:objective]
+            @printf "Brute Force objective: \$%.4f\n" sol_socp_bf[:objective]
+            @printf "tADMM objective:       \$%.4f\n" sol_socp_tadmm[:objective]
             @printf "Absolute difference:   \$%.4f\n" obj_diff
             @printf "Relative difference:   %.4f%%\n" obj_rel_diff
             
@@ -1087,12 +1140,12 @@ begin # tadmm lindistflow solve
                 println("Battery $j:")
                 
                 # Brute force
-                P_B_bf_kW = [sol_ldf_bf[:P_B][j, t] * P_BASE for t in data[:Tset]]
-                B_bf_kWh = [sol_ldf_bf[:B][j, t] * E_BASE for t in data[:Tset]]
+                P_B_bf_kW = [sol_socp_bf[:P_B][j, t] * P_BASE for t in data[:Tset]]
+                B_bf_kWh = [sol_socp_bf[:B][j, t] * E_BASE for t in data[:Tset]]
                 
                 # tADMM
-                P_B_tadmm_kW = [sol_ldf_tadmm[:P_B][j, t] * P_BASE for t in data[:Tset]]
-                B_tadmm_kWh = [sol_ldf_tadmm[:B][j, t] * E_BASE for t in data[:Tset]]
+                P_B_tadmm_kW = [sol_socp_tadmm[:P_B][j, t] * P_BASE for t in data[:Tset]]
+                B_tadmm_kWh = [sol_socp_tadmm[:B][j, t] * E_BASE for t in data[:Tset]]
                 
                 @printf "  BF P_B (kW):    min=%.1f, max=%.1f\n" minimum(P_B_bf_kW) maximum(P_B_bf_kW)
                 @printf "  tADMM P_B (kW): min=%.1f, max=%.1f\n" minimum(P_B_tadmm_kW) maximum(P_B_tadmm_kW)
@@ -1102,7 +1155,7 @@ begin # tadmm lindistflow solve
         end
         
         println("\n" * "="^80)
-        println(COLOR_HIGHLIGHT, "MPOPF LINDISTFLOW tADMM SOLUTION COMPLETE", COLOR_RESET)
+        println(COLOR_HIGHLIGHT, "MPOPF SOCP tADMM SOLUTION COMPLETE", COLOR_RESET)
         println("="^80)
     else
         println("\n" * "="^80)
@@ -1110,9 +1163,9 @@ begin # tadmm lindistflow solve
         println("⚠ No batteries in system - skipping tADMM solution")
         print(COLOR_RESET)
         println("="^80)
-        sol_ldf_tadmm = nothing
+        sol_socp_tadmm = nothing
     end
-end # tadmm lindistflow solve
+end # tadmm socp solve
 
 begin # plotting results
     println("\n" * "="^80)
@@ -1127,7 +1180,7 @@ begin # plotting results
     mkpath(system_dir)  # Create system-specific subfolder with horizon
 
     # Plot tADMM convergence history (MOVED HERE - after Plotter.jl is included)
-    if !isempty(data[:Bset]) && !isnothing(sol_ldf_tadmm)
+    if !isempty(data[:Bset]) && !isnothing(sol_socp_tadmm)
         println("\n" * "="^80)
         println(COLOR_INFO, "PLOTTING tADMM CONVERGENCE", COLOR_RESET)
         println("="^80)
@@ -1138,7 +1191,7 @@ begin # plotting results
         
         # Use Plotter.jl function for consistent styling
         conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence.png")
-        plot_tadmm_ldf_convergence(sol_ldf_tadmm, sol_ldf_bf, eps_pri_tadmm, eps_dual_tadmm,
+        plot_tadmm_ldf_convergence(sol_socp_tadmm, sol_socp_bf, eps_pri_tadmm, eps_dual_tadmm,
                                 showPlots=showPlots, savePlots=true, 
                                 filename=conv_plot_path)
         
@@ -1153,17 +1206,17 @@ begin # plotting results
 
     # Plot battery actions (only if optimization was successful and batteries exist)
     # Save in system-specific subfolder
-    if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
-        battery_actions_path = joinpath(system_dir, "battery_actions_lindistflow_bf.png")
-        plot_battery_actions(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)", 
+    if (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
+        battery_actions_path = joinpath(system_dir, "battery_actions_socp_bf.png")
+        plot_battery_actions(sol_socp_bf, data, "SOCP-BF (Gurobi)", 
                             showPlots=showPlots, savePlots=true, 
                             filename=battery_actions_path,
                             plot_all_batteries=saveAllBatteryPlots)
         
         # Plot tADMM battery actions if available
-        if !isnothing(sol_ldf_tadmm)
-            battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_lindistflow_tadmm.png")
-            plot_battery_actions(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)", 
+        if !isnothing(sol_socp_tadmm)
+            battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_socp_tadmm.png")
+            plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)", 
                                 showPlots=showPlots, savePlots=true, 
                                 filename=battery_actions_tadmm_path,
                                 plot_all_batteries=saveAllBatteryPlots)
@@ -1175,30 +1228,30 @@ begin # plotting results
     end
 
     # Plot substation power and cost (only if optimization was successful)
-    if (sol_ldf_bf[:status] == MOI.OPTIMAL || sol_ldf_bf[:status] == MOI.LOCALLY_SOLVED)
+    if (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
         subs_power_cost_path = joinpath(system_dir, "substation_power_cost_bf.png")
-        plot_substation_power_and_cost(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
+        plot_substation_power_and_cost(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=subs_power_cost_path)
         
         # Plot tADMM substation power if available
-        if !isnothing(sol_ldf_tadmm)
+        if !isnothing(sol_socp_tadmm)
             subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_tadmm.png")
-            plot_substation_power_and_cost(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+            plot_substation_power_and_cost(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=subs_power_cost_tadmm_path)
         end
         
         # Plot voltage profile for last bus
         voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus_bf.png")
-        plot_voltage_profile_one_bus(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
+        plot_voltage_profile_one_bus(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_one_bus_path)
         
         # Plot tADMM voltage profile for last bus
-        if !isnothing(sol_ldf_tadmm)
+        if !isnothing(sol_socp_tadmm)
             voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_last_bus_tadmm.png")
-            plot_voltage_profile_one_bus(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+            plot_voltage_profile_one_bus(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=voltage_one_bus_tadmm_path)
         end
@@ -1206,17 +1259,17 @@ begin # plotting results
         # Plot voltage profile for all buses at middle time step + create GIF
         voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_bf.png")
         voltage_gif_path = joinpath(system_dir, "voltage_animation_bf.gif")
-        plot_voltage_profile_all_buses(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
+        plot_voltage_profile_all_buses(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_all_buses_path,
                                     create_gif=true,
                                     gif_filename=voltage_gif_path)
         
         # Plot tADMM voltage profile for all buses + create GIF
-        if !isnothing(sol_ldf_tadmm)
+        if !isnothing(sol_socp_tadmm)
             voltage_all_buses_tadmm_path = joinpath(system_dir, "voltage_profile_all_buses_tadmm.png")
             voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_tadmm.gif")
-            plot_voltage_profile_all_buses(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+            plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=voltage_all_buses_tadmm_path,
                                         create_gif=true,
@@ -1226,29 +1279,29 @@ begin # plotting results
         # Plot PV power (p_D and q_D) if PV exists
         if !isempty(data[:Dset])
             pv_power_path = joinpath(system_dir, "pv_power_bf.png")
-            plot_pv_power(sol_ldf_bf, data, "LinDistFlow-BF (Gurobi)",
+            plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                         pv_index=1,  # Plot first PV (or only PV)
                         showPlots=showPlots, savePlots=true,
                         filename=pv_power_path)
             
             # Create PV power circle GIF
             pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bf.gif")
-            plot_pv_power_circle_gif(sol_ldf_bf, data, "LinDistFlow-BF",
+            plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
                                     pv_index=1,
                                     showPlots=showPlots, savePlots=true,
                                     filename=pv_circle_gif_path)
             
             # Plot tADMM PV power if available
-            if !isnothing(sol_ldf_tadmm)
+            if !isnothing(sol_socp_tadmm)
                 pv_power_tadmm_path = joinpath(system_dir, "pv_power_tadmm.png")
-                plot_pv_power(sol_ldf_tadmm, data, "LinDistFlow-tADMM (Ipopt)",
+                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                             pv_index=1,
                             showPlots=showPlots, savePlots=true,
                             filename=pv_power_tadmm_path)
                 
                 # Create tADMM PV power circle GIF
                 pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_tadmm.gif")
-                plot_pv_power_circle_gif(sol_ldf_tadmm, data, "LinDistFlow-tADMM",
+                plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
                                         pv_index=1,
                                         showPlots=showPlots, savePlots=true,
                                         filename=pv_circle_gif_tadmm_path)
