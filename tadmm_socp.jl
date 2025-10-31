@@ -273,7 +273,7 @@ begin # function mpopf socp bruteforced
         # ========== 6. SOLVE ==========
         
         # Create output directory for system-specific files
-        processedData_dir = joinpath(@__DIR__, "processedData")
+        processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
         system_folder = "$(systemName)_T$(T)"
         system_dir = joinpath(processedData_dir, system_folder)
         mkpath(system_dir)
@@ -291,11 +291,13 @@ begin # function mpopf socp bruteforced
         # ========== 7. EXTRACT RESULTS ==========
         status = termination_status(model)
         obj_val = has_values(model) ? objective_value(model) : NaN
+        solver_time = solve_time(model)  # Get pure solver time from JuMP
         
         result = Dict(
             :model => model,
             :status => status,
             :objective => obj_val,
+            :solve_time => solver_time,
             :P_Subs => has_values(model) ? value.(P_Subs) : P_Subs,
             :P => has_values(model) ? value.(P) : P,
             :Q => has_values(model) ? value.(Q) : Q,
@@ -426,9 +428,7 @@ begin # socp brute-forced solve
     println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
     println("="^80)
 
-    time_bf_start = time()
     sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=:gurobi)
-    time_bf_elapsed = time() - time_bf_start
 
     # Report results
     println("\n--- SOLUTION STATUS ---")
@@ -442,7 +442,7 @@ begin # socp brute-forced solve
         println("\n--- OBJECTIVE VALUE ---")
         @printf "Total Cost: \$%.2f\n" sol_socp_bf[:objective]
         println("\n--- COMPUTATION TIME ---")
-        @printf "Wall clock time: %.2f seconds\n" time_bf_elapsed
+        @printf "Solver time: %.2f seconds\n" sol_socp_bf[:solve_time]
         
         # Extract solution arrays
         P_Subs_vals = sol_socp_bf[:P_Subs]
@@ -592,7 +592,7 @@ begin # socp brute-forced solve
     
     # Write results to file
     if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
-        processedData_dir = joinpath(@__DIR__, "processedData")
+        processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
         system_folder = "$(systemName)_T$(T)"
         system_dir = joinpath(processedData_dir, system_folder)
         results_file = joinpath(system_dir, "results_socp_bf.txt")
@@ -613,7 +613,7 @@ begin # socp brute-forced solve
             println(io, "\n--- OBJECTIVE VALUE ---")
             @printf(io, "Total Cost: \$%.4f\n", sol_socp_bf[:objective])
             println(io, "\n--- COMPUTATION TIME ---")
-            @printf(io, "Wall clock time: %.4f seconds\n", time_bf_elapsed)
+            @printf(io, "Solver time: %.4f seconds\n", sol_socp_bf[:solve_time])
             println(io, "\n--- SOLVER ---")
             println(io, "Solver: Gurobi")
             println(io, "Formulation: SOCP (BFM-NL)")
@@ -753,6 +753,9 @@ begin # function primal update (update 1) tadmm socp
         # Solve subproblem
         optimize!(model)
         
+        # Get pure solver time
+        solver_time_t0 = solve_time(model)
+        
         # Extract results and update local copies
         for j in Bset
             for t in Tset
@@ -783,6 +786,7 @@ begin # function primal update (update 1) tadmm socp
             :energy_cost => energy_cost_val,
             :battery_cost => battery_cost_val,
             :penalty => penalty_val,
+            :solve_time => solver_time_t0,
             :P_Subs => P_Subs_val,
             :Q_Subs => Q_Subs_val,
             :P => P_vals,
@@ -950,10 +954,9 @@ begin # function solve MPOPF tadmm socp
             subproblem_times_k = Float64[]
             
             for t0 in Tset
-                t0_start = time()
                 result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0)
-                t0_elapsed = time() - t0_start
-                push!(subproblem_times_k, t0_elapsed)
+                # Use pure solver time from the subproblem
+                push!(subproblem_times_k, result[:solve_time])
                 
                 # Update collections - Store ALL decision variables
                 B_collection[t0] = result[:B_local]
@@ -1222,7 +1225,7 @@ begin # tadmm socp solve
         end
         
         # Write tADMM results to file
-        processedData_dir = joinpath(@__DIR__, "processedData")
+        processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
         system_folder = "$(systemName)_T$(T)"
         system_dir = joinpath(processedData_dir, system_folder)
         results_file = joinpath(system_dir, "results_socp_tadmm.txt")
@@ -1259,11 +1262,11 @@ begin # tadmm socp solve
                 @printf(io, "Relative difference: %.4f%%\n", obj_rel_diff)
             end
             println(io, "\n--- COMPUTATION TIME ---")
-            @printf(io, "Effective wall clock time: %.4f seconds\n", sol_socp_tadmm[:timing][:total_effective_time])
-            @printf(io, "Sequential time (all subproblems): %.4f seconds\n", sol_socp_tadmm[:timing][:total_sequential_time])
+            @printf(io, "Effective solver time: %.4f seconds\n", sol_socp_tadmm[:timing][:total_effective_time])
+            @printf(io, "Sequential solver time (all subproblems): %.4f seconds\n", sol_socp_tadmm[:timing][:total_sequential_time])
             if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
-                @printf(io, "Brute Force time: %.4f seconds\n", time_bf_elapsed)
-                speedup = time_bf_elapsed / sol_socp_tadmm[:timing][:total_effective_time]
+                @printf(io, "Brute Force solver time: %.4f seconds\n", sol_socp_bf[:solve_time])
+                speedup = sol_socp_bf[:solve_time] / sol_socp_tadmm[:timing][:total_effective_time]
                 @printf(io, "Speedup vs Brute Force: %.2fx\n", speedup)
             end
             println(io, "\n--- SOLVER ---")
@@ -1294,7 +1297,7 @@ begin # plotting results
     println("="^80)
 
     # Create output directories (use absolute path like model writing section)
-    processedData_dir = joinpath(@__DIR__, "processedData")
+    processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
     system_folder = "$(systemName)_T$(T)"
     system_dir = joinpath(processedData_dir, system_folder)
     mkpath(processedData_dir)  # Create processedData folder
