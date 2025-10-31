@@ -10,28 +10,28 @@ Number of batteries: 26
 Number of PV units: 17
 
 --- tADMM PARAMETERS ---
-Initial ρ: 10000.0
+Initial ρ: 100000.0
 Adaptive ρ: true
 Max iterations: 3000
 Primal tolerance: 1.0e-05
 Dual tolerance: 1.0e-04
 
 --- CONVERGENCE ---
-Converged in 74 iterations
-Final primal residual: 1.63e-09
-Final dual residual: 1.09e-06
+Converged in 107 iterations
+Final primal residual: 1.62e-09
+Final dual residual: 1.34e-05
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3417.2169
+Total Cost: $3417.2170
 Brute Force objective: $3417.2170
-Absolute difference: $0.0001
+Absolute difference: $0.0000
 Relative difference: 0.0000%
 
 --- COMPUTATION TIME ---
-Effective wall clock time: 33.3580 seconds
-Sequential time (all subproblems): 373.3350 seconds
-Brute Force time: 2.1900 seconds
-Speedup vs Brute Force: 0.07x
+Effective wall clock time: 32.8750 seconds
+Sequential time (all subproblems): 425.8160 seconds
+Brute Force time: 2.1320 seconds
+Speedup vs Brute Force: 0.06x
 
 --- SOLVER ---
 Subproblem solver: Ipopt
