@@ -17,24 +17,24 @@ Primal tolerance: 1.0e-05
 Dual tolerance: 1.0e-04
 
 --- CONVERGENCE ---
-Converged in 74 iterations
-Final primal residual: 1.63e-09
-Final dual residual: 1.09e-06
+Converged in 75 iterations
+Final primal residual: 1.27e-07
+Final dual residual: 1.91e-05
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3417.2169
+Total Cost: $3417.2145
 Brute Force objective: $3417.2170
-Absolute difference: $0.0001
-Relative difference: 0.0000%
+Absolute difference: $0.0025
+Relative difference: 0.0001%
 
 --- COMPUTATION TIME ---
-Effective wall clock time: 24.2920 seconds
-Sequential time (all subproblems): 267.4390 seconds
-Brute Force time: 7.8350 seconds
-Speedup vs Brute Force: 0.32x
+Effective solver time: 4.5520 seconds
+Sequential solver time (all subproblems): 59.5790 seconds
+Brute Force solver time: 0.2120 seconds
+Speedup vs Brute Force: 0.05x
 
 --- SOLVER ---
-Subproblem solver: Ipopt
+Subproblem solver: Gurobi
 Formulation: SOCP (BFM-NL)
 Decomposition: Temporal ADMM
 ================================================================================
