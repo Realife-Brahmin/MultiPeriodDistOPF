@@ -26,8 +26,8 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-# systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
+systemName = "ads10A_1ph"
+# systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 1.0  # Time step duration in hours
 
@@ -51,6 +51,7 @@ begin # scenario config
     showPlots = false  # Set to true to display plots interactively
     # saveAllBatteryPlots = false  # Set to true to save plots for ALL batteries (time-consuming)
     saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
+    saveAllPVPlots = true  # Set to true to save plots for ALL PV units (shows p_D and q_D)
 
 
     # Load shapes
@@ -1399,34 +1400,80 @@ begin # plotting results
         
         # Plot PV power (p_D and q_D) if PV exists
         if !isempty(data[:Dset])
-            first_pv_bus = minimum(data[:Dset])
-            pv_power_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_bf.png")
-            plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
-                        pv_index=1,  # Plot first PV (or only PV)
-                        showPlots=showPlots, savePlots=true,
-                        filename=pv_power_path)
-            
-            # Create PV power circle GIF
-            pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_bf.gif")
-            plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
-                                    pv_index=1,
-                                    showPlots=showPlots, savePlots=true,
-                                    filename=pv_circle_gif_path)
-            
-            # Plot tADMM PV power if available
-            if !isnothing(sol_socp_tadmm)
-                pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
-                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
-                            pv_index=1,
-                            showPlots=showPlots, savePlots=true,
-                            filename=pv_power_tadmm_path)
+            # Plot individual PV plots for ALL PVs if enabled
+            if saveAllPVPlots
+                println("\n📊 Generating individual PV plots for all $(length(data[:Dset])) PV units...")
                 
-                # Create tADMM PV power circle GIF
-                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
-                plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
+                # BF individual PV plots
+                pv_power_all_bf_path = joinpath(system_dir, "pv_power_socp_bf.png")
+                plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
+                            showPlots=showPlots, savePlots=true,
+                            filename=pv_power_all_bf_path,
+                            plot_all_pvs=true)
+                
+                # tADMM individual PV plots if available
+                if !isnothing(sol_socp_tadmm)
+                    pv_power_all_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
+                    plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+                                showPlots=showPlots, savePlots=true,
+                                filename=pv_power_all_tadmm_path,
+                                plot_all_pvs=true)
+                end
+                println("✓ Individual PV plots saved")
+            else
+                # Plot only first PV
+                first_pv_bus = minimum(data[:Dset])
+                pv_power_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_bf.png")
+                plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
+                            pv_index=1,  # Plot first PV (or only PV)
+                            showPlots=showPlots, savePlots=true,
+                            filename=pv_power_path)
+                
+                # Plot tADMM PV power if available
+                if !isnothing(sol_socp_tadmm)
+                    pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
+                    plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+                                pv_index=1,
+                                showPlots=showPlots, savePlots=true,
+                                filename=pv_power_tadmm_path)
+                end
+            end
+            
+            # Create PV power circle GIFs
+            if saveAllPVPlots
+                # Create circle GIFs for ALL PVs
+                println("📊 Generating PV power circle GIFs for all $(length(data[:Dset])) PV units...")
+                pv_circle_gif_all_path = joinpath(system_dir, "pv_power_circle_socp_bf.gif")
+                plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
+                                        showPlots=showPlots, savePlots=true,
+                                        filename=pv_circle_gif_all_path,
+                                        plot_all_pvs=true)
+                
+                if !isnothing(sol_socp_tadmm)
+                    pv_circle_gif_all_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
+                    plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
+                                            showPlots=showPlots, savePlots=true,
+                                            filename=pv_circle_gif_all_tadmm_path,
+                                            plot_all_pvs=true)
+                end
+                println("✓ PV power circle GIFs saved")
+            else
+                # Create circle GIF for first PV only
+                first_pv_bus = minimum(data[:Dset])
+                pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_bf.gif")
+                plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
                                         pv_index=1,
                                         showPlots=showPlots, savePlots=true,
-                                        filename=pv_circle_gif_tadmm_path)
+                                        filename=pv_circle_gif_path)
+                
+                # Create tADMM PV power circle GIF if available
+                if !isnothing(sol_socp_tadmm)
+                    pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
+                    plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
+                                            pv_index=1,
+                                            showPlots=showPlots, savePlots=true,
+                                            filename=pv_circle_gif_tadmm_path)
+                end
             end
         else
             println("No PV units in system, skipping PV power plots")
