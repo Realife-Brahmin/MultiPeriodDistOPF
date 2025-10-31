@@ -588,6 +588,39 @@ begin # socp brute-forced solve
     println("\n" * "="^80)
     println(COLOR_HIGHLIGHT, "MPOPF SOCP BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
     println("="^80)
+    
+    # Write results to file
+    if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+        processedData_dir = joinpath(@__DIR__, "processedData")
+        system_folder = "$(systemName)_T$(T)"
+        system_dir = joinpath(processedData_dir, system_folder)
+        results_file = joinpath(system_dir, "results_socp_bf.txt")
+        
+        open(results_file, "w") do io
+            println(io, "="^80)
+            println(io, "SOCP BRUTE-FORCED OPTIMIZATION RESULTS")
+            println(io, "="^80)
+            println(io, "System: $(systemName)")
+            println(io, "Time horizon: T=$(T) periods")
+            println(io, "Time step: $(delta_t_h) hours")
+            println(io, "Number of buses: $(length(data[:Nset]))")
+            println(io, "Number of branches: $(length(data[:Lset]))")
+            println(io, "Number of batteries: $(length(data[:Bset]))")
+            println(io, "Number of PV units: $(length(data[:Dset]))")
+            println(io, "\n--- OPTIMIZATION STATUS ---")
+            println(io, "Status: $(sol_socp_bf[:status])")
+            println(io, "\n--- OBJECTIVE VALUE ---")
+            @printf(io, "Total Cost: \$%.4f\n", sol_socp_bf[:objective])
+            println(io, "\n--- COMPUTATION TIME ---")
+            @printf(io, "Wall clock time: %.4f seconds\n", time_bf_elapsed)
+            println(io, "\n--- SOLVER ---")
+            println(io, "Solver: Gurobi")
+            println(io, "Formulation: SOCP (BFM-NL)")
+            println(io, "="^80)
+        end
+        
+        println(COLOR_SUCCESS, "✓ Results written to $(results_file)", COLOR_RESET)
+    end
 
 end # socp brute-forced solve
 
@@ -604,10 +637,17 @@ begin # function primal update (update 1) tadmm socp
         Δt = delta_t_h
         P_BASE = kVA_B
         
-        # Create model for subproblem t0 (use Ipopt for quieter operation)
+        # Create model for subproblem t0 (use Ipopt with robust settings)
         model = Model(Ipopt.Optimizer)
         set_silent(model)
         set_optimizer_attribute(model, "print_level", 0)
+        set_optimizer_attribute(model, "max_iter", 3000)
+        set_optimizer_attribute(model, "tol", 1e-6)
+        set_optimizer_attribute(model, "acceptable_tol", 1e-4)
+        set_optimizer_attribute(model, "mu_strategy", "adaptive")
+        set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
+        set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+        set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
         
         # ===== NETWORK VARIABLES (time t0 ONLY) =====
         @variable(model, P_Subs_t0 >= 0)
@@ -615,7 +655,7 @@ begin # function primal update (update 1) tadmm socp
         @variable(model, P_t0[(i, j) in Lset])
         @variable(model, Q_t0[(i, j) in Lset])
         @variable(model, v_t0[j in Nset])
-        @variable(model, ℓ_t0[(i, j) in Lset] >= 0)  # Current squared magnitude
+        @variable(model, ℓ_t0[(i, j) in Lset] >= 1e-6)  # Current squared magnitude (bounded away from 0)
         @variable(model, q_D_t0[j in Dset])
         
         # ===== BATTERY VARIABLES (ENTIRE horizon) =====
@@ -955,6 +995,10 @@ begin # function solve MPOPF tadmm socp
             push!(battery_cost_history, total_battery_cost)
             push!(penalty_history, total_penalty)
             
+            # Store timing information
+            push!(subproblem_times_history, subproblem_times_k)
+            push!(iteration_effective_times, maximum(subproblem_times_k))  # Parallel execution time
+            
             # 🔴 STEP 2: Consensus Update
             Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
             
@@ -1110,6 +1154,12 @@ begin # function solve MPOPF tadmm socp
                 :r_norm_history => r_norm_history,
                 :s_norm_history => s_norm_history,
                 :Bhat_history => Bhat_history
+            ),
+            :timing => Dict(
+                :subproblem_times_history => subproblem_times_history,
+                :iteration_effective_times => iteration_effective_times,
+                :total_effective_time => sum(iteration_effective_times),
+                :total_sequential_time => sum(sum.(subproblem_times_history))
             )
         )
     end
@@ -1132,6 +1182,9 @@ begin # tadmm socp solve
         print(COLOR_SUCCESS)
         @printf "Objective: \$%.2f\n" sol_socp_tadmm[:objective]
         print(COLOR_RESET)
+        println("\n--- COMPUTATION TIME ---")
+        @printf "Effective wall clock time: %.2f seconds (%d iterations)\n" sol_socp_tadmm[:timing][:total_effective_time] length(sol_socp_tadmm[:timing][:iteration_effective_times])
+        @printf "Sequential time (all subproblems): %.2f seconds\n" sol_socp_tadmm[:timing][:total_sequential_time]
         
         # Compare with brute force
         if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
@@ -1166,6 +1219,60 @@ begin # tadmm socp solve
                 @printf "  tADMM B (kWh):  min=%.1f, max=%.1f\n" minimum(B_tadmm_kWh) maximum(B_tadmm_kWh)
             end
         end
+        
+        # Write tADMM results to file
+        processedData_dir = joinpath(@__DIR__, "processedData")
+        system_folder = "$(systemName)_T$(T)"
+        system_dir = joinpath(processedData_dir, system_folder)
+        results_file = joinpath(system_dir, "results_socp_tadmm.txt")
+        
+        open(results_file, "w") do io
+            println(io, "="^80)
+            println(io, "SOCP tADMM OPTIMIZATION RESULTS")
+            println(io, "="^80)
+            println(io, "System: $(systemName)")
+            println(io, "Time horizon: T=$(T) periods")
+            println(io, "Time step: $(delta_t_h) hours")
+            println(io, "Number of buses: $(length(data[:Nset]))")
+            println(io, "Number of branches: $(length(data[:Lset]))")
+            println(io, "Number of batteries: $(length(data[:Bset]))")
+            println(io, "Number of PV units: $(length(data[:Dset]))")
+            println(io, "\n--- tADMM PARAMETERS ---")
+            @printf(io, "Initial ρ: %.1f\n", rho_tadmm)
+            println(io, "Adaptive ρ: $(adaptive_rho_tadmm)")
+            @printf(io, "Max iterations: %d\n", max_iter_tadmm)
+            @printf(io, "Primal tolerance: %.1e\n", eps_pri_tadmm)
+            @printf(io, "Dual tolerance: %.1e\n", eps_dual_tadmm)
+            println(io, "\n--- CONVERGENCE ---")
+            n_iters = length(sol_socp_tadmm[:timing][:iteration_effective_times])
+            @printf(io, "Converged in %d iterations\n", n_iters)
+            @printf(io, "Final primal residual: %.2e\n", sol_socp_tadmm[:convergence_history][:r_norm_history][end])
+            @printf(io, "Final dual residual: %.2e\n", sol_socp_tadmm[:convergence_history][:s_norm_history][end])
+            println(io, "\n--- OBJECTIVE VALUE ---")
+            @printf(io, "Total Cost: \$%.4f\n", sol_socp_tadmm[:objective])
+            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+                obj_diff = abs(sol_socp_tadmm[:objective] - sol_socp_bf[:objective])
+                obj_rel_diff = obj_diff / sol_socp_bf[:objective] * 100
+                @printf(io, "Brute Force objective: \$%.4f\n", sol_socp_bf[:objective])
+                @printf(io, "Absolute difference: \$%.4f\n", obj_diff)
+                @printf(io, "Relative difference: %.4f%%\n", obj_rel_diff)
+            end
+            println(io, "\n--- COMPUTATION TIME ---")
+            @printf(io, "Effective wall clock time: %.4f seconds\n", sol_socp_tadmm[:timing][:total_effective_time])
+            @printf(io, "Sequential time (all subproblems): %.4f seconds\n", sol_socp_tadmm[:timing][:total_sequential_time])
+            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+                @printf(io, "Brute Force time: %.4f seconds\n", time_bf_elapsed)
+                speedup = time_bf_elapsed / sol_socp_tadmm[:timing][:total_effective_time]
+                @printf(io, "Speedup vs Brute Force: %.2fx\n", speedup)
+            end
+            println(io, "\n--- SOLVER ---")
+            println(io, "Subproblem solver: Ipopt")
+            println(io, "Formulation: SOCP (BFM-NL)")
+            println(io, "Decomposition: Temporal ADMM")
+            println(io, "="^80)
+        end
+        
+        println(COLOR_SUCCESS, "✓ tADMM results written to $(results_file)", COLOR_RESET)
         
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "MPOPF SOCP tADMM SOLUTION COMPLETE", COLOR_RESET)
@@ -1256,14 +1363,15 @@ begin # plotting results
         end
         
         # Plot voltage profile for last bus
-        voltage_one_bus_path = joinpath(system_dir, "voltage_profile_last_bus_socp_bf.png")
+        last_bus = maximum(data[:Nset])
+        voltage_one_bus_path = joinpath(system_dir, "voltage_profile_bus_$(last_bus)_socp_bf.png")
         plot_voltage_profile_one_bus(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=true,
                                     filename=voltage_one_bus_path)
         
         # Plot tADMM voltage profile for last bus
         if !isnothing(sol_socp_tadmm)
-            voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_last_bus_socp_tadmm.png")
+            voltage_one_bus_tadmm_path = joinpath(system_dir, "voltage_profile_bus_$(last_bus)_socp_tadmm.png")
             plot_voltage_profile_one_bus(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=voltage_one_bus_tadmm_path)
@@ -1291,14 +1399,15 @@ begin # plotting results
         
         # Plot PV power (p_D and q_D) if PV exists
         if !isempty(data[:Dset])
-            pv_power_path = joinpath(system_dir, "pv_power_socp_bf.png")
+            first_pv_bus = minimum(data[:Dset])
+            pv_power_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_bf.png")
             plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                         pv_index=1,  # Plot first PV (or only PV)
                         showPlots=showPlots, savePlots=true,
                         filename=pv_power_path)
             
             # Create PV power circle GIF
-            pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_socp_bf.gif")
+            pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_bf.gif")
             plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
                                     pv_index=1,
                                     showPlots=showPlots, savePlots=true,
@@ -1306,14 +1415,14 @@ begin # plotting results
             
             # Plot tADMM PV power if available
             if !isnothing(sol_socp_tadmm)
-                pv_power_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
+                pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
                 plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
                             pv_index=1,
                             showPlots=showPlots, savePlots=true,
                             filename=pv_power_tadmm_path)
                 
                 # Create tADMM PV power circle GIF
-                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
+                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
                 plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
                                         pv_index=1,
                                         showPlots=showPlots, savePlots=true,
