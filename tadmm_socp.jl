@@ -28,15 +28,19 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 24  # Number of time steps
-delta_t_h = 1.0  # Time step duration in hours
+T = 96  # Number of time steps
+delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
 use_gurobi_for_bf = true       # Use Gurobi for brute force (SOCP)
 use_gurobi_for_tadmm = true    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
 
 # tADMM algorithm parameters
-rho_tadmm = 10000.0
+rho_base = 10000.0              # Base ρ value for T=24
+rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
+# ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
+# Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
+rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
 max_iter_tadmm = 3000
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
