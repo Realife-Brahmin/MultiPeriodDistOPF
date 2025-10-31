@@ -2,7 +2,7 @@
 
 # Activate the tadmm environment
 import Pkg
-env_path = @__DIR__
+env_path = joinpath(@__DIR__, "envs", "tadmm")
 Pkg.activate(env_path)
 
 using Revise
