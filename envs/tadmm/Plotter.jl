@@ -698,27 +698,30 @@ end
 """
     plot_pv_power(sol::Dict, data::Dict, method_label::String="Method"; 
                   pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false, 
-                  filename::String="pv_power.png")
+                  filename::String="pv_power.png", plot_all_pvs::Bool=false)
 
-Plot PV real and reactive power output over time for a single PV unit.
-- Top subplot: p_D (real power) in orange
-- Bottom subplot: q_D (reactive power) in purple (bidirectional)
+Plot PV real and reactive power output over time for a single PV unit (or all PVs if plot_all_pvs=true).
+- Top subplot: p_D (real power) in orange-yellow (fixed, not a decision variable)
+- Bottom subplot: q_D (reactive power) with color-coded bars (decision variable):
+  * Positive q_D (inductive): Deep purple/violet
+  * Negative q_D (capacitive): Light purple/lavender
 
 # Arguments
 - sol: Solution dictionary containing :p_D (from data) and :q_D (from optimization)
 - data: Data dictionary containing :Dset, :p_D_pu, :T, :kVA_B
 - method_label: Label for the method used
-- pv_index: Index of PV to plot (1 = first PV, -1 = last PV)
+- pv_index: Index of PV to plot (1 = first PV, -1 = last PV) - ignored if plot_all_pvs=true
 - showPlots: Whether to display the plot
 - savePlots: Whether to save the plot to file
 - filename: Filename for saving the plot
+- plot_all_pvs: If true, create separate plots for all PV units
 
 # Returns
-- Plot object
+- Plot object (or nothing if plot_all_pvs=true)
 """
 function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method"; 
                        pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false, 
-                       filename::String="pv_power.png")
+                       filename::String="pv_power.png", plot_all_pvs::Bool=false)
     try
         Dset = data[:Dset]
         
@@ -727,12 +730,36 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
             return nothing
         end
         
-        # Select PV unit
-        pv_bus = pv_index == -1 ? maximum(Dset) : minimum(Dset)
-        if pv_index > 0 && length(Dset) >= pv_index
-            pv_bus = sort(collect(Dset))[pv_index]
+        # If plotting all PVs, iterate and create individual files
+        if plot_all_pvs
+            for (idx, pv) in enumerate(sort(collect(Dset)))
+                # Modify filename to include PV bus number
+                base, ext = splitext(filename)
+                pv_filename = "$(base)_pv$(pv)$(ext)"
+                _plot_single_pv(sol, data, method_label, pv, showPlots, savePlots, pv_filename)
+            end
+            return nothing
+        else
+            # Select PV unit for single plot
+            pv_bus = pv_index == -1 ? maximum(Dset) : minimum(Dset)
+            if pv_index > 0 && length(Dset) >= pv_index
+                pv_bus = sort(collect(Dset))[pv_index]
+            end
+            return _plot_single_pv(sol, data, method_label, pv_bus, showPlots, savePlots, filename)
         end
         
+    catch e
+        @warn "Could not create PV power plot" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+"""
+Helper function to plot a single PV unit with fancy colors.
+"""
+function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::Int,
+                        showPlots::Bool, savePlots::Bool, filename::String)
+    try
         T = data[:T]
         P_BASE = data[:kVA_B]
         p_D_pu = data[:p_D_pu]
@@ -748,17 +775,27 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
         gr()
         theme(:mute)
         
-        # Create subplot layout
+        # Set common x-axis limits
+        x_min, x_max = 0.0, T + 1.0
+        
+        # === TOP SUBPLOT: p_D (Real Power - Fixed, Not Decision Variable) ===
+        # Use fancy orange-yellow-golden colors to indicate fixed input
         p1 = plot(
             time_steps, p_D_kW,
             dpi=600,
-            label=L"p_D^t (Real Power)",
+            label=L"p_D^t" * " (Fixed Input)",
             xlabel="",
-            ylabel="PV Real Power (kW)",
-            title="PV Power Output at Bus $pv_bus - $method_label",
-            linewidth=3,
-            linecolor=:orange,
+            ylabel="Real Power (kW)",
+            title="PV Unit at Bus $pv_bus - $method_label\nReal Power (Fixed) & Reactive Power (Optimized)",
+            linewidth=4,
+            linecolor=:darkorange,  # Fancy orange
+            markershape=:circle,
+            markersize=5,
+            markercolor=:gold,  # Golden yellow
+            markerstrokecolor=:darkorange3,  # Dark orange stroke
+            markerstrokewidth=2,
             legend=:topright,
+            legendfontsize=9,
             size=(900, 700),
             grid=:on,
             minorgrid=:on,
@@ -766,22 +803,45 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
             gridalpha=0.3,
             minorgridalpha=0.15,
             framestyle=:box,
-            ylims=(0, 1.1 * maximum(p_D_kW))
+            xlims=(x_min, x_max),
+            xticks=0:T,
+            ylims=(0, max(1.1 * maximum(p_D_kW), 0.1)),
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(11, "Computer Modern"),
+            tickfontfamily="Computer Modern"
         )
         
-        # Add zero line for q_D subplot
+        # Add fill under curve for visual emphasis
+        plot!(p1, time_steps, p_D_kW,
+              fillrange=0, fillalpha=0.2, fillcolor=:gold,
+              label="")
+        
+        # === BOTTOM SUBPLOT: q_D (Reactive Power - Decision Variable) ===
+        # Use fancy purple colors: deep purple for positive (inductive), lavender for negative (capacitive)
+        
+        # Separate positive and negative q_D values
+        q_pos = max.(q_D_kvar, 0.0)  # Inductive (absorbing reactive power)
+        q_neg = min.(q_D_kvar, 0.0)  # Capacitive (supplying reactive power)
+        
+        # Calculate y-axis limits
         y_max = maximum(abs.(q_D_kvar))
         y_lim = y_max > 0 ? 1.2 * y_max : 1.0
         
-        p2 = plot(
-            time_steps, q_D_kvar,
+        # Bar plot positions
+        bar_x_positions = collect(0.5:1.0:(T-0.5))
+        
+        # Create bar plot with fancy purple gradient
+        p2 = bar(
+            bar_x_positions, q_pos,
             dpi=600,
-            label=L"q_D^t (Reactive Power)",
+            label=L"q_D^t > 0" * " (Inductive)",
             xlabel="Time Period (t)",
-            ylabel="PV Reactive Power (kvar)",
-            linewidth=3,
-            linecolor=:purple,
+            ylabel="Reactive Power (kvar)",
+            bar_width=1.0,
+            color=:purple4,  # Deep purple for positive
+            alpha=0.85,
             legend=:topright,
+            legendfontsize=9,
             size=(900, 700),
             grid=:on,
             minorgrid=:on,
@@ -789,14 +849,26 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
             gridalpha=0.3,
             minorgridalpha=0.15,
             framestyle=:box,
-            ylims=(-y_lim, y_lim)
+            xlims=(x_min, x_max),
+            xticks=0:T,
+            ylims=(-y_lim, y_lim),
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(11, "Computer Modern"),
+            tickfontfamily="Computer Modern"
         )
         
-        # Add zero reference line
-        hline!(p2, [0], linestyle=:dash, linecolor=:gray, linewidth=1, label="", alpha=0.5)
+        # Add negative bars (capacitive) in lighter purple/lavender
+        bar!(p2, bar_x_positions, q_neg,
+             label=L"q_D^t < 0" * " (Capacitive)",
+             bar_width=1.0,
+             color=:plum2,  # Light purple/lavender for negative
+             alpha=0.85)
         
-        # Combine subplots
-        p = plot(p1, p2, layout=(2, 1), size=(900, 700))
+        # Add zero reference line
+        hline!(p2, [0], linestyle=:solid, linecolor=:black, linewidth=2, label="", alpha=0.6)
+        
+        # Combine subplots vertically
+        p = plot(p1, p2, layout=(2, 1), size=(900, 800))
         
         # Save and/or show
         if savePlots
@@ -810,7 +882,7 @@ function plot_pv_power(sol::Dict, data::Dict, method_label::String="Method";
         return p
         
     catch e
-        @warn "Could not create PV power plot" exception=(e, catch_backtrace())
+        @warn "Could not create PV power plot for bus $pv_bus" exception=(e, catch_backtrace())
         return nothing
     end
 end
@@ -840,7 +912,7 @@ Create an animated GIF showing PV power as a point moving in the P-Q plane.
 """
 function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="Method";
                                   pv_index::Int=1, showPlots::Bool=true, savePlots::Bool=false,
-                                  filename::String="pv_power_circle.gif")
+                                  filename::String="pv_power_circle.gif", plot_all_pvs::Bool=false)
     try
         Dset = data[:Dset]
         
@@ -849,11 +921,37 @@ function plot_pv_power_circle_gif(sol::Dict, data::Dict, method_label::String="M
             return nothing
         end
         
-        # Select PV unit
+        # If plotting all PVs, iterate and create individual files
+        if plot_all_pvs
+            for (idx, pv) in enumerate(sort(collect(Dset)))
+                # Modify filename to include PV bus number
+                base, ext = splitext(filename)
+                pv_filename = "$(base)_pv$(pv)$(ext)"
+                _plot_single_pv_circle_gif(sol, data, method_label, pv, showPlots, savePlots, pv_filename)
+            end
+            return nothing
+        end
+        
+        # Select PV unit for single plot
         pv_bus = pv_index == -1 ? maximum(Dset) : minimum(Dset)
         if pv_index > 0 && length(Dset) >= pv_index
             pv_bus = sort(collect(Dset))[pv_index]
         end
+        
+        return _plot_single_pv_circle_gif(sol, data, method_label, pv_bus, showPlots, savePlots, filename)
+        
+    catch e
+        @warn "Could not create PV power circle GIF" exception=(e, catch_backtrace())
+        return nothing
+    end
+end
+
+"""
+Helper function to create PV power circle GIF for a single PV unit.
+"""
+function _plot_single_pv_circle_gif(sol::Dict, data::Dict, method_label::String, pv_bus::Int,
+                                    showPlots::Bool, savePlots::Bool, filename::String)
+    try
         
         T = data[:T]
         P_BASE = data[:kVA_B]
