@@ -9,6 +9,13 @@ Number of branches: 127
 Number of batteries: 26
 Number of PV units: 17
 
+--- PROBLEM SIZE ---
+Number of variables: 13920
+Linear constraints: 17640
+Quadratic constraints (SOCP): 3048
+Nonlinear constraints: 0
+Total constraints: 20688
+
 --- OPTIMIZATION STATUS ---
 Status: OPTIMAL
 
@@ -16,7 +23,10 @@ Status: OPTIMAL
 Total Cost: $3417.2170
 
 --- COMPUTATION TIME ---
-Solver time: 0.2120 seconds
+Solver time: 0.2060 seconds
+
+--- SOLUTION FEASIBILITY ---
+Status: ✓ FEASIBLE - All constraints satisfied
 
 --- SOLVER ---
 Solver: Gurobi
