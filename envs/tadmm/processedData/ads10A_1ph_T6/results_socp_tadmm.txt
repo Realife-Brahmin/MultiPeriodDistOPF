@@ -1,0 +1,50 @@
+================================================================================
+SOCP tADMM OPTIMIZATION RESULTS
+================================================================================
+System: ads10A_1ph
+Time horizon: T=6 periods
+Time step: 4.0 hours
+Number of buses: 10
+Number of branches: 9
+Number of batteries: 1
+Number of PV units: 1
+
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 52
+Linear constraints: 69
+Quadratic constraints (SOCP): 9
+Nonlinear constraints: 0
+Total constraints: 78
+
+--- tADMM PARAMETERS ---
+Initial ρ: 5000.0
+Adaptive ρ: true
+Max iterations: 3000
+Primal tolerance: 1.0e-05
+Dual tolerance: 1.0e-04
+
+--- CONVERGENCE ---
+Converged in 14 iterations
+Final primal residual: 4.92e-08
+Final dual residual: 2.39e-05
+
+--- OBJECTIVE VALUE ---
+Total Cost: $256.6696
+Brute Force objective: $256.6696
+Absolute difference: $0.0000
+Relative difference: 0.0000%
+
+--- COMPUTATION TIME ---
+Effective solver time: 0.0270 seconds
+Sequential solver time (all subproblems): 0.1020 seconds
+Brute Force solver time: 0.0020 seconds
+Speedup vs Brute Force: 0.07x
+
+--- SOLUTION FEASIBILITY ---
+Status: ✓ FEASIBLE - All constraints satisfied
+
+--- SOLVER ---
+Subproblem solver: Gurobi
+Formulation: SOCP (BFM-NL)
+Decomposition: Temporal ADMM
+================================================================================
