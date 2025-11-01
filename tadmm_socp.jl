@@ -1306,27 +1306,34 @@ begin # tadmm socp solve
             @printf "Absolute difference:   \$%.4f\n" obj_diff
             @printf "Relative difference:   %.4f%%\n" obj_rel_diff
             
-            # Compare battery schedules
-            println("\n--- BATTERY SCHEDULE COMPARISON ---")
-            P_BASE = data[:kVA_B]
-            E_BASE = P_BASE * 1.0
+            # Speedup comparison
+            println("\n--- COMPUTATIONAL SPEEDUP ---")
+            @printf "Brute Force solver time: %.4f seconds\n" sol_socp_bf[:solve_time]
+            @printf "tADMM effective time:    %.4f seconds\n" sol_socp_tadmm[:timing][:total_effective_time]
+            speedup = sol_socp_bf[:solve_time] / sol_socp_tadmm[:timing][:total_effective_time]
+            @printf "Speedup vs Brute Force:  %.2fx\n" speedup
             
-            for j in data[:Bset]
-                println("Battery $j:")
-                
-                # Brute force
-                P_B_bf_kW = [sol_socp_bf[:P_B][j, t] * P_BASE for t in data[:Tset]]
-                B_bf_kWh = [sol_socp_bf[:B][j, t] * E_BASE for t in data[:Tset]]
-                
-                # tADMM
-                P_B_tadmm_kW = [sol_socp_tadmm[:P_B][j, t] * P_BASE for t in data[:Tset]]
-                B_tadmm_kWh = [sol_socp_tadmm[:B][j, t] * E_BASE for t in data[:Tset]]
-                
-                @printf "  BF P_B (kW):    min=%.1f, max=%.1f\n" minimum(P_B_bf_kW) maximum(P_B_bf_kW)
-                @printf "  tADMM P_B (kW): min=%.1f, max=%.1f\n" minimum(P_B_tadmm_kW) maximum(P_B_tadmm_kW)
-                @printf "  BF B (kWh):     min=%.1f, max=%.1f\n" minimum(B_bf_kWh) maximum(B_bf_kWh)
-                @printf "  tADMM B (kWh):  min=%.1f, max=%.1f\n" minimum(B_tadmm_kWh) maximum(B_tadmm_kWh)
-            end
+            # # Compare battery schedules (commented out - no longer needed scaffolding)
+            # println("\n--- BATTERY SCHEDULE COMPARISON ---")
+            # P_BASE = data[:kVA_B]
+            # E_BASE = P_BASE * 1.0
+            # 
+            # for j in data[:Bset]
+            #     println("Battery $j:")
+            #     
+            #     # Brute force
+            #     P_B_bf_kW = [sol_socp_bf[:P_B][j, t] * P_BASE for t in data[:Tset]]
+            #     B_bf_kWh = [sol_socp_bf[:B][j, t] * E_BASE for t in data[:Tset]]
+            #     
+            #     # tADMM
+            #     P_B_tadmm_kW = [sol_socp_tadmm[:P_B][j, t] * P_BASE for t in data[:Tset]]
+            #     B_tadmm_kWh = [sol_socp_tadmm[:B][j, t] * E_BASE for t in data[:Tset]]
+            #     
+            #     @printf "  BF P_B (kW):    min=%.1f, max=%.1f\n" minimum(P_B_bf_kW) maximum(P_B_bf_kW)
+            #     @printf "  tADMM P_B (kW): min=%.1f, max=%.1f\n" minimum(P_B_tadmm_kW) maximum(P_B_tadmm_kW)
+            #     @printf "  BF B (kWh):     min=%.1f, max=%.1f\n" minimum(B_bf_kWh) maximum(B_bf_kWh)
+            #     @printf "  tADMM B (kWh):  min=%.1f, max=%.1f\n" minimum(B_tadmm_kWh) maximum(B_tadmm_kWh)
+            # end
         end
         
         # Write tADMM results to file
@@ -1502,23 +1509,19 @@ begin # plotting results
         end
     end
     
-    # Plot voltage profile for all buses at middle time step + create GIF
+    # Create voltage profile GIF animation for all buses
     if plotVoltageAllBuses && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
-        voltage_all_buses_path = joinpath(system_dir, "voltage_profile_all_buses_socp_bf.png")
         voltage_gif_path = joinpath(system_dir, "voltage_animation_socp_bf.gif")
         plot_voltage_profile_all_buses(sol_socp_bf, data, "SOCP-BF (Gurobi)",
-                                    showPlots=showPlots, savePlots=true,
-                                    filename=voltage_all_buses_path,
+                                    showPlots=showPlots, savePlots=false,
                                     create_gif=true,
                                     gif_filename=voltage_gif_path)
         
-        # Plot tADMM voltage profile for all buses + create GIF
+        # Create tADMM voltage profile GIF animation
         if !isnothing(sol_socp_tadmm)
-            voltage_all_buses_tadmm_path = joinpath(system_dir, "voltage_profile_all_buses_socp_tadmm.png")
             voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_socp_tadmm.gif")
             plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
-                                        showPlots=showPlots, savePlots=true,
-                                        filename=voltage_all_buses_tadmm_path,
+                                        showPlots=showPlots, savePlots=false,
                                         create_gif=true,
                                         gif_filename=voltage_gif_tadmm_path)
         end
