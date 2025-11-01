@@ -71,7 +71,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 96  # Number of time steps
+T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -354,18 +354,22 @@ begin # function mpopf socp bruteforced
         println("STARTING OPTIMIZATION")
         println("="^80)
         
+        # Start wall-clock timer for BF optimization
+        bf_wallclock_start = time()
         optimize!(model)
+        bf_wallclock_time = time() - bf_wallclock_start
         
         # ========== 7. EXTRACT RESULTS ==========
         status = termination_status(model)
         obj_val = has_values(model) ? objective_value(model) : NaN
-        solver_time = solve_time(model)  # Get pure solver time from JuMP
+        solver_time = solve_time(model)  # Get pure solver time from JuMP (reported by Gurobi/Ipopt)
         
         result = Dict(
             :model => model,
             :status => status,
             :objective => obj_val,
-            :solve_time => solver_time,
+            :solve_time => solver_time,  # Pure solver time (from Gurobi/Ipopt)
+            :wallclock_time => bf_wallclock_time,  # Wall-clock time (includes JuMP overhead)
             :P_Subs => has_values(model) ? value.(P_Subs) : P_Subs,
             :Q_Subs => has_values(model) ? value.(Q_Subs) : Q_Subs,
             :P => has_values(model) ? value.(P) : P,
@@ -1041,6 +1045,7 @@ begin # function solve MPOPF tadmm socp
         penalty_history = Float64[]
         r_norm_history = Float64[]
         s_norm_history = Float64[]
+        ρ_history = Float64[]  # Track ρ values over iterations
         Bhat_history = Dict(j => Vector{Vector{Float64}}() for j in Bset)
         # Timing tracking: subproblem_times_history[k] = [t1, t2, ..., tT] for iteration k
         subproblem_times_history = Vector{Vector{Float64}}()
@@ -1087,6 +1092,9 @@ begin # function solve MPOPF tadmm socp
         
         # Capture subproblem model stats (will be set on first iteration)
         tadmm_subproblem_stats = nothing
+        
+        # Start wall-clock timer for tADMM loop
+        tadmm_wallclock_start = time()
         
         try
             for k in 1:max_iter
@@ -1242,6 +1250,7 @@ begin # function solve MPOPF tadmm socp
             
             push!(r_norm_history, r_norm)
             push!(s_norm_history, s_norm)
+            push!(ρ_history, ρ_current)  # Store current ρ value
             
             # 🚀 ACCELERATION: Detect very slow progress and take aggressive action
             if k >= slow_progress_window && k % update_interval == 0
@@ -1437,6 +1446,9 @@ begin # function solve MPOPF tadmm socp
             end
         end
         
+        # Calculate wall-clock time for entire tADMM loop
+        tadmm_wallclock_time = time() - tadmm_wallclock_start
+        
         result_dict = Dict(
             :status => MOI.OPTIMAL,  # Assume converged
             :P_Subs => P_Subs_final,
@@ -1459,13 +1471,15 @@ begin # function solve MPOPF tadmm socp
                 :penalty_history => penalty_history,
                 :r_norm_history => r_norm_history,
                 :s_norm_history => s_norm_history,
+                :ρ_history => ρ_history,  # Add ρ values history
                 :Bhat_history => Bhat_history
             ),
             :timing => Dict(
                 :subproblem_times_history => subproblem_times_history,
                 :iteration_effective_times => iteration_effective_times,
                 :total_effective_time => sum(iteration_effective_times),
-                :total_sequential_time => sum(sum.(subproblem_times_history))
+                :total_sequential_time => sum(sum.(subproblem_times_history)),
+                :wallclock_time => tadmm_wallclock_time  # Total wall-clock time for tADMM loop
             ),
             :subproblem_model_stats => tadmm_subproblem_stats
         )
@@ -1607,12 +1621,19 @@ begin # tadmm socp solve
                 @printf(io, "Relative difference: %.4f%%\n", obj_rel_diff)
             end
             println(io, "\n--- COMPUTATION TIME ---")
-            @printf(io, "Effective solver time: %.4f seconds\n", sol_socp_tadmm[:timing][:total_effective_time])
-            @printf(io, "Sequential solver time (all subproblems): %.4f seconds\n", sol_socp_tadmm[:timing][:total_sequential_time])
+            println(io, "Brute Force:")
+            @printf(io, "  Wall-clock time: %.4f seconds (actual time on machine)\n", sol_socp_bf[:wallclock_time])
+            @printf(io, "  Solver time: %.4f seconds (reported by Gurobi)\n", sol_socp_bf[:solve_time])
+            println(io, "tADMM:")
+            @printf(io, "  Wall-clock time: %.4f seconds (actual time on machine)\n", sol_socp_tadmm[:timing][:wallclock_time])
+            @printf(io, "  Effective time: %.4f seconds (max subproblem time per iter)\n", sol_socp_tadmm[:timing][:total_effective_time])
+            @printf(io, "  Sequential time: %.4f seconds (sum of all subproblems)\n", sol_socp_tadmm[:timing][:total_sequential_time])
             if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
-                @printf(io, "Brute Force solver time: %.4f seconds\n", sol_socp_bf[:solve_time])
-                speedup = sol_socp_bf[:solve_time] / sol_socp_tadmm[:timing][:total_effective_time]
-                @printf(io, "Speedup vs Brute Force: %.2fx\n", speedup)
+                println(io, "Speedup Metrics:")
+                speedup_wallclock = sol_socp_bf[:wallclock_time] / sol_socp_tadmm[:timing][:wallclock_time]
+                @printf(io, "  tADMM vs BF (wall-clock): %.2fx\n", speedup_wallclock)
+                parallel_efficiency = sol_socp_tadmm[:timing][:total_effective_time] / sol_socp_tadmm[:timing][:wallclock_time]
+                @printf(io, "  Parallel efficiency: %.1f%% (%.2fx speedup)\n", parallel_efficiency * 100, parallel_efficiency)
             end
             println(io, "\n--- SOLUTION FEASIBILITY ---")
             if tadmm_validation[:feasible]
@@ -1646,10 +1667,26 @@ begin # tadmm socp solve
         println("\n" * "="^80)
         println(COLOR_SUCCESS, "⏱  TOTAL SIMULATION TIME (BF + tADMM)", COLOR_RESET)
         println("="^80)
-        @printf "Total time (parsing + BF + tADMM): %.2f seconds\n" total_simulation_time
-        @printf "  - Brute Force solve time:        %.2f seconds\n" sol_socp_bf[:solve_time]
-        @printf "  - tADMM effective time:          %.2f seconds\n" sol_socp_tadmm[:timing][:total_effective_time]
-        @printf "  - Overhead (setup/validation):   %.2f seconds\n" (total_simulation_time - sol_socp_bf[:solve_time] - sol_socp_tadmm[:timing][:total_effective_time])
+        @printf "Total time (parsing + BF + tADMM):    %.2f seconds\n" total_simulation_time
+        println("\nBrute Force Timing:")
+        @printf "  - BF wall-clock time:               %.2f seconds (actual time on machine)\n" sol_socp_bf[:wallclock_time]
+        @printf "  - BF solver time:                   %.2f seconds (reported by Gurobi)\n" sol_socp_bf[:solve_time]
+        println("\ntADMM Timing:")
+        @printf "  - tADMM wall-clock time:            %.2f seconds (actual time on machine)\n" sol_socp_tadmm[:timing][:wallclock_time]
+        @printf "  - tADMM effective time:             %.2f seconds (max subproblem time per iter)\n" sol_socp_tadmm[:timing][:total_effective_time]
+        @printf "  - tADMM sequential time:            %.2f seconds (sum of all subproblems)\n" sol_socp_tadmm[:timing][:total_sequential_time]
+        println("\nOverhead:")
+        optimization_wallclock = sol_socp_bf[:wallclock_time] + sol_socp_tadmm[:timing][:wallclock_time]
+        @printf "  - Total optimization wall-clock:    %.2f seconds\n" optimization_wallclock
+        @printf "  - Parsing/setup/validation:         %.2f seconds\n" (total_simulation_time - optimization_wallclock)
+        println("\nSpeedup Metrics:")
+        if sol_socp_bf[:wallclock_time] > 0
+            @printf "  - tADMM vs BF (wall-clock):         %.2fx\n" (sol_socp_bf[:wallclock_time] / sol_socp_tadmm[:timing][:wallclock_time])
+        end
+        if sol_socp_tadmm[:timing][:wallclock_time] > 0
+            parallel_efficiency = sol_socp_tadmm[:timing][:total_effective_time] / sol_socp_tadmm[:timing][:wallclock_time]
+            @printf "  - Parallel efficiency:              %.1f%% (%.2fx speedup)\n" (parallel_efficiency * 100) parallel_efficiency
+        end
         println("="^80)
     else
         println("\n" * "="^80)
