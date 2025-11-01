@@ -29,7 +29,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-T = 6  # Number of time steps
+T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -46,6 +46,9 @@ max_iter_tadmm = 3000
 eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-4
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
+
+# Create shared Gurobi environment (suppresses repeated license messages)
+const GUROBI_ENV = Gurobi.Env()
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -150,7 +153,7 @@ begin # function mpopf socp bruteforced
         # ========== 2. CREATE MODEL ==========
         model = Model()
         if solver == :gurobi
-            set_optimizer(model, Gurobi.Optimizer)
+            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
             set_optimizer_attribute(model, "NonConvex", 2)
             set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
             set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
@@ -695,7 +698,7 @@ begin # function primal update (update 1) tadmm socp
         # Create model for subproblem t0 (solver choice: Gurobi for SOCP or Ipopt for NLP)
         model = Model()
         if solver == :gurobi
-            set_optimizer(model, Gurobi.Optimizer)
+            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
             set_silent(model)
             set_optimizer_attribute(model, "NonConvex", 2)
             set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
