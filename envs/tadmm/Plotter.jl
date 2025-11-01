@@ -6,6 +6,7 @@ Standalone plotting functions for battery actions and input curves
 using Plots
 using Printf
 using LaTeXStrings
+using Statistics
 
 """
     plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=false, filename::String="input_curves.png")
@@ -1213,6 +1214,11 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     s_norm_history = hist[:s_norm_history]
     ρ_history = get(hist, :ρ_history, Float64[])  # Get ρ history (with fallback for old runs)
     
+    # Extract timing data (slowest subproblem per iteration)
+    timing_data = get(sol_tadmm, :timing, Dict())
+    subproblem_times_history = get(timing_data, :subproblem_times_history, Vector{Vector{Float64}}())
+    max_subproblem_times = [maximum(times) for times in subproblem_times_history]  # Slowest per iteration
+    
     # Set theme and colors (matching copper plate example)
     gr()
     theme(:mute)
@@ -1220,6 +1226,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     line_colour_rho = :purple           # Purple for ρ values
+    line_colour_time = :crimson         # Red for solve times
     
     # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
@@ -1413,10 +1420,65 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         p4 = plot(title="ρ history not available", grid=false, showaxis=false)
     end
     
-    # Combine into VERTICAL layout (4 rows, 1 column)
-    p_combined = plot(p1, p2, p3, p4, 
-                     layout=(4, 1), 
-                     size=(900, 1300),
+    # Subplot 5: Slowest subproblem solve time per iteration
+    if !isempty(max_subproblem_times)
+        # Get brute force solve time for comparison
+        bf_solve_time = get(sol_bf, :solve_time, NaN)
+        
+        p5 = plot(
+            iterations, max_subproblem_times,
+            dpi=600,
+            xlabel="Iteration (k)",
+            ylabel="Max Subproblem Time (s)",
+            title="Slowest Subproblem per Iteration",
+            lw=3,
+            color=line_colour_time,
+            markershape=:circle,
+            markersize=4,
+            markerstrokecolor=:black,
+            markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
+            label="Max subproblem time",
+            legend=:topright,
+            legendfontsize=9,
+            grid=true,
+            gridstyle=:solid,
+            gridalpha=0.3,
+            minorgrid=true,
+            minorgridstyle=:solid,
+            minorgridalpha=0.15,
+            xlims=(0.5, n_iter + 0.5),
+            xticks=xtick_vals,
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(12, "Computer Modern"),
+            tickfontfamily="Computer Modern",
+            bottom_margin=2Plots.mm
+        )
+        
+        # Add brute force reference line if available
+        if !isnan(bf_solve_time)
+            hline!(p5, [bf_solve_time], 
+                   color=:blue, lw=2, linestyle=:dash, alpha=0.7,
+                   label="Brute force total time = $(round(bf_solve_time, digits=2))s")
+        end
+        
+        # Add mean and median reference lines
+        mean_time = mean(max_subproblem_times)
+        median_time = median(max_subproblem_times)
+        hline!(p5, [mean_time], 
+               color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
+               label="Mean = $(round(mean_time, digits=2))s")
+        hline!(p5, [median_time], 
+               color=:darkorange, lw=1.5, linestyle=:dashdot, alpha=0.6,
+               label="Median = $(round(median_time, digits=2))s")
+    else
+        # Fallback if no timing data
+        p5 = plot(title="Timing data not available", grid=false, showaxis=false)
+    end
+    
+    # Combine into VERTICAL layout (5 rows, 1 column)
+    p_combined = plot(p1, p2, p3, p4, p5, 
+                     layout=(5, 1), 
+                     size=(900, 1600),
                      plot_title="tADMM Convergence Summary",
                      plot_titlefontsize=14,
                      plot_titlefontfamily="Computer Modern",
