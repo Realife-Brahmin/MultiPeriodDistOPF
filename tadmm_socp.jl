@@ -41,8 +41,8 @@ rho_base = 10000.0              # Base ρ value for T=24
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
-# rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
-rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
+rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
+# rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 250
 eps_pri_tadmm = 1e-6
 eps_dual_tadmm = 1e-5
@@ -1013,6 +1013,16 @@ begin # function solve MPOPF tadmm socp
         ρ_max = 1e6       # Maximum ρ value
         update_interval = 10  # Update ρ every N iterations
         
+        # Two-phase adaptive ρ strategy
+        primal_converged_once = false  # Track if r_norm has reached threshold
+        phase1_only_increase = true    # Phase 1: Only increase ρ until primal converges
+        
+        # Stall detection parameters
+        last_rho_change_iter = 0  # Track when ρ was last changed
+        stall_check_interval = 10  # Check for stalls every N iterations
+        stall_nudge_factor = 2.0   # Factor to nudge ρ when stalled (100% increase)
+        enable_stall_detection = true  # Enable stall detection
+        
         println("\n" * "="^80)
         print(COLOR_INFO)
         @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
@@ -1123,22 +1133,86 @@ begin # function solve MPOPF tadmm socp
             push!(r_norm_history, r_norm)
             push!(s_norm_history, s_norm)
             
-            # 🔧 STEP 5: Adaptive ρ Update (optional)
+            # 🔧 STEP 5: Two-Phase Adaptive ρ Update (optional)
             if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
                 ρ_old = ρ_current
+                rho_changed = false
                 
-                if r_norm > 5.0 * s_norm
-                    # Primal residual too large -> INCREASE rho to enforce consensus
-                    ρ_current = min(ρ_max, τ_incr * ρ_current)
-                    print(COLOR_WARNING)
-                    @printf "  [UP] rho: %.1f -> %.1f (r/s=%.1f > 5.0 primal lagging)\n" ρ_old ρ_current (r_norm/s_norm)
+                # Check if primal has converged (phase transition condition)
+                if r_norm <= eps_pri && !primal_converged_once
+                    primal_converged_once = true
+                    phase1_only_increase = false  # Switch to Phase 2
+                    print(COLOR_SUCCESS)
+                    @printf "  ✓ PHASE TRANSITION: Primal converged (‖r‖=%.2e ≤ %.1e), enabling bidirectional ρ adaptation\n" r_norm eps_pri
                     print(COLOR_RESET)
-                elseif s_norm > 5.0 * r_norm
-                    # Dual residual too large -> DECREASE rho to allow flexibility
-                    ρ_current = max(ρ_min, ρ_current / τ_decr)
-                    print(COLOR_WARNING)
-                    @printf "  [DOWN] rho: %.1f -> %.1f (s/r=%.1f > 5.0 dual lagging)\n" ρ_old ρ_current (s_norm/r_norm)
-                    print(COLOR_RESET)
+                end
+                
+                # PHASE 1: Only increase ρ until primal convergence
+                if phase1_only_increase
+                    if r_norm > μ_balance * s_norm
+                        # Primal residual too large -> INCREASE rho to enforce consensus
+                        ρ_current = min(ρ_max, τ_incr * ρ_current)
+                        print(COLOR_WARNING)
+                        @printf "  [PHASE1-UP] rho: %.1f -> %.1f (r/s=%.1f > %.1f primal lagging)\n" ρ_old ρ_current (r_norm/s_norm) μ_balance
+                        print(COLOR_RESET)
+                        rho_changed = true
+                    elseif r_norm > eps_pri
+                        # Primal still not converged, check for stall
+                        iters_since_rho_change = k - last_rho_change_iter
+                        if iters_since_rho_change >= stall_check_interval
+                            # Primal stuck -> nudge ρ up
+                            ρ_current = min(ρ_max, stall_nudge_factor * ρ_current)
+                            print(COLOR_WARNING)
+                            @printf "  [PHASE1-NUDGE] rho: %.1f -> %.1f (primal stalled, %d iters no ρ change, ‖r‖=%.2e>%.1e)\n" ρ_old ρ_current iters_since_rho_change r_norm eps_pri
+                            print(COLOR_RESET)
+                            rho_changed = true
+                        end
+                    end
+                    # Phase 1: NEVER decrease ρ (ignore dual lagging)
+                
+                # PHASE 2: Standard bidirectional adaptation after primal convergence
+                else
+                    if r_norm > μ_balance * s_norm
+                        # Primal residual too large -> INCREASE rho
+                        ρ_current = min(ρ_max, τ_incr * ρ_current)
+                        print(COLOR_WARNING)
+                        @printf "  [PHASE2-UP] rho: %.1f -> %.1f (r/s=%.1f > %.1f primal lagging)\n" ρ_old ρ_current (r_norm/s_norm) μ_balance
+                        print(COLOR_RESET)
+                        rho_changed = true
+                    elseif s_norm > μ_balance * r_norm
+                        # Dual residual too large -> DECREASE rho (allowed in Phase 2)
+                        ρ_current = max(ρ_min, ρ_current / τ_decr)
+                        print(COLOR_WARNING)
+                        @printf "  [PHASE2-DOWN] rho: %.1f -> %.1f (s/r=%.1f > %.1f dual lagging)\n" ρ_old ρ_current (s_norm/r_norm) μ_balance
+                        print(COLOR_RESET)
+                        rho_changed = true
+                    elseif enable_stall_detection
+                        # Ratios balanced, check for stall
+                        iters_since_rho_change = k - last_rho_change_iter
+                        
+                        if iters_since_rho_change >= stall_check_interval
+                            primal_stalled = r_norm > eps_pri
+                            dual_stalled = s_norm > eps_dual
+                            
+                            if primal_stalled || dual_stalled
+                                # Nudge ρ upward to break the stall
+                                ρ_current = min(ρ_max, stall_nudge_factor * ρ_current)
+                                print(COLOR_WARNING)
+                                stall_reason = primal_stalled ? "primal" : "dual"
+                                if primal_stalled && dual_stalled
+                                    stall_reason = "both"
+                                end
+                                @printf "  [PHASE2-NUDGE] rho: %.1f -> %.1f (stalled %s, %d iters no ρ change, ‖r‖=%.2e vs %.1e, ‖s‖=%.2e vs %.1e)\n" ρ_old ρ_current stall_reason iters_since_rho_change r_norm eps_pri s_norm eps_dual
+                                print(COLOR_RESET)
+                                rho_changed = true
+                            end
+                        end
+                    end
+                end
+                
+                # Update last change tracker
+                if rho_changed
+                    last_rho_change_iter = k
                 end
                 
                 # CRITICAL: Rescale dual variables when rho changes  
