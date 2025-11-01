@@ -41,10 +41,11 @@ rho_base = 10000.0              # Base ρ value for T=24
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
-rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
-max_iter_tadmm = 3000
-eps_pri_tadmm = 1e-5
-eps_dual_tadmm = 1e-4
+# rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
+rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
+max_iter_tadmm = 250
+eps_pri_tadmm = 1e-6
+eps_dual_tadmm = 1e-5
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # Create shared Gurobi environment (suppresses repeated license messages)
@@ -1276,7 +1277,9 @@ begin # tadmm socp solve
         # Print ρ scaling info
         if rho_scaling_with_T
             scaling_factor = sqrt(T / 24.0)
-            println(COLOR_INFO, "ρ scaled with T: $(rho_base) × √($(T)/24) = $(round(rho_tadmm, digits=1))", COLOR_RESET)
+            # println(COLOR_INFO, "ρ scaled with T: $(rho_base) × √($(T)/24) = $(round(rho_tadmm, digits=1))", COLOR_RESET)
+            println(COLOR_INFO, "ρ scaled with T: $(rho_base) × ($(T)/24)^2 = $(round(rho_tadmm, digits=1))", COLOR_RESET)
+
         else
             println(COLOR_INFO, "Using fixed ρ = $(rho_tadmm)", COLOR_RESET)
         end
