@@ -1,0 +1,50 @@
+================================================================================
+SOCP tADMM OPTIMIZATION RESULTS
+================================================================================
+System: ieee123A_1ph
+Time horizon: T=48 periods
+Time step: 0.5 hours
+Number of buses: 128
+Number of branches: 127
+Number of batteries: 26
+Number of PV units: 17
+
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 3024
+Linear constraints: 4401
+Quadratic constraints (SOCP): 127
+Nonlinear constraints: 0
+Total constraints: 4528
+
+--- tADMM PARAMETERS ---
+Initial ρ: 40000.0
+Adaptive ρ: true
+Max iterations: 250
+Primal tolerance: 1.0e-06
+Dual tolerance: 1.0e-05
+
+--- CONVERGENCE ---
+Converged in 120 iterations
+Final primal residual: 2.13e-07
+Final dual residual: 1.74e-06
+
+--- OBJECTIVE VALUE ---
+Total Cost: $3427.2340
+Brute Force objective: $3427.2320
+Absolute difference: $0.0020
+Relative difference: 0.0001%
+
+--- COMPUTATION TIME ---
+Effective solver time: 15.4640 seconds
+Sequential solver time (all subproblems): 331.4630 seconds
+Brute Force solver time: 0.4060 seconds
+Speedup vs Brute Force: 0.03x
+
+--- SOLUTION FEASIBILITY ---
+Status: ✓ FEASIBLE - All constraints satisfied
+
+--- SOLVER ---
+Subproblem solver: Gurobi
+Formulation: SOCP (BFM-NL)
+Decomposition: Temporal ADMM
+================================================================================
