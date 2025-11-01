@@ -1224,6 +1224,19 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
     iterations = 1:n_iter
+    
+    # Adaptive marker stroke width based on number of iterations
+    # More iterations = thinner borders to avoid clutter
+    markerstrokewidth = if n_iter <= 50
+        1.5  # Thick borders for few iterations
+    elseif n_iter <= 100
+        1.0  # Medium borders
+    elseif n_iter <= 200
+        0.5  # Thin borders
+    else
+        0.3  # Very thin borders for many iterations
+    end
+    
     xtick_vals = if n_iter <= 10
         collect(iterations)
     elseif n_iter <= 50
@@ -1259,7 +1272,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         markershape=:circle,
         markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
         label="tADMM Objective",
         legend=:topright,
         legendfontsize=9,
@@ -1305,7 +1318,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         markershape=:square,
         markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
         yscale=:log10,
         label="Primal Residual (‖r‖)",
         legend=:topright,
@@ -1340,7 +1353,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         markershape=:diamond,
         markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
         yscale=:log10,
         label="Dual Residual (‖s‖)",
         legend=:topright,
@@ -1377,7 +1390,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
             markershape=:hexagon,
             markersize=4,
             markerstrokecolor=:black,
-            markerstrokewidth=1.5,
+            markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
             yscale=:log10,
             label="ρ value",
             legend=:topright,
