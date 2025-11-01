@@ -26,9 +26,9 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-# systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
-T = 6  # Number of time steps
+systemName = "ads10A_1ph"
+# systemName = "ieee123A_1ph"
+T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
