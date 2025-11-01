@@ -9,6 +9,13 @@ Number of branches: 9
 Number of batteries: 1
 Number of PV units: 1
 
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 232
+Linear constraints: 339
+Quadratic constraints (SOCP): 9
+Nonlinear constraints: 0
+Total constraints: 348
+
 --- tADMM PARAMETERS ---
 Initial ρ: 20000.0
 Adaptive ρ: true
@@ -28,10 +35,13 @@ Absolute difference: $0.0006
 Relative difference: 0.0003%
 
 --- COMPUTATION TIME ---
-Effective solver time: 1.4030 seconds
-Sequential solver time (all subproblems): 80.1780 seconds
-Brute Force solver time: 0.0380 seconds
+Effective solver time: 1.2140 seconds
+Sequential solver time (all subproblems): 76.3530 seconds
+Brute Force solver time: 0.0390 seconds
 Speedup vs Brute Force: 0.03x
+
+--- SOLUTION FEASIBILITY ---
+Status: ✓ FEASIBLE - All constraints satisfied
 
 --- SOLVER ---
 Subproblem solver: Gurobi
