@@ -27,6 +27,7 @@ function plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=fal
     LoadShapeLoad = data[:LoadShapeLoad]
     LoadShapePV = data[:LoadShapePV]
     LoadShapeCost = data[:LoadShapeCost]
+    delta_t_h = data[:delta_t_h]
     
     # Prepare data for plotting
     time_steps = 1:T
@@ -37,6 +38,29 @@ function plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=fal
     left_max = 1.05
     right_min = floor(0.95 * minimum(load_cost_cents))
     right_max = ceil(1.05 * maximum(load_cost_cents))
+    
+    # Smart x-tick spacing (avoid overlap at endpoints)
+    xtick_vals = if T <= 24
+        1:T
+    else
+        step = max(1, div(T, 5))
+        ticks = collect(step:step:T)
+        # Only include T if it's far enough from the last tick
+        if isempty(ticks) || (T - last(ticks)) > step * 0.3
+            vcat(1, ticks, T)
+        else
+            vcat(1, ticks[1:end-1], T)  # Replace last tick with T
+        end
+    end
+    xtick_vals = sort(unique(xtick_vals))
+    
+    # Smart time step label (hours or minutes)
+    dt_label = if delta_t_h >= 1.0
+        "Δt = $(delta_t_h) h"
+    else
+        dt_minutes = round(Int, delta_t_h * 60)
+        "Δt = $(dt_minutes) min"
+    end
 
     # Set theme and backend
     gr()
@@ -62,8 +86,8 @@ function plot_input_curves(data::Dict; showPlots::Bool=true, savePlots::Bool=fal
         minorgridstyle=:solid,
         minorgridalpha=0.15,
         ylims=(left_min, left_max),
-        xticks=1:T,
-        title="Input Curves: Load, PV, and Cost Profiles",
+        xticks=xtick_vals,
+        title="Input Curves: Load, PV, and Cost Profiles ($(dt_label))",
         titlefont=font(14, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -176,6 +200,31 @@ function _plot_single_battery(solution::Dict, data::Dict, method_name::String, b
                               T::Int, P_BASE::Float64, E_BASE::Float64,
                               showPlots::Bool, savePlots::Bool, filename::String)
     
+    delta_t_h = data[:delta_t_h]
+    
+    # Smart time step label (hours or minutes)
+    dt_label = if delta_t_h >= 1.0
+        "Δt = $(delta_t_h) h"
+    else
+        dt_minutes = round(Int, delta_t_h * 60)
+        "Δt = $(dt_minutes) min"
+    end
+    
+    # Smart x-tick spacing (avoid overlap at endpoints)
+    xtick_vals_power = if T <= 24
+        0:T
+    else
+        step = max(1, div(T, 5))
+        ticks = collect(step:step:T)
+        # Only include T if it's far enough from the last tick
+        if isempty(ticks) || (T - last(ticks)) > step * 0.3
+            vcat(0, ticks, T)
+        else
+            vcat(0, ticks[1:end-1], T)  # Replace last tick with T
+        end
+    end
+    xtick_vals_power = sort(unique(xtick_vals_power))
+    
     # Convert to physical units for plotting
     P_B_pu = nothing
     if haskey(solution, :P_B)
@@ -247,14 +296,14 @@ function _plot_single_battery(solution::Dict, data::Dict, method_name::String, b
         ylabel="P_c/P_d [kW]",
         ylim=ylimit,
         xlim=(x_min, x_max),
-        xticks=0:T,
+        xticks=xtick_vals_power,
         gridstyle=:solid,
         gridlinewidth=1.0,
         gridalpha=0.2,
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.15,
-        title="Battery Actions - $(method_name) - Battery $(b)\nCharging and Discharging",
+        title="Battery Actions - $(method_name) - Battery $(b) ($(dt_label))\nCharging and Discharging",
         titlefont=font(12, "Computer Modern"),
         guidefont=font(15, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -290,7 +339,7 @@ function _plot_single_battery(solution::Dict, data::Dict, method_name::String, b
         ylabel="SOC [%]",
         ylim=(data[:soc_min][b] * 100 * 0.95, data[:soc_max][b] * 100 * 1.10),
         xlim=(x_min, x_max),
-        xticks=0:T,
+        xticks=xtick_vals_power,
         yticks=5*(div(data[:soc_min][b] * 100 * 0.95, 5)-1):10:5*(div(data[:soc_max][b] * 100 * 1.05, 5)+1),
         gridstyle=:solid,
         gridlinewidth=1.0,
@@ -412,6 +461,14 @@ function plot_substation_power_and_cost(solution, data, method_name;
     P_BASE = data[:kVA_B]
     delta_t_h = data[:delta_t_h]
     
+    # Smart time step label (hours or minutes)
+    dt_label = if delta_t_h >= 1.0
+        "Δt = $(delta_t_h) h"
+    else
+        dt_minutes = round(Int, delta_t_h * 60)
+        "Δt = $(dt_minutes) min"
+    end
+    
     # Extract substation power
     P_Subs_var = solution[:P_Subs]
     
@@ -426,8 +483,20 @@ function plot_substation_power_and_cost(solution, data, method_name;
         gr()
         theme(:mute)
         
-        # Set up x-axis ticks (all time steps if T=24)
-        xtick_vals = T == 24 ? (1:T) : :auto
+        # Smart x-tick spacing (avoid overlap at endpoints)
+        xtick_vals = if T <= 24
+            1:T
+        else
+            step = max(1, div(T, 5))
+            ticks = collect(step:step:T)
+            # Only include T if it's far enough from the last tick
+            if isempty(ticks) || (T - last(ticks)) > step * 0.3
+                vcat(1, ticks, T)
+            else
+                vcat(1, ticks[1:end-1], T)  # Replace last tick with T
+            end
+        end
+        xtick_vals = sort(unique(xtick_vals))
         
         # Create plot with dual y-axes
         p = plot(
@@ -446,7 +515,7 @@ function plot_substation_power_and_cost(solution, data, method_name;
             minorgrid=true,
             minorgridstyle=:dot,
             minorgridalpha=0.2,
-            title="$method_name: Substation Power & Cost",
+            title="$method_name: Substation Power & Cost ($(dt_label))",
             size=(900, 500),
             xticks=xtick_vals
         )
@@ -501,6 +570,15 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
     
     T = data[:T]
     Nset = data[:Nset]
+    delta_t_h = data[:delta_t_h]
+    
+    # Smart time step label (hours or minutes)
+    dt_label = if delta_t_h >= 1.0
+        "Δt = $(delta_t_h) h"
+    else
+        dt_minutes = round(Int, delta_t_h * 60)
+        "Δt = $(dt_minutes) min"
+    end
     
     # Select bus (default: last bus)
     selected_bus = isnothing(bus) ? maximum(Nset) : bus
@@ -521,8 +599,20 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
         gr()
         theme(:mute)
         
-        # Set up x-axis ticks (all time steps if T=24)
-        xtick_vals = T == 24 ? (1:T) : :auto
+        # Smart x-tick spacing (avoid overlap at endpoints)
+        xtick_vals = if T <= 24
+            1:T
+        else
+            step = max(1, div(T, 5))
+            ticks = collect(step:step:T)
+            # Only include T if it's far enough from the last tick
+            if isempty(ticks) || (T - last(ticks)) > step * 0.3
+                vcat(1, ticks, T)
+            else
+                vcat(1, ticks[1:end-1], T)  # Replace last tick with T
+            end
+        end
+        xtick_vals = sort(unique(xtick_vals))
         
         # Create plot with LaTeX notation
         p = plot(
@@ -541,7 +631,7 @@ function plot_voltage_profile_one_bus(solution, data, method_name;
             minorgrid=true,
             minorgridstyle=:dot,
             minorgridalpha=0.2,
-            title="$method_name: " * L"V^t_j" * " vs " * L"t" * " for Bus $selected_bus",
+            title="$method_name: " * L"V^t_j" * " vs " * L"t" * " for Bus $selected_bus ($(dt_label))",
             size=(900, 500),
             ylims=(0.92, 1.08),
             xticks=xtick_vals
@@ -764,6 +854,15 @@ function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::In
         P_BASE = data[:kVA_B]
         p_D_pu = data[:p_D_pu]
         q_D_vals = sol[:q_D]
+        delta_t_h = data[:delta_t_h]
+        
+        # Smart time step label (hours or minutes)
+        dt_label = if delta_t_h >= 1.0
+            "Δt = $(delta_t_h) h"
+        else
+            dt_minutes = round(Int, delta_t_h * 60)
+            "Δt = $(dt_minutes) min"
+        end
         
         time_steps = 1:T
         
@@ -778,6 +877,21 @@ function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::In
         # Set common x-axis limits
         x_min, x_max = 0.0, T + 1.0
         
+        # Smart x-tick spacing (avoid overlap at endpoints)
+        xtick_vals = if T <= 24
+            0:T
+        else
+            step = max(1, div(T, 5))
+            ticks = collect(step:step:T)
+            # Only include T if it's far enough from the last tick
+            if isempty(ticks) || (T - last(ticks)) > step * 0.3
+                vcat(0, ticks, T)
+            else
+                vcat(0, ticks[1:end-1], T)  # Replace last tick with T
+            end
+        end
+        xtick_vals = sort(unique(xtick_vals))
+        
         # === TOP SUBPLOT: p_D (Real Power - Fixed, Not Decision Variable) ===
         # Use fancy orange-yellow-golden colors to indicate fixed input
         p1 = plot(
@@ -786,7 +900,7 @@ function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::In
             label=L"p_D^t" * " (Fixed Input)",
             xlabel="",
             ylabel="Real Power (kW)",
-            title="PV Unit at Bus $pv_bus - $method_label\nReal Power (Fixed) & Reactive Power (Optimized)",
+            title="PV Unit at Bus $pv_bus - $method_label ($(dt_label))\nReal Power (Fixed) & Reactive Power (Optimized)",
             linewidth=4,
             linecolor=:darkorange,  # Fancy orange
             markershape=:circle,
@@ -804,7 +918,7 @@ function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::In
             minorgridalpha=0.15,
             framestyle=:box,
             xlims=(x_min, x_max),
-            xticks=0:T,
+            xticks=xtick_vals,
             ylims=(0, max(1.1 * maximum(p_D_kW), 0.1)),
             titlefont=font(12, "Computer Modern"),
             guidefont=font(11, "Computer Modern"),
@@ -850,7 +964,7 @@ function _plot_single_pv(sol::Dict, data::Dict, method_label::String, pv_bus::In
             minorgridalpha=0.15,
             framestyle=:box,
             xlims=(x_min, x_max),
-            xticks=0:T,
+            xticks=xtick_vals,
             ylims=(-y_lim, y_lim),
             titlefont=font(12, "Computer Modern"),
             guidefont=font(11, "Computer Modern"),
@@ -1105,17 +1219,29 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     
-    # Smart x-tick spacing based on number of iterations
+    # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
     iterations = 1:n_iter
     xtick_vals = if n_iter <= 10
         collect(iterations)
     elseif n_iter <= 50
-        vcat(1, collect(10:10:n_iter), n_iter)
+        ticks = collect(10:10:n_iter)
+        # Only include n_iter if far enough from last tick
+        if isempty(ticks) || (n_iter - last(ticks)) > 3
+            vcat(1, ticks, n_iter)
+        else
+            vcat(1, ticks[1:end-1], n_iter)
+        end
     else
         # For large iteration counts, show ~5 ticks (roughly every 20%)
         step = max(1, div(n_iter, 5))
-        vcat(1, collect(step:step:n_iter), n_iter)
+        ticks = collect(step:step:n_iter)
+        # Only include n_iter if far enough from last tick
+        if isempty(ticks) || (n_iter - last(ticks)) > step * 0.3
+            vcat(1, ticks, n_iter)
+        else
+            vcat(1, ticks[1:end-1], n_iter)  # Replace last tick with n_iter
+        end
     end
     xtick_vals = sort(unique(xtick_vals))  # Remove duplicates
     
@@ -1155,10 +1281,15 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         # Only add line if objective is finite (successful solve)
         if isfinite(bf_obj)
             hline!(p1, [bf_obj], 
-                   color=:darkorange, lw=2, linestyle=:dash, alpha=0.8,
+                   color=:darkorange3, lw=3, linestyle=:dash, alpha=0.9,
                    label="BF Objective = \$$(round(bf_obj, digits=2))")
         end
     end
+    
+    # Add tADMM final objective to legend
+    final_obj_tadmm = last(obj_history)
+    plot!(p1, [n_iter], [final_obj_tadmm], 
+          seriestype=:scatter, markersize=0, label="tADMM Final = \$$(round(final_obj_tadmm, digits=2))")
     
     # Subplot 2: Primal residual (log scale)
     p2 = plot(
