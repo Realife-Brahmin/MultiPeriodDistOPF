@@ -1105,28 +1105,48 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     
+    # Smart x-tick spacing based on number of iterations
+    n_iter = length(obj_history)
+    iterations = 1:n_iter
+    xtick_vals = if n_iter <= 10
+        collect(iterations)
+    elseif n_iter <= 50
+        vcat(1, collect(10:10:n_iter), n_iter)
+    else
+        # For large iteration counts, show ~5 ticks (roughly every 20%)
+        step = max(1, div(n_iter, 5))
+        vcat(1, collect(step:step:n_iter), n_iter)
+    end
+    xtick_vals = sort(unique(xtick_vals))  # Remove duplicates
+    
     # Subplot 1: Objective function
     p1 = plot(
-        obj_history,
+        iterations, obj_history,
         dpi=600,
-        xlabel="Iteration",
-        ylabel="Cost (\$)",
+        xlabel="Iteration (k)",
+        ylabel="Objective Function [\$]",
         title="Objective",
-        lw=2,
+        lw=3,
         color=line_colour_obj,
-        marker=:circle,
-        markersize=2,
-        markerstrokewidth=0,
-        legend=false,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        label="tADMM Objective",
+        legend=:topright,
+        legendfontsize=9,
         grid=true,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.15,
-        titlefont=font(11, "Computer Modern"),
-        guidefont=font(10, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        top_margin=2Plots.mm
     )
     
     # Add BF optimal line if available (check for successful optimization)
@@ -1135,74 +1155,111 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         # Only add line if objective is finite (successful solve)
         if isfinite(bf_obj)
             hline!(p1, [bf_obj], 
-                   color=:darkorange, lw=2, linestyle=:dash, alpha=0.7)
+                   color=:darkorange, lw=2, linestyle=:dash, alpha=0.8,
+                   label="BF Objective = \$$(round(bf_obj, digits=2))")
         end
     end
     
     # Subplot 2: Primal residual (log scale)
     p2 = plot(
-        r_norm_history,
+        iterations, r_norm_history,
         dpi=600,
-        xlabel="Iteration",
-        ylabel="‖r‖",
+        xlabel="Iteration (k)",
+        ylabel="Primal Residual ‖r‖ [log scale]",
         title="Primal Residual",
-        lw=2,
+        lw=3,
         color=line_colour_primal,
-        marker=:circle,
-        markersize=2,
-        markerstrokewidth=0,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
         yscale=:log10,
-        legend=false,
+        label="Primal Residual (‖r‖)",
+        legend=:topright,
+        legendfontsize=9,
         grid=true,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.15,
-        titlefont=font(11, "Computer Modern"),
-        guidefont=font(10, "Computer Modern"),
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern"
     )
     
     # Add tolerance threshold line
     hline!(p2, [eps_pri], 
-           color=:red, lw=2, linestyle=:dash, alpha=0.7)
+           color=:red, lw=2, linestyle=:dash, alpha=0.7,
+           label="Threshold ε_pri = $(eps_pri)")
     
     # Subplot 3: Dual residual (log scale)
     p3 = plot(
-        s_norm_history,
+        iterations, s_norm_history,
         dpi=600,
-        xlabel="Iteration",
-        ylabel="‖s‖",
+        xlabel="Iteration (k)",
+        ylabel="Dual Residual ‖s‖ [log scale]",
         title="Dual Residual",
-        lw=2,
+        lw=3,
         color=line_colour_dual,
-        marker=:circle,
-        markersize=2,
-        markerstrokewidth=0,
+        markershape=:diamond,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
         yscale=:log10,
-        legend=false,
+        label="Dual Residual (‖s‖)",
+        legend=:topright,
+        legendfontsize=9,
         grid=true,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
         minorgridstyle=:solid,
         minorgridalpha=0.15,
-        titlefont=font(11, "Computer Modern"),
-        guidefont=font(10, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        bottom_margin=2Plots.mm
     )
     
     # Add tolerance threshold line
     hline!(p3, [eps_dual], 
-           color=:red, lw=2, linestyle=:dash, alpha=0.7)
+           color=:red, lw=2, linestyle=:dash, alpha=0.7,
+           label="Threshold ε_dual = $(eps_dual)")
     
-    # Combine into horizontal layout (1 row, 3 columns)
+    # Combine into VERTICAL layout (3 rows, 1 column)
     p_combined = plot(p1, p2, p3, 
-                     layout=(1, 3), 
-                     size=(1200, 400),
+                     layout=(3, 1), 
+                     size=(900, 1000),
                      plot_title="tADMM Convergence Summary",
-                     plot_titlefont=font(14, "Computer Modern"))
+                     plot_titlefontsize=14,
+                     plot_titlefontfamily="Computer Modern",
+                     left_margin=8Plots.mm,
+                     right_margin=5Plots.mm,
+                     top_margin=8Plots.mm,
+                     bottom_margin=5Plots.mm)
+    
+    # Print convergence summary
+    final_obj = last(obj_history)
+    final_r_norm = last(r_norm_history)
+    final_s_norm = last(s_norm_history)
+    converged = (final_r_norm ≤ eps_pri) && (final_s_norm ≤ eps_dual)
+    
+    println("\ntADMM Convergence Summary:")
+    println("  Total iterations: $(length(obj_history))")
+    if haskey(sol_bf, :objective) && isfinite(sol_bf[:objective])
+        bf_obj = sol_bf[:objective]
+        @printf "  Final objective:  \$%.6f (BF: \$%.6f, Δ=%.2e)\n" final_obj bf_obj abs(final_obj - bf_obj)
+    else
+        @printf "  Final objective:  \$%.6f\n" final_obj
+    end
+    @printf "  Final ‖r‖:        %.2e (threshold: %.1e) %s\n" final_r_norm eps_pri (final_r_norm ≤ eps_pri ? "✓" : "✗")
+    @printf "  Final ‖s‖:        %.2e (threshold: %.1e) %s\n" final_s_norm eps_dual (final_s_norm ≤ eps_dual ? "✓" : "✗")
+    println("  Converged:        $(converged ? "✅ YES" : "❌ NO")")
     
     # Show the plot if requested
     if showPlots
