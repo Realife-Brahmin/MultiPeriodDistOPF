@@ -1,4 +1,25 @@
 
+# ============================================================================
+# PARALLELIZATION CONFIGURATION
+# ============================================================================
+# Auto-detect available CPU cores - try multiple methods for reliability
+function detect_cpu_cores()
+    # Try environment variable first (most reliable if set)
+    if haskey(ENV, "NUMBER_OF_PROCESSORS")
+        return parse(Int, ENV["NUMBER_OF_PROCESSORS"])
+    end
+    # Try Sys.CPU_THREADS (works on most systems)
+    sys_threads = Sys.CPU_THREADS
+    if sys_threads > 1
+        return sys_threads
+    end
+    # Fallback: check what Julia is actually using
+    return max(1, Threads.nthreads())
+end
+
+const AVAILABLE_CORES = detect_cpu_cores()
+const USE_THREADING = true  # Enable multi-threading for time-period subproblems
+# ============================================================================
 
 # Activate the tadmm environment
 import Pkg
@@ -17,6 +38,27 @@ using Parameters: @unpack
 using Plots
 using Crayons
 
+# Display threading status at startup
+println("\n" * "="^80)
+println("🚀 PARALLELIZATION STATUS")
+println("="^80)
+println("Hardware CPU cores:  ", AVAILABLE_CORES)
+println("Julia threads:       ", Threads.nthreads())
+if Threads.nthreads() >= AVAILABLE_CORES
+    println("Status:              ✓ Using all available cores")
+elseif Threads.nthreads() > 1
+    println("Status:              ⚠  Using $(Threads.nthreads())/$(AVAILABLE_CORES) cores")
+    println("\nTo use all cores, restart Julia with:")
+    println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
+    println("  \$ julia tadmm_socp.jl")
+else
+    println("Status:              ⚠  Single-threaded mode")
+    println("\nTo enable parallel execution, restart Julia with:")
+    println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
+    println("  \$ julia tadmm_socp.jl")
+end
+println("="^80)
+
 begin # entire script including environment setup
 
 # Include standalone utilities
@@ -29,7 +71,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 48  # Number of time steps
+T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -41,10 +83,11 @@ rho_base = 10000.0              # Base ρ value for T=24
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
-rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
+# rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
+rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 250
-eps_pri_tadmm = 1e-6
+eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-5
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
@@ -458,6 +501,9 @@ begin # socp brute-forced solve
     # =============================================================================
     # SOLVE AND REPORT
     # =============================================================================
+    
+    # Start total simulation timer (includes BF + tADMM, excludes plotting)
+    total_simulation_start_time = time()
 
     println("\n" * "="^80)
     println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
@@ -704,6 +750,7 @@ begin # function primal update (update 1) tadmm socp
             set_silent(model)
             set_optimizer_attribute(model, "NonConvex", 2)
             set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+            set_optimizer_attribute(model, "Threads", 1)  # Thread-safety: each subproblem uses 1 thread
             set_optimizer_attribute(model, "DualReductions", 0)
         else  # :ipopt
             set_optimizer(model, Ipopt.Optimizer)
@@ -1009,9 +1056,9 @@ begin # function solve MPOPF tadmm socp
         μ_balance = 5.0   # Threshold for imbalance (standard: 2-5, was 10 - too conservative!)
         τ_incr = 2.0      # Factor to increase ρ
         τ_decr = 2.0      # Factor to decrease ρ
-        ρ_min = 1.0       # Minimum ρ value
+        ρ_min = 0.1       # Minimum ρ value
         ρ_max = 1e6       # Maximum ρ value
-        update_interval = 10  # Update ρ every N iterations
+        update_interval = 5  # Update ρ every N iterations
         
         # Two-phase adaptive ρ strategy
         primal_converged_once = false  # Track if r_norm has reached threshold
@@ -1019,9 +1066,15 @@ begin # function solve MPOPF tadmm socp
         
         # Stall detection parameters
         last_rho_change_iter = 0  # Track when ρ was last changed
-        stall_check_interval = 10  # Check for stalls every N iterations
+        stall_check_interval = 5  # Check for stalls every N iterations (match update_interval)
         stall_nudge_factor = 2.0   # Factor to nudge ρ when stalled (100% increase)
         enable_stall_detection = true  # Enable stall detection
+        
+        # Acceleration: Track progress for slow convergence detection
+        obj_history = Float64[]
+        slow_progress_window = 10  # Check progress over last N iterations
+        slow_progress_threshold = 1e-4  # Relative objective change threshold
+        aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
         
         println("\n" * "="^80)
         print(COLOR_INFO)
@@ -1048,47 +1101,104 @@ begin # function solve MPOPF tadmm socp
             # Track subproblem solve times for this iteration
             subproblem_times_k = Float64[]
             
-            for t0 in Tset
-                result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
-                # Use pure solver time from the subproblem
-                push!(subproblem_times_k, result[:solve_time])
+            # 🚀 PARALLEL or SEQUENTIAL primal updates based on configuration
+            if USE_THREADING && Threads.nthreads() > 1
+                # PARALLEL: Each time period solved on different thread
+                # Pre-allocate results storage (thread-safe)
+                results_collection = Vector{Any}(undef, length(Tset))
                 
-                # Capture model stats from first subproblem of first iteration
-                if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
-                    tadmm_subproblem_stats = result[:model_stats]
+                Threads.@threads for i in 1:length(Tset)
+                    t0 = Tset[i]
+                    results_collection[i] = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
                 end
                 
-                # Update collections - Store ALL decision variables
-                B_collection[t0] = result[:B_local]
-                P_Subs_collection[t0] = result[:P_Subs]
-                Q_Subs_collection[t0] = result[:Q_Subs]
-                
-                for (i, j) in data[:Lset]
-                    P_collection[(i, j)][t0] = result[:P][(i, j)]
-                    Q_collection[(i, j)][t0] = result[:Q][(i, j)]
-                    ℓ_collection[(i, j)][t0] = result[:ℓ][(i, j)]
+                # Extract results after parallel execution
+                for i in 1:length(Tset)
+                    t0 = Tset[i]
+                    result = results_collection[i]
+                    push!(subproblem_times_k, result[:solve_time])
+                    
+                    # Capture model stats from first subproblem of first iteration
+                    if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
+                        tadmm_subproblem_stats = result[:model_stats]
+                    end
+                    
+                    # Update collections
+                    B_collection[t0] = result[:B_local]
+                    P_Subs_collection[t0] = result[:P_Subs]
+                    Q_Subs_collection[t0] = result[:Q_Subs]
+                    
+                    for (i, j) in data[:Lset]
+                        P_collection[(i, j)][t0] = result[:P][(i, j)]
+                        Q_collection[(i, j)][t0] = result[:Q][(i, j)]
+                        ℓ_collection[(i, j)][t0] = result[:ℓ][(i, j)]
+                    end
+                    
+                    for j in data[:Nset]
+                        v_collection[j][t0] = result[:v][j]
+                    end
+                    
+                    for j in data[:Dset]
+                        q_D_collection[j][t0] = result[:q_D][j]
+                    end
+                    
+                    for j in Bset
+                        # Initialize nested dict if not exists
+                        if !haskey(P_B_collection[j], t0)
+                            P_B_collection[j][t0] = Dict{Int,Float64}()
+                        end
+                        for t in Tset
+                            P_B_collection[j][t0][t] = result[:P_B][j][t]
+                        end
+                    end
+                    
+                    # Accumulate costs
+                    total_energy_cost += result[:energy_cost]
+                    total_battery_cost += result[:battery_cost]
+                    total_penalty += result[:penalty]
                 end
-                
-                for j in data[:Nset]
-                    v_collection[j][t0] = result[:v][j]
+            else
+                # SEQUENTIAL: Original behavior (safe fallback)
+                for t0 in Tset
+                    result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
+                    # Use pure solver time from the subproblem
+                    push!(subproblem_times_k, result[:solve_time])
+                    
+                    # Capture model stats from first subproblem of first iteration
+                    if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
+                        tadmm_subproblem_stats = result[:model_stats]
+                    end
+                    
+                    # Update collections - Store ALL decision variables
+                    B_collection[t0] = result[:B_local]
+                    P_Subs_collection[t0] = result[:P_Subs]
+                    Q_Subs_collection[t0] = result[:Q_Subs]
+                    
+                    for (i, j) in data[:Lset]
+                        P_collection[(i, j)][t0] = result[:P][(i, j)]
+                        Q_collection[(i, j)][t0] = result[:Q][(i, j)]
+                        ℓ_collection[(i, j)][t0] = result[:ℓ][(i, j)]
+                    end
+                    
+                    for j in data[:Nset]
+                        v_collection[j][t0] = result[:v][j]
+                    end
+                    
+                    for j in data[:Dset]
+                        q_D_collection[j][t0] = result[:q_D][j]
+                    end
+                    
+                    for j in Bset
+                        # Store the full P_B trajectory from this subproblem
+                        P_B_collection[j][t0] = result[:P_B][j]
+                    end
+                    
+                    # Accumulate costs
+                    total_energy_cost += result[:energy_cost]
+                    total_battery_cost += result[:battery_cost]
+                    total_penalty += result[:penalty]
                 end
-                
-                for j in data[:Dset]
-                    q_D_collection[j][t0] = result[:q_D][j]
-                end
-                
-                for j in Bset
-                    # Store the full P_B trajectory from this subproblem
-                    # P_B_collection[j] is a Dict{Int, Dict{Int, Float64}}
-                    # where P_B_collection[j][t0][t] = P_B value at time t from subproblem t0
-                    P_B_collection[j][t0] = result[:P_B][j]  # This is already a Dict(t => value)
-                end
-                
-                # Accumulate costs
-                total_energy_cost += result[:energy_cost]
-                total_battery_cost += result[:battery_cost]
-                total_penalty += result[:penalty]
-            end
+            end  # End if USE_THREADING
             print(COLOR_SUCCESS)
             println(" ✓")
             print(COLOR_RESET)
@@ -1132,6 +1242,34 @@ begin # function solve MPOPF tadmm socp
             
             push!(r_norm_history, r_norm)
             push!(s_norm_history, s_norm)
+            
+            # 🚀 ACCELERATION: Detect very slow progress and take aggressive action
+            if k >= slow_progress_window && k % update_interval == 0
+                recent_objs = obj_history[end-slow_progress_window+1:end]
+                obj_range = maximum(recent_objs) - minimum(recent_objs)
+                obj_mean = sum(recent_objs) / length(recent_objs)
+                relative_progress = obj_range / abs(obj_mean)
+                
+                # If objective barely changing AND residuals still not converged -> aggressive nudge
+                if relative_progress < slow_progress_threshold
+                    still_not_converged = (r_norm > eps_pri) || (s_norm > eps_dual)
+                    if still_not_converged
+                        ρ_old_accel = ρ_current
+                        # Very aggressive increase to break stagnation
+                        ρ_current = min(ρ_max, aggressive_nudge_factor * ρ_current)
+                        print(COLOR_WARNING)
+                        @printf "  ⚡ [ACCELERATION] rho: %.1f -> %.1f (obj stagnant: Δrel=%.2e < %.1e over %d iters, ‖r‖=%.2e, ‖s‖=%.2e)\n" ρ_old_accel ρ_current relative_progress slow_progress_threshold slow_progress_window r_norm s_norm
+                        print(COLOR_RESET)
+                        # Rescale dual variables
+                        scale_factor = ρ_old_accel / ρ_current
+                        for t0 in Tset, j in Bset
+                            u_collection[t0][j] .*= scale_factor
+                        end
+                        last_rho_change_iter = k  # Update tracker
+                        continue  # Skip normal adaptive ρ this iteration
+                    end
+                end
+            end
             
             # 🔧 STEP 5: Two-Phase Adaptive ρ Update (optional)
             if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
@@ -1502,6 +1640,17 @@ begin # tadmm socp solve
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "MPOPF SOCP tADMM SOLUTION COMPLETE", COLOR_RESET)
         println("="^80)
+        
+        # Calculate and display total simulation time (BF + tADMM, before plotting)
+        total_simulation_time = time() - total_simulation_start_time
+        println("\n" * "="^80)
+        println(COLOR_SUCCESS, "⏱  TOTAL SIMULATION TIME (BF + tADMM)", COLOR_RESET)
+        println("="^80)
+        @printf "Total time (parsing + BF + tADMM): %.2f seconds\n" total_simulation_time
+        @printf "  - Brute Force solve time:        %.2f seconds\n" sol_socp_bf[:solve_time]
+        @printf "  - tADMM effective time:          %.2f seconds\n" sol_socp_tadmm[:timing][:total_effective_time]
+        @printf "  - Overhead (setup/validation):   %.2f seconds\n" (total_simulation_time - sol_socp_bf[:solve_time] - sol_socp_tadmm[:timing][:total_effective_time])
+        println("="^80)
     else
         println("\n" * "="^80)
         print(COLOR_WARNING)
@@ -1513,6 +1662,9 @@ begin # tadmm socp solve
 end # tadmm socp solve
 
 begin # plotting results
+    # Start plotting timer
+    plotting_start_time = time()
+    
     println("\n" * "="^80)
     println(COLOR_INFO, "GENERATING PLOTS", COLOR_RESET)
     println("="^80)
@@ -1562,8 +1714,9 @@ begin # plotting results
         
         # Plot tADMM battery actions if available
         if !isnothing(sol_socp_tadmm)
+            tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
             battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_socp_tadmm.png")
-            plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)", 
+            plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)", 
                                 showPlots=showPlots, savePlots=true, 
                                 filename=battery_actions_tadmm_path,
                                 plot_all_batteries=saveAllBatteryPlots)
@@ -1583,8 +1736,9 @@ begin # plotting results
         
         # Plot tADMM substation power if available
         if !isnothing(sol_socp_tadmm)
+            tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
             subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_socp_tadmm.png")
-            plot_substation_power_and_cost(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+            plot_substation_power_and_cost(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
                                         showPlots=showPlots, savePlots=true,
                                         filename=subs_power_cost_tadmm_path)
         end
@@ -1600,8 +1754,9 @@ begin # plotting results
         
         # Create tADMM voltage profile GIF animation
         if !isnothing(sol_socp_tadmm)
+            tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
             voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_socp_tadmm.gif")
-            plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+            plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
                                         showPlots=showPlots, savePlots=false,
                                         create_gif=true,
                                         gif_filename=voltage_gif_tadmm_path)
@@ -1623,8 +1778,9 @@ begin # plotting results
             
             # tADMM individual PV plots if available
             if !isnothing(sol_socp_tadmm)
+                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
                 pv_power_all_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
-                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
                             showPlots=showPlots, savePlots=true,
                             filename=pv_power_all_tadmm_path,
                             plot_all_pvs=true)
@@ -1641,8 +1797,9 @@ begin # plotting results
             
             # Plot tADMM PV power if available
             if !isnothing(sol_socp_tadmm)
+                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
                 pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
-                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM (Ipopt)",
+                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
                             pv_index=1,
                             showPlots=showPlots, savePlots=true,
                             filename=pv_power_tadmm_path)
@@ -1697,8 +1854,13 @@ begin # plotting results
         end
     end
 
+    # Calculate and display plotting time
+    plotting_time = time() - plotting_start_time
+    
     println("\n" * "="^80)
     println(COLOR_SUCCESS, "PLOTTING COMPLETE", COLOR_RESET)
+    println("="^80)
+    @printf "⏱  Plotting time: %.2f seconds\n" plotting_time
     println("="^80)
 end # plotting results
 
