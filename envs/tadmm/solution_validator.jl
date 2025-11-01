@@ -5,6 +5,14 @@ Validates branch flow model equations and constraint feasibility
 
 using Printf
 using LinearAlgebra
+using Crayons
+
+# Define color schemes
+const COLOR_SUCCESS_VAL = Crayon(foreground = :green, bold = true)
+const COLOR_WARNING_VAL = Crayon(foreground = :yellow, bold = true)
+const COLOR_ERROR_VAL = Crayon(foreground = :red, bold = true)
+const COLOR_INFO_VAL = Crayon(foreground = :cyan, bold = true)
+const COLOR_RESET_VAL = Crayon(reset = true)
 
 """
     validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose=false)
@@ -278,13 +286,19 @@ function print_validation_summary(validation_results::Dict; solution_name="Solut
     feasible = validation_results[:feasible]
     
     println("\n", "="^80)
+    print(COLOR_INFO_VAL)
     println("SOLUTION VALIDATION: $solution_name")
+    print(COLOR_RESET_VAL)
     println("="^80)
     
     if feasible
+        print(COLOR_SUCCESS_VAL)
         println("✓ All constraints satisfied!")
+        print(COLOR_RESET_VAL)
     else
-        println("⚠ Total constraint violations: $total_viol")
+        print(COLOR_ERROR_VAL)
+        println("⚠ INFEASIBLE SOLUTION - Total constraint violations: $total_viol")
+        print(COLOR_RESET_VAL)
         println("\nViolation breakdown:")
         println("  Constraint Type                    | Count  | Max Violation")
         println("  " * "-"^70)
@@ -293,7 +307,9 @@ function print_validation_summary(validation_results::Dict; solution_name="Solut
         for (key, count) in violations
             if count > 0
                 max_val = max_viol[key]
+                print(COLOR_WARNING_VAL)
                 println(@sprintf("  %-35s | %6d | %.2e", string(key), count, max_val))
+                print(COLOR_RESET_VAL)
             end
         end
     end
