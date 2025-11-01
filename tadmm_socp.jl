@@ -26,8 +26,8 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
+# systemName = "ads10A_1ph"
+systemName = "ieee123A_1ph"
 T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
@@ -801,8 +801,12 @@ begin # function primal update (update 1) tadmm socp
         P_B_val_t0 = Dict(j => value(P_B_var[j, t0]) for j in Bset)
         
         # Compute objective components
+        # CRITICAL: Only return costs for time t0 (spatial decomposition)
+        # Each subproblem t0 contributes ONLY its time step's cost
         energy_cost_val = LoadShapeCost[t0] * P_Subs_val * P_BASE * Δt
         battery_cost_val = sum(C_B * (P_B_val_t0[j] * P_BASE)^2 * Δt for j in Bset)
+        
+        # BUT the penalty is over the full horizon (temporal coupling)
         penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 
                                         for t in Tset) for j in Bset)
         
