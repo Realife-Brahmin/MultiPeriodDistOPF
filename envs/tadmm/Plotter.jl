@@ -1211,6 +1211,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     obj_history = hist[:obj_history]
     r_norm_history = hist[:r_norm_history]
     s_norm_history = hist[:s_norm_history]
+    ρ_history = get(hist, :ρ_history, Float64[])  # Get ρ history (with fallback for old runs)
     
     # Set theme and colors (matching copper plate example)
     gr()
@@ -1218,6 +1219,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_obj = :dodgerblue       # Blue for objective
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
+    line_colour_rho = :purple           # Purple for ρ values
     
     # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
@@ -1362,10 +1364,46 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
            color=:red, lw=2, linestyle=:dash, alpha=0.7,
            label="Threshold ε_dual = $(eps_dual)")
     
-    # Combine into VERTICAL layout (3 rows, 1 column)
-    p_combined = plot(p1, p2, p3, 
-                     layout=(3, 1), 
-                     size=(900, 1000),
+    # Subplot 4: Penalty parameter ρ (log scale if available)
+    if !isempty(ρ_history)
+        p4 = plot(
+            iterations, ρ_history,
+            dpi=600,
+            xlabel="Iteration (k)",
+            ylabel="Penalty Parameter ρ [log scale]",
+            title="Adaptive ρ Schedule",
+            lw=3,
+            color=line_colour_rho,
+            markershape=:hexagon,
+            markersize=4,
+            markerstrokecolor=:black,
+            markerstrokewidth=1.5,
+            yscale=:log10,
+            label="ρ value",
+            legend=:topright,
+            legendfontsize=9,
+            grid=true,
+            gridstyle=:solid,
+            gridalpha=0.3,
+            minorgrid=true,
+            minorgridstyle=:solid,
+            minorgridalpha=0.15,
+            xlims=(0.5, n_iter + 0.5),
+            xticks=xtick_vals,
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(12, "Computer Modern"),
+            tickfontfamily="Computer Modern",
+            bottom_margin=2Plots.mm
+        )
+    else
+        # Fallback if no ρ history (for backward compatibility)
+        p4 = plot(title="ρ history not available", grid=false, showaxis=false)
+    end
+    
+    # Combine into VERTICAL layout (4 rows, 1 column)
+    p_combined = plot(p1, p2, p3, p4, 
+                     layout=(4, 1), 
+                     size=(900, 1300),
                      plot_title="tADMM Convergence Summary",
                      plot_titlefontsize=14,
                      plot_titlefontfamily="Computer Modern",
