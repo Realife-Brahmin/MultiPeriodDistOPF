@@ -27,8 +27,8 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
+# systemName = "ads10A_1ph"
+systemName = "ieee123A_1ph"
 T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
@@ -72,7 +72,8 @@ begin # scenario config
     plotSubstationPower = true  # Substation power and cost
     plotVoltageAllBuses = true  # Voltage profile for all buses (snapshot + GIF animation)
     plotPVPower = true          # PV real and reactive power
-    plotPVCircleGIF = true      # PV power circle GIF animations
+    plotPVCircleGIF = false      # PV power circle GIF animations
+    # plotPVCircleGIF = true      # PV power circle GIF animations
 
 
     # Load shapes
