@@ -9,29 +9,39 @@ Number of branches: 127
 Number of batteries: 26
 Number of PV units: 17
 
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 5520
+Linear constraints: 8145
+Quadratic constraints (SOCP): 127
+Nonlinear constraints: 0
+Total constraints: 8272
+
 --- tADMM PARAMETERS ---
 Initial ρ: 20000.0
 Adaptive ρ: true
-Max iterations: 3000
-Primal tolerance: 1.0e-05
-Dual tolerance: 1.0e-04
+Max iterations: 250
+Primal tolerance: 1.0e-06
+Dual tolerance: 1.0e-05
 
 --- CONVERGENCE ---
-Converged in 136 iterations
-Final primal residual: 5.63e-06
-Final dual residual: 9.83e-05
+Converged in 165 iterations
+Final primal residual: 1.59e-07
+Final dual residual: 4.83e-06
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3388.7078
+Total Cost: $3432.4143
 Brute Force objective: $3432.4025
-Absolute difference: $43.6947
-Relative difference: 1.2730%
+Absolute difference: $0.0118
+Relative difference: 0.0003%
 
 --- COMPUTATION TIME ---
-Effective solver time: 57.2760 seconds
-Sequential solver time (all subproblems): 1699.0500 seconds
-Brute Force solver time: 0.9300 seconds
-Speedup vs Brute Force: 0.02x
+Effective solver time: 87.6330 seconds
+Sequential solver time (all subproblems): 2590.9020 seconds
+Brute Force solver time: 0.8860 seconds
+Speedup vs Brute Force: 0.01x
+
+--- SOLUTION FEASIBILITY ---
+Status: ✓ FEASIBLE - All constraints satisfied
 
 --- SOLVER ---
 Subproblem solver: Gurobi
