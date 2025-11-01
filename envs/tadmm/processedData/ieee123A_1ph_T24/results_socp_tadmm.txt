@@ -35,10 +35,16 @@ Absolute difference: $0.0005
 Relative difference: 0.0000%
 
 --- COMPUTATION TIME ---
-Effective solver time: 15.9720 seconds
-Sequential solver time (all subproblems): 194.6560 seconds
-Brute Force solver time: 0.2560 seconds
-Speedup vs Brute Force: 0.02x
+Brute Force:
+  Wall-clock time: 1.1330 seconds (actual time on machine)
+  Solver time: 0.2760 seconds (reported by Gurobi)
+tADMM:
+  Wall-clock time: 58.6030 seconds (actual time on machine)
+  Effective time: 22.3930 seconds (max subproblem time per iter)
+  Sequential time: 329.2500 seconds (sum of all subproblems)
+Speedup Metrics:
+  tADMM vs BF (wall-clock): 0.02x
+  Parallel efficiency: 38.2% (0.38x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied

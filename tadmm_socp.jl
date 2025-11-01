@@ -71,7 +71,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 144  # Number of time steps
+T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -1728,6 +1728,12 @@ begin # plotting results
         plot_tadmm_ldf_convergence(sol_socp_tadmm, sol_socp_bf, eps_pri_tadmm, eps_dual_tadmm,
                                 showPlots=showPlots, savePlots=true, 
                                 filename=conv_plot_path)
+        
+        # Create timing analysis plot
+        timing_plot_path = joinpath(conv_plots_dir, "tadmm_timing_socp.png")
+        plot_tadmm_timing_analysis(sol_socp_tadmm, sol_socp_bf,
+                                showPlots=showPlots, savePlots=true,
+                                filename=timing_plot_path)
         
         println(COLOR_SUCCESS, "✓ Convergence plots saved to $(conv_plots_dir)", COLOR_RESET)
     end

@@ -1214,11 +1214,6 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     s_norm_history = hist[:s_norm_history]
     ρ_history = get(hist, :ρ_history, Float64[])  # Get ρ history (with fallback for old runs)
     
-    # Extract timing data (slowest subproblem per iteration)
-    timing_data = get(sol_tadmm, :timing, Dict())
-    subproblem_times_history = get(timing_data, :subproblem_times_history, Vector{Vector{Float64}}())
-    max_subproblem_times = [maximum(times) for times in subproblem_times_history]  # Slowest per iteration
-    
     # Set theme and colors (matching copper plate example)
     gr()
     theme(:mute)
@@ -1226,7 +1221,6 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     line_colour_rho = :purple           # Purple for ρ values
-    line_colour_time = :crimson         # Red for solve times
     
     # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
@@ -1420,65 +1414,10 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         p4 = plot(title="ρ history not available", grid=false, showaxis=false)
     end
     
-    # Subplot 5: Slowest subproblem solve time per iteration
-    if !isempty(max_subproblem_times)
-        # Get brute force solve time for comparison
-        bf_solve_time = get(sol_bf, :solve_time, NaN)
-        
-        p5 = plot(
-            iterations, max_subproblem_times,
-            dpi=600,
-            xlabel="Iteration (k)",
-            ylabel="Max Subproblem Time (s)",
-            title="Slowest Subproblem per Iteration",
-            lw=3,
-            color=line_colour_time,
-            markershape=:circle,
-            markersize=4,
-            markerstrokecolor=:black,
-            markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
-            label="Max subproblem time",
-            legend=:topright,
-            legendfontsize=9,
-            grid=true,
-            gridstyle=:solid,
-            gridalpha=0.3,
-            minorgrid=true,
-            minorgridstyle=:solid,
-            minorgridalpha=0.15,
-            xlims=(0.5, n_iter + 0.5),
-            xticks=xtick_vals,
-            titlefont=font(12, "Computer Modern"),
-            guidefont=font(12, "Computer Modern"),
-            tickfontfamily="Computer Modern",
-            bottom_margin=2Plots.mm
-        )
-        
-        # Add brute force reference line if available
-        if !isnan(bf_solve_time)
-            hline!(p5, [bf_solve_time], 
-                   color=:blue, lw=2, linestyle=:dash, alpha=0.7,
-                   label="Brute force total time = $(round(bf_solve_time, digits=2))s")
-        end
-        
-        # Add mean and median reference lines
-        mean_time = mean(max_subproblem_times)
-        median_time = median(max_subproblem_times)
-        hline!(p5, [mean_time], 
-               color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
-               label="Mean = $(round(mean_time, digits=2))s")
-        hline!(p5, [median_time], 
-               color=:darkorange, lw=1.5, linestyle=:dashdot, alpha=0.6,
-               label="Median = $(round(median_time, digits=2))s")
-    else
-        # Fallback if no timing data
-        p5 = plot(title="Timing data not available", grid=false, showaxis=false)
-    end
-    
-    # Combine into VERTICAL layout (5 rows, 1 column)
-    p_combined = plot(p1, p2, p3, p4, p5, 
-                     layout=(5, 1), 
-                     size=(900, 1600),
+    # Combine into VERTICAL layout (4 rows, 1 column)
+    p_combined = plot(p1, p2, p3, p4, 
+                     layout=(4, 1), 
+                     size=(900, 1300),
                      plot_title="tADMM Convergence Summary",
                      plot_titlefontsize=14,
                      plot_titlefontfamily="Computer Modern",
@@ -1513,6 +1452,275 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     # Save the plot if requested
     if savePlots
         @printf "Saving tADMM convergence plot to: %s\n" filename
+        savefig(p_combined, filename)
+    end
+    
+    return p_combined
+end
+
+
+"""
+    plot_tadmm_timing_analysis(sol_tadmm, sol_bf; showPlots::Bool=true, savePlots::Bool=false, filename::String="tadmm_timing.png")
+
+Create detailed timing analysis plot for tADMM algorithm with 4 subplots:
+1. Maximum subproblem time per iteration (bottleneck for parallelization)
+2. Median subproblem time per iteration (typical case)
+3. Total iteration time (sum of all subproblems, showing sequential cost)
+4. Cumulative wall-clock time
+
+# Arguments
+- sol_tadmm: Solution dictionary from tADMM with :timing data
+- sol_bf: Solution dictionary from brute force for comparison
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+
+# Returns
+- Combined plot object with 4 subplots
+"""
+function plot_tadmm_timing_analysis(sol_tadmm, sol_bf; 
+                                    showPlots::Bool=true, savePlots::Bool=false, 
+                                    filename::String="tadmm_timing.png")
+    
+    # Extract timing data
+    timing_data = get(sol_tadmm, :timing, Dict())
+    subproblem_times_history = get(timing_data, :subproblem_times_history, Vector{Vector{Float64}}())
+    
+    if isempty(subproblem_times_history)
+        println("Warning: No timing data available in sol_tadmm[:timing][:subproblem_times_history]")
+        return plot(title="No timing data available", grid=false, showaxis=false)
+    end
+    
+    # Calculate timing metrics per iteration
+    n_iter = length(subproblem_times_history)
+    iterations = 1:n_iter
+    
+    max_times = [maximum(times) for times in subproblem_times_history]      # Bottleneck (effective time)
+    median_times = [median(times) for times in subproblem_times_history]    # Typical subproblem
+    total_times = [sum(times) for times in subproblem_times_history]        # Sequential cost
+    cumulative_wallclock = cumsum(max_times)                                 # Actual wall-clock time
+    
+    # Get brute force solve time for comparison
+    bf_solve_time = get(sol_bf, :solve_time, NaN)
+    
+    # Statistics for reference lines
+    mean_max = mean(max_times)
+    mean_median = mean(median_times)
+    mean_total = mean(total_times)
+    final_wallclock = last(cumulative_wallclock)
+    
+    # Set theme and colors
+    gr()
+    theme(:mute)
+    line_colour_max = :crimson          # Red for maximum (bottleneck)
+    line_colour_median = :darkorange2   # Orange for median
+    line_colour_total = :purple         # Purple for total
+    line_colour_cumul = :dodgerblue     # Blue for cumulative
+    
+    # Smart x-tick spacing
+    xtick_vals = if n_iter <= 20
+        collect(1:n_iter)
+    elseif n_iter <= 50
+        collect(1:5:n_iter)
+    elseif n_iter <= 100
+        collect(1:10:n_iter)
+    else
+        collect(1:20:n_iter)
+    end
+    
+    # Adaptive marker stroke width
+    markerstrokewidth = if n_iter <= 50
+        1.5
+    elseif n_iter <= 100
+        1.0
+    elseif n_iter <= 200
+        0.5
+    else
+        0.3
+    end
+    
+    # Subplot 1: Maximum subproblem time (bottleneck for parallel execution)
+    p1 = plot(
+        iterations, max_times,
+        dpi=600,
+        xlabel="Iteration (k)",
+        ylabel="Max Subproblem Time (s)",
+        title="Maximum Subproblem Time per Iteration (Parallel Bottleneck)",
+        lw=3,
+        color=line_colour_max,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=markerstrokewidth,
+        label="Max subproblem",
+        legend=:topright,
+        legendfontsize=9,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Add reference lines
+    hline!(p1, [mean_max], 
+           color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
+           label="Mean = $(round(mean_max, digits=2))s")
+    
+    if !isnan(bf_solve_time)
+        hline!(p1, [bf_solve_time], 
+               color=:blue, lw=2, linestyle=:dash, alpha=0.7,
+               label="BF total = $(round(bf_solve_time, digits=2))s")
+    end
+    
+    # Subplot 2: Median subproblem time (typical case)
+    p2 = plot(
+        iterations, median_times,
+        dpi=600,
+        xlabel="Iteration (k)",
+        ylabel="Median Subproblem Time (s)",
+        title="Median Subproblem Time per Iteration (Typical Case)",
+        lw=3,
+        color=line_colour_median,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=markerstrokewidth,
+        label="Median subproblem",
+        legend=:topright,
+        legendfontsize=9,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    hline!(p2, [mean_median], 
+           color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
+           label="Mean = $(round(mean_median, digits=2))s")
+    
+    # Subplot 3: Total iteration time (sum of all subproblems)
+    p3 = plot(
+        iterations, total_times,
+        dpi=600,
+        xlabel="Iteration (k)",
+        ylabel="Total Iteration Time (s)",
+        title="Total Iteration Time (Sum of All Subproblems)",
+        lw=3,
+        color=line_colour_total,
+        markershape=:diamond,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=markerstrokewidth,
+        label="Sum of all subproblems",
+        legend=:topright,
+        legendfontsize=9,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    hline!(p3, [mean_total], 
+           color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
+           label="Mean = $(round(mean_total, digits=2))s")
+    
+    # Subplot 4: Cumulative wall-clock time
+    p4 = plot(
+        iterations, cumulative_wallclock,
+        dpi=600,
+        xlabel="Iteration (k)",
+        ylabel="Cumulative Time (s)",
+        title="Cumulative Wall-Clock Time (Parallel Execution)",
+        lw=3,
+        color=line_colour_cumul,
+        markershape=:hexagon,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=markerstrokewidth,
+        label="Cumulative wall-clock",
+        legend=:topleft,
+        legendfontsize=9,
+        grid=true,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, n_iter + 0.5),
+        xticks=xtick_vals,
+        titlefont=font(12, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        bottom_margin=2Plots.mm
+    )
+    
+    hline!(p4, [final_wallclock], 
+           color=:darkgreen, lw=1.5, linestyle=:dot, alpha=0.6,
+           label="Final = $(round(final_wallclock, digits=2))s")
+    
+    if !isnan(bf_solve_time)
+        hline!(p4, [bf_solve_time], 
+               color=:blue, lw=2, linestyle=:dash, alpha=0.7,
+               label="BF total = $(round(bf_solve_time, digits=2))s")
+    end
+    
+    # Combine into VERTICAL layout (4 rows, 1 column)
+    p_combined = plot(p1, p2, p3, p4, 
+                     layout=(4, 1), 
+                     size=(900, 1300),
+                     plot_title="tADMM Timing Analysis",
+                     plot_titlefontsize=14,
+                     plot_titlefontfamily="Computer Modern",
+                     left_margin=8Plots.mm,
+                     right_margin=5Plots.mm,
+                     top_margin=8Plots.mm,
+                     bottom_margin=5Plots.mm)
+    
+    # Print timing summary
+    total_sequential = sum(total_times)
+    speedup = total_sequential / final_wallclock
+    
+    println("\ntADMM Timing Summary:")
+    println("  Total iterations: $n_iter")
+    println("  Max subproblem time: min=$(round(minimum(max_times), digits=2))s, median=$(round(median(max_times), digits=2))s, max=$(round(maximum(max_times), digits=2))s")
+    println("  Median subproblem time: mean=$(round(mean_median, digits=2))s")
+    println("  Total sequential time: $(round(total_sequential, digits=2))s")
+    println("  Total wall-clock time: $(round(final_wallclock, digits=2))s")
+    println("  Parallel speedup: $(round(speedup, digits=2))x")
+    if !isnan(bf_solve_time)
+        println("  Brute force time: $(round(bf_solve_time, digits=2))s")
+        println("  tADMM vs BF: $(round(final_wallclock / bf_solve_time, digits=2))x slower")
+    end
+    
+    # Show the plot if requested
+    if showPlots
+        display(p_combined)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        @printf "Saving tADMM timing plot to: %s\n" filename
         savefig(p_combined, filename)
     end
     
