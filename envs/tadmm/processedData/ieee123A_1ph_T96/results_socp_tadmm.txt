@@ -17,28 +17,28 @@ Nonlinear constraints: 0
 Total constraints: 8272
 
 --- tADMM PARAMETERS ---
-Initial ρ: 20000.0
+Initial ρ: 40000.0
 Adaptive ρ: true
 Max iterations: 250
-Primal tolerance: 1.0e-06
+Primal tolerance: 1.0e-05
 Dual tolerance: 1.0e-05
 
 --- CONVERGENCE ---
-Converged in 165 iterations
-Final primal residual: 1.59e-07
-Final dual residual: 4.83e-06
+Converged in 83 iterations
+Final primal residual: 1.38e-07
+Final dual residual: 6.81e-06
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3432.4143
+Total Cost: $3432.4082
 Brute Force objective: $3432.4025
-Absolute difference: $0.0118
-Relative difference: 0.0003%
+Absolute difference: $0.0056
+Relative difference: 0.0002%
 
 --- COMPUTATION TIME ---
-Effective solver time: 87.6330 seconds
-Sequential solver time (all subproblems): 2590.9020 seconds
-Brute Force solver time: 0.8860 seconds
-Speedup vs Brute Force: 0.01x
+Effective solver time: 56.8570 seconds
+Sequential solver time (all subproblems): 1377.2830 seconds
+Brute Force solver time: 1.0270 seconds
+Speedup vs Brute Force: 0.02x
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
