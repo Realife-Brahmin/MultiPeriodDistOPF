@@ -1,0 +1,32 @@
+================================================================================
+COPPER PLATE MPOPF - DDP SOLUTION
+================================================================================
+
+Problem Configuration:
+  Time periods (T):         4
+  Solver:                   gurobi
+  Optimization status:      OPTIMAL
+  Converged:                true
+  Iterations:               2
+
+Objective Value:
+  Total Cost:     $436.499680
+  Energy Cost:    $436.499609 (100.00%)
+  Battery Cost:   $0.070431 (0.02%)
+
+Comparison with Brute Force:
+  BF Objective:   $374.328900
+  DDP Objective:  $436.499680
+  Difference:     $62.170779 (1.6609e+01%)
+
+Computation Time:
+  Total time:     0.960000 seconds
+  Iterations:     2
+  Time/iter:      0.480000 seconds
+
+Solution Summary:
+  Substation (kW):  min=235.33, max=1094.41, avg=802.58
+  Battery (kW):     min=0.00, max=800.00, avg=300.00
+  SOC (kWh):        min=1200.00, max=1600.00, avg=1300.00
+
+================================================================================
