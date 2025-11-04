@@ -151,18 +151,6 @@ function check_for_ddp_convergence(ddpModel;
         return ddpModel
     end
 
-    max_discrepancy = 0.0
-    threshold_soc = 1e-2
-    threshold_mu = 1e-2
-    threshold_fval = 1e-1
-    # threshold_conv_iters = 2
-    all_under_threshold = true
-
-    crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
-    crayon_green = Crayon(background=:green, foreground=:white, bold=true)
-    crayon_blue = Crayon(foreground=:blue, bold=true)
-    crayon_blue_neg = Crayon(foreground=:blue, bold=true, negative=true)
-
     # Criterion 2: Check the magnitude of updates in fval
 
     converged_fval = true
@@ -463,15 +451,33 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
 
     if t_ddp ∈ 1:T-1
         μ = mu
-        @unpack Bset, alpha_fpi, gamma_fpi = data
+        @unpack B_prev, P_B_prev = ddpModel
+        @unpack Bset, alpha_fpi, gamma_fpi, delta_t, eta_C, eta_D = data
         α_fpi0 = alpha_fpi
         γ_fpi = gamma_fpi
         MU = Dict()
+        B_NEXT = Dict()
+        P_B_NEXT = Dict()
         α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
         # HF.myprintln(verbose, "FP$(k_ddp): α_fpi = $α_fpi")
         MU = compute_interpolated_mu(μ, Bset, k_ddp, t_ddp, α_fpi, verbose=verbose)
+        
+        # Get B_next and P_B_next values from previous forward pass
+        for j ∈ Bset
+            if k_ddp == 1
+                B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+                P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
+            elseif k_ddp >= 2
+                B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+                P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
+            else
+                @error "Invalid value of k_ddp: $k_ddp"
+                return
+            end
+        end
 
-        objfun_expr_t0_k0_appendix = sum( MU[j, t_ddp+1] * (-model_t0_k0[:B][j, t_ddp]) for j ∈ Bset )
+        # New objective term: mu[j, t+1] * (B_next[j, t+1] - B[j, t] + delta_t * P_B_next[j, t+1])
+        objfun_expr_t0_k0_appendix = sum( MU[j, t_ddp+1] * (B_NEXT[j, t_ddp+1] - model_t0_k0[:B][j, t_ddp] + delta_t * P_B_NEXT[j, t_ddp+1]) for j ∈ Bset )
         objfun_expr_t0_k0_ddp = objfun_expr_t0_k0_base + objfun_expr_t0_k0_appendix
     elseif t_ddp == T
         objfun_expr_t0_k0_ddp = objfun_expr_t0_k0_base
@@ -539,6 +545,27 @@ function reformulate_model_as_FS(ddpModel, modelDict_t0_k0;
 end
 #endregion
 
+#region store_B_and_P_B_values
+function store_B_and_P_B_values(ddpModel, model_t0, t_ddp)
+    """Store B and P_B values from the current forward pass for use in next iteration"""
+    @unpack k_ddp, B_prev, P_B_prev, data = ddpModel
+    @unpack Bset, eta_C, eta_D = data
+    
+    for j ∈ Bset
+        # Store B value
+        B_prev[j, t_ddp, k_ddp] = value(model_t0[:B][j, t_ddp])
+        
+        # Compute and store P_B = (1/eta_D) * P_d - eta_C * P_c (positive = discharge)
+        P_c_val = value(model_t0[:P_c][j, t_ddp])
+        P_d_val = value(model_t0[:P_d][j, t_ddp])
+        P_B_prev[j, t_ddp, k_ddp] = (1.0 / eta_D[j]) * P_d_val - eta_C[j] * P_c_val
+    end
+    
+    @pack! ddpModel = B_prev, P_B_prev
+    return ddpModel
+end
+#endregion
+
 #region solve_and_store_FS
 function solve_and_store_FS(ddpModel; Tset,
     verbose=false)
@@ -556,6 +583,9 @@ function solve_and_store_FS(ddpModel; Tset,
     @pack! ddpModel = models_ddp_vs_t_vs_k
 
     ddpModel = MC.store_FS_t_k_decvar_values(ddpModel, Tset=Tset, optModel="Linear", verbose=verbose)    
+    
+    # Store B and P_B values for next iteration
+    ddpModel = store_B_and_P_B_values(ddpModel, model_t0_k0, t_ddp)
     
     # Todo: WTF it this function?
     ddpModel = store_FS_t_k_dual_variables(ddpModel, Tset=Tset, verbose=verbose)
@@ -807,6 +837,8 @@ function DDPModel(data;
     modelVals_ddp_vs_FP = Dict{Int,Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     BVals_vs_k = Dict{Tuple{Int,Int,Int},Float64}()
+    B_prev = Dict{Tuple{Int,Int,Int},Float64}()  # B values from previous forward pass
+    P_B_prev = Dict{Tuple{Int,Int,Int},Float64}()  # P_B values from previous forward pass
     lambda_lo = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_up = Dict{Tuple{Int,Int,Int},Float64}()
     outputVals_vs_k = Dict{Int, Any}()
@@ -824,6 +856,9 @@ function DDPModel(data;
         end
         lambda_lo[j, t_ddp, 0] = 0.0
         lambda_up[j, t_ddp, 0] = 0.0
+        # Initialize with B0 and P_B=0 for k=0
+        B_prev[j, t_ddp, 0] = B0[j]
+        P_B_prev[j, t_ddp, 0] = 0.0
     end
 
     ddpModel = Dict(
@@ -841,6 +876,8 @@ function DDPModel(data;
         :k_ddp => 1,
         :lambda_lo => lambda_lo,
         :lambda_up => lambda_up,
+        :B_prev => B_prev,
+        :P_B_prev => P_B_prev,
         :maxiter => maxiter,
 
         :BVals_vs_k => BVals_vs_k,
