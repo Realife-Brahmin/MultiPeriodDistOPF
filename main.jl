@@ -4,8 +4,8 @@ include("./src/setupMultiPeriodDistOPF.jl")
 begin
     # systemName0 = "ads3_1ph"
     # systemName0 = "ads10_1ph"
-    systemName0 = "ads10_1batt_1ph";
-    # systemName0 = "ieee123_1ph-A"
+    # systemName0 = "ads10_1batt_1ph";
+    systemName0 = "ieee123_1ph-A"
     # systemName0 = "ieee123_1ph-B"
     # systemName0 = "ieee729_1ph"
     # systemName0 = "ieee730_1ph"
@@ -54,8 +54,8 @@ begin
     relax_terminal_soc_constraint = true
     tSOC_hard = false
     # tSOC_hard = true
-    solver = "Ipopt"
-    # solver = "Gurobi"
+    # solver = "Ipopt"
+    solver = "Gurobi"
     # solver = "Juniper"
     if systemName0 == "ieee123_1ph-A"
         systemName = "ieee123_1ph"
