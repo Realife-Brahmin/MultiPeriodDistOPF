@@ -517,47 +517,41 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         iter_time = time() - iter_start
         push!(iteration_times, iter_time)
         
-        # Print progress with colorized dual variables
-        @printf "k=%3d  obj=\$%.4f  ||Δμ||=%.2e  time=%.4fs\n" k total_obj mu_error iter_time
+        # Print progress with KKT condition check
+        @printf "k=%3d  obj=\$%.4f  ||Δμ||=%.2e\n" k total_obj mu_error
         
-        # Show dual variables with colors for every iteration
-        print("      ")
+        # Show KKT condition: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
+        # For t < T: four terms
+        # For t = T: only three terms (no future μ)
         for t in 1:T
             mu_t = mu_collection[t]
-            mu_tp1 = (t < T) ? mu_collection[t+1] : 0.0
             lambda_Bmin_t = lambda_Bmin_collection[t]
             lambda_Bmax_t = lambda_Bmax_collection[t]
             
-            # Pink for current μ[t], Cyan for future μ[t+1], White for lambdas
-            print("t=$t: ")
-            print(Crayon(foreground=:magenta, bold=true))
-            @printf "μ[t]=%+.3f" mu_t
-            print(COLOR_RESET)
-            print(" ")
-            print(Crayon(foreground=:cyan, bold=true))
-            @printf "μ[t+1]=%+.3f" mu_tp1
-            print(COLOR_RESET)
-            print(" | ")
-            print(Crayon(foreground=:white))
-            @printf "λ_min=%+.3f λ_max=%+.3f" lambda_Bmin_t lambda_Bmax_t
-            print(COLOR_RESET)
-            
-            # Show residual
-            residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
-            if abs(residual) < 1e-3
-                print(Crayon(foreground=:green))
-                @printf " ✓%.1e" residual
-            else
-                print(Crayon(foreground=:red))
-                @printf " ⚠%.1e" residual
-            end
-            print(COLOR_RESET)
-            
             if t < T
-                print("  ")
+                # Interior time steps: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
+                mu_tp1 = mu_collection[t+1]
+                residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
+                kkt_satisfied = abs(residual) < 1e-3
+                
+                @printf "  t=%d: [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1 residual
+            else
+                # Terminal time step: λ_Bmax - λ_Bmin + μ[T] = 0 (no future coupling)
+                residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
+                kkt_satisfied = abs(residual) < 1e-3
+                
+                @printf "  t=%d: [%+.3f - %+.3f + %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t residual
             end
+            
+            if kkt_satisfied
+                print(Crayon(foreground=:green, bold=true))
+                println("✓")
+            else
+                print(Crayon(foreground=:red, bold=true))
+                println("✗")
+            end
+            print(COLOR_RESET)
         end
-        println()
         
         # Check convergence based on dual variables (μ)
         if mu_error < tol
