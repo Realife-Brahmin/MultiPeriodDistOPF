@@ -694,87 +694,16 @@ println("="^80)
 solver_bf_choice = use_gurobi_for_bf ? :gurobi : :ipopt
 sol_bf = solve_CopperPlate_BruteForced(data; solver=solver_bf_choice)
 
-# Report results
-println("\n--- SOLUTION STATUS ---")
-print("Status: ")
-
+# Report results (simplified - just status and objective)
 if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
     print(COLOR_SUCCESS)
-    println(sol_bf[:status])
-    println("✓ Optimization successful!")
+    @printf "✓ Brute Force OPTIMAL: \$%.4f (%.4fs)\n" sol_bf[:objective] sol_bf[:wallclock_time]
     print(COLOR_RESET)
-    
-    println("\n--- OBJECTIVE VALUE ---")
-    @printf "Total Cost:     \$%.4f\n" sol_bf[:objective]
-    @printf "  Energy Cost:  \$%.4f (%.1f%%)\n" sol_bf[:energy_cost] (sol_bf[:energy_cost]/sol_bf[:objective]*100)
-    @printf "  Battery Cost: \$%.4f (%.1f%%)\n" sol_bf[:battery_cost] (sol_bf[:battery_cost]/sol_bf[:objective]*100)
-    
-    println("\n--- COMPUTATION TIME ---")
-    @printf "Solver time:    %.4f seconds\n" sol_bf[:solve_time]
-    @printf "Wallclock time: %.4f seconds\n" sol_bf[:wallclock_time]
-    
-    println("\n--- MODEL STATISTICS ---")
-    @printf "Variables:      %d\n" sol_bf[:model_stats][:n_variables]
-    @printf "Constraints:    %d\n" sol_bf[:model_stats][:n_constraints]
-    
-    # Convert to physical units
-    P_Subs_kW = sol_bf[:P_Subs] .* data.P_BASE
-    P_B_kW = sol_bf[:P_B] .* data.P_BASE
-    B_kWh = sol_bf[:B] .* data.E_BASE
-    
-    println("\n--- POWER SUMMARY ---")
-    @printf "Substation (kW):  min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_Subs_kW) maximum(P_Subs_kW) mean(P_Subs_kW)
-    @printf "Battery (kW):     min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_B_kW) maximum(P_B_kW) mean(P_B_kW)
-    
-    println("\n--- SOC SUMMARY ---")
-    soc_percent = B_kWh ./ E_Rated_kWh .* 100
-    @printf "SOC (%%):          min=%.1f, max=%.1f, avg=%.1f\n" minimum(soc_percent) maximum(soc_percent) mean(soc_percent)
-    @printf "SOC (kWh):        min=%.1f, max=%.1f, avg=%.1f\n" minimum(B_kWh) maximum(B_kWh) mean(B_kWh)
-    
-    # Verify power balance
-    println("\n--- POWER BALANCE VERIFICATION ---")
-    P_L_kW = data.P_L_pu .* data.P_BASE
-    balance_error = maximum(abs.(P_Subs_kW .+ P_B_kW .- P_L_kW))
-    @printf "Max power balance error: %.2e kW\n" balance_error
-    if balance_error < 1e-6
-        print(COLOR_SUCCESS)
-        println("✓ Power balance satisfied")
-        print(COLOR_RESET)
-    else
-        print(COLOR_WARNING)
-        println("⚠ Power balance may have numerical errors")
-        print(COLOR_RESET)
-    end
-    
-    # Verify battery dynamics
-    println("\n--- BATTERY DYNAMICS VERIFICATION ---")
-    B0_kWh = data.bat.B0_pu * data.E_BASE
-    B_expected = [B0_kWh]
-    for t in 1:T
-        push!(B_expected, B_expected[end] - P_B_kW[t] * Δt_h)
-    end
-    dynamics_error = maximum(abs.(B_kWh .- B_expected[2:end]))
-    @printf "Max battery dynamics error: %.2e kWh\n" dynamics_error
-    if dynamics_error < 1e-6
-        print(COLOR_SUCCESS)
-        println("✓ Battery dynamics satisfied")
-        print(COLOR_RESET)
-    else
-        print(COLOR_WARNING)
-        println("⚠ Battery dynamics may have numerical errors")
-        print(COLOR_RESET)
-    end
-    
 else
     print(COLOR_ERROR)
-    println("⚠ Optimization failed or did not converge to optimality")
-    println("Status: ", sol_bf[:status])
+    @printf "⚠ Brute Force FAILED: %s\n" sol_bf[:status]
     print(COLOR_RESET)
 end
-
-println("\n" * "="^80)
-println(COLOR_HIGHLIGHT, "COPPER PLATE MPOPF BRUTE-FORCED SOLUTION COMPLETE", COLOR_RESET)
-println("="^80)
 
 # ============================================================================
 # SAVE RESULTS TO FILE
