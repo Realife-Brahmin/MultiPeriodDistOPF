@@ -1,21 +1,3 @@
-# ============================================================================
-# DDP FOR COPPER PLATE PROBLEM
-# ============================================================================
-# This script solves a simplified multi-period optimal power flow (MPOPF)
-# problem using the Copper Plate approximation:
-# - No network constraints (single aggregated bus)
-# - Only power balance constraint: P_Subs + P_B = P_L
-# - Battery dynamics: B[t] = B[t-1] - P_B[t] * Δt
-# - Objective: minimize energy cost + battery quadratic cost
-#
-# Solution methods:
-# 1. Brute Force: Centralized optimization (all T time steps together)
-# 2. DDP: Distributed decomposition by time period (TO BE IMPLEMENTED)
-# ============================================================================
-
-# ============================================================================
-# PARALLELIZATION CONFIGURATION
-# ============================================================================
 function detect_cpu_cores()
     if haskey(ENV, "NUMBER_OF_PROCESSORS")
         return parse(Int, ENV["NUMBER_OF_PROCESSORS"])
@@ -129,27 +111,7 @@ struct CopperPlateData
     C_B::Float64
 end
 
-# ============================================================================
-# DATA GENERATION
-# ============================================================================
 
-"""
-    setup_copperplate_data(; kwargs...)
-
-Generate synthetic copper plate problem data with realistic load/cost profiles.
-
-Arguments:
-- T: Number of time periods (default: 24)
-- P_L_R_kW: Rated load power in kW (default: 1250.0)
-- E_Rated_kWh: Battery energy capacity in kWh (default: 4000.0)
-- P_B_R_kW: Battery power rating in kW (default: 800.0)
-- soc_min, soc_max: SOC limits (default: 0.30, 0.95)
-- B0_fraction: Initial SOC as fraction of E_Rated (default: 0.60)
-- B_T_target_fraction: Terminal SOC constraint (default: nothing)
-- Δt_h: Time step duration in hours (default: 1.0)
-
-Returns: CopperPlateData instance
-"""
 function setup_copperplate_data(;
     T::Int=24,
     P_L_R_kW::Float64=1250.0,
@@ -188,37 +150,6 @@ function setup_copperplate_data(;
     return CopperPlateData(T, LoadShapeCost, P_L_pu, bat, P_BASE, E_BASE, C_B)
 end
 
-# ============================================================================
-# BRUTE FORCE SOLVER (CENTRALIZED)
-# ============================================================================
-
-"""
-    solve_CopperPlate_BruteForced(data; solver=:gurobi)
-
-Solve the copper plate MPOPF problem using centralized optimization.
-All T time periods are solved together as a single large optimization problem.
-
-Decision variables (T time periods):
-- P_Subs[t]: Substation power at time t (≥ 0)
-- P_B[t]: Battery power at time t (charge < 0, discharge > 0)
-- B[t]: Battery SOC at end of time t
-
-Constraints:
-- Power balance: P_Subs[t] + P_B[t] = P_L[t]  ∀t
-- Battery dynamics: B[t] = B[t-1] - P_B[t] * Δt  ∀t
-- Initial SOC: B[0] = B0
-- SOC bounds: B_min ≤ B[t] ≤ B_max  ∀t
-- Power bounds: -P_B_R ≤ P_B[t] ≤ P_B_R  ∀t
-- Terminal SOC (optional): B[T] = B_T_target
-
-Objective: minimize Σₜ (price[t] * P_Subs[t] * Δt + C_B * P_B[t]² * Δt)
-
-Arguments:
-- data: CopperPlateData instance
-- solver: :gurobi or :ipopt
-
-Returns: Dict with solution and statistics
-"""
 function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gurobi)
     
     @unpack T, price, P_L_pu, bat, P_BASE, E_BASE, C_B = data
@@ -247,8 +178,8 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
     @constraint(model, power_balance[t in 1:T], P_Subs[t] + P_B[t] == P_L_pu[t])
     
     # Battery dynamics
-    @constraint(model, B[1] == bat.B0_pu - P_B[1] * Δt)
-    @constraint(model, [t in 2:T], B[t] == B[t-1] - P_B[t] * Δt)
+    @constraint(model, B[1] - bat.B0_pu + P_B[1] * Δt == 0)
+    @constraint(model, [t in 2:T], B[t] - B[t-1] + P_B[t] * Δt == 0)
     
     # Terminal SOC constraint (if specified)
     if !isnothing(bat.B_T_target_pu)
@@ -275,7 +206,7 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
     # Get model statistics
     n_vars = num_variables(model)
     n_constraints = sum(num_constraints(model, F, S) 
-                       for (F, S) in list_of_constraint_types(model))
+                    for (F, S) in list_of_constraint_types(model))
     
     result = Dict(
         :status => status,
@@ -387,7 +318,7 @@ function forward_pass_ddp!(B_collection, mu_collection, PB_collection, data::Cop
     @constraint(model, power_balance, P_Subs_t + P_B_t == P_L_pu[t])
     
     # 2. Battery dynamics: B[t] = B[t-1] - Δt*P_B[t]
-    @constraint(model, battery_dynamics, B_t == B_prev - Δt * P_B_t)
+    @constraint(model, battery_dynamics, B_t - B_prev + Δt * P_B_t == 0)
     
     # Solve
     optimize!(model)
@@ -410,8 +341,8 @@ function forward_pass_ddp!(B_collection, mu_collection, PB_collection, data::Cop
         # g_Bmax: B - Bmax ≤ 0  (i.e., B ≤ Bmax), want λ_Bmax ≥ 0 when active
         # JuMP returns: dual(g_Bmin) < 0 when lower bound is active (need to negate!)
         #               dual(g_Bmax) > 0 when upper bound is active (correct sign!)
-        lambda_Bmin = dual(soc_lower)  # Negate to get positive when at lower bound
-        lambda_Bmax = dual(soc_upper)   # Already correct sign
+        lambda_Bmin = -dual(soc_lower)  # Negate to get positive when at lower bound
+        lambda_Bmax = dual(soc_upper)    # Already correct sign
         
         return Dict(
             :status => status,
@@ -586,18 +517,47 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         iter_time = time() - iter_start
         push!(iteration_times, iter_time)
         
-        # Print progress with more details
-        if k == 1 || k == 2 || k == 3 || k % 10 == 0 || k == max_iter
-            @printf "k=%3d  obj=\$%.4f  ||Δμ||=%.2e  time=%.4fs" k total_obj mu_error iter_time
-            if k <= 3  # Show B and μ values for first few iterations
-                B_str = join([@sprintf("%.2f", B_collection[t]) for t in 1:T], ", ")
-                mu_str = join([@sprintf("%.1f", mu_collection[t]) for t in 1:T], ", ")
-                PB_str = join([@sprintf("%.1f", PB_collection[t]) for t in 1:T], ", ")
-                println("\n    B=[$B_str]  μ=[$mu_str]  P_B=[$PB_str]")
+        # Print progress with colorized dual variables
+        @printf "k=%3d  obj=\$%.4f  ||Δμ||=%.2e  time=%.4fs\n" k total_obj mu_error iter_time
+        
+        # Show dual variables with colors for every iteration
+        print("      ")
+        for t in 1:T
+            mu_t = mu_collection[t]
+            mu_tp1 = (t < T) ? mu_collection[t+1] : 0.0
+            lambda_Bmin_t = lambda_Bmin_collection[t]
+            lambda_Bmax_t = lambda_Bmax_collection[t]
+            
+            # Pink for current μ[t], Cyan for future μ[t+1], White for lambdas
+            print("t=$t: ")
+            print(Crayon(foreground=:magenta, bold=true))
+            @printf "μ[t]=%+.3f" mu_t
+            print(COLOR_RESET)
+            print(" ")
+            print(Crayon(foreground=:cyan, bold=true))
+            @printf "μ[t+1]=%+.3f" mu_tp1
+            print(COLOR_RESET)
+            print(" | ")
+            print(Crayon(foreground=:white))
+            @printf "λ_min=%+.3f λ_max=%+.3f" lambda_Bmin_t lambda_Bmax_t
+            print(COLOR_RESET)
+            
+            # Show residual
+            residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
+            if abs(residual) < 1e-3
+                print(Crayon(foreground=:green))
+                @printf " ✓%.1e" residual
             else
-                println()
+                print(Crayon(foreground=:red))
+                @printf " ⚠%.1e" residual
+            end
+            print(COLOR_RESET)
+            
+            if t < T
+                print("  ")
             end
         end
+        println()
         
         # Check convergence based on dual variables (μ)
         if mu_error < tol
@@ -661,7 +621,7 @@ begin # scenario config
     use_gurobi_for_ddp = true  # Use Gurobi for DDP subproblems
     
     # DDP algorithm parameters
-    max_iter_ddp = 500
+    max_iter_ddp = 5
     tol_ddp = 1e-5
     
     # Battery and load parameters (will be passed to setup function)
