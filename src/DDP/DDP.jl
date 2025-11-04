@@ -28,7 +28,7 @@ include("../ModelCopier/ModelCopier.jl")
 import .ModelCopier as MC
 
 include("../helperFunctions.jl")
-using .helperFunctions
+import .helperFunctions as HF
 
 include("../SolverArranger/SolverArranger.jl")
 import .SolverArranger as SolverArranger
@@ -80,12 +80,12 @@ function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     crayon_update = Crayon(foreground=:light_blue, background=:white, bold=true)
     # println(crayon_update("Backward Pass k_ddp = $(k_ddp): μ, λ_lo, and λ_up values for t_ddp = $(t_ddp)"))
     # for j in Bset
-    #     println(crayon_update("j = $j: μ_t_k = ", trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
+    #     println(crayon_update("j = $j: μ_t_k = ", HF.trim_number_for_printing(μ[j, t_ddp, k_ddp], sigdigits=2)))
     #     if t_ddp != T
-    #         println(crayon_update("j = $j: μ_tp1_km1 = ", trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
+    #         println(crayon_update("j = $j: μ_tp1_km1 = ", HF.trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)))
     #     end
-    #     println(crayon_update("j = $j: λ_lo_t_k = ", trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
-    #     println(crayon_update("j = $j: λ_up_t_k = ", trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
+    #     println(crayon_update("j = $j: λ_lo_t_k = ", HF.trim_number_for_printing(λ_lo[j, t_ddp, k_ddp], sigdigits=2)))
+    #     println(crayon_update("j = $j: λ_up_t_k = ", HF.trim_number_for_printing(λ_up[j, t_ddp, k_ddp], sigdigits=2)))
     # end
 
     # Print KKT balance equation
@@ -97,7 +97,7 @@ function compute_and_store_dual_variables(ddpModel, model_t0; Tset=nothing)
     #     else
     #         balance = -λ_lo[j, t_ddp, k_ddp] + λ_up[j, t_ddp, k_ddp] + μ[j, t_ddp, k_ddp]
     #     end
-    #     println(crayon_update("j = $j: KKT balance = ", trim_number_for_printing(balance, sigdigits=2)))
+    #     println(crayon_update("j = $j: KKT balance = ", HF.trim_number_for_printing(balance, sigdigits=2)))
     # end
 
     mu = μ
@@ -131,7 +131,7 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose = true
 
     if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [1]
         modelDict = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0) # an unsolved model
@@ -145,22 +145,29 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0) 
     μ = mu
-    @unpack Bset, alpha_fpi, gamma_fpi = data;
+    @unpack B_prev, P_B_prev = ddpModel
+    @unpack Bset, alpha_fpi, gamma_fpi, delta_t, eta_C, eta_D = data
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
     MU = Dict()
+    B_NEXT = Dict()
+    P_B_NEXT = Dict()
     α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
-    myprintln(true, "FP$(k_ddp): α_fpi = $α_fpi")
+    HF.myprintln(true, "FP$(k_ddp): α_fpi = $α_fpi")
 
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
+            B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+            P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
-            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
+            B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+            P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
+            MU_used_str = HF.trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+            MU_not_used_str = HF.trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # HF.myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -168,10 +175,9 @@ function build_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
         end
     end
 
-    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    # New objective term: mu[j, t+1] * (B_next[j, t+1] - B[j, t] + delta_t * P_B_next[j, t+1])
     objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+    sum(MU[j, t_ddp+1] * (B_NEXT[j, t_ddp+1] - model_t0[:B][j, t_ddp] + delta_t * P_B_NEXT[j, t_ddp+1]) for j ∈ Bset)
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
     # B0 values are already set in the model so no need to fix them separately
@@ -197,7 +203,7 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
     verbose = true
     # if k_ddp == 1
     if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be something like [2] or [3] or ... or [T-1]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
@@ -223,20 +229,27 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     objfun_expr_t0_without_mu_terms = objective_function(model_t0)
     μ = mu
-    @unpack Bset, alpha_fpi, gamma_fpi = data
+    @unpack B_prev, P_B_prev = ddpModel
+    @unpack Bset, alpha_fpi, gamma_fpi, delta_t, eta_C, eta_D = data
     α_fpi0 = alpha_fpi
     γ_fpi = gamma_fpi
     MU = Dict()
+    B_NEXT = Dict()
+    P_B_NEXT = Dict()
     α_fpi = compute_alpha_fpi(α_fpi0, γ_fpi, k_ddp)
     for j ∈ Bset
         if k_ddp == 1
             MU[j, t_ddp+1] = μ[j, t_ddp+1, k_ddp-1]
+            B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+            P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
         elseif k_ddp >= 2
             MU[j, t_ddp+1] = get_interpolated_value(μ[j, t_ddp+1, k_ddp-1], μ[j, t_ddp+1, k_ddp-2], α_fpi)
-            MU_used_str = trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
-            MU_not_used_str = trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
+            B_NEXT[j, t_ddp+1] = B_prev[j, t_ddp+1, k_ddp-1]
+            P_B_NEXT[j, t_ddp+1] = P_B_prev[j, t_ddp+1, k_ddp-1]
+            MU_used_str = HF.trim_number_for_printing(MU[j, t_ddp+1], sigdigits=2)
+            MU_not_used_str = HF.trim_number_for_printing(μ[j, t_ddp+1, k_ddp-1], sigdigits=2)
             if j in Bset[1]
-                # myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
+                # HF.myprintln(true, "FP$(k_ddp): μ[$(j), $(t_ddp+1)] = $(MU_used_str) instead of $(MU_not_used_str)")
             end
         else
             @error "Invalid value of k_ddp: $k_ddp"
@@ -244,10 +257,9 @@ function build_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
         end
     end
 
-    # objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms + 
-    # sum(μ[j, t_ddp+1, k_ddp-1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset )
+    # New objective term: mu[j, t+1] * (B_next[j, t+1] - B[j, t] + delta_t * P_B_next[j, t+1])
     objfun_expr_t0_k_with_mu_terms = objfun_expr_t0_without_mu_terms +
-                                     sum(MU[j, t_ddp+1] * (-model_t0[:B][j, t_ddp]) for j ∈ Bset)
+                                     sum(MU[j, t_ddp+1] * (B_NEXT[j, t_ddp+1] - model_t0[:B][j, t_ddp] + delta_t * P_B_NEXT[j, t_ddp+1]) for j ∈ Bset)
 
     @objective(model_t0, Min, objfun_expr_t0_k_with_mu_terms)
 
@@ -273,7 +285,7 @@ function build_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
     # if k_ddp == 1
     verbose = true
     if k_ddp >= 1
-        # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
+        # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp): Building Forward Step model for t = $(t_ddp)")
 
         Tset_t0 = [t_ddp] # should be [T]
         modelDict_t0 = MB.build_MPOPF_1ph_NL_model_t_in_Tset(data, Tset=Tset_t0)
@@ -344,7 +356,7 @@ function check_for_ddp_convergence(ddpModel;
                 crayon_t = ((t_idx + line_idx) % 2 == 1) ? crayon_light_green : crayon_light_blue
 
                 # Retrieve and format the current μ value
-                mu_current = trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=2)
+                mu_current = HF.trim_number_for_printing(mu[(j, t, k_ddp)], sigdigits=2)
 
                 # Print formatted μ value
                 print(crayon_t("$mu_current "))
@@ -379,7 +391,7 @@ function check_for_ddp_convergence(ddpModel;
                 var_name = Symbol("B[$j,$t]")
                 B_j_t_current = var_dict_current[var_name]
                 soc_percent_j_t_current = B_j_t_current / B_R_pu[j] * 100.0
-                soc_percent_j_t_current_str = trim_number_for_printing(soc_percent_j_t_current, sigdigits=2)
+                soc_percent_j_t_current_str = HF.trim_number_for_printing(soc_percent_j_t_current, sigdigits=2)
 
                 # Print formatted μ value
                 print(crayon_t("$soc_percent_j_t_current_str "))
@@ -431,10 +443,10 @@ function check_for_ddp_convergence(ddpModel;
         discrepancy = abs(PSubsCost_current - PSubsCost_previous)
         if discrepancy > threshold_fval
             all_under_threshold = false
-            myprintln(print_fval, "*******")
-            myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
-            myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
-            myprintln(true, "*******")
+            HF.myprintln(print_fval, "*******")
+            HF.myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
+            HF.myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
+            HF.myprintln(true, "*******")
         end
     end
 
@@ -460,7 +472,7 @@ function check_for_ddp_convergence(ddpModel;
                 if max_discrepancy > threshold
                     all_under_threshold = false
                     if discrepancy > threshold_soc
-                        # myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
+                        # HF.myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                         if j in Bset_to_print
                             println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
                             println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
@@ -488,7 +500,7 @@ function check_for_ddp_convergence(ddpModel;
                     max_discrepancy = max(max_discrepancy, discrepancy)
                     if discrepancy > threshold_mu
                         all_under_threshold = false
-                        # myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                        # HF.myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
                         if j in Bset_to_print
                         # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
                         # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
@@ -551,7 +563,7 @@ This function performs a forward pass in the Differential Dynamic Programming (D
 function forward_pass_1ph_NL(ddpModel; verbose::Bool=false)
     verbose = true
     @unpack k_ddp = ddpModel
-    # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+    # HF.myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
     t_ddp = 1
     @unpack data = ddpModel
     @unpack Tset, T = data
@@ -632,6 +644,25 @@ function ForwardStep_1ph_NL_t_is_T(ddpModel;
     return ddpModel
 end
 
+function store_B_and_P_B_values(ddpModel, model_t0, t_ddp)
+    """Store B and P_B values from the current forward pass for use in next iteration"""
+    @unpack k_ddp, B_prev, P_B_prev, data = ddpModel
+    @unpack Bset, eta_C, eta_D = data
+    
+    for j ∈ Bset
+        # Store B value
+        B_prev[j, t_ddp, k_ddp] = value(model_t0[:B][j, t_ddp])
+        
+        # Compute and store P_B = (1/eta_D) * P_d - eta_C * P_c (positive = discharge)
+        P_c_val = value(model_t0[:P_c][j, t_ddp])
+        P_d_val = value(model_t0[:P_d][j, t_ddp])
+        P_B_prev[j, t_ddp, k_ddp] = (1.0 / eta_D[j]) * P_d_val - eta_C[j] * P_c_val
+    end
+    
+    @pack! ddpModel = B_prev, P_B_prev
+    return ddpModel
+end
+
 function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     verbose::Bool=false)
 
@@ -643,7 +674,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
 
     @unpack k_ddp, models_ddp_vs_t_vs_k = ddpModel;
 
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
 
@@ -690,6 +721,9 @@ function optimize_ForwardStep_1ph_NL_model_t_is_1(ddpModel;
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
 
+    # Store B and P_B values for next iteration
+    ddpModel = store_B_and_P_B_values(ddpModel, model_t0, t_ddp)
+
     # Now that the model_t0 is solved and updated, we can compute the dual variables associated with its soc constraints for the next iteration's forward pass
     # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
@@ -709,7 +743,7 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     @unpack k_ddp = ddpModel
 
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     @unpack models_ddp_vs_t_vs_k = ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
@@ -753,6 +787,10 @@ function optimize_ForwardStep_1ph_NL_model_t_in_2toTm1(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    
+    # Store B and P_B values for next iteration
+    ddpModel = store_B_and_P_B_values(ddpModel, model_t0, t_ddp)
+    
     # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
@@ -771,7 +809,7 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     @unpack k_ddp = ddpModel
 
-    # myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
+    # HF.myprintln(verbose, "Forward Pass k_ddp = $(k_ddp) : About to optimize Forward Step model for t = $(t_ddp)")
 
     @unpack models_ddp_vs_t_vs_k = ddpModel;
     model_t0 = models_ddp_vs_t_vs_k[t_ddp, k_ddp] # unsolved model
@@ -814,6 +852,10 @@ function optimize_ForwardStep_1ph_NL_model_t_is_T(ddpModel;
 
     modelVals_ddp_vs_t_vs_k[t_ddp, k_ddp] = modelVals
     @pack! ddpModel = modelVals_ddp_vs_t_vs_k
+    
+    # Store B and P_B values for next iteration
+    ddpModel = store_B_and_P_B_values(ddpModel, model_t0, t_ddp)
+    
     # println("Backward Pass for Tset = $Tset")
     ddpModel = compute_and_store_dual_variables(ddpModel, model_t0, Tset=Tset)
 
@@ -856,7 +898,7 @@ function optimize_MPOPF_1ph_NL_DDP(data;
     keepForwardPassesRunning = true
     while keepForwardPassesRunning
         @unpack k_ddp = ddpModel
-        # myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
+        # HF.myprintln(verbose, "Starting Forward Pass k_ddp = $(k_ddp)")
         ddpModel = forward_pass_1ph_NL(ddpModel,
             verbose=verbose)
 
@@ -919,12 +961,14 @@ function DDPModel(data;
     muDict=nothing,
     verbose::Bool=false)
 
-    @unpack Tset, Bset, solver = data;
+    @unpack Tset, Bset, solver, B0 = data;
     models_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Model}()
     modelVals_ddp_vs_t_vs_k = Dict{Tuple{Int,Int},Dict}()
     mu = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_lo = Dict{Tuple{Int,Int,Int},Float64}()
     lambda_up = Dict{Tuple{Int,Int,Int},Float64}()
+    B_prev = Dict{Tuple{Int,Int,Int},Float64}()  # B values from previous forward pass
+    P_B_prev = Dict{Tuple{Int,Int,Int},Float64}()  # P_B values from previous forward pass
     outputVals_vs_k = Dict{Int, Any}()
     # modelVals = Dict{Symbol,Any}()
     modelVals = MC.ModelVals(data)
@@ -938,6 +982,9 @@ function DDPModel(data;
         end
         lambda_lo[j, t_ddp, 0] = 0.0
         lambda_up[j, t_ddp, 0] = 0.0
+        # Initialize with B0 and P_B=0 for k=0
+        B_prev[j, t_ddp, 0] = B0[j]
+        P_B_prev[j, t_ddp, 0] = 0.0
     end
 
     ddpModel = Dict(
@@ -950,6 +997,8 @@ function DDPModel(data;
         :k_ddp => 1,
         :lambda_lo => lambda_lo,
         :lambda_up => lambda_up,
+        :B_prev => B_prev,
+        :P_B_prev => P_B_prev,
         :maxiter => maxiter,
         :modelVals => modelVals,
         :models_ddp_vs_t_vs_k=>models_ddp_vs_t_vs_k,
