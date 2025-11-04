@@ -151,41 +151,148 @@ function check_for_ddp_convergence(ddpModel;
         return ddpModel
     end
 
-    # Define threshold and crayons
-    threshold_mu = 1e-2
-    all_mu_converged = true
+    # Criterion 2: Check the magnitude of updates in fval
 
-    crayon_red_neg = Crayon(foreground=:red, bold=true, negative=true)
-    crayon_green = Crayon(foreground=:green, bold=true)
+    converged_fval = true
+    if fval_change
+        @unpack k_best, fval_best, fval_best_hit = ddpModel
+        @unpack PSubsCost_dollar_vs_k = ddpModel;
+        PSubsCost_current = PSubsCost_dollar_vs_k[k_ddp]
+        PSubsCost_previous = PSubsCost_dollar_vs_k[k_ddp-1]
+        diff_fval_best_vs_now = abs(fval_best - PSubsCost_current)
+        # if diff_fval_best_vs_now <= threshold_fval
+        discrepancy = abs(PSubsCost_current - PSubsCost_previous)
+        if discrepancy > threshold_fval
+            all_under_threshold = false
+            HF.myprintln(print_fval, "*******")
+            HF.myprintln(print_fval, crayon_red_neg("Previous value of PSubsCost_allT_dollar = $PSubsCost_previous"))
+            HF.myprintln(print_fval, crayon_red_neg("Current value of PSubsCost_allT_dollar = $PSubsCost_current"))
+            HF.myprintln(true, "*******")
+            converged_fval = false
+        else
+            HF.myprintln(true, "FP$(k_ddp): Objective function value update is under the threshold.")
+        end
+    end
 
-    # ONLY CRITERION: Check the magnitude of updates in μ values for ALL batteries and ALL times
-    if mu_change
-        for t in Tset
+    if converged_fval
+        ddpModel[:conv_fval_num] += 1
+        HF.myprintln(print_fval, "FP$(k_ddp): conv_fval_num = $(ddpModel[:conv_fval_num]).")
+    else
+        ddpModel[:conv_fval_num] = 1
+    end
+
+    
+    # println(crayon_green("Checking convergence for B values:"))
+
+    # Criterion 3: Check the magnitude of updates in SOC values
+
+    converged_soc = true
+    if soc_change
+        for t_ddp in Tset
+            model_current = models_ddp_vs_t_vs_k[t_ddp, k_ddp]
+            model_previous = models_ddp_vs_t_vs_k[t_ddp, k_ddp-1]
+            # model_previous = models_ddp_vs_t_vs_k[T, k_ddp-1]
+
+            # Create dictionaries for current and previous models
+            var_dict_current = MC.create_variable_dict(model_current)
+            var_dict_previous = MC.create_variable_dict(model_previous)
+
             for j in Bset
-                if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
-                    mu_current = mu[(j, t, k_ddp)]
-                    mu_previous = mu[(j, t, k_ddp - 1)]
-                    discrepancy = abs(mu_current - mu_previous)
-                    
-                    if discrepancy > threshold_mu
-                        all_mu_converged = false
+                var_name = Symbol("B[$j,$t_ddp]")
+                value_current = var_dict_current[var_name]
+                value_previous = var_dict_previous[var_name]
+                discrepancy = abs(value_current - value_previous)
+                max_discrepancy = max(max_discrepancy, discrepancy)
+
+                if max_discrepancy > threshold
+                    converged_soc = false
+                    all_under_threshold = false
+                    if discrepancy > threshold_soc
+                        # HF.myprintln(verbose, "Exceeding update tolerance: var_name = $var_name, discrepancy = $discrepancy")
                         if j in Bset_to_print
-                            println(crayon_red_neg("μ[$j, $t] not converged: |$mu_current - $mu_previous| = $discrepancy > $threshold_mu"))
+                            println(crayon_red_neg("Previous value of var $(var_name) = $value_previous"))
+                            println(crayon_red_neg("Current value of var $(var_name) = $value_current"))
+                        end
+                    else
+                        if j in Bset_to_print
+                            # println(crayon_green("var_name = $var_name, discrepancy = $discrepancy"))
                         end
                     end
                 end
             end
         end
     end
-    
-    if all_mu_converged
-        println(crayon_green("FP$(k_ddp): ALL μ updates are under threshold $threshold_mu"))
+
+    if converged_soc
+        ddpModel[:conv_soc_num] += 1
+        HF.myprintln(print_soc, "FP$(k_ddp): conv_soc_num = $(ddpModel[:conv_soc_num]).")
+    else
+        ddpModel[:conv_soc_num] = 1
+    end
+
+    if all_under_threshold
+        HF.myprintln(true, "FP$(k_ddp): All SOC updates are under the threshold.")
+    end
+
+    # Criterion 4: Check the magnitude of updates in μ values
+
+    converged_mu = true
+    if mu_change
+
+        for t in Tset
+            for j in Bset[1]
+                if haskey(mu, (j, t, k_ddp)) && haskey(mu, (j, t, k_ddp - 1))
+                    mu_current = mu[(j, t, k_ddp)]
+                    mu_previous = mu[(j, t, k_ddp - 1)]
+                    discrepancy = abs(mu_current - mu_previous)
+                    max_discrepancy = max(max_discrepancy, discrepancy)
+                    if discrepancy > threshold_mu
+                        converged_mu = false
+                        all_under_threshold = false
+                        # HF.myprintln(verbose, "Exceeding update tolerance: mu[$j, $t, $k_ddp], discrepancy = $discrepancy")
+                        if j in Bset_to_print
+                        # println(crayon_blue_neg("Previous value of mu[$j, $t, $(k_ddp-1)] = $mu_previous"))
+                        # println(crayon_blue_neg("Current value of mu[$j, $t, $k_ddp] = $mu_current"))
+                        end
+                    else
+                        # if j in Bset_to_print
+                        #     println(crayon_blue("mu[$j, $t, $k_ddp], discrepancy = $discrepancy"))
+                        # end
+                    end
+                else
+                    if j in Bset_to_print
+                        # println(crayon_red_neg("mu[$j, $t, $k_ddp] or mu[$j, $t, $(k_ddp-1)] not found"))
+                    end
+                end
+            end
+        end
+    end
+    if all_under_threshold
+        HF.myprintln(true, "FP$(k_ddp): All μ updates are under the threshold.")
+    end
+
+    if converged_mu
+        ddpModel[:conv_mu_num] += 1
+        HF.myprintln(print_mu, "FP$(k_ddp): conv_mu_num = $(ddpModel[:conv_mu_num]).")
+    else
+        ddpModel[:conv_mu_num] = 1
+    end
+
+    if ddpModel[:conv_fval_num] >= ddpModel[:threshold_conv_iters] && ddpModel[:conv_soc_num] >= ddpModel[:threshold_conv_iters]
+        println(crayon_green("FP$(k_ddp): SOC and fval convergence criteria repeatedly satisfied for $(ddpModel[:threshold_conv_iters]) Forward Passes."))
         converged = true
         shouldStop = true
         @pack! ddpModel = converged, shouldStop
+    end
+    if !all_under_threshold
         return ddpModel
-    else
-        HF.myprintln(print_mu, "FP$(k_ddp): Some μ updates still above threshold, continuing...")
+    end
+
+    if all_under_threshold
+        println(crayon_green("All updates are under the threshold."))
+        converged = true
+        shouldStop = true
+        @pack! ddpModel = converged, shouldStop
     end
 
     return ddpModel

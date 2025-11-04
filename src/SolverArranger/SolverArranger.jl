@@ -55,14 +55,15 @@ end
 
 #region configure_solver
 """
-    configure_solver(solver_name)
+    configure_solver(solver_name; gurobi_env=nothing)
 
 Configure and return an optimization model with the specified solver.
 
 This function creates and configures an optimization model based on the `solver_name`. 
 It sets the optimizer attributes and returns the configured model.
+For Gurobi, optionally accepts a gurobi_env to suppress license messages.
 """
-function configure_solver(solver_name)
+function configure_solver(solver_name; gurobi_env=nothing)
     if solver_name == "Ipopt"
         model = Model(Ipopt.Optimizer)
         set_silent(model)
@@ -70,7 +71,12 @@ function configure_solver(solver_name)
         set_optimizer_attribute(model, "max_iter", 10000)
         # set_optimizer_attribute(model, "print_level", 5)
     elseif solver_name == "Gurobi"
-        model = Model(Gurobi.Optimizer)
+        if gurobi_env !== nothing
+            model = Model(() -> Gurobi.Optimizer(gurobi_env))
+        else
+            model = Model(Gurobi.Optimizer)
+        end
+        set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
         set_optimizer_attribute(model, "TimeLimit", 300)        # Limit time (in seconds)
     elseif solver == "Juniper"
         ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level" => 0)

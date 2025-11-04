@@ -16,7 +16,7 @@ begin
     # T0 = 4
     # T0 = 6
     # T0 = 12
-    T0 = 24
+    T0 = 6
     # T0 = 36
     # T0 = 48
     factor = 1
@@ -32,6 +32,7 @@ begin
     alpha_fpi = 3.00
     gamma_fpi = 1.00
     maxiter_ddp = 50
+    rho_ddp = 0.1  # DDP dual step size (0.1 = 10% gradient, lower = more stable)
     # warmStart_mu = "nonlinear"
     # warmStart_mu = "linear"
     # savePlots = false

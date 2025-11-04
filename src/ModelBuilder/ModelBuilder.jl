@@ -92,7 +92,8 @@ function build_MPOPF_1ph_NL_model_t_in_Tset(data;
     @unpack solver = data
 
     # Define the optimization model including any specific solver settings
-    model = SolverArranger.configure_solver(solver)
+    gurobi_env = get(data, :gurobi_env, nothing)
+    model = SolverArranger.configure_solver(solver, gurobi_env=gurobi_env)
 
     if Tset === nothing
         Tset = data[:Tset]
