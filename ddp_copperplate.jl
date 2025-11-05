@@ -119,7 +119,8 @@ function setup_copperplate_data(;
     P_B_R_kW::Float64=800.0,
     soc_min::Float64=0.30,
     soc_max::Float64=0.95,
-    B0_fraction::Float64=0.60,
+    # B0_fraction::Float64=0.60,
+    B0_fraction::Float64=0.30,
     B_T_target_fraction::Union{Nothing,Float64}=nothing,
     Δt_h::Float64=1.0
 )
@@ -242,23 +243,23 @@ end
 # ============================================================================
 
 """
-    forward_pass_ddp!(B_collection, mu_collection, PB_collection, data, t; solver=:gurobi)
+    forward_pass_ddp!(B_collection, mu_coupling, PB_coupling, B_coupling, data, t; solver=:gurobi)
 
 Solve DDP subproblem for time step t using forward pass decomposition.
 
 Each time step optimizes only its own variables {P_Subs[t], P_B[t], B[t]} using:
-- From previous step: B[t-1] (or B0 if t=1)
-- From next step (last iteration): B[t+1], μ[t+1], P_B[t+1]
+- From previous step: B[t-1] from B_collection (CURRENT iteration, just solved)
+- From next step: B[t+1], μ[t+1], P_B[t+1] from coupling dicts (PREVIOUS iteration k-1)
 
 Objective:
-    min C[t]*P_Subs[t] + C_B*P_B[t]² + μ[t+1]*(B[t+1] - B[t] + Δt*P_B[t+1])
+        min C[t]*P_Subs[t]*Δt  + C_B*P_B[t]²* Δt + μ[t+1]*(B[t+1] - B[t] + Δt*P_B[t+1])
         └─ energy cost ─┘  └ battery ┘   └────── coupling with next ──────┘
 
 The coupling term enforces consistency with the next time step's dynamics.
 
-Returns: Dict with solution and updates B_collection[t], PB_collection[t], mu_collection[t]
+Returns: Dict with solution and updates B_collection[t] and mu_collection[t] (for iteration k)
 """
-function forward_pass_ddp!(B_collection, mu_collection, PB_collection, data::CopperPlateData, t::Int; solver::Symbol=:gurobi)
+function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data::CopperPlateData, t::Int; solver::Symbol=:gurobi)
     
     @unpack T, price, P_L_pu, bat, P_BASE, E_BASE, C_B = data
     Δt = bat.Δt
@@ -297,13 +298,13 @@ function forward_pass_ddp!(B_collection, mu_collection, PB_collection, data::Cop
     
     # 3. Coupling term with next time step (if exists)
     if t < T
-        # Get values from next time step (from last forward pass iteration)
-        B_next = B_collection[t+1]
-        mu_next = mu_collection[t+1]
-        PB_next = PB_collection[t+1]
+        # Get values from next time step from PREVIOUS iteration (k-1)
+        B_next = B_coupling[t+1]
+        mu_next = mu_coupling[t+1]
+        PB_next = PB_coupling[t+1]
         
         # Coupling: +μ[t+1] * (B[t+1] - B[t] + Δt*P_B[t+1])
-        # This enforces consistency with next step's dynamics
+        # This enforces consistency with next step's dynamics from iteration k-1
         coupling_term = mu_next * (B_next - B_t + Δt * PB_next)
         
         @objective(model, Min, energy_cost + battery_cost + coupling_term)
@@ -435,57 +436,71 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     for k in 1:max_iter
         iter_start = time()
         
-        # Store previous iteration for convergence check (dual variables)
+        # Store previous iteration values BEFORE forward pass
+        # These will be used for coupling terms: mu[t+1], B[t+1], PB[t+1] from iteration k-1
         mu_prev = copy([mu_collection[t] for t in 1:T])
+        B_prev_iter = copy([B_collection[t] for t in 1:T])
+        PB_prev_iter = copy([PB_collection[t] for t in 1:T])
         
         # FORWARD PASS: Solve all time steps sequentially
         # Each step uses B[t-1] from the CURRENT forward pass (just solved)
-        # and mu[t+1], B[t+1], PB[t+1] from PREVIOUS iteration
+        # and mu[t+1], B[t+1], PB[t+1] from PREVIOUS iteration (mu_prev, B_prev_iter, PB_prev_iter)
+        
+        # Create temporary dictionaries with previous iteration values for coupling
+        mu_coupling = Dict(t => mu_prev[t] for t in 1:T)
+        B_coupling = Dict(t => B_prev_iter[t] for t in 1:T)
+        PB_coupling = Dict(t => PB_prev_iter[t] for t in 1:T)
+        
+        if k <= 3
+            println("\n  " * "─"^70)
+            println("  📊 OPTIMALITY CHECK (Iteration $k) - After Each Time Step")
+            println("  " * "─"^70)
+        end
         
         for t in 1:T
-            result = forward_pass_ddp!(B_collection, mu_collection, PB_collection, data, t; solver=solver)
+            result = forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data, t; solver=solver)
             PSubs_collection[t] = result[:P_Subs]
             
             # Extract dual variables for SOC box constraints
             lambda_Bmax_collection[t] = result[:lambda_Bmax]
             lambda_Bmin_collection[t] = result[:lambda_Bmin]
             
-            # Note: B_collection[t] is now updated with the fresh value
-            # The next time step (t+1) will use this fresh B_collection[t] as B[t]
-        end
-        
-        # VERIFY OPTIMALITY CONDITIONS: λ_Bmax[t] - λ_Bmin[t] + μ_SOC[t] - μ_SOC[t+1] = 0
-        # Also check individual lambda signs (should be ≥ 0)
-        if k <= 3
-            println("\n  " * "─"^70)
-            println("  📊 OPTIMALITY & DUAL SIGN CHECK (Iteration $k)")
-            println("  " * "─"^70)
-            for t in 1:T
+            # IMMEDIATE KKT CHECK: Show what this subproblem thinks based on coupling info
+            if k <= 3
                 B_t = B_collection[t]
                 mu_t = mu_collection[t]
-                mu_tp1 = (t < T) ? mu_collection[t+1] : 0.0
                 lambda_Bmax_t = lambda_Bmax_collection[t]
                 lambda_Bmin_t = lambda_Bmin_collection[t]
                 
-                # Check if constraints are active
-                Bmin_val = Bmin(data.bat)
-                Bmax_val = Bmax(data.bat)
-                at_lower = abs(B_t - Bmin_val) < 1e-4
-                at_upper = abs(B_t - Bmax_val) < 1e-4
+                # The mu[t+1] that was USED in this subproblem's objective (from previous iteration)
+                mu_tp1_used = (t < T) ? mu_coupling[t+1] : 0.0
                 
-                opt_residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
+                println("  t=$t solved: B=$(round(B_t, digits=4)) ∈ [$(round(Bmin(data.bat), digits=2)), $(round(Bmax(data.bat), digits=2))]")
+                @printf "      λ_Bmin=%+.6f,  λ_Bmax=%+.6f,  μ[t]=%+.6f\n" lambda_Bmin_t lambda_Bmax_t mu_t
+                @printf "      μ[t+1] used in objective = %+.6f (from iter %d)\n" mu_tp1_used (k-1)
                 
-                println("  t=$t: B=$(round(B_t, digits=4)) ∈ [$(round(Bmin_val, digits=2)), $(round(Bmax_val, digits=2))]")
-                @printf "      λ_Bmin=%+.6f %s,  λ_Bmax=%+.6f %s\n" lambda_Bmin_t (lambda_Bmin_t >= -1e-6 ? "✓" : "⚠") lambda_Bmax_t (lambda_Bmax_t >= -1e-6 ? "✓" : "⚠")
-                @printf "      μ[t]=%+.4f,  μ[t+1]=%+.4f  →  Δμ=%+.4f\n" mu_t mu_tp1 (mu_t - mu_tp1)
-                @printf "      Optimality residual: %.2e %s\n" opt_residual (abs(opt_residual) < 1e-3 ? "✓" : "⚠")
-                if at_lower
-                    println("      📍 At LOWER bound (expect λ_Bmin > 0)")
-                elseif at_upper
-                    println("      📍 At UPPER bound (expect λ_Bmax > 0)")
+                if t < T
+                    residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1_used
+                    @printf "      KKT: [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
+                else
+                    residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
+                    @printf "      KKT: [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
+                end
+                
+                if abs(residual) < 1e-3
+                    println(" ✓")
+                else
+                    println(" ✗")
                 end
                 println()
             end
+            
+            # Note: B_collection[t] and mu_collection[t] are now updated with fresh values from iteration k
+            # The next time step (t+1) will use this fresh B_collection[t] as B[t-1]
+            # But for coupling, all steps still use mu_coupling[t+1] from iteration k-1
+        end
+        
+        if k <= 3
             println("  " * "─"^70)
         end
         
