@@ -183,7 +183,7 @@ Plot DDP convergence showing objective function and convergence error across ite
 - filename: Filename for saving the plot
 """
 function plot_ddp_convergence(solution_ddp; showPlots::Bool=true, savePlots::Bool=false, 
-                              filename::String="ddp_convergence.png")
+                              filename::String="ddp_convergence.png", bf_objective::Union{Nothing, Float64}=nothing)
     
     conv_hist = solution_ddp[:convergence_history]
     obj_history = conv_hist[:obj_history]
@@ -191,18 +191,22 @@ function plot_ddp_convergence(solution_ddp; showPlots::Bool=true, savePlots::Boo
     
     iterations = 1:length(obj_history)
     
+    # Get DDP final objective
+    ddp_final_obj = solution_ddp[:objective]
+    
     # Set theme and colors
     gr()
     theme(:mute)
     
-    # Create objective function plot
+    # Create objective function plot with DDP trace
+    ddp_label = @sprintf "DDP (final: \$%.2f)" ddp_final_obj
     obj_plot = plot(
         iterations, obj_history,
         dpi=600,
-        label="Objective Value",
+        label=ddp_label,
         xlabel="Iteration (k)",
         ylabel="Objective Function [\$]",
-        legend=:bottomright,
+        legend=:topright,
         lw=3,
         color=:magenta,  # Magenta for DDP (blue reserved for tADMM)
         markershape=:circle,
@@ -220,16 +224,28 @@ function plot_ddp_convergence(solution_ddp; showPlots::Bool=true, savePlots::Boo
         tickfontfamily="Computer Modern"
     )
     
+    # Add BF reference line if provided
+    if !isnothing(bf_objective)
+        bf_label = @sprintf "BF Optimal: \$%.2f" bf_objective
+        plot!(obj_plot, 
+              iterations, 
+              fill(bf_objective, length(iterations)),
+              label=bf_label,
+              linestyle=:dash,
+              lw=2.5,
+              color=:orange)
+    end
+    
     # Create convergence error plot (log scale if range is large enough)
     use_log_scale = (maximum(convergence_error) / minimum(convergence_error[convergence_error .> 0]) > 10.0)
     
     error_plot = plot(
         iterations, convergence_error,
         dpi=600,
-        label="Convergence Error (||ΔB||)",
+        label="Convergence Error (||Δμ||)",
         xlabel="Iteration (k)",
-        ylabel=use_log_scale ? "||ΔB|| [log scale]" : "||ΔB||",
-        legend=:bottomleft,
+        ylabel=use_log_scale ? "||Δμ|| [log scale]" : "||Δμ||",
+        legend=:topright,
         lw=3,
         color=:darkgreen,
         markershape=:square,

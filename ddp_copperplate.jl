@@ -179,8 +179,8 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
     @constraint(model, power_balance[t in 1:T], P_Subs[t] + P_B[t] == P_L_pu[t])
     
     # Battery dynamics
-    @constraint(model, B[1] - bat.B0_pu + P_B[1] * Δt == 0)
-    @constraint(model, [t in 2:T], B[t] - B[t-1] + P_B[t] * Δt == 0)
+    @constraint(model, battery_dynamics_1, B[1] - bat.B0_pu + P_B[1] * Δt == 0)
+    @constraint(model, battery_dynamics[t in 2:T], B[t] - B[t-1] + P_B[t] * Δt == 0)
     
     # Terminal SOC constraint (if specified)
     if !isnothing(bat.B_T_target_pu)
@@ -226,6 +226,16 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
         result[:P_Subs] = value.(P_Subs)
         result[:P_B] = value.(P_B)
         result[:B] = value.(B)
+        
+        # Extract dual variables for battery dynamics (μ)
+        # μ[1] = -dual of battery_dynamics constraint at t=1
+        # μ[t] = -dual of battery_dynamics constraint at t (for t=2..T)
+        mu_bf = zeros(T)
+        mu_bf[1] = -dual(battery_dynamics_1)
+        for t in 2:T
+            mu_bf[t] = -dual(battery_dynamics[t])
+        end
+        result[:mu] = mu_bf
         
         # Compute objective components
         energy_cost = sum(price[t] * (value(P_Subs[t]) * P_BASE) * Δt for t in 1:T)
@@ -298,25 +308,16 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
     
     # 3. Coupling term with next time step (if exists)
     if t < T
-        # NEW: Make B[t+1] and P_B[t+1] DECISION VARIABLES instead of constants
-        # Only μ[t+1] remains as a parameter from previous iteration
-        @variable(model, -bat.P_B_R_pu <= P_B_tp1 <= bat.P_B_R_pu)
-        @variable(model, B_tp1)
+        # Get coupling values from previous iteration k-1
+        # These are CONSTANTS (not decision variables)
+        B_next = B_coupling[t+1]      # B[t+1] from previous iteration
+        PB_next = PB_coupling[t+1]    # P_B[t+1] from previous iteration
+        mu_next = mu_coupling[t+1]    # μ[t+1] from previous iteration
         
-        # Add SOC bounds for B[t+1]
-        @constraint(model, Bmin(bat) - B_tp1 <= 0)
-        @constraint(model, B_tp1 - Bmax(bat) <= 0)
-        
-        # Link B[t+1] and P_B[t+1] through battery dynamics: B[t+1] = B[t] - Δt*P_B[t+1]
-        @constraint(model, forward_dynamics, B_tp1 - B_t + Δt * P_B_tp1 == 0)
-        
-        # Get dual variable from previous iteration
-        mu_next = mu_coupling[t+1]
-        
-        # Coupling: +μ[t+1] * (B[t+1] - B[t] + Δt*P_B[t+1])
-        # With the forward_dynamics constraint, this term will be zero at optimum
-        # But the constraint's dual (which equals μ[t+1]) provides the coordination
-        coupling_term = mu_next * (B_tp1 - B_t + Δt * P_B_tp1)
+        # Coupling term: μ[t+1] * (B[t+1] - B[t] + Δt*P_B[t+1])
+        # where B[t+1], P_B[t+1] are constants from previous iteration
+        # and B[t] is a decision variable
+        coupling_term = mu_next * (B_next - B_t + Δt * PB_next)
         
         @objective(model, Min, energy_cost + battery_cost + coupling_term)
     else
@@ -356,7 +357,7 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         lambda_Bmin = -dual(soc_lower)  # Negate to get positive when at lower bound
         lambda_Bmax = dual(soc_upper)    # Already correct sign
         
-        result_dict = Dict(
+        return Dict(
             :status => status,
             :objective => objective_value(model),
             :P_Subs => value(P_Subs_t),
@@ -367,22 +368,13 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
             :lambda_Bmin => lambda_Bmin,
             :solve_time => solve_time(model)
         )
-        
-        # If this subproblem has a coupling term, return the predicted next state
-        # These are the values that B[t+1] and P_B[t+1] SHOULD be according to this subproblem
-        if t < T
-            result_dict[:B_tp1_predicted] = value(B_tp1)
-            result_dict[:P_B_tp1_predicted] = value(P_B_tp1)
-        end
-        
-        return result_dict
     else
         error("DDP forward pass failed for time step t=$t with status: $status")
     end
 end
 
 """
-    solve_CopperPlate_DDP(data; max_iter=100, tol=1e-5, solver=:gurobi)
+    solve_CopperPlate_DDP(data; max_iter=100, tol=1e-5, solver=:gurobi, mu_init=nothing)
 
 Solve copper plate MPOPF using DDP (Distributed Dynamic Programming) with forward pass decomposition.
 
@@ -394,12 +386,16 @@ Algorithm:
    - Automatically updates collections
 3. Check convergence: ||B^k - B^{k-1}|| < tol
 
+Parameters:
+- mu_init: Optional vector of length T with initial μ values (e.g., from brute force solution)
+
 Returns: Dict with solution, convergence history, and timing statistics
 """
 function solve_CopperPlate_DDP(data::CopperPlateData; 
                                 max_iter::Int=100, 
                                 tol::Float64=1e-5,
-                                solver::Symbol=:gurobi)
+                                solver::Symbol=:gurobi,
+                                mu_init::Union{Nothing, Vector{Float64}}=nothing)
     
     @unpack T, price, P_L_pu, bat, P_BASE, E_BASE, C_B = data
     Δt = bat.Δt
@@ -413,9 +409,18 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     # For k=1, initialize all states with B0
     for t in 1:T
         B_collection[t] = bat.B0_pu
-        mu_collection[t] = 0.0
+        # Use provided μ initialization if available, otherwise start with 0
+        mu_collection[t] = isnothing(mu_init) ? 0.0 : mu_init[t]
         PB_collection[t] = 0.0
         PSubs_collection[t] = 0.0
+    end
+    
+    # Print initialization source
+    if !isnothing(mu_init)
+        println("\n🎯 DDP initialized with provided μ values:")
+        for t in 1:T
+            @printf "   μ[%d] = %+.6f\n" t mu_init[t]
+        end
     end
     
     # Lambda collections for SOC box constraint duals
@@ -655,7 +660,7 @@ begin # scenario config
     use_gurobi_for_ddp = true  # Use Gurobi for DDP subproblems
     
     # DDP algorithm parameters
-    max_iter_ddp = 5
+    max_iter_ddp = 50
     tol_ddp = 1e-5
     
     # Battery and load parameters (will be passed to setup function)
@@ -803,11 +808,24 @@ println("\n" * "="^80)
 println(COLOR_HIGHLIGHT, "SOLVING COPPER PLATE MPOPF (DDP)", COLOR_RESET)
 println("="^80)
 
+# Extract μ from brute force solution for initialization
+mu_init_from_bf = nothing
+if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
+    if haskey(sol_bf, :mu)
+        mu_init_from_bf = sol_bf[:mu]
+        println("\n📋 Extracted μ values from Brute Force solution:")
+        for t in 1:T
+            @printf "   μ[%d] = %+.6f\n" t mu_init_from_bf[t]
+        end
+    end
+end
+
 solver_ddp_choice = use_gurobi_for_ddp ? :gurobi : :ipopt
 sol_ddp = solve_CopperPlate_DDP(data; 
                                  max_iter=max_iter_ddp, 
                                  tol=tol_ddp,
-                                 solver=solver_ddp_choice)
+                                 solver=solver_ddp_choice,
+                                 mu_init=mu_init_from_bf)
 
 # Report results
 println("\n--- SOLUTION STATUS ---")
@@ -975,26 +993,27 @@ if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
                         filename=joinpath(system_dir, "battery_actions_bf.png"))
 end
 
-if sol_ddp[:converged]
-    println("📊 Plotting battery actions (DDP)...")
-    plot_battery_actions(sol_ddp, data, "DDP",
-                        showPlots=showPlots,
-                        savePlots=savePlots,
-                        filename=joinpath(system_dir, "battery_actions_ddp.png"))
-    
-    println("📊 Plotting DDP convergence...")
-    plot_ddp_convergence(sol_ddp,
-                        showPlots=showPlots,
-                        savePlots=savePlots,
-                        filename=joinpath(system_dir, "ddp_convergence.png"))
-    
-    if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
-        println("📊 Plotting comparison...")
-        plot_comparison(sol_bf, sol_ddp, data,
-                       showPlots=showPlots,
-                       savePlots=savePlots,
-                       filename=joinpath(system_dir, "comparison_bf_vs_ddp.png"))
-    end
+# Plot DDP results (even if not converged, to see the trajectory)
+println("📊 Plotting battery actions (DDP)...")
+plot_battery_actions(sol_ddp, data, "DDP",
+                    showPlots=showPlots,
+                    savePlots=savePlots,
+                    filename=joinpath(system_dir, "battery_actions_ddp.png"))
+
+println("📊 Plotting DDP convergence...")
+bf_obj = (sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED) ? sol_bf[:objective] : nothing
+plot_ddp_convergence(sol_ddp,
+                    showPlots=showPlots,
+                    savePlots=savePlots,
+                    filename=joinpath(system_dir, "ddp_convergence.png"),
+                    bf_objective=bf_obj)
+
+if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
+    println("📊 Plotting comparison...")
+    plot_comparison(sol_bf, sol_ddp, data,
+                   showPlots=showPlots,
+                   savePlots=savePlots,
+                   filename=joinpath(system_dir, "comparison_bf_vs_ddp.png"))
 end
 
 println("\n" * "="^80)
