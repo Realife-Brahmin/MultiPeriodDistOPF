@@ -275,7 +275,7 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         set_silent(model)
     end
     
-    # Decision variables for time step t only
+    # Decision variables for time step t
     @variable(model, P_Subs_t >= 0)
     @variable(model, -bat.P_B_R_pu <= P_B_t <= bat.P_B_R_pu)
     @variable(model, B_t)
@@ -298,14 +298,25 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
     
     # 3. Coupling term with next time step (if exists)
     if t < T
-        # Get values from next time step from PREVIOUS iteration (k-1)
-        B_next = B_coupling[t+1]
+        # NEW: Make B[t+1] and P_B[t+1] DECISION VARIABLES instead of constants
+        # Only μ[t+1] remains as a parameter from previous iteration
+        @variable(model, -bat.P_B_R_pu <= P_B_tp1 <= bat.P_B_R_pu)
+        @variable(model, B_tp1)
+        
+        # Add SOC bounds for B[t+1]
+        @constraint(model, Bmin(bat) - B_tp1 <= 0)
+        @constraint(model, B_tp1 - Bmax(bat) <= 0)
+        
+        # Link B[t+1] and P_B[t+1] through battery dynamics: B[t+1] = B[t] - Δt*P_B[t+1]
+        @constraint(model, forward_dynamics, B_tp1 - B_t + Δt * P_B_tp1 == 0)
+        
+        # Get dual variable from previous iteration
         mu_next = mu_coupling[t+1]
-        PB_next = PB_coupling[t+1]
         
         # Coupling: +μ[t+1] * (B[t+1] - B[t] + Δt*P_B[t+1])
-        # This enforces consistency with next step's dynamics from iteration k-1
-        coupling_term = mu_next * (B_next - B_t + Δt * PB_next)
+        # With the forward_dynamics constraint, this term will be zero at optimum
+        # But the constraint's dual (which equals μ[t+1]) provides the coordination
+        coupling_term = mu_next * (B_tp1 - B_t + Δt * P_B_tp1)
         
         @objective(model, Min, energy_cost + battery_cost + coupling_term)
     else
@@ -345,7 +356,7 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         lambda_Bmin = -dual(soc_lower)  # Negate to get positive when at lower bound
         lambda_Bmax = dual(soc_upper)    # Already correct sign
         
-        return Dict(
+        result_dict = Dict(
             :status => status,
             :objective => objective_value(model),
             :P_Subs => value(P_Subs_t),
@@ -356,6 +367,15 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
             :lambda_Bmin => lambda_Bmin,
             :solve_time => solve_time(model)
         )
+        
+        # If this subproblem has a coupling term, return the predicted next state
+        # These are the values that B[t+1] and P_B[t+1] SHOULD be according to this subproblem
+        if t < T
+            result_dict[:B_tp1_predicted] = value(B_tp1)
+            result_dict[:P_B_tp1_predicted] = value(P_B_tp1)
+        end
+        
+        return result_dict
     else
         error("DDP forward pass failed for time step t=$t with status: $status")
     end
@@ -475,13 +495,18 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
                 # The mu[t+1] that was USED in this subproblem's objective (from previous iteration)
                 mu_tp1_used = (t < T) ? mu_coupling[t+1] : 0.0
                 
-                println("  t=$t solved: B=$(round(B_t, digits=4)) ∈ [$(round(Bmin(data.bat), digits=2)), $(round(Bmax(data.bat), digits=2))]")
-                @printf "      λ_Bmin=%+.6f,  λ_Bmax=%+.6f,  μ[t]=%+.6f\n" lambda_Bmin_t lambda_Bmax_t mu_t
-                @printf "      μ[t+1] used in objective = %+.6f (from iter %d)\n" mu_tp1_used (k-1)
+                # B[t-1]: previous state (input to this subproblem)
+                B_tm1 = (t == 1) ? data.bat.B0_pu : B_collection[t-1]
+                
+                println("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                println("  t=$t: \e[31mB[t-1]=$(round(B_tm1, digits=4))\e[0m → B[t]=$(round(B_t, digits=4)) (SOC ∈ [$(round(Bmin(data.bat), digits=2)), $(round(Bmax(data.bat), digits=2))])")
+                @printf "      λ_Bmin=%+.6f,  λ_Bmax=%+.6f\n" lambda_Bmin_t lambda_Bmax_t
+                @printf "      \e[32mμ[t] PRODUCED\e[0m = %+.6f (will be used in t=%d next iter)\n" mu_t (t-1)
+                @printf "      \e[34mμ[t+1] USED\e[0m    = %+.6f (from iter %d)\n" mu_tp1_used (k-1)
                 
                 if t < T
                     residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1_used
-                    @printf "      KKT: [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
+                    @printf "      KKT: [%+.3f - %+.3f + %+.3f - \e[34m%+.3f\e[0m] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
                 else
                     residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
                     @printf "      KKT: [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
