@@ -242,9 +242,9 @@ function plot_ddp_convergence(solution_ddp; showPlots::Bool=true, savePlots::Boo
     error_plot = plot(
         iterations, convergence_error,
         dpi=600,
-        label="Convergence Error (||ΔB||)",
+        label="Convergence Error (max(||ΔB||, ||Δμ||))",
         xlabel="Iteration (k)",
-        ylabel=use_log_scale ? "||ΔB|| [log scale]" : "||ΔB||",
+        ylabel=use_log_scale ? "max(||ΔB||, ||Δμ||) [log scale]" : "max(||ΔB||, ||Δμ||)",
         legend=:topright,
         lw=3,
         color=:darkgreen,

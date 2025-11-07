@@ -1,0 +1,28 @@
+================================================================================
+COPPER PLATE MPOPF - BRUTE FORCE SOLUTION
+================================================================================
+
+Problem Configuration:
+  Time periods (T):         2
+  Solver:                   gurobi
+  Optimization status:      OPTIMAL
+
+Objective Value:
+  Total Cost:     $118.872622
+  Energy Cost:    $118.832622 (99.97%)
+  Battery Cost:   $0.040000 (0.03%)
+
+Computation Time:
+  Solver time:    0.000000 seconds
+  Wallclock time: 0.000000 seconds
+
+Model Statistics:
+  Variables:      6
+  Constraints:    14
+
+Solution Summary:
+  Substation (kW):  min=235.33, max=1435.33, avg=835.33
+  Battery (kW):     min=-400.00, max=800.00, avg=200.00
+  SOC (kWh):        min=1200.00, max=2000.00, avg=1600.00
+
+================================================================================
