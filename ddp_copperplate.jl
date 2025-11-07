@@ -119,8 +119,7 @@ function setup_copperplate_data(;
     P_B_R_kW::Float64=800.0,
     soc_min::Float64=0.30,
     soc_max::Float64=0.95,
-    # B0_fraction::Float64=0.60,
-    B0_fraction::Float64=0.30,
+    B0_fraction::Float64=0.60,
     B_T_target_fraction::Union{Nothing,Float64}=nothing,
     Δt_h::Float64=1.0
 )
@@ -133,8 +132,25 @@ function setup_copperplate_data(;
     LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
     P_L_kW = P_L_R_kW .* LoadShapeLoad
     
-    # Generate cost shape: sinusoidal profile from 8 to 20 cents/kWh
-    LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+    # Original cost shape (sinusoidal): commented out
+    # LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+    
+    # NEW cost shape: Low prices in first half (CHARGE), high prices in second half (DISCHARGE)
+    # This creates strong incentive to charge when cheap, discharge when expensive
+    # Pattern: [cheap, cheap, ..., expensive, expensive, ...]
+    # Example for T=4: [5, 5, 20, 20] cents/kWh (4x price difference)
+    # This should make greedy DDP fail since it can't look ahead
+    if T == 2
+        # For 2 periods: [5, 20] cents/kWh - charge at t=1, discharge at t=2
+        LoadShapeCost = [0.05, 0.20]
+    elseif T == 4
+        # For 4 periods: [5, 5, 20, 20] cents/kWh
+        LoadShapeCost = [0.05, 0.05, 0.20, 0.20]
+    else
+        # For general T: first half cheap (5 cents), second half expensive (20 cents)
+        half_T = div(T, 2)
+        LoadShapeCost = vcat(fill(0.05, half_T), fill(0.20, T - half_T))
+    end
     
     # Battery quadratic cost coefficient
     C_B = 1e-6 * minimum(LoadShapeCost)
@@ -356,6 +372,16 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         lambda_Bmin = -dual(soc_lower)  # Negate to get positive when at lower bound
         lambda_Bmax = dual(soc_upper)    # Already correct sign
         
+        # Extract dual of battery dynamics constraint
+        # This represents the shadow price / marginal value of state B[t]
+        mu_raw = dual(battery_dynamics)
+        mu_val = -mu_raw  # Negate for proper economic interpretation
+        
+        # DEBUG: Print raw dual value for first few iterations
+        # if t <= 2
+        #     @printf "    DEBUG t=%d: dual(battery_dynamics)=%+.6f, μ[t]=%+.6f\n" t mu_raw mu_val
+        # end
+        
         # Return dict with solution
         result_dict = Dict(
             :status => status,
@@ -363,7 +389,7 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
             :P_Subs => value(P_Subs_t),
             :P_B => value(P_B_t),
             :B => value(B_t),
-            :mu => -dual(battery_dynamics),
+            :mu => mu_val,
             :lambda_Bmax => lambda_Bmax,
             :lambda_Bmin => lambda_Bmin,
             :solve_time => solve_time(model)
@@ -493,6 +519,9 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             result = forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data, t; solver=solver)
             PSubs_collection[t] = result[:P_Subs]
             
+            # Update μ[t] with the dual variable from this subproblem
+            mu_collection[t] = result[:mu]
+            
             # If not terminal time, update P_B[t+1] with the optimal value from coupling
             if t < T && haskey(result, :PB_next)
                 PB_collection[t+1] = result[:PB_next]
@@ -518,15 +547,26 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
                 println("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 println("  t=$t: \e[31mB[t-1]=$(round(B_tm1, digits=4))\e[0m → B[t]=$(round(B_t, digits=4)) (SOC ∈ [$(round(Bmin(data.bat), digits=2)), $(round(Bmax(data.bat), digits=2))])")
                 @printf "      λ_Bmin=%+.6f,  λ_Bmax=%+.6f\n" lambda_Bmin_t lambda_Bmax_t
-                @printf "      \e[32mμ[t] PRODUCED\e[0m = %+.6f (will be used in t=%d next iter)\n" mu_t (t-1)
-                @printf "      \e[34mμ[t+1] USED\e[0m    = %+.6f (from iter %d)\n" mu_tp1_used (k-1)
+                
+                # Display μ[t] produced and where it will be used
+                if t == 1
+                    @printf "      \e[32mμ[t] PRODUCED\e[0m = %+.6f (only for KKT check, no backward coupling)\n" mu_t
+                else
+                    @printf "      \e[32mμ[t] PRODUCED\e[0m = %+.6f (will be used in t=%d coupling next iter)\n" mu_t (t-1)
+                end
                 
                 if t < T
+                    # For iteration k, we use μ[t+1] from iteration k-1
+                    iter_source = (k == 1) ? "initialization" : "iter $(k-1)"
+                    @printf "      \e[34mμ[t+1] USED\e[0m    = %+.6f (from %s)\n" mu_tp1_used iter_source
                     residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1_used
-                    @printf "      KKT: [%+.3f - %+.3f + %+.3f - \e[34m%+.3f\e[0m] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
+                    @printf "      KKT (interior): λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0\n"
+                    @printf "                      [%+.3f - %+.3f + %+.3f - \e[34m%+.3f\e[0m] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
                 else
+                    @printf "      \e[90mμ[t+1]\e[0m          = N/A (no future timestep)\n"
                     residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
-                    @printf "      KKT: [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
+                    @printf "      KKT (terminal): λ_Bmax - λ_Bmin + μ[T] = 0\n"
+                    @printf "                      [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
                 end
                 
                 if abs(residual) < 1e-3
@@ -569,21 +609,27 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         push!(lambda_Bmin_history, [lambda_Bmin_collection[t] for t in 1:T])
         push!(lambda_Bmax_history, [lambda_Bmax_collection[t] for t in 1:T])
         
-        # Compute convergence metrics based on STATE variables (B)
+        # Compute convergence metrics based on BOTH STATE (B) and DUAL (μ) variables
         B_curr = [B_collection[t] for t in 1:T]
         B_error = norm(B_curr - B_prev_iter)
         
-        push!(convergence_error, B_error)
+        mu_curr = [mu_collection[t] for t in 1:T]
+        mu_error = norm(mu_curr - mu_prev)
+        
+        # Combined convergence metric: max of both errors
+        combined_error = max(B_error, mu_error)
+        
+        push!(convergence_error, combined_error)
         
         iter_time = time() - iter_start
         push!(iteration_times, iter_time)
         
         # Print progress
-        @printf "k=%3d  obj=\$%.4f  ||ΔB||=%.2e\n" k total_obj B_error
+        @printf "k=%3d  obj=\$%.4f  ||ΔB||=%.2e  ||Δμ||=%.2e  max=%.2e\n" k total_obj B_error mu_error combined_error
         
-        # Show KKT condition: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
-        # For t < T: four terms
-        # For t = T: only three terms (no future μ)
+        # Show KKT condition check for all time steps
+        # Interior (t < T): λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
+        # Terminal (t = T): λ_Bmax - λ_Bmin + μ[T] = 0 (no future coupling)
         for t in 1:T
             mu_t = mu_collection[t]
             lambda_Bmin_t = lambda_Bmin_collection[t]
@@ -595,13 +641,13 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
                 residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
                 kkt_satisfied = abs(residual) < 1e-3
                 
-                @printf "  t=%d: [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1 residual
+                @printf "  t=%d (interior): [λ_Bmax - λ_Bmin + μ[t] - μ[t+1]] = [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1 residual
             else
-                # Terminal time step: λ_Bmax - λ_Bmin + μ[T] = 0 (no future coupling)
+                # Terminal time step: λ_Bmax - λ_Bmin + μ[T] = 0 (no future, no μ[T+1])
                 residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
                 kkt_satisfied = abs(residual) < 1e-3
                 
-                @printf "  t=%d: [%+.3f - %+.3f + %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t residual
+                @printf "  t=%d (terminal): [λ_Bmax - λ_Bmin + μ[T]] = [%+.3f - %+.3f + %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t residual
             end
             
             if kkt_satisfied
@@ -614,9 +660,9 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             print(COLOR_RESET)
         end
         
-        # Check convergence based on state variables (B)
-        if B_error < tol
-            @printf "🎉 DDP converged at iteration %d (||ΔB||=%.2e < %.2e)\n" k B_error tol
+        # Check convergence based on BOTH state (B) and dual (μ) variables
+        if combined_error < tol
+            @printf "🎉 DDP converged at iteration %d (max(||ΔB||, ||Δμ||)=%.2e < %.2e)\n" k combined_error tol
             converged = true
             final_iter = k
             break
@@ -627,7 +673,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     
     if !converged
         print(COLOR_WARNING)
-        @printf "⚠ DDP did not converge after %d iterations (||ΔB||=%.2e >= %.2e)\n" max_iter last(convergence_error) tol
+        @printf "⚠ DDP did not converge after %d iterations (max(||ΔB||, ||Δμ||)=%.2e >= %.2e)\n" max_iter last(convergence_error) tol
         print(COLOR_RESET)
     end
     
@@ -669,14 +715,14 @@ end
 
 begin # scenario config
     # System parameters
-    T = 4  # Number of time periods (start small for testing)
+    T = 2  # Number of time periods (start small for testing)
     
     # Solver selection
     use_gurobi_for_bf = true   # Use Gurobi for brute force
     use_gurobi_for_ddp = true  # Use Gurobi for DDP subproblems
     
     # DDP algorithm parameters
-    max_iter_ddp = 50
+    max_iter_ddp = 20
     tol_ddp = 1e-5
     
     # Battery and load parameters (will be passed to setup function)
@@ -685,7 +731,9 @@ begin # scenario config
     P_B_R_kW = 800.0        # Battery power rating
     soc_min = 0.30
     soc_max = 0.95
-    B0_fraction = 0.60      # Initial SOC (60% of capacity)
+    # B0_fraction = 0.60      # Initial SOC (60% of capacity)
+    B0_fraction = 0.40      # Initial SOC (40% of capacity)
+
     Δt_h = 1.0              # 1-hour time steps
     
     # Plotting settings
