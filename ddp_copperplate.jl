@@ -188,7 +188,7 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
     # Decision variables
     @variable(model, P_Subs[t in 1:T] >= 0)
     @variable(model, -bat.P_B_R_pu <= P_B[t in 1:T] <= bat.P_B_R_pu)
-    @variable(model, Bmin(bat) <= B[t in 1:T] <= Bmax(bat))
+    @variable(model, B[t in 1:T])  # Will add explicit bounds as constraints
     
     # Constraints
     # Power balance at each time
@@ -198,9 +198,14 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
     @constraint(model, battery_dynamics_1, B[1] - bat.B0_pu + P_B[1] * Δt == 0)
     @constraint(model, battery_dynamics[t in 2:T], B[t] - B[t-1] + P_B[t] * Δt == 0)
     
+    # SOC box constraints (explicit for dual extraction)
+    @constraint(model, soc_lower[t in 1:T], Bmin(bat) - B[t] <= 0)  # B >= Bmin
+    @constraint(model, soc_upper[t in 1:T], B[t] - Bmax(bat) <= 0)  # B <= Bmax
+    
     # Terminal SOC constraint (if specified)
-    if !isnothing(bat.B_T_target_pu)
-        @constraint(model, B[T] == bat.B_T_target_pu)
+    has_terminal_constraint = !isnothing(bat.B_T_target_pu)
+    if has_terminal_constraint
+        @constraint(model, terminal_soc, B[T] == bat.B_T_target_pu)
     end
     
     # Objective: energy cost + battery quadratic cost
@@ -252,6 +257,23 @@ function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gu
             mu_bf[t] = -dual(battery_dynamics[t])
         end
         result[:mu] = mu_bf
+        
+        # Extract dual variables for SOC box constraints
+        lambda_Bmin_bf = zeros(T)
+        lambda_Bmax_bf = zeros(T)
+        for t in 1:T
+            lambda_Bmin_bf[t] = -dual(soc_lower[t])  # Negate to get positive when at lower bound
+            lambda_Bmax_bf[t] = dual(soc_upper[t])    # Already correct sign
+        end
+        result[:lambda_Bmin] = lambda_Bmin_bf
+        result[:lambda_Bmax] = lambda_Bmax_bf
+        
+        # Extract dual of terminal SOC constraint if present
+        mu_terminal_bf = zeros(T)
+        if has_terminal_constraint
+            mu_terminal_bf[T] = -dual(terminal_soc)  # Negate for proper sign convention
+        end
+        result[:mu_terminal] = mu_terminal_bf
         
         # Compute objective components
         energy_cost = sum(price[t] * (value(P_Subs[t]) * P_BASE) * Δt for t in 1:T)
@@ -353,6 +375,12 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
     # 2. Battery dynamics: B[t] = B[t-1] - Δt*P_B[t]
     @constraint(model, battery_dynamics, B_t - B_prev + Δt * P_B_t == 0)
     
+    # 3. Terminal SOC constraint (if this is the last time step)
+    has_terminal_constraint = (t == T && !isnothing(bat.B_T_target_pu))
+    if has_terminal_constraint
+        @constraint(model, terminal_soc, B_t == bat.B_T_target_pu)
+    end
+    
     # Solve
     optimize!(model)
     
@@ -377,10 +405,17 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         mu_raw = dual(battery_dynamics)
         mu_val = -mu_raw  # Negate for proper economic interpretation
         
-        # DEBUG: Print raw dual value for first few iterations
-        # if t <= 2
-        #     @printf "    DEBUG t=%d: dual(battery_dynamics)=%+.6f, μ[t]=%+.6f\n" t mu_raw mu_val
-        # end
+        # Extract dual of terminal SOC constraint if present
+        # This represents the shadow price of enforcing B[T] = B_target
+        mu_terminal = 0.0
+        if has_terminal_constraint
+            mu_terminal_raw = dual(terminal_soc)
+            mu_terminal = -mu_terminal_raw  # Negate for proper sign convention
+        end
+        
+        # Total coupling dual for backward pass = μ[t] + μ_terminal
+        # At terminal step, the total shadow price includes both dynamics and terminal constraint
+        mu_total = mu_val + mu_terminal
         
         # Return dict with solution
         result_dict = Dict(
@@ -390,6 +425,8 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
             :P_B => value(P_B_t),
             :B => value(B_t),
             :mu => mu_val,
+            :mu_terminal => mu_terminal,
+            :mu_total => mu_total,
             :lambda_Bmax => lambda_Bmax,
             :lambda_Bmin => lambda_Bmin,
             :solve_time => solve_time(model)
@@ -459,9 +496,11 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     # Lambda collections for SOC box constraint duals
     lambda_Bmin_collection = Dict{Int, Float64}()
     lambda_Bmax_collection = Dict{Int, Float64}()
+    mu_terminal_collection = Dict{Int, Float64}()  # Terminal SOC constraint dual
     for t in 1:T
         lambda_Bmin_collection[t] = 0.0
         lambda_Bmax_collection[t] = 0.0
+        mu_terminal_collection[t] = 0.0
     end
     
     # History tracking
@@ -490,6 +529,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     converged = false
     final_iter = max_iter
     wallclock_start = time()
+    kkt_prev = Inf  # Track previous KKT error for stagnation detection
     
     for k in 1:max_iter
         iter_start = time()
@@ -521,6 +561,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             
             # Update μ[t] with the dual variable from this subproblem
             mu_collection[t] = result[:mu]
+            mu_terminal_collection[t] = result[:mu_terminal]
             
             # If not terminal time, update P_B[t+1] with the optimal value from coupling
             if t < T && haskey(result, :PB_next)
@@ -535,6 +576,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             if k <= 3
                 B_t = B_collection[t]
                 mu_t = mu_collection[t]
+                mu_terminal_t = mu_terminal_collection[t]
                 lambda_Bmax_t = lambda_Bmax_collection[t]
                 lambda_Bmin_t = lambda_Bmin_collection[t]
                 
@@ -556,17 +598,25 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
                 end
                 
                 if t < T
-                    # For iteration k, we use μ[t+1] from iteration k-1
+                    # Interior timestep KKT condition
                     iter_source = (k == 1) ? "initialization" : "iter $(k-1)"
                     @printf "      \e[34mμ[t+1] USED\e[0m    = %+.6f (from %s)\n" mu_tp1_used iter_source
                     residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1_used
                     @printf "      KKT (interior): λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0\n"
                     @printf "                      [%+.3f - %+.3f + %+.3f - \e[34m%+.3f\e[0m] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1_used residual
                 else
+                    # Terminal timestep KKT condition includes terminal constraint dual
                     @printf "      \e[90mμ[t+1]\e[0m          = N/A (no future timestep)\n"
-                    residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
-                    @printf "      KKT (terminal): λ_Bmax - λ_Bmin + μ[T] = 0\n"
-                    @printf "                      [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
+                    if mu_terminal_t != 0.0
+                        @printf "      \e[35mμ_terminal\e[0m     = %+.6f (dual of B[T]==B_target constraint)\n" mu_terminal_t
+                        residual = lambda_Bmax_t - lambda_Bmin_t + mu_t + mu_terminal_t
+                        @printf "      KKT (terminal): λ_Bmax - λ_Bmin + μ[T] + μ_terminal = 0\n"
+                        @printf "                      [%+.3f - %+.3f + %+.3f + \e[35m%+.3f\e[0m] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t mu_terminal_t residual
+                    else
+                        residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
+                        @printf "      KKT (terminal): λ_Bmax - λ_Bmin + μ[T] = 0\n"
+                        @printf "                      [%+.3f - %+.3f + %+.3f] = %+.2e" lambda_Bmax_t lambda_Bmin_t mu_t residual
+                    end
                 end
                 
                 if abs(residual) < 1e-3
@@ -609,61 +659,49 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         push!(lambda_Bmin_history, [lambda_Bmin_collection[t] for t in 1:T])
         push!(lambda_Bmax_history, [lambda_Bmax_collection[t] for t in 1:T])
         
-        # Compute convergence metrics based on BOTH STATE (B) and DUAL (μ) variables
-        B_curr = [B_collection[t] for t in 1:T]
-        B_error = norm(B_curr - B_prev_iter)
+        # KKT optimality check: sum of absolute KKT residuals across all time steps
+        # This checks if we've actually reached an optimal point for the full MPOPF
+        # KKT condition: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0 for t<T
+        #                λ_Bmax - λ_Bmin + μ[T] + μ_terminal = 0 for t=T
+        kkt_residuals = Float64[]
+        for t in 1:T
+            if t < T
+                residual = lambda_Bmax_collection[t] - lambda_Bmin_collection[t] + mu_collection[t] - mu_collection[t+1]
+            else
+                # Terminal includes both dynamics dual and terminal constraint dual
+                residual = lambda_Bmax_collection[t] - lambda_Bmin_collection[t] + mu_collection[t] + mu_terminal_collection[t]
+            end
+            push!(kkt_residuals, abs(residual))
+        end
+        kkt_error = sum(kkt_residuals)  # Sum of absolute KKT violations
         
-        mu_curr = [mu_collection[t] for t in 1:T]
-        mu_error = norm(mu_curr - mu_prev)
+        # Track change in KKT error (for convergence detection)
+        kkt_error_change = (k > 1) ? abs(kkt_error - kkt_prev) : Inf
+        kkt_prev = kkt_error
         
-        # Combined convergence metric: max of both errors
-        combined_error = max(B_error, mu_error)
-        
-        push!(convergence_error, combined_error)
+        push!(convergence_error, kkt_error)
         
         iter_time = time() - iter_start
         push!(iteration_times, iter_time)
         
-        # Print progress
-        @printf "k=%3d  obj=\$%.4f  ||ΔB||=%.2e  ||Δμ||=%.2e  max=%.2e\n" k total_obj B_error mu_error combined_error
+        # Print progress - simplified to focus on KKT
+        @printf "k=%3d  obj=\$%.4f  KKT_sum=%.2e  Δ(KKT)=%.2e\n" k total_obj kkt_error kkt_error_change
         
-        # Show KKT condition check for all time steps
-        # Interior (t < T): λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
-        # Terminal (t = T): λ_Bmax - λ_Bmin + μ[T] = 0 (no future coupling)
-        for t in 1:T
-            mu_t = mu_collection[t]
-            lambda_Bmin_t = lambda_Bmin_collection[t]
-            lambda_Bmax_t = lambda_Bmax_collection[t]
-            
-            if t < T
-                # Interior time steps: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
-                mu_tp1 = mu_collection[t+1]
-                residual = lambda_Bmax_t - lambda_Bmin_t + mu_t - mu_tp1
-                kkt_satisfied = abs(residual) < 1e-3
-                
-                @printf "  t=%d (interior): [λ_Bmax - λ_Bmin + μ[t] - μ[t+1]] = [%+.3f - %+.3f + %+.3f - %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t mu_tp1 residual
-            else
-                # Terminal time step: λ_Bmax - λ_Bmin + μ[T] = 0 (no future, no μ[T+1])
-                residual = lambda_Bmax_t - lambda_Bmin_t + mu_t
-                kkt_satisfied = abs(residual) < 1e-3
-                
-                @printf "  t=%d (terminal): [λ_Bmax - λ_Bmin + μ[T]] = [%+.3f - %+.3f + %+.3f] = %+.2e " t lambda_Bmax_t lambda_Bmin_t mu_t residual
-            end
-            
-            if kkt_satisfied
-                print(Crayon(foreground=:green, bold=true))
-                println("✓")
-            else
-                print(Crayon(foreground=:red, bold=true))
-                println("✗")
-            end
-            print(COLOR_RESET)
+        # Check convergence based on KKT optimality condition
+        # If KKT error is small, we've found an optimal point!
+        kkt_tol = 0.25  # Tolerance for KKT condition (relaxed for forward-only DDP)
+        if kkt_error < kkt_tol
+            @printf "🎉 DDP converged at iteration %d (KKT_sum=%.2e < %.2e) - Near-optimal point found!\n" k kkt_error kkt_tol
+            converged = true
+            final_iter = k
+            break
         end
         
-        # Check convergence based on BOTH state (B) and dual (μ) variables
-        if combined_error < tol
-            @printf "🎉 DDP converged at iteration %d (max(||ΔB||, ||Δμ||)=%.2e < %.2e)\n" k combined_error tol
-            converged = true
+        # Also check for stagnation in KKT error
+        kkt_stagnation_tol = 1e-4
+        if k > 5 && kkt_error_change < kkt_stagnation_tol
+            @printf "⚠ DDP stagnated at iteration %d (Δ(KKT)=%.2e < %.2e, KKT_sum=%.2e)\n" k kkt_error_change kkt_stagnation_tol kkt_error
+            converged = false
             final_iter = k
             break
         end
@@ -673,7 +711,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     
     if !converged
         print(COLOR_WARNING)
-        @printf "⚠ DDP did not converge after %d iterations (max(||ΔB||, ||Δμ||)=%.2e >= %.2e)\n" max_iter last(convergence_error) tol
+        @printf "⚠ DDP did not converge after %d iterations (KKT_sum=%.2e)\n" max_iter kkt_error
         print(COLOR_RESET)
     end
     
@@ -731,8 +769,7 @@ begin # scenario config
     P_B_R_kW = 800.0        # Battery power rating
     soc_min = 0.30
     soc_max = 0.95
-    # B0_fraction = 0.60      # Initial SOC (60% of capacity)
-    B0_fraction = 0.40      # Initial SOC (40% of capacity)
+    B0_fraction = 0.30      # Initial SOC = 30% of capacity
 
     Δt_h = 1.0              # 1-hour time steps
     
@@ -757,6 +794,7 @@ data = setup_copperplate_data(
     soc_min=soc_min,
     soc_max=soc_max,
     B0_fraction=B0_fraction,
+    B_T_target_fraction=0.32,  # Terminal SOC = 32% (slightly above min to avoid bound)
     Δt_h=Δt_h
 )
 
@@ -802,6 +840,28 @@ if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
     print(COLOR_SUCCESS)
     @printf "✓ Brute Force OPTIMAL: \$%.4f (%.4fs)\n" sol_bf[:objective] sol_bf[:wallclock_time]
     print(COLOR_RESET)
+    
+    # Display BF optimal dual variables (μ, λ, and μ_terminal)
+    println("\n📊 BF Optimal Dual Variables:")
+    for t in 1:T
+        @printf "   t=%d: μ=%+.6f" t sol_bf[:mu][t]
+        if sol_bf[:mu_terminal][t] != 0.0
+            @printf ", μ_terminal=%+.6f" sol_bf[:mu_terminal][t]
+        end
+        @printf ", λ_Bmin=%+.6f, λ_Bmax=%+.6f\n" sol_bf[:lambda_Bmin][t] sol_bf[:lambda_Bmax][t]
+    end
+    
+    # Display BF KKT Residuals (should be ~0 for optimal solution)
+    println("\n📊 BF KKT Residuals (should be ~0):")
+    for t in 1:T
+        if t < T
+            residual = sol_bf[:lambda_Bmax][t] - sol_bf[:lambda_Bmin][t] + sol_bf[:mu][t] - sol_bf[:mu][t+1]
+            @printf "   t=%d (interior): λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = %.2e\n" t residual
+        else
+            residual = sol_bf[:lambda_Bmax][t] - sol_bf[:lambda_Bmin][t] + sol_bf[:mu][t] + sol_bf[:mu_terminal][t]
+            @printf "   t=%d (terminal): λ_Bmax - λ_Bmin + μ[T] + μ_terminal = %.2e\n" t residual
+        end
+    end
 else
     print(COLOR_ERROR)
     @printf "⚠ Brute Force FAILED: %s\n" sol_bf[:status]
@@ -866,25 +926,29 @@ end
 
 # ============================================================================
 # SOLVE USING DDP (FORWARD PASS DECOMPOSITION)
-# ============================================================================
 
 println("\n" * "="^80)
 println(COLOR_HIGHLIGHT, "SOLVING COPPER PLATE MPOPF (DDP)", COLOR_RESET)
 println("="^80)
 
-# Extract μ from brute force solution for initialization
+# Extract μ from brute force solution for warm start initialization
 mu_init_from_bf = nothing
-# TEMPORARILY DISABLE BF WARM START TO TEST AUGMENTED LAGRANGIAN FROM COLD START
-# if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
-#     if haskey(sol_bf, :mu)
-#         mu_init_from_bf = sol_bf[:mu]
-#         println("\n📋 Extracted μ values from Brute Force solution:")
-#         for t in 1:T
-#             @printf "   μ[%d] = %+.6f\n" t mu_init_from_bf[t]
-#         end
-#     end
-# end
-println("\n📋 Starting DDP with cold start (μ=0)")
+if sol_bf[:status] == MOI.OPTIMAL || sol_bf[:status] == MOI.LOCALLY_SOLVED
+    if haskey(sol_bf, :mu)
+        mu_init_from_bf = sol_bf[:mu]
+        print(COLOR_HIGHLIGHT)
+        println("\nWARM START EXPERIMENT: Using BF optimal mu values to initialize DDP")
+        print(COLOR_RESET)
+        println("BF Optimal mu values:")
+        for t in 1:T
+            @printf "   μ[%d] = %+.6f\n" t mu_init_from_bf[t]
+        end
+        println("\nHYPOTHESIS: If mu values are true Lagrangian multipliers,")
+        println("   DDP should converge to optimal solution in first forward pass.")
+    end
+else
+    println("\nStarting DDP with cold start (mu=0)")
+end
 
 solver_ddp_choice = use_gurobi_for_ddp ? :gurobi : :ipopt
 sol_ddp = solve_CopperPlate_DDP(data; 
