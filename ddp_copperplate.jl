@@ -109,7 +109,6 @@ struct CopperPlateData
     P_BASE::Float64
     E_BASE::Float64
     C_B::Float64
-    ρ::Float64  # Augmented Lagrangian penalty parameter
 end
 
 
@@ -123,8 +122,7 @@ function setup_copperplate_data(;
     # B0_fraction::Float64=0.60,
     B0_fraction::Float64=0.30,
     B_T_target_fraction::Union{Nothing,Float64}=nothing,
-    Δt_h::Float64=1.0,
-    ρ::Float64=10.0  # Augmented Lagrangian penalty parameter
+    Δt_h::Float64=1.0
 )
     # Physical bases
     KVA_B = 1000.0
@@ -150,7 +148,7 @@ function setup_copperplate_data(;
     
     bat = BatteryParams(E_Rated_pu, soc_min, soc_max, P_B_R_pu, Δt_h, B0_pu, B_T_target_pu)
     
-    return CopperPlateData(T, LoadShapeCost, P_L_pu, bat, P_BASE, E_BASE, C_B, ρ)
+    return CopperPlateData(T, LoadShapeCost, P_L_pu, bat, P_BASE, E_BASE, C_B)
 end
 
 function solve_CopperPlate_BruteForced(data::CopperPlateData; solver::Symbol=:gurobi)
@@ -259,19 +257,20 @@ end
 
 Solve DDP subproblem for time step t using forward pass decomposition.
 
-Each time step optimizes only its own variables {P_Subs[t], P_B[t], B[t]} using:
+Each time step optimizes {P_Subs[t], P_B[t], B[t], P_B[t+1]} where:
 - From previous step: B[t-1] from B_collection (CURRENT iteration, just solved)
-- From next step: B[t+1], μ[t+1], P_B[t+1] from coupling dicts (PREVIOUS iteration k-1)
+- From next step: B[t+1], μ[t+1] from coupling dicts (PREVIOUS iteration k-1)
+- P_B[t+1] is a DECISION VARIABLE in the soft coupling constraint
 
 Objective:
-        min C[t]*P_Subs[t]*Δt  + C_B*P_B[t]²* Δt + μ[t+1]*(B[t+1] - B[t] + Δt*P_B[t+1])
-        └─ energy cost ─┘  └ battery ┘   └────── coupling with next ──────┘
+        min C[t]*P_Subs[t]*Δt  + C_B*P_B[t]²*Δt + μ[t+1]*(B[t+1] - B[t] + Δt*P_B[t+1])
+        └─ energy cost ─┘  └ battery ┘   └────── soft coupling with next ──────┘
 
-The coupling term enforces consistency with the next time step's dynamics.
+The coupling term uses B[t+1] as a parameter but optimizes P_B[t+1] to minimize violation.
 
-Returns: Dict with solution and updates B_collection[t] and mu_collection[t] (for iteration k)
+Returns: Dict with solution and updates B_collection[t], mu_collection[t], and PB_collection[t+1]
 """
-function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data::CopperPlateData, t::Int; solver::Symbol=:gurobi, ρ::Float64=data.ρ)
+function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data::CopperPlateData, t::Int; solver::Symbol=:gurobi)
     
     @unpack T, price, P_L_pu, bat, P_BASE, E_BASE, C_B = data
     Δt = bat.Δt
@@ -311,17 +310,18 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
     # 3. Coupling term with next time step (if exists)
     if t < T
         # Get coupling values from previous iteration k-1
-        # These are CONSTANTS (not decision variables)
-        B_next = B_coupling[t+1]      # B[t+1] from previous iteration
-        PB_next = PB_coupling[t+1]    # P_B[t+1] from previous iteration
-        mu_next = mu_coupling[t+1]    # μ[t+1] from previous iteration
+        B_next_param = B_coupling[t+1]      # B[t+1] from previous iteration (PARAMETER)
+        mu_next = mu_coupling[t+1]          # μ[t+1] from previous iteration (PARAMETER)
         
-        # Augmented Lagrangian coupling:
-        # Linear term: μ[t+1] * residual
-        # Quadratic penalty: (ρ/2) * residual²
-        # where residual = B[t+1] - B[t] + Δt*P_B[t+1]
-        residual = B_next - B_t + Δt * PB_next
-        coupling_term = mu_next * residual + (ρ/2) * residual^2
+        # P_B[t+1] is a DECISION VARIABLE in the soft constraint
+        @variable(model, -bat.P_B_R_pu <= PB_next_var <= bat.P_B_R_pu)
+        
+        # Soft constraint: penalize violation of coupling dynamics
+        # We want: B[t+1] = B[t] - Δt*P_B[t+1]
+        # Rearrange: B[t+1] - B[t] + Δt*P_B[t+1] = 0
+        # But B[t+1] is a parameter (B_next_param), so:
+        # Coupling term: μ[t+1] * (B_next_param - B[t] + Δt*P_B[t+1])
+        coupling_term = mu_next * (B_next_param - B_t + Δt * PB_next_var)
         
         @objective(model, Min, energy_cost + battery_cost + coupling_term)
     else
@@ -348,10 +348,6 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         B_collection[t] = value(B_t)
         PB_collection[t] = value(P_B_t)
         
-        # NOTE: In Augmented Lagrangian, μ is NOT updated here
-        # It will be updated AFTER the full forward pass based on coupling residuals
-        # For now, keep μ from previous iteration (don't touch mu_collection[t])
-        
         # Extract dual variables for SOC box constraints (negative inequality form)
         # g_Bmin: Bmin - B ≤ 0  (i.e., B ≥ Bmin), want λ_Bmin ≥ 0 when active
         # g_Bmax: B - Bmax ≤ 0  (i.e., B ≤ Bmax), want λ_Bmax ≥ 0 when active
@@ -360,7 +356,8 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
         lambda_Bmin = -dual(soc_lower)  # Negate to get positive when at lower bound
         lambda_Bmax = dual(soc_upper)    # Already correct sign
         
-        return Dict(
+        # Return dict with solution
+        result_dict = Dict(
             :status => status,
             :objective => objective_value(model),
             :P_Subs => value(P_Subs_t),
@@ -371,6 +368,13 @@ function forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupli
             :lambda_Bmin => lambda_Bmin,
             :solve_time => solve_time(model)
         )
+        
+        # If this is not the terminal time step, also return P_B[t+1] optimal value
+        if t < T
+            result_dict[:PB_next] = value(PB_next_var)
+        end
+        
+        return result_dict
     else
         error("DDP forward pass failed for time step t=$t with status: $status")
     end
@@ -461,9 +465,6 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     final_iter = max_iter
     wallclock_start = time()
     
-    # Initialize adaptive penalty parameter
-    ρ_current = data.ρ
-    
     for k in 1:max_iter
         iter_start = time()
         
@@ -489,8 +490,13 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         end
         
         for t in 1:T
-            result = forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data, t; solver=solver, ρ=ρ_current)
+            result = forward_pass_ddp!(B_collection, PB_collection, mu_collection, mu_coupling, PB_coupling, B_coupling, data, t; solver=solver)
             PSubs_collection[t] = result[:P_Subs]
+            
+            # If not terminal time, update P_B[t+1] with the optimal value from coupling
+            if t < T && haskey(result, :PB_next)
+                PB_collection[t+1] = result[:PB_next]
+            end
             
             # Extract dual variables for SOC box constraints
             lambda_Bmax_collection[t] = result[:lambda_Bmax]
@@ -540,30 +546,9 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             println("  " * "─"^70)
         end
         
-        # AUGMENTED LAGRANGIAN DUAL UPDATE
-        # Update μ[t] based on coupling constraint violations:
-        # The residual is the mismatch between current and previous iteration:
-        # residual = (B^k[t+1] - B^k[t] + Δt*P_B^k[t+1]) - (B^{k-1}[t+1] - B^{k-1}[t] + Δt*P_B^{k-1}[t+1])
-        # Since each subproblem enforces B[t] - B[t-1] + Δt*P_B[t] = 0 locally,
-        # we compute residual based on the difference from previous iteration's values
-        if k <= 3
-            println("  \e[35mAugmented Lagrangian Dual Updates:\e[0m")
-        end
-        for t in 1:(T-1)
-            # Coupling residual: how much B[t+1] and P_B[t+1] changed from what we assumed
-            # In the subproblem objective, we used B_coupling[t+1] and PB_coupling[t+1]
-            # Now we have new values B_collection[t+1] and PB_collection[t+1]
-            residual_B = B_collection[t+1] - B_coupling[t+1]
-            residual_PB = PB_collection[t+1] - PB_coupling[t+1]
-            # The full coupling residual considering the dynamics
-            coupling_residual = residual_B + Δt * residual_PB
-            mu_old = mu_collection[t]
-            mu_collection[t] = mu_collection[t] + ρ_current * coupling_residual
-            if k <= 3
-                @printf "    t=%d: residual=%+.6f, μ: %.4f → %.4f (Δμ=%+.4f)\n" t coupling_residual mu_old mu_collection[t] (mu_collection[t]-mu_old)
-            end
-        end
-        # Terminal time step: no coupling update needed (already handled by boundary condition)
+        # No explicit dual update needed - μ values are extracted from subproblems
+        # Each subproblem's battery_dynamics constraint dual gives μ[t]
+        # These are already stored in mu_collection by forward_pass_ddp!
         
         # Compute total objective (energy + battery costs) - scale to physical units at end
         total_energy_cost_pu = sum(price[t] * PSubs_collection[t] * Δt for t in 1:T)
@@ -584,52 +569,17 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
         push!(lambda_Bmin_history, [lambda_Bmin_collection[t] for t in 1:T])
         push!(lambda_Bmax_history, [lambda_Bmax_collection[t] for t in 1:T])
         
-        # Compute convergence metrics based on DUAL variables (μ)
-        mu_curr = [mu_collection[t] for t in 1:T]
-        mu_error = norm(mu_curr - mu_prev)
+        # Compute convergence metrics based on STATE variables (B)
+        B_curr = [B_collection[t] for t in 1:T]
+        B_error = norm(B_curr - B_prev_iter)
         
-        # Compute primal residual (coupling constraint violations)
-        primal_residuals = Float64[]
-        for t in 1:(T-1)
-            residual_B = B_collection[t+1] - B_coupling[t+1]
-            residual_PB = PB_collection[t+1] - PB_coupling[t+1]
-            coupling_residual = residual_B + Δt * residual_PB
-            push!(primal_residuals, coupling_residual)
-        end
-        primal_error = norm(primal_residuals)
-        
-        # ADAPTIVE ρ UPDATE (Boyd et al. ADMM paper, Section 3.4.1)
-        # If primal residual >> dual residual: increase ρ (enforce feasibility)
-        # If dual residual >> primal residual: decrease ρ (allow progress)
-        # Note: We use a local ρ_current variable since data is immutable
-        τ_incr = 2.0  # Increase factor
-        τ_decr = 2.0  # Decrease factor
-        μ_adapt = 10.0  # Threshold ratio
-        
-        if k > 1 && k % 5 == 0  # Adapt every 5 iterations
-            ρ_old = ρ_current
-            if primal_error > μ_adapt * mu_error
-                # Primal residual is large → increase ρ
-                ρ_current = τ_incr * ρ_current
-                if k <= 15
-                    println("  📈 Increased ρ: $(round(ρ_old, digits=2)) → $(round(ρ_current, digits=2))")
-                end
-            elseif mu_error > μ_adapt * primal_error
-                # Dual residual is large → decrease ρ
-                ρ_current = ρ_current / τ_decr
-                if k <= 15
-                    println("  📉 Decreased ρ: $(round(ρ_old, digits=2)) → $(round(ρ_current, digits=2))")
-                end
-            end
-        end
-        
-        push!(convergence_error, mu_error)
+        push!(convergence_error, B_error)
         
         iter_time = time() - iter_start
         push!(iteration_times, iter_time)
         
-        # Print progress with KKT condition check
-        @printf "k=%3d  obj=\$%.4f  ||Δμ||=%.2e  ||r_p||=%.2e  ρ=%.2f\n" k total_obj mu_error primal_error ρ_current
+        # Print progress
+        @printf "k=%3d  obj=\$%.4f  ||ΔB||=%.2e\n" k total_obj B_error
         
         # Show KKT condition: λ_Bmax - λ_Bmin + μ[t] - μ[t+1] = 0
         # For t < T: four terms
@@ -664,9 +614,9 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
             print(COLOR_RESET)
         end
         
-        # Check convergence based on dual variables (μ)
-        if mu_error < tol
-            @printf "🎉 DDP converged at iteration %d (||Δμ||=%.2e < %.2e)\n" k mu_error tol
+        # Check convergence based on state variables (B)
+        if B_error < tol
+            @printf "🎉 DDP converged at iteration %d (||ΔB||=%.2e < %.2e)\n" k B_error tol
             converged = true
             final_iter = k
             break
@@ -677,7 +627,7 @@ function solve_CopperPlate_DDP(data::CopperPlateData;
     
     if !converged
         print(COLOR_WARNING)
-        @printf "⚠ DDP did not converge after %d iterations (||Δμ||=%.2e >= %.2e)\n" max_iter last(convergence_error) tol
+        @printf "⚠ DDP did not converge after %d iterations (||ΔB||=%.2e >= %.2e)\n" max_iter last(convergence_error) tol
         print(COLOR_RESET)
     end
     
