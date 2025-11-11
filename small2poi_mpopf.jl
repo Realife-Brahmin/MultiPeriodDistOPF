@@ -751,8 +751,11 @@ println("="^80)
 # Load plotter
 include(joinpath(@__DIR__, "envs", "multi_poi", "Plotter.jl"))
 
-# Generate plot
-plot_input_curves(data, showPlots=true, savePlots=true, filename="plots/mpopf_input_curves.png")
+# Generate plot in proper location
+plots_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", "plots")
+mkpath(plots_dir)
+plot_filename = joinpath(plots_dir, "mpopf_input_curves.png")
+plot_input_curves(data, showPlots=true, savePlots=true, filename=plot_filename)
 print_curve_statistics(data)
 
 println("="^80)
