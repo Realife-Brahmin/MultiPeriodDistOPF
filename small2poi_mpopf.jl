@@ -35,7 +35,7 @@ r1_ohm = 0.025; r2_ohm = 0.075
 x1_ohm = 0.025; x2_ohm = 0.025
 
 # Base load (peak values for scaling)
-P_L_base_kW = 500
+P_L_base_kW = 5000
 Q_L_base_kW = P_L_base_kW * 0.75
 
 # System base values
@@ -311,18 +311,26 @@ end
 
 
 """
-    solve_two_poi_mpopf(data)
+    solve_two_poi_mpopf(data, slack_node)
 
-Solve multi-period optimal power flow for 2-POI system.
+Solve multi-period optimal power flow for 2-POI system with specified slack bus.
+
+Arguments:
+- data: system data dictionary
+- slack_node: which node is slack (0 or 1, corresponding to substations 1 and 2)
 
 Returns Dict with time-indexed arrays for all decision variables.
 """
-function solve_two_poi_mpopf(data)
+function solve_two_poi_mpopf(data, slack_node::Int)
     # Extract time set and parameters
     Tset = data[:Tset]
     T = data[:T]
     Δt = data[:delta_t_h]
     P_BASE = data[:kVA_B]
+    
+    # Compute network topology matrices for this slack configuration
+    println("  Computing network matrices for slack bus = node $slack_node...")
+    network_matrices = compute_network_matrices(data, slack_node)
     
     # Create model
     model = Model(Ipopt.Optimizer)
@@ -410,6 +418,7 @@ function solve_two_poi_mpopf(data)
         :status => status,
         :objective => has_values(model) ? objective_value(model) : NaN,
         :solve_time => solve_time_val,
+        :slack_node => slack_node,
         # Store time-indexed arrays
         :P_1j => [value(P_1j[t]) for t in Tset],
         :Q_1j => [value(Q_1j[t]) for t in Tset],
@@ -417,11 +426,119 @@ function solve_two_poi_mpopf(data)
         :P_2j => [value(P_2j[t]) for t in Tset],
         :Q_2j => [value(Q_2j[t]) for t in Tset],
         :l_2j => [value(l_2j[t]) for t in Tset],
-        :v_j => [value(v_j[t]) for t in Tset]
+        :v_j => [value(v_j[t]) for t in Tset],
+        # Store network matrices for angle computation
+        :network_matrices => network_matrices
     )
     
     return result
 end
+
+"""
+    analyze_slack_configuration_mpopf(slack_node, data)
+
+Solve MPOPF with specified slack bus and compute angle statistics across time.
+
+Returns Dict with:
+- :objective - total cost over all time periods
+- :angles_deg - matrix of angles [substation × time]
+- :median_angles_deg - median angle for each non-slack substation
+- :angle_ranges_deg - [min, max] angle for each non-slack substation
+- :rmse_values_deg - RMSE (temporal variation) for each non-slack substation
+- :total_deviation_deg - grand RMS of all RMSE values
+- Other power flow results
+"""
+function analyze_slack_configuration_mpopf(slack_node::Int, data)
+    # Solve MPOPF
+    result = solve_two_poi_mpopf(data, slack_node)
+    
+    if !(result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED)
+        @warn "MPOPF failed for slack_node=$slack_node"
+        return result
+    end
+    
+    # Extract time parameters
+    T = data[:T]
+    Tset = data[:Tset]
+    
+    # Compute angles for each time period
+    # angles_matrix[substation_idx, time_idx]
+    angles_matrix = Dict()
+    
+    for t in Tset
+        # Package results for this time period
+        opf_result_t = Dict(
+            :P_1j => result[:P_1j][t],
+            :Q_1j => result[:Q_1j][t],
+            :P_2j => result[:P_2j][t],
+            :Q_2j => result[:Q_2j][t],
+            :v_j => result[:v_j][t]
+        )
+        
+        # Compute β angles
+        beta_result = compute_beta_angles(data, opf_result_t, slack_node)
+        β = beta_result[:beta]
+        
+        # Get network matrices
+        B_T = result[:network_matrices][:B_T]
+        
+        # Solve for angles: θ_★ = B_T^(-1) * β
+        θ_star = B_T \ β
+        
+        # Project to (-π, π]
+        θ_star = mod.(θ_star .+ π, 2π) .- π
+        
+        # Map to substation indices
+        if slack_node == 0
+            # Removed node 0, so θ_star[1] corresponds to node 1 (substation 2)
+            sub_idx = 2
+            angle_deg = rad2deg(θ_star[1])
+        else  # slack_node == 1
+            # Removed node 1, so θ_star[1] corresponds to node 0 (substation 1)
+            sub_idx = 1
+            angle_deg = rad2deg(θ_star[1])
+        end
+        
+        # Store angle
+        if !haskey(angles_matrix, sub_idx)
+            angles_matrix[sub_idx] = Float64[]
+        end
+        push!(angles_matrix[sub_idx], angle_deg)
+    end
+    
+    # Compute statistics across time for each non-slack substation
+    median_angles_deg = Dict()
+    angle_ranges_deg = Dict()
+    rmse_values_deg = Dict()
+    
+    for (sub, angles_vec) in angles_matrix
+        # Median
+        median_angles_deg[sub] = median(angles_vec)
+        
+        # Range [min, max]
+        angle_ranges_deg[sub] = [minimum(angles_vec), maximum(angles_vec)]
+        
+        # RMSE (temporal variation around median)
+        rmse_values_deg[sub] = sqrt(mean((angles_vec .- median_angles_deg[sub]).^2))
+    end
+    
+    # Total angle deviation (grand RMS)
+    if length(rmse_values_deg) > 0
+        total_deviation = sqrt(sum(v^2 for v in values(rmse_values_deg)) / length(rmse_values_deg))
+    else
+        total_deviation = 0.0
+    end
+    
+    # Add statistics to result
+    result[:angles_matrix] = angles_matrix
+    result[:median_angles_deg] = median_angles_deg
+    result[:angle_ranges_deg] = angle_ranges_deg
+    result[:rmse_values_deg] = rmse_values_deg
+    result[:total_deviation_deg] = total_deviation
+    
+    return result
+end
+
 
 println("\n" * "="^80)
 println("NETWORK TOPOLOGY")
@@ -431,18 +548,192 @@ println("Links: 0→2 (link 1), 1→2 (link 2)")
 println("="^80)
 
 # ==================================================================================
-# SOLVE MPOPF
+# SOLVE MPOPF FOR BOTH SLACK BUS CONFIGURATIONS
 # ==================================================================================
 
 println("\n" * "="^80)
-println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF"))
+println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF FOR BOTH SLACK CONFIGURATIONS"))
 println("="^80)
 
-sol_mpopf = solve_two_poi_mpopf(data)
+# Analyze each slack bus configuration
+results_by_slack = Dict()
+
+for slack_sub in [1, 2]
+    slack_node = slack_sub - 1  # Convert substation number to node index
+    println("\n" * "-"^80)
+    println(Crayon(foreground = :yellow, bold = true)("Solving MPOPF with Substation $slack_sub (node $slack_node) as slack bus..."))
+    println("-"^80)
+    results_by_slack[slack_sub] = analyze_slack_configuration_mpopf(slack_node, data)
+end
 
 # ==================================================================================
-# REPORT RESULTS
+# PRINT COMPARISON TABLES
 # ==================================================================================
+
+println("\n" * "="^80)
+println(Crayon(foreground = :light_blue, bold = true)("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS"))
+println("="^80)
+
+# Print header
+header_crayon = Crayon(foreground = :white, bold = true)
+header = @sprintf("%-15s | %-20s | %-20s", "Slack Bus", "Total Angle", "Operational")
+header2 = @sprintf("%-15s | %-20s | %-20s", "(Substation)", "Deviation* (°)", "Cost (\$)")
+separator = "-"^length(header)
+
+println(separator)
+println(header_crayon(header))
+println(header_crayon(header2))
+println(separator)
+
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    total_cost = result[:objective]
+    total_dev = result[:total_deviation_deg]
+    
+    # Format with colors
+    if slack_sub == 1
+        sub_str = Crayon(foreground = :green, bold = true)(@sprintf("%-15d", slack_sub))
+    else
+        sub_str = Crayon(foreground = :cyan, bold = true)(@sprintf("%-15d", slack_sub))
+    end
+    
+    dev_str = @sprintf("%-20.3f", total_dev)
+    cost_str = @sprintf("%-20.2f", total_cost)
+    
+    @printf("%s | %s | %s\n", sub_str, dev_str, cost_str)
+end
+
+println(separator)
+println("*RMS of temporal angle variations across all non-slack substations")
+println("="^80)
+
+# ==================================================================================
+# DETAILED ANGLE COORDINATION (TABLE II) FOR EACH CONFIGURATION
+# ==================================================================================
+
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    println("\n" * "="^80)
+    title2_crayon = Crayon(foreground = :light_magenta, bold = true)
+    println(title2_crayon("TABLE II: ANGLE COORDINATION DETAILS (SLACK: SUBSTATION $slack_sub)"))
+    println("="^80)
+    
+    header2_crayon = Crayon(foreground = :white, bold = true)
+    header_detail = @sprintf("%-15s | %-20s | %-25s | %-15s", 
+                            "Substation", "Median", "Angle Range", "Temporal RMSE")
+    header_detail2 = @sprintf("%-15s | %-20s | %-25s | %-15s",
+                             "(Non-Slack)", "Angle (°)", "(°)", "(°)")
+    sep_detail = "-"^length(header_detail)
+    
+    println(sep_detail)
+    println(header2_crayon(header_detail))
+    println(header2_crayon(header_detail2))
+    println(sep_detail)
+    
+    # Get non-slack substations
+    non_slack_subs = sort(collect(keys(result[:angles_matrix])))
+    
+    for sub in non_slack_subs
+        median_angle = result[:median_angles_deg][sub]
+        angle_range = result[:angle_ranges_deg][sub]
+        rmse = result[:rmse_values_deg][sub]
+        
+        sub_str = Crayon(foreground = :yellow)(@sprintf("%-15d", sub))
+        median_str = @sprintf("θ%-2d,%-2d = %7.3f", sub, slack_sub, median_angle)
+        range_str = @sprintf("[%7.3f, %7.3f]", angle_range[1], angle_range[2])
+        rmse_str = @sprintf("%-15.3f", rmse)
+        
+        @printf("%s | %-20s | %-25s | %s\n", sub_str, median_str, range_str, rmse_str)
+    end
+    
+    println(sep_detail)
+    
+    # Print computed substation angles (showing median and range)
+    println()
+    if slack_sub == 1
+        # Sub 1 is slack (θ₁ = 0°), compute θ₂
+        θ₁_median = 0.0
+        θ₂_median = result[:median_angles_deg][2]
+        θ₂_range = result[:angle_ranges_deg][2]
+        
+        theta1_str = Crayon(foreground = :green, bold = true)("θ₁ (Sub 1, slack)")
+        theta2_str = Crayon(foreground = :yellow, bold = true)("θ₂ (Sub 2)")
+        
+        println("Computed Substation Angles (across time):")
+        @printf("  %s = %7.3f° (fixed)\n", theta1_str, θ₁_median)
+        @printf("  %s = %7.3f° (median), range [%7.3f°, %7.3f°]\n", 
+                theta2_str, θ₂_median, θ₂_range[1], θ₂_range[2])
+        
+        delta_str = Crayon(foreground = :magenta, bold = true)("Δθ (θ₂ - θ₁)")
+        @printf("  %s = %7.3f° (median)\n", delta_str, θ₂_median - θ₁_median)
+        
+    else  # slack_sub == 2
+        # Sub 2 is slack (θ₂ = 0°), compute θ₁
+        θ₁_median = result[:median_angles_deg][1]
+        θ₁_range = result[:angle_ranges_deg][1]
+        θ₂_median = 0.0
+        
+        theta1_str = Crayon(foreground = :yellow, bold = true)("θ₁ (Sub 1)")
+        theta2_str = Crayon(foreground = :cyan, bold = true)("θ₂ (Sub 2, slack)")
+        
+        println("Computed Substation Angles (across time):")
+        @printf("  %s = %7.3f° (median), range [%7.3f°, %7.3f°]\n",
+                theta1_str, θ₁_median, θ₁_range[1], θ₁_range[2])
+        @printf("  %s = %7.3f° (fixed)\n", theta2_str, θ₂_median)
+        
+        delta_str = Crayon(foreground = :magenta, bold = true)("Δθ (θ₂ - θ₁)")
+        @printf("  %s = %7.3f° (median)\n", delta_str, θ₂_median - θ₁_median)
+    end
+    
+    # Print bus voltages (time-averaged)
+    println()
+    v_crayon = Crayon(foreground = :light_yellow)
+    println("Bus Voltages (time-averaged):")
+    
+    v_0_pu = data[:V_1_pu]  # Substation 1 (node 0) - fixed
+    v_1_pu = data[:V_2_pu]  # Substation 2 (node 1) - fixed
+    v_2_pu = mean(sqrt.(result[:v_j]))  # Load bus (node 2) - averaged over time
+    
+    println("  ", v_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu, digits=4)) pu")
+    println("  ", v_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu, digits=4)) pu")
+    println("  ", v_crayon("Node 2 (Load): "), " V = $(round(v_2_pu, digits=4)) pu (avg)")
+    
+    # Print power dispatch summary (time-averaged)
+    println()
+    p1_crayon = Crayon(foreground = :light_green)
+    p2_crayon = Crayon(foreground = :light_cyan)
+    
+    P_BASE = data[:kVA_B]
+    println("Power Dispatches (time-averaged):")
+    p1_avg = mean(result[:P_1j]) * P_BASE
+    q1_avg = mean(result[:Q_1j]) * P_BASE
+    p2_avg = mean(result[:P_2j]) * P_BASE
+    q2_avg = mean(result[:Q_2j]) * P_BASE
+    
+    println("  ", p1_crayon("Substation 1:"), " P = $(round(p1_avg, digits=1)) kW, Q = $(round(q1_avg, digits=1)) kVAr")
+    println("  ", p2_crayon("Substation 2:"), " P = $(round(p2_avg, digits=1)) kW, Q = $(round(q2_avg, digits=1)) kVAr")
+    
+    cost_crayon = Crayon(foreground = :light_red, bold = true)
+    println()
+    println("  ", cost_crayon("Total Energy Cost:"), " \$$(round(result[:objective], digits=2))")
+    println("  Solve time: $(round(result[:solve_time], digits=2)) seconds")
+end
+
+println("\n" * "="^80)
+
+# ==================================================================================
+# DETAILED REPORT FOR ONE CONFIGURATION (for plotting)
+# ==================================================================================
+
+# Use substation 1 as slack for detailed plots
+slack_sub_for_plot = 1
+sol_mpopf = results_by_slack[slack_sub_for_plot]
+
+println("\n" * "="^80)
+println(Crayon(foreground = :magenta, bold = true)("DETAILED RESULTS FOR SLACK BUS = SUBSTATION $slack_sub_for_plot"))
+println("="^80)
 
 if sol_mpopf[:status] == MOI.OPTIMAL || sol_mpopf[:status] == MOI.LOCALLY_SOLVED
     println("\n" * "="^80)
@@ -534,12 +825,15 @@ if sol_mpopf[:status] == MOI.OPTIMAL || sol_mpopf[:status] == MOI.LOCALLY_SOLVED
     
 else
     println("\n" * "="^80)
-    println(Crayon(foreground = :red, bold = true)("MPOPF FAILED"))
+    println(Crayon(foreground = :red, bold = true)("MPOPF FAILED FOR PLOTTING"))
     println("="^80)
     println("Status: ", sol_mpopf[:status])
     println("="^80)
 end
 
 println("\n" * "="^80)
-println(Crayon(foreground = :green, bold = true)("✓ MPOPF SCRIPT COMPLETE"))
+success_crayon = Crayon(foreground = :light_green, bold = true)
+info_crayon = Crayon(foreground = :light_blue)
+println(success_crayon("✓ MPOPF SCRIPT COMPLETE!"), " Analyzed both slack bus configurations.")
+println(info_crayon("ℹ Tables I & II show angle coordination and cost comparison."))
 println("="^80)
