@@ -11,11 +11,11 @@ Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
 using JuMP
 using Ipopt
 using LinearAlgebra
+using Crayons
+using Printf
 
 # Optional: Uncomment if running OpenDSS validation
-using Crayons
 # import OpenDSSDirect as dss
-using Printf
 # ----------------------------------------------------------------------
 
 data = Dict()
@@ -351,8 +351,270 @@ println("Power dispatches: P₁=$(round(modelDict[:P_1j] * data[:kVA_B], digits=
 beta_results = compute_beta_angles(data, modelDict, network_matrices)
 
 println("="^80)
-println("\nScript complete! All network topology and OPF analysis finished.")
+
+# ==================================================================================
+# SLACK BUS CONFIGURATION COMPARISON
+# ==================================================================================
+
+"""
+    analyze_slack_configuration(slack_node, data)
+
+Solve OPF with given slack bus and compute:
+1. Objective function value
+2. Phase-shifted angles for non-slack substations
+3. Recommended median angle for each non-slack substation
+4. Total angle deviation (grand RMS)
+
+Arguments:
+- slack_node: 0 or 1 (which substation is slack)
+- data: system data dictionary
+
+Returns Dict with:
+- :objective - optimal cost
+- :angles_deg - Dict of non-slack substation angles vs time
+- :median_angles_deg - recommended angle for each non-slack substation
+- :angle_ranges_deg - [min, max] for each non-slack substation
+- :rmse_values_deg - RMSE for each non-slack substation
+- :total_deviation_deg - grand RMS across all non-slack substations
+"""
+function analyze_slack_configuration(slack_node::Int, data::Dict)
+    # For now, we have a single time period
+    # In MPOPF, this will loop over multiple time periods
+    
+    # Setup model with specified slack bus
+    model = Model(Ipopt.Optimizer)
+    set_silent(model)
+    
+    @variable(model, P_1j >= 0)
+    @variable(model, Q_1j)
+    @variable(model, l_1j >= 0)
+    @variable(model, P_2j >= 0)
+    @variable(model, Q_2j)
+    @variable(model, l_2j >= 0)
+    @variable(model, v_j >= data[:Vminpu]^2)
+    @constraint(model, v_j <= data[:Vmaxpu]^2)
+    
+    # Extract parameters
+    r1j = data[:r1_pu]
+    x1j = data[:x1_pu]
+    r2j = data[:r2_pu]
+    x2j = data[:x2_pu]
+    v_1 = data[:V_1_pu]^2
+    v_2 = data[:V_2_pu]^2
+    alpha = data[:alpha_share]
+    P_L_j = data[:P_L_pu]
+    Q_L_j = data[:Q_L_pu]
+    C_1 = data[:C_1_dollar_pu]
+    C_2 = data[:C_2_dollar_pu]
+    
+    # Constraints
+    @constraint(model, (P_1j - r1j * l_1j) + (P_2j - r2j * l_2j) == P_L_j)
+    @constraint(model, (Q_1j - x1j * l_1j) + (Q_2j - x2j * l_2j) == Q_L_j)
+    @constraint(model, v_j == v_1 - 2 * (r1j * P_1j + x1j * Q_1j) + (r1j^2 + x1j^2) * l_1j)
+    @constraint(model, v_j == v_2 - 2 * (r2j * P_2j + x2j * Q_2j) + (r2j^2 + x2j^2) * l_2j)
+    @constraint(model, P_1j^2 + Q_1j^2 >= v_1 * l_1j)
+    @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
+    @constraint(model, P_2j == alpha * P_1j)
+    
+    @objective(model, Min, C_1 * P_1j + C_2 * P_2j)
+    
+    optimize!(model)
+    
+    obj_value = objective_value(model)
+    
+    # Extract results
+    P_1j_val = value(P_1j)
+    Q_1j_val = value(Q_1j)
+    P_2j_val = value(P_2j)
+    Q_2j_val = value(Q_2j)
+    v_j_val = value(v_j)
+    
+    # Compute angles using branch flow relationships
+    # We have 2 substations: node 0 (grid1) and node 1 (grid2)
+    # One is slack, the other is non-slack
+    
+    # Extract impedances
+    r_1 = data[:r1_pu]
+    x_1 = data[:x1_pu]
+    r_2 = data[:r2_pu]
+    x_2 = data[:x2_pu]
+    
+    V_0_pu = sqrt(v_1)
+    V_1_pu = sqrt(v_2)
+    V_2_pu = sqrt(v_j_val)
+    
+    # Get slack bus angle (always 0° for slack)
+    δ_slack = 0.0
+    
+    # Compute non-slack substation angles (θ) from OPF solution
+    # These are the phase-shifter angles computed POST-OPTIMIZATION
+    # NOT from input delta values (those are fixed physical angles, irrelevant here)
+    # We compute from power flows using voltage drop relationships
+    
+    if slack_node == 0
+        # Substation 1 is slack at θ₁ = 0°
+        # Compute θ₂ (angle at substation 2) from power flow solution
+        # Using voltage drop: θ_to = θ_from - (r*P + x*Q) / (V_from * V_to)
+        
+        # Angle at load from sub1 path
+        θ_load_from_sub1 = 0.0 - (r_1 * P_1j_val + x_1 * Q_1j_val) / (V_0_pu * V_2_pu)
+        
+        # Angle at sub2 from load (going backwards)
+        θ_sub2 = θ_load_from_sub1 + (r_2 * P_2j_val + x_2 * Q_2j_val) / (V_1_pu * V_2_pu)
+        
+        angles_deg = Dict(2 => rad2deg(θ_sub2))
+        
+    else  # slack_node == 1
+        # Substation 2 is slack at θ₂ = 0°
+        # Compute θ₁ (angle at substation 1) from power flow solution
+        
+        # Angle at load from sub2 path
+        θ_load_from_sub2 = 0.0 - (r_2 * P_2j_val + x_2 * Q_2j_val) / (V_1_pu * V_2_pu)
+        
+        # Angle at sub1 from load (going backwards)
+        θ_sub1 = θ_load_from_sub2 + (r_1 * P_1j_val + x_1 * Q_1j_val) / (V_0_pu * V_2_pu)
+        
+        angles_deg = Dict(1 => rad2deg(θ_sub1))
+    end
+    
+    # For single time period, median is just the value itself
+    median_angles_deg = Dict()
+    angle_ranges_deg = Dict()
+    
+    for (sub, angle) in angles_deg
+        median_angles_deg[sub] = angle
+        angle_ranges_deg[sub] = [angle, angle]  # Single time period: min = max = angle
+    end
+    
+    # Compute RMSE for each non-slack substation
+    # RMSE = sqrt(mean((angle - median)^2))
+    # For single time period: RMSE = 0
+    rmse_values_deg = Dict()
+    for sub in keys(angles_deg)
+        # In MPOPF: rmse = sqrt(mean((angles[:, t] .- median).^2))
+        rmse_values_deg[sub] = 0.0  # Single time period
+    end
+    
+    # Total angle deviation (grand RMS)
+    # Grand RMS = sqrt(mean(all_rmse_values.^2))
+    if length(rmse_values_deg) > 0
+        total_deviation = sqrt(sum(v^2 for v in values(rmse_values_deg)) / length(rmse_values_deg))
+    else
+        total_deviation = 0.0
+    end
+    
+    return Dict(
+        :objective => obj_value,
+        :angles_deg => angles_deg,
+        :median_angles_deg => median_angles_deg,
+        :angle_ranges_deg => angle_ranges_deg,
+        :rmse_values_deg => rmse_values_deg,
+        :total_deviation_deg => total_deviation,
+        :P_1j => P_1j_val,
+        :P_2j => P_2j_val,
+        :Q_1j => Q_1j_val,
+        :Q_2j => Q_2j_val
+    )
+end
+
+println("\n" * "="^80)
+println("SLACK BUS CONFIGURATION COMPARISON")
+println("="^80)
+println()
+
+# Analyze each slack bus configuration
+results_by_slack = Dict()
+
+for slack_sub in [1, 2]
+    println("Analyzing with Substation $slack_sub as slack bus...")
+    results_by_slack[slack_sub] = analyze_slack_configuration(slack_sub - 1, data)
+end
+
+println("\n" * "="^80)
+println("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS")
+println("="^80)
+
+# Print header
+header = @sprintf("%-15s | %-20s | %-20s", "Slack Bus", "Total Angle", "Operational")
+header2 = @sprintf("%-15s | %-20s | %-20s", "(Substation)", "Deviation* (°)", "Cost (\$)")
+separator = "-"^length(header)
+
+println(separator)
+println(header)
+println(header2)
+println(separator)
+
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    # Convert to physical units
+    cost_dollars = result[:objective] * data[:kVA_B]  # Convert from pu
+    total_dev = result[:total_deviation_deg]
+    
+    # Format with colors
+    if slack_sub == 1
+        sub_str = Crayon(foreground = :green, bold = true)(@sprintf("%-15d", slack_sub))
+    else
+        sub_str = Crayon(foreground = :cyan, bold = true)(@sprintf("%-15d", slack_sub))
+    end
+    
+    dev_str = @sprintf("%-20.3f", total_dev)
+    cost_str = @sprintf("%-20.2f", cost_dollars)
+    
+    @printf("%s | %s | %s\n", sub_str, dev_str, cost_str)
+end
+
+println(separator)
+println("*Sum of RMS angle deviations across all non-slack substations")
+println()
+
+# Print detailed angle coordination for each configuration
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    println("\n" * "="^80)
+    println("TABLE II: ANGLE COORDINATION DETAILS (SLACK: SUBSTATION $slack_sub)")
+    println("="^80)
+    
+    header_detail = @sprintf("%-15s | %-20s | %-25s | %-15s", 
+                            "Substation", "Median", "Angle Range", "Std Dev")
+    header_detail2 = @sprintf("%-15s | %-20s | %-25s | %-15s",
+                             "(Non-Slack)", "Angle (°)", "(°)", "(°)")
+    sep_detail = "-"^length(header_detail)
+    
+    println(sep_detail)
+    println(header_detail)
+    println(header_detail2)
+    println(sep_detail)
+    
+    # Get non-slack substations
+    non_slack_subs = sort(collect(keys(result[:angles_deg])))
+    
+    for sub in non_slack_subs
+        median_angle = result[:median_angles_deg][sub]
+        angle_range = result[:angle_ranges_deg][sub]
+        rmse = result[:rmse_values_deg][sub]
+        
+        sub_str = Crayon(foreground = :yellow)(@sprintf("%-15d", sub))
+        median_str = @sprintf("θ%-2d,%-2d = %7.3f", sub, slack_sub, median_angle)
+        range_str = @sprintf("[%7.3f, %7.3f]", angle_range[1], angle_range[2])
+        rmse_str = @sprintf("%-15.3f", rmse)
+        
+        @printf("%s | %-20s | %-25s | %s\n", sub_str, median_str, range_str, rmse_str)
+    end
+    
+    println(sep_detail)
+    
+    # Print power dispatch summary
+    println("\nPower Dispatches:")
+    println("  Substation 1: P = $(round(result[:P_1j] * data[:kVA_B], digits=1)) kW, Q = $(round(result[:Q_1j] * data[:kVA_B], digits=1)) kVAr")
+    println("  Substation 2: P = $(round(result[:P_2j] * data[:kVA_B], digits=1)) kW, Q = $(round(result[:Q_2j] * data[:kVA_B], digits=1)) kVAr")
+end
+
+println("\n" * "="^80)
+println("\nScript complete! Slack bus configuration analysis finished.")
 println("For OpenDSS validation, see: envs/multi_poi/archive/opendss_validation.jl")
+println("="^80)
 
 # Uncomment below to run OpenDSS validation:
 # include("envs/multi_poi/archive/opendss_validation.jl")
