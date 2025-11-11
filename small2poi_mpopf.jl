@@ -1,4 +1,10 @@
 # small2poi_mpopf.jl - Multi-Period Optimal Power Flow for 2-POI system
+# 
+# Key feature: 'same_voltage_levels' parameter (line ~30)
+#   - true (default): All substations have fixed voltages (1.05 pu)
+#   - false: Non-slack substation voltage becomes a decision variable (optimized)
+#            This allows different optimal voltage setpoints and breaks angle symmetry
+#
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
@@ -25,6 +31,17 @@ using Plots  # For input curve plotting
 # ============================================================================
 
 data = Dict()
+
+# User-defined parameter: Should substations have same voltage levels?
+# - true: Non-slack substations have fixed voltage (V_1_pu, V_2_pu)
+# - false: Non-slack substation voltages become decision variables
+# same_voltage_levels = true
+same_voltage_levels = false
+
+# Plotting options
+showPlots = false  # Set to true to display plots in GUI
+savePlots = true   # Set to true to save plots to file
+
 V_1_pu = 1.05
 delta_1_deg = 0.0
 V_2_pu = 1.05
@@ -64,6 +81,7 @@ LoadShapeCost_1 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) .
 LoadShapeCost_2 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2
 
 data = Dict(
+    :same_voltage_levels => same_voltage_levels,
     :V_1_pu => V_1_pu,
     :delta_1_deg => delta_1_deg,
     :V_2_pu => V_2_pu,
@@ -150,6 +168,8 @@ println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr
 println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
 println("Cost variation (Sub 1): \$$(round(minimum(data[:LoadShapeCost_1]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_1]), digits=3)) per kWh")
 println("Cost variation (Sub 2): \$$(round(minimum(data[:LoadShapeCost_2]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_2]), digits=3)) per kWh")
+voltage_config_str = data[:same_voltage_levels] ? "FIXED (all substations at 1.05 pu)" : "VARIABLE (non-slack optimized)"
+println("Voltage configuration: ", Crayon(foreground = :light_magenta, bold = true)(voltage_config_str))
 println("="^80)
 
 
@@ -243,7 +263,7 @@ end
 
 
 """
-    compute_beta_angles(data, opf_result, slack_node)
+    compute_beta_angles(data, opf_result, slack_node, v_nonslack=nothing)
 
 Compute the angle difference β_ij = ∠(v_i - z*_ij S_ij) for each link (i,j) ∈ E
 after solving the OPF, as per equation (27) in the paper.
@@ -252,18 +272,34 @@ Arguments:
 - data: system data dictionary
 - opf_result: Dict with OPF solution (:P_1j, :Q_1j, :P_2j, :Q_2j, :v_j, etc.)
 - slack_node: which node is slack (0 or 1)
+- v_nonslack: voltage magnitude squared for non-slack substation (if variable)
 
 Returns Dict with:
 - :beta - vector of angle differences for all links (in radians)
 - :beta_deg - vector of angle differences for all links (in degrees)
 """
-function compute_beta_angles(data, opf_result, slack_node::Int)
+function compute_beta_angles(data, opf_result, slack_node::Int, v_nonslack=nothing)
     # Compute β_ij = ∠(v_i - z*_ij S_ij) for each link (i,j) ∈ E
     # as per equation (27) in the paper
     
     # Extract voltage magnitudes
-    V_0_pu = data[:V_1_pu]  # Node 0 (substation 1)
-    V_1_pu = data[:V_2_pu]  # Node 1 (substation 2)
+    same_voltage_levels = data[:same_voltage_levels]
+    
+    if same_voltage_levels
+        # Fixed voltages
+        V_0_pu = data[:V_1_pu]  # Node 0 (substation 1)
+        V_1_pu = data[:V_2_pu]  # Node 1 (substation 2)
+    else
+        # Variable voltage for non-slack substation
+        if slack_node == 0
+            V_0_pu = data[:V_1_pu]  # Slack (fixed)
+            V_1_pu = sqrt(v_nonslack)  # Non-slack (variable)
+        else  # slack_node == 1
+            V_0_pu = sqrt(v_nonslack)  # Non-slack (variable)
+            V_1_pu = data[:V_2_pu]  # Slack (fixed)
+        end
+    end
+    
     V_2_pu = sqrt(opf_result[:v_j])  # Node 2 (load) - from OPF
     
     # For slack node, angle is 0
@@ -333,6 +369,7 @@ function solve_two_poi_mpopf(data, slack_node::Int)
     T = data[:T]
     Δt = data[:delta_t_h]
     P_BASE = data[:kVA_B]
+    same_voltage_levels = data[:same_voltage_levels]
     
     # Compute network topology matrices for this slack configuration
     println("  Computing network matrices for slack bus = node $slack_node...")
@@ -353,15 +390,34 @@ function solve_two_poi_mpopf(data, slack_node::Int)
     @variable(model, l_2j[t in Tset] >= 0)
     @variable(model, v_j[t in Tset])
     
+    # Voltage variables for non-slack substations (if same_voltage_levels = false)
+    if !same_voltage_levels
+        if slack_node == 0
+            # Node 0 is slack, node 1 voltage becomes decision variable
+            @variable(model, data[:Vminpu]^2 <= v_1[t in Tset] <= data[:Vmaxpu]^2)
+        else  # slack_node == 1
+            # Node 1 is slack, node 0 voltage becomes decision variable
+            @variable(model, data[:Vminpu]^2 <= v_0[t in Tset] <= data[:Vmaxpu]^2)
+        end
+    end
+    
     # Extract parameters (time-independent)
     r1j = data[:r1_pu]
     x1j = data[:x1_pu]
     r2j = data[:r2_pu]
     x2j = data[:x2_pu]
-    v_1 = data[:V_1_pu]^2
-    v_2 = data[:V_2_pu]^2
     Vminpu = data[:Vminpu]
     Vmaxpu = data[:Vmaxpu]
+    
+    # Set substation voltages based on same_voltage_levels flag
+    if same_voltage_levels
+        # Fixed voltages (current behavior)
+        v_1 = data[:V_1_pu]^2
+        v_2 = data[:V_2_pu]^2
+    else
+        # Voltage depends on slack configuration - will be used in constraints below
+        # (handled differently in constraint section)
+    end
 
     # ========== CONSTRAINTS (for each time period) ==========
     for t in Tset
@@ -375,19 +431,43 @@ function solve_two_poi_mpopf(data, slack_node::Int)
         # 2. Reactive power balance at load
         @constraint(model, (Q_1j[t] - x1j * l_1j[t]) + (Q_2j[t] - x2j * l_2j[t]) == Q_L_t)
         
-        # 3. KVL constraint for line 1
-        @constraint(model, v_j[t] == v_1 - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
-        
-        # 4. KVL constraint for line 2
-        @constraint(model, v_j[t] == v_2 - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
-        
+        # 3. KVL constraint for line 1 (node 0 → node 2)
+        # 4. KVL constraint for line 2 (node 1 → node 2)
         # 5. SOC relaxation for line 1
-        @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_1 * l_1j[t])
-        
         # 6. SOC relaxation for line 2
-        @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_2 * l_2j[t])
+        if same_voltage_levels
+            # Fixed voltages (current behavior)
+            v_1_val = data[:V_1_pu]^2
+            v_2_val = data[:V_2_pu]^2
+            
+            @constraint(model, v_j[t] == v_1_val - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
+            @constraint(model, v_j[t] == v_2_val - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
+            @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_1_val * l_1j[t])
+            @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_2_val * l_2j[t])
+        else
+            # Variable voltages for non-slack substation
+            if slack_node == 0
+                # Node 0 (Sub 1) is slack with fixed voltage
+                # Node 1 (Sub 2) has variable voltage v_1[t]
+                v_0_val = data[:V_1_pu]^2  # Slack voltage (fixed)
+                
+                @constraint(model, v_j[t] == v_0_val - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
+                @constraint(model, v_j[t] == v_1[t] - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
+                @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_0_val * l_1j[t])
+                @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_1[t] * l_2j[t])
+            else  # slack_node == 1
+                # Node 1 (Sub 2) is slack with fixed voltage
+                # Node 0 (Sub 1) has variable voltage v_0[t]
+                v_1_val = data[:V_2_pu]^2  # Slack voltage (fixed)
+                
+                @constraint(model, v_j[t] == v_0[t] - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
+                @constraint(model, v_j[t] == v_1_val - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
+                @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_0[t] * l_1j[t])
+                @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_1_val * l_2j[t])
+            end
+        end
         
-        # 7. Voltage limits
+        # 7. Voltage limits (load bus always constrained)
         @constraint(model, Vminpu^2 <= v_j[t] <= Vmaxpu^2)
     end
 
@@ -427,6 +507,7 @@ function solve_two_poi_mpopf(data, slack_node::Int)
         :objective => has_values(model) ? objective_value(model) : NaN,
         :solve_time => solve_time_val,
         :slack_node => slack_node,
+        :same_voltage_levels => same_voltage_levels,
         # Store time-indexed arrays
         :P_1j => [value(P_1j[t]) for t in Tset],
         :Q_1j => [value(Q_1j[t]) for t in Tset],
@@ -438,6 +519,17 @@ function solve_two_poi_mpopf(data, slack_node::Int)
         # Store network matrices for angle computation
         :network_matrices => network_matrices
     )
+    
+    # Store non-slack substation voltages if variable
+    if !same_voltage_levels
+        if slack_node == 0
+            # Node 1 voltage was variable
+            result[:v_nonslack] = [value(v_1[t]) for t in Tset]
+        else  # slack_node == 1
+            # Node 0 voltage was variable
+            result[:v_nonslack] = [value(v_0[t]) for t in Tset]
+        end
+    end
     
     return result
 end
@@ -483,8 +575,11 @@ function analyze_slack_configuration_mpopf(slack_node::Int, data)
             :v_j => result[:v_j][t]
         )
         
+        # Get non-slack voltage if variable
+        v_nonslack_t = haskey(result, :v_nonslack) ? result[:v_nonslack][t] : nothing
+        
         # Compute β angles
-        beta_result = compute_beta_angles(data, opf_result_t, slack_node)
+        beta_result = compute_beta_angles(data, opf_result_t, slack_node, v_nonslack_t)
         β = beta_result[:beta]
         
         # Get network matrices
@@ -660,15 +755,49 @@ for slack_sub in sort(collect(keys(results_by_slack)))
     # Print bus voltages (time-averaged)
     println()
     v_crayon = Crayon(foreground = :light_yellow)
+    v_var_crayon = Crayon(foreground = :light_magenta, bold = true)
     println("Bus Voltages (time-averaged):")
     
-    v_0_pu = data[:V_1_pu]  # Substation 1 (node 0) - fixed
-    v_1_pu = data[:V_2_pu]  # Substation 2 (node 1) - fixed
-    v_2_pu = mean(sqrt.(result[:v_j]))  # Load bus (node 2) - averaged over time
+    same_voltage_levels = data[:same_voltage_levels]
+    slack_node_val = result[:slack_node]  # Get slack node from result
     
-    println("  ", v_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu, digits=4)) pu")
-    println("  ", v_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu, digits=4)) pu")
-    println("  ", v_crayon("Node 2 (Load): "), " V = $(round(v_2_pu, digits=4)) pu (avg)")
+    if same_voltage_levels
+        # Fixed voltages
+        v_0_pu = data[:V_1_pu]  # Substation 1 (node 0) - fixed
+        v_1_pu = data[:V_2_pu]  # Substation 2 (node 1) - fixed
+        v_2_pu = mean(sqrt.(result[:v_j]))  # Load bus (node 2) - averaged over time
+        
+        println("  ", v_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu, digits=4)) pu (fixed)")
+        println("  ", v_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu, digits=4)) pu (fixed)")
+        println("  ", v_crayon("Node 2 (Load): "), " V = $(round(v_2_pu, digits=4)) pu (avg)")
+    else
+        # Variable voltage for non-slack
+        v_2_pu = mean(sqrt.(result[:v_j]))  # Load bus (node 2) - averaged over time
+        
+        if slack_node_val == 0
+            # Node 0 is slack (fixed), node 1 is variable
+            v_0_pu = data[:V_1_pu]
+            v_1_pu_avg = mean(sqrt.(result[:v_nonslack]))
+            v_1_pu_min = minimum(sqrt.(result[:v_nonslack]))
+            v_1_pu_max = maximum(sqrt.(result[:v_nonslack]))
+            
+            println("  ", v_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu, digits=4)) pu (slack, fixed)")
+            println("  ", v_var_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu_avg, digits=4)) pu (avg, optimized)")
+            println("                    Range: [$(round(v_1_pu_min, digits=4)), $(round(v_1_pu_max, digits=4))] pu")
+        else  # slack_node_val == 1
+            # Node 1 is slack (fixed), node 0 is variable
+            v_1_pu = data[:V_2_pu]
+            v_0_pu_avg = mean(sqrt.(result[:v_nonslack]))
+            v_0_pu_min = minimum(sqrt.(result[:v_nonslack]))
+            v_0_pu_max = maximum(sqrt.(result[:v_nonslack]))
+            
+            println("  ", v_var_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu_avg, digits=4)) pu (avg, optimized)")
+            println("                    Range: [$(round(v_0_pu_min, digits=4)), $(round(v_0_pu_max, digits=4))] pu")
+            println("  ", v_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu, digits=4)) pu (slack, fixed)")
+        end
+        
+        println("  ", v_crayon("Node 2 (Load): "), " V = $(round(v_2_pu, digits=4)) pu (avg)")
+    end
     
     # Print power dispatch summary (time-averaged)
     println()
@@ -755,7 +884,7 @@ include(joinpath(@__DIR__, "envs", "multi_poi", "Plotter.jl"))
 plots_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", "plots")
 mkpath(plots_dir)
 plot_filename = joinpath(plots_dir, "mpopf_input_curves.png")
-plot_input_curves(data, showPlots=true, savePlots=true, filename=plot_filename)
+plot_input_curves(data, showPlots=showPlots, savePlots=savePlots, filename=plot_filename)
 print_curve_statistics(data)
 
 println("="^80)
