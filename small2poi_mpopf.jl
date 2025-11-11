@@ -14,7 +14,7 @@ using LinearAlgebra
 using Crayons
 using Printf
 using Statistics
-# using Plots  # Removed for now - will add back when plotting meets standards
+using Plots  # For input curve plotting
 
 # Optional: Uncomment if running OpenDSS validation
 # import OpenDSSDirect as dss
@@ -56,8 +56,12 @@ delta_t_h = 24.0 / T  # Time step duration in hours
 # Time-varying load profile (sinusoidal, similar to tadmm_copper_plate)
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 
-# Time-varying energy cost ($/kWh)
-LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
+# Time-varying energy cost ($/kWh) - different for each substation
+# Substation 1: Peak during early hours
+LoadShapeCost_1 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2
+
+# Substation 2: Peak during later hours (shifted by π/2)
+LoadShapeCost_2 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2
 
 data = Dict(
     :V_1_pu => V_1_pu,
@@ -77,7 +81,8 @@ data = Dict(
     :T => T,
     :delta_t_h => delta_t_h,
     :LoadShapeLoad => LoadShapeLoad,
-    :LoadShapeCost => LoadShapeCost
+    :LoadShapeCost_1 => LoadShapeCost_1,
+    :LoadShapeCost_2 => LoadShapeCost_2
 )
 
 function process_data!(data)
@@ -143,7 +148,8 @@ println("Time periods: T = $(data[:T])")
 println("Time step: Δt = $(data[:delta_t_h]) hours")
 println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr")
 println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
-println("Cost variation: \$$(round(minimum(data[:LoadShapeCost]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost]), digits=3)) per kWh")
+println("Cost variation (Sub 1): \$$(round(minimum(data[:LoadShapeCost_1]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_1]), digits=3)) per kWh")
+println("Cost variation (Sub 2): \$$(round(minimum(data[:LoadShapeCost_2]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_2]), digits=3)) per kWh")
 println("="^80)
 
 
@@ -387,11 +393,13 @@ function solve_two_poi_mpopf(data, slack_node::Int)
 
     # ========== OBJECTIVE ==========
     # Total energy cost over all time periods
-    # Cost is time-varying from LoadShapeCost
-    LoadShapeCost = data[:LoadShapeCost]
+    # Cost is time-varying and different for each substation
+    LoadShapeCost_1 = data[:LoadShapeCost_1]
+    LoadShapeCost_2 = data[:LoadShapeCost_2]
     
     @expression(model, energy_cost_total,
-        sum(LoadShapeCost[t] * (P_1j[t] + P_2j[t]) * P_BASE * Δt for t in Tset))
+        sum(LoadShapeCost_1[t] * P_1j[t] * P_BASE * Δt + 
+            LoadShapeCost_2[t] * P_2j[t] * P_BASE * Δt for t in Tset))
     
     @objective(model, Min, energy_cost_total)
 
@@ -730,4 +738,21 @@ success_crayon = Crayon(foreground = :light_green, bold = true)
 info_crayon = Crayon(foreground = :light_blue)
 println(success_crayon("✓ MPOPF SCRIPT COMPLETE!"), " Analyzed both slack bus configurations.")
 println(info_crayon("ℹ Tables I & II show angle coordination and cost comparison."))
+println("="^80)
+
+# ==================================================================================
+# PLOT INPUT CURVES
+# ==================================================================================
+
+println("\n" * "="^80)
+println(Crayon(foreground = :magenta, bold = true)("GENERATING INPUT CURVE PLOTS"))
+println("="^80)
+
+# Load plotter
+include(joinpath(@__DIR__, "envs", "multi_poi", "Plotter.jl"))
+
+# Generate plot
+plot_input_curves(data, showPlots=true, savePlots=true, filename="plots/mpopf_input_curves.png")
+print_curve_statistics(data)
+
 println("="^80)
