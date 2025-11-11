@@ -109,38 +109,35 @@ process_data!(data)
 
 
 """
-    compute_network_matrices(data)
+    compute_network_matrices(data, slack_node)
 
-Compute the incidence matrices B, B_T (tree), B_⊥ (chord) and angle vector β
-for the 3-bus system with topology:
-- Node 0 (substation): slack bus with V_0 = V_1_pu ∠ δ_1
-- Node 1 (substation): PV bus with V_1 = V_2_pu ∠ δ_2  
-- Node 2 (load): load bus
+Compute the incidence matrices B, B_T (tree), B_⊥ (chord) for the 3-bus system
+with the specified slack bus removed.
+
+Topology:
+- Node 0 (substation 1): can be slack
+- Node 1 (substation 2): can be slack
+- Node 2 (load): never slack
 - Link 1: connects node 0 → node 2
 - Link 2: connects node 1 → node 2
 
+Arguments:
+- data: system data dictionary
+- slack_node: which node is slack (0 or 1)
+
 Returns a Dict with:
-- :B - reduced incidence matrix (m × n)
+- :B - reduced incidence matrix (m × n) after removing slack node
 - :B_T - tree part of B (n × n)
 - :B_⊥ - chord part of B ((m-n) × n)
-- :β - angle differences on all links (after OPF solve)
 - :spanning_tree_links - indices of tree links
 - :chord_links - indices of chord links
 """
-function compute_network_matrices(data)
+function compute_network_matrices(data, slack_node::Int)
     # Network topology for 3-bus system:
-    # Nodes: 0 (slack at grid1), 1 (PV at grid2), 2 (load)
-    # We remove node 0 from the formulation → working with nodes 1, 2
+    # Nodes: 0 (substation 1), 1 (substation 2), 2 (load)
     # Links: e=1 (0→2), e=2 (1→2)
     
-    # After removing node 0, we have:
-    # n = 2 nodes (node 1, node 2 in reduced system, originally nodes 1,2)
-    # m = 2 links
-    
-    n_nodes_reduced = 2  # nodes 1 and 2 (after removing slack node 0)
-    m_links = 2          # links 1 and 2
-    
-    # Full incidence matrix C (before removing node 0)
+    # Full incidence matrix C (before removing slack)
     # Rows: nodes 0, 1, 2
     # Cols: links 1, 2
     # C[i,e] = +1 if link e leaves node i
@@ -156,23 +153,35 @@ function compute_network_matrices(data)
        -1  -1    # node 2: both links enter
     ]
     
-    # Reduced incidence matrix B: remove first row (node 0) and transpose
-    B = C_full[2:end, :]'  # Remove row 1 (node 0), then transpose
+    # Remove slack node row and transpose to get B
+    if slack_node == 0
+        # Remove node 0 (row 1), keep nodes 1, 2
+        B = C_full[2:end, :]'
+        n_nodes_reduced = 2
+    elseif slack_node == 1
+        # Remove node 1 (row 2), keep nodes 0, 2
+        B = C_full[[1,3], :]'
+        n_nodes_reduced = 2
+    else
+        error("Invalid slack node: $slack_node. Must be 0 or 1.")
+    end
     
-    # Choose spanning tree T
+    m_links = 2
+    
+    # For a radial network, all links are in the spanning tree
     spanning_tree_links = [1, 2]  # Both links are in the tree
     chord_links = Int[]            # No chord links
     
-    # B_T: tree part (should be n × n = 2 × 2, and invertible)
+    # B_T: tree part (should be n × n and invertible)
     B_T = B[spanning_tree_links, :]
     
     # Check if B_T is invertible
     det_B_T = det(B_T)
     
-    # B_⊥: chord part ((m-n) × n matrix)
+    # B_⊥: chord part ((m-n) × n matrix) - empty for radial network
     B_chord = zeros(0, n_nodes_reduced)
     
-    println("Network: 3 nodes, 2 links (radial), det(B_T) = $(round(det_B_T, digits=3))")
+    println("  Network with slack=$slack_node: det(B_T) = $(round(det_B_T, digits=3))")
     
     return Dict(
         :B => B,
@@ -182,45 +191,54 @@ function compute_network_matrices(data)
         :m_links => m_links,
         :spanning_tree_links => spanning_tree_links,
         :chord_links => chord_links,
-        :C_full => C_full
+        :C_full => C_full,
+        :slack_node => slack_node
     )
 end
 
 
 """
-    compute_beta_angles(data, opf_result, network_matrices)
+    compute_beta_angles(data, opf_result, slack_node)
 
 Compute the angle difference β_ij = ∠(v_i - z*_ij S_ij) for each link (i,j) ∈ E
-after solving the OPF.
+after solving the OPF, as per equation (27) in the paper.
 
 Arguments:
 - data: system data dictionary
 - opf_result: Dict with OPF solution (:P_1j, :Q_1j, :P_2j, :Q_2j, :v_j, etc.)
-- network_matrices: Dict from compute_network_matrices()
+- slack_node: which node is slack (0 or 1)
 
 Returns Dict with:
 - :beta - vector of angle differences for all links (in radians)
 - :beta_deg - vector of angle differences for all links (in degrees)
 """
-function compute_beta_angles(data, opf_result, network_matrices)
-    # Extract voltage magnitudes squared
-    v_0 = data[:V_1_pu]^2  # Node 0 (grid1) - slack
-    v_1 = data[:V_2_pu]^2  # Node 1 (grid2) - PV bus
-    v_2 = opf_result[:v_j]  # Node 2 (load) - from OPF
+function compute_beta_angles(data, opf_result, slack_node::Int)
+    # Compute β_ij = ∠(v_i - z*_ij S_ij) for each link (i,j) ∈ E
+    # as per equation (27) in the paper
     
-    # Extract angles (in radians)
-    δ_0 = data[:delta_1_rad]  # Node 0 angle
-    δ_1 = data[:delta_2_rad]  # Node 1 angle
+    # Extract voltage magnitudes
+    V_0_pu = data[:V_1_pu]  # Node 0 (substation 1)
+    V_1_pu = data[:V_2_pu]  # Node 1 (substation 2)
+    V_2_pu = sqrt(opf_result[:v_j])  # Node 2 (load) - from OPF
     
-    # For node 2, we need to compute the angle from the OPF results
-    # Using the branch flow equations and power flows
-    # This is implicit in the BFM, but we can estimate it
+    # For slack node, angle is 0
+    if slack_node == 0
+        δ_0 = 0.0
+    else
+        δ_0 = data[:delta_1_rad]  # Non-slack: use input angle (for β computation only)
+    end
+    
+    if slack_node == 1
+        δ_1 = 0.0
+    else
+        δ_1 = data[:delta_2_rad]  # Non-slack: use input angle (for β computation only)
+    end
     
     # Extract power flows
-    P_12 = opf_result[:P_1j]  # Power from grid1 (node 0) to load (node 2) via link 1
-    Q_12 = opf_result[:Q_1j]
-    P_22 = opf_result[:P_2j]  # Power from grid2 (node 1) to load (node 2) via link 2
-    Q_22 = opf_result[:Q_2j]
+    P_02 = opf_result[:P_1j]  # Power on link 1: node 0 → node 2
+    Q_02 = opf_result[:Q_1j]
+    P_12 = opf_result[:P_2j]  # Power on link 2: node 1 → node 2
+    Q_12 = opf_result[:Q_2j]
     
     # Extract line impedances
     r_1 = data[:r1_pu]
@@ -231,55 +249,24 @@ function compute_beta_angles(data, opf_result, network_matrices)
     x_2 = data[:x2_pu]
     z_2 = r_2 + im*x_2
     
-    # For a radial network in BFM, we can compute the angle at node 2
-    # from the relationship: δ_j ≈ δ_i - (r*P + x*Q)/(V_i * V_j)
-    # But since we have two sources, let's use the dominant one
-    
-    # Approximate angle at node 2 from path through link 1
-    V_0_pu = sqrt(v_0)
-    V_2_pu = sqrt(v_2)
-    δ_2_from_link1 = δ_0 - (r_1 * P_12 + x_1 * Q_12) / (V_0_pu * V_2_pu)
-    
-    # Approximate angle at node 2 from path through link 2
-    V_1_pu = sqrt(v_1)
-    δ_2_from_link2 = δ_1 - (r_2 * P_22 + x_2 * Q_22) / (V_1_pu * V_2_pu)
-    
-    # Average them (or pick one if one dominates)
-    δ_2 = (δ_2_from_link1 + δ_2_from_link2) / 2
-    
     # Compute β for each link: β_ij = ∠(v_i - z*_ij S_ij)
-    # where S_ij = P_ij + j*Q_ij is the complex power flow
-    
     # Link 1: from node 0 to node 2
-    S_12 = P_12 + im*Q_12  # Complex power on link 1
+    S_02 = P_02 + im*Q_02
     V_0_complex = V_0_pu * exp(im * δ_0)
-    V_0_minus_zS_1 = V_0_complex - conj(z_1) * S_12
-    β_1 = angle(V_0_minus_zS_1)
+    V_0_minus_zS = V_0_complex - conj(z_1) * S_02
+    β_1 = angle(V_0_minus_zS)
     
     # Link 2: from node 1 to node 2  
-    S_22 = P_22 + im*Q_22  # Complex power on link 2
+    S_12 = P_12 + im*Q_12
     V_1_complex = V_1_pu * exp(im * δ_1)
-    V_1_minus_zS_2 = V_1_complex - conj(z_2) * S_22
-    β_2 = angle(V_1_minus_zS_2)
-    
-    # Also compute the angle differences directly
-    Δδ_01 = δ_0 - δ_2  # Angle difference across link 1
-    Δδ_12 = δ_1 - δ_2  # Angle difference across link 2
+    V_1_minus_zS = V_1_complex - conj(z_2) * S_12
+    β_2 = angle(V_1_minus_zS)
     
     β_vec = [β_1, β_2]
-    β_deg_vec = rad2deg.(β_vec)
-    
-    println("β: [$(round(β_deg_vec[1], digits=3))°, $(round(β_deg_vec[2], digits=3))°], δ₂ = $(round(rad2deg(δ_2), digits=3))°")
     
     return Dict(
         :beta => β_vec,
-        :beta_deg => β_deg_vec,
-        :delta_2 => δ_2,
-        :delta_2_deg => rad2deg(δ_2),
-        :angle_diff_link1 => Δδ_01,
-        :angle_diff_link2 => Δδ_12,
-        :V_0_minus_zS_1 => V_0_minus_zS_1,
-        :V_1_minus_zS_2 => V_1_minus_zS_2
+        :beta_deg => rad2deg.(β_vec)
     )
 end
 
@@ -362,10 +349,9 @@ end
 println("\n" * "="^80)
 println("NETWORK TOPOLOGY")
 println("="^80)
-
-# Compute network matrices (topology-dependent, OPF-independent)
-network_matrices = compute_network_matrices(data)
-
+println("3-bus system: 2 substations (nodes 0, 1) + 1 load (node 2)")
+println("Links: 0→2 (link 1), 1→2 (link 2)")
+println("Network matrices B, B_T computed per slack configuration")
 println("="^80)
 
 # ==================================================================================
@@ -455,52 +441,45 @@ function analyze_slack_configuration(slack_node::Int, data::Dict)
     Q_2j_val = value(Q_2j)
     v_j_val = value(v_j)
     
-    # Compute angles using branch flow relationships
-    # We have 2 substations: node 0 (grid1) and node 1 (grid2)
-    # One is slack, the other is non-slack
+    # Compute angles using matrix formula from paper: θ_★ = P(B^(-1)β)
+    # where β_ij = ∠(v_i - z*_ij S_ij) from equation (27)
+    # and P projects to (-π, π]
     
-    # Extract impedances
-    r_1 = data[:r1_pu]
-    x_1 = data[:x1_pu]
-    r_2 = data[:r2_pu]
-    x_2 = data[:x2_pu]
+    # Get network matrices for this slack configuration
+    network_matrices = compute_network_matrices(data, slack_node)
+    B = network_matrices[:B]
+    B_T = network_matrices[:B_T]
     
-    V_0_pu = sqrt(v_1)
-    V_1_pu = sqrt(v_2)
-    V_2_pu = sqrt(v_j_val)
+    # Package OPF results
+    opf_result = Dict(
+        :P_1j => P_1j_val,
+        :Q_1j => Q_1j_val,
+        :P_2j => P_2j_val,
+        :Q_2j => Q_2j_val,
+        :v_j => v_j_val
+    )
     
-    # Get slack bus angle (always 0° for slack)
-    δ_slack = 0.0
+    # Compute β vector for all links
+    beta_result = compute_beta_angles(data, opf_result, slack_node)
+    β = beta_result[:beta]
     
-    # Compute non-slack substation angles (θ) from OPF solution
-    # These are the phase-shifter angles computed POST-OPTIMIZATION
-    # NOT from input delta values (those are fixed physical angles, irrelevant here)
-    # We compute from power flows using voltage drop relationships
+    # Compute angles: θ_★ = P(B^(-1)β)
+    # For radial network, B = B_T (all links are tree links)
+    θ_star = B_T \ β  # Solve B_T * θ_★ = β
     
+    # Project to (-π, π]
+    θ_star = mod.(θ_star .+ π, 2π) .- π
+    
+    # Map back to substation indices
+    # θ_star corresponds to non-slack nodes in the reduced system
     if slack_node == 0
-        # Substation 1 is slack at θ₁ = 0°
-        # Compute θ₂ (angle at substation 2) from power flow solution
-        # Using voltage drop: θ_to = θ_from - (r*P + x*Q) / (V_from * V_to)
-        
-        # Angle at load from sub1 path
-        θ_load_from_sub1 = 0.0 - (r_1 * P_1j_val + x_1 * Q_1j_val) / (V_0_pu * V_2_pu)
-        
-        # Angle at sub2 from load (going backwards)
-        θ_sub2 = θ_load_from_sub1 + (r_2 * P_2j_val + x_2 * Q_2j_val) / (V_1_pu * V_2_pu)
-        
-        angles_deg = Dict(2 => rad2deg(θ_sub2))
-        
+        # Removed node 0, so θ_star corresponds to [node 1, node 2]
+        # We care about node 1 (substation 2)
+        angles_deg = Dict(2 => rad2deg(θ_star[1]))
     else  # slack_node == 1
-        # Substation 2 is slack at θ₂ = 0°
-        # Compute θ₁ (angle at substation 1) from power flow solution
-        
-        # Angle at load from sub2 path
-        θ_load_from_sub2 = 0.0 - (r_2 * P_2j_val + x_2 * Q_2j_val) / (V_1_pu * V_2_pu)
-        
-        # Angle at sub1 from load (going backwards)
-        θ_sub1 = θ_load_from_sub2 + (r_1 * P_1j_val + x_1 * Q_1j_val) / (V_0_pu * V_2_pu)
-        
-        angles_deg = Dict(1 => rad2deg(θ_sub1))
+        # Removed node 1, so θ_star corresponds to [node 0, node 2]
+        # We care about node 0 (substation 1)
+        angles_deg = Dict(1 => rad2deg(θ_star[1]))
     end
     
     # For single time period, median is just the value itself
