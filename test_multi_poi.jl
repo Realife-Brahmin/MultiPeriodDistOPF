@@ -296,9 +296,9 @@ function compute_beta_angles(data, opf_result, network_matrices)
     δ_2 = (δ_2_from_link1 + δ_2_from_link2) / 2
     
     println("Estimated angle at node 2:")
-    println("  From link 1 path: $(rad2deg(δ_2_from_link1))°")
-    println("  From link 2 path: $(rad2deg(δ_2_from_link2))°")
-    println("  Average δ_2: $(rad2deg(δ_2))°")
+    println("  From link 1 path: $(round(rad2deg(δ_2_from_link1), digits=3))°")
+    println("  From link 2 path: $(round(rad2deg(δ_2_from_link2), digits=3))°")
+    println("  Average δ_2: $(round(rad2deg(δ_2), digits=3))°")
     println()
     
     # Compute β for each link: β_ij = ∠(v_i - z*_ij S_ij)
@@ -324,13 +324,13 @@ function compute_beta_angles(data, opf_result, network_matrices)
     β_deg_vec = rad2deg.(β_vec)
     
     println("Angle differences β_ij = ∠(v_i - z*_ij S_ij):")
-    println("  Link 1 (0→2): β₁ = $(β_deg_vec[1])° ($(β_vec[1]) rad)")
-    println("  Link 2 (1→2): β₂ = $(β_deg_vec[2])° ($(β_vec[2]) rad)")
+    println("  Link 1 (0→2): β₁ = $(round(β_deg_vec[1], digits=3))° ($(round(β_vec[1], digits=3)) rad)")
+    println("  Link 2 (1→2): β₂ = $(round(β_deg_vec[2], digits=3))° ($(round(β_vec[2], digits=3)) rad)")
     println()
     
     println("Direct angle differences Δδ = δ_from - δ_to:")
-    println("  Link 1 (0→2): Δδ = $(rad2deg(Δδ_01))°")
-    println("  Link 2 (1→2): Δδ = $(rad2deg(Δδ_12))°")
+    println("  Link 1 (0→2): Δδ = $(round(rad2deg(Δδ_01), digits=3))°")
+    println("  Link 2 (1→2): Δδ = $(round(rad2deg(Δδ_12), digits=3))°")
     println()
     
     println("="^60)
@@ -454,13 +454,13 @@ end
 
 println("\n\n2. Angle Differences β:")
 for (i, β_val) in enumerate(beta_results[:beta])
-    println("   Link $i: β = $(beta_results[:beta_deg][i])° = $(β_val) rad")
+    println("   Link $i: β = $(round(beta_results[:beta_deg][i], digits=3))° = $(round(β_val, digits=3)) rad")
 end
 
 println("\n\n3. Node Angles:")
-println("   Node 0 (grid1): $(rad2deg(data[:delta_1_rad]))°")
-println("   Node 1 (grid2): $(rad2deg(data[:delta_2_rad]))°")
-println("   Node 2 (load):  $(beta_results[:delta_2_deg])° (computed)")
+println("   Node 0 (grid1): $(round(rad2deg(data[:delta_1_rad]), digits=3))°")
+println("   Node 1 (grid2): $(round(rad2deg(data[:delta_2_rad]), digits=3))°")
+println("   Node 2 (load):  $(round(beta_results[:delta_2_deg], digits=3))° (computed)")
 
 println("\n" * "="^80)
 println("\nScript complete! All network topology and OPF analysis finished.")
