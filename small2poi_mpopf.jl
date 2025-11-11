@@ -43,8 +43,8 @@ kVA_B = 1000
 kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
 
 # Power limits for each substation (kW)
-P_1_max_kW = 350.0
-P_2_max_kW = 350.0
+P_1_max_kW = P_L_base_kW * 0.7
+P_2_max_kW = P_L_base_kW * 0.7
 
 # ============================================================================
 # TIME HORIZON PARAMETERS
@@ -107,8 +107,8 @@ function process_data!(data)
     delta_2_rad = data[:delta_2_deg] * pi / 180
 
     # Voltage limits
-    Vminpu = 0.90
-    Vmaxpu = 1.10
+    Vminpu = 0.95
+    Vmaxpu = 1.05
     
     # Power limits (pu)
     P_1_max_pu = data[:P_1_max_kW] / S_base_kVA
