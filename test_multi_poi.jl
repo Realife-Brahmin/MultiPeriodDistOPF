@@ -25,7 +25,8 @@ V_2_pu = 1.07
 delta_2_deg = 0.0
 alpha_share = 0.75
 
-r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.025; x2_ohm=0.025;
+# r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.025; x2_ohm=0.025;
+r1_ohm = 0.025; r2_ohm=0.075; x1_ohm=0.025; x2_ohm=0.025;
 P_L_kW = 500
 Q_L_kW = P_L_kW*0.75
 kVA_B = 1000
