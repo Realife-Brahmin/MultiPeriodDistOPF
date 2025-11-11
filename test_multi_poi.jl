@@ -143,69 +143,23 @@ function compute_network_matrices(data)
        -1  -1    # node 2: both links enter
     ]
     
-    println("Full incidence matrix C (3 nodes × 2 links):")
-    println("Rows: nodes [0, 1, 2], Cols: links [1, 2]")
-    display(C_full)
-    println()
-    
     # Reduced incidence matrix B: remove first row (node 0) and transpose
-    # B is m × n where rows are links, columns are nodes (in reduced system)
     B = C_full[2:end, :]'  # Remove row 1 (node 0), then transpose
     
-    println("Reduced incidence matrix B (2 links × 2 nodes):")
-    println("Rows: links [1, 2], Cols: nodes [1, 2] (in reduced system)")
-    display(B)
-    println()
-    
     # Choose spanning tree T
-    # We need n = 2 tree links to span n = 2 nodes
-    # Since we only have m = 2 links total, both must be tree links
-    # This means: m = n, so there are no chord links (no cycles)
-    
     spanning_tree_links = [1, 2]  # Both links are in the tree
     chord_links = Int[]            # No chord links
     
     # B_T: tree part (should be n × n = 2 × 2, and invertible)
     B_T = B[spanning_tree_links, :]
     
-    println("Tree incidence matrix B_T ($(length(spanning_tree_links)) tree links × $n_nodes_reduced nodes):")
-    display(B_T)
-    println()
-    
     # Check if B_T is invertible
     det_B_T = det(B_T)
-    println("Determinant of B_T: $det_B_T")
-    if abs(det_B_T) > 1e-10
-        println("✓ B_T is invertible (forms a valid spanning tree)")
-    else
-        println("✗ Warning: B_T is singular (not a valid spanning tree)")
-    end
-    println()
     
     # B_⊥: chord part ((m-n) × n matrix)
-    # Since m = n = 2, we have 0 chord links
-    if length(chord_links) > 0
-        B_chord = B[chord_links, :]
-        println("Chord incidence matrix B_⊥ ($(length(chord_links)) chord links × $n_nodes_reduced nodes):")
-        display(B_chord)
-    else
-        B_chord = zeros(0, n_nodes_reduced)
-        println("Chord incidence matrix B_⊥: empty (no chord links, tree network)")
-    end
-    println()
+    B_chord = zeros(0, n_nodes_reduced)
     
-    # Network summary
-    println("="^60)
-    println("Network Topology Summary:")
-    println("="^60)
-    println("Total nodes (including slack): 3")
-    println("Reduced nodes (excluding slack): $n_nodes_reduced")
-    println("Total links: $m_links")
-    println("Tree links: $(length(spanning_tree_links))")
-    println("Chord links: $(length(chord_links))")
-    println("Network type: $(length(chord_links) == 0 ? "Radial (tree)" : "Meshed")")
-    println("="^60)
-    println()
+    println("Network: 3 nodes, 2 links (radial), det(B_T) = $(round(det_B_T, digits=3))")
     
     return Dict(
         :B => B,
@@ -236,10 +190,6 @@ Returns Dict with:
 - :beta_deg - vector of angle differences for all links (in degrees)
 """
 function compute_beta_angles(data, opf_result, network_matrices)
-    println("="^60)
-    println("Computing Angle Differences β on Each Link")
-    println("="^60)
-    
     # Extract voltage magnitudes squared
     v_0 = data[:V_1_pu]^2  # Node 0 (grid1) - slack
     v_1 = data[:V_2_pu]^2  # Node 1 (grid2) - PV bus
@@ -268,17 +218,6 @@ function compute_beta_angles(data, opf_result, network_matrices)
     x_2 = data[:x2_pu]
     z_2 = r_2 + im*x_2
     
-    println("\nVoltage magnitudes squared:")
-    println("  v_0 (node 0, grid1): $(v_0)")
-    println("  v_1 (node 1, grid2): $(v_1)")
-    println("  v_2 (node 2, load):  $(v_2)")
-    println()
-    
-    println("Initial angles (given):")
-    println("  δ_0 (node 0): $(rad2deg(δ_0))°")
-    println("  δ_1 (node 1): $(rad2deg(δ_1))°")
-    println()
-    
     # For a radial network in BFM, we can compute the angle at node 2
     # from the relationship: δ_j ≈ δ_i - (r*P + x*Q)/(V_i * V_j)
     # But since we have two sources, let's use the dominant one
@@ -294,12 +233,6 @@ function compute_beta_angles(data, opf_result, network_matrices)
     
     # Average them (or pick one if one dominates)
     δ_2 = (δ_2_from_link1 + δ_2_from_link2) / 2
-    
-    println("Estimated angle at node 2:")
-    println("  From link 1 path: $(round(rad2deg(δ_2_from_link1), digits=3))°")
-    println("  From link 2 path: $(round(rad2deg(δ_2_from_link2), digits=3))°")
-    println("  Average δ_2: $(round(rad2deg(δ_2), digits=3))°")
-    println()
     
     # Compute β for each link: β_ij = ∠(v_i - z*_ij S_ij)
     # where S_ij = P_ij + j*Q_ij is the complex power flow
@@ -323,18 +256,7 @@ function compute_beta_angles(data, opf_result, network_matrices)
     β_vec = [β_1, β_2]
     β_deg_vec = rad2deg.(β_vec)
     
-    println("Angle differences β_ij = ∠(v_i - z*_ij S_ij):")
-    println("  Link 1 (0→2): β₁ = $(round(β_deg_vec[1], digits=3))° ($(round(β_vec[1], digits=3)) rad)")
-    println("  Link 2 (1→2): β₂ = $(round(β_deg_vec[2], digits=3))° ($(round(β_vec[2], digits=3)) rad)")
-    println()
-    
-    println("Direct angle differences Δδ = δ_from - δ_to:")
-    println("  Link 1 (0→2): Δδ = $(round(rad2deg(Δδ_01), digits=3))°")
-    println("  Link 2 (1→2): Δδ = $(round(rad2deg(Δδ_12), digits=3))°")
-    println()
-    
-    println("="^60)
-    println()
+    println("β: [$(round(β_deg_vec[1], digits=3))°, $(round(β_deg_vec[2], digits=3))°], δ₂ = $(round(rad2deg(δ_2), digits=3))°")
     
     return Dict(
         :beta => β_vec,
@@ -416,53 +338,19 @@ end
 modelDict = solve_two_poi_opf(data)
 
 println("\n" * "="^80)
-println("NETWORK TOPOLOGY ANALYSIS")
+println("NETWORK TOPOLOGY & OPF RESULTS")
 println("="^80)
 
 # Compute network matrices (topology-dependent, OPF-independent)
 network_matrices = compute_network_matrices(data)
 
-println("\n" * "="^80)
-println("OPF SOLUTION RESULTS")
-println("="^80)
-println("Optimal power dispatches:")
-println("  P_1j (from grid1): $(modelDict[:P_1j]) pu = $(modelDict[:P_1j] * data[:kVA_B]) kW")
-println("  Q_1j (from grid1): $(modelDict[:Q_1j]) pu = $(modelDict[:Q_1j] * data[:kVA_B]) kVAr")
-println("  P_2j (from grid2): $(modelDict[:P_2j]) pu = $(modelDict[:P_2j] * data[:kVA_B]) kW")
-println("  Q_2j (from grid2): $(modelDict[:Q_2j]) pu = $(modelDict[:Q_2j] * data[:kVA_B]) kVAr")
-println("  v_j (load bus):    $(modelDict[:v_j]) pu² = $(sqrt(modelDict[:v_j])) pu")
-println("="^80)
 println()
+println("Power dispatches: P₁=$(round(modelDict[:P_1j] * data[:kVA_B], digits=1)) kW, P₂=$(round(modelDict[:P_2j] * data[:kVA_B], digits=1)) kW")
 
 # Compute beta angles (requires OPF results)
 beta_results = compute_beta_angles(data, modelDict, network_matrices)
 
 println("="^80)
-println("SUMMARY OF ALL COMPUTED QUANTITIES")
-println("="^80)
-println("\n1. Incidence Matrices:")
-println("   B (reduced, m×n):")
-display(network_matrices[:B])
-println("\n   B_T (tree part, n×n):")
-display(network_matrices[:B_T])
-if size(network_matrices[:B_chord], 1) > 0
-    println("\n   B_⊥ (chord part, (m-n)×n):")
-    display(network_matrices[:B_chord])
-else
-    println("\n   B_⊥ (chord part): empty (radial network)")
-end
-
-println("\n\n2. Angle Differences β:")
-for (i, β_val) in enumerate(beta_results[:beta])
-    println("   Link $i: β = $(round(beta_results[:beta_deg][i], digits=3))° = $(round(β_val, digits=3)) rad")
-end
-
-println("\n\n3. Node Angles:")
-println("   Node 0 (grid1): $(round(rad2deg(data[:delta_1_rad]), digits=3))°")
-println("   Node 1 (grid2): $(round(rad2deg(data[:delta_2_rad]), digits=3))°")
-println("   Node 2 (load):  $(round(beta_results[:delta_2_deg], digits=3))° (computed)")
-
-println("\n" * "="^80)
 println("\nScript complete! All network topology and OPF analysis finished.")
 println("For OpenDSS validation, see: envs/multi_poi/archive/opendss_validation.jl")
 
