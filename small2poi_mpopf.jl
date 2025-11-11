@@ -758,10 +758,10 @@ for slack_sub in sort(collect(keys(results_by_slack)))
     v_var_crayon = Crayon(foreground = :light_magenta, bold = true)
     println("Bus Voltages (time-averaged):")
     
-    same_voltage_levels = data[:same_voltage_levels]
+    same_v_levels = data[:same_voltage_levels]  # Local copy to avoid soft scope warning
     slack_node_val = result[:slack_node]  # Get slack node from result
     
-    if same_voltage_levels
+    if same_v_levels
         # Fixed voltages
         v_0_pu = data[:V_1_pu]  # Substation 1 (node 0) - fixed
         v_1_pu = data[:V_2_pu]  # Substation 2 (node 1) - fixed
