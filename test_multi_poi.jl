@@ -25,13 +25,17 @@ V_2_pu = 1.07
 delta_2_deg = 0.0
 alpha_share = 0.75
 
-r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.005; x2_ohm=0.005;
+r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.025; x2_ohm=0.025;
 P_L_kW = 500
 Q_L_kW = P_L_kW*0.75
 kVA_B = 1000
 kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
-C_1_dollar_per_kWh = 0.50
+C_1_dollar_per_kWh = 1.00
 C_2_dollar_per_kWh = 0.50
+
+# Power limits for each substation (kW)
+P_1_max_kW = 350.0
+P_2_max_kW = 350.0
 
 data = Dict(
     :V_1_pu => V_1_pu,
@@ -48,7 +52,9 @@ data = Dict(
     :kVA_B => kVA_B,
     :kV_B => kV_B,
     :C_1_dollar_per_kWh => C_1_dollar_per_kWh,
-    :C_2_dollar_per_kWh => C_2_dollar_per_kWh
+    :C_2_dollar_per_kWh => C_2_dollar_per_kWh,
+    :P_1_max_kW => P_1_max_kW,
+    :P_2_max_kW => P_2_max_kW
 )
 
 function process_data!(data)
@@ -75,6 +81,10 @@ function process_data!(data)
     # Voltage limits
     Vminpu = 0.95
     Vmaxpu = 1.05
+    
+    # Power limits (pu)
+    P_1_max_pu = data[:P_1_max_kW] / S_base
+    P_2_max_pu = data[:P_2_max_kW] / S_base
 
     # Update data dict with all required fields
     data[:P_L_pu] = P_L_pu
@@ -89,6 +99,8 @@ function process_data!(data)
     data[:delta_2_rad] = delta_2_rad
     data[:Vminpu] = Vminpu
     data[:Vmaxpu] = Vmaxpu
+    data[:P_1_max_pu] = P_1_max_pu
+    data[:P_2_max_pu] = P_2_max_pu
 
 end
 
@@ -275,10 +287,10 @@ function solve_two_poi_opf(data)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
     # Variables
-    @variable(model, P_1j >= 0)
+    @variable(model, 0 <= P_1j <= data[:P_1_max_pu])
     @variable(model, Q_1j)
     @variable(model, l_1j >= 0)
-    @variable(model, P_2j >= 0)
+    @variable(model, 0 <= P_2j <= data[:P_2_max_pu])
     @variable(model, Q_2j)
     @variable(model, l_2j >= 0)
     @variable(model, v_j >= data[:Vminpu]^2)
@@ -291,7 +303,7 @@ function solve_two_poi_opf(data)
     x2j = data[:x2_pu]
     v_1 = data[:V_1_pu]^2
     v_2 = data[:V_2_pu]^2
-    alpha = data[:alpha_share]
+    # alpha = data[:alpha_share]  # Not used when power limits are active
     P_L_j = data[:P_L_pu]
     Q_L_j = data[:Q_L_pu]
     C_1 = data[:C_1_dollar_pu]
@@ -310,16 +322,27 @@ function solve_two_poi_opf(data)
     @constraint(model, P_1j^2 + Q_1j^2 >= v_1 * l_1j)
     # 6. BCPF2
     @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
-    # 7. Power sharing
-    @constraint(model, P_2j == alpha * P_1j)
+    # 7. Power limits (already in variable bounds)
     # 8. Voltage limits (already in variable bounds)
-    # 9. P_1j, P_2j >= 0 (already in variable bounds)
+    # Note: Power sharing constraint (P_2j == alpha * P_1j) commented out
+    #       to allow optimizer to choose based on costs and power limits
 
     # Objective
     @objective(model, Min, C_1 * P_1j + C_2 * P_2j)
 
     # Solve
     optimize!(model)
+    
+    # Check termination status
+    status = termination_status(model)
+    
+    if status == MOI.LOCALLY_SOLVED || status == MOI.OPTIMAL
+        status_crayon = Crayon(foreground = :green, bold = true)
+        println(status_crayon("✓ OPF Solved: $status"))
+    else
+        status_crayon = Crayon(foreground = :red, bold = true)
+        println(status_crayon("✗ OPF Failed: $status"))
+    end
 
     # Collect results
     modelDict = Dict(
@@ -329,26 +352,18 @@ function solve_two_poi_opf(data)
         :P_2j => value(P_2j),
         :Q_2j => value(Q_2j),
         :l_2j => value(l_2j),
-        :v_j => value(v_j)
+        :v_j => value(v_j),
+        :status => status
     )
     return modelDict
 end
 
-# Example usage:
-modelDict = solve_two_poi_opf(data)
-
 println("\n" * "="^80)
-println("NETWORK TOPOLOGY & OPF RESULTS")
+println("NETWORK TOPOLOGY")
 println("="^80)
 
 # Compute network matrices (topology-dependent, OPF-independent)
 network_matrices = compute_network_matrices(data)
-
-println()
-println("Power dispatches: P₁=$(round(modelDict[:P_1j] * data[:kVA_B], digits=1)) kW, P₂=$(round(modelDict[:P_2j] * data[:kVA_B], digits=1)) kW")
-
-# Compute beta angles (requires OPF results)
-beta_results = compute_beta_angles(data, modelDict, network_matrices)
 
 println("="^80)
 
@@ -385,10 +400,10 @@ function analyze_slack_configuration(slack_node::Int, data::Dict)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
     
-    @variable(model, P_1j >= 0)
+    @variable(model, 0 <= P_1j <= data[:P_1_max_pu])
     @variable(model, Q_1j)
     @variable(model, l_1j >= 0)
-    @variable(model, P_2j >= 0)
+    @variable(model, 0 <= P_2j <= data[:P_2_max_pu])
     @variable(model, Q_2j)
     @variable(model, l_2j >= 0)
     @variable(model, v_j >= data[:Vminpu]^2)
@@ -401,7 +416,6 @@ function analyze_slack_configuration(slack_node::Int, data::Dict)
     x2j = data[:x2_pu]
     v_1 = data[:V_1_pu]^2
     v_2 = data[:V_2_pu]^2
-    alpha = data[:alpha_share]
     P_L_j = data[:P_L_pu]
     Q_L_j = data[:Q_L_pu]
     C_1 = data[:C_1_dollar_pu]
@@ -414,11 +428,22 @@ function analyze_slack_configuration(slack_node::Int, data::Dict)
     @constraint(model, v_j == v_2 - 2 * (r2j * P_2j + x2j * Q_2j) + (r2j^2 + x2j^2) * l_2j)
     @constraint(model, P_1j^2 + Q_1j^2 >= v_1 * l_1j)
     @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
-    @constraint(model, P_2j == alpha * P_1j)
+    # Note: Power sharing constraint removed, using power limits instead
     
     @objective(model, Min, C_1 * P_1j + C_2 * P_2j)
     
     optimize!(model)
+    
+    # Check termination status
+    status = termination_status(model)
+    
+    if status == MOI.LOCALLY_SOLVED || status == MOI.OPTIMAL
+        status_crayon = Crayon(foreground = :green, bold = true)
+        println(status_crayon("  ✓ Slack=$slack_node: $status"))
+    else
+        status_crayon = Crayon(foreground = :red, bold = true)
+        println(status_crayon("  ✗ Slack=$slack_node: $status"))
+    end
     
     obj_value = objective_value(model)
     
@@ -526,22 +551,126 @@ println()
 results_by_slack = Dict()
 
 for slack_sub in [1, 2]
-    println("Analyzing with Substation $slack_sub as slack bus...")
+    println("Solving OPF with Substation $slack_sub as slack bus...")
     results_by_slack[slack_sub] = analyze_slack_configuration(slack_sub - 1, data)
 end
 
+println()
+
+# Print detailed angle coordination for each configuration (TABLE II)
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    println("\n" * "="^80)
+    title2_crayon = Crayon(foreground = :light_magenta, bold = true)
+    println(title2_crayon("TABLE II: ANGLE COORDINATION DETAILS (SLACK: SUBSTATION $slack_sub)"))
+    println("="^80)
+    
+    header2_crayon = Crayon(foreground = :white, bold = true)
+    header_detail = @sprintf("%-15s | %-20s | %-25s | %-15s", 
+                            "Substation", "Median", "Angle Range", "Std Dev")
+    header_detail2 = @sprintf("%-15s | %-20s | %-25s | %-15s",
+                             "(Non-Slack)", "Angle (°)", "(°)", "(°)")
+    sep_detail = "-"^length(header_detail)
+    
+    println(sep_detail)
+    println(header2_crayon(header_detail))
+    println(header2_crayon(header_detail2))
+    println(sep_detail)
+    
+    # Get non-slack substations
+    non_slack_subs = sort(collect(keys(result[:angles_deg])))
+    
+    for sub in non_slack_subs
+        median_angle = result[:median_angles_deg][sub]
+        angle_range = result[:angle_ranges_deg][sub]
+        rmse = result[:rmse_values_deg][sub]
+        
+        sub_str = Crayon(foreground = :yellow)(@sprintf("%-15d", sub))
+        median_str = @sprintf("θ%-2d,%-2d = %7.3f", sub, slack_sub, median_angle)
+        range_str = @sprintf("[%7.3f, %7.3f]", angle_range[1], angle_range[2])
+        rmse_str = @sprintf("%-15.3f", rmse)
+        
+        @printf("%s | %-20s | %-25s | %s\n", sub_str, median_str, range_str, rmse_str)
+    end
+    
+    println(sep_detail)
+    
+    # Print computed substation angles θ₁ and θ₂
+    println()
+    if slack_sub == 1
+        # Sub 1 is slack (θ₁ = 0°), compute θ₂
+        θ₁ = 0.0
+        θ₂ = result[:angles_deg][2]
+        
+        theta1_str = Crayon(foreground = :green, bold = true)("θ₁ (Sub 1, slack)")
+        theta2_str = Crayon(foreground = :yellow, bold = true)("θ₂ (Sub 2)")
+        
+        println("Computed Substation Angles:")
+        @printf("  %s = %7.3f°\n", theta1_str, θ₁)
+        @printf("  %s = %7.3f°\n", theta2_str, θ₂)
+        
+        delta_str = Crayon(foreground = :magenta, bold = true)("Δθ (θ₂ - θ₁)")
+        @printf("  %s = %7.3f°\n", delta_str, θ₂ - θ₁)
+        
+    else  # slack_sub == 2
+        # Sub 2 is slack (θ₂ = 0°), compute θ₁
+        θ₁ = result[:angles_deg][1]
+        θ₂ = 0.0
+        
+        theta1_str = Crayon(foreground = :yellow, bold = true)("θ₁ (Sub 1)")
+        theta2_str = Crayon(foreground = :cyan, bold = true)("θ₂ (Sub 2, slack)")
+        
+        println("Computed Substation Angles:")
+        @printf("  %s = %7.3f°\n", theta1_str, θ₁)
+        @printf("  %s = %7.3f°\n", theta2_str, θ₂)
+        
+        delta_str = Crayon(foreground = :magenta, bold = true)("Δθ (θ₂ - θ₁)")
+        @printf("  %s = %7.3f°\n", delta_str, θ₂ - θ₁)
+    end
+    
+    # Print power dispatch summary
+    println()
+    p1_crayon = Crayon(foreground = :light_green)
+    p2_crayon = Crayon(foreground = :light_cyan)
+    
+    println("Power Dispatches:")
+    p1_val = round(result[:P_1j] * data[:kVA_B], digits=1)
+    q1_val = round(result[:Q_1j] * data[:kVA_B], digits=1)
+    p2_val = round(result[:P_2j] * data[:kVA_B], digits=1)
+    q2_val = round(result[:Q_2j] * data[:kVA_B], digits=1)
+    
+    println("  ", p1_crayon("Substation 1:"), " P = $(p1_val) kW, Q = $(q1_val) kVAr")
+    println("  ", p2_crayon("Substation 2:"), " P = $(p2_val) kW, Q = $(q2_val) kVAr")
+    
+    # Print cost breakdown
+    cost1 = p1_val * data[:C_1_dollar_per_kWh]
+    cost2 = p2_val * data[:C_2_dollar_per_kWh]
+    total_cost = cost1 + cost2
+    
+    cost_crayon = Crayon(foreground = :light_red, bold = true)
+    println()
+    println("Cost Breakdown:")
+    println("  Sub 1 cost: \$$(round(cost1, digits=2)) (@\$$(data[:C_1_dollar_per_kWh])/kWh)")
+    println("  Sub 2 cost: \$$(round(cost2, digits=2)) (@\$$(data[:C_2_dollar_per_kWh])/kWh)")
+    println("  ", cost_crayon("Total:"), " \$$(round(total_cost, digits=2))")
+end
+
+# Now print summary comparison table (TABLE I)
 println("\n" * "="^80)
-println("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS")
+title_crayon = Crayon(foreground = :light_blue, bold = true)
+println(title_crayon("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS"))
 println("="^80)
 
 # Print header
+header_crayon = Crayon(foreground = :white, bold = true)
 header = @sprintf("%-15s | %-20s | %-20s", "Slack Bus", "Total Angle", "Operational")
 header2 = @sprintf("%-15s | %-20s | %-20s", "(Substation)", "Deviation* (°)", "Cost (\$)")
 separator = "-"^length(header)
 
 println(separator)
-println(header)
-println(header2)
+println(header_crayon(header))
+println(header_crayon(header2))
 println(separator)
 
 for slack_sub in sort(collect(keys(results_by_slack)))
@@ -566,54 +695,13 @@ end
 
 println(separator)
 println("*Sum of RMS angle deviations across all non-slack substations")
-println()
-
-# Print detailed angle coordination for each configuration
-for slack_sub in sort(collect(keys(results_by_slack)))
-    result = results_by_slack[slack_sub]
-    
-    println("\n" * "="^80)
-    println("TABLE II: ANGLE COORDINATION DETAILS (SLACK: SUBSTATION $slack_sub)")
-    println("="^80)
-    
-    header_detail = @sprintf("%-15s | %-20s | %-25s | %-15s", 
-                            "Substation", "Median", "Angle Range", "Std Dev")
-    header_detail2 = @sprintf("%-15s | %-20s | %-25s | %-15s",
-                             "(Non-Slack)", "Angle (°)", "(°)", "(°)")
-    sep_detail = "-"^length(header_detail)
-    
-    println(sep_detail)
-    println(header_detail)
-    println(header_detail2)
-    println(sep_detail)
-    
-    # Get non-slack substations
-    non_slack_subs = sort(collect(keys(result[:angles_deg])))
-    
-    for sub in non_slack_subs
-        median_angle = result[:median_angles_deg][sub]
-        angle_range = result[:angle_ranges_deg][sub]
-        rmse = result[:rmse_values_deg][sub]
-        
-        sub_str = Crayon(foreground = :yellow)(@sprintf("%-15d", sub))
-        median_str = @sprintf("θ%-2d,%-2d = %7.3f", sub, slack_sub, median_angle)
-        range_str = @sprintf("[%7.3f, %7.3f]", angle_range[1], angle_range[2])
-        rmse_str = @sprintf("%-15.3f", rmse)
-        
-        @printf("%s | %-20s | %-25s | %s\n", sub_str, median_str, range_str, rmse_str)
-    end
-    
-    println(sep_detail)
-    
-    # Print power dispatch summary
-    println("\nPower Dispatches:")
-    println("  Substation 1: P = $(round(result[:P_1j] * data[:kVA_B], digits=1)) kW, Q = $(round(result[:Q_1j] * data[:kVA_B], digits=1)) kVAr")
-    println("  Substation 2: P = $(round(result[:P_2j] * data[:kVA_B], digits=1)) kW, Q = $(round(result[:Q_2j] * data[:kVA_B], digits=1)) kVAr")
-end
 
 println("\n" * "="^80)
-println("\nScript complete! Slack bus configuration analysis finished.")
-println("For OpenDSS validation, see: envs/multi_poi/archive/opendss_validation.jl")
+success_crayon = Crayon(foreground = :light_green, bold = true)
+info_crayon = Crayon(foreground = :light_blue)
+println()
+println(success_crayon("✓ Script complete!"), " Slack bus configuration analysis finished.")
+println(info_crayon("ℹ For OpenDSS validation, see:"), " envs/multi_poi/archive/opendss_validation.jl")
 println("="^80)
 
 # Uncomment below to run OpenDSS validation:
