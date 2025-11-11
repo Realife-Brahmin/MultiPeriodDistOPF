@@ -14,7 +14,7 @@ using LinearAlgebra
 using Crayons
 using Printf
 using Statistics
-using Plots
+# using Plots  # Removed for now - will add back when plotting meets standards
 
 # Optional: Uncomment if running OpenDSS validation
 # import OpenDSSDirect as dss
@@ -31,8 +31,8 @@ V_2_pu = 1.05
 delta_2_deg = 0.0
 
 # Network impedances (ohms)
-r1_ohm = 0.025; r2_ohm = 0.075
-x1_ohm = 0.025; x2_ohm = 0.025
+r1_ohm = 0.25; r2_ohm = 0.75
+x1_ohm = 0.25; x2_ohm = 0.25
 
 # Base load (peak values for scaling)
 P_L_base_kW = 5000
@@ -567,46 +567,8 @@ for slack_sub in [1, 2]
 end
 
 # ==================================================================================
-# PRINT COMPARISON TABLES
+# PRINT COMPARISON TABLES (TABLE II FIRST, THEN TABLE I)
 # ==================================================================================
-
-println("\n" * "="^80)
-println(Crayon(foreground = :light_blue, bold = true)("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS"))
-println("="^80)
-
-# Print header
-header_crayon = Crayon(foreground = :white, bold = true)
-header = @sprintf("%-15s | %-20s | %-20s", "Slack Bus", "Total Angle", "Operational")
-header2 = @sprintf("%-15s | %-20s | %-20s", "(Substation)", "Deviation* (°)", "Cost (\$)")
-separator = "-"^length(header)
-
-println(separator)
-println(header_crayon(header))
-println(header_crayon(header2))
-println(separator)
-
-for slack_sub in sort(collect(keys(results_by_slack)))
-    result = results_by_slack[slack_sub]
-    
-    total_cost = result[:objective]
-    total_dev = result[:total_deviation_deg]
-    
-    # Format with colors
-    if slack_sub == 1
-        sub_str = Crayon(foreground = :green, bold = true)(@sprintf("%-15d", slack_sub))
-    else
-        sub_str = Crayon(foreground = :cyan, bold = true)(@sprintf("%-15d", slack_sub))
-    end
-    
-    dev_str = @sprintf("%-20.3f", total_dev)
-    cost_str = @sprintf("%-20.2f", total_cost)
-    
-    @printf("%s | %s | %s\n", sub_str, dev_str, cost_str)
-end
-
-println(separator)
-println("*RMS of temporal angle variations across all non-slack substations")
-println("="^80)
 
 # ==================================================================================
 # DETAILED ANGLE COORDINATION (TABLE II) FOR EACH CONFIGURATION
@@ -721,115 +683,47 @@ for slack_sub in sort(collect(keys(results_by_slack)))
     println("  Solve time: $(round(result[:solve_time], digits=2)) seconds")
 end
 
-println("\n" * "="^80)
-
 # ==================================================================================
-# DETAILED REPORT FOR ONE CONFIGURATION (for plotting)
+# SUMMARY COMPARISON TABLE (TABLE I)
 # ==================================================================================
 
-# Use substation 1 as slack for detailed plots
-slack_sub_for_plot = 1
-sol_mpopf = results_by_slack[slack_sub_for_plot]
-
 println("\n" * "="^80)
-println(Crayon(foreground = :magenta, bold = true)("DETAILED RESULTS FOR SLACK BUS = SUBSTATION $slack_sub_for_plot"))
+println(Crayon(foreground = :light_blue, bold = true)("TABLE I: COMPARISON OF SLACK BUS CONFIGURATIONS"))
 println("="^80)
 
-if sol_mpopf[:status] == MOI.OPTIMAL || sol_mpopf[:status] == MOI.LOCALLY_SOLVED
-    println("\n" * "="^80)
-    println(Crayon(foreground = :green, bold = true)("MPOPF SOLUTION SUMMARY"))
-    println("="^80)
+# Print header
+header_crayon = Crayon(foreground = :white, bold = true)
+header = @sprintf("%-15s | %-20s | %-20s", "Slack Bus", "Total Angle", "Operational")
+header2 = @sprintf("%-15s | %-20s | %-20s", "(Substation)", "Deviation* (°)", "Cost (\$)")
+separator = "-"^length(header)
+
+println(separator)
+println(header_crayon(header))
+println(header_crayon(header2))
+println(separator)
+
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
     
-    # Convert to physical units
-    P_BASE = data[:kVA_B]
-    Δt = data[:delta_t_h]
-    T = data[:T]
+    total_cost = result[:objective]
+    total_dev = result[:total_deviation_deg]
     
-    # Extract arrays
-    P_1j_kW = sol_mpopf[:P_1j] .* P_BASE
-    P_2j_kW = sol_mpopf[:P_2j] .* P_BASE
-    Q_1j_kVAr = sol_mpopf[:Q_1j] .* P_BASE
-    Q_2j_kVAr = sol_mpopf[:Q_2j] .* P_BASE
-    v_j_pu = sqrt.(sol_mpopf[:v_j])
+    # Format with colors
+    if slack_sub == 1
+        sub_str = Crayon(foreground = :green, bold = true)(@sprintf("%-15d", slack_sub))
+    else
+        sub_str = Crayon(foreground = :cyan, bold = true)(@sprintf("%-15d", slack_sub))
+    end
     
-    # Total substation power
-    P_total_kW = P_1j_kW .+ P_2j_kW
+    dev_str = @sprintf("%-20.3f", total_dev)
+    cost_str = @sprintf("%-20.2f", total_cost)
     
-    # Compute energy costs
-    energy_costs_t = data[:LoadShapeCost] .* P_total_kW .* Δt
-    total_cost = sum(energy_costs_t)
-    
-    println("\n--- OBJECTIVE VALUE ---")
-    @printf "Total Cost: \$%.2f\n" total_cost
-    @printf "Average Cost per hour: \$%.2f/h\n" (total_cost / (T * Δt))
-    
-    println("\n--- POWER SUMMARY ---")
-    @printf "Substation 1 Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_1j_kW) maximum(P_1j_kW) mean(P_1j_kW)
-    @printf "Substation 2 Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_2j_kW) maximum(P_2j_kW) mean(P_2j_kW)
-    @printf "Total Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_total_kW) maximum(P_total_kW) mean(P_total_kW)
-    
-    println("\n--- VOLTAGE SUMMARY ---")
-    @printf "Load Voltage (pu): min=%.4f, max=%.4f, avg=%.4f\n" minimum(v_j_pu) maximum(v_j_pu) mean(v_j_pu)
-    
-    println("\n--- ENERGY SUMMARY ---")
-    total_energy_kWh = sum(P_total_kW) * Δt
-    @printf "Total Energy Delivered: %.2f kWh\n" total_energy_kWh
-    @printf "Sub 1 Energy: %.2f kWh (%.1f%%)\n" (sum(P_1j_kW) * Δt) (100 * sum(P_1j_kW) / sum(P_total_kW))
-    @printf "Sub 2 Energy: %.2f kWh (%.1f%%)\n" (sum(P_2j_kW) * Δt) (100 * sum(P_2j_kW) / sum(P_total_kW))
-    
-    println("="^80)
-    
-    # ==================================================================================
-    # PLOT RESULTS
-    # ==================================================================================
-    
-    println("\n" * "="^80)
-    println(Crayon(foreground = :magenta, bold = true)("GENERATING PLOTS"))
-    println("="^80)
-    
-    time_hours = collect(1:T) .* Δt
-    
-    # Plot 1: Load profile and substation power dispatch
-    p1 = plot(time_hours, P_total_kW, label="Total Load", linewidth=2, 
-              xlabel="Time (hours)", ylabel="Power (kW)", title="Load and Power Dispatch",
-              legend=:topright, grid=true)
-    plot!(p1, time_hours, P_1j_kW, label="Substation 1", linewidth=2, linestyle=:dash)
-    plot!(p1, time_hours, P_2j_kW, label="Substation 2", linewidth=2, linestyle=:dashdot)
-    
-    # Plot 2: Energy cost profile
-    p2 = plot(time_hours, data[:LoadShapeCost], label="Energy Cost", linewidth=2,
-              xlabel="Time (hours)", ylabel="Cost (\$/kWh)", title="Time-Varying Energy Cost",
-              legend=:topright, grid=true, color=:red)
-    
-    # Plot 3: Load voltage profile
-    p3 = plot(time_hours, v_j_pu, label="Load Bus Voltage", linewidth=2,
-              xlabel="Time (hours)", ylabel="Voltage (pu)", title="Load Bus Voltage Profile",
-              legend=:topright, grid=true, color=:green)
-    hline!(p3, [data[:Vminpu]], label="V_min", linestyle=:dot, color=:red)
-    hline!(p3, [data[:Vmaxpu]], label="V_max", linestyle=:dot, color=:red)
-    
-    # Plot 4: Reactive power
-    p4 = plot(time_hours, Q_1j_kVAr, label="Substation 1", linewidth=2,
-              xlabel="Time (hours)", ylabel="Reactive Power (kVAr)", title="Reactive Power Dispatch",
-              legend=:topright, grid=true)
-    plot!(p4, time_hours, Q_2j_kVAr, label="Substation 2", linewidth=2, linestyle=:dash)
-    
-    # Combined plot
-    plot_combined = plot(p1, p2, p3, p4, layout=(2,2), size=(1200, 800))
-    
-    # Save plot
-    mkpath("plots")
-    savefig(plot_combined, "plots/mpopf_2poi_T$(T)_results.png")
-    println(Crayon(foreground = :green)("✓ Plots saved to plots/mpopf_2poi_T$(T)_results.png"))
-    println("="^80)
-    
-else
-    println("\n" * "="^80)
-    println(Crayon(foreground = :red, bold = true)("MPOPF FAILED FOR PLOTTING"))
-    println("="^80)
-    println("Status: ", sol_mpopf[:status])
-    println("="^80)
+    @printf("%s | %s | %s\n", sub_str, dev_str, cost_str)
 end
+
+println(separator)
+println("*RMS of temporal angle variations across all non-slack substations")
+println("="^80)
 
 println("\n" * "="^80)
 success_crayon = Crayon(foreground = :light_green, bold = true)
