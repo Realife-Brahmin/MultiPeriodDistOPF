@@ -1,4 +1,4 @@
-# multi_poi.jl
+# small2poi_mpopf.jl - Multi-Period Optimal Power Flow for 2-POI system
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
 Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
@@ -13,67 +13,94 @@ using Ipopt
 using LinearAlgebra
 using Crayons
 using Printf
+using Statistics
+using Plots
 
 # Optional: Uncomment if running OpenDSS validation
 # import OpenDSSDirect as dss
 # ----------------------------------------------------------------------
+
+# ============================================================================
+# SYSTEM PARAMETERS
+# ============================================================================
 
 data = Dict()
 V_1_pu = 1.05
 delta_1_deg = 0.0
 V_2_pu = 1.05
 delta_2_deg = 0.0
-alpha_share = 0.75
 
-# r1_ohm = 0.025; r2_ohm=0.025; x1_ohm=0.025; x2_ohm=0.025;
-r1_ohm = 0.025; r2_ohm=0.075; x1_ohm=0.025; x2_ohm=0.025;
-P_L_kW = 500
-Q_L_kW = P_L_kW*0.75
+# Network impedances (ohms)
+r1_ohm = 0.025; r2_ohm = 0.075
+x1_ohm = 0.025; x2_ohm = 0.025
+
+# Base load (peak values for scaling)
+P_L_base_kW = 500
+Q_L_base_kW = P_L_base_kW * 0.75
+
+# System base values
 kVA_B = 1000
 kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
-C_1_dollar_per_kWh = 1.5
-C_2_dollar_per_kWh = 1.5
 
 # Power limits for each substation (kW)
 P_1_max_kW = 350.0
 P_2_max_kW = 350.0
+
+# ============================================================================
+# TIME HORIZON PARAMETERS
+# ============================================================================
+
+T = 24  # Number of time periods
+delta_t_h = 24.0 / T  # Time step duration in hours
+
+# Time-varying load profile (sinusoidal, similar to tadmm_copper_plate)
+LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
+
+# Time-varying energy cost ($/kWh)
+LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2
 
 data = Dict(
     :V_1_pu => V_1_pu,
     :delta_1_deg => delta_1_deg,
     :V_2_pu => V_2_pu,
     :delta_2_deg => delta_2_deg,
-    :alpha_share => alpha_share,
     :r1_ohm => r1_ohm,
     :x1_ohm => x1_ohm,
     :r2_ohm => r2_ohm,
     :x2_ohm => x2_ohm,
-    :P_L_kW => P_L_kW,
-    :Q_L_kW => Q_L_kW,
+    :P_L_base_kW => P_L_base_kW,
+    :Q_L_base_kW => Q_L_base_kW,
     :kVA_B => kVA_B,
     :kV_B => kV_B,
-    :C_1_dollar_per_kWh => C_1_dollar_per_kWh,
-    :C_2_dollar_per_kWh => C_2_dollar_per_kWh,
     :P_1_max_kW => P_1_max_kW,
-    :P_2_max_kW => P_2_max_kW
+    :P_2_max_kW => P_2_max_kW,
+    :T => T,
+    :delta_t_h => delta_t_h,
+    :LoadShapeLoad => LoadShapeLoad,
+    :LoadShapeCost => LoadShapeCost
 )
 
 function process_data!(data)
     # Base values
-    S_base = data[:kVA_B]
+    S_base_kVA = data[:kVA_B]
+    S_base_MVA = S_base_kVA / 1000  # Convert kVA to MVA
     V_base = data[:kV_B]
+    T = data[:T]
 
-    # Per-unit conversions
-    P_L_pu = data[:P_L_kW] / S_base
-    Q_L_pu = data[:Q_L_kW] / S_base
-    r1_pu = data[:r1_ohm] / ((V_base^2) / S_base)
-    x1_pu = data[:x1_ohm] / ((V_base^2) / S_base)
-    r2_pu = data[:r2_ohm] / ((V_base^2) / S_base)
-    x2_pu = data[:x2_ohm] / ((V_base^2) / S_base)
+    # Per-unit impedances: Z_pu = Z_ohm * (MVA_base / kV_base^2)
+    Z_base_ohm = (V_base^2) / S_base_MVA  # Ohms
+    r1_pu = data[:r1_ohm] / Z_base_ohm
+    x1_pu = data[:x1_ohm] / Z_base_ohm
+    r2_pu = data[:r2_ohm] / Z_base_ohm
+    x2_pu = data[:x2_ohm] / Z_base_ohm
 
-    # Cost per unit energy (pu)
-    C_1_dollar_pu = data[:C_1_dollar_per_kWh] / S_base
-    C_2_dollar_pu = data[:C_2_dollar_per_kWh] / S_base
+    # Time-varying load in per-unit [T vector]
+    P_L_base_pu = data[:P_L_base_kW] / S_base_kVA
+    Q_L_base_pu = data[:Q_L_base_kW] / S_base_kVA
+    
+    # Create time-indexed load arrays
+    P_L_pu = [P_L_base_pu * data[:LoadShapeLoad][t] for t in 1:T]
+    Q_L_pu = [Q_L_base_pu * data[:LoadShapeLoad][t] for t in 1:T]
 
     # Angles in radians
     delta_1_rad = data[:delta_1_deg] * pi / 180
@@ -84,28 +111,40 @@ function process_data!(data)
     Vmaxpu = 1.10
     
     # Power limits (pu)
-    P_1_max_pu = data[:P_1_max_kW] / S_base
-    P_2_max_pu = data[:P_2_max_kW] / S_base
+    P_1_max_pu = data[:P_1_max_kW] / S_base_kVA
+    P_2_max_pu = data[:P_2_max_kW] / S_base_kVA
+    
+    # Time set
+    Tset = 1:T
 
     # Update data dict with all required fields
-    data[:P_L_pu] = P_L_pu
-    data[:Q_L_pu] = Q_L_pu
+    data[:P_L_pu] = P_L_pu  # Now a time-indexed vector
+    data[:Q_L_pu] = Q_L_pu  # Now a time-indexed vector
     data[:r1_pu] = r1_pu
     data[:x1_pu] = x1_pu
     data[:r2_pu] = r2_pu
     data[:x2_pu] = x2_pu
-    data[:C_1_dollar_pu] = C_1_dollar_pu
-    data[:C_2_dollar_pu] = C_2_dollar_pu
     data[:delta_1_rad] = delta_1_rad
     data[:delta_2_rad] = delta_2_rad
     data[:Vminpu] = Vminpu
     data[:Vmaxpu] = Vmaxpu
     data[:P_1_max_pu] = P_1_max_pu
     data[:P_2_max_pu] = P_2_max_pu
+    data[:Tset] = Tset
 
 end
 
 process_data!(data)
+
+println("\n" * "="^80)
+println("MULTI-PERIOD OPTIMAL POWER FLOW (MPOPF)")
+println("="^80)
+println("Time periods: T = $(data[:T])")
+println("Time step: Δt = $(data[:delta_t_h]) hours")
+println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr")
+println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
+println("Cost variation: \$$(round(minimum(data[:LoadShapeCost]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost]), digits=3)) per kWh")
+println("="^80)
 
 
 """
@@ -271,79 +310,117 @@ function compute_beta_angles(data, opf_result, slack_node::Int)
 end
 
 
-function solve_two_poi_opf(data)
+"""
+    solve_two_poi_mpopf(data)
+
+Solve multi-period optimal power flow for 2-POI system.
+
+Returns Dict with time-indexed arrays for all decision variables.
+"""
+function solve_two_poi_mpopf(data)
+    # Extract time set and parameters
+    Tset = data[:Tset]
+    T = data[:T]
+    Δt = data[:delta_t_h]
+    P_BASE = data[:kVA_B]
+    
+    # Create model
     model = Model(Ipopt.Optimizer)
     set_silent(model)
-    # Variables
-    @variable(model, 0 <= P_1j <= data[:P_1_max_pu])
-    @variable(model, Q_1j)
-    @variable(model, l_1j >= 0)
-    @variable(model, 0 <= P_2j <= data[:P_2_max_pu])
-    @variable(model, Q_2j)
-    @variable(model, l_2j >= 0)
-    @variable(model, v_j >= data[:Vminpu]^2)
-    @constraint(model, v_j <= data[:Vmaxpu]^2)
-
-    # Extract parameters
+    set_optimizer_attribute(model, "max_iter", 3000)
+    set_optimizer_attribute(model, "tol", 1e-6)
+    
+    # ========== VARIABLES (time-indexed) ==========
+    @variable(model, 0 <= P_1j[t in Tset] <= data[:P_1_max_pu])
+    @variable(model, Q_1j[t in Tset])
+    @variable(model, l_1j[t in Tset] >= 0)
+    @variable(model, 0 <= P_2j[t in Tset] <= data[:P_2_max_pu])
+    @variable(model, Q_2j[t in Tset])
+    @variable(model, l_2j[t in Tset] >= 0)
+    @variable(model, v_j[t in Tset])
+    
+    # Extract parameters (time-independent)
     r1j = data[:r1_pu]
     x1j = data[:x1_pu]
     r2j = data[:r2_pu]
     x2j = data[:x2_pu]
     v_1 = data[:V_1_pu]^2
     v_2 = data[:V_2_pu]^2
-    # alpha = data[:alpha_share]  # Not used when power limits are active
-    P_L_j = data[:P_L_pu]
-    Q_L_j = data[:Q_L_pu]
-    C_1 = data[:C_1_dollar_pu]
-    C_2 = data[:C_2_dollar_pu]
+    Vminpu = data[:Vminpu]
+    Vmaxpu = data[:Vmaxpu]
 
-    # Constraints
-    # 1. NRealPB
-    @constraint(model, (P_1j - r1j * l_1j) + (P_2j - r2j * l_2j) == P_L_j)
-    # 2. NReacPB
-    @constraint(model, (Q_1j - x1j * l_1j) + (Q_2j - x2j * l_2j) == Q_L_j)
-    # 3. KVL1
-    @constraint(model, v_j == v_1 - 2 * (r1j * P_1j + x1j * Q_1j) + (r1j^2 + x1j^2) * l_1j)
-    # 4. KVL2
-    @constraint(model, v_j == v_2 - 2 * (r2j * P_2j + x2j * Q_2j) + (r2j^2 + x2j^2) * l_2j)
-    # 5. BCPF1
-    @constraint(model, P_1j^2 + Q_1j^2 >= v_1 * l_1j)
-    # 6. BCPF2
-    @constraint(model, P_2j^2 + Q_2j^2 >= v_2 * l_2j)
-    # 7. Power limits (already in variable bounds)
-    # 8. Voltage limits (already in variable bounds)
-    # Note: Power sharing constraint (P_2j == alpha * P_1j) commented out
-    #       to allow optimizer to choose based on costs and power limits
+    # ========== CONSTRAINTS (for each time period) ==========
+    for t in Tset
+        # Load at time t
+        P_L_t = data[:P_L_pu][t]
+        Q_L_t = data[:Q_L_pu][t]
+        
+        # 1. Real power balance at load
+        @constraint(model, (P_1j[t] - r1j * l_1j[t]) + (P_2j[t] - r2j * l_2j[t]) == P_L_t)
+        
+        # 2. Reactive power balance at load
+        @constraint(model, (Q_1j[t] - x1j * l_1j[t]) + (Q_2j[t] - x2j * l_2j[t]) == Q_L_t)
+        
+        # 3. KVL constraint for line 1
+        @constraint(model, v_j[t] == v_1 - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
+        
+        # 4. KVL constraint for line 2
+        @constraint(model, v_j[t] == v_2 - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
+        
+        # 5. SOC relaxation for line 1
+        @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_1 * l_1j[t])
+        
+        # 6. SOC relaxation for line 2
+        @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_2 * l_2j[t])
+        
+        # 7. Voltage limits
+        @constraint(model, Vminpu^2 <= v_j[t] <= Vmaxpu^2)
+    end
 
-    # Objective
-    @objective(model, Min, C_1 * P_1j + C_2 * P_2j)
+    # ========== OBJECTIVE ==========
+    # Total energy cost over all time periods
+    # Cost is time-varying from LoadShapeCost
+    LoadShapeCost = data[:LoadShapeCost]
+    
+    @expression(model, energy_cost_total,
+        sum(LoadShapeCost[t] * (P_1j[t] + P_2j[t]) * P_BASE * Δt for t in Tset))
+    
+    @objective(model, Min, energy_cost_total)
 
-    # Solve
+    # ========== SOLVE ==========
+    println("\nSolving MPOPF with T=$(T) time periods...")
+    solve_start = time()
     optimize!(model)
+    solve_time_val = time() - solve_start
     
     # Check termination status
     status = termination_status(model)
     
     if status == MOI.LOCALLY_SOLVED || status == MOI.OPTIMAL
         status_crayon = Crayon(foreground = :green, bold = true)
-        println(status_crayon("✓ OPF Solved: $status"))
+        println(status_crayon("✓ MPOPF Solved: $status"))
+        println("Solve time: $(round(solve_time_val, digits=2)) seconds")
     else
         status_crayon = Crayon(foreground = :red, bold = true)
-        println(status_crayon("✗ OPF Failed: $status"))
+        println(status_crayon("✗ MPOPF Failed: $status"))
     end
 
-    # Collect results
-    modelDict = Dict(
-        :P_1j => value(P_1j),
-        :Q_1j => value(Q_1j),
-        :l_1j => value(l_1j),
-        :P_2j => value(P_2j),
-        :Q_2j => value(Q_2j),
-        :l_2j => value(l_2j),
-        :v_j => value(v_j),
-        :status => status
+    # ========== COLLECT RESULTS ==========
+    result = Dict(
+        :status => status,
+        :objective => has_values(model) ? objective_value(model) : NaN,
+        :solve_time => solve_time_val,
+        # Store time-indexed arrays
+        :P_1j => [value(P_1j[t]) for t in Tset],
+        :Q_1j => [value(Q_1j[t]) for t in Tset],
+        :l_1j => [value(l_1j[t]) for t in Tset],
+        :P_2j => [value(P_2j[t]) for t in Tset],
+        :Q_2j => [value(Q_2j[t]) for t in Tset],
+        :l_2j => [value(l_2j[t]) for t in Tset],
+        :v_j => [value(v_j[t]) for t in Tset]
     )
-    return modelDict
+    
+    return result
 end
 
 println("\n" * "="^80)
@@ -351,41 +428,121 @@ println("NETWORK TOPOLOGY")
 println("="^80)
 println("3-bus system: 2 substations (nodes 0, 1) + 1 load (node 2)")
 println("Links: 0→2 (link 1), 1→2 (link 2)")
-println("Network matrices B, B_T computed per slack configuration")
 println("="^80)
 
 # ==================================================================================
-# SLACK BUS CONFIGURATION COMPARISON
+# SOLVE MPOPF
 # ==================================================================================
 
-"""
-    analyze_slack_configuration(slack_node, data)
+println("\n" * "="^80)
+println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF"))
+println("="^80)
 
-Solve OPF with given slack bus and compute:
-1. Objective function value
-2. Phase-shifted angles for non-slack substations
-3. Recommended median angle for each non-slack substation
-4. Total angle deviation (grand RMS)
+sol_mpopf = solve_two_poi_mpopf(data)
 
-Arguments:
-- slack_node: 0 or 1 (which substation is slack)
-- data: system data dictionary
+# ==================================================================================
+# REPORT RESULTS
+# ==================================================================================
 
-Returns Dict with:
-- :objective - optimal cost
-- :angles_deg - Dict of non-slack substation angles vs time
-- :median_angles_deg - recommended angle for each non-slack substation
-- :angle_ranges_deg - [min, max] for each non-slack substation
-- :rmse_values_deg - RMSE for each non-slack substation
-- :total_deviation_deg - grand RMS across all non-slack substations
-"""
-function analyze_slack_configuration(slack_node::Int, data::Dict)
-    # For now, we have a single time period
-    # In MPOPF, this will loop over multiple time periods
+if sol_mpopf[:status] == MOI.OPTIMAL || sol_mpopf[:status] == MOI.LOCALLY_SOLVED
+    println("\n" * "="^80)
+    println(Crayon(foreground = :green, bold = true)("MPOPF SOLUTION SUMMARY"))
+    println("="^80)
     
-    # Setup model with specified slack bus
-    model = Model(Ipopt.Optimizer)
-    set_silent(model)
+    # Convert to physical units
+    P_BASE = data[:kVA_B]
+    Δt = data[:delta_t_h]
+    T = data[:T]
+    
+    # Extract arrays
+    P_1j_kW = sol_mpopf[:P_1j] .* P_BASE
+    P_2j_kW = sol_mpopf[:P_2j] .* P_BASE
+    Q_1j_kVAr = sol_mpopf[:Q_1j] .* P_BASE
+    Q_2j_kVAr = sol_mpopf[:Q_2j] .* P_BASE
+    v_j_pu = sqrt.(sol_mpopf[:v_j])
+    
+    # Total substation power
+    P_total_kW = P_1j_kW .+ P_2j_kW
+    
+    # Compute energy costs
+    energy_costs_t = data[:LoadShapeCost] .* P_total_kW .* Δt
+    total_cost = sum(energy_costs_t)
+    
+    println("\n--- OBJECTIVE VALUE ---")
+    @printf "Total Cost: \$%.2f\n" total_cost
+    @printf "Average Cost per hour: \$%.2f/h\n" (total_cost / (T * Δt))
+    
+    println("\n--- POWER SUMMARY ---")
+    @printf "Substation 1 Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_1j_kW) maximum(P_1j_kW) mean(P_1j_kW)
+    @printf "Substation 2 Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_2j_kW) maximum(P_2j_kW) mean(P_2j_kW)
+    @printf "Total Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_total_kW) maximum(P_total_kW) mean(P_total_kW)
+    
+    println("\n--- VOLTAGE SUMMARY ---")
+    @printf "Load Voltage (pu): min=%.4f, max=%.4f, avg=%.4f\n" minimum(v_j_pu) maximum(v_j_pu) mean(v_j_pu)
+    
+    println("\n--- ENERGY SUMMARY ---")
+    total_energy_kWh = sum(P_total_kW) * Δt
+    @printf "Total Energy Delivered: %.2f kWh\n" total_energy_kWh
+    @printf "Sub 1 Energy: %.2f kWh (%.1f%%)\n" (sum(P_1j_kW) * Δt) (100 * sum(P_1j_kW) / sum(P_total_kW))
+    @printf "Sub 2 Energy: %.2f kWh (%.1f%%)\n" (sum(P_2j_kW) * Δt) (100 * sum(P_2j_kW) / sum(P_total_kW))
+    
+    println("="^80)
+    
+    # ==================================================================================
+    # PLOT RESULTS
+    # ==================================================================================
+    
+    println("\n" * "="^80)
+    println(Crayon(foreground = :magenta, bold = true)("GENERATING PLOTS"))
+    println("="^80)
+    
+    time_hours = collect(1:T) .* Δt
+    
+    # Plot 1: Load profile and substation power dispatch
+    p1 = plot(time_hours, P_total_kW, label="Total Load", linewidth=2, 
+              xlabel="Time (hours)", ylabel="Power (kW)", title="Load and Power Dispatch",
+              legend=:topright, grid=true)
+    plot!(p1, time_hours, P_1j_kW, label="Substation 1", linewidth=2, linestyle=:dash)
+    plot!(p1, time_hours, P_2j_kW, label="Substation 2", linewidth=2, linestyle=:dashdot)
+    
+    # Plot 2: Energy cost profile
+    p2 = plot(time_hours, data[:LoadShapeCost], label="Energy Cost", linewidth=2,
+              xlabel="Time (hours)", ylabel="Cost (\$/kWh)", title="Time-Varying Energy Cost",
+              legend=:topright, grid=true, color=:red)
+    
+    # Plot 3: Load voltage profile
+    p3 = plot(time_hours, v_j_pu, label="Load Bus Voltage", linewidth=2,
+              xlabel="Time (hours)", ylabel="Voltage (pu)", title="Load Bus Voltage Profile",
+              legend=:topright, grid=true, color=:green)
+    hline!(p3, [data[:Vminpu]], label="V_min", linestyle=:dot, color=:red)
+    hline!(p3, [data[:Vmaxpu]], label="V_max", linestyle=:dot, color=:red)
+    
+    # Plot 4: Reactive power
+    p4 = plot(time_hours, Q_1j_kVAr, label="Substation 1", linewidth=2,
+              xlabel="Time (hours)", ylabel="Reactive Power (kVAr)", title="Reactive Power Dispatch",
+              legend=:topright, grid=true)
+    plot!(p4, time_hours, Q_2j_kVAr, label="Substation 2", linewidth=2, linestyle=:dash)
+    
+    # Combined plot
+    plot_combined = plot(p1, p2, p3, p4, layout=(2,2), size=(1200, 800))
+    
+    # Save plot
+    mkpath("plots")
+    savefig(plot_combined, "plots/mpopf_2poi_T$(T)_results.png")
+    println(Crayon(foreground = :green)("✓ Plots saved to plots/mpopf_2poi_T$(T)_results.png"))
+    println("="^80)
+    
+else
+    println("\n" * "="^80)
+    println(Crayon(foreground = :red, bold = true)("MPOPF FAILED"))
+    println("="^80)
+    println("Status: ", sol_mpopf[:status])
+    println("="^80)
+end
+
+println("\n" * "="^80)
+println(Crayon(foreground = :green, bold = true)("✓ MPOPF SCRIPT COMPLETE"))
+println("="^80)
     
     @variable(model, 0 <= P_1j <= data[:P_1_max_pu])
     @variable(model, Q_1j)
