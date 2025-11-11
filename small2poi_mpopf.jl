@@ -19,9 +19,9 @@ using Printf
 # ----------------------------------------------------------------------
 
 data = Dict()
-V_1_pu = 1.07
+V_1_pu = 1.05
 delta_1_deg = 0.0
-V_2_pu = 1.07
+V_2_pu = 1.05
 delta_2_deg = 0.0
 alpha_share = 0.75
 
@@ -80,8 +80,8 @@ function process_data!(data)
     delta_2_rad = data[:delta_2_deg] * pi / 180
 
     # Voltage limits
-    Vminpu = 0.95
-    Vmaxpu = 1.05
+    Vminpu = 0.90
+    Vmaxpu = 1.10
     
     # Power limits (pu)
     P_1_max_pu = data[:P_1_max_kW] / S_base
@@ -518,7 +518,10 @@ function analyze_slack_configuration(slack_node::Int, data::Dict)
         :P_1j => P_1j_val,
         :P_2j => P_2j_val,
         :Q_1j => Q_1j_val,
-        :Q_2j => Q_2j_val
+        :Q_2j => Q_2j_val,
+        :v_j => v_j_val,
+        :v_0 => v_1,
+        :v_1 => v_2
     )
 end
 
@@ -608,6 +611,19 @@ for slack_sub in sort(collect(keys(results_by_slack)))
         delta_str = Crayon(foreground = :magenta, bold = true)("Δθ (θ₂ - θ₁)")
         @printf("  %s = %7.3f°\n", delta_str, θ₂ - θ₁)
     end
+    
+    # Print bus voltages
+    println()
+    v_crayon = Crayon(foreground = :light_yellow)
+    println("Bus Voltages:")
+    
+    v_0_pu = sqrt(result[:v_0])  # Substation 1 (node 0)
+    v_1_pu = sqrt(result[:v_1])  # Substation 2 (node 1)
+    v_2_pu = sqrt(result[:v_j])  # Load bus (node 2)
+    
+    println("  ", v_crayon("Node 0 (Sub 1):"), " V = $(round(v_0_pu, digits=4)) pu")
+    println("  ", v_crayon("Node 1 (Sub 2):"), " V = $(round(v_1_pu, digits=4)) pu")
+    println("  ", v_crayon("Node 2 (Load): "), " V = $(round(v_2_pu, digits=4)) pu")
     
     # Print power dispatch summary
     println()
