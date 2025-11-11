@@ -31,8 +31,8 @@ P_L_kW = 500
 Q_L_kW = P_L_kW*0.75
 kVA_B = 1000
 kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
-C_1_dollar_per_kWh = 1.00
-C_2_dollar_per_kWh = 0.50
+C_1_dollar_per_kWh = 1.5
+C_2_dollar_per_kWh = 1.5
 
 # Power limits for each substation (kW)
 P_1_max_kW = 350.0
