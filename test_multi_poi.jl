@@ -73,8 +73,8 @@ function process_data!(data)
     delta_2_rad = data[:delta_2_deg] * pi / 180
 
     # Voltage limits
-    Vminpu = 0.90
-    Vmaxpu = 1.10
+    Vminpu = 0.95
+    Vmaxpu = 1.05
 
     # Update data dict with all required fields
     data[:P_L_pu] = P_L_pu
