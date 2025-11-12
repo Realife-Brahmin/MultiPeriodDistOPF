@@ -1184,7 +1184,7 @@ begin # function solve MPOPF tadmm socp
                         if !haskey(P_B_collection[j], t0)
                             P_B_collection[j][t0] = Dict{Int,Float64}()
                         end
-                        for t in Tset
+                        for t in  Tset
                             P_B_collection[j][t0][t] = result[:P_B][j][t]
                         end
                     end
