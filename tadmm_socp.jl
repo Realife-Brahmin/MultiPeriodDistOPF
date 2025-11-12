@@ -71,8 +71,8 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-# T = 24  # Number of time steps
-T = 96  # Number of time steps
+T = 24  # Number of time steps
+# T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -80,7 +80,7 @@ use_gurobi_for_bf = true       # Use Gurobi for brute force (SOCP)
 use_gurobi_for_tadmm = true    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
 
 # tADMM algorithm parameters
-rho_base = 1000.0               # Base ρ value for T=24 (REDUCED for FAADMM - was 10000)
+rho_base = 10000.0               # Base ρ value for T=24 (REDUCED for FAADMM - was 10000)
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
@@ -93,7 +93,8 @@ eps_dual_tadmm = 1e-5
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
-use_faadmm = true              # Enable acceleration with momentum and restart
+# use_faadmm = true              # Enable acceleration with momentum and restart
+use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
 # Create shared Gurobi environment (suppresses repeated license messages)
