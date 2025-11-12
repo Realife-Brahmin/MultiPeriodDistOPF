@@ -111,15 +111,16 @@ begin # scenario config
     showPlots = false  # Set to true to display plots interactively
     saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
     saveAllPVPlots = true  # Set to true to save plots for ALL PV units (shows p_D and q_D)
+    plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
     # Plot type toggles (enable/disable specific plot types)
-    plotConvergence = true      # tADMM convergence plots
-    plotInputCurves = true      # Load, PV, and cost input curves
-    plotBatteryActions = true   # Battery charging/discharging and SOC
-    plotSubstationPower = true  # Substation power and cost
-    plotVoltageAllBuses = true  # Voltage profile for all buses (snapshot + GIF animation)
-    plotPVPower = true          # PV real and reactive power
-    plotPVCircleGIF = false      # PV power circle GIF animations
+    plotConvergence = true      # tADMM convergence plots (always plotted)
+    plotInputCurves = true      # Load, PV, and cost input curves (always plotted)
+    plotBatteryActions = true   # Battery charging/discharging and SOC (conditional on convergence)
+    plotSubstationPower = true  # Substation power and cost (always plotted)
+    plotVoltageAllBuses = true  # Voltage profile for all buses (conditional on convergence)
+    plotPVPower = true          # PV real and reactive power (conditional on convergence)
+    plotPVCircleGIF = false      # PV power circle GIF animations (conditional on convergence)
     # plotPVCircleGIF = true      # PV power circle GIF animations
 
 
@@ -1810,6 +1811,17 @@ begin # plotting results
     println("\n" * "="^80)
     println(COLOR_INFO, "GENERATING PLOTS", COLOR_RESET)
     println("="^80)
+    
+    # Inform user about conditional plotting
+    if plot_only_if_converged && !isempty(data[:Bset])
+        if tadmm_converged
+            println(COLOR_SUCCESS, "✓ tADMM converged - all plots will be generated", COLOR_RESET)
+        else
+            println(COLOR_WARNING, "⚠ tADMM did not converge - battery/PV/voltage plots will be skipped", COLOR_RESET)
+            println("  (Convergence plots and substation plots will still be generated)")
+            println("  Set plot_only_if_converged=false to generate all plots regardless")
+        end
+    end
 
     # Create output directories (use absolute path like model writing section)
     processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
@@ -1860,14 +1872,20 @@ begin # plotting results
                             filename=battery_actions_path,
                             plot_all_batteries=saveAllBatteryPlots)
         
-        # Plot tADMM battery actions if available
+        # Plot tADMM battery actions if available AND converged (if plot_only_if_converged is true)
         if !isnothing(sol_socp_tadmm)
-            tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
-            battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_socp_tadmm.png")
-            plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)", 
-                                showPlots=showPlots, savePlots=true, 
-                                filename=battery_actions_tadmm_path,
-                                plot_all_batteries=saveAllBatteryPlots)
+            should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+            
+            if should_plot_tadmm
+                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
+                battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_socp_tadmm.png")
+                plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)", 
+                                    showPlots=showPlots, savePlots=true, 
+                                    filename=battery_actions_tadmm_path,
+                                    plot_all_batteries=saveAllBatteryPlots)
+            else
+                println(COLOR_WARNING, "⚠ Skipping tADMM battery plot (not converged)", COLOR_RESET)
+            end
         end
     else
         if isempty(data[:Bset]) && plotBatteryActions
@@ -1900,14 +1918,20 @@ begin # plotting results
                                     create_gif=true,
                                     gif_filename=voltage_gif_path)
         
-        # Create tADMM voltage profile GIF animation
+        # Create tADMM voltage profile GIF animation (conditional on convergence)
         if !isnothing(sol_socp_tadmm)
-            tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
-            voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_socp_tadmm.gif")
-            plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
-                                        showPlots=showPlots, savePlots=false,
-                                        create_gif=true,
-                                        gif_filename=voltage_gif_tadmm_path)
+            should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+            
+            if should_plot_tadmm
+                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
+                voltage_gif_tadmm_path = joinpath(system_dir, "voltage_animation_socp_tadmm.gif")
+                plot_voltage_profile_all_buses(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
+                                            showPlots=showPlots, savePlots=false,
+                                            create_gif=true,
+                                            gif_filename=voltage_gif_tadmm_path)
+            else
+                println(COLOR_WARNING, "⚠ Skipping tADMM voltage GIF (not converged)", COLOR_RESET)
+            end
         end
     end
         
@@ -1924,14 +1948,20 @@ begin # plotting results
                         filename=pv_power_all_bf_path,
                         plot_all_pvs=true)
             
-            # tADMM individual PV plots if available
+            # tADMM individual PV plots if available (conditional on convergence)
             if !isnothing(sol_socp_tadmm)
-                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
-                pv_power_all_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
-                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
-                            showPlots=showPlots, savePlots=true,
-                            filename=pv_power_all_tadmm_path,
-                            plot_all_pvs=true)
+                should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+                
+                if should_plot_tadmm
+                    tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
+                    pv_power_all_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
+                    plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
+                                showPlots=showPlots, savePlots=true,
+                                filename=pv_power_all_tadmm_path,
+                                plot_all_pvs=true)
+                else
+                    println(COLOR_WARNING, "⚠ Skipping tADMM PV plots (not converged)", COLOR_RESET)
+                end
             end
             println("✓ Individual PV plots saved")
         else
@@ -1943,14 +1973,20 @@ begin # plotting results
                         showPlots=showPlots, savePlots=true,
                         filename=pv_power_path)
             
-            # Plot tADMM PV power if available
+            # Plot tADMM PV power if available (conditional on convergence)
             if !isnothing(sol_socp_tadmm)
-                tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
-                pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
-                plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
-                            pv_index=1,
-                            showPlots=showPlots, savePlots=true,
-                            filename=pv_power_tadmm_path)
+                should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+                
+                if should_plot_tadmm
+                    tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
+                    pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
+                    plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
+                                pv_index=1,
+                                showPlots=showPlots, savePlots=true,
+                                filename=pv_power_tadmm_path)
+                else
+                    println(COLOR_WARNING, "⚠ Skipping tADMM PV plot (not converged)", COLOR_RESET)
+                end
             end
         end
     else
@@ -1970,12 +2006,19 @@ begin # plotting results
                                     filename=pv_circle_gif_all_path,
                                     plot_all_pvs=true)
             
+            # tADMM PV circle GIFs (conditional on convergence)
             if !isnothing(sol_socp_tadmm)
-                pv_circle_gif_all_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
-                plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
-                                        showPlots=showPlots, savePlots=true,
-                                        filename=pv_circle_gif_all_tadmm_path,
-                                        plot_all_pvs=true)
+                should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+                
+                if should_plot_tadmm
+                    pv_circle_gif_all_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
+                    plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
+                                            showPlots=showPlots, savePlots=true,
+                                            filename=pv_circle_gif_all_tadmm_path,
+                                            plot_all_pvs=true)
+                else
+                    println(COLOR_WARNING, "⚠ Skipping tADMM PV circle GIFs (not converged)", COLOR_RESET)
+                end
             end
             println("✓ PV power circle GIFs saved")
         else
@@ -1987,13 +2030,19 @@ begin # plotting results
                                     showPlots=showPlots, savePlots=true,
                                     filename=pv_circle_gif_path)
             
-            # Create tADMM PV power circle GIF if available
+            # Create tADMM PV power circle GIF if available (conditional on convergence)
             if !isnothing(sol_socp_tadmm)
-                pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
-                plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
-                                        pv_index=1,
-                                        showPlots=showPlots, savePlots=true,
-                                        filename=pv_circle_gif_tadmm_path)
+                should_plot_tadmm = !plot_only_if_converged || tadmm_converged
+                
+                if should_plot_tadmm
+                    pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
+                    plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
+                                            pv_index=1,
+                                            showPlots=showPlots, savePlots=true,
+                                            filename=pv_circle_gif_tadmm_path)
+                else
+                    println(COLOR_WARNING, "⚠ Skipping tADMM PV circle GIF (not converged)", COLOR_RESET)
+                end
             end
         end
     else
