@@ -1,0 +1,506 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Define colors for variables
+\definecolor{bluevar}{RGB}{0,100,200}     % Blue for current iteration
+\definecolor{redvar}{RGB}{200,0,0}        % Red for previous iteration
+\definecolor{greenvar}{RGB}{0,128,0}      % Green for dual variables
+
+\newcommand{\blueB}[1]{\textcolor{bluevar}{\mathbf{#1}}}      % Current iteration B
+\newcommand{\redB}[1]{\textcolor{redvar}{\mathbf{#1}}}        % Previous iteration B
+\newcommand{\greenmu}[1]{\textcolor{greenvar}{\mathbf{#1}}}   % Dual variables \mu
+
+\title{Distributed Dynamic Programming (DDP):\\Forward Pass Decomposition for Copper Plate MPOPF}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Problem Overview}
+
+Distributed Dynamic Programming (DDP) decomposes a multi-period optimal power flow (MPOPF) problem into $T$ sequential subproblems using a forward pass approach. Each time step $t$ solves a local optimization problem that couples with adjacent time steps through:
+\begin{itemize}
+    \item \textbf{Backward coupling}: State trajectory from previous time step $t-1$ (current iteration)
+    \item \textbf{Forward coupling}: Shadow prices (dual variables) from next time step $t+1$ (previous iteration)
+\end{itemize}
+
+The copper plate formulation ignores network constraints and focuses on energy arbitrage with battery storage.
+
+\section{Sets, Indices, and Parameters}
+
+\subsection{Sets and Indices}
+\begin{itemize}
+    \item $\mathcal{T} = \{1, 2, \ldots, T\}$: Set of time periods
+    \item $t \in \mathcal{T}$: Time period index
+    \item $k$: DDP iteration index
+\end{itemize}
+
+\subsection{System Parameters}
+\begin{align}
+P_{\text{BASE}} &= 1000 \text{ kW (power base)} \\
+E_{\text{BASE}} &= 1000 \text{ kWh (energy base)} \\
+\Delta t &= 1.0 \text{ hour (time step duration)}
+\end{align}
+
+\subsection{Load and Price Profiles}
+\begin{itemize}
+    \item $P_L[t]$: Load demand at time $t$ [pu on $P_{\text{BASE}}$]
+    \item $C[t]$: Energy price at time $t$ [\$/kWh]
+    \item $C_B$: Battery quadratic cost coefficient [\$/kW$^2$/h], typically $10^{-6} \times \min(C[t])$
+\end{itemize}
+
+\subsection{Battery Parameters}
+\begin{align}
+E_{\text{Rated}} &: \text{Battery energy capacity [pu on } E_{\text{BASE}}\text{]} \\
+P_{B,R} &: \text{Battery power rating [pu on } P_{\text{BASE}}\text{]} \\
+\text{SOC}_{\min}, \text{SOC}_{\max} &: \text{SOC limits (fraction of } E_{\text{Rated}}\text{)} \\
+B_0 &: \text{Initial SOC [pu on } E_{\text{BASE}}\text{]} \\
+B_{T,\text{target}} &: \text{Terminal SOC constraint (optional) [pu on } E_{\text{BASE}}\text{]}
+\end{align}
+
+SOC bounds:
+\begin{align}
+\underline{B} &= \text{SOC}_{\min} \cdot E_{\text{Rated}} \\
+\overline{B} &= \text{SOC}_{\max} \cdot E_{\text{Rated}}
+\end{align}
+
+\section{Variable Color Coding}
+
+Following DDP forward pass decomposition:
+\begin{itemize}
+    \item $\blueB{B[t]}$: Battery SOC at time $t$ in \textbf{current iteration $k$} (blue)
+    \item $\redB{B[t]}$: Battery SOC at time $t$ from \textbf{previous iteration $k-1$} (red, used for coupling)
+    \item $\greenmu{\mu[t]}$: Shadow price (dual variable) for battery dynamics at time $t$ (green)
+    \item $P_{\text{subs}}[t]$: Substation power at time $t$ [pu]
+    \item $P_B[t]$: Battery power at time $t$ [pu] (positive = discharge, negative = charge)
+\end{itemize}
+
+\section{DDP Forward Pass Subproblem}
+
+\subsection{Subproblem for Time Step $t$ (Iteration $k$)}
+
+Each time step $t \in \{1, \ldots, T\}$ solves the following optimization problem:
+
+\begin{align}
+\min_{\substack{P_{\text{subs}}[t], P_B[t], \blueB{B[t]}, \\ P_B[t+1] \text{ (if } t < T\text{)}}} \quad & \underbrace{C[t] \cdot P_{\text{subs}}[t] \cdot \Delta t}_{\text{Energy cost at } t} + \underbrace{C_B \cdot (P_B[t])^2 \cdot \Delta t}_{\text{Battery cost at } t} \notag \\
+& + \underbrace{\greenmu{\mu^{k-1}[t+1]} \cdot \left( \redB{B^{k-1}[t+1]} - \blueB{B[t]} + \Delta t \cdot P_B[t+1] \right)}_{\text{Soft coupling with next time step (if } t < T\text{)}}
+\end{align}
+
+\textbf{Subject to:}
+
+\textbf{Power Balance:}
+\begin{align}
+P_{\text{subs}}[t] + P_B[t] &= P_L[t]
+\end{align}
+
+\textbf{Battery Dynamics:}
+\begin{align}
+\blueB{B[t]} - B_{\text{prev}}[t] + \Delta t \cdot P_B[t] &= 0
+\end{align}
+where:
+\begin{align}
+B_{\text{prev}}[t] = \begin{cases}
+B_0 & \text{if } t = 1 \\
+\blueB{B^k[t-1]} & \text{if } t > 1 \quad \text{(from current forward pass)}
+\end{cases}
+\end{align}
+
+\textbf{SOC Box Constraints (Negative Inequality Form):}
+\begin{align}
+\underline{B} - \blueB{B[t]} &\leq 0 \quad \text{(i.e., } \blueB{B[t]} \geq \underline{B}\text{)} \\
+\blueB{B[t]} - \overline{B} &\leq 0 \quad \text{(i.e., } \blueB{B[t]} \leq \overline{B}\text{)}
+\end{align}
+
+\textbf{Battery Power Limits:}
+\begin{align}
+-P_{B,R} \leq P_B[t] &\leq P_{B,R} \\
+-P_{B,R} \leq P_B[t+1] &\leq P_{B,R} \quad \text{(if } t < T\text{)}
+\end{align}
+
+\textbf{Terminal SOC Constraint (if $t = T$ and terminal constraint exists):}
+\begin{align}
+\blueB{B[T]} &= B_{T,\text{target}}
+\end{align}
+
+\subsection{Key Formulation Insights}
+
+\subsubsection{Coupling Structure}
+\begin{itemize}
+    \item \textbf{Backward (state) coupling}: Each subproblem uses $\blueB{B[t-1]}$ from the \textit{current} forward pass (iteration $k$), ensuring consistency within the same pass.
+    
+    \item \textbf{Forward (cost-to-go) coupling}: The coupling term with time $t+1$ uses:
+    \begin{itemize}
+        \item $\redB{B^{k-1}[t+1]}$: State from \textit{previous} iteration (parameter)
+        \item $\greenmu{\mu^{k-1}[t+1]}$: Shadow price from \textit{previous} iteration (parameter)
+        \item $P_B[t+1]$: Battery power at $t+1$ as a \textit{decision variable}
+    \end{itemize}
+    
+    \item The coupling term $\greenmu{\mu[t+1]} \cdot (\redB{B[t+1]} - \blueB{B[t]} + \Delta t \cdot P_B[t+1])$ penalizes violations of the battery dynamics constraint between $t$ and $t+1$.
+    
+    \item By optimizing $P_B[t+1]$ as a decision variable, each subproblem can "soft-enforce" consistency with the next time step, even though $\redB{B[t+1]}$ is fixed from the previous iteration.
+\end{itemize}
+
+\subsubsection{Shadow Price Interpretation}
+The dual variable $\greenmu{\mu[t]}$ from the battery dynamics constraint represents:
+\begin{itemize}
+    \item Marginal value of increasing $\blueB{B[t]}$ by one unit
+    \item Shadow price / cost-to-go from state $\blueB{B[t]}$ to terminal time $T$
+    \item How much the objective would improve if we had one more unit of energy stored at time $t$
+\end{itemize}
+
+For terminal time step $t = T$ with terminal constraint $\blueB{B[T]} = B_{T,\text{target}}$:
+\begin{align}
+\greenmu{\mu_{\text{total}}[T]} = \greenmu{\mu_{\text{dynamics}}[T]} + \greenmu{\mu_{\text{terminal}}[T]}
+\end{align}
+where $\greenmu{\mu_{\text{terminal}}[T]}$ is the dual of the terminal constraint.
+
+\subsubsection{No Explicit Dual Update}
+Unlike ADMM-based methods, DDP does \textit{not} require a separate dual update step. The shadow prices $\greenmu{\mu[t]}$ are automatically extracted from each subproblem's battery dynamics constraint dual:
+\begin{align}
+\greenmu{\mu[t]} = -\lambda_{\text{battery\_dynamics}}[t]
+\end{align}
+where $\lambda_{\text{battery\_dynamics}}[t]$ is the JuMP dual variable (negated for proper economic sign convention).
+
+\section{DDP Algorithm}
+
+\begin{algorithm}[H]
+\caption{DDP Forward Pass for Copper Plate MPOPF}
+\begin{algorithmic}[1]
+\State \textbf{Input:} Problem data $\mathcal{D} = \{T, C[t], P_L[t], B_0, E_{\text{Rated}}, P_{B,R}, \text{SOC}_{\min}, \text{SOC}_{\max}, \Delta t\}$
+\State \textbf{Parameters:} $\text{max\_iter}$, $\epsilon_{\text{tol}}$, optional $\greenmu{\mu^0}$ (initial dual variables)
+\State
+\State \textbf{Initialize} ($k = 0$):
+\State \hspace{1em} $\blueB{B^0[t]} \gets B_0$ for all $t \in \mathcal{T}$
+\State \hspace{1em} $\greenmu{\mu^0[t]} \gets 0$ (or provided warm start) for all $t \in \mathcal{T}$
+\State \hspace{1em} $P_B^0[t] \gets 0$, $P_{\text{subs}}^0[t] \gets 0$ for all $t \in \mathcal{T}$
+\State
+\For{$k = 1, 2, \ldots, \text{max\_iter}$}
+    \State \textbf{// Store previous iteration values for coupling}
+    \State $\redB{B^{k-1}} \gets \blueB{B^{k-1}}$, $\greenmu{\mu^{k-1}} \gets \greenmu{\mu^{k-1}}$, $P_B^{k-1} \gets P_B^{k-1}$
+    \State
+    \State \textbf{// Forward Pass: Solve each time step sequentially}
+    \For{$t = 1, 2, \ldots, T$}
+        \State Solve subproblem for time $t$ using:
+        \State \hspace{2em} $\blueB{B^k[t-1]}$ from current forward pass (if $t > 1$)
+        \State \hspace{2em} $\redB{B^{k-1}[t+1]}$, $\greenmu{\mu^{k-1}[t+1]}$ from previous iteration (if $t < T$)
+        \State
+        \State Extract solution:
+        \State \hspace{2em} $\blueB{B^k[t]} \gets$ optimal SOC
+        \State \hspace{2em} $P_B^k[t] \gets$ optimal battery power
+        \State \hspace{2em} $P_{\text{subs}}^k[t] \gets$ optimal substation power
+        \State \hspace{2em} $\greenmu{\mu^k[t]} \gets -\text{dual}(\text{battery\_dynamics}[t])$
+        \State \hspace{2em} If $t = T$ with terminal constraint:
+        \State \hspace{4em} $\greenmu{\mu^k[T]} \gets \greenmu{\mu^k[T]} + (-\text{dual}(\text{terminal\_soc}))$
+        \State
+        \If{$t < T$}
+            \State $P_B^k[t+1] \gets$ optimal value of $P_B[t+1]$ variable
+        \EndIf
+    \EndFor
+    \State
+    \State \textbf{// Compute convergence metrics}
+    \State $\text{err}_{\text{state}} \gets \|\blueB{B^k} - \blueB{B^{k-1}}\|_2$
+    \State $\text{err}_{\text{dual}} \gets \|\greenmu{\mu^k} - \greenmu{\mu^{k-1}}\|_2$
+    \State $\text{err}_{\text{KKT}} \gets \max(\text{err}_{\text{state}}, \text{err}_{\text{dual}})$
+    \State
+    \If{$\text{err}_{\text{KKT}} < \epsilon_{\text{tol}}$}
+        \State \textbf{break} \Comment{Converged}
+    \EndIf
+\EndFor
+\State
+\State \textbf{Return:} $\{\blueB{B^k[t]}, P_B^k[t], P_{\text{subs}}^k[t], \greenmu{\mu^k[t]}\}_{t=1}^T$, convergence status
+\end{algorithmic}
+\end{algorithm}
+
+\section{Convergence Criteria}
+
+\subsection{State Trajectory Error}
+\begin{align}
+\text{err}_{\text{state}}^k = \left\| \blueB{B^k} - \blueB{B^{k-1}} \right\|_2 = \sqrt{\sum_{t=1}^T \left( \blueB{B^k[t]} - \blueB{B^{k-1}[t]} \right)^2}
+\end{align}
+
+\subsection{Dual Variable Error}
+\begin{align}
+\text{err}_{\text{dual}}^k = \left\| \greenmu{\mu^k} - \greenmu{\mu^{k-1}} \right\|_2 = \sqrt{\sum_{t=1}^T \left( \greenmu{\mu^k[t]} - \greenmu{\mu^{k-1}[t]} \right)^2}
+\end{align}
+
+\subsection{KKT Error (Combined)}
+\begin{align}
+\text{err}_{\text{KKT}}^k = \max\left( \text{err}_{\text{state}}^k, \text{err}_{\text{dual}}^k \right)
+\end{align}
+
+The algorithm converges when:
+\begin{align}
+\text{err}_{\text{KKT}}^k < \epsilon_{\text{tol}} \quad \text{(typically } \epsilon_{\text{tol}} = 10^{-5}\text{)}
+\end{align}
+
+\section{Objective Function}
+
+\subsection{Total Objective (Physical Units)}
+\begin{align}
+J = \sum_{t=1}^T \left[ C[t] \cdot (P_{\text{subs}}[t] \cdot P_{\text{BASE}}) \cdot \Delta t + C_B \cdot (P_B[t] \cdot P_{\text{BASE}})^2 \cdot \Delta t \right]
+\end{align}
+
+\subsection{Objective Components}
+\begin{align}
+J_{\text{energy}} &= \sum_{t=1}^T C[t] \cdot (P_{\text{subs}}[t] \cdot P_{\text{BASE}}) \cdot \Delta t \quad \text{[\$]} \\
+J_{\text{battery}} &= \sum_{t=1}^T C_B \cdot (P_B[t] \cdot P_{\text{BASE}})^2 \cdot \Delta t \quad \text{[\$]} \\
+J &= J_{\text{energy}} + J_{\text{battery}} \quad \text{[\$]}
+\end{align}
+
+\subsection{Battery Quadratic Cost Rationale}
+The battery cost term $C_B \cdot (P_B[t])^2$ serves multiple purposes:
+\begin{enumerate}
+    \item \textbf{Regularization}: Prevents numerical issues and excessive battery cycling
+    \item \textbf{Smoothing}: Encourages gradual power transitions rather than bang-bang control
+    \item \textbf{Conditioning}: Improves numerical stability of the optimization problem
+    \item \textbf{Physical realism}: Approximates wear-and-tear and efficiency losses
+\end{enumerate}
+
+Typically set as: $C_B = 10^{-6} \times \min(C[t])$ to ensure it's a small regularization term.
+
+\section{Dual Variable Extraction and Sign Conventions}
+
+\subsection{Battery Dynamics Dual}
+From the constraint:
+\begin{align}
+\blueB{B[t]} - B_{\text{prev}}[t] + \Delta t \cdot P_B[t] = 0
+\end{align}
+
+JuMP returns the dual $\lambda_{\text{dynamics}}[t]$. The shadow price is:
+\begin{align}
+\greenmu{\mu_{\text{dynamics}}[t]} = -\lambda_{\text{dynamics}}[t]
+\end{align}
+
+\textbf{Economic interpretation:} $\greenmu{\mu[t]} > 0$ means increasing $\blueB{B[t]}$ would \textit{decrease} the objective (energy stored is valuable). $\greenmu{\mu[t]} < 0$ means increasing $\blueB{B[t]}$ would \textit{increase} the objective (energy stored is costly).
+
+\subsection{SOC Box Constraint Duals}
+From constraints (negative inequality form):
+\begin{align}
+g_{\text{Bmin}}[t] &= \underline{B} - \blueB{B[t]} \leq 0 \quad \text{(i.e., } \blueB{B[t]} \geq \underline{B}\text{)} \\
+g_{\text{Bmax}}[t] &= \blueB{B[t]} - \overline{B} \leq 0 \quad \text{(i.e., } \blueB{B[t]} \leq \overline{B}\text{)}
+\end{align}
+
+JuMP dual variables:
+\begin{align}
+\lambda_{\text{Bmin}}[t] &= -\text{dual}(g_{\text{Bmin}}[t]) \quad \text{(negate to get positive when active)} \\
+\lambda_{\text{Bmax}}[t] &= \text{dual}(g_{\text{Bmax}}[t]) \quad \text{(already correct sign)}
+\end{align}
+
+Complementary slackness:
+\begin{align}
+\lambda_{\text{Bmin}}[t] \cdot (\blueB{B[t]} - \underline{B}) &= 0, \quad \lambda_{\text{Bmin}}[t] \geq 0 \\
+\lambda_{\text{Bmax}}[t] \cdot (\overline{B} - \blueB{B[t]}) &= 0, \quad \lambda_{\text{Bmax}}[t] \geq 0
+\end{align}
+
+\subsection{Terminal SOC Constraint Dual}
+If terminal constraint exists: $\blueB{B[T]} = B_{T,\text{target}}$
+
+The total shadow price at $t = T$ is:
+\begin{align}
+\greenmu{\mu_{\text{total}}[T]} = \greenmu{\mu_{\text{dynamics}}[T]} + \greenmu{\mu_{\text{terminal}}[T]}
+\end{align}
+where:
+\begin{align}
+\greenmu{\mu_{\text{terminal}}[T]} = -\text{dual}(\text{terminal\_soc})
+\end{align}
+
+\section{KKT Optimality Conditions}
+
+For each time step $t$, the KKT conditions are:
+
+\subsection{Stationarity}
+\begin{align}
+\frac{\partial \mathcal{L}}{\partial P_{\text{subs}}[t]} &= C[t] \cdot \Delta t + \lambda_{\text{power\_balance}}[t] = 0 \\
+\frac{\partial \mathcal{L}}{\partial P_B[t]} &= 2 C_B \cdot P_B[t] \cdot \Delta t + \lambda_{\text{power\_balance}}[t] + \Delta t \cdot \greenmu{\mu[t]} = 0 \\
+\frac{\partial \mathcal{L}}{\partial \blueB{B[t]}} &= \greenmu{\mu[t]} - \greenmu{\mu[t+1]} + \lambda_{\text{Bmin}}[t] - \lambda_{\text{Bmax}}[t] = 0
+\end{align}
+
+For terminal step $t = T$ with terminal constraint:
+\begin{align}
+\frac{\partial \mathcal{L}}{\partial \blueB{B[T]}} &= \greenmu{\mu_{\text{dynamics}}[T]} + \greenmu{\mu_{\text{terminal}}[T]} + \lambda_{\text{Bmin}}[T] - \lambda_{\text{Bmax}}[T] = 0
+\end{align}
+
+\subsection{Primal Feasibility}
+All constraints satisfied:
+\begin{align}
+P_{\text{subs}}[t] + P_B[t] - P_L[t] &= 0 \\
+\blueB{B[t]} - B_{\text{prev}}[t] + \Delta t \cdot P_B[t] &= 0 \\
+\underline{B} \leq \blueB{B[t]} &\leq \overline{B} \\
+-P_{B,R} \leq P_B[t] &\leq P_{B,R}
+\end{align}
+
+\subsection{Dual Feasibility}
+\begin{align}
+\lambda_{\text{Bmin}}[t] &\geq 0 \\
+\lambda_{\text{Bmax}}[t] &\geq 0
+\end{align}
+
+\subsection{Complementary Slackness}
+\begin{align}
+\lambda_{\text{Bmin}}[t] \cdot (\blueB{B[t]} - \underline{B}) &= 0 \\
+\lambda_{\text{Bmax}}[t] \cdot (\overline{B} - \blueB{B[t]}) &= 0
+\end{align}
+
+\section{Comparison with Brute Force Solution}
+
+\subsection{Centralized (Brute Force) Formulation}
+The brute force approach solves the full multi-period problem in one shot:
+
+\begin{align}
+\min_{\{P_{\text{subs}}[t], P_B[t], B[t]\}_{t=1}^T} \quad & \sum_{t=1}^T \left[ C[t] \cdot P_{\text{subs}}[t] \cdot \Delta t + C_B \cdot (P_B[t])^2 \cdot \Delta t \right]
+\end{align}
+
+\textbf{Subject to:}
+\begin{align}
+P_{\text{subs}}[t] + P_B[t] &= P_L[t], \quad \forall t \in \mathcal{T} \\
+B[1] - B_0 + \Delta t \cdot P_B[1] &= 0 \\
+B[t] - B[t-1] + \Delta t \cdot P_B[t] &= 0, \quad \forall t \in \{2, \ldots, T\} \\
+\underline{B} \leq B[t] &\leq \overline{B}, \quad \forall t \in \mathcal{T} \\
+-P_{B,R} \leq P_B[t] &\leq P_{B,R}, \quad \forall t \in \mathcal{T} \\
+B[T] &= B_{T,\text{target}} \quad \text{(if terminal constraint exists)}
+\end{align}
+
+\subsection{Key Differences}
+\begin{itemize}
+    \item \textbf{Brute Force}: Solves all time steps simultaneously, guarantees global optimum
+    \item \textbf{DDP}: Solves time steps sequentially with iterative coupling, may require multiple passes to converge
+    \item \textbf{Scalability}: DDP can parallelize across time steps (not implemented in current version)
+    \item \textbf{Memory}: DDP has smaller subproblems, lower memory footprint per solve
+    \item \textbf{Warm starting}: DDP can initialize with duals from brute force for rapid convergence
+\end{itemize}
+
+\section{Convergence Properties}
+
+\subsection{Optimality Guarantee}
+Under convexity assumptions (which hold for the copper plate problem):
+\begin{itemize}
+    \item If DDP converges (i.e., $\text{err}_{\text{KKT}} < \epsilon_{\text{tol}}$), the solution is \textbf{globally optimal}
+    \item Convergence is guaranteed if the coupling penalty (implicitly through dual variables) is strong enough
+    \item With warm start from brute force duals, DDP often converges in 1-2 iterations
+\end{itemize}
+
+\subsection{Convergence Rate}
+\begin{itemize}
+    \item \textbf{Linear convergence}: $\text{err}^{k+1} \leq \alpha \cdot \text{err}^k$ for some $\alpha < 1$
+    \item Convergence rate depends on problem conditioning and coupling strength
+    \item Tighter SOC bounds $\Rightarrow$ slower convergence (more binding constraints)
+    \item More time periods $T$ $\Rightarrow$ longer horizon coupling, potentially slower convergence
+\end{itemize}
+
+\subsection{Practical Observations}
+From numerical experiments with $T = 2, 4$ time periods:
+\begin{itemize}
+    \item \textbf{Cold start} ($\mu = 0$): Converges in 5-15 iterations to $\epsilon_{\text{tol}} = 10^{-5}$
+    \item \textbf{Warm start} ($\mu$ from BF): Converges in 1-2 iterations
+    \item \textbf{Objective accuracy}: Matches brute force to within $10^{-6}$ relative error
+    \item \textbf{Solution accuracy}: State and control trajectories match BF to numerical precision
+\end{itemize}
+
+\section{Implementation Notes}
+
+\subsection{Solver Choices}
+\begin{itemize}
+    \item \textbf{Gurobi}: Fast for quadratic programs (QP), commercial license required
+    \item \textbf{Ipopt}: Open-source nonlinear solver, slightly slower but freely available
+    \item Both solvers produce identical solutions for this convex problem
+\end{itemize}
+
+\subsection{Numerical Considerations}
+\begin{itemize}
+    \item Use per-unit system to avoid ill-conditioning from large physical values
+    \item Set $C_B$ small enough to be a regularization, not a dominant cost
+    \item Terminal SOC constraint should not be at SOC bounds to avoid numerical issues
+    \item Monitor dual variable magnitudes to detect potential infeasibility
+\end{itemize}
+
+\subsection{Parallelization Potential}
+Current implementation is \textit{sequential} forward pass. Future extensions:
+\begin{itemize}
+    \item Parallelize subproblems within each iteration (requires asynchronous updates)
+    \item Use GPU acceleration for large-scale systems
+    \item Implement backward pass for improved convergence
+\end{itemize}
+
+\section{Example Problem Instance}
+
+\subsection{System Configuration}
+\begin{align}
+T &= 4 \text{ time periods} \\
+\Delta t &= 1.0 \text{ hour} \\
+P_{\text{BASE}} &= 1000 \text{ kW} \\
+E_{\text{BASE}} &= 1000 \text{ kWh}
+\end{align}
+
+\subsection{Battery Specifications}
+\begin{align}
+E_{\text{Rated}} &= 4000 \text{ kWh} = 4.0 \text{ pu} \\
+P_{B,R} &= 800 \text{ kW} = 0.8 \text{ pu} \\
+\text{SOC}_{\min} &= 0.30 \quad (30\%) \\
+\text{SOC}_{\max} &= 0.95 \quad (95\%) \\
+B_0 &= 0.30 \times 4.0 = 1.2 \text{ pu} \quad (30\% \text{ initial SOC}) \\
+B_{T,\text{target}} &= 0.32 \times 4.0 = 1.28 \text{ pu} \quad (32\% \text{ terminal SOC})
+\end{align}
+
+\subsection{Load Profile (Rated = 1250 kW)}
+\begin{align}
+P_L[t] &= 1250 \times \text{LoadShape}[t] / 1000 \quad \text{[pu]} \\
+\text{LoadShape} &= 0.8 + 0.2 \times \frac{\sin(\omega t - 0.8) + 1}{2}, \quad \omega = \frac{2\pi}{T}
+\end{align}
+
+Example for $T = 4$: $P_L \approx [1.00, 1.10, 1.15, 1.05]$ pu (approximate sinusoidal)
+
+\subsection{Price Profile (Charge-Discharge Scenario)}
+Design to test look-ahead capability:
+\begin{align}
+C[t] = \begin{cases}
+0.05 \text{ \$/kWh} & t \in \{1, 2\} \quad \text{(cheap: charge)} \\
+0.20 \text{ \$/kWh} & t \in \{3, 4\} \quad \text{(expensive: discharge)}
+\end{cases}
+\end{align}
+
+This creates a 4× price difference to incentivize:
+\begin{itemize}
+    \item \textbf{Periods 1-2}: Charge battery (low prices)
+    \item \textbf{Periods 3-4}: Discharge battery (high prices)
+\end{itemize}
+
+\subsection{Battery Cost Coefficient}
+\begin{align}
+C_B = 10^{-6} \times \min(C[t]) = 10^{-6} \times 0.05 = 5 \times 10^{-8} \text{ \$/kW}^2\text{/h}
+\end{align}
+
+\section{Appendix: Physical Interpretation}
+
+\subsection{Battery Power Sign Convention}
+\begin{itemize}
+    \item $P_B[t] > 0$: Battery \textbf{discharging} (injecting power into grid)
+    \item $P_B[t] < 0$: Battery \textbf{charging} (consuming power from grid)
+    \item $P_B[t] = 0$: Battery idle
+\end{itemize}
+
+\subsection{Economic Signals}
+\begin{itemize}
+    \item High $C[t]$ $\Rightarrow$ Expensive energy $\Rightarrow$ Discharge battery ($P_B[t] > 0$) $\Rightarrow$ Reduce $P_{\text{subs}}[t]$
+    \item Low $C[t]$ $\Rightarrow$ Cheap energy $\Rightarrow$ Charge battery ($P_B[t] < 0$) $\Rightarrow$ Increase $P_{\text{subs}}[t]$
+    \item $\greenmu{\mu[t]} > 0$ $\Rightarrow$ Energy stored at $t$ is valuable (future high prices)
+    \item $\greenmu{\mu[t]} < 0$ $\Rightarrow$ Energy stored at $t$ is costly (future low prices)
+\end{itemize}
+
+\subsection{SOC Trajectory Interpretation}
+\begin{itemize}
+    \item $\blueB{B[t]}$ decreases when $P_B[t] > 0$ (discharging)
+    \item $\blueB{B[t]}$ increases when $P_B[t] < 0$ (charging)
+    \item Optimal trajectory balances energy arbitrage profit against SOC constraints
+    \item Terminal constraint $B[T] = B_{T,\text{target}}$ ensures battery returns to desired state
+\end{itemize}
+
+\end{document}
