@@ -776,9 +776,10 @@ println("\n" * "="^80)
 println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF FOR ALL THREE SLACK CONFIGURATIONS"))
 println("="^80)
 
-# Create results directory structure: processedData/<systemName>_T<horizon>/
+# Create results directory structure: processedData/<systemName>_T<horizon>/<voltage_config>/
 system_folder_name = "$(data[:systemName])_T$(data[:T])"
-results_base_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", system_folder_name)
+voltage_config_folder = data[:same_voltage_levels] ? "symmetrical_voltages" : "variable_voltages"
+results_base_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", system_folder_name, voltage_config_folder)
 plots_dir = joinpath(results_base_dir, "plots")
 mkpath(plots_dir)
 
