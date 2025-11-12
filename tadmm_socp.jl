@@ -71,7 +71,8 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
-T = 24  # Number of time steps
+# T = 24  # Number of time steps
+T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -91,9 +92,9 @@ eps_pri_tadmm = 1e-5
 eps_dual_tadmm = 1e-5
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
-# FAADMM (Fast ADMM with Restart) parameters
+# FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
 use_faadmm = true              # Enable acceleration with momentum and restart
-faadmm_restart_criterion = :objective  # Restart criterion: :objective (if obj increases) or :residual (if residual increases)
+faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
 # Create shared Gurobi environment (suppresses repeated license messages)
 const GUROBI_ENV = Gurobi.Env()
@@ -941,8 +942,8 @@ end # function primal update (update 1) tadmm socp
 
 begin # function consensus update (update 2) tadmm socp
     function consensus_update_tadmm_socp!(Bhat, B_collection, u_collection, data, ρ::Float64;
-                                          use_acceleration::Bool=false, α::Float64=0.0, 
-                                          Bhat_prev=nothing)
+                                          use_acceleration::Bool=false, α_current::Float64=0.0, 
+                                          α_prev::Float64=0.0, Bhat_prev=nothing)
         @unpack Bset, Tset, B_R_pu, soc_min, soc_max = data
         
         violations = Tuple{Int,Int}[]  # Store (battery, time) pairs with violations
@@ -955,10 +956,10 @@ begin # function consensus update (update 2) tadmm socp
                 Bhat_standard = consensus_sum / length(Tset)
                 
                 # FAADMM: Apply momentum (extrapolation) if enabled
-                if use_acceleration && α > 0.0 && !isnothing(Bhat_prev)
-                    # Extrapolated consensus: Bhat_new = Bhat_standard + α*(Bhat_standard - Bhat_prev)
-                    # This "looks ahead" in the direction of progress
-                    Bhat_new = Bhat_standard + α * (Bhat_standard - Bhat_prev[j][t])
+                # Paper's extrapolation (Equation 10): ẑ^(k+1) = z^(k+1) + ((α^k - 1)/α^(k+1))(z^(k+1) - z^k)
+                if use_acceleration && α_current >= 1.0 && !isnothing(Bhat_prev)
+                    weight = (α_prev - 1.0) / α_current
+                    Bhat_new = Bhat_standard + weight * (Bhat_standard - Bhat_prev[j][t])
                 else
                     # Standard ADMM: no acceleration
                     Bhat_new = Bhat_standard
@@ -1013,7 +1014,7 @@ begin # function solve MPOPF tadmm socp
     function solve_MPOPF_SOCP_tADMM(data; ρ::Float64=1.0, 
                                         max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4,
                                         adaptive_rho::Bool=false, solver::Symbol=:ipopt,
-                                        use_faadmm::Bool=false, faadmm_restart::Symbol=:objective)
+                                        use_faadmm::Bool=false, faadmm_restart_eta::Float64=0.999)
         @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
         
         # Initialize global consensus variables B̂ⱼᵗ
@@ -1108,7 +1109,7 @@ begin # function solve MPOPF tadmm socp
         println("\n" * "="^80)
         print(COLOR_INFO)
         if use_faadmm
-            @printf "🎯 FAADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, restart=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho faadmm_restart length(Bset) length(data[:Nset]) length(data[:Lset])
+            @printf "🎯 FAADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, restart=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho use_faadmm length(Bset) length(data[:Nset]) length(data[:Lset])
         else
             @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
         end
@@ -1252,18 +1253,26 @@ begin # function solve MPOPF tadmm socp
             # 🔴 STEP 2: Consensus Update (with optional FAADMM acceleration)
             Bhat_old = Dict(j => copy(Bhat[j]) for j in Bset)
             
-            # Compute momentum coefficient for FAADMM
-            if use_faadmm && k > 1
-                # Standard FISTA momentum schedule: α_k = (k-1)/(k+2)
-                # Starts at 0, approaches 1 asymptotically
-                α_k = (k - 1.0) / (k + 2.0)
+            # Compute momentum coefficient for FAADMM (Paper's Equation 9)
+            # α^(k+1) = (1 + √(1 + 4(α^k)²)) / 2, starting with α^1 = 1
+            if use_faadmm
+                if k == 1
+                    α_k = 1.0  # Initial value from paper
+                else
+                    # Recursive formula grows unbounded: α = {1, 1.618, 2.058, 2.414, ...}
+                    α_k = (1.0 + sqrt(1.0 + 4.0 * α_history[end]^2)) / 2.0
+                end
             else
-                α_k = 0.0  # No acceleration on first iteration or if FAADMM disabled
+                α_k = 0.0
             end
+            
+            # Get previous α for paper's extrapolation weight
+            α_prev = k > 1 ? α_history[end] : 1.0
             
             consensus_result = consensus_update_tadmm_socp!(Bhat, B_collection, u_collection, data, ρ_current;
                                                            use_acceleration=use_faadmm, 
-                                                           α=α_k, 
+                                                           α_current=α_k,
+                                                           α_prev=α_prev,
                                                            Bhat_prev=Bhat_prev)
             
             # STEP 3: Dual Update
@@ -1293,43 +1302,25 @@ begin # function solve MPOPF tadmm socp
             push!(ρ_history, ρ_current)  # Store current ρ value
             push!(α_history, α_k)  # Store momentum coefficient
             
-            # 🔄 FAADMM RESTART LOGIC (with hysteresis to prevent excessive restarts)
+            # 🔄 FAADMM RESTART LOGIC (Paper's combined residual criterion)
+            # Restart if l^k ≥ η·l^(k-1) where l^k = (1/ρ)||y^k - ŷ^k||² + ρ||z^k - ẑ^k||²
             should_restart = false
-            restart_reason = ""
             
             if use_faadmm && k > 1 && α_k > 0.0
-                if faadmm_restart == :objective
-                    # Restart if objective increased SIGNIFICANTLY (add tolerance to prevent noise-triggered restarts)
-                    # Only restart if objective increases by more than 0.1% (relative) or 0.01 (absolute)
-                    obj_prev = obj_history[end-1]
-                    obj_increase = true_objective - obj_prev
-                    relative_increase = obj_increase / abs(obj_prev)
-                    restart_threshold_rel = 1e-3  # 0.1% relative increase
-                    restart_threshold_abs = 0.01   # $0.01 absolute increase
-                    
-                    if obj_increase > restart_threshold_abs && relative_increase > restart_threshold_rel
-                        should_restart = true
-                        restart_reason = "objective increased significantly"
-                    end
-                elseif faadmm_restart == :residual
-                    # Restart if primal residual increased significantly
-                    r_prev = r_norm_history[end-1]
-                    r_increase = r_norm - r_prev
-                    relative_increase = r_increase / r_prev
-                    
-                    # Only restart if residual increases by >20%
-                    if relative_increase > 0.2
-                        should_restart = true
-                        restart_reason = "residual increased significantly"
-                    end
-                end
+                # Compute combined residual l^k (paper's Equation 11)
+                # In our notation: y = dual vars (u), z = consensus vars (Bhat)
+                # ||y^k - ŷ^k||² ≈ ||s||² (dual residual), ||z^k - ẑ^k||² ≈ ||r||² (primal residual)
+                l_k = (1.0 / ρ_current) * s_norm^2 + ρ_current * r_norm^2
+                l_prev = (1.0 / ρ_current) * s_norm_history[end-1]^2 + ρ_current * r_norm_history[end-1]^2
                 
-                if should_restart
-                    # Reset momentum
-                    α_k = 0.0
+                # Restart if combined residual increased beyond threshold
+                if l_k >= faadmm_restart_eta * l_prev
+                    should_restart = true
+                    # Reset momentum to α = 1
+                    α_k = 1.0
                     push!(restart_history, k)
                     print(COLOR_WARNING)
-                    @printf "  🔄 [RESTART] iter=%d: %s (obj: %.4f -> %.4f, Δ=%.4f)\n" k restart_reason obj_prev true_objective (true_objective - obj_prev)
+                    @printf "  🔄 [RESTART] iter=%d: l^k=%.3e ≥ η·l^(k-1)=%.3e (η=%.4f)\n" k l_k (faadmm_restart_eta * l_prev) faadmm_restart_eta
                     print(COLOR_RESET)
                 end
             end
@@ -1609,14 +1600,28 @@ begin # tadmm socp solve
         sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm, 
                                                     max_iter=max_iter_tadmm, 
                                                     eps_pri=eps_pri_tadmm, 
-                                                    eps_dual=eps_dual_tadmm,
-                                                    adaptive_rho=adaptive_rho_tadmm,
-                                                    solver=solver_tadmm_choice,
-                                                    use_faadmm=use_faadmm,
-                                                    faadmm_restart=faadmm_restart_criterion)
+                                                eps_dual=eps_dual_tadmm,
+                                                adaptive_rho=adaptive_rho_tadmm,
+                                                solver=solver_tadmm_choice,
+                                                use_faadmm=use_faadmm,
+                                                faadmm_restart_eta=faadmm_restart_eta)        # Check convergence status
+        final_r_norm = sol_socp_tadmm[:convergence_history][:r_norm_history][end]
+        final_s_norm = sol_socp_tadmm[:convergence_history][:s_norm_history][end]
+        tadmm_converged = (final_r_norm <= eps_pri_tadmm) && (final_s_norm <= eps_dual_tadmm)
         
         # Report results
         println("\n--- tADMM SOLUTION STATUS ---")
+        if tadmm_converged
+            print(COLOR_SUCCESS)
+            println("✓ CONVERGED")
+            print(COLOR_RESET)
+        else
+            print(COLOR_WARNING)
+            println("⚠ NOT CONVERGED")
+            @printf "  Final ‖r‖=%.2e (threshold: %.2e) %s\n" final_r_norm eps_pri_tadmm (final_r_norm <= eps_pri_tadmm ? "✓" : "✗")
+            @printf "  Final ‖s‖=%.2e (threshold: %.2e) %s\n" final_s_norm eps_dual_tadmm (final_s_norm <= eps_dual_tadmm ? "✓" : "✗")
+            print(COLOR_RESET)
+        end
         print(COLOR_SUCCESS)
         @printf "Objective: \$%.2f\n" sol_socp_tadmm[:objective]
         print(COLOR_RESET)
