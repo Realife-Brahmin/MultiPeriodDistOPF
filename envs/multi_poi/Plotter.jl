@@ -144,6 +144,213 @@ end
 
 
 """
+    plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Bool=true, savePlots::Bool=false, filename::String="angle_voltage_trajectory.png")
+
+Plot angle trajectory θ^t_i (left axis) and optimized non-slack substation voltage V_i (right axis) over time.
+Reference line δ_i shows the median coordination angle for the non-slack substation.
+
+# Arguments
+- result: Dictionary containing optimization results with :angles_matrix, :median_angles_deg, :v_nonslack, :v_j
+- data: Dictionary containing system data (:T, :delta_t_h, :V_1_pu, :V_2_pu, :same_voltage_levels)
+- slack_sub: Which substation is slack (1 or 2)
+- showPlots: Whether to display the plot
+- savePlots: Whether to save the plot to file
+- filename: Filename for saving the plot
+
+# Returns
+- Plot object
+"""
+function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Bool=true, savePlots::Bool=false, filename::String="angle_voltage_trajectory.png")
+    T = data[:T]
+    Δt = data[:delta_t_h]
+    time_steps = 1:T
+    
+    # Extract angle data
+    angles_matrix = result[:angles_matrix]
+    median_angles_deg = result[:median_angles_deg]
+    
+    # Get the non-slack substation index
+    non_slack_subs = sort(collect(keys(angles_matrix)))
+    if isempty(non_slack_subs)
+        @warn "No non-slack substations found in angles_matrix"
+        return nothing
+    end
+    non_slack_sub = non_slack_subs[1]  # For 2-substation system, only one non-slack
+    
+    # Get angle trajectory and median
+    θ_trajectory = angles_matrix[non_slack_sub]
+    θ_median = median_angles_deg[non_slack_sub]
+    
+    # Compute angle deviation: φ = θ - θ_median
+    φ_trajectory = θ_trajectory .- θ_median
+    
+    # Extract voltage data
+    same_voltage_levels = data[:same_voltage_levels]
+    slack_node_val = result[:slack_node]
+    
+    # Load bus voltage (always available)
+    v_load_pu = sqrt.(result[:v_j])
+    
+    # Substation voltages
+    if same_voltage_levels
+        # Both substations fixed
+        v_sub1 = fill(data[:V_1_pu], T)
+        v_sub2 = fill(data[:V_2_pu], T)
+    else
+        # One is variable
+        if slack_node_val == 0
+            # Sub 1 is slack (fixed), Sub 2 is variable
+            v_sub1 = fill(data[:V_1_pu], T)
+            v_sub2 = sqrt.(result[:v_nonslack])
+        else  # slack_node_val == 1
+            # Sub 2 is slack (fixed), Sub 1 is variable
+            v_sub1 = sqrt.(result[:v_nonslack])
+            v_sub2 = fill(data[:V_2_pu], T)
+        end
+    end
+    
+    # Calculate y-axis limits for angle θ (left axis)
+    θ_min = minimum(θ_trajectory)
+    θ_max = maximum(θ_trajectory)
+    θ_range = θ_max - θ_min
+    θ_margin = max(0.5, 0.15 * θ_range)
+    left_min = θ_min - θ_margin
+    left_max = θ_max + θ_margin
+    
+    # Calculate y-axis limits for voltage (right axis) - only non-slack voltage
+    v_nonslack_data = slack_node_val == 0 ? v_sub2 : v_sub1
+    v_min = minimum(v_nonslack_data)
+    v_max = maximum(v_nonslack_data)
+    v_range = v_max - v_min
+    v_margin = max(0.01, 0.1 * v_range)
+    right_min = v_min - v_margin
+    right_max = v_max + v_margin
+    
+    # Smart x-tick spacing
+    xtick_vals = if T <= 24
+        1:T
+    else
+        step = max(1, div(T, 5))
+        ticks = collect(step:step:T)
+        if isempty(ticks) || (T - last(ticks)) > step * 0.3
+            vcat(1, ticks, T)
+        else
+            vcat(1, ticks[1:end-1], T)
+        end
+    end
+    xtick_vals = sort(unique(xtick_vals))
+    
+    # Smart time step label
+    dt_label = if Δt >= 1.0
+        "Δt = $(Δt) h"
+    else
+        dt_minutes = round(Int, Δt * 60)
+        "Δt = $(dt_minutes) min"
+    end
+    
+    # Set theme and backend
+    gr()
+    theme(:mute)
+    
+    # Determine slack voltage and reference angle for title
+    if slack_node_val == 0
+        slack_v_str = "V_1 = $(data[:V_1_pu]) \\, \\mathrm{pu}"
+        δ_slack_str = "\\delta_1 = 0.0^{\\circ}"
+        title_str = "Substation Angle and Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+    else
+        slack_v_str = "V_2 = $(data[:V_2_pu]) \\, \\mathrm{pu}"
+        δ_slack_str = "\\delta_2 = 0.0^{\\circ}"
+        title_str = "Substation Angle and Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+    end
+    
+    # Create main plot with angle θ (blue theme) - plot actual angle, not deviation
+    θ_label = "\\theta^t_{$(non_slack_sub)}"
+    p = plot(
+        time_steps, θ_trajectory,
+        dpi=600,
+        label=θ_label,
+        xlabel="Time Period (t)",
+        ylabel="Angle [degrees]",
+        legend=:topleft,
+        lw=4,
+        color=:dodgerblue,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        ylims=(left_min, left_max),
+        xticks=xtick_vals,
+        title=title_str,
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern",
+        right_margin=10Plots.mm
+    )
+    
+    # Add reference line at δ (the median coordination angle)
+    plot!(
+        p, time_steps, fill(θ_median, T),
+        label="\\delta_{$(non_slack_sub)} = $(round(θ_median, digits=2))°",
+        lw=2.5,
+        color=:gray40,
+        linestyle=:dash,
+        alpha=0.8
+    )
+    
+    # Add secondary y-axis for voltages
+    ax2 = twinx()
+    
+    # Non-slack substation voltage (the one being optimized)
+    if slack_node_val == 0
+        # Sub 1 is slack, plot Sub 2 (optimized)
+        v_nonslack = v_sub2
+        nonslack_label = "V_$(non_slack_sub)"
+        v_color = :limegreen
+    else
+        # Sub 2 is slack, plot Sub 1 (optimized)
+        v_nonslack = v_sub1
+        nonslack_label = "V_$(non_slack_sub)"
+        v_color = :forestgreen
+    end
+    
+    plot!(
+        ax2, time_steps, v_nonslack,
+        label=nonslack_label,
+        lw=4,
+        color=v_color,
+        linestyle=:solid,
+        markershape=:square,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        ylabel="Voltage Magnitude [pu]",
+        ylims=(right_min, right_max),
+        legend=:topright,
+        titlefont=font(14, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Show the plot if requested
+    if showPlots
+        display(p)
+    end
+    
+    # Save the plot if requested
+    if savePlots
+        savefig(p, filename)
+    end
+    
+    return p
+end
+
+
+"""
     print_curve_statistics(data)
 
 Print statistics about the input curves.
