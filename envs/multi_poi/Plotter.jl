@@ -65,7 +65,7 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
 
     # Set theme and backend
     gr()
-    theme(:mute)
+    theme(:dao)
     
     # Create main plot with LoadShapeLoad (dark yellow theme) and TOP legend (like tADMM style)
     p = plot(
@@ -174,6 +174,10 @@ Reference line δ_i shows the median coordination angle for the non-slack substa
 - Plot object
 """
 function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Bool=true, savePlots::Bool=false, filename::String="angle_voltage_trajectory.png")
+    """
+    Publication-ready stacked subplot visualization for IEEE PESGM.
+    Top panel: Phase angles (θ), Bottom panel: Voltage magnitudes (V).
+    """
     T = data[:T]
     Δt = data[:delta_t_h]
     time_steps = 1:T
@@ -182,20 +186,21 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
     angles_matrix = result[:angles_matrix]
     median_angles_deg = result[:median_angles_deg]
     
-    # Get the non-slack substation index
+    # Get the non-slack substation indices
     non_slack_subs = sort(collect(keys(angles_matrix)))
     if isempty(non_slack_subs)
         @warn "No non-slack substations found in angles_matrix"
         return nothing
     end
-    non_slack_sub = non_slack_subs[1]  # For 2-substation system, only one non-slack
     
-    # Get angle trajectory and median
-    θ_trajectory = angles_matrix[non_slack_sub]
-    θ_median = median_angles_deg[non_slack_sub]
-    
-    # Compute angle deviation: φ = θ - θ_median
-    φ_trajectory = θ_trajectory .- θ_median
+    # For multiple substations, we'll plot all non-slack angles
+    # Get all angle trajectories and medians
+    θ_trajectories = Dict()
+    θ_medians = Dict()
+    for sub in non_slack_subs
+        θ_trajectories[sub] = angles_matrix[sub]
+        θ_medians[sub] = median_angles_deg[sub]
+    end
     
     # Extract voltage data
     same_voltage_levels = data[:same_voltage_levels]
@@ -204,36 +209,55 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
     # Load bus voltage (always available)
     v_load_pu = sqrt.(result[:v_j])
     
-    # Substation voltages
-    if same_voltage_levels
-        # Both substations fixed
-        v_sub1 = fill(data[:V_1_pu], T)
-        v_sub2 = fill(data[:V_2_pu], T)
-    else
-        # One is variable
-        if slack_node_val == 0
-            # Sub 1 is slack (fixed), Sub 2 is variable
-            v_sub1 = fill(data[:V_1_pu], T)
-            v_sub2 = sqrt.(result[:v_nonslack])
-        else  # slack_node_val == 1
-            # Sub 2 is slack (fixed), Sub 1 is variable
-            v_sub1 = sqrt.(result[:v_nonslack])
-            v_sub2 = fill(data[:V_2_pu], T)
+    # Determine number of substations (count V_*_pu keys in data)
+    n_subs = 0
+    for i in 1:10  # Check up to 10 substations
+        if haskey(data, Symbol("V_$(i)_pu"))
+            n_subs = i
+        else
+            break
         end
     end
     
-    # Calculate y-axis limits for angle θ (left axis)
-    θ_min = minimum(θ_trajectory)
-    θ_max = maximum(θ_trajectory)
+    # Substation voltages
+    v_subs = Dict{Int, Vector{Float64}}()
+    if same_voltage_levels
+        # All substations fixed
+        for sub in 1:n_subs
+            v_subs[sub] = fill(data[Symbol("V_$(sub)_pu")], T)
+        end
+    else
+        # Non-slack substations are variable
+        for sub in 1:n_subs
+            if sub - 1 == slack_node_val  # Convert sub index to node index
+                # This is the slack substation (fixed)
+                v_subs[sub] = fill(data[Symbol("V_$(sub)_pu")], T)
+            else
+                # Non-slack substation (variable)
+                if haskey(result, :v_nonslack) && haskey(result[:v_nonslack], sub)
+                    v_subs[sub] = sqrt.(result[:v_nonslack][sub])
+                else
+                    @warn "Missing voltage data for substation $sub"
+                    v_subs[sub] = fill(NaN, T)
+                end
+            end
+        end
+    end
+    
+    # Calculate y-axis limits for angles θ (left axis)
+    # Use all non-slack angle trajectories
+    all_angles = vcat([θ_trajectories[sub] for sub in non_slack_subs]...)
+    θ_min = minimum(all_angles)
+    θ_max = maximum(all_angles)
     θ_range = θ_max - θ_min
     θ_margin = max(0.5, 0.15 * θ_range)
     left_min = θ_min - θ_margin
     left_max = θ_max + θ_margin
     
-    # Calculate y-axis limits for voltage (right axis) - only non-slack voltage
-    v_nonslack_data = slack_node_val == 0 ? v_sub2 : v_sub1
-    v_min = minimum(v_nonslack_data)
-    v_max = maximum(v_nonslack_data)
+    # Calculate y-axis limits for voltage (right axis) - only non-slack voltages
+    all_v_nonslack = vcat([v_subs[sub] for sub in non_slack_subs]...)
+    v_min = minimum(all_v_nonslack)
+    v_max = maximum(all_v_nonslack)
     v_range = v_max - v_min
     v_margin = max(0.01, 0.1 * v_range)
     right_min = v_min - v_margin
@@ -263,109 +287,148 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
     
     # Set theme and backend
     gr()
-    theme(:mute)
+    theme(:dao)
     
-    # Determine slack voltage and reference angle for title
-    if slack_node_val == 0
-        slack_v_str = "V_1 = $(data[:V_1_pu]) \\, \\mathrm{pu}"
-        δ_slack_str = "\\delta_1 = 0.0^{\\circ}"
-        title_str = "Substation Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+    # Determine slack information for title
+    slack_sub_idx = slack_node_val + 1
+    slack_v_str = "V_{$slack_sub_idx} = $(data[Symbol("V_$(slack_sub_idx)_pu")]) \\, \\mathrm{pu}"
+    δ_slack_str = "\\delta_{$slack_sub_idx} = 0.0^{\\circ}"
+    title_str = "Substation Voltage Profile vs Time (Slack: Subs $slack_sub_idx)"
+    
+    # Color scheme: one family per substation (from cove's palette)
+    # Sub 1: deep blue (angle) + sky blue (voltage) - calm, baseline
+    # Sub 2: amber/orange (angle) + light amber (voltage) - warm, active
+    # Sub 3: teal green (angle) + mint green (voltage) - stable, cool
+    angle_colors = [RGB(0x00/255, 0x72/255, 0xB2/255),    # #0072B2 deep blue
+                    RGB(0xE6/255, 0x9F/255, 0x00/255),    # #E69F00 amber/orange
+                    RGB(0x00/255, 0x9E/255, 0x73/255)]    # #009E73 teal green
+    voltage_colors = [RGB(0x66/255, 0xB2/255, 0xFF/255),  # #66B2FF sky blue
+                      RGB(0xFF/255, 0xD5/255, 0x80/255),  # #FFD580 light amber
+                      RGB(0x7F/255, 0xD1/255, 0xAE/255)]  # #7FD1AE mint green
+    
+    # Smart x-tick spacing: fewer ticks for clarity (every 2-3 hours)
+    xtick_sparse = if T <= 24
+        collect(1:2:T)
     else
-        slack_v_str = "V_2 = $(data[:V_2_pu]) \\, \\mathrm{pu}"
-        δ_slack_str = "\\delta_2 = 0.0^{\\circ}"
-        title_str = "Substation Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+        step = max(2, div(T, 8))
+        collect(1:step:T)
     end
     
-    # Create main plot with angle θ (blue theme) - use LaTeX labels
-    δ_text = @sprintf("%.2f", round(θ_median, digits=2))
-    
-    p = plot(
-        time_steps, θ_trajectory,
-        dpi=600,
-        label=L"\theta^t_{%$non_slack_sub}",
-        xlabel="Time Period (t)",
-        ylabel="Angle [degrees]",
-        legend=:top,
-        legendfontsize=9,
-        lw=4,
-        color=:dodgerblue,
-        markershape=:circle,
-        markersize=6,
-        markerstrokecolor=:black,
-        markerstrokewidth=2.0,
-        gridstyle=:solid,
-        gridalpha=0.3,
-        minorgrid=true,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
+    # ==== TOP PANEL: ANGLES ====
+    p_angle = plot(
+        dpi=400,
+        ylabel="Angle [°]",
+        legend=:topright,
+        legend_columns=1,
+        legendfontsize=8,
+        framestyle=:box,
         ylims=(left_min, left_max),
-        xticks=xtick_vals,
-        title=title_str,
-        titlefont=font(12, "Computer Modern"),
-        guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern",
-        right_margin=10Plots.mm,
-        top_margin=4Plots.mm
+        xticks=(xtick_sparse, string.(xtick_sparse)),
+        xformatter=_->"",  # Hide x-labels on top panel
+        grid=true,
+        gridlinewidth=0.5,
+        gridalpha=0.25,
+        gridstyle=:solid,
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfont=font(9, "Computer Modern"),
+        left_margin=3Plots.mm,
+        right_margin=3Plots.mm,
+        top_margin=2Plots.mm,
+        bottom_margin=0Plots.mm,
+        title=title_str
     )
     
-    # Add reference line at δ (the median coordination angle)
-    plot!(
-        p, time_steps, fill(θ_median, T),
-        label=L"\delta_{%$non_slack_sub} = %$δ_text^{\circ}",
-        lw=2.5,
-        color=:gray40,
-        linestyle=:dash,
-        alpha=0.9
-    )
-    
-    # Add secondary y-axis for voltages
-    ax2 = twinx()
-    
-    # Non-slack substation voltage (the one being optimized)
-    if slack_node_val == 0
-        # Sub 1 is slack, plot Sub 2 (optimized)
-        v_nonslack = v_sub2
-        nonslack_label = L"V_{2}"
-        v_color = :limegreen
-    else
-        # Sub 2 is slack, plot Sub 1 (optimized)
-        v_nonslack = v_sub1
-        nonslack_label = L"V_{1}"
-        v_color = :forestgreen
+    # Plot angle trajectories with δ reference lines
+    for (idx, sub) in enumerate(non_slack_subs)
+        θ_traj = θ_trajectories[sub]
+        θ_med = θ_medians[sub]
+        
+        angle_col = angle_colors[mod1(idx, length(angle_colors))]
+        
+        # δ reference line (thicker, more visible)
+        hline!(
+            p_angle,
+            [θ_med],
+            linestyle=:dash,
+            linewidth=2.0,
+            linecolor=angle_col,
+            alpha=0.8,
+            label="δ$sub = $(round(θ_med, digits=2))°"
+        )
+        
+        # Angle trajectory (solid line, lw=2.2, marker size=5, with black edge)
+        plot!(
+            p_angle, time_steps, θ_traj,
+            color=angle_col,
+            lw=2.2,
+            markershape=:circle,
+            markersize=5,
+            markerstrokewidth=1.5,
+            markerstrokecolor=:black,
+            markeralpha=0.9,
+            label="θ @ Sub $sub"
+        )
     end
     
-    plot!(
-        ax2, time_steps, v_nonslack,
-        label="$(nonslack_label)",
-        lw=4,
-        color=v_color,
-        linestyle=:solid,
-        markershape=:square,
-        markersize=6,
-        markerstrokecolor=:black,
-        markerstrokewidth=2.0,
-        ylabel="Voltage Magnitude [pu]",
+    # ==== BOTTOM PANEL: VOLTAGES ====
+    p_voltage = plot(
+        dpi=400,
+        xlabel="Time Period (t)",
+        ylabel="Voltage [pu]",
+        legend=:topright,
+        legend_columns=2,
+        legendfontsize=8,
+        framestyle=:box,
         ylims=(right_min, right_max),
-        legend=false,
-        titlefont=font(14, "Computer Modern"),
-        guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        xticks=(xtick_sparse, string.(xtick_sparse)),
+        grid=true,
+        gridlinewidth=0.5,
+        gridalpha=0.25,
+        gridstyle=:solid,
+        guidefont=font(10, "Computer Modern"),
+        tickfont=font(9, "Computer Modern"),
+        left_margin=3Plots.mm,
+        right_margin=3Plots.mm,
+        top_margin=0Plots.mm,
+        bottom_margin=4Plots.mm
     )
-
-    # Consolidate legends: register voltage series label on primary axis with proper color/marker but no data
-    plot!(p, time_steps, fill(NaN, T), label=nonslack_label, lw=4, color=v_color, linestyle=:solid,
-        marker=:square, markersize=6, markerstrokecolor=:black)
-    # Remove legend frame background for cleaner look
-    # unified legend font size applied via legendfontsize above
     
-    # Removed inline annotations now that legends are restored
+    # Plot voltage trajectories (lw=2.0, dashed, marker size=4)
+    for (idx, sub) in enumerate(non_slack_subs)
+        v_traj = v_subs[sub]
+        
+        volt_col = voltage_colors[mod1(idx, length(voltage_colors))]
+        
+        # Voltage trajectory (dashed line, lw=2.0, marker size=4, with black edge)
+        plot!(
+            p_voltage, time_steps, v_traj,
+            color=volt_col,
+            lw=2.0,
+            linestyle=:dash,
+            markershape=:square,
+            markersize=4,
+            markerstrokewidth=1.5,
+            markerstrokecolor=:black,
+            markeralpha=0.9,
+            label="V @ Sub $sub"
+        )
+    end
+    
+    # Stack the two panels vertically with IEEE 2-column dimensions
+    # 7.1 inches × 4.6 inches at 400 DPI for full 2-column width
+    p = plot(p_angle, p_voltage, 
+             layout=(2,1), 
+             size=(7.1*100, 4.6*100),  # Convert inches to pixels (100 px/inch for screen)
+             plot_title="",
+             link=:x)
     
     # Show the plot if requested
     if showPlots
         display(p)
     end
     
-    # Save the plot if requested
+    # Save the plot if requested (already at 400 dpi from panel settings)
     if savePlots
         savefig(p, filename)
     end
