@@ -269,11 +269,11 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
     if slack_node_val == 0
         slack_v_str = "V_1 = $(data[:V_1_pu]) \\, \\mathrm{pu}"
         δ_slack_str = "\\delta_1 = 0.0^{\\circ}"
-        title_str = "Substation Angle and Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+        title_str = "Substation Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
     else
         slack_v_str = "V_2 = $(data[:V_2_pu]) \\, \\mathrm{pu}"
         δ_slack_str = "\\delta_2 = 0.0^{\\circ}"
-        title_str = "Substation Angle and Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
+        title_str = "Substation Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
     end
     
     # Create main plot with angle θ (blue theme) - use LaTeX labels
