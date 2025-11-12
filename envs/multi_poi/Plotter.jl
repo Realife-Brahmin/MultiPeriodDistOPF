@@ -71,10 +71,11 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     p = plot(
         time_steps, LoadShapeLoad,
         dpi=600,
-        label=L"\lambda^t",
+        label=L"Load Shape (\lambda^t)",
         xlabel="Time Period (t)",
         ylabel="Normalized Load Profile [0-1]",
-        legend=:top,
+        legend=:topright,
+        legend_background_color=RGBA(1,1,1,0.75),
         legendfontsize=9,
         lw=4,
         color=:darkgoldenrod2,
@@ -94,7 +95,7 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
         right_margin=10Plots.mm,
-        top_margin=4Plots.mm
+        top_margin=6Plots.mm
     )
 
     # Add secondary y-axis for cost curves (sexy green shades)
@@ -103,7 +104,7 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     # Substation 1 cost: Dark forest green (#228B22)
     plot!(
         ax2, time_steps, cost_1_cents,
-        label=L"C^t_1",
+        label="Cost Subs 1 \$(C^t_1)\$",
         lw=4,
         color=RGB(34/255, 139/255, 34/255),
         linestyle=:solid,
@@ -122,7 +123,7 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     # Substation 2 cost: Bright lime green (#32CD32)
     plot!(
         ax2, time_steps, cost_2_cents,
-        label=L"C^t_2",
+        label=L"Cost Subs 2 (C^t_2)",
         lw=4,
         color=RGB(50/255, 205/255, 50/255),
         linestyle=:dash,
@@ -133,8 +134,12 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     )
 
     # Consolidate legend entries to a single top legend on primary axis
-    plot!(p, time_steps, fill(NaN, T), label=L"C^t_1", lw=4, color=RGB(34/255,139/255,34/255), linestyle=:solid, marker=:circle, markersize=6, markerstrokecolor=:black)
-    plot!(p, time_steps, fill(NaN, T), label=L"C^t_2", lw=4, color=RGB(50/255,205/255,50/255), linestyle=:dash, marker=:diamond, markersize=6, markerstrokecolor=:black)
+    plot!(p, [NaN], [NaN], seriestype=:scatter, label=L"Cost Subs 1 (C^t_1)",
+        marker=:circle, markercolor=RGB(34/255,139/255,34/255), markersize=7,
+        markerstrokecolor=:black, markerstrokewidth=2.0, lw=0)
+    plot!(p, [NaN], [NaN], seriestype=:scatter, label=L"Cost Subs 2 (C^t_2)",
+        marker=:diamond, markercolor=RGB(50/255,205/255,50/255), markersize=7,
+        markerstrokecolor=:black, markerstrokewidth=2.0, lw=0)
     # consolidated legend uses the primary axis legend with fontsize set above
 
     # Show the plot if requested
