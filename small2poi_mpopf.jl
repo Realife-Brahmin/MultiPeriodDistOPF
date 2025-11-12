@@ -658,6 +658,10 @@ println("\n" * "="^80)
 println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF FOR BOTH SLACK CONFIGURATIONS"))
 println("="^80)
 
+# Create plots directory (needed for trajectory plots)
+plots_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", "plots")
+mkpath(plots_dir)
+
 # Analyze each slack bus configuration
 results_by_slack = Dict()
 
@@ -880,11 +884,28 @@ println("="^80)
 # Load plotter
 include(joinpath(@__DIR__, "envs", "multi_poi", "Plotter.jl"))
 
-# Generate plot in proper location
-plots_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", "plots")
-mkpath(plots_dir)
+# Generate input curves plot
 plot_filename = joinpath(plots_dir, "mpopf_input_curves.png")
 plot_input_curves(data, showPlots=showPlots, savePlots=savePlots, filename=plot_filename)
 print_curve_statistics(data)
+
+# Generate angle and voltage trajectory plots for each slack configuration
+println("\n" * "="^80)
+println(Crayon(foreground = :magenta, bold = true)("GENERATING ANGLE AND VOLTAGE TRAJECTORY PLOTS"))
+println("="^80)
+
+for slack_sub in sort(collect(keys(results_by_slack)))
+    result = results_by_slack[slack_sub]
+    
+    println("\nGenerating plot for Slack: Substation $(slack_sub)...")
+    traj_filename = joinpath(plots_dir, "angle_voltage_slack$(slack_sub).png")
+    plot_angle_voltage_trajectories(result, data, slack_sub, 
+                                     showPlots=showPlots, 
+                                     savePlots=savePlots, 
+                                     filename=traj_filename)
+    if savePlots
+        println("  ✓ Plot saved: $(traj_filename)")
+    end
+end
 
 println("="^80)
