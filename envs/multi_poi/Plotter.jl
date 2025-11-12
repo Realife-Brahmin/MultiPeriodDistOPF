@@ -3,6 +3,7 @@
 
 using Plots
 using Printf
+using LaTeXStrings
 
 """
     plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, filename::String="mpopf_input_curves.png")
@@ -66,20 +67,21 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     gr()
     theme(:mute)
     
-    # Create main plot with LoadShapeLoad (dark yellow theme)
+    # Create main plot with LoadShapeLoad (dark yellow theme) and TOP legend (like tADMM style)
     p = plot(
         time_steps, LoadShapeLoad,
         dpi=600,
-        label="Load Shape (λᵗ)",
+        label=L"\lambda^t",
         xlabel="Time Period (t)",
         ylabel="Normalized Load Profile [0-1]",
-        legend=:left,
+        legend=:top,
+        legendfontsize=9,
         lw=4,
-        color=:darkgoldenrod2,  # Dark yellow theme
+        color=:darkgoldenrod2,
         markershape=:square,
-        markersize=4,
+        markersize=6,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=2.0,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
@@ -91,7 +93,8 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
         titlefont=font(14, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        right_margin=10Plots.mm
+        right_margin=10Plots.mm,
+        top_margin=4Plots.mm
     )
 
     # Add secondary y-axis for cost curves (sexy green shades)
@@ -100,17 +103,17 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     # Substation 1 cost: Dark forest green (#228B22)
     plot!(
         ax2, time_steps, cost_1_cents,
-        label="Cost Sub 1 (C₁ᵗ)",
+        label=L"C^t_1",
         lw=4,
-        color=RGB(34/255, 139/255, 34/255),  # Forest green
+        color=RGB(34/255, 139/255, 34/255),
         linestyle=:solid,
         markershape=:circle,
-        markersize=4,
+        markersize=6,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=2.0,
         ylabel="Cost [cents/kWh]",
         ylims=(right_min, right_max),
-        legend=:right,
+        legend=false,
         titlefont=font(14, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern"
@@ -119,15 +122,20 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     # Substation 2 cost: Bright lime green (#32CD32)
     plot!(
         ax2, time_steps, cost_2_cents,
-        label="Cost Sub 2 (C₂ᵗ)",
+        label=L"C^t_2",
         lw=4,
-        color=RGB(50/255, 205/255, 50/255),  # Lime green
+        color=RGB(50/255, 205/255, 50/255),
         linestyle=:dash,
         markershape=:diamond,
-        markersize=4,
+        markersize=6,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5
+        markerstrokewidth=2.0
     )
+
+    # Consolidate legend entries to a single top legend on primary axis
+    plot!(p, time_steps, fill(NaN, T), label=L"C^t_1", lw=4, color=RGB(34/255,139/255,34/255), linestyle=:solid, marker=:circle, markersize=6, markerstrokecolor=:black)
+    plot!(p, time_steps, fill(NaN, T), label=L"C^t_2", lw=4, color=RGB(50/255,205/255,50/255), linestyle=:dash, marker=:diamond, markersize=6, markerstrokecolor=:black)
+    # consolidated legend uses the primary axis legend with fontsize set above
 
     # Show the plot if requested
     if showPlots
@@ -263,21 +271,23 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
         title_str = "Substation Angle and Voltage Profile vs Time (\$$(slack_v_str), $(δ_slack_str)\$)"
     end
     
-    # Create main plot with angle θ (blue theme) - plot actual angle, not deviation
-    θ_label = "\\theta^t_{$(non_slack_sub)}"
+    # Create main plot with angle θ (blue theme) - use LaTeX labels
+    δ_text = @sprintf("%.2f", round(θ_median, digits=2))
+    
     p = plot(
         time_steps, θ_trajectory,
         dpi=600,
-        label=θ_label,
+        label=L"\theta^t_{%$non_slack_sub}",
         xlabel="Time Period (t)",
         ylabel="Angle [degrees]",
-        legend=:topleft,
+        legend=:top,
+        legendfontsize=9,
         lw=4,
         color=:dodgerblue,
         markershape=:circle,
-        markersize=4,
+        markersize=6,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=2.0,
         gridstyle=:solid,
         gridalpha=0.3,
         minorgrid=true,
@@ -286,20 +296,21 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
         ylims=(left_min, left_max),
         xticks=xtick_vals,
         title=title_str,
-        titlefont=font(11, "Computer Modern"),
+        titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        right_margin=10Plots.mm
+        right_margin=10Plots.mm,
+        top_margin=4Plots.mm
     )
     
     # Add reference line at δ (the median coordination angle)
     plot!(
         p, time_steps, fill(θ_median, T),
-        label="\\delta_{$(non_slack_sub)} = $(round(θ_median, digits=2))°",
+        label=L"\delta_{%$non_slack_sub} = %$δ_text^{\circ}",
         lw=2.5,
         color=:gray40,
         linestyle=:dash,
-        alpha=0.8
+        alpha=0.9
     )
     
     # Add secondary y-axis for voltages
@@ -309,32 +320,40 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
     if slack_node_val == 0
         # Sub 1 is slack, plot Sub 2 (optimized)
         v_nonslack = v_sub2
-        nonslack_label = "V_$(non_slack_sub)"
+        nonslack_label = L"V_{2}"
         v_color = :limegreen
     else
         # Sub 2 is slack, plot Sub 1 (optimized)
         v_nonslack = v_sub1
-        nonslack_label = "V_$(non_slack_sub)"
+        nonslack_label = L"V_{1}"
         v_color = :forestgreen
     end
     
     plot!(
         ax2, time_steps, v_nonslack,
-        label=nonslack_label,
+        label="$(nonslack_label)",
         lw=4,
         color=v_color,
         linestyle=:solid,
         markershape=:square,
-        markersize=4,
+        markersize=6,
         markerstrokecolor=:black,
-        markerstrokewidth=1.5,
+        markerstrokewidth=2.0,
         ylabel="Voltage Magnitude [pu]",
         ylims=(right_min, right_max),
-        legend=:topright,
+        legend=false,
         titlefont=font(14, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern"
     )
+
+    # Consolidate legends: register voltage series label on primary axis with proper color/marker but no data
+    plot!(p, time_steps, fill(NaN, T), label=nonslack_label, lw=4, color=v_color, linestyle=:solid,
+        marker=:square, markersize=6, markerstrokecolor=:black)
+    # Remove legend frame background for cleaner look
+    # unified legend font size applied via legendfontsize above
+    
+    # Removed inline annotations now that legends are restored
     
     # Show the plot if requested
     if showPlots
