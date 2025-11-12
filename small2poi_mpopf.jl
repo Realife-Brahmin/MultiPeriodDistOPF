@@ -7,11 +7,12 @@
 #
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
-Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
+Pkg.activate(joinpath(@__DIR__, "envs", "multi_poi"))
 # Pkg.add("Crayons")
 # Pkg.add("JuMP")
 # Pkg.add("Ipopt")
 # Pkg.add("OpenDSSDirect")
+# Pkg.add("Plots")
 # Pkg.instantiate()
 # Pkg.precompile()
 using JuMP
@@ -21,6 +22,7 @@ using Crayons
 using Printf
 using Statistics
 using Plots  # For input curve plotting
+using LaTeXStrings  # For LaTeX-formatted plot labels
 
 # Optional: Uncomment if running OpenDSS validation
 # import OpenDSSDirect as dss
@@ -31,6 +33,9 @@ using Plots  # For input curve plotting
 # ============================================================================
 
 data = Dict()
+
+# System name for organizing results
+systemName = "small2poi_1ph"  # Name for organizing results
 
 # User-defined parameter: Should substations have same voltage levels?
 # - true: Non-slack substations have fixed voltage (V_1_pu, V_2_pu)
@@ -81,6 +86,7 @@ LoadShapeCost_1 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) .
 LoadShapeCost_2 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2
 
 data = Dict(
+    :systemName => systemName,
     :same_voltage_levels => same_voltage_levels,
     :V_1_pu => V_1_pu,
     :delta_1_deg => delta_1_deg,
@@ -658,8 +664,11 @@ println("\n" * "="^80)
 println(Crayon(foreground = :cyan, bold = true)("SOLVING MULTI-PERIOD OPF FOR BOTH SLACK CONFIGURATIONS"))
 println("="^80)
 
-# Create plots directory (needed for trajectory plots)
-plots_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", "plots")
+# Create results directory structure: processedData/<systemName>_T<horizon>/<voltage_config>/
+system_folder_name = "$(data[:systemName])_T$(data[:T])"
+voltage_config_folder = data[:same_voltage_levels] ? "symmetrical_voltages" : "variable_voltages"
+results_base_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", system_folder_name, voltage_config_folder)
+plots_dir = joinpath(results_base_dir, "plots")
 mkpath(plots_dir)
 
 # Analyze each slack bus configuration
