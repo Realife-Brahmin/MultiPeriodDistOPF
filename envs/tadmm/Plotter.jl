@@ -1213,6 +1213,9 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     r_norm_history = hist[:r_norm_history]
     s_norm_history = hist[:s_norm_history]
     ρ_history = get(hist, :ρ_history, Float64[])  # Get ρ history (with fallback for old runs)
+    α_history = get(hist, :α_history, Float64[])  # FAADMM momentum history
+    restart_history = get(hist, :restart_history, Int[])  # FAADMM restart iterations
+    use_faadmm = get(hist, :use_faadmm, false)  # Check if FAADMM was used
     
     # Set theme and colors (matching copper plate example)
     gr()
@@ -1307,6 +1310,36 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     plot!(p1, [n_iter], [final_obj_tadmm], 
           seriestype=:scatter, markersize=0, label="tADMM Final = \$$(round(final_obj_tadmm, digits=2))")
     
+    # Add FAADMM restart markers if applicable (with adaptive sizing)
+    if use_faadmm && !isempty(restart_history)
+        restart_objs = [obj_history[k] for k in restart_history if k <= length(obj_history)]
+        
+        # Adaptive restart marker size based on frequency
+        # If many restarts (>10% of iterations), reduce marker size to avoid clutter
+        restart_frequency = length(restart_history) / n_iter
+        restart_markersize = if restart_frequency > 0.5
+            3  # Very frequent restarts (>50%): tiny markers
+        elseif restart_frequency > 0.3
+            4  # Frequent restarts (30-50%): small markers
+        elseif restart_frequency > 0.15
+            5  # Moderate restarts (15-30%): medium markers
+        elseif restart_frequency > 0.05
+            6  # Few restarts (5-15%): normal markers
+        else
+            8  # Rare restarts (<5%): large markers
+        end
+        
+        restart_strokewidth = restart_markersize > 5 ? 2.0 : 1.0
+        
+        scatter!(p1, restart_history, restart_objs,
+                markershape=:xcross,
+                markersize=restart_markersize,
+                markercolor=:red,
+                markerstrokewidth=restart_strokewidth,
+                label="FAADMM Restart ($(length(restart_history)), $(round(restart_frequency*100, digits=1))%)",
+                legend=:topright)
+    end
+    
     # Subplot 2: Primal residual (log scale)
     p2 = plot(
         iterations, r_norm_history,
@@ -1378,14 +1411,15 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
            color=:red, lw=2, linestyle=:dash, alpha=0.7,
            label="Threshold ε_dual = $(eps_dual)")
     
-    # Subplot 4: Penalty parameter ρ (log scale if available)
+    # Subplot 4: Adaptive ρ schedule (always show, even with FAADMM)
     if !isempty(ρ_history)
+        # Show adaptive ρ
         p4 = plot(
             iterations, ρ_history,
             dpi=600,
             xlabel="Iteration (k)",
             ylabel="Penalty Parameter ρ [log scale]",
-            title="Adaptive ρ Schedule",
+            title=use_faadmm ? "Adaptive ρ Schedule (FAADMM)" : "Adaptive ρ Schedule",
             lw=3,
             color=line_colour_rho,
             markershape=:hexagon,
@@ -1409,22 +1443,107 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
             tickfontfamily="Computer Modern",
             bottom_margin=2Plots.mm
         )
+        
+        # Add FAADMM momentum as secondary info if available
+        if use_faadmm && !isempty(α_history)
+            # Add text annotation showing restart count
+            n_restarts = length(restart_history)
+            restart_pct = round(n_restarts / n_iter * 100, digits=1)
+            annotate!(p4, n_iter * 0.5, maximum(ρ_history) * 0.5,
+                     text("FAADMM: $(n_restarts) restarts ($(restart_pct)%)", 10, :gray))
+        end
     else
-        # Fallback if no ρ history (for backward compatibility)
-        p4 = plot(title="ρ history not available", grid=false, showaxis=false)
+        # Fallback if no ρ history
+        p4 = plot(title="No ρ history available", grid=false, showaxis=false)
     end
     
-    # Combine into VERTICAL layout (4 rows, 1 column)
-    p_combined = plot(p1, p2, p3, p4, 
-                     layout=(4, 1), 
-                     size=(900, 1300),
-                     plot_title="tADMM Convergence Summary",
-                     plot_titlefontsize=14,
-                     plot_titlefontfamily="Computer Modern",
-                     left_margin=8Plots.mm,
-                     right_margin=5Plots.mm,
-                     top_margin=8Plots.mm,
-                     bottom_margin=5Plots.mm)
+    # Subplot 5 (optional): FAADMM momentum coefficient α
+    if use_faadmm && !isempty(α_history)
+        p5 = plot(
+            iterations, α_history,
+            dpi=600,
+            xlabel="Iteration (k)",
+            ylabel="Momentum Coefficient α",
+            title="FAADMM Momentum",
+            lw=3,
+            color=:crimson,
+            markershape=:star5,
+            markersize=3,
+            markerstrokecolor=:black,
+            markerstrokewidth=markerstrokewidth * 0.7,
+            label="α (momentum)",
+            legend=:bottomright,
+            legendfontsize=9,
+            grid=true,
+            gridstyle=:solid,
+            gridalpha=0.3,
+            minorgrid=true,
+            minorgridstyle=:solid,
+            minorgridalpha=0.15,
+            xlims=(0.5, n_iter + 0.5),
+            ylims=(-0.05, 1.05),
+            xticks=xtick_vals,
+            titlefont=font(12, "Computer Modern"),
+            guidefont=font(12, "Computer Modern"),
+            tickfontfamily="Computer Modern",
+            bottom_margin=2Plots.mm
+        )
+        
+        # Add restart markers (adaptive size matching objective plot)
+        if !isempty(restart_history)
+            restart_alphas = [α_history[k] for k in restart_history if k <= length(α_history)]
+            restart_frequency = length(restart_history) / n_iter
+            restart_markersize = restart_frequency > 0.5 ? 3 : (restart_frequency > 0.3 ? 4 : (restart_frequency > 0.15 ? 5 : (restart_frequency > 0.05 ? 6 : 8)))
+            restart_strokewidth = restart_markersize > 5 ? 2.0 : 1.0
+            
+            scatter!(p5, restart_history, restart_alphas,
+                    markershape=:xcross,
+                    markersize=restart_markersize,
+                    markercolor=:red,
+                    markerstrokewidth=restart_strokewidth,
+                    label="Restart")
+        end
+        
+        # Add theoretical FISTA schedule for reference
+        fista_schedule = [(k-1)/(k+2) for k in iterations]
+        plot!(p5, iterations, fista_schedule,
+              linestyle=:dash,
+              lw=2,
+              color=:gray,
+              alpha=0.7,
+              label="FISTA schedule")
+    else
+        p5 = nothing
+    end
+    
+    # Combine into VERTICAL layout (4 or 5 rows, 1 column)
+    plot_title_text = use_faadmm ? "FAADMM Convergence Summary" : "tADMM Convergence Summary"
+    
+    if use_faadmm && !isnothing(p5)
+        # FAADMM: 5 subplots (obj, primal, dual, rho, alpha)
+        p_combined = plot(p1, p2, p3, p4, p5, 
+                         layout=(5, 1), 
+                         size=(900, 1500),
+                         plot_title=plot_title_text,
+                         plot_titlefontsize=14,
+                         plot_titlefontfamily="Computer Modern",
+                         left_margin=8Plots.mm,
+                         right_margin=5Plots.mm,
+                         top_margin=8Plots.mm,
+                         bottom_margin=5Plots.mm)
+    else
+        # Standard ADMM: 4 subplots (obj, primal, dual, rho)
+        p_combined = plot(p1, p2, p3, p4, 
+                         layout=(4, 1), 
+                         size=(900, 1300),
+                         plot_title=plot_title_text,
+                         plot_titlefontsize=14,
+                         plot_titlefontfamily="Computer Modern",
+                         left_margin=8Plots.mm,
+                         right_margin=5Plots.mm,
+                         top_margin=8Plots.mm,
+                         bottom_margin=5Plots.mm)
+    end
     
     # Print convergence summary
     final_obj = last(obj_history)
@@ -1432,8 +1551,15 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     final_s_norm = last(s_norm_history)
     converged = (final_r_norm ≤ eps_pri) && (final_s_norm ≤ eps_dual)
     
-    println("\ntADMM Convergence Summary:")
+    algo_name = use_faadmm ? "FAADMM" : "tADMM"
+    println("\n$(algo_name) Convergence Summary:")
     println("  Total iterations: $(length(obj_history))")
+    if use_faadmm
+        println("  FAADMM restarts:  $(length(restart_history))")
+        if !isempty(α_history)
+            @printf "  Final momentum α: %.4f\n" last(α_history)
+        end
+    end
     if haskey(sol_bf, :objective) && isfinite(sol_bf[:objective])
         bf_obj = sol_bf[:objective]
         @printf "  Final objective:  \$%.6f (BF: \$%.6f, Δ=%.2e)\n" final_obj bf_obj abs(final_obj - bf_obj)
@@ -1451,7 +1577,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     
     # Save the plot if requested
     if savePlots
-        @printf "Saving tADMM convergence plot to: %s\n" filename
+        @printf "Saving %s convergence plot to: %s\n" algo_name filename
         savefig(p_combined, filename)
     end
     
