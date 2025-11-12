@@ -17,40 +17,37 @@ Nonlinear constraints: 0
 Total constraints: 2656
 
 --- tADMM PARAMETERS ---
-Initial ρ: 1000.0
+Initial ρ: 10000.0
 Adaptive ρ: true
 Max iterations: 250
 Primal tolerance: 1.0e-05
 Dual tolerance: 1.0e-05
 
 --- ACCELERATION (FAADMM) ---
-FAADMM enabled: true
-Number of restarts: 112
-Restart iterations: [2, 3, 4, 5, 6, 7, 8, 10, 11, 14, 15, 16, 19, 20, 21, 25, 26, 37, 38, 39, 43, 45, 48, 50, 53, 55, 56, 58, 59, 61, 63, 68, 73, 76, 78, 80, 83, 85, 88, 90, 93, 98, 100, 103, 105, 106, 107, 109, 110, 111, 112, 115, 118, 123, 125, 128, 133, 135, 136, 137, 139, 140, 141, 142, 145, 148, 149, 153, 155, 158, 160, 163, 165, 166, 167, 169, 170, 173, 175, 178, 183, 185, 186, 187, 189, 190, 191, 192, 195, 198, 201, 204, 207, 210, 212, 214, 216, 217, 219, 222, 225, 228, 231, 234, 237, 238, 240, 243, 245, 247, 249, 250]
-Final momentum α: 126.7070
+FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 250 iterations
-Final primal residual: 8.90e-04
-Final dual residual: 1.27e-01
+Converged in 64 iterations
+Final primal residual: 1.89e-07
+Final dual residual: 4.23e-07
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3417.9678
+Total Cost: $3417.2020
 Brute Force objective: $3417.2170
-Absolute difference: $0.7508
-Relative difference: 0.0220%
+Absolute difference: $0.0149
+Relative difference: 0.0004%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 0.3050 seconds (actual time on machine)
+  Wall-clock time: 0.3490 seconds (actual time on machine)
   Solver time: 0.2370 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 81.5210 seconds (actual time on machine)
-  Effective time: 24.4710 seconds (max subproblem time per iter)
-  Sequential time: 309.1240 seconds (sum of all subproblems)
+  Wall-clock time: 30.9430 seconds (actual time on machine)
+  Effective time: 9.9530 seconds (max subproblem time per iter)
+  Sequential time: 113.2050 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.00x
-  Parallel efficiency: 30.0% (0.30x speedup)
+  tADMM vs BF (wall-clock): 0.01x
+  Parallel efficiency: 32.2% (0.32x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
