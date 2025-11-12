@@ -354,7 +354,7 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
             linewidth=2.0,
             linecolor=angle_col,
             alpha=0.8,
-            label="δ$sub = $(round(θ_med, digits=2))°"
+            label="\$\\delta_$sub = $(round(θ_med, digits=2))^\\circ\$"
         )
         
         # Angle trajectory (solid line, lw=2.2, marker size=5, with black edge)
@@ -367,7 +367,7 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
             markerstrokewidth=1.5,
             markerstrokecolor=:black,
             markeralpha=0.9,
-            label="θ @ Sub $sub"
+            label="\$\\theta^t_$sub\$"
         )
     end
     
@@ -411,7 +411,7 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
             markerstrokewidth=1.5,
             markerstrokecolor=:black,
             markeralpha=0.9,
-            label="V @ Sub $sub"
+            label="\$V_{\\mathrm{Subs}, $sub}\$"
         )
     end
     
