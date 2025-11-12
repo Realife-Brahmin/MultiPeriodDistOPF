@@ -29,16 +29,22 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     LoadShapeLoad = data[:LoadShapeLoad]
     LoadShapeCost_1 = data[:LoadShapeCost_1]
     LoadShapeCost_2 = data[:LoadShapeCost_2]
+    LoadShapeCost_3 = get(data, :LoadShapeCost_3, nothing)
     
     # Convert costs to cents/kWh for better readability
     cost_1_cents = LoadShapeCost_1 .* 100
     cost_2_cents = LoadShapeCost_2 .* 100
+    cost_3_cents = LoadShapeCost_3 !== nothing ? LoadShapeCost_3 .* 100 : nothing
     
     # Calculate y-axis limits for left axis (load)
     left_min = -0.05
     left_max = 1.05
-    right_min = floor(0.95 * min(minimum(cost_1_cents), minimum(cost_2_cents)))
-    right_max = ceil(1.05 * max(maximum(cost_1_cents), maximum(cost_2_cents)))
+    all_costs = [cost_1_cents; cost_2_cents]
+    if cost_3_cents !== nothing
+        all_costs = [all_costs; cost_3_cents]
+    end
+    right_min = floor(0.95 * minimum(all_costs))
+    right_max = ceil(1.05 * maximum(all_costs))
     
     # Smart x-tick spacing (avoid overlap at endpoints)
     xtick_vals = if T <= 24
@@ -67,80 +73,103 @@ function plot_input_curves(data; showPlots::Bool=true, savePlots::Bool=false, fi
     gr()
     theme(:dao)
     
-    # Create main plot with LoadShapeLoad (dark yellow theme) and TOP legend (like tADMM style)
+    # Create main plot with LoadShapeLoad (dark gray for contrast)
     p = plot(
         time_steps, LoadShapeLoad,
-        dpi=600,
-        label=L"Load Shape (\lambda^t)",
+        dpi=400,
+        label=L"\lambda^t",
         xlabel="Time Period (t)",
-        ylabel="Normalized Load Profile [0-1]",
-        legend=:topright,
-        legend_background_color=RGBA(1,1,1,0.75),
-        legendfontsize=9,
-        lw=4,
-        color=:darkgoldenrod2,
+        ylabel="Normalized Load Profile",
+        legend=:bottomleft,
+        legend_columns=4,
+        legend_background_color=RGBA(1,1,1,0.95),
+        legendfontsize=8,
+        lw=2.5,
+        color=RGB(0.2, 0.2, 0.2),  # Dark gray
         markershape=:square,
-        markersize=6,
+        markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=2.0,
+        markerstrokewidth=1.0,
         gridstyle=:solid,
-        gridalpha=0.3,
-        minorgrid=true,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
+        gridalpha=0.25,
+        gridlinewidth=0.5,
         ylims=(left_min, left_max),
-        xticks=xtick_vals,
+        xticks=(xtick_vals, string.(xtick_vals)),
         title="Input Curves: Load and Substation Costs ($(dt_label))",
-        titlefont=font(14, "Computer Modern"),
-        guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern",
-        right_margin=10Plots.mm,
-        top_margin=6Plots.mm
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfont=font(9, "Computer Modern"),
+        right_margin=8Plots.mm,
+        top_margin=3Plots.mm,
+        left_margin=3Plots.mm,
+        bottom_margin=3Plots.mm
     )
 
-    # Add secondary y-axis for cost curves (sexy green shades)
+    # Add secondary y-axis for cost curves with cove's color palette
     ax2 = twinx()
     
-    # Substation 1 cost: Dark forest green (#228B22)
+    # Substation 1 cost: Deep blue (#0072B2)
     plot!(
         ax2, time_steps, cost_1_cents,
         label="Cost Subs 1 \$(C^t_1)\$",
-        lw=4,
-        color=RGB(34/255, 139/255, 34/255),
+        lw=2.5,
+        color=RGB(0x00/255, 0x72/255, 0xB2/255),
         linestyle=:solid,
         markershape=:circle,
-        markersize=6,
+        markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=2.0,
+        markerstrokewidth=1.0,
         ylabel="Cost [cents/kWh]",
         ylims=(right_min, right_max),
         legend=false,
-        titlefont=font(14, "Computer Modern"),
-        guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(10, "Computer Modern"),
+        tickfont=font(9, "Computer Modern")
     )
     
-    # Substation 2 cost: Bright lime green (#32CD32)
+    # Substation 2 cost: Amber (#E69F00)
     plot!(
         ax2, time_steps, cost_2_cents,
         label=L"Cost Subs 2 (C^t_2)",
-        lw=4,
-        color=RGB(50/255, 205/255, 50/255),
+        lw=2.5,
+        color=RGB(0xE6/255, 0x9F/255, 0x00/255),
         linestyle=:dash,
         markershape=:diamond,
-        markersize=6,
+        markersize=4,
         markerstrokecolor=:black,
-        markerstrokewidth=2.0
+        markerstrokewidth=1.0
     )
+    
+    # Substation 3 cost: Teal green (#009E73) - if available
+    if cost_3_cents !== nothing
+        plot!(
+            ax2, time_steps, cost_3_cents,
+            label=L"Cost Subs 3 (C^t_3)",
+            lw=2.5,
+            color=RGB(0x00/255, 0x9E/255, 0x73/255),
+            linestyle=:dot,
+            markershape=:hexagon,
+            markersize=4,
+            markerstrokecolor=:black,
+            markerstrokewidth=1.0
+        )
+    end
 
-    # Consolidate legend entries to a single top legend on primary axis
-    plot!(p, [NaN], [NaN], seriestype=:scatter, label=L"Cost Subs 1 (C^t_1)",
-        marker=:circle, markercolor=RGB(34/255,139/255,34/255), markersize=7,
-        markerstrokecolor=:black, markerstrokewidth=2.0, lw=0)
-    plot!(p, [NaN], [NaN], seriestype=:scatter, label=L"Cost Subs 2 (C^t_2)",
-        marker=:diamond, markercolor=RGB(50/255,205/255,50/255), markersize=7,
-        markerstrokecolor=:black, markerstrokewidth=2.0, lw=0)
-    # consolidated legend uses the primary axis legend with fontsize set above
+    # Consolidate legend entries to a single external legend on primary axis
+    plot!(p, [NaN], [NaN], seriestype=:line, label=L"C^t_1",
+        color=RGB(0x00/255, 0x72/255, 0xB2/255), lw=2.5,
+        markershape=:circle, markersize=4,
+        markerstrokecolor=:black, markerstrokewidth=1.0)
+    plot!(p, [NaN], [NaN], seriestype=:line, label=L"C^t_2",
+        color=RGB(0xE6/255, 0x9F/255, 0x00/255), lw=2.5, linestyle=:dash,
+        markershape=:diamond, markersize=4,
+        markerstrokecolor=:black, markerstrokewidth=1.0)
+    if cost_3_cents !== nothing
+        plot!(p, [NaN], [NaN], seriestype=:line, label=L"C^t_3",
+            color=RGB(0x00/255, 0x9E/255, 0x73/255), lw=2.5, linestyle=:dot,
+            markershape=:hexagon, markersize=4,
+            markerstrokecolor=:black, markerstrokewidth=1.0)
+    end
 
     # Show the plot if requested
     if showPlots
@@ -321,6 +350,7 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
         legend=:topright,
         legend_columns=1,
         legendfontsize=8,
+        legend_background_color=RGBA(1,1,1,0.7),
         framestyle=:box,
         ylims=(left_min, left_max),
         xticks=(xtick_sparse, string.(xtick_sparse)),
@@ -379,6 +409,7 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
         legend=:topright,
         legend_columns=2,
         legendfontsize=8,
+        legend_background_color=RGBA(1,1,1,0.7),
         framestyle=:box,
         ylims=(right_min, right_max),
         xticks=(xtick_sparse, string.(xtick_sparse)),
