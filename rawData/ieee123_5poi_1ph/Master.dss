@@ -7,11 +7,11 @@ Clear
 New Circuit.ieee123_5poi_1ph basekv=] Bus1=1s pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001  
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
 
-New Vsource.subs1 Bus1=1s basekv=11.5470 pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001
-New Vsource.subs2 Bus1=2s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs3 Bus1=3s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs4 Bus1=4s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs5 Bus1=5s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs1 Phases=1 Bus1=1s basekv=11.5470 pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001
+New Vsource.subs2 Phases=1 Bus1=2s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs3 Phases=1 Bus1=3s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs4 Phases=1 Bus1=4s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs5 Phases=1 Bus1=5s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
 
 Redirect BranchData.dss
 
