@@ -276,9 +276,20 @@ function plot_angle_voltage_trajectories(result, data, slack_sub; showPlots::Boo
                 v_subs[sub] = fill(data[Symbol("V_$(sub)_pu")], T)
             else
                 # Non-slack substation (variable)
-                if haskey(result, :v_nonslack) && haskey(result[:v_nonslack], sub)
-                    # result[:v_nonslack] is a Dict with sub indices as keys, values are time-indexed vectors
-                    v_subs[sub] = sqrt.(result[:v_nonslack][sub])
+                if haskey(result, :v_nonslack)
+                    # Check if v_nonslack is a Dict (3-POI) or Vector (2-POI)
+                    if isa(result[:v_nonslack], Dict)
+                        # 3-POI case: Dict with sub indices as keys
+                        if haskey(result[:v_nonslack], sub)
+                            v_subs[sub] = sqrt.(result[:v_nonslack][sub])
+                        else
+                            @warn "Missing voltage data for substation $sub"
+                            v_subs[sub] = fill(NaN, T)
+                        end
+                    else
+                        # 2-POI case: Vector (only one non-slack substation)
+                        v_subs[sub] = sqrt.(result[:v_nonslack])
+                    end
                 else
                     @warn "Missing voltage data for substation $sub"
                     v_subs[sub] = fill(NaN, T)
