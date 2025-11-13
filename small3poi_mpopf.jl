@@ -7,7 +7,8 @@
 #
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
-Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
+# Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
+Pkg.activate(joinpath(@__DIR__, "envs", "multi_poi"))
 # Pkg.add("Crayons")
 # Pkg.add("JuMP")
 # Pkg.add("Ipopt")
