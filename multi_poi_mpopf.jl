@@ -1,13 +1,9 @@
-# small3poi_mpopf.jl - Multi-Period Optimal Power Flow for 3-POI system
+# multi_poi_mpopf.jl - Multi-Period Optimal Power Flow for Multi-POI systems
 # 
-# Key feature: 'same_voltage_levels' parameter (line ~30)
-#   - true: All substations have fixed voltages (1.05 pu)
-#   - false (default): Non-slack substation voltages become decision variables (optimized)
-#            This allows different optimal voltage setpoints and breaks angle symmetry
+# Uses OpenDSS parser to load system data from ieee123_5poi_1ph
 #
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
-# Pkg.activate(joinpath(@__DIR__, "..", "envs", "multi_poi"))
 Pkg.activate(joinpath(@__DIR__, "envs", "multi_poi"))
 # Pkg.add("Crayons")
 # Pkg.add("JuMP")
@@ -22,22 +18,26 @@ using Crayons
 using Printf
 using Statistics
 using Plots  # For input curve plotting
+using OpenDSSDirect
 
-# Optional: Uncomment if running OpenDSS validation
-# import OpenDSSDirect as dss
-# ----------------------------------------------------------------------
+# Include the multi-POI parser
+include(joinpath(@__DIR__, "envs", "multi_poi", "parse_opendss_multi_poi.jl"))
 
 # ============================================================================
 # SYSTEM PARAMETERS
 # ============================================================================
 
-data = Dict()
-
 # System identification
-systemName = "small3poi_1ph"  # Name for organizing results
+systemName = "ieee123_5poi_1ph"
+
+# Simulation parameters
+T = 24  # Number of time periods
+delta_t_h = 1.0  # Time step duration in hours
+kVA_B = 1000.0
+kV_B = 11.547  # 20kV line-to-line -> 11.547kV line-to-neutral
 
 # User-defined parameter: Should substations have same voltage levels?
-# - true: Non-slack substations have fixed voltage (V_1_pu, V_2_pu, V_3_pu)
+# - true: Non-slack substations have fixed voltage 
 # - false (default): Non-slack substation voltages become decision variables
 same_voltage_levels = false
 
@@ -45,158 +45,89 @@ same_voltage_levels = false
 showPlots = false  # Set to true to display plots in GUI
 savePlots = true   # Set to true to save plots to file
 
-V_1_pu = 1.05
-delta_1_deg = 0.0
-V_2_pu = 1.05
-delta_2_deg = 0.0
-V_3_pu = 1.05
-delta_3_deg = 0.0
-
-# Network impedances (ohms)
-r1_ohm = 0.25; r2_ohm = 0.75; r3_ohm = 0.50
-x1_ohm = 0.25; x2_ohm = 0.25; x3_ohm = 0.35
-
-# Base load (peak values for scaling)
-P_L_base_kW = 5000
-Q_L_base_kW = P_L_base_kW * 0.75
-
-# System base values
-kVA_B = 1000
-kV_B = 11.547 # 20kV line-to-line, 11.547kV line-to-neutral
-
-# Power limits for each substation (kW)
-P_1_max_kW = P_L_base_kW * 0.7
-P_2_max_kW = P_L_base_kW * 0.7
-P_3_max_kW = P_L_base_kW * 0.7
-
 # ============================================================================
 # TIME HORIZON PARAMETERS
 # ============================================================================
 
-T = 24  # Number of time periods
-delta_t_h = 24.0 / T  # Time step duration in hours
-
-# Time-varying load profile (sinusoidal, similar to tadmm_copper_plate)
+# Time-varying load profile (sinusoidal)
 LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
 
 # Time-varying energy cost ($/kWh) - different for each substation
-# Substation 1: Peak during early hours
-LoadShapeCost_1 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2
-
-# Substation 2: Peak during mid hours (shifted by -π/4)
-LoadShapeCost_2 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2
-
-# Substation 3: Peak during late hours (shifted by π/2)
-LoadShapeCost_3 = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/2) .+ 1) ./ 2
-
-data = Dict(
-    :systemName => systemName,
-    :same_voltage_levels => same_voltage_levels,
-    :V_1_pu => V_1_pu,
-    :delta_1_deg => delta_1_deg,
-    :V_2_pu => V_2_pu,
-    :delta_2_deg => delta_2_deg,
-    :V_3_pu => V_3_pu,
-    :delta_3_deg => delta_3_deg,
-    :r1_ohm => r1_ohm,
-    :x1_ohm => x1_ohm,
-    :r2_ohm => r2_ohm,
-    :x2_ohm => x2_ohm,
-    :r3_ohm => r3_ohm,
-    :x3_ohm => x3_ohm,
-    :P_L_base_kW => P_L_base_kW,
-    :Q_L_base_kW => Q_L_base_kW,
-    :kVA_B => kVA_B,
-    :kV_B => kV_B,
-    :P_1_max_kW => P_1_max_kW,
-    :P_2_max_kW => P_2_max_kW,
-    :P_3_max_kW => P_3_max_kW,
-    :T => T,
-    :delta_t_h => delta_t_h,
-    :LoadShapeLoad => LoadShapeLoad,
-    :LoadShapeCost_1 => LoadShapeCost_1,
-    :LoadShapeCost_2 => LoadShapeCost_2,
-    :LoadShapeCost_3 => LoadShapeCost_3
+# Create phase-shifted cost profiles for each of the 5 substations
+LoadShapeCost_dict = Dict(
+    1 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2,
+    2 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2,
+    3 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2,
+    4 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/2) .+ 1) ./ 2,
+    5 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/2) .+ 1) ./ 2
 )
 
-function process_data!(data)
-    # Base values
-    S_base_kVA = data[:kVA_B]
-    S_base_MVA = S_base_kVA / 1000  # Convert kVA to MVA
-    V_base = data[:kV_B]
-    T = data[:T]
+LoadShapePV = zeros(T)  # No PV for now
+C_B = 1e-6 * 0.08
 
-    # Per-unit impedances: Z_pu = Z_ohm * (MVA_base / kV_base^2)
-    Z_base_ohm = (V_base^2) / S_base_MVA  # Ohms
-    r1_pu = data[:r1_ohm] / Z_base_ohm
-    x1_pu = data[:x1_ohm] / Z_base_ohm
-    r2_pu = data[:r2_ohm] / Z_base_ohm
-    x2_pu = data[:x2_ohm] / Z_base_ohm
-    r3_pu = data[:r3_ohm] / Z_base_ohm
-    x3_pu = data[:x3_ohm] / Z_base_ohm
-
-    # Time-varying load in per-unit [T vector]
-    P_L_base_pu = data[:P_L_base_kW] / S_base_kVA
-    Q_L_base_pu = data[:Q_L_base_kW] / S_base_kVA
-    
-    # Create time-indexed load arrays
-    P_L_pu = [P_L_base_pu * data[:LoadShapeLoad][t] for t in 1:T]
-    Q_L_pu = [Q_L_base_pu * data[:LoadShapeLoad][t] for t in 1:T]
-
-    # Angles in radians
-    delta_1_rad = data[:delta_1_deg] * pi / 180
-    delta_2_rad = data[:delta_2_deg] * pi / 180
-    delta_3_rad = data[:delta_3_deg] * pi / 180
-
-    # Voltage limits
-    Vminpu = 0.95
-    Vmaxpu = 1.05
-    
-    # Power limits (pu)
-    P_1_max_pu = data[:P_1_max_kW] / S_base_kVA
-    P_2_max_pu = data[:P_2_max_kW] / S_base_kVA
-    P_3_max_pu = data[:P_3_max_kW] / S_base_kVA
-    
-    # Time set
-    Tset = 1:T
-
-    # Update data dict with all required fields
-    data[:P_L_pu] = P_L_pu  # Now a time-indexed vector
-    data[:Q_L_pu] = Q_L_pu  # Now a time-indexed vector
-    data[:r1_pu] = r1_pu
-    data[:x1_pu] = x1_pu
-    data[:r2_pu] = r2_pu
-    data[:x2_pu] = x2_pu
-    data[:r3_pu] = r3_pu
-    data[:x3_pu] = x3_pu
-    data[:delta_1_rad] = delta_1_rad
-    data[:delta_2_rad] = delta_2_rad
-    data[:delta_3_rad] = delta_3_rad
-    data[:Vminpu] = Vminpu
-    data[:Vmaxpu] = Vmaxpu
-    data[:P_1_max_pu] = P_1_max_pu
-    data[:P_2_max_pu] = P_2_max_pu
-    data[:P_3_max_pu] = P_3_max_pu
-    data[:Tset] = Tset
-
-end
-
-process_data!(data)
+# ============================================================================
+# PARSE SYSTEM DATA FROM OPENDSS
+# ============================================================================
 
 println("\n" * "="^80)
-println("MULTI-PERIOD OPTIMAL POWER FLOW (MPOPF)")
-println("="^80)
-println("Time periods: T = $(data[:T])")
-println("Time step: Δt = $(data[:delta_t_h]) hours")
-println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr")
-println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
-println("Cost variation (Sub 1): \$$(round(minimum(data[:LoadShapeCost_1]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_1]), digits=3)) per kWh")
-println("Cost variation (Sub 2): \$$(round(minimum(data[:LoadShapeCost_2]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_2]), digits=3)) per kWh")
-println("Cost variation (Sub 3): \$$(round(minimum(data[:LoadShapeCost_3]), digits=3)) to \$$(round(maximum(data[:LoadShapeCost_3]), digits=3)) per kWh")
-voltage_config_str = data[:same_voltage_levels] ? "FIXED (all substations at 1.05 pu)" : "VARIABLE (non-slack optimized)"
-println("Voltage configuration: ", Crayon(foreground = :light_magenta, bold = true)(voltage_config_str))
+println("PARSING MULTI-POI SYSTEM FROM OPENDSS")
 println("="^80)
 
+data = parse_system_from_dss_multi_poi(
+    systemName,
+    T;
+    kVA_B=kVA_B,
+    kV_B=kV_B,
+    LoadShapeLoad=LoadShapeLoad,
+    LoadShapePV=LoadShapePV,
+    LoadShapeCost_dict=LoadShapeCost_dict,
+    C_B=C_B,
+    delta_t_h=delta_t_h
+)
+
+# Add user-defined voltage configuration flag
+data[:same_voltage_levels] = same_voltage_levels
+
+# Print summary
+println("\n" * "="^80)
+println("SYSTEM DATA LOADED SUCCESSFULLY")
+println("="^80)
+println("System: $(data[:systemName])")
+println("Substations: $(data[:num_substations])")
+println("Substation buses: $(data[:substation_buses])")
+println("POI connections:")
+for (sub_bus, dist_bus) in data[:poi_connections]
+    println("  $sub_bus → Bus $dist_bus")
+end
+println("\nNetwork:")
+println("  Distribution buses: $(data[:N])")
+println("  Distribution branches: $(data[:m])")
+println("  Total load: $(round(sum(values(data[:p_L_R_pu])) * kVA_B, digits=1)) kW")
+println("\nTime horizon: T = $T, Δt = $(delta_t_h) hours")
+println("="^80)
+
+# ============================================================================
+# BELOW: OLD 3-POI OPTIMIZATION CODE (COMMENTED OUT FOR NOW)
+# ============================================================================
+# TODO: Replace with multi-POI MPOPF formulation
+
+# println("\n" * "="^80)
+# println("MULTI-PERIOD OPTIMAL POWER FLOW (MPOPF)")
+# println("="^80)
+# println("Time periods: T = $(data[:T])")
+# println("Time step: Δt = $(data[:delta_t_h]) hours")
+# println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr")
+# println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
+# voltage_config_str = data[:same_voltage_levels] ? "FIXED (all substations at 1.05 pu)" : "VARIABLE (non-slack optimized)"
+# println("Voltage configuration: ", Crayon(foreground = :light_magenta, bold = true)(voltage_config_str))
+# println("="^80)
+
+
+#=
+# ============================================================================
+# OLD 3-POI FUNCTIONS AND CODE - COMMENTED OUT
+# ============================================================================
+# TODO: Replace with multi-POI MPOPF formulation for IEEE 123-bus 5-POI system
 
 """
     compute_network_matrices(data, slack_node)
@@ -1065,3 +996,6 @@ for slack_sub in sort(collect(keys(results_by_slack)))
 end
 
 println("="^80)
+
+=#
+# End of commented-out 3-POI code
