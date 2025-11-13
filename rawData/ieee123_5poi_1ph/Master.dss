@@ -4,16 +4,23 @@ Clear
 
 // Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001
 
-New Circuit.ieee123_5poi_1ph basekv=20.0 Bus1=1s pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001  
+New Circuit.ieee123_5poi_1ph basekv=] Bus1=1s pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001  
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
 
-New Vsource.subs1 Bus1=1s basekv=20.0 pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001
-New Vsource.subs2 Bus1=33s basekv=20.0 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs3 Bus1=120s basekv=20.0 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs4 Bus1=116s basekv=20.0 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs5 Bus1=85s basekv=20.0 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs1 Bus1=1s basekv=11.5470 pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001
+New Vsource.subs2 Bus1=2s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs3 Bus1=3s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs4 Bus1=4s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+New Vsource.subs5 Bus1=5s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
 
 Redirect BranchData.dss
+
+! POI connection lines from substations to distribution buses
+New Line.poi1 Phases=1 Bus1=1s Bus2=1 r1=1e-06 x1=1e-06
+New Line.poi2 Phases=1 Bus1=2s Bus2=33 r1=1e-06 x1=1e-06
+New Line.poi3 Phases=1 Bus1=3s Bus2=120 r1=1e-06 x1=1e-06
+New Line.poi4 Phases=1 Bus1=4s Bus2=116 r1=1e-06 x1=1e-06
+New Line.poi5 Phases=1 Bus1=5s Bus2=85 r1=1e-06 x1=1e-06
 
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
