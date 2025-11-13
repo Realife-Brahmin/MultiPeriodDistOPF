@@ -1,8 +1,17 @@
 Clear
 
-New Circuit.ieee123A_1ph  
+New Circuit.ieee123_5poi_1ph  
 
-Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001
+// Edit "Vsource.source" bus1=1 pu=1.03 R0=0 X0=0.00000001 phases=1 basekv=2.4018 R1=0 X1=0.00000001
+
+New Circuit.large4poi_3ph basekv=20.0 Bus1=1s pu=1.07 R1=0 X1=0.0001 R0=0 X0=0.0001  
+VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
+
+New Vsource.grid1 Bus1=1s basekv=20.0 pu=1.07 R1=0 X1=0.0001 R0=0 X0=0.0001
+New Vsource.grid2 Bus1=34s basekv=20.0 pu=1.06 angle=-0.5 x1r1=7.0 MVAsc3=500
+New Vsource.grid3 Bus1=53s basekv=20.0 pu=1.05 angle=-1.0 x1r1=7.0 MVAsc3=500
+New Vsource.grid4 Bus1=76s basekv=20.0 pu=1.04 angle=-1.5 x1r1=7.0 MVAsc3=500
+New Vsource.grid5 Bus1=97s basekv=20.0 pu=1.03 angle=-2.0 x1r1=7.0 MVAsc3=500
 
 Redirect BranchData.dss
 
@@ -10,8 +19,8 @@ Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
-Redirect PVSystem.dss
-Redirect Storage.dss
+// Redirect PVSystem.dss
+// Redirect Storage.dss
 
 Set VoltageBases = [4.16]
 Set mode = Daily 
