@@ -573,19 +573,19 @@ function parse_voltage_limits!(data::Dict)
     Vmaxpu = Dict{Any, Float64}()
     
     for bus in data[:Nset]
-        # Vminpu[bus] = 0.95
-        Vminpu[bus] = 0.90
-        # Vmaxpu[bus] = 1.05
-        Vmaxpu[bus] = 1.10
+        Vminpu[bus] = 0.95
+        # Vminpu[bus] = 0.90  # RELAXED VERSION - commented out
+        Vmaxpu[bus] = 1.05
+        # Vmaxpu[bus] = 1.10  # RELAXED VERSION - commented out
     end
     
     Vminpu_sub = Dict{String, Float64}()
     Vmaxpu_sub = Dict{String, Float64}()
     for sub_bus in data[:Sset]
-        # Vminpu_sub[sub_bus] = 0.95
-        Vminpu_sub[sub_bus] = 0.90
-        # Vmaxpu_sub[sub_bus] = 1.05
-        Vmaxpu_sub[sub_bus] = 1.10
+        Vminpu_sub[sub_bus] = 0.95
+        # Vminpu_sub[sub_bus] = 0.90  # RELAXED VERSION - commented out
+        Vmaxpu_sub[sub_bus] = 1.05
+        # Vmaxpu_sub[sub_bus] = 1.10  # RELAXED VERSION - commented out
     end
     
     data[:Vminpu] = Vminpu
@@ -1099,10 +1099,28 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
         t = 1
         total_P_Subs = sum(result[:P_Subs][s][t] for s in Sset) * P_BASE
         total_load = sum(p_L_pu[j, t] for j in Nm1set) * P_BASE
-        total_losses = sum(rdict_pu[line] * result[:ℓ][line][t] for line in Lset) * P_BASE
+        
+        # Compute losses correctly: P_loss = r * ℓ (both in pu), then scale to kW
+        total_losses_pu = sum(rdict_pu[line] * result[:ℓ][line][t] for line in Lset)
+        total_losses = total_losses_pu * P_BASE
+        
+        # Debug: Check a few line losses
+        sample_line_losses = []
+        for line in collect(Lset)[1:min(3, length(Lset))]
+            r_pu = rdict_pu[line]
+            ℓ_val = result[:ℓ][line][t]
+            loss_pu = r_pu * ℓ_val
+            loss_kW = loss_pu * P_BASE
+            push!(sample_line_losses, (line, r_pu, ℓ_val, loss_kW))
+        end
+        
         println("    Total substation power: $(round(total_P_Subs, digits=1)) kW")
         println("    Total load demand: $(round(total_load, digits=1)) kW")
-        println("    Total network losses: $(round(total_losses, digits=3)) kW")
+        println("    Total network losses: $(round(total_losses, digits=3)) kW ($(round(total_losses_pu, digits=6)) pu)")
+        println("    Sample line losses:")
+        for (line, r, ℓ, loss) in sample_line_losses
+            println("      Line $line: r=$(round(r, digits=8)) pu, ℓ=$(round(ℓ, digits=6)) pu, loss=$(round(loss, digits=6)) kW")
+        end
         println("    Balance (P_Subs - Load - Losses): $(round(total_P_Subs - total_load - total_losses, digits=6)) kW")
         
         # Topology connectivity check
