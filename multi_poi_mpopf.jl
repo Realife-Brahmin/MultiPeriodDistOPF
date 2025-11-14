@@ -313,6 +313,12 @@ function parse_network_topology!(data::Dict)
     data[:Lset] = Lset_oriented
     data[:L1set] = L1set_oriented
     data[:Lm1set] = Lm1set_oriented
+    
+    # Store undirected versions for topology computation
+    data[:Lset_undirected] = Lset  # Original undirected lines
+    data[:L1set_undirected] = L1set  # Original undirected POI lines
+    data[:Lm1set_undirected] = Lm1set  # Original undirected distribution lines
+    
     data[:line_orientations] = line_orientations  # Store for impedance parsing
     data[:parent] = parent
     data[:children] = children
@@ -606,7 +612,7 @@ end
 systemName = "ieee123_5poi_1ph"
 
 # Simulation parameters
-T = 1  # Number of time periods (testing with single period)
+T = 24  # Number of time periods (testing with single period)
 delta_t_h = 1.0  # Time step duration in hours
 kVA_B = 1000.0
 kV_B = 11.547  # 20kV line-to-line -> 11.547kV line-to-neutral
@@ -964,7 +970,7 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
         
         # ----- 5.5 VOLTAGE CONSTRAINTS -----
         # Slack substation: fixed voltage
-        @constraint(model, v[slack_substation, t] == 1.05^2,
+        @constraint(model, v[slack_substation, t] == 1.03^2,
             base_name = "SlackVoltage_$(slack_substation)_t$(t)")
         
         # Non-slack substations: voltage within limits (decision variables)
@@ -1202,7 +1208,9 @@ println("║"*" "^20*"RUNNING MULTI-POI MPOPF SOLVER"*" "^28*"║")
 println("╚"*"═"^78*"╝")
 
 # Solve with default slack substation using Gurobi
-slack_sub = "3s"
+slack_sub = "1s"
+# slack_sub = "3s"
+# slack_sub = "5s"
 println("\nTesting with slack substation: $slack_sub")
 println("Using solver: Gurobi")
 
