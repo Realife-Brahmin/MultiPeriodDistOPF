@@ -570,7 +570,7 @@ end
 systemName = "ieee123_5poi_1ph"
 
 # Simulation parameters
-T = 24  # Number of time periods
+T = 1  # Number of time periods (testing with single period)
 delta_t_h = 1.0  # Time step duration in hours
 kVA_B = 1000.0
 kV_B = 11.547  # 20kV line-to-line -> 11.547kV line-to-neutral
@@ -589,17 +589,31 @@ savePlots = true   # Set to true to save plots to file
 # ============================================================================
 
 # Time-varying load profile (sinusoidal)
-LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
+if T == 1
+    LoadShapeLoad = [1.0]  # Unity load for single period
+else
+    LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2π, length=T) .- 0.8) .+ 1) ./ 2
+end
 
 # Time-varying energy cost ($/kWh) - different for each substation
 # Create phase-shifted cost profiles for each of the 5 substations
-LoadShapeCost_dict = Dict(
-    1 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2,
-    2 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2,
-    3 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2,
-    4 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/2) .+ 1) ./ 2,
-    5 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/2) .+ 1) ./ 2
-)
+if T == 1
+    LoadShapeCost_dict = Dict(
+        1 => [0.08],
+        2 => [0.08],
+        3 => [0.08],
+        4 => [0.08],
+        5 => [0.08]
+    )
+else
+    LoadShapeCost_dict = Dict(
+        1 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2,
+        2 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2,
+        3 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2,
+        4 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/2) .+ 1) ./ 2,
+        5 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/2) .+ 1) ./ 2
+    )
+end
 
 LoadShapePV = zeros(T)  # No PV for now
 C_B = 1e-6 * 0.08
@@ -688,6 +702,7 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     
     p_L_pu = data[:p_L_pu]
     q_L_pu = data[:q_L_pu]
+    p_L_R_pu = data[:p_L_R_pu]  # Rated load power per bus
     p_D_pu = data[:p_D_pu]
     
     P_B_R_pu = data[:P_B_R_pu]
@@ -746,9 +761,19 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     
     # ========== 3. DEFINE VARIABLES ==========
     
+    # Compute total system rated load for substation power limits
+    P_L_R_System = sum(values(p_L_R_pu))  # Total rated load in pu
+    P_Subs_max = 0.7 * P_L_R_System  # 70% of total system load
+    
+    println("\nSubstation power limits:")
+    println("  Total system rated load: $(round(P_L_R_System, digits=4)) pu = $(round(P_L_R_System * kVA_B, digits=1)) kW")
+    println("  Max per substation: $(round(P_Subs_max, digits=4)) pu = $(round(P_Subs_max * kVA_B, digits=1)) kW")
+    
     # Substation power injections (indexed by substation name and time)
-    @variable(model, P_Subs[s in Sset, t in Tset] >= 0)
+    # P_Subs_max = Inf
+    @variable(model, 0 <= P_Subs[s in Sset, t in Tset] <= P_Subs_max)
     @variable(model, Q_Subs[s in Sset, t in Tset])
+    # @variable(model, Q_Subs[s in Sset, t in Tset])
     
     # Branch power flows (works with mixed bus types)
     @variable(model, P[line in Lset, t in Tset])
@@ -791,34 +816,34 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     
     for t in Tset
         # ----- 5.1 POWER BALANCE AT SUBSTATIONS -----
-        # Each substation injects power to its connected distribution bus via POI line
+        # Each substation injects power through all its connected POI lines
         for s in Sset
-            # Find which distribution bus this substation connects to
-            poi_bus = nothing
-            for (sub_bus, dist_bus) in poi_connections
-                if sub_bus == s
-                    poi_bus = dist_bus
-                    break
-                end
+            # Find all POI lines connected to this substation
+            poi_lines_s = [(i, j) for (i, j) in L1set if i == s]
+            
+            if isempty(poi_lines_s)
+                error("No POI lines found for substation $s in L1set")
             end
             
-            if isnothing(poi_bus)
-                error("No POI connection found for substation $s")
-            end
-            
-            # Power balance: Substation power = Power flowing through POI line
-            @constraint(model, P_Subs[s, t] == P[(s, poi_bus), t])
-            @constraint(model, Q_Subs[s, t] == Q[(s, poi_bus), t])
+            # Power balance: Substation power = Sum of power flowing through all POI lines
+            @constraint(model, P_Subs[s, t] == sum(P[line, t] for line in poi_lines_s))
+            @constraint(model, Q_Subs[s, t] == sum(Q[line, t] for line in poi_lines_s))
         end
         
         # ----- 5.2 NODAL POWER BALANCE (DISTRIBUTION BUSES) -----
         for j in Nm1set
-            i = parent[j]
-            P_ij_t = P[(i, j), t]
-            Q_ij_t = Q[(i, j), t]
+            # Find all parent lines feeding bus j
+            # In general: all lines (i,j) where i feeds j
+            # In radial: parent[j] gives the unique parent, so line is (parent[j], j)
+            parent_lines_j = [(i, j) for (i, j) in Lset if (i, j) in keys(rdict_pu) && i == parent[j]]
             
+            # Sum over all child lines emanating from bus j
             sum_Pjk = isempty(children[j]) ? 0.0 : sum(P[(j, k), t] for k in children[j])
             sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+            
+            # Sum over all parent lines (with losses)
+            sum_Pij_minus_loss = isempty(parent_lines_j) ? 0.0 : sum(P[line, t] - rdict_pu[line] * ℓ[line, t] for line in parent_lines_j)
+            sum_Qij_minus_loss = isempty(parent_lines_j) ? 0.0 : sum(Q[line, t] - xdict_pu[line] * ℓ[line, t] for line in parent_lines_j)
             
             # Nodal injections/withdrawals
             p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0
@@ -827,11 +852,11 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
             P_B_j_t = (j in Bset) ? P_B[j, t] : 0.0
             
-            # Real power balance
-            @constraint(model, P_ij_t == sum_Pjk + p_L_j_t - p_D_j_t - P_B_j_t)
+            # Real power balance: Σ(P_ij - r_ij*ℓ_ij) - Σ P_jk = p_j
+            @constraint(model, sum_Pij_minus_loss - sum_Pjk == p_L_j_t - p_D_j_t - P_B_j_t)
             
-            # Reactive power balance
-            @constraint(model, Q_ij_t == sum_Qjk + q_L_j_t - q_D_j_t)
+            # Reactive power balance: Σ(Q_ij - x_ij*ℓ_ij) - Σ Q_jk = q_j
+            @constraint(model, sum_Qij_minus_loss - sum_Qjk == q_L_j_t - q_D_j_t)
         end
         
         # ----- 5.3 VOLTAGE DROP CONSTRAINTS (BFM) -----
