@@ -26,8 +26,8 @@ Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads
 // Redirect  Capacitor.dss
-// Redirect PVSystem.dss
-// Redirect Storage.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
 
 // Set VoltageBases = [4.16]
 Set VoltageBases = [20.00]
