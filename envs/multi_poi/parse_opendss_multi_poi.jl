@@ -225,19 +225,25 @@ end
 
 Parse network topology: buses, branches, parent-child relationships.
 For multi-POI systems, this includes substation buses and POI connection lines.
+
+Network structure for MPOPF:
+- Sset: Substation bus names ["1s", "2s", "3s", "4s", "5s"]
+- Nset: ALL buses including substations ["1s", "2s", ..., "5s", 1, 2, ..., 128]
+- Nm1set: Only distribution buses [1, 2, 3, ..., 128]
+- Lset: ALL lines including POI lines [(1s, 1), (2s, 33), ..., (1, 2), (2, 3), ...]
+- L1set: POI connection lines [(1s, 1), (2s, 33), (3s, 120), (4s, 116), (5s, 85)]
+- Lm1set: Only distribution lines [(1, 2), (2, 3), ..., (127, 128)]
 """
 function parse_network_topology!(data::Dict)
     println("\n--- Parsing Network Topology ---")
     
-    # Get circuit name
-    circuit_name = OpenDSSDirect.Circuit.Name()
-    
-    # Get all bus names and extract bus numbers
-    # Note: This includes both substation buses (1s, 2s, ...) and distribution buses (1, 2, ...)
+    # Get all bus names from OpenDSS
     bus_names = OpenDSSDirect.Circuit.AllBusNames()
     
     # Separate substation and distribution buses
+    substation_buses = data[:substation_buses]  # Already parsed: ["1s", "2s", ...]
     dist_bus_numbers = Int[]
+    
     for name in bus_names
         base_name = split(name, ".")[1]
         if !endswith(base_name, "s")  # Not a substation bus
@@ -246,119 +252,141 @@ function parse_network_topology!(data::Dict)
         end
     end
     
+    dist_bus_numbers = sort(unique(dist_bus_numbers))
     N_dist = maximum(dist_bus_numbers)  # Max distribution bus number
     
-    # Node sets (distribution buses only, for now)
-    data[:N] = N_dist
-    data[:Nset] = sort(unique(dist_bus_numbers))
+    # Create Sset: substation bus names
+    Sset = substation_buses  # ["1s", "2s", "3s", "4s", "5s"]
     
-    println("  Total distribution buses: $(data[:N])")
-    println("  Distribution bus numbers: $(minimum(data[:Nset])) to $(maximum(data[:Nset]))")
+    # Create Nset: ALL buses (substations + distribution)
+    # Store as Vector{Any} to hold both String and Int
+    Nset = Vector{Any}(vcat(substation_buses, dist_bus_numbers))
     
-    # Get all line/branch names
+    # Create Nm1set: only distribution buses (excluding substations)
+    Nm1set = dist_bus_numbers  # [1, 2, 3, ..., 128]
+    
+    data[:Sset] = Sset
+    data[:Nset] = Nset
+    data[:Nm1set] = Nm1set
+    data[:N] = N_dist  # Total distribution buses
+    data[:num_dist_buses] = length(Nm1set)
+    
+    println("  Substation buses (Sset): $(length(Sset))")
+    println("  Distribution buses (Nm1set): $(length(Nm1set)) ($(minimum(Nm1set)) to $(maximum(Nm1set)))")
+    println("  Total buses (Nset): $(length(Nset)) (substations + distribution)")
+    
+    # Get all line names
     line_names = OpenDSSDirect.Lines.AllNames()
     
-    # Separate POI lines from distribution lines
-    dist_line_names = filter(name -> !startswith(lowercase(name), "poi"), line_names)
+    # Parse ALL lines (POI + distribution)
+    Lset = []  # Will contain Tuple{Any, Any} to handle mixed String/Int bus names
+    L1set = []  # POI lines only
+    Lm1set = []  # Distribution lines only
     
-    data[:m] = length(dist_line_names)
-    println("  Total distribution lines (excluding POI): $(data[:m])")
-    
-    # Parse branches and build topology
-    Lset = Tuple{Int,Int}[]
-    parent = Dict{Int, Union{Nothing, Int}}()
-    children = Dict{Int, Vector{Int}}()
+    parent = Dict{Any, Union{Nothing, Any}}()
+    children = Dict{Any, Vector{Any}}()
     
     # Initialize children dict for all buses
-    for i in data[:Nset]
-        children[i] = Int[]
+    for bus in Nset
+        children[bus] = []
     end
     
-    # Mark POI connection points as having no parent (they connect to substations)
-    poi_connection_buses = [conn[2] for conn in data[:poi_connections]]
-    for bus in poi_connection_buses
-        parent[bus] = nothing  # These buses connect directly to substations
-    end
-    
-    # Parse each distribution line
-    for line_name in dist_line_names
-        OpenDSSDirect.Circuit.SetActiveElement("Line.$line_name")
+    # Parse each line
+    for line_name in line_names
+        OpenDSSDirect.Lines.Name(line_name)
         
         # Get bus names for this line
-        bus1_full = OpenDSSDirect.CktElement.BusNames()[1]
-        bus2_full = OpenDSSDirect.CktElement.BusNames()[2]
+        buses = OpenDSSDirect.CktElement.BusNames()
+        bus1_base = split(buses[1], ".")[1]
+        bus2_base = split(buses[2], ".")[1]
         
-        # Extract bus numbers (e.g., "7.1" -> 7)
-        i = parse(Int, split(bus1_full, ".")[1])
-        j = parse(Int, split(bus2_full, ".")[1])
+        # Determine bus types (substation or distribution)
+        bus1 = endswith(bus1_base, "s") ? bus1_base : parse(Int, bus1_base)
+        bus2 = endswith(bus2_base, "s") ? bus2_base : parse(Int, bus2_base)
         
-        # Add to branch set
-        push!(Lset, (i, j))
+        # Add to appropriate line set
+        line_tuple = (bus1, bus2)
+        push!(Lset, line_tuple)
         
-        # Build parent-child relationships
-        # Assume branches point away from POI connection points
-        if i in poi_connection_buses || (haskey(parent, i) && !haskey(parent, j))
-            parent[j] = i
-            push!(children[i], j)
-        elseif j in poi_connection_buses || (haskey(parent, j) && !haskey(parent, i))
-            parent[i] = j
-            push!(children[j], i)
+        # Classify as POI or distribution line
+        is_poi_line = startswith(lowercase(line_name), "poi")
+        
+        if is_poi_line
+            push!(L1set, line_tuple)
+            # POI lines: substation -> distribution bus
+            # Substation has no parent, distribution bus's parent is substation
+            if endswith(string(bus1), "s")
+                parent[bus1] = nothing  # Substation has no parent
+                parent[bus2] = bus1  # Distribution bus's parent is substation
+                push!(children[bus1], bus2)
+            else
+                parent[bus2] = nothing  # Substation has no parent
+                parent[bus1] = bus2  # Distribution bus's parent is substation
+                push!(children[bus2], bus1)
+            end
         else
-            # Default: i -> j
-            parent[j] = i
-            push!(children[i], j)
+            push!(Lm1set, line_tuple)
+            # Distribution line: build parent-child relationships
+            # Assume bus1 -> bus2 (pointing away from substations)
+            if !haskey(parent, bus2) || isnothing(parent[bus2])
+                parent[bus2] = bus1
+                push!(children[bus1], bus2)
+            elseif !haskey(parent, bus1) || isnothing(parent[bus1])
+                parent[bus1] = bus2
+                push!(children[bus2], bus1)
+            else
+                # Both have parents, use heuristic (lower bus number is closer to root)
+                if isa(bus1, Int) && isa(bus2, Int)
+                    if bus1 < bus2
+                        parent[bus2] = bus1
+                        push!(children[bus1], bus2)
+                    else
+                        parent[bus1] = bus2
+                        push!(children[bus2], bus1)
+                    end
+                end
+            end
         end
     end
     
     data[:Lset] = Lset
+    data[:L1set] = L1set  # POI lines
+    data[:Lm1set] = Lm1set  # Distribution lines
     data[:parent] = parent
     data[:children] = children
+    data[:m] = length(Lset)  # Total number of lines
+    data[:m_poi] = length(L1set)  # Number of POI lines
+    data[:m_dist] = length(Lm1set)  # Number of distribution lines
     
-    println("  Total branches in Lset: $(length(Lset))")
+    println("  POI lines (L1set): $(length(L1set))")
+    println("  Distribution lines (Lm1set): $(length(Lm1set))")
+    println("  Total lines (Lset): $(length(Lset))")
     
-    # Classify branches (for backward compatibility)
-    # For multi-POI, we'll need to update this later
-    # For now, treat POI connection buses as "substation" buses
-    L1set = Tuple{Int,Int}[]  # Branches from POI connection points
-    Lm1set = Tuple{Int,Int}[]  # All other branches
-    
-    for (i, j) in Lset
-        if i in poi_connection_buses
-            push!(L1set, (i, j))
-        else
-            push!(Lm1set, (i, j))
-        end
+    # Print POI line details for verification
+    println("\n  POI Line Details:")
+    for (bus1, bus2) in L1set
+        println("    $bus1 → $bus2")
     end
-    
-    data[:L1set] = L1set
-    data[:Lm1set] = Lm1set
-    
-    # Non-POI-connection nodes
-    Nm1set = filter(n -> !(n in poi_connection_buses), data[:Nset])
-    data[:Nm1set] = Nm1set
-    
-    println("  Branches from POI connections (L1set): $(length(L1set))")
-    println("  Other branches (Lm1set): $(length(Lm1set))")
 end
 
 
 """
     parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
 
-Parse line resistance and reactance for all lines (including POI lines).
+Parse line resistance and reactance for all lines (POI + distribution).
+Creates unified impedance dictionaries that can handle both String (substation) and Int (distribution) bus names.
 """
 function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
     println("\n--- Parsing Line Impedances ---")
     
     Z_B = kV_B^2 / (kVA_B / 1000)  # Base impedance in Ohms
     
-    rdict = Dict{Tuple{Int,Int}, Float64}()
-    xdict = Dict{Tuple{Int,Int}, Float64}()
-    rdict_pu = Dict{Tuple{Int,Int}, Float64}()
-    xdict_pu = Dict{Tuple{Int,Int}, Float64}()
+    # Unified dictionaries for ALL lines (Dict{Any, Float64} to handle mixed bus types)
+    rdict_pu = Dict{Any, Float64}()
+    xdict_pu = Dict{Any, Float64}()
     
-    # Also store POI line impedances separately
-    poi_rdict = Dict{String, Float64}()  # Keyed by substation bus name
+    # Separate POI dicts for backward compatibility (keyed by substation bus name)
+    poi_rdict = Dict{String, Float64}()
     poi_xdict = Dict{String, Float64}()
     
     line_names = OpenDSSDirect.Lines.AllNames()
@@ -366,49 +394,55 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
     for line_name in line_names
         OpenDSSDirect.Lines.Name(line_name)
         
-        # Get bus names from bus names (e.g., "7.1" -> 7, or "1s.1" -> "1s")
+        # Get bus names (e.g., "7.1" -> 7, or "1s.1" -> "1s")
         buses = OpenDSSDirect.CktElement.BusNames()
         bus1_base = split(buses[1], ".")[1]
         bus2_base = split(buses[2], ".")[1]
+        
+        # Determine bus types (String for substation, Int for distribution)
+        bus1 = endswith(bus1_base, "s") ? bus1_base : parse(Int, bus1_base)
+        bus2 = endswith(bus2_base, "s") ? bus2_base : parse(Int, bus2_base)
         
         # Get R and X (Ohms)
         R_ohm = OpenDSSDirect.Lines.RMatrix()[1]  # First element of R matrix
         X_ohm = OpenDSSDirect.Lines.XMatrix()[1]  # First element of X matrix
         
-        # Check if this is a POI line
+        # Convert to per-unit
+        R_pu = R_ohm / Z_B
+        X_pu = X_ohm / Z_B
+        
+        # Store in unified dictionaries
+        line_tuple = (bus1, bus2)
+        rdict_pu[line_tuple] = R_pu
+        xdict_pu[line_tuple] = X_pu
+        
+        # If it's a POI line, also store in POI-specific dict
         if startswith(lowercase(line_name), "poi")
-            # Store POI impedance by substation bus name
-            sub_bus = endswith(bus1_base, "s") ? bus1_base : bus2_base
-            poi_rdict[sub_bus] = R_ohm
+            sub_bus = endswith(string(bus1), "s") ? bus1 : bus2
+            poi_rdict[sub_bus] = R_ohm  # Store in Ohms for POI dict
             poi_xdict[sub_bus] = X_ohm
-        else
-            # Regular distribution line - store by (i, j) tuple
-            i = parse(Int, bus1_base)
-            j = parse(Int, bus2_base)
-            
-            rdict[(i,j)] = R_ohm
-            xdict[(i,j)] = X_ohm
-            rdict_pu[(i,j)] = R_ohm / Z_B
-            xdict_pu[(i,j)] = X_ohm / Z_B
         end
     end
     
     data[:Z_B] = Z_B
-    data[:rdict] = rdict
-    data[:xdict] = xdict
     data[:rdict_pu] = rdict_pu
     data[:xdict_pu] = xdict_pu
     data[:poi_rdict] = poi_rdict
     data[:poi_xdict] = poi_xdict
     
     println("  Base impedance Z_B: $(round(Z_B, digits=4)) Ω")
-    println("  Distribution lines parsed: $(length(rdict))")
-    println("  POI lines parsed: $(length(poi_rdict))")
+    println("  Total lines with impedances: $(length(rdict_pu))")
+    println("  Distribution lines (Lm1set): $(data[:m_dist])")
+    println("  POI lines (L1set): $(data[:m_poi])")
     
-    # Print POI impedances
-    for (sub_bus, R) in poi_rdict
-        X = poi_xdict[sub_bus]
-        println("    POI $sub_bus: R = $(R) Ω, X = $(X) Ω")
+    # Print POI impedances for verification
+    println("\n  POI Line Impedances:")
+    for sub_bus in data[:substation_buses]
+        R_ohm = get(poi_rdict, sub_bus, NaN)
+        X_ohm = get(poi_xdict, sub_bus, NaN)
+        R_pu = R_ohm / Z_B
+        X_pu = X_ohm / Z_B
+        println("    $sub_bus: R=$(round(R_ohm, digits=8)) Ω ($(round(R_pu, digits=10)) pu), X=$(round(X_ohm, digits=8)) Ω ($(round(X_pu, digits=10)) pu)")
     end
 end
 
@@ -454,8 +488,9 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     end
     
     # Create 2D arrays for time-varying load (indexed by [bus, time])
-    Nset = data[:Nset]
-    max_bus = maximum(Nset)
+    # Use Nm1set (distribution buses only) to determine array size
+    Nm1set = data[:Nm1set]
+    max_bus = maximum(Nm1set)
     p_L_pu = zeros(max_bus, T)
     q_L_pu = zeros(max_bus, T)
     
@@ -497,9 +532,9 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
     p_D_R_pu = Dict{Int, Float64}()
     S_D_R = Dict{Int, Float64}()  # Apparent power rating (pu)
     
-    # Get max bus number for array sizing
-    Nset = data[:Nset]
-    max_bus = maximum(Nset)
+    # Get max bus number for array sizing (use Nm1set which contains only distribution buses)
+    Nm1set = data[:Nm1set]
+    max_bus = maximum(Nm1set)
     
     # Initialize 2D array for time-varying PV (indexed by [bus, time])
     p_D_pu = zeros(max_bus, T)
@@ -638,22 +673,35 @@ end
     parse_voltage_limits!(data::Dict)
 
 Parse voltage limits for all buses from OpenDSS.
+Uses Dict{Any, Float64} to handle both substation (String) and distribution (Int) buses.
 """
 function parse_voltage_limits!(data::Dict)
     println("\n--- Parsing Voltage Limits ---")
     
-    N = data[:N]
-    Vminpu = Dict{Int, Float64}()
-    Vmaxpu = Dict{Int, Float64}()
+    # Use Dict{Any, Float64} to handle both String and Int bus names
+    Vminpu = Dict{Any, Float64}()
+    Vmaxpu = Dict{Any, Float64}()
     
-    # Default voltage limits
-    for i in data[:Nset]
-        Vminpu[i] = 0.95
-        Vmaxpu[i] = 1.05
+    # Default voltage limits for all buses (substations + distribution)
+    for bus in data[:Nset]
+        Vminpu[bus] = 0.95
+        Vmaxpu[bus] = 1.05
+    end
+    
+    # Also store limits specifically for substation buses (for MPOPF slack bus constraints)
+    Vminpu_sub = Dict{String, Float64}()
+    Vmaxpu_sub = Dict{String, Float64}()
+    for sub_bus in data[:Sset]
+        Vminpu_sub[sub_bus] = 0.95
+        Vmaxpu_sub[sub_bus] = 1.05
     end
     
     data[:Vminpu] = Vminpu
     data[:Vmaxpu] = Vmaxpu
+    data[:Vminpu_sub] = Vminpu_sub
+    data[:Vmaxpu_sub] = Vmaxpu_sub
     
-    println("  Voltage limits: [$(Vminpu[1]), $(Vmaxpu[1])] pu")
+    println("  Voltage limits for all buses: [0.95, 1.05] pu")
+    println("  Substation buses ($(length(data[:Sset]))): $(data[:Sset])")
+    println("  Distribution buses ($(length(data[:Nm1set]))): $(minimum(data[:Nm1set])) to $(maximum(data[:Nm1set]))")
 end

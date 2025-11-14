@@ -90,8 +90,9 @@ try
     
     println("\n--- Impedances ---")
     println("  Base impedance: $(round(data[:Z_B], digits=4)) Ω")
-    println("  Distribution lines: $(length(data[:rdict]))")
-    println("  POI lines: $(length(data[:poi_rdict]))")
+    println("  Distribution lines (Lm1set): $(data[:m_dist])")
+    println("  POI lines (L1set): $(data[:m_poi])")
+    println("  Total lines (Lset): $(data[:m])")
     
     println("\n--- Time Series ---")
     println("  Time horizon: T = $T")
@@ -99,16 +100,27 @@ try
     println("  Load shape range: [$(round(minimum(LoadShapeLoad), digits=3)), $(round(maximum(LoadShapeLoad), digits=3))]")
     
     println("\n--- Voltage Limits ---")
-    println("  V_min: $(data[:Vminpu][1]) pu")
-    println("  V_max: $(data[:Vmaxpu][1]) pu")
+    println("  Distribution buses: $(data[:Vminpu][1]) to $(data[:Vmaxpu][1]) pu")
+    sub_vmin = data[:Vminpu_sub]["1s"]
+    sub_vmax = data[:Vmaxpu_sub]["1s"]
+    println("  Substation buses: $sub_vmin to $sub_vmax pu")
+    
+    println("\n--- Network Sets for MPOPF ---")
+    println("  Sset (substations): $(length(data[:Sset])) buses")
+    println("  Nset (all buses): $(length(data[:Nset])) buses (substations + distribution)")
+    println("  Nm1set (distribution only): $(length(data[:Nm1set])) buses")
+    println("  Lset (all lines): $(length(data[:Lset])) lines")
+    println("  L1set (POI lines): $(length(data[:L1set])) lines")
+    println("  Lm1set (distribution lines): $(length(data[:Lm1set])) lines")
     
     println("\n" * "="^80)
     println("✓ PARSER TEST COMPLETE - ALL DATA SUCCESSFULLY LOADED")
     println("="^80)
     
     # Verify some key data structures exist
-    required_keys = [:systemName, :T, :N, :Lset, :num_substations, :substation_buses,
-                     :poi_connections, :rdict, :xdict, :p_L_pu, :q_L_pu, :Vminpu, :Vmaxpu]
+    required_keys = [:systemName, :T, :N, :Sset, :Nset, :Nm1set, :Lset, :L1set, :Lm1set,
+                     :num_substations, :substation_buses, :poi_connections, 
+                     :rdict_pu, :xdict_pu, :p_L_pu, :q_L_pu, :Vminpu, :Vmaxpu]
     
     missing_keys = filter(k -> !haskey(data, k), required_keys)
     if !isempty(missing_keys)
