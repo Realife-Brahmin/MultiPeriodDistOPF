@@ -8,11 +8,11 @@ OBJECTIVE:
 ================================================================================
 
 VARIABLES:
-  P_Subs[1s,1]: lower=0.0, upper=none
-  P_Subs[2s,1]: lower=0.0, upper=none
-  P_Subs[3s,1]: lower=0.0, upper=none
-  P_Subs[4s,1]: lower=0.0, upper=none
-  P_Subs[5s,1]: lower=0.0, upper=none
+  P_Subs[1s,1]: lower=0.0, upper=0.8142378999999995
+  P_Subs[2s,1]: lower=0.0, upper=0.8142378999999995
+  P_Subs[3s,1]: lower=0.0, upper=0.8142378999999995
+  P_Subs[4s,1]: lower=0.0, upper=0.8142378999999995
+  P_Subs[5s,1]: lower=0.0, upper=0.8142378999999995
   Q_Subs[1s,1]: lower=none, upper=none
   Q_Subs[2s,1]: lower=none, upper=none
   Q_Subs[3s,1]: lower=none, upper=none
@@ -2952,7 +2952,22 @@ CONSTRAINTS:
 [800] :
   ScalarConstraint{VariableRef, MathOptInterface.GreaterThan{Float64}}(ℓ[("5s", 85),1], MathOptInterface.GreaterThan{Float64}(0.0))
 
+[801] :
+  ScalarConstraint{VariableRef, MathOptInterface.LessThan{Float64}}(P_Subs[1s,1], MathOptInterface.LessThan{Float64}(0.8142378999999995))
+
+[802] :
+  ScalarConstraint{VariableRef, MathOptInterface.LessThan{Float64}}(P_Subs[2s,1], MathOptInterface.LessThan{Float64}(0.8142378999999995))
+
+[803] :
+  ScalarConstraint{VariableRef, MathOptInterface.LessThan{Float64}}(P_Subs[3s,1], MathOptInterface.LessThan{Float64}(0.8142378999999995))
+
+[804] :
+  ScalarConstraint{VariableRef, MathOptInterface.LessThan{Float64}}(P_Subs[4s,1], MathOptInterface.LessThan{Float64}(0.8142378999999995))
+
+[805] :
+  ScalarConstraint{VariableRef, MathOptInterface.LessThan{Float64}}(P_Subs[5s,1], MathOptInterface.LessThan{Float64}(0.8142378999999995))
+
 ================================================================================
 
-Total constraints: 800
+Total constraints: 805
 ================================================================================
