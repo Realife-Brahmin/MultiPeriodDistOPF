@@ -817,10 +817,9 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     println("  Max per substation: $(round(P_Subs_max, digits=4)) pu = $(round(P_Subs_max * kVA_B, digits=1)) kW")
     
     # Substation power injections (indexed by substation name and time)
-    P_Subs_max = Inf
+    # P_Subs_max = Inf  # RELAXED VERSION - commented out to enforce 70% limit
     @variable(model, 0 <= P_Subs[s in Sset, t in Tset] <= P_Subs_max)
     @variable(model, Q_Subs[s in Sset, t in Tset])
-    # @variable(model, Q_Subs[s in Sset, t in Tset])
     
     # Branch power flows (works with mixed bus types)
     @variable(model, P[line in Lset, t in Tset])
