@@ -247,6 +247,7 @@ function parse_network_topology!(data::Dict)
         children[bus] = []
     end
     
+    # Build line topology - store as directed tuples
     for line_name in line_names
         OpenDSSDirect.Lines.Name(line_name)
         buses = OpenDSSDirect.CktElement.BusNames()
@@ -263,42 +264,68 @@ function parse_network_topology!(data::Dict)
         
         if is_poi_line
             push!(L1set, line_tuple)
-            if endswith(string(bus1), "s")
-                parent[bus1] = nothing
-                parent[bus2] = bus1
-                push!(children[bus1], bus2)
-            else
-                parent[bus2] = nothing
-                parent[bus1] = bus2
-                push!(children[bus2], bus1)
-            end
         else
             push!(Lm1set, line_tuple)
-            if !haskey(parent, bus2) || isnothing(parent[bus2])
+        end
+    end
+    
+    # Build parent-child relationships via BFS from substations
+    # Substations are roots (no parent)
+    for s in Sset
+        parent[s] = nothing
+    end
+    
+    # BFS to establish topology - use Any type for mixed String/Int buses
+    queue = Vector{Any}(collect(Sset))
+    visited = Set{Any}(Sset)
+    
+    # Also track line orientations
+    line_orientations = Dict{Tuple{Any,Any}, Tuple{Any,Any}}()  # original → oriented
+    
+    while !isempty(queue)
+        current_bus = popfirst!(queue)
+        
+        # Find all lines connected to current bus
+        for (bus1, bus2) in Lset
+            if bus1 == current_bus && !(bus2 in visited)
+                # bus1 → bus2, so bus1 is parent of bus2
                 parent[bus2] = bus1
                 push!(children[bus1], bus2)
-            elseif !haskey(parent, bus1) || isnothing(parent[bus1])
+                push!(visited, bus2)
+                push!(queue, bus2)
+                line_orientations[(bus1, bus2)] = (bus1, bus2)  # Already correct orientation
+            elseif bus2 == current_bus && !(bus1 in visited)
+                # bus2 → bus1, so bus2 is parent of bus1
                 parent[bus1] = bus2
                 push!(children[bus2], bus1)
+                push!(visited, bus1)
+                push!(queue, bus1)
+                line_orientations[(bus1, bus2)] = (bus2, bus1)  # Needs reversal
             end
         end
     end
     
-    data[:Lset] = Lset
-    data[:L1set] = L1set
-    data[:Lm1set] = Lm1set
+    # Reorient Lset to match parent→child direction
+    Lset_oriented = [haskey(line_orientations, line) ? line_orientations[line] : line for line in Lset]
+    L1set_oriented = [haskey(line_orientations, line) ? line_orientations[line] : line for line in L1set]
+    Lm1set_oriented = [haskey(line_orientations, line) ? line_orientations[line] : line for line in Lm1set]
+    
+    data[:Lset] = Lset_oriented
+    data[:L1set] = L1set_oriented
+    data[:Lm1set] = Lm1set_oriented
+    data[:line_orientations] = line_orientations  # Store for impedance parsing
     data[:parent] = parent
     data[:children] = children
-    data[:m] = length(Lset)
-    data[:m_poi] = length(L1set)
-    data[:m_dist] = length(Lm1set)
+    data[:m] = length(Lset_oriented)
+    data[:m_poi] = length(L1set_oriented)
+    data[:m_dist] = length(Lm1set_oriented)
     
-    println("  POI lines (L1set): $(length(L1set))")
-    println("  Distribution lines (Lm1set): $(length(Lm1set))")
-    println("  Total lines (Lset): $(length(Lset))")
+    println("  POI lines (L1set): $(length(L1set_oriented))")
+    println("  Distribution lines (Lm1set): $(length(Lm1set_oriented))")
+    println("  Total lines (Lset): $(length(Lset_oriented))")
     
     println("\n  POI Line Details:")
-    for (bus1, bus2) in L1set
+    for (bus1, bus2) in L1set_oriented
         println("    $bus1 → $bus2")
     end
 end
@@ -331,9 +358,14 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
         R_pu = R_ohm / Z_B
         X_pu = X_ohm / Z_B
         
-        line_tuple = (bus1, bus2)
-        rdict_pu[line_tuple] = R_pu
-        xdict_pu[line_tuple] = X_pu
+        line_tuple_original = (bus1, bus2)
+        
+        # Use oriented line tuple if available
+        line_orientations = get(data, :line_orientations, Dict())
+        line_tuple_oriented = get(line_orientations, line_tuple_original, line_tuple_original)
+        
+        rdict_pu[line_tuple_oriented] = R_pu
+        xdict_pu[line_tuple_oriented] = X_pu
         
         if startswith(lowercase(line_name), "poi")
             sub_bus = endswith(string(bus1), "s") ? bus1 : bus2
@@ -1072,6 +1104,68 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
         println("    Total load demand: $(round(total_load, digits=1)) kW")
         println("    Total network losses: $(round(total_losses, digits=3)) kW")
         println("    Balance (P_Subs - Load - Losses): $(round(total_P_Subs - total_load - total_losses, digits=6)) kW")
+        
+        # Topology connectivity check
+        println("\n  Topology Connectivity Check:")
+        println("    Total buses: $(length(Nset)) ($(length(Sset)) substations + $(length(Nm1set)) distribution)")
+        println("    Total lines: $(length(Lset)) ($(length(L1set)) POI + $(length(Lm1set)) distribution)")
+        
+        # Check if each distribution bus is reachable from at least one substation (BFS)
+        reachable_buses = Set{Any}(Sset)
+        changed = true
+        while changed
+            changed = false
+            for line in Lset
+                (bus1, bus2) = line
+                if bus1 in reachable_buses && !(bus2 in reachable_buses)
+                    push!(reachable_buses, bus2)
+                    changed = true
+                elseif bus2 in reachable_buses && !(bus1 in reachable_buses)
+                    push!(reachable_buses, bus1)
+                    changed = true
+                end
+            end
+        end
+        unreachable = setdiff(Set(Nset), reachable_buses)
+        if isempty(unreachable)
+            println("    ✓ All buses are connected")
+        else
+            println("    ✗ WARNING: $(length(unreachable)) unreachable buses: $unreachable")
+        end
+        
+        # Branch flow verification for POI lines
+        println("\n  POI Line Power Flows (t=1):")
+        for (i, j) in L1set
+            P_val = result[:P][(i, j)][t] * P_BASE
+            losses_val = rdict_pu[(i, j)] * result[:ℓ][(i, j)][t] * P_BASE
+            println("    Line ($i → $j): P = $(round(P_val, digits=1)) kW, Losses = $(round(losses_val, digits=3)) kW")
+        end
+        
+        # Check power balance at first few distribution nodes
+        println("\n  Sample Distribution Node Power Balance (t=1):")
+        sample_nodes = Nm1set[1:min(5, length(Nm1set))]
+        for j in sample_nodes
+            # Find parent lines (incoming power)
+            parent_lines_j = [(i_bus, j_bus) for (i_bus, j_bus) in Lset 
+                              if j_bus == j && (i_bus, j_bus) in keys(rdict_pu) && i_bus == parent[j]]
+            
+            # Find child lines (outgoing power)
+            child_lines_j = [(j, k) for k in children[j] if (j, k) in keys(rdict_pu)]
+            
+            # Calculate incoming power (with empty check)
+            P_in = isempty(parent_lines_j) ? 0.0 : sum(result[:P][line][t] - rdict_pu[line] * result[:ℓ][line][t] for line in parent_lines_j)
+            
+            # Calculate outgoing power (with empty check)
+            P_out = isempty(child_lines_j) ? 0.0 : sum(result[:P][line][t] for line in child_lines_j)
+            
+            # Load at this node
+            P_load = p_L_pu[j, t]
+            
+            # Balance
+            balance = P_in - P_out - P_load
+            
+            println("    Node $j: P_in=$(round(P_in*P_BASE, digits=2)) kW, P_out=$(round(P_out*P_BASE, digits=2)) kW, Load=$(round(P_load*P_BASE, digits=2)) kW, Balance=$(round(balance*P_BASE, digits=6)) kW")
+        end
     end
     
     println("="^80)
