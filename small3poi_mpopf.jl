@@ -510,9 +510,9 @@ function solve_three_poi_mpopf(data, slack_node::Int)
             @constraint(model, v_j[t] == v_0_val - 2 * (r1j * P_1j[t] + x1j * Q_1j[t]) + (r1j^2 + x1j^2) * l_1j[t])
             @constraint(model, v_j[t] == v_1_val - 2 * (r2j * P_2j[t] + x2j * Q_2j[t]) + (r2j^2 + x2j^2) * l_2j[t])
             @constraint(model, v_j[t] == v_2_val - 2 * (r3j * P_3j[t] + x3j * Q_3j[t]) + (r3j^2 + x3j^2) * l_3j[t])
-            @constraint(model, P_1j[t]^2 + Q_1j[t]^2 >= v_0_val * l_1j[t])
-            @constraint(model, P_2j[t]^2 + Q_2j[t]^2 >= v_1_val * l_2j[t])
-            @constraint(model, P_3j[t]^2 + Q_3j[t]^2 >= v_2_val * l_3j[t])
+            @constraint(model, P_1j[t]^2 + Q_1j[t]^2 <= v_0_val * l_1j[t])
+            @constraint(model, P_2j[t]^2 + Q_2j[t]^2 <= v_1_val * l_2j[t])
+            @constraint(model, P_3j[t]^2 + Q_3j[t]^2 <= v_2_val * l_3j[t])
         else
             # Variable voltages for non-slack substations
             if slack_node == 0
