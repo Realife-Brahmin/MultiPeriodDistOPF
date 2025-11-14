@@ -837,9 +837,11 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     @variable(model, q_D[j in Dset, t in Tset])
     
     println("\nVariables created:")
-    println("  P_Subs: $(num_subs) × $T")
-    println("  Branch flows: $(length(Lset)) × $T")
-    println("  Voltages: $(length(Nset)) × $T")
+    println("  P_Subs, Q_Subs: $(num_subs) × $T")
+    println("  P, Q, ℓ (branch flows): $(length(Lset)) × $T each")
+    println("  v (voltage squared): $(length(Nset)) × $T")
+    println("  P_B, B (battery): $(length(Bset)) × $T each")
+    println("  q_D (PV reactive): $(length(Dset)) × $T")
     
     # ========== 4. OBJECTIVE FUNCTION ==========
     
