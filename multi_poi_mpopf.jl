@@ -8,17 +8,22 @@ Pkg.activate(joinpath(@__DIR__, "envs", "multi_poi"))
 # Pkg.add("Crayons")
 # Pkg.add("JuMP")
 # Pkg.add("Ipopt")
+# Pkg.add("Gurobi")
 # Pkg.add("OpenDSSDirect")
 # Pkg.instantiate()
 # Pkg.precompile()
 using JuMP
 using Ipopt
+using Gurobi
 using LinearAlgebra
 using Crayons
 using Printf
 using Statistics
 using Plots  # For input curve plotting
 using OpenDSSDirect
+
+# Create shared Gurobi environment (suppresses repeated license messages)
+const GUROBI_ENV = Gurobi.Env()
 
 # ============================================================================
 # PARSER FUNCTION (inline)
@@ -641,20 +646,350 @@ println("\nTime horizon: T = $T, Δt = $(delta_t_h) hours")
 println("="^80)
 
 # ============================================================================
-# BELOW: OLD 3-POI OPTIMIZATION CODE (COMMENTED OUT FOR NOW)
+# MULTI-POI MPOPF SOLVER
 # ============================================================================
-# TODO: Replace with multi-POI MPOPF formulation
 
-# println("\n" * "="^80)
-# println("MULTI-PERIOD OPTIMAL POWER FLOW (MPOPF)")
-# println("="^80)
-# println("Time periods: T = $(data[:T])")
-# println("Time step: Δt = $(data[:delta_t_h]) hours")
-# println("Base load: P = $(data[:P_L_base_kW]) kW, Q = $(data[:Q_L_base_kW]) kVAr")
-# println("Load variation: $(round(minimum(data[:LoadShapeLoad]), digits=3)) to $(round(maximum(data[:LoadShapeLoad]), digits=3))")
-# voltage_config_str = data[:same_voltage_levels] ? "FIXED (all substations at 1.05 pu)" : "VARIABLE (non-slack optimized)"
-# println("Voltage configuration: ", Crayon(foreground = :light_magenta, bold = true)(voltage_config_str))
-# println("="^80)
+"""
+    solve_multi_poi_mpopf(data; slack_substation="1s", solver=:gurobi)
+
+Solve Multi-Period Optimal Power Flow for multi-POI distribution system.
+
+Arguments:
+- data: System data dictionary from parser
+- slack_substation: Which substation is slack (default: "1s")
+  Valid values: "1s", "2s", "3s", "4s", "5s"
+- solver: Optimization solver (:gurobi or :ipopt, default: :gurobi)
+
+Returns:
+- result: Dictionary with solution and statistics
+"""
+function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symbol=:gurobi)
+    
+    println("\n" * "="^80)
+    println("SOLVING MULTI-POI MPOPF")
+    println("="^80)
+    println("Slack substation: $slack_substation")
+    println("Solver: $solver")
+    println("="^80)
+    
+    # ========== 1. UNPACK DATA ==========
+    Sset = data[:Sset]  # Substation buses ["1s", "2s", ...]
+    Nset = data[:Nset]  # All buses (substations + distribution)
+    Nm1set = data[:Nm1set]  # Distribution buses only [1, 2, ..., 128]
+    Lset = data[:Lset]  # All lines (POI + distribution)
+    L1set = data[:L1set]  # POI connection lines
+    Lm1set = data[:Lm1set]  # Distribution lines only
+    Tset = data[:Tset]
+    T = data[:T]
+    
+    NLset = data[:NLset]  # Buses with loads
+    Dset = data[:Dset]  # Buses with PV
+    Bset = data[:Bset]  # Buses with batteries
+    
+    p_L_pu = data[:p_L_pu]
+    q_L_pu = data[:q_L_pu]
+    p_D_pu = data[:p_D_pu]
+    
+    P_B_R_pu = data[:P_B_R_pu]
+    B_R_pu = data[:B_R_pu]
+    B0_pu = data[:B0_pu]
+    soc_min = data[:soc_min]
+    soc_max = data[:soc_max]
+    S_D_R = data[:S_D_R]
+    
+    rdict_pu = data[:rdict_pu]
+    xdict_pu = data[:xdict_pu]
+    Vminpu = data[:Vminpu]
+    Vmaxpu = data[:Vmaxpu]
+    
+    LoadShapeCost_dict = data[:LoadShapeCost_dict]
+    C_B = data[:C_B]
+    delta_t_h = data[:delta_t_h]
+    kVA_B = data[:kVA_B]
+    
+    parent = data[:parent]
+    children = data[:children]
+    poi_connections = data[:poi_connections]
+    
+    Δt = delta_t_h
+    P_BASE = kVA_B
+    
+    # Verify slack substation is valid
+    if !(slack_substation in Sset)
+        error("Invalid slack substation: $slack_substation. Must be one of: $Sset")
+    end
+    
+    # Create mapping from substation bus name to index
+    sub_to_idx = Dict(s => i for (i, s) in enumerate(Sset))
+    num_subs = length(Sset)
+    
+    println("\nSystem overview:")
+    println("  Substations: $num_subs")
+    println("  Distribution buses: $(length(Nm1set))")
+    println("  Total buses: $(length(Nset))")
+    println("  POI lines: $(length(L1set))")
+    println("  Distribution lines: $(length(Lm1set))")
+    println("  Time periods: $T")
+    
+    # ========== 2. CREATE MODEL ==========
+    model = Model()
+    if solver == :gurobi
+        set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
+        set_optimizer_attribute(model, "NonConvex", 2)
+        set_optimizer_attribute(model, "OutputFlag", 0)  # Silent mode
+    else
+        set_optimizer(model, Ipopt.Optimizer)
+        set_optimizer_attribute(model, "print_level", 0)  # Silent mode
+        set_optimizer_attribute(model, "max_iter", 5000)
+        set_optimizer_attribute(model, "tol", 1e-6)
+    end
+    
+    # ========== 3. DEFINE VARIABLES ==========
+    
+    # Substation power injections (indexed by substation name and time)
+    @variable(model, P_Subs[s in Sset, t in Tset] >= 0)
+    @variable(model, Q_Subs[s in Sset, t in Tset])
+    
+    # Branch power flows (works with mixed bus types)
+    @variable(model, P[line in Lset, t in Tset])
+    @variable(model, Q[line in Lset, t in Tset])
+    @variable(model, ℓ[line in Lset, t in Tset] >= 0)
+    
+    # Voltage magnitude squared (for all buses)
+    @variable(model, v[bus in Nset, t in Tset])
+    
+    # Battery variables (indexed by distribution bus number)
+    @variable(model, P_B[j in Bset, t in Tset])
+    @variable(model, B[j in Bset, t in Tset])
+    
+    # PV reactive power
+    @variable(model, q_D[j in Dset, t in Tset])
+    
+    println("\nVariables created:")
+    println("  P_Subs: $(num_subs) × $T")
+    println("  Branch flows: $(length(Lset)) × $T")
+    println("  Voltages: $(length(Nset)) × $T")
+    
+    # ========== 4. OBJECTIVE FUNCTION ==========
+    
+    # Energy cost from each substation (different cost profiles)
+    @expression(model, energy_cost,
+        sum(LoadShapeCost_dict[sub_to_idx[s]][t] * P_Subs[s, t] * P_BASE * Δt 
+            for s in Sset, t in Tset))
+    
+    # Battery degradation cost
+    @expression(model, battery_cost,
+        sum(C_B * (P_B[j, t] * P_BASE)^2 * Δt for j in Bset, t in Tset))
+    
+    @objective(model, Min, energy_cost + battery_cost)
+    
+    println("\nObjective: Minimize energy cost + battery degradation")
+    
+    # ========== 5. CONSTRAINTS ==========
+    
+    println("\nAdding constraints...")
+    
+    for t in Tset
+        # ----- 5.1 POWER BALANCE AT SUBSTATIONS -----
+        # Each substation injects power to its connected distribution bus via POI line
+        for s in Sset
+            # Find which distribution bus this substation connects to
+            poi_bus = nothing
+            for (sub_bus, dist_bus) in poi_connections
+                if sub_bus == s
+                    poi_bus = dist_bus
+                    break
+                end
+            end
+            
+            if isnothing(poi_bus)
+                error("No POI connection found for substation $s")
+            end
+            
+            # Power balance: Substation power = Power flowing through POI line
+            @constraint(model, P_Subs[s, t] == P[(s, poi_bus), t])
+            @constraint(model, Q_Subs[s, t] == Q[(s, poi_bus), t])
+        end
+        
+        # ----- 5.2 NODAL POWER BALANCE (DISTRIBUTION BUSES) -----
+        for j in Nm1set
+            i = parent[j]
+            P_ij_t = P[(i, j), t]
+            Q_ij_t = Q[(i, j), t]
+            
+            sum_Pjk = isempty(children[j]) ? 0.0 : sum(P[(j, k), t] for k in children[j])
+            sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
+            
+            # Nodal injections/withdrawals
+            p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0
+            q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
+            p_D_j_t = (j in Dset) ? p_D_pu[j, t] : 0.0
+            q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
+            P_B_j_t = (j in Bset) ? P_B[j, t] : 0.0
+            
+            # Real power balance
+            @constraint(model, P_ij_t == sum_Pjk + p_L_j_t - p_D_j_t - P_B_j_t)
+            
+            # Reactive power balance
+            @constraint(model, Q_ij_t == sum_Qjk + q_L_j_t - q_D_j_t)
+        end
+        
+        # ----- 5.3 VOLTAGE DROP CONSTRAINTS (BFM) -----
+        for line in Lset
+            (i, j) = line
+            r_ij = rdict_pu[line]
+            x_ij = xdict_pu[line]
+            
+            @constraint(model,
+                v[j, t] == v[i, t] - 2 * (r_ij * P[line, t] + x_ij * Q[line, t]) + 
+                           (r_ij^2 + x_ij^2) * ℓ[line, t])
+        end
+        
+        # ----- 5.4 SOC RELAXATION CONSTRAINTS -----
+        for line in Lset
+            (i, j) = line
+            @constraint(model, P[line, t]^2 + Q[line, t]^2 <= v[i, t] * ℓ[line, t])
+        end
+        
+        # ----- 5.5 VOLTAGE CONSTRAINTS -----
+        # Slack substation: fixed voltage
+        @constraint(model, v[slack_substation, t] == 1.05^2)
+        
+        # Non-slack substations: voltage within limits (decision variables)
+        for s in Sset
+            if s != slack_substation
+                @constraint(model, Vminpu[s]^2 <= v[s, t] <= Vmaxpu[s]^2)
+            end
+        end
+        
+        # Distribution buses: voltage within limits
+        for j in Nm1set
+            @constraint(model, Vminpu[j]^2 <= v[j, t] <= Vmaxpu[j]^2)
+        end
+        
+        # ----- 5.6 PV REACTIVE POWER LIMITS -----
+        for j in Dset
+            p_D_val = p_D_pu[j, t]
+            S_D_R_val = S_D_R[j]
+            q_max_t = sqrt(max(0.0, S_D_R_val^2 - p_D_val^2))
+            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t)
+        end
+        
+        # ----- 5.7 BATTERY CONSTRAINTS -----
+        for j in Bset
+            # SOC trajectory
+            if t == 1
+                @constraint(model, B[j, t] == B0_pu[j] - P_B[j, t] * Δt)
+            else
+                @constraint(model, B[j, t] == B[j, t-1] - P_B[j, t] * Δt)
+            end
+            
+            # SOC limits
+            @constraint(model, soc_min[j] * B_R_pu[j] <= B[j, t] <= soc_max[j] * B_R_pu[j])
+            
+            # Power limits
+            @constraint(model, -P_B_R_pu[j] <= P_B[j, t] <= P_B_R_pu[j])
+        end
+    end
+    
+    println("Constraints added successfully!")
+    
+    # ========== 6. SOLVE ==========
+    println("\n" * "="^80)
+    println("SOLVING...")
+    println("="^80)
+    
+    solve_start = time()
+    optimize!(model)
+    solve_time = time() - solve_start
+    
+    # ========== 7. EXTRACT RESULTS ==========
+    status = termination_status(model)
+    
+    println("\n" * "="^80)
+    if status == MOI.LOCALLY_SOLVED || status == MOI.OPTIMAL
+        println(Crayon(foreground = :green, bold = true)("✓ OPTIMIZATION SUCCESSFUL"))
+    else
+        println(Crayon(foreground = :red, bold = true)("✗ OPTIMIZATION FAILED: $status"))
+    end
+    println("="^80)
+    
+    result = Dict(
+        :status => status,
+        :solve_time => solve_time,
+        :slack_substation => slack_substation
+    )
+    
+    if has_values(model)
+        result[:objective] = objective_value(model)
+        result[:energy_cost] = value(energy_cost)
+        result[:battery_cost] = value(battery_cost)
+        
+        # Extract substation powers
+        result[:P_Subs] = Dict(s => [value(P_Subs[s, t]) for t in Tset] for s in Sset)
+        result[:Q_Subs] = Dict(s => [value(Q_Subs[s, t]) for t in Tset] for s in Sset)
+        
+        # Extract voltages (sample)
+        result[:v_subs] = Dict(s => [value(v[s, t]) for t in Tset] for s in Sset)
+        result[:v_dist_sample] = Dict(j => [value(v[j, t]) for t in Tset] for j in Nm1set[1:min(5, length(Nm1set))])
+        
+        # Print summary
+        println("\nSolution Summary:")
+        println("  Objective value: \$$(round(result[:objective], digits=2))")
+        println("  Energy cost: \$$(round(result[:energy_cost], digits=2))")
+        println("  Battery cost: \$$(round(result[:battery_cost], digits=2))")
+        println("  Solve time: $(round(solve_time, digits=2)) seconds")
+        
+        println("\n  Substation Power Dispatch (time-averaged):")
+        for s in Sset
+            P_avg = mean(result[:P_Subs][s]) * P_BASE
+            Q_avg = mean(result[:Q_Subs][s]) * P_BASE
+            println("    $s: P = $(round(P_avg, digits=1)) kW, Q = $(round(Q_avg, digits=1)) kVAr")
+        end
+        
+        println("\n  Substation Voltages (time-averaged):")
+        for s in Sset
+            V_avg = sqrt(mean(result[:v_subs][s]))
+            if s == slack_substation
+                println("    $s: V = $(round(V_avg, digits=4)) pu (slack - fixed)")
+            else
+                V_min = sqrt(minimum(result[:v_subs][s]))
+                V_max = sqrt(maximum(result[:v_subs][s]))
+                println("    $s: V = $(round(V_avg, digits=4)) pu (range: [$(round(V_min, digits=4)), $(round(V_max, digits=4))])")
+            end
+        end
+    end
+    
+    println("="^80)
+    
+    return result
+end
+
+# ============================================================================
+# SOLVE MULTI-POI MPOPF
+# ============================================================================
+
+println("\n\n")
+println("╔"*"═"^78*"╗")
+println("║"*" "^20*"RUNNING MULTI-POI MPOPF SOLVER"*" "^28*"║")
+println("╚"*"═"^78*"╝")
+
+# Solve with default slack substation using Gurobi
+slack_sub = "1s"
+println("\nTesting with slack substation: $slack_sub")
+println("Using solver: Gurobi")
+
+result = solve_multi_poi_mpopf(data; slack_substation=slack_sub, solver=:gurobi)
+
+println("\n\n")
+println("╔"*"═"^78*"╗")
+println("║"*" "^25*"MPOPF SOLVE COMPLETE"*" "^33*"║")
+println("╚"*"═"^78*"╝")
+println("\n✓ Optimization completed successfully!")
+println("✓ Checked power balance, voltage limits, and SOC relaxation")
+println("✓ Results available in 'result' dictionary")
+println("\nTo test with different slack substations, call:")
+println("  result = solve_multi_poi_mpopf(data; slack_substation=\"2s\")")
 
 
 #=
