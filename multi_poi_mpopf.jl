@@ -541,15 +541,19 @@ function parse_voltage_limits!(data::Dict)
     Vmaxpu = Dict{Any, Float64}()
     
     for bus in data[:Nset]
-        Vminpu[bus] = 0.95
-        Vmaxpu[bus] = 1.05
+        # Vminpu[bus] = 0.95
+        Vminpu[bus] = 0.90
+        # Vmaxpu[bus] = 1.05
+        Vmaxpu[bus] = 1.10
     end
     
     Vminpu_sub = Dict{String, Float64}()
     Vmaxpu_sub = Dict{String, Float64}()
     for sub_bus in data[:Sset]
-        Vminpu_sub[sub_bus] = 0.95
-        Vmaxpu_sub[sub_bus] = 1.05
+        # Vminpu_sub[sub_bus] = 0.95
+        Vminpu_sub[sub_bus] = 0.90
+        # Vmaxpu_sub[sub_bus] = 1.05
+        Vmaxpu_sub[sub_bus] = 1.10
     end
     
     data[:Vminpu] = Vminpu
@@ -640,6 +644,49 @@ data = parse_system_from_dss_multi_poi(
 
 # Add user-defined voltage configuration flag
 data[:same_voltage_levels] = same_voltage_levels
+
+"""
+Export detailed model formulation to text file
+"""
+function export_model_to_file(model, filename)
+    open(filename, "w") do io
+        println(io, "="^80)
+        println(io, "MPOPF MODEL FORMULATION")
+        println(io, "="^80)
+        println(io)
+        
+        # Objective
+        println(io, "OBJECTIVE:")
+        println(io, objective_function(model))
+        println(io)
+        println(io, "="^80)
+        
+        # Variables
+        println(io, "\nVARIABLES:")
+        for v in all_variables(model)
+            println(io, "  $(name(v)): lower=$(has_lower_bound(v) ? lower_bound(v) : "none"), upper=$(has_upper_bound(v) ? upper_bound(v) : "none")")
+        end
+        println(io)
+        println(io, "="^80)
+        
+        # Constraints
+        println(io, "\nCONSTRAINTS:")
+        constraint_count = 0
+        for (F, S) in list_of_constraint_types(model)
+            cons_list = all_constraints(model, F, S)
+            for con in cons_list
+                constraint_count += 1
+                println(io, "\n[$(constraint_count)] $(name(con)):")
+                println(io, "  $(constraint_object(con))")
+            end
+        end
+        println(io)
+        println(io, "="^80)
+        println(io, "\nTotal constraints: $constraint_count")
+        println(io, "="^80)
+    end
+    println("Model exported to: $filename")
+end
 
 # Print summary
 println("\n" * "="^80)
@@ -770,7 +817,7 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     println("  Max per substation: $(round(P_Subs_max, digits=4)) pu = $(round(P_Subs_max * kVA_B, digits=1)) kW")
     
     # Substation power injections (indexed by substation name and time)
-    # P_Subs_max = Inf
+    P_Subs_max = Inf
     @variable(model, 0 <= P_Subs[s in Sset, t in Tset] <= P_Subs_max)
     @variable(model, Q_Subs[s in Sset, t in Tset])
     # @variable(model, Q_Subs[s in Sset, t in Tset])
@@ -826,16 +873,18 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             end
             
             # Power balance: Substation power = Sum of power flowing through all POI lines
-            @constraint(model, P_Subs[s, t] == sum(P[line, t] for line in poi_lines_s))
-            @constraint(model, Q_Subs[s, t] == sum(Q[line, t] for line in poi_lines_s))
+            @constraint(model, P_Subs[s, t] == sum(P[line, t] for line in poi_lines_s),
+                base_name = "RealPowerBalance_Substation_$(s)_t$(t)")
+            @constraint(model, Q_Subs[s, t] == sum(Q[line, t] for line in poi_lines_s),
+                base_name = "ReactivePowerBalance_Substation_$(s)_t$(t)")
         end
         
         # ----- 5.2 NODAL POWER BALANCE (DISTRIBUTION BUSES) -----
         for j in Nm1set
             # Find all parent lines feeding bus j
-            # In general: all lines (i,j) where i feeds j
+            # In general: all lines (i,j_bus) where j_bus == j and i feeds j
             # In radial: parent[j] gives the unique parent, so line is (parent[j], j)
-            parent_lines_j = [(i, j) for (i, j) in Lset if (i, j) in keys(rdict_pu) && i == parent[j]]
+            parent_lines_j = [(i_bus, j_bus) for (i_bus, j_bus) in Lset if j_bus == j && (i_bus, j_bus) in keys(rdict_pu) && i_bus == parent[j]]
             
             # Sum over all child lines emanating from bus j
             sum_Pjk = isempty(children[j]) ? 0.0 : sum(P[(j, k), t] for k in children[j])
@@ -853,10 +902,12 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             P_B_j_t = (j in Bset) ? P_B[j, t] : 0.0
             
             # Real power balance: Σ(P_ij - r_ij*ℓ_ij) - Σ P_jk = p_j
-            @constraint(model, sum_Pij_minus_loss - sum_Pjk == p_L_j_t - p_D_j_t - P_B_j_t)
+            @constraint(model, sum_Pij_minus_loss - sum_Pjk == p_L_j_t - p_D_j_t - P_B_j_t,
+                base_name = "RealPowerBalance_Node$(j)_t$(t)")
             
             # Reactive power balance: Σ(Q_ij - x_ij*ℓ_ij) - Σ Q_jk = q_j
-            @constraint(model, sum_Qij_minus_loss - sum_Qjk == q_L_j_t - q_D_j_t)
+            @constraint(model, sum_Qij_minus_loss - sum_Qjk == q_L_j_t - q_D_j_t,
+                base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
         end
         
         # ----- 5.3 VOLTAGE DROP CONSTRAINTS (BFM) -----
@@ -867,29 +918,34 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             
             @constraint(model,
                 v[j, t] == v[i, t] - 2 * (r_ij * P[line, t] + x_ij * Q[line, t]) + 
-                           (r_ij^2 + x_ij^2) * ℓ[line, t])
+                           (r_ij^2 + x_ij^2) * ℓ[line, t],
+                base_name = "VoltageDrop_Line_$(i)_$(j)_t$(t)")
         end
         
-        # ----- 5.4 SOC RELAXATION CONSTRAINTS -----
+        # ----- 5.4 CONIC RELAXATION (BCPF) -----
         for line in Lset
             (i, j) = line
-            @constraint(model, P[line, t]^2 + Q[line, t]^2 <= v[i, t] * ℓ[line, t])
+            @constraint(model, P[line, t]^2 + Q[line, t]^2 <= v[i, t] * ℓ[line, t],
+                base_name = "BCPF_Line_$(i)_$(j)_t$(t)")
         end
         
         # ----- 5.5 VOLTAGE CONSTRAINTS -----
         # Slack substation: fixed voltage
-        @constraint(model, v[slack_substation, t] == 1.05^2)
+        @constraint(model, v[slack_substation, t] == 1.05^2,
+            base_name = "SlackVoltage_$(slack_substation)_t$(t)")
         
         # Non-slack substations: voltage within limits (decision variables)
         for s in Sset
             if s != slack_substation
-                @constraint(model, Vminpu[s]^2 <= v[s, t] <= Vmaxpu[s]^2)
+                @constraint(model, Vminpu[s]^2 <= v[s, t] <= Vmaxpu[s]^2,
+                    base_name = "VoltageLimits_Substation_$(s)_t$(t)")
             end
         end
         
         # Distribution buses: voltage within limits
         for j in Nm1set
-            @constraint(model, Vminpu[j]^2 <= v[j, t] <= Vmaxpu[j]^2)
+            @constraint(model, Vminpu[j]^2 <= v[j, t] <= Vmaxpu[j]^2,
+                base_name = "VoltageLimits_Node$(j)_t$(t)")
         end
         
         # ----- 5.6 PV REACTIVE POWER LIMITS -----
@@ -897,27 +953,35 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             p_D_val = p_D_pu[j, t]
             S_D_R_val = S_D_R[j]
             q_max_t = sqrt(max(0.0, S_D_R_val^2 - p_D_val^2))
-            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t)
+            @constraint(model, -q_max_t <= q_D[j, t] <= q_max_t,
+                base_name = "PV_ReactivePowerLimits_Node$(j)_t$(t)")
         end
         
         # ----- 5.7 BATTERY CONSTRAINTS -----
         for j in Bset
             # SOC trajectory
             if t == 1
-                @constraint(model, B[j, t] == B0_pu[j] - P_B[j, t] * Δt)
+                @constraint(model, B[j, t] == B0_pu[j] - P_B[j, t] * Δt,
+                    base_name = "Battery_SOC_Initial_Node$(j)_t$(t)")
             else
-                @constraint(model, B[j, t] == B[j, t-1] - P_B[j, t] * Δt)
+                @constraint(model, B[j, t] == B[j, t-1] - P_B[j, t] * Δt,
+                    base_name = "Battery_SOC_Dynamics_Node$(j)_t$(t)")
             end
             
             # SOC limits
-            @constraint(model, soc_min[j] * B_R_pu[j] <= B[j, t] <= soc_max[j] * B_R_pu[j])
+            @constraint(model, soc_min[j] * B_R_pu[j] <= B[j, t] <= soc_max[j] * B_R_pu[j],
+                base_name = "Battery_SOC_Limits_Node$(j)_t$(t)")
             
             # Power limits
-            @constraint(model, -P_B_R_pu[j] <= P_B[j, t] <= P_B_R_pu[j])
+            @constraint(model, -P_B_R_pu[j] <= P_B[j, t] <= P_B_R_pu[j],
+                base_name = "Battery_PowerLimits_Node$(j)_t$(t)")
         end
     end
     
     println("Constraints added successfully!")
+    
+    # ========== 5.8 SAVE MODEL TO FILE ==========
+    export_model_to_file(model, "model_formulation_slack_$(slack_substation).txt")
     
     # ========== 6. SOLVE ==========
     println("\n" * "="^80)
@@ -1000,7 +1064,7 @@ println("║"*" "^20*"RUNNING MULTI-POI MPOPF SOLVER"*" "^28*"║")
 println("╚"*"═"^78*"╝")
 
 # Solve with default slack substation using Gurobi
-slack_sub = "1s"
+slack_sub = "3s"
 println("\nTesting with slack substation: $slack_sub")
 println("Using solver: Gurobi")
 
