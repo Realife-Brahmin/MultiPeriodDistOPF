@@ -1015,13 +1015,26 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
         result[:energy_cost] = value(energy_cost)
         result[:battery_cost] = value(battery_cost)
         
-        # Extract substation powers
+        # Extract all decision variables
+        # Substation powers (separate dict for easy access)
         result[:P_Subs] = Dict(s => [value(P_Subs[s, t]) for t in Tset] for s in Sset)
         result[:Q_Subs] = Dict(s => [value(Q_Subs[s, t]) for t in Tset] for s in Sset)
         
-        # Extract voltages (sample)
-        result[:v_subs] = Dict(s => [value(v[s, t]) for t in Tset] for s in Sset)
-        result[:v_dist_sample] = Dict(j => [value(v[j, t]) for t in Tset] for j in Nm1set[1:min(5, length(Nm1set))])
+        # Branch power flows (P, Q, ℓ)
+        result[:P] = Dict(line => [value(P[line, t]) for t in Tset] for line in Lset)
+        result[:Q] = Dict(line => [value(Q[line, t]) for t in Tset] for line in Lset)
+        result[:ℓ] = Dict(line => [value(ℓ[line, t]) for t in Tset] for line in Lset)
+        
+        # Voltage magnitude squared (all buses)
+        result[:v] = Dict(bus => [value(v[bus, t]) for t in Tset] for bus in Nset)
+        result[:v_subs] = Dict(s => [value(v[s, t]) for t in Tset] for s in Sset)  # Substation subset for convenience
+        
+        # Battery variables (if any)
+        result[:P_B] = Dict(j => [value(P_B[j, t]) for t in Tset] for j in Bset)
+        result[:B] = Dict(j => [value(B[j, t]) for t in Tset] for j in Bset)
+        
+        # PV reactive power (if any)
+        result[:q_D] = Dict(j => [value(q_D[j, t]) for t in Tset] for j in Dset)
         
         # Print summary
         println("\nSolution Summary:")
@@ -1048,6 +1061,17 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
                 println("    $s: V = $(round(V_avg, digits=4)) pu (range: [$(round(V_min, digits=4)), $(round(V_max, digits=4))])")
             end
         end
+        
+        # Power balance verification
+        println("\n  Power Balance Verification (t=1):")
+        t = 1
+        total_P_Subs = sum(result[:P_Subs][s][t] for s in Sset) * P_BASE
+        total_load = sum(p_L_pu[j, t] for j in Nm1set) * P_BASE
+        total_losses = sum(rdict_pu[line] * result[:ℓ][line][t] for line in Lset) * P_BASE
+        println("    Total substation power: $(round(total_P_Subs, digits=1)) kW")
+        println("    Total load demand: $(round(total_load, digits=1)) kW")
+        println("    Total network losses: $(round(total_losses, digits=3)) kW")
+        println("    Balance (P_Subs - Load - Losses): $(round(total_P_Subs - total_load - total_losses, digits=6)) kW")
     end
     
     println("="^80)
