@@ -1094,96 +1094,97 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
             end
         end
         
-        # Power balance verification
-        println("\n  Power Balance Verification (t=1):")
-        t = 1
-        total_P_Subs = sum(result[:P_Subs][s][t] for s in Sset) * P_BASE
-        total_load = sum(p_L_pu[j, t] for j in Nm1set) * P_BASE
-        
-        # Compute losses correctly: P_loss = r * ℓ (both in pu), then scale to kW
-        total_losses_pu = sum(rdict_pu[line] * result[:ℓ][line][t] for line in Lset)
-        total_losses = total_losses_pu * P_BASE
-        
-        # Debug: Check a few line losses
-        sample_line_losses = []
-        for line in collect(Lset)[1:min(3, length(Lset))]
-            r_pu = rdict_pu[line]
-            ℓ_val = result[:ℓ][line][t]
-            loss_pu = r_pu * ℓ_val
-            loss_kW = loss_pu * P_BASE
-            push!(sample_line_losses, (line, r_pu, ℓ_val, loss_kW))
-        end
-        
-        println("    Total substation power: $(round(total_P_Subs, digits=1)) kW")
-        println("    Total load demand: $(round(total_load, digits=1)) kW")
-        println("    Total network losses: $(round(total_losses, digits=3)) kW ($(round(total_losses_pu, digits=6)) pu)")
-        println("    Sample line losses:")
-        for (line, r, ℓ, loss) in sample_line_losses
-            println("      Line $line: r=$(round(r, digits=8)) pu, ℓ=$(round(ℓ, digits=6)) pu, loss=$(round(loss, digits=6)) kW")
-        end
-        println("    Balance (P_Subs - Load - Losses): $(round(total_P_Subs - total_load - total_losses, digits=6)) kW")
-        
-        # Topology connectivity check
-        println("\n  Topology Connectivity Check:")
-        println("    Total buses: $(length(Nset)) ($(length(Sset)) substations + $(length(Nm1set)) distribution)")
-        println("    Total lines: $(length(Lset)) ($(length(L1set)) POI + $(length(Lm1set)) distribution)")
-        
-        # Check if each distribution bus is reachable from at least one substation (BFS)
-        reachable_buses = Set{Any}(Sset)
-        changed = true
-        while changed
-            changed = false
-            for line in Lset
-                (bus1, bus2) = line
-                if bus1 in reachable_buses && !(bus2 in reachable_buses)
-                    push!(reachable_buses, bus2)
-                    changed = true
-                elseif bus2 in reachable_buses && !(bus1 in reachable_buses)
-                    push!(reachable_buses, bus1)
-                    changed = true
-                end
-            end
-        end
-        unreachable = setdiff(Set(Nset), reachable_buses)
-        if isempty(unreachable)
-            println("    ✓ All buses are connected")
-        else
-            println("    ✗ WARNING: $(length(unreachable)) unreachable buses: $unreachable")
-        end
-        
-        # Branch flow verification for POI lines
-        println("\n  POI Line Power Flows (t=1):")
-        for (i, j) in L1set
-            P_val = result[:P][(i, j)][t] * P_BASE
-            losses_val = rdict_pu[(i, j)] * result[:ℓ][(i, j)][t] * P_BASE
-            println("    Line ($i → $j): P = $(round(P_val, digits=1)) kW, Losses = $(round(losses_val, digits=3)) kW")
-        end
-        
-        # Check power balance at first few distribution nodes
-        println("\n  Sample Distribution Node Power Balance (t=1):")
-        sample_nodes = Nm1set[1:min(5, length(Nm1set))]
-        for j in sample_nodes
-            # Find parent lines (incoming power)
-            parent_lines_j = [(i_bus, j_bus) for (i_bus, j_bus) in Lset 
-                              if j_bus == j && (i_bus, j_bus) in keys(rdict_pu) && i_bus == parent[j]]
-            
-            # Find child lines (outgoing power)
-            child_lines_j = [(j, k) for k in children[j] if (j, k) in keys(rdict_pu)]
-            
-            # Calculate incoming power (with empty check)
-            P_in = isempty(parent_lines_j) ? 0.0 : sum(result[:P][line][t] - rdict_pu[line] * result[:ℓ][line][t] for line in parent_lines_j)
-            
-            # Calculate outgoing power (with empty check)
-            P_out = isempty(child_lines_j) ? 0.0 : sum(result[:P][line][t] for line in child_lines_j)
-            
-            # Load at this node
-            P_load = p_L_pu[j, t]
-            
-            # Balance
-            balance = P_in - P_out - P_load
-            
-            println("    Node $j: P_in=$(round(P_in*P_BASE, digits=2)) kW, P_out=$(round(P_out*P_BASE, digits=2)) kW, Load=$(round(P_load*P_BASE, digits=2)) kW, Balance=$(round(balance*P_BASE, digits=6)) kW")
-        end
+        # # DIAGNOSTIC OUTPUT - Commented out for production runs
+        # # Power balance verification
+        # println("\n  Power Balance Verification (t=1):")
+        # t = 1
+        # total_P_Subs = sum(result[:P_Subs][s][t] for s in Sset) * P_BASE
+        # total_load = sum(p_L_pu[j, t] for j in Nm1set) * P_BASE
+        # 
+        # # Compute losses correctly: P_loss = r * ℓ (both in pu), then scale to kW
+        # total_losses_pu = sum(rdict_pu[line] * result[:ℓ][line][t] for line in Lset)
+        # total_losses = total_losses_pu * P_BASE
+        # 
+        # # Debug: Check a few line losses
+        # sample_line_losses = []
+        # for line in collect(Lset)[1:min(3, length(Lset))]
+        #     r_pu = rdict_pu[line]
+        #     ℓ_val = result[:ℓ][line][t]
+        #     loss_pu = r_pu * ℓ_val
+        #     loss_kW = loss_pu * P_BASE
+        #     push!(sample_line_losses, (line, r_pu, ℓ_val, loss_kW))
+        # end
+        # 
+        # println("    Total substation power: $(round(total_P_Subs, digits=1)) kW")
+        # println("    Total load demand: $(round(total_load, digits=1)) kW")
+        # println("    Total network losses: $(round(total_losses, digits=3)) kW ($(round(total_losses_pu, digits=6)) pu)")
+        # println("    Sample line losses:")
+        # for (line, r, ℓ, loss) in sample_line_losses
+        #     println("      Line $line: r=$(round(r, digits=8)) pu, ℓ=$(round(ℓ, digits=6)) pu, loss=$(round(loss, digits=6)) kW")
+        # end
+        # println("    Balance (P_Subs - Load - Losses): $(round(total_P_Subs - total_load - total_losses, digits=6)) kW")
+        # 
+        # # Topology connectivity check
+        # println("\n  Topology Connectivity Check:")
+        # println("    Total buses: $(length(Nset)) ($(length(Sset)) substations + $(length(Nm1set)) distribution)")
+        # println("    Total lines: $(length(Lset)) ($(length(L1set)) POI + $(length(Lm1set)) distribution)")
+        # 
+        # # Check if each distribution bus is reachable from at least one substation (BFS)
+        # reachable_buses = Set{Any}(Sset)
+        # changed = true
+        # while changed
+        #     changed = false
+        #     for line in Lset
+        #         (bus1, bus2) = line
+        #         if bus1 in reachable_buses && !(bus2 in reachable_buses)
+        #             push!(reachable_buses, bus2)
+        #             changed = true
+        #         elseif bus2 in reachable_buses && !(bus1 in reachable_buses)
+        #             push!(reachable_buses, bus1)
+        #             changed = true
+        #         end
+        #     end
+        # end
+        # unreachable = setdiff(Set(Nset), reachable_buses)
+        # if isempty(unreachable)
+        #     println("    ✓ All buses are connected")
+        # else
+        #     println("    ✗ WARNING: $(length(unreachable)) unreachable buses: $unreachable")
+        # end
+        # 
+        # # Branch flow verification for POI lines
+        # println("\n  POI Line Power Flows (t=1):")
+        # for (i, j) in L1set
+        #     P_val = result[:P][(i, j)][t] * P_BASE
+        #     losses_val = rdict_pu[(i, j)] * result[:ℓ][(i, j)][t] * P_BASE
+        #     println("    Line ($i → $j): P = $(round(P_val, digits=1)) kW, Losses = $(round(losses_val, digits=3)) kW")
+        # end
+        # 
+        # # Check power balance at first few distribution nodes
+        # println("\n  Sample Distribution Node Power Balance (t=1):")
+        # sample_nodes = Nm1set[1:min(5, length(Nm1set))]
+        # for j in sample_nodes
+        #     # Find parent lines (incoming power)
+        #     parent_lines_j = [(i_bus, j_bus) for (i_bus, j_bus) in Lset 
+        #                       if j_bus == j && (i_bus, j_bus) in keys(rdict_pu) && i_bus == parent[j]]
+        #     
+        #     # Find child lines (outgoing power)
+        #     child_lines_j = [(j, k) for k in children[j] if (j, k) in keys(rdict_pu)]
+        #     
+        #     # Calculate incoming power (with empty check)
+        #     P_in = isempty(parent_lines_j) ? 0.0 : sum(result[:P][line][t] - rdict_pu[line] * result[:ℓ][line][t] for line in parent_lines_j)
+        #     
+        #     # Calculate outgoing power (with empty check)
+        #     P_out = isempty(child_lines_j) ? 0.0 : sum(result[:P][line][t] for line in child_lines_j)
+        #     
+        #     # Load at this node
+        #     P_load = p_L_pu[j, t]
+        #     
+        #     # Balance
+        #     balance = P_in - P_out - P_load
+        #     
+        #     println("    Node $j: P_in=$(round(P_in*P_BASE, digits=2)) kW, P_out=$(round(P_out*P_BASE, digits=2)) kW, Load=$(round(P_load*P_BASE, digits=2)) kW, Balance=$(round(balance*P_BASE, digits=6)) kW")
+        # end
     end
     
     println("="^80)
