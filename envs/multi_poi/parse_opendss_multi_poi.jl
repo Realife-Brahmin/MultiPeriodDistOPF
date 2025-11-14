@@ -268,12 +268,13 @@ function parse_network_topology!(data::Dict)
     data[:Sset] = Sset
     data[:Nset] = Nset
     data[:Nm1set] = Nm1set
-    data[:N] = N_dist  # Total distribution buses
-    data[:num_dist_buses] = length(Nm1set)
+    data[:N] = length(Nset)  # Total number of buses (substations + distribution)
+    data[:N_sub] = length(Sset)  # Number of substation buses
+    data[:N_dist] = length(Nm1set)  # Number of distribution buses only
     
-    println("  Substation buses (Sset): $(length(Sset))")
-    println("  Distribution buses (Nm1set): $(length(Nm1set)) ($(minimum(Nm1set)) to $(maximum(Nm1set)))")
-    println("  Total buses (Nset): $(length(Nset)) (substations + distribution)")
+    println("  Substation buses (Sset): $(data[:N_sub])")
+    println("  Distribution buses (Nm1set): $(data[:N_dist]) ($(minimum(Nm1set)) to $(maximum(Nm1set)))")
+    println("  Total buses N = |Nset|: $(data[:N]) (substations + distribution)")
     
     # Get all line names
     line_names = OpenDSSDirect.Lines.AllNames()

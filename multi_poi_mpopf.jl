@@ -1,6 +1,6 @@
 # multi_poi_mpopf.jl - Multi-Period Optimal Power Flow for Multi-POI systems
 # 
-# Uses OpenDSS parser to load system data from ieee123_5poi_1ph
+# Self-contained script that includes parser and loads system data from ieee123_5poi_1ph
 #
 # Onetime script - uncomment if needed, comment once finished
 import Pkg
@@ -20,8 +20,542 @@ using Statistics
 using Plots  # For input curve plotting
 using OpenDSSDirect
 
-# Include the multi-POI parser
-include(joinpath(@__DIR__, "envs", "multi_poi", "parse_opendss_multi_poi.jl"))
+# ============================================================================
+# PARSER FUNCTION (inline)
+# ============================================================================
+
+"""
+    parse_system_from_dss_multi_poi(systemName, T; kwargs...)
+
+Parse multi-POI distribution system from OpenDSS files.
+
+Loads IEEE 123-bus 5-POI system with substations at network vertices.
+
+Returns data dictionary with all network sets properly configured for MPOPF:
+- Sset: Substation buses ["1s", "2s", "3s", "4s", "5s"]
+- Nset: ALL buses (substations + distribution) [133 total]
+- Nm1set: Distribution buses only [1, 2, ..., 128]
+- Lset: ALL lines (POI + distribution) [132 total]
+- L1set: POI connection lines [5 lines]
+- Lm1set: Distribution lines only [127 lines]
+"""
+function parse_system_from_dss_multi_poi(systemName::String, T::Int; kwargs...)
+    # Load the system in OpenDSS
+    data = Dict{Symbol, Any}()
+    
+    # Determine path to OpenDSS files
+    rawDataFolderPath = get(kwargs, :rawDataFolderPath, nothing)
+    if isnothing(rawDataFolderPath)
+        rawDataFolderPath = joinpath(@__DIR__, "rawData")
+    end
+    
+    dssFilePath = joinpath(rawDataFolderPath, systemName, "Master.dss")
+    
+    if !isfile(dssFilePath)
+        error("OpenDSS file not found: $dssFilePath")
+    end
+    
+    # Clear any existing circuit and load new one
+    OpenDSSDirect.Text.Command("clear")
+    OpenDSSDirect.Text.Command("Redirect $(dssFilePath)")
+    OpenDSSDirect.Solution.Solve()
+    
+    println("✓ Loaded system: $systemName from $dssFilePath")
+    
+    # Store system name and time horizon
+    data[:systemName] = systemName
+    data[:T] = T
+    data[:Tset] = 1:T
+    
+    # Parse multi-POI elements (substations and POI connections)
+    parse_multi_poi_elements!(data)
+    
+    # Parse network topology (all buses and lines)
+    parse_network_topology!(data)
+    
+    # Extract parameters from kwargs
+    kVA_B = get(kwargs, :kVA_B, 1000.0)
+    kV_B = get(kwargs, :kV_B, 11.547)
+    LoadShapeLoad = get(kwargs, :LoadShapeLoad, ones(T))
+    LoadShapePV = get(kwargs, :LoadShapePV, zeros(T))
+    LoadShapeCost_dict = get(kwargs, :LoadShapeCost_dict, Dict(i => 0.08 * ones(T) for i in 1:5))
+    C_B = get(kwargs, :C_B, 1e-6 * 0.08)
+    delta_t_h = get(kwargs, :delta_t_h, 1.0)
+    
+    data[:kVA_B] = kVA_B
+    data[:kV_B] = kV_B
+    data[:delta_t_h] = delta_t_h
+    
+    # Parse line impedances
+    parse_line_impedances!(data, kVA_B, kV_B)
+    
+    # Parse loads
+    parse_loads!(data, T, LoadShapeLoad, kVA_B)
+    
+    # Parse PV generators
+    parse_pv_generators!(data, T, LoadShapePV, kVA_B)
+    
+    # Parse batteries
+    parse_batteries!(data, T, kVA_B)
+    
+    # Parse voltage limits
+    parse_voltage_limits!(data)
+    
+    # Store load shapes and cost data
+    data[:LoadShapeLoad] = LoadShapeLoad
+    data[:LoadShapePV] = LoadShapePV
+    
+    # Store cost profiles for each substation
+    for (sub_idx, cost_profile) in LoadShapeCost_dict
+        data[Symbol("LoadShapeCost_$sub_idx")] = cost_profile
+    end
+    data[:LoadShapeCost_dict] = LoadShapeCost_dict
+    data[:C_B] = C_B
+    
+    println("\n" * "="^80)
+    println("✓ PARSING COMPLETE")
+    println("="^80)
+    
+    return data
+end
+
+"""Helper function to identify substation buses and POI lines"""
+function parse_multi_poi_elements!(data::Dict)
+    println("\n--- Parsing Multi-POI Elements ---")
+    
+    # Get all bus names
+    all_buses = OpenDSSDirect.Circuit.AllBusNames()
+    
+    # Identify substation buses (buses ending with 's')
+    substation_buses = String[]
+    substation_bus_numbers = Int[]
+    
+    for bus_name in all_buses
+        base_name = split(bus_name, ".")[1]
+        if endswith(base_name, "s")
+            push!(substation_buses, base_name)
+            # Extract number (e.g., "1s" -> 1)
+            bus_num = parse(Int, base_name[1:end-1])
+            push!(substation_bus_numbers, bus_num)
+        end
+    end
+    
+    # Sort by bus number
+    perm = sortperm(substation_bus_numbers)
+    substation_buses = substation_buses[perm]
+    substation_bus_numbers = substation_bus_numbers[perm]
+    
+    num_subs = length(substation_buses)
+    println("  Number of substations: $num_subs")
+    for (i, (bus, num)) in enumerate(zip(substation_buses, substation_bus_numbers))
+        println("    Substation $i: Bus $bus (number $num)")
+    end
+    
+    # Identify POI connection lines
+    all_lines = OpenDSSDirect.Lines.AllNames()
+    poi_lines = String[]
+    poi_connections = Tuple{String, Int}[]
+    
+    for line_name in all_lines
+        if startswith(lowercase(line_name), "poi")
+            push!(poi_lines, line_name)
+            
+            # Get connected buses
+            OpenDSSDirect.Lines.Name(line_name)
+            buses = OpenDSSDirect.CktElement.BusNames()
+            bus1_base = split(buses[1], ".")[1]
+            bus2_base = split(buses[2], ".")[1]
+            
+            # Determine which is substation and which is distribution
+            if endswith(bus1_base, "s")
+                sub_bus = bus1_base
+                dist_bus = parse(Int, bus2_base)
+            else
+                sub_bus = bus2_base
+                dist_bus = parse(Int, bus1_base)
+            end
+            
+            push!(poi_connections, (sub_bus, dist_bus))
+        end
+    end
+    
+    println("\n  POI Connection Lines: $num_subs")
+    for (line_name, (sub_bus, dist_bus)) in zip(poi_lines, poi_connections)
+        println("    $line_name: $sub_bus → $dist_bus")
+    end
+    
+    # Store in data dictionary
+    data[:num_substations] = num_subs
+    data[:substation_buses] = substation_buses
+    data[:substation_bus_numbers] = substation_bus_numbers
+    data[:poi_lines] = poi_lines
+    data[:poi_connections] = poi_connections
+end
+
+"""Helper function to parse network topology"""
+function parse_network_topology!(data::Dict)
+    println("\n--- Parsing Network Topology ---")
+    
+    # Get all bus names from OpenDSS
+    bus_names = OpenDSSDirect.Circuit.AllBusNames()
+    
+    # Separate substation and distribution buses
+    substation_buses = data[:substation_buses]
+    dist_bus_numbers = Int[]
+    
+    for name in bus_names
+        base_name = split(name, ".")[1]
+        if !endswith(base_name, "s")
+            bus_num = parse(Int, base_name)
+            push!(dist_bus_numbers, bus_num)
+        end
+    end
+    
+    dist_bus_numbers = sort(unique(dist_bus_numbers))
+    
+    # Create network sets
+    Sset = substation_buses
+    Nset = Vector{Any}(vcat(substation_buses, dist_bus_numbers))
+    Nm1set = dist_bus_numbers
+    
+    data[:Sset] = Sset
+    data[:Nset] = Nset
+    data[:Nm1set] = Nm1set
+    data[:N] = length(Nset)
+    data[:N_sub] = length(Sset)
+    data[:N_dist] = length(Nm1set)
+    
+    println("  Substation buses (Sset): $(data[:N_sub])")
+    println("  Distribution buses (Nm1set): $(data[:N_dist]) ($(minimum(Nm1set)) to $(maximum(Nm1set)))")
+    println("  Total buses N = |Nset|: $(data[:N]) (substations + distribution)")
+    
+    # Parse lines
+    line_names = OpenDSSDirect.Lines.AllNames()
+    Lset = []
+    L1set = []
+    Lm1set = []
+    
+    parent = Dict{Any, Union{Nothing, Any}}()
+    children = Dict{Any, Vector{Any}}()
+    
+    for bus in Nset
+        children[bus] = []
+    end
+    
+    for line_name in line_names
+        OpenDSSDirect.Lines.Name(line_name)
+        buses = OpenDSSDirect.CktElement.BusNames()
+        bus1_base = split(buses[1], ".")[1]
+        bus2_base = split(buses[2], ".")[1]
+        
+        bus1 = endswith(bus1_base, "s") ? bus1_base : parse(Int, bus1_base)
+        bus2 = endswith(bus2_base, "s") ? bus2_base : parse(Int, bus2_base)
+        
+        line_tuple = (bus1, bus2)
+        push!(Lset, line_tuple)
+        
+        is_poi_line = startswith(lowercase(line_name), "poi")
+        
+        if is_poi_line
+            push!(L1set, line_tuple)
+            if endswith(string(bus1), "s")
+                parent[bus1] = nothing
+                parent[bus2] = bus1
+                push!(children[bus1], bus2)
+            else
+                parent[bus2] = nothing
+                parent[bus1] = bus2
+                push!(children[bus2], bus1)
+            end
+        else
+            push!(Lm1set, line_tuple)
+            if !haskey(parent, bus2) || isnothing(parent[bus2])
+                parent[bus2] = bus1
+                push!(children[bus1], bus2)
+            elseif !haskey(parent, bus1) || isnothing(parent[bus1])
+                parent[bus1] = bus2
+                push!(children[bus2], bus1)
+            end
+        end
+    end
+    
+    data[:Lset] = Lset
+    data[:L1set] = L1set
+    data[:Lm1set] = Lm1set
+    data[:parent] = parent
+    data[:children] = children
+    data[:m] = length(Lset)
+    data[:m_poi] = length(L1set)
+    data[:m_dist] = length(Lm1set)
+    
+    println("  POI lines (L1set): $(length(L1set))")
+    println("  Distribution lines (Lm1set): $(length(Lm1set))")
+    println("  Total lines (Lset): $(length(Lset))")
+    
+    println("\n  POI Line Details:")
+    for (bus1, bus2) in L1set
+        println("    $bus1 → $bus2")
+    end
+end
+
+"""Helper function to parse line impedances"""
+function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
+    println("\n--- Parsing Line Impedances ---")
+    
+    Z_B = kV_B^2 / (kVA_B / 1000)
+    
+    rdict_pu = Dict{Any, Float64}()
+    xdict_pu = Dict{Any, Float64}()
+    poi_rdict = Dict{String, Float64}()
+    poi_xdict = Dict{String, Float64}()
+    
+    line_names = OpenDSSDirect.Lines.AllNames()
+    
+    for line_name in line_names
+        OpenDSSDirect.Lines.Name(line_name)
+        buses = OpenDSSDirect.CktElement.BusNames()
+        bus1_base = split(buses[1], ".")[1]
+        bus2_base = split(buses[2], ".")[1]
+        
+        bus1 = endswith(bus1_base, "s") ? bus1_base : parse(Int, bus1_base)
+        bus2 = endswith(bus2_base, "s") ? bus2_base : parse(Int, bus2_base)
+        
+        R_ohm = OpenDSSDirect.Lines.RMatrix()[1]
+        X_ohm = OpenDSSDirect.Lines.XMatrix()[1]
+        
+        R_pu = R_ohm / Z_B
+        X_pu = X_ohm / Z_B
+        
+        line_tuple = (bus1, bus2)
+        rdict_pu[line_tuple] = R_pu
+        xdict_pu[line_tuple] = X_pu
+        
+        if startswith(lowercase(line_name), "poi")
+            sub_bus = endswith(string(bus1), "s") ? bus1 : bus2
+            poi_rdict[sub_bus] = R_ohm
+            poi_xdict[sub_bus] = X_ohm
+        end
+    end
+    
+    data[:Z_B] = Z_B
+    data[:rdict_pu] = rdict_pu
+    data[:xdict_pu] = xdict_pu
+    data[:poi_rdict] = poi_rdict
+    data[:poi_xdict] = poi_xdict
+    
+    println("  Base impedance Z_B: $(round(Z_B, digits=4)) Ω")
+    println("  Total lines with impedances: $(length(rdict_pu))")
+    println("  Distribution lines (Lm1set): $(data[:m_dist])")
+    println("  POI lines (L1set): $(data[:m_poi])")
+    
+    println("\n  POI Line Impedances:")
+    for sub_bus in data[:substation_buses]
+        R_ohm = get(poi_rdict, sub_bus, NaN)
+        X_ohm = get(poi_xdict, sub_bus, NaN)
+        R_pu = R_ohm / Z_B
+        X_pu = X_ohm / Z_B
+        println("    $sub_bus: R=$(round(R_ohm, digits=8)) Ω ($(round(R_pu, digits=10)) pu), X=$(round(X_ohm, digits=8)) Ω ($(round(X_pu, digits=10)) pu)")
+    end
+end
+
+"""Helper function to parse loads"""
+function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
+    println("\n--- Parsing Loads ---")
+    
+    load_names = OpenDSSDirect.Loads.AllNames()
+    NLset = Int[]
+    p_L_R_pu = Dict{Int, Float64}()
+    q_L_R_pu = Dict{Int, Float64}()
+    
+    for load_name in load_names
+        OpenDSSDirect.Loads.Name(load_name)
+        bus_full = OpenDSSDirect.CktElement.BusNames()[1]
+        bus_num = parse(Int, split(bus_full, ".")[1])
+        
+        kW = OpenDSSDirect.Loads.kW()
+        kVAR = OpenDSSDirect.Loads.kvar()
+        
+        p_base_pu = kW / kVA_B
+        q_base_pu = kVAR / kVA_B
+        
+        if haskey(p_L_R_pu, bus_num)
+            p_L_R_pu[bus_num] += p_base_pu
+            q_L_R_pu[bus_num] += q_base_pu
+        else
+            p_L_R_pu[bus_num] = p_base_pu
+            q_L_R_pu[bus_num] = q_base_pu
+            push!(NLset, bus_num)
+        end
+    end
+    
+    Nm1set = data[:Nm1set]
+    max_bus = maximum(Nm1set)
+    p_L_pu = zeros(max_bus, T)
+    q_L_pu = zeros(max_bus, T)
+    
+    for bus in NLset
+        for t in 1:T
+            p_L_pu[bus, t] = p_L_R_pu[bus] * LoadShapeLoad[t]
+            q_L_pu[bus, t] = q_L_R_pu[bus] * LoadShapeLoad[t]
+        end
+    end
+    
+    data[:NLset] = sort(NLset)
+    data[:N_L] = length(NLset)
+    data[:p_L_pu] = p_L_pu
+    data[:q_L_pu] = q_L_pu
+    data[:p_L_R_pu] = p_L_R_pu
+    data[:q_L_R_pu] = q_L_R_pu
+    
+    total_P_kW = sum(values(p_L_R_pu)) * kVA_B
+    total_Q_kVAr = sum(values(q_L_R_pu)) * kVA_B
+    
+    println("  Buses with loads: $(data[:N_L])")
+    println("  Total base load: $(round(total_P_kW, digits=1)) kW, $(round(total_Q_kVAr, digits=1)) kVAr")
+end
+
+"""Helper function to parse PV generators"""
+function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Float64)
+    println("\n--- Parsing PV Systems ---")
+    
+    gen_names = OpenDSSDirect.PVsystems.AllNames()
+    Dset = Int[]
+    p_D_R_pu = Dict{Int, Float64}()
+    S_D_R = Dict{Int, Float64}()
+    
+    Nm1set = data[:Nm1set]
+    max_bus = maximum(Nm1set)
+    p_D_pu = zeros(max_bus, T)
+    
+    if !isempty(gen_names) && gen_names[1] != "NONE"
+        for gen_name in gen_names
+            OpenDSSDirect.PVsystems.Name(gen_name)
+            bus_full = OpenDSSDirect.CktElement.BusNames()[1]
+            bus_num = parse(Int, split(bus_full, ".")[1])
+            
+            kW_rated = OpenDSSDirect.PVsystems.kW()
+            kVA_rated = OpenDSSDirect.PVsystems.kVARated()
+            
+            p_rated_pu = kW_rated / kVA_B
+            S_rated_pu = kVA_rated / kVA_B
+            
+            if haskey(p_D_R_pu, bus_num)
+                p_D_R_pu[bus_num] += p_rated_pu
+                S_D_R[bus_num] += S_rated_pu
+            else
+                p_D_R_pu[bus_num] = p_rated_pu
+                S_D_R[bus_num] = S_rated_pu
+            end
+            
+            if !(bus_num in Dset)
+                push!(Dset, bus_num)
+            end
+        end
+        
+        for bus in Dset
+            for t in 1:T
+                p_D_pu[bus, t] = p_D_R_pu[bus] * LoadShapePV[t]
+            end
+        end
+        
+        println("  PV systems found: $(length(Dset))")
+    else
+        println("  No PV systems found")
+    end
+    
+    data[:Dset] = sort(Dset)
+    data[:n_D] = length(Dset)
+    data[:p_D_pu] = p_D_pu
+    data[:p_D_R_pu] = p_D_R_pu
+    data[:S_D_R] = S_D_R
+end
+
+"""Helper function to parse batteries"""
+function parse_batteries!(data::Dict, T::Int, kVA_B::Float64)
+    println("\n--- Parsing Battery Storage ---")
+    
+    storage_names = OpenDSSDirect.Storages.AllNames()
+    Bset = Int[]
+    B0_pu = Dict{Int, Float64}()
+    B_R = Dict{Int, Float64}()
+    B_R_pu = Dict{Int, Float64}()
+    P_B_R = Dict{Int, Float64}()
+    P_B_R_pu = Dict{Int, Float64}()
+    S_B_R_pu = Dict{Int, Float64}()
+    soc_min = Dict{Int, Float64}()
+    soc_max = Dict{Int, Float64}()
+    
+    E_BASE = kVA_B * 1.0
+    
+    if !isempty(storage_names) && storage_names[1] != "NONE"
+        for storage_name in storage_names
+            OpenDSSDirect.Storages.Name(storage_name)
+            bus_full = OpenDSSDirect.CktElement.BusNames()[1]
+            bus_num = parse(Int, split(bus_full, ".")[1])
+            
+            kWh_stored = OpenDSSDirect.Storages.kWhStored()
+            kWh_rated = OpenDSSDirect.Storages.kWhRated()
+            kW_rated = OpenDSSDirect.Storages.kW()
+            kVA_rated_storage = OpenDSSDirect.Storages.kVA()
+            
+            B0_pu[bus_num] = kWh_stored / E_BASE
+            B_R[bus_num] = kWh_rated
+            B_R_pu[bus_num] = kWh_rated / E_BASE
+            P_B_R[bus_num] = kW_rated
+            P_B_R_pu[bus_num] = kW_rated / kVA_B
+            S_B_R_pu[bus_num] = kVA_rated_storage / kVA_B
+            
+            soc_min[bus_num] = 0.2
+            soc_max[bus_num] = 1.0
+            
+            push!(Bset, bus_num)
+        end
+        
+        println("  Battery storage found: $(length(Bset))")
+    else
+        println("  No battery storage found")
+    end
+    
+    data[:Bset] = sort(Bset)
+    data[:n_B] = length(Bset)
+    data[:B0_pu] = B0_pu
+    data[:B_R] = B_R
+    data[:B_R_pu] = B_R_pu
+    data[:P_B_R] = P_B_R
+    data[:P_B_R_pu] = P_B_R_pu
+    data[:S_B_R_pu] = S_B_R_pu
+    data[:soc_min] = soc_min
+    data[:soc_max] = soc_max
+end
+
+"""Helper function to parse voltage limits"""
+function parse_voltage_limits!(data::Dict)
+    println("\n--- Parsing Voltage Limits ---")
+    
+    Vminpu = Dict{Any, Float64}()
+    Vmaxpu = Dict{Any, Float64}()
+    
+    for bus in data[:Nset]
+        Vminpu[bus] = 0.95
+        Vmaxpu[bus] = 1.05
+    end
+    
+    Vminpu_sub = Dict{String, Float64}()
+    Vmaxpu_sub = Dict{String, Float64}()
+    for sub_bus in data[:Sset]
+        Vminpu_sub[sub_bus] = 0.95
+        Vmaxpu_sub[sub_bus] = 1.05
+    end
+    
+    data[:Vminpu] = Vminpu
+    data[:Vmaxpu] = Vmaxpu
+    data[:Vminpu_sub] = Vminpu_sub
+    data[:Vmaxpu_sub] = Vmaxpu_sub
+    
+    println("  Voltage limits for all buses: [0.95, 1.05] pu")
+    println("  Substation buses ($(length(data[:Sset]))): $(data[:Sset])")
+    println("  Distribution buses ($(length(data[:Nm1set]))): $(minimum(data[:Nm1set])) to $(maximum(data[:Nm1set]))")
+end
 
 # ============================================================================
 # SYSTEM PARAMETERS
