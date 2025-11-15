@@ -572,6 +572,7 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
             p_rated_pu = kW_rated / kVA_B
             S_rated_pu = kVA_rated / kVA_B
             
+            # Aggregate if multiple PVs on same bus
             if haskey(p_D_R_pu, bus_num)
                 p_D_R_pu[bus_num] += p_rated_pu
                 S_D_R[bus_num] += S_rated_pu
@@ -580,9 +581,7 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
                 S_D_R[bus_num] = S_rated_pu
             end
             
-            if !(bus_num in Dset)
-                push!(Dset, bus_num)
-            end
+            push!(Dset, bus_num)
         end
         
         for bus in Dset
@@ -591,12 +590,12 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
             end
         end
         
-        println("  PV systems found: $(length(Dset))")
+        println("  PV systems found: $(length(unique(Dset)))")
     else
         println("  No PV systems found")
     end
     
-    data[:Dset] = sort(Dset)
+    data[:Dset] = sort(unique(Dset))
     data[:n_D] = length(Dset)
     data[:p_D_pu] = p_D_pu
     data[:p_D_R_pu] = p_D_R_pu
@@ -626,30 +625,37 @@ function parse_batteries!(data::Dict, T::Int, kVA_B::Float64)
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
             bus_num = parse(Int, split(bus_full, ".")[1])
             
-            kWh_stored = OpenDSSDirect.Storages.kWhStored()
-            kWh_rated = OpenDSSDirect.Storages.kWhRated()
-            kW_rated = OpenDSSDirect.Storages.kW()
-            kVA_rated_storage = OpenDSSDirect.Storages.kVA()
+            # Use Text.Command for reliable parameter queries (OpenDSS quirk)
+            kWh_rated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.kWhrated"))
+            kW_rated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.kWrated"))
+            kVA_rated_storage = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.kva"))
+            pct_stored = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.%stored"))
+            pct_reserve = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.%reserve"))
             
-            B0_pu[bus_num] = kWh_stored / E_BASE
+            # Convert to per-unit
             B_R[bus_num] = kWh_rated
             B_R_pu[bus_num] = kWh_rated / E_BASE
             P_B_R[bus_num] = kW_rated
             P_B_R_pu[bus_num] = kW_rated / kVA_B
             S_B_R_pu[bus_num] = kVA_rated_storage / kVA_B
             
-            soc_min[bus_num] = 0.2
-            soc_max[bus_num] = 1.0
+            # Initial SOC from %stored parameter
+            B0_kWh = kWh_rated * (pct_stored / 100.0)
+            B0_pu[bus_num] = B0_kWh / E_BASE
+            
+            # SOC limits from %reserve parameter
+            soc_min[bus_num] = pct_reserve / 100.0
+            soc_max[bus_num] = 0.95  # Default max SOC
             
             push!(Bset, bus_num)
         end
         
-        println("  Battery storage found: $(length(Bset))")
+        println("  Battery storage found: $(length(unique(Bset)))")
     else
         println("  No battery storage found")
     end
     
-    data[:Bset] = sort(Bset)
+    data[:Bset] = sort(unique(Bset))
     data[:n_B] = length(Bset)
     data[:B0_pu] = B0_pu
     data[:B_R] = B_R
@@ -763,7 +769,22 @@ else
     LoadShapeCost_dict[5] = fill(0.15, T)  # Constant at mid-level
 end
 
-LoadShapePV = zeros(T)  # No PV for now
+# Solar PV generation profile (simple bell curve)
+# Zero from 6PM (hour 18) to 6AM (hour 6), bell-shaped during daylight
+LoadShapePV = zeros(T)
+for t in 1:T
+    if 7 <= t <= 18  # Hours 7-18: daylight hours (6AM-6PM)
+        # Bell-shaped curve: peak at noon (hour 12-13)
+        # Using cosine curve for smooth bell shape
+        hour_from_sunrise = t - 7  # 0 at 6AM, 11 at 5PM
+        hours_of_sun = 12  # 12 hours of sunlight
+        # Cosine gives 1.0 at center (noon), 0.0 at edges (sunrise/sunset)
+        LoadShapePV[t] = 0.5 * (1 + cos(π * (hour_from_sunrise - hours_of_sun/2) / (hours_of_sun/2)))
+    else
+        LoadShapePV[t] = 0.0  # Night time (6PM-6AM)
+    end
+end
+
 C_B = 1e-6 * 0.08
 
 # ============================================================================
@@ -3288,6 +3309,17 @@ for slack_sub in sort(collect(keys(results_by_slack)))
     end
 end
 
+# Save results to global variables for easy inspection
+global results_mpopf = results_by_slack
+global data_mpopf = data
+println("\n" * "="^80)
+println(Crayon(foreground = :light_green, bold = true)("✓ Results saved to global variables:"))
+println("  - results_mpopf: Dictionary with keys '1s', '2s', '3s', '4s', '5s'")
+println("  - data_mpopf: System data dictionary")
+println("\nQuick access examples:")
+println("  results_mpopf[\"1s\"][:P_Subs][\"1s\"]  # Substation 1s power (24-hour vector)")
+println("  results_mpopf[\"1s\"][:v][67]          # Voltage at bus 67 (24-hour vector)")
+println("  results_mpopf[\"1s\"][:objective]      # Total cost for slack=1s")
 println("="^80)
 
 =#
