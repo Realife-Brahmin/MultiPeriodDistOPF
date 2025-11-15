@@ -1602,25 +1602,28 @@ for slack_sub in slack_substations
     println(title_crayon("DETAILED RESULTS: SLACK = $slack_sub"))
     println("="^80)
     
-    # Power dispatch summary (time-averaged)
-    println("\nSubstation Power Dispatch (time-averaged):")
+    # Power dispatch summary
+    header_crayon = Crayon(foreground = :white, bold = true)
+    println(header_crayon("\nSubstation Power Dispatch (total over horizon):"))
     for s in sort(collect(data[:Sset]))
-        P_avg_kW = mean(result[:P_Subs][s]) * data[:kVA_B]
-        Q_avg_kVAr = mean(result[:Q_Subs][s]) * data[:kVA_B]
+        P_total_kW = sum(result[:P_Subs][s]) * data[:kVA_B]
+        Q_total_kVAr = sum(result[:Q_Subs][s]) * data[:kVA_B]
         P_min_kW = minimum(result[:P_Subs][s]) * data[:kVA_B]
         P_max_kW = maximum(result[:P_Subs][s]) * data[:kVA_B]
+        Q_min_kVAr = minimum(result[:Q_Subs][s]) * data[:kVA_B]
+        Q_max_kVAr = maximum(result[:Q_Subs][s]) * data[:kVA_B]
         
         if s == slack_sub
             slack_marker = Crayon(foreground = :green, bold = true)(" (SLACK)")
-            print("  $s: P = $(round(P_avg_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))]")
+            print("  $s: P = $(round(P_total_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))], Q = $(round(Q_total_kVAr, digits=1)) kVAr [$(round(Q_min_kVAr, digits=1)), $(round(Q_max_kVAr, digits=1))]")
             println(slack_marker)
         else
-            println("  $s: P = $(round(P_avg_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))], Q = $(round(Q_avg_kVAr, digits=1)) kVAr")
+            println("  $s: P = $(round(P_total_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))], Q = $(round(Q_total_kVAr, digits=1)) kVAr [$(round(Q_min_kVAr, digits=1)), $(round(Q_max_kVAr, digits=1))]")
         end
     end
     
-    # Voltage summary
-    println("\nVoltage Statistics (distribution buses, time-averaged):")
+    # Distribution bus voltage summary
+    println(header_crayon("\nVoltage Statistics (distribution buses, time-averaged):"))
     v_vals = [mean(result[:v][bus]) for bus in data[:Nm1set]]
     V_avg = mean(sqrt.(v_vals))
     V_min = minimum(sqrt.(v_vals))
@@ -1643,16 +1646,18 @@ for slack_sub in slack_substations
     P_loss_kW = P_loss_total * data[:kVA_B]
     Q_loss_kVAr = Q_loss_total * data[:kVA_B]
     
-    println("\nLine Losses (time-averaged):")
+    println(header_crayon("\nLine Losses (time-averaged):"))
     println("  Real: $(round(P_loss_kW, digits=1)) kW")
     println("  Reactive: $(round(Q_loss_kVAr, digits=1)) kVAr")
     
     # Angle statistics
-    println("\nVoltage Angle Statistics (non-slack substations):")
+    println(header_crayon("\nVoltage Angle Statistics (substations):"))
     angle_results = result[:angles]
     for s in sort(collect(data[:Sset]))
         if s == slack_sub
-            println("  $s: θ = 0.0° (slack reference)")
+            slack_marker = Crayon(foreground = :green, bold = true)(" (SLACK)")
+            print("  $s: θ = 0.0° (slack reference)")
+            println(slack_marker)
         else
             if haskey(angle_results[:median_angles_deg], s)
                 median_angle = angle_results[:median_angles_deg][s]
@@ -1663,6 +1668,23 @@ for slack_sub in slack_substations
         end
     end
     println("  Total angle deviation (RMS): $(round(angle_results[:total_deviation_deg], digits=3))°")
+    
+    # Voltage magnitude statistics for substations
+    println(header_crayon("\nVoltage Magnitude Statistics (substations):"))
+    for s in sort(collect(data[:Sset]))
+        V_vals = sqrt.(result[:v][s])
+        V_avg = mean(V_vals)
+        V_min = minimum(V_vals)
+        V_max = maximum(V_vals)
+        
+        if s == slack_sub
+            slack_marker = Crayon(foreground = :green, bold = true)(" (SLACK)")
+            print("  $s: V_avg = $(round(V_avg, digits=4)) pu, range = [$(round(V_min, digits=4)), $(round(V_max, digits=4))] pu")
+            println(slack_marker)
+        else
+            println("  $s: V_avg = $(round(V_avg, digits=4)) pu, range = [$(round(V_min, digits=4)), $(round(V_max, digits=4))] pu")
+        end
+    end
     
     println("\nObjective Value: \$$(round(result[:objective], digits=2))")
     println("Solve Time: $(round(result[:solve_time], digits=2)) seconds")
