@@ -579,19 +579,19 @@ function parse_voltage_limits!(data::Dict)
     Vmaxpu = Dict{Any, Float64}()
     
     for bus in data[:Nset]
-        Vminpu[bus] = 0.95
-        # Vminpu[bus] = 0.90  # RELAXED VERSION - commented out
-        Vmaxpu[bus] = 1.05
-        # Vmaxpu[bus] = 1.10  # RELAXED VERSION - commented out
+        # Vminpu[bus] = 0.95
+        Vminpu[bus] = 0.90  # RELAXED VERSION - commented out
+        # Vmaxpu[bus] = 1.05
+        Vmaxpu[bus] = 1.10  # RELAXED VERSION - commented out
     end
     
     Vminpu_sub = Dict{String, Float64}()
     Vmaxpu_sub = Dict{String, Float64}()
     for sub_bus in data[:Sset]
-        Vminpu_sub[sub_bus] = 0.95
-        # Vminpu_sub[sub_bus] = 0.90  # RELAXED VERSION - commented out
-        Vmaxpu_sub[sub_bus] = 1.05
-        # Vmaxpu_sub[sub_bus] = 1.10  # RELAXED VERSION - commented out
+        # Vminpu_sub[sub_bus] = 0.95
+        Vminpu_sub[sub_bus] = 0.90  # RELAXED VERSION - commented out
+        # Vmaxpu_sub[sub_bus] = 1.05
+        Vmaxpu_sub[sub_bus] = 1.10  # RELAXED VERSION - commented out
     end
     
     data[:Vminpu] = Vminpu
@@ -848,7 +848,7 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     
     # Compute total system rated load for substation power limits
     P_L_R_System = sum(values(p_L_R_pu))  # Total rated load in pu
-    P_Subs_max = 0.7 * P_L_R_System  # 70% of total system load
+    P_Subs_max = 0.4 * P_L_R_System  # 40% of total system load
     
     println("\nSubstation power limits:")
     println("  Total system rated load: $(round(P_L_R_System, digits=4)) pu = $(round(P_L_R_System * kVA_B, digits=1)) kW")
@@ -1368,6 +1368,152 @@ info_crayon = Crayon(foreground = :light_blue)
 println(success_crayon("✓ MULTI-SLACK MPOPF ANALYSIS COMPLETE!"))
 println(info_crayon("ℹ Analyzed all $(length(slack_substations)) slack bus configurations."))
 println("ℹ Results saved to: $results_base_dir")
+println("="^80)
+
+# ==================================================================================
+# GENERATE COMPARISON PLOTS
+# ==================================================================================
+
+println("\n" * "="^80)
+println(Crayon(foreground = :cyan, bold = true)("GENERATING COMPARISON PLOTS"))
+println("="^80)
+
+# Extract data for all successful configurations
+Tset = 1:data[:T]
+substations = sort(collect(data[:Sset]))
+kVA_B = data[:kVA_B]
+
+# For each slack configuration, extract time series data
+for slack_sub in slack_substations
+    result = results_by_slack[slack_sub]
+    
+    if !(result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED)
+        continue
+    end
+    
+    # Prepare data for stacked bar plots
+    # P_Subs: Real power dispatch (kW) for each substation at each time step
+    P_matrix = zeros(length(substations), data[:T])
+    Q_matrix = zeros(length(substations), data[:T])
+    Cost_matrix = zeros(length(substations), data[:T])
+    
+    for (i, s) in enumerate(substations)
+        P_kW = result[:P_Subs][s] .* kVA_B
+        Q_kVAr = result[:Q_Subs][s] .* kVA_B
+        
+        P_matrix[i, :] = P_kW
+        Q_matrix[i, :] = Q_kVAr
+        
+        # Cost calculation: use substation-specific cost profile
+        # Extract substation index (e.g., "1s" -> 1)
+        s_idx = parse(Int, string(s)[1:end-1])
+        energy_rate_per_t = data[:LoadShapeCost_dict][s_idx]  # $/kWh for this substation
+        Δt = data[:delta_t_h]  # hours
+        Cost_matrix[i, :] = P_kW .* energy_rate_per_t .* Δt
+    end
+    
+    # Define colors and markers for each substation (from color scheme)
+    # Sub 1: deep blue, Sub 2: amber/orange, Sub 3: teal green, Sub 4: magenta/pink, Sub 5: rust red
+    slack_colors = [RGB(0, 114/255, 130/255),      # #007282 (deep blue) - Sub 1
+                    RGB(230/255, 159/255, 0),       # #E69F00 (amber/orange) - Sub 2  
+                    RGB(0, 158/255, 115/255),       # #009E73 (teal green) - Sub 3
+                    RGB(204/255, 121/255, 167/255), # #CC79A7 (magenta/pink) - Sub 4
+                    RGB(213/255, 94/255, 0)]        # #D55E00 (rust red) - Sub 5
+    marker_shapes = [:circle, :square, :diamond, :utriangle, :star5]
+    
+    # Plot 1: Line plot of P_Subs (Real Power) for all substations
+    p1 = plot(xlabel = "Time Period (hour)", 
+              ylabel = "Real Power (kW)",
+              title = "Substation Real Power Dispatch: Slack = $slack_sub",
+              legend = :outertopright,
+              size = (1200, 600),
+              linewidth = 3,
+              grid = true,
+              minorgrid = true,
+              gridlinewidth = 1,
+              minorgridlinewidth = 0.5,
+              gridalpha = 0.3,
+              minorgridalpha = 0.15,
+              framestyle = :box,
+              foreground_color_legend = nothing,
+              background_color_legend = RGBA(1, 1, 1, 0.8),
+              legendfontsize = 10)
+    for (i, s) in enumerate(substations)
+        plot!(p1, Tset, P_matrix[i, :], 
+              label = string(s),
+              color = slack_colors[i],
+              marker = marker_shapes[i],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              linewidth = 2.5)
+    end
+    
+    # Plot 2: Line plot of Q_Subs (Reactive Power) for all substations
+    p2 = plot(xlabel = "Time Period (hour)", 
+              ylabel = "Reactive Power (kVAr)",
+              title = "Substation Reactive Power Dispatch: Slack = $slack_sub",
+              legend = :outertopright,
+              size = (1200, 600),
+              linewidth = 3,
+              grid = true,
+              minorgrid = true,
+              gridlinewidth = 1,
+              minorgridlinewidth = 0.5,
+              gridalpha = 0.3,
+              minorgridalpha = 0.15,
+              framestyle = :box,
+              foreground_color_legend = nothing,
+              background_color_legend = RGBA(1, 1, 1, 0.8),
+              legendfontsize = 10)
+    for (i, s) in enumerate(substations)
+        plot!(p2, Tset, Q_matrix[i, :], 
+              label = string(s),
+              color = slack_colors[i],
+              marker = marker_shapes[i],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              linewidth = 2.5)
+    end
+    
+    # Plot 3: Line plot of Cost for all substations
+    p3 = plot(xlabel = "Time Period (hour)", 
+              ylabel = "Cost (\$)",
+              title = "Substation Energy Cost: Slack = $slack_sub",
+              legend = :outertopright,
+              size = (1200, 600),
+              linewidth = 3,
+              grid = true,
+              minorgrid = true,
+              gridlinewidth = 1,
+              minorgridlinewidth = 0.5,
+              gridalpha = 0.3,
+              minorgridalpha = 0.15,
+              framestyle = :box,
+              foreground_color_legend = nothing,
+              background_color_legend = RGBA(1, 1, 1, 0.8),
+              legendfontsize = 10)
+    for (i, s) in enumerate(substations)
+        plot!(p3, Tset, Cost_matrix[i, :], 
+              label = string(s),
+              color = slack_colors[i],
+              marker = marker_shapes[i],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              linewidth = 2.5)
+    end
+    
+    # Save plots
+    plots_dir = joinpath(results_base_dir, "plots")
+    mkpath(plots_dir)
+    
+    savefig(p1, joinpath(plots_dir, "P_Subs_timeseries_slack_$(slack_sub).png"))
+    savefig(p2, joinpath(plots_dir, "Q_Subs_timeseries_slack_$(slack_sub).png"))
+    savefig(p3, joinpath(plots_dir, "Cost_timeseries_slack_$(slack_sub).png"))
+    
+    println("  ✓ Saved plots for slack=$slack_sub")
+end
+
+println("\n✓ All plots saved to: $(joinpath(results_base_dir, "plots"))")
 println("="^80)
 
 
