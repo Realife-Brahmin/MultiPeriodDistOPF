@@ -20,6 +20,7 @@ using Crayons
 using Printf
 using Statistics
 using Plots  # For input curve plotting
+using LaTeXStrings  # For LaTeX formatting in plots
 using OpenDSSDirect
 
 # Create shared Gurobi environment (suppresses repeated license messages)
@@ -401,6 +402,33 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
     end
 end
 
+"""Helper function to find which substation zone a bus belongs to by tracing parent path"""
+function find_zone_substation(bus::Int, parent_dict::Dict, Sset)
+    current = bus
+    # Trace back through parents until we reach a substation
+    visited = Set{Any}()
+    while true
+        if current in visited
+            # Cycle detected, default to first substation
+            return first(Sset)
+        end
+        push!(visited, current)
+        
+        # Check if current node is a substation
+        if current in Sset || string(current) in string.(Sset)
+            return string(current) in string.(Sset) ? string(current) : string(current) * "s"
+        end
+        
+        # Move to parent
+        if haskey(parent_dict, current)
+            current = parent_dict[current]
+        else
+            # No parent found, default to first substation
+            return first(Sset)
+        end
+    end
+end
+
 """Helper function to parse loads"""
 function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     println("\n--- Parsing Loads ---")
@@ -436,12 +464,40 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     p_L_pu = zeros(max_bus, T)
     q_L_pu = zeros(max_bus, T)
     
+    # Create spatial load variation: assign each bus to a zone based on parent substation
+    # This creates reproducible, systematic spatial diversity
+    parent_dict = data[:parent]  # Maps each bus to its parent substation
+    
+    # Create zone-specific load profiles with phase shifts
+    # Zone determined by which substation feeds the bus
+    zone_profiles = Dict{String, Vector{Float64}}()
+    if T == 1
+        for sub in data[:Sset]
+            zone_profiles[sub] = [1.0]
+        end
+    else
+        # Different daily patterns for each substation's zone
+        # Base pattern + phase shift + amplitude variation
+        zone_profiles["1s"] = 0.75 .+ 0.35 .* (sin.(range(0, 2π, length=T) .+ 0.0) .+ 1) ./ 2      # Peak at hour 12
+        zone_profiles["2s"] = 0.80 .+ 0.30 .* (sin.(range(0, 2π, length=T) .+ π/3) .+ 1) ./ 2      # Peak at hour 16
+        zone_profiles["3s"] = 0.85 .+ 0.25 .* (sin.(range(0, 2π, length=T) .+ 2π/3) .+ 1) ./ 2    # Peak at hour 20
+        zone_profiles["4s"] = 0.70 .+ 0.40 .* (sin.(range(0, 2π, length=T) .- π/3) .+ 1) ./ 2     # Peak at hour 8
+        zone_profiles["5s"] = 0.78 .+ 0.32 .* (sin.(range(0, 2π, length=T) .- 2π/3) .+ 1) ./ 2   # Peak at hour 4
+    end
+    
+    # Apply spatially-varying temporal profiles
     for bus in NLset
+        # Find which substation zone this bus belongs to
+        zone_sub = find_zone_substation(bus, parent_dict, data[:Sset])
+        load_profile = zone_profiles[zone_sub]
+        
         for t in 1:T
-            p_L_pu[bus, t] = p_L_R_pu[bus] * LoadShapeLoad[t]
-            q_L_pu[bus, t] = q_L_R_pu[bus] * LoadShapeLoad[t]
+            p_L_pu[bus, t] = p_L_R_pu[bus] * load_profile[t]
+            q_L_pu[bus, t] = q_L_R_pu[bus] * load_profile[t]
         end
     end
+    
+    data[:zone_profiles] = zone_profiles  # Store for reference
     
     data[:NLset] = sort(NLset)
     data[:N_L] = length(NLset)
@@ -1412,94 +1468,129 @@ for slack_sub in slack_substations
         Cost_matrix[i, :] = P_kW .* energy_rate_per_t .* Δt
     end
     
-    # Define colors and markers for each substation (from color scheme)
-    # Sub 1: deep blue, Sub 2: amber/orange, Sub 3: teal green, Sub 4: magenta/pink, Sub 5: rust red
-    slack_colors = [RGB(0, 114/255, 130/255),      # #007282 (deep blue) - Sub 1
-                    RGB(230/255, 159/255, 0),       # #E69F00 (amber/orange) - Sub 2  
-                    RGB(0, 158/255, 115/255),       # #009E73 (teal green) - Sub 3
-                    RGB(204/255, 121/255, 167/255), # #CC79A7 (magenta/pink) - Sub 4
-                    RGB(213/255, 94/255, 0)]        # #D55E00 (rust red) - Sub 5
+    # Define colors and markers for each substation (matching small3poi style)
+    # Subs 1: deep blue, Subs 2: amber, Subs 3: teal, Subs 4: magenta, Subs 5: rust red
+    slack_colors = [RGB(0x00/255, 0x72/255, 0xB2/255),    # #0072B2 deep blue
+                    RGB(0xE6/255, 0x9F/255, 0x00/255),    # #E69F00 amber
+                    RGB(0x00/255, 0x9E/255, 0x73/255),    # #009E73 teal
+                    RGB(0xCC/255, 0x79/255, 0xA7/255),    # #CC79A7 magenta
+                    RGB(0xD5/255, 0x5E/255, 0x00/255)]    # #D55E00 rust red
     marker_shapes = [:circle, :square, :diamond, :utriangle, :star5]
     
+    # Smart x-tick spacing for clarity
+    xtick_sparse = if T <= 24
+        collect(1:2:T)
+    else
+        step = max(2, div(T, 8))
+        collect(1:step:T)
+    end
+    
     # Plot 1: Line plot of P_Subs (Real Power) for all substations
-    p1 = plot(xlabel = "Time Period (hour)", 
-              ylabel = "Real Power (kW)",
-              title = "Substation Real Power Dispatch: Slack = $slack_sub",
-              legend = :outertopright,
-              size = (1200, 600),
-              linewidth = 3,
+    p1 = plot(xlabel = L"Time Period $t$ (hour)", 
+              ylabel = L"Real Power $P_{\mathrm{Subs}}$ (kW)",
+              title = "Active Power Dispatch (Slack: Subs $slack_sub)",
+              legend = :topright,
+              legend_columns = 2,
+              legendfontsize = 8,
+              legend_background_color = RGBA(1,1,1,0.7),
+              size = (710, 460),
+              theme = :dao,
+              dpi = 400,
+              tickfont = font(9, "Computer Modern"),
+              guidefont = font(10, "Computer Modern"),
+              titlefont = font(11, "Computer Modern"),
+              xticks = (xtick_sparse, string.(xtick_sparse)),
               grid = true,
-              minorgrid = true,
-              gridlinewidth = 1,
-              minorgridlinewidth = 0.5,
-              gridalpha = 0.3,
-              minorgridalpha = 0.15,
+              gridlinewidth = 0.5,
+              gridalpha = 0.25,
+              gridstyle = :solid,
               framestyle = :box,
-              foreground_color_legend = nothing,
-              background_color_legend = RGBA(1, 1, 1, 0.8),
-              legendfontsize = 10)
+              left_margin = 3Plots.mm,
+              right_margin = 3Plots.mm,
+              top_margin = 2Plots.mm,
+              bottom_margin = 4Plots.mm)
     for (i, s) in enumerate(substations)
         plot!(p1, Tset, P_matrix[i, :], 
-              label = string(s),
+              label = L"Subs %$i",
               color = slack_colors[i],
-              marker = marker_shapes[i],
+              markershape = marker_shapes[i],
               markersize = 5,
               markerstrokewidth = 1.5,
-              linewidth = 2.5)
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
     end
     
     # Plot 2: Line plot of Q_Subs (Reactive Power) for all substations
-    p2 = plot(xlabel = "Time Period (hour)", 
-              ylabel = "Reactive Power (kVAr)",
-              title = "Substation Reactive Power Dispatch: Slack = $slack_sub",
-              legend = :outertopright,
-              size = (1200, 600),
-              linewidth = 3,
+    p2 = plot(xlabel = L"Time Period $t$ (hour)", 
+              ylabel = L"Reactive Power $Q_{\mathrm{Subs}}$ (kVAr)",
+              title = "Reactive Power Dispatch (Slack: Subs $slack_sub)",
+              legend = :topright,
+              legend_columns = 2,
+              legendfontsize = 8,
+              legend_background_color = RGBA(1,1,1,0.7),
+              size = (710, 460),
+              theme = :dao,
+              dpi = 400,
+              tickfont = font(9, "Computer Modern"),
+              guidefont = font(10, "Computer Modern"),
+              titlefont = font(11, "Computer Modern"),
+              xticks = (xtick_sparse, string.(xtick_sparse)),
               grid = true,
-              minorgrid = true,
-              gridlinewidth = 1,
-              minorgridlinewidth = 0.5,
-              gridalpha = 0.3,
-              minorgridalpha = 0.15,
+              gridlinewidth = 0.5,
+              gridalpha = 0.25,
+              gridstyle = :solid,
               framestyle = :box,
-              foreground_color_legend = nothing,
-              background_color_legend = RGBA(1, 1, 1, 0.8),
-              legendfontsize = 10)
+              left_margin = 3Plots.mm,
+              right_margin = 3Plots.mm,
+              top_margin = 2Plots.mm,
+              bottom_margin = 4Plots.mm)
     for (i, s) in enumerate(substations)
         plot!(p2, Tset, Q_matrix[i, :], 
-              label = string(s),
+              label = L"Subs %$i",
               color = slack_colors[i],
-              marker = marker_shapes[i],
+              markershape = marker_shapes[i],
               markersize = 5,
               markerstrokewidth = 1.5,
-              linewidth = 2.5)
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
     end
     
     # Plot 3: Line plot of Cost for all substations
-    p3 = plot(xlabel = "Time Period (hour)", 
-              ylabel = "Cost (\$)",
-              title = "Substation Energy Cost: Slack = $slack_sub",
-              legend = :outertopright,
-              size = (1200, 600),
-              linewidth = 3,
+    p3 = plot(xlabel = L"Time Period $t$ (hour)", 
+              ylabel = L"Energy Cost $C$ (\$)",
+              title = "Energy Cost per Period (Slack: Subs $slack_sub)",
+              legend = :topright,
+              legend_columns = 2,
+              legendfontsize = 8,
+              legend_background_color = RGBA(1,1,1,0.7),
+              size = (710, 460),
+              theme = :dao,
+              dpi = 400,
+              tickfont = font(9, "Computer Modern"),
+              guidefont = font(10, "Computer Modern"),
+              titlefont = font(11, "Computer Modern"),
+              xticks = (xtick_sparse, string.(xtick_sparse)),
               grid = true,
-              minorgrid = true,
-              gridlinewidth = 1,
-              minorgridlinewidth = 0.5,
-              gridalpha = 0.3,
-              minorgridalpha = 0.15,
+              gridlinewidth = 0.5,
+              gridalpha = 0.25,
+              gridstyle = :solid,
               framestyle = :box,
-              foreground_color_legend = nothing,
-              background_color_legend = RGBA(1, 1, 1, 0.8),
-              legendfontsize = 10)
+              left_margin = 3Plots.mm,
+              right_margin = 3Plots.mm,
+              top_margin = 2Plots.mm,
+              bottom_margin = 4Plots.mm)
     for (i, s) in enumerate(substations)
         plot!(p3, Tset, Cost_matrix[i, :], 
-              label = string(s),
+              label = L"Subs %$i",
               color = slack_colors[i],
-              marker = marker_shapes[i],
+              markershape = marker_shapes[i],
               markersize = 5,
               markerstrokewidth = 1.5,
-              linewidth = 2.5)
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
     end
     
     # Save plots
