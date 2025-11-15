@@ -76,12 +76,12 @@ function parse_system_from_dss_multi_poi(systemName::String, T::Int; kwargs...)
     # Parse multi-POI elements (substations and POI connections)
     parse_multi_poi_elements!(data)
     
-    # Parse network topology (all buses and lines)
-    parse_network_topology!(data)
-    
-    # Extract parameters from kwargs
+    # Extract parameters from kwargs (need for parsing)
     kVA_B = get(kwargs, :kVA_B, 1000.0)
     kV_B = get(kwargs, :kV_B, 11.547)
+    
+    # Parse network topology (all buses and lines, stores impedances)
+    parse_network_topology!(data, kV_B, kVA_B)
     LoadShapeLoad = get(kwargs, :LoadShapeLoad, ones(T))
     LoadShapePV = get(kwargs, :LoadShapePV, zeros(T))
     LoadShapeCost_dict = get(kwargs, :LoadShapeCost_dict, Dict(i => 0.08 * ones(T) for i in 1:5))
@@ -199,7 +199,7 @@ function parse_multi_poi_elements!(data::Dict)
 end
 
 """Helper function to parse network topology"""
-function parse_network_topology!(data::Dict)
+function parse_network_topology!(data::Dict, basekv::Float64, Sbase::Float64)
     println("\n--- Parsing Network Topology ---")
     
     # Get all bus names from OpenDSS
@@ -241,6 +241,9 @@ function parse_network_topology!(data::Dict)
     L1set = []
     Lm1set = []
     
+    # Store line impedances for angle computation
+    line_impedances = Dict{Tuple, Tuple{Float64, Float64}}()  # line_tuple => (r_pu, x_pu)
+    
     parent = Dict{Any, Union{Nothing, Any}}()
     children = Dict{Any, Vector{Any}}()
     
@@ -248,7 +251,7 @@ function parse_network_topology!(data::Dict)
         children[bus] = []
     end
     
-    # Build line topology - store as directed tuples
+    # Build line topology - store as directed tuples and impedances
     for line_name in line_names
         OpenDSSDirect.Lines.Name(line_name)
         buses = OpenDSSDirect.CktElement.BusNames()
@@ -260,6 +263,15 @@ function parse_network_topology!(data::Dict)
         
         line_tuple = (bus1, bus2)
         push!(Lset, line_tuple)
+        
+        # Get and store line impedances in per-unit
+        r_ohm = OpenDSSDirect.Lines.R1()
+        x_ohm = OpenDSSDirect.Lines.X1()
+        length_km = OpenDSSDirect.Lines.Length()
+        base_impedance = basekv^2 / Sbase
+        r_pu = (r_ohm * length_km) / base_impedance
+        x_pu = (x_ohm * length_km) / base_impedance
+        line_impedances[line_tuple] = (r_pu, x_pu)
         
         is_poi_line = startswith(lowercase(line_name), "poi")
         
@@ -321,6 +333,7 @@ function parse_network_topology!(data::Dict)
     data[:Lm1set_undirected] = Lm1set  # Original undirected distribution lines
     
     data[:line_orientations] = line_orientations  # Store for impedance parsing
+    data[:line_impedances] = line_impedances  # Store impedances for angle computation
     data[:parent] = parent
     data[:children] = children
     data[:m] = length(Lset_oriented)
@@ -1292,6 +1305,161 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
 end
 
 # ============================================================================
+# ANGLE COMPUTATION FOR MULTI-POI SYSTEM
+# ============================================================================
+
+"""
+    compute_angles_from_power_flow(data, result, slack_sub)
+
+Compute bus voltage angles from power flow solution using incidence matrix approach.
+Uses linearized power flow: θ = B^T * (B*B^T)^-1 * (x.*P - r.*Q) ./ V
+
+Arguments:
+- data: system data dictionary
+- result: OPF solution result (with :P_flow, :Q_flow, :v_sq organized by time)
+- slack_sub: slack substation (e.g., "1s", "2s", etc.)
+
+Returns Dict with angle statistics.
+"""
+function compute_angles_from_power_flow(data, result, slack_sub)
+    T = data[:T]
+    Tset = 1:T
+    Nset = data[:Nset]
+    Lset = data[:Lset]  # Oriented lines (132 lines)
+    
+    # Create bus index mapping (133 buses total)
+    bus_list = sort(collect(Nset), by = x -> x isa String ? (0, x) : (1, x))
+    bus_to_idx = Dict(bus => i for (i, bus) in enumerate(bus_list))
+    idx_to_bus = Dict(i => bus for (i, bus) in enumerate(bus_list))
+    
+    n_buses = length(Nset)  # 133
+    n_lines = length(Lset)  # 132
+    
+    # Build full incidence matrix C (n_lines × n_buses)
+    # For each line (i,j): C[line, i] = 1, C[line, j] = -1
+    C = zeros(n_lines, n_buses)
+    
+    for (line_idx, (bus_i, bus_j)) in enumerate(Lset)
+        i = bus_to_idx[bus_i]
+        j = bus_to_idx[bus_j]
+        C[line_idx, i] = 1.0
+        C[line_idx, j] = -1.0
+    end
+    
+    # Remove slack bus column to get reduced incidence matrix B
+    slack_idx = bus_to_idx[slack_sub]
+    non_slack_indices = setdiff(1:n_buses, slack_idx)
+    B = C[:, non_slack_indices]  # (n_lines × (n_buses-1))
+    
+    # Create mapping for non-slack buses
+    non_slack_buses = [idx_to_bus[i] for i in non_slack_indices]
+    non_slack_to_reduced_idx = Dict(bus => i for (i, bus) in enumerate(non_slack_buses))
+    
+    # Get line impedances and create vectors
+    line_impedances = data[:line_impedances]
+    r_vec = zeros(n_lines)
+    x_vec = zeros(n_lines)
+    
+    for (line_idx, line_tuple) in enumerate(Lset)
+        # Try both orientations since Lset is oriented but impedances stored with original orientation
+        if haskey(line_impedances, line_tuple)
+            r_vec[line_idx], x_vec[line_idx] = line_impedances[line_tuple]
+        else
+            # Try reversed
+            line_tuple_rev = (line_tuple[2], line_tuple[1])
+            if haskey(line_impedances, line_tuple_rev)
+                r_vec[line_idx], x_vec[line_idx] = line_impedances[line_tuple_rev]
+            else
+                error("Could not find impedance for line $line_tuple or $line_tuple_rev")
+            end
+        end
+    end
+    
+    # Precompute (B * B^T)^-1 * B for angle computation
+    # θ = B^T * (B*B^T)^-1 * (x.*P - r.*Q)
+    BBT = B * B'
+    BBT_inv = inv(BBT)
+    angle_matrix = B' * BBT_inv  # (n_buses-1) × n_lines
+    
+    # Storage for angles across time
+    theta_matrix = Dict{Any, Vector{Float64}}()  # bus => [angle at each t]
+    
+    # Initialize all buses
+    for bus in Nset
+        theta_matrix[bus] = zeros(T)
+    end
+    
+    # For each time period, compute angles using incidence matrix
+    for t in Tset
+        # Extract power flows and voltages at time t
+        P_flow = result[:P_flow][t]  # Dict: line_tuple => power flow (pu)
+        Q_flow = result[:Q_flow][t]  # Dict: line_tuple => power flow (pu)
+        v_sq = result[:v_sq][t]      # Dict: bus => v^2 (pu)
+        
+        # Build power flow vectors (in line order)
+        P_vec = zeros(n_lines)
+        Q_vec = zeros(n_lines)
+        
+        for (line_idx, line_tuple) in enumerate(Lset)
+            P_vec[line_idx] = P_flow[line_tuple]
+            Q_vec[line_idx] = Q_flow[line_tuple]
+        end
+        
+        # Compute angle differences using linearized power flow
+        # δθ = (B^T * (B*B^T)^-1) * (x.*P - r.*Q)
+        angle_source = x_vec .* P_vec - r_vec .* Q_vec
+        theta_reduced = angle_matrix * angle_source  # Angles for non-slack buses
+        
+        # Store angles (slack is zero, others from computation)
+        for (i, bus) in enumerate(non_slack_buses)
+            theta_matrix[bus][t] = theta_reduced[i]
+        end
+        # Slack bus angle remains zero (already initialized)
+    end
+    
+    # Convert to degrees
+    theta_deg = Dict{Any, Vector{Float64}}()
+    for (bus, angles_rad) in theta_matrix
+        theta_deg[bus] = rad2deg.(angles_rad)
+    end
+    
+    # Compute statistics for all non-slack buses
+    Sset = data[:Sset]
+    median_angles_deg = Dict{Any, Float64}()
+    angle_ranges_deg = Dict{Any, Vector{Float64}}()
+    rmse_values_deg = Dict{Any, Float64}()
+    
+    # Compute stats for all substations except slack
+    for sub in Sset
+        if sub == slack_sub
+            continue  # Skip slack bus (angle is zero by definition)
+        end
+        
+        angles = theta_deg[sub]
+        med = median(angles)
+        median_angles_deg[sub] = med
+        angle_ranges_deg[sub] = [minimum(angles), maximum(angles)]
+        rmse_values_deg[sub] = sqrt(mean((angles .- med).^2))
+    end
+    
+    # Total deviation (RMS of all substation RMSEs)
+    if length(rmse_values_deg) > 0
+        total_deviation_deg = sqrt(sum(v^2 for v in values(rmse_values_deg)) / length(rmse_values_deg))
+    else
+        total_deviation_deg = 0.0
+    end
+    
+    return Dict(
+        :theta_deg => theta_deg,
+        :theta_rad => theta_matrix,
+        :median_angles_deg => median_angles_deg,
+        :angle_ranges_deg => angle_ranges_deg,
+        :rmse_values_deg => rmse_values_deg,
+        :total_deviation_deg => total_deviation_deg
+    )
+end
+
+# ============================================================================
 # SOLVE MULTI-POI MPOPF FOR ALL SLACK CONFIGURATIONS
 # ============================================================================
 
@@ -1323,6 +1491,27 @@ for slack_sub in slack_substations
     result = solve_multi_poi_mpopf(data; slack_substation=slack_sub, solver=:gurobi)
     
     if result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED
+        # Reorganize data for angle computation
+        # Convert Dict{line => [t values]} to [t => Dict{line => value}]
+        T = data[:T]
+        P_flow = [Dict(line => result[:P][line][t] for line in data[:Lset]) for t in 1:T]
+        Q_flow = [Dict(line => result[:Q][line][t] for line in data[:Lset]) for t in 1:T]
+        v_sq = [Dict(bus => result[:v][bus][t] for bus in data[:Nset]) for t in 1:T]
+        
+        # Package for angle computation
+        angle_input = Dict(
+            :P_flow => P_flow,
+            :Q_flow => Q_flow,
+            :v_sq => v_sq
+        )
+        
+        # Compute angles
+        println("  Computing voltage angles...")
+        angle_result = compute_angles_from_power_flow(data, angle_input, slack_sub)
+        
+        # Add angle results to main result
+        result[:angles] = angle_result
+        
         results_by_slack[slack_sub] = result
         
         # Print summary
@@ -1333,6 +1522,9 @@ for slack_sub in slack_substations
         # Calculate total power dispatch (time-averaged)
         total_P_kW = sum(mean(result[:P_Subs][s]) for s in data[:Sset]) * data[:kVA_B]
         println("  Total power: $(round(total_P_kW, digits=1)) kW (time-averaged)")
+        
+        # Print angle statistics
+        println("  Total angle deviation: $(round(angle_result[:total_deviation_deg], digits=3))°")
     else
         @warn "MPOPF failed for slack=$slack_sub with status $(result[:status])"
         results_by_slack[slack_sub] = result
@@ -1349,10 +1541,10 @@ println("="^80)
 
 # Print header
 header_crayon = Crayon(foreground = :white, bold = true)
-header = @sprintf("%-20s | %-20s | %-20s | %-15s", 
-                 "Slack Bus", "Operational", "Avg Power", "Solve Time")
-header2 = @sprintf("%-20s | %-20s | %-20s | %-15s",
-                  "(Substation)", "Cost (\$)", "(kW)", "(seconds)")
+header = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s", 
+                 "Slack Bus", "Operational", "Avg Power", "Solve Time", "Angle Dev")
+header2 = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s",
+                  "(Subs)", "Cost (\$)", "(kW)", "(sec)", "(deg)")
 separator = "-"^length(header)
 
 println(separator)
@@ -1370,20 +1562,24 @@ for slack_sub in slack_substations
         # Calculate average total power dispatch
         total_P_kW = sum(mean(result[:P_Subs][s]) for s in data[:Sset]) * data[:kVA_B]
         
+        # Get angle deviation
+        angle_dev = result[:angles][:total_deviation_deg]
+        
         # Format with colors
         slack_idx = parse(Int, slack_sub[1:end-1])
         slack_colors = [:green, :cyan, :light_blue, :light_magenta, :light_yellow]
         color = slack_colors[slack_idx]
-        sub_str = Crayon(foreground = color, bold = true)(@sprintf("%-20s", slack_sub))
+        sub_str = Crayon(foreground = color, bold = true)(@sprintf("%-15s", slack_sub))
         
-        cost_str = @sprintf("%-20.2f", total_cost)
-        power_str = @sprintf("%-20.1f", total_P_kW)
-        time_str = @sprintf("%-15.2f", solve_time)
+        cost_str = @sprintf("%-15.2f", total_cost)
+        power_str = @sprintf("%-15.1f", total_P_kW)
+        time_str = @sprintf("%-12.2f", solve_time)
+        angle_str = @sprintf("%-15.3f", angle_dev)
         
-        @printf("%s | %s | %s | %s\n", sub_str, cost_str, power_str, time_str)
+        @printf("%s | %s | %s | %s | %s\n", sub_str, cost_str, power_str, time_str, angle_str)
     else
-        sub_str = Crayon(foreground = :red)(@sprintf("%-20s", slack_sub))
-        @printf("%s | %-20s | %-20s | %-15s\n", sub_str, "FAILED", "N/A", "N/A")
+        sub_str = Crayon(foreground = :red)(@sprintf("%-15s", slack_sub))
+        @printf("%s | %-15s | %-15s | %-12s | %-15s\n", sub_str, "FAILED", "N/A", "N/A", "N/A")
     end
 end
 
@@ -1450,6 +1646,23 @@ for slack_sub in slack_substations
     println("\nLine Losses (time-averaged):")
     println("  Real: $(round(P_loss_kW, digits=1)) kW")
     println("  Reactive: $(round(Q_loss_kVAr, digits=1)) kVAr")
+    
+    # Angle statistics
+    println("\nVoltage Angle Statistics (non-slack substations):")
+    angle_results = result[:angles]
+    for s in sort(collect(data[:Sset]))
+        if s == slack_sub
+            println("  $s: θ = 0.0° (slack reference)")
+        else
+            if haskey(angle_results[:median_angles_deg], s)
+                median_angle = angle_results[:median_angles_deg][s]
+                angle_range = angle_results[:angle_ranges_deg][s]
+                rmse_angle = angle_results[:rmse_values_deg][s]
+                println("  $s: θ_med = $(round(median_angle, digits=3))°, range = [$(round(angle_range[1], digits=3))°, $(round(angle_range[2], digits=3))°], RMSE = $(round(rmse_angle, digits=3))°")
+            end
+        end
+    end
+    println("  Total angle deviation (RMS): $(round(angle_results[:total_deviation_deg], digits=3))°")
     
     println("\nObjective Value: \$$(round(result[:objective], digits=2))")
     println("Solve Time: $(round(result[:solve_time], digits=2)) seconds")
@@ -1629,6 +1842,89 @@ for slack_sub in slack_substations
               linewidth = 2.2)
     end
     
+    # Plot 4: Voltage angle trajectories for all substations
+    angle_matrix = zeros(length(substations), T)
+    for (i, s) in enumerate(substations)
+        angle_matrix[i, :] = rad2deg.(result[:angles][:theta_rad][s])
+    end
+    
+    p4 = plot(xlabel = L"Time Period $t$ (hour)", 
+              ylabel = L"Voltage Angle $\theta$ (degrees)",
+              title = "Voltage Angles at Substations (Slack: Subs $slack_sub)",
+              legend = :topright,
+              legend_columns = 2,
+              legendfontsize = 8,
+              legend_background_color = RGBA(1,1,1,0.7),
+              size = (710, 460),
+              theme = :dao,
+              dpi = 400,
+              tickfont = font(9, "Computer Modern"),
+              guidefont = font(10, "Computer Modern"),
+              titlefont = font(11, "Computer Modern"),
+              xticks = (xtick_sparse, string.(xtick_sparse)),
+              grid = true,
+              gridlinewidth = 0.5,
+              gridalpha = 0.25,
+              gridstyle = :solid,
+              framestyle = :box,
+              left_margin = 3Plots.mm,
+              right_margin = 3Plots.mm,
+              top_margin = 2Plots.mm,
+              bottom_margin = 4Plots.mm)
+    for (i, s) in enumerate(substations)
+        plot!(p4, Tset, angle_matrix[i, :], 
+              label = L"Subs %$i",
+              color = slack_colors[i],
+              markershape = marker_shapes[i],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
+    end
+    
+    # Plot 5: Voltage magnitude trajectories for all substations
+    voltage_matrix = zeros(length(substations), T)
+    for (i, s) in enumerate(substations)
+        voltage_matrix[i, :] = sqrt.(result[:v][s])
+    end
+    
+    p5 = plot(xlabel = L"Time Period $t$ (hour)", 
+              ylabel = L"Voltage Magnitude $|V|$ (pu)",
+              title = "Voltage Magnitudes at Substations (Slack: Subs $slack_sub)",
+              legend = :topright,
+              legend_columns = 2,
+              legendfontsize = 8,
+              legend_background_color = RGBA(1,1,1,0.7),
+              size = (710, 460),
+              theme = :dao,
+              dpi = 400,
+              tickfont = font(9, "Computer Modern"),
+              guidefont = font(10, "Computer Modern"),
+              titlefont = font(11, "Computer Modern"),
+              xticks = (xtick_sparse, string.(xtick_sparse)),
+              ylims = (0.95, 1.08),
+              grid = true,
+              gridlinewidth = 0.5,
+              gridalpha = 0.25,
+              gridstyle = :solid,
+              framestyle = :box,
+              left_margin = 3Plots.mm,
+              right_margin = 3Plots.mm,
+              top_margin = 2Plots.mm,
+              bottom_margin = 4Plots.mm)
+    for (i, s) in enumerate(substations)
+        plot!(p5, Tset, voltage_matrix[i, :], 
+              label = L"Subs %$i",
+              color = slack_colors[i],
+              markershape = marker_shapes[i],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
+    end
+    
     # Save plots
     plots_dir = joinpath(results_base_dir, "plots")
     mkpath(plots_dir)
@@ -1636,6 +1932,8 @@ for slack_sub in slack_substations
     savefig(p1, joinpath(plots_dir, "P_Subs_timeseries_slack_$(slack_sub).png"))
     savefig(p2, joinpath(plots_dir, "Q_Subs_timeseries_slack_$(slack_sub).png"))
     savefig(p3, joinpath(plots_dir, "Cost_timeseries_slack_$(slack_sub).png"))
+    savefig(p4, joinpath(plots_dir, "Angles_timeseries_slack_$(slack_sub).png"))
+    savefig(p5, joinpath(plots_dir, "Voltages_timeseries_slack_$(slack_sub).png"))
     
     println("  ✓ Saved plots for slack=$slack_sub")
 end
@@ -1775,7 +2073,7 @@ println("="^80)
 # ============================================================================
 # OLD 3-POI FUNCTIONS AND CODE - COMMENTED OUT
 # ============================================================================
-# TODO: Replace with multi-POI MPOPF formulation for IEEE 123-bus 5-POI system
+# These functions are specific to the simple 3-POI 4-bus star topology
 
 """
     compute_network_matrices(data, slack_node)
