@@ -1522,6 +1522,22 @@ for slack_sub in slack_substations
         # Add angle results to main result
         result[:angles] = angle_result
         
+        # Compute total losses
+        P_loss_total_pu = 0.0
+        Q_loss_total_pu = 0.0
+        for line in data[:Lset]
+            r_pu = data[:rdict_pu][line]
+            x_pu = data[:xdict_pu][line]
+            for t in data[:Tset]
+                P_loss_total_pu += r_pu * result[:ℓ][line][t]
+                Q_loss_total_pu += x_pu * result[:ℓ][line][t]
+            end
+        end
+        result[:P_loss_pu] = P_loss_total_pu
+        result[:Q_loss_pu] = Q_loss_total_pu
+        result[:P_loss_kW] = P_loss_total_pu * data[:kVA_B]
+        result[:Q_loss_kVAr] = Q_loss_total_pu * data[:kVA_B]
+        
         results_by_slack[slack_sub] = result
         
         # Print summary
@@ -1551,10 +1567,10 @@ println("="^80)
 
 # Print header
 header_crayon = Crayon(foreground = :white, bold = true)
-header = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s", 
-                 "Slack Bus", "Operational", "Avg Power", "Solve Time", "Angle Dev")
-header2 = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s",
-                  "(Subs)", "Cost (\$)", "(kW)", "(sec)", "(deg)")
+header = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s | %-15s", 
+                 "Slack Bus", "Operational", "Avg Power", "Solve Time", "Angle Dev", "Total Losses")
+header2 = @sprintf("%-15s | %-15s | %-15s | %-12s | %-15s | %-15s",
+                  "(Subs)", "Cost (\$)", "(kW)", "(sec)", "(deg)", "(kW)")
 separator = "-"^length(header)
 
 println(separator)
@@ -1575,6 +1591,9 @@ for slack_sub in slack_substations
         # Get angle deviation
         angle_dev = result[:angles][:total_deviation_deg]
         
+        # Get losses
+        P_loss_kW = result[:P_loss_kW]
+        
         # Format with colors
         slack_idx = parse(Int, slack_sub[1:end-1])
         slack_colors = [:green, :cyan, :light_blue, :light_magenta, :light_yellow]
@@ -1585,12 +1604,34 @@ for slack_sub in slack_substations
         power_str = @sprintf("%-15.1f", total_P_kW)
         time_str = @sprintf("%-12.2f", solve_time)
         angle_str = @sprintf("%-15.3f", angle_dev)
+        loss_str = @sprintf("%-15.1f", P_loss_kW)
         
-        @printf("%s | %s | %s | %s | %s\n", sub_str, cost_str, power_str, time_str, angle_str)
+        @printf("%s | %s | %s | %s | %s | %s\n", sub_str, cost_str, power_str, time_str, angle_str, loss_str)
     else
         sub_str = Crayon(foreground = :red)(@sprintf("%-15s", slack_sub))
-        @printf("%s | %-15s | %-15s | %-12s | %-15s\n", sub_str, "FAILED", "N/A", "N/A", "N/A")
+        @printf("%s | %-15s | %-15s | %-12s | %-15s | %-15s\n", sub_str, "FAILED", "N/A", "N/A", "N/A", "N/A")
     end
+end
+
+println(separator)
+
+# Print loss statistics summary
+println("\n" * "="^80)
+println(Crayon(foreground = :light_green, bold = true)("LOSS STATISTICS ACROSS ALL CONFIGURATIONS"))
+println("="^80)
+
+loss_values = [results_by_slack[s][:P_loss_kW] for s in slack_substations if haskey(results_by_slack[s], :P_loss_kW)]
+if !isempty(loss_values)
+    loss_avg = mean(loss_values)
+    loss_min = minimum(loss_values)
+    loss_max = maximum(loss_values)
+    loss_std = std(loss_values)
+    
+    println("  Average losses: $(round(loss_avg, digits=1)) kW")
+    println("  Range: [$(round(loss_min, digits=1)), $(round(loss_max, digits=1))] kW")
+    println("  Std deviation: $(round(loss_std, digits=1)) kW")
+    println("  Loss percentage (avg): $(round(100 * loss_avg / (sum(sum(results_by_slack["1s"][:P_Subs][s]) for s in data[:Sset]) * data[:kVA_B]), digits=2))%")
+    println("\n  Note: Thermal limit constraint added: I_max = 5.0 pu → ℓ_max = 25.0 pu")
 end
 
 println(separator)
