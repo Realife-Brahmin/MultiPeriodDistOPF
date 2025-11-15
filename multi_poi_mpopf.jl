@@ -1842,80 +1842,88 @@ for slack_sub in slack_substations
               linewidth = 2.2)
     end
     
-    # Plot 4: Voltage angle trajectories for all substations
+    # Combined Plot: Voltage angles (top) and magnitudes (bottom) - matching small3poi style
     angle_matrix = zeros(length(substations), T)
+    voltage_matrix = zeros(length(substations), T)
+    median_angles = Dict{String, Float64}()
+    
     for (i, s) in enumerate(substations)
         angle_matrix[i, :] = rad2deg.(result[:angles][:theta_rad][s])
-    end
-    
-    p4 = plot(xlabel = L"Time Period $t$ (hour)", 
-              ylabel = L"Voltage Angle $\theta$ (degrees)",
-              title = "Voltage Angles at Substations (Slack: Subs $slack_sub)",
-              legend = :topright,
-              legend_columns = 2,
-              legendfontsize = 8,
-              legend_background_color = RGBA(1,1,1,0.7),
-              size = (710, 460),
-              theme = :dao,
-              dpi = 400,
-              tickfont = font(9, "Computer Modern"),
-              guidefont = font(10, "Computer Modern"),
-              titlefont = font(11, "Computer Modern"),
-              xticks = (xtick_sparse, string.(xtick_sparse)),
-              grid = true,
-              gridlinewidth = 0.5,
-              gridalpha = 0.25,
-              gridstyle = :solid,
-              framestyle = :box,
-              left_margin = 3Plots.mm,
-              right_margin = 3Plots.mm,
-              top_margin = 2Plots.mm,
-              bottom_margin = 4Plots.mm)
-    for (i, s) in enumerate(substations)
-        plot!(p4, Tset, angle_matrix[i, :], 
-              label = L"Subs %$i",
-              color = slack_colors[i],
-              markershape = marker_shapes[i],
-              markersize = 5,
-              markerstrokewidth = 1.5,
-              markerstrokecolor = :black,
-              markeralpha = 0.9,
-              linewidth = 2.2)
-    end
-    
-    # Plot 5: Voltage magnitude trajectories for all substations
-    voltage_matrix = zeros(length(substations), T)
-    for (i, s) in enumerate(substations)
         voltage_matrix[i, :] = sqrt.(result[:v][s])
+        
+        # Store median angles for non-slack substations
+        if s != slack_sub && haskey(result[:angles][:median_angles_deg], s)
+            median_angles[s] = result[:angles][:median_angles_deg][s]
+        end
     end
     
-    p5 = plot(xlabel = L"Time Period $t$ (hour)", 
-              ylabel = L"Voltage Magnitude $|V|$ (pu)",
-              title = "Voltage Magnitudes at Substations (Slack: Subs $slack_sub)",
-              legend = :topright,
-              legend_columns = 2,
-              legendfontsize = 8,
-              legend_background_color = RGBA(1,1,1,0.7),
-              size = (710, 460),
-              theme = :dao,
-              dpi = 400,
-              tickfont = font(9, "Computer Modern"),
-              guidefont = font(10, "Computer Modern"),
-              titlefont = font(11, "Computer Modern"),
-              xticks = (xtick_sparse, string.(xtick_sparse)),
-              ylims = (0.95, 1.08),
-              grid = true,
-              gridlinewidth = 0.5,
-              gridalpha = 0.25,
-              gridstyle = :solid,
-              framestyle = :box,
-              left_margin = 3Plots.mm,
-              right_margin = 3Plots.mm,
-              top_margin = 2Plots.mm,
-              bottom_margin = 4Plots.mm)
+    # Calculate y-axis limits for angles
+    all_angles = vec(angle_matrix)
+    θ_min = minimum(all_angles)
+    θ_max = maximum(all_angles)
+    θ_range = θ_max - θ_min
+    θ_margin = max(0.5, 0.15 * θ_range)
+    angle_ylims = (θ_min - θ_margin, θ_max + θ_margin)
+    
+    # Calculate y-axis limits for voltages
+    all_voltages = vec(voltage_matrix)
+    v_min = minimum(all_voltages)
+    v_max = maximum(all_voltages)
+    v_range = v_max - v_min
+    v_margin = max(0.01, 0.1 * v_range)
+    voltage_ylims = (v_min - v_margin, v_max + v_margin)
+    
+    # Lighter colors for voltage panel (bottom)
+    voltage_colors = [RGB(0x66/255, 0xB2/255, 0xFF/255),  # sky blue
+                      RGB(0xFF/255, 0xD5/255, 0x80/255),  # light amber
+                      RGB(0x7F/255, 0xD1/255, 0xAE/255),  # mint green
+                      RGB(0xE6/255, 0x9F/255, 0xCC/255),  # light pink
+                      RGB(0xFF/255, 0xB3/255, 0x8C/255)]  # peach
+    
+    # TOP PANEL: Angles with median reference lines
+    p_angle = plot(xlabel = "",
+                   ylabel = L"Angle $\theta$ [°]",
+                   title = "Substation Voltage Profile vs Time (Slack: Subs $slack_sub)",
+                   legend = :outertop,
+                   legend_columns = 5,
+                   legendfontsize = 7,
+                   legend_background_color = RGBA(1,1,1,0.9),
+                   size = (710, 460),
+                   theme = :dao,
+                   dpi = 400,
+                   tickfont = font(9, "Computer Modern"),
+                   guidefont = font(10, "Computer Modern"),
+                   titlefont = font(11, "Computer Modern"),
+                   xticks = (xtick_sparse, string.(xtick_sparse)),
+                   xformatter = _->"",
+                   ylims = angle_ylims,
+                   grid = true,
+                   gridlinewidth = 0.5,
+                   gridalpha = 0.25,
+                   gridstyle = :solid,
+                   framestyle = :box,
+                   left_margin = 3Plots.mm,
+                   right_margin = 3Plots.mm,
+                   top_margin = 2Plots.mm,
+                   bottom_margin = 0Plots.mm)
+    
+    # Plot median reference lines first (dashed, behind trajectories)
     for (i, s) in enumerate(substations)
-        plot!(p5, Tset, voltage_matrix[i, :], 
-              label = L"Subs %$i",
+        if haskey(median_angles, s)
+            δ_med = median_angles[s]
+            hline!(p_angle, [δ_med],
+                   linestyle = :dash,
+                   linewidth = 2.0,
+                   linecolor = slack_colors[i],
+                   alpha = 0.8,
+                   label = L"\delta_{%$i} = %$(round(δ_med, digits=2))°")
+        end
+    end
+    
+    # Plot angle trajectories
+    for (i, s) in enumerate(substations)
+        plot!(p_angle, Tset, angle_matrix[i, :], 
+              label = L"\theta^t_{%$i}",
               color = slack_colors[i],
               markershape = marker_shapes[i],
               markersize = 5,
@@ -1924,6 +1932,49 @@ for slack_sub in slack_substations
               markeralpha = 0.9,
               linewidth = 2.2)
     end
+    
+    # BOTTOM PANEL: Voltages (lighter colors, dashed lines)
+    p_voltage = plot(xlabel = L"Time Period $t$ (hour)",
+                     ylabel = L"Voltage $V$ [pu]",
+                     legend = false,
+                     size = (710, 460),
+                     theme = :dao,
+                     dpi = 400,
+                     tickfont = font(9, "Computer Modern"),
+                     guidefont = font(10, "Computer Modern"),
+                     titlefont = font(11, "Computer Modern"),
+                     xticks = (xtick_sparse, string.(xtick_sparse)),
+                     ylims = voltage_ylims,
+                     grid = true,
+                     gridlinewidth = 0.5,
+                     gridalpha = 0.25,
+                     gridstyle = :solid,
+                     framestyle = :box,
+                     left_margin = 3Plots.mm,
+                     right_margin = 3Plots.mm,
+                     top_margin = 0Plots.mm,
+                     bottom_margin = 4Plots.mm)
+    
+    # Plot voltage trajectories (lighter colors, dashed, square markers)
+    for (i, s) in enumerate(substations)
+        plot!(p_voltage, Tset, voltage_matrix[i, :], 
+              label = L"V_{\mathrm{Subs},%$i}",
+              color = voltage_colors[i],
+              markershape = :square,
+              markersize = 4,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.0,
+              linestyle = :dash)
+    end
+    
+    # Stack the two panels vertically
+    p4 = plot(p_angle, p_voltage,
+              layout = (2,1),
+              size = (710, 540),
+              plot_title = "",
+              link = :x)
     
     # Save plots
     plots_dir = joinpath(results_base_dir, "plots")
@@ -1932,8 +1983,7 @@ for slack_sub in slack_substations
     savefig(p1, joinpath(plots_dir, "P_Subs_timeseries_slack_$(slack_sub).png"))
     savefig(p2, joinpath(plots_dir, "Q_Subs_timeseries_slack_$(slack_sub).png"))
     savefig(p3, joinpath(plots_dir, "Cost_timeseries_slack_$(slack_sub).png"))
-    savefig(p4, joinpath(plots_dir, "Angles_timeseries_slack_$(slack_sub).png"))
-    savefig(p5, joinpath(plots_dir, "Voltages_timeseries_slack_$(slack_sub).png"))
+    savefig(p4, joinpath(plots_dir, "angle_voltage_slack$(slack_sub).png"))
     
     println("  ✓ Saved plots for slack=$slack_sub")
 end
