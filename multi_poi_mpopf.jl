@@ -1074,6 +1074,16 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
                 base_name = "BCPF_Line_$(i)_$(j)_t$(t)")
         end
         
+        # ----- 5.4b THERMAL/AMPACITY LIMITS -----
+        # Cap current squared at (I_max)^2 where I_max = 5 pu
+        I_max_pu = 5.0
+        ℓ_max = I_max_pu^2  # = 25 pu
+        for line in Lset
+            (i, j) = line
+            @constraint(model, ℓ[line, t] <= ℓ_max,
+                base_name = "ThermalLimit_Line_$(i)_$(j)_t$(t)")
+        end
+        
         # ----- 5.5 VOLTAGE CONSTRAINTS -----
         # Slack substation: fixed voltage
         @constraint(model, v[slack_substation, t] == 1.03^2,
@@ -1631,24 +1641,229 @@ for slack_sub in slack_substations
     println("  Average: $(round(V_avg, digits=4)) pu")
     println("  Range: [$(round(V_min, digits=4)), $(round(V_max, digits=4))] pu")
     
-    # Line losses - computed from ℓ values
+    # Line losses - computed from ℓ values (total over horizon)
     # Real power loss on each line: P_loss = r * ℓ (in pu), then convert to kW
-    P_loss_total = 0.0
-    Q_loss_total = 0.0
+    P_loss_total_pu = 0.0
+    Q_loss_total_pu = 0.0
+    
+    # Create 24x1 vector for losses per time period (for debugging)
+    P_loss_per_period_pu = zeros(length(data[:Tset]))
+    
     for line in data[:Lset]
         r_pu = data[:rdict_pu][line]
         x_pu = data[:xdict_pu][line]
-        # Time-averaged losses
-        ℓ_avg = mean(result[:ℓ][line])
-        P_loss_total += r_pu * ℓ_avg
-        Q_loss_total += x_pu * ℓ_avg
+        # Sum over all time periods
+        for t in data[:Tset]
+            loss_t = r_pu * result[:ℓ][line][t]
+            P_loss_total_pu += loss_t
+            P_loss_per_period_pu[t] += loss_t
+            Q_loss_total_pu += x_pu * result[:ℓ][line][t]
+        end
     end
-    P_loss_kW = P_loss_total * data[:kVA_B]
-    Q_loss_kVAr = Q_loss_total * data[:kVA_B]
+    P_loss_kW = P_loss_total_pu * data[:kVA_B]
+    Q_loss_kVAr = Q_loss_total_pu * data[:kVA_B]
     
-    println(header_crayon("\nLine Losses (time-averaged):"))
+    println(header_crayon("\nLine Losses (total over horizon):"))
+    println("  Σ(r*ℓ) = $(round(P_loss_total_pu, digits=6)) pu")
     println("  Real: $(round(P_loss_kW, digits=1)) kW")
     println("  Reactive: $(round(Q_loss_kVAr, digits=1)) kVAr")
+    
+    # Print 24x1 vector for slack=1s
+    if slack_sub == "1s"
+        println(header_crayon("\nLosses per time period (pu) - Σ_lines(r_ij*ℓ_ij) for each t:"))
+        for t in data[:Tset]
+            println("  t=$t: $(round(P_loss_per_period_pu[t], digits=6)) pu")
+        end
+        println("  Sum = $(round(sum(P_loss_per_period_pu), digits=6)) pu")
+    end
+    
+    # Power balance verification: Σ P_Subs = Σ p_L + Σ (r*ℓ) - Σ p_D - Σ P_B
+    total_P_Subs_pu = sum(sum(result[:P_Subs][s]) for s in data[:Sset])
+    total_P_Subs_kW = total_P_Subs_pu * data[:kVA_B]
+    
+    # Compute total loads (currently allocated to buses)
+    total_p_L_pu = sum(sum(data[:p_L_pu][j, t] for t in data[:Tset]) for j in data[:NLset])
+    total_p_L_kW = total_p_L_pu * data[:kVA_B]
+    
+    # Compute total PV generation (zero for now, but ready for future)
+    total_p_D_pu = isempty(data[:Dset]) ? 0.0 : sum(sum(data[:p_D_pu][j, t] for t in data[:Tset]) for j in data[:Dset])
+    total_p_D_kW = total_p_D_pu * data[:kVA_B]
+    
+    # Compute total battery power (zero for now, but ready for future)
+    total_P_B_pu = 0.0  # isempty(data[:Bset]) ? 0.0 : sum(sum(result[:P_B][j][t] for t in data[:Tset]) for j in data[:Bset]) - Not stored in result yet
+    total_P_B_kW = total_P_B_pu * data[:kVA_B]
+    
+    println(header_crayon("\nPower Balance Check (total over horizon):"))
+    println("  Σ P_Subs = $(round(total_P_Subs_pu, digits=6)) pu = $(round(total_P_Subs_kW, digits=1)) kW")
+    println("  Σ p_L (loads) = $(round(total_p_L_pu, digits=6)) pu = $(round(total_p_L_kW, digits=1)) kW")
+    println("  Σ (r*ℓ) (losses) = $(round(P_loss_total_pu, digits=6)) pu = $(round(P_loss_kW, digits=1)) kW")
+    println("  Σ p_D (PV gen) = $(round(total_p_D_kW, digits=1)) kW")
+    println("  Σ P_B (battery) = $(round(total_P_B_kW, digits=1)) kW")
+    println("  Balance: Σ P_Subs - Σ p_L - Σ (r*ℓ) + Σ p_D + Σ P_B = $(round(total_P_Subs_kW - total_p_L_kW - P_loss_kW + total_p_D_kW + total_P_B_kW, digits=3)) kW (should ≈ 0)")
+    
+    if slack_sub == "1s"
+        println("\n  DEBUG:")
+        println("    total_P_Subs_pu calculation: sum over substations of sum over time")
+        for s in data[:Sset]
+            sum_s = sum(result[:P_Subs][s])
+            println("      Substation $s: sum = $(round(sum_s, digits=6)) pu")
+        end
+        println("    Total = $(round(total_P_Subs_pu, digits=6)) pu")
+        println("    Should equal: total_p_L_pu + P_loss_total_pu = $(round(total_p_L_pu, digits=6)) + $(round(P_loss_total_pu, digits=6)) = $(round(total_p_L_pu + P_loss_total_pu, digits=6)) pu")
+        
+        # Check a few line losses in detail
+        println("\n  Checking individual line losses for t=9 (peak loss period):")
+        t = 9
+        line_count = 0
+        total_loss_t9 = 0.0
+        max_ℓ_line = nothing
+        max_ℓ_val = 0.0
+        
+        for line in data[:Lset]
+            r_pu = data[:rdict_pu][line]
+            ℓ_val = result[:ℓ][line][t]
+            loss = r_pu * ℓ_val
+            total_loss_t9 += loss
+            
+            if ℓ_val > max_ℓ_val
+                max_ℓ_val = ℓ_val
+                max_ℓ_line = line
+            end
+            
+            if line_count < 10  # Print first 10 lines
+                P_val = result[:P][line][t]
+                Q_val = result[:Q][line][t]
+                i, j = line
+                v_i = result[:v][i][t]
+                println("      Line $line: r=$(round(r_pu, sigdigits=4)) pu, ℓ=$(round(ℓ_val, sigdigits=4)) pu, loss=$(round(loss, sigdigits=4)) pu")
+                println("        P=$(round(P_val, sigdigits=4)), Q=$(round(Q_val, sigdigits=4)), v_i=$(round(v_i, sigdigits=4))")
+                println("        Check: P²+Q² = $(round(P_val^2 + Q_val^2, sigdigits=4)), v*ℓ = $(round(v_i * ℓ_val, sigdigits=4))")
+                line_count += 1
+            end
+        end
+        println("      Total loss at t=9: $(round(total_loss_t9, digits=6)) pu")
+        println("      (Should match P_loss_per_period_pu[9] = $(round(P_loss_per_period_pu[9], digits=6)) pu)")
+        
+        if max_ℓ_line !== nothing
+            i, j = max_ℓ_line
+            P_val = result[:P][max_ℓ_line][t]
+            Q_val = result[:Q][max_ℓ_line][t]
+            v_i = result[:v][i][t]
+            r_pu = data[:rdict_pu][max_ℓ_line]
+            println("\n      Line with MAX ℓ at t=9: $max_ℓ_line")
+            println("        ℓ = $(round(max_ℓ_val, sigdigits=6)) pu (current squared)")
+            println("        I = $(round(sqrt(max_ℓ_val), sigdigits=6)) pu (current magnitude)")
+            println("        P=$(round(P_val, sigdigits=4)), Q=$(round(Q_val, sigdigits=4)), v_i=$(round(v_i, sigdigits=4))")
+            println("        r=$(round(r_pu, sigdigits=4)) pu, loss=$(round(r_pu * max_ℓ_val, sigdigits=6)) pu")
+        end
+        
+        # Now show ℓ values across all time for the max line
+        println("\n  ℓ values for line $max_ℓ_line across all 24 periods:")
+        for t in data[:Tset]
+            ℓ_val = result[:ℓ][max_ℓ_line][t]
+            println("      t=$t: ℓ=$(round(ℓ_val, sigdigits=6)) pu")
+        end
+    end
+    
+    # DETAILED NODAL BALANCE CHECK (only for slack=1s for debugging)
+    if slack_sub == "1s"
+        println(header_crayon("\n" * "="^80))
+        println(header_crayon("DETAILED NODAL POWER BALANCE CHECK (pu)"))
+        println(header_crayon("="^80))
+        println("NRPB equation: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) = p_j where p_j = P_B_j + p_D_j - p_L_j")
+        println("For each distribution bus j:")
+        println("  Σ P_jk       = Total outflow from bus j")
+        println("  Σ P_ij       = Total inflow to bus j")
+        println("  Σ (r_ij*ℓ_ij) = Total real power losses on incoming lines")
+        println("  p_j          = Net generation (P_B + p_D - p_L)")
+        println("-"^80)
+        
+        # Define color scheme
+        outflow_color = Crayon(foreground = :light_blue, bold = true)
+        inflow_color = Crayon(foreground = :light_cyan, bold = true)
+        loss_color = Crayon(foreground = :light_yellow, bold = true)
+        gen_color = Crayon(foreground = :light_green, bold = true)
+        balance_color_good = Crayon(foreground = :green, bold = true)
+        balance_color_bad = Crayon(foreground = :red, bold = true)
+        
+        # Get distribution buses (exclude substation buses)
+        dist_buses = sort(collect(data[:Nm1set]))
+        
+        max_imbalance = 0.0
+        total_imbalance = 0.0
+        
+        for j in dist_buses
+            # Sum over all time periods
+            sum_Pjk = 0.0      # Outflow
+            sum_Pij = 0.0      # Inflow
+            sum_rij_lij = 0.0  # Losses
+            p_j = 0.0          # Net generation
+            
+            for t in data[:Tset]
+                # Outgoing power (to children): Σ P_jk
+                if !isempty(data[:children][j])
+                    for k in data[:children][j]
+                        child_line = (j, k)
+                        if child_line in keys(data[:rdict_pu])
+                            sum_Pjk += result[:P][child_line][t]
+                        end
+                    end
+                end
+                
+                # Incoming power and losses (from parent lines)
+                parent_j = data[:parent][j]
+                parent_line = (parent_j, j)
+                if parent_line in keys(data[:rdict_pu])
+                    P_ij = result[:P][parent_line][t]
+                    r_ij = data[:rdict_pu][parent_line]
+                    ℓ_ij = result[:ℓ][parent_line][t]
+                    
+                    sum_Pij += P_ij
+                    sum_rij_lij += r_ij * ℓ_ij
+                end
+                
+                # Net generation: P_B_j + p_D_j - p_L_j
+                p_L_j_t = (j in data[:NLset]) ? data[:p_L_pu][j, t] : 0.0
+                p_D_j_t = (j in data[:Dset]) ? data[:p_D_pu][j, t] : 0.0
+                P_B_j_t = 0.0  # (j in data[:Bset]) ? result[:P_B][j][t] : 0.0
+                
+                p_j += P_B_j_t + p_D_j_t - p_L_j_t
+            end
+            
+            # Verify: Σ(r_ij*ℓ_ij) should equal Σ P_ij - Σ P_jk + p_j
+            # From NRPB: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) = p_j
+            # Therefore: Σ(r_ij*ℓ_ij) = Σ P_ij - Σ P_jk + p_j
+            sum_rij_lij_computed = sum_Pij - sum_Pjk + p_j
+            
+            # Balance check: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) - p_j should ≈ 0
+            # Which is: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) - p_j
+            balance = sum_Pjk - sum_Pij + sum_rij_lij - p_j
+            abs_balance = abs(balance)
+            
+            max_imbalance = max(max_imbalance, abs_balance)
+            total_imbalance += abs_balance
+            
+            # Color code the balance
+            balance_crayon = abs_balance < 1e-6 ? balance_color_good : balance_color_bad
+            
+            # Print: Σ P_jk - p_j, Σ P_ij, Σ(r_ij*ℓ_ij) [where third = first - second]
+            print("Bus $(rpad(j, 4)): ")
+            print(outflow_color("Σ P_jk-p_j = $(rpad(round(sum_Pjk - p_j, digits=6), 11))"))
+            print(" | ")
+            print(inflow_color("Σ P_ij = $(rpad(round(sum_Pij, digits=6), 11))"))
+            print(" | ")
+            print(loss_color("Σ r*ℓ = $(rpad(round(sum_rij_lij, digits=6), 11))"))
+            print(" (comp: $(rpad(round(sum_rij_lij_computed, digits=6), 11)))")
+            print(" | ")
+            println(balance_crayon("Bal = $(round(balance, sigdigits=3))"))
+        end
+        
+        println("-"^80)
+        println("Summary:")
+        println("  Max absolute imbalance: $(round(max_imbalance, sigdigits=4)) pu")
+        println("  Total absolute imbalance: $(round(total_imbalance, sigdigits=4)) pu")
+        println(header_crayon("="^80))
+    end
     
     # Angle statistics
     println(header_crayon("\nVoltage Angle Statistics (substations):"))
