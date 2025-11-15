@@ -669,8 +669,8 @@ function parse_voltage_limits!(data::Dict)
     Vmaxpu = Dict{Any, Float64}()
     
     for bus in data[:Nset]
-        # Vminpu[bus] = 0.95
-        Vminpu[bus] = 0.90  # RELAXED VERSION - commented out
+        Vminpu[bus] = 0.95
+        # Vminpu[bus] = 0.90  # RELAXED VERSION - commented out
         # Vmaxpu[bus] = 1.05
         Vmaxpu[bus] = 1.10  # RELAXED VERSION - commented out
     end
@@ -678,8 +678,8 @@ function parse_voltage_limits!(data::Dict)
     Vminpu_sub = Dict{String, Float64}()
     Vmaxpu_sub = Dict{String, Float64}()
     for sub_bus in data[:Sset]
-        # Vminpu_sub[sub_bus] = 0.95
-        Vminpu_sub[sub_bus] = 0.90  # RELAXED VERSION - commented out
+        Vminpu_sub[sub_bus] = 0.95
+        # Vminpu_sub[sub_bus] = 0.90  # RELAXED VERSION - commented out
         # Vmaxpu_sub[sub_bus] = 1.05
         Vmaxpu_sub[sub_bus] = 1.10  # RELAXED VERSION - commented out
     end
