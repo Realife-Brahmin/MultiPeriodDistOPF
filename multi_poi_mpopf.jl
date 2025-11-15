@@ -792,8 +792,9 @@ data[:same_voltage_levels] = same_voltage_levels
 """
 Export detailed model formulation to text file
 """
-function export_model_to_file(model, filename)
-    open(filename, "w") do io
+function export_model_to_file(model, filename, output_dir=".")
+    filepath = joinpath(output_dir, filename)
+    open(filepath, "w") do io
         println(io, "="^80)
         println(io, "MPOPF MODEL FORMULATION")
         println(io, "="^80)
@@ -1136,7 +1137,8 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     println("Constraints added successfully!")
     
     # ========== 5.8 SAVE MODEL TO FILE ==========
-    export_model_to_file(model, "model_formulation_slack_$(slack_substation).txt")
+    # Note: results_base_dir will be defined by the calling context
+    # For now, we'll export to current directory and move it later
     
     # ========== 6. SOLVE ==========
     println("\n" * "="^80)
@@ -1479,7 +1481,7 @@ println("║"*" "^15*"MULTI-SLACK MPOPF ANALYSIS FOR IEEE 123-BUS 5-POI"*" "^13*
 println("╚"*"═"^78*"╝")
 
 # Create results directory
-system_folder_name = "$(data[:systemName])"
+system_folder_name = "$(data[:systemName])_T$(data[:T])"
 results_base_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", system_folder_name)
 plots_dir = joinpath(results_base_dir, "plots")
 mkpath(plots_dir)
