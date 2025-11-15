@@ -1199,32 +1199,176 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
 end
 
 # ============================================================================
-# SOLVE MULTI-POI MPOPF
+# SOLVE MULTI-POI MPOPF FOR ALL SLACK CONFIGURATIONS
 # ============================================================================
 
 println("\n\n")
 println("╔"*"═"^78*"╗")
-println("║"*" "^20*"RUNNING MULTI-POI MPOPF SOLVER"*" "^28*"║")
+println("║"*" "^15*"MULTI-SLACK MPOPF ANALYSIS FOR IEEE 123-BUS 5-POI"*" "^13*"║")
 println("╚"*"═"^78*"╝")
 
-# Solve with default slack substation using Gurobi
-slack_sub = "1s"
-# slack_sub = "3s"
-# slack_sub = "5s"
-println("\nTesting with slack substation: $slack_sub")
-println("Using solver: Gurobi")
+# Create results directory
+system_folder_name = "$(data[:systemName])"
+results_base_dir = joinpath(@__DIR__, "envs", "multi_poi", "processedData", system_folder_name)
+plots_dir = joinpath(results_base_dir, "plots")
+mkpath(plots_dir)
+println("\nResults will be saved to: $results_base_dir")
 
-result = solve_multi_poi_mpopf(data; slack_substation=slack_sub, solver=:gurobi)
+# Solve for all 5 slack substation configurations
+slack_substations = ["1s", "2s", "3s", "4s", "5s"]
+results_by_slack = Dict{String, Any}()
 
-println("\n\n")
-println("╔"*"═"^78*"╗")
-println("║"*" "^25*"MPOPF SOLVE COMPLETE"*" "^33*"║")
-println("╚"*"═"^78*"╝")
-println("\n✓ Optimization completed successfully!")
-println("✓ Checked power balance, voltage limits, and SOC relaxation")
-println("✓ Results available in 'result' dictionary")
-println("\nTo test with different slack substations, call:")
-println("  result = solve_multi_poi_mpopf(data; slack_substation=\"2s\")")
+println("\n" * "="^80)
+println(Crayon(foreground = :cyan, bold = true)("SOLVING MPOPF FOR ALL FIVE SLACK CONFIGURATIONS"))
+println("="^80)
+
+for slack_sub in slack_substations
+    println("\n" * "-"^80)
+    println(Crayon(foreground = :yellow, bold = true)("Solving MPOPF with Substation $slack_sub as slack bus..."))
+    println("-"^80)
+    
+    result = solve_multi_poi_mpopf(data; slack_substation=slack_sub, solver=:gurobi)
+    
+    if result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED
+        results_by_slack[slack_sub] = result
+        
+        # Print summary
+        println(Crayon(foreground = :green)("✓ Converged"))
+        println("  Objective: \$$(round(result[:objective], digits=2))")
+        println("  Solve time: $(round(result[:solve_time], digits=2)) seconds")
+        
+        # Calculate total power dispatch (time-averaged)
+        total_P_kW = sum(mean(result[:P_Subs][s]) for s in data[:Sset]) * data[:kVA_B]
+        println("  Total power: $(round(total_P_kW, digits=1)) kW (time-averaged)")
+    else
+        @warn "MPOPF failed for slack=$slack_sub with status $(result[:status])"
+        results_by_slack[slack_sub] = result
+    end
+end
+
+# ==================================================================================
+# PRINT COMPARISON TABLE
+# ==================================================================================
+
+println("\n" * "="^80)
+println(Crayon(foreground = :light_blue, bold = true)("COMPARISON OF SLACK BUS CONFIGURATIONS"))
+println("="^80)
+
+# Print header
+header_crayon = Crayon(foreground = :white, bold = true)
+header = @sprintf("%-20s | %-20s | %-20s | %-15s", 
+                 "Slack Bus", "Operational", "Avg Power", "Solve Time")
+header2 = @sprintf("%-20s | %-20s | %-20s | %-15s",
+                  "(Substation)", "Cost (\$)", "(kW)", "(seconds)")
+separator = "-"^length(header)
+
+println(separator)
+println(header_crayon(header))
+println(header_crayon(header2))
+println(separator)
+
+for slack_sub in slack_substations
+    result = results_by_slack[slack_sub]
+    
+    if result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED
+        total_cost = result[:objective]
+        solve_time = result[:solve_time]
+        
+        # Calculate average total power dispatch
+        total_P_kW = sum(mean(result[:P_Subs][s]) for s in data[:Sset]) * data[:kVA_B]
+        
+        # Format with colors
+        slack_idx = parse(Int, slack_sub[1:end-1])
+        slack_colors = [:green, :cyan, :light_blue, :light_magenta, :light_yellow]
+        color = slack_colors[slack_idx]
+        sub_str = Crayon(foreground = color, bold = true)(@sprintf("%-20s", slack_sub))
+        
+        cost_str = @sprintf("%-20.2f", total_cost)
+        power_str = @sprintf("%-20.1f", total_P_kW)
+        time_str = @sprintf("%-15.2f", solve_time)
+        
+        @printf("%s | %s | %s | %s\n", sub_str, cost_str, power_str, time_str)
+    else
+        sub_str = Crayon(foreground = :red)(@sprintf("%-20s", slack_sub))
+        @printf("%s | %-20s | %-20s | %-15s\n", sub_str, "FAILED", "N/A", "N/A")
+    end
+end
+
+println(separator)
+println("="^80)
+
+# ==================================================================================
+# DETAILED RESULTS FOR EACH CONFIGURATION
+# ==================================================================================
+
+for slack_sub in slack_substations
+    result = results_by_slack[slack_sub]
+    
+    if !(result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED)
+        continue
+    end
+    
+    println("\n" * "="^80)
+    title_crayon = Crayon(foreground = :light_magenta, bold = true)
+    println(title_crayon("DETAILED RESULTS: SLACK = $slack_sub"))
+    println("="^80)
+    
+    # Power dispatch summary (time-averaged)
+    println("\nSubstation Power Dispatch (time-averaged):")
+    for s in sort(collect(data[:Sset]))
+        P_avg_kW = mean(result[:P_Subs][s]) * data[:kVA_B]
+        Q_avg_kVAr = mean(result[:Q_Subs][s]) * data[:kVA_B]
+        P_min_kW = minimum(result[:P_Subs][s]) * data[:kVA_B]
+        P_max_kW = maximum(result[:P_Subs][s]) * data[:kVA_B]
+        
+        if s == slack_sub
+            slack_marker = Crayon(foreground = :green, bold = true)(" (SLACK)")
+            print("  $s: P = $(round(P_avg_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))]")
+            println(slack_marker)
+        else
+            println("  $s: P = $(round(P_avg_kW, digits=1)) kW [$(round(P_min_kW, digits=1)), $(round(P_max_kW, digits=1))], Q = $(round(Q_avg_kVAr, digits=1)) kVAr")
+        end
+    end
+    
+    # Voltage summary
+    println("\nVoltage Statistics (distribution buses, time-averaged):")
+    v_vals = [mean(result[:v][bus]) for bus in data[:Nm1set]]
+    V_avg = mean(sqrt.(v_vals))
+    V_min = minimum(sqrt.(v_vals))
+    V_max = maximum(sqrt.(v_vals))
+    println("  Average: $(round(V_avg, digits=4)) pu")
+    println("  Range: [$(round(V_min, digits=4)), $(round(V_max, digits=4))] pu")
+    
+    # Line losses - computed from ℓ values
+    # Real power loss on each line: P_loss = r * ℓ (in pu), then convert to kW
+    P_loss_total = 0.0
+    Q_loss_total = 0.0
+    for line in data[:Lset]
+        r_pu = data[:rdict_pu][line]
+        x_pu = data[:xdict_pu][line]
+        # Time-averaged losses
+        ℓ_avg = mean(result[:ℓ][line])
+        P_loss_total += r_pu * ℓ_avg
+        Q_loss_total += x_pu * ℓ_avg
+    end
+    P_loss_kW = P_loss_total * data[:kVA_B]
+    Q_loss_kVAr = Q_loss_total * data[:kVA_B]
+    
+    println("\nLine Losses (time-averaged):")
+    println("  Real: $(round(P_loss_kW, digits=1)) kW")
+    println("  Reactive: $(round(Q_loss_kVAr, digits=1)) kVAr")
+    
+    println("\nObjective Value: \$$(round(result[:objective], digits=2))")
+    println("Solve Time: $(round(result[:solve_time], digits=2)) seconds")
+end
+
+println("\n" * "="^80)
+success_crayon = Crayon(foreground = :light_green, bold = true)
+info_crayon = Crayon(foreground = :light_blue)
+println(success_crayon("✓ MULTI-SLACK MPOPF ANALYSIS COMPLETE!"))
+println(info_crayon("ℹ Analyzed all $(length(slack_substations)) slack bus configurations."))
+println("ℹ Results saved to: $results_base_dir")
+println("="^80)
 
 
 #=
