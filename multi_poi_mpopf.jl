@@ -1007,6 +1007,10 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
     
     println("\nAdding constraints...")
     
+    # Thermal/ampacity limit constants (defined once outside time loop)
+    I_max_pu = 5.0
+    ℓ_max = I_max_pu^2  # = 25 pu
+    
     for t in Tset
         # ----- 5.1 POWER BALANCE AT SUBSTATIONS -----
         # Each substation injects power through all its connected POI lines
@@ -1077,8 +1081,6 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
         
         # ----- 5.4b THERMAL/AMPACITY LIMITS -----
         # Cap current squared at (I_max)^2 where I_max = 5 pu
-        I_max_pu = 5.0
-        ℓ_max = I_max_pu^2  # = 25 pu
         for line in Lset
             (i, j) = line
             @constraint(model, ℓ[line, t] <= ℓ_max,
@@ -1216,6 +1218,20 @@ function solve_multi_poi_mpopf(data; slack_substation::String="1s", solver::Symb
                 V_max = sqrt(maximum(result[:v_subs][s]))
                 println("    $s: V = $(round(V_avg, digits=4)) pu (range: [$(round(V_min, digits=4)), $(round(V_max, digits=4))])")
             end
+        end
+        
+        # PV generation summary
+        if !isempty(Dset)
+            println("\n  PV Generation (time-averaged):")
+            for j in sort(collect(Dset))
+                p_D_avg = mean(p_D_pu[j, :]) * P_BASE
+                q_D_avg = mean([value(q_D[j, t]) for t in Tset]) * P_BASE
+                println("    Bus $j: P_pv = $(round(p_D_avg, digits=1)) kW, Q_pv = $(round(q_D_avg, digits=1)) kVAr")
+            end
+            total_pv_gen = sum(mean(p_D_pu[j, :]) for j in Dset) * P_BASE
+            println("    Total PV: $(round(total_pv_gen, digits=1)) kW (time-averaged)")
+        else
+            println("\n  No PV systems installed")
         end
         
         # # DIAGNOSTIC OUTPUT - Commented out for production runs
@@ -1808,105 +1824,106 @@ for slack_sub in slack_substations
         end
     end
     
-    # DETAILED NODAL BALANCE CHECK (only for slack=1s for debugging)
-    if slack_sub == "1s"
-        println(header_crayon("\n" * "="^80))
-        println(header_crayon("DETAILED NODAL POWER BALANCE CHECK (pu)"))
-        println(header_crayon("="^80))
-        println("NRPB equation: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) = p_j where p_j = P_B_j + p_D_j - p_L_j")
-        println("For each distribution bus j:")
-        println("  Σ P_jk       = Total outflow from bus j")
-        println("  Σ P_ij       = Total inflow to bus j")
-        println("  Σ (r_ij*ℓ_ij) = Total real power losses on incoming lines")
-        println("  p_j          = Net generation (P_B + p_D - p_L)")
-        println("-"^80)
-        
-        # Define color scheme
-        outflow_color = Crayon(foreground = :light_blue, bold = true)
-        inflow_color = Crayon(foreground = :light_cyan, bold = true)
-        loss_color = Crayon(foreground = :light_yellow, bold = true)
-        gen_color = Crayon(foreground = :light_green, bold = true)
-        balance_color_good = Crayon(foreground = :green, bold = true)
-        balance_color_bad = Crayon(foreground = :red, bold = true)
-        
-        # Get distribution buses (exclude substation buses)
-        dist_buses = sort(collect(data[:Nm1set]))
-        
-        max_imbalance = 0.0
-        total_imbalance = 0.0
-        
-        for j in dist_buses
-            # Sum over all time periods
-            sum_Pjk = 0.0      # Outflow
-            sum_Pij = 0.0      # Inflow
-            sum_rij_lij = 0.0  # Losses
-            p_j = 0.0          # Net generation
-            
-            for t in data[:Tset]
-                # Outgoing power (to children): Σ P_jk
-                if !isempty(data[:children][j])
-                    for k in data[:children][j]
-                        child_line = (j, k)
-                        if child_line in keys(data[:rdict_pu])
-                            sum_Pjk += result[:P][child_line][t]
-                        end
-                    end
-                end
-                
-                # Incoming power and losses (from parent lines)
-                parent_j = data[:parent][j]
-                parent_line = (parent_j, j)
-                if parent_line in keys(data[:rdict_pu])
-                    P_ij = result[:P][parent_line][t]
-                    r_ij = data[:rdict_pu][parent_line]
-                    ℓ_ij = result[:ℓ][parent_line][t]
-                    
-                    sum_Pij += P_ij
-                    sum_rij_lij += r_ij * ℓ_ij
-                end
-                
-                # Net generation: P_B_j + p_D_j - p_L_j
-                p_L_j_t = (j in data[:NLset]) ? data[:p_L_pu][j, t] : 0.0
-                p_D_j_t = (j in data[:Dset]) ? data[:p_D_pu][j, t] : 0.0
-                P_B_j_t = 0.0  # (j in data[:Bset]) ? result[:P_B][j][t] : 0.0
-                
-                p_j += P_B_j_t + p_D_j_t - p_L_j_t
-            end
-            
-            # Verify: Σ(r_ij*ℓ_ij) should equal Σ P_ij - Σ P_jk + p_j
-            # From NRPB: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) = p_j
-            # Therefore: Σ(r_ij*ℓ_ij) = Σ P_ij - Σ P_jk + p_j
-            sum_rij_lij_computed = sum_Pij - sum_Pjk + p_j
-            
-            # Balance check: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) - p_j should ≈ 0
-            # Which is: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) - p_j
-            balance = sum_Pjk - sum_Pij + sum_rij_lij - p_j
-            abs_balance = abs(balance)
-            
-            max_imbalance = max(max_imbalance, abs_balance)
-            total_imbalance += abs_balance
-            
-            # Color code the balance
-            balance_crayon = abs_balance < 1e-6 ? balance_color_good : balance_color_bad
-            
-            # Print: Σ P_jk - p_j, Σ P_ij, Σ(r_ij*ℓ_ij) [where third = first - second]
-            print("Bus $(rpad(j, 4)): ")
-            print(outflow_color("Σ P_jk-p_j = $(rpad(round(sum_Pjk - p_j, digits=6), 11))"))
-            print(" | ")
-            print(inflow_color("Σ P_ij = $(rpad(round(sum_Pij, digits=6), 11))"))
-            print(" | ")
-            print(loss_color("Σ r*ℓ = $(rpad(round(sum_rij_lij, digits=6), 11))"))
-            print(" (comp: $(rpad(round(sum_rij_lij_computed, digits=6), 11)))")
-            print(" | ")
-            println(balance_crayon("Bal = $(round(balance, sigdigits=3))"))
-        end
-        
-        println("-"^80)
-        println("Summary:")
-        println("  Max absolute imbalance: $(round(max_imbalance, sigdigits=4)) pu")
-        println("  Total absolute imbalance: $(round(total_imbalance, sigdigits=4)) pu")
-        println(header_crayon("="^80))
-    end
+    # # DETAILED NODAL BALANCE CHECK (only for slack=1s for debugging)
+    # # Commented out - power balance verified as correct
+    # if slack_sub == "1s"
+    #     println(header_crayon("\n" * "="^80))
+    #     println(header_crayon("DETAILED NODAL POWER BALANCE CHECK (pu)"))
+    #     println(header_crayon("="^80))
+    #     println("NRPB equation: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) = p_j where p_j = P_B_j + p_D_j - p_L_j")
+    #     println("For each distribution bus j:")
+    #     println("  Σ P_jk       = Total outflow from bus j")
+    #     println("  Σ P_ij       = Total inflow to bus j")
+    #     println("  Σ (r_ij*ℓ_ij) = Total real power losses on incoming lines")
+    #     println("  p_j          = Net generation (P_B + p_D - p_L)")
+    #     println("-"^80)
+    #     
+    #     # Define color scheme
+    #     outflow_color = Crayon(foreground = :light_blue, bold = true)
+    #     inflow_color = Crayon(foreground = :light_cyan, bold = true)
+    #     loss_color = Crayon(foreground = :light_yellow, bold = true)
+    #     gen_color = Crayon(foreground = :light_green, bold = true)
+    #     balance_color_good = Crayon(foreground = :green, bold = true)
+    #     balance_color_bad = Crayon(foreground = :red, bold = true)
+    #     
+    #     # Get distribution buses (exclude substation buses)
+    #     dist_buses = sort(collect(data[:Nm1set]))
+    #     
+    #     max_imbalance = 0.0
+    #     total_imbalance = 0.0
+    #     
+    #     for j in dist_buses
+    #         # Sum over all time periods
+    #         sum_Pjk = 0.0      # Outflow
+    #         sum_Pij = 0.0      # Inflow
+    #         sum_rij_lij = 0.0  # Losses
+    #         p_j = 0.0          # Net generation
+    #         
+    #         for t in data[:Tset]
+    #             # Outgoing power (to children): Σ P_jk
+    #             if !isempty(data[:children][j])
+    #                 for k in data[:children][j]
+    #                     child_line = (j, k)
+    #                     if child_line in keys(data[:rdict_pu])
+    #                         sum_Pjk += result[:P][child_line][t]
+    #                     end
+    #                 end
+    #             end
+    #             
+    #             # Incoming power and losses (from parent lines)
+    #             parent_j = data[:parent][j]
+    #             parent_line = (parent_j, j)
+    #             if parent_line in keys(data[:rdict_pu])
+    #                 P_ij = result[:P][parent_line][t]
+    #                 r_ij = data[:rdict_pu][parent_line]
+    #                 ℓ_ij = result[:ℓ][parent_line][t]
+    #                 
+    #                 sum_Pij += P_ij
+    #                 sum_rij_lij += r_ij * ℓ_ij
+    #             end
+    #             
+    #             # Net generation: P_B_j + p_D_j - p_L_j
+    #             p_L_j_t = (j in data[:NLset]) ? data[:p_L_pu][j, t] : 0.0
+    #             p_D_j_t = (j in data[:Dset]) ? data[:p_D_pu][j, t] : 0.0
+    #             P_B_j_t = 0.0  # (j in data[:Bset]) ? result[:P_B][j][t] : 0.0
+    #             
+    #             p_j += P_B_j_t + p_D_j_t - p_L_j_t
+    #         end
+    #         
+    #         # Verify: Σ(r_ij*ℓ_ij) should equal Σ P_ij - Σ P_jk + p_j
+    #         # From NRPB: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) = p_j
+    #         # Therefore: Σ(r_ij*ℓ_ij) = Σ P_ij - Σ P_jk + p_j
+    #         sum_rij_lij_computed = sum_Pij - sum_Pjk + p_j
+    #         
+    #         # Balance check: Σ P_jk - Σ(P_ij - r_ij*ℓ_ij) - p_j should ≈ 0
+    #         # Which is: Σ P_jk - Σ P_ij + Σ(r_ij*ℓ_ij) - p_j
+    #         balance = sum_Pjk - sum_Pij + sum_rij_lij - p_j
+    #         abs_balance = abs(balance)
+    #         
+    #         max_imbalance = max(max_imbalance, abs_balance)
+    #         total_imbalance += abs_balance
+    #         
+    #         # Color code the balance
+    #         balance_crayon = abs_balance < 1e-6 ? balance_color_good : balance_color_bad
+    #         
+    #         # Print: Σ P_jk - p_j, Σ P_ij, Σ(r_ij*ℓ_ij) [where third = first - second]
+    #         print("Bus $(rpad(j, 4)): ")
+    #         print(outflow_color("Σ P_jk-p_j = $(rpad(round(sum_Pjk - p_j, digits=6), 11))"))
+    #         print(" | ")
+    #         print(inflow_color("Σ P_ij = $(rpad(round(sum_Pij, digits=6), 11))"))
+    #         print(" | ")
+    #         print(loss_color("Σ r*ℓ = $(rpad(round(sum_rij_lij, digits=6), 11))"))
+    #         print(" (comp: $(rpad(round(sum_rij_lij_computed, digits=6), 11)))")
+    #         print(" | ")
+    #         println(balance_crayon("Bal = $(round(balance, sigdigits=3))"))
+    #     end
+    #     
+    #     println("-"^80)
+    #     println("Summary:")
+    #     println("  Max absolute imbalance: $(round(max_imbalance, sigdigits=4)) pu")
+    #     println("  Total absolute imbalance: $(round(total_imbalance, sigdigits=4)) pu")
+    #     println(header_crayon("="^80))
+    # end
     
     # Angle statistics
     println(header_crayon("\nVoltage Angle Statistics (substations):"))
