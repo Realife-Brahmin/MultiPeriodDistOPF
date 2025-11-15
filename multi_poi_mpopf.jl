@@ -476,13 +476,34 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
             zone_profiles[sub] = [1.0]
         end
     else
-        # Different daily patterns for each substation's zone
-        # Base pattern + phase shift + amplitude variation
-        zone_profiles["1s"] = 0.75 .+ 0.35 .* (sin.(range(0, 2π, length=T) .+ 0.0) .+ 1) ./ 2      # Peak at hour 12
-        zone_profiles["2s"] = 0.80 .+ 0.30 .* (sin.(range(0, 2π, length=T) .+ π/3) .+ 1) ./ 2      # Peak at hour 16
-        zone_profiles["3s"] = 0.85 .+ 0.25 .* (sin.(range(0, 2π, length=T) .+ 2π/3) .+ 1) ./ 2    # Peak at hour 20
-        zone_profiles["4s"] = 0.70 .+ 0.40 .* (sin.(range(0, 2π, length=T) .- π/3) .+ 1) ./ 2     # Peak at hour 8
-        zone_profiles["5s"] = 0.78 .+ 0.32 .* (sin.(range(0, 2π, length=T) .- 2π/3) .+ 1) ./ 2   # Peak at hour 4
+        # Diverse daily patterns for each zone: 2 sinusoids, 2 multi-level, 1 ramping
+        
+        # Zone 1: Sinusoid (smooth residential pattern - peak midday)
+        # Range: 0.75 + 0.25*[0,1] = [0.75, 1.00]
+        zone_profiles["1s"] = 0.75 .+ 0.25 .* (sin.(range(0, 2π, length=T) .+ 0.0) .+ 1) ./ 2
+        
+        # Zone 2: Sinusoid (smooth commercial pattern - peak afternoon)
+        # Range: 0.75 + 0.25*[0,1] = [0.75, 1.00]
+        zone_profiles["2s"] = 0.75 .+ 0.25 .* (sin.(range(0, 2π, length=T) .+ π/3) .+ 1) ./ 2
+        
+        # Zone 3: Multi-level square (industrial with shifts)
+        load_3 = fill(0.70, T)  # Base: low night
+        load_3[7:12] .= 1.00    # Morning shift: high
+        load_3[13:18] .= 0.90   # Afternoon shift: medium-high
+        load_3[19:22] .= 0.80   # Evening: medium
+        zone_profiles["3s"] = load_3
+        
+        # Zone 4: Two-level square (office building - on/off)
+        load_4 = fill(0.65, T)  # Base: minimal (off-hours)
+        load_4[8:18] .= 1.00    # Business hours: high
+        zone_profiles["4s"] = load_4
+        
+        # Zone 5: Ramping (charging station - gradual increase then drop)
+        load_5 = fill(0.75, T)
+        load_5[1:8] .= 0.70 .+ (0:7) .* 0.03        # Morning ramp up
+        load_5[9:16] .= 0.94 .+ (0:7) .* 0.008      # Peak and continue up slightly
+        load_5[17:24] .= 1.00 .- (0:7) .* 0.045     # Evening ramp down
+        zone_profiles["5s"] = load_5
     end
     
     # Apply spatially-varying temporal profiles
@@ -694,23 +715,39 @@ else
 end
 
 # Time-varying energy cost ($/kWh) - different for each substation
-# Create phase-shifted cost profiles for each of the 5 substations
+# Diverse patterns: 2 sinusoids, 2 multi-level squares, 1 flat
 if T == 1
     LoadShapeCost_dict = Dict(
-        1 => [0.08],
-        2 => [0.08],
-        3 => [0.08],
-        4 => [0.08],
-        5 => [0.08]
+        1 => [0.15],
+        2 => [0.15],
+        3 => [0.15],
+        4 => [0.15],
+        5 => [0.15]
     )
 else
+    # Subs 1: Sinusoid (peak early)
     LoadShapeCost_dict = Dict(
         1 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/4) .+ 1) ./ 2,
-        2 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/4) .+ 1) ./ 2,
-        3 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T)) .+ 1) ./ 2,
-        4 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .+ π/2) .+ 1) ./ 2,
-        5 => 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/2) .+ 1) ./ 2
     )
+    
+    # Subs 2: Sinusoid (peak late)
+    LoadShapeCost_dict[2] = 0.08 .+ 0.12 .* (sin.(range(0, 2π, length=T) .- π/3) .+ 1) ./ 2
+    
+    # Subs 3: Multi-level square wave (3 levels: low-med-high-med)
+    cost_3 = fill(0.10, T)  # Base: medium
+    cost_3[1:6] .= 0.18      # Hours 1-6: high (night peak)
+    cost_3[7:12] .= 0.08     # Hours 7-12: low (morning off-peak)
+    cost_3[13:18] .= 0.18    # Hours 13-18: high (afternoon peak)
+    cost_3[19:24] .= 0.12    # Hours 19-24: medium (evening)
+    LoadShapeCost_dict[3] = cost_3
+    
+    # Subs 4: Multi-level square wave (2 levels: low-high alternating)
+    cost_4 = fill(0.08, T)  # Base: low
+    cost_4[9:20] .= 0.20     # Hours 9-20: high (peak period)
+    LoadShapeCost_dict[4] = cost_4
+    
+    # Subs 5: Flat (constant cost)
+    LoadShapeCost_dict[5] = fill(0.15, T)  # Constant at mid-level
 end
 
 LoadShapePV = zeros(T)  # No PV for now
@@ -1434,6 +1471,14 @@ println("\n" * "="^80)
 println(Crayon(foreground = :cyan, bold = true)("GENERATING COMPARISON PLOTS"))
 println("="^80)
 
+# Define colors and markers for all plots (once, outside the loop)
+slack_colors = [RGB(0x00/255, 0x72/255, 0xB2/255),    # #0072B2 deep blue
+                RGB(0xE6/255, 0x9F/255, 0x00/255),    # #E69F00 amber
+                RGB(0x00/255, 0x9E/255, 0x73/255),    # #009E73 teal
+                RGB(0xCC/255, 0x79/255, 0xA7/255),    # #CC79A7 magenta
+                RGB(0xD5/255, 0x5E/255, 0x00/255)]    # #D55E00 rust red
+marker_shapes = [:circle, :square, :diamond, :utriangle, :star5]
+
 # Extract data for all successful configurations
 Tset = 1:data[:T]
 substations = sort(collect(data[:Sset]))
@@ -1467,15 +1512,6 @@ for slack_sub in slack_substations
         Δt = data[:delta_t_h]  # hours
         Cost_matrix[i, :] = P_kW .* energy_rate_per_t .* Δt
     end
-    
-    # Define colors and markers for each substation (matching small3poi style)
-    # Subs 1: deep blue, Subs 2: amber, Subs 3: teal, Subs 4: magenta, Subs 5: rust red
-    slack_colors = [RGB(0x00/255, 0x72/255, 0xB2/255),    # #0072B2 deep blue
-                    RGB(0xE6/255, 0x9F/255, 0x00/255),    # #E69F00 amber
-                    RGB(0x00/255, 0x9E/255, 0x73/255),    # #009E73 teal
-                    RGB(0xCC/255, 0x79/255, 0xA7/255),    # #CC79A7 magenta
-                    RGB(0xD5/255, 0x5E/255, 0x00/255)]    # #D55E00 rust red
-    marker_shapes = [:circle, :square, :diamond, :utriangle, :star5]
     
     # Smart x-tick spacing for clarity
     xtick_sparse = if T <= 24
@@ -1607,6 +1643,133 @@ end
 println("\n✓ All plots saved to: $(joinpath(results_base_dir, "plots"))")
 println("="^80)
 
+# ==================================================================================
+# PLOT INPUT CURVES (matching small3poi style)
+# ==================================================================================
+println("\n" * "="^80)
+println(Crayon(foreground = :magenta, bold = true)("GENERATING INPUT CURVE PLOTS"))
+println("="^80)
+
+# Smart x-tick spacing for clarity
+xtick_sparse = if T <= 24
+    collect(1:2:T)
+else
+    step = max(2, div(T, 8))
+    collect(1:step:T)
+end
+
+# Smart time step label
+Δt = data[:delta_t_h]
+dt_label = if Δt >= 1.0
+    "Δt = $(Δt) h"
+else
+    dt_minutes = round(Int, Δt * 60)
+    "Δt = $(dt_minutes) min"
+end
+
+# Color palette (matching substation plots)
+cost_colors = slack_colors  # Reuse the same colors for consistency
+
+# ==== TOP PANEL: LOAD PROFILES FOR ALL 5 ZONES ====
+p_load = plot(
+    dpi=400,
+    ylabel="Normalized Load",
+    legend=:topright,
+    legend_columns=2,
+    legendfontsize=8,
+    legend_background_color=RGBA(1,1,1,0.7),
+    framestyle=:box,
+    ylims=(0.60, 1.05),
+    xticks=(xtick_sparse, string.(xtick_sparse)),
+    xformatter=_->"",  # Hide x-labels on top panel
+    grid=true,
+    gridlinewidth=0.5,
+    gridalpha=0.25,
+    gridstyle=:solid,
+    titlefont=font(11, "Computer Modern"),
+    guidefont=font(10, "Computer Modern"),
+    tickfont=font(9, "Computer Modern"),
+    left_margin=3Plots.mm,
+    right_margin=3Plots.mm,
+    top_margin=2Plots.mm,
+    bottom_margin=0Plots.mm,
+    title="Input Curves: Zone Load Profiles and Substation Costs ($(dt_label))"
+)
+
+# Plot each zone's load profile
+zone_profiles = data[:zone_profiles]
+for (i, sub) in enumerate(data[:Sset])
+    plot!(
+        p_load, Tset, zone_profiles[sub],
+        color=slack_colors[i],
+        lw=2.2,
+        markershape=marker_shapes[i],
+        markersize=5,
+        markerstrokewidth=1.5,
+        markerstrokecolor=:black,
+        markeralpha=0.9,
+        label=L"\lambda^t_{\mathrm{Zone}\,%$i}"
+    )
+end
+
+# ==== BOTTOM PANEL: COST CURVES ====
+# Extract cost data
+LoadShapeCost_dict = data[:LoadShapeCost_dict]
+num_subs = length(data[:Sset])
+all_costs = vcat([LoadShapeCost_dict[i] .* 100 for i in 1:num_subs]...)  # Convert to cents/kWh
+cost_min = floor(0.95 * minimum(all_costs))
+cost_max = ceil(1.05 * maximum(all_costs))
+
+p_cost = plot(
+    dpi=400,
+    xlabel="Time Period (t)",
+    ylabel="Cost [cents/kWh]",
+    legend=:topright,
+    legend_columns=2,
+    legendfontsize=8,
+    legend_background_color=RGBA(1,1,1,0.7),
+    framestyle=:box,
+    ylims=(cost_min, cost_max),
+    xticks=(xtick_sparse, string.(xtick_sparse)),
+    grid=true,
+    gridlinewidth=0.5,
+    gridalpha=0.25,
+    gridstyle=:solid,
+    guidefont=font(10, "Computer Modern"),
+    tickfont=font(9, "Computer Modern"),
+    left_margin=3Plots.mm,
+    right_margin=3Plots.mm,
+    top_margin=0Plots.mm,
+    bottom_margin=4Plots.mm
+)
+
+# Plot each substation's cost curve
+for i in 1:num_subs
+    cost_cents = LoadShapeCost_dict[i] .* 100
+    plot!(
+        p_cost, Tset, cost_cents,
+        color=cost_colors[i],
+        lw=2.2,
+        markershape=marker_shapes[i],
+        markersize=5,
+        markerstrokewidth=1.5,
+        markerstrokecolor=:black,
+        markeralpha=0.9,
+        label=L"C^t_%$i"
+    )
+end
+
+# Stack the two panels vertically with IEEE 2-column dimensions
+p_input = plot(p_load, p_cost, 
+         layout=(2,1), 
+         size=(710, 460),
+         plot_title="",
+         link=:x)
+
+savefig(p_input, joinpath(plots_dir, "input_curves.png"))
+println("  ✓ Saved input curves plot")
+
+println("="^80)
 
 #=
 # ============================================================================
