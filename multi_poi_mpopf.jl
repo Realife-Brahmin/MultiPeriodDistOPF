@@ -1677,6 +1677,117 @@ println(separator)
 println("="^80)
 
 # ==================================================================================
+# SAVE TABLE II: ANGLE COORDINATION DETAILS TO FILE
+# ==================================================================================
+
+table2_filename = joinpath(results_base_dir, "angle_coordination_table_II.txt")
+table2_io = open(table2_filename, "w")
+
+println(table2_io, "="^80)
+println(table2_io, "TABLE II: COMPLETE ANGLE COORDINATION REQUIREMENTS FOR ALL SLACK CONFIGURATIONS")
+println(table2_io, "IEEE 123-Bus Five-Substation System (24-hour horizon)")
+println(table2_io, "="^80)
+println(table2_io, "")
+println(table2_io, "Color-coded rows for LaTeX table:")
+println(table2_io, "  Green:   Slack = 1s")
+println(table2_io, "  Cyan:    Slack = 2s")
+println(table2_io, "  Blue:    Slack = 3s")
+println(table2_io, "  Magenta: Slack = 4s")
+println(table2_io, "  Yellow:  Slack = 5s")
+println(table2_io, "")
+
+color_names = ["Green (1s)", "Cyan (2s)", "Blue (3s)", "Magenta (4s)", "Yellow (5s)"]
+
+for slack_sub in slack_substations
+    result = results_by_slack[slack_sub]
+    
+    if !(result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED)
+        continue
+    end
+    
+    slack_idx = parse(Int, slack_sub[1:end-1])
+    color_name = color_names[slack_idx]
+    
+    println(table2_io, "-"^80)
+    println(table2_io, "SLACK CONFIGURATION: SUBSTATION $(slack_sub) ($color_name rows in LaTeX)")
+    println(table2_io, "Total RMS Deviation: $(round(result[:angles][:total_deviation_deg], digits=3))°")
+    println(table2_io, "-"^80)
+    println(table2_io, @sprintf("%-15s | %-20s | %-25s | %-15s", 
+                               "Non-Slack", "Median Angle", "Angle Range", "Temporal RMSE"))
+    println(table2_io, @sprintf("%-15s | %-20s | %-25s | %-15s",
+                               "Substation", "(degrees)", "(degrees)", "(degrees)"))
+    println(table2_io, "-"^80)
+    
+    # Get non-slack substations
+    non_slack_subs = sort([s for s in data[:Sset] if s != slack_sub])
+    
+    for sub in non_slack_subs
+        median_angle = result[:angles][:median_angles_deg][sub]
+        angle_range = result[:angles][:angle_ranges_deg][sub]
+        rmse = result[:angles][:rmse_values_deg][sub]
+        
+        println(table2_io, @sprintf("%-15s | %20.3f | [%9.3f, %9.3f] | %15.3f", 
+                                   sub, median_angle, angle_range[1], angle_range[2], rmse))
+    end
+    println(table2_io, "")
+end
+
+# Add LaTeX-formatted version
+println(table2_io, "="^80)
+println(table2_io, "LATEX-FORMATTED TABLE II (20 ROWS)")
+println(table2_io, "="^80)
+println(table2_io, "")
+println(table2_io, "% Copy the rows below into your LaTeX table")
+println(table2_io, "% Table structure: Non-Slack Substation | Median Angle | Range | RMSE")
+println(table2_io, "")
+
+color_codes = ["green", "cyan", "blue", "magenta", "yellow"]
+
+for slack_sub in slack_substations
+    result = results_by_slack[slack_sub]
+    
+    if !(result[:status] == MOI.OPTIMAL || result[:status] == MOI.LOCALLY_SOLVED)
+        continue
+    end
+    
+    slack_idx = parse(Int, slack_sub[1:end-1])
+    color = color_codes[slack_idx]
+    
+    println(table2_io, "% --- Slack = $(slack_sub) ($(color_names[slack_idx]), RMS = $(round(result[:angles][:total_deviation_deg], digits=3))°) ---")
+    
+    non_slack_subs = sort([s for s in data[:Sset] if s != slack_sub])
+    
+    for sub in non_slack_subs
+        median_angle = result[:angles][:median_angles_deg][sub]
+        angle_range = result[:angles][:angle_ranges_deg][sub]
+        rmse = result[:angles][:rmse_values_deg][sub]
+        
+        # Format for LaTeX
+        latex_line = "\\rowcolor{$(color)!10}\n"
+        latex_line *= @sprintf("%s & \$%.3f\$ & [\$%.3f\$, \$%.3f\$] & %.3f \\\\\n",
+                              sub, median_angle, angle_range[1], angle_range[2], rmse)
+        print(table2_io, latex_line)
+    end
+    
+    println(table2_io, "\\hline")
+end
+
+println(table2_io, "")
+println(table2_io, "% Legend for table footer:")
+total_rms_values = [round(results_by_slack[s][:angles][:total_deviation_deg], digits=3) for s in slack_substations if haskey(results_by_slack[s], :angles)]
+println(table2_io, "% \\multicolumn{4}{l}{\\footnotesize \\textcolor{green!50!black}{Green: Slack = 1s (Total RMS: $(total_rms_values[1])\$^\\circ\$)},")
+println(table2_io, "% \\textcolor{cyan!50!black}{Cyan: Slack = 2s ($(total_rms_values[2])\$^\\circ\$)},")
+println(table2_io, "% \\textcolor{blue!50!black}{Blue: Slack = 3s ($(total_rms_values[3])\$^\\circ\$)}}\\\\")
+println(table2_io, "% \\multicolumn{4}{l}{\\footnotesize \\textcolor{magenta!50!black}{Magenta: Slack = 4s ($(total_rms_values[4])\$^\\circ\$)},")
+println(table2_io, "% \\textcolor{orange!80!black}{Yellow: Slack = 5s ($(total_rms_values[5])\$^\\circ\$)}}")
+
+close(table2_io)
+
+println("\n" * "="^80)
+println(Crayon(foreground = :light_green, bold = true)("✓ Table II saved to: $table2_filename"))
+println("="^80)
+
+# ==================================================================================
 # DETAILED RESULTS FOR EACH CONFIGURATION
 # ==================================================================================
 
