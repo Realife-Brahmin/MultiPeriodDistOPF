@@ -1346,6 +1346,9 @@ function compute_angles_from_power_flow(data, result, slack_sub)
         theta_matrix[bus] = zeros(T)
     end
     
+    # Storage for beta vectors (for debugging/inspection)
+    beta_all = Vector{Vector{Float64}}(undef, T)
+    
     # For each time period, compute angles using incidence matrix
     for t in Tset
         # Extract power flows and voltages at time t
@@ -1365,6 +1368,7 @@ function compute_angles_from_power_flow(data, result, slack_sub)
         # Compute angle differences using linearized power flow
         # δθ = (B^T * (B*B^T)^-1) * (x.*P - r.*Q)
         angle_source = x_vec .* P_vec - r_vec .* Q_vec
+        beta_all[t] = angle_source  # Store beta for this time period
         theta_reduced = angle_matrix * angle_source  # Angles for non-slack buses
         
         # Store angles (slack is zero, others from computation)
@@ -1412,7 +1416,11 @@ function compute_angles_from_power_flow(data, result, slack_sub)
         :median_angles_deg => median_angles_deg,
         :angle_ranges_deg => angle_ranges_deg,
         :rmse_values_deg => rmse_values_deg,
-        :total_deviation_deg => total_deviation_deg
+        :total_deviation_deg => total_deviation_deg,
+        :beta_all => beta_all,  # Store beta vectors for inspection
+        :incidence_C => C,  # Store full incidence matrix
+        :incidence_B => B,  # Store reduced incidence matrix (= B_T for radial)
+        :non_slack_buses => non_slack_buses  # Store bus ordering
     )
 end
 
@@ -2079,18 +2087,26 @@ for slack_sub in slack_substations
     end
     
     # Combined Plot: Voltage angles (top) and magnitudes (bottom) - matching small3poi style
-    angle_matrix = zeros(length(substations), T)
+    # Exclude slack substation from angle plot (it's always 0°)
+    non_slack_substations = [s for s in substations if s != slack_sub]
+    
+    angle_matrix = zeros(length(non_slack_substations), T)
     voltage_matrix = zeros(length(substations), T)
     median_angles = Dict{String, Float64}()
     
-    for (i, s) in enumerate(substations)
+    # Angles: only non-slack substations
+    for (i, s) in enumerate(non_slack_substations)
         angle_matrix[i, :] = rad2deg.(result[:angles][:theta_rad][s])
-        voltage_matrix[i, :] = sqrt.(result[:v][s])
         
-        # Store median angles for non-slack substations
-        if s != slack_sub && haskey(result[:angles][:median_angles_deg], s)
+        # Store median angles
+        if haskey(result[:angles][:median_angles_deg], s)
             median_angles[s] = result[:angles][:median_angles_deg][s]
         end
+    end
+    
+    # Voltages: all substations
+    for (i, s) in enumerate(substations)
+        voltage_matrix[i, :] = sqrt.(result[:v][s])
     end
     
     # Calculate y-axis limits for angles
@@ -2121,7 +2137,7 @@ for slack_sub in slack_substations
                    ylabel = L"Angle $\theta$ [°]",
                    title = "Substation Voltage Profile vs Time (Slack: Subs $slack_sub)",
                    legend = :outertop,
-                   legend_columns = 5,
+                   legend_columns = 4,
                    legendfontsize = 7,
                    legend_background_color = RGBA(1,1,1,0.9),
                    size = (710, 460),
@@ -2143,30 +2159,63 @@ for slack_sub in slack_substations
                    top_margin = 2Plots.mm,
                    bottom_margin = 0Plots.mm)
     
-    # Plot median reference lines first (dashed, behind trajectories)
-    for (i, s) in enumerate(substations)
+    # Plot median reference lines first (dashed, behind trajectories) - only non-slack
+    # Plot WITHOUT labels first, then add labels in desired order
+    for (i, s) in enumerate(non_slack_substations)
         if haskey(median_angles, s)
             δ_med = median_angles[s]
+            # Find original color index (substations list includes slack)
+            orig_idx = findfirst(==(s), substations)
             hline!(p_angle, [δ_med],
                    linestyle = :dash,
                    linewidth = 2.0,
-                   linecolor = slack_colors[i],
+                   linecolor = slack_colors[orig_idx],
                    alpha = 0.8,
-                   label = L"\delta_{%$i} = %$(round(δ_med, digits=2))°")
+                   label = "")
         end
     end
     
-    # Plot angle trajectories
-    for (i, s) in enumerate(substations)
+    # Plot angle trajectories - only non-slack (no labels yet)
+    for (i, s) in enumerate(non_slack_substations)
+        # Find original color index
+        orig_idx = findfirst(==(s), substations)
         plot!(p_angle, Tset, angle_matrix[i, :], 
-              label = L"\theta^t_{%$i}",
-              color = slack_colors[i],
-              markershape = marker_shapes[i],
+              label = "",
+              color = slack_colors[orig_idx],
+              markershape = marker_shapes[orig_idx],
               markersize = 5,
               markerstrokewidth = 1.5,
               markerstrokecolor = :black,
               markeralpha = 0.9,
               linewidth = 2.2)
+    end
+    
+    # Add legend entries in desired order: deltas first (top row), then thetas (bottom row)
+    # First add delta labels
+    for (i, s) in enumerate(non_slack_substations)
+        if haskey(median_angles, s)
+            δ_med = median_angles[s]
+            orig_idx = findfirst(==(s), substations)
+            plot!(p_angle, [], [],
+                  linestyle = :dash,
+                  linewidth = 2.0,
+                  linecolor = slack_colors[orig_idx],
+                  alpha = 0.8,
+                  label = L"\delta_{%$s} = %$(round(δ_med, digits=2))°")
+        end
+    end
+    # Then add theta labels
+    for (i, s) in enumerate(non_slack_substations)
+        orig_idx = findfirst(==(s), substations)
+        plot!(p_angle, [], [],
+              color = slack_colors[orig_idx],
+              markershape = marker_shapes[orig_idx],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2,
+              label = L"\theta^t_{%$s}")
     end
     
     # BOTTOM PANEL: Voltages (lighter colors, dashed lines)
