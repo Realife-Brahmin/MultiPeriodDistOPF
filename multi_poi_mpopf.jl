@@ -2104,9 +2104,10 @@ for slack_sub in slack_substations
         end
     end
     
-    # Voltages: all substations
-    for (i, s) in enumerate(substations)
-        voltage_matrix[i, :] = sqrt.(result[:v][s])
+    # Voltages: only non-slack substations
+    non_slack_voltage_matrix = zeros(length(non_slack_substations), T)
+    for (i, s) in enumerate(non_slack_substations)
+        non_slack_voltage_matrix[i, :] = sqrt.(result[:v][s])
     end
     
     # Calculate y-axis limits for angles
@@ -2117,8 +2118,8 @@ for slack_sub in slack_substations
     θ_margin = max(0.5, 0.15 * θ_range)
     angle_ylims = (θ_min - θ_margin, θ_max + θ_margin)
     
-    # Calculate y-axis limits for voltages
-    all_voltages = vec(voltage_matrix)
+    # Calculate y-axis limits for voltages (non-slack only)
+    all_voltages = vec(non_slack_voltage_matrix)
     v_min = minimum(all_voltages)
     v_max = maximum(all_voltages)
     v_range = v_max - v_min
@@ -2218,10 +2219,13 @@ for slack_sub in slack_substations
               label = L"\theta^t_{%$s}")
     end
     
-    # BOTTOM PANEL: Voltages (lighter colors, dashed lines)
+    # BOTTOM PANEL: Voltages (lighter colors, dashed lines) - non-slack only
     p_voltage = plot(xlabel = L"Time Period $t$ (hour)",
                      ylabel = L"Voltage $V$ [pu]",
-                     legend = false,
+                     legend = :topright,
+                     legend_columns = 2,
+                     legendfontsize = 7,
+                     legend_background_color = RGBA(1,1,1,0.9),
                      size = (710, 460),
                      theme = :dao,
                      dpi = 400,
@@ -2240,11 +2244,13 @@ for slack_sub in slack_substations
                      top_margin = 0Plots.mm,
                      bottom_margin = 4Plots.mm)
     
-    # Plot voltage trajectories (lighter colors, dashed, square markers)
-    for (i, s) in enumerate(substations)
-        plot!(p_voltage, Tset, voltage_matrix[i, :], 
-              label = L"V_{\mathrm{Subs},%$i}",
-              color = voltage_colors[i],
+    # Plot voltage trajectories (lighter colors, dashed, square markers) - non-slack only
+    for (i, s) in enumerate(non_slack_substations)
+        # Find original color index
+        orig_idx = findfirst(==(s), substations)
+        plot!(p_voltage, Tset, non_slack_voltage_matrix[i, :], 
+              label = L"V_{\mathrm{Subs},%$orig_idx}",
+              color = voltage_colors[orig_idx],
               markershape = :square,
               markersize = 4,
               markerstrokewidth = 1.5,
@@ -2261,6 +2267,86 @@ for slack_sub in slack_substations
               plot_title = "",
               link = :x)
     
+    # STANDALONE ANGLE-ONLY PLOT (no voltage subplot)
+    p_angle_only = plot(xlabel = L"Time Period $t$ (hour)",
+                        ylabel = L"Angle $\theta$ [°]",
+                        title = "Substation Voltage Angle Profile vs Time (Slack: Subs $slack_sub)",
+                        legend = :outertop,
+                        legend_columns = 4,
+                        legendfontsize = 7,
+                        legend_background_color = RGBA(1,1,1,0.9),
+                        size = (710, 360),
+                        theme = :dao,
+                        dpi = 400,
+                        tickfont = font(9, "Computer Modern"),
+                        guidefont = font(10, "Computer Modern"),
+                        titlefont = font(11, "Computer Modern"),
+                        xticks = (xtick_sparse, string.(xtick_sparse)),
+                        ylims = angle_ylims,
+                        grid = true,
+                        gridlinewidth = 0.5,
+                        gridalpha = 0.25,
+                        gridstyle = :solid,
+                        framestyle = :box,
+                        left_margin = 3Plots.mm,
+                        right_margin = 3Plots.mm,
+                        top_margin = 2Plots.mm,
+                        bottom_margin = 4Plots.mm)
+    
+    # Plot median reference lines first (dashed, behind trajectories) - only non-slack
+    for (i, s) in enumerate(non_slack_substations)
+        if haskey(median_angles, s)
+            δ_med = median_angles[s]
+            orig_idx = findfirst(==(s), substations)
+            hline!(p_angle_only, [δ_med],
+                   linestyle = :dash,
+                   linewidth = 2.0,
+                   linecolor = slack_colors[orig_idx],
+                   alpha = 0.8,
+                   label = "")
+        end
+    end
+    
+    # Plot angle trajectories - only non-slack (no labels yet)
+    for (i, s) in enumerate(non_slack_substations)
+        orig_idx = findfirst(==(s), substations)
+        plot!(p_angle_only, Tset, angle_matrix[i, :], 
+              label = "",
+              color = slack_colors[orig_idx],
+              markershape = marker_shapes[orig_idx],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2)
+    end
+    
+    # Add legend entries in desired order: deltas first (top row), then thetas (bottom row)
+    for (i, s) in enumerate(non_slack_substations)
+        if haskey(median_angles, s)
+            δ_med = median_angles[s]
+            orig_idx = findfirst(==(s), substations)
+            plot!(p_angle_only, [], [],
+                  linestyle = :dash,
+                  linewidth = 2.0,
+                  linecolor = slack_colors[orig_idx],
+                  alpha = 0.8,
+                  label = L"\delta_{%$s} = %$(round(δ_med, digits=2))°")
+        end
+    end
+    for (i, s) in enumerate(non_slack_substations)
+        orig_idx = findfirst(==(s), substations)
+        plot!(p_angle_only, [], [],
+              color = slack_colors[orig_idx],
+              markershape = marker_shapes[orig_idx],
+              markersize = 5,
+              markerstrokewidth = 1.5,
+              markerstrokecolor = :black,
+              markeralpha = 0.9,
+              linewidth = 2.2,
+              label = L"\theta^t_{%$s}")
+    end
+    
     # Save plots
     plots_dir = joinpath(results_base_dir, "plots")
     mkpath(plots_dir)
@@ -2269,6 +2355,7 @@ for slack_sub in slack_substations
     savefig(p2, joinpath(plots_dir, "Q_Subs_timeseries_slack_$(slack_sub).png"))
     savefig(p3, joinpath(plots_dir, "Cost_timeseries_slack_$(slack_sub).png"))
     savefig(p4, joinpath(plots_dir, "angle_voltage_slack$(slack_sub).png"))
+    savefig(p_angle_only, joinpath(plots_dir, "angle_only_slack$(slack_sub).png"))
     
     println("  ✓ Saved plots for slack=$slack_sub")
 end
