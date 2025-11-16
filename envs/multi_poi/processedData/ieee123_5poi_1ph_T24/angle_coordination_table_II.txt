@@ -1,0 +1,136 @@
+================================================================================
+TABLE II: COMPLETE ANGLE COORDINATION REQUIREMENTS FOR ALL SLACK CONFIGURATIONS
+IEEE 123-Bus Five-Substation System (24-hour horizon)
+================================================================================
+
+Color-coded rows for LaTeX table:
+  Green:   Slack = 1s
+  Cyan:    Slack = 2s
+  Blue:    Slack = 3s
+  Magenta: Slack = 4s
+  Yellow:  Slack = 5s
+
+--------------------------------------------------------------------------------
+SLACK CONFIGURATION: SUBSTATION 1s (Green (1s) rows in LaTeX)
+Total RMS Deviation: 14.917°
+--------------------------------------------------------------------------------
+Non-Slack       | Median Angle         | Angle Range               | Temporal RMSE  
+Substation      | (degrees)            | (degrees)                 | (degrees)      
+--------------------------------------------------------------------------------
+2s              |              -13.578 | [  -30.388,     6.864] |          12.008
+3s              |               -4.807 | [  -31.611,    13.366] |          14.646
+4s              |               -9.496 | [  -29.942,    17.736] |          16.963
+5s              |               -7.221 | [  -22.508,    19.208] |          15.610
+
+--------------------------------------------------------------------------------
+SLACK CONFIGURATION: SUBSTATION 2s (Cyan (2s) rows in LaTeX)
+Total RMS Deviation: 8.133°
+--------------------------------------------------------------------------------
+Non-Slack       | Median Angle         | Angle Range               | Temporal RMSE  
+Substation      | (degrees)            | (degrees)                 | (degrees)      
+--------------------------------------------------------------------------------
+1s              |               13.556 | [   -6.891,    30.406] |          12.010
+3s              |                2.352 | [   -2.669,    16.577] |           7.453
+4s              |                8.887 | [   -2.865,    14.473] |           6.200
+5s              |                7.132 | [    2.299,    20.408] |           5.130
+
+--------------------------------------------------------------------------------
+SLACK CONFIGURATION: SUBSTATION 3s (Blue (3s) rows in LaTeX)
+Total RMS Deviation: 9.872°
+--------------------------------------------------------------------------------
+Non-Slack       | Median Angle         | Angle Range               | Temporal RMSE  
+Substation      | (degrees)            | (degrees)                 | (degrees)      
+--------------------------------------------------------------------------------
+1s              |                4.797 | [  -13.365,    31.628] |          14.645
+2s              |               -2.362 | [  -16.573,     2.654] |           7.450
+4s              |                1.617 | [  -15.515,    13.627] |           8.263
+5s              |                6.117 | [  -11.427,    20.429] |           7.180
+
+--------------------------------------------------------------------------------
+SLACK CONFIGURATION: SUBSTATION 4s (Magenta (4s) rows in LaTeX)
+Total RMS Deviation: 10.393°
+--------------------------------------------------------------------------------
+Non-Slack       | Median Angle         | Angle Range               | Temporal RMSE  
+Substation      | (degrees)            | (degrees)                 | (degrees)      
+--------------------------------------------------------------------------------
+1s              |                9.437 | [  -17.724,    29.910] |          16.957
+2s              |               -8.925 | [  -14.518,     2.841] |           6.209
+3s              |               -1.621 | [  -13.648,    15.497] |           8.269
+5s              |                3.252 | [   -7.552,     8.202] |           6.134
+
+--------------------------------------------------------------------------------
+SLACK CONFIGURATION: SUBSTATION 5s (Yellow (5s) rows in LaTeX)
+Total RMS Deviation: 9.469°
+--------------------------------------------------------------------------------
+Non-Slack       | Median Angle         | Angle Range               | Temporal RMSE  
+Substation      | (degrees)            | (degrees)                 | (degrees)      
+--------------------------------------------------------------------------------
+1s              |                7.207 | [  -19.213,    22.493] |          15.609
+2s              |               -7.142 | [  -20.402,    -2.313] |           5.123
+3s              |               -6.122 | [  -20.433,    11.413] |           7.177
+4s              |               -3.270 | [   -8.215,     7.477] |           6.105
+
+================================================================================
+LATEX-FORMATTED TABLE II (20 ROWS)
+================================================================================
+
+% Copy the rows below into your LaTeX table
+% Table structure: Non-Slack Substation | Median Angle | Range | RMSE
+
+% --- Slack = 1s (Green (1s), RMS = 14.917°) ---
+\rowcolor{green!10}
+2s & $-13.578$ & [$-30.388$, $6.864$] & 12.008 \\
+\rowcolor{green!10}
+3s & $-4.807$ & [$-31.611$, $13.366$] & 14.646 \\
+\rowcolor{green!10}
+4s & $-9.496$ & [$-29.942$, $17.736$] & 16.963 \\
+\rowcolor{green!10}
+5s & $-7.221$ & [$-22.508$, $19.208$] & 15.610 \\
+\hline
+% --- Slack = 2s (Cyan (2s), RMS = 8.133°) ---
+\rowcolor{cyan!10}
+1s & $13.556$ & [$-6.891$, $30.406$] & 12.010 \\
+\rowcolor{cyan!10}
+3s & $2.352$ & [$-2.669$, $16.577$] & 7.453 \\
+\rowcolor{cyan!10}
+4s & $8.887$ & [$-2.865$, $14.473$] & 6.200 \\
+\rowcolor{cyan!10}
+5s & $7.132$ & [$2.299$, $20.408$] & 5.130 \\
+\hline
+% --- Slack = 3s (Blue (3s), RMS = 9.872°) ---
+\rowcolor{blue!10}
+1s & $4.797$ & [$-13.365$, $31.628$] & 14.645 \\
+\rowcolor{blue!10}
+2s & $-2.362$ & [$-16.573$, $2.654$] & 7.450 \\
+\rowcolor{blue!10}
+4s & $1.617$ & [$-15.515$, $13.627$] & 8.263 \\
+\rowcolor{blue!10}
+5s & $6.117$ & [$-11.427$, $20.429$] & 7.180 \\
+\hline
+% --- Slack = 4s (Magenta (4s), RMS = 10.393°) ---
+\rowcolor{magenta!10}
+1s & $9.437$ & [$-17.724$, $29.910$] & 16.957 \\
+\rowcolor{magenta!10}
+2s & $-8.925$ & [$-14.518$, $2.841$] & 6.209 \\
+\rowcolor{magenta!10}
+3s & $-1.621$ & [$-13.648$, $15.497$] & 8.269 \\
+\rowcolor{magenta!10}
+5s & $3.252$ & [$-7.552$, $8.202$] & 6.134 \\
+\hline
+% --- Slack = 5s (Yellow (5s), RMS = 9.469°) ---
+\rowcolor{yellow!10}
+1s & $7.207$ & [$-19.213$, $22.493$] & 15.609 \\
+\rowcolor{yellow!10}
+2s & $-7.142$ & [$-20.402$, $-2.313$] & 5.123 \\
+\rowcolor{yellow!10}
+3s & $-6.122$ & [$-20.433$, $11.413$] & 7.177 \\
+\rowcolor{yellow!10}
+4s & $-3.270$ & [$-8.215$, $7.477$] & 6.105 \\
+\hline
+
+% Legend for table footer:
+% \multicolumn{4}{l}{\footnotesize \textcolor{green!50!black}{Green: Slack = 1s (Total RMS: 14.917$^\circ$)},
+% \textcolor{cyan!50!black}{Cyan: Slack = 2s (8.133$^\circ$)},
+% \textcolor{blue!50!black}{Blue: Slack = 3s (9.872$^\circ$)}}\\
+% \multicolumn{4}{l}{\footnotesize \textcolor{magenta!50!black}{Magenta: Slack = 4s (10.393$^\circ$)},
+% \textcolor{orange!80!black}{Yellow: Slack = 5s (9.469$^\circ$)}}
