@@ -1397,10 +1397,12 @@ function compute_angles_from_power_flow(data, result, slack_sub)
         end
         
         angles = theta_deg[sub]
-        med = median(angles)
-        median_angles_deg[sub] = med
+        # Use mean (not median) - this is the value that minimizes sum of squared errors
+        # i.e., the δ that minimizes Σ(θ^t - δ)² is δ = mean(θ^t)
+        avg_angle = mean(angles)
+        median_angles_deg[sub] = avg_angle
         angle_ranges_deg[sub] = [minimum(angles), maximum(angles)]
-        rmse_values_deg[sub] = sqrt(mean((angles .- med).^2))
+        rmse_values_deg[sub] = sqrt(mean((angles .- avg_angle).^2))
     end
     
     # Total deviation (RMS of all substation RMSEs)
