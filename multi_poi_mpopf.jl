@@ -2478,3 +2478,56 @@ for i in 1:num_subs
         label=L"C^t_%$i"
     )
 end
+
+# ==================================================================================
+# COPY PLOTS TO LATEX FIGURES FOLDER
+# ==================================================================================
+println("\n" * "="^80)
+println(Crayon(foreground = :cyan, bold = true)("COPYING PLOTS TO LATEX FIGURES FOLDER"))
+println("="^80)
+
+# Define source and destination directories
+plots_source = joinpath(results_base_dir, "plots")
+documents_general = joinpath(@__DIR__, "..", "..")
+latex_dest = joinpath(documents_general, "documentsCreated", "PESGM2026_Multi-Source-Multi-Period-OPF", "figures")
+
+# Create destination if it doesn't exist
+mkpath(latex_dest)
+
+# Plot files to copy - both combined (angle+voltage) and angle-only plots
+plot_files_to_copy = [
+    "angle_voltage_slack1s.png",
+    "angle_voltage_slack2s.png",
+    "angle_voltage_slack3s.png",
+    "angle_voltage_slack4s.png",
+    "angle_voltage_slack5s.png",
+    "angle_only_slack1s.png",
+    "angle_only_slack2s.png",
+    "angle_only_slack3s.png",
+    "angle_only_slack4s.png",
+    "angle_only_slack5s.png"
+]
+
+println("\nSource: $plots_source")
+println("Destination: $latex_dest")
+
+n_total = length(plot_files_to_copy)
+n_copied = 0
+
+for filename in plot_files_to_copy
+    global n_copied
+    src = joinpath(plots_source, filename)
+    dst = joinpath(latex_dest, filename)
+    
+    if isfile(src)
+        cp(src, dst, force=true)
+        println("  ✓ Copied: $filename")
+        n_copied += 1
+    else
+        println("  ✗ Not found: $filename")
+    end
+end
+
+println("\n" * "="^80)
+println(Crayon(foreground = :light_green, bold = true)("✓ COPIED $(n_copied)/$(n_total) PLOTS TO LATEX FIGURES FOLDER"))
+println("="^80)
