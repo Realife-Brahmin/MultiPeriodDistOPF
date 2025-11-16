@@ -15,13 +15,18 @@ latex_dest = joinpath(documents_general, "documentsCreated", "PESGM2026_Multi-So
 # Create destination if it doesn't exist
 mkpath(latex_dest)
 
-# Plot files to copy
+# Plot files to copy - both combined (angle+voltage) and angle-only plots
 plot_files = [
     "angle_voltage_slack1s.png",
     "angle_voltage_slack2s.png",
     "angle_voltage_slack3s.png",
     "angle_voltage_slack4s.png",
-    "angle_voltage_slack5s.png"
+    "angle_voltage_slack5s.png",
+    "angle_only_slack1s.png",
+    "angle_only_slack2s.png",
+    "angle_only_slack3s.png",
+    "angle_only_slack4s.png",
+    "angle_only_slack5s.png"
 ]
 
 println("\nSource: $plots_source")
