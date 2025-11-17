@@ -178,27 +178,26 @@ function generate_latex_table()
     latex_str = """
 \\begin{table}[t]
 \\centering
-\\caption{Resource Distribution Across Network Zones}
+\\caption{Distributed Energy Resource Allocation Across Network Zones}
 \\label{tab:zone_resources}
-\\begin{tabular}{lccccc}
+\\begin{tabular}{lcccc}
 \\toprule
-Zone & Substation & Load & PV Capacity & Battery Units & Battery Power \\\\
-     &            & (kW) & (kW)        &               & (kW) \\\\
+Zone & Substation & PV Units & PV Capacity & Battery Units & Battery Power \\\\
+     &            &          & (kW)        &               & (kW) \\\\
 \\midrule
 """
     
+    # Show all 5 zones - focuses on DER allocation only
     for zone in 1:5
-        load_count = length(zone_loads[zone])
         pv_count = length(pv_zones[zone])
         batt_count = length(batt_zones[zone])
-        load_kw = round(Int, zone_load_kw[zone])
         pv_kw = round(Int, zone_pv_kw[zone])
         batt_kw = round(Int, zone_batt_kw[zone])
-        latex_str *= "Zone $zone & $(zone_subs[zone]) & $load_kw & $pv_kw & $batt_count & $batt_kw \\\\\n"
+        latex_str *= "Zone $zone & $(zone_subs[zone]) & $pv_count & $pv_kw & $batt_count & $batt_kw \\\\\n"
     end
     
     latex_str *= """\\midrule
-Total & -- & $(round(Int, total_load)) & $(round(Int, total_pv)) & $(total_batt_units) & $(round(Int, total_batt)) \\\\
+Total & -- & $(total_pv_units) & $(round(Int, total_pv)) & $(total_batt_units) & $(round(Int, total_batt)) \\\\
 \\bottomrule
 \\end{tabular}
 \\end{table}
