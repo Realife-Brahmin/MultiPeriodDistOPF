@@ -24,6 +24,202 @@
 \begin{document}
 \maketitle
 
+\section{NEW: Local Neighbor Coupling tADMM (Reduced Communication)}
+
+\subsection{Overview}
+
+This formulation modifies the standard tADMM algorithm to use \textbf{local temporal coupling} instead of global coupling. Each subproblem $t_0$ only shares SOC variables with its immediate time neighbors $(t_0-1, t_0, t_0+1)$, reducing coupling from $\mathcal{O}(T \times |\mathcal{B}|)$ to $\mathcal{O}(3 \times |\mathcal{B}|)$ per subproblem.
+
+\subsection{Key Modifications}
+
+\begin{itemize}
+    \item \textbf{Original (Global Coupling)}: Each subproblem $t_0$ couples with \textit{all} $T$ time steps
+    \item \textbf{New (Local Coupling)}: Each subproblem $t_0$ couples only with neighbors $\{t_0-1, t_0, t_0+1\}$
+    \item \textbf{Memory Reduction}: $T^2 \times |\mathcal{B}| \to 3T \times |\mathcal{B}|$ total storage
+    \item \textbf{Communication Reduction}: Each subproblem exchanges $3 \times |\mathcal{B}|$ variables (not $T \times |\mathcal{B}|$)
+\end{itemize}
+
+\subsection{Local Time Sets}
+
+For each subproblem $t_0 \in \{1, 2, \ldots, T\}$, define the local time set:
+\begin{align}
+\mathcal{T}_{\text{local}}^{t_0} = \begin{cases}
+\{1, 2\} & \text{if } t_0 = 1 \text{ (boundary)} \\
+\{t_0-1, t_0, t_0+1\} & \text{if } 2 \leq t_0 \leq T-1 \text{ (interior)} \\
+\{T-1, T\} & \text{if } t_0 = T \text{ (boundary)}
+\end{cases}
+\end{align}
+
+\subsection{Step 1: Primal Update (Local Coupling)}
+
+For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
+
+\begin{align}
+\min_{\substack{P_{\text{Subs}}^{t_0}, Q_{\text{Subs}}^{t_0}, \\ P_{ij}^{t_0}, Q_{ij}^{t_0}, v_j^{t_0}, q_{D,j}^{t_0}, \\ P_{B,j}^t, \blueB{B_j^{t_0}[t]} \\ \forall j \in \mathcal{B}, \, t \in \mathcal{T}_{\text{local}}^{t_0}}} \quad & c^{t_0} \cdot P_{\text{Subs}}^{t_0} \cdot P_{\text{BASE}} \cdot \Delta t + C_B \sum_{j \in \mathcal{B}} \left(P_{B,j}^{t_0}\right)^2 \cdot P_{\text{BASE}}^2 \cdot \Delta t \notag \\
+& + \frac{\rho}{2} \sum_{j \in \mathcal{B}} \sum_{t \in \mathcal{T}_{\text{local}}^{t_0}} \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} + \greenu{u_j^{t_0}[t]} \right)^2
+\end{align}
+
+\textbf{Subject to:}
+
+\textbf{Spatial Network Constraints (only for time $t_0$):}
+\begin{align}
+\text{(Same as global formulation - constraints (2)-(8))}
+\end{align}
+
+\textbf{Temporal Battery Constraints:}
+
+\noindent\textbf{Case 1: First time period ($t_0 = 1$):}
+
+\textit{Local times: $\{1, 2\}$, Decision variables: $\blueB{B_j^{1}[1]}, \blueB{B_j^{1}[2]}$, Dual variables: $\greenu{u_j^{1}[1]}$ only}
+\begin{align}
+\text{SOC trajectory } t=0 \to t=1: \quad & \blueB{B_j^{1}[1]} = B_{0,j} - P_{B,j}^1 \cdot \Delta t, \quad \forall j \in \mathcal{B} \\
+\text{SOC trajectory } t=1 \to t=2: \quad & \blueB{B_j^{1}[2]} = \blueB{B_j^{1}[1]} - P_{B,j}^2 \cdot \Delta t, \quad \forall j \in \mathcal{B}
+\end{align}
+
+\textit{Note:} $B_{0,j}$ is a parameter (initial condition), not a decision variable. Only $\blueB{B_j^{1}[1]}$ participates in consensus (with dual $\greenu{u_j^{1}[1]}$). Variable $\blueB{B_j^{1}[2]}$ exists for penalty computation but does not participate in consensus at $t=1$.
+
+\noindent\textbf{Case 2: Interior time periods ($2 \leq t_0 \leq T-1$):}
+
+\textit{Local times: $\{t_0-1, t_0, t_0+1\}$, Decision variables: $\blueB{B_j^{t_0}[t_0-1]}, \blueB{B_j^{t_0}[t_0]}, \blueB{B_j^{t_0}[t_0+1]}$}
+
+\textit{Dual variables: $\greenu{u_j^{t_0}[t_0]}$ only}
+\begin{align}
+\text{SOC trajectory } t_0-1 \to t_0: \quad & \blueB{B_j^{t_0}[t_0]} = \blueB{B_j^{t_0}[t_0-1]} - P_{B,j}^{t_0} \cdot \Delta t, \quad \forall j \in \mathcal{B} \\
+\text{SOC trajectory } t_0 \to t_0+1: \quad & \blueB{B_j^{t_0}[t_0+1]} = \blueB{B_j^{t_0}[t_0]} - P_{B,j}^{t_0+1} \cdot \Delta t, \quad \forall j \in \mathcal{B}
+\end{align}
+
+\textit{Note:} Only $\blueB{B_j^{t_0}[t_0]}$ participates in consensus update at time $t_0$ (with dual $\greenu{u_j^{t_0}[t_0]}$). Variables $\blueB{B_j^{t_0}[t_0-1]}$ and $\blueB{B_j^{t_0}[t_0+1]}$ are used for penalty terms but do not generate new dual variables in this subproblem.
+
+\noindent\textbf{Case 3: Last time period ($t_0 = T$):}
+
+\textit{Local times: $\{T-1, T\}$, Decision variables: $\blueB{B_j^{T}[T-1]}, \blueB{B_j^{T}[T]}$, Dual variables: $\greenu{u_j^{T}[T]}$ only}
+\begin{align}
+\text{SOC trajectory } T-1 \to T: \quad & \blueB{B_j^{T}[T]} = \blueB{B_j^{T}[T-1]} - P_{B,j}^T \cdot \Delta t, \quad \forall j \in \mathcal{B}
+\end{align}
+
+\textit{Note:} Only $\blueB{B_j^{T}[T]}$ participates in consensus at $t=T$ (with dual $\greenu{u_j^{T}[T]}$). Variable $\blueB{B_j^{T}[T-1]}$ is for penalty only.
+
+\textbf{SOC and Power Limits:}
+\begin{align}
+\text{SOC limits:} \quad & \text{SOC}_{\min,j} \cdot B_{\text{rated},j} \leq \blueB{B_j^{t_0}[t]} \leq \text{SOC}_{\max,j} \cdot B_{\text{rated},j}, \notag \\
+& \quad \forall t \in \mathcal{T}_{\text{local}}^{t_0}, \, j \in \mathcal{B} \\
+\text{Power limits:} \quad & -P_{B,\text{rated},j} \leq P_{B,j}^{t} \leq P_{B,\text{rated},j}, \quad \forall t \in \mathcal{T}_{\text{local}}^{t_0}, \, j \in \mathcal{B}
+\end{align}
+
+\textit{Note:} Power limits must be enforced for \textit{all} times appearing in constraints, not just $t_0$. For interior times: $P_{B,j}^{t_0-1}, P_{B,j}^{t_0}, P_{B,j}^{t_0+1}$ all need limits.
+
+\subsection{Step 2: Consensus Update (Local Averaging)}
+
+For each battery $j \in \mathcal{B}$ and each time $t \in \mathcal{T}$, average only over subproblems where $t$ is the \textit{active} time:
+
+\noindent\textbf{Consensus at $t=1$:}
+\begin{align}
+\redBhat{\hat{B}_j[1]} &= \text{clamp}\left( \frac{1}{2} \left( \blueB{B_j^{1}[1]} + \greenu{u_j^{1}[1]} + \blueB{B_j^{2}[1]} + \greenu{u_j^{2}[1]} \right), \underline{B}_j, \overline{B}_j \right)
+\end{align}
+\textit{Contributors:} Subproblems $t_0=1$ and $t_0=2$ (only these have $t=1$ as decision variable with dual)
+
+\noindent\textbf{Consensus at interior times ($2 \leq t \leq T-1$):}
+\begin{align}
+\redBhat{\hat{B}_j[t]} &= \text{clamp}\left( \frac{1}{3} \left( \blueB{B_j^{t-1}[t]} + \greenu{u_j^{t-1}[t]} + \blueB{B_j^{t}[t]} + \greenu{u_j^{t}[t]} + \blueB{B_j^{t+1}[t]} + \greenu{u_j^{t+1}[t]} \right), \underline{B}_j, \overline{B}_j \right)
+\end{align}
+\textit{Contributors:} Subproblems $t_0 \in \{t-1, t, t+1\}$ (each has $t$ as its active control time)
+
+\noindent\textbf{Consensus at $t=T$:}
+\begin{align}
+\redBhat{\hat{B}_j[T]} &= \text{clamp}\left( \frac{1}{2} \left( \blueB{B_j^{T-1}[T]} + \greenu{u_j^{T-1}[T]} + \blueB{B_j^{T}[T]} + \greenu{u_j^{T}[T]} \right), \underline{B}_j, \overline{B}_j \right)
+\end{align}
+\textit{Contributors:} Subproblems $t_0=T-1$ and $t_0=T$ (only these have $t=T$ as decision variable with dual)
+
+\textbf{General form:}
+\begin{align}
+\mathcal{N}_t &= \{t_0 \in \mathcal{T} : t \text{ is the active control time in subproblem } t_0\} \\
+&= \begin{cases}
+\{1, 2\} & \text{if } t = 1 \\
+\{t-1, t, t+1\} & \text{if } 2 \leq t \leq T-1 \\
+\{T-1, T\} & \text{if } t = T
+\end{cases}
+\end{align}
+
+\subsection{Step 3: Dual Update (Active Time Only)}
+
+For each subproblem $t_0 \in \mathcal{T}$ and battery $j \in \mathcal{B}$, update dual \textit{only} for the active control time $t_0$:
+
+\noindent\textbf{Subproblem $t_0=1$:}
+\begin{align}
+\greenu{u_j^{1}[1]} &:= \greenu{u_j^{1}[1]} + \left( \blueB{B_j^{1}[1]} - \redBhat{\hat{B}_j[1]} \right)
+\end{align}
+
+\noindent\textbf{Subproblem $t_0$ ($2 \leq t_0 \leq T-1$):}
+\begin{align}
+\greenu{u_j^{t_0}[t_0]} &:= \greenu{u_j^{t_0}[t_0]} + \left( \blueB{B_j^{t_0}[t_0]} - \redBhat{\hat{B}_j[t_0]} \right)
+\end{align}
+
+\noindent\textbf{Subproblem $t_0=T$:}
+\begin{align}
+\greenu{u_j^{T}[T]} &:= \greenu{u_j^{T}[T]} + \left( \blueB{B_j^{T}[T]} - \redBhat{\hat{B}_j[T]} \right)
+\end{align}
+
+\textbf{Critical Note:} Each subproblem $t_0$ maintains \textit{only one} dual variable per battery: $\greenu{u_j^{t_0}[t_0]}$. 
+
+\noindent The local SOC variables $\blueB{B_j^{t_0}[t_0 \pm 1]}$ are used in penalty terms for coupling but do \textit{not} generate separate dual updates within subproblem $t_0$. They will be updated when those times are the active control time in their respective subproblems.
+
+\subsection{Convergence Criteria}
+
+\textbf{Primal Residual (only for coupled times):}
+\begin{align}
+\|r^k\|_2 &= \frac{1}{\sqrt{N_{\text{coupled}}}} \left( \sum_{t_0 \in \mathcal{T}} \sum_{j \in \mathcal{B}} \sum_{t \in \mathcal{T}_{\text{local}}^{t_0}} \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} \right)^2 \right)^{1/2}
+\end{align}
+
+where $N_{\text{coupled}} = \sum_{t_0 \in \mathcal{T}} |\mathcal{T}_{\text{local}}^{t_0}| \times |\mathcal{B}| = (2 + 3(T-2) + 2) \times |\mathcal{B}| = 3T \times |\mathcal{B}| - 2|\mathcal{B}|$.
+
+\textbf{Dual Residual:}
+\begin{align}
+\|s^k\|_2 &= \frac{\rho}{|\mathcal{B}|} \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^k[t]} - \redBhat{\hat{B}_j^{k-1}[t]} \right)^2} \leq \epsilon_{\text{dual}}
+\end{align}
+
+\subsection{Complexity Comparison}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Global Coupling} & \textbf{Local Coupling} \\
+\midrule
+SOC variables per subproblem & $T \times |\mathcal{B}|$ & $2$ or $3 \times |\mathcal{B}|$ \\
+Dual variables per subproblem & $T \times |\mathcal{B}|$ & $1 \times |\mathcal{B}|$ \\
+Penalty terms per subproblem & $T \times |\mathcal{B}|$ & $2$ or $3 \times |\mathcal{B}|$ \\
+Total SOC storage & $T^2 \times |\mathcal{B}|$ & $(2 \cdot 2 + 3 \cdot (T-2)) \times |\mathcal{B}| = (3T-2) \times |\mathcal{B}|$ \\
+Total dual storage & $T^2 \times |\mathcal{B}|$ & $T \times |\mathcal{B}|$ \\
+Communication per iteration & $T \times |\mathcal{B}|$ per subproblem & $2$ or $3 \times |\mathcal{B}|$ per subproblem \\
+Consensus contributors & All $T$ subproblems & Only $2$ or $3$ neighbors \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{For $T=24$, $|\mathcal{B}|=26$ batteries:}
+\begin{itemize}
+    \item \textbf{SOC Variables:}
+    \begin{itemize}
+        \item Global: $24^2 \times 26 = 14,976$ total
+        \item Local: $(3 \times 24 - 2) \times 26 = 1,872$ total
+        \item \textbf{Reduction: $8.0\times$}
+    \end{itemize}
+    \item \textbf{Dual Variables:}
+    \begin{itemize}
+        \item Global: $24^2 \times 26 = 14,976$ total
+        \item Local: $24 \times 26 = 624$ total
+        \item \textbf{Reduction: $24\times$}
+    \end{itemize}
+    \item \textbf{Per-subproblem SOC variables:}
+    \begin{itemize}
+        \item Global: $24 \times 26 = 624$ per subproblem
+        \item Local (boundary): $2 \times 26 = 52$ per subproblem
+        \item Local (interior): $3 \times 26 = 78$ per subproblem
+        \item \textbf{Reduction: $12\times$ (boundary), $8\times$ (interior)}
+    \end{itemize}
+\end{itemize}
+
+\newpage
+
 \section{LinDistFlow MPOPF with tADMM}
 
 \subsection{Problem Overview}

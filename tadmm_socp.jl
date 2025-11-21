@@ -785,9 +785,18 @@ begin # function primal update (update 1) tadmm socp
         @variable(model, ℓ_t0[(i, j) in Lset] >= 1e-6)  # Current squared magnitude (bounded away from 0)
         @variable(model, q_D_t0[j in Dset])
         
-        # ===== BATTERY VARIABLES (ENTIRE horizon) =====
+        # ===== BATTERY VARIABLES (LOCAL COUPLING - NEIGHBORS ONLY) =====
+        # Define local time set: current time and neighbors
+        if t0 == 1
+            local_times = [1, 2]  # First time: share with t=2
+        elseif t0 == length(Tset)
+            local_times = [t0-1, t0]  # Last time: share with t=T-1
+        else
+            local_times = [t0-1, t0, t0+1]  # Middle: share with t-1, t, t+1
+        end
+        
         @variable(model, P_B_var[j in Bset, t in Tset])
-        @variable(model, B_var[j in Bset, t in Tset])
+        @variable(model, B_var[j in Bset, t in local_times])  # Only local neighbors!
         
         # ===== OBJECTIVE =====
         # Energy cost at t0
@@ -796,9 +805,9 @@ begin # function primal update (update 1) tadmm socp
         # Battery quadratic cost at t0
         battery_cost = sum(C_B * (P_B_var[j, t0] * P_BASE)^2 * Δt for j in Bset)
         
-        # ADMM penalty (full horizon)
-        penalty = (ρ / 2) * sum(sum((B_var[j, t] - Bhat[j][t] + u_local[j][t])^2 
-                                    for t in Tset) for j in Bset)
+        # ADMM penalty for all local times (each has its own dual)
+        # u_local[j] has keys for all local_times
+        penalty = (ρ / 2) * sum(sum((B_var[j, t] - Bhat[j][t] + u_local[j][t])^2 for t in local_times) for j in Bset)
         
         @objective(model, Min, energy_cost + battery_cost + penalty)
         
@@ -857,21 +866,37 @@ begin # function primal update (update 1) tadmm socp
             @constraint(model, -q_max <= q_D_t0[j] <= q_max)
         end
         
-        # ===== TEMPORAL CONSTRAINTS (ENTIRE horizon) =====
+        # ===== TEMPORAL CONSTRAINTS (LOCAL COUPLING) =====
         
         for j in Bset
-            # Battery SOC trajectory (all time periods)
-            for t in Tset
-                if t == 1
-                    @constraint(model, B_var[j, t] == B0_pu[j] - P_B_var[j, t] * Δt)
-                else
-                    @constraint(model, B_var[j, t] == B_var[j, t-1] - P_B_var[j, t] * Δt)
-                end
+            # SOC Trajectory constraints depend on which subproblem we're in
+            if t0 == 1
+                # Case 1: t0 = 1 (boundary), local_times = [1, 2]
+                # Trajectory 1: t=0 -> t=1
+                @constraint(model, B_var[j, 1] == B0_pu[j] - P_B_var[j, 1] * Δt)
+                # Trajectory 2: t=1 -> t=2  
+                @constraint(model, B_var[j, 2] == B_var[j, 1] - P_B_var[j, 2] * Δt)
+                
+            elseif t0 == length(Tset)
+                # Case 3: t0 = T (boundary), local_times = [T-1, T]
+                # Only one trajectory: t=T-1 -> t=T
+                @constraint(model, B_var[j, t0] == B_var[j, t0-1] - P_B_var[j, t0] * Δt)
+                
+            else
+                # Case 2: Interior (2 <= t0 <= T-1), local_times = [t0-1, t0, t0+1]
+                # Trajectory 1: t=t0-1 -> t=t0
+                @constraint(model, B_var[j, t0] == B_var[j, t0-1] - P_B_var[j, t0] * Δt)
+                # Trajectory 2: t=t0 -> t=t0+1
+                @constraint(model, B_var[j, t0+1] == B_var[j, t0] - P_B_var[j, t0+1] * Δt)
             end
             
-            # SOC and power limits (all time periods)
-            for t in Tset
+            # SOC limits (only local times)
+            for t in local_times
                 @constraint(model, soc_min[j] * B_R_pu[j] <= B_var[j, t] <= soc_max[j] * B_R_pu[j])
+            end
+            
+            # Power limits (for all times in local neighborhood - needed for trajectories)
+            for t in local_times
                 @constraint(model, -P_B_R_pu[j] <= P_B_var[j, t] <= P_B_R_pu[j])
             end
         end
@@ -891,9 +916,9 @@ begin # function primal update (update 1) tadmm socp
         # Get pure solver time
         solver_time_t0 = solve_time(model)
         
-        # Extract results and update local copies
+        # Extract results - store only local times (Dict structure, not array)
         for j in Bset
-            for t in Tset
+            for t in local_times
                 B_local[j][t] = value(B_var[j, t])
             end
         end
@@ -916,9 +941,8 @@ begin # function primal update (update 1) tadmm socp
         energy_cost_val = LoadShapeCost[t0] * P_Subs_val * P_BASE * Δt
         battery_cost_val = sum(C_B * (P_B_val_t0[j] * P_BASE)^2 * Δt for j in Bset)
         
-        # BUT the penalty is over the full horizon (temporal coupling)
-        penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 
-                                        for t in Tset) for j in Bset)
+        # Penalty only for active time t0 (where dual exists)
+        penalty_val = (ρ / 2) * sum((value(B_var[j, t0]) - Bhat[j][t0] + u_local[j][t0])^2 for j in Bset)
         
         return Dict(
             :total_objective => objective_value(model),
@@ -952,9 +976,34 @@ begin # function consensus update (update 2) tadmm socp
         
         for j in Bset
             for t in Tset
-                # Standard ADMM consensus: average across all T subproblems
-                consensus_sum = sum(B_collection[t0][j][t] + u_collection[t0][j][t] for t0 in Tset)
-                Bhat_standard = consensus_sum / length(Tset)
+                # Local consensus: average only over subproblems where t is the ACTIVE control time
+                # Each subproblem t0 has dual u^t0[t0] only for its active time
+                
+                # Determine which subproblems have t as their active time with dual
+                if t == 1
+                    # t=1 is active in subproblems t0=1 and t0=2
+                    active_t0s = [1, 2]
+                elseif t == length(Tset)
+                    # t=T is active in subproblems t0=T-1 and t0=T
+                    active_t0s = [length(Tset)-1, length(Tset)]
+                else
+                    # t is active in subproblems t0 ∈ {t-1, t, t+1}
+                    active_t0s = [t-1, t, t+1]
+                end
+                
+                # Consensus: average B + u only for active subproblems that have time t
+                # B_collection[t0][j][t] exists for t ∈ local_times(t0)
+                # u_collection[t0][j][t] exists for t ∈ local_times(t0) (matching structure)
+                consensus_sum = 0.0
+                num_contributors = 0
+                for t0 in active_t0s
+                    # Check if both B and u exist at time t in this subproblem
+                    if haskey(B_collection[t0][j], t) && haskey(u_collection[t0][j], t)
+                        consensus_sum += B_collection[t0][j][t] + u_collection[t0][j][t]
+                        num_contributors += 1
+                    end
+                end
+                Bhat_standard = num_contributors > 0 ? consensus_sum / num_contributors : 0.0
                 
                 # FAADMM: Apply momentum (extrapolation) if enabled
                 # Paper's extrapolation (Equation 10): ẑ^(k+1) = z^(k+1) + ((α^k - 1)/α^(k+1))(z^(k+1) - z^k)
@@ -994,8 +1043,12 @@ begin # function dual update (update 3) tadmm socp
         max_change = 0.0
         
         for t0 in Tset
+            # Each subproblem t0 has duals for ALL local times
+            # Update all duals that exist in this subproblem
+            
             for j in Bset
-                for t in Tset
+                # Update all duals for all local times in this subproblem
+                for t in keys(u_collection[t0][j])
                     old_u = u_collection[t0][j][t]
                     u_collection[t0][j][t] += (B_collection[t0][j][t] - Bhat[j][t])
                     max_change = max(max_change, abs(u_collection[t0][j][t] - old_u))
@@ -1024,11 +1077,31 @@ begin # function solve MPOPF tadmm socp
             Bhat[j] .= clamp.(Bhat[j], soc_min[j] * B_R_pu[j], soc_max[j] * B_R_pu[j])
         end
         
-        # Initialize local SOC variables Bⱼᵗ'ᵗ⁰ for each subproblem
-        B_collection = Dict(t0 => Dict(j => copy(Bhat[j]) for j in Bset) for t0 in Tset)
+        # Initialize local SOC variables Bⱼᵗ'ᵗ⁰ for each subproblem (ONLY LOCAL NEIGHBORS)
+        # Structure: B_collection[t0][j] = Dict(t => value) where t in local_times(t0)
+        # Each subproblem t0 stores SOC for 2 or 3 times (neighbors)
+        B_collection = Dict{Int,Dict{Int,Dict{Int,Float64}}}()
         
-        # Initialize scaled dual variables uⱼᵗ'ᵗ⁰
-        u_collection = Dict(t0 => Dict(j => zeros(length(Tset)) for j in Bset) for t0 in Tset)
+        # Structure: u_collection[t0][j] = Dict(t0 => value) - ONLY ONE DUAL PER BATTERY
+        # Each subproblem t0 has exactly 1 dual per battery: u^t0[t0]
+        u_collection = Dict{Int,Dict{Int,Dict{Int,Float64}}}()
+        
+        for t0 in Tset
+            # Define local times for this subproblem (for B_collection)
+            if t0 == 1
+                local_times = [1, 2]
+            elseif t0 == length(Tset)
+                local_times = [t0-1, t0]
+            else
+                local_times = [t0-1, t0, t0+1]
+            end
+            
+            # Initialize SOC for local neighborhood (2 or 3 times)
+            B_collection[t0] = Dict(j => Dict(t => Bhat[j][t] for t in local_times) for j in Bset)
+            
+            # Initialize duals for ALL local times (matching B structure)
+            u_collection[t0] = Dict(j => Dict(t => 0.0 for t in local_times) for j in Bset)
+        end
         
         # Storage for ALL decision variables from each subproblem
         P_Subs_collection = Dict{Int,Float64}()
@@ -1283,14 +1356,19 @@ begin # function solve MPOPF tadmm socp
                 push!(Bhat_history[j], copy(Bhat[j]))
             end
             
-            # 📏 STEP 4: Compute residuals
-            r_vectors = []
+            # 📏 STEP 4: Compute residuals (only for active times with duals)
+            # Primal residual: consensus violation at each time t
+            # Only count residual at time t for subproblems where t is the active control time
+            r_values = Float64[]
             for t0 in Tset
                 for j in Bset
-                    push!(r_vectors, B_collection[t0][j] - Bhat[j])
+                    # Only compute residual for active time t0 (where dual exists)
+                    if haskey(B_collection[t0][j], t0)
+                        push!(r_values, B_collection[t0][j][t0] - Bhat[j][t0])
+                    end
                 end
             end
-            r_norm = norm(vcat(r_vectors...)) / (length(Tset) * length(Bset))
+            r_norm = norm(r_values) / sqrt(length(r_values))
             
             s_vectors = []
             for j in Bset
@@ -1351,7 +1429,9 @@ begin # function solve MPOPF tadmm socp
                         # Rescale dual variables
                         scale_factor = ρ_old_accel / ρ_current
                         for t0 in Tset, j in Bset
-                            u_collection[t0][j] .*= scale_factor
+                            for t_key in keys(u_collection[t0][j])
+                                u_collection[t0][j][t_key] *= scale_factor
+                            end
                         end
                         last_rho_change_iter = k  # Update tracker
                         continue  # Skip normal adaptive ρ this iteration
@@ -1445,7 +1525,10 @@ begin # function solve MPOPF tadmm socp
                 if ρ_current != ρ_old
                     scale_factor = ρ_old / ρ_current
                     for t0 in Tset, j in Bset
-                        u_collection[t0][j] .*= scale_factor
+                        # u_collection[t0][j] is now a Dict{Int, Float64}
+                        for t in keys(u_collection[t0][j])
+                            u_collection[t0][j][t] *= scale_factor
+                        end
                     end
                 end
             end

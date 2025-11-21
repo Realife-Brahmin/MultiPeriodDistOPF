@@ -10,11 +10,11 @@ Number of batteries: 26
 Number of PV units: 17
 
 --- SUBPROBLEM SIZE (one time period) ---
-Number of variables: 1776
-Linear constraints: 2529
+Number of variables: 1204
+Linear constraints: 813
 Quadratic constraints (SOCP): 127
 Nonlinear constraints: 0
-Total constraints: 2656
+Total constraints: 940
 
 --- tADMM PARAMETERS ---
 Initial ρ: 10000.0
@@ -27,27 +27,27 @@ Dual tolerance: 1.0e-05
 FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 64 iterations
-Final primal residual: 1.89e-07
-Final dual residual: 4.23e-07
+Converged in 208 iterations
+Final primal residual: 2.61e-06
+Final dual residual: 9.78e-06
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3417.2020
+Total Cost: $3417.2764
 Brute Force objective: $3417.2170
-Absolute difference: $0.0149
-Relative difference: 0.0004%
+Absolute difference: $0.0595
+Relative difference: 0.0017%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 0.3490 seconds (actual time on machine)
-  Solver time: 0.2370 seconds (reported by Gurobi)
+  Wall-clock time: 0.3180 seconds (actual time on machine)
+  Solver time: 0.2510 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 30.9430 seconds (actual time on machine)
-  Effective time: 9.9530 seconds (max subproblem time per iter)
-  Sequential time: 113.2050 seconds (sum of all subproblems)
+  Wall-clock time: 63.2340 seconds (actual time on machine)
+  Effective time: 28.9200 seconds (max subproblem time per iter)
+  Sequential time: 428.6600 seconds (sum of all subproblems)
 Speedup Metrics:
   tADMM vs BF (wall-clock): 0.01x
-  Parallel efficiency: 32.2% (0.32x speedup)
+  Parallel efficiency: 45.7% (0.46x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
