@@ -72,7 +72,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
 # T = 24  # Number of time steps
-T = 96  # Number of time steps
+T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -941,8 +941,8 @@ begin # function primal update (update 1) tadmm socp
         energy_cost_val = LoadShapeCost[t0] * P_Subs_val * P_BASE * Δt
         battery_cost_val = sum(C_B * (P_B_val_t0[j] * P_BASE)^2 * Δt for j in Bset)
         
-        # Penalty only for active time t0 (where dual exists)
-        penalty_val = (ρ / 2) * sum((value(B_var[j, t0]) - Bhat[j][t0] + u_local[j][t0])^2 for j in Bset)
+        # Penalty for all local times
+        penalty_val = (ρ / 2) * sum(sum((value(B_var[j, t]) - Bhat[j][t] + u_local[j][t])^2 for t in local_times) for j in Bset)
         
         return Dict(
             :total_objective => objective_value(model),
