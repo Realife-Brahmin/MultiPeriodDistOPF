@@ -69,8 +69,8 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-# systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
+systemName = "ads10A_1ph"
+# systemName = "ieee123A_1ph"
 # T = 24  # Number of time steps
 T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
@@ -93,8 +93,8 @@ eps_dual_tadmm = 1e-5
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
-# use_faadmm = true              # Enable acceleration with momentum and restart
-use_faadmm = false
+use_faadmm = true              # Enable acceleration with momentum and restart
+# use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
 # Create shared Gurobi environment (suppresses repeated license messages)
