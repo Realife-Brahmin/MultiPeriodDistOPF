@@ -70,9 +70,10 @@ const COLOR_RESET = Crayon(reset = true)
 systemName = "cp1"  # Copper Plate 1
 # max_iter = 10000
 max_iter = 1000
-rho = 10.0                     # ADMM penalty parameter
+rho = 10.0                     # ADMM penalty parameter (initial value if adaptive)
 eps_pri = 1e-5
 eps_dual = 1e-4
+adaptive_rho = true            # Enable adaptive ρ adjustment
 # ----------------------- Scenario ---------------------------
 # T = 24
 T = 24
@@ -391,7 +392,7 @@ Algorithm:
 Returns Dict(:P_B, :P_Subs, :B, :objective_history, :consensus_trajectory, :convergence_history)
 """
 function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
-    max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3)
+    max_iter::Int=200, eps_pri::Float64=1e-3, eps_dual::Float64=1e-3, adaptive_rho::Bool=false)
     T = inst.T
     b = inst.bat
 
@@ -411,16 +412,14 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     P_Subs_collection = zeros(T)  # P_Subs[t] from subproblem t
     B_local_collection = zeros(T)  # B[t] from subproblem t (local blue solutions)
 
-    # 📊 History tracking with objective breakdown
+    # 📊 History tracking
     obj_history = Float64[]  # True objective (energy + battery costs only)
-    energy_cost_history = Float64[]
-    battery_cost_history = Float64[]
-    penalty_history = Float64[]
     Bhat_history = Vector{Vector{Float64}}()
     B_collection_history = Vector{Vector{Vector{Float64}}}()
     u_collection_history = Vector{Vector{Vector{Float64}}}()
     r_norm_history = Float64[]
     s_norm_history = Float64[]
+    rho_history = Float64[]  # Track ρ evolution if adaptive
 
     # Store initial states
     push!(Bhat_history, copy(Bhat))
@@ -457,9 +456,6 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         # True objective is energy + battery costs (penalty is just for convergence)
         true_objective = total_energy_cost + total_battery_cost
         push!(obj_history, true_objective)
-        push!(energy_cost_history, total_energy_cost)
-        push!(battery_cost_history, total_battery_cost)
-        push!(penalty_history, total_penalty)
 
         # 🔴 STEP 2: Consensus Update  
         Bhat_old = copy(Bhat)
@@ -472,6 +468,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         push!(Bhat_history, copy(Bhat))
         push!(B_collection_history, deepcopy(B_collection))
         push!(u_collection_history, deepcopy(u_collection))
+        push!(rho_history, ρ)  # Track current ρ value
 
         # 📏 STEP 4: Compute residuals using vector norms
         # Primal residual: measure consensus violation using 2-norm
@@ -487,7 +484,37 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         push!(r_norm_history, r_norm)
         push!(s_norm_history, s_norm)
 
-        @printf "k=%3d  obj=%.4f (energy=%.4f, battery=%.4f, penalty=%.4f)  ‖r‖=%.2e  ‖s‖=%.2e\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm
+        # 📊 Adaptive ρ adjustment (Boyd et al. 2011) - only update every 10 iterations
+        if adaptive_rho && (k % 10 == 0)
+            μ = 10.0  # Balance factor
+            τ_incr = 2.0  # Increase factor
+            τ_decr = 2.0  # Decrease factor
+            
+            # Use original s_norm formula without current ρ for comparison
+            s_norm_base = 1/(inst.T) * norm(Bhat - Bhat_old)
+            
+            if r_norm > μ * (ρ * s_norm_base)
+                # Primal residual too large, increase ρ
+                ρ_old = ρ
+                ρ = τ_incr * ρ
+                # Rescale dual variables
+                for t0 in 1:inst.T
+                    u_collection[t0] ./= τ_incr
+                end
+                @printf "  → ρ increased: %.2f → %.2f\n" ρ_old ρ
+            elseif (ρ * s_norm_base) > μ * r_norm
+                # Dual residual too large, decrease ρ
+                ρ_old = ρ
+                ρ = ρ / τ_decr
+                # Rescale dual variables
+                for t0 in 1:inst.T
+                    u_collection[t0] .*= τ_decr
+                end
+                @printf "  → ρ decreased: %.2f → %.2f\n" ρ_old ρ
+            end
+        end
+
+        @printf "k=%3d  obj=%.4f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.2f\n" k true_objective r_norm s_norm ρ
 
         if r_norm ≤ eps_pri && s_norm ≤ eps_dual
             @printf "🎉 tADMM converged at iteration %d\n" k
@@ -512,9 +539,7 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
             :r_norm_history => r_norm_history,
             :s_norm_history => s_norm_history,
             :obj_history => obj_history,
-            :energy_cost_history => energy_cost_history,
-            :battery_cost_history => battery_cost_history,
-            :penalty_history => penalty_history
+            :rho_history => rho_history
         )
     )
 end
@@ -587,7 +612,7 @@ println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH tADMM (TEMPORAL DECOMPOSITION)", CO
 println("="^80)
 
 # tADMM with PDF formulation variable names 
-sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=eps_pri, eps_dual=eps_dual)
+sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=eps_pri, eps_dual=eps_dual, adaptive_rho=adaptive_rho)
 
 println("\n--- tADMM RESULTS ---")
 print(COLOR_SUCCESS)
@@ -1094,10 +1119,11 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     obj_history = conv_hist[:obj_history]
     r_norm_history = conv_hist[:r_norm_history]
     s_norm_history = conv_hist[:s_norm_history]
+    rho_history = conv_hist[:rho_history]
     
     # Downsample data for cleaner plotting (keep all data, just plot subset)
-    plot_indices, obj_plot, r_norm_plot, s_norm_plot = downsample_for_plotting(
-        obj_history, r_norm_history, s_norm_history; max_points=25)
+    plot_indices, obj_plot, r_norm_plot, s_norm_plot, rho_plot = downsample_for_plotting(
+        obj_history, r_norm_history, s_norm_history, rho_history; max_points=25)
     
     iterations = 1:length(obj_history)  # Full range for x-axis limits
     plot_iterations = plot_indices      # Downsampled points for plotting
@@ -1130,7 +1156,7 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
         minorgridalpha=0.15,
         xlims=(0.5, length(obj_history) + 0.5),
         xticks=1:max(1, div(length(obj_history), 5)):length(obj_history),  # Smart x-ticks
-        title="tADMM Convergence - Objective Function (ρ=$(rho))",
+        title="tADMM Convergence - Objective Function",
         titlefont=font(11, "Computer Modern"),
         guidefont=font(11, "Computer Modern"),
         tickfontfamily="Computer Modern"
@@ -1201,8 +1227,40 @@ function plot_tadmm_convergence(sol_tadmm, sol_bf; showPlots::Bool=true, savePlo
     # Add convergence threshold line for dual residual
     hline!(dual_plot, [eps_dual], color=:red, lw=2, linestyle=:dash, alpha=0.7, label="ε_dual = $(eps_dual)")
     
-    # Combine plots in vertical layout (3x1)
-    combined_plot = plot(obj_plot, primal_plot, dual_plot, layout=(3,1), size=(800, 900))
+    # Create rho evolution plot
+    rho_plot_fig = plot(
+        plot_iterations, rho_plot,
+        dpi=600,
+        label="Penalty Parameter ρ",
+        xlabel="Iteration (k)",
+        ylabel="ρ Value",
+        legend=:topright,
+        lw=3,
+        color=:purple,
+        markershape=:circle,
+        markersize=4,
+        markerstrokecolor=:black,
+        markerstrokewidth=1.5,
+        gridstyle=:solid,
+        gridalpha=0.3,
+        minorgrid=true,
+        minorgridstyle=:solid,
+        minorgridalpha=0.15,
+        xlims=(0.5, length(rho_history) + 0.5),
+        xticks=1:max(1, div(length(rho_history), 5)):length(rho_history),
+        title="Penalty Parameter Evolution",
+        titlefont=font(11, "Computer Modern"),
+        guidefont=font(11, "Computer Modern"),
+        tickfontfamily="Computer Modern"
+    )
+    
+    # Use log scale if rho varies significantly
+    if maximum(rho_history) / minimum(rho_history) > 10
+        plot!(rho_plot_fig, yscale=:log10)
+    end
+    
+    # Combine plots in vertical layout (4x1)
+    combined_plot = plot(obj_plot, primal_plot, dual_plot, rho_plot_fig, layout=(4,1), size=(800, 1200))
     
     # Print convergence summary
     final_obj = last(obj_history)
@@ -1237,122 +1295,6 @@ end
 Plot breakdown of tADMM objective function showing energy costs, battery costs, and ADMM penalty across iterations.
 This helps identify if penalty terms are dominating the primary objective.
 """
-function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bool=false, filename::String="objective_breakdown.png")
-    
-    # Extract convergence history
-    conv_hist = sol_tadmm[:convergence_history]
-    obj_history = conv_hist[:obj_history]
-    energy_history = conv_hist[:energy_cost_history]
-    battery_history = conv_hist[:battery_cost_history]
-    penalty_history = conv_hist[:penalty_history]
-    
-    iterations = 1:length(obj_history)
-    
-    # Downsample for plotting
-    plot_iterations, obj_plot = downsample_for_plotting(iterations, obj_history)
-    _, energy_plot = downsample_for_plotting(iterations, energy_history)
-    _, battery_plot = downsample_for_plotting(iterations, battery_history)
-    _, penalty_plot = downsample_for_plotting(iterations, penalty_history)
-    
-    # Smart x-tick spacing based on downsampled data
-    n_plot_points = length(plot_iterations)
-    if n_plot_points <= 10
-        x_tick_spacing = 1
-    elseif n_plot_points <= 25
-        x_tick_spacing = max(1, div(n_plot_points, 5))
-    else
-        x_tick_spacing = max(1, div(n_plot_points, 8))
-    end
-    x_ticks = plot_iterations[1:x_tick_spacing:end]
-    
-    # Set theme and colors
-    gr()
-    theme(:mute)
-    
-    # Create objective breakdown plot
-    breakdown_plot = plot(
-        plot_iterations, obj_plot,
-        dpi=600,
-        label="Total Objective (Energy + Battery)",
-        xlabel="Iteration (k)",
-        ylabel="Cost [\$]",
-        legend=:topright,
-        lw=3,
-        color=:blue,
-        markershape=:circle,
-        markersize=4,
-        markerstrokecolor=:black,
-        markerstrokewidth=1.5,
-        gridstyle=:solid,
-        gridalpha=0.3,
-        minorgrid=true,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
-        xlims=(0.5, last(iterations) + 0.5),
-        xticks=x_ticks,
-        title="tADMM Objective Function Breakdown (ρ=$(rho))",
-        titlefont=font(12, "Computer Modern"),
-        guidefont=font(11, "Computer Modern"),
-        tickfontfamily="Computer Modern"
-    )
-    
-    plot!(breakdown_plot, plot_iterations, energy_plot,
-        label="Energy Cost",
-        lw=2,
-        color=:green,
-        markershape=:square,
-        markersize=3,
-        markerstrokecolor=:black,
-        markerstrokewidth=1.0
-    )
-    
-    plot!(breakdown_plot, plot_iterations, battery_plot,
-        label="Battery Quadratic Cost",
-        lw=2,
-        color=:purple,
-        markershape=:diamond,
-        markersize=3,
-        markerstrokecolor=:black,
-        markerstrokewidth=1.0
-    )
-    
-    plot!(breakdown_plot, plot_iterations, penalty_plot,
-        label="ADMM Penalty (should → 0)",
-        lw=2,
-        color=:red,
-        linestyle=:dash,
-        markershape=:utriangle,
-        markersize=3,
-        markerstrokecolor=:black,
-        markerstrokewidth=1.0
-    )
-    
-    # Print final breakdown
-    final_total = last(obj_history)
-    final_energy = last(energy_history)
-    final_battery = last(battery_history)
-    final_penalty = last(penalty_history)
-    
-    @printf "Final Objective Breakdown:\n"
-    @printf "  Total Objective:    \$%.6f\n" final_total
-    @printf "  Energy Cost:        \$%.6f (%.1f%%)\n" final_energy (final_energy/final_total*100)
-    @printf "  Battery Cost:       \$%.6f (%.1f%%)\n" final_battery (final_battery/final_total*100)
-    @printf "  ADMM Penalty:       \$%.6f (%.1f%%) ← should be ~0\n" final_penalty (final_penalty/final_total*100)
-    
-    # Show the plot if requested
-    if showPlots
-        display(breakdown_plot)
-    end
-    
-    # Save the plot if requested
-    if savePlots
-        @printf "Saving objective breakdown plot to: %s\n" filename
-        savefig(breakdown_plot, filename)
-    end
-    
-    return breakdown_plot
-end
-
 # Create output directories for plots
 processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
 system_folder = "$(systemName)_T$(T)"
@@ -1369,7 +1311,6 @@ println("="^80)
 plot_load_and_cost_curves(showPlots=false, savePlots=true, filename=joinpath(system_dir, "load_and_cost_curves.png"))
 plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=false, savePlots=true, rho_val=rho, filename=joinpath(system_dir, "battery_actions.png"))
 # plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=false, savePlots=true, filename=joinpath(system_dir, "power_balance_verification.png"))
-plot_objective_breakdown(sol_tadmm, showPlots=false, savePlots=true, filename=joinpath(system_dir, "objective_breakdown.png"))
 plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=false, savePlots=true, filename=joinpath(system_dir, "tadmm_convergence.png"))
 
 println(COLOR_SUCCESS, "✓ All plots saved to $(system_dir)", COLOR_RESET)
