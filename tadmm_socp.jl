@@ -87,9 +87,9 @@ rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
 rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
-max_iter_tadmm = 250
-eps_pri_tadmm = 1e-5
-eps_dual_tadmm = 1e-5
+max_iter_tadmm = 500  # Increased to allow convergence (was 250)
+eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
+eps_dual_tadmm = 5e-5  # Relax dual tolerance (was 1e-5) to reduce oscillations
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
@@ -976,27 +976,25 @@ begin # function consensus update (update 2) tadmm socp
         
         for j in Bset
             for t in Tset
-                # Local consensus: average only over subproblems where t is the ACTIVE control time
-                # Each subproblem t0 has dual u^t0[t0] only for its active time
+                # Localized consensus: average over ALL subproblems that contain time t in their local window
+                # Each time t appears in 2 or 3 subproblems depending on position
+                # t=1: appears in subproblems {1, 2}
+                # t=2:T-1: appears in subproblems {t-1, t, t+1}
+                # t=T: appears in subproblems {T-1, T}
                 
-                # Determine which subproblems have t as their active time with dual
+                # Determine which subproblems include time t in their local_times
                 if t == 1
-                    # t=1 is active in subproblems t0=1 and t0=2
-                    active_t0s = [1, 2]
+                    subproblems_with_t = [1, 2]
                 elseif t == length(Tset)
-                    # t=T is active in subproblems t0=T-1 and t0=T
-                    active_t0s = [length(Tset)-1, length(Tset)]
+                    subproblems_with_t = [length(Tset)-1, length(Tset)]
                 else
-                    # t is active in subproblems t0 ∈ {t-1, t, t+1}
-                    active_t0s = [t-1, t, t+1]
+                    subproblems_with_t = [t-1, t, t+1]
                 end
                 
-                # Consensus: average B + u only for active subproblems that have time t
-                # B_collection[t0][j][t] exists for t ∈ local_times(t0)
-                # u_collection[t0][j][t] exists for t ∈ local_times(t0) (matching structure)
+                # Average B + u over all subproblems containing time t
                 consensus_sum = 0.0
                 num_contributors = 0
-                for t0 in active_t0s
+                for t0 in subproblems_with_t
                     # Check if both B and u exist at time t in this subproblem
                     if haskey(B_collection[t0][j], t) && haskey(u_collection[t0][j], t)
                         consensus_sum += B_collection[t0][j][t] + u_collection[t0][j][t]
@@ -1155,24 +1153,28 @@ begin # function solve MPOPF tadmm socp
             push!(Bhat_history[j], copy(Bhat[j]))
         end
         
-        # Adaptive ρ parameters
+        # Adaptive ρ parameters (tuned for stable convergence)
         ρ_current = ρ  # Track current ρ value
-        μ_balance = 5.0   # Threshold for imbalance (standard: 2-5, was 10 - too conservative!)
+        μ_balance = 5.0   # Threshold for imbalance (standard: 2-5)
         τ_incr = 2.0      # Factor to increase ρ
         τ_decr = 2.0      # Factor to decrease ρ
-        ρ_min = 0.1       # Minimum ρ value
+        ρ_min = 1.0       # Minimum ρ value (raised from 0.1 to prevent over-relaxation)
         ρ_max = 1e6       # Maximum ρ value
         update_interval = 5  # Update ρ every N iterations
+        
+        # Stability zone: don't change ρ if both residuals are "close enough"
+        freeze_rho_near_convergence = true
+        freeze_threshold_multiplier = 10.0  # Don't change ρ if both residuals < 10x tolerance
         
         # Two-phase adaptive ρ strategy
         primal_converged_once = false  # Track if r_norm has reached threshold
         phase1_only_increase = true    # Phase 1: Only increase ρ until primal converges
         
-        # Stall detection parameters
+        # Stall detection parameters (TEMPORARILY DISABLED for localized testing)
         last_rho_change_iter = 0  # Track when ρ was last changed
         stall_check_interval = 5  # Check for stalls every N iterations (match update_interval)
         stall_nudge_factor = 2.0   # Factor to nudge ρ when stalled (100% increase)
-        enable_stall_detection = true  # Enable stall detection
+        enable_stall_detection = false  # DISABLED - testing clean localized formulation
         
         # Acceleration: Track progress for slow convergence detection
         obj_history = Float64[]
@@ -1444,6 +1446,19 @@ begin # function solve MPOPF tadmm socp
                 ρ_old = ρ_current
                 rho_changed = false
                 
+                # Check if we're in "stability zone" - both residuals close to convergence
+                in_stability_zone = false
+                if freeze_rho_near_convergence
+                    freeze_threshold_pri = freeze_threshold_multiplier * eps_pri
+                    freeze_threshold_dual = freeze_threshold_multiplier * eps_dual
+                    if r_norm < freeze_threshold_pri && s_norm < freeze_threshold_dual
+                        in_stability_zone = true
+                        # Skip ρ adjustment to avoid oscillations near convergence
+                    end
+                end
+                
+                # Only proceed with ρ adjustment if NOT in stability zone
+                if !in_stability_zone
                 # Check if primal has converged (phase transition condition)
                 if r_norm <= eps_pri && !primal_converged_once
                     primal_converged_once = true
@@ -1515,6 +1530,8 @@ begin # function solve MPOPF tadmm socp
                         end
                     end
                 end
+                
+                end  # if !in_stability_zone
                 
                 # Update last change tracker
                 if rho_changed
