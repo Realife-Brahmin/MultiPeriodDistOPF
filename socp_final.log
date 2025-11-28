@@ -1,0 +1,533 @@
+  Activating project at `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm`
+
+================================================================================
+🚀 PARALLELIZATION STATUS
+================================================================================
+Hardware CPU cores:  16
+Julia threads:       16
+Status:              ✓ Using all available cores
+================================================================================
+Set parameter Username
+Set parameter LicenseID to value 2612288
+Academic license - for non-commercial use only - expires 2026-01-20
+
+================================================================================
+PARSING SYSTEM DATA
+================================================================================
+Loaded system: ieee123A_1ph from C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\..\..\rawData\ieee123A_1ph\Master.dss
+┌ Warning: Result of running OpenDSS Command "? Storage.battery3.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery3.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery3.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery3.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery3.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery7.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery7.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery7.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery7.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery7.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery11.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery11.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery11.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery11.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery11.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery18.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery18.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery18.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery18.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery18.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery22.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery22.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery22.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery22.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery22.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery30.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery30.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery30.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery30.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery30.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery34.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery34.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery34.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery34.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery34.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery37.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery37.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery37.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery37.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery37.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery41.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery41.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery41.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery41.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery41.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery47.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery47.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery47.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery47.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery47.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery50.kWhrated" is: 98
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery50.kWrated" is: 24.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery50.kva" is: 29.4
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery50.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery50.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery53.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery53.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery53.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery53.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery53.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery58.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery58.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery58.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery58.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery58.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery62.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery62.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery62.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery62.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery62.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery67.kWhrated" is: 65.338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery67.kWrated" is: 16.3345
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery67.kva" is: 19.6014
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery67.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery67.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery71.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery71.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery71.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery71.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery71.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery75.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery75.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery75.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery75.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery75.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery79.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery79.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery79.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery79.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery79.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery84.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery84.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery84.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery84.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery84.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery87.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery87.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery87.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery87.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery87.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery92.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery92.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery92.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery92.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery92.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery97.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery97.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery97.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery97.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery97.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery101.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery101.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery101.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery101.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery101.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery106.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery106.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery106.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery106.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery106.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery111.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery111.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery111.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery111.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery111.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery116.kWhrated" is: 9.3338
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery116.kWrated" is: 2.3335
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery116.kva" is: 2.8001
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery116.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery116.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+
+========================================
+Initial Powerflow
+========================================
+Powerflow completed successfully!
+
+[OpenDSS] Total system load: 872.27 kW
+[OpenDSS] Substation power: 884.83 kW
+[OpenDSS] Total PV dispatch: 0.00 kW
+[OpenDSS] Total battery dispatch: 0.00 kW
+[OpenDSS] Total system losses: 12.56 kW
+
+
+================================================================================
+[35;1mSOLVING MPOPF WITH SOCP (BRUTE-FORCED)[0m
+================================================================================
+Set parameter NonConvex to value 2
+Model summary saved to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\model_summary_socp_bf.txt
+
+================================================================================
+STARTING OPTIMIZATION
+================================================================================
+Set parameter NonConvex to value 2
+Set parameter DualReductions to value 0
+
+================================================================================
+[36;1mCOMPUTING AND VERIFYING NODAL INJECTIONS[0m
+================================================================================
+
+Verifying nodal injection calculations...
+[32;1m✓ All nodal injections verified! Both methods match.
+[0m  Max real power difference: 5.814377e-13 pu
+  Max reactive power difference: 1.034679e-12 pu
+[36;1m
+Nodal injections added to solution dictionary.
+[0m================================================================================
+
+================================================================================
+[36;1mVALIDATING BRANCH FLOW MODEL EQUATIONS[0m
+================================================================================
+
+================================================================================
+SOLUTION VALIDATION: Brute Force SOCP
+================================================================================
+✓ All constraints satisfied!
+================================================================================
+
+--- SOLUTION STATUS ---
+Status: [32;1mOPTIMAL
+✓ Optimization successful!
+[0m
+--- OBJECTIVE VALUE ---
+Total Cost: $3432.40
+
+--- COMPUTATION TIME ---
+Solver time: 2.01 seconds
+
+--- POWER SUMMARY ---
+Substation Power (kW): min=800.5, max=1120.6, avg=1014.4
+
+--- VOLTAGE SUMMARY ---
+Voltage (pu): min=0.9930, max=1.0500
+
+================================================================================
+[36;1mVOLTAGE DROP CONSTRAINT VERIFICATION (across all time periods)[0m
+================================================================================
+[32;1m✓ All voltage drop constraints satisfied (max violation: 5.122569035620472e-13)
+[0m
+================================================================================
+[36;1mSOC RELAXATION VERIFICATION (across all time periods)[0m
+================================================================================
+[32;1m✓ All SOC relaxation constraints satisfied (max violation: 0.0)
+[0m================================================================================
+
+================================================================================
+[35;1mMPOPF SOCP BRUTE-FORCED SOLUTION COMPLETE[0m
+================================================================================
+[32;1m✓ Results written to C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\results_socp_bf.txt[0m
+
+================================================================================
+[35;1mSOLVING MPOPF WITH SOCP (tADMM)[0m
+================================================================================
+[36;1mρ scaled with T: 10000.0 × (96/24)^2 = 40000.0[0m
+
+================================================================================
+[36;1m🎯 tADMM[SOCP]: T=96, ρ_init=40000.0, adaptive=true, |Bset|=26, |Nset|=128, |Lset|=127
+[0m================================================================================
+k=  1  obj=$3051.42  ‖r‖=8.30e-04  ‖s‖=4.05e+00  ρ=40000.0
+[33;1m  [k=  5] Phase 1 nudge: ρ 40000.0 → 80000.0
+[0mk=  5  obj=$3226.01  ‖r‖=3.98e-04  ‖s‖=4.88e+00  ρ=80000.0
+[33;1m  [k= 10] Phase 1 nudge: ρ 80000.0 → 160000.0
+[0mk= 10  obj=$3442.70  ‖r‖=1.01e-04  ‖s‖=5.81e+00  ρ=160000.0
+[32;1m  [k= 15] Phase 1→2: primal converged
+[0m[36;1m  [k= 15] ρ 160000.0 → 80000.0 (s/r=4627344.8, ‖r‖ converged)
+[0mk= 15  obj=$3475.72  ‖r‖=1.10e-06  ‖s‖=5.07e+00  ρ=80000.0
+[36;1m  [k= 20] ρ 80000.0 → 40000.0 (s/r=3113304.0, ‖r‖ converged)
+[0mk= 20  obj=$3473.04  ‖r‖=1.51e-06  ‖s‖=4.71e+00  ρ=40000.0
+[36;1m  [k= 25] ρ 40000.0 → 20000.0 (s/r=609391.6, ‖r‖ converged)
+[0mk= 25  obj=$3469.07  ‖r‖=6.16e-06  ‖s‖=3.76e+00  ρ=20000.0
+k= 30  obj=$3463.55  ‖r‖=1.94e-05  ‖s‖=2.49e+00  ρ=20000.0
+k= 35  obj=$3460.77  ‖r‖=2.11e-05  ‖s‖=2.06e+00  ρ=20000.0
+k= 40  obj=$3461.56  ‖r‖=1.82e-05  ‖s‖=2.09e+00  ρ=20000.0
+[36;1m  [k= 45] ρ 20000.0 → 10000.0 (s/r=1155239.2, ‖r‖ converged)
+[0mk= 45  obj=$3460.46  ‖r‖=1.75e-06  ‖s‖=2.02e+00  ρ=10000.0
+[36;1m  [k= 50] ρ 10000.0 → 5000.0 (s/r=185743.6, ‖r‖ converged)
+[0mk= 50  obj=$3457.02  ‖r‖=9.96e-06  ‖s‖=1.85e+00  ρ=5000.0
+k= 55  obj=$3452.90  ‖r‖=2.01e-05  ‖s‖=1.51e+00  ρ=5000.0
+k= 60  obj=$3450.47  ‖r‖=1.93e-05  ‖s‖=1.36e+00  ρ=5000.0
+k= 65  obj=$3446.21  ‖r‖=1.41e-05  ‖s‖=1.22e+00  ρ=5000.0
+[36;1m  [k= 70] ρ 5000.0 → 2500.0 (s/r=171651.8, ‖r‖ converged)
+[0mk= 70  obj=$3443.05  ‖r‖=5.35e-06  ‖s‖=9.19e-01  ρ=2500.0
+[36;1m  [k= 75] ρ 2500.0 → 1250.0 (s/r=75731.1, ‖r‖ converged)
+[0mk= 75  obj=$3441.08  ‖r‖=8.56e-06  ‖s‖=6.48e-01  ρ=1250.0
+k= 80  obj=$3438.47  ‖r‖=1.77e-05  ‖s‖=5.04e-01  ρ=1250.0
+k= 85  obj=$3437.52  ‖r‖=1.60e-05  ‖s‖=4.51e-01  ρ=1250.0
+k= 90  obj=$3435.29  ‖r‖=1.14e-05  ‖s‖=3.73e-01  ρ=1250.0
+[36;1m  [k= 95] ρ 1250.0 → 625.0 (s/r=38334.8, ‖r‖ converged)
+[0mk= 95  obj=$3433.14  ‖r‖=8.95e-06  ‖s‖=3.43e-01  ρ=625.0
+k=100  obj=$3431.77  ‖r‖=1.11e-05  ‖s‖=1.95e-01  ρ=625.0
+[36;1m  [k=105] ρ 625.0 → 312.5 (s/r=19684.3, ‖r‖ converged)
+[0mk=105  obj=$3432.33  ‖r‖=6.97e-06  ‖s‖=1.37e-01  ρ=312.5
+k=110  obj=$3433.23  ‖r‖=1.38e-05  ‖s‖=7.46e-02  ρ=312.5
+k=115  obj=$3433.06  ‖r‖=1.07e-05  ‖s‖=4.78e-02  ρ=312.5
+[36;1m  [k=120] ρ 312.5 → 156.2 (s/r=2470.1, ‖r‖ converged)
+[0mk=120  obj=$3433.90  ‖r‖=8.64e-06  ‖s‖=2.13e-02  ρ=156.2
+k=125  obj=$3433.14  ‖r‖=1.08e-05  ‖s‖=1.23e-02  ρ=156.2
+k=130  obj=$3432.00  ‖r‖=1.11e-05  ‖s‖=1.02e-02  ρ=156.2
+[36;1m  [k=135] ρ 156.2 → 78.1 (s/r=772.0, ‖r‖ converged)
+[0mk=135  obj=$3431.86  ‖r‖=8.19e-06  ‖s‖=6.32e-03  ρ=78.1
+k=140  obj=$3431.54  ‖r‖=1.23e-05  ‖s‖=3.55e-03  ρ=78.1
+[36;1m  [k=145] ρ 78.1 → 39.1 (s/r=595.7, ‖r‖ converged)
+[0mk=145  obj=$3431.61  ‖r‖=6.43e-06  ‖s‖=3.83e-03  ρ=39.1
+k=150  obj=$3432.51  ‖r‖=1.21e-05  ‖s‖=1.98e-03  ρ=39.1
+k=155  obj=$3433.06  ‖r‖=1.14e-05  ‖s‖=1.15e-03  ρ=39.1
+[36;1m  [k=160] ρ 39.1 → 19.5 (s/r=189.7, ‖r‖ converged)
+[0mk=160  obj=$3433.25  ‖r‖=8.70e-06  ‖s‖=1.65e-03  ρ=19.5
+k=165  obj=$3434.29  ‖r‖=1.04e-05  ‖s‖=1.45e-03  ρ=19.5
+[36;1m  [k=170] ρ 19.5 → 9.8 (s/r=107.1, ‖r‖ converged)
+[0mk=170  obj=$3433.27  ‖r‖=8.44e-06  ‖s‖=9.04e-04  ρ=9.8
+k=175  obj=$3432.01  ‖r‖=1.66e-05  ‖s‖=5.47e-04  ρ=9.8
+k=180  obj=$3431.92  ‖r‖=1.38e-05  ‖s‖=3.68e-04  ρ=9.8
+k=185  obj=$3432.12  ‖r‖=1.08e-05  ‖s‖=4.87e-04  ρ=9.8
+[36;1m  [k=190] ρ 9.8 → 4.9 (s/r=60.0, ‖r‖ converged)
+[0mk=190  obj=$3432.28  ‖r‖=9.88e-06  ‖s‖=5.93e-04  ρ=4.9
+k=195  obj=$3433.05  ‖r‖=1.69e-05  ‖s‖=3.49e-04  ρ=4.9
+k=200  obj=$3433.31  ‖r‖=1.81e-05  ‖s‖=1.45e-04  ρ=4.9
+k=205  obj=$3433.15  ‖r‖=1.94e-05  ‖s‖=2.32e-04  ρ=4.9
+k=210  obj=$3432.71  ‖r‖=1.54e-05  ‖s‖=1.81e-04  ρ=4.9
+k=215  obj=$3433.30  ‖r‖=1.97e-05  ‖s‖=2.19e-04  ρ=4.9
+k=220  obj=$3432.76  ‖r‖=1.57e-05  ‖s‖=1.58e-04  ρ=4.9
+[36;1m  [k=225] ρ 4.9 → 2.4 (s/r=13.1, ‖r‖ converged)
+[0mk=225  obj=$3432.48  ‖r‖=9.93e-06  ‖s‖=1.30e-04  ρ=2.4
+k=230  obj=$3432.16  ‖r‖=2.04e-05  ‖s‖=1.21e-04  ρ=2.4
+k=235  obj=$3432.73  ‖r‖=2.22e-05  ‖s‖=9.82e-05  ρ=2.4
+k=240  obj=$3432.16  ‖r‖=1.28e-05  ‖s‖=6.30e-05  ρ=2.4
+k=245  obj=$3432.85  ‖r‖=1.78e-05  ‖s‖=6.67e-05  ρ=2.4
+[33;1m  [k=246] 🐕 RNORM WATCHDOG: ρ 2.4 → 4.9 (‖r‖=2.84e-05 > 1.0e-05 for 20 iters)
+[0mk=250  obj=$3432.47  ‖r‖=1.03e-05  ‖s‖=1.31e-04  ρ=4.9
+[32;1m🎉 tADMM converged at iteration 252
+[0m
+================================================================================
+[36;1mVALIDATING tADMM SOLUTION[0m
+================================================================================
+
+================================================================================
+SOLUTION VALIDATION: tADMM SOCP
+================================================================================
+✓ All constraints satisfied!
+================================================================================
+
+--- tADMM SOLUTION STATUS ---
+[32;1m✓ CONVERGED
+[0m[32;1mObjective: $3431.75
+[0m
+--- COMPUTATION TIME ---
+Effective wall clock time: 114.77 seconds (252 iterations)
+Sequential time (all subproblems): 4413.09 seconds
+
+--- COMPARISON WITH BRUTE FORCE ---
+Brute Force objective: $3432.4025
+tADMM objective:       $3431.7508
+Absolute difference:   $0.6517
+Relative difference:   0.0190%
+
+--- COMPUTATIONAL SPEEDUP ---
+Brute Force solver time: 2.0130 seconds
+tADMM effective time:    114.7710 seconds
+Speedup vs Brute Force:  0.02x
+[32;1m✓ tADMM results written to C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\results_socp_tadmm.txt[0m
+
+================================================================================
+[35;1mMPOPF SOCP tADMM SOLUTION COMPLETE[0m
+================================================================================
+
+================================================================================
+[32;1m⏱  TOTAL SIMULATION TIME (BF + tADMM)[0m
+================================================================================
+Total time (parsing + BF + tADMM):    592.34 seconds
+
+Brute Force Timing:
+  - BF wall-clock time:               3.92 seconds (actual time on machine)
+  - BF solver time:                   2.01 seconds (reported by Gurobi)
+
+tADMM Timing:
+  - tADMM wall-clock time:            558.53 seconds (actual time on machine)
+  - tADMM effective time:             114.77 seconds (max subproblem time per iter)
+  - tADMM sequential time:            4413.09 seconds (sum of all subproblems)
+
+Overhead:
+  - Total optimization wall-clock:    562.45 seconds
+  - Parsing/setup/validation:         29.89 seconds
+
+Speedup Metrics:
+  - tADMM vs BF (wall-clock):         0.01x
+  - Parallel efficiency:              20.5% (0.21x speedup)
+================================================================================
+
+================================================================================
+[36;1mGENERATING PLOTS[0m
+================================================================================
+[32;1m✓ tADMM converged - all plots will be generated[0m
+
+================================================================================
+[36;1mPLOTTING tADMM CONVERGENCE[0m
+================================================================================
+
+tADMM Convergence Summary:
+  Total iterations: 252
+  Final objective:  $3431.750804 (BF: $3432.402534, Δ=6.52e-01)
+  Final ‖r‖:        7.71e-06 (threshold: 1.0e-05) ✓
+  Final ‖s‖:        9.72e-05 (threshold: 1.0e-04) ✓
+  Converged:        ✅ YES
+Saving tADMM convergence plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\convergence\tadmm_convergence_socp.png
+
+tADMM Timing Summary:
+  Total iterations: 252
+  Max subproblem time: min=0.12s, median=0.36s, max=2.2s
+  Median subproblem time: mean=0.16s
+  Total sequential time: 4413.09s
+  Total wall-clock time: 114.77s
+  Parallel speedup: 38.45x
+  Brute force time: 2.01s
+  tADMM vs BF: 57.01x slower
+Saving tADMM timing plot to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\convergence\tadmm_timing_socp.png
+[32;1m✓ Convergence plots saved to C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ieee123A_1ph_T96\convergence[0m
+
+
+
+📊 Generating individual PV plots for all 17 PV units...
+✓ Individual PV plots saved
+
+================================================================================
+[32;1mPLOTTING COMPLETE[0m
+================================================================================
+⏱  Plotting time: 864.57 seconds
+================================================================================

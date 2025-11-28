@@ -19,6 +19,8 @@ end
 
 const AVAILABLE_CORES = detect_cpu_cores()
 const USE_THREADING = true  # Enable multi-threading for time-period subproblems
+# To use threading: set JULIA_NUM_THREADS=16 before starting Julia
+# Example: $ export JULIA_NUM_THREADS=16 && julia tadmm_socp.jl
 # ============================================================================
 
 # Activate the tadmm environment
@@ -72,7 +74,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
 # T = 24  # Number of time steps
-T = 24  # Number of time steps
+T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -88,8 +90,7 @@ rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-# eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
-# eps_dual_tadmm = 5e-5  # Relax dual tolerance (was 1e-5) to reduce oscillations
+eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
 eps_dual_tadmm = 1e-4  # Relax dual tolerance (was 1e-5) to reduce oscillations
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
@@ -1185,6 +1186,12 @@ begin # function solve MPOPF tadmm socp
         aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
         enable_slow_progress_accel = false  # DISABLED - no unconditional aggressive nudges
         
+        # Primal residual watchdog (Phase 2 only - detects when consensus breaks down)
+        enable_rnorm_watchdog = true  # Monitor if r_norm stays above threshold too long
+        rnorm_watchdog_window = 20  # Trigger nudge if r_norm > eps_pri for this many iterations
+        rnorm_watchdog_factor = 2.0  # Factor to increase ρ when watchdog triggers
+        rnorm_high_counter = 0  # Count consecutive iterations with high r_norm
+        
         # Output control
         progress_interval = 5  # Print iteration details every N iterations
         
@@ -1411,6 +1418,41 @@ begin # function solve MPOPF tadmm socp
                 Bhat_prev[j] = copy(Bhat_old[j])
             end
             
+            # 🐕 WATCHDOG: Monitor primal residual trend, not just instantaneous value
+            # Accumulates whenever any ρ update happens (every update_interval)
+            # This runs EVERY iteration to track the trend
+            if enable_rnorm_watchdog
+                # Increment counter UNLESS primal has ACTUALLY converged (sustained low r_norm)
+                # Use a more lenient threshold (2x eps_pri) to avoid false resets from noise
+                if r_norm > 2.0 * eps_pri
+                    rnorm_high_counter += 1
+                elseif r_norm < 0.5 * eps_pri
+                    # Only reset if r_norm is WELL below threshold (true convergence)
+                    rnorm_high_counter = 0
+                end
+                # If r_norm is between 0.5*eps_pri and 2*eps_pri, don't change counter (hysteresis)
+                
+                # Trigger aggressive nudge if counter hits threshold
+                if rnorm_high_counter >= rnorm_watchdog_window
+                    ρ_old_watchdog = ρ_current
+                    ρ_current = min(ρ_max, rnorm_watchdog_factor * ρ_current)
+                    print(COLOR_WARNING)
+                    @printf "  [k=%3d] 🐕 RNORM WATCHDOG: ρ %.1f → %.1f (‖r‖=%.2e > %.1e for %d iters)\n" k ρ_old_watchdog ρ_current r_norm eps_pri rnorm_high_counter
+                    print(COLOR_RESET)
+                    
+                    # Rescale dual variables immediately
+                    scale_factor = ρ_old_watchdog / ρ_current
+                    for t0 in Tset, j in Bset
+                        for t_key in keys(u_collection[t0][j])
+                            u_collection[t0][j][t_key] *= scale_factor
+                        end
+                    end
+                    
+                    last_rho_change_iter = k
+                    rnorm_high_counter = 0  # Reset counter after triggering
+                end
+            end
+            
             # 🚀 ACCELERATION: Detect very slow progress and take aggressive action (optional)
             if enable_slow_progress_accel && k >= slow_progress_window && k % update_interval == 0
                 recent_objs = obj_history[end-slow_progress_window+1:end]
@@ -1493,43 +1535,45 @@ begin # function solve MPOPF tadmm socp
                 
                 # PHASE 2: Standard bidirectional adaptation after primal convergence
                 else
+                    # Standard adaptive logic for Phase 2
                     if r_norm > μ_balance * s_norm
-                        # Primal residual too large -> INCREASE rho
-                        ρ_current = min(ρ_max, τ_incr * ρ_current)
-                        print(COLOR_WARNING)
-                        @printf "  [k=%3d] ρ %.1f → %.1f (r/s=%.1f)\n" k ρ_old ρ_current (r_norm/s_norm)
-                        print(COLOR_RESET)
-                        rho_changed = true
-                    elseif s_norm > μ_balance * r_norm
-                        # Dual residual too large -> DECREASE rho (allowed in Phase 2)
-                        ρ_current = max(ρ_min, ρ_current / τ_decr)
-                        print(COLOR_INFO)
-                        @printf "  [k=%3d] ρ %.1f → %.1f (s/r=%.1f)\n" k ρ_old ρ_current (s_norm/r_norm)
-                        print(COLOR_RESET)
-                        rho_changed = true
-                    elseif enable_stall_detection
-                        # Ratios balanced, check for stall
-                        iters_since_rho_change = k - last_rho_change_iter
-                        
-                        if iters_since_rho_change >= stall_check_interval
-                            primal_stalled = r_norm > eps_pri
-                            dual_stalled = s_norm > eps_dual
+                            # Primal residual too large -> INCREASE rho
+                            ρ_current = min(ρ_max, τ_incr * ρ_current)
+                            print(COLOR_WARNING)
+                            @printf "  [k=%3d] ρ %.1f → %.1f (r/s=%.1f)\n" k ρ_old ρ_current (r_norm/s_norm)
+                            print(COLOR_RESET)
+                            rho_changed = true
+                        elseif s_norm > μ_balance * r_norm && r_norm <= eps_pri
+                            # Dual residual too large -> DECREASE rho
+                            # BUT ONLY if primal is already converged (watchdog protection)
+                            ρ_current = max(ρ_min, ρ_current / τ_decr)
+                            print(COLOR_INFO)
+                            @printf "  [k=%3d] ρ %.1f → %.1f (s/r=%.1f, ‖r‖ converged)\n" k ρ_old ρ_current (s_norm/r_norm)
+                            print(COLOR_RESET)
+                            rho_changed = true
+                        elseif enable_stall_detection
+                            # Ratios balanced, check for stall
+                            iters_since_rho_change = k - last_rho_change_iter
                             
-                            if primal_stalled || dual_stalled
-                                # Nudge ρ upward to break the stall
-                                ρ_current = min(ρ_max, stall_nudge_factor * ρ_current)
-                                print(COLOR_WARNING)
-                                stall_reason = primal_stalled ? "primal" : "dual"
-                                if primal_stalled && dual_stalled
-                                    stall_reason = "both"
+                            if iters_since_rho_change >= stall_check_interval
+                                primal_stalled = r_norm > eps_pri
+                                dual_stalled = s_norm > eps_dual
+                                
+                                if primal_stalled || dual_stalled
+                                    # Nudge ρ upward to break the stall
+                                    ρ_current = min(ρ_max, stall_nudge_factor * ρ_current)
+                                    print(COLOR_WARNING)
+                                    stall_reason = primal_stalled ? "primal" : "dual"
+                                    if primal_stalled && dual_stalled
+                                        stall_reason = "both"
+                                    end
+                                    @printf "  [PHASE2-NUDGE] rho: %.1f -> %.1f (stalled %s, %d iters no ρ change, ‖r‖=%.2e vs %.1e, ‖s‖=%.2e vs %.1e)\n" ρ_old ρ_current stall_reason iters_since_rho_change r_norm eps_pri s_norm eps_dual
+                                    print(COLOR_RESET)
+                                    rho_changed = true
                                 end
-                                @printf "  [PHASE2-NUDGE] rho: %.1f -> %.1f (stalled %s, %d iters no ρ change, ‖r‖=%.2e vs %.1e, ‖s‖=%.2e vs %.1e)\n" ρ_old ρ_current stall_reason iters_since_rho_change r_norm eps_pri s_norm eps_dual
-                                print(COLOR_RESET)
-                                rho_changed = true
                             end
                         end
-                    end
-                end
+                end  # PHASE 2
                 
                 end  # if !in_stability_zone
                 
