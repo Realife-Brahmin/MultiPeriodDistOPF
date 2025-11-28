@@ -421,12 +421,20 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     s_norm_history = Float64[]
     rho_history = Float64[]  # Track ρ evolution if adaptive
 
+    # Adaptive ρ parameters (simplified for copper plate - matches tadmm_socp spirit)
+    μ_balance = 10.0          # Threshold for imbalance (standard Boyd parameter)
+    τ_incr = 2.0              # Factor to increase ρ
+    τ_decr = 2.0              # Factor to decrease ρ
+    ρ_min = 0.1               # Minimum ρ value
+    ρ_max = 1e6               # Maximum ρ value
+    update_interval = 10      # Update ρ every N iterations (copper plate converges faster)
+
     # Store initial states
     push!(Bhat_history, copy(Bhat))
     push!(B_collection_history, deepcopy(B_collection))
     push!(u_collection_history, deepcopy(u_collection))
 
-    @printf "🎯 tADMM[PDF-formulation]: T=%d, ρ=%.3f\n" T ρ
+    @printf "🎯 tADMM[PDF-formulation]: T=%d, ρ_init=%.3f, adaptive=%s\n" T ρ adaptive_rho
 
     for k in 1:max_iter
         # 🔵 STEP 1: Primal Update - Solve T subproblems
@@ -484,33 +492,30 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         push!(r_norm_history, r_norm)
         push!(s_norm_history, s_norm)
 
-        # 📊 Adaptive ρ adjustment (Boyd et al. 2011) - only update every 10 iterations
-        if adaptive_rho && (k % 10 == 0)
-            μ = 10.0  # Balance factor
-            τ_incr = 2.0  # Increase factor
-            τ_decr = 2.0  # Decrease factor
+        # 🔧 Adaptive ρ adjustment (simplified Boyd et al. 2011 - better for copper plate)
+        if adaptive_rho && k % update_interval == 0
+            ρ_old = ρ
             
-            # Use original s_norm formula without current ρ for comparison
-            s_norm_base = 1/(inst.T) * norm(Bhat - Bhat_old)
-            
-            if r_norm > μ * (ρ * s_norm_base)
-                # Primal residual too large, increase ρ
-                ρ_old = ρ
-                ρ = τ_incr * ρ
+            if r_norm > μ_balance * s_norm
+                # Primal residual too large -> INCREASE rho to enforce consensus
+                ρ = min(ρ_max, τ_incr * ρ)
+                print(COLOR_WARNING)
+                @printf "  ⬆ ρ increased: %.2f → %.2f (r/s=%.1f > μ=%.1f)\n" ρ_old ρ (r_norm/s_norm) μ_balance
+                print(COLOR_RESET)
                 # Rescale dual variables
                 for t0 in 1:inst.T
                     u_collection[t0] ./= τ_incr
                 end
-                @printf "  → ρ increased: %.2f → %.2f\n" ρ_old ρ
-            elseif (ρ * s_norm_base) > μ * r_norm
-                # Dual residual too large, decrease ρ
-                ρ_old = ρ
-                ρ = ρ / τ_decr
+            elseif s_norm > μ_balance * r_norm
+                # Dual residual too large -> DECREASE rho to speed convergence
+                ρ = max(ρ_min, ρ / τ_decr)
+                print(COLOR_WARNING)
+                @printf "  ⬇ ρ decreased: %.2f → %.2f (s/r=%.1f > μ=%.1f)\n" ρ_old ρ (s_norm/r_norm) μ_balance
+                print(COLOR_RESET)
                 # Rescale dual variables
                 for t0 in 1:inst.T
                     u_collection[t0] .*= τ_decr
                 end
-                @printf "  → ρ decreased: %.2f → %.2f\n" ρ_old ρ
             end
         end
 
