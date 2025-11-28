@@ -1,9 +1,73 @@
+# ============================================================================
+# PARALLELIZATION CONFIGURATION
+# ============================================================================
+# Auto-detect available CPU cores - try multiple methods for reliability
+function detect_cpu_cores()
+    # Try environment variable first (most reliable if set)
+    if haskey(ENV, "NUMBER_OF_PROCESSORS")
+        return parse(Int, ENV["NUMBER_OF_PROCESSORS"])
+    end
+    # Try Sys.CPU_THREADS (works on most systems)
+    sys_threads = Sys.CPU_THREADS
+    if sys_threads > 1
+        return sys_threads
+    end
+    # Fallback: check what Julia is actually using
+    return max(1, Threads.nthreads())
+end
+
+const AVAILABLE_CORES = detect_cpu_cores()
+const USE_THREADING = true  # Enable multi-threading for time-period subproblems
+# ============================================================================
+
+# Activate the tadmm environment
+import Pkg
+env_path = joinpath(@__DIR__, "envs", "tadmm")
+Pkg.activate(env_path)
+
+using Revise
 using JuMP
 using Ipopt
 using LinearAlgebra
 using Printf
 using Gurobi
+using Plots
+using Crayons
+
+# Display threading status at startup
+println("\n" * "="^80)
+println("🚀 PARALLELIZATION STATUS")
+println("="^80)
+println("Hardware CPU cores:  ", AVAILABLE_CORES)
+println("Julia threads:       ", Threads.nthreads())
+if Threads.nthreads() >= AVAILABLE_CORES
+    println("Status:              ✓ Using all available cores")
+elseif Threads.nthreads() > 1
+    println("Status:              ⚠  Using $(Threads.nthreads())/$(AVAILABLE_CORES) cores")
+    println("\nTo use all cores, restart Julia with:")
+    println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
+    println("  \$ julia tadmm_copper_plate.jl")
+else
+    println("Status:              ⚠  Single-threaded mode")
+    println("\nTo enable parallel execution, restart Julia with:")
+    println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
+    println("  \$ julia tadmm_copper_plate.jl")
+end
+println("="^80)
+
+# Create shared Gurobi environment (suppresses repeated license messages)
+const GUROBI_ENV = Gurobi.Env()
+
+# Define color schemes
+const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
+const COLOR_WARNING = Crayon(foreground = :yellow, bold = true)
+const COLOR_ERROR = Crayon(foreground = :red, bold = true)
+const COLOR_INFO = Crayon(foreground = :cyan, bold = true)
+const COLOR_HIGHLIGHT = Crayon(foreground = :magenta, bold = true)
+const COLOR_RESET = Crayon(reset = true)
+
 # ----------------------- Bases ---------------------------
+systemName = "cp1"  # Copper Plate 1
 # max_iter = 10000
 max_iter = 1000
 rho = 10.0                     # ADMM penalty parameter
@@ -113,10 +177,11 @@ function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t
     
     # 🎯 Setup optimization model for subproblem t0
     # m = Model(Ipopt.Optimizer)
-    m = Model(Gurobi.Optimizer)
+    m = Model(() -> Gurobi.Optimizer(GUROBI_ENV))
     set_silent(m)
-    set_optimizer_attribute(m, "OutputFlag", 0)  # Disable all Gurobi output including license messages
-    # set_optimizer_attribute(m, "verbose", 0)  # Disable all Gurobi output including license messages
+    set_optimizer_attribute(m, "OutputFlag", 0)
+    set_optimizer_attribute(m, "Threads", 1)  # Each subproblem uses 1 thread
+    set_optimizer_attribute(m, "DualReductions", 0)  # Better infeasibility diagnosis
 
     # 🔵 Decision variables for time t0 (INCREMENTAL: P_B as full vector)
     @variables(m, begin
@@ -458,9 +523,10 @@ end
 function solve_MPOPF_using_BruteForce(inst::InstancePU)
     T = inst.T
     b = inst.bat
-    m = Model(Gurobi.Optimizer)
+    m = Model(() -> Gurobi.Optimizer(GUROBI_ENV))
     set_silent(m)
-    set_optimizer_attribute(m, "OutputFlag", 0)  # Disable all Gurobi output including license messages
+    set_optimizer_attribute(m, "OutputFlag", 0)
+    set_optimizer_attribute(m, "DualReductions", 0)  # Better infeasibility diagnosis
 
     @variables(m, begin
         -b.P_B_R_pu <= P_B[1:T] <= b.P_B_R_pu
@@ -502,24 +568,39 @@ inst = build_instance_pu(T, LoadShapeCost, P_L_kW,
     P_B_R_kW, Δt_h, B0_kWh;
     B_T_target_kWh=nothing)
 
+println("\n" * "="^80)
+println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH BRUTE FORCE (MONOLITHIC)", COLOR_RESET)
+println("="^80)
+
 # Brute-force baseline (unchanged)
 sol_bf = solve_MPOPF_using_BruteForce(inst)
-@printf "\nBrute-force objective: %.4f\n" sol_bf[:objective]
+
+println("\n--- BRUTE FORCE RESULTS ---")
+print(COLOR_SUCCESS)
+@printf "Objective: \$%.4f\n" sol_bf[:objective]
+print(COLOR_RESET)
+@printf "B[min,max]=[%.4f, %.4f] pu  | P_B[min,max]=[%.4f, %.4f] pu\n" minimum(sol_bf[:B]) maximum(sol_bf[:B]) minimum(sol_bf[:P_B]) maximum(sol_bf[:P_B])
+println("="^80)
+
+println("\n" * "="^80)
+println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH tADMM (TEMPORAL DECOMPOSITION)", COLOR_RESET)
+println("="^80)
 
 # tADMM with PDF formulation variable names 
 sol_tadmm = solve_MPOPF_using_tADMM(inst; ρ=rho, max_iter=max_iter, eps_pri=eps_pri, eps_dual=eps_dual)
-@printf "tADMM objective: %.4f\n" sol_tadmm[:objective]
 
-# Quick pu checks - compare all methods
-@printf "BruteForced     B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_bf[:B]) maximum(sol_bf[:B]) minimum(sol_bf[:P_B]) maximum(sol_bf[:P_B])
-
-@printf "tADMM  B[min,max]=[%.4f, %.4f] pu  | PB[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
+println("\n--- tADMM RESULTS ---")
+print(COLOR_SUCCESS)
+@printf "Objective: \$%.4f\n" sol_tadmm[:objective]
+print(COLOR_RESET)
+@printf "B[min,max]=[%.4f, %.4f] pu  | P_B[min,max]=[%.4f, %.4f] pu\n" minimum(sol_tadmm[:B]) maximum(sol_tadmm[:B]) minimum(sol_tadmm[:P_B]) maximum(sol_tadmm[:P_B])
 
 # Convert tADMM results back to physical for sanity checks
 P_B_kW = sol_tadmm[:P_B] .* P_BASE
 PSubs_kW = sol_tadmm[:P_Subs] .* P_BASE
 B_kWh = sol_tadmm[:B] .* E_BASE
-@printf "(tADMM) P_B[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(P_B_kW) maximum(P_B_kW) minimum(B_kWh) maximum(B_kWh)
+@printf "P_B[kW] in [%.1f, %.1f], B[kWh] in [%.1f, %.1f]\n" minimum(P_B_kW) maximum(P_B_kW) minimum(B_kWh) maximum(B_kWh)
+println("="^80)
 
 # ----------------------- Plotting Functions --------------
 using Plots
@@ -806,15 +887,22 @@ Uses the same styling as the original Plotter.jl battery actions function.
 Includes rho value in tADMM plot title if rho_val is provided.
 """
 function plot_battery_actions_both(sol_bf, sol_tadmm, inst::InstancePU; 
-    showPlots::Bool=true, savePlots::Bool=false, rho_val::Union{Nothing,Float64}=nothing)
+    showPlots::Bool=true, savePlots::Bool=false, rho_val::Union{Nothing,Float64}=nothing,
+    filename::String="battery_actions.png")
+    
+    # Extract directory and base filename
+    dir_path = dirname(filename)
+    base_name = splitext(basename(filename))[1]
     
     # Plot Brute Force solution
+    filename_bf = isempty(dir_path) ? "$(base_name)_bf.png" : joinpath(dir_path, "$(base_name)_bf.png")
     plot_bf = plot_battery_actions_single(sol_bf, inst, "Brute Force", 
-        showPlots=showPlots, savePlots=savePlots, filename_prefix="battery_actions")
+        showPlots=showPlots, savePlots=savePlots, filename_prefix=filename_bf)
     
     # Plot tADMM solution with rho value in title
+    filename_tadmm = isempty(dir_path) ? "$(base_name)_tadmm.png" : joinpath(dir_path, "$(base_name)_tadmm.png")
     plot_tadmm = plot_battery_actions_single(sol_tadmm, inst, "tADMM",
-        showPlots=showPlots, savePlots=savePlots, filename_prefix="battery_actions", rho_val=rho_val)
+        showPlots=showPlots, savePlots=savePlots, filename_prefix=filename_tadmm, rho_val=rho_val)
     
     return plot_bf, plot_tadmm
 end
@@ -1265,10 +1353,25 @@ function plot_objective_breakdown(sol_tadmm; showPlots::Bool=true, savePlots::Bo
     return breakdown_plot
 end
 
+# Create output directories for plots
+processedData_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData")
+system_folder = "$(systemName)_T$(T)"
+system_dir = joinpath(processedData_dir, system_folder)
+mkpath(system_dir)
+
+println("\n" * "="^80)
+println(COLOR_INFO, "GENERATING PLOTS", COLOR_RESET)
+println("="^80)
+println("Saving plots to: $(system_dir)")
+println("="^80)
+
 # Create and display the plots
-plot_load_and_cost_curves(showPlots=true, savePlots=true, filename="load_and_cost_curves.png")
-plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, rho_val=rho)
-# plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=true, savePlots=true, filename="power_balance_verification.png")
-plot_objective_breakdown(sol_tadmm, showPlots=true, savePlots=true, filename="objective_breakdown.png")
-plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=true, savePlots=true, filename="tadmm_convergence.png")
+plot_load_and_cost_curves(showPlots=false, savePlots=true, filename=joinpath(system_dir, "load_and_cost_curves.png"))
+plot_battery_actions_both(sol_bf, sol_tadmm, inst, showPlots=false, savePlots=true, rho_val=rho, filename=joinpath(system_dir, "battery_actions.png"))
+# plot_power_balance_verification(sol_bf, sol_tadmm, inst, showPlots=false, savePlots=true, filename=joinpath(system_dir, "power_balance_verification.png"))
+plot_objective_breakdown(sol_tadmm, showPlots=false, savePlots=true, filename=joinpath(system_dir, "objective_breakdown.png"))
+plot_tadmm_convergence(sol_tadmm, sol_bf, showPlots=false, savePlots=true, filename=joinpath(system_dir, "tadmm_convergence.png"))
+
+println(COLOR_SUCCESS, "✓ All plots saved to $(system_dir)", COLOR_RESET)
+println("="^80)
 
