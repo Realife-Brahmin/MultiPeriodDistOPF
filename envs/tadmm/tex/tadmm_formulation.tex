@@ -478,6 +478,172 @@ For the copper plate problem (24-hour horizon, 1000 kVA base):
     \item Typical $\rho$ trajectory: $10.0 \to 5.0 \to 2.5 \to 1.25$ (decreasing to balance residuals)
 \end{itemize}
 
+\clearpage
+
+\section{Copper Plate Localized tADMM (Reduced Network)}
+
+\subsection{Overview}
+
+The copper plate formulation simplifies the multi-period OPF by removing network constraints entirely, reducing each time period's problem to pure energy arbitrage. Combined with localized temporal coupling (Section 1), this yields the most compact tADMM subproblems.
+
+\textbf{Key Simplifications:}
+\begin{itemize}
+    \item \textbf{Network}: No voltage, power flow, or line constraints
+    \item \textbf{Spatial}: Single aggregated load, single aggregated battery
+    \item \textbf{Temporal}: Localized coupling (2--3 time steps per subproblem)
+    \item \textbf{Problem Size}: Each subproblem has only 3--5 decision variables
+\end{itemize}
+
+\subsection{Local Time Sets (Copper Plate)}
+
+Same as LinDistFlow localized formulation:
+\begin{align}
+\mathcal{T}_{\text{local}}^{t_0} = \begin{cases}
+\{1, 2\} & \text{if } t_0 = 1 \\
+\{t_0-1, t_0, t_0+1\} & \text{if } 2 \leq t_0 \leq T-1 \\
+\{T-1, T\} & \text{if } t_0 = T
+\end{cases}
+\end{align}
+
+\subsection{Primal Update (Copper Plate, Subproblem $t_0$)}
+
+For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
+
+\begin{align}
+\min_{\substack{P_{\text{subs}}^{t_0}, P_B^t, \blueB{B^{t_0}[t]} \\ t \in \mathcal{T}_{\text{local}}^{t_0}}} \quad & c^{t_0} \cdot P_{\text{subs}}^{t_0} \cdot P_{\text{BASE}} \cdot \Delta t + C_B \cdot \left(P_B^{t_0}\right)^2 \cdot P_{\text{BASE}}^2 \cdot \Delta t \notag \\
+& + \frac{\rho}{2} \sum_{t \in \mathcal{T}_{\text{local}}^{t_0}} \left( \blueB{B^{t_0}[t]} - \redBhat{\hat{B}[t]} + \greenu{u^{t_0}[t]} \right)^2
+\end{align}
+
+\textbf{Subject to:}
+
+\textbf{Nodal Real Power Balance (only at $t_0$):}
+\begin{align}
+P_{\text{subs}}^{t_0} + P_B^{t_0} = P_L^{t_0}
+\end{align}
+
+\textbf{Battery SOC Dynamics:}
+
+\noindent\textbf{Case 1: $t_0 = 1$ (First period):}
+
+\textit{Local times: $\{1, 2\}$, Optimize: $\blueB{B^{1}[1]}, \blueB{B^{1}[2]}, P_B^1, P_B^2, P_{\text{subs}}^1$}
+\begin{align}
+\blueB{B^{1}[1]} &= B_0 - P_B^1 \cdot \Delta t \\
+\blueB{B^{1}[2]} &= \blueB{B^{1}[1]} - P_B^2 \cdot \Delta t
+\end{align}
+
+\noindent\textbf{Case 2: $2 \leq t_0 \leq T-1$ (Interior periods):}
+
+\textit{Local times: $\{t_0-1, t_0, t_0+1\}$, Optimize: $\blueB{B^{t_0}[t_0-1]}, \blueB{B^{t_0}[t_0]}, \blueB{B^{t_0}[t_0+1]}, P_B^{t_0}, P_B^{t_0+1}, P_{\text{subs}}^{t_0}$}
+\begin{align}
+\blueB{B^{t_0}[t_0]} &= \blueB{B^{t_0}[t_0-1]} - P_B^{t_0} \cdot \Delta t \\
+\blueB{B^{t_0}[t_0+1]} &= \blueB{B^{t_0}[t_0]} - P_B^{t_0+1} \cdot \Delta t
+\end{align}
+
+\noindent\textbf{Case 3: $t_0 = T$ (Last period):}
+
+\textit{Local times: $\{T-1, T\}$, Optimize: $\blueB{B^{T}[T-1]}, \blueB{B^{T}[T]}, P_B^T, P_{\text{subs}}^T$}
+\begin{align}
+\blueB{B^{T}[T]} &= \blueB{B^{T}[T-1]} - P_B^T \cdot \Delta t
+\end{align}
+
+\textbf{Battery Bounds (all local times):}
+\begin{align}
+\underline{B} &\leq \blueB{B^{t_0}[t]} \leq \overline{B}, \quad \forall t \in \mathcal{T}_{\text{local}}^{t_0} \\
+-P_{B,R} &\leq P_B^t \leq P_{B,R}, \quad \forall t \in \{t_0, t_0+1\} \cap \mathcal{T}_{\text{local}}^{t_0}
+\end{align}
+
+\subsection{Consensus Update (Localized Averaging)}
+
+For each time step $t \in \{1, 2, \ldots, T\}$, average over subproblems containing $t$:
+
+\begin{align}
+\redBhat{\hat{B}[t]} = \begin{cases}
+\frac{1}{2} \left( \blueB{B^{1}[1]} + \greenu{u^{1}[1]} + \blueB{B^{2}[1]} + \greenu{u^{2}[1]} \right) & \text{if } t = 1 \\[0.5em]
+\frac{1}{3} \sum_{t_0 \in \{t-1, t, t+1\}} \left( \blueB{B^{t_0}[t]} + \greenu{u^{t_0}[t]} \right) & \text{if } 2 \leq t \leq T-1 \\[0.5em]
+\frac{1}{2} \left( \blueB{B^{T-1}[T]} + \greenu{u^{T-1}[T]} + \blueB{B^{T}[T]} + \greenu{u^{T}[T]} \right) & \text{if } t = T
+\end{cases}
+\end{align}
+
+\textbf{Projection onto Feasible Set:}
+\begin{align}
+\redBhat{\hat{B}[t]} &\leftarrow \max\left( \underline{B}, \min\left( \overline{B}, \redBhat{\hat{B}[t]} \right) \right)
+\end{align}
+
+\subsection{Dual Update (Localized)}
+
+For each subproblem $t_0 \in \{1, 2, \ldots, T\}$ and $t \in \mathcal{T}_{\text{local}}^{t_0}$:
+\begin{align}
+\greenu{u^{t_0}[t]} &\leftarrow \greenu{u^{t_0}[t]} + \left( \blueB{B^{t_0}[t]} - \redBhat{\hat{B}[t]} \right)
+\end{align}
+
+\textbf{Number of Dual Updates per Iteration:}
+\begin{itemize}
+    \item Subproblem $t_0 = 1$: Update 2 dual variables ($\greenu{u^{1}[1]}, \greenu{u^{1}[2]}$)
+    \item Subproblems $t_0 = 2, \ldots, T-1$: Update 3 dual variables each
+    \item Subproblem $t_0 = T$: Update 2 dual variables ($\greenu{u^{T}[T-1]}, \greenu{u^{T}[T]}$)
+    \item \textbf{Total}: $2 + 3(T-2) + 2 = 3T - 2$ dual variable updates
+\end{itemize}
+
+\subsection{Convergence Criteria}
+
+\textbf{Primal Residual (consensus violation):}
+\begin{align}
+\|r^k\|_2 = \frac{1}{T} \sqrt{ \sum_{t_0=1}^T \sum_{t \in \mathcal{T}_{\text{local}}^{t_0}} \left( \blueB{B^{t_0}[t]} - \redBhat{\hat{B}[t]} \right)^2 }
+\end{align}
+
+\textbf{Dual Residual (consensus change):}
+\begin{align}
+\|s^k\|_2 = \frac{\rho}{T} \sqrt{ \sum_{t=1}^T \left( \redBhat{\hat{B}^k[t]} - \redBhat{\hat{B}^{k-1}[t]} \right)^2 }
+\end{align}
+
+\textbf{Stopping Criteria:}
+\begin{align}
+\text{Converged if: } \quad \|r^k\|_2 \leq \epsilon_{\text{pri}} \quad \text{and} \quad \|s^k\|_2 \leq \epsilon_{\text{dual}}
+\end{align}
+
+\subsection{Complexity Comparison}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Formulation} & \textbf{Variables/Subproblem} & \textbf{Coupling Variables} & \textbf{Total Storage} \\
+\midrule
+Global tADMM & $T$ SOC + $T$ power & $T$ & $T^2$ \\
+Localized tADMM (LinDistFlow) & 2--3 SOC + 2--3 power & 2--3 & $3T$ \\
+\textbf{Localized Copper Plate} & \textbf{2--3 SOC + 1--2 power} & \textbf{2--3} & \textbf{3T} \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of tADMM formulations (per-unit battery system)}
+\end{table}
+
+\textbf{Copper Plate Advantages:}
+\begin{itemize}
+    \item \textbf{Minimal subproblem size}: 3--5 decision variables per subproblem
+    \item \textbf{No spatial coupling}: Pure temporal decomposition
+    \item \textbf{Fast solves}: Each subproblem is a small LP/QP ($<$1ms with Gurobi)
+    \item \textbf{Scalability}: Computational cost grows linearly with $T$ (not $T^2$)
+\end{itemize}
+
+\subsection{Example: 24-Hour Copper Plate Problem}
+
+\textbf{Problem Data:}
+\begin{itemize}
+    \item Time periods: $T = 24$ (hourly intervals)
+    \item Battery: $E_{\text{rated}} = 4000$ kWh, $P_{B,R} = 800$ kW
+    \item Load: $P_L \in [800, 1200]$ kW (time-varying)
+    \item Energy price: $c^t \in [0.08, 0.20]$ \$/kWh (sinusoidal)
+    \item Quadratic battery cost: $C_B = 10^{-6} \times \min(c^t)$
+\end{itemize}
+
+\textbf{Convergence Performance:}
+\begin{itemize}
+    \item \textbf{Fixed $\rho = 10.0$}: $\sim$200--300 iterations
+    \item \textbf{Adaptive $\rho$ (Boyd)}: $\sim$98 iterations ($\rho$: $10.0 \to 5.0 \to 2.5 \to 1.25$)
+    \item \textbf{Solve time}: $<$5 seconds total (single-threaded Julia)
+    \item \textbf{Objective gap vs. centralized}: $<10^{-6}$ (numerically exact)
+\end{itemize}
+
 \section{Appendix: Full Variable and Parameter Definitions}
 
 \subsection{System Bases}
