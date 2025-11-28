@@ -67,7 +67,7 @@ const COLOR_HIGHLIGHT = Crayon(foreground = :magenta, bold = true)
 const COLOR_RESET = Crayon(reset = true)
 
 # ----------------------- Bases ---------------------------
-systemName = "cp1"  # Copper Plate 1
+systemName = "cp1_1ph"  # Copper Plate 1, single-phase
 # max_iter = 10000
 max_iter = 1000
 rho = 10.0                     # ADMM penalty parameter (initial value if adaptive)
