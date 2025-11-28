@@ -134,242 +134,281 @@ end
 """
     primal_update_tadmm!(B_t0, Bhat, u_t0, inst, ρ, t0)
 
-🔵 PRIMAL UPDATE for TADMM Subproblem t0 🔵
+🔵 PRIMAL UPDATE for LOCALIZED TADMM Subproblem t0 🔵
 
-Solves the t0-th subproblem in TADMM formulation:
-    min C_t0 * P_subs_t0 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
+Solves the t0-th subproblem with LOCAL time window T_local:
+- t0 = 1:     T_local = {1, 2}
+- t0 = 2:T-1: T_local = {t0-1, t0, t0+1}  
+- t0 = T:     T_local = {T-1, T}
 
 Variables being optimized (for subproblem t0):
-- 🔵B_t0[t0]: Local SOC decision variable at time t0 (1 scalar)
-- P_B_t0: Battery power at time t0 (1 scalar) 
+- 🔵B_t0: Local SOC Dict with keys in T_local (2-3 variables)
+- P_B: Battery power Dict with keys in T_local (2-3 variables for middle, 1-2 for edges)
 - P_subs_t0: Substation power at time t0 (1 scalar)
 
-Fixed parameters from previous iteration:
-- 🔴B̂: Global consensus SOC trajectory (T-length vector)
-- 🟢u_t0: Local scaled dual variable (T-length vector)
-
 Constraints in this subproblem:
-📊 CONSTRAINT COUNT:
-    ✅ Equality constraints: 2
-    1. SOC trajectory: 🔵B_t0[t0] = 🔴B̂[t0-1] - P_B_t0 * Δt  (1 constraint)
-    2. NRPB: P_subs_t0 + P_B_t0 = P_L[t0]  (1 constraint)
+📊 For t0 ∈ {2, ..., T-1} (middle time steps):
+    ✅ Equality constraints: 3
+    1. SOC dynamics: B[t0] = B[t0-1] - P_B[t0] * Δt
+    2. SOC dynamics: B[t0+1] = B[t0] - P_B[t0+1] * Δt
+    3. NRPB at t0: P_subs_t0 + P_B[t0] = P_L[t0]
+    
+    🚧 Inequality constraints: 5
+    1. SOC bounds: B[t] ∈ [B_min, B_max] for t ∈ {t0-1, t0, t0+1}
+    2. Battery power bounds: P_B[t] ∈ [-P_B_R, P_B_R] for t ∈ {t0, t0+1}
 
-    🚧 Inequality constraints: T + 1  
-    1. SOC bounds: 🔵B_t0[t] ∈ [B_lower, B_upper] ∀t ∈ {1,...,T}  (T constraints)
-    2. Battery power bounds: P_B_t0 ∈ [-P_B_R, P_B_R]  (1 constraint)
+📊 For t0 = 1 (first time step):
+    ✅ Equality constraints: 3
+    1. SOC dynamics: B[1] = B0 - P_B[1] * Δt
+    2. SOC dynamics: B[2] = B[1] - P_B[2] * Δt
+    3. NRPB at t0=1: P_subs_1 + P_B[1] = P_L[1]
+
+📊 For t0 = T (last time step):
+    ✅ Equality constraints: 2
+    1. SOC dynamics: B[T] = B[T-1] - P_B[T] * Δt
+    2. NRPB at t0=T: P_subs_T + P_B[T] = P_L[T]
 
 Arguments:
-- B_t0: Local SOC variables for subproblem t0 (🔵B_t0 - modified in-place)
-- Bhat: Global consensus SOC (🔴B̂ - read-only)  
-- u_t0: Local scaled dual variables for subproblem t0 (🟢u_t0 - read-only)
+- B_t0: Local SOC Dict{Int,Float64} for subproblem t0 (modified in-place)
+- Bhat: Global consensus SOC Dict{Int,Float64} (read-only)
+- u_t0: Local scaled dual Dict{Int,Float64} for subproblem t0 (read-only)
 - inst: Problem instance
 - ρ: Penalty parameter
 - t0: Time index for this subproblem
 
 Returns: Dict with keys:
-    - :objective => objective value for this subproblem
-    - :P_B => battery power dispatch P_B_t0
-    - :P_subs => substation power dispatch P_subs_t0  
-    - :B_t0 => updated local SOC vector (🔵B_t0)
-    - :t0 => time index of this subproblem (for reference)
+    - :total_objective => objective value
+    - :energy_cost => energy cost component
+    - :battery_quad_cost => battery quadratic cost
+    - :penalty => ADMM penalty
+    - :P_B => Dict{Int,Float64} with battery power for T_local
+    - :P_subs => substation power at t0
+    - :B_t0 => Dict{Int,Float64} with updated local SOC for T_local
+    - :t0 => time index
 """
-function primal_update_tadmm!(B_t0, Bhat, u_t0, inst::InstancePU, ρ::Float64, t0::Int)
+function primal_update_tadmm!(B_t0::Dict{Int,Float64}, Bhat::Dict{Int,Float64}, 
+                              u_t0::Dict{Int,Float64}, inst::InstancePU, ρ::Float64, t0::Int)
     b = inst.bat
+    T = inst.T
+    
+    # 🎯 Define local time window T_local
+    if t0 == 1
+        T_local = [1, 2]
+    elseif t0 == T
+        T_local = [T-1, T]
+    else
+        T_local = [t0-1, t0, t0+1]
+    end
     
     # 🎯 Setup optimization model for subproblem t0
-    # m = Model(Ipopt.Optimizer)
     m = Model(() -> Gurobi.Optimizer(GUROBI_ENV))
     set_silent(m)
     set_optimizer_attribute(m, "OutputFlag", 0)
-    set_optimizer_attribute(m, "Threads", 1)  # Each subproblem uses 1 thread
-    set_optimizer_attribute(m, "DualReductions", 0)  # Better infeasibility diagnosis
+    set_optimizer_attribute(m, "Threads", 1)
+    set_optimizer_attribute(m, "DualReductions", 0)
 
-    # 🔵 Decision variables for time t0 (INCREMENTAL: P_B as full vector)
-    @variables(m, begin
-        # Battery power for ALL time steps (T-length vector with box constraints)
-        -b.P_B_R_pu <= P_B_var[1:inst.T] <= b.P_B_R_pu         
-        # Substation power at time t0 (scalar)  
-        P_subs_t0                                     
-        # 🔵 Local SOC trajectory (T-length vector, but only B_t0[t0] is truly optimized)
-        Bmin(b) <= B_t0_var[1:inst.T] <= Bmax(b)                  
-    end)
+    # 🔵 Decision variables for T_local only
+    @variable(m, Bmin(b) <= B_var[t in T_local] <= Bmax(b))
+    
+    # P_B variables: optimize for current and future time steps in T_local (not past)
+    P_B_indices = filter(t -> t >= t0, T_local)  # For t0=2: [2,3], for t0=1: [1,2], for t0=T: [T]
+    @variable(m, -b.P_B_R_pu <= P_B_var[t in P_B_indices] <= b.P_B_R_pu)
+    
+    # Substation power at time t0 (scalar)
+    @variable(m, P_subs_t0)
 
-    # 📌 CONSTRAINT 1: SOC Dynamics for ALL time steps (T equality constraints)
-    # B[1] = B0 - P_B[1] * Δt
-    # B[t] = B[t-1] - P_B[t] * Δt  for t = 2, ..., T
-    @constraint(m, B_t0_var[1] == b.B0_pu - P_B_var[1] * b.Δt)
-    for t in 2:inst.T
-        @constraint(m, B_t0_var[t] == B_t0_var[t-1] - P_B_var[t] * b.Δt)
+    # 📌 CONSTRAINT 1: SOC Dynamics
+    if t0 == 1
+        # B[1] = B0 - P_B[1] * Δt
+        @constraint(m, B_var[1] == b.B0_pu - P_B_var[1] * b.Δt)
+        # B[2] = B[1] - P_B[2] * Δt
+        @constraint(m, B_var[2] == B_var[1] - P_B_var[2] * b.Δt)
+    elseif t0 == T
+        # B[T] = B[T-1] - P_B[T] * Δt
+        @constraint(m, B_var[T] == B_var[T-1] - P_B_var[T] * b.Δt)
+    else
+        # Middle time step: two constraints
+        # B[t0] = B[t0-1] - P_B[t0] * Δt
+        @constraint(m, B_var[t0] == B_var[t0-1] - P_B_var[t0] * b.Δt)
+        # B[t0+1] = B[t0] - P_B[t0+1] * Δt
+        @constraint(m, B_var[t0+1] == B_var[t0] - P_B_var[t0+1] * b.Δt)
     end
     
-    # 📌 CONSTRAINT 2: Nodal Real Power Balance ONLY for time t0 (1 equality constraint)
-    # P_subs_t0 + P_B[t0] = P_L[t0]
+    # 📌 CONSTRAINT 2: Nodal Real Power Balance ONLY at t0
     @constraint(m, P_subs_t0 + P_B_var[t0] == inst.P_L_pu[t0])
 
-    # 🎯 OBJECTIVE: Economic cost + Battery quadratic cost + ADMM penalty
-    # C_t0 * P_subs_t0 + C_B * P_B[t0]^2 + (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
+    # 🎯 OBJECTIVE: Economic cost (only t0) + Battery cost (only t0) + ADMM penalty (all T_local)
     energy_cost = inst.price[t0] * (P_subs_t0 * P_BASE) * b.Δt
-    battery_quad_cost = C_B * (P_B_var[t0] * P_BASE)^2 * b.Δt  # Quadratic cost for t0
+    battery_quad_cost = C_B * (P_B_var[t0] * P_BASE)^2 * b.Δt
     
-    # ADMM penalty: (ρ/2) * ||🔵B_t0 - 🔴B̂ + 🟢u_t0||²₂
-    penalty = (ρ / 2) * sum((B_t0_var[t] - Bhat[t] + u_t0[t])^2 for t in 1:inst.T)
+    # ADMM penalty: couple all B variables in T_local with consensus
+    penalty = (ρ / 2) * sum((B_var[t] - Bhat[t] + u_t0[t])^2 for t in T_local)
     
     @objective(m, Min, energy_cost + battery_quad_cost + penalty)
 
     # 🚀 Solve subproblem
     optimize!(m)
 
-    # 📥 Extract results and update 🔵B_t0
-    # B_t0[t0] = value(B_t0_var[t0])  # Only update the t0-th component
-    for t in 1:inst.T
-        B_t0[t] = value(B_t0_var[t])  # Update ALL components
+    # 📥 Extract results and update B_t0 Dict
+    for t in T_local
+        B_t0[t] = value(B_var[t])
     end
-    P_B_val = value(P_B_var[t0])    # Extract t0-th P_B value
+    
+    # Extract P_B values
+    P_B_result = Dict{Int,Float64}()
+    for t in P_B_indices
+        P_B_result[t] = value(P_B_var[t])
+    end
+    
     P_subs_val = value(P_subs_t0)
     
-    #  Compute objective components using solved values (not symbolic expressions)
+    # Compute objective components
     energy_cost_val = inst.price[t0] * (P_subs_val * P_BASE) * b.Δt
-    battery_quad_cost_val = C_B * (P_B_val * P_BASE)^2 * b.Δt
-    penalty_val = (ρ / 2) * sum((value(B_t0_var[t]) - Bhat[t] + u_t0[t])^2 for t in 1:inst.T)
+    battery_quad_cost_val = C_B * (P_B_result[t0] * P_BASE)^2 * b.Δt
+    penalty_val = (ρ / 2) * sum((value(B_var[t]) - Bhat[t] + u_t0[t])^2 for t in T_local)
     
-    # 📦 Return results as extensible dictionary with objective breakdown
+    # 📦 Return results
     return Dict(
         :total_objective => objective_value(m),
         :energy_cost => energy_cost_val,
-        :battery_quad_cost => battery_quad_cost_val, 
+        :battery_quad_cost => battery_quad_cost_val,
         :penalty => penalty_val,
-        :P_B => P_B_val,
+        :P_B => P_B_result,  # Dict with keys in P_B_indices
         :P_subs => P_subs_val,
-        :B_t0 => B_t0,
-        :t0 => t0,
-        # Easy to add more fields later: :solver_status, :solve_time, etc.
+        :B_t0 => B_t0,  # Dict with keys in T_local
+        :t0 => t0
     )
 end
 
 """
     consensus_update_tadmm!(Bhat, B_collection, u_collection, inst, ρ)
 
-🔴 CONSENSUS UPDATE for TADMM 🔴  
+🔴 CONSENSUS UPDATE for LOCALIZED TADMM 🔴  
 
-Updates global consensus variables 🔴B̂ using averaging of local solutions:
-    🔴B̂[t] = (1/T) * Σ_{t0=1}^T (🔵B_t0[t] + 🟢u_t0[t])
+Updates global consensus variables using averaging over subproblems that include each time step:
+- B̂[1] = mean over {B¹[1], B²[1]} (2 subproblems)
+- B̂[t] = mean over {Bᵗ⁻¹[t], Bᵗ[t], Bᵗ⁺¹[t]} for t=2:T-1 (3 subproblems each)
+- B̂[T] = mean over {Bᵀ⁻¹[T], Bᵀ[T]} (2 subproblems)
+
+Each average includes dual adjustment: B̂[t] = mean(B_local[t] + u[t]) over relevant subproblems
 
 Arguments:
-- Bhat: Global consensus SOC trajectory (🔴B̂ - modified in-place)
-- B_collection: Collection of all local SOC variables {🔵B_t0} for t0=1:T
-- u_collection: Collection of all local scaled duals {🟢u_t0} for t0=1:T  
+- Bhat: Global consensus SOC Dict{Int,Float64} (modified in-place)
+- B_collection: Vector of T Dicts, each B_collection[t0] has keys in T_local for that subproblem
+- u_collection: Vector of T Dicts, each u_collection[t0] has keys in T_local for that subproblem
 - inst: Problem instance
-- ρ: Penalty parameter (unused in consensus update but kept for interface consistency)
+- ρ: Penalty parameter (unused but kept for interface)
 
 Returns: Dict with keys:
-    - :Bhat => updated global consensus trajectory (🔴B̂)
-    - :bounds_violations => number of times clamping was needed
-    - :violation_indices => time indices where bounds violations occurred
+    - :Bhat => updated global consensus
+    - :bounds_violations => number of times clamping needed
+    - :violation_indices => time indices with violations
 """
-function consensus_update_tadmm!(Bhat, B_collection, u_collection, inst::InstancePU, ρ::Float64)
+function consensus_update_tadmm!(Bhat::Dict{Int,Float64}, B_collection::Vector{Dict{Int,Float64}}, 
+                                 u_collection::Vector{Dict{Int,Float64}}, inst::InstancePU, ρ::Float64)
     T = inst.T
     b = inst.bat
     violations = Int[]
-    
-    violation_tolerance = 1e-4  # Only warn if violation is > 1e-6
+    violation_tolerance = 1e-4
 
-    #  Update consensus variables: B̂[t] for t = 1, 2, ..., T-1  
-    # Note: B̂[t] represents SOC at END of time period t
-    # B0 (initial SOC) is handled separately in primal updates
-    for t in 1:T-1  # Don't update the last time step if it has terminal constraint
-        # Average across all T subproblems with dual adjustments
-        # 🔴B̂[t] = (1/T) * Σ_{t0=1}^T (🔵B_t0[t] + 🟢u_t0[t])
-        consensus_sum = sum(B_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
-        Bhat_new = consensus_sum / T
+    # Update each time step by averaging over subproblems that include it
+    for t in 1:T
+        # Determine which subproblems include time t
+        subproblems_with_t = Int[]
+        if t == 1
+            subproblems_with_t = [1, 2]  # B¹ and B² both have key 1
+        elseif t == T
+            subproblems_with_t = [T-1, T]  # Bᵀ⁻¹ and Bᵀ both have key T
+        else
+            subproblems_with_t = [t-1, t, t+1]  # Bᵗ⁻¹, Bᵗ, Bᵗ⁺¹ all have key t
+        end
         
-        # Check if projection is needed and track violations
+        # Average over relevant subproblems with dual adjustments
+        consensus_sum = 0.0
+        count = 0
+        for t0 in subproblems_with_t
+            if haskey(B_collection[t0], t) && haskey(u_collection[t0], t)
+                consensus_sum += B_collection[t0][t] + u_collection[t0][t]
+                count += 1
+            end
+        end
+        
+        Bhat_new = consensus_sum / count
+        
+        # Check violations and clamp
         violation_amount = max(Bmin(b) - Bhat_new, Bhat_new - Bmax(b), 0.0)
-
+        
         if violation_amount > violation_tolerance
             push!(violations, t)
             @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))] by $(violation_amount). Clamping applied."
         elseif Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
-            # Still track minor violations for statistics, but don't warn
             push!(violations, t)
         end
         
-        # Project onto feasible set
         Bhat[t] = clamp(Bhat_new, Bmin(b), Bmax(b))
     end
     
-    # 📌 Terminal condition (if specified)
+    # 📌 Terminal condition override (if specified)
     if !isnothing(b.B_T_target_pu)
-        Bhat[T] = b.B_T_target_pu  # B̂[T] = B_T_target (given terminal condition)
-    else
-        # If no terminal constraint, update the last time step too
-        t = T
-        consensus_sum = sum(B_collection[t0][t] + u_collection[t0][t] for t0 in 1:T)
-        Bhat_new = consensus_sum / T
-        
-        if Bhat_new < Bmin(b) || Bhat_new > Bmax(b)
-            violation_amount = max(Bmin(b) - Bhat_new, Bhat_new - Bmax(b), 0.0)
-
-            if violation_amount > violation_tolerance
-                push!(violations, t)
-                @warn "🚨 Consensus B̂[$t] = $(Bhat_new) violates bounds [$(Bmin(b)), $(Bmax(b))] by $(violation_amount). Clamping applied."
-            else
-                push!(violations, t)
-            end
-        end
-        
-        Bhat[T] = clamp(Bhat_new, Bmin(b), Bmax(b))
+        Bhat[T] = b.B_T_target_pu
     end
     
-    # 📦 Return results as extensible dictionary
     return Dict(
         :Bhat => Bhat,
         :bounds_violations => length(violations),
-        :violation_indices => violations,
-        # Easy to add: :consensus_change, :max_violation_amount, etc.
+        :violation_indices => violations
     )
 end
 
 """
     dual_update_tadmm!(u_collection, B_collection, Bhat, ρ)
 
-🟢 DUAL UPDATE for TADMM 🟢
+🟢 DUAL UPDATE for LOCALIZED TADMM 🟢
 
-Updates scaled dual variables for each subproblem:
-    🟢u_t0[t] := 🟢u_t0[t] + (🔵B_t0[t] - 🔴B̂[t])
+Updates scaled dual variables for each subproblem, only for times in T_local:
+    🟢u^t0[t] := 🟢u^t0[t] + (🔵B^t0[t] - 🔴B̂[t]) for t ∈ T_local
+
+For each subproblem t0:
+- t0 = 1:     update u¹[1], u¹[2]
+- t0 = 2:T-1: update uᵗ⁰[t0-1], uᵗ⁰[t0], uᵗ⁰[t0+1]
+- t0 = T:     update uᵀ[T-1], uᵀ[T]
 
 Arguments:
-- u_collection: Collection of local scaled dual variables {🟢u_t0} (modified in-place)
-- B_collection: Collection of local SOC variables {🔵B_t0} (read-only)
-- Bhat: Global consensus SOC trajectory (🔴B̂ - read-only)
+- u_collection: Vector of T Dicts (modified in-place)
+- B_collection: Vector of T Dicts (read-only)
+- Bhat: Global consensus Dict{Int,Float64} (read-only)
 - ρ: Penalty parameter (ρ scaling absorbed into u)
 
 Returns: Dict with keys:
-    - :u_collection => updated dual variable collection {🟢u_t0}
-    - :max_dual_change => maximum absolute change in any dual variable
-    - :total_updates => total number of dual variables updated (T²)
+    - :u_collection => updated dual variables
+    - :max_dual_change => max absolute change
+    - :total_updates => total number of dual variables updated
 """
-function dual_update_tadmm!(u_collection, B_collection, Bhat, ρ::Float64)
-    T = length(Bhat)
+function dual_update_tadmm!(u_collection::Vector{Dict{Int,Float64}}, B_collection::Vector{Dict{Int,Float64}}, 
+                            Bhat::Dict{Int,Float64}, ρ::Float64)
+    T = length(u_collection)
     max_change = 0.0
+    total_updates = 0
     
-    # 🟢 Update scaled dual variables for each subproblem t0
+    # Update dual variables for each subproblem
     for t0 in 1:T
-        for t in 1:T
-            # Dual ascent step: 🟢u_t0[t] += (🔵B_t0[t] - 🔴B̂[t])
+        # Get T_local for this subproblem
+        T_local_keys = collect(keys(B_collection[t0]))
+        
+        for t in T_local_keys
+            # Dual ascent: u^t0[t] += (B^t0[t] - B̂[t])
             old_u = u_collection[t0][t]
             u_collection[t0][t] += (B_collection[t0][t] - Bhat[t])
             
-            # Track maximum change for diagnostics
             max_change = max(max_change, abs(u_collection[t0][t] - old_u))
+            total_updates += 1
         end
     end
     
-    # 📦 Return results as extensible dictionary
     return Dict(
         :u_collection => u_collection,
         :max_dual_change => max_change,
-        :total_updates => T * T,
-        # Easy to add: :dual_norms, :convergence_metrics, etc.
+        :total_updates => total_updates
     )
 end
 
@@ -396,45 +435,64 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
     T = inst.T
     b = inst.bat
 
-    # 🔴 Initialize global consensus trajectory B̂ with B0
-    Bhat = fill(b.B0_pu, T)  # Initialize all time steps with B0
-    # Clamp to ensure feasibility
-    Bhat .= clamp.(Bhat, Bmin(b), Bmax(b))
+    # 🔴 Initialize global consensus Dict with all time steps
+    Bhat = Dict{Int,Float64}(t => clamp(b.B0_pu, Bmin(b), Bmax(b)) for t in 1:T)
 
-    # 🔵 Initialize local SOC variables {B_t0} for each subproblem
-    B_collection = [copy(Bhat) for t0 in 1:T]  # T copies of T-length vectors
+    # 🔵 Initialize local SOC Dicts {B^t0} for each subproblem
+    # Each B^t0 has keys corresponding to T_local for that subproblem
+    B_collection = Vector{Dict{Int,Float64}}(undef, T)
+    for t0 in 1:T
+        if t0 == 1
+            T_local = [1, 2]
+        elseif t0 == T
+            T_local = [T-1, T]
+        else
+            T_local = [t0-1, t0, t0+1]
+        end
+        B_collection[t0] = Dict{Int,Float64}(t => Bhat[t] for t in T_local)
+    end
 
-    # 🟢 Initialize scaled dual variables {u_t0} for each subproblem  
-    u_collection = [zeros(T) for t0 in 1:T]  # T copies of T-length vectors
+    # 🟢 Initialize scaled dual Dicts {u^t0} for each subproblem
+    u_collection = Vector{Dict{Int,Float64}}(undef, T)
+    for t0 in 1:T
+        if t0 == 1
+            T_local = [1, 2]
+        elseif t0 == T
+            T_local = [T-1, T]
+        else
+            T_local = [t0-1, t0, t0+1]
+        end
+        u_collection[t0] = Dict{Int,Float64}(t => 0.0 for t in T_local)
+    end
 
-    # 📊 Initialize power collections to store results from each subproblem
-    P_B_collection = zeros(T)   # P_B[t] from subproblem t
-    P_Subs_collection = zeros(T)  # P_Subs[t] from subproblem t
-    B_local_collection = zeros(T)  # B[t] from subproblem t (local blue solutions)
+    # 📊 Initialize power collections to store results
+    P_B_collection = zeros(T)
+    P_Subs_collection = zeros(T)
+    B_local_collection = zeros(T)
 
     # 📊 History tracking
-    obj_history = Float64[]  # True objective (energy + battery costs only)
-    Bhat_history = Vector{Vector{Float64}}()
-    B_collection_history = Vector{Vector{Vector{Float64}}}()
-    u_collection_history = Vector{Vector{Vector{Float64}}}()
+    obj_history = Float64[]
+    Bhat_history = Vector{Dict{Int,Float64}}()
+    B_collection_history = Vector{Vector{Dict{Int,Float64}}}()
+    u_collection_history = Vector{Vector{Dict{Int,Float64}}}()
     r_norm_history = Float64[]
     s_norm_history = Float64[]
-    rho_history = Float64[]  # Track ρ evolution if adaptive
+    rho_history = Float64[]
 
-    # Adaptive ρ parameters (simplified for copper plate - matches tadmm_socp spirit)
-    μ_balance = 10.0          # Threshold for imbalance (standard Boyd parameter)
-    τ_incr = 2.0              # Factor to increase ρ
-    τ_decr = 2.0              # Factor to decrease ρ
-    ρ_min = 0.1               # Minimum ρ value
-    ρ_max = 1e6               # Maximum ρ value
-    update_interval = 10      # Update ρ every N iterations (copper plate converges faster)
+    # Adaptive ρ parameters
+    μ_balance = 10.0
+    τ_incr = 2.0
+    τ_decr = 2.0
+    ρ_min = 0.1
+    ρ_max = 1e6
+    update_interval = 10
 
     # Store initial states
-    push!(Bhat_history, copy(Bhat))
+    push!(Bhat_history, deepcopy(Bhat))
     push!(B_collection_history, deepcopy(B_collection))
     push!(u_collection_history, deepcopy(u_collection))
 
-    @printf "🎯 tADMM[PDF-formulation]: T=%d, ρ_init=%.3f, adaptive=%s\n" T ρ adaptive_rho
+    @printf "🎯 tADMM[Localized]: T=%d, ρ_init=%.3f, adaptive=%s\n" T ρ adaptive_rho
 
     for k in 1:max_iter
         # 🔵 STEP 1: Primal Update - Solve T subproblems
@@ -442,79 +500,85 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         total_energy_cost = 0.0
         total_battery_cost = 0.0
         total_penalty = 0.0
+        
         for t0 in 1:T
             result = primal_update_tadmm!(B_collection[t0], Bhat, u_collection[t0], inst, ρ, t0)
-            # print(Bhat)
-            # Ensure B_collection[t0] is updated with the result
-            B_collection[t0] = copy(result[:B_t0])
-            # Store power results from each subproblem t0
-            P_B_collection[t0] = result[:P_B]
+            
+            # Update B_collection[t0] with result
+            B_collection[t0] = deepcopy(result[:B_t0])
+            
+            # Store power results - P_B from result is a Dict, extract value at t0
+            P_B_collection[t0] = result[:P_B][t0]
             P_Subs_collection[t0] = result[:P_subs]
-            # Store local SOC from each subproblem t0 (the actual optimized SOC at time t0)
+            
+            # Store local SOC at time t0
             B_local_collection[t0] = B_collection[t0][t0]
             
-            # Accumulate ONLY the primary objective components (not ADMM penalty)
+            # Accumulate objective components
             total_energy_cost += result[:energy_cost]
             total_battery_cost += result[:battery_quad_cost]
-            total_penalty += result[:penalty]  # Track penalty separately
-            # @printf "%d " t0
+            total_penalty += result[:penalty]
         end
         @printf "\n"
         
-        # True objective is energy + battery costs (penalty is just for convergence)
         true_objective = total_energy_cost + total_battery_cost
         push!(obj_history, true_objective)
 
-        # 🔴 STEP 2: Consensus Update  
-        Bhat_old = copy(Bhat)
+        # 🔴 STEP 2: Consensus Update
+        Bhat_old = deepcopy(Bhat)
         consensus_result = consensus_update_tadmm!(Bhat, B_collection, u_collection, inst, ρ)
 
         # 🟢 STEP 3: Dual Update
         dual_result = dual_update_tadmm!(u_collection, B_collection, Bhat, ρ)
 
         # 📊 Store iteration history
-        push!(Bhat_history, copy(Bhat))
+        push!(Bhat_history, deepcopy(Bhat))
         push!(B_collection_history, deepcopy(B_collection))
         push!(u_collection_history, deepcopy(u_collection))
-        push!(rho_history, ρ)  # Track current ρ value
+        push!(rho_history, ρ)
 
-        # 📏 STEP 4: Compute residuals using vector norms
-        # Primal residual: measure consensus violation using 2-norm
-        r_vectors = []
+        # 📏 STEP 4: Compute residuals
+        # Primal residual: norm of all local violations
+        r_vectors = Float64[]
         for t0 in 1:T
-            push!(r_vectors, B_collection[t0] - Bhat)
+            for t in keys(B_collection[t0])
+                push!(r_vectors, B_collection[t0][t] - Bhat[t])
+            end
         end
-        r_norm = 1/(inst.T) * norm(vcat(r_vectors...))  # Concatenate all residual vectors and take 2-norm
+        r_norm = norm(r_vectors) / T
 
-        # Dual residual: measure change in consensus
-        s_norm = 1/(inst.T)* ρ * norm(Bhat - Bhat_old)
+        # Dual residual: scaled change in consensus
+        s_vectors = Float64[Bhat[t] - Bhat_old[t] for t in 1:T]
+        s_norm = ρ * norm(s_vectors) / T
 
         push!(r_norm_history, r_norm)
         push!(s_norm_history, s_norm)
 
-        # 🔧 Adaptive ρ adjustment (simplified Boyd et al. 2011 - better for copper plate)
+        # 🔧 Adaptive ρ adjustment
         if adaptive_rho && k % update_interval == 0
             ρ_old = ρ
             
             if r_norm > μ_balance * s_norm
-                # Primal residual too large -> INCREASE rho to enforce consensus
                 ρ = min(ρ_max, τ_incr * ρ)
                 print(COLOR_WARNING)
                 @printf "  ⬆ ρ increased: %.2f → %.2f (r/s=%.1f > μ=%.1f)\n" ρ_old ρ (r_norm/s_norm) μ_balance
                 print(COLOR_RESET)
                 # Rescale dual variables
-                for t0 in 1:inst.T
-                    u_collection[t0] ./= τ_incr
+                for t0 in 1:T
+                    for t in keys(u_collection[t0])
+                        u_collection[t0][t] /= τ_incr
+                    end
                 end
             elseif s_norm > μ_balance * r_norm
-                # Dual residual too large -> DECREASE rho to speed convergence
                 ρ = max(ρ_min, ρ / τ_decr)
                 print(COLOR_WARNING)
                 @printf "  ⬇ ρ decreased: %.2f → %.2f (s/r=%.1f > μ=%.1f)\n" ρ_old ρ (s_norm/r_norm) μ_balance
                 print(COLOR_RESET)
                 # Rescale dual variables
-                for t0 in 1:inst.T
-                    u_collection[t0] .*= τ_decr
+                for t0 in 1:T
+                    for t in keys(u_collection[t0])
+                        u_collection[t0][t] *= τ_decr
+                    end
                 end
             end
         end
@@ -527,16 +591,16 @@ function solve_MPOPF_using_tADMM(inst::InstancePU; ρ::Float64=1.0,
         end
     end
 
-    # 📤 Return results using power values from latest subproblem optimizations
+    # 📤 Return results - convert to simple arrays for plotting compatibility
     return Dict(
-        :P_B => P_B_collection,  # From latest subproblem optimizations
-        :P_Subs => P_Subs_collection,  # From latest subproblem optimizations
-        :B => B_local_collection,  # Use local SOC solutions (🔵 blue variables)
+        :P_B => P_B_collection,
+        :P_Subs => P_Subs_collection,
+        :B => B_local_collection,
         :objective => last(obj_history),
         :objective_history => obj_history,
-        :consensus_trajectory => Bhat,  # 🔴B̂ final trajectory
-        :local_solutions => B_collection,  # All 🔵B_t0 solutions
-        :dual_variables => u_collection,  # All 🟢u_t0 variables
+        :consensus_trajectory => Bhat,
+        :local_solutions => B_collection,
+        :dual_variables => u_collection,
         :convergence_history => Dict(
             :Bhat_history => Bhat_history,
             :B_collection_history => B_collection_history,
