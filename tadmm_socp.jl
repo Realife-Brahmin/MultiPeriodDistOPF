@@ -69,8 +69,8 @@ includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
-systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
+# systemName = "ads10A_1ph"
+systemName = "ieee123A_1ph"
 # T = 24  # Number of time steps
 T = 24  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
@@ -1170,17 +1170,18 @@ begin # function solve MPOPF tadmm socp
         primal_converged_once = false  # Track if r_norm has reached threshold
         phase1_only_increase = true    # Phase 1: Only increase ρ until primal converges
         
-        # Stall detection parameters (TEMPORARILY DISABLED for localized testing)
+        # Stall detection parameters (DISABLED for clean adaptive ρ testing)
         last_rho_change_iter = 0  # Track when ρ was last changed
         stall_check_interval = 5  # Check for stalls every N iterations (match update_interval)
         stall_nudge_factor = 2.0   # Factor to nudge ρ when stalled (100% increase)
         enable_stall_detection = false  # DISABLED - testing clean localized formulation
         
-        # Acceleration: Track progress for slow convergence detection
+        # Slow progress acceleration parameters (DISABLED - controlled by enable_stall_detection)
         obj_history = Float64[]
         slow_progress_window = 10  # Check progress over last N iterations
         slow_progress_threshold = 1e-4  # Relative objective change threshold
         aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
+        enable_slow_progress_accel = false  # DISABLED - no unconditional aggressive nudges
         
         println("\n" * "="^80)
         print(COLOR_INFO)
@@ -1411,8 +1412,8 @@ begin # function solve MPOPF tadmm socp
                 Bhat_prev[j] = copy(Bhat_old[j])
             end
             
-            # 🚀 ACCELERATION: Detect very slow progress and take aggressive action
-            if k >= slow_progress_window && k % update_interval == 0
+            # 🚀 ACCELERATION: Detect very slow progress and take aggressive action (optional)
+            if enable_slow_progress_accel && k >= slow_progress_window && k % update_interval == 0
                 recent_objs = obj_history[end-slow_progress_window+1:end]
                 obj_range = maximum(recent_objs) - minimum(recent_objs)
                 obj_mean = sum(recent_objs) / length(recent_objs)
