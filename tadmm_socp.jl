@@ -88,8 +88,9 @@ rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
-eps_dual_tadmm = 5e-5  # Relax dual tolerance (was 1e-5) to reduce oscillations
+# eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
+# eps_dual_tadmm = 5e-5  # Relax dual tolerance (was 1e-5) to reduce oscillations
+eps_dual_tadmm = 1e-4  # Relax dual tolerance (was 1e-5) to reduce oscillations
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
@@ -1163,7 +1164,8 @@ begin # function solve MPOPF tadmm socp
         update_interval = 5  # Update ρ every N iterations
         
         # Stability zone: don't change ρ if both residuals are "close enough"
-        freeze_rho_near_convergence = true
+        # DISABLED by default since ρ_min=1.0 is already conservative
+        enable_stability_zone = false  # Set to true to freeze ρ when near convergence
         freeze_threshold_multiplier = 10.0  # Don't change ρ if both residuals < 10x tolerance
         
         # Two-phase adaptive ρ strategy
@@ -1182,6 +1184,9 @@ begin # function solve MPOPF tadmm socp
         slow_progress_threshold = 1e-4  # Relative objective change threshold
         aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
         enable_slow_progress_accel = false  # DISABLED - no unconditional aggressive nudges
+        
+        # Output control
+        progress_interval = 5  # Print iteration details every N iterations
         
         println("\n" * "="^80)
         print(COLOR_INFO)
@@ -1205,9 +1210,6 @@ begin # function solve MPOPF tadmm socp
         try
             for k in 1:max_iter
             # 🔵 STEP 1: Primal Update - Solve T subproblems
-            print(COLOR_INFO)
-            @printf "  🔵 Iteration %3d: Primal updates" k
-            print(COLOR_RESET)
             total_energy_cost = 0.0
             total_battery_cost = 0.0
             total_penalty = 0.0
@@ -1313,9 +1315,6 @@ begin # function solve MPOPF tadmm socp
                     total_penalty += result[:penalty]
                 end
             end  # End if USE_THREADING
-            print(COLOR_SUCCESS)
-            println(" ✓")
-            print(COLOR_RESET)
             
             true_objective = total_energy_cost + total_battery_cost
             push!(obj_history, true_objective)
@@ -1449,7 +1448,7 @@ begin # function solve MPOPF tadmm socp
                 
                 # Check if we're in "stability zone" - both residuals close to convergence
                 in_stability_zone = false
-                if freeze_rho_near_convergence
+                if enable_stability_zone
                     freeze_threshold_pri = freeze_threshold_multiplier * eps_pri
                     freeze_threshold_dual = freeze_threshold_multiplier * eps_dual
                     if r_norm < freeze_threshold_pri && s_norm < freeze_threshold_dual
@@ -1465,7 +1464,7 @@ begin # function solve MPOPF tadmm socp
                     primal_converged_once = true
                     phase1_only_increase = false  # Switch to Phase 2
                     print(COLOR_SUCCESS)
-                    @printf "  ✓ PHASE TRANSITION: Primal converged (‖r‖=%.2e ≤ %.1e), enabling bidirectional ρ adaptation\n" r_norm eps_pri
+                    @printf "  [k=%3d] Phase 1→2: primal converged\n" k
                     print(COLOR_RESET)
                 end
                 
@@ -1485,7 +1484,7 @@ begin # function solve MPOPF tadmm socp
                             # Primal stuck -> nudge ρ up
                             ρ_current = min(ρ_max, stall_nudge_factor * ρ_current)
                             print(COLOR_WARNING)
-                            @printf "  [PHASE1-NUDGE] rho: %.1f -> %.1f (primal stalled, %d iters no ρ change, ‖r‖=%.2e>%.1e)\n" ρ_old ρ_current iters_since_rho_change r_norm eps_pri
+                            @printf "  [k=%3d] Phase 1 nudge: ρ %.1f → %.1f\n" k ρ_old ρ_current
                             print(COLOR_RESET)
                             rho_changed = true
                         end
@@ -1498,14 +1497,14 @@ begin # function solve MPOPF tadmm socp
                         # Primal residual too large -> INCREASE rho
                         ρ_current = min(ρ_max, τ_incr * ρ_current)
                         print(COLOR_WARNING)
-                        @printf "  [PHASE2-UP] rho: %.1f -> %.1f (r/s=%.1f > %.1f primal lagging)\n" ρ_old ρ_current (r_norm/s_norm) μ_balance
+                        @printf "  [k=%3d] ρ %.1f → %.1f (r/s=%.1f)\n" k ρ_old ρ_current (r_norm/s_norm)
                         print(COLOR_RESET)
                         rho_changed = true
                     elseif s_norm > μ_balance * r_norm
                         # Dual residual too large -> DECREASE rho (allowed in Phase 2)
                         ρ_current = max(ρ_min, ρ_current / τ_decr)
-                        print(COLOR_WARNING)
-                        @printf "  [PHASE2-DOWN] rho: %.1f -> %.1f (s/r=%.1f > %.1f dual lagging)\n" ρ_old ρ_current (s_norm/r_norm) μ_balance
+                        print(COLOR_INFO)
+                        @printf "  [k=%3d] ρ %.1f → %.1f (s/r=%.1f)\n" k ρ_old ρ_current (s_norm/r_norm)
                         print(COLOR_RESET)
                         rho_changed = true
                     elseif enable_stall_detection
@@ -1551,10 +1550,11 @@ begin # function solve MPOPF tadmm socp
                 end
             end
             
-            if use_faadmm
-                @printf "k=%3d  obj=\$%.4f (energy=\$%.4f, battery=\$%.4f, penalty=\$%.4f)  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f  α=%.3f\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm ρ_current α_k
-            else
-                @printf "k=%3d  obj=\$%.4f (energy=\$%.4f, battery=\$%.4f, penalty=\$%.4f)  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective total_energy_cost total_battery_cost total_penalty r_norm s_norm ρ_current
+            # Minimal output: only show every progress_interval iterations or when something interesting happens
+            show_this_iter = (k % progress_interval == 0) || (k == 1)
+            
+            if show_this_iter
+                @printf "k=%3d  obj=\$%.2f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective r_norm s_norm ρ_current
             end
             
             # Check convergence
