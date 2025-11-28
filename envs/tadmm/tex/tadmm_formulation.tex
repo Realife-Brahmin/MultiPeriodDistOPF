@@ -411,7 +411,7 @@ Where:
 \begin{itemize}
     \item $C^{t_0}$: Energy price at time $t_0$ [\$/kWh]
     \item $C_B$: Battery quadratic cost coefficient [\$/kW$^2$/h] (typically $10^{-6} \times \min(C^t)$)
-    \item $\rho$: ADMM penalty parameter
+    \item $\rho$: ADMM penalty parameter (adaptive or fixed)
 \end{itemize}
 
 The battery quadratic cost term $C_B \cdot \left(P_{B}^{t_0}\right)^2$ serves as a regularization to:
@@ -424,10 +424,58 @@ The battery quadratic cost term $C_B \cdot \left(P_{B}^{t_0}\right)^2$ serves as
 \subsection{Algorithmic Parameters}
 
 \begin{itemize}
-    \item \textbf{Penalty Parameter}: $\rho$ (typically 0.1 to 10.0)
-    \item \textbf{Primal Tolerance}: $\epsilon_{\text{pri}} = 10^{-3}$
-    \item \textbf{Dual Tolerance}: $\epsilon_{\text{dual}} = 10^{-3}$
+    \item \textbf{Penalty Parameter}: $\rho_{\text{init}} = 10.0$ (initial value if adaptive)
+    \item \textbf{Primal Tolerance}: $\epsilon_{\text{pri}} = 10^{-5}$
+    \item \textbf{Dual Tolerance}: $\epsilon_{\text{dual}} = 10^{-4}$
     \item \textbf{Maximum Iterations}: 1000
+\end{itemize}
+
+\subsection{Adaptive Penalty Parameter (Boyd et al. 2011)}
+
+The penalty parameter $\rho$ can be adjusted dynamically to balance convergence rates of primal and dual residuals. The adaptive scheme is activated by setting \texttt{adaptive\_rho = true}.
+
+\textbf{Residual Balance Criterion:}
+
+At iteration $k$, if the residuals are imbalanced by more than factor $\mu$:
+\begin{align}
+\text{If } \|r^k\|_2 &> \mu \cdot \|s^k\|_2: \quad \text{Primal residual too large} \\
+\text{If } \|s^k\|_2 &> \mu \cdot \|r^k\|_2: \quad \text{Dual residual too large}
+\end{align}
+
+\textbf{Penalty Parameter Update (every $N_{\text{update}}$ iterations):}
+\begin{align}
+\rho^{k+1} &= \begin{cases}
+\min(\rho_{\max}, \tau_{\text{incr}} \cdot \rho^k) & \text{if } \|r^k\|_2 > \mu \cdot \|s^k\|_2 \\
+\max(\rho_{\min}, \rho^k / \tau_{\text{decr}}) & \text{if } \|s^k\|_2 > \mu \cdot \|r^k\|_2 \\
+\rho^k & \text{otherwise (residuals balanced)}
+\end{cases}
+\end{align}
+
+\textbf{Dual Variable Rescaling:}
+
+When $\rho$ changes from $\rho^k$ to $\rho^{k+1}$, the scaled dual variables must be rescaled:
+\begin{align}
+\greenu{u^{t_0}[t]} &\leftarrow \greenu{u^{t_0}[t]} \cdot \frac{\rho^{k+1}}{\rho^k}, \quad \forall t_0, t
+\end{align}
+
+This maintains the relationship between scaled and unscaled dual variables: $\greenu{u} = \lambda / \rho$.
+
+\textbf{Adaptive Parameters:}
+\begin{itemize}
+    \item \textbf{Balance factor}: $\mu = 10.0$ (higher for copper plate vs. $5.0$ for SOCP)
+    \item \textbf{Increase factor}: $\tau_{\text{incr}} = 2.0$
+    \item \textbf{Decrease factor}: $\tau_{\text{decr}} = 2.0$
+    \item \textbf{Bounds}: $\rho_{\min} = 0.1$, $\rho_{\max} = 10^6$
+    \item \textbf{Update interval}: $N_{\text{update}} = 10$ iterations
+\end{itemize}
+
+\textbf{Convergence Impact:}
+
+For the copper plate problem (24-hour horizon, 1000 kVA base):
+\begin{itemize}
+    \item \textbf{Fixed $\rho = 10.0$}: Converges in $\sim$200--400 iterations
+    \item \textbf{Adaptive $\rho$}: Converges in $\sim$98 iterations (2--4$\times$ speedup)
+    \item Typical $\rho$ trajectory: $10.0 \to 5.0 \to 2.5 \to 1.25$ (decreasing to balance residuals)
 \end{itemize}
 
 \section{Appendix: Full Variable and Parameter Definitions}
