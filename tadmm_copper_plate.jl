@@ -766,7 +766,8 @@ Creates separate charging/discharging bars and SOC plot in the same style as Plo
 If rho_val is provided and method_name contains "tADMM", includes rho value in the title.
 """
 function plot_battery_actions_single(solution, inst::InstancePU, method_name::String; 
-    showPlots::Bool=true, savePlots::Bool=false, filename_prefix::String="battery_actions", rho_val::Union{Nothing,Float64}=nothing)
+    showPlots::Bool=true, savePlots::Bool=false, filename_prefix::String="battery_actions", 
+    filename::Union{Nothing,String}=nothing, rho_val::Union{Nothing,Float64}=nothing)
     
     T = inst.T
     b = inst.bat
@@ -901,9 +902,9 @@ function plot_battery_actions_single(solution, inst::InstancePU, method_name::St
     
     # Save the plot if requested
     if savePlots
-        filename = "$(filename_prefix)_$(lowercase(replace(method_name, " " => "_"))).png"
-        @printf "Saving %s battery actions plot to: %s\n" method_name filename
-        savefig(plot_combined, filename)
+        save_filename = isnothing(filename) ? "$(filename_prefix)_$(lowercase(replace(method_name, " " => "_"))).png" : filename
+        @printf "Saving %s battery actions plot to: %s\n" method_name save_filename
+        savefig(plot_combined, save_filename)
     end
     
     return plot_combined
@@ -927,12 +928,12 @@ function plot_battery_actions_both(sol_bf, sol_tadmm, inst::InstancePU;
     # Plot Brute Force solution
     filename_bf = isempty(dir_path) ? "$(base_name)_bf.png" : joinpath(dir_path, "$(base_name)_bf.png")
     plot_bf = plot_battery_actions_single(sol_bf, inst, "Brute Force", 
-        showPlots=showPlots, savePlots=savePlots, filename_prefix=filename_bf)
+        showPlots=showPlots, savePlots=savePlots, filename=filename_bf)
     
     # Plot tADMM solution with rho value in title
     filename_tadmm = isempty(dir_path) ? "$(base_name)_tadmm.png" : joinpath(dir_path, "$(base_name)_tadmm.png")
     plot_tadmm = plot_battery_actions_single(sol_tadmm, inst, "tADMM",
-        showPlots=showPlots, savePlots=savePlots, filename_prefix=filename_tadmm, rho_val=rho_val)
+        showPlots=showPlots, savePlots=savePlots, filename=filename_tadmm, rho_val=rho_val)
     
     return plot_bf, plot_tadmm
 end
