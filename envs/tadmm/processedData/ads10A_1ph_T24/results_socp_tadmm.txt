@@ -19,35 +19,35 @@ Total constraints: 66
 --- tADMM PARAMETERS ---
 Initial ρ: 10000.0
 Adaptive ρ: true
-Max iterations: 250
+Max iterations: 500
 Primal tolerance: 1.0e-05
-Dual tolerance: 1.0e-05
+Dual tolerance: 5.0e-05
 
 --- ACCELERATION (FAADMM) ---
 FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 250 iterations
-Final primal residual: 5.91e-05
-Final dual residual: 6.46e-04
+Converged in 71 iterations
+Final primal residual: 3.23e-07
+Final dual residual: 2.20e-05
 
 --- OBJECTIVE VALUE ---
-Total Cost: $257.9899
+Total Cost: $258.0578
 Brute Force objective: $258.0560
-Absolute difference: $0.0661
-Relative difference: 0.0256%
+Absolute difference: $0.0018
+Relative difference: 0.0007%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 0.6010 seconds (actual time on machine)
-  Solver time: 0.0080 seconds (reported by Gurobi)
+  Wall-clock time: 0.6270 seconds (actual time on machine)
+  Solver time: 0.0120 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 27.5600 seconds (actual time on machine)
-  Effective time: 2.1010 seconds (max subproblem time per iter)
-  Sequential time: 5.1630 seconds (sum of all subproblems)
+  Wall-clock time: 12.2920 seconds (actual time on machine)
+  Effective time: 0.1680 seconds (max subproblem time per iter)
+  Sequential time: 1.7630 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.02x
-  Parallel efficiency: 7.6% (0.08x speedup)
+  tADMM vs BF (wall-clock): 0.05x
+  Parallel efficiency: 1.4% (0.01x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
