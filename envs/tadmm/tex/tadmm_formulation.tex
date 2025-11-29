@@ -140,42 +140,64 @@ For each battery $j \in \mathcal{B}$ and each time $t \in \mathcal{T}$, average 
 \end{cases}
 \end{align}
 
-\subsection{Step 3: Dual Update (Active Time Only)}
+\subsection{Step 3: Dual Update (All Local Times)}
 
-For each subproblem $t_0 \in \mathcal{T}$ and battery $j \in \mathcal{B}$, update dual \textit{only} for the active control time $t_0$:
+For each subproblem $t_0 \in \mathcal{T}$ and battery $j \in \mathcal{B}$, update dual variables for \textbf{all local times} $t \in \mathcal{T}_{\text{local}}^{t_0}$:
 
-\noindent\textbf{Subproblem $t_0=1$:}
+\noindent\textbf{Subproblem $t_0=1$ (local times: $\{1, 2\}$):}
 \begin{align}
-\greenu{u_j^{1}[1]} &:= \greenu{u_j^{1}[1]} + \left( \blueB{B_j^{1}[1]} - \redBhat{\hat{B}_j[1]} \right)
+\greenu{u_j^{1}[1]} &:= \greenu{u_j^{1}[1]} + \left( \blueB{B_j^{1}[1]} - \redBhat{\hat{B}_j[1]} \right) \\
+\greenu{u_j^{1}[2]} &:= \greenu{u_j^{1}[2]} + \left( \blueB{B_j^{1}[2]} - \redBhat{\hat{B}_j[2]} \right)
 \end{align}
 
-\noindent\textbf{Subproblem $t_0$ ($2 \leq t_0 \leq T-1$):}
+\noindent\textbf{Subproblem $t_0$ ($2 \leq t_0 \leq T-1$, local times: $\{t_0-1, t_0, t_0+1\}$):}
 \begin{align}
-\greenu{u_j^{t_0}[t_0]} &:= \greenu{u_j^{t_0}[t_0]} + \left( \blueB{B_j^{t_0}[t_0]} - \redBhat{\hat{B}_j[t_0]} \right)
+\greenu{u_j^{t_0}[t_0-1]} &:= \greenu{u_j^{t_0}[t_0-1]} + \left( \blueB{B_j^{t_0}[t_0-1]} - \redBhat{\hat{B}_j[t_0-1]} \right) \\
+\greenu{u_j^{t_0}[t_0]} &:= \greenu{u_j^{t_0}[t_0]} + \left( \blueB{B_j^{t_0}[t_0]} - \redBhat{\hat{B}_j[t_0]} \right) \\
+\greenu{u_j^{t_0}[t_0+1]} &:= \greenu{u_j^{t_0}[t_0+1]} + \left( \blueB{B_j^{t_0}[t_0+1]} - \redBhat{\hat{B}_j[t_0+1]} \right)
 \end{align}
 
-\noindent\textbf{Subproblem $t_0=T$:}
+\noindent\textbf{Subproblem $t_0=T$ (local times: $\{T-1, T\}$):}
 \begin{align}
+\greenu{u_j^{T}[T-1]} &:= \greenu{u_j^{T}[T-1]} + \left( \blueB{B_j^{T}[T-1]} - \redBhat{\hat{B}_j[T-1]} \right) \\
 \greenu{u_j^{T}[T]} &:= \greenu{u_j^{T}[T]} + \left( \blueB{B_j^{T}[T]} - \redBhat{\hat{B}_j[T]} \right)
 \end{align}
 
-\textbf{Critical Note:} Each subproblem $t_0$ maintains \textit{only one} dual variable per battery: $\greenu{u_j^{t_0}[t_0]}$. 
-
-\noindent The local SOC variables $\blueB{B_j^{t_0}[t_0 \pm 1]}$ are used in penalty terms for coupling but do \textit{not} generate separate dual updates within subproblem $t_0$. They will be updated when those times are the active control time in their respective subproblems.
-
-\subsection{Convergence Criteria}
-
-\textbf{Primal Residual (only for coupled times):}
+\textbf{General Form:}
 \begin{align}
-\|r^k\|_2 &= \frac{1}{\sqrt{N_{\text{coupled}}}} \left( \sum_{t_0 \in \mathcal{T}} \sum_{j \in \mathcal{B}} \sum_{t \in \mathcal{T}_{\text{local}}^{t_0}} \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} \right)^2 \right)^{1/2}
+\text{For each } t \in \mathcal{T}_{\text{local}}^{t_0}: \quad \greenu{u_j^{t_0}[t]} &:= \greenu{u_j^{t_0}[t]} + \left( \blueB{B_j^{t_0}[t]} - \redBhat{\hat{B}_j[t]} \right)
 \end{align}
 
-where $N_{\text{coupled}} = \sum_{t_0 \in \mathcal{T}} |\mathcal{T}_{\text{local}}^{t_0}| \times |\mathcal{B}| = (2 + 3(T-2) + 2) \times |\mathcal{B}| = 3T \times |\mathcal{B}| - 2|\mathcal{B}|$.
+\textbf{Critical Note:} Each subproblem $t_0$ maintains dual variables for \textit{all} its local times $\mathcal{T}_{\text{local}}^{t_0}$, which is 2 or 3 times per battery. This ensures that each time $t$ has duals from all subproblems that include it in their penalty terms, enabling proper consensus averaging in Step 2.
 
-\textbf{Dual Residual:}
+\subsection{Convergence Criteria (Exact Implementation)}
+
+\textbf{Primal Residual (Consensus Violation):}
+
+Only count residuals at active control times (where dual variables exist):
 \begin{align}
-\|s^k\|_2 &= \frac{\rho}{|\mathcal{B}|} \sqrt{\sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^k[t]} - \redBhat{\hat{B}_j^{k-1}[t]} \right)^2} \leq \epsilon_{\text{dual}}
+r_{\text{values}} &= \left\{ \blueB{B_j^{t_0,k}[t_0]} - \redBhat{\hat{B}_j^k[t_0]} : t_0 \in \mathcal{T}, \, j \in \mathcal{B} \right\} \\
+\|r^k\|_2 &= \frac{\|\mathbf{r}_{\text{values}}\|_2}{\sqrt{|\mathbf{r}_{\text{values}}|}} = \frac{1}{\sqrt{T \cdot |\mathcal{B}|}} \left( \sum_{t_0=1}^T \sum_{j \in \mathcal{B}} \left( \blueB{B_j^{t_0,k}[t_0]} - \redBhat{\hat{B}_j^k[t_0]} \right)^2 \right)^{1/2}
 \end{align}
+
+\textit{Note:} We only compute residual at time $t_0$ for each subproblem $t_0$ (the active control time where dual $\greenu{u_j^{t_0}[t_0]}$ exists). The normalization is by $\sqrt{T \cdot |\mathcal{B}|}$, the number of active consensus variables.
+
+\textbf{Dual Residual (Consensus Variable Change):}
+
+Measures how much the consensus variables $\redBhat{\hat{B}}$ changed from previous iteration:
+\begin{align}
+\mathbf{s}_j^k &= \redBhat{\hat{B}_j^k} - \redBhat{\hat{B}_j^{k-1}} = \begin{bmatrix} \redBhat{\hat{B}_j^k[1]} - \redBhat{\hat{B}_j^{k-1}[1]} \\ \vdots \\ \redBhat{\hat{B}_j^k[T]} - \redBhat{\hat{B}_j^{k-1}[T]} \end{bmatrix} \quad \in \mathbb{R}^T \\
+\|s^k\|_2 &= \frac{\rho^k}{|\mathcal{B}|} \left\| \begin{bmatrix} \mathbf{s}_1^k \\ \vdots \\ \mathbf{s}_{|\mathcal{B}|}^k \end{bmatrix} \right\|_2 = \frac{\rho^k}{|\mathcal{B}|} \left( \sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^k[t]} - \redBhat{\hat{B}_j^{k-1}[t]} \right)^2 \right)^{1/2}
+\end{align}
+
+\textit{Note:} The dual residual is scaled by $\rho$ and normalized by $|\mathcal{B}|$ (number of batteries), not by $\sqrt{T \cdot |\mathcal{B}|}$.
+
+\textbf{Convergence Condition:}
+\begin{align}
+\text{Converged if } \|r^k\|_2 \leq \epsilon_{\text{pri}} \quad \text{and} \quad \|s^k\|_2 \leq \epsilon_{\text{dual}}
+\end{align}
+
+with $\epsilon_{\text{pri}} = 10^{-5}$ and $\epsilon_{\text{dual}} = 10^{-4}$.
 
 \subsection{Complexity Comparison}
 
@@ -185,12 +207,12 @@ where $N_{\text{coupled}} = \sum_{t_0 \in \mathcal{T}} |\mathcal{T}_{\text{local
 \textbf{Metric} & \textbf{Global Coupling} & \textbf{Local Coupling} \\
 \midrule
 SOC variables per subproblem & $T \times |\mathcal{B}|$ & $2$ or $3 \times |\mathcal{B}|$ \\
-Dual variables per subproblem & $T \times |\mathcal{B}|$ & $1 \times |\mathcal{B}|$ \\
+Dual variables per subproblem & $T \times |\mathcal{B}|$ & $2$ or $3 \times |\mathcal{B}|$ (same as SOC) \\
 Penalty terms per subproblem & $T \times |\mathcal{B}|$ & $2$ or $3 \times |\mathcal{B}|$ \\
 Total SOC storage & $T^2 \times |\mathcal{B}|$ & $(2 \cdot 2 + 3 \cdot (T-2)) \times |\mathcal{B}| = (3T-2) \times |\mathcal{B}|$ \\
-Total dual storage & $T^2 \times |\mathcal{B}|$ & $T \times |\mathcal{B}|$ \\
+Total dual storage & $T^2 \times |\mathcal{B}|$ & $(3T-2) \times |\mathcal{B}|$ (same as SOC) \\
 Communication per iteration & $T \times |\mathcal{B}|$ per subproblem & $2$ or $3 \times |\mathcal{B}|$ per subproblem \\
-Consensus contributors & All $T$ subproblems & Only $2$ or $3$ neighbors \\
+Consensus contributors per time & All $T$ subproblems & Only $2$ or $3$ neighbors \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -430,52 +452,134 @@ The battery quadratic cost term $C_B \cdot \left(P_{B}^{t_0}\right)^2$ serves as
     \item \textbf{Maximum Iterations}: 1000
 \end{itemize}
 
-\subsection{Adaptive Penalty Parameter (Boyd et al. 2011)}
+\subsection{Adaptive Penalty Parameter: Two-Phase Strategy with Watchdog}
 
-The penalty parameter $\rho$ can be adjusted dynamically to balance convergence rates of primal and dual residuals. The adaptive scheme is activated by setting \texttt{adaptive\_rho = true}.
+The penalty parameter $\rho$ is adjusted dynamically using a sophisticated two-phase strategy that prioritizes primal convergence initially, then balances both residuals. The scheme is activated by setting \texttt{adaptive\_rho = true}.
 
-\textbf{Residual Balance Criterion:}
+\subsubsection{Residual Calculations (Exact Implementation)}
 
-At iteration $k$, if the residuals are imbalanced by more than factor $\mu$:
+\textbf{Primal Residual (Consensus Violation):}
 \begin{align}
-\text{If } \|r^k\|_2 &> \mu \cdot \|s^k\|_2: \quad \text{Primal residual too large} \\
-\text{If } \|s^k\|_2 &> \mu \cdot \|r^k\|_2: \quad \text{Dual residual too large}
+\|r^k\|_2 &= \frac{1}{\sqrt{N_{\text{active}}}} \left( \sum_{t_0=1}^T \sum_{j \in \mathcal{B}} \left( \blueB{B_j^{t_0,k}[t_0]} - \redBhat{\hat{B}_j^k[t_0]} \right)^2 \right)^{1/2}
+\end{align}
+where $N_{\text{active}} = T \times |\mathcal{B}|$ is the number of active time-battery pairs (only counting where duals exist).
+
+\textbf{Dual Residual (Consensus Variable Change):}
+\begin{align}
+\|s^k\|_2 &= \frac{\rho^k}{|\mathcal{B}|} \left( \sum_{j \in \mathcal{B}} \sum_{t=1}^T \left( \redBhat{\hat{B}_j^k[t]} - \redBhat{\hat{B}_j^{k-1}[t]} \right)^2 \right)^{1/2}
 \end{align}
 
-\textbf{Penalty Parameter Update (every $N_{\text{update}}$ iterations):}
+\subsubsection{Phase 1: Aggressive Primal Convergence (Until $\|r\| \leq \epsilon_{\text{pri}}$)}
+
+\textbf{Objective:} Drive primal residual below threshold by only increasing $\rho$. Never decrease $\rho$ to avoid slowing consensus formation.
+
+\textbf{Update Rules (every $N_{\text{update}} = 5$ iterations):}
 \begin{align}
 \rho^{k+1} &= \begin{cases}
-\min(\rho_{\max}, \tau_{\text{incr}} \cdot \rho^k) & \text{if } \|r^k\|_2 > \mu \cdot \|s^k\|_2 \\
-\max(\rho_{\min}, \rho^k / \tau_{\text{decr}}) & \text{if } \|s^k\|_2 > \mu \cdot \|r^k\|_2 \\
+\min(\rho_{\max}, \tau_{\text{incr}} \cdot \rho^k) & \text{if } \|r^k\| > \mu \cdot \|s^k\| \\
+\min(\rho_{\max}, \tau_{\text{nudge}} \cdot \rho^k) & \text{if } \|r^k\| > \epsilon_{\text{pri}} \text{ and no $\rho$ change for } N_{\text{stall}} \text{ iters} \\
+\rho^k & \text{otherwise (do not decrease)}
+\end{cases}
+\end{align}
+
+\textbf{Phase Transition:}
+\begin{align}
+\text{Switch to Phase 2 if } \|r^k\| \leq \epsilon_{\text{pri}} \text{ (primal converged once)}
+\end{align}
+
+\subsubsection{Phase 2: Bidirectional Adaptation (After primal convergence)}
+
+\textbf{Objective:} Balance primal and dual residuals, allowing both increases and decreases of $\rho$.
+
+\textbf{Update Rules (every $N_{\text{update}} = 5$ iterations):}
+\begin{align}
+\rho^{k+1} &= \begin{cases}
+\min(\rho_{\max}, \tau_{\text{incr}} \cdot \rho^k) & \text{if } \|r^k\| > \mu \cdot \|s^k\| \\
+\max(\rho_{\min}, \rho^k / \tau_{\text{decr}}) & \text{if } \|s^k\| > \mu \cdot \|r^k\| \textbf{ and } \|r^k\| \leq \epsilon_{\text{pri}} \\
 \rho^k & \text{otherwise (residuals balanced)}
 \end{cases}
 \end{align}
 
-\textbf{Dual Variable Rescaling:}
+\textbf{Watchdog Protection:} The decrease condition includes $\|r^k\| \leq \epsilon_{\text{pri}}$ to prevent premature decreases when primal consensus breaks down after Phase 1 → 2 transition.
+
+\subsubsection{Primal Residual Watchdog (All Phases)}
+
+\textbf{Motivation:} Detects when primal residual stays elevated for many consecutive iterations, indicating insufficient penalty to enforce consensus.
+
+\textbf{Hysteresis-Based Counter (runs every iteration):}
+\begin{align}
+\text{counter}^{k+1} &= \begin{cases}
+\text{counter}^k + 1 & \text{if } \|r^k\| > 2\epsilon_{\text{pri}} \\
+0 & \text{if } \|r^k\| < 0.5\epsilon_{\text{pri}} \\
+\text{counter}^k & \text{if } 0.5\epsilon_{\text{pri}} \leq \|r^k\| \leq 2\epsilon_{\text{pri}} \text{ (hysteresis zone)}
+\end{cases}
+\end{align}
+
+\textbf{Watchdog Trigger:}
+\begin{align}
+\text{If counter}^k \geq N_{\text{watchdog}} = 20: \quad \rho^{k+1} &= \min(\rho_{\max}, \tau_{\text{watchdog}} \cdot \rho^k), \quad \text{counter}^{k+1} = 0
+\end{align}
+
+The hysteresis prevents false resets from oscillations around $\epsilon_{\text{pri}}$, while the 20-iteration window ensures sustained high residuals trigger aggressive action.
+
+\subsubsection{Dual Variable Rescaling}
 
 When $\rho$ changes from $\rho^k$ to $\rho^{k+1}$, the scaled dual variables must be rescaled:
 \begin{align}
-\greenu{u^{t_0}[t]} &\leftarrow \greenu{u^{t_0}[t]} \cdot \frac{\rho^{k+1}}{\rho^k}, \quad \forall t_0, t
+\greenu{u_j^{t_0}[t]} &\leftarrow \greenu{u_j^{t_0}[t]} \cdot \frac{\rho^k}{\rho^{k+1}}, \quad \forall t_0 \in \mathcal{T}, \, j \in \mathcal{B}, \, t \in \mathcal{T}_{\text{local}}^{t_0}
 \end{align}
 
 This maintains the relationship between scaled and unscaled dual variables: $\greenu{u} = \lambda / \rho$.
 
-\textbf{Adaptive Parameters:}
-\begin{itemize}
-    \item \textbf{Balance factor}: $\mu = 10.0$ (higher for copper plate vs. $5.0$ for SOCP)
-    \item \textbf{Increase factor}: $\tau_{\text{incr}} = 2.0$
-    \item \textbf{Decrease factor}: $\tau_{\text{decr}} = 2.0$
-    \item \textbf{Bounds}: $\rho_{\min} = 0.1$, $\rho_{\max} = 10^6$
-    \item \textbf{Update interval}: $N_{\text{update}} = 10$ iterations
-\end{itemize}
+\subsubsection{Complete Parameter Summary}
 
-\textbf{Convergence Impact:}
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value (SOCP tADMM)} \\
+\midrule
+\textbf{Tolerances} & \\
+Primal tolerance $\epsilon_{\text{pri}}$ & $1 \times 10^{-5}$ \\
+Dual tolerance $\epsilon_{\text{dual}}$ & $1 \times 10^{-4}$ (relaxed for faster convergence) \\
+\midrule
+\textbf{Standard Adaptive Parameters} & \\
+Balance factor $\mu$ & $5.0$ \\
+Increase factor $\tau_{\text{incr}}$ & $2.0$ (double $\rho$) \\
+Decrease factor $\tau_{\text{decr}}$ & $2.0$ (halve $\rho$) \\
+Update interval $N_{\text{update}}$ & $5$ iterations \\
+\midrule
+\textbf{Bounds} & \\
+Minimum $\rho_{\min}$ & $1.0$ \\
+Maximum $\rho_{\max}$ & $10^6$ \\
+\midrule
+\textbf{Phase 1 Nudge (Stall Detection)} & \\
+Stall check interval $N_{\text{stall}}$ & $5$ iterations \\
+Stall nudge factor $\tau_{\text{nudge}}$ & $2.0$ \\
+Enable stall detection & \texttt{false} (disabled for clean testing) \\
+\midrule
+\textbf{Watchdog Parameters} & \\
+Enable watchdog & \texttt{true} \\
+Watchdog window $N_{\text{watchdog}}$ & $20$ iterations \\
+Watchdog factor $\tau_{\text{watchdog}}$ & $2.0$ (double $\rho$) \\
+Upper threshold (increment counter) & $2\epsilon_{\text{pri}} = 2 \times 10^{-5}$ \\
+Lower threshold (reset counter) & $0.5\epsilon_{\text{pri}} = 5 \times 10^{-6}$ \\
+\midrule
+\textbf{Disabled Features} & \\
+Stability zone (freeze $\rho$ near convergence) & \texttt{false} \\
+Slow progress acceleration & \texttt{false} \\
+\bottomrule
+\end{tabular}
+\end{center}
 
-For the copper plate problem (24-hour horizon, 1000 kVA base):
+\subsubsection{Convergence Impact}
+
+For LinDistFlow SOCP problems (ieee123A\_1ph, T=96, 26 batteries):
 \begin{itemize}
-    \item \textbf{Fixed $\rho = 10.0$}: Converges in $\sim$200--400 iterations
-    \item \textbf{Adaptive $\rho$}: Converges in $\sim$98 iterations (2--4$\times$ speedup)
-    \item Typical $\rho$ trajectory: $10.0 \to 5.0 \to 2.5 \to 1.25$ (decreasing to balance residuals)
+    \item \textbf{Phase 1}: $\rho$ increases rapidly ($40000 \to 80000 \to 160000$) driving primal convergence
+    \item \textbf{Phase 1→2 Transition}: At $k \approx 15$ when $\|r\| < 10^{-5}$
+    \item \textbf{Phase 2}: Bidirectional adaptation, but decreases blocked by watchdog protection if $\|r\|$ rises
+    \item \textbf{Watchdog}: Triggers every 20 iterations if primal residual stays elevated, preventing slow drift
+    \item \textbf{Total Iterations}: Typically 100--200 iterations for tight tolerances with threading enabled
 \end{itemize}
 
 \clearpage
