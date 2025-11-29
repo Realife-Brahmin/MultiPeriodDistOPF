@@ -87,11 +87,11 @@ rho_base = 10000.0               # Base ρ value for T=24 (REDUCED for FAADMM - 
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
-# rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
-rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base
+rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT scaling for stability
+# rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base  # Linear (was causing oscillations)
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 1e-5  # Keep primal tolerance tight
+eps_pri_tadmm = 3e-5  # Relaxed from 1e-5 - plot shows oscillations around 3e-5
 eps_dual_tadmm = 1e-4  # Relax dual tolerance (was 1e-5) to reduce oscillations
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
@@ -1189,8 +1189,8 @@ begin # function solve MPOPF tadmm socp
         
         # Primal residual watchdog (Phase 2 only - detects when consensus breaks down)
         enable_rnorm_watchdog = true  # Monitor if r_norm stays above threshold too long
-        rnorm_watchdog_window = 20  # Trigger nudge if r_norm > eps_pri for this many iterations
-        rnorm_watchdog_factor = 2.0  # Factor to increase ρ when watchdog triggers
+        rnorm_watchdog_window = 10  # Trigger nudge if r_norm > eps_pri for this many iterations (REDUCED from 20)
+        rnorm_watchdog_factor = 3.0  # Factor to increase ρ when watchdog triggers (INCREASED from 2.0)
         rnorm_high_counter = 0  # Count consecutive iterations with high r_norm
         
         # Output control
