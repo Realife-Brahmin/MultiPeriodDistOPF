@@ -1,0 +1,2172 @@
+Set parameter Username
+Set parameter LicenseID to value 2612288
+Academic license - for non-commercial use only - expires 2026-01-20
+Set parameter NonConvex to value 2
+Set parameter OutputFlag to value 1
+Set parameter DualReductions to value 0
+Set parameter NonConvex to value 2
+Set parameter DualReductions to value 0
+Set parameter OutputFlag to value 1
+Gurobi Optimizer version 12.0.3 build v12.0.3rc0 (win64 - Windows 11.0 (26100.2))
+
+CPU model: AMD Ryzen 9 4900HS with Radeon Graphics, instruction set [SSE2|AVX|AVX2]
+Thread count: 8 physical cores, 16 logical processors, using up to 16 threads
+
+Non-default parameters:
+DualReductions  0
+NonConvex  2
+
+Optimize a model with 176 rows, 184 columns and 423 nonzeros
+Model fingerprint: 0xa08d837a
+Model has 4 quadratic objective terms
+Coefficient statistics:
+  Matrix range     [4e-03, 1e+00]
+  Objective range  [9e+01, 2e+02]
+  QObjective range [2e-01, 2e-01]
+  Bounds range     [3e-03, 1e+00]
+  RHS range        [3e-03, 1e+00]
+Presolve removed 173 rows and 173 columns
+Presolve time: 0.00s
+Presolved: 3 rows, 11 columns, 9 nonzeros
+Presolved model has 4 quadratic objective terms
+Ordering time: 0.00s
+
+Barrier statistics:
+ AA' NZ     : 2.000e+00
+ Factor NZ  : 6.000e+00
+ Factor Ops : 1.400e+01 (less than 1 second per iteration)
+ Threads    : 1
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   3.39450490e+06 -5.63489621e+06  3.00e+03 3.08e+02  1.00e+06     0s
+   1  -5.83428337e+03 -4.62748637e+02  6.82e+00 7.01e-01  2.27e+03     0s
+   2   3.88839277e+01 -4.21688090e+02  3.59e-03 3.69e-04  3.83e+00     0s
+   3   4.19820109e+01 -6.38264516e+00  3.59e-09 3.69e-10  2.75e-01     0s
+   4   4.18096810e+01  4.07377513e+01  1.80e-11 1.81e-12  6.09e-03     0s
+   5   4.11533315e+01  4.10147657e+01  3.12e-14 1.21e-14  7.87e-04     0s
+   6   4.11157031e+01  4.11154358e+01  1.39e-17 6.32e-16  1.52e-06     0s
+   7   4.11156378e+01  4.11156375e+01  2.17e-19 3.89e-15  1.52e-09     0s
+   8   4.11156377e+01  4.11156377e+01  4.34e-19 1.19e-14  1.52e-12     0s
+
+Barrier solved model in 8 iterations and 0.00 seconds (0.00 work units)
+Optimal objective 4.11156377e+01
+
+
+User-callback calls 83, time in user-callback 0.00 sec
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+================================================================================
+PARSING SYSTEM DATA
+================================================================================
+Loaded system: ads10A_1ph from C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\..\..\rawData\ads10A_1ph\Master.dss
+
+========================================
+Initial Powerflow
+========================================
+Powerflow completed successfully!
+
+[OpenDSS] Total system load: 59.87 kW
+[OpenDSS] Substation power: 59.88 kW
+[OpenDSS] Total PV dispatch: 0.00 kW
+[OpenDSS] Total battery dispatch: 0.00 kW
+[OpenDSS] Total system losses: 0.01 kW
+
+
+================================================================================
+[35;1mSOLVING MPOPF WITH LINDISTFLOW (BRUTE-FORCED)[0m
+================================================================================
+Model summary saved to: C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\processedData\ads10A_1ph_T4\model_summary.txt
+
+================================================================================
+STARTING OPTIMIZATION
+================================================================================
+
+================================================================================
+[36;1mCOMPUTING AND VERIFYING NODAL INJECTIONS[0m
+================================================================================
+
+Verifying nodal injection calculations...
+[32;1m✓ All nodal injections verified! Both methods match.
+[0m  Max real power difference: 1.387779e-17 pu
+  Max reactive power difference: 3.469447e-18 pu
+[36;1m
+Nodal injections added to solution dictionary.
+[0m================================================================================
+
+--- SOLUTION STATUS ---
+Status: [32;1mOPTIMAL
+✓ Optimization successful!
+[0m
+--- OBJECTIVE VALUE ---
+Total Cost: $41.12
+
+--- POWER SUMMARY ---
+Substation Power (kW): min=67.1, max=80.5, avg=73.7
+
+--- VOLTAGE SUMMARY ---
+Voltage (pu): min=1.0493, max=1.0500
+
+================================================================================
+[36;1mKVL CONSTRAINT VERIFICATION (across all time periods)[0m
+================================================================================
+[32;1m✓ All KVL constraints satisfied (max violation: 2.548959307513421e-16)
+[0m================================================================================
+
+================================================================================
+[35;1mMPOPF LINDISTFLOW BRUTE-FORCED SOLUTION COMPLETE[0m
+================================================================================
+
+================================================================================
+[35;1mSOLVING MPOPF WITH LINDISTFLOW (tADMM)[0m
+================================================================================
+
+================================================================================
+[36;1m🎯 tADMM[LinDistFlow]: T=4, ρ=1.000, |Bset|=1, |Nset|=10, |Lset|=9
+[0m================================================================================
+[36;1m  🔵 Iteration   1: Primal updates[0m[32;1m ✓
+[0mk=  1  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0000)  ‖r‖=1.80e-03  ‖s‖=2.06e-04
+[36;1m  🔵 Iteration   2: Primal updates[0m[32;1m ✓
+[0mk=  2  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0001)  ‖r‖=1.68e-03  ‖s‖=3.19e-04
+[36;1m  🔵 Iteration   3: Primal updates[0m[32;1m ✓
+[0mk=  3  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0002)  ‖r‖=1.58e-03  ‖s‖=3.87e-04
+[36;1m  🔵 Iteration   4: Primal updates[0m[32;1m ✓
+[0mk=  4  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0003)  ‖r‖=1.47e-03  ‖s‖=4.59e-04
+[36;1m  🔵 Iteration   5: Primal updates[0m[32;1m ✓
+[0mk=  5  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0005)  ‖r‖=1.33e-03  ‖s‖=5.08e-04
+[36;1m  🔵 Iteration   6: Primal updates[0m[32;1m ✓
+[0mk=  6  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0007)  ‖r‖=1.29e-03  ‖s‖=3.37e-04
+[36;1m  🔵 Iteration   7: Primal updates[0m[32;1m ✓
+[0mk=  7  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0008)  ‖r‖=1.31e-03  ‖s‖=2.48e-04
+[36;1m  🔵 Iteration   8: Primal updates[0m[32;1m ✓
+[0mk=  8  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0011)  ‖r‖=1.33e-03  ‖s‖=1.27e-04
+[36;1m  🔵 Iteration   9: Primal updates[0m[32;1m ✓
+[0mk=  9  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0013)  ‖r‖=1.32e-03  ‖s‖=6.93e-05
+[36;1m  🔵 Iteration  10: Primal updates[0m[32;1m ✓
+[0mk= 10  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0016)  ‖r‖=1.31e-03  ‖s‖=7.23e-05
+[36;1m  🔵 Iteration  11: Primal updates[0m[32;1m ✓
+[0mk= 11  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0019)  ‖r‖=1.30e-03  ‖s‖=6.51e-05
+[36;1m  🔵 Iteration  12: Primal updates[0m[32;1m ✓
+[0mk= 12  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0022)  ‖r‖=1.29e-03  ‖s‖=6.69e-05
+[36;1m  🔵 Iteration  13: Primal updates[0m[32;1m ✓
+[0mk= 13  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0025)  ‖r‖=1.29e-03  ‖s‖=6.46e-05
+[36;1m  🔵 Iteration  14: Primal updates[0m[32;1m ✓
+[0mk= 14  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0029)  ‖r‖=1.29e-03  ‖s‖=4.99e-05
+[36;1m  🔵 Iteration  15: Primal updates[0m[32;1m ✓
+[0mk= 15  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0033)  ‖r‖=1.29e-03  ‖s‖=2.56e-05
+[36;1m  🔵 Iteration  16: Primal updates[0m[32;1m ✓
+[0mk= 16  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0038)  ‖r‖=1.29e-03  ‖s‖=3.25e-06
+[36;1m  🔵 Iteration  17: Primal updates[0m[32;1m ✓
+[0mk= 17  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0042)  ‖r‖=1.29e-03  ‖s‖=1.82e-05
+[36;1m  🔵 Iteration  18: Primal updates[0m[32;1m ✓
+[0mk= 18  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0047)  ‖r‖=1.29e-03  ‖s‖=2.61e-05
+[36;1m  🔵 Iteration  19: Primal updates[0m[32;1m ✓
+[0mk= 19  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0052)  ‖r‖=1.29e-03  ‖s‖=2.45e-05
+[36;1m  🔵 Iteration  20: Primal updates[0m[32;1m ✓
+[0mk= 20  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0057)  ‖r‖=1.29e-03  ‖s‖=1.66e-05
+[36;1m  🔵 Iteration  21: Primal updates[0m[32;1m ✓
+[0mk= 21  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0063)  ‖r‖=1.29e-03  ‖s‖=1.35e-05
+[36;1m  🔵 Iteration  22: Primal updates[0m[32;1m ✓
+[0mk= 22  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0069)  ‖r‖=1.29e-03  ‖s‖=1.94e-05
+[36;1m  🔵 Iteration  23: Primal updates[0m[32;1m ✓
+[0mk= 23  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0075)  ‖r‖=1.29e-03  ‖s‖=2.58e-05
+[36;1m  🔵 Iteration  24: Primal updates[0m[32;1m ✓
+[0mk= 24  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0082)  ‖r‖=1.29e-03  ‖s‖=2.88e-05
+[36;1m  🔵 Iteration  25: Primal updates[0m[32;1m ✓
+[0mk= 25  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0088)  ‖r‖=1.29e-03  ‖s‖=2.76e-05
+[36;1m  🔵 Iteration  26: Primal updates[0m[32;1m ✓
+[0mk= 26  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0095)  ‖r‖=1.29e-03  ‖s‖=2.30e-05
+[36;1m  🔵 Iteration  27: Primal updates[0m[32;1m ✓
+[0mk= 27  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0102)  ‖r‖=1.29e-03  ‖s‖=1.64e-05
+[36;1m  🔵 Iteration  28: Primal updates[0m[32;1m ✓
+[0mk= 28  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0110)  ‖r‖=1.29e-03  ‖s‖=9.32e-06
+[36;1m  🔵 Iteration  29: Primal updates[0m[32;1m ✓
+[0mk= 29  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0118)  ‖r‖=1.29e-03  ‖s‖=2.10e-06
+[36;1m  🔵 Iteration  30: Primal updates[0m[32;1m ✓
+[0mk= 30  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0126)  ‖r‖=1.29e-03  ‖s‖=6.50e-06
+[36;1m  🔵 Iteration  31: Primal updates[0m[32;1m ✓
+[0mk= 31  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0134)  ‖r‖=1.29e-03  ‖s‖=1.18e-05
+[36;1m  🔵 Iteration  32: Primal updates[0m[32;1m ✓
+[0mk= 32  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0143)  ‖r‖=1.29e-03  ‖s‖=1.49e-05
+[36;1m  🔵 Iteration  33: Primal updates[0m[32;1m ✓
+[0mk= 33  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0151)  ‖r‖=1.29e-03  ‖s‖=1.57e-05
+[36;1m  🔵 Iteration  34: Primal updates[0m[32;1m ✓
+[0mk= 34  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0160)  ‖r‖=1.29e-03  ‖s‖=1.46e-05
+[36;1m  🔵 Iteration  35: Primal updates[0m[32;1m ✓
+[0mk= 35  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0170)  ‖r‖=1.29e-03  ‖s‖=1.17e-05
+[36;1m  🔵 Iteration  36: Primal updates[0m[32;1m ✓
+[0mk= 36  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0179)  ‖r‖=1.29e-03  ‖s‖=7.74e-06
+[36;1m  🔵 Iteration  37: Primal updates[0m[32;1m ✓
+[0mk= 37  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0189)  ‖r‖=1.29e-03  ‖s‖=3.36e-06
+[36;1m  🔵 Iteration  38: Primal updates[0m[32;1m ✓
+[0mk= 38  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0199)  ‖r‖=1.29e-03  ‖s‖=8.83e-07
+[36;1m  🔵 Iteration  39: Primal updates[0m[32;1m ✓
+[0mk= 39  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0210)  ‖r‖=1.29e-03  ‖s‖=4.42e-06
+[36;1m  🔵 Iteration  40: Primal updates[0m[32;1m ✓
+[0mk= 40  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0220)  ‖r‖=1.29e-03  ‖s‖=6.96e-06
+[36;1m  🔵 Iteration  41: Primal updates[0m[32;1m ✓
+[0mk= 41  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0231)  ‖r‖=1.29e-03  ‖s‖=8.31e-06
+[36;1m  🔵 Iteration  42: Primal updates[0m[32;1m ✓
+[0mk= 42  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0243)  ‖r‖=1.29e-03  ‖s‖=8.47e-06
+[36;1m  🔵 Iteration  43: Primal updates[0m[32;1m ✓
+[0mk= 43  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0254)  ‖r‖=1.29e-03  ‖s‖=7.55e-06
+[36;1m  🔵 Iteration  44: Primal updates[0m[32;1m ✓
+[0mk= 44  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0266)  ‖r‖=1.29e-03  ‖s‖=5.82e-06
+[36;1m  🔵 Iteration  45: Primal updates[0m[32;1m ✓
+[0mk= 45  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0278)  ‖r‖=1.29e-03  ‖s‖=3.58e-06
+[36;1m  🔵 Iteration  46: Primal updates[0m[32;1m ✓
+[0mk= 46  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0290)  ‖r‖=1.29e-03  ‖s‖=1.19e-06
+[36;1m  🔵 Iteration  47: Primal updates[0m[32;1m ✓
+[0mk= 47  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0302)  ‖r‖=1.29e-03  ‖s‖=1.04e-06
+[36;1m  🔵 Iteration  48: Primal updates[0m[32;1m ✓
+[0mk= 48  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0315)  ‖r‖=1.29e-03  ‖s‖=2.86e-06
+[36;1m  🔵 Iteration  49: Primal updates[0m[32;1m ✓
+[0mk= 49  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0328)  ‖r‖=1.29e-03  ‖s‖=4.08e-06
+[36;1m  🔵 Iteration  50: Primal updates[0m[32;1m ✓
+[0mk= 50  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0342)  ‖r‖=1.29e-03  ‖s‖=4.64e-06
+[36;1m  🔵 Iteration  51: Primal updates[0m[32;1m ✓
+[0mk= 51  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0355)  ‖r‖=1.29e-03  ‖s‖=4.55e-06
+[36;1m  🔵 Iteration  52: Primal updates[0m[32;1m ✓
+[0mk= 52  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0369)  ‖r‖=1.29e-03  ‖s‖=3.90e-06
+[36;1m  🔵 Iteration  53: Primal updates[0m[32;1m ✓
+[0mk= 53  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0383)  ‖r‖=1.29e-03  ‖s‖=2.85e-06
+[36;1m  🔵 Iteration  54: Primal updates[0m[32;1m ✓
+[0mk= 54  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0397)  ‖r‖=1.29e-03  ‖s‖=1.58e-06
+[36;1m  🔵 Iteration  55: Primal updates[0m[32;1m ✓
+[0mk= 55  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0412)  ‖r‖=1.29e-03  ‖s‖=2.85e-07
+[36;1m  🔵 Iteration  56: Primal updates[0m[32;1m ✓
+[0mk= 56  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0427)  ‖r‖=1.29e-03  ‖s‖=8.78e-07
+[36;1m  🔵 Iteration  57: Primal updates[0m[32;1m ✓
+[0mk= 57  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0442)  ‖r‖=1.29e-03  ‖s‖=1.78e-06
+[36;1m  🔵 Iteration  58: Primal updates[0m[32;1m ✓
+[0mk= 58  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0458)  ‖r‖=1.29e-03  ‖s‖=2.34e-06
+[36;1m  🔵 Iteration  59: Primal updates[0m[32;1m ✓
+[0mk= 59  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0473)  ‖r‖=1.29e-03  ‖s‖=2.54e-06
+[36;1m  🔵 Iteration  60: Primal updates[0m[32;1m ✓
+[0mk= 60  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0489)  ‖r‖=1.29e-03  ‖s‖=2.40e-06
+[36;1m  🔵 Iteration  61: Primal updates[0m[32;1m ✓
+[0mk= 61  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0505)  ‖r‖=1.29e-03  ‖s‖=1.98e-06
+[36;1m  🔵 Iteration  62: Primal updates[0m[32;1m ✓
+[0mk= 62  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0522)  ‖r‖=1.29e-03  ‖s‖=1.36e-06
+[36;1m  🔵 Iteration  63: Primal updates[0m[32;1m ✓
+[0mk= 63  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0539)  ‖r‖=1.29e-03  ‖s‖=6.54e-07
+[36;1m  🔵 Iteration  64: Primal updates[0m[32;1m ✓
+[0mk= 64  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0556)  ‖r‖=1.29e-03  ‖s‖=5.27e-08
+[36;1m  🔵 Iteration  65: Primal updates[0m[32;1m ✓
+[0mk= 65  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0573)  ‖r‖=1.29e-03  ‖s‖=6.52e-07
+[36;1m  🔵 Iteration  66: Primal updates[0m[32;1m ✓
+[0mk= 66  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0590)  ‖r‖=1.29e-03  ‖s‖=1.09e-06
+[36;1m  🔵 Iteration  67: Primal updates[0m[32;1m ✓
+[0mk= 67  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0608)  ‖r‖=1.29e-03  ‖s‖=1.51e-06
+[36;1m  🔵 Iteration  68: Primal updates[0m[32;1m ✓
+[0mk= 68  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0626)  ‖r‖=1.29e-03  ‖s‖=1.51e-06
+[36;1m  🔵 Iteration  69: Primal updates[0m[32;1m ✓
+[0mk= 69  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0645)  ‖r‖=1.29e-03  ‖s‖=1.33e-06
+[36;1m  🔵 Iteration  70: Primal updates[0m[32;1m ✓
+[0mk= 70  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0663)  ‖r‖=1.29e-03  ‖s‖=1.01e-06
+[36;1m  🔵 Iteration  71: Primal updates[0m[32;1m ✓
+[0mk= 71  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0682)  ‖r‖=1.29e-03  ‖s‖=6.04e-07
+[36;1m  🔵 Iteration  72: Primal updates[0m[32;1m ✓
+[0mk= 72  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0701)  ‖r‖=1.29e-03  ‖s‖=1.76e-07
+[36;1m  🔵 Iteration  73: Primal updates[0m[32;1m ✓
+[0mk= 73  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0721)  ‖r‖=1.29e-03  ‖s‖=2.25e-07
+[36;1m  🔵 Iteration  74: Primal updates[0m[32;1m ✓
+[0mk= 74  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0740)  ‖r‖=1.29e-03  ‖s‖=5.40e-07
+[36;1m  🔵 Iteration  75: Primal updates[0m[32;1m ✓
+[0mk= 75  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0760)  ‖r‖=1.29e-03  ‖s‖=7.47e-07
+[36;1m  🔵 Iteration  76: Primal updates[0m[32;1m ✓
+[0mk= 76  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0780)  ‖r‖=1.29e-03  ‖s‖=8.34e-07
+[36;1m  🔵 Iteration  77: Primal updates[0m[32;1m ✓
+[0mk= 77  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0801)  ‖r‖=1.29e-03  ‖s‖=8.06e-07
+[36;1m  🔵 Iteration  78: Primal updates[0m[32;1m ✓
+[0mk= 78  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0822)  ‖r‖=1.29e-03  ‖s‖=6.82e-07
+[36;1m  🔵 Iteration  79: Primal updates[0m[32;1m ✓
+[0mk= 79  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0843)  ‖r‖=1.29e-03  ‖s‖=4.89e-07
+[36;1m  🔵 Iteration  80: Primal updates[0m[32;1m ✓
+[0mk= 80  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0864)  ‖r‖=1.29e-03  ‖s‖=2.60e-07
+[36;1m  🔵 Iteration  81: Primal updates[0m[32;1m ✓
+[0mk= 81  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0885)  ‖r‖=1.29e-03  ‖s‖=2.91e-08
+[36;1m  🔵 Iteration  82: Primal updates[0m[32;1m ✓
+[0mk= 82  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0907)  ‖r‖=1.29e-03  ‖s‖=1.77e-07
+[36;1m  🔵 Iteration  83: Primal updates[0m[32;1m ✓
+[0mk= 83  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0929)  ‖r‖=1.29e-03  ‖s‖=3.34e-07
+[36;1m  🔵 Iteration  84: Primal updates[0m[32;1m ✓
+[0mk= 84  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0951)  ‖r‖=1.29e-03  ‖s‖=4.29e-07
+[36;1m  🔵 Iteration  85: Primal updates[0m[32;1m ✓
+[0mk= 85  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0974)  ‖r‖=1.29e-03  ‖s‖=4.59e-07
+[36;1m  🔵 Iteration  86: Primal updates[0m[32;1m ✓
+[0mk= 86  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.0997)  ‖r‖=1.29e-03  ‖s‖=4.27e-07
+[36;1m  🔵 Iteration  87: Primal updates[0m[32;1m ✓
+[0mk= 87  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1020)  ‖r‖=1.29e-03  ‖s‖=3.47e-07
+[36;1m  🔵 Iteration  88: Primal updates[0m[32;1m ✓
+[0mk= 88  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1043)  ‖r‖=1.29e-03  ‖s‖=2.33e-07
+[36;1m  🔵 Iteration  89: Primal updates[0m[32;1m ✓
+[0mk= 89  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1067)  ‖r‖=1.29e-03  ‖s‖=1.05e-07
+[36;1m  🔵 Iteration  90: Primal updates[0m[32;1m ✓
+[0mk= 90  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1091)  ‖r‖=1.29e-03  ‖s‖=1.89e-08
+[36;1m  🔵 Iteration  91: Primal updates[0m[32;1m ✓
+[0mk= 91  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1115)  ‖r‖=1.29e-03  ‖s‖=1.25e-07
+[36;1m  🔵 Iteration  92: Primal updates[0m[32;1m ✓
+[0mk= 92  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1139)  ‖r‖=1.29e-03  ‖s‖=2.02e-07
+[36;1m  🔵 Iteration  93: Primal updates[0m[32;1m ✓
+[0mk= 93  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1164)  ‖r‖=1.29e-03  ‖s‖=2.43e-07
+[36;1m  🔵 Iteration  94: Primal updates[0m[32;1m ✓
+[0mk= 94  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1189)  ‖r‖=1.29e-03  ‖s‖=2.49e-07
+[36;1m  🔵 Iteration  95: Primal updates[0m[32;1m ✓
+[0mk= 95  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1214)  ‖r‖=1.29e-03  ‖s‖=2.24e-07
+[36;1m  🔵 Iteration  96: Primal updates[0m[32;1m ✓
+[0mk= 96  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1240)  ‖r‖=1.29e-03  ‖s‖=1.73e-07
+[36;1m  🔵 Iteration  97: Primal updates[0m[32;1m ✓
+[0mk= 97  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1265)  ‖r‖=1.29e-03  ‖s‖=1.08e-07
+[36;1m  🔵 Iteration  98: Primal updates[0m[32;1m ✓
+[0mk= 98  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1291)  ‖r‖=1.29e-03  ‖s‖=3.77e-08
+[36;1m  🔵 Iteration  99: Primal updates[0m[32;1m ✓
+[0mk= 99  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1318)  ‖r‖=1.29e-03  ‖s‖=2.83e-08
+[36;1m  🔵 Iteration 100: Primal updates[0m[32;1m ✓
+[0mk=100  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1344)  ‖r‖=1.29e-03  ‖s‖=8.23e-08
+[36;1m  🔵 Iteration 101: Primal updates[0m[32;1m ✓
+[0mk=101  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1371)  ‖r‖=1.29e-03  ‖s‖=1.19e-07
+[36;1m  🔵 Iteration 102: Primal updates[0m[32;1m ✓
+[0mk=102  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1398)  ‖r‖=1.29e-03  ‖s‖=1.36e-07
+[36;1m  🔵 Iteration 103: Primal updates[0m[32;1m ✓
+[0mk=103  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1425)  ‖r‖=1.29e-03  ‖s‖=1.34e-07
+[36;1m  🔵 Iteration 104: Primal updates[0m[32;1m ✓
+[0mk=104  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1453)  ‖r‖=1.29e-03  ‖s‖=1.16e-07
+[36;1m  🔵 Iteration 105: Primal updates[0m[32;1m ✓
+[0mk=105  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1481)  ‖r‖=1.29e-03  ‖s‖=8.55e-08
+[36;1m  🔵 Iteration 106: Primal updates[0m[32;1m ✓
+[0mk=106  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1509)  ‖r‖=1.29e-03  ‖s‖=4.83e-08
+[36;1m  🔵 Iteration 107: Primal updates[0m[32;1m ✓
+[0mk=107  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1537)  ‖r‖=1.29e-03  ‖s‖=9.92e-09
+[36;1m  🔵 Iteration 108: Primal updates[0m[32;1m ✓
+[0mk=108  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1566)  ‖r‖=1.29e-03  ‖s‖=2.47e-08
+[36;1m  🔵 Iteration 109: Primal updates[0m[32;1m ✓
+[0mk=109  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1595)  ‖r‖=1.29e-03  ‖s‖=5.19e-08
+[36;1m  🔵 Iteration 110: Primal updates[0m[32;1m ✓
+[0mk=110  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1624)  ‖r‖=1.29e-03  ‖s‖=6.90e-08
+[36;1m  🔵 Iteration 111: Primal updates[0m[32;1m ✓
+[0mk=111  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1653)  ‖r‖=1.29e-03  ‖s‖=7.54e-08
+[36;1m  🔵 Iteration 112: Primal updates[0m[32;1m ✓
+[0mk=112  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1683)  ‖r‖=1.29e-03  ‖s‖=7.15e-08
+[36;1m  🔵 Iteration 113: Primal updates[0m[32;1m ✓
+[0mk=113  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1713)  ‖r‖=1.29e-03  ‖s‖=5.93e-08
+[36;1m  🔵 Iteration 114: Primal updates[0m[32;1m ✓
+[0mk=114  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1743)  ‖r‖=1.29e-03  ‖s‖=4.12e-08
+[36;1m  🔵 Iteration 115: Primal updates[0m[32;1m ✓
+[0mk=115  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1774)  ‖r‖=1.29e-03  ‖s‖=2.04e-08
+[36;1m  🔵 Iteration 116: Primal updates[0m[32;1m ✓
+[0mk=116  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1805)  ‖r‖=1.29e-03  ‖s‖=3.98e-10
+[36;1m  🔵 Iteration 117: Primal updates[0m[32;1m ✓
+[0mk=117  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1836)  ‖r‖=1.29e-03  ‖s‖=1.84e-08
+[36;1m  🔵 Iteration 118: Primal updates[0m[32;1m ✓
+[0mk=118  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1867)  ‖r‖=1.29e-03  ‖s‖=3.17e-08
+[36;1m  🔵 Iteration 119: Primal updates[0m[32;1m ✓
+[0mk=119  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1898)  ‖r‖=1.29e-03  ‖s‖=3.95e-08
+[36;1m  🔵 Iteration 120: Primal updates[0m[32;1m ✓
+[0mk=120  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1930)  ‖r‖=1.29e-03  ‖s‖=4.13e-08
+[36;1m  🔵 Iteration 121: Primal updates[0m[32;1m ✓
+[0mk=121  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1962)  ‖r‖=1.29e-03  ‖s‖=3.77e-08
+[36;1m  🔵 Iteration 122: Primal updates[0m[32;1m ✓
+[0mk=122  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.1995)  ‖r‖=1.29e-03  ‖s‖=3.00e-08
+[36;1m  🔵 Iteration 123: Primal updates[0m[32;1m ✓
+[0mk=123  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2027)  ‖r‖=1.29e-03  ‖s‖=1.94e-08
+[36;1m  🔵 Iteration 124: Primal updates[0m[32;1m ✓
+[0mk=124  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2060)  ‖r‖=1.29e-03  ‖s‖=7.89e-09
+[36;1m  🔵 Iteration 125: Primal updates[0m[32;1m ✓
+[0mk=125  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2093)  ‖r‖=1.29e-03  ‖s‖=3.17e-09
+[36;1m  🔵 Iteration 126: Primal updates[0m[32;1m ✓
+[0mk=126  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2127)  ‖r‖=1.29e-03  ‖s‖=1.24e-08
+[36;1m  🔵 Iteration 127: Primal updates[0m[32;1m ✓
+[0mk=127  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2160)  ‖r‖=1.29e-03  ‖s‖=1.89e-08
+[36;1m  🔵 Iteration 128: Primal updates[0m[32;1m ✓
+[0mk=128  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2194)  ‖r‖=1.29e-03  ‖s‖=2.22e-08
+[36;1m  🔵 Iteration 129: Primal updates[0m[32;1m ✓
+[0mk=129  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2229)  ‖r‖=1.29e-03  ‖s‖=2.23e-08
+[36;1m  🔵 Iteration 130: Primal updates[0m[32;1m ✓
+[0mk=130  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2263)  ‖r‖=1.29e-03  ‖s‖=1.96e-08
+[36;1m  🔵 Iteration 131: Primal updates[0m[32;1m ✓
+[0mk=131  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2298)  ‖r‖=1.29e-03  ‖s‖=1.48e-08
+[36;1m  🔵 Iteration 132: Primal updates[0m[32;1m ✓
+[0mk=132  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2333)  ‖r‖=1.29e-03  ‖s‖=8.82e-09
+[36;1m  🔵 Iteration 133: Primal updates[0m[32;1m ✓
+[0mk=133  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2368)  ‖r‖=1.29e-03  ‖s‖=2.49e-09
+[36;1m  🔵 Iteration 134: Primal updates[0m[32;1m ✓
+[0mk=134  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2403)  ‖r‖=1.29e-03  ‖s‖=3.35e-09
+[36;1m  🔵 Iteration 135: Primal updates[0m[32;1m ✓
+[0mk=135  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2439)  ‖r‖=1.29e-03  ‖s‖=8.02e-09
+[36;1m  🔵 Iteration 136: Primal updates[0m[32;1m ✓
+[0mk=136  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2475)  ‖r‖=1.29e-03  ‖s‖=1.11e-08
+[36;1m  🔵 Iteration 137: Primal updates[0m[32;1m ✓
+[0mk=137  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2512)  ‖r‖=1.29e-03  ‖s‖=1.24e-08
+[36;1m  🔵 Iteration 138: Primal updates[0m[32;1m ✓
+[0mk=138  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2548)  ‖r‖=1.29e-03  ‖s‖=1.20e-08
+[36;1m  🔵 Iteration 139: Primal updates[0m[32;1m ✓
+[0mk=139  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2585)  ‖r‖=1.29e-03  ‖s‖=1.01e-08
+[36;1m  🔵 Iteration 140: Primal updates[0m[32;1m ✓
+[0mk=140  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2622)  ‖r‖=1.29e-03  ‖s‖=7.28e-09
+[36;1m  🔵 Iteration 141: Primal updates[0m[32;1m ✓
+[0mk=141  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2660)  ‖r‖=1.29e-03  ‖s‖=3.88e-09
+[36;1m  🔵 Iteration 142: Primal updates[0m[32;1m ✓
+[0mk=142  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2697)  ‖r‖=1.29e-03  ‖s‖=4.69e-10
+[36;1m  🔵 Iteration 143: Primal updates[0m[32;1m ✓
+[0mk=143  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2735)  ‖r‖=1.29e-03  ‖s‖=2.61e-09
+[36;1m  🔵 Iteration 144: Primal updates[0m[32;1m ✓
+[0mk=144  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2773)  ‖r‖=1.29e-03  ‖s‖=4.93e-09
+[36;1m  🔵 Iteration 145: Primal updates[0m[32;1m ✓
+[0mk=145  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2812)  ‖r‖=1.29e-03  ‖s‖=6.32e-09
+[36;1m  🔵 Iteration 146: Primal updates[0m[32;1m ✓
+[0mk=146  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2850)  ‖r‖=1.29e-03  ‖s‖=6.75e-09
+[36;1m  🔵 Iteration 147: Primal updates[0m[32;1m ✓
+[0mk=147  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2889)  ‖r‖=1.29e-03  ‖s‖=6.27e-09
+[36;1m  🔵 Iteration 148: Primal updates[0m[32;1m ✓
+[0mk=148  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2929)  ‖r‖=1.29e-03  ‖s‖=5.08e-09
+[36;1m  🔵 Iteration 149: Primal updates[0m[32;1m ✓
+[0mk=149  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.2968)  ‖r‖=1.29e-03  ‖s‖=3.40e-09
+[36;1m  🔵 Iteration 150: Primal updates[0m[32;1m ✓
+[0mk=150  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3008)  ‖r‖=1.29e-03  ‖s‖=1.52e-09
+[36;1m  🔵 Iteration 151: Primal updates[0m[32;1m ✓
+[0mk=151  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3048)  ‖r‖=1.29e-03  ‖s‖=3.53e-10
+[36;1m  🔵 Iteration 152: Primal updates[0m[32;1m ✓
+[0mk=152  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3088)  ‖r‖=1.29e-03  ‖s‖=1.88e-09
+[36;1m  🔵 Iteration 153: Primal updates[0m[32;1m ✓
+[0mk=153  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3129)  ‖r‖=1.29e-03  ‖s‖=3.01e-09
+[36;1m  🔵 Iteration 154: Primal updates[0m[32;1m ✓
+[0mk=154  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3169)  ‖r‖=1.29e-03  ‖s‖=3.62e-09
+[36;1m  🔵 Iteration 155: Primal updates[0m[32;1m ✓
+[0mk=155  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3211)  ‖r‖=1.29e-03  ‖s‖=3.70e-09
+[36;1m  🔵 Iteration 156: Primal updates[0m[32;1m ✓
+[0mk=156  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3252)  ‖r‖=1.29e-03  ‖s‖=3.32e-09
+[36;1m  🔵 Iteration 157: Primal updates[0m[32;1m ✓
+[0mk=157  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3293)  ‖r‖=1.29e-03  ‖s‖=2.58e-09
+[36;1m  🔵 Iteration 158: Primal updates[0m[32;1m ✓
+[0mk=158  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3335)  ‖r‖=1.29e-03  ‖s‖=1.61e-09
+[36;1m  🔵 Iteration 159: Primal updates[0m[32;1m ✓
+[0mk=159  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3377)  ‖r‖=1.29e-03  ‖s‖=5.85e-10
+[36;1m  🔵 Iteration 160: Primal updates[0m[32;1m ✓
+[0mk=160  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3420)  ‖r‖=1.29e-03  ‖s‖=4.32e-10
+[36;1m  🔵 Iteration 161: Primal updates[0m[32;1m ✓
+[0mk=161  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3463)  ‖r‖=1.29e-03  ‖s‖=1.21e-09
+[36;1m  🔵 Iteration 162: Primal updates[0m[32;1m ✓
+[0mk=162  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3505)  ‖r‖=1.29e-03  ‖s‖=1.75e-09
+[36;1m  🔵 Iteration 163: Primal updates[0m[32;1m ✓
+[0mk=163  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3549)  ‖r‖=1.29e-03  ‖s‖=2.00e-09
+[36;1m  🔵 Iteration 164: Primal updates[0m[32;1m ✓
+[0mk=164  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3592)  ‖r‖=1.29e-03  ‖s‖=1.97e-09
+[36;1m  🔵 Iteration 165: Primal updates[0m[32;1m ✓
+[0mk=165  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3636)  ‖r‖=1.29e-03  ‖s‖=1.69e-09
+[36;1m  🔵 Iteration 166: Primal updates[0m[32;1m ✓
+[0mk=166  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3680)  ‖r‖=1.29e-03  ‖s‖=1.25e-09
+[36;1m  🔵 Iteration 167: Primal updates[0m[32;1m ✓
+[0mk=167  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3724)  ‖r‖=1.29e-03  ‖s‖=7.03e-10
+[36;1m  🔵 Iteration 168: Primal updates[0m[32;1m ✓
+[0mk=168  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3769)  ‖r‖=1.29e-03  ‖s‖=1.87e-10
+[36;1m  🔵 Iteration 169: Primal updates[0m[32;1m ✓
+[0mk=169  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3813)  ‖r‖=1.29e-03  ‖s‖=4.12e-10
+[36;1m  🔵 Iteration 170: Primal updates[0m[32;1m ✓
+[0mk=170  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3858)  ‖r‖=1.29e-03  ‖s‖=7.98e-10
+[36;1m  🔵 Iteration 171: Primal updates[0m[32;1m ✓
+[0mk=171  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3904)  ‖r‖=1.29e-03  ‖s‖=1.05e-09
+[36;1m  🔵 Iteration 172: Primal updates[0m[32;1m ✓
+[0mk=172  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3949)  ‖r‖=1.29e-03  ‖s‖=1.14e-09
+[36;1m  🔵 Iteration 173: Primal updates[0m[32;1m ✓
+[0mk=173  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.3995)  ‖r‖=1.29e-03  ‖s‖=1.08e-09
+[36;1m  🔵 Iteration 174: Primal updates[0m[32;1m ✓
+[0mk=174  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4041)  ‖r‖=1.29e-03  ‖s‖=9.00e-10
+[36;1m  🔵 Iteration 175: Primal updates[0m[32;1m ✓
+[0mk=175  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4088)  ‖r‖=1.29e-03  ‖s‖=6.37e-10
+[36;1m  🔵 Iteration 176: Primal updates[0m[32;1m ✓
+[0mk=176  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4134)  ‖r‖=1.29e-03  ‖s‖=3.43e-10
+[36;1m  🔵 Iteration 177: Primal updates[0m[32;1m ✓
+[0mk=177  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4181)  ‖r‖=1.29e-03  ‖s‖=1.36e-10
+[36;1m  🔵 Iteration 178: Primal updates[0m[32;1m ✓
+[0mk=178  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4228)  ‖r‖=1.29e-03  ‖s‖=2.90e-10
+[36;1m  🔵 Iteration 179: Primal updates[0m[32;1m ✓
+[0mk=179  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4276)  ‖r‖=1.29e-03  ‖s‖=4.73e-10
+[36;1m  🔵 Iteration 180: Primal updates[0m[32;1m ✓
+[0mk=180  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4323)  ‖r‖=1.29e-03  ‖s‖=5.82e-10
+[36;1m  🔵 Iteration 181: Primal updates[0m[32;1m ✓
+[0mk=181  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4371)  ‖r‖=1.29e-03  ‖s‖=6.07e-10
+[36;1m  🔵 Iteration 182: Primal updates[0m[32;1m ✓
+[0mk=182  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4420)  ‖r‖=1.29e-03  ‖s‖=5.56e-10
+[36;1m  🔵 Iteration 183: Primal updates[0m[32;1m ✓
+[0mk=183  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4468)  ‖r‖=1.29e-03  ‖s‖=4.45e-10
+[36;1m  🔵 Iteration 184: Primal updates[0m[32;1m ✓
+[0mk=184  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4517)  ‖r‖=1.29e-03  ‖s‖=3.00e-10
+[36;1m  🔵 Iteration 185: Primal updates[0m[32;1m ✓
+[0mk=185  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4566)  ‖r‖=1.29e-03  ‖s‖=1.65e-10
+[36;1m  🔵 Iteration 186: Primal updates[0m[32;1m ✓
+[0mk=186  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4615)  ‖r‖=1.29e-03  ‖s‖=1.45e-10
+[36;1m  🔵 Iteration 187: Primal updates[0m[32;1m ✓
+[0mk=187  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4665)  ‖r‖=1.29e-03  ‖s‖=2.38e-10
+[36;1m  🔵 Iteration 188: Primal updates[0m[32;1m ✓
+[0mk=188  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4714)  ‖r‖=1.29e-03  ‖s‖=3.22e-10
+[36;1m  🔵 Iteration 189: Primal updates[0m[32;1m ✓
+[0mk=189  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4764)  ‖r‖=1.29e-03  ‖s‖=3.66e-10
+[36;1m  🔵 Iteration 190: Primal updates[0m[32;1m ✓
+[0mk=190  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4815)  ‖r‖=1.29e-03  ‖s‖=3.67e-10
+[36;1m  🔵 Iteration 191: Primal updates[0m[32;1m ✓
+[0mk=191  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4865)  ‖r‖=1.29e-03  ‖s‖=3.29e-10
+[36;1m  🔵 Iteration 192: Primal updates[0m[32;1m ✓
+[0mk=192  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4916)  ‖r‖=1.29e-03  ‖s‖=2.65e-10
+[36;1m  🔵 Iteration 193: Primal updates[0m[32;1m ✓
+[0mk=193  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.4967)  ‖r‖=1.29e-03  ‖s‖=1.92e-10
+[36;1m  🔵 Iteration 194: Primal updates[0m[32;1m ✓
+[0mk=194  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5019)  ‖r‖=1.29e-03  ‖s‖=1.36e-10
+[36;1m  🔵 Iteration 195: Primal updates[0m[32;1m ✓
+[0mk=195  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5070)  ‖r‖=1.29e-03  ‖s‖=1.31e-10
+[36;1m  🔵 Iteration 196: Primal updates[0m[32;1m ✓
+[0mk=196  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5122)  ‖r‖=1.29e-03  ‖s‖=1.64e-10
+[36;1m  🔵 Iteration 197: Primal updates[0m[32;1m ✓
+[0mk=197  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5175)  ‖r‖=1.29e-03  ‖s‖=1.95e-10
+[36;1m  🔵 Iteration 198: Primal updates[0m[32;1m ✓
+[0mk=198  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5227)  ‖r‖=1.29e-03  ‖s‖=2.10e-10
+[36;1m  🔵 Iteration 199: Primal updates[0m[32;1m ✓
+[0mk=199  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5280)  ‖r‖=1.29e-03  ‖s‖=2.05e-10
+[36;1m  🔵 Iteration 200: Primal updates[0m[32;1m ✓
+[0mk=200  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5333)  ‖r‖=1.29e-03  ‖s‖=1.84e-10
+[36;1m  🔵 Iteration 201: Primal updates[0m[32;1m ✓
+[0mk=201  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5386)  ‖r‖=1.29e-03  ‖s‖=1.55e-10
+[36;1m  🔵 Iteration 202: Primal updates[0m[32;1m ✓
+[0mk=202  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5439)  ‖r‖=1.29e-03  ‖s‖=1.31e-10
+[36;1m  🔵 Iteration 203: Primal updates[0m[32;1m ✓
+[0mk=203  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5493)  ‖r‖=1.29e-03  ‖s‖=1.23e-10
+[36;1m  🔵 Iteration 204: Primal updates[0m[32;1m ✓
+[0mk=204  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5547)  ‖r‖=1.29e-03  ‖s‖=1.33e-10
+[36;1m  🔵 Iteration 205: Primal updates[0m[32;1m ✓
+[0mk=205  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5602)  ‖r‖=1.29e-03  ‖s‖=1.49e-10
+[36;1m  🔵 Iteration 206: Primal updates[0m[32;1m ✓
+[0mk=206  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5656)  ‖r‖=1.29e-03  ‖s‖=1.61e-10
+[36;1m  🔵 Iteration 207: Primal updates[0m[32;1m ✓
+[0mk=207  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5711)  ‖r‖=1.29e-03  ‖s‖=1.65e-10
+[36;1m  🔵 Iteration 208: Primal updates[0m[32;1m ✓
+[0mk=208  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5766)  ‖r‖=1.29e-03  ‖s‖=1.60e-10
+[36;1m  🔵 Iteration 209: Primal updates[0m[32;1m ✓
+[0mk=209  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5821)  ‖r‖=1.29e-03  ‖s‖=1.49e-10
+[36;1m  🔵 Iteration 210: Primal updates[0m[32;1m ✓
+[0mk=210  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5877)  ‖r‖=1.29e-03  ‖s‖=1.35e-10
+[36;1m  🔵 Iteration 211: Primal updates[0m[32;1m ✓
+[0mk=211  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5933)  ‖r‖=1.29e-03  ‖s‖=1.24e-10
+[36;1m  🔵 Iteration 212: Primal updates[0m[32;1m ✓
+[0mk=212  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.5989)  ‖r‖=1.29e-03  ‖s‖=1.19e-10
+[36;1m  🔵 Iteration 213: Primal updates[0m[32;1m ✓
+[0mk=213  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6045)  ‖r‖=1.29e-03  ‖s‖=1.19e-10
+[36;1m  🔵 Iteration 214: Primal updates[0m[32;1m ✓
+[0mk=214  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6102)  ‖r‖=1.29e-03  ‖s‖=1.22e-10
+[36;1m  🔵 Iteration 215: Primal updates[0m[32;1m ✓
+[0mk=215  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6159)  ‖r‖=1.29e-03  ‖s‖=1.25e-10
+[36;1m  🔵 Iteration 216: Primal updates[0m[32;1m ✓
+[0mk=216  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6216)  ‖r‖=1.29e-03  ‖s‖=1.25e-10
+[36;1m  🔵 Iteration 217: Primal updates[0m[32;1m ✓
+[0mk=217  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6274)  ‖r‖=1.29e-03  ‖s‖=1.23e-10
+[36;1m  🔵 Iteration 218: Primal updates[0m[32;1m ✓
+[0mk=218  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6331)  ‖r‖=1.29e-03  ‖s‖=1.19e-10
+[36;1m  🔵 Iteration 219: Primal updates[0m[32;1m ✓
+[0mk=219  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6389)  ‖r‖=1.29e-03  ‖s‖=1.17e-10
+[36;1m  🔵 Iteration 220: Primal updates[0m[32;1m ✓
+[0mk=220  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6448)  ‖r‖=1.29e-03  ‖s‖=1.16e-10
+[36;1m  🔵 Iteration 221: Primal updates[0m[32;1m ✓
+[0mk=221  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6506)  ‖r‖=1.29e-03  ‖s‖=1.16e-10
+[36;1m  🔵 Iteration 222: Primal updates[0m[32;1m ✓
+[0mk=222  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6565)  ‖r‖=1.29e-03  ‖s‖=1.18e-10
+[36;1m  🔵 Iteration 223: Primal updates[0m[32;1m ✓
+[0mk=223  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6624)  ‖r‖=1.29e-03  ‖s‖=1.20e-10
+[36;1m  🔵 Iteration 224: Primal updates[0m[32;1m ✓
+[0mk=224  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6683)  ‖r‖=1.29e-03  ‖s‖=1.21e-10
+[36;1m  🔵 Iteration 225: Primal updates[0m[32;1m ✓
+[0mk=225  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6743)  ‖r‖=1.29e-03  ‖s‖=1.20e-10
+[36;1m  🔵 Iteration 226: Primal updates[0m[32;1m ✓
+[0mk=226  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6803)  ‖r‖=1.29e-03  ‖s‖=1.19e-10
+[36;1m  🔵 Iteration 227: Primal updates[0m[32;1m ✓
+[0mk=227  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6863)  ‖r‖=1.29e-03  ‖s‖=1.17e-10
+[36;1m  🔵 Iteration 228: Primal updates[0m[32;1m ✓
+[0mk=228  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6923)  ‖r‖=1.29e-03  ‖s‖=1.14e-10
+[36;1m  🔵 Iteration 229: Primal updates[0m[32;1m ✓
+[0mk=229  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.6984)  ‖r‖=1.29e-03  ‖s‖=1.13e-10
+[36;1m  🔵 Iteration 230: Primal updates[0m[32;1m ✓
+[0mk=230  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7045)  ‖r‖=1.29e-03  ‖s‖=1.12e-10
+[36;1m  🔵 Iteration 231: Primal updates[0m[32;1m ✓
+[0mk=231  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7106)  ‖r‖=1.29e-03  ‖s‖=1.11e-10
+[36;1m  🔵 Iteration 232: Primal updates[0m[32;1m ✓
+[0mk=232  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7168)  ‖r‖=1.29e-03  ‖s‖=1.11e-10
+[36;1m  🔵 Iteration 233: Primal updates[0m[32;1m ✓
+[0mk=233  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7229)  ‖r‖=1.29e-03  ‖s‖=1.11e-10
+[36;1m  🔵 Iteration 234: Primal updates[0m[32;1m ✓
+[0mk=234  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7291)  ‖r‖=1.29e-03  ‖s‖=1.10e-10
+[36;1m  🔵 Iteration 235: Primal updates[0m[32;1m ✓
+[0mk=235  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7353)  ‖r‖=1.29e-03  ‖s‖=1.10e-10
+[36;1m  🔵 Iteration 236: Primal updates[0m[32;1m ✓
+[0mk=236  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7416)  ‖r‖=1.29e-03  ‖s‖=1.10e-10
+[36;1m  🔵 Iteration 237: Primal updates[0m[32;1m ✓
+[0mk=237  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7479)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 238: Primal updates[0m[32;1m ✓
+[0mk=238  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7542)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 239: Primal updates[0m[32;1m ✓
+[0mk=239  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7605)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 240: Primal updates[0m[32;1m ✓
+[0mk=240  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7669)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 241: Primal updates[0m[32;1m ✓
+[0mk=241  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7732)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 242: Primal updates[0m[32;1m ✓
+[0mk=242  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7797)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 243: Primal updates[0m[32;1m ✓
+[0mk=243  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7861)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 244: Primal updates[0m[32;1m ✓
+[0mk=244  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7925)  ‖r‖=1.29e-03  ‖s‖=1.08e-10
+[36;1m  🔵 Iteration 245: Primal updates[0m[32;1m ✓
+[0mk=245  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.7990)  ‖r‖=1.29e-03  ‖s‖=1.07e-10
+[36;1m  🔵 Iteration 246: Primal updates[0m[32;1m ✓
+[0mk=246  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8056)  ‖r‖=1.29e-03  ‖s‖=1.07e-10
+[36;1m  🔵 Iteration 247: Primal updates[0m[32;1m ✓
+[0mk=247  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8121)  ‖r‖=1.29e-03  ‖s‖=1.06e-10
+[36;1m  🔵 Iteration 248: Primal updates[0m[32;1m ✓
+[0mk=248  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8187)  ‖r‖=1.29e-03  ‖s‖=1.06e-10
+[36;1m  🔵 Iteration 249: Primal updates[0m[32;1m ✓
+[0mk=249  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8253)  ‖r‖=1.29e-03  ‖s‖=1.05e-10
+[36;1m  🔵 Iteration 250: Primal updates[0m[32;1m ✓
+[0mk=250  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8319)  ‖r‖=1.29e-03  ‖s‖=1.05e-10
+[36;1m  🔵 Iteration 251: Primal updates[0m[32;1m ✓
+[0mk=251  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8385)  ‖r‖=1.29e-03  ‖s‖=1.05e-10
+[36;1m  🔵 Iteration 252: Primal updates[0m[32;1m ✓
+[0mk=252  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8452)  ‖r‖=1.29e-03  ‖s‖=1.04e-10
+[36;1m  🔵 Iteration 253: Primal updates[0m[32;1m ✓
+[0mk=253  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8519)  ‖r‖=1.29e-03  ‖s‖=1.04e-10
+[36;1m  🔵 Iteration 254: Primal updates[0m[32;1m ✓
+[0mk=254  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8586)  ‖r‖=1.29e-03  ‖s‖=1.04e-10
+[36;1m  🔵 Iteration 255: Primal updates[0m[32;1m ✓
+[0mk=255  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8654)  ‖r‖=1.29e-03  ‖s‖=1.04e-10
+[36;1m  🔵 Iteration 256: Primal updates[0m[32;1m ✓
+[0mk=256  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8721)  ‖r‖=1.29e-03  ‖s‖=1.03e-10
+[36;1m  🔵 Iteration 257: Primal updates[0m[32;1m ✓
+[0mk=257  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8790)  ‖r‖=1.29e-03  ‖s‖=1.03e-10
+[36;1m  🔵 Iteration 258: Primal updates[0m[32;1m ✓
+[0mk=258  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8858)  ‖r‖=1.29e-03  ‖s‖=1.03e-10
+[36;1m  🔵 Iteration 259: Primal updates[0m[32;1m ✓
+[0mk=259  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8926)  ‖r‖=1.29e-03  ‖s‖=1.03e-10
+[36;1m  🔵 Iteration 260: Primal updates[0m[32;1m ✓
+[0mk=260  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.8995)  ‖r‖=1.29e-03  ‖s‖=1.02e-10
+[36;1m  🔵 Iteration 261: Primal updates[0m[32;1m ✓
+[0mk=261  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9064)  ‖r‖=1.29e-03  ‖s‖=1.02e-10
+[36;1m  🔵 Iteration 262: Primal updates[0m[32;1m ✓
+[0mk=262  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9134)  ‖r‖=1.29e-03  ‖s‖=1.02e-10
+[36;1m  🔵 Iteration 263: Primal updates[0m[32;1m ✓
+[0mk=263  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9203)  ‖r‖=1.29e-03  ‖s‖=1.01e-10
+[36;1m  🔵 Iteration 264: Primal updates[0m[32;1m ✓
+[0mk=264  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9273)  ‖r‖=1.29e-03  ‖s‖=1.01e-10
+[36;1m  🔵 Iteration 265: Primal updates[0m[32;1m ✓
+[0mk=265  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9343)  ‖r‖=1.29e-03  ‖s‖=1.01e-10
+[36;1m  🔵 Iteration 266: Primal updates[0m[32;1m ✓
+[0mk=266  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9414)  ‖r‖=1.29e-03  ‖s‖=1.00e-10
+[36;1m  🔵 Iteration 267: Primal updates[0m[32;1m ✓
+[0mk=267  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9485)  ‖r‖=1.29e-03  ‖s‖=1.00e-10
+[36;1m  🔵 Iteration 268: Primal updates[0m[32;1m ✓
+[0mk=268  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9556)  ‖r‖=1.29e-03  ‖s‖=9.97e-11
+[36;1m  🔵 Iteration 269: Primal updates[0m[32;1m ✓
+[0mk=269  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9627)  ‖r‖=1.29e-03  ‖s‖=9.94e-11
+[36;1m  🔵 Iteration 270: Primal updates[0m[32;1m ✓
+[0mk=270  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9698)  ‖r‖=1.29e-03  ‖s‖=9.91e-11
+[36;1m  🔵 Iteration 271: Primal updates[0m[32;1m ✓
+[0mk=271  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9770)  ‖r‖=1.29e-03  ‖s‖=9.89e-11
+[36;1m  🔵 Iteration 272: Primal updates[0m[32;1m ✓
+[0mk=272  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9842)  ‖r‖=1.29e-03  ‖s‖=9.86e-11
+[36;1m  🔵 Iteration 273: Primal updates[0m[32;1m ✓
+[0mk=273  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9914)  ‖r‖=1.29e-03  ‖s‖=9.84e-11
+[36;1m  🔵 Iteration 274: Primal updates[0m[32;1m ✓
+[0mk=274  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$0.9987)  ‖r‖=1.29e-03  ‖s‖=9.81e-11
+[36;1m  🔵 Iteration 275: Primal updates[0m[32;1m ✓
+[0mk=275  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0060)  ‖r‖=1.29e-03  ‖s‖=9.79e-11
+[36;1m  🔵 Iteration 276: Primal updates[0m[32;1m ✓
+[0mk=276  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0133)  ‖r‖=1.29e-03  ‖s‖=9.76e-11
+[36;1m  🔵 Iteration 277: Primal updates[0m[32;1m ✓
+[0mk=277  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0206)  ‖r‖=1.29e-03  ‖s‖=9.73e-11
+[36;1m  🔵 Iteration 278: Primal updates[0m[32;1m ✓
+[0mk=278  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0280)  ‖r‖=1.29e-03  ‖s‖=9.71e-11
+[36;1m  🔵 Iteration 279: Primal updates[0m[32;1m ✓
+[0mk=279  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0354)  ‖r‖=1.29e-03  ‖s‖=9.68e-11
+[36;1m  🔵 Iteration 280: Primal updates[0m[32;1m ✓
+[0mk=280  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0428)  ‖r‖=1.29e-03  ‖s‖=9.65e-11
+[36;1m  🔵 Iteration 281: Primal updates[0m[32;1m ✓
+[0mk=281  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0502)  ‖r‖=1.29e-03  ‖s‖=9.62e-11
+[36;1m  🔵 Iteration 282: Primal updates[0m[32;1m ✓
+[0mk=282  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0577)  ‖r‖=1.29e-03  ‖s‖=9.59e-11
+[36;1m  🔵 Iteration 283: Primal updates[0m[32;1m ✓
+[0mk=283  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0652)  ‖r‖=1.29e-03  ‖s‖=9.56e-11
+[36;1m  🔵 Iteration 284: Primal updates[0m[32;1m ✓
+[0mk=284  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0727)  ‖r‖=1.29e-03  ‖s‖=9.54e-11
+[36;1m  🔵 Iteration 285: Primal updates[0m[32;1m ✓
+[0mk=285  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0802)  ‖r‖=1.29e-03  ‖s‖=9.51e-11
+[36;1m  🔵 Iteration 286: Primal updates[0m[32;1m ✓
+[0mk=286  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0878)  ‖r‖=1.29e-03  ‖s‖=9.49e-11
+[36;1m  🔵 Iteration 287: Primal updates[0m[32;1m ✓
+[0mk=287  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.0954)  ‖r‖=1.29e-03  ‖s‖=9.46e-11
+[36;1m  🔵 Iteration 288: Primal updates[0m[32;1m ✓
+[0mk=288  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1030)  ‖r‖=1.29e-03  ‖s‖=9.44e-11
+[36;1m  🔵 Iteration 289: Primal updates[0m[32;1m ✓
+[0mk=289  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1107)  ‖r‖=1.29e-03  ‖s‖=9.41e-11
+[36;1m  🔵 Iteration 290: Primal updates[0m[32;1m ✓
+[0mk=290  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1184)  ‖r‖=1.29e-03  ‖s‖=9.39e-11
+[36;1m  🔵 Iteration 291: Primal updates[0m[32;1m ✓
+[0mk=291  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1261)  ‖r‖=1.29e-03  ‖s‖=9.87e-11
+[36;1m  🔵 Iteration 292: Primal updates[0m[32;1m ✓
+[0mk=292  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1338)  ‖r‖=1.29e-03  ‖s‖=1.12e-10
+[36;1m  🔵 Iteration 293: Primal updates[0m[32;1m ✓
+[0mk=293  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1416)  ‖r‖=1.29e-03  ‖s‖=1.14e-10
+[36;1m  🔵 Iteration 294: Primal updates[0m[32;1m ✓
+[0mk=294  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1493)  ‖r‖=1.29e-03  ‖s‖=1.11e-10
+[36;1m  🔵 Iteration 295: Primal updates[0m[32;1m ✓
+[0mk=295  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1571)  ‖r‖=1.29e-03  ‖s‖=1.07e-10
+[36;1m  🔵 Iteration 296: Primal updates[0m[32;1m ✓
+[0mk=296  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1650)  ‖r‖=1.29e-03  ‖s‖=1.03e-10
+[36;1m  🔵 Iteration 297: Primal updates[0m[32;1m ✓
+[0mk=297  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1728)  ‖r‖=1.29e-03  ‖s‖=9.76e-11
+[36;1m  🔵 Iteration 298: Primal updates[0m[32;1m ✓
+[0mk=298  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1807)  ‖r‖=1.29e-03  ‖s‖=9.31e-11
+[36;1m  🔵 Iteration 299: Primal updates[0m[32;1m ✓
+[0mk=299  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1887)  ‖r‖=1.29e-03  ‖s‖=9.16e-11
+[36;1m  🔵 Iteration 300: Primal updates[0m[32;1m ✓
+[0mk=300  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.1966)  ‖r‖=1.29e-03  ‖s‖=9.33e-11
+[36;1m  🔵 Iteration 301: Primal updates[0m[32;1m ✓
+[0mk=301  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2046)  ‖r‖=1.29e-03  ‖s‖=9.63e-11
+[36;1m  🔵 Iteration 302: Primal updates[0m[32;1m ✓
+[0mk=302  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2126)  ‖r‖=1.29e-03  ‖s‖=9.87e-11
+[36;1m  🔵 Iteration 303: Primal updates[0m[32;1m ✓
+[0mk=303  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2206)  ‖r‖=1.29e-03  ‖s‖=9.92e-11
+[36;1m  🔵 Iteration 304: Primal updates[0m[32;1m ✓
+[0mk=304  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2286)  ‖r‖=1.29e-03  ‖s‖=9.80e-11
+[36;1m  🔵 Iteration 305: Primal updates[0m[32;1m ✓
+[0mk=305  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2367)  ‖r‖=1.29e-03  ‖s‖=9.55e-11
+[36;1m  🔵 Iteration 306: Primal updates[0m[32;1m ✓
+[0mk=306  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2448)  ‖r‖=1.29e-03  ‖s‖=9.28e-11
+[36;1m  🔵 Iteration 307: Primal updates[0m[32;1m ✓
+[0mk=307  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2529)  ‖r‖=1.29e-03  ‖s‖=9.06e-11
+[36;1m  🔵 Iteration 308: Primal updates[0m[32;1m ✓
+[0mk=308  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2611)  ‖r‖=1.29e-03  ‖s‖=8.94e-11
+[36;1m  🔵 Iteration 309: Primal updates[0m[32;1m ✓
+[0mk=309  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2693)  ‖r‖=1.29e-03  ‖s‖=8.91e-11
+[36;1m  🔵 Iteration 310: Primal updates[0m[32;1m ✓
+[0mk=310  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2775)  ‖r‖=1.29e-03  ‖s‖=8.93e-11
+[36;1m  🔵 Iteration 311: Primal updates[0m[32;1m ✓
+[0mk=311  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2857)  ‖r‖=1.29e-03  ‖s‖=8.94e-11
+[36;1m  🔵 Iteration 312: Primal updates[0m[32;1m ✓
+[0mk=312  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.2940)  ‖r‖=1.29e-03  ‖s‖=8.93e-11
+[36;1m  🔵 Iteration 313: Primal updates[0m[32;1m ✓
+[0mk=313  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3023)  ‖r‖=1.29e-03  ‖s‖=8.88e-11
+[36;1m  🔵 Iteration 314: Primal updates[0m[32;1m ✓
+[0mk=314  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3106)  ‖r‖=1.29e-03  ‖s‖=8.82e-11
+[36;1m  🔵 Iteration 315: Primal updates[0m[32;1m ✓
+[0mk=315  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3189)  ‖r‖=1.29e-03  ‖s‖=8.78e-11
+[36;1m  🔵 Iteration 316: Primal updates[0m[32;1m ✓
+[0mk=316  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3273)  ‖r‖=1.29e-03  ‖s‖=8.76e-11
+[36;1m  🔵 Iteration 317: Primal updates[0m[32;1m ✓
+[0mk=317  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3357)  ‖r‖=1.29e-03  ‖s‖=8.77e-11
+[36;1m  🔵 Iteration 318: Primal updates[0m[32;1m ✓
+[0mk=318  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3441)  ‖r‖=1.29e-03  ‖s‖=8.79e-11
+[36;1m  🔵 Iteration 319: Primal updates[0m[32;1m ✓
+[0mk=319  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3525)  ‖r‖=1.29e-03  ‖s‖=8.81e-11
+[36;1m  🔵 Iteration 320: Primal updates[0m[32;1m ✓
+[0mk=320  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3610)  ‖r‖=1.29e-03  ‖s‖=8.81e-11
+[36;1m  🔵 Iteration 321: Primal updates[0m[32;1m ✓
+[0mk=321  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3695)  ‖r‖=1.29e-03  ‖s‖=8.79e-11
+[36;1m  🔵 Iteration 322: Primal updates[0m[32;1m ✓
+[0mk=322  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3780)  ‖r‖=1.29e-03  ‖s‖=8.74e-11
+[36;1m  🔵 Iteration 323: Primal updates[0m[32;1m ✓
+[0mk=323  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3866)  ‖r‖=1.29e-03  ‖s‖=8.69e-11
+[36;1m  🔵 Iteration 324: Primal updates[0m[32;1m ✓
+[0mk=324  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.3951)  ‖r‖=1.29e-03  ‖s‖=8.63e-11
+[36;1m  🔵 Iteration 325: Primal updates[0m[32;1m ✓
+[0mk=325  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4037)  ‖r‖=1.29e-03  ‖s‖=8.59e-11
+[36;1m  🔵 Iteration 326: Primal updates[0m[32;1m ✓
+[0mk=326  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4124)  ‖r‖=1.29e-03  ‖s‖=8.55e-11
+[36;1m  🔵 Iteration 327: Primal updates[0m[32;1m ✓
+[0mk=327  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4210)  ‖r‖=1.29e-03  ‖s‖=8.52e-11
+[36;1m  🔵 Iteration 328: Primal updates[0m[32;1m ✓
+[0mk=328  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4297)  ‖r‖=1.29e-03  ‖s‖=8.50e-11
+[36;1m  🔵 Iteration 329: Primal updates[0m[32;1m ✓
+[0mk=329  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4384)  ‖r‖=1.29e-03  ‖s‖=8.48e-11
+[36;1m  🔵 Iteration 330: Primal updates[0m[32;1m ✓
+[0mk=330  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4472)  ‖r‖=1.29e-03  ‖s‖=8.46e-11
+[36;1m  🔵 Iteration 331: Primal updates[0m[32;1m ✓
+[0mk=331  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4559)  ‖r‖=1.29e-03  ‖s‖=8.44e-11
+[36;1m  🔵 Iteration 332: Primal updates[0m[32;1m ✓
+[0mk=332  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4647)  ‖r‖=1.29e-03  ‖s‖=8.42e-11
+[36;1m  🔵 Iteration 333: Primal updates[0m[32;1m ✓
+[0mk=333  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4735)  ‖r‖=1.29e-03  ‖s‖=8.41e-11
+[36;1m  🔵 Iteration 334: Primal updates[0m[32;1m ✓
+[0mk=334  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4824)  ‖r‖=1.29e-03  ‖s‖=8.40e-11
+[36;1m  🔵 Iteration 335: Primal updates[0m[32;1m ✓
+[0mk=335  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.4912)  ‖r‖=1.29e-03  ‖s‖=8.39e-11
+[36;1m  🔵 Iteration 336: Primal updates[0m[32;1m ✓
+[0mk=336  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5001)  ‖r‖=1.29e-03  ‖s‖=8.38e-11
+[36;1m  🔵 Iteration 337: Primal updates[0m[32;1m ✓
+[0mk=337  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5091)  ‖r‖=1.29e-03  ‖s‖=8.37e-11
+[36;1m  🔵 Iteration 338: Primal updates[0m[32;1m ✓
+[0mk=338  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5180)  ‖r‖=1.29e-03  ‖s‖=8.35e-11
+[36;1m  🔵 Iteration 339: Primal updates[0m[32;1m ✓
+[0mk=339  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5270)  ‖r‖=1.29e-03  ‖s‖=8.33e-11
+[36;1m  🔵 Iteration 340: Primal updates[0m[32;1m ✓
+[0mk=340  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5360)  ‖r‖=1.29e-03  ‖s‖=8.30e-11
+[36;1m  🔵 Iteration 341: Primal updates[0m[32;1m ✓
+[0mk=341  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5450)  ‖r‖=1.29e-03  ‖s‖=8.28e-11
+[36;1m  🔵 Iteration 342: Primal updates[0m[32;1m ✓
+[0mk=342  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5541)  ‖r‖=1.29e-03  ‖s‖=8.25e-11
+[36;1m  🔵 Iteration 343: Primal updates[0m[32;1m ✓
+[0mk=343  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5631)  ‖r‖=1.29e-03  ‖s‖=8.23e-11
+[36;1m  🔵 Iteration 344: Primal updates[0m[32;1m ✓
+[0mk=344  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5722)  ‖r‖=1.29e-03  ‖s‖=8.20e-11
+[36;1m  🔵 Iteration 345: Primal updates[0m[32;1m ✓
+[0mk=345  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5814)  ‖r‖=1.29e-03  ‖s‖=8.18e-11
+[36;1m  🔵 Iteration 346: Primal updates[0m[32;1m ✓
+[0mk=346  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5905)  ‖r‖=1.29e-03  ‖s‖=8.16e-11
+[36;1m  🔵 Iteration 347: Primal updates[0m[32;1m ✓
+[0mk=347  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.5997)  ‖r‖=1.29e-03  ‖s‖=8.14e-11
+[36;1m  🔵 Iteration 348: Primal updates[0m[32;1m ✓
+[0mk=348  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6089)  ‖r‖=1.29e-03  ‖s‖=8.13e-11
+[36;1m  🔵 Iteration 349: Primal updates[0m[32;1m ✓
+[0mk=349  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6182)  ‖r‖=1.29e-03  ‖s‖=8.11e-11
+[36;1m  🔵 Iteration 350: Primal updates[0m[32;1m ✓
+[0mk=350  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6274)  ‖r‖=1.29e-03  ‖s‖=8.09e-11
+[36;1m  🔵 Iteration 351: Primal updates[0m[32;1m ✓
+[0mk=351  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6367)  ‖r‖=1.29e-03  ‖s‖=8.08e-11
+[36;1m  🔵 Iteration 352: Primal updates[0m[32;1m ✓
+[0mk=352  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6460)  ‖r‖=1.29e-03  ‖s‖=8.06e-11
+[36;1m  🔵 Iteration 353: Primal updates[0m[32;1m ✓
+[0mk=353  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6554)  ‖r‖=1.29e-03  ‖s‖=8.05e-11
+[36;1m  🔵 Iteration 354: Primal updates[0m[32;1m ✓
+[0mk=354  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6648)  ‖r‖=1.29e-03  ‖s‖=8.03e-11
+[36;1m  🔵 Iteration 355: Primal updates[0m[32;1m ✓
+[0mk=355  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6742)  ‖r‖=1.29e-03  ‖s‖=8.02e-11
+[36;1m  🔵 Iteration 356: Primal updates[0m[32;1m ✓
+[0mk=356  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6836)  ‖r‖=1.29e-03  ‖s‖=8.00e-11
+[36;1m  🔵 Iteration 357: Primal updates[0m[32;1m ✓
+[0mk=357  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.6930)  ‖r‖=1.29e-03  ‖s‖=7.98e-11
+[36;1m  🔵 Iteration 358: Primal updates[0m[32;1m ✓
+[0mk=358  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7025)  ‖r‖=1.29e-03  ‖s‖=7.96e-11
+[36;1m  🔵 Iteration 359: Primal updates[0m[32;1m ✓
+[0mk=359  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7120)  ‖r‖=1.29e-03  ‖s‖=7.94e-11
+[36;1m  🔵 Iteration 360: Primal updates[0m[32;1m ✓
+[0mk=360  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7215)  ‖r‖=1.29e-03  ‖s‖=7.92e-11
+[36;1m  🔵 Iteration 361: Primal updates[0m[32;1m ✓
+[0mk=361  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7311)  ‖r‖=1.29e-03  ‖s‖=7.90e-11
+[36;1m  🔵 Iteration 362: Primal updates[0m[32;1m ✓
+[0mk=362  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7407)  ‖r‖=1.29e-03  ‖s‖=7.89e-11
+[36;1m  🔵 Iteration 363: Primal updates[0m[32;1m ✓
+[0mk=363  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7503)  ‖r‖=1.29e-03  ‖s‖=7.87e-11
+[36;1m  🔵 Iteration 364: Primal updates[0m[32;1m ✓
+[0mk=364  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7599)  ‖r‖=1.29e-03  ‖s‖=7.85e-11
+[36;1m  🔵 Iteration 365: Primal updates[0m[32;1m ✓
+[0mk=365  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7696)  ‖r‖=1.29e-03  ‖s‖=7.83e-11
+[36;1m  🔵 Iteration 366: Primal updates[0m[32;1m ✓
+[0mk=366  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7793)  ‖r‖=1.29e-03  ‖s‖=7.82e-11
+[36;1m  🔵 Iteration 367: Primal updates[0m[32;1m ✓
+[0mk=367  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7890)  ‖r‖=1.29e-03  ‖s‖=7.80e-11
+[36;1m  🔵 Iteration 368: Primal updates[0m[32;1m ✓
+[0mk=368  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.7987)  ‖r‖=1.29e-03  ‖s‖=7.79e-11
+[36;1m  🔵 Iteration 369: Primal updates[0m[32;1m ✓
+[0mk=369  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8085)  ‖r‖=1.29e-03  ‖s‖=7.77e-11
+[36;1m  🔵 Iteration 370: Primal updates[0m[32;1m ✓
+[0mk=370  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8183)  ‖r‖=1.29e-03  ‖s‖=7.75e-11
+[36;1m  🔵 Iteration 371: Primal updates[0m[32;1m ✓
+[0mk=371  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8281)  ‖r‖=1.29e-03  ‖s‖=7.74e-11
+[36;1m  🔵 Iteration 372: Primal updates[0m[32;1m ✓
+[0mk=372  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8379)  ‖r‖=1.29e-03  ‖s‖=7.72e-11
+[36;1m  🔵 Iteration 373: Primal updates[0m[32;1m ✓
+[0mk=373  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8478)  ‖r‖=1.29e-03  ‖s‖=7.71e-11
+[36;1m  🔵 Iteration 374: Primal updates[0m[32;1m ✓
+[0mk=374  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8577)  ‖r‖=1.29e-03  ‖s‖=7.69e-11
+[36;1m  🔵 Iteration 375: Primal updates[0m[32;1m ✓
+[0mk=375  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8676)  ‖r‖=1.29e-03  ‖s‖=7.67e-11
+[36;1m  🔵 Iteration 376: Primal updates[0m[32;1m ✓
+[0mk=376  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8776)  ‖r‖=1.29e-03  ‖s‖=7.66e-11
+[36;1m  🔵 Iteration 377: Primal updates[0m[32;1m ✓
+[0mk=377  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8876)  ‖r‖=1.29e-03  ‖s‖=7.64e-11
+[36;1m  🔵 Iteration 378: Primal updates[0m[32;1m ✓
+[0mk=378  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.8976)  ‖r‖=1.29e-03  ‖s‖=7.63e-11
+[36;1m  🔵 Iteration 379: Primal updates[0m[32;1m ✓
+[0mk=379  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9076)  ‖r‖=1.29e-03  ‖s‖=7.61e-11
+[36;1m  🔵 Iteration 380: Primal updates[0m[32;1m ✓
+[0mk=380  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9177)  ‖r‖=1.29e-03  ‖s‖=7.59e-11
+[36;1m  🔵 Iteration 381: Primal updates[0m[32;1m ✓
+[0mk=381  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9278)  ‖r‖=1.29e-03  ‖s‖=7.58e-11
+[36;1m  🔵 Iteration 382: Primal updates[0m[32;1m ✓
+[0mk=382  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9379)  ‖r‖=1.29e-03  ‖s‖=7.56e-11
+[36;1m  🔵 Iteration 383: Primal updates[0m[32;1m ✓
+[0mk=383  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9480)  ‖r‖=1.29e-03  ‖s‖=7.55e-11
+[36;1m  🔵 Iteration 384: Primal updates[0m[32;1m ✓
+[0mk=384  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9582)  ‖r‖=1.29e-03  ‖s‖=7.53e-11
+[36;1m  🔵 Iteration 385: Primal updates[0m[32;1m ✓
+[0mk=385  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9684)  ‖r‖=1.29e-03  ‖s‖=7.52e-11
+[36;1m  🔵 Iteration 386: Primal updates[0m[32;1m ✓
+[0mk=386  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9786)  ‖r‖=1.29e-03  ‖s‖=7.50e-11
+[36;1m  🔵 Iteration 387: Primal updates[0m[32;1m ✓
+[0mk=387  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9888)  ‖r‖=1.29e-03  ‖s‖=7.49e-11
+[36;1m  🔵 Iteration 388: Primal updates[0m[32;1m ✓
+[0mk=388  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$1.9991)  ‖r‖=1.29e-03  ‖s‖=7.47e-11
+[36;1m  🔵 Iteration 389: Primal updates[0m[32;1m ✓
+[0mk=389  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0094)  ‖r‖=1.29e-03  ‖s‖=7.46e-11
+[36;1m  🔵 Iteration 390: Primal updates[0m[32;1m ✓
+[0mk=390  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0197)  ‖r‖=1.29e-03  ‖s‖=7.44e-11
+[36;1m  🔵 Iteration 391: Primal updates[0m[32;1m ✓
+[0mk=391  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0301)  ‖r‖=1.29e-03  ‖s‖=7.43e-11
+[36;1m  🔵 Iteration 392: Primal updates[0m[32;1m ✓
+[0mk=392  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0404)  ‖r‖=1.29e-03  ‖s‖=7.41e-11
+[36;1m  🔵 Iteration 393: Primal updates[0m[32;1m ✓
+[0mk=393  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0508)  ‖r‖=1.29e-03  ‖s‖=7.40e-11
+[36;1m  🔵 Iteration 394: Primal updates[0m[32;1m ✓
+[0mk=394  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0613)  ‖r‖=1.29e-03  ‖s‖=7.38e-11
+[36;1m  🔵 Iteration 395: Primal updates[0m[32;1m ✓
+[0mk=395  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0717)  ‖r‖=1.29e-03  ‖s‖=7.37e-11
+[36;1m  🔵 Iteration 396: Primal updates[0m[32;1m ✓
+[0mk=396  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0822)  ‖r‖=1.29e-03  ‖s‖=7.35e-11
+[36;1m  🔵 Iteration 397: Primal updates[0m[32;1m ✓
+[0mk=397  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.0927)  ‖r‖=1.29e-03  ‖s‖=7.34e-11
+[36;1m  🔵 Iteration 398: Primal updates[0m[32;1m ✓
+[0mk=398  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1032)  ‖r‖=1.29e-03  ‖s‖=7.32e-11
+[36;1m  🔵 Iteration 399: Primal updates[0m[32;1m ✓
+[0mk=399  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1138)  ‖r‖=1.29e-03  ‖s‖=7.31e-11
+[36;1m  🔵 Iteration 400: Primal updates[0m[32;1m ✓
+[0mk=400  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1244)  ‖r‖=1.29e-03  ‖s‖=7.30e-11
+[36;1m  🔵 Iteration 401: Primal updates[0m[32;1m ✓
+[0mk=401  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1350)  ‖r‖=1.29e-03  ‖s‖=7.28e-11
+[36;1m  🔵 Iteration 402: Primal updates[0m[32;1m ✓
+[0mk=402  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1456)  ‖r‖=1.29e-03  ‖s‖=7.27e-11
+[36;1m  🔵 Iteration 403: Primal updates[0m[32;1m ✓
+[0mk=403  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1563)  ‖r‖=1.29e-03  ‖s‖=7.25e-11
+[36;1m  🔵 Iteration 404: Primal updates[0m[32;1m ✓
+[0mk=404  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1670)  ‖r‖=1.29e-03  ‖s‖=7.24e-11
+[36;1m  🔵 Iteration 405: Primal updates[0m[32;1m ✓
+[0mk=405  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1777)  ‖r‖=1.29e-03  ‖s‖=7.23e-11
+[36;1m  🔵 Iteration 406: Primal updates[0m[32;1m ✓
+[0mk=406  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1885)  ‖r‖=1.29e-03  ‖s‖=7.21e-11
+[36;1m  🔵 Iteration 407: Primal updates[0m[32;1m ✓
+[0mk=407  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.1992)  ‖r‖=1.29e-03  ‖s‖=7.20e-11
+[36;1m  🔵 Iteration 408: Primal updates[0m[32;1m ✓
+[0mk=408  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2100)  ‖r‖=1.29e-03  ‖s‖=7.18e-11
+[36;1m  🔵 Iteration 409: Primal updates[0m[32;1m ✓
+[0mk=409  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2209)  ‖r‖=1.29e-03  ‖s‖=7.17e-11
+[36;1m  🔵 Iteration 410: Primal updates[0m[32;1m ✓
+[0mk=410  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2317)  ‖r‖=1.29e-03  ‖s‖=7.16e-11
+[36;1m  🔵 Iteration 411: Primal updates[0m[32;1m ✓
+[0mk=411  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2426)  ‖r‖=1.29e-03  ‖s‖=7.14e-11
+[36;1m  🔵 Iteration 412: Primal updates[0m[32;1m ✓
+[0mk=412  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2535)  ‖r‖=1.29e-03  ‖s‖=7.13e-11
+[36;1m  🔵 Iteration 413: Primal updates[0m[32;1m ✓
+[0mk=413  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2644)  ‖r‖=1.29e-03  ‖s‖=7.12e-11
+[36;1m  🔵 Iteration 414: Primal updates[0m[32;1m ✓
+[0mk=414  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2754)  ‖r‖=1.29e-03  ‖s‖=7.10e-11
+[36;1m  🔵 Iteration 415: Primal updates[0m[32;1m ✓
+[0mk=415  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2864)  ‖r‖=1.29e-03  ‖s‖=7.09e-11
+[36;1m  🔵 Iteration 416: Primal updates[0m[32;1m ✓
+[0mk=416  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.2974)  ‖r‖=1.29e-03  ‖s‖=7.08e-11
+[36;1m  🔵 Iteration 417: Primal updates[0m[32;1m ✓
+[0mk=417  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3084)  ‖r‖=1.29e-03  ‖s‖=7.06e-11
+[36;1m  🔵 Iteration 418: Primal updates[0m[32;1m ✓
+[0mk=418  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3195)  ‖r‖=1.29e-03  ‖s‖=7.05e-11
+[36;1m  🔵 Iteration 419: Primal updates[0m[32;1m ✓
+[0mk=419  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3306)  ‖r‖=1.29e-03  ‖s‖=7.04e-11
+[36;1m  🔵 Iteration 420: Primal updates[0m[32;1m ✓
+[0mk=420  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3417)  ‖r‖=1.29e-03  ‖s‖=7.02e-11
+[36;1m  🔵 Iteration 421: Primal updates[0m[32;1m ✓
+[0mk=421  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3528)  ‖r‖=1.29e-03  ‖s‖=7.01e-11
+[36;1m  🔵 Iteration 422: Primal updates[0m[32;1m ✓
+[0mk=422  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3640)  ‖r‖=1.29e-03  ‖s‖=7.00e-11
+[36;1m  🔵 Iteration 423: Primal updates[0m[32;1m ✓
+[0mk=423  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3752)  ‖r‖=1.29e-03  ‖s‖=6.98e-11
+[36;1m  🔵 Iteration 424: Primal updates[0m[32;1m ✓
+[0mk=424  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3864)  ‖r‖=1.29e-03  ‖s‖=6.97e-11
+[36;1m  🔵 Iteration 425: Primal updates[0m[32;1m ✓
+[0mk=425  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.3977)  ‖r‖=1.29e-03  ‖s‖=6.96e-11
+[36;1m  🔵 Iteration 426: Primal updates[0m[32;1m ✓
+[0mk=426  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4089)  ‖r‖=1.29e-03  ‖s‖=7.20e-11
+[36;1m  🔵 Iteration 427: Primal updates[0m[32;1m ✓
+[0mk=427  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4202)  ‖r‖=1.29e-03  ‖s‖=7.94e-11
+[36;1m  🔵 Iteration 428: Primal updates[0m[32;1m ✓
+[0mk=428  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4316)  ‖r‖=1.29e-03  ‖s‖=8.13e-11
+[36;1m  🔵 Iteration 429: Primal updates[0m[32;1m ✓
+[0mk=429  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4429)  ‖r‖=1.29e-03  ‖s‖=7.99e-11
+[36;1m  🔵 Iteration 430: Primal updates[0m[32;1m ✓
+[0mk=430  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4543)  ‖r‖=1.29e-03  ‖s‖=7.80e-11
+[36;1m  🔵 Iteration 431: Primal updates[0m[32;1m ✓
+[0mk=431  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4657)  ‖r‖=1.29e-03  ‖s‖=7.55e-11
+[36;1m  🔵 Iteration 432: Primal updates[0m[32;1m ✓
+[0mk=432  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4771)  ‖r‖=1.29e-03  ‖s‖=7.22e-11
+[36;1m  🔵 Iteration 433: Primal updates[0m[32;1m ✓
+[0mk=433  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.4886)  ‖r‖=1.29e-03  ‖s‖=6.94e-11
+[36;1m  🔵 Iteration 434: Primal updates[0m[32;1m ✓
+[0mk=434  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5001)  ‖r‖=1.29e-03  ‖s‖=6.84e-11
+[36;1m  🔵 Iteration 435: Primal updates[0m[32;1m ✓
+[0mk=435  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5116)  ‖r‖=1.29e-03  ‖s‖=6.93e-11
+[36;1m  🔵 Iteration 436: Primal updates[0m[32;1m ✓
+[0mk=436  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5231)  ‖r‖=1.29e-03  ‖s‖=7.10e-11
+[36;1m  🔵 Iteration 437: Primal updates[0m[32;1m ✓
+[0mk=437  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5347)  ‖r‖=1.29e-03  ‖s‖=7.24e-11
+[36;1m  🔵 Iteration 438: Primal updates[0m[32;1m ✓
+[0mk=438  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5463)  ‖r‖=1.29e-03  ‖s‖=7.28e-11
+[36;1m  🔵 Iteration 439: Primal updates[0m[32;1m ✓
+[0mk=439  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5579)  ‖r‖=1.29e-03  ‖s‖=7.21e-11
+[36;1m  🔵 Iteration 440: Primal updates[0m[32;1m ✓
+[0mk=440  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5696)  ‖r‖=1.29e-03  ‖s‖=7.07e-11
+[36;1m  🔵 Iteration 441: Primal updates[0m[32;1m ✓
+[0mk=441  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5812)  ‖r‖=1.29e-03  ‖s‖=6.91e-11
+[36;1m  🔵 Iteration 442: Primal updates[0m[32;1m ✓
+[0mk=442  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.5929)  ‖r‖=1.29e-03  ‖s‖=6.79e-11
+[36;1m  🔵 Iteration 443: Primal updates[0m[32;1m ✓
+[0mk=443  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6047)  ‖r‖=1.29e-03  ‖s‖=6.73e-11
+[36;1m  🔵 Iteration 444: Primal updates[0m[32;1m ✓
+[0mk=444  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6164)  ‖r‖=1.29e-03  ‖s‖=6.71e-11
+[36;1m  🔵 Iteration 445: Primal updates[0m[32;1m ✓
+[0mk=445  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6282)  ‖r‖=1.29e-03  ‖s‖=6.73e-11
+[36;1m  🔵 Iteration 446: Primal updates[0m[32;1m ✓
+[0mk=446  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6400)  ‖r‖=1.29e-03  ‖s‖=6.74e-11
+[36;1m  🔵 Iteration 447: Primal updates[0m[32;1m ✓
+[0mk=447  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6518)  ‖r‖=1.29e-03  ‖s‖=6.73e-11
+[36;1m  🔵 Iteration 448: Primal updates[0m[32;1m ✓
+[0mk=448  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6637)  ‖r‖=1.29e-03  ‖s‖=6.70e-11
+[36;1m  🔵 Iteration 449: Primal updates[0m[32;1m ✓
+[0mk=449  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6756)  ‖r‖=1.29e-03  ‖s‖=6.67e-11
+[36;1m  🔵 Iteration 450: Primal updates[0m[32;1m ✓
+[0mk=450  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6875)  ‖r‖=1.29e-03  ‖s‖=6.64e-11
+[36;1m  🔵 Iteration 451: Primal updates[0m[32;1m ✓
+[0mk=451  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.6994)  ‖r‖=1.29e-03  ‖s‖=6.63e-11
+[36;1m  🔵 Iteration 452: Primal updates[0m[32;1m ✓
+[0mk=452  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7114)  ‖r‖=1.29e-03  ‖s‖=6.63e-11
+[36;1m  🔵 Iteration 453: Primal updates[0m[32;1m ✓
+[0mk=453  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7234)  ‖r‖=1.29e-03  ‖s‖=6.65e-11
+[36;1m  🔵 Iteration 454: Primal updates[0m[32;1m ✓
+[0mk=454  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7354)  ‖r‖=1.29e-03  ‖s‖=6.66e-11
+[36;1m  🔵 Iteration 455: Primal updates[0m[32;1m ✓
+[0mk=455  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7474)  ‖r‖=1.29e-03  ‖s‖=6.66e-11
+[36;1m  🔵 Iteration 456: Primal updates[0m[32;1m ✓
+[0mk=456  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7595)  ‖r‖=1.29e-03  ‖s‖=6.65e-11
+[36;1m  🔵 Iteration 457: Primal updates[0m[32;1m ✓
+[0mk=457  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7716)  ‖r‖=1.29e-03  ‖s‖=6.62e-11
+[36;1m  🔵 Iteration 458: Primal updates[0m[32;1m ✓
+[0mk=458  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7837)  ‖r‖=1.29e-03  ‖s‖=6.59e-11
+[36;1m  🔵 Iteration 459: Primal updates[0m[32;1m ✓
+[0mk=459  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.7958)  ‖r‖=1.29e-03  ‖s‖=6.56e-11
+[36;1m  🔵 Iteration 460: Primal updates[0m[32;1m ✓
+[0mk=460  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8080)  ‖r‖=1.29e-03  ‖s‖=6.54e-11
+[36;1m  🔵 Iteration 461: Primal updates[0m[32;1m ✓
+[0mk=461  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8202)  ‖r‖=1.29e-03  ‖s‖=6.52e-11
+[36;1m  🔵 Iteration 462: Primal updates[0m[32;1m ✓
+[0mk=462  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8324)  ‖r‖=1.29e-03  ‖s‖=6.50e-11
+[36;1m  🔵 Iteration 463: Primal updates[0m[32;1m ✓
+[0mk=463  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8447)  ‖r‖=1.29e-03  ‖s‖=6.49e-11
+[36;1m  🔵 Iteration 464: Primal updates[0m[32;1m ✓
+[0mk=464  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8570)  ‖r‖=1.29e-03  ‖s‖=6.48e-11
+[36;1m  🔵 Iteration 465: Primal updates[0m[32;1m ✓
+[0mk=465  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8693)  ‖r‖=1.29e-03  ‖s‖=6.47e-11
+[36;1m  🔵 Iteration 466: Primal updates[0m[32;1m ✓
+[0mk=466  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8816)  ‖r‖=1.29e-03  ‖s‖=6.46e-11
+[36;1m  🔵 Iteration 467: Primal updates[0m[32;1m ✓
+[0mk=467  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.8940)  ‖r‖=1.29e-03  ‖s‖=6.45e-11
+[36;1m  🔵 Iteration 468: Primal updates[0m[32;1m ✓
+[0mk=468  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9064)  ‖r‖=1.29e-03  ‖s‖=6.44e-11
+[36;1m  🔵 Iteration 469: Primal updates[0m[32;1m ✓
+[0mk=469  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9188)  ‖r‖=1.29e-03  ‖s‖=6.44e-11
+[36;1m  🔵 Iteration 470: Primal updates[0m[32;1m ✓
+[0mk=470  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9312)  ‖r‖=1.29e-03  ‖s‖=6.43e-11
+[36;1m  🔵 Iteration 471: Primal updates[0m[32;1m ✓
+[0mk=471  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9437)  ‖r‖=1.29e-03  ‖s‖=6.42e-11
+[36;1m  🔵 Iteration 472: Primal updates[0m[32;1m ✓
+[0mk=472  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9562)  ‖r‖=1.29e-03  ‖s‖=6.42e-11
+[36;1m  🔵 Iteration 473: Primal updates[0m[32;1m ✓
+[0mk=473  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9687)  ‖r‖=1.29e-03  ‖s‖=6.41e-11
+[36;1m  🔵 Iteration 474: Primal updates[0m[32;1m ✓
+[0mk=474  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9812)  ‖r‖=1.29e-03  ‖s‖=6.40e-11
+[36;1m  🔵 Iteration 475: Primal updates[0m[32;1m ✓
+[0mk=475  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$2.9938)  ‖r‖=1.29e-03  ‖s‖=6.38e-11
+[36;1m  🔵 Iteration 476: Primal updates[0m[32;1m ✓
+[0mk=476  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0064)  ‖r‖=1.29e-03  ‖s‖=6.37e-11
+[36;1m  🔵 Iteration 477: Primal updates[0m[32;1m ✓
+[0mk=477  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0190)  ‖r‖=1.29e-03  ‖s‖=6.35e-11
+[36;1m  🔵 Iteration 478: Primal updates[0m[32;1m ✓
+[0mk=478  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0317)  ‖r‖=1.29e-03  ‖s‖=6.34e-11
+[36;1m  🔵 Iteration 479: Primal updates[0m[32;1m ✓
+[0mk=479  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0443)  ‖r‖=1.29e-03  ‖s‖=6.33e-11
+[36;1m  🔵 Iteration 480: Primal updates[0m[32;1m ✓
+[0mk=480  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0570)  ‖r‖=1.29e-03  ‖s‖=6.32e-11
+[36;1m  🔵 Iteration 481: Primal updates[0m[32;1m ✓
+[0mk=481  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0698)  ‖r‖=1.29e-03  ‖s‖=6.30e-11
+[36;1m  🔵 Iteration 482: Primal updates[0m[32;1m ✓
+[0mk=482  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0825)  ‖r‖=1.29e-03  ‖s‖=6.29e-11
+[36;1m  🔵 Iteration 483: Primal updates[0m[32;1m ✓
+[0mk=483  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.0953)  ‖r‖=1.29e-03  ‖s‖=6.28e-11
+[36;1m  🔵 Iteration 484: Primal updates[0m[32;1m ✓
+[0mk=484  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1081)  ‖r‖=1.29e-03  ‖s‖=6.28e-11
+[36;1m  🔵 Iteration 485: Primal updates[0m[32;1m ✓
+[0mk=485  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1210)  ‖r‖=1.29e-03  ‖s‖=6.27e-11
+[36;1m  🔵 Iteration 486: Primal updates[0m[32;1m ✓
+[0mk=486  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1338)  ‖r‖=1.29e-03  ‖s‖=6.26e-11
+[36;1m  🔵 Iteration 487: Primal updates[0m[32;1m ✓
+[0mk=487  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1467)  ‖r‖=1.29e-03  ‖s‖=6.25e-11
+[36;1m  🔵 Iteration 488: Primal updates[0m[32;1m ✓
+[0mk=488  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1596)  ‖r‖=1.29e-03  ‖s‖=6.24e-11
+[36;1m  🔵 Iteration 489: Primal updates[0m[32;1m ✓
+[0mk=489  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1726)  ‖r‖=1.29e-03  ‖s‖=6.23e-11
+[36;1m  🔵 Iteration 490: Primal updates[0m[32;1m ✓
+[0mk=490  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1855)  ‖r‖=1.29e-03  ‖s‖=6.22e-11
+[36;1m  🔵 Iteration 491: Primal updates[0m[32;1m ✓
+[0mk=491  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.1985)  ‖r‖=1.29e-03  ‖s‖=6.21e-11
+[36;1m  🔵 Iteration 492: Primal updates[0m[32;1m ✓
+[0mk=492  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2115)  ‖r‖=1.29e-03  ‖s‖=6.20e-11
+[36;1m  🔵 Iteration 493: Primal updates[0m[32;1m ✓
+[0mk=493  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2246)  ‖r‖=1.29e-03  ‖s‖=6.19e-11
+[36;1m  🔵 Iteration 494: Primal updates[0m[32;1m ✓
+[0mk=494  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2377)  ‖r‖=1.29e-03  ‖s‖=6.18e-11
+[36;1m  🔵 Iteration 495: Primal updates[0m[32;1m ✓
+[0mk=495  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2508)  ‖r‖=1.29e-03  ‖s‖=6.17e-11
+[36;1m  🔵 Iteration 496: Primal updates[0m[32;1m ✓
+[0mk=496  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2639)  ‖r‖=1.29e-03  ‖s‖=6.16e-11
+[36;1m  🔵 Iteration 497: Primal updates[0m[32;1m ✓
+[0mk=497  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2770)  ‖r‖=1.29e-03  ‖s‖=6.15e-11
+[36;1m  🔵 Iteration 498: Primal updates[0m[32;1m ✓
+[0mk=498  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.2902)  ‖r‖=1.29e-03  ‖s‖=6.14e-11
+[36;1m  🔵 Iteration 499: Primal updates[0m[32;1m ✓
+[0mk=499  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3034)  ‖r‖=1.29e-03  ‖s‖=6.13e-11
+[36;1m  🔵 Iteration 500: Primal updates[0m[32;1m ✓
+[0mk=500  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3167)  ‖r‖=1.29e-03  ‖s‖=6.12e-11
+[36;1m  🔵 Iteration 501: Primal updates[0m[32;1m ✓
+[0mk=501  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3299)  ‖r‖=1.29e-03  ‖s‖=6.11e-11
+[36;1m  🔵 Iteration 502: Primal updates[0m[32;1m ✓
+[0mk=502  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3432)  ‖r‖=1.29e-03  ‖s‖=6.10e-11
+[36;1m  🔵 Iteration 503: Primal updates[0m[32;1m ✓
+[0mk=503  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3565)  ‖r‖=1.29e-03  ‖s‖=6.09e-11
+[36;1m  🔵 Iteration 504: Primal updates[0m[32;1m ✓
+[0mk=504  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3698)  ‖r‖=1.29e-03  ‖s‖=6.08e-11
+[36;1m  🔵 Iteration 505: Primal updates[0m[32;1m ✓
+[0mk=505  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3832)  ‖r‖=1.29e-03  ‖s‖=6.07e-11
+[36;1m  🔵 Iteration 506: Primal updates[0m[32;1m ✓
+[0mk=506  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.3966)  ‖r‖=1.29e-03  ‖s‖=6.07e-11
+[36;1m  🔵 Iteration 507: Primal updates[0m[32;1m ✓
+[0mk=507  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4100)  ‖r‖=1.29e-03  ‖s‖=6.06e-11
+[36;1m  🔵 Iteration 508: Primal updates[0m[32;1m ✓
+[0mk=508  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4235)  ‖r‖=1.29e-03  ‖s‖=6.05e-11
+[36;1m  🔵 Iteration 509: Primal updates[0m[32;1m ✓
+[0mk=509  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4369)  ‖r‖=1.29e-03  ‖s‖=6.04e-11
+[36;1m  🔵 Iteration 510: Primal updates[0m[32;1m ✓
+[0mk=510  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4504)  ‖r‖=1.29e-03  ‖s‖=6.03e-11
+[36;1m  🔵 Iteration 511: Primal updates[0m[32;1m ✓
+[0mk=511  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4639)  ‖r‖=1.29e-03  ‖s‖=6.02e-11
+[36;1m  🔵 Iteration 512: Primal updates[0m[32;1m ✓
+[0mk=512  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4775)  ‖r‖=1.29e-03  ‖s‖=6.01e-11
+[36;1m  🔵 Iteration 513: Primal updates[0m[32;1m ✓
+[0mk=513  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.4911)  ‖r‖=1.29e-03  ‖s‖=6.00e-11
+[36;1m  🔵 Iteration 514: Primal updates[0m[32;1m ✓
+[0mk=514  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5047)  ‖r‖=1.29e-03  ‖s‖=5.99e-11
+[36;1m  🔵 Iteration 515: Primal updates[0m[32;1m ✓
+[0mk=515  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5183)  ‖r‖=1.29e-03  ‖s‖=5.98e-11
+[36;1m  🔵 Iteration 516: Primal updates[0m[32;1m ✓
+[0mk=516  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5320)  ‖r‖=1.29e-03  ‖s‖=5.97e-11
+[36;1m  🔵 Iteration 517: Primal updates[0m[32;1m ✓
+[0mk=517  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5456)  ‖r‖=1.29e-03  ‖s‖=5.96e-11
+[36;1m  🔵 Iteration 518: Primal updates[0m[32;1m ✓
+[0mk=518  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5593)  ‖r‖=1.29e-03  ‖s‖=5.95e-11
+[36;1m  🔵 Iteration 519: Primal updates[0m[32;1m ✓
+[0mk=519  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5731)  ‖r‖=1.29e-03  ‖s‖=5.94e-11
+[36;1m  🔵 Iteration 520: Primal updates[0m[32;1m ✓
+[0mk=520  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.5868)  ‖r‖=1.29e-03  ‖s‖=5.94e-11
+[36;1m  🔵 Iteration 521: Primal updates[0m[32;1m ✓
+[0mk=521  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6006)  ‖r‖=1.29e-03  ‖s‖=5.93e-11
+[36;1m  🔵 Iteration 522: Primal updates[0m[32;1m ✓
+[0mk=522  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6144)  ‖r‖=1.29e-03  ‖s‖=5.92e-11
+[36;1m  🔵 Iteration 523: Primal updates[0m[32;1m ✓
+[0mk=523  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6283)  ‖r‖=1.29e-03  ‖s‖=5.91e-11
+[36;1m  🔵 Iteration 524: Primal updates[0m[32;1m ✓
+[0mk=524  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6422)  ‖r‖=1.29e-03  ‖s‖=5.90e-11
+[36;1m  🔵 Iteration 525: Primal updates[0m[32;1m ✓
+[0mk=525  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6560)  ‖r‖=1.29e-03  ‖s‖=5.89e-11
+[36;1m  🔵 Iteration 526: Primal updates[0m[32;1m ✓
+[0mk=526  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6700)  ‖r‖=1.29e-03  ‖s‖=5.88e-11
+[36;1m  🔵 Iteration 527: Primal updates[0m[32;1m ✓
+[0mk=527  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6839)  ‖r‖=1.29e-03  ‖s‖=5.87e-11
+[36;1m  🔵 Iteration 528: Primal updates[0m[32;1m ✓
+[0mk=528  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.6979)  ‖r‖=1.29e-03  ‖s‖=5.87e-11
+[36;1m  🔵 Iteration 529: Primal updates[0m[32;1m ✓
+[0mk=529  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7119)  ‖r‖=1.29e-03  ‖s‖=5.86e-11
+[36;1m  🔵 Iteration 530: Primal updates[0m[32;1m ✓
+[0mk=530  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7259)  ‖r‖=1.29e-03  ‖s‖=5.85e-11
+[36;1m  🔵 Iteration 531: Primal updates[0m[32;1m ✓
+[0mk=531  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7400)  ‖r‖=1.29e-03  ‖s‖=5.84e-11
+[36;1m  🔵 Iteration 532: Primal updates[0m[32;1m ✓
+[0mk=532  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7540)  ‖r‖=1.29e-03  ‖s‖=5.83e-11
+[36;1m  🔵 Iteration 533: Primal updates[0m[32;1m ✓
+[0mk=533  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7681)  ‖r‖=1.29e-03  ‖s‖=5.82e-11
+[36;1m  🔵 Iteration 534: Primal updates[0m[32;1m ✓
+[0mk=534  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7823)  ‖r‖=1.29e-03  ‖s‖=5.81e-11
+[36;1m  🔵 Iteration 535: Primal updates[0m[32;1m ✓
+[0mk=535  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.7964)  ‖r‖=1.29e-03  ‖s‖=5.81e-11
+[36;1m  🔵 Iteration 536: Primal updates[0m[32;1m ✓
+[0mk=536  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8106)  ‖r‖=1.29e-03  ‖s‖=5.80e-11
+[36;1m  🔵 Iteration 537: Primal updates[0m[32;1m ✓
+[0mk=537  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8248)  ‖r‖=1.29e-03  ‖s‖=5.79e-11
+[36;1m  🔵 Iteration 538: Primal updates[0m[32;1m ✓
+[0mk=538  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8391)  ‖r‖=1.29e-03  ‖s‖=5.78e-11
+[36;1m  🔵 Iteration 539: Primal updates[0m[32;1m ✓
+[0mk=539  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8533)  ‖r‖=1.29e-03  ‖s‖=5.77e-11
+[36;1m  🔵 Iteration 540: Primal updates[0m[32;1m ✓
+[0mk=540  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8676)  ‖r‖=1.29e-03  ‖s‖=5.76e-11
+[36;1m  🔵 Iteration 541: Primal updates[0m[32;1m ✓
+[0mk=541  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8819)  ‖r‖=1.29e-03  ‖s‖=5.76e-11
+[36;1m  🔵 Iteration 542: Primal updates[0m[32;1m ✓
+[0mk=542  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.8963)  ‖r‖=1.29e-03  ‖s‖=5.75e-11
+[36;1m  🔵 Iteration 543: Primal updates[0m[32;1m ✓
+[0mk=543  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9106)  ‖r‖=1.29e-03  ‖s‖=5.74e-11
+[36;1m  🔵 Iteration 544: Primal updates[0m[32;1m ✓
+[0mk=544  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9250)  ‖r‖=1.29e-03  ‖s‖=5.73e-11
+[36;1m  🔵 Iteration 545: Primal updates[0m[32;1m ✓
+[0mk=545  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9395)  ‖r‖=1.29e-03  ‖s‖=5.72e-11
+[36;1m  🔵 Iteration 546: Primal updates[0m[32;1m ✓
+[0mk=546  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9539)  ‖r‖=1.29e-03  ‖s‖=5.71e-11
+[36;1m  🔵 Iteration 547: Primal updates[0m[32;1m ✓
+[0mk=547  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9684)  ‖r‖=1.29e-03  ‖s‖=5.71e-11
+[36;1m  🔵 Iteration 548: Primal updates[0m[32;1m ✓
+[0mk=548  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9829)  ‖r‖=1.29e-03  ‖s‖=5.70e-11
+[36;1m  🔵 Iteration 549: Primal updates[0m[32;1m ✓
+[0mk=549  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$3.9974)  ‖r‖=1.29e-03  ‖s‖=5.69e-11
+[36;1m  🔵 Iteration 550: Primal updates[0m[32;1m ✓
+[0mk=550  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0120)  ‖r‖=1.29e-03  ‖s‖=5.68e-11
+[36;1m  🔵 Iteration 551: Primal updates[0m[32;1m ✓
+[0mk=551  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0265)  ‖r‖=1.29e-03  ‖s‖=5.67e-11
+[36;1m  🔵 Iteration 552: Primal updates[0m[32;1m ✓
+[0mk=552  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0412)  ‖r‖=1.29e-03  ‖s‖=5.67e-11
+[36;1m  🔵 Iteration 553: Primal updates[0m[32;1m ✓
+[0mk=553  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0558)  ‖r‖=1.29e-03  ‖s‖=5.66e-11
+[36;1m  🔵 Iteration 554: Primal updates[0m[32;1m ✓
+[0mk=554  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0704)  ‖r‖=1.29e-03  ‖s‖=5.65e-11
+[36;1m  🔵 Iteration 555: Primal updates[0m[32;1m ✓
+[0mk=555  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0851)  ‖r‖=1.29e-03  ‖s‖=5.69e-11
+[36;1m  🔵 Iteration 556: Primal updates[0m[32;1m ✓
+[0mk=556  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.0998)  ‖r‖=1.29e-03  ‖s‖=5.72e-11
+[36;1m  🔵 Iteration 557: Primal updates[0m[32;1m ✓
+[0mk=557  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1146)  ‖r‖=1.29e-03  ‖s‖=5.73e-11
+[36;1m  🔵 Iteration 558: Primal updates[0m[32;1m ✓
+[0mk=558  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1293)  ‖r‖=1.29e-03  ‖s‖=5.70e-11
+[36;1m  🔵 Iteration 559: Primal updates[0m[32;1m ✓
+[0mk=559  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1441)  ‖r‖=1.29e-03  ‖s‖=5.66e-11
+[36;1m  🔵 Iteration 560: Primal updates[0m[32;1m ✓
+[0mk=560  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1590)  ‖r‖=1.29e-03  ‖s‖=5.62e-11
+[36;1m  🔵 Iteration 561: Primal updates[0m[32;1m ✓
+[0mk=561  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1738)  ‖r‖=1.29e-03  ‖s‖=5.59e-11
+[36;1m  🔵 Iteration 562: Primal updates[0m[32;1m ✓
+[0mk=562  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.1887)  ‖r‖=1.29e-03  ‖s‖=5.59e-11
+[36;1m  🔵 Iteration 563: Primal updates[0m[32;1m ✓
+[0mk=563  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2036)  ‖r‖=1.29e-03  ‖s‖=5.61e-11
+[36;1m  🔵 Iteration 564: Primal updates[0m[32;1m ✓
+[0mk=564  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2185)  ‖r‖=1.29e-03  ‖s‖=5.64e-11
+[36;1m  🔵 Iteration 565: Primal updates[0m[32;1m ✓
+[0mk=565  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2334)  ‖r‖=1.29e-03  ‖s‖=5.66e-11
+[36;1m  🔵 Iteration 566: Primal updates[0m[32;1m ✓
+[0mk=566  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2484)  ‖r‖=1.29e-03  ‖s‖=5.66e-11
+[36;1m  🔵 Iteration 567: Primal updates[0m[32;1m ✓
+[0mk=567  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2634)  ‖r‖=1.29e-03  ‖s‖=5.64e-11
+[36;1m  🔵 Iteration 568: Primal updates[0m[32;1m ✓
+[0mk=568  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2785)  ‖r‖=1.29e-03  ‖s‖=5.61e-11
+[36;1m  🔵 Iteration 569: Primal updates[0m[32;1m ✓
+[0mk=569  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.2935)  ‖r‖=1.29e-03  ‖s‖=5.57e-11
+[36;1m  🔵 Iteration 570: Primal updates[0m[32;1m ✓
+[0mk=570  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3086)  ‖r‖=1.29e-03  ‖s‖=5.54e-11
+[36;1m  🔵 Iteration 571: Primal updates[0m[32;1m ✓
+[0mk=571  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3237)  ‖r‖=1.29e-03  ‖s‖=5.52e-11
+[36;1m  🔵 Iteration 572: Primal updates[0m[32;1m ✓
+[0mk=572  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3388)  ‖r‖=1.29e-03  ‖s‖=5.51e-11
+[36;1m  🔵 Iteration 573: Primal updates[0m[32;1m ✓
+[0mk=573  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3540)  ‖r‖=1.29e-03  ‖s‖=5.50e-11
+[36;1m  🔵 Iteration 574: Primal updates[0m[32;1m ✓
+[0mk=574  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3692)  ‖r‖=1.29e-03  ‖s‖=5.49e-11
+[36;1m  🔵 Iteration 575: Primal updates[0m[32;1m ✓
+[0mk=575  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3844)  ‖r‖=1.29e-03  ‖s‖=5.48e-11
+[36;1m  🔵 Iteration 576: Primal updates[0m[32;1m ✓
+[0mk=576  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.3997)  ‖r‖=1.29e-03  ‖s‖=5.48e-11
+[36;1m  🔵 Iteration 577: Primal updates[0m[32;1m ✓
+[0mk=577  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4149)  ‖r‖=1.29e-03  ‖s‖=5.47e-11
+[36;1m  🔵 Iteration 578: Primal updates[0m[32;1m ✓
+[0mk=578  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4302)  ‖r‖=1.29e-03  ‖s‖=5.46e-11
+[36;1m  🔵 Iteration 579: Primal updates[0m[32;1m ✓
+[0mk=579  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4455)  ‖r‖=1.29e-03  ‖s‖=5.46e-11
+[36;1m  🔵 Iteration 580: Primal updates[0m[32;1m ✓
+[0mk=580  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4609)  ‖r‖=1.29e-03  ‖s‖=5.46e-11
+[36;1m  🔵 Iteration 581: Primal updates[0m[32;1m ✓
+[0mk=581  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4763)  ‖r‖=1.29e-03  ‖s‖=5.46e-11
+[36;1m  🔵 Iteration 582: Primal updates[0m[32;1m ✓
+[0mk=582  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.4917)  ‖r‖=1.29e-03  ‖s‖=5.46e-11
+[36;1m  🔵 Iteration 583: Primal updates[0m[32;1m ✓
+[0mk=583  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5071)  ‖r‖=1.29e-03  ‖s‖=5.45e-11
+[36;1m  🔵 Iteration 584: Primal updates[0m[32;1m ✓
+[0mk=584  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5225)  ‖r‖=1.29e-03  ‖s‖=5.44e-11
+[36;1m  🔵 Iteration 585: Primal updates[0m[32;1m ✓
+[0mk=585  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5380)  ‖r‖=1.29e-03  ‖s‖=5.43e-11
+[36;1m  🔵 Iteration 586: Primal updates[0m[32;1m ✓
+[0mk=586  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5535)  ‖r‖=1.29e-03  ‖s‖=5.42e-11
+[36;1m  🔵 Iteration 587: Primal updates[0m[32;1m ✓
+[0mk=587  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5691)  ‖r‖=1.29e-03  ‖s‖=5.41e-11
+[36;1m  🔵 Iteration 588: Primal updates[0m[32;1m ✓
+[0mk=588  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.5846)  ‖r‖=1.29e-03  ‖s‖=5.40e-11
+[36;1m  🔵 Iteration 589: Primal updates[0m[32;1m ✓
+[0mk=589  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6002)  ‖r‖=1.29e-03  ‖s‖=5.39e-11
+[36;1m  🔵 Iteration 590: Primal updates[0m[32;1m ✓
+[0mk=590  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6158)  ‖r‖=1.29e-03  ‖s‖=5.38e-11
+[36;1m  🔵 Iteration 591: Primal updates[0m[32;1m ✓
+[0mk=591  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6315)  ‖r‖=1.29e-03  ‖s‖=5.37e-11
+[36;1m  🔵 Iteration 592: Primal updates[0m[32;1m ✓
+[0mk=592  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6471)  ‖r‖=1.29e-03  ‖s‖=5.36e-11
+[36;1m  🔵 Iteration 593: Primal updates[0m[32;1m ✓
+[0mk=593  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6628)  ‖r‖=1.29e-03  ‖s‖=5.35e-11
+[36;1m  🔵 Iteration 594: Primal updates[0m[32;1m ✓
+[0mk=594  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6785)  ‖r‖=1.29e-03  ‖s‖=5.35e-11
+[36;1m  🔵 Iteration 595: Primal updates[0m[32;1m ✓
+[0mk=595  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.6943)  ‖r‖=1.29e-03  ‖s‖=5.34e-11
+[36;1m  🔵 Iteration 596: Primal updates[0m[32;1m ✓
+[0mk=596  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7100)  ‖r‖=1.29e-03  ‖s‖=5.34e-11
+[36;1m  🔵 Iteration 597: Primal updates[0m[32;1m ✓
+[0mk=597  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7258)  ‖r‖=1.29e-03  ‖s‖=5.33e-11
+[36;1m  🔵 Iteration 598: Primal updates[0m[32;1m ✓
+[0mk=598  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7417)  ‖r‖=1.29e-03  ‖s‖=5.33e-11
+[36;1m  🔵 Iteration 599: Primal updates[0m[32;1m ✓
+[0mk=599  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7575)  ‖r‖=1.29e-03  ‖s‖=5.32e-11
+[36;1m  🔵 Iteration 600: Primal updates[0m[32;1m ✓
+[0mk=600  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7734)  ‖r‖=1.29e-03  ‖s‖=5.31e-11
+[36;1m  🔵 Iteration 601: Primal updates[0m[32;1m ✓
+[0mk=601  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.7893)  ‖r‖=1.29e-03  ‖s‖=5.31e-11
+[36;1m  🔵 Iteration 602: Primal updates[0m[32;1m ✓
+[0mk=602  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8052)  ‖r‖=1.29e-03  ‖s‖=5.30e-11
+[36;1m  🔵 Iteration 603: Primal updates[0m[32;1m ✓
+[0mk=603  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8212)  ‖r‖=1.29e-03  ‖s‖=5.29e-11
+[36;1m  🔵 Iteration 604: Primal updates[0m[32;1m ✓
+[0mk=604  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8372)  ‖r‖=1.29e-03  ‖s‖=5.28e-11
+[36;1m  🔵 Iteration 605: Primal updates[0m[32;1m ✓
+[0mk=605  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8532)  ‖r‖=1.29e-03  ‖s‖=5.28e-11
+[36;1m  🔵 Iteration 606: Primal updates[0m[32;1m ✓
+[0mk=606  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8692)  ‖r‖=1.29e-03  ‖s‖=5.27e-11
+[36;1m  🔵 Iteration 607: Primal updates[0m[32;1m ✓
+[0mk=607  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.8853)  ‖r‖=1.29e-03  ‖s‖=5.26e-11
+[36;1m  🔵 Iteration 608: Primal updates[0m[32;1m ✓
+[0mk=608  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9014)  ‖r‖=1.29e-03  ‖s‖=5.25e-11
+[36;1m  🔵 Iteration 609: Primal updates[0m[32;1m ✓
+[0mk=609  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9175)  ‖r‖=1.29e-03  ‖s‖=5.24e-11
+[36;1m  🔵 Iteration 610: Primal updates[0m[32;1m ✓
+[0mk=610  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9336)  ‖r‖=1.29e-03  ‖s‖=5.24e-11
+[36;1m  🔵 Iteration 611: Primal updates[0m[32;1m ✓
+[0mk=611  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9498)  ‖r‖=1.29e-03  ‖s‖=5.23e-11
+[36;1m  🔵 Iteration 612: Primal updates[0m[32;1m ✓
+[0mk=612  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9660)  ‖r‖=1.29e-03  ‖s‖=5.22e-11
+[36;1m  🔵 Iteration 613: Primal updates[0m[32;1m ✓
+[0mk=613  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9822)  ‖r‖=1.29e-03  ‖s‖=5.22e-11
+[36;1m  🔵 Iteration 614: Primal updates[0m[32;1m ✓
+[0mk=614  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$4.9984)  ‖r‖=1.29e-03  ‖s‖=5.21e-11
+[36;1m  🔵 Iteration 615: Primal updates[0m[32;1m ✓
+[0mk=615  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0147)  ‖r‖=1.29e-03  ‖s‖=5.21e-11
+[36;1m  🔵 Iteration 616: Primal updates[0m[32;1m ✓
+[0mk=616  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0310)  ‖r‖=1.29e-03  ‖s‖=5.20e-11
+[36;1m  🔵 Iteration 617: Primal updates[0m[32;1m ✓
+[0mk=617  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0473)  ‖r‖=1.29e-03  ‖s‖=5.19e-11
+[36;1m  🔵 Iteration 618: Primal updates[0m[32;1m ✓
+[0mk=618  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0637)  ‖r‖=1.29e-03  ‖s‖=5.19e-11
+[36;1m  🔵 Iteration 619: Primal updates[0m[32;1m ✓
+[0mk=619  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0801)  ‖r‖=1.29e-03  ‖s‖=5.18e-11
+[36;1m  🔵 Iteration 620: Primal updates[0m[32;1m ✓
+[0mk=620  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.0965)  ‖r‖=1.29e-03  ‖s‖=5.17e-11
+[36;1m  🔵 Iteration 621: Primal updates[0m[32;1m ✓
+[0mk=621  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1129)  ‖r‖=1.29e-03  ‖s‖=5.17e-11
+[36;1m  🔵 Iteration 622: Primal updates[0m[32;1m ✓
+[0mk=622  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1294)  ‖r‖=1.29e-03  ‖s‖=5.16e-11
+[36;1m  🔵 Iteration 623: Primal updates[0m[32;1m ✓
+[0mk=623  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1458)  ‖r‖=1.29e-03  ‖s‖=5.15e-11
+[36;1m  🔵 Iteration 624: Primal updates[0m[32;1m ✓
+[0mk=624  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1624)  ‖r‖=1.29e-03  ‖s‖=5.14e-11
+[36;1m  🔵 Iteration 625: Primal updates[0m[32;1m ✓
+[0mk=625  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1789)  ‖r‖=1.29e-03  ‖s‖=5.14e-11
+[36;1m  🔵 Iteration 626: Primal updates[0m[32;1m ✓
+[0mk=626  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.1955)  ‖r‖=1.29e-03  ‖s‖=5.13e-11
+[36;1m  🔵 Iteration 627: Primal updates[0m[32;1m ✓
+[0mk=627  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2120)  ‖r‖=1.29e-03  ‖s‖=5.12e-11
+[36;1m  🔵 Iteration 628: Primal updates[0m[32;1m ✓
+[0mk=628  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2287)  ‖r‖=1.29e-03  ‖s‖=5.12e-11
+[36;1m  🔵 Iteration 629: Primal updates[0m[32;1m ✓
+[0mk=629  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2453)  ‖r‖=1.29e-03  ‖s‖=5.11e-11
+[36;1m  🔵 Iteration 630: Primal updates[0m[32;1m ✓
+[0mk=630  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2620)  ‖r‖=1.29e-03  ‖s‖=5.10e-11
+[36;1m  🔵 Iteration 631: Primal updates[0m[32;1m ✓
+[0mk=631  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2787)  ‖r‖=1.29e-03  ‖s‖=5.10e-11
+[36;1m  🔵 Iteration 632: Primal updates[0m[32;1m ✓
+[0mk=632  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.2954)  ‖r‖=1.29e-03  ‖s‖=5.18e-11
+[36;1m  🔵 Iteration 633: Primal updates[0m[32;1m ✓
+[0mk=633  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3121)  ‖r‖=1.29e-03  ‖s‖=6.21e-11
+[36;1m  🔵 Iteration 634: Primal updates[0m[32;1m ✓
+[0mk=634  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3289)  ‖r‖=1.29e-03  ‖s‖=6.61e-11
+[36;1m  🔵 Iteration 635: Primal updates[0m[32;1m ✓
+[0mk=635  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3457)  ‖r‖=1.29e-03  ‖s‖=6.44e-11
+[36;1m  🔵 Iteration 636: Primal updates[0m[32;1m ✓
+[0mk=636  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3626)  ‖r‖=1.29e-03  ‖s‖=6.18e-11
+[36;1m  🔵 Iteration 637: Primal updates[0m[32;1m ✓
+[0mk=637  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3794)  ‖r‖=1.29e-03  ‖s‖=5.93e-11
+[36;1m  🔵 Iteration 638: Primal updates[0m[32;1m ✓
+[0mk=638  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.3963)  ‖r‖=1.29e-03  ‖s‖=5.60e-11
+[36;1m  🔵 Iteration 639: Primal updates[0m[32;1m ✓
+[0mk=639  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4132)  ‖r‖=1.29e-03  ‖s‖=5.25e-11
+[36;1m  🔵 Iteration 640: Primal updates[0m[32;1m ✓
+[0mk=640  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4301)  ‖r‖=1.29e-03  ‖s‖=5.06e-11
+[36;1m  🔵 Iteration 641: Primal updates[0m[32;1m ✓
+[0mk=641  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4471)  ‖r‖=1.29e-03  ‖s‖=5.11e-11
+[36;1m  🔵 Iteration 642: Primal updates[0m[32;1m ✓
+[0mk=642  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4641)  ‖r‖=1.29e-03  ‖s‖=5.30e-11
+[36;1m  🔵 Iteration 643: Primal updates[0m[32;1m ✓
+[0mk=643  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4811)  ‖r‖=1.29e-03  ‖s‖=5.49e-11
+[36;1m  🔵 Iteration 644: Primal updates[0m[32;1m ✓
+[0mk=644  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.4981)  ‖r‖=1.29e-03  ‖s‖=5.57e-11
+[36;1m  🔵 Iteration 645: Primal updates[0m[32;1m ✓
+[0mk=645  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.5152)  ‖r‖=1.29e-03  ‖s‖=5.53e-11
+[36;1m  🔵 Iteration 646: Primal updates[0m[32;1m ✓
+[0mk=646  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.5323)  ‖r‖=1.29e-03  ‖s‖=5.40e-11
+[36;1m  🔵 Iteration 647: Primal updates[0m[32;1m ✓
+[0mk=647  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.5494)  ‖r‖=1.29e-03  ‖s‖=5.23e-11
+[36;1m  🔵 Iteration 648: Primal updates[0m[32;1m ✓
+[0mk=648  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.5666)  ‖r‖=1.29e-03  ‖s‖=5.09e-11
+[36;1m  🔵 Iteration 649: Primal updates[0m[32;1m ✓
+[0mk=649  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.5837)  ‖r‖=1.29e-03  ‖s‖=5.00e-11
+[36;1m  🔵 Iteration 650: Primal updates[0m[32;1m ✓
+[0mk=650  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6009)  ‖r‖=1.29e-03  ‖s‖=4.98e-11
+[36;1m  🔵 Iteration 651: Primal updates[0m[32;1m ✓
+[0mk=651  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6182)  ‖r‖=1.29e-03  ‖s‖=4.99e-11
+[36;1m  🔵 Iteration 652: Primal updates[0m[32;1m ✓
+[0mk=652  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6354)  ‖r‖=1.29e-03  ‖s‖=9.72e-08
+[36;1m  🔵 Iteration 653: Primal updates[0m[32;1m ✓
+[0mk=653  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6527)  ‖r‖=1.29e-03  ‖s‖=5.90e-08
+[36;1m  🔵 Iteration 654: Primal updates[0m[32;1m ✓
+[0mk=654  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6700)  ‖r‖=1.29e-03  ‖s‖=4.61e-08
+[36;1m  🔵 Iteration 655: Primal updates[0m[32;1m ✓
+[0mk=655  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.6873)  ‖r‖=1.29e-03  ‖s‖=4.09e-08
+[36;1m  🔵 Iteration 656: Primal updates[0m[32;1m ✓
+[0mk=656  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7047)  ‖r‖=1.29e-03  ‖s‖=3.68e-08
+[36;1m  🔵 Iteration 657: Primal updates[0m[32;1m ✓
+[0mk=657  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7221)  ‖r‖=1.29e-03  ‖s‖=3.53e-08
+[36;1m  🔵 Iteration 658: Primal updates[0m[32;1m ✓
+[0mk=658  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7395)  ‖r‖=1.29e-03  ‖s‖=4.19e-08
+[36;1m  🔵 Iteration 659: Primal updates[0m[32;1m ✓
+[0mk=659  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7569)  ‖r‖=1.29e-03  ‖s‖=5.04e-08
+[36;1m  🔵 Iteration 660: Primal updates[0m[32;1m ✓
+[0mk=660  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7744)  ‖r‖=1.29e-03  ‖s‖=5.40e-08
+[36;1m  🔵 Iteration 661: Primal updates[0m[32;1m ✓
+[0mk=661  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.7919)  ‖r‖=1.29e-03  ‖s‖=5.03e-08
+[36;1m  🔵 Iteration 662: Primal updates[0m[32;1m ✓
+[0mk=662  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8094)  ‖r‖=1.29e-03  ‖s‖=4.06e-08
+[36;1m  🔵 Iteration 663: Primal updates[0m[32;1m ✓
+[0mk=663  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8269)  ‖r‖=1.29e-03  ‖s‖=2.71e-08
+[36;1m  🔵 Iteration 664: Primal updates[0m[32;1m ✓
+[0mk=664  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8445)  ‖r‖=1.29e-03  ‖s‖=1.25e-08
+[36;1m  🔵 Iteration 665: Primal updates[0m[32;1m ✓
+[0mk=665  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8621)  ‖r‖=1.29e-03  ‖s‖=3.75e-09
+[36;1m  🔵 Iteration 666: Primal updates[0m[32;1m ✓
+[0mk=666  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8797)  ‖r‖=1.29e-03  ‖s‖=1.42e-08
+[36;1m  🔵 Iteration 667: Primal updates[0m[32;1m ✓
+[0mk=667  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.8974)  ‖r‖=1.29e-03  ‖s‖=2.27e-08
+[36;1m  🔵 Iteration 668: Primal updates[0m[32;1m ✓
+[0mk=668  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.9150)  ‖r‖=1.29e-03  ‖s‖=2.74e-08
+[36;1m  🔵 Iteration 669: Primal updates[0m[32;1m ✓
+[0mk=669  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.9327)  ‖r‖=1.29e-03  ‖s‖=2.81e-08
+[36;1m  🔵 Iteration 670: Primal updates[0m[32;1m ✓
+[0mk=670  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.9505)  ‖r‖=1.29e-03  ‖s‖=2.52e-08
+[36;1m  🔵 Iteration 671: Primal updates[0m[32;1m ✓
+[0mk=671  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.9682)  ‖r‖=1.29e-03  ‖s‖=1.95e-08
+[36;1m  🔵 Iteration 672: Primal updates[0m[32;1m ✓
+[0mk=672  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$5.9860)  ‖r‖=1.29e-03  ‖s‖=1.21e-08
+[36;1m  🔵 Iteration 673: Primal updates[0m[32;1m ✓
+[0mk=673  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0038)  ‖r‖=1.29e-03  ‖s‖=4.14e-09
+[36;1m  🔵 Iteration 674: Primal updates[0m[32;1m ✓
+[0mk=674  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0216)  ‖r‖=1.29e-03  ‖s‖=3.33e-09
+[36;1m  🔵 Iteration 675: Primal updates[0m[32;1m ✓
+[0mk=675  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0395)  ‖r‖=1.29e-03  ‖s‖=9.42e-09
+[36;1m  🔵 Iteration 676: Primal updates[0m[32;1m ✓
+[0mk=676  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0574)  ‖r‖=1.29e-03  ‖s‖=1.36e-08
+[36;1m  🔵 Iteration 677: Primal updates[0m[32;1m ✓
+[0mk=677  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0753)  ‖r‖=1.29e-03  ‖s‖=1.55e-08
+[36;1m  🔵 Iteration 678: Primal updates[0m[32;1m ✓
+[0mk=678  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.0932)  ‖r‖=1.29e-03  ‖s‖=1.53e-08
+[36;1m  🔵 Iteration 679: Primal updates[0m[32;1m ✓
+[0mk=679  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.1112)  ‖r‖=1.29e-03  ‖s‖=1.32e-08
+[36;1m  🔵 Iteration 680: Primal updates[0m[32;1m ✓
+[0mk=680  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.1292)  ‖r‖=1.29e-03  ‖s‖=9.75e-09
+[36;1m  🔵 Iteration 681: Primal updates[0m[32;1m ✓
+[0mk=681  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.1472)  ‖r‖=1.29e-03  ‖s‖=5.56e-09
+[36;1m  🔵 Iteration 682: Primal updates[0m[32;1m ✓
+[0mk=682  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.1653)  ‖r‖=1.29e-03  ‖s‖=1.23e-09
+[36;1m  🔵 Iteration 683: Primal updates[0m[32;1m ✓
+[0mk=683  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.1833)  ‖r‖=1.29e-03  ‖s‖=2.71e-09
+[36;1m  🔵 Iteration 684: Primal updates[0m[32;1m ✓
+[0mk=684  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2014)  ‖r‖=1.29e-03  ‖s‖=5.93e-09
+[36;1m  🔵 Iteration 685: Primal updates[0m[32;1m ✓
+[0mk=685  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2196)  ‖r‖=1.29e-03  ‖s‖=7.99e-09
+[36;1m  🔵 Iteration 686: Primal updates[0m[32;1m ✓
+[0mk=686  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2377)  ‖r‖=1.29e-03  ‖s‖=8.79e-09
+[36;1m  🔵 Iteration 687: Primal updates[0m[32;1m ✓
+[0mk=687  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2559)  ‖r‖=1.29e-03  ‖s‖=8.39e-09
+[36;1m  🔵 Iteration 688: Primal updates[0m[32;1m ✓
+[0mk=688  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2741)  ‖r‖=1.29e-03  ‖s‖=6.99e-09
+[36;1m  🔵 Iteration 689: Primal updates[0m[32;1m ✓
+[0mk=689  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.2923)  ‖r‖=1.29e-03  ‖s‖=4.91e-09
+[36;1m  🔵 Iteration 690: Primal updates[0m[32;1m ✓
+[0mk=690  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.3106)  ‖r‖=1.29e-03  ‖s‖=2.48e-09
+[36;1m  🔵 Iteration 691: Primal updates[0m[32;1m ✓
+[0mk=691  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.3289)  ‖r‖=1.29e-03  ‖s‖=7.87e-11
+[36;1m  🔵 Iteration 692: Primal updates[0m[32;1m ✓
+[0mk=692  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.3472)  ‖r‖=1.29e-03  ‖s‖=2.07e-09
+[36;1m  🔵 Iteration 693: Primal updates[0m[32;1m ✓
+[0mk=693  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.3655)  ‖r‖=1.29e-03  ‖s‖=3.66e-09
+[36;1m  🔵 Iteration 694: Primal updates[0m[32;1m ✓
+[0mk=694  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.3839)  ‖r‖=1.29e-03  ‖s‖=4.59e-09
+[36;1m  🔵 Iteration 695: Primal updates[0m[32;1m ✓
+[0mk=695  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4023)  ‖r‖=1.29e-03  ‖s‖=4.83e-09
+[36;1m  🔵 Iteration 696: Primal updates[0m[32;1m ✓
+[0mk=696  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4207)  ‖r‖=1.29e-03  ‖s‖=4.44e-09
+[36;1m  🔵 Iteration 697: Primal updates[0m[32;1m ✓
+[0mk=697  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4391)  ‖r‖=1.29e-03  ‖s‖=3.55e-09
+[36;1m  🔵 Iteration 698: Primal updates[0m[32;1m ✓
+[0mk=698  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4576)  ‖r‖=1.29e-03  ‖s‖=2.34e-09
+[36;1m  🔵 Iteration 699: Primal updates[0m[32;1m ✓
+[0mk=699  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4761)  ‖r‖=1.29e-03  ‖s‖=9.91e-10
+[36;1m  🔵 Iteration 700: Primal updates[0m[32;1m ✓
+[0mk=700  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.4946)  ‖r‖=1.29e-03  ‖s‖=3.09e-10
+[36;1m  🔵 Iteration 701: Primal updates[0m[32;1m ✓
+[0mk=701  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.5131)  ‖r‖=1.29e-03  ‖s‖=1.42e-09
+[36;1m  🔵 Iteration 702: Primal updates[0m[32;1m ✓
+[0mk=702  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.5317)  ‖r‖=1.29e-03  ‖s‖=2.71e-09
+[36;1m  🔵 Iteration 703: Primal updates[0m[32;1m ✓
+[0mk=703  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.5503)  ‖r‖=1.29e-03  ‖s‖=3.47e-09
+[36;1m  🔵 Iteration 704: Primal updates[0m[32;1m ✓
+[0mk=704  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.5689)  ‖r‖=1.29e-03  ‖s‖=3.67e-09
+[36;1m  🔵 Iteration 705: Primal updates[0m[32;1m ✓
+[0mk=705  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.5876)  ‖r‖=1.29e-03  ‖s‖=3.41e-09
+[36;1m  🔵 Iteration 706: Primal updates[0m[32;1m ✓
+[0mk=706  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.6063)  ‖r‖=1.29e-03  ‖s‖=2.79e-09
+[36;1m  🔵 Iteration 707: Primal updates[0m[32;1m ✓
+[0mk=707  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.6250)  ‖r‖=1.29e-03  ‖s‖=1.92e-09
+[36;1m  🔵 Iteration 708: Primal updates[0m[32;1m ✓
+[0mk=708  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.6437)  ‖r‖=1.29e-03  ‖s‖=9.49e-10
+[36;1m  🔵 Iteration 709: Primal updates[0m[32;1m ✓
+[0mk=709  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.6625)  ‖r‖=1.29e-03  ‖s‖=1.22e-10
+[36;1m  🔵 Iteration 710: Primal updates[0m[32;1m ✓
+[0mk=710  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.6813)  ‖r‖=1.29e-03  ‖s‖=8.47e-10
+[36;1m  🔵 Iteration 711: Primal updates[0m[32;1m ✓
+[0mk=711  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7001)  ‖r‖=1.29e-03  ‖s‖=2.25e-09
+[36;1m  🔵 Iteration 712: Primal updates[0m[32;1m ✓
+[0mk=712  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7189)  ‖r‖=1.29e-03  ‖s‖=3.44e-09
+[36;1m  🔵 Iteration 713: Primal updates[0m[32;1m ✓
+[0mk=713  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7378)  ‖r‖=1.29e-03  ‖s‖=3.46e-09
+[36;1m  🔵 Iteration 714: Primal updates[0m[32;1m ✓
+[0mk=714  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7567)  ‖r‖=1.29e-03  ‖s‖=3.21e-09
+[36;1m  🔵 Iteration 715: Primal updates[0m[32;1m ✓
+[0mk=715  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7756)  ‖r‖=1.29e-03  ‖s‖=3.09e-09
+[36;1m  🔵 Iteration 716: Primal updates[0m[32;1m ✓
+[0mk=716  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.7945)  ‖r‖=1.29e-03  ‖s‖=2.87e-09
+[36;1m  🔵 Iteration 717: Primal updates[0m[32;1m ✓
+[0mk=717  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.8135)  ‖r‖=1.29e-03  ‖s‖=2.47e-09
+[36;1m  🔵 Iteration 718: Primal updates[0m[32;1m ✓
+[0mk=718  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.8325)  ‖r‖=1.29e-03  ‖s‖=1.66e-09
+[36;1m  🔵 Iteration 719: Primal updates[0m[32;1m ✓
+[0mk=719  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.8515)  ‖r‖=1.29e-03  ‖s‖=7.32e-10
+[36;1m  🔵 Iteration 720: Primal updates[0m[32;1m ✓
+[0mk=720  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.8706)  ‖r‖=1.29e-03  ‖s‖=2.56e-10
+[36;1m  🔵 Iteration 721: Primal updates[0m[32;1m ✓
+[0mk=721  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.8896)  ‖r‖=1.29e-03  ‖s‖=9.69e-10
+[36;1m  🔵 Iteration 722: Primal updates[0m[32;1m ✓
+[0mk=722  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.9087)  ‖r‖=1.29e-03  ‖s‖=1.49e-09
+[36;1m  🔵 Iteration 723: Primal updates[0m[32;1m ✓
+[0mk=723  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.9279)  ‖r‖=1.29e-03  ‖s‖=1.73e-09
+[36;1m  🔵 Iteration 724: Primal updates[0m[32;1m ✓
+[0mk=724  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.9470)  ‖r‖=1.29e-03  ‖s‖=1.66e-09
+[36;1m  🔵 Iteration 725: Primal updates[0m[32;1m ✓
+[0mk=725  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.9662)  ‖r‖=1.29e-03  ‖s‖=1.96e-09
+[36;1m  🔵 Iteration 726: Primal updates[0m[32;1m ✓
+[0mk=726  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$6.9854)  ‖r‖=1.29e-03  ‖s‖=1.32e-09
+[36;1m  🔵 Iteration 727: Primal updates[0m[32;1m ✓
+[0mk=727  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.0047)  ‖r‖=1.29e-03  ‖s‖=7.47e-10
+[36;1m  🔵 Iteration 728: Primal updates[0m[32;1m ✓
+[0mk=728  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.0239)  ‖r‖=1.29e-03  ‖s‖=3.79e-10
+[36;1m  🔵 Iteration 729: Primal updates[0m[32;1m ✓
+[0mk=729  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.0432)  ‖r‖=1.29e-03  ‖s‖=5.89e-10
+[36;1m  🔵 Iteration 730: Primal updates[0m[32;1m ✓
+[0mk=730  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.0625)  ‖r‖=1.29e-03  ‖s‖=9.56e-10
+[36;1m  🔵 Iteration 731: Primal updates[0m[32;1m ✓
+[0mk=731  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.0819)  ‖r‖=1.29e-03  ‖s‖=1.21e-09
+[36;1m  🔵 Iteration 732: Primal updates[0m[32;1m ✓
+[0mk=732  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1012)  ‖r‖=1.29e-03  ‖s‖=1.28e-09
+[36;1m  🔵 Iteration 733: Primal updates[0m[32;1m ✓
+[0mk=733  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1206)  ‖r‖=1.29e-03  ‖s‖=1.80e-09
+[36;1m  🔵 Iteration 734: Primal updates[0m[32;1m ✓
+[0mk=734  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1400)  ‖r‖=1.29e-03  ‖s‖=2.34e-09
+[36;1m  🔵 Iteration 735: Primal updates[0m[32;1m ✓
+[0mk=735  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1595)  ‖r‖=1.29e-03  ‖s‖=2.39e-09
+[36;1m  🔵 Iteration 736: Primal updates[0m[32;1m ✓
+[0mk=736  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1790)  ‖r‖=1.29e-03  ‖s‖=2.44e-09
+[36;1m  🔵 Iteration 737: Primal updates[0m[32;1m ✓
+[0mk=737  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.1985)  ‖r‖=1.29e-03  ‖s‖=2.51e-09
+[36;1m  🔵 Iteration 738: Primal updates[0m[32;1m ✓
+[0mk=738  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.2180)  ‖r‖=1.29e-03  ‖s‖=2.37e-09
+[36;1m  🔵 Iteration 739: Primal updates[0m[32;1m ✓
+[0mk=739  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.2375)  ‖r‖=1.29e-03  ‖s‖=1.93e-09
+[36;1m  🔵 Iteration 740: Primal updates[0m[32;1m ✓
+[0mk=740  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.2571)  ‖r‖=1.29e-03  ‖s‖=1.26e-09
+[36;1m  🔵 Iteration 741: Primal updates[0m[32;1m ✓
+[0mk=741  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.2767)  ‖r‖=1.29e-03  ‖s‖=5.24e-10
+[36;1m  🔵 Iteration 742: Primal updates[0m[32;1m ✓
+[0mk=742  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.2964)  ‖r‖=1.29e-03  ‖s‖=2.03e-10
+[36;1m  🔵 Iteration 743: Primal updates[0m[32;1m ✓
+[0mk=743  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.3160)  ‖r‖=1.29e-03  ‖s‖=7.56e-10
+[36;1m  🔵 Iteration 744: Primal updates[0m[32;1m ✓
+[0mk=744  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.3357)  ‖r‖=1.29e-03  ‖s‖=1.14e-09
+[36;1m  🔵 Iteration 745: Primal updates[0m[32;1m ✓
+[0mk=745  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.3554)  ‖r‖=1.29e-03  ‖s‖=1.34e-09
+[36;1m  🔵 Iteration 746: Primal updates[0m[32;1m ✓
+[0mk=746  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.3752)  ‖r‖=1.29e-03  ‖s‖=1.35e-09
+[36;1m  🔵 Iteration 747: Primal updates[0m[32;1m ✓
+[0mk=747  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.3949)  ‖r‖=1.29e-03  ‖s‖=1.20e-09
+[36;1m  🔵 Iteration 748: Primal updates[0m[32;1m ✓
+[0mk=748  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.4147)  ‖r‖=1.29e-03  ‖s‖=9.13e-10
+[36;1m  🔵 Iteration 749: Primal updates[0m[32;1m ✓
+[0mk=749  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.4345)  ‖r‖=1.29e-03  ‖s‖=5.53e-10
+[36;1m  🔵 Iteration 750: Primal updates[0m[32;1m ✓
+[0mk=750  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.4544)  ‖r‖=1.29e-03  ‖s‖=1.74e-10
+[36;1m  🔵 Iteration 751: Primal updates[0m[32;1m ✓
+[0mk=751  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.4742)  ‖r‖=1.29e-03  ‖s‖=1.93e-10
+[36;1m  🔵 Iteration 752: Primal updates[0m[32;1m ✓
+[0mk=752  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.4941)  ‖r‖=1.29e-03  ‖s‖=4.75e-10
+[36;1m  🔵 Iteration 753: Primal updates[0m[32;1m ✓
+[0mk=753  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.5141)  ‖r‖=1.29e-03  ‖s‖=6.64e-10
+[36;1m  🔵 Iteration 754: Primal updates[0m[32;1m ✓
+[0mk=754  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.5340)  ‖r‖=1.29e-03  ‖s‖=7.46e-10
+[36;1m  🔵 Iteration 755: Primal updates[0m[32;1m ✓
+[0mk=755  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.5540)  ‖r‖=1.29e-03  ‖s‖=7.26e-10
+[36;1m  🔵 Iteration 756: Primal updates[0m[32;1m ✓
+[0mk=756  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.5740)  ‖r‖=1.29e-03  ‖s‖=6.18e-10
+[36;1m  🔵 Iteration 757: Primal updates[0m[32;1m ✓
+[0mk=757  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.5940)  ‖r‖=1.29e-03  ‖s‖=4.48e-10
+[36;1m  🔵 Iteration 758: Primal updates[0m[32;1m ✓
+[0mk=758  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.6141)  ‖r‖=1.29e-03  ‖s‖=2.46e-10
+[36;1m  🔵 Iteration 759: Primal updates[0m[32;1m ✓
+[0mk=759  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.6342)  ‖r‖=1.29e-03  ‖s‖=5.63e-11
+[36;1m  🔵 Iteration 760: Primal updates[0m[32;1m ✓
+[0mk=760  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.6543)  ‖r‖=1.29e-03  ‖s‖=1.56e-10
+[36;1m  🔵 Iteration 761: Primal updates[0m[32;1m ✓
+[0mk=761  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.6744)  ‖r‖=1.29e-03  ‖s‖=2.95e-10
+[36;1m  🔵 Iteration 762: Primal updates[0m[32;1m ✓
+[0mk=762  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.6946)  ‖r‖=1.29e-03  ‖s‖=3.82e-10
+[36;1m  🔵 Iteration 763: Primal updates[0m[32;1m ✓
+[0mk=763  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.7147)  ‖r‖=1.29e-03  ‖s‖=4.10e-10
+[36;1m  🔵 Iteration 764: Primal updates[0m[32;1m ✓
+[0mk=764  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.7350)  ‖r‖=1.29e-03  ‖s‖=3.84e-10
+[36;1m  🔵 Iteration 765: Primal updates[0m[32;1m ✓
+[0mk=765  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.7552)  ‖r‖=1.29e-03  ‖s‖=3.15e-10
+[36;1m  🔵 Iteration 766: Primal updates[0m[32;1m ✓
+[0mk=766  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.7755)  ‖r‖=1.29e-03  ‖s‖=2.16e-10
+[36;1m  🔵 Iteration 767: Primal updates[0m[32;1m ✓
+[0mk=767  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.7958)  ‖r‖=1.29e-03  ‖s‖=1.07e-10
+[36;1m  🔵 Iteration 768: Primal updates[0m[32;1m ✓
+[0mk=768  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.8161)  ‖r‖=1.29e-03  ‖s‖=4.55e-11
+[36;1m  🔵 Iteration 769: Primal updates[0m[32;1m ✓
+[0mk=769  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.8364)  ‖r‖=1.29e-03  ‖s‖=1.17e-10
+[36;1m  🔵 Iteration 770: Primal updates[0m[32;1m ✓
+[0mk=770  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.8568)  ‖r‖=1.29e-03  ‖s‖=1.83e-10
+[36;1m  🔵 Iteration 771: Primal updates[0m[32;1m ✓
+[0mk=771  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.8772)  ‖r‖=1.29e-03  ‖s‖=2.21e-10
+[36;1m  🔵 Iteration 772: Primal updates[0m[32;1m ✓
+[0mk=772  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.8976)  ‖r‖=1.29e-03  ‖s‖=2.28e-10
+[36;1m  🔵 Iteration 773: Primal updates[0m[32;1m ✓
+[0mk=773  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.9181)  ‖r‖=1.29e-03  ‖s‖=2.06e-10
+[36;1m  🔵 Iteration 774: Primal updates[0m[32;1m ✓
+[0mk=774  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.9385)  ‖r‖=1.29e-03  ‖s‖=1.64e-10
+[36;1m  🔵 Iteration 775: Primal updates[0m[32;1m ✓
+[0mk=775  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.9591)  ‖r‖=1.29e-03  ‖s‖=1.09e-10
+[36;1m  🔵 Iteration 776: Primal updates[0m[32;1m ✓
+[0mk=776  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$7.9796)  ‖r‖=1.29e-03  ‖s‖=5.73e-11
+[36;1m  🔵 Iteration 777: Primal updates[0m[32;1m ✓
+[0mk=777  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.0001)  ‖r‖=1.29e-03  ‖s‖=4.82e-11
+[36;1m  🔵 Iteration 778: Primal updates[0m[32;1m ✓
+[0mk=778  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.0207)  ‖r‖=1.29e-03  ‖s‖=8.22e-11
+[36;1m  🔵 Iteration 779: Primal updates[0m[32;1m ✓
+[0mk=779  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.0413)  ‖r‖=1.29e-03  ‖s‖=1.12e-10
+[36;1m  🔵 Iteration 780: Primal updates[0m[32;1m ✓
+[0mk=780  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.0620)  ‖r‖=1.29e-03  ‖s‖=1.27e-10
+[36;1m  🔵 Iteration 781: Primal updates[0m[32;1m ✓
+[0mk=781  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.0826)  ‖r‖=1.29e-03  ‖s‖=1.26e-10
+[36;1m  🔵 Iteration 782: Primal updates[0m[32;1m ✓
+[0mk=782  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.1033)  ‖r‖=1.29e-03  ‖s‖=1.11e-10
+[36;1m  🔵 Iteration 783: Primal updates[0m[32;1m ✓
+[0mk=783  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.1240)  ‖r‖=1.29e-03  ‖s‖=8.75e-11
+[36;1m  🔵 Iteration 784: Primal updates[0m[32;1m ✓
+[0mk=784  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.1448)  ‖r‖=1.29e-03  ‖s‖=6.11e-11
+[36;1m  🔵 Iteration 785: Primal updates[0m[32;1m ✓
+[0mk=785  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.1656)  ‖r‖=1.29e-03  ‖s‖=4.39e-11
+[36;1m  🔵 Iteration 786: Primal updates[0m[32;1m ✓
+[0mk=786  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.1863)  ‖r‖=1.29e-03  ‖s‖=4.79e-11
+[36;1m  🔵 Iteration 787: Primal updates[0m[32;1m ✓
+[0mk=787  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.2072)  ‖r‖=1.29e-03  ‖s‖=6.28e-11
+[36;1m  🔵 Iteration 788: Primal updates[0m[32;1m ✓
+[0mk=788  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.2280)  ‖r‖=1.29e-03  ‖s‖=7.50e-11
+[36;1m  🔵 Iteration 789: Primal updates[0m[32;1m ✓
+[0mk=789  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.2489)  ‖r‖=1.29e-03  ‖s‖=8.00e-11
+[36;1m  🔵 Iteration 790: Primal updates[0m[32;1m ✓
+[0mk=790  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.2698)  ‖r‖=1.29e-03  ‖s‖=7.75e-11
+[36;1m  🔵 Iteration 791: Primal updates[0m[32;1m ✓
+[0mk=791  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.2907)  ‖r‖=1.29e-03  ‖s‖=6.89e-11
+[36;1m  🔵 Iteration 792: Primal updates[0m[32;1m ✓
+[0mk=792  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.3117)  ‖r‖=1.29e-03  ‖s‖=5.73e-11
+[36;1m  🔵 Iteration 793: Primal updates[0m[32;1m ✓
+[0mk=793  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.3327)  ‖r‖=1.29e-03  ‖s‖=4.70e-11
+[36;1m  🔵 Iteration 794: Primal updates[0m[32;1m ✓
+[0mk=794  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.3537)  ‖r‖=1.29e-03  ‖s‖=4.25e-11
+[36;1m  🔵 Iteration 795: Primal updates[0m[32;1m ✓
+[0mk=795  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.3747)  ‖r‖=1.29e-03  ‖s‖=4.48e-11
+[36;1m  🔵 Iteration 796: Primal updates[0m[32;1m ✓
+[0mk=796  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.3958)  ‖r‖=1.29e-03  ‖s‖=5.00e-11
+[36;1m  🔵 Iteration 797: Primal updates[0m[32;1m ✓
+[0mk=797  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.4168)  ‖r‖=1.29e-03  ‖s‖=5.40e-11
+[36;1m  🔵 Iteration 798: Primal updates[0m[32;1m ✓
+[0mk=798  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.4380)  ‖r‖=1.29e-03  ‖s‖=5.52e-11
+[36;1m  🔵 Iteration 799: Primal updates[0m[32;1m ✓
+[0mk=799  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.4591)  ‖r‖=1.29e-03  ‖s‖=5.33e-11
+[36;1m  🔵 Iteration 800: Primal updates[0m[32;1m ✓
+[0mk=800  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.4803)  ‖r‖=1.29e-03  ‖s‖=4.95e-11
+[36;1m  🔵 Iteration 801: Primal updates[0m[32;1m ✓
+[0mk=801  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.5015)  ‖r‖=1.29e-03  ‖s‖=4.53e-11
+[36;1m  🔵 Iteration 802: Primal updates[0m[32;1m ✓
+[0mk=802  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.5227)  ‖r‖=1.29e-03  ‖s‖=4.26e-11
+[36;1m  🔵 Iteration 803: Primal updates[0m[32;1m ✓
+[0mk=803  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.5439)  ‖r‖=1.29e-03  ‖s‖=4.22e-11
+[36;1m  🔵 Iteration 804: Primal updates[0m[32;1m ✓
+[0mk=804  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.5652)  ‖r‖=1.29e-03  ‖s‖=4.36e-11
+[36;1m  🔵 Iteration 805: Primal updates[0m[32;1m ✓
+[0mk=805  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.5865)  ‖r‖=1.29e-03  ‖s‖=4.54e-11
+[36;1m  🔵 Iteration 806: Primal updates[0m[32;1m ✓
+[0mk=806  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.6078)  ‖r‖=1.29e-03  ‖s‖=4.67e-11
+[36;1m  🔵 Iteration 807: Primal updates[0m[32;1m ✓
+[0mk=807  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.6292)  ‖r‖=1.29e-03  ‖s‖=4.67e-11
+[36;1m  🔵 Iteration 808: Primal updates[0m[32;1m ✓
+[0mk=808  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.6505)  ‖r‖=1.29e-03  ‖s‖=4.57e-11
+[36;1m  🔵 Iteration 809: Primal updates[0m[32;1m ✓
+[0mk=809  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.6719)  ‖r‖=1.29e-03  ‖s‖=4.42e-11
+[36;1m  🔵 Iteration 810: Primal updates[0m[32;1m ✓
+[0mk=810  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.6934)  ‖r‖=1.29e-03  ‖s‖=4.27e-11
+[36;1m  🔵 Iteration 811: Primal updates[0m[32;1m ✓
+[0mk=811  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.7148)  ‖r‖=1.29e-03  ‖s‖=4.19e-11
+[36;1m  🔵 Iteration 812: Primal updates[0m[32;1m ✓
+[0mk=812  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.7363)  ‖r‖=1.29e-03  ‖s‖=4.17e-11
+[36;1m  🔵 Iteration 813: Primal updates[0m[32;1m ✓
+[0mk=813  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.7578)  ‖r‖=1.29e-03  ‖s‖=4.21e-11
+[36;1m  🔵 Iteration 814: Primal updates[0m[32;1m ✓
+[0mk=814  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.7794)  ‖r‖=1.29e-03  ‖s‖=4.25e-11
+[36;1m  🔵 Iteration 815: Primal updates[0m[32;1m ✓
+[0mk=815  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.8009)  ‖r‖=1.29e-03  ‖s‖=4.27e-11
+[36;1m  🔵 Iteration 816: Primal updates[0m[32;1m ✓
+[0mk=816  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.8225)  ‖r‖=1.29e-03  ‖s‖=4.26e-11
+[36;1m  🔵 Iteration 817: Primal updates[0m[32;1m ✓
+[0mk=817  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.8441)  ‖r‖=1.29e-03  ‖s‖=4.23e-11
+[36;1m  🔵 Iteration 818: Primal updates[0m[32;1m ✓
+[0mk=818  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.8658)  ‖r‖=1.29e-03  ‖s‖=4.18e-11
+[36;1m  🔵 Iteration 819: Primal updates[0m[32;1m ✓
+[0mk=819  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.8874)  ‖r‖=1.29e-03  ‖s‖=4.15e-11
+[36;1m  🔵 Iteration 820: Primal updates[0m[32;1m ✓
+[0mk=820  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.9091)  ‖r‖=1.29e-03  ‖s‖=4.14e-11
+[36;1m  🔵 Iteration 821: Primal updates[0m[32;1m ✓
+[0mk=821  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.9309)  ‖r‖=1.29e-03  ‖s‖=4.14e-11
+[36;1m  🔵 Iteration 822: Primal updates[0m[32;1m ✓
+[0mk=822  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.9526)  ‖r‖=1.29e-03  ‖s‖=4.16e-11
+[36;1m  🔵 Iteration 823: Primal updates[0m[32;1m ✓
+[0mk=823  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.9744)  ‖r‖=1.29e-03  ‖s‖=4.17e-11
+[36;1m  🔵 Iteration 824: Primal updates[0m[32;1m ✓
+[0mk=824  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$8.9962)  ‖r‖=1.29e-03  ‖s‖=4.15e-11
+[36;1m  🔵 Iteration 825: Primal updates[0m[32;1m ✓
+[0mk=825  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.0180)  ‖r‖=1.29e-03  ‖s‖=4.13e-11
+[36;1m  🔵 Iteration 826: Primal updates[0m[32;1m ✓
+[0mk=826  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.0399)  ‖r‖=1.29e-03  ‖s‖=4.12e-11
+[36;1m  🔵 Iteration 827: Primal updates[0m[32;1m ✓
+[0mk=827  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.0617)  ‖r‖=1.29e-03  ‖s‖=4.11e-11
+[36;1m  🔵 Iteration 828: Primal updates[0m[32;1m ✓
+[0mk=828  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.0836)  ‖r‖=1.29e-03  ‖s‖=4.11e-11
+[36;1m  🔵 Iteration 829: Primal updates[0m[32;1m ✓
+[0mk=829  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.1056)  ‖r‖=1.29e-03  ‖s‖=4.10e-11
+[36;1m  🔵 Iteration 830: Primal updates[0m[32;1m ✓
+[0mk=830  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.1275)  ‖r‖=1.29e-03  ‖s‖=4.10e-11
+[36;1m  🔵 Iteration 831: Primal updates[0m[32;1m ✓
+[0mk=831  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.1495)  ‖r‖=1.29e-03  ‖s‖=4.10e-11
+[36;1m  🔵 Iteration 832: Primal updates[0m[32;1m ✓
+[0mk=832  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.1715)  ‖r‖=1.29e-03  ‖s‖=4.09e-11
+[36;1m  🔵 Iteration 833: Primal updates[0m[32;1m ✓
+[0mk=833  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.1936)  ‖r‖=1.29e-03  ‖s‖=4.09e-11
+[36;1m  🔵 Iteration 834: Primal updates[0m[32;1m ✓
+[0mk=834  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.2156)  ‖r‖=1.29e-03  ‖s‖=4.08e-11
+[36;1m  🔵 Iteration 835: Primal updates[0m[32;1m ✓
+[0mk=835  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.2377)  ‖r‖=1.29e-03  ‖s‖=4.08e-11
+[36;1m  🔵 Iteration 836: Primal updates[0m[32;1m ✓
+[0mk=836  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.2598)  ‖r‖=1.29e-03  ‖s‖=4.08e-11
+[36;1m  🔵 Iteration 837: Primal updates[0m[32;1m ✓
+[0mk=837  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.2820)  ‖r‖=1.29e-03  ‖s‖=4.07e-11
+[36;1m  🔵 Iteration 838: Primal updates[0m[32;1m ✓
+[0mk=838  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.3042)  ‖r‖=1.29e-03  ‖s‖=4.07e-11
+[36;1m  🔵 Iteration 839: Primal updates[0m[32;1m ✓
+[0mk=839  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.3264)  ‖r‖=1.29e-03  ‖s‖=4.07e-11
+[36;1m  🔵 Iteration 840: Primal updates[0m[32;1m ✓
+[0mk=840  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.3486)  ‖r‖=1.29e-03  ‖s‖=4.07e-11
+[36;1m  🔵 Iteration 841: Primal updates[0m[32;1m ✓
+[0mk=841  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.3708)  ‖r‖=1.29e-03  ‖s‖=4.06e-11
+[36;1m  🔵 Iteration 842: Primal updates[0m[32;1m ✓
+[0mk=842  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.3931)  ‖r‖=1.29e-03  ‖s‖=4.05e-11
+[36;1m  🔵 Iteration 843: Primal updates[0m[32;1m ✓
+[0mk=843  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.4154)  ‖r‖=1.29e-03  ‖s‖=4.05e-11
+[36;1m  🔵 Iteration 844: Primal updates[0m[32;1m ✓
+[0mk=844  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.4377)  ‖r‖=1.29e-03  ‖s‖=4.04e-11
+[36;1m  🔵 Iteration 845: Primal updates[0m[32;1m ✓
+[0mk=845  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.4601)  ‖r‖=1.29e-03  ‖s‖=4.04e-11
+[36;1m  🔵 Iteration 846: Primal updates[0m[32;1m ✓
+[0mk=846  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.4825)  ‖r‖=1.29e-03  ‖s‖=4.03e-11
+[36;1m  🔵 Iteration 847: Primal updates[0m[32;1m ✓
+[0mk=847  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.5049)  ‖r‖=1.29e-03  ‖s‖=4.03e-11
+[36;1m  🔵 Iteration 848: Primal updates[0m[32;1m ✓
+[0mk=848  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.5273)  ‖r‖=1.29e-03  ‖s‖=4.03e-11
+[36;1m  🔵 Iteration 849: Primal updates[0m[32;1m ✓
+[0mk=849  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.5498)  ‖r‖=1.29e-03  ‖s‖=4.02e-11
+[36;1m  🔵 Iteration 850: Primal updates[0m[32;1m ✓
+[0mk=850  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.5723)  ‖r‖=1.29e-03  ‖s‖=4.02e-11
+[36;1m  🔵 Iteration 851: Primal updates[0m[32;1m ✓
+[0mk=851  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.5948)  ‖r‖=1.29e-03  ‖s‖=4.02e-11
+[36;1m  🔵 Iteration 852: Primal updates[0m[32;1m ✓
+[0mk=852  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.6173)  ‖r‖=1.29e-03  ‖s‖=4.01e-11
+[36;1m  🔵 Iteration 853: Primal updates[0m[32;1m ✓
+[0mk=853  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.6399)  ‖r‖=1.29e-03  ‖s‖=4.01e-11
+[36;1m  🔵 Iteration 854: Primal updates[0m[32;1m ✓
+[0mk=854  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.6625)  ‖r‖=1.29e-03  ‖s‖=4.01e-11
+[36;1m  🔵 Iteration 855: Primal updates[0m[32;1m ✓
+[0mk=855  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.6851)  ‖r‖=1.29e-03  ‖s‖=4.00e-11
+[36;1m  🔵 Iteration 856: Primal updates[0m[32;1m ✓
+[0mk=856  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.7078)  ‖r‖=1.29e-03  ‖s‖=4.00e-11
+[36;1m  🔵 Iteration 857: Primal updates[0m[32;1m ✓
+[0mk=857  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.7304)  ‖r‖=1.29e-03  ‖s‖=4.00e-11
+[36;1m  🔵 Iteration 858: Primal updates[0m[32;1m ✓
+[0mk=858  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.7531)  ‖r‖=1.29e-03  ‖s‖=3.99e-11
+[36;1m  🔵 Iteration 859: Primal updates[0m[32;1m ✓
+[0mk=859  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.7759)  ‖r‖=1.29e-03  ‖s‖=3.99e-11
+[36;1m  🔵 Iteration 860: Primal updates[0m[32;1m ✓
+[0mk=860  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.7986)  ‖r‖=1.29e-03  ‖s‖=3.98e-11
+[36;1m  🔵 Iteration 861: Primal updates[0m[32;1m ✓
+[0mk=861  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.8214)  ‖r‖=1.29e-03  ‖s‖=3.98e-11
+[36;1m  🔵 Iteration 862: Primal updates[0m[32;1m ✓
+[0mk=862  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.8442)  ‖r‖=1.29e-03  ‖s‖=3.97e-11
+[36;1m  🔵 Iteration 863: Primal updates[0m[32;1m ✓
+[0mk=863  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.8670)  ‖r‖=1.29e-03  ‖s‖=3.97e-11
+[36;1m  🔵 Iteration 864: Primal updates[0m[32;1m ✓
+[0mk=864  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.8899)  ‖r‖=1.29e-03  ‖s‖=3.97e-11
+[36;1m  🔵 Iteration 865: Primal updates[0m[32;1m ✓
+[0mk=865  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.9128)  ‖r‖=1.29e-03  ‖s‖=3.96e-11
+[36;1m  🔵 Iteration 866: Primal updates[0m[32;1m ✓
+[0mk=866  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.9357)  ‖r‖=1.29e-03  ‖s‖=3.96e-11
+[36;1m  🔵 Iteration 867: Primal updates[0m[32;1m ✓
+[0mk=867  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.9586)  ‖r‖=1.29e-03  ‖s‖=3.96e-11
+[36;1m  🔵 Iteration 868: Primal updates[0m[32;1m ✓
+[0mk=868  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$9.9816)  ‖r‖=1.29e-03  ‖s‖=3.95e-11
+[36;1m  🔵 Iteration 869: Primal updates[0m[32;1m ✓
+[0mk=869  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.0046)  ‖r‖=1.29e-03  ‖s‖=3.95e-11
+[36;1m  🔵 Iteration 870: Primal updates[0m[32;1m ✓
+[0mk=870  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.0276)  ‖r‖=1.29e-03  ‖s‖=3.95e-11
+[36;1m  🔵 Iteration 871: Primal updates[0m[32;1m ✓
+[0mk=871  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.0506)  ‖r‖=1.29e-03  ‖s‖=3.94e-11
+[36;1m  🔵 Iteration 872: Primal updates[0m[32;1m ✓
+[0mk=872  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.0737)  ‖r‖=1.29e-03  ‖s‖=3.94e-11
+[36;1m  🔵 Iteration 873: Primal updates[0m[32;1m ✓
+[0mk=873  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.0968)  ‖r‖=1.29e-03  ‖s‖=3.94e-11
+[36;1m  🔵 Iteration 874: Primal updates[0m[32;1m ✓
+[0mk=874  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.1199)  ‖r‖=1.29e-03  ‖s‖=3.93e-11
+[36;1m  🔵 Iteration 875: Primal updates[0m[32;1m ✓
+[0mk=875  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.1431)  ‖r‖=1.29e-03  ‖s‖=3.93e-11
+[36;1m  🔵 Iteration 876: Primal updates[0m[32;1m ✓
+[0mk=876  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.1663)  ‖r‖=1.29e-03  ‖s‖=3.92e-11
+[36;1m  🔵 Iteration 877: Primal updates[0m[32;1m ✓
+[0mk=877  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.1895)  ‖r‖=1.29e-03  ‖s‖=3.92e-11
+[36;1m  🔵 Iteration 878: Primal updates[0m[32;1m ✓
+[0mk=878  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.2127)  ‖r‖=1.29e-03  ‖s‖=3.92e-11
+[36;1m  🔵 Iteration 879: Primal updates[0m[32;1m ✓
+[0mk=879  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.2359)  ‖r‖=1.29e-03  ‖s‖=3.91e-11
+[36;1m  🔵 Iteration 880: Primal updates[0m[32;1m ✓
+[0mk=880  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.2592)  ‖r‖=1.29e-03  ‖s‖=3.91e-11
+[36;1m  🔵 Iteration 881: Primal updates[0m[32;1m ✓
+[0mk=881  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.2825)  ‖r‖=1.29e-03  ‖s‖=3.91e-11
+[36;1m  🔵 Iteration 882: Primal updates[0m[32;1m ✓
+[0mk=882  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.3059)  ‖r‖=1.29e-03  ‖s‖=3.90e-11
+[36;1m  🔵 Iteration 883: Primal updates[0m[32;1m ✓
+[0mk=883  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.3292)  ‖r‖=1.29e-03  ‖s‖=3.90e-11
+[36;1m  🔵 Iteration 884: Primal updates[0m[32;1m ✓
+[0mk=884  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.3526)  ‖r‖=1.29e-03  ‖s‖=3.90e-11
+[36;1m  🔵 Iteration 885: Primal updates[0m[32;1m ✓
+[0mk=885  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.3760)  ‖r‖=1.29e-03  ‖s‖=3.89e-11
+[36;1m  🔵 Iteration 886: Primal updates[0m[32;1m ✓
+[0mk=886  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.3995)  ‖r‖=1.29e-03  ‖s‖=3.89e-11
+[36;1m  🔵 Iteration 887: Primal updates[0m[32;1m ✓
+[0mk=887  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.4229)  ‖r‖=1.29e-03  ‖s‖=3.89e-11
+[36;1m  🔵 Iteration 888: Primal updates[0m[32;1m ✓
+[0mk=888  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.4464)  ‖r‖=1.29e-03  ‖s‖=3.88e-11
+[36;1m  🔵 Iteration 889: Primal updates[0m[32;1m ✓
+[0mk=889  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.4699)  ‖r‖=1.29e-03  ‖s‖=3.88e-11
+[36;1m  🔵 Iteration 890: Primal updates[0m[32;1m ✓
+[0mk=890  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.4935)  ‖r‖=1.29e-03  ‖s‖=3.87e-11
+[36;1m  🔵 Iteration 891: Primal updates[0m[32;1m ✓
+[0mk=891  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.5171)  ‖r‖=1.29e-03  ‖s‖=3.87e-11
+[36;1m  🔵 Iteration 892: Primal updates[0m[32;1m ✓
+[0mk=892  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.5407)  ‖r‖=1.29e-03  ‖s‖=3.87e-11
+[36;1m  🔵 Iteration 893: Primal updates[0m[32;1m ✓
+[0mk=893  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.5643)  ‖r‖=1.29e-03  ‖s‖=3.86e-11
+[36;1m  🔵 Iteration 894: Primal updates[0m[32;1m ✓
+[0mk=894  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.5879)  ‖r‖=1.29e-03  ‖s‖=3.86e-11
+[36;1m  🔵 Iteration 895: Primal updates[0m[32;1m ✓
+[0mk=895  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.6116)  ‖r‖=1.29e-03  ‖s‖=3.86e-11
+[36;1m  🔵 Iteration 896: Primal updates[0m[32;1m ✓
+[0mk=896  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.6353)  ‖r‖=1.29e-03  ‖s‖=3.85e-11
+[36;1m  🔵 Iteration 897: Primal updates[0m[32;1m ✓
+[0mk=897  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.6591)  ‖r‖=1.29e-03  ‖s‖=3.85e-11
+[36;1m  🔵 Iteration 898: Primal updates[0m[32;1m ✓
+[0mk=898  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.6828)  ‖r‖=1.29e-03  ‖s‖=3.85e-11
+[36;1m  🔵 Iteration 899: Primal updates[0m[32;1m ✓
+[0mk=899  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.7066)  ‖r‖=1.29e-03  ‖s‖=3.84e-11
+[36;1m  🔵 Iteration 900: Primal updates[0m[32;1m ✓
+[0mk=900  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.7304)  ‖r‖=1.29e-03  ‖s‖=3.84e-11
+[36;1m  🔵 Iteration 901: Primal updates[0m[32;1m ✓
+[0mk=901  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.7542)  ‖r‖=1.29e-03  ‖s‖=3.84e-11
+[36;1m  🔵 Iteration 902: Primal updates[0m[32;1m ✓
+[0mk=902  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.7781)  ‖r‖=1.29e-03  ‖s‖=3.83e-11
+[36;1m  🔵 Iteration 903: Primal updates[0m[32;1m ✓
+[0mk=903  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.8020)  ‖r‖=1.29e-03  ‖s‖=3.83e-11
+[36;1m  🔵 Iteration 904: Primal updates[0m[32;1m ✓
+[0mk=904  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.8259)  ‖r‖=1.29e-03  ‖s‖=3.83e-11
+[36;1m  🔵 Iteration 905: Primal updates[0m[32;1m ✓
+[0mk=905  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.8499)  ‖r‖=1.29e-03  ‖s‖=3.82e-11
+[36;1m  🔵 Iteration 906: Primal updates[0m[32;1m ✓
+[0mk=906  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.8738)  ‖r‖=1.29e-03  ‖s‖=3.82e-11
+[36;1m  🔵 Iteration 907: Primal updates[0m[32;1m ✓
+[0mk=907  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.8978)  ‖r‖=1.29e-03  ‖s‖=3.82e-11
+[36;1m  🔵 Iteration 908: Primal updates[0m[32;1m ✓
+[0mk=908  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.9218)  ‖r‖=1.29e-03  ‖s‖=3.81e-11
+[36;1m  🔵 Iteration 909: Primal updates[0m[32;1m ✓
+[0mk=909  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.9459)  ‖r‖=1.29e-03  ‖s‖=3.81e-11
+[36;1m  🔵 Iteration 910: Primal updates[0m[32;1m ✓
+[0mk=910  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.9700)  ‖r‖=1.29e-03  ‖s‖=3.81e-11
+[36;1m  🔵 Iteration 911: Primal updates[0m[32;1m ✓
+[0mk=911  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$10.9941)  ‖r‖=1.29e-03  ‖s‖=3.80e-11
+[36;1m  🔵 Iteration 912: Primal updates[0m[32;1m ✓
+[0mk=912  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.0182)  ‖r‖=1.29e-03  ‖s‖=3.80e-11
+[36;1m  🔵 Iteration 913: Primal updates[0m[32;1m ✓
+[0mk=913  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.0423)  ‖r‖=1.29e-03  ‖s‖=3.80e-11
+[36;1m  🔵 Iteration 914: Primal updates[0m[32;1m ✓
+[0mk=914  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.0665)  ‖r‖=1.29e-03  ‖s‖=3.79e-11
+[36;1m  🔵 Iteration 915: Primal updates[0m[32;1m ✓
+[0mk=915  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.0907)  ‖r‖=1.29e-03  ‖s‖=3.79e-11
+[36;1m  🔵 Iteration 916: Primal updates[0m[32;1m ✓
+[0mk=916  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.1150)  ‖r‖=1.29e-03  ‖s‖=3.79e-11
+[36;1m  🔵 Iteration 917: Primal updates[0m[32;1m ✓
+[0mk=917  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.1392)  ‖r‖=1.29e-03  ‖s‖=3.78e-11
+[36;1m  🔵 Iteration 918: Primal updates[0m[32;1m ✓
+[0mk=918  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.1635)  ‖r‖=1.29e-03  ‖s‖=3.78e-11
+[36;1m  🔵 Iteration 919: Primal updates[0m[32;1m ✓
+[0mk=919  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.1878)  ‖r‖=1.29e-03  ‖s‖=3.78e-11
+[36;1m  🔵 Iteration 920: Primal updates[0m[32;1m ✓
+[0mk=920  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.2122)  ‖r‖=1.29e-03  ‖s‖=3.77e-11
+[36;1m  🔵 Iteration 921: Primal updates[0m[32;1m ✓
+[0mk=921  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.2365)  ‖r‖=1.29e-03  ‖s‖=3.77e-11
+[36;1m  🔵 Iteration 922: Primal updates[0m[32;1m ✓
+[0mk=922  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.2609)  ‖r‖=1.29e-03  ‖s‖=3.77e-11
+[36;1m  🔵 Iteration 923: Primal updates[0m[32;1m ✓
+[0mk=923  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.2853)  ‖r‖=1.29e-03  ‖s‖=3.76e-11
+[36;1m  🔵 Iteration 924: Primal updates[0m[32;1m ✓
+[0mk=924  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.3098)  ‖r‖=1.29e-03  ‖s‖=3.76e-11
+[36;1m  🔵 Iteration 925: Primal updates[0m[32;1m ✓
+[0mk=925  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.3343)  ‖r‖=1.29e-03  ‖s‖=3.76e-11
+[36;1m  🔵 Iteration 926: Primal updates[0m[32;1m ✓
+[0mk=926  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.3588)  ‖r‖=1.29e-03  ‖s‖=3.75e-11
+[36;1m  🔵 Iteration 927: Primal updates[0m[32;1m ✓
+[0mk=927  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.3833)  ‖r‖=1.29e-03  ‖s‖=3.75e-11
+[36;1m  🔵 Iteration 928: Primal updates[0m[32;1m ✓
+[0mk=928  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.4078)  ‖r‖=1.29e-03  ‖s‖=3.75e-11
+[36;1m  🔵 Iteration 929: Primal updates[0m[32;1m ✓
+[0mk=929  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.4324)  ‖r‖=1.29e-03  ‖s‖=3.74e-11
+[36;1m  🔵 Iteration 930: Primal updates[0m[32;1m ✓
+[0mk=930  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.4570)  ‖r‖=1.29e-03  ‖s‖=3.74e-11
+[36;1m  🔵 Iteration 931: Primal updates[0m[32;1m ✓
+[0mk=931  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.4816)  ‖r‖=1.29e-03  ‖s‖=3.74e-11
+[36;1m  🔵 Iteration 932: Primal updates[0m[32;1m ✓
+[0mk=932  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.5063)  ‖r‖=1.29e-03  ‖s‖=3.73e-11
+[36;1m  🔵 Iteration 933: Primal updates[0m[32;1m ✓
+[0mk=933  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.5310)  ‖r‖=1.29e-03  ‖s‖=3.73e-11
+[36;1m  🔵 Iteration 934: Primal updates[0m[32;1m ✓
+[0mk=934  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.5557)  ‖r‖=1.29e-03  ‖s‖=3.73e-11
+[36;1m  🔵 Iteration 935: Primal updates[0m[32;1m ✓
+[0mk=935  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.5804)  ‖r‖=1.29e-03  ‖s‖=3.72e-11
+[36;1m  🔵 Iteration 936: Primal updates[0m[32;1m ✓
+[0mk=936  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.6052)  ‖r‖=1.29e-03  ‖s‖=3.72e-11
+[36;1m  🔵 Iteration 937: Primal updates[0m[32;1m ✓
+[0mk=937  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.6300)  ‖r‖=1.29e-03  ‖s‖=3.72e-11
+[36;1m  🔵 Iteration 938: Primal updates[0m[32;1m ✓
+[0m  Activating project at `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm`
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWhrated" is: 18.662
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kWrated" is: 4.6655
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.kva" is: 5.5986
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%stored" is: 62.5
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+┌ Warning: Result of running OpenDSS Command "? Storage.battery5.%reserve" is: 30
+└ @ OpenDSSDirect.Text C:\Users\aryan\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
+ERROR: LoadError: UndefVarError: `plot_tadmm_ldf_convergence` not defined
+Stacktrace:
+ [1] top-level scope
+   @ C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\tadmm.jl:968
+in expression starting at C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\envs\tadmm\tadmm.jl:899
+k=938  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.6548)  ‖r‖=1.29e-03  ‖s‖=3.71e-11
+[36;1m  🔵 Iteration 939: Primal updates[0m[32;1m ✓
+[0mk=939  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.6796)  ‖r‖=1.29e-03  ‖s‖=3.71e-11
+[36;1m  🔵 Iteration 940: Primal updates[0m[32;1m ✓
+[0mk=940  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.7045)  ‖r‖=1.29e-03  ‖s‖=3.71e-11
+[36;1m  🔵 Iteration 941: Primal updates[0m[32;1m ✓
+[0mk=941  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.7294)  ‖r‖=1.29e-03  ‖s‖=3.71e-11
+[36;1m  🔵 Iteration 942: Primal updates[0m[32;1m ✓
+[0mk=942  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.7543)  ‖r‖=1.29e-03  ‖s‖=3.70e-11
+[36;1m  🔵 Iteration 943: Primal updates[0m[32;1m ✓
+[0mk=943  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.7793)  ‖r‖=1.29e-03  ‖s‖=3.70e-11
+[36;1m  🔵 Iteration 944: Primal updates[0m[32;1m ✓
+[0mk=944  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.8042)  ‖r‖=1.29e-03  ‖s‖=3.70e-11
+[36;1m  🔵 Iteration 945: Primal updates[0m[32;1m ✓
+[0mk=945  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.8293)  ‖r‖=1.29e-03  ‖s‖=3.69e-11
+[36;1m  🔵 Iteration 946: Primal updates[0m[32;1m ✓
+[0mk=946  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.8543)  ‖r‖=1.29e-03  ‖s‖=3.69e-11
+[36;1m  🔵 Iteration 947: Primal updates[0m[32;1m ✓
+[0mk=947  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.8793)  ‖r‖=1.29e-03  ‖s‖=3.69e-11
+[36;1m  🔵 Iteration 948: Primal updates[0m[32;1m ✓
+[0mk=948  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.9044)  ‖r‖=1.29e-03  ‖s‖=3.68e-11
+[36;1m  🔵 Iteration 949: Primal updates[0m[32;1m ✓
+[0mk=949  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.9295)  ‖r‖=1.29e-03  ‖s‖=3.68e-11
+[36;1m  🔵 Iteration 950: Primal updates[0m[32;1m ✓
+[0mk=950  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.9547)  ‖r‖=1.29e-03  ‖s‖=3.68e-11
+[36;1m  🔵 Iteration 951: Primal updates[0m[32;1m ✓
+[0mk=951  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$11.9798)  ‖r‖=1.29e-03  ‖s‖=3.67e-11
+[36;1m  🔵 Iteration 952: Primal updates[0m[32;1m ✓
+[0mk=952  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.0050)  ‖r‖=1.29e-03  ‖s‖=3.67e-11
+[36;1m  🔵 Iteration 953: Primal updates[0m[32;1m ✓
+[0mk=953  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.0302)  ‖r‖=1.29e-03  ‖s‖=3.67e-11
+[36;1m  🔵 Iteration 954: Primal updates[0m[32;1m ✓
+[0mk=954  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.0554)  ‖r‖=1.29e-03  ‖s‖=3.66e-11
+[36;1m  🔵 Iteration 955: Primal updates[0m[32;1m ✓
+[0mk=955  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.0807)  ‖r‖=1.29e-03  ‖s‖=3.66e-11
+[36;1m  🔵 Iteration 956: Primal updates[0m[32;1m ✓
+[0mk=956  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.1060)  ‖r‖=1.29e-03  ‖s‖=3.66e-11
+[36;1m  🔵 Iteration 957: Primal updates[0m[32;1m ✓
+[0mk=957  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.1313)  ‖r‖=1.29e-03  ‖s‖=3.66e-11
+[36;1m  🔵 Iteration 958: Primal updates[0m[32;1m ✓
+[0mk=958  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.1567)  ‖r‖=1.29e-03  ‖s‖=3.65e-11
+[36;1m  🔵 Iteration 959: Primal updates[0m[32;1m ✓
+[0mk=959  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.1820)  ‖r‖=1.29e-03  ‖s‖=3.65e-11
+[36;1m  🔵 Iteration 960: Primal updates[0m[32;1m ✓
+[0mk=960  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.2074)  ‖r‖=1.29e-03  ‖s‖=3.65e-11
+[36;1m  🔵 Iteration 961: Primal updates[0m[32;1m ✓
+[0mk=961  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.2329)  ‖r‖=1.29e-03  ‖s‖=3.64e-11
+[36;1m  🔵 Iteration 962: Primal updates[0m[32;1m ✓
+[0mk=962  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.2583)  ‖r‖=1.29e-03  ‖s‖=3.64e-11
+[36;1m  🔵 Iteration 963: Primal updates[0m[32;1m ✓
+[0mk=963  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.2838)  ‖r‖=1.29e-03  ‖s‖=3.64e-11
+[36;1m  🔵 Iteration 964: Primal updates[0m[32;1m ✓
+[0mk=964  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.3093)  ‖r‖=1.29e-03  ‖s‖=3.63e-11
+[36;1m  🔵 Iteration 965: Primal updates[0m[32;1m ✓
+[0mk=965  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.3348)  ‖r‖=1.29e-03  ‖s‖=3.63e-11
+[36;1m  🔵 Iteration 966: Primal updates[0m[32;1m ✓
+[0mk=966  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.3604)  ‖r‖=1.29e-03  ‖s‖=3.63e-11
+[36;1m  🔵 Iteration 967: Primal updates[0m[32;1m ✓
+[0mk=967  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.3860)  ‖r‖=1.29e-03  ‖s‖=3.62e-11
+[36;1m  🔵 Iteration 968: Primal updates[0m[32;1m ✓
+[0mk=968  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.4116)  ‖r‖=1.29e-03  ‖s‖=3.62e-11
+[36;1m  🔵 Iteration 969: Primal updates[0m[32;1m ✓
+[0mk=969  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.4372)  ‖r‖=1.29e-03  ‖s‖=3.62e-11
+[36;1m  🔵 Iteration 970: Primal updates[0m[32;1m ✓
+[0mk=970  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.4629)  ‖r‖=1.29e-03  ‖s‖=3.62e-11
+[36;1m  🔵 Iteration 971: Primal updates[0m[32;1m ✓
+[0mk=971  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.4885)  ‖r‖=1.29e-03  ‖s‖=3.61e-11
+[36;1m  🔵 Iteration 972: Primal updates[0m[32;1m ✓
+[0mk=972  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.5143)  ‖r‖=1.29e-03  ‖s‖=3.61e-11
+[36;1m  🔵 Iteration 973: Primal updates[0m[32;1m ✓
+[0mk=973  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.5400)  ‖r‖=1.29e-03  ‖s‖=3.61e-11
+[36;1m  🔵 Iteration 974: Primal updates[0m[32;1m ✓
+[0mk=974  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.5658)  ‖r‖=1.29e-03  ‖s‖=3.60e-11
+[36;1m  🔵 Iteration 975: Primal updates[0m[32;1m ✓
+[0mk=975  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.5916)  ‖r‖=1.29e-03  ‖s‖=3.60e-11
+[36;1m  🔵 Iteration 976: Primal updates[0m[32;1m ✓
+[0mk=976  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.6174)  ‖r‖=1.29e-03  ‖s‖=3.60e-11
+[36;1m  🔵 Iteration 977: Primal updates[0m[32;1m ✓
+[0mk=977  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.6432)  ‖r‖=1.29e-03  ‖s‖=3.60e-11
+[36;1m  🔵 Iteration 978: Primal updates[0m[32;1m ✓
+[0mk=978  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.6691)  ‖r‖=1.29e-03  ‖s‖=3.59e-11
+[36;1m  🔵 Iteration 979: Primal updates[0m[32;1m ✓
+[0mk=979  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.6950)  ‖r‖=1.29e-03  ‖s‖=3.59e-11
+[36;1m  🔵 Iteration 980: Primal updates[0m[32;1m ✓
+[0mk=980  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.7209)  ‖r‖=1.29e-03  ‖s‖=3.59e-11
+[36;1m  🔵 Iteration 981: Primal updates[0m[32;1m ✓
+[0mk=981  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.7469)  ‖r‖=1.29e-03  ‖s‖=3.58e-11
+[36;1m  🔵 Iteration 982: Primal updates[0m[32;1m ✓
+[0mk=982  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.7729)  ‖r‖=1.29e-03  ‖s‖=3.58e-11
+[36;1m  🔵 Iteration 983: Primal updates[0m[32;1m ✓
+[0mk=983  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.7989)  ‖r‖=1.29e-03  ‖s‖=3.58e-11
+[36;1m  🔵 Iteration 984: Primal updates[0m[32;1m ✓
+[0mk=984  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.8249)  ‖r‖=1.29e-03  ‖s‖=3.57e-11
+[36;1m  🔵 Iteration 985: Primal updates[0m[32;1m ✓
+[0mk=985  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.8510)  ‖r‖=1.29e-03  ‖s‖=3.57e-11
+[36;1m  🔵 Iteration 986: Primal updates[0m[32;1m ✓
+[0mk=986  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.8770)  ‖r‖=1.29e-03  ‖s‖=3.57e-11
+[36;1m  🔵 Iteration 987: Primal updates[0m[32;1m ✓
+[0mk=987  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.9032)  ‖r‖=1.29e-03  ‖s‖=3.57e-11
+[36;1m  🔵 Iteration 988: Primal updates[0m[32;1m ✓
+[0mk=988  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.9293)  ‖r‖=1.29e-03  ‖s‖=3.56e-11
+[36;1m  🔵 Iteration 989: Primal updates[0m[32;1m ✓
+[0mk=989  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.9555)  ‖r‖=1.29e-03  ‖s‖=3.56e-11
+[36;1m  🔵 Iteration 990: Primal updates[0m[32;1m ✓
+[0mk=990  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$12.9817)  ‖r‖=1.29e-03  ‖s‖=3.56e-11
+[36;1m  🔵 Iteration 991: Primal updates[0m[32;1m ✓
+[0mk=991  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.0079)  ‖r‖=1.29e-03  ‖s‖=3.55e-11
+[36;1m  🔵 Iteration 992: Primal updates[0m[32;1m ✓
+[0mk=992  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.0341)  ‖r‖=1.29e-03  ‖s‖=3.55e-11
+[36;1m  🔵 Iteration 993: Primal updates[0m[32;1m ✓
+[0mk=993  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.0604)  ‖r‖=1.29e-03  ‖s‖=3.55e-11
+[36;1m  🔵 Iteration 994: Primal updates[0m[32;1m ✓
+[0mk=994  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.0867)  ‖r‖=1.29e-03  ‖s‖=3.55e-11
+[36;1m  🔵 Iteration 995: Primal updates[0m[32;1m ✓
+[0mk=995  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.1130)  ‖r‖=1.29e-03  ‖s‖=3.54e-11
+[36;1m  🔵 Iteration 996: Primal updates[0m[32;1m ✓
+[0mk=996  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.1394)  ‖r‖=1.29e-03  ‖s‖=3.54e-11
+[36;1m  🔵 Iteration 997: Primal updates[0m[32;1m ✓
+[0mk=997  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.1657)  ‖r‖=1.29e-03  ‖s‖=3.54e-11
+[36;1m  🔵 Iteration 998: Primal updates[0m[32;1m ✓
+[0mk=998  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.1921)  ‖r‖=1.29e-03  ‖s‖=3.54e-11
+[36;1m  🔵 Iteration 999: Primal updates[0m[32;1m ✓
+[0mk=999  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.2186)  ‖r‖=1.29e-03  ‖s‖=3.53e-11
+[36;1m  🔵 Iteration 1000: Primal updates[0m[32;1m ✓
+[0mk=1000  obj=$39.8369 (energy=$39.8369, battery=$0.0000, penalty=$13.2450)  ‖r‖=1.29e-03  ‖s‖=3.53e-11
+
+--- tADMM SOLUTION STATUS ---
+[32;1mObjective: $39.84
+[0m
+--- COMPARISON WITH BRUTE FORCE ---
+Brute Force objective: $41.1156
+tADMM objective:       $39.8369
+Absolute difference:   $1.2787
+Relative difference:   3.1100%
+
+--- BATTERY SCHEDULE COMPARISON ---
+Battery 5:
+  BF P_B (kW):    min=-4.7, max=4.7
+  tADMM P_B (kW): min=4.7, max=4.7
+  BF B (kWh):     min=5.6, max=10.3
+  tADMM B (kWh):  min=5.6, max=7.0
+
+================================================================================
+[35;1mMPOPF LINDISTFLOW tADMM SOLUTION COMPLETE[0m
+================================================================================
+
+================================================================================
+[36;1mPLOTTING tADMM CONVERGENCE[0m
+================================================================================
