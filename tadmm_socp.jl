@@ -74,8 +74,8 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 systemName = "ieee123A_1ph"
 # T = 24  # Number of time steps
-T = 48  # Number of time steps
-# T = 96  # Number of time steps
+# T = 48  # Number of time steps
+T = 96  # Number of time steps
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # Solver selection
@@ -526,7 +526,7 @@ begin # socp brute-forced solve
     solver_bf_choice = use_gurobi_for_bf ? :gurobi : :ipopt
     sol_socp_bf = solve_MPOPF_with_SOCP_BruteForced(data; solver=solver_bf_choice)
 
-    # Report results
+    # Report results (COMPACT MODE)
     println("\n--- SOLUTION STATUS ---")
     print("Status: ")
 
@@ -540,57 +540,19 @@ begin # socp brute-forced solve
         println("\n--- COMPUTATION TIME ---")
         @printf "Solver time: %.2f seconds\n" sol_socp_bf[:solve_time]
         
-        # Extract solution arrays
+        # Extract solution arrays (for validation only, no printing)
         P_Subs_vals = sol_socp_bf[:P_Subs]
         P_B_vals = sol_socp_bf[:P_B]
         B_vals = sol_socp_bf[:B]
         v_vals = sol_socp_bf[:v]
-        
-        # Convert to physical units
-        P_BASE = data[:kVA_B]
-        E_BASE = P_BASE * 1.0
-        
-        println("\n--- POWER SUMMARY ---")
-        if isa(P_Subs_vals, AbstractArray)
-            P_Subs_kW = P_Subs_vals .* P_BASE
-            @printf "Substation Power (kW): min=%.1f, max=%.1f, avg=%.1f\n" minimum(P_Subs_kW) maximum(P_Subs_kW) mean(P_Subs_kW)
-        end
-        
-        if !isempty(data[:Bset]) && isa(P_B_vals, AbstractDict)
-            println("\n--- BATTERY POWER ---")
-            for b in data[:Bset]
-                P_B_kW = [P_B_vals[b, t] * P_BASE for t in data[:Tset]]
-                @printf "Battery %d Power (kW): min=%.1f, max=%.1f\n" b minimum(P_B_kW) maximum(P_B_kW)
-            end
-        end
-        
-        if !isempty(data[:Bset]) && isa(B_vals, AbstractDict)
-            println("\n--- BATTERY SOC ---")
-            for b in data[:Bset]
-                B_kWh = [B_vals[b, t] * E_BASE for t in data[:Tset]]
-                B_R_kWh = data[:B_R][b]
-                soc_percent = (B_kWh ./ B_R_kWh) .* 100
-                @printf "Battery %d SOC (%%): min=%.1f%%, max=%.1f%%, final=%.1f%%\n" b minimum(soc_percent) maximum(soc_percent) soc_percent[end]
-            end
-        end
-        
-        println("\n--- VOLTAGE SUMMARY ---")
-        # Always run voltage diagnostics (v_vals is a JuMP container, not AbstractDict)
-        v_mag = Dict()
-        for n in data[:Nset], t in data[:Tset]
-            v_mag[(n,t)] = sqrt(v_vals[n, t])
-        end
-        v_all = [v_mag[(n,t)] for n in data[:Nset], t in data[:Tset]]
-        @printf "Voltage (pu): min=%.4f, max=%.4f\n" minimum(v_all) maximum(v_all)
-        
-        # VOLTAGE DROP VERIFICATION: Check if voltage drop constraints are satisfied
         P_vals = sol_socp_bf[:P]
         Q_vals = sol_socp_bf[:Q]
         ℓ_vals = sol_socp_bf[:ℓ]
         
-        println("\n" * "="^80)
-        println(COLOR_INFO, "VOLTAGE DROP CONSTRAINT VERIFICATION (across all time periods)", COLOR_RESET)
-        println("="^80)
+        # COMPACT VALIDATION: Only show summary
+        println("\n--- CONSTRAINT VALIDATION (COMPACT) ---")
+        
+        # Voltage drop verification
         local max_voltage_drop_violation = 0.0
         local total_violations = 0
         violation_threshold = 1e-6
@@ -599,81 +561,55 @@ begin # socp brute-forced solve
             for (i, j) in data[:Lset]
                 r_ij = data[:rdict_pu][(i, j)]
                 x_ij = data[:xdict_pu][(i, j)]
-                # LHS: v[j,t]
                 lhs = v_vals[j, t]
-                # RHS: v[i,t] - 2*(r*P + x*Q) + (r²+x²)*ℓ
                 rhs = v_vals[i, t] - 2 * (r_ij * P_vals[(i, j), t] + x_ij * Q_vals[(i, j), t]) + (r_ij^2 + x_ij^2) * ℓ_vals[(i, j), t]
-                # Violation: |LHS - RHS|
                 violation = abs(lhs - rhs)
-                
                 if violation > max_voltage_drop_violation
                     max_voltage_drop_violation = violation
                 end
-                
                 if violation > violation_threshold
                     total_violations += 1
-                    if total_violations <= 10  # Print first 10 violations
-                        print(COLOR_WARNING)
-                        @printf "  ⚠ Voltage drop violation at t=%d, branch (%d,%d): |%.8f - %.8f| = %.2e\n" t i j lhs rhs violation
-                        print(COLOR_RESET)
-                    end
                 end
             end
         end
         
         if total_violations == 0
             print(COLOR_SUCCESS)
-            println("✓ All voltage drop constraints satisfied (max violation: $(max_voltage_drop_violation))")
+            @printf "✓ Voltage drop: satisfied (max: %.2e)\n" max_voltage_drop_violation
             print(COLOR_RESET)
         else
             print(COLOR_WARNING)
-            println("⚠ Total voltage drop violations (>$(violation_threshold)): $(total_violations)")
-            println("  Maximum violation: $(max_voltage_drop_violation)")
+            @printf "⚠ Voltage drop: %d violations (max: %.2e)\n" total_violations max_voltage_drop_violation
             print(COLOR_RESET)
         end
         
-        # SOC RELAXATION VERIFICATION
-        println("\n" * "="^80)
-        println(COLOR_INFO, "SOC RELAXATION VERIFICATION (across all time periods)", COLOR_RESET)
-        println("="^80)
+        # SOC relaxation verification
         local max_soc_violation = 0.0
         local total_soc_violations = 0
         
         for t in data[:Tset]
             for (i, j) in data[:Lset]
-                # LHS: P² + Q²
                 lhs = P_vals[(i, j), t]^2 + Q_vals[(i, j), t]^2
-                # RHS: v[i,t] * ℓ[(i,j),t]
                 rhs = v_vals[i, t] * ℓ_vals[(i, j), t]
-                # Violation: max(LHS - RHS, 0)
                 violation = max(lhs - rhs, 0.0)
-                
                 if violation > max_soc_violation
                     max_soc_violation = violation
                 end
-                
                 if violation > violation_threshold
                     total_soc_violations += 1
-                    if total_soc_violations <= 10
-                        print(COLOR_WARNING)
-                        @printf "  ⚠ SOC violation at t=%d, branch (%d,%d): %.8f > %.8f (Δ=%.2e)\n" t i j lhs rhs violation
-                        print(COLOR_RESET)
-                    end
                 end
             end
         end
         
         if total_soc_violations == 0
             print(COLOR_SUCCESS)
-            println("✓ All SOC relaxation constraints satisfied (max violation: $(max_soc_violation))")
+            @printf "✓ SOC relaxation: satisfied (max: %.2e)\n" max_soc_violation
             print(COLOR_RESET)
         else
             print(COLOR_WARNING)
-            println("⚠ Total SOC violations (>$(violation_threshold)): $(total_soc_violations)")
-            println("  Maximum violation: $(max_soc_violation)")
+            @printf "⚠ SOC relaxation: %d violations (max: %.2e)\n" total_soc_violations max_soc_violation
             print(COLOR_RESET)
         end
-        println("="^80)
         
     else
         print(COLOR_ERROR)
