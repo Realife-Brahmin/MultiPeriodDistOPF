@@ -1241,6 +1241,17 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         0.3  # Very thin borders for many iterations
     end
     
+    # Adaptive marker size for residual plots (smaller as iterations increase)
+    residual_markersize = if n_iter <= 50
+        4  # Normal size for few iterations
+    elseif n_iter <= 100
+        3  # Smaller for moderate iterations
+    elseif n_iter <= 200
+        2  # Smaller for many iterations
+    else
+        1.5  # Very small for lots of iterations
+    end
+    
     xtick_vals = if n_iter <= 10
         collect(iterations)
     elseif n_iter <= 50
@@ -1350,7 +1361,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         lw=3,
         color=line_colour_primal,
         markershape=:square,
-        markersize=4,
+        markersize=residual_markersize,  # Adaptive: smaller as iterations increase
         markerstrokecolor=:black,
         markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
         yscale=:log10,
@@ -1385,7 +1396,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
         lw=3,
         color=line_colour_dual,
         markershape=:diamond,
-        markersize=4,
+        markersize=residual_markersize,  # Adaptive: smaller as iterations increase
         markerstrokecolor=:black,
         markerstrokewidth=markerstrokewidth,  # Adaptive based on n_iter
         yscale=:log10,
