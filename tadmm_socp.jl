@@ -93,8 +93,8 @@ rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT sc
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base  # Linear (was causing oscillations)
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 3e-5  # Relaxed from 1e-5 - plot shows oscillations around 3e-5
-eps_dual_tadmm = 1e-4  # Relax dual tolerance (was 1e-5) to reduce oscillations
+eps_pri_tadmm = 5e-5  # Practical tolerance - below this is noise (was 3e-5)
+eps_dual_tadmm = 2e-4  # Practical tolerance - dual converges smoothly (was 1e-4)
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
@@ -1121,14 +1121,14 @@ begin # function solve MPOPF tadmm socp
         # Slow progress acceleration parameters (DISABLED - controlled by enable_stall_detection)
         obj_history = Float64[]
         slow_progress_window = 10  # Check progress over last N iterations
-        slow_progress_threshold = 1e-4  # Relative objective change threshold
+        slow_progress_threshold = 5e-6  # Tighter threshold for early stopping (was 1e-4)
         aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
         enable_slow_progress_accel = false  # DISABLED - no unconditional aggressive nudges
         
         # Primal residual watchdog (Phase 2 only - detects when consensus breaks down)
         enable_rnorm_watchdog = true  # Monitor if r_norm stays above threshold too long
-        rnorm_watchdog_window = 10  # Trigger nudge if r_norm > eps_pri for this many iterations (REDUCED from 20)
-        rnorm_watchdog_factor = 3.0  # Factor to increase ρ when watchdog triggers (INCREASED from 2.0)
+        rnorm_watchdog_window = 15  # Trigger nudge if r_norm > eps_pri for this many iterations (was 10)
+        rnorm_watchdog_factor = 2.5  # Factor to increase ρ when watchdog triggers (was 3.0)
         rnorm_high_counter = 0  # Count consecutive iterations with high r_norm
         
         # Output control
