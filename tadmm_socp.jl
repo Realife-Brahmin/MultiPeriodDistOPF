@@ -85,7 +85,7 @@ use_gurobi_for_bf = true       # Use Gurobi for brute force (SOCP)
 use_gurobi_for_tadmm = true    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
 
 # tADMM algorithm parameters
-rho_base = 10000.0               # Base ρ value for T=24 (REDUCED for FAADMM - was 10000)
+rho_base = 3000.0               # Base ρ value for T=24 (REDUCED from 10k - less aggressive)
 rho_scaling_with_T = true       # Automatically scale ρ with T (recommended)
 # ρ scaling logic: Larger T → need larger ρ to handle more coupling constraints
 # Rule of thumb: ρ ∝ √T (conservative) or ρ ∝ T (aggressive)
@@ -93,8 +93,8 @@ rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT sc
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base  # Linear (was causing oscillations)
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 5e-5  # Practical tolerance - below this is noise (was 3e-5)
-eps_dual_tadmm = 2e-4  # Practical tolerance - dual converges smoothly (was 1e-4)
+eps_pri_tadmm = 8e-5  # Practical tolerance - plot shows oscillations around this (was 5e-5)
+eps_dual_tadmm = 3e-4  # Practical tolerance - give more room (was 2e-4)
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
@@ -1120,8 +1120,8 @@ begin # function solve MPOPF tadmm socp
         
         # Slow progress acceleration parameters (DISABLED - controlled by enable_stall_detection)
         obj_history = Float64[]
-        slow_progress_window = 10  # Check progress over last N iterations
-        slow_progress_threshold = 5e-6  # Tighter threshold for early stopping (was 1e-4)
+        slow_progress_window = 8  # Check progress over last N iterations (was 10)
+        slow_progress_threshold = 1e-5  # Stop if obj varies < 0.001% (was 5e-6)
         aggressive_nudge_factor = 5.0  # Aggressive ρ increase for very slow progress
         enable_slow_progress_accel = false  # DISABLED - no unconditional aggressive nudges
         
@@ -1541,13 +1541,29 @@ begin # function solve MPOPF tadmm socp
                 @printf "k=%3d  obj=\$%.2f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective r_norm s_norm ρ_current
             end
             
-            # Check convergence
+            # Check convergence (residuals)
             if r_norm ≤ eps_pri && s_norm ≤ eps_dual
                 converged = true
                 print(COLOR_SUCCESS)
                 @printf "🎉 tADMM converged at iteration %d\n" k
                 print(COLOR_RESET)
                 break
+            end
+            
+            # Early termination: objective stagnation (practical convergence)
+            if k >= slow_progress_window + 5
+                recent_objs = obj_history[end-slow_progress_window+1:end]
+                obj_range = maximum(recent_objs) - minimum(recent_objs)
+                avg_obj = mean(recent_objs)
+                relative_obj_change = obj_range / abs(avg_obj)
+                
+                if relative_obj_change < slow_progress_threshold && r_norm < 2.0 * eps_pri && s_norm < 2.0 * eps_dual
+                    converged = true
+                    print(COLOR_WARNING)
+                    @printf "✓ Practical convergence at iteration %d (obj stagnant: Δrel=%.2e < %.1e, ‖r‖=%.2e, ‖s‖=%.2e)\n" k relative_obj_change slow_progress_threshold r_norm s_norm
+                    print(COLOR_RESET)
+                    break
+                end
             end
             
             final_iter = k  # Track last completed iteration
