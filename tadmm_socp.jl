@@ -97,6 +97,11 @@ eps_pri_tadmm = 8e-5  # Practical tolerance - plot shows oscillations around thi
 eps_dual_tadmm = 3e-4  # Practical tolerance - give more room (was 2e-4)
 adaptive_rho_tadmm = true  # Set to false for fixed ρ
 
+# Warm-starting parameters
+enable_warm_start = true  # ENABLED to test warm-start with detailed timing - use previous iteration's solution to warm-start subproblems
+# When false: cold start (JuMP's default initialization)
+# When true: use previous iteration's decision variables as initial guess
+
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
 # use_faadmm = true              # Enable acceleration with momentum and restart
 use_faadmm = false
@@ -116,17 +121,18 @@ const COLOR_RESET = Crayon(reset = true)
 begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
+    savePlots = false  # DISABLED: Set to true to save plots (time-consuming with many components)
     saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
     saveAllPVPlots = true  # Set to true to save plots for ALL PV units (shows p_D and q_D)
     plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
-    # Plot type toggles (enable/disable specific plot types)
-    plotConvergence = true      # tADMM convergence plots (always plotted)
-    plotInputCurves = true      # Load, PV, and cost input curves (always plotted)
-    plotBatteryActions = true   # Battery charging/discharging and SOC (conditional on convergence)
-    plotSubstationPower = true  # Substation power and cost (always plotted)
-    plotVoltageAllBuses = true  # Voltage profile for all buses (conditional on convergence)
-    plotPVPower = true          # PV real and reactive power (conditional on convergence)
+    # Plot type toggles (enable/disable specific plot types) - ALL DISABLED FOR FASTER RUNS
+    plotConvergence = false      # tADMM convergence plots (always plotted)
+    plotInputCurves = false      # Load, PV, and cost input curves (always plotted)
+    plotBatteryActions = false   # Battery charging/discharging and SOC (conditional on convergence)
+    plotSubstationPower = false  # Substation power and cost (always plotted)
+    plotVoltageAllBuses = false  # Voltage profile for all buses (conditional on convergence)
+    plotPVPower = false          # PV real and reactive power (conditional on convergence)
     plotPVCircleGIF = false      # PV power circle GIF animations (conditional on convergence)
     # plotPVCircleGIF = true      # PV power circle GIF animations
 
@@ -683,7 +689,10 @@ begin # socp brute-forced solve
 end # socp brute-forced solve
 
 begin # function primal update (update 1) tadmm socp
-    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int; solver::Symbol=:ipopt)
+    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int; 
+                                       solver::Symbol=:ipopt, 
+                                       warm_start::Bool=false,
+                                       prev_solution::Union{Nothing,Dict}=nothing)
         @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
         @unpack substationBus, parent, children = data
         @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -842,6 +851,84 @@ begin # function primal update (update 1) tadmm socp
             end
         end
         
+        # ===== WARM-START (if enabled and previous solution exists) =====
+        if warm_start && !isnothing(prev_solution)
+            # Network variables at time t0
+            if haskey(prev_solution, :P_Subs)
+                set_start_value(P_Subs_t0, prev_solution[:P_Subs])
+            end
+            if haskey(prev_solution, :Q_Subs)
+                set_start_value(Q_Subs_t0, prev_solution[:Q_Subs])
+            end
+            
+            # Branch flows
+            if haskey(prev_solution, :P)
+                for (i, j) in Lset
+                    if haskey(prev_solution[:P], (i, j))
+                        set_start_value(P_t0[(i, j)], prev_solution[:P][(i, j)])
+                    end
+                end
+            end
+            if haskey(prev_solution, :Q)
+                for (i, j) in Lset
+                    if haskey(prev_solution[:Q], (i, j))
+                        set_start_value(Q_t0[(i, j)], prev_solution[:Q][(i, j)])
+                    end
+                end
+            end
+            
+            # Voltages and currents
+            if haskey(prev_solution, :v)
+                for j in Nset
+                    if haskey(prev_solution[:v], j)
+                        set_start_value(v_t0[j], prev_solution[:v][j])
+                    end
+                end
+            end
+            if haskey(prev_solution, :ℓ)
+                for (i, j) in Lset
+                    if haskey(prev_solution[:ℓ], (i, j))
+                        set_start_value(ℓ_t0[(i, j)], prev_solution[:ℓ][(i, j)])
+                    end
+                end
+            end
+            
+            # PV reactive power
+            if haskey(prev_solution, :q_D)
+                for j in Dset
+                    if haskey(prev_solution[:q_D], j)
+                        set_start_value(q_D_t0[j], prev_solution[:q_D][j])
+                    end
+                end
+            end
+            
+            # Battery variables
+            if haskey(prev_solution, :P_B)
+                for j in Bset
+                    if haskey(prev_solution[:P_B], j)
+                        for t in Tset
+                            if haskey(prev_solution[:P_B][j], t)
+                                set_start_value(P_B_var[j, t], prev_solution[:P_B][j][t])
+                            end
+                        end
+                    end
+                end
+            end
+            
+            # Battery SOC (only local times)
+            if haskey(prev_solution, :B_local)
+                for j in Bset
+                    if haskey(prev_solution[:B_local], j)
+                        for t in local_times
+                            if haskey(prev_solution[:B_local][j], t)
+                                set_start_value(B_var[j, t], prev_solution[:B_local][j][t])
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        
         # Get model size statistics (only for first subproblem)
         subproblem_stats = (t0 == 1) ? get_model_size_statistics(model) : nothing
         
@@ -854,8 +941,21 @@ begin # function primal update (update 1) tadmm socp
             error("Subproblem t0=$t0 failed with status: $status. Try reducing ρ or check problem feasibility.")
         end
         
-        # Get pure solver time
+        # Get pure solver time (only optimize! time, no overhead)
         solver_time_t0 = solve_time(model)
+        
+        # Get solver statistics if available (Gurobi-specific)
+        barrier_iters = 0
+        simplex_iters = 0
+        if solver == :gurobi
+            try
+                # Get Gurobi model directly
+                gurobi_model = backend(model).optimizer.model
+                barrier_iters = get_intattr(gurobi_model.inner, "BarIterCount")
+            catch e
+                barrier_iters = 0  # Silently fail if attribute not available
+            end
+        end
         
         # Extract results - store only local times (Dict structure, not array)
         for j in Bset
@@ -891,6 +991,8 @@ begin # function primal update (update 1) tadmm socp
             :battery_cost => battery_cost_val,
             :penalty => penalty_val,
             :solve_time => solver_time_t0,
+            :barrier_iters => barrier_iters,
+            :simplex_iters => simplex_iters,
             :P_Subs => P_Subs_val,
             :Q_Subs => Q_Subs_val,
             :P => P_vals,
@@ -1083,6 +1185,9 @@ begin # function solve MPOPF tadmm socp
         subproblem_times_history = Vector{Vector{Float64}}()
         iteration_effective_times = Float64[]  # max(subproblem times) per iteration
         
+        # Barrier iteration tracking (for warm-start analysis)
+        barrier_iter_history = Dict{Int, Vector{Int}}()  # barrier_iter_history[k] = [iters for each subproblem]
+        
         # FAADMM tracking
         α_history = Float64[]  # Momentum coefficient history
         restart_history = Int[]  # Iterations where restart occurred
@@ -1137,9 +1242,9 @@ begin # function solve MPOPF tadmm socp
         println("\n" * "="^80)
         print(COLOR_INFO)
         if use_faadmm
-            @printf "🎯 FAADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, restart=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho use_faadmm length(Bset) length(data[:Nset]) length(data[:Lset])
+            @printf "🎯 FAADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, restart=%s, warm_start=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho use_faadmm enable_warm_start length(Bset) length(data[:Nset]) length(data[:Lset])
         else
-            @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho length(Bset) length(data[:Nset]) length(data[:Lset])
+            @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, warm_start=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) ρ adaptive_rho enable_warm_start length(Bset) length(data[:Nset]) length(data[:Lset])
         end
         print(COLOR_RESET)
         println("="^80)
@@ -1149,6 +1254,13 @@ begin # function solve MPOPF tadmm socp
         
         # Capture subproblem model stats (will be set on first iteration)
         tadmm_subproblem_stats = nothing
+        
+        # Storage for previous iteration solutions (for warm-starting)
+        # prev_solutions[t0] stores the solution dict from previous iteration for subproblem t0
+        prev_solutions = Dict{Int, Union{Nothing,Dict}}()
+        for t0 in Tset
+            prev_solutions[t0] = nothing
+        end
         
         # Start wall-clock timer for tADMM loop
         tadmm_wallclock_start = time()
@@ -1171,7 +1283,12 @@ begin # function solve MPOPF tadmm socp
                 
                 Threads.@threads for i in 1:length(Tset)
                     t0 = Tset[i]
-                    results_collection[i] = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
+                    results_collection[i] = primal_update_tadmm_socp!(
+                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; 
+                        solver=solver,
+                        warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
+                        prev_solution=prev_solutions[t0]
+                    )
                 end
                 
                 # Extract results after parallel execution
@@ -1183,6 +1300,11 @@ begin # function solve MPOPF tadmm socp
                     # Capture model stats from first subproblem of first iteration
                     if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
                         tadmm_subproblem_stats = result[:model_stats]
+                    end
+                    
+                    # Store solution for next iteration's warm-start
+                    if enable_warm_start
+                        prev_solutions[t0] = result
                     end
                     
                     # Update collections
@@ -1222,13 +1344,31 @@ begin # function solve MPOPF tadmm socp
             else
                 # SEQUENTIAL: Original behavior (safe fallback)
                 for t0 in Tset
-                    result = primal_update_tadmm_socp!(B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; solver=solver)
+                    result = primal_update_tadmm_socp!(
+                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; 
+                        solver=solver,
+                        warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
+                        prev_solution=prev_solutions[t0]
+                    )
                     # Use pure solver time from the subproblem
                     push!(subproblem_times_k, result[:solve_time])
+                    
+                    # Track barrier iterations (if available)
+                    if haskey(result, :barrier_iters) && result[:barrier_iters] > 0
+                        if !haskey(barrier_iter_history, k)
+                            barrier_iter_history[k] = []
+                        end
+                        push!(barrier_iter_history[k], result[:barrier_iters])
+                    end
                     
                     # Capture model stats from first subproblem of first iteration
                     if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
                         tadmm_subproblem_stats = result[:model_stats]
+                    end
+                    
+                    # Store solution for next iteration's warm-start
+                    if enable_warm_start
+                        prev_solutions[t0] = result
                     end
                     
                     # Update collections - Store ALL decision variables
@@ -1538,7 +1678,23 @@ begin # function solve MPOPF tadmm socp
             show_this_iter = (k % progress_interval == 0) || (k == 1)
             
             if show_this_iter
+                # Calculate solver time statistics for this iteration
+                times = subproblem_times_k
+                mean_time = sum(times) / length(times)
+                min_time = minimum(times)
+                max_time = maximum(times)
+                median_time = median(times)
+                std_time = std(times)
+                
+                # Get barrier iteration stats if available
+                barrier_stats = ""
+                if haskey(barrier_iter_history, k) && !isempty(barrier_iter_history[k])
+                    b_iters = barrier_iter_history[k]
+                    barrier_stats = @sprintf "  Barrier: min=%d med=%d max=%d" minimum(b_iters) Int(median(b_iters)) maximum(b_iters)
+                end
+                
                 @printf "k=%3d  obj=\$%.2f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective r_norm s_norm ρ_current
+                @printf "      Solver times(s): min=%.3f med=%.3f max=%.3f mean=%.3f std=%.3f%s\n" min_time median_time max_time mean_time std_time barrier_stats
             end
             
             # Check convergence (residuals)
@@ -1633,6 +1789,72 @@ begin # function solve MPOPF tadmm socp
         # Calculate wall-clock time for entire tADMM loop
         tadmm_wallclock_time = time() - tadmm_wallclock_start
         
+        # ========================================================================
+        # WARM-START ANALYSIS: Compare solver performance
+        # ========================================================================
+        println("\n" * "="^80)
+        print(COLOR_INFO)
+        println("📊 SOLVER PERFORMANCE ANALYSIS (optimize!() times only)")
+        print(COLOR_RESET)
+        println("="^80)
+        
+        # Overall statistics
+        all_solve_times = vcat(subproblem_times_history...)
+        total_effective_time = sum(iteration_effective_times)
+        println(@sprintf "Total iterations:        %d" final_iter)
+        println(@sprintf "Effective solver time:   %.2f seconds (max per iteration summed)" total_effective_time)
+        println(@sprintf "Wall-clock time:         %.2f seconds (includes overhead)" tadmm_wallclock_time)
+        println(@sprintf "Overhead:                %.2f seconds (%.1f%%)" (tadmm_wallclock_time - total_effective_time) 100*(tadmm_wallclock_time - total_effective_time)/tadmm_wallclock_time)
+        
+        # Per-iteration statistics
+        println("\nPer-iteration solver time distribution (seconds):")
+        iter_means = [mean(times) for times in subproblem_times_history]
+        iter_medians = [median(times) for times in subproblem_times_history]
+        iter_maxs = [maximum(times) for times in subproblem_times_history]
+        iter_stds = [std(times) for times in subproblem_times_history]
+        
+        println(@sprintf "  Mean across iters:     min=%.4f  median=%.4f  max=%.4f" minimum(iter_means) median(iter_means) maximum(iter_means))
+        println(@sprintf "  Median across iters:   min=%.4f  median=%.4f  max=%.4f" minimum(iter_medians) median(iter_medians) maximum(iter_medians))
+        println(@sprintf "  Max across iters:      min=%.4f  median=%.4f  max=%.4f" minimum(iter_maxs) median(iter_maxs) maximum(iter_maxs))
+        println(@sprintf "  Std dev across iters:  min=%.4f  median=%.4f  max=%.4f" minimum(iter_stds) median(iter_stds) maximum(iter_stds))
+        
+        # Barrier iteration statistics (if available)
+        if !isempty(barrier_iter_history)
+            println("\nGurobi barrier iteration distribution:")
+            all_barrier_iters = vcat([barrier_iter_history[k] for k in keys(barrier_iter_history)]...)
+            println(@sprintf "  Min:     %d iterations" minimum(all_barrier_iters))
+            println(@sprintf "  Median:  %d iterations" Int(median(all_barrier_iters)))
+            println(@sprintf "  Mean:    %.1f iterations" mean(all_barrier_iters))
+            println(@sprintf "  Max:     %d iterations" maximum(all_barrier_iters))
+            println(@sprintf "  Std dev: %.1f iterations" std(all_barrier_iters))
+            
+            # Compare early vs late iterations (convergence behavior)
+            if final_iter >= 20
+                early_iters = vcat([barrier_iter_history[k] for k in 1:min(10, final_iter) if haskey(barrier_iter_history, k)]...)
+                late_iters = vcat([barrier_iter_history[k] for k in max(1, final_iter-9):final_iter if haskey(barrier_iter_history, k)]...)
+                
+                if !isempty(early_iters) && !isempty(late_iters)
+                    println("\n  Early iterations (k=1-10):")
+                    println(@sprintf "    Mean: %.1f, Median: %d, Max: %d" mean(early_iters) Int(median(early_iters)) maximum(early_iters))
+                    println("  Late iterations (k=$(max(1, final_iter-9))-$(final_iter)):")
+                    println(@sprintf "    Mean: %.1f, Median: %d, Max: %d" mean(late_iters) Int(median(late_iters)) maximum(late_iters))
+                    
+                    # Check if warm-starting helped reduce iterations over time
+                    if mean(late_iters) < 0.9 * mean(early_iters)
+                        println(@sprintf "  ✓ Barrier iterations DECREASED by %.1f%% (warm-starting may be helping)" 100*(1 - mean(late_iters)/mean(early_iters)))
+                    elseif mean(late_iters) > 1.1 * mean(early_iters)
+                        println(@sprintf "  ✗ Barrier iterations INCREASED by %.1f%% (warm-starting not helping)" 100*(mean(late_iters)/mean(early_iters) - 1))
+                    else
+                        println("  → Barrier iterations stable (warm-start impact unclear)")
+                    end
+                end
+            end
+        else
+            println("\n⚠  Barrier iteration data not available (check solver)")
+        end
+        
+        println("="^80)
+        
         result_dict = Dict(
             :status => MOI.OPTIMAL,  # Assume converged
             :P_Subs => P_Subs_final,
@@ -1666,7 +1888,8 @@ begin # function solve MPOPF tadmm socp
                 :iteration_effective_times => iteration_effective_times,
                 :total_effective_time => sum(iteration_effective_times),
                 :total_sequential_time => sum(sum.(subproblem_times_history)),
-                :wallclock_time => tadmm_wallclock_time  # Total wall-clock time for tADMM loop
+                :wallclock_time => tadmm_wallclock_time,  # Total wall-clock time for tADMM loop
+                :barrier_iter_history => barrier_iter_history  # Gurobi barrier iterations per subproblem
             ),
             :subproblem_model_stats => tadmm_subproblem_stats
         )
@@ -1950,13 +2173,13 @@ begin # plotting results
         # Use Plotter.jl function for consistent styling
         conv_plot_path = joinpath(conv_plots_dir, "tadmm_convergence_socp.png")
         plot_tadmm_ldf_convergence(sol_socp_tadmm, sol_socp_bf, eps_pri_tadmm, eps_dual_tadmm,
-                                showPlots=showPlots, savePlots=true, 
+                                showPlots=showPlots, savePlots=savePlots, 
                                 filename=conv_plot_path)
         
         # Create timing analysis plot
         timing_plot_path = joinpath(conv_plots_dir, "tadmm_timing_socp.png")
         plot_tadmm_timing_analysis(sol_socp_tadmm, sol_socp_bf,
-                                showPlots=showPlots, savePlots=true,
+                                showPlots=showPlots, savePlots=savePlots,
                                 filename=timing_plot_path)
         
         println(COLOR_SUCCESS, "✓ Convergence plots saved to $(conv_plots_dir)", COLOR_RESET)
@@ -1967,7 +2190,7 @@ begin # plotting results
     # Plot input curves (load, PV, cost) - save in system-specific folder (not processedData root)
     if plotInputCurves
         input_curves_path = joinpath(system_dir, "input_curves_socp.png")
-        plot_input_curves(data, showPlots=showPlots, savePlots=true, filename=input_curves_path)
+        plot_input_curves(data, showPlots=showPlots, savePlots=savePlots, filename=input_curves_path)
     end
 
     # Plot battery actions (only if optimization was successful and batteries exist)
@@ -1975,7 +2198,7 @@ begin # plotting results
     if plotBatteryActions && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
         battery_actions_path = joinpath(system_dir, "battery_actions_socp_bf.png")
         plot_battery_actions(sol_socp_bf, data, "SOCP-BF (Gurobi)", 
-                            showPlots=showPlots, savePlots=true, 
+                            showPlots=showPlots, savePlots=savePlots, 
                             filename=battery_actions_path,
                             plot_all_batteries=saveAllBatteryPlots)
         
@@ -1987,7 +2210,7 @@ begin # plotting results
                 tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
                 battery_actions_tadmm_path = joinpath(system_dir, "battery_actions_socp_tadmm.png")
                 plot_battery_actions(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)", 
-                                    showPlots=showPlots, savePlots=true, 
+                                    showPlots=showPlots, savePlots=savePlots, 
                                     filename=battery_actions_tadmm_path,
                                     plot_all_batteries=saveAllBatteryPlots)
             else
@@ -2004,7 +2227,7 @@ begin # plotting results
     if plotSubstationPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
         subs_power_cost_path = joinpath(system_dir, "substation_power_cost_socp_bf.png")
         plot_substation_power_and_cost(sol_socp_bf, data, "SOCP-BF (Gurobi)",
-                                    showPlots=showPlots, savePlots=true,
+                                    showPlots=showPlots, savePlots=savePlots,
                                     filename=subs_power_cost_path)
         
         # Plot tADMM substation power if available
@@ -2012,7 +2235,7 @@ begin # plotting results
             tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
             subs_power_cost_tadmm_path = joinpath(system_dir, "substation_power_cost_socp_tadmm.png")
             plot_substation_power_and_cost(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
-                                        showPlots=showPlots, savePlots=true,
+                                        showPlots=showPlots, savePlots=savePlots,
                                         filename=subs_power_cost_tadmm_path)
         end
     end
@@ -2051,7 +2274,7 @@ begin # plotting results
             # BF individual PV plots
             pv_power_all_bf_path = joinpath(system_dir, "pv_power_socp_bf.png")
             plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
-                        showPlots=showPlots, savePlots=true,
+                        showPlots=showPlots, savePlots=savePlots,
                         filename=pv_power_all_bf_path,
                         plot_all_pvs=true)
             
@@ -2063,7 +2286,7 @@ begin # plotting results
                     tadmm_solver_name = use_gurobi_for_tadmm ? "Gurobi" : "Ipopt"
                     pv_power_all_tadmm_path = joinpath(system_dir, "pv_power_socp_tadmm.png")
                     plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
-                                showPlots=showPlots, savePlots=true,
+                                showPlots=showPlots, savePlots=savePlots,
                                 filename=pv_power_all_tadmm_path,
                                 plot_all_pvs=true)
                 else
@@ -2077,7 +2300,7 @@ begin # plotting results
             pv_power_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_bf.png")
             plot_pv_power(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                         pv_index=1,  # Plot first PV (or only PV)
-                        showPlots=showPlots, savePlots=true,
+                        showPlots=showPlots, savePlots=savePlots,
                         filename=pv_power_path)
             
             # Plot tADMM PV power if available (conditional on convergence)
@@ -2089,7 +2312,7 @@ begin # plotting results
                     pv_power_tadmm_path = joinpath(system_dir, "pv_power_bus_$(first_pv_bus)_socp_tadmm.png")
                     plot_pv_power(sol_socp_tadmm, data, "SOCP-tADMM ($tadmm_solver_name)",
                                 pv_index=1,
-                                showPlots=showPlots, savePlots=true,
+                                showPlots=showPlots, savePlots=savePlots,
                                 filename=pv_power_tadmm_path)
                 else
                     println(COLOR_WARNING, "⚠ Skipping tADMM PV plot (not converged)", COLOR_RESET)
@@ -2109,7 +2332,7 @@ begin # plotting results
             println("📊 Generating PV power circle GIFs for all $(length(data[:Dset])) PV units...")
             pv_circle_gif_all_path = joinpath(system_dir, "pv_power_circle_socp_bf.gif")
             plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
-                                    showPlots=showPlots, savePlots=true,
+                                    showPlots=showPlots, savePlots=savePlots,
                                     filename=pv_circle_gif_all_path,
                                     plot_all_pvs=true)
             
@@ -2120,7 +2343,7 @@ begin # plotting results
                 if should_plot_tadmm
                     pv_circle_gif_all_tadmm_path = joinpath(system_dir, "pv_power_circle_socp_tadmm.gif")
                     plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
-                                            showPlots=showPlots, savePlots=true,
+                                            showPlots=showPlots, savePlots=savePlots,
                                             filename=pv_circle_gif_all_tadmm_path,
                                             plot_all_pvs=true)
                 else
@@ -2134,7 +2357,7 @@ begin # plotting results
             pv_circle_gif_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_bf.gif")
             plot_pv_power_circle_gif(sol_socp_bf, data, "SOCP-BF",
                                     pv_index=1,
-                                    showPlots=showPlots, savePlots=true,
+                                    showPlots=showPlots, savePlots=savePlots,
                                     filename=pv_circle_gif_path)
             
             # Create tADMM PV power circle GIF if available (conditional on convergence)
@@ -2145,7 +2368,7 @@ begin # plotting results
                     pv_circle_gif_tadmm_path = joinpath(system_dir, "pv_power_circle_bus_$(first_pv_bus)_socp_tadmm.gif")
                     plot_pv_power_circle_gif(sol_socp_tadmm, data, "SOCP-tADMM",
                                             pv_index=1,
-                                            showPlots=showPlots, savePlots=true,
+                                            showPlots=showPlots, savePlots=savePlots,
                                             filename=pv_circle_gif_tadmm_path)
                 else
                     println(COLOR_WARNING, "⚠ Skipping tADMM PV circle GIF (not converged)", COLOR_RESET)
