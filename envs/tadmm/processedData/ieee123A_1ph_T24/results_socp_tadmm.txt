@@ -39,15 +39,15 @@ Relative difference: 0.0121%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 2.4850 seconds (actual time on machine)
-  Solver time: 1.2820 seconds (reported by Gurobi)
+  Wall-clock time: 0.8960 seconds (actual time on machine)
+  Solver time: 0.2050 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 20.8920 seconds (actual time on machine)
-  Effective time: 6.6920 seconds (max subproblem time per iter)
-  Sequential time: 106.9680 seconds (sum of all subproblems)
+  Wall-clock time: 23.2010 seconds (actual time on machine)
+  Effective time: 7.1620 seconds (max subproblem time per iter)
+  Sequential time: 110.9850 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.12x
-  Parallel efficiency: 32.0% (0.32x speedup)
+  tADMM vs BF (wall-clock): 0.04x
+  Parallel efficiency: 30.9% (0.31x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
