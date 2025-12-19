@@ -29,22 +29,21 @@ env_path = joinpath(@__DIR__, "envs", "tadmm")
 Pkg.activate(env_path)
 
 # ============================================================================
-# SOLVER CONFIGURATION - Gurobi disabled (license expired)
+# SOLVER CONFIGURATION
 # ============================================================================
-# Solver selection - Using Ipopt only
-const use_gurobi_for_bf = false       # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
-const use_gurobi_for_tadmm = false    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
-const use_gurobi = false  # HARDCODED TO FALSE - Gurobi license expired
+# Solver selection
+const use_gurobi_for_bf = true        # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
+const use_gurobi_for_tadmm = true     # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
+const use_gurobi = true
 # ============================================================================
 
 using Revise
 using LinearAlgebra
 using JuMP
 using Ipopt
-# Gurobi disabled - license expired
-# if use_gurobi
-#     using Gurobi
-# end
+if use_gurobi
+    using Gurobi
+end
 using OpenDSSDirect
 using Printf
 using Statistics
@@ -117,9 +116,8 @@ enable_warm_start = true  # ENABLED to test warm-start with detailed timing - us
 use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
-# Gurobi disabled - license expired
 # Create shared Gurobi environment (suppresses repeated license messages)
-# const GUROBI_ENV = Gurobi.Env()
+const GUROBI_ENV = Gurobi.Env()
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -226,17 +224,16 @@ begin # function mpopf socp bruteforced
         
         # ========== 2. CREATE MODEL ==========
         model = Model()
-        # Gurobi disabled - using Ipopt only
-        # if solver == :gurobi
-        #     set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
-        #     set_optimizer_attribute(model, "NonConvex", 2)
-        #     set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
-        #     set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
-        # else
-        set_optimizer(model, Ipopt.Optimizer)
-        set_optimizer_attribute(model, "print_level", 3)
-        set_optimizer_attribute(model, "max_iter", 3000)
-        # end
+        if solver == :gurobi
+            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
+            set_optimizer_attribute(model, "NonConvex", 2)
+            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+            set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
+        else
+            set_optimizer(model, Ipopt.Optimizer)
+            set_optimizer_attribute(model, "print_level", 3)
+            set_optimizer_attribute(model, "max_iter", 3000)
+        end
         
         # ========== 3. DEFINE VARIABLES ==========
         @variable(model, P_Subs[t in Tset] >= 0)
@@ -716,28 +713,27 @@ begin # function primal update (update 1) tadmm socp
         Δt = delta_t_h
         P_BASE = kVA_B
         
-        # Create model for subproblem t0 - Using Ipopt only (Gurobi disabled)
+        # Create model for subproblem t0
         model = Model()
-        # Gurobi disabled
-        # if solver == :gurobi
-        #     set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
-        #     set_silent(model)
-        #     set_optimizer_attribute(model, "NonConvex", 2)
-        #     set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
-        #     set_optimizer_attribute(model, "Threads", 1)  # Thread-safety: each subproblem uses 1 thread
-        #     set_optimizer_attribute(model, "DualReductions", 0)
-        # else  # :ipopt
-        set_optimizer(model, Ipopt.Optimizer)
-        set_silent(model)
-        set_optimizer_attribute(model, "print_level", 0)
-        set_optimizer_attribute(model, "max_iter", 3000)
-        set_optimizer_attribute(model, "tol", 1e-6)
-        # end
-        set_optimizer_attribute(model, "acceptable_tol", 1e-4)
-        set_optimizer_attribute(model, "mu_strategy", "adaptive")
-        set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
-        set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
-        set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
+        if solver == :gurobi
+            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
+            set_silent(model)
+            set_optimizer_attribute(model, "NonConvex", 2)
+            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+            set_optimizer_attribute(model, "Threads", 1)  # Thread-safety: each subproblem uses 1 thread
+            set_optimizer_attribute(model, "DualReductions", 0)
+        else  # :ipopt
+            set_optimizer(model, Ipopt.Optimizer)
+            set_silent(model)
+            set_optimizer_attribute(model, "print_level", 0)
+            set_optimizer_attribute(model, "max_iter", 3000)
+            set_optimizer_attribute(model, "tol", 1e-6)
+            set_optimizer_attribute(model, "acceptable_tol", 1e-4)
+            set_optimizer_attribute(model, "mu_strategy", "adaptive")
+            set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
+            set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+            set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
+        end
         
         # ===== NETWORK VARIABLES (time t0 ONLY) =====
         @variable(model, P_Subs_t0 >= 0)
