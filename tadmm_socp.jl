@@ -28,11 +28,23 @@ import Pkg
 env_path = joinpath(@__DIR__, "envs", "tadmm")
 Pkg.activate(env_path)
 
+# ============================================================================
+# SOLVER CONFIGURATION - Gurobi disabled (license expired)
+# ============================================================================
+# Solver selection - Using Ipopt only
+const use_gurobi_for_bf = false       # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
+const use_gurobi_for_tadmm = false    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
+const use_gurobi = false  # HARDCODED TO FALSE - Gurobi license expired
+# ============================================================================
+
 using Revise
 using LinearAlgebra
 using JuMP
 using Ipopt
-using Gurobi
+# Gurobi disabled - license expired
+# if use_gurobi
+#     using Gurobi
+# end
 using OpenDSSDirect
 using Printf
 using Statistics
@@ -60,6 +72,8 @@ else
     println("  \$ julia tadmm_socp.jl")
 end
 println("="^80)
+println("Solver configuration: Ipopt (NLP) - Gurobi disabled")
+println("="^80)
 
 begin # entire script including environment setup
 
@@ -79,10 +93,6 @@ T = 24  # Number of time steps
 # T = 480  # Number of time steps
 # T = 144
 delta_t_h = 24.0/T  # Time step duration in hours
-
-# Solver selection
-use_gurobi_for_bf = true       # Use Gurobi for brute force (SOCP)
-use_gurobi_for_tadmm = true    # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
 
 # tADMM algorithm parameters
 rho_base = 3000.0               # Base ρ value for T=24 (REDUCED from 10k - less aggressive)
@@ -107,8 +117,9 @@ enable_warm_start = true  # ENABLED to test warm-start with detailed timing - us
 use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
+# Gurobi disabled - license expired
 # Create shared Gurobi environment (suppresses repeated license messages)
-const GUROBI_ENV = Gurobi.Env()
+# const GUROBI_ENV = Gurobi.Env()
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -215,16 +226,17 @@ begin # function mpopf socp bruteforced
         
         # ========== 2. CREATE MODEL ==========
         model = Model()
-        if solver == :gurobi
-            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
-            set_optimizer_attribute(model, "NonConvex", 2)
-            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
-            set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
-        else
-            set_optimizer(model, Ipopt.Optimizer)
-            set_optimizer_attribute(model, "print_level", 3)
-            set_optimizer_attribute(model, "max_iter", 3000)
-        end
+        # Gurobi disabled - using Ipopt only
+        # if solver == :gurobi
+        #     set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
+        #     set_optimizer_attribute(model, "NonConvex", 2)
+        #     set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+        #     set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
+        # else
+        set_optimizer(model, Ipopt.Optimizer)
+        set_optimizer_attribute(model, "print_level", 3)
+        set_optimizer_attribute(model, "max_iter", 3000)
+        # end
         
         # ========== 3. DEFINE VARIABLES ==========
         @variable(model, P_Subs[t in Tset] >= 0)
@@ -704,27 +716,28 @@ begin # function primal update (update 1) tadmm socp
         Δt = delta_t_h
         P_BASE = kVA_B
         
-        # Create model for subproblem t0 (solver choice: Gurobi for SOCP or Ipopt for NLP)
+        # Create model for subproblem t0 - Using Ipopt only (Gurobi disabled)
         model = Model()
-        if solver == :gurobi
-            set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
-            set_silent(model)
-            set_optimizer_attribute(model, "NonConvex", 2)
-            set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
-            set_optimizer_attribute(model, "Threads", 1)  # Thread-safety: each subproblem uses 1 thread
-            set_optimizer_attribute(model, "DualReductions", 0)
-        else  # :ipopt
-            set_optimizer(model, Ipopt.Optimizer)
-            set_silent(model)
-            set_optimizer_attribute(model, "print_level", 0)
-            set_optimizer_attribute(model, "max_iter", 3000)
-            set_optimizer_attribute(model, "tol", 1e-6)
-            set_optimizer_attribute(model, "acceptable_tol", 1e-4)
-            set_optimizer_attribute(model, "mu_strategy", "adaptive")
-            set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
-            set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
-            set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
-        end
+        # Gurobi disabled
+        # if solver == :gurobi
+        #     set_optimizer(model, () -> Gurobi.Optimizer(GUROBI_ENV))
+        #     set_silent(model)
+        #     set_optimizer_attribute(model, "NonConvex", 2)
+        #     set_optimizer_attribute(model, "OutputFlag", 0)  # Suppress Gurobi output
+        #     set_optimizer_attribute(model, "Threads", 1)  # Thread-safety: each subproblem uses 1 thread
+        #     set_optimizer_attribute(model, "DualReductions", 0)
+        # else  # :ipopt
+        set_optimizer(model, Ipopt.Optimizer)
+        set_silent(model)
+        set_optimizer_attribute(model, "print_level", 0)
+        set_optimizer_attribute(model, "max_iter", 3000)
+        set_optimizer_attribute(model, "tol", 1e-6)
+        # end
+        set_optimizer_attribute(model, "acceptable_tol", 1e-4)
+        set_optimizer_attribute(model, "mu_strategy", "adaptive")
+        set_optimizer_attribute(model, "linear_solver", "mumps")  # More robust than default MA27
+        set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+        set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
         
         # ===== NETWORK VARIABLES (time t0 ONLY) =====
         @variable(model, P_Subs_t0 >= 0)
@@ -935,9 +948,9 @@ begin # function primal update (update 1) tadmm socp
         # Solve subproblem
         optimize!(model)
         
-        # Check if solution exists
+        # Check if solution exists (accept Ipopt statuses)
         status = termination_status(model)
-        if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED
+        if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED && status != MOI.ALMOST_LOCALLY_SOLVED
             error("Subproblem t0=$t0 failed with status: $status. Try reducing ρ or check problem feasibility.")
         end
         
@@ -947,15 +960,16 @@ begin # function primal update (update 1) tadmm socp
         # Get solver statistics if available (Gurobi-specific)
         barrier_iters = 0
         simplex_iters = 0
-        if solver == :gurobi
-            try
-                # Get Gurobi model directly
-                gurobi_model = backend(model).optimizer.model
-                barrier_iters = get_intattr(gurobi_model.inner, "BarIterCount")
-            catch e
-                barrier_iters = 0  # Silently fail if attribute not available
-            end
-        end
+        # Gurobi disabled
+        # if solver == :gurobi
+        #     try
+        #         # Get Gurobi model directly
+        #         gurobi_model = backend(model).optimizer.model
+        #         barrier_iters = get_intattr(gurobi_model.inner, "BarIterCount")
+        #     catch e
+        #         barrier_iters = 0  # Silently fail if attribute not available
+        #     end
+        # end
         
         # Extract results - store only local times (Dict structure, not array)
         for j in Bset
@@ -2049,7 +2063,7 @@ begin # tadmm socp solve
             @printf(io, "Final dual residual: %.2e\n", sol_socp_tadmm[:convergence_history][:s_norm_history][end])
             println(io, "\n--- OBJECTIVE VALUE ---")
             @printf(io, "Total Cost: \$%.4f\n", sol_socp_tadmm[:objective])
-            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED
                 obj_diff = abs(sol_socp_tadmm[:objective] - sol_socp_bf[:objective])
                 obj_rel_diff = obj_diff / sol_socp_bf[:objective] * 100
                 @printf(io, "Brute Force objective: \$%.4f\n", sol_socp_bf[:objective])
@@ -2064,7 +2078,7 @@ begin # tadmm socp solve
             @printf(io, "  Wall-clock time: %.4f seconds (actual time on machine)\n", sol_socp_tadmm[:timing][:wallclock_time])
             @printf(io, "  Effective time: %.4f seconds (max subproblem time per iter)\n", sol_socp_tadmm[:timing][:total_effective_time])
             @printf(io, "  Sequential time: %.4f seconds (sum of all subproblems)\n", sol_socp_tadmm[:timing][:total_sequential_time])
-            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED
                 println(io, "Speedup Metrics:")
                 speedup_wallclock = sol_socp_bf[:wallclock_time] / sol_socp_tadmm[:timing][:wallclock_time]
                 @printf(io, "  tADMM vs BF (wall-clock): %.2fx\n", speedup_wallclock)
@@ -2195,7 +2209,7 @@ begin # plotting results
 
     # Plot battery actions (only if optimization was successful and batteries exist)
     # Save in system-specific subfolder
-    if plotBatteryActions && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Bset])
+    if plotBatteryActions && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Bset])
         battery_actions_path = joinpath(system_dir, "battery_actions_socp_bf.png")
         plot_battery_actions(sol_socp_bf, data, "SOCP-BF (Gurobi)", 
                             showPlots=showPlots, savePlots=savePlots, 
@@ -2224,7 +2238,7 @@ begin # plotting results
     end
 
     # Plot substation power and cost (only if optimization was successful)
-    if plotSubstationPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
+    if plotSubstationPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
         subs_power_cost_path = joinpath(system_dir, "substation_power_cost_socp_bf.png")
         plot_substation_power_and_cost(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=savePlots,
@@ -2241,7 +2255,7 @@ begin # plotting results
     end
     
     # Create voltage profile GIF animation for all buses
-    if plotVoltageAllBuses && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
+    if plotVoltageAllBuses && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
         voltage_gif_path = joinpath(system_dir, "voltage_animation_socp_bf.gif")
         plot_voltage_profile_all_buses(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=false,
@@ -2266,7 +2280,7 @@ begin # plotting results
     end
         
     # Plot PV power (p_D and q_D) if PV exists
-    if plotPVPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Dset])
+    if plotPVPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
         # Plot individual PV plots for ALL PVs if enabled
         if saveAllPVPlots
             println("\n📊 Generating individual PV plots for all $(length(data[:Dset])) PV units...")
@@ -2326,7 +2340,7 @@ begin # plotting results
     end
     
     # Create PV power circle GIFs
-    if plotPVCircleGIF && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED) && !isempty(data[:Dset])
+    if plotPVCircleGIF && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
         if saveAllPVPlots
             # Create circle GIFs for ALL PVs
             println("📊 Generating PV power circle GIFs for all $(length(data[:Dset])) PV units...")
