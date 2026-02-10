@@ -1,2 +1,2 @@
-! Storage systems can be added here if needed
-! Format: New Storage.Battery<bus> phases=1 Bus1=<bus> kV=4.1569 kVA=<kVA> kWrated=<kW> kWhrated=<kWh> %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+! Battery storage at bus 100 with substantial rating
+New Storage.Battery100 phases=1 Bus1=100 kV=4.1569 kVA=120.0 kWrated=100.0 kWhrated=400.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
