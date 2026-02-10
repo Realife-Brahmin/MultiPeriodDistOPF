@@ -85,7 +85,8 @@ includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
+# systemName = "ieee123A_1ph"
+systemName = "ieee2552_1ph"
 T = 24  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
