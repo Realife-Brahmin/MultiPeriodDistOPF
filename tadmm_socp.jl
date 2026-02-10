@@ -70,9 +70,9 @@ else
     println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
     println("  \$ julia tadmm_socp.jl")
 end
-println("="^80)
-println("Solver configuration: Ipopt (NLP) - Gurobi disabled")
-println("="^80)
+# println("="^80)
+# println("Solver configuration: Ipopt (NLP) - Gurobi disabled")
+# println("="^80)
 
 begin # entire script including environment setup
 
