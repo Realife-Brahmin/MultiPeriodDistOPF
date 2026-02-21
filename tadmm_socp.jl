@@ -87,11 +87,11 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
 systemName = "ieee2552_1ph"
-T = 24  # Number of time steps
+# T = 24  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
-# T = 144
+T = 144
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # tADMM algorithm parameters
@@ -132,12 +132,14 @@ begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
     savePlots = false  # DISABLED: Set to true to save plots (time-consuming with many components)
+    savePlots = true 
     saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
     saveAllPVPlots = true  # Set to true to save plots for ALL PV units (shows p_D and q_D)
     plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
     # Plot type toggles (enable/disable specific plot types) - ALL DISABLED FOR FASTER RUNS
-    plotConvergence = false      # tADMM convergence plots (always plotted)
+    # plotConvergence = false      # tADMM convergence plots (always plotted)
+    # plotConvergence = true
     plotInputCurves = false      # Load, PV, and cost input curves (always plotted)
     plotBatteryActions = false   # Battery charging/discharging and SOC (conditional on convergence)
     plotSubstationPower = false  # Substation power and cost (always plotted)
