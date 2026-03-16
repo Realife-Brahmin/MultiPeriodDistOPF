@@ -32,9 +32,9 @@ Pkg.activate(env_path)
 # SOLVER CONFIGURATION
 # ============================================================================
 # Solver selection
-const use_gurobi_for_bf = true        # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
-const use_gurobi_for_tadmm = true     # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
-const use_gurobi = true
+const use_gurobi_for_bf = false        # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
+const use_gurobi_for_tadmm = false     # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
+const use_gurobi = false
 # ============================================================================
 
 using Revise
@@ -91,7 +91,8 @@ systemName = "ieee2552_1ph"
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
-T = 144
+# T = 144
+T = 6
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # tADMM algorithm parameters
@@ -118,7 +119,7 @@ use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
 # Create shared Gurobi environment (suppresses repeated license messages)
-const GUROBI_ENV = Gurobi.Env()
+const GUROBI_ENV = use_gurobi ? Gurobi.Env() : nothing
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -138,7 +139,7 @@ begin # scenario config
     plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
     # Plot type toggles (enable/disable specific plot types) - ALL DISABLED FOR FASTER RUNS
-    # plotConvergence = false      # tADMM convergence plots (always plotted)
+    plotConvergence = false      # tADMM convergence plots (always plotted)
     # plotConvergence = true
     plotInputCurves = false      # Load, PV, and cost input curves (always plotted)
     plotBatteryActions = false   # Battery charging/discharging and SOC (conditional on convergence)
