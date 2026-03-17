@@ -87,12 +87,12 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
 systemName = "ieee2552_1ph"
-# T = 24  # Number of time steps
+T = 24  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
 # T = 144
-T = 6
+# T = 6
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # tADMM algorithm parameters
