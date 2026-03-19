@@ -1,0 +1,13 @@
+! Battery storage distributed across ieee2552_1ph network
+! 10 batteries spatially distributed with varying sizes (50-150 kVA)
+
+New Storage.Battery250 phases=1 Bus1=250 kV=4.1569 kVA=100.0 kWrated=83.3 kWhrated=333.2 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery500 phases=1 Bus1=500 kV=4.1569 kVA=75.0 kWrated=62.5 kWhrated=250.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery750 phases=1 Bus1=750 kV=4.1569 kVA=120.0 kWrated=100.0 kWhrated=400.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery1000 phases=1 Bus1=1000 kV=4.1569 kVA=60.0 kWrated=50.0 kWhrated=200.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery1250 phases=1 Bus1=1250 kV=4.1569 kVA=150.0 kWrated=125.0 kWhrated=500.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery1500 phases=1 Bus1=1500 kV=4.1569 kVA=90.0 kWrated=75.0 kWhrated=300.0 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery1750 phases=1 Bus1=1750 kV=4.1569 kVA=110.0 kWrated=91.7 kWhrated=366.8 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery2000 phases=1 Bus1=2000 kV=4.1569 kVA=85.0 kWrated=70.8 kWhrated=283.2 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery2250 phases=1 Bus1=2250 kV=4.1569 kVA=70.0 kWrated=58.3 kWhrated=233.2 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.Battery2500 phases=1 Bus1=2500 kV=4.1569 kVA=95.0 kWrated=79.2 kWhrated=316.8 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External

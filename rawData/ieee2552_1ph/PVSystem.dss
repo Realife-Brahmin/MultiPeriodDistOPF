@@ -1,0 +1,14 @@
+! PV systems distributed across ieee2552_1ph network
+! 10 PVs spatially distributed with varying sizes (50-150 kVA)
+! Mix of: PV-only buses, BESS-only buses, and PV+BESS buses
+
+New PVsystem.PV250 irrad=1.0 Phases=1 Bus1=250.1 kV=4.1569 kVA=100.0 Pmpp=83.3 %cutin=0.001 %cutout=0.001
+New PVsystem.PV300 irrad=1.0 Phases=1 Bus1=300.1 kV=4.1569 kVA=80.0 Pmpp=66.7 %cutin=0.001 %cutout=0.001
+New PVsystem.PV600 irrad=1.0 Phases=1 Bus1=600.1 kV=4.1569 kVA=90.0 Pmpp=75.0 %cutin=0.001 %cutout=0.001
+New PVsystem.PV750 irrad=1.0 Phases=1 Bus1=750.1 kV=4.1569 kVA=120.0 Pmpp=100.0 %cutin=0.001 %cutout=0.001
+New PVsystem.PV1100 irrad=1.0 Phases=1 Bus1=1100.1 kV=4.1569 kVA=70.0 Pmpp=58.3 %cutin=0.001 %cutout=0.001
+New PVsystem.PV1250 irrad=1.0 Phases=1 Bus1=1250.1 kV=4.1569 kVA=150.0 Pmpp=125.0 %cutin=0.001 %cutout=0.001
+New PVsystem.PV1600 irrad=1.0 Phases=1 Bus1=1600.1 kV=4.1569 kVA=65.0 Pmpp=54.2 %cutin=0.001 %cutout=0.001
+New PVsystem.PV1750 irrad=1.0 Phases=1 Bus1=1750.1 kV=4.1569 kVA=110.0 Pmpp=91.7 %cutin=0.001 %cutout=0.001
+New PVsystem.PV2000 irrad=1.0 Phases=1 Bus1=2000.1 kV=4.1569 kVA=85.0 Pmpp=70.8 %cutin=0.001 %cutout=0.001
+New PVsystem.PV2500 irrad=1.0 Phases=1 Bus1=2500.1 kV=4.1569 kVA=95.0 Pmpp=79.2 %cutin=0.001 %cutout=0.001

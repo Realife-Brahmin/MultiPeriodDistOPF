@@ -32,9 +32,9 @@ Pkg.activate(env_path)
 # SOLVER CONFIGURATION
 # ============================================================================
 # Solver selection
-const use_gurobi_for_bf = true        # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
-const use_gurobi_for_tadmm = true     # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
-const use_gurobi = true
+const use_gurobi_for_bf = false        # Use Gurobi for brute force (SOCP), false = use Ipopt (NLP)
+const use_gurobi_for_tadmm = false     # Use Gurobi for tADMM subproblems (SOCP), false = use Ipopt (NLP)
+const use_gurobi = false
 # ============================================================================
 
 using Revise
@@ -70,9 +70,9 @@ else
     println("  \$ export JULIA_NUM_THREADS=$(AVAILABLE_CORES)")
     println("  \$ julia tadmm_socp.jl")
 end
-println("="^80)
-println("Solver configuration: Ipopt (NLP) - Gurobi disabled")
-println("="^80)
+# println("="^80)
+# println("Solver configuration: Ipopt (NLP) - Gurobi disabled")
+# println("="^80)
 
 begin # entire script including environment setup
 
@@ -85,12 +85,14 @@ includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
+# systemName = "ieee123A_1ph"
+systemName = "ieee2552_1ph"
 T = 24  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
 # T = 144
+# T = 6
 delta_t_h = 24.0/T  # Time step duration in hours
 
 # tADMM algorithm parameters
@@ -117,7 +119,7 @@ use_faadmm = false
 faadmm_restart_eta = 0.999     # Restart parameter η: restart if l^k ≥ η·l^(k-1) where l = combined residual
 
 # Create shared Gurobi environment (suppresses repeated license messages)
-const GUROBI_ENV = Gurobi.Env()
+const GUROBI_ENV = use_gurobi ? Gurobi.Env() : nothing
 
 # Define color schemes
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -131,12 +133,14 @@ begin # scenario config
     # Plotting settings
     showPlots = false  # Set to true to display plots interactively
     savePlots = false  # DISABLED: Set to true to save plots (time-consuming with many components)
+    savePlots = true 
     saveAllBatteryPlots = true  # Set to true to save plots for ALL batteries (time-consuming)
     saveAllPVPlots = true  # Set to true to save plots for ALL PV units (shows p_D and q_D)
     plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
     # Plot type toggles (enable/disable specific plot types) - ALL DISABLED FOR FASTER RUNS
     plotConvergence = false      # tADMM convergence plots (always plotted)
+    # plotConvergence = true
     plotInputCurves = false      # Load, PV, and cost input curves (always plotted)
     plotBatteryActions = false   # Battery charging/discharging and SOC (conditional on convergence)
     plotSubstationPower = false  # Substation power and cost (always plotted)
