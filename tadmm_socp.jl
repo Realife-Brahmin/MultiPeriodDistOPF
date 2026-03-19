@@ -51,6 +51,9 @@ using Parameters: @unpack
 using Plots
 using Crayons
 
+# MOI for solver attribute queries
+const MOI = JuMP.MOI
+
 # Display threading status at startup
 println("\n" * "="^80)
 println("🚀 PARALLELIZATION STATUS")
@@ -965,13 +968,8 @@ begin # function primal update (update 1) tadmm socp
         ipopt_iters = 0
         if solver == :ipopt && track_subproblem_details
             try
-                # Try to get iteration count via MOI RawStatusString
-                raw_status = MOI.get(model, MOI.RawStatusString())
-                # Ipopt format: "Number of Iterations....: 42"
-                m = match(r"Number of Iterations.*?:\s*(\d+)", raw_status)
-                if m !== nothing
-                    ipopt_iters = parse(Int, m.captures[1])
-                end
+                # Ipopt uses interior-point/barrier algorithm
+                ipopt_iters = MOI.get(model, MOI.BarrierIterations())
             catch
                 ipopt_iters = 0  # Silently fail if not available
             end
