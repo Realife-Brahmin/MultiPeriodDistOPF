@@ -87,7 +87,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
 systemName = "ieee2552_1ph"
-T = 6  # Number of time steps (reduced from 24 for quick testing of subproblem tracking)
+T = 12  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
