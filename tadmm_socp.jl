@@ -88,9 +88,9 @@ includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
-systemName = "ieee2552_1ph"
-T = 12  # Number of time steps
+systemName = "ieee123A_1ph"
+# systemName = "ieee2552_1ph"
+T = 24  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -2225,7 +2225,7 @@ begin # tadmm socp solve
                             max_time = maximum(times_t0),
                             std_time = std(times_t0),
                             mean_iters = isempty(iters_nonzero) ? 0.0 : mean(iters_nonzero),
-                            median_iters = isempty(iters_nonzero) ? 0 : Int(median(iters_nonzero)),
+                            median_iters = isempty(iters_nonzero) ? 0 : round(Int, median(iters_nonzero)),
                             max_iters = isempty(iters_nonzero) ? 0 : maximum(iters_nonzero)
                         ))
                     end

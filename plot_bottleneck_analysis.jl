@@ -26,11 +26,14 @@ text_color = "#000000"      # Black
 grid_major = "#E8C4D4"      # Soft pink
 grid_minor = "#D4D4E8"      # Soft lavender
 
-# Command line argument or default
+# Command line arguments or defaults
+# Usage: julia plot_bottleneck_analysis.jl [T] [systemName]
 T = length(ARGS) > 0 ? parse(Int, ARGS[1]) : 6
+systemName = length(ARGS) > 1 ? ARGS[2] : "ieee2552_1ph"
 
 # Load data
-csv_path = raw"c:\Users\arjha\OneDrive - Tesla\Documents\documents_general_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552_1ph_T" * string(T) * raw"\subproblem_timing_details.csv"
+base_path = raw"c:\Users\arjha\OneDrive - Tesla\Documents\documents_general_addendum\MultiPeriodDistOPF\envs\tadmm\processedData"
+csv_path = joinpath(base_path, "$(systemName)_T$(T)", "subproblem_timing_details.csv")
 
 if !isfile(csv_path)
     error("CSV file not found: $csv_path")
