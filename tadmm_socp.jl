@@ -88,9 +88,10 @@ includet(joinpath(env_path, "Plotter.jl"))
 
 # System and simulation parameters
 # systemName = "ads10A_1ph"
-systemName = "ieee123A_1ph"
+# systemName = "ieee123A_1ph"
 # systemName = "ieee2552_1ph"
-T = 24  # Number of time steps
+systemName = "large10k_1ph"
+T = 6  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -1967,7 +1968,8 @@ begin # function solve MPOPF tadmm socp
 end # function solve MPOPF tadmm socp
 
 begin # tadmm socp solve
-    if !isempty(data[:Bset])  # Only run tADMM if there are batteries
+    # SKIP TADMM FOR INITIAL LARGE10K TEST - JUST RUN BRUTE FORCE
+    if false && !isempty(data[:Bset])  # Only run tADMM if there are batteries
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (tADMM)", COLOR_RESET)
         println("="^80)
