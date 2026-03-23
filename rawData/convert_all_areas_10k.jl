@@ -69,22 +69,33 @@ open(joinpath(output_dir, "BranchData.dss"), "w") do f
         write(f, "New Line.L$(line_counter[]) Phases=1 Bus1=$fbus Bus2=$tbus r1=$r_default x1=$x_default\n")
     end
 
-    # 2. Cross-boundary connections
+    # 2. Cross-boundary connections to area ROOT buses
+    # CB_full.txt connects to various area buses, but this creates mesh topology
+    # Instead, connect each area's root (local bus 1) to a backbone bus
+    # Use CB to determine WHICH backbone bus connects to WHICH area
+
+    # First, collect unique areas from CB_full
+    cb_areas_seen = Set{Int}()
+    cb_area_to_backbone = Dict{Int, Int}()
+
     for i in 1:size(cb_data, 1)
         backbone_bus = cb_data[i, 1]
-        area_local_bus = cb_data[i, 2]
-        cb_area_id = cb_data[i, 3]  # This is 101-120 in CB_full.txt
+        cb_area_id = cb_data[i, 3]
 
-        # Map CB area_id to actual Area directory number
-        # CB_full.txt uses area_id 101-120
-        # Area directories are Area1-Area101
-        # Mapping: CB area_id 101 → Area1, 102 → Area2, etc.
-        area_dir_num = cb_area_id - 100  # 101 → 1, 102 → 2, ..., 120 → 20
+        # Only create ONE connection per area (to avoid mesh)
+        if cb_area_id ∉ cb_areas_seen
+            area_dir_num = cb_area_id - 100  # 101 → 1, 102 → 2, etc.
+            cb_area_to_backbone[area_dir_num] = backbone_bus
+            push!(cb_areas_seen, cb_area_id)
+        end
+    end
 
-        area_global_bus = area_dir_num * 1000 + area_local_bus
+    # Now create CB connections to each area's ROOT bus (local bus 1)
+    for (area_dir_num, backbone_bus) in sort(collect(cb_area_to_backbone))
+        area_root_bus = area_dir_num * 1000 + 1  # Area root is local bus 1
 
         line_counter[] += 1
-        write(f, "New Line.L$(line_counter[]) Phases=1 Bus1=$backbone_bus Bus2=$area_global_bus r1=$r_boundary x1=$x_boundary\n")
+        write(f, "New Line.L$(line_counter[]) Phases=1 Bus1=$backbone_bus Bus2=$area_root_bus r1=$r_boundary x1=$x_boundary\n")
     end
 
     # 3. Internal lines within each area
