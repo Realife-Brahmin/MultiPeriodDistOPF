@@ -32,31 +32,59 @@ println("=== Main Backbone ===")
 main_feeder = readdlm(joinpath(flexparams_dir, "linedata.txt"), '\t', Int)
 println("Loaded: $(size(main_feeder, 1)) lines")
 
-# Read ALL area data
-println("\n=== Loading All Areas ===")
+# Read cross-boundary connections first
+println("\n=== Cross-Boundary Connections ===")
+cb_data = readdlm(joinpath(flexparams_dir, "CB_full.txt"), '\t', Int)
+println("Loaded: $(size(cb_data, 1)) CB connections")
+
+# Determine which areas are actually connected via CB
+println("\n=== Identifying Connected Areas from CB ===")
+cb_area_ids = unique(cb_data[:, 3])
+connected_area_dirs = sort([cb_id - 100 for cb_id in cb_area_ids])  # 101→1, 102→2, etc.
+println("CB mentions $(length(cb_area_ids)) unique area IDs: $(sort(cb_area_ids))")
+println("Mapping to area directories: $(connected_area_dirs)")
+
+# Read ONLY the connected area data
+println("\n=== Loading Connected Areas ===")
 area_data_dir = joinpath(flexparams_dir, "Area Data")
 area_lines = Dict{Int, Array{Int,2}}()
 
-for area_id in 1:101
+for area_id in connected_area_dirs
     linedata_file = joinpath(area_data_dir, "Area$area_id", "linedata.txt")
     if isfile(linedata_file)
         lines = readdlm(linedata_file, '\t', Int)
         area_lines[area_id] = lines
-        if area_id <= 5 || area_id == 101
+        if area_id <= 5 || area_id == maximum(connected_area_dirs)
             println("  Area$area_id: $(size(lines, 1)) lines")
         end
+    else
+        println("  WARNING: Area$area_id not found!")
     end
 end
 total_area_lines = sum(size(lines, 1) for lines in values(area_lines))
 println("  ... (showing first 5 and last)")
 println("Total: $(length(area_lines)) areas, $total_area_lines lines")
 
-# Read cross-boundary connections
-println("\n=== Cross-Boundary Connections ===")
-cb_data = readdlm(joinpath(flexparams_dir, "CB_full.txt"), '\t', Int)
-println("Loaded: $(size(cb_data, 1)) CB connections")
+# Bus numbering: 6-digit format AAABBB (Area X, local bus Y → X*1000 + Y)
 
-# Bus numbering: Area X, local bus Y → global bus X*1000 + Y
+# Build cross-boundary area mapping (before file writing)
+println("\n=== Building CB Area Mapping ===")
+cb_areas_seen = Set{Int}()
+cb_area_to_backbone = Dict{Int, Int}()
+
+for i in 1:size(cb_data, 1)
+    backbone_bus = cb_data[i, 1]
+    cb_area_id = cb_data[i, 3]
+
+    # Only create ONE connection per area (to avoid mesh)
+    if cb_area_id ∉ cb_areas_seen
+        area_dir_num = cb_area_id - 100  # 101 → 1, 102 → 2, etc.
+        cb_area_to_backbone[area_dir_num] = backbone_bus
+        push!(cb_areas_seen, cb_area_id)
+    end
+end
+println("Mapped $(length(cb_area_to_backbone)) areas to backbone connections")
+
 println("\n=== Generating BranchData.dss ===")
 line_counter = Ref(0)
 
@@ -70,27 +98,6 @@ open(joinpath(output_dir, "BranchData.dss"), "w") do f
     end
 
     # 2. Cross-boundary connections to area ROOT buses
-    # CB_full.txt connects to various area buses, but this creates mesh topology
-    # Instead, connect each area's root (local bus 1) to a backbone bus
-    # Use CB to determine WHICH backbone bus connects to WHICH area
-
-    # First, collect unique areas from CB_full
-    cb_areas_seen = Set{Int}()
-    cb_area_to_backbone = Dict{Int, Int}()
-
-    for i in 1:size(cb_data, 1)
-        backbone_bus = cb_data[i, 1]
-        cb_area_id = cb_data[i, 3]
-
-        # Only create ONE connection per area (to avoid mesh)
-        if cb_area_id ∉ cb_areas_seen
-            area_dir_num = cb_area_id - 100  # 101 → 1, 102 → 2, etc.
-            cb_area_to_backbone[area_dir_num] = backbone_bus
-            push!(cb_areas_seen, cb_area_id)
-        end
-    end
-
-    # Now create CB connections to each area's ROOT bus (local bus 1)
     for (area_dir_num, backbone_bus) in sort(collect(cb_area_to_backbone))
         area_root_bus = area_dir_num * 1000 + 1  # Area root is local bus 1
 
@@ -118,16 +125,19 @@ println("Generated $(line_counter[]) total lines")
 println("\n=== Identifying All Buses ===")
 all_buses = Set{Int}()
 
+# Backbone buses
 for i in 1:size(main_feeder, 1)
     push!(all_buses, main_feeder[i, 1])
     push!(all_buses, main_feeder[i, 2])
 end
 
-for i in 1:size(cb_data, 1)
-    push!(all_buses, cb_data[i, 1])
-    push!(all_buses, cb_data[i, 3] * 1000 + cb_data[i, 2])
+# Area root buses (connected via CB)
+for (area_dir_num, backbone_bus) in cb_area_to_backbone
+    push!(all_buses, backbone_bus)  # Backbone connection point
+    push!(all_buses, area_dir_num * 1000 + 1)  # Area root (local bus 1)
 end
 
+# Area internal buses
 for (area_id, lines) in area_lines
     for i in 1:size(lines, 1)
         push!(all_buses, area_id * 1000 + lines[i, 1])
@@ -172,8 +182,8 @@ open(joinpath(output_dir, "PVSystem.dss"), "w") do f
         end
     end
 
-    # Area PV (every 10th bus in each area)
-    for area_id in 1:101
+    # Area PV (every 10th bus in connected areas only)
+    for area_id in connected_area_dirs
         for local_bus in 2:10:120
             global_bus = area_id * 1000 + local_bus
             if global_bus in all_buses_sorted
@@ -221,9 +231,12 @@ println("\n" * "="^70)
 println("✓ CONVERSION COMPLETE")
 println("="^70)
 println("Buses:     $(length(all_buses_sorted))")
+println("  - Bus numbering: 6-digit AAABBB format")
+println("  - Backbone: 1-$(maximum(main_feeder))")
+println("  - Areas: $(minimum(connected_area_dirs))001-$(maximum(connected_area_dirs))XXX")
 println("Lines:     $(line_counter[])")
 println("  - Backbone:     $(size(main_feeder, 1))")
-println("  - Cross-bound:  $(size(cb_data, 1))")
+println("  - Cross-bound:  $(length(cb_area_to_backbone))")
 println("  - Area internal: $total_area_lines")
 println("Loads:     $(load_counter[])")
 println("PV:        $(pv_counter[])")
