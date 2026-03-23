@@ -37,17 +37,11 @@ println("\n=== Cross-Boundary Connections ===")
 cb_data = readdlm(joinpath(flexparams_dir, "CB_full.txt"), '\t', Int)
 println("Loaded: $(size(cb_data, 1)) CB connections")
 
-# Determine which areas are actually connected via CB
-println("\n=== Identifying Connected Areas from CB ===")
-cb_area_ids = unique(cb_data[:, 3])
-connected_area_dirs = sort([cb_id - 100 for cb_id in cb_area_ids])  # 101→1, 102→2, etc.
-println("CB mentions $(length(cb_area_ids)) unique area IDs: $(sort(cb_area_ids))")
-println("Mapping to area directories: $(connected_area_dirs)")
-
-# Read ONLY the connected area data
-println("\n=== Loading Connected Areas ===")
+# Load ALL 101 areas (ignore CB, create star topology from bus 1)
+println("\n=== Loading All 101 Areas ===")
 area_data_dir = joinpath(flexparams_dir, "Area Data")
 area_lines = Dict{Int, Array{Int,2}}()
+connected_area_dirs = 1:101  # Load ALL areas
 
 for area_id in connected_area_dirs
     linedata_file = joinpath(area_data_dir, "Area$area_id", "linedata.txt")
@@ -67,23 +61,13 @@ println("Total: $(length(area_lines)) areas, $total_area_lines lines")
 
 # Bus numbering: 6-digit format AAABBB (Area X, local bus Y → X*1000 + Y)
 
-# Build cross-boundary area mapping (before file writing)
-println("\n=== Building CB Area Mapping ===")
-cb_areas_seen = Set{Int}()
+# Build area connections: ALL areas connect to bus 1 (star topology)
+println("\n=== Building Star Topology (All Areas → Bus 1) ===")
 cb_area_to_backbone = Dict{Int, Int}()
-
-for i in 1:size(cb_data, 1)
-    backbone_bus = cb_data[i, 1]
-    cb_area_id = cb_data[i, 3]
-
-    # Only create ONE connection per area (to avoid mesh)
-    if cb_area_id ∉ cb_areas_seen
-        area_dir_num = cb_area_id - 100  # 101 → 1, 102 → 2, etc.
-        cb_area_to_backbone[area_dir_num] = backbone_bus
-        push!(cb_areas_seen, cb_area_id)
-    end
+for area_id in connected_area_dirs
+    cb_area_to_backbone[area_id] = 1  # All connect to bus 1
 end
-println("Mapped $(length(cb_area_to_backbone)) areas to backbone connections")
+println("Connecting $(length(cb_area_to_backbone)) areas to backbone bus 1")
 
 println("\n=== Generating BranchData.dss ===")
 line_counter = Ref(0)
