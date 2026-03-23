@@ -60,19 +60,26 @@ cb_data = readdlm(cb_file, '\t', Int)
 println("Cross-boundary connections: $(size(cb_data, 1)) lines")
 println("Format: [backbone_bus, area_local_bus, area_id]")
 
-# ===== Read all area data =====
-println("\n=== Reading Area Data ===")
+# ===== Identify which areas are actually connected via CB =====
+println("\n=== Identifying Connected Areas ===")
+connected_areas = sort(unique(cb_data[:, 3]))
+println("Areas with CB connections: ", connected_areas)
+println("Number of connected areas: ", length(connected_areas))
+
+# ===== Read only connected area data =====
+println("\n=== Reading Area Data (connected areas only) ===")
 area_data_dir = joinpath(flexparams_dir, "Area Data")
-num_areas = 101
 
 area_lines = Dict{Int, Array{Int,2}}()
-for area_id in 1:num_areas
+for area_id in connected_areas
     area_dir = joinpath(area_data_dir, "Area$area_id")
     linedata_file = joinpath(area_dir, "linedata.txt")
 
     if isfile(linedata_file)
         lines = readdlm(linedata_file, '\t', Int)
         area_lines[area_id] = lines
+    else
+        println("WARNING: Area$area_id in CB but no linedata.txt found!")
     end
 end
 
@@ -220,8 +227,8 @@ open(joinpath(output_dir, "PVSystem.dss"), "w") do f
         end
     end
 
-    # DG in each area (local buses 2, 12, 22, ..., 92)
-    for area_id in 1:num_areas
+    # DG in each connected area (local buses 2, 12, 22, ..., 92)
+    for area_id in connected_areas
         for local_bus in 2:10:100
             global_bus = area_id * 1000 + local_bus
 
