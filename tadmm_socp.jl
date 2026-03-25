@@ -91,7 +91,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ieee123A_1ph"
 # systemName = "ieee2552_1ph"
 systemName = "large10k_1ph"
-T = 6  # Number of time steps
+T = 4  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -2376,6 +2376,7 @@ begin # tadmm socp solve
         print(COLOR_RESET)
         println("="^80)
         sol_socp_tadmm = nothing
+        tadmm_converged = false
     end
 end # tadmm socp solve
 
