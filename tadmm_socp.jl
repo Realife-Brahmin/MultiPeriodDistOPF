@@ -50,6 +50,10 @@ using Statistics
 using Parameters: @unpack
 using Plots
 using Crayons
+using Serialization
+
+# MOI for solver attribute queries
+const MOI = JuMP.MOI
 
 # Display threading status at startup
 println("\n" * "="^80)
@@ -86,8 +90,9 @@ includet(joinpath(env_path, "Plotter.jl"))
 # System and simulation parameters
 # systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
-systemName = "ieee2552_1ph"
-T = 24  # Number of time steps
+# systemName = "ieee2552_1ph"
+systemName = "large10k_1ph"
+T = 4  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -112,6 +117,9 @@ adaptive_rho_tadmm = true  # Set to false for fixed ρ
 enable_warm_start = true  # ENABLED to test warm-start with detailed timing - use previous iteration's solution to warm-start subproblems
 # When false: cold start (JuMP's default initialization)
 # When true: use previous iteration's decision variables as initial guess
+
+# Detailed subproblem performance tracking
+track_subproblem_details = true  # Track per-subproblem solve times and Ipopt iterations (set false for production)
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
 # use_faadmm = true              # Enable acceleration with momentum and restart
@@ -394,13 +402,24 @@ begin # function mpopf socp bruteforced
         status = termination_status(model)
         obj_val = has_values(model) ? objective_value(model) : NaN
         solver_time = solve_time(model)  # Get pure solver time from JuMP (reported by Gurobi/Ipopt)
-        
+
+        # Extract Ipopt iteration count
+        bf_ipopt_iters = 0
+        try
+            bf_ipopt_iters = MOI.get(model, MOI.BarrierIterations())
+        catch
+            bf_ipopt_iters = 0
+        end
+        bf_time_per_iter = bf_ipopt_iters > 0 ? solver_time / bf_ipopt_iters : NaN
+
         result = Dict(
             :model => model,
             :status => status,
             :objective => obj_val,
             :solve_time => solver_time,  # Pure solver time (from Gurobi/Ipopt)
             :wallclock_time => bf_wallclock_time,  # Wall-clock time (includes JuMP overhead)
+            :ipopt_iters => bf_ipopt_iters,
+            :time_per_iter => bf_time_per_iter,
             :P_Subs => has_values(model) ? value.(P_Subs) : P_Subs,
             :Q_Subs => has_values(model) ? value.(Q_Subs) : Q_Subs,
             :P => has_values(model) ? value.(P) : P,
@@ -532,14 +551,50 @@ begin # function mpopf socp bruteforced
     end
 end # function mpopf socp bruteforced
 
+const run_bf = false  # Set to true to run brute-force solve
+const run_tadmm = true  # Set to true to run tADMM solve
+
+# =============================================================================
+# SOLUTION SAVE/LOAD (persist results across sessions)
+# =============================================================================
+function get_results_dir()
+    dir = joinpath(@__DIR__, "envs", "tadmm", "processedData", "$(systemName)_T$(T)")
+    mkpath(dir)
+    return dir
+end
+
+function save_solution(sol::Dict, filename::String)
+    # Strip non-serializable JuMP model object
+    sol_save = Dict(k => v for (k, v) in sol if k != :model)
+    filepath = joinpath(get_results_dir(), filename)
+    open(filepath, "w") do io
+        serialize(io, sol_save)
+    end
+    println(COLOR_SUCCESS, "✓ Solution saved to $(filepath)", COLOR_RESET)
+end
+
+function load_solution(filename::String)
+    filepath = joinpath(get_results_dir(), filename)
+    if isfile(filepath)
+        sol = open(deserialize, filepath)
+        println(COLOR_SUCCESS, "✓ Solution loaded from $(filepath)", COLOR_RESET)
+        return sol
+    else
+        println(COLOR_WARNING, "⚠ No saved solution found at $(filepath)", COLOR_RESET)
+        return nothing
+    end
+end
+
 begin # socp brute-forced solve
     # =============================================================================
     # SOLVE AND REPORT
     # =============================================================================
-    
+
     # Start total simulation timer (includes BF + tADMM, excludes plotting)
     total_simulation_start_time = time()
 
+    sol_socp_bf = nothing
+    if run_bf
     println("\n" * "="^80)
     println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (BRUTE-FORCED)", COLOR_RESET)
     println("="^80)
@@ -560,7 +615,11 @@ begin # socp brute-forced solve
         @printf "Total Cost: \$%.2f\n" sol_socp_bf[:objective]
         println("\n--- COMPUTATION TIME ---")
         @printf "Solver time: %.2f seconds\n" sol_socp_bf[:solve_time]
-        
+        @printf "Ipopt iterations: %d\n" sol_socp_bf[:ipopt_iters]
+        if sol_socp_bf[:ipopt_iters] > 0
+            @printf "Avg time per iteration: %.4f seconds\n" sol_socp_bf[:time_per_iter]
+        end
+
         # Extract solution arrays (for validation only, no printing)
         P_Subs_vals = sol_socp_bf[:P_Subs]
         P_B_vals = sol_socp_bf[:P_B]
@@ -676,6 +735,10 @@ begin # socp brute-forced solve
             @printf(io, "Total Cost: \$%.4f\n", sol_socp_bf[:objective])
             println(io, "\n--- COMPUTATION TIME ---")
             @printf(io, "Solver time: %.4f seconds\n", sol_socp_bf[:solve_time])
+            @printf(io, "Ipopt iterations: %d\n", sol_socp_bf[:ipopt_iters])
+            if sol_socp_bf[:ipopt_iters] > 0
+                @printf(io, "Avg time per iteration: %.4f seconds\n", sol_socp_bf[:time_per_iter])
+            end
             println(io, "\n--- SOLUTION FEASIBILITY ---")
             if bf_validation[:feasible]
                 println(io, "Status: ✓ FEASIBLE - All constraints satisfied")
@@ -697,15 +760,21 @@ begin # socp brute-forced solve
         end
         
         println(COLOR_SUCCESS, "✓ Results written to $(results_file)", COLOR_RESET)
+        save_solution(sol_socp_bf, "sol_socp_bf.jls")
     end
+
+    else  # !run_bf — try loading from disk
+        sol_socp_bf = load_solution("sol_socp_bf.jls")
+    end # if run_bf
 
 end # socp brute-forced solve
 
 begin # function primal update (update 1) tadmm socp
-    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int; 
-                                       solver::Symbol=:ipopt, 
+    function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, ρ::Float64, t0::Int;
+                                       solver::Symbol=:ipopt,
                                        warm_start::Bool=false,
-                                       prev_solution::Union{Nothing,Dict}=nothing)
+                                       prev_solution::Union{Nothing,Dict}=nothing,
+                                       track_subproblem_details::Bool=false)
         @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
         @unpack substationBus, parent, children = data
         @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -956,7 +1025,18 @@ begin # function primal update (update 1) tadmm socp
         
         # Get pure solver time (only optimize! time, no overhead)
         solver_time_t0 = solve_time(model)
-        
+
+        # Extract Ipopt iteration count
+        ipopt_iters = 0
+        if solver == :ipopt && track_subproblem_details
+            try
+                # Ipopt uses interior-point/barrier algorithm
+                ipopt_iters = MOI.get(model, MOI.BarrierIterations())
+            catch
+                ipopt_iters = 0  # Silently fail if not available
+            end
+        end
+
         # Get solver statistics if available (Gurobi-specific)
         barrier_iters = 0
         simplex_iters = 0
@@ -1005,6 +1085,7 @@ begin # function primal update (update 1) tadmm socp
             :battery_cost => battery_cost_val,
             :penalty => penalty_val,
             :solve_time => solver_time_t0,
+            :ipopt_iters => ipopt_iters,
             :barrier_iters => barrier_iters,
             :simplex_iters => simplex_iters,
             :P_Subs => P_Subs_val,
@@ -1120,10 +1201,11 @@ begin # function dual update (update 3) tadmm socp
 end # function dual update (update 3) tadmm socp
 
 begin # function solve MPOPF tadmm socp
-    function solve_MPOPF_SOCP_tADMM(data; ρ::Float64=1.0, 
+    function solve_MPOPF_SOCP_tADMM(data; ρ::Float64=1.0,
                                         max_iter::Int=1000, eps_pri::Float64=1e-5, eps_dual::Float64=1e-4,
                                         adaptive_rho::Bool=false, solver::Symbol=:ipopt,
-                                        use_faadmm::Bool=false, faadmm_restart_eta::Float64=0.999)
+                                        use_faadmm::Bool=false, faadmm_restart_eta::Float64=0.999,
+                                        enable_warm_start::Bool=false, track_subproblem_details::Bool=false)
         @unpack Bset, Tset, B0_pu, B_R_pu, soc_min, soc_max = data
         
         # Initialize global consensus variables B̂ⱼᵗ
@@ -1201,7 +1283,12 @@ begin # function solve MPOPF tadmm socp
         
         # Barrier iteration tracking (for warm-start analysis)
         barrier_iter_history = Dict{Int, Vector{Int}}()  # barrier_iter_history[k] = [iters for each subproblem]
-        
+
+        # Detailed per-subproblem tracking (for performance analysis)
+        T = length(Tset)
+        subproblem_times_matrix = zeros(Float64, max_iter, T)  # [iteration, subproblem_idx]
+        subproblem_iters_matrix = zeros(Int, max_iter, T)      # [iteration, subproblem_idx]
+
         # FAADMM tracking
         α_history = Float64[]  # Momentum coefficient history
         restart_history = Int[]  # Iterations where restart occurred
@@ -1298,10 +1385,11 @@ begin # function solve MPOPF tadmm socp
                 Threads.@threads for i in 1:length(Tset)
                     t0 = Tset[i]
                     results_collection[i] = primal_update_tadmm_socp!(
-                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; 
+                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0;
                         solver=solver,
                         warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
-                        prev_solution=prev_solutions[t0]
+                        prev_solution=prev_solutions[t0],
+                        track_subproblem_details=track_subproblem_details
                     )
                 end
                 
@@ -1310,7 +1398,16 @@ begin # function solve MPOPF tadmm socp
                     t0 = Tset[i]
                     result = results_collection[i]
                     push!(subproblem_times_k, result[:solve_time])
-                    
+
+                    # Store detailed per-subproblem data (thread-safe via indexing)
+                    if track_subproblem_details
+                        subproblem_idx = findfirst(==(t0), Tset)
+                        subproblem_times_matrix[k, subproblem_idx] = result[:solve_time]
+                        if haskey(result, :ipopt_iters)
+                            subproblem_iters_matrix[k, subproblem_idx] = result[:ipopt_iters]
+                        end
+                    end
+
                     # Capture model stats from first subproblem of first iteration
                     if k == 1 && t0 == 1 && !isnothing(result[:model_stats])
                         tadmm_subproblem_stats = result[:model_stats]
@@ -1359,14 +1456,24 @@ begin # function solve MPOPF tadmm socp
                 # SEQUENTIAL: Original behavior (safe fallback)
                 for t0 in Tset
                     result = primal_update_tadmm_socp!(
-                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0; 
+                        B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0;
                         solver=solver,
                         warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
-                        prev_solution=prev_solutions[t0]
+                        prev_solution=prev_solutions[t0],
+                        track_subproblem_details=track_subproblem_details
                     )
                     # Use pure solver time from the subproblem
                     push!(subproblem_times_k, result[:solve_time])
-                    
+
+                    # Store detailed per-subproblem data (thread-safe via indexing)
+                    if track_subproblem_details
+                        subproblem_idx = findfirst(==(t0), Tset)
+                        subproblem_times_matrix[k, subproblem_idx] = result[:solve_time]
+                        if haskey(result, :ipopt_iters)
+                            subproblem_iters_matrix[k, subproblem_idx] = result[:ipopt_iters]
+                        end
+                    end
+
                     # Track barrier iterations (if available)
                     if haskey(result, :barrier_iters) && result[:barrier_iters] > 0
                         if !haskey(barrier_iter_history, k)
@@ -1903,7 +2010,9 @@ begin # function solve MPOPF tadmm socp
                 :total_effective_time => sum(iteration_effective_times),
                 :total_sequential_time => sum(sum.(subproblem_times_history)),
                 :wallclock_time => tadmm_wallclock_time,  # Total wall-clock time for tADMM loop
-                :barrier_iter_history => barrier_iter_history  # Gurobi barrier iterations per subproblem
+                :barrier_iter_history => barrier_iter_history,  # Gurobi barrier iterations per subproblem
+                :subproblem_times_matrix => subproblem_times_matrix,  # Detailed per-subproblem timing matrix
+                :subproblem_iters_matrix => subproblem_iters_matrix  # Ipopt iterations per subproblem
             ),
             :subproblem_model_stats => tadmm_subproblem_stats
         )
@@ -1920,7 +2029,7 @@ begin # function solve MPOPF tadmm socp
 end # function solve MPOPF tadmm socp
 
 begin # tadmm socp solve
-    if !isempty(data[:Bset])  # Only run tADMM if there are batteries
+    if run_tadmm && !isempty(data[:Bset])  # Only run tADMM if enabled and there are batteries
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "SOLVING MPOPF WITH SOCP (tADMM)", COLOR_RESET)
         println("="^80)
@@ -1936,14 +2045,16 @@ begin # tadmm socp solve
         end
         
         solver_tadmm_choice = use_gurobi_for_tadmm ? :gurobi : :ipopt
-        sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm, 
-                                                    max_iter=max_iter_tadmm, 
-                                                    eps_pri=eps_pri_tadmm, 
+        sol_socp_tadmm = solve_MPOPF_SOCP_tADMM(data; ρ=rho_tadmm,
+                                                    max_iter=max_iter_tadmm,
+                                                    eps_pri=eps_pri_tadmm,
                                                 eps_dual=eps_dual_tadmm,
                                                 adaptive_rho=adaptive_rho_tadmm,
                                                 solver=solver_tadmm_choice,
                                                 use_faadmm=use_faadmm,
-                                                faadmm_restart_eta=faadmm_restart_eta)        # Check convergence status
+                                                faadmm_restart_eta=faadmm_restart_eta,
+                                                enable_warm_start=enable_warm_start,
+                                                track_subproblem_details=track_subproblem_details)        # Check convergence status
         final_r_norm = sol_socp_tadmm[:convergence_history][:r_norm_history][end]
         final_s_norm = sol_socp_tadmm[:convergence_history][:s_norm_history][end]
         tadmm_converged = (final_r_norm <= eps_pri_tadmm) && (final_s_norm <= eps_dual_tadmm)
@@ -1969,7 +2080,7 @@ begin # tadmm socp solve
         @printf "Sequential time (all subproblems): %.2f seconds\n" sol_socp_tadmm[:timing][:total_sequential_time]
         
         # Compare with brute force
-        if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED
+        if !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED)
             println("\n--- COMPARISON WITH BRUTE FORCE ---")
             obj_diff = abs(sol_socp_tadmm[:objective] - sol_socp_bf[:objective])
             obj_rel_diff = obj_diff / sol_socp_bf[:objective] * 100
@@ -2063,7 +2174,7 @@ begin # tadmm socp solve
             @printf(io, "Final dual residual: %.2e\n", sol_socp_tadmm[:convergence_history][:s_norm_history][end])
             println(io, "\n--- OBJECTIVE VALUE ---")
             @printf(io, "Total Cost: \$%.4f\n", sol_socp_tadmm[:objective])
-            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED
+            if !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
                 obj_diff = abs(sol_socp_tadmm[:objective] - sol_socp_bf[:objective])
                 obj_rel_diff = obj_diff / sol_socp_bf[:objective] * 100
                 @printf(io, "Brute Force objective: \$%.4f\n", sol_socp_bf[:objective])
@@ -2071,14 +2182,16 @@ begin # tadmm socp solve
                 @printf(io, "Relative difference: %.4f%%\n", obj_rel_diff)
             end
             println(io, "\n--- COMPUTATION TIME ---")
+            if !isnothing(sol_socp_bf)
             println(io, "Brute Force:")
             @printf(io, "  Wall-clock time: %.4f seconds (actual time on machine)\n", sol_socp_bf[:wallclock_time])
-            @printf(io, "  Solver time: %.4f seconds (reported by Gurobi)\n", sol_socp_bf[:solve_time])
+            @printf(io, "  Solver time: %.4f seconds (reported by Ipopt)\n", sol_socp_bf[:solve_time])
+            end
             println(io, "tADMM:")
             @printf(io, "  Wall-clock time: %.4f seconds (actual time on machine)\n", sol_socp_tadmm[:timing][:wallclock_time])
             @printf(io, "  Effective time: %.4f seconds (max subproblem time per iter)\n", sol_socp_tadmm[:timing][:total_effective_time])
             @printf(io, "  Sequential time: %.4f seconds (sum of all subproblems)\n", sol_socp_tadmm[:timing][:total_sequential_time])
-            if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED
+            if !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
                 println(io, "Speedup Metrics:")
                 speedup_wallclock = sol_socp_bf[:wallclock_time] / sol_socp_tadmm[:timing][:wallclock_time]
                 @printf(io, "  tADMM vs BF (wall-clock): %.2fx\n", speedup_wallclock)
@@ -2107,30 +2220,216 @@ begin # tadmm socp solve
         end
         
         println(COLOR_SUCCESS, "✓ tADMM results written to $(results_file)", COLOR_RESET)
-        
+
+        # Export detailed subproblem performance data if tracking is enabled
+        if track_subproblem_details
+            # Export CSV
+            final_iter = length(sol_socp_tadmm[:timing][:iteration_effective_times])
+            csv_file = joinpath(system_dir, "subproblem_timing_details.csv")
+
+            open(csv_file, "w") do io
+                # Header
+                println(io, "iteration,subproblem,solve_time_sec,ipopt_iters")
+
+                # Data rows
+                times_matrix = sol_socp_tadmm[:timing][:subproblem_times_matrix][1:final_iter, :]
+                iters_matrix = sol_socp_tadmm[:timing][:subproblem_iters_matrix][1:final_iter, :]
+                Tset_vec = collect(data[:Tset])  # Convert UnitRange to Vector
+                for k in 1:final_iter
+                    for (idx, t0) in enumerate(Tset_vec)
+                        time_val = times_matrix[k, idx]
+                        iter_val = iters_matrix[k, idx]
+                        println(io, "$k,$t0,$time_val,$iter_val")
+                    end
+                end
+            end
+            println(COLOR_SUCCESS, "✓ Detailed timing CSV exported to $(csv_file)", COLOR_RESET)
+
+            # Write performance report
+            times_matrix = sol_socp_tadmm[:timing][:subproblem_times_matrix]
+            iters_matrix = sol_socp_tadmm[:timing][:subproblem_iters_matrix]
+            Tset_vec = collect(data[:Tset])  # Convert UnitRange to Vector
+            report_file = joinpath(system_dir, "subproblem_performance.txt")
+
+            open(report_file, "w") do io
+                println(io, "="^80)
+                println(io, "DETAILED SUBPROBLEM PERFORMANCE ANALYSIS")
+                println(io, "System: $systemName, T=$T, Iterations: $final_iter")
+                println(io, "="^80)
+
+                # Section 1: Per-subproblem summary
+                println(io, "\n--- PER-SUBPROBLEM SUMMARY (Across All Iterations) ---\n")
+                @printf(io, "%-6s %10s %10s %10s %10s %10s %12s %12s %12s\n",
+                        "t0", "Mean(s)", "Median(s)", "Min(s)", "Max(s)", "Std(s)", "Mean(iters)", "Med(iters)", "Max(iters)")
+                println(io, "-"^96)
+
+                # Overall statistics
+                all_times = times_matrix[1:final_iter, :]
+                all_iters = iters_matrix[1:final_iter, :]
+                iters_nonzero_all = all_iters[all_iters .> 0]
+                @printf(io, "%-6s %10.4f %10.4f %10.4f %10.4f %10.4f %12.1f %12d %12d\n",
+                        "ALL", mean(all_times), median(all_times), minimum(all_times), maximum(all_times), std(all_times),
+                        (isempty(iters_nonzero_all) ? 0.0 : mean(iters_nonzero_all)),
+                        (isempty(iters_nonzero_all) ? 0 : Int(median(iters_nonzero_all))),
+                        (isempty(iters_nonzero_all) ? 0 : maximum(iters_nonzero_all)))
+                println(io, "-"^96)
+
+                # Per-subproblem statistics (sorted by mean time, descending)
+                subprob_stats = []
+                for (idx, t0) in enumerate(Tset_vec)
+                        times_t0 = times_matrix[1:final_iter, idx]
+                        iters_t0 = iters_matrix[1:final_iter, idx]
+                        iters_nonzero = iters_t0[iters_t0 .> 0]
+
+                        push!(subprob_stats, (
+                            t0 = t0,
+                            mean_time = mean(times_t0),
+                            median_time = median(times_t0),
+                            min_time = minimum(times_t0),
+                            max_time = maximum(times_t0),
+                            std_time = std(times_t0),
+                            mean_iters = isempty(iters_nonzero) ? 0.0 : mean(iters_nonzero),
+                            median_iters = isempty(iters_nonzero) ? 0 : round(Int, median(iters_nonzero)),
+                            max_iters = isempty(iters_nonzero) ? 0 : maximum(iters_nonzero)
+                        ))
+                    end
+
+                # Sort by mean time descending (slowest first)
+                sort!(subprob_stats, by = s -> s.mean_time, rev = true)
+
+                for stat in subprob_stats
+                    @printf(io, "%2d     %10.4f %10.4f %10.4f %10.4f %10.4f %12.1f %12d %12d\n",
+                            stat.t0, stat.mean_time, stat.median_time, stat.min_time, stat.max_time, stat.std_time,
+                            stat.mean_iters, stat.median_iters, stat.max_iters)
+                end
+
+                # Section 2: Outlier analysis
+                println(io, "\n\n--- OUTLIER ANALYSIS ---\n")
+                median_time = median(all_times)
+                outlier_threshold = 1.5 * median_time
+
+                outlier_subprobs = []
+                for (idx, t0) in enumerate(Tset_vec)
+                    times_t0 = times_matrix[1:final_iter, idx]
+                    outlier_count = count(t -> t > outlier_threshold, times_t0)
+                    outlier_pct = 100 * outlier_count / final_iter
+
+                    if outlier_pct > 20  # Flag if >20% of iterations are outliers
+                        push!(outlier_subprobs, (t0=t0, pct=outlier_pct, mean=mean(times_t0)))
+                    end
+                end
+
+                if isempty(outlier_subprobs)
+                    println(io, "No persistent outliers detected (all subproblems within 1.5× median)")
+                else
+                    println(io, "Subproblems that exceed 1.5× median time ($(round(outlier_threshold, digits=3))s) frequently:\n")
+                    sort!(outlier_subprobs, by = o -> o.pct, rev = true)
+                    for o in outlier_subprobs
+                        @printf(io, "  t0=%2d: %.1f%% of iterations (mean time: %.3fs)\n",
+                                o.t0, o.pct, o.mean)
+                    end
+                end
+
+                # Section 3: Iteration count analysis
+                println(io, "\n\n--- IPOPT ITERATION COUNT ANALYSIS ---\n")
+
+                if maximum(all_iters) == 0
+                    println(io, "⚠  Ipopt iteration data not available")
+                else
+                    iters_nz = all_iters[all_iters .> 0]
+                    @printf(io, "Overall: mean=%.1f, median=%d, max=%d iterations\n\n",
+                            mean(iters_nz), Int(median(iters_nz)), maximum(iters_nz))
+
+                    # Find subproblems with highest iteration counts
+                    high_iter_subprobs = filter(s -> s.mean_iters > 0, subprob_stats)
+                    sort!(high_iter_subprobs, by = s -> s.mean_iters, rev = true)
+
+                    println(io, "Subproblems ranked by mean Ipopt iterations:\n")
+                    for (rank, stat) in enumerate(high_iter_subprobs[1:min(5, length(high_iter_subprobs))])
+                        @printf(io, "  %d. t0=%2d: %.1f iterations (median=%d, max=%d)\n",
+                                rank, stat.t0, stat.mean_iters, stat.median_iters, stat.max_iters)
+                    end
+                end
+
+                # Section 4: Convergence behavior (early vs late)
+                println(io, "\n\n--- CONVERGENCE BEHAVIOR (Warm-Start Effectiveness) ---\n")
+
+                if final_iter >= 20
+                    early_k = 1:min(10, final_iter÷2)
+                    late_k = max(1, final_iter-9):final_iter
+
+                    early_times = times_matrix[early_k, :]
+                    late_times = times_matrix[late_k, :]
+                    early_iters = iters_matrix[early_k, :]
+                    late_iters = iters_matrix[late_k, :]
+
+                    @printf(io, "Early iterations (k=%d-%d):\n", first(early_k), last(early_k))
+                    early_iters_nz = early_iters[early_iters .> 0]
+                    early_iter_mean = isempty(early_iters_nz) ? 0.0 : mean(early_iters_nz)
+                    @printf(io, "  Mean time: %.4fs, Mean Ipopt iters: %.1f\n",
+                            mean(early_times), early_iter_mean)
+
+                    @printf(io, "\nLate iterations (k=%d-%d):\n", first(late_k), last(late_k))
+                    late_iters_nz = late_iters[late_iters .> 0]
+                    late_iter_mean = isempty(iters_nonzero_all) ? 0.0 : mean(late_iters_nz)
+                    @printf(io, "  Mean time: %.4fs, Mean Ipopt iters: %.1f\n",
+                            mean(late_times), late_iter_mean)
+
+                    time_improvement = 100 * (1 - mean(late_times) / mean(early_times))
+                    iter_improvement = early_iter_mean > 0 ? 100 * (1 - late_iter_mean / early_iter_mean) : 0.0
+
+                    println(io, "\nImprovement from early to late:")
+                    @printf(io, "  Time: %.1f%% %s\n", abs(time_improvement), (time_improvement > 0 ? "faster ✓" : "slower ✗"))
+                    if maximum(all_iters) > 0
+                        @printf(io, "  Ipopt iterations: %.1f%% %s\n", abs(iter_improvement), (iter_improvement > 0 ? "fewer ✓" : "more ✗"))
+                    end
+
+                    if time_improvement > 10
+                        println(io, "\n✓ Warm-starting is effective (>10% improvement)")
+                    elseif time_improvement > 0
+                        println(io, "\n→ Warm-starting shows modest benefit")
+                    else
+                        println(io, "\n✗ Warm-starting not helping (times increased)")
+                    end
+                else
+                    println(io, "Not enough iterations for early/late comparison (need ≥20)")
+                end
+
+                println(io, "\n" * "="^80)
+            end
+
+            println(COLOR_SUCCESS, "✓ Subproblem performance report saved to $(report_file)", COLOR_RESET)
+        end
+
         println("\n" * "="^80)
         println(COLOR_HIGHLIGHT, "MPOPF SOCP tADMM SOLUTION COMPLETE", COLOR_RESET)
         println("="^80)
-        
+
+        save_solution(sol_socp_tadmm, "sol_socp_tadmm.jls")
+
         # Calculate and display total simulation time (BF + tADMM, before plotting)
         total_simulation_time = time() - total_simulation_start_time
         println("\n" * "="^80)
-        println(COLOR_SUCCESS, "⏱  TOTAL SIMULATION TIME (BF + tADMM)", COLOR_RESET)
+        println(COLOR_SUCCESS, "⏱  TOTAL SIMULATION TIME", COLOR_RESET)
         println("="^80)
-        @printf "Total time (parsing + BF + tADMM):    %.2f seconds\n" total_simulation_time
+        @printf "Total time (parsing + solve):         %.2f seconds\n" total_simulation_time
+        if !isnothing(sol_socp_bf)
         println("\nBrute Force Timing:")
         @printf "  - BF wall-clock time:               %.2f seconds (actual time on machine)\n" sol_socp_bf[:wallclock_time]
-        @printf "  - BF solver time:                   %.2f seconds (reported by Gurobi)\n" sol_socp_bf[:solve_time]
+        @printf "  - BF solver time:                   %.2f seconds (reported by Ipopt)\n" sol_socp_bf[:solve_time]
+        end
         println("\ntADMM Timing:")
         @printf "  - tADMM wall-clock time:            %.2f seconds (actual time on machine)\n" sol_socp_tadmm[:timing][:wallclock_time]
         @printf "  - tADMM effective time:             %.2f seconds (max subproblem time per iter)\n" sol_socp_tadmm[:timing][:total_effective_time]
         @printf "  - tADMM sequential time:            %.2f seconds (sum of all subproblems)\n" sol_socp_tadmm[:timing][:total_sequential_time]
+        if !isnothing(sol_socp_bf)
         println("\nOverhead:")
         optimization_wallclock = sol_socp_bf[:wallclock_time] + sol_socp_tadmm[:timing][:wallclock_time]
         @printf "  - Total optimization wall-clock:    %.2f seconds\n" optimization_wallclock
         @printf "  - Parsing/setup/validation:         %.2f seconds\n" (total_simulation_time - optimization_wallclock)
+        end
         println("\nSpeedup Metrics:")
-        if sol_socp_bf[:wallclock_time] > 0
+        if !isnothing(sol_socp_bf) && sol_socp_bf[:wallclock_time] > 0
             @printf "  - tADMM vs BF (wall-clock):         %.2fx\n" (sol_socp_bf[:wallclock_time] / sol_socp_tadmm[:timing][:wallclock_time])
         end
         if sol_socp_tadmm[:timing][:wallclock_time] > 0
@@ -2144,7 +2443,8 @@ begin # tadmm socp solve
         println("⚠ No batteries in system - skipping tADMM solution")
         print(COLOR_RESET)
         println("="^80)
-        sol_socp_tadmm = nothing
+        sol_socp_tadmm = load_solution("sol_socp_tadmm.jls")
+        tadmm_converged = !isnothing(sol_socp_tadmm) && sol_socp_tadmm[:converged]
     end
 end # tadmm socp solve
 
@@ -2209,7 +2509,7 @@ begin # plotting results
 
     # Plot battery actions (only if optimization was successful and batteries exist)
     # Save in system-specific subfolder
-    if plotBatteryActions && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Bset])
+    if plotBatteryActions && !isnothing(sol_socp_bf) && !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Bset])
         battery_actions_path = joinpath(system_dir, "battery_actions_socp_bf.png")
         plot_battery_actions(sol_socp_bf, data, "SOCP-BF (Gurobi)", 
                             showPlots=showPlots, savePlots=savePlots, 
@@ -2238,7 +2538,7 @@ begin # plotting results
     end
 
     # Plot substation power and cost (only if optimization was successful)
-    if plotSubstationPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
+    if plotSubstationPower && !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
         subs_power_cost_path = joinpath(system_dir, "substation_power_cost_socp_bf.png")
         plot_substation_power_and_cost(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=savePlots,
@@ -2255,7 +2555,7 @@ begin # plotting results
     end
     
     # Create voltage profile GIF animation for all buses
-    if plotVoltageAllBuses && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
+    if plotVoltageAllBuses && !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED)
         voltage_gif_path = joinpath(system_dir, "voltage_animation_socp_bf.gif")
         plot_voltage_profile_all_buses(sol_socp_bf, data, "SOCP-BF (Gurobi)",
                                     showPlots=showPlots, savePlots=false,
@@ -2280,7 +2580,7 @@ begin # plotting results
     end
         
     # Plot PV power (p_D and q_D) if PV exists
-    if plotPVPower && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
+    if plotPVPower && !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
         # Plot individual PV plots for ALL PVs if enabled
         if saveAllPVPlots
             println("\n📊 Generating individual PV plots for all $(length(data[:Dset])) PV units...")
@@ -2340,7 +2640,7 @@ begin # plotting results
     end
     
     # Create PV power circle GIFs
-    if plotPVCircleGIF && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
+    if plotPVCircleGIF && !isnothing(sol_socp_bf) && (sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SOLVED || sol_socp_bf[:status] == MOI.ALMOST_LOCALLY_SOLVED) && !isempty(data[:Dset])
         if saveAllPVPlots
             # Create circle GIFs for ALL PVs
             println("📊 Generating PV power circle GIFs for all $(length(data[:Dset])) PV units...")

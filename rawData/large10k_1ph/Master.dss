@@ -1,0 +1,20 @@
+Clear
+
+New Circuit.large10k_1ph
+
+Edit "Vsource.source" bus1=1 pu=1.05 R0=0 X0=0.00000001 phases=1 basekv=7.1996 R1=0 X1=0.00000001
+
+Redirect BranchData.dss
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
+
+Set VoltageBases = [12.47]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases
+

@@ -1,0 +1,44 @@
+================================================================================
+DETAILED SUBPROBLEM PERFORMANCE ANALYSIS
+System: large10k_1ph, T=4, Iterations: 9
+================================================================================
+
+--- PER-SUBPROBLEM SUMMARY (Across All Iterations) ---
+
+t0        Mean(s)  Median(s)     Min(s)     Max(s)     Std(s)  Mean(iters)   Med(iters)   Max(iters)
+------------------------------------------------------------------------------------------------
+ALL       14.9501    10.3635     5.9090    53.8020    12.7048         20.8           13          106
+------------------------------------------------------------------------------------------------
+ 3        15.7642    10.6160     7.2850    53.8020    14.6402         22.9           14          106
+ 2        15.5971    11.0270     5.9090    52.7260    14.3997         21.9           14           95
+ 4        14.6047    10.1110     6.6230    47.8670    12.9390         20.3           13           85
+ 1        13.8344     9.5130     6.9470    40.9260    10.6921         18.2           13           71
+
+
+--- OUTLIER ANALYSIS ---
+
+Subproblems that exceed 1.5× median time (15.545s) frequently:
+
+  t0= 1: 22.2% of iterations (mean time: 13.834s)
+  t0= 2: 22.2% of iterations (mean time: 15.597s)
+  t0= 3: 22.2% of iterations (mean time: 15.764s)
+  t0= 4: 22.2% of iterations (mean time: 14.605s)
+
+
+--- IPOPT ITERATION COUNT ANALYSIS ---
+
+Overall: mean=20.8, median=13, max=106 iterations
+
+Subproblems ranked by mean Ipopt iterations:
+
+  1. t0= 3: 22.9 iterations (median=14, max=106)
+  2. t0= 2: 21.9 iterations (median=14, max=95)
+  3. t0= 4: 20.3 iterations (median=13, max=85)
+  4. t0= 1: 18.2 iterations (median=13, max=71)
+
+
+--- CONVERGENCE BEHAVIOR (Warm-Start Effectiveness) ---
+
+Not enough iterations for early/late comparison (need ≥20)
+
+================================================================================

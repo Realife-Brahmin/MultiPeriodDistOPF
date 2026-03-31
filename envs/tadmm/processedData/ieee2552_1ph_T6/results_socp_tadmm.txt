@@ -6,15 +6,15 @@ Time horizon: T=6 periods
 Time step: 4.0 hours
 Number of buses: 2522
 Number of branches: 2521
-Number of batteries: 1
-Number of PV units: 1
+Number of batteries: 10
+Number of PV units: 10
 
 --- SUBPROBLEM SIZE (one time period) ---
-Number of variables: 10096
-Linear constraints: 12617
+Number of variables: 10177
+Linear constraints: 12680
 Quadratic constraints (SOCP): 2521
 Nonlinear constraints: 0
-Total constraints: 15138
+Total constraints: 15201
 
 --- tADMM PARAMETERS ---
 Initial ρ: 1500.0
@@ -27,27 +27,27 @@ Dual tolerance: 3.0e-04
 FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 15 iterations
-Final primal residual: 9.39e-09
+Converged in 16 iterations
+Final primal residual: 9.30e-09
 Final dual residual: 0.00e+00
 
 --- OBJECTIVE VALUE ---
-Total Cost: $9942.7362
-Brute Force objective: $9942.7362
+Total Cost: $9115.9700
+Brute Force objective: $9115.9699
 Absolute difference: $0.0000
 Relative difference: 0.0000%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 58.1890 seconds (actual time on machine)
-  Solver time: 57.0390 seconds (reported by Gurobi)
+  Wall-clock time: 53.0940 seconds (actual time on machine)
+  Solver time: 51.4570 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 32.1270 seconds (actual time on machine)
-  Effective time: 26.5810 seconds (max subproblem time per iter)
-  Sequential time: 143.8240 seconds (sum of all subproblems)
+  Wall-clock time: 42.8130 seconds (actual time on machine)
+  Effective time: 35.8980 seconds (max subproblem time per iter)
+  Sequential time: 189.0920 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 1.81x
-  Parallel efficiency: 82.7% (0.83x speedup)
+  tADMM vs BF (wall-clock): 1.24x
+  Parallel efficiency: 83.8% (0.84x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied

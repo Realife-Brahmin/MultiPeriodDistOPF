@@ -27,33 +27,33 @@ Dual tolerance: 3.0e-04
 FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 67 iterations
-Final primal residual: 8.52e-06
-Final dual residual: 1.49e-04
+Converged in 62 iterations
+Final primal residual: 5.78e-06
+Final dual residual: 7.83e-05
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3416.8042
-Brute Force objective: $3417.2170
-Absolute difference: $0.4128
-Relative difference: 0.0121%
+Total Cost: $3417.1257
+Brute Force objective: $3417.2169
+Absolute difference: $0.0912
+Relative difference: 0.0027%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 0.4170 seconds (actual time on machine)
-  Solver time: 0.3420 seconds (reported by Gurobi)
+  Wall-clock time: 1.6750 seconds (actual time on machine)
+  Solver time: 0.9160 seconds (reported by Gurobi)
 tADMM:
-  Wall-clock time: 15.7350 seconds (actual time on machine)
-  Effective time: 6.3840 seconds (max subproblem time per iter)
-  Sequential time: 87.6840 seconds (sum of all subproblems)
+  Wall-clock time: 72.6400 seconds (actual time on machine)
+  Effective time: 52.4030 seconds (max subproblem time per iter)
+  Sequential time: 824.8300 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.03x
-  Parallel efficiency: 40.6% (0.41x speedup)
+  tADMM vs BF (wall-clock): 0.02x
+  Parallel efficiency: 72.1% (0.72x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
 
 --- SOLVER ---
-Subproblem solver: Gurobi
+Subproblem solver: Ipopt
 Formulation: SOCP (BFM-NL)
 Decomposition: Temporal ADMM
 ================================================================================
