@@ -6,24 +6,26 @@ Time horizon: T=6 periods
 Time step: 4.0 hours
 Number of buses: 10321
 Number of branches: 10320
-Number of batteries: 0
+Number of batteries: 102
 Number of PV units: 1022
 
 --- PROBLEM SIZE ---
-Number of variables: 253830
-Linear constraints: 315762
+Number of variables: 255054
+Linear constraints: 317598
 Quadratic constraints (SOCP): 61920
 Nonlinear constraints: 0
-Total constraints: 377682
+Total constraints: 379518
 
 --- OPTIMIZATION STATUS ---
 Status: LOCALLY_SOLVED
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3122450.6362
+Total Cost: $3118379.4180
 
 --- COMPUTATION TIME ---
-Solver time: 379.7900 seconds
+Solver time: 365.9360 seconds
+Ipopt iterations: 321
+Avg time per iteration: 1.1400 seconds
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied

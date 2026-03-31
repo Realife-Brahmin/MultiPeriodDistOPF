@@ -92,7 +92,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ieee123A_1ph"
 # systemName = "ieee2552_1ph"
 systemName = "large10k_1ph"
-T = 4  # Number of time steps
+T = 6  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -551,7 +551,7 @@ begin # function mpopf socp bruteforced
     end
 end # function mpopf socp bruteforced
 
-const run_bf = false  # Set to true to run brute-force solve
+const run_bf = true  # Set to true to run brute-force solve
 const run_tadmm = true  # Set to true to run tADMM solve
 
 # =============================================================================
