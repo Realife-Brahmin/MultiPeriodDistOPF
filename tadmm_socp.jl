@@ -123,6 +123,10 @@ enable_warm_start = true  # ENABLED to test warm-start with detailed timing - us
 # Detailed subproblem performance tracking
 track_subproblem_details = true  # Track per-subproblem solve times and Ipopt iterations (set false for production)
 
+# Pre-solve warm-start for k=1: solve each subproblem with loose Ipopt tolerances
+# (max 30 iters, tol=1e-2) to get a rough feasible point, then k=1 warm-starts from it
+presolve_warmstart = true
+
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
 # use_faadmm = true              # Enable acceleration with momentum and restart
 use_faadmm = false
@@ -776,7 +780,9 @@ begin # function primal update (update 1) tadmm socp
                                        solver::Symbol=:ipopt,
                                        warm_start::Bool=false,
                                        prev_solution::Union{Nothing,Dict}=nothing,
-                                       track_subproblem_details::Bool=false)
+                                       track_subproblem_details::Bool=false,
+                                       lindistflow::Bool=false,
+                                       ipopt_overrides::Union{Nothing,Dict}=nothing)
         @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
         @unpack substationBus, parent, children = data
         @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -809,6 +815,12 @@ begin # function primal update (update 1) tadmm socp
             set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
             set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
         end
+        # Apply overrides (e.g., loose tolerances for pre-solve)
+        if !isnothing(ipopt_overrides)
+            for (k, v) in ipopt_overrides
+                set_optimizer_attribute(model, k, v)
+            end
+        end
         
         # ===== NETWORK VARIABLES (time t0 ONLY) =====
         @variable(model, P_Subs_t0 >= 0)
@@ -816,7 +828,9 @@ begin # function primal update (update 1) tadmm socp
         @variable(model, P_t0[(i, j) in Lset])
         @variable(model, Q_t0[(i, j) in Lset])
         @variable(model, v_t0[j in Nset])
-        @variable(model, ℓ_t0[(i, j) in Lset] >= 1e-6)  # Current squared magnitude (bounded away from 0)
+        if !lindistflow
+            @variable(model, ℓ_t0[(i, j) in Lset] >= 1e-6)  # Current squared magnitude (bounded away from 0)
+        end
         @variable(model, q_D_t0[j in Dset])
         
         # ===== BATTERY VARIABLES (LOCAL COUPLING - NEIGHBORS ONLY) =====
@@ -872,16 +886,25 @@ begin # function primal update (update 1) tadmm socp
             @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
         end
         
-        # Voltage drop constraints (BFM-NL)
-        for (i, j) in Lset
-            r_ij = rdict_pu[(i, j)]
-            x_ij = xdict_pu[(i, j)]
-            @constraint(model, v_t0[j] == v_t0[i] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]) + (r_ij^2 + x_ij^2)*ℓ_t0[(i,j)])
-        end
-        
-        # SOC relaxation constraints
-        for (i, j) in Lset
-            @constraint(model, P_t0[(i,j)]^2 + Q_t0[(i,j)]^2 <= v_t0[i] * ℓ_t0[(i,j)])
+        # Voltage drop constraints
+        if lindistflow
+            # LinDistFlow: v_j = v_i - 2(r*P + x*Q)  (no ℓ term, no SOC constraint)
+            for (i, j) in Lset
+                r_ij = rdict_pu[(i, j)]
+                x_ij = xdict_pu[(i, j)]
+                @constraint(model, v_t0[j] == v_t0[i] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]))
+            end
+        else
+            # BFM-NL (full SOCP)
+            for (i, j) in Lset
+                r_ij = rdict_pu[(i, j)]
+                x_ij = xdict_pu[(i, j)]
+                @constraint(model, v_t0[j] == v_t0[i] - 2*(r_ij*P_t0[(i,j)] + x_ij*Q_t0[(i,j)]) + (r_ij^2 + x_ij^2)*ℓ_t0[(i,j)])
+            end
+            # SOC relaxation constraints
+            for (i, j) in Lset
+                @constraint(model, P_t0[(i,j)]^2 + Q_t0[(i,j)]^2 <= v_t0[i] * ℓ_t0[(i,j)])
+            end
         end
         
         # Fixed substation voltage
@@ -969,7 +992,7 @@ begin # function primal update (update 1) tadmm socp
                     end
                 end
             end
-            if haskey(prev_solution, :ℓ)
+            if !lindistflow && haskey(prev_solution, :ℓ)
                 for (i, j) in Lset
                     if haskey(prev_solution[:ℓ], (i, j))
                         set_start_value(ℓ_t0[(i, j)], prev_solution[:ℓ][(i, j)])
@@ -1021,7 +1044,12 @@ begin # function primal update (update 1) tadmm socp
         
         # Check if solution exists (accept Ipopt statuses)
         status = termination_status(model)
-        if status != MOI.OPTIMAL && status != MOI.LOCALLY_SOLVED && status != MOI.ALMOST_LOCALLY_SOLVED
+        acceptable = (status == MOI.OPTIMAL || status == MOI.LOCALLY_SOLVED || status == MOI.ALMOST_LOCALLY_SOLVED)
+        # For pre-solve with loose tolerances, also accept iteration limit (partial solution is fine)
+        if !isnothing(ipopt_overrides)
+            acceptable = acceptable || status == MOI.ITERATION_LIMIT
+        end
+        if !acceptable
             error("Subproblem t0=$t0 failed with status: $status. Try reducing ρ or check problem feasibility.")
         end
         
@@ -1066,7 +1094,12 @@ begin # function primal update (update 1) tadmm socp
         P_vals = Dict((i, j) => value(P_t0[(i, j)]) for (i, j) in Lset)
         Q_vals = Dict((i, j) => value(Q_t0[(i, j)]) for (i, j) in Lset)
         v_vals = Dict(j => value(v_t0[j]) for j in Nset)
-        ℓ_vals = Dict((i, j) => value(ℓ_t0[(i, j)]) for (i, j) in Lset)
+        if lindistflow
+            # Compute ℓ from LinDistFlow solution: ℓ_ij = (P_ij² + Q_ij²) / v_i
+            ℓ_vals = Dict((i, j) => (P_vals[(i,j)]^2 + Q_vals[(i,j)]^2) / v_vals[i] for (i, j) in Lset)
+        else
+            ℓ_vals = Dict((i, j) => value(ℓ_t0[(i, j)]) for (i, j) in Lset)
+        end
         q_D_vals = Dict(j => value(q_D_t0[j]) for j in Dset)
         # Extract P_B for ALL times (full trajectory)
         P_B_vals_all_times = Dict(j => Dict(t => value(P_B_var[j, t]) for t in Tset) for j in Bset)
@@ -1367,7 +1400,35 @@ begin # function solve MPOPF tadmm socp
         
         # Start wall-clock timer for tADMM loop
         tadmm_wallclock_start = time()
-        
+
+        # Loose-tolerance SOCP pre-solve to warm-start k=1
+        # Solves full SOCP but with relaxed Ipopt settings (fewer iterations, loose tol)
+        if presolve_warmstart
+            println(COLOR_INFO, "⚡ Loose-tol SOCP pre-solve for k=1 warm-start...", COLOR_RESET)
+            presolve_start = time()
+
+            # Temporarily override Ipopt settings for cheap pre-solve
+            presolve_ipopt_overrides = Dict(
+                "max_iter" => 30,        # Just 30 iterations, not 3000
+                "tol" => 1e-2,           # Very loose tolerance
+                "acceptable_tol" => 1e-1,
+                "acceptable_iter" => 5   # Accept after 5 acceptable iterations
+            )
+
+            for t0 in Tset
+                prev_solutions[t0] = primal_update_tadmm_socp!(
+                    B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0;
+                    solver=solver, warm_start=false, prev_solution=nothing,
+                    track_subproblem_details=false, ipopt_overrides=presolve_ipopt_overrides
+                )
+                @printf "  t0=%d: %.1fs\n" t0 prev_solutions[t0][:solve_time]
+            end
+
+            presolve_time = time() - presolve_start
+            max_presolve = maximum(prev_solutions[t0][:solve_time] for t0 in Tset)
+            @printf "  Pre-solve done in %.1fs wall-clock (max subproblem: %.1fs)\n" presolve_time max_presolve
+        end
+
         try
             for k in 1:max_iter
             # 🔵 STEP 1: Primal Update - Solve T subproblems
@@ -1389,7 +1450,7 @@ begin # function solve MPOPF tadmm socp
                     results_collection[i] = primal_update_tadmm_socp!(
                         B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0;
                         solver=solver,
-                        warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
+                        warm_start=enable_warm_start && (k > 1 || presolve_warmstart),
                         prev_solution=prev_solutions[t0],
                         track_subproblem_details=track_subproblem_details
                     )
@@ -1460,7 +1521,7 @@ begin # function solve MPOPF tadmm socp
                     result = primal_update_tadmm_socp!(
                         B_collection[t0], Bhat, u_collection[t0], data, ρ_current, t0;
                         solver=solver,
-                        warm_start=enable_warm_start && k > 1,  # Warm-start from iteration 2 onwards
+                        warm_start=enable_warm_start && (k > 1 || presolve_warmstart),
                         prev_solution=prev_solutions[t0],
                         track_subproblem_details=track_subproblem_details
                     )
