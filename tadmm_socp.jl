@@ -94,7 +94,7 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ieee123A_1ph"
 # systemName = "ieee2552_1ph"
 systemName = "large10kC_1ph"
-T = 4  # Number of time steps
+T = 6  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -2401,6 +2401,25 @@ begin # tadmm socp solve
             end
 
             println(COLOR_SUCCESS, "✓ Subproblem performance report saved to $(report_file)", COLOR_RESET)
+        end
+
+        # Export convergence data CSV (objfun, r, s, rho vs iteration)
+        let hist = sol_socp_tadmm[:convergence_history],
+            obj_h = hist[:obj_history],
+            r_h = hist[:r_norm_history],
+            s_h = hist[:s_norm_history],
+            ρ_h = hist[:ρ_history],
+            n_iter = length(obj_h)
+
+            conv_csv = joinpath(system_dir, "convergence_data.csv")
+            open(conv_csv, "w") do io
+                println(io, "iteration,objective,r_norm,s_norm,rho")
+                for k in 1:n_iter
+                    rho_val = k <= length(ρ_h) ? ρ_h[k] : NaN
+                    @printf(io, "%d,%.6f,%.10e,%.10e,%.2f\n", k, obj_h[k], r_h[k], s_h[k], rho_val)
+                end
+            end
+            println(COLOR_SUCCESS, "✓ Convergence data CSV exported to $(conv_csv)", COLOR_RESET)
         end
 
         println("\n" * "="^80)

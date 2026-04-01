@@ -1,0 +1,52 @@
+================================================================================
+DETAILED SUBPROBLEM PERFORMANCE ANALYSIS
+System: large10kC_1ph, T=6, Iterations: 25
+================================================================================
+
+--- PER-SUBPROBLEM SUMMARY (Across All Iterations) ---
+
+t0        Mean(s)  Median(s)     Min(s)     Max(s)     Std(s)  Mean(iters)   Med(iters)   Max(iters)
+------------------------------------------------------------------------------------------------
+ALL       20.0571    15.8905     9.1660   145.5800    18.1108         17.1           11          359
+------------------------------------------------------------------------------------------------
+ 6        22.7348    16.5420    10.0100   145.5800    26.1730         27.2           14          359
+ 4        20.4927    16.2350     9.5140   118.4850    20.8960         18.4            8          198
+ 2        19.6438    15.6730     9.2410    95.3290    16.6827         15.0           11          130
+ 1        19.5018    15.2040     9.9300    97.7830    17.0696         14.5           10          125
+ 3        19.4389    15.9430     9.1660    85.5890    14.5824         14.9           12          105
+ 5        18.5303    15.6580     9.3900    64.4090    11.0155         12.9           10           67
+
+
+--- OUTLIER ANALYSIS ---
+
+No persistent outliers detected (all subproblems within 1.5× median)
+
+
+--- IPOPT ITERATION COUNT ANALYSIS ---
+
+Overall: mean=17.1, median=11, max=359 iterations
+
+Subproblems ranked by mean Ipopt iterations:
+
+  1. t0= 6: 27.2 iterations (median=14, max=359)
+  2. t0= 4: 18.4 iterations (median=8, max=198)
+  3. t0= 2: 15.0 iterations (median=11, max=130)
+  4. t0= 3: 14.9 iterations (median=12, max=105)
+  5. t0= 1: 14.5 iterations (median=10, max=125)
+
+
+--- CONVERGENCE BEHAVIOR (Warm-Start Effectiveness) ---
+
+Early iterations (k=1-10):
+  Mean time: 24.0733s, Mean Ipopt iters: 23.1
+
+Late iterations (k=16-25):
+  Mean time: 14.8890s, Mean Ipopt iters: 13.5
+
+Improvement from early to late:
+  Time: 38.2% faster ✓
+  Ipopt iterations: 41.4% fewer ✓
+
+✓ Warm-starting is effective (>10% improvement)
+
+================================================================================

@@ -16,7 +16,7 @@ using Plots
 ENV["GKSwstype"] = "png"
 gr()
 
-data_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData", "large10kC_1ph_T4")
+data_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData", "large10kC_1ph_T6")
 println("Loading solutions from: $data_dir")
 
 sol_tadmm = deserialize(joinpath(data_dir, "sol_socp_tadmm.jls"))
