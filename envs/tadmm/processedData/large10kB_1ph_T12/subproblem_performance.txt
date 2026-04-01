@@ -1,0 +1,58 @@
+================================================================================
+DETAILED SUBPROBLEM PERFORMANCE ANALYSIS
+System: large10kB_1ph, T=12, Iterations: 78
+================================================================================
+
+--- PER-SUBPROBLEM SUMMARY (Across All Iterations) ---
+
+t0        Mean(s)  Median(s)     Min(s)     Max(s)     Std(s)  Mean(iters)   Med(iters)   Max(iters)
+------------------------------------------------------------------------------------------------
+ALL       31.2130    29.5760    14.2060   288.2940    20.6995         13.6           12          371
+------------------------------------------------------------------------------------------------
+ 6        33.8913    30.5505    17.3830   288.2940    29.6460         17.1           13          371
+11        32.8835    31.3155    19.0120   146.3660    14.0176         15.1           15           67
+ 5        32.5422    30.4820    17.7030   224.8510    22.6120         14.1           13          167
+ 7        32.3480    30.0265    17.4840   220.9330    22.3030         13.4           12          155
+ 2        32.0181    29.7915    17.6650   203.8510    20.4059         13.1           12          122
+ 8        31.7023    31.2590    16.1770   156.0810    15.2517         13.6           14           70
+ 4        31.3329    29.3910    18.1540   186.5580    18.6264         13.7           13          108
+ 3        30.9530    28.6430    18.2400   181.7280    17.9748         12.6           12           99
+ 9        30.6164    29.2960    16.7690   156.7290    15.5865         12.0           12           72
+10        30.2651    29.1460    16.2620   159.8590    15.8603         11.8           11           75
+12        29.1493    25.0860    17.2400   278.7350    28.9249         15.6           11          330
+ 1        26.8540    24.4275    14.2060   201.5840    20.7256         11.2           10          124
+
+
+--- OUTLIER ANALYSIS ---
+
+No persistent outliers detected (all subproblems within 1.5× median)
+
+
+--- IPOPT ITERATION COUNT ANALYSIS ---
+
+Overall: mean=13.6, median=12, max=371 iterations
+
+Subproblems ranked by mean Ipopt iterations:
+
+  1. t0= 6: 17.1 iterations (median=13, max=371)
+  2. t0=12: 15.6 iterations (median=11, max=330)
+  3. t0=11: 15.1 iterations (median=15, max=67)
+  4. t0= 5: 14.1 iterations (median=13, max=167)
+  5. t0= 4: 13.7 iterations (median=13, max=108)
+
+
+--- CONVERGENCE BEHAVIOR (Warm-Start Effectiveness) ---
+
+Early iterations (k=1-10):
+  Mean time: 40.7953s, Mean Ipopt iters: 23.0
+
+Late iterations (k=69-78):
+  Mean time: 26.8731s, Mean Ipopt iters: 11.9
+
+Improvement from early to late:
+  Time: 34.1% faster ✓
+  Ipopt iterations: 48.1% fewer ✓
+
+✓ Warm-starting is effective (>10% improvement)
+
+================================================================================
