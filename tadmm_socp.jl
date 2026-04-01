@@ -1,3 +1,5 @@
+# Fix GR backend display issues on headless/Windows environments
+ENV["GKSwstype"] = "png"
 
 # ============================================================================
 # PARALLELIZATION CONFIGURATION
@@ -91,8 +93,8 @@ includet(joinpath(env_path, "Plotter.jl"))
 # systemName = "ads10A_1ph"
 # systemName = "ieee123A_1ph"
 # systemName = "ieee2552_1ph"
-systemName = "large10k_1ph"
-T = 6  # Number of time steps
+systemName = "large10kC_1ph"
+T = 4  # Number of time steps
 # T = 48  # Number of time steps
 # T = 96  # Number of time steps
 # T = 480  # Number of time steps
@@ -111,7 +113,7 @@ rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT sc
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
 eps_pri_tadmm = 8e-5  # Practical tolerance - plot shows oscillations around this (was 5e-5)
 eps_dual_tadmm = 3e-4  # Practical tolerance - give more room (was 2e-4)
-adaptive_rho_tadmm = true  # Set to false for fixed ρ
+adaptive_rho_tadmm = true  # Adaptive ρ enabled
 
 # Warm-starting parameters
 enable_warm_start = true  # ENABLED to test warm-start with detailed timing - use previous iteration's solution to warm-start subproblems
@@ -147,7 +149,7 @@ begin # scenario config
     plot_only_if_converged = true  # Only plot battery/PV/voltage plots if tADMM converged
     
     # Plot type toggles (enable/disable specific plot types) - ALL DISABLED FOR FASTER RUNS
-    plotConvergence = false      # tADMM convergence plots (always plotted)
+    plotConvergence = true      # tADMM convergence plots (always plotted)
     # plotConvergence = true
     plotInputCurves = false      # Load, PV, and cost input curves (always plotted)
     plotBatteryActions = false   # Battery charging/discharging and SOC (conditional on convergence)
