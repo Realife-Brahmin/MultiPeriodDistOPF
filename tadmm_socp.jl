@@ -2,6 +2,20 @@
 ENV["GKSwstype"] = "png"
 
 # ============================================================================
+# INTERACTIVE CONFIG - MODIFY THESE TO CONTROL WHAT RUNS
+# ============================================================================
+# Simply change these values and press play (Ctrl+Shift+Enter in VS Code Julia)
+const RUN_CONFIG = (
+    system = "large10kC_1ph",     # System to solve: "large10kC_1ph", "large10kB_1ph", "large10k_1ph", "ieee2552_1ph", etc.
+    T = 12,                        # Time periods: 4, 6, 12, 24, 48, etc.
+    run_bf = true,                 # Run brute-force (true) or skip (false)
+    run_tadmm = false,             # Run tADMM (true) or skip (false)
+    bf_timeout_sec = 600,          # Kill BF after this many seconds (600 = 10 min, 0 = no limit)
+    verbose = true                 # Print progress updates
+)
+# ============================================================================
+
+# ============================================================================
 # PARALLELIZATION CONFIGURATION
 # ============================================================================
 # Auto-detect available CPU cores - try multiple methods for reliability
@@ -89,14 +103,9 @@ includet(joinpath(env_path, "solution_validator.jl"))
 includet(joinpath(env_path, "logger.jl"))
 includet(joinpath(env_path, "Plotter.jl"))
 
-# System and simulation parameters
-# systemName = "ads10A_1ph"
-# systemName = "ieee123A_1ph"
-# systemName = "ieee2552_1ph"
-systemName = "large10kC_1ph"
-T = 6  # Number of time steps
-# T = 48  # Number of time steps
-# T = 96  # Number of time steps
+# System and simulation parameters (from RUN_CONFIG above)
+systemName = RUN_CONFIG.system
+T = RUN_CONFIG.T
 # T = 480  # Number of time steps
 # T = 144
 # T = 6
@@ -249,8 +258,9 @@ begin # function mpopf socp bruteforced
             set_optimizer_attribute(model, "DualReductions", 0)  # Better infeasibility diagnosis
         else
             set_optimizer(model, Ipopt.Optimizer)
-            set_optimizer_attribute(model, "print_level", 3)
-            set_optimizer_attribute(model, "max_iter", 3000)
+            set_optimizer_attribute(model, "print_level", 5)  # INCREASED: 5 = very verbose, shows every iteration
+            set_optimizer_attribute(model, "max_iter", 5000)  # Increased from 3000
+            set_optimizer_attribute(model, "output_file", "ipopt_bf.log")  # Write Ipopt output to file too
         end
         
         # ========== 3. DEFINE VARIABLES ==========
@@ -398,11 +408,26 @@ begin # function mpopf socp bruteforced
         println("\n" * "="^80)
         println("STARTING OPTIMIZATION")
         println("="^80)
-        
+        println("[BF] Launching Ipopt solver...")
+
         # Start wall-clock timer for BF optimization
         bf_wallclock_start = time()
+
+        # Set timeout if configured
+        bf_timeout = RUN_CONFIG.bf_timeout_sec
+        if bf_timeout > 0
+            set_time_limit_sec(model, bf_timeout)
+            println("[BF] Timeout set to $(bf_timeout)s")
+        end
+
         optimize!(model)
         bf_wallclock_time = time() - bf_wallclock_start
+
+        if bf_timeout > 0 && bf_wallclock_time >= bf_timeout
+            println("[BF] ⏱️  TIMEOUT: BF killed after $(round(bf_wallclock_time, digits=1))s (limit: $(bf_timeout)s)")
+        else
+            println("[BF] ✓ Optimization completed in $(round(bf_wallclock_time, digits=1))s")
+        end
         
         # ========== 7. EXTRACT RESULTS ==========
         status = termination_status(model)
@@ -558,7 +583,7 @@ begin # function mpopf socp bruteforced
 end # function mpopf socp bruteforced
 
 const run_bf = true  # Set to true to run brute-force solve
-const run_tadmm = true  # Set to true to run tADMM solve
+const run_tadmm = false  # Set to true to run tADMM solve
 
 # =============================================================================
 # SOLUTION SAVE/LOAD (persist results across sessions)
@@ -1430,6 +1455,7 @@ begin # function solve MPOPF tadmm socp
         end
 
         try
+            tadmm_start_time = time()  # Start timer for progress updates
             for k in 1:max_iter
             # 🔵 STEP 1: Primal Update - Solve T subproblems
             total_energy_cost = 0.0
@@ -1879,6 +1905,13 @@ begin # function solve MPOPF tadmm socp
                 
                 @printf "k=%3d  obj=\$%.2f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f\n" k true_objective r_norm s_norm ρ_current
                 @printf "      Solver times(s): min=%.3f med=%.3f max=%.3f mean=%.3f std=%.3f%s\n" min_time median_time max_time mean_time std_time barrier_stats
+
+                # Progress update every 10 iterations
+                if mod(k, 10) == 0
+                    elapsed = time() - tadmm_start_time
+                    iters_per_min = round(Int, k / (elapsed/60))
+                    @printf "      [Progress] k=%d: %.1fs elapsed, %d iterations/min\n" k elapsed iters_per_min
+                end
             end
             
             # Check convergence (residuals)
@@ -1918,6 +1951,23 @@ begin # function solve MPOPF tadmm socp
             end
         end
         
+        # Check for ρ maxed out with no convergence improvement
+        if !converged && ρ_current >= ρ_max * 0.99  # ρ essentially at max
+            # Check if residual is stuck (not improving significantly)
+            if length(r_norm_history) >= 20
+                recent_r_norms = r_norm_history[end-19:end]
+                r_norm_change = (recent_r_norms[1] - recent_r_norms[end]) / recent_r_norms[1]
+                if abs(r_norm_change) < 0.01  # Less than 1% improvement in last 20 iters
+                    print(COLOR_ERROR)
+                    @printf "\n❌ FATAL: ρ reached maximum (%.0e) with stuck residual\n" ρ_current
+                    @printf "   ‖r‖ has not improved >1%% over last 20 iterations (current: %.2e)\n" r_norm_history[end]
+                    @printf "   Problem appears ill-conditioned for ADMM. Terminating.\n"
+                    print(COLOR_RESET)
+                    error("ADMM divergence: ρ maxed with stuck residual")
+                end
+            end
+        end
+
         # Report convergence status
         if !converged
             print(COLOR_WARNING)

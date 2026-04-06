@@ -1306,7 +1306,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     )
     
     # Add BF optimal line if available (check for successful optimization)
-    if haskey(sol_bf, :objective)
+    if !isnothing(sol_bf) && haskey(sol_bf, :objective)
         bf_obj = sol_bf[:objective]
         # Only add line if objective is finite (successful solve)
         if isfinite(bf_obj)
@@ -1571,7 +1571,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
             @printf "  Final momentum α: %.4f\n" last(α_history)
         end
     end
-    if haskey(sol_bf, :objective) && isfinite(sol_bf[:objective])
+    if !isnothing(sol_bf) && haskey(sol_bf, :objective) && isfinite(sol_bf[:objective])
         bf_obj = sol_bf[:objective]
         @printf "  Final objective:  \$%.6f (BF: \$%.6f, Δ=%.2e)\n" final_obj bf_obj abs(final_obj - bf_obj)
     else
