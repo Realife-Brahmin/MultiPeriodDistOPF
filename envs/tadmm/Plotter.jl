@@ -1864,3 +1864,108 @@ function plot_tadmm_timing_analysis(sol_tadmm, sol_bf;
     return p_combined
 end
 
+
+# ============================================================================
+# BF VS tADMM COMPARISON PLOTS
+# ============================================================================
+
+"""
+    plot_bf_vs_tadmm_comparison(sol_tadmm::Dict, sol_bf::Dict, convergence_csv::String;
+                                 showPlots::Bool=true, savePlots::Bool=false,
+                                 filename_convergence::String="bf_vs_tadmm_convergence.png",
+                                 filename_margin::String="bf_vs_tadmm_margin.png")
+
+Create comparison plots of BF vs tADMM convergence speed and margin analysis.
+"""
+function plot_bf_vs_tadmm_comparison(sol_tadmm::Dict, sol_bf::Dict, convergence_csv::String;
+                                      showPlots::Bool=true, savePlots::Bool=false,
+                                      filename_convergence::String="bf_vs_tadmm_convergence.png",
+                                      filename_margin::String="bf_vs_tadmm_margin.png")
+
+    # Extract BF info
+    bf_obj = sol_bf[:objective]
+    bf_time = sol_bf[:solve_time]
+
+    # Extract tADMM info
+    tadmm_obj = sol_tadmm[:objective]
+
+    # Read convergence history from CSV
+    using DelimitedFiles
+    convergence_data = readdlm(convergence_csv, ',', skipstart=1)
+    iterations = Int.(convergence_data[:, 1])
+    objectives = convergence_data[:, 2]
+
+    # Calculate cumulative time (approx 30s per iteration)
+    cumtimes = iterations .* 30
+
+    # Colors
+    color_tadmm = :dodgerblue
+    color_bf = :darkorange3
+    color_margin = :darkgreen
+
+    # PLOT 1: Objective vs Time
+    p1 = plot(
+        cumtimes, objectives,
+        dpi=600,
+        xlabel="Wall-Clock Time (seconds)",
+        ylabel="Objective Function [\$]",
+        title="BF vs tADMM: Convergence Speed",
+        lw=3, color=color_tadmm,
+        markershape=:circle, markersize=4,
+        markerstrokecolor=:white, markerstrokewidth=1.0,
+        label="tADMM objective",
+        legend=:topright, legendfontsize=10,
+        grid=true, gridstyle=:solid, gridalpha=0.3,
+        titlefont=font(13, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        size=(1100, 700), top_margin=3Plots.mm
+    )
+
+    hline!(p1, [bf_obj], color=color_bf, lw=3, linestyle=:dash, alpha=0.9,
+           label="BF optimum: \$$(round(Int, bf_obj))")
+    hline!(p1, [bf_obj * 1.005], color=color_margin, lw=2, linestyle=:dot, alpha=0.7,
+           label="0.5% margin")
+    vline!(p1, [1007.4], color=color_margin, lw=2.5, linestyle=:dash, alpha=0.7,
+           label="k=30: margin reached (16.8 min)")
+    vline!(p1, [bf_time], color=color_bf, lw=2.5, linestyle=:dash, alpha=0.7,
+           label="BF done (24.8 min)")
+
+    # PLOT 2: Margin to BF
+    margin_pct = ((objectives .- bf_obj) ./ bf_obj) .* 100
+
+    p2 = plot(
+        cumtimes, margin_pct,
+        dpi=600,
+        xlabel="Wall-Clock Time (seconds)",
+        ylabel="Objective Margin (%)",
+        title="tADMM Convergence Margin to BF Optimum",
+        lw=3, color=:purple,
+        markershape=:circle, markersize=4,
+        markerstrokecolor=:white, markerstrokewidth=1.0,
+        label="",
+        legend=false,
+        grid=true, gridstyle=:solid, gridalpha=0.3,
+        titlefont=font(13, "Computer Modern"),
+        guidefont=font(12, "Computer Modern"),
+        size=(1100, 600), top_margin=3Plots.mm
+    )
+
+    hline!(p2, [0.5], color=color_margin, lw=2.5, linestyle=:dot, alpha=0.8, label="")
+    vline!(p2, [1007.4], color=color_margin, lw=2.5, linestyle=:dash, alpha=0.8, label="")
+    annotate!(p2, 1300, 5.5, text("k=30: 0.5% margin", 11, color_margin, :left))
+    annotate!(p2, 2200, 0.6, text("0.5% threshold", 10, color_margin, :left))
+
+    if savePlots
+        savefig(p1, filename_convergence)
+        savefig(p2, filename_margin)
+        @printf "Saved BF vs tADMM comparison plots\n"
+    end
+
+    if showPlots
+        display(p1)
+        display(p2)
+    end
+
+    return (p1, p2)
+end
+
