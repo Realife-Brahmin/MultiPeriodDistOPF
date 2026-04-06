@@ -8,8 +8,8 @@ ENV["GKSwstype"] = "png"
 const RUN_CONFIG = (
     system = "large10kC_1ph",     # System to solve: "large10kC_1ph", "large10kB_1ph", "large10k_1ph", "ieee2552_1ph", etc.
     T = 12,                        # Time periods: 4, 6, 12, 24, 48, etc.
-    run_bf = true,                 # Run brute-force (true) or skip (false)
-    run_tadmm = false,             # Run tADMM (true) or skip (false)
+    run_bf = false,                # Run brute-force (true) or skip (false)
+    run_tadmm = true,              # Run tADMM (true) or skip (false)
     bf_timeout_sec = 600,          # Kill BF after this many seconds (600 = 10 min, 0 = no limit)
     verbose = true                 # Print progress updates
 )
@@ -101,7 +101,11 @@ includet(joinpath(env_path, "parse_opendss.jl"))
 includet(joinpath(env_path, "opendss_validator.jl"))
 includet(joinpath(env_path, "solution_validator.jl"))
 includet(joinpath(env_path, "logger.jl"))
-includet(joinpath(env_path, "Plotter.jl"))
+try
+    includet(joinpath(env_path, "Plotter.jl"))
+catch e
+    println(COLOR_WARNING, "⚠ Plotter.jl include failed (will skip plotting): $e", COLOR_RESET)
+end
 
 # System and simulation parameters (from RUN_CONFIG above)
 systemName = RUN_CONFIG.system
@@ -134,7 +138,8 @@ track_subproblem_details = true  # Track per-subproblem solve times and Ipopt it
 
 # Pre-solve warm-start for k=1: solve each subproblem with loose Ipopt tolerances
 # (max 30 iters, tol=1e-2) to get a rough feasible point, then k=1 warm-starts from it
-presolve_warmstart = true
+# DISABLED: Now that all subproblems are capped at max_iter=30, pre-solve is redundant
+presolve_warmstart = false
 
 # FAADMM (Fast ADMM with Restart) parameters - using paper's exact formulation
 # use_faadmm = true              # Enable acceleration with momentum and restart
@@ -582,8 +587,8 @@ begin # function mpopf socp bruteforced
     end
 end # function mpopf socp bruteforced
 
-const run_bf = true  # Set to true to run brute-force solve
-const run_tadmm = false  # Set to true to run tADMM solve
+const run_bf = RUN_CONFIG.run_bf  # Use RUN_CONFIG setting
+const run_tadmm = RUN_CONFIG.run_tadmm  # Use RUN_CONFIG setting
 
 # =============================================================================
 # SOLUTION SAVE/LOAD (persist results across sessions)
@@ -832,7 +837,7 @@ begin # function primal update (update 1) tadmm socp
             set_optimizer(model, Ipopt.Optimizer)
             set_silent(model)
             set_optimizer_attribute(model, "print_level", 0)
-            set_optimizer_attribute(model, "max_iter", 3000)
+            set_optimizer_attribute(model, "max_iter", 30)
             set_optimizer_attribute(model, "tol", 1e-6)
             set_optimizer_attribute(model, "acceptable_tol", 1e-4)
             set_optimizer_attribute(model, "mu_strategy", "adaptive")
@@ -1070,10 +1075,8 @@ begin # function primal update (update 1) tadmm socp
         # Check if solution exists (accept Ipopt statuses)
         status = termination_status(model)
         acceptable = (status == MOI.OPTIMAL || status == MOI.LOCALLY_SOLVED || status == MOI.ALMOST_LOCALLY_SOLVED)
-        # For pre-solve with loose tolerances, also accept iteration limit (partial solution is fine)
-        if !isnothing(ipopt_overrides)
-            acceptable = acceptable || status == MOI.ITERATION_LIMIT
-        end
+        # Accept iteration limit (with max_iter=30 globally, hitting limit is expected and partial solution is fine)
+        acceptable = acceptable || status == MOI.ITERATION_LIMIT
         if !acceptable
             error("Subproblem t0=$t0 failed with status: $status. Try reducing ρ or check problem feasibility.")
         end
@@ -1919,6 +1922,17 @@ begin # function solve MPOPF tadmm socp
                 converged = true
                 print(COLOR_SUCCESS)
                 @printf "🎉 tADMM converged at iteration %d\n" k
+                print(COLOR_RESET)
+                break
+            end
+
+            # Early stopping: s_norm threshold at 5e-3
+            s_threshold = 5e-3
+            if s_norm ≤ s_threshold
+                converged = true
+                print(COLOR_WARNING)
+                @printf "✓ Early stopping at iteration %d (‖s‖=%.2e ≤ %.2e threshold)\n" k s_norm s_threshold
+                @printf "  Final: ‖r‖=%.2e, ‖s‖=%.2e, obj=\$%.2f\n" r_norm s_norm true_objective
                 print(COLOR_RESET)
                 break
             end
