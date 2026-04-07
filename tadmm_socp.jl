@@ -7,10 +7,10 @@ ENV["GKSwstype"] = "png"
 # Simply change these values and press play (Ctrl+Shift+Enter in VS Code Julia)
 const RUN_CONFIG = (
     system = "large10kC_1ph",     # System to solve: "large10kC_1ph", "large10kB_1ph", "large10k_1ph", "ieee2552_1ph", etc.
-    T = 12,                        # Time periods: 4, 6, 12, 24, 48, etc.
+    T = 24,                        # Time periods: 4, 6, 12, 24, 48, etc.
     run_bf = false,                # Run brute-force (true) or skip (false)
     run_tadmm = true,              # Run tADMM (true) or skip (false)
-    bf_timeout_sec = 600,          # Kill BF after this many seconds (600 = 10 min, 0 = no limit)
+    bf_timeout_sec = 0,            # Kill BF after this many seconds (600 = 10 min, 0 = no limit)
     verbose = false                # Print progress updates (DISABLED: too many OpenDSS warnings causing hangs)
 )
 # ============================================================================
@@ -124,7 +124,7 @@ rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT sc
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base  # Linear (was causing oscillations)
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 1e-4  # Compulsory primal residual threshold
+eps_pri_tadmm = 1e-3  # Relaxed primal residual threshold (was 1e-4, tightened r_norm gate blocking early stopping)
 eps_dual_tadmm = 1e-2  # Loose dual residual (1e-2 for big systems like 10kC)
 adaptive_rho_tadmm = true  # Adaptive ρ enabled
 stagnation_window = 5  # Check improvement over last N iterations
