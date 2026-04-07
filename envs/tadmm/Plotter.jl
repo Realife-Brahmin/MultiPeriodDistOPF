@@ -1216,7 +1216,19 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     α_history = get(hist, :α_history, Float64[])  # FAADMM momentum history
     restart_history = get(hist, :restart_history, Int[])  # FAADMM restart iterations
     use_faadmm = get(hist, :use_faadmm, false)  # Check if FAADMM was used
-    
+
+    # Filter out NaN values to prevent plotting errors (can occur if convergence was early)
+    valid_idx = .!isnan.(obj_history) .& .!isnan.(r_norm_history) .& .!isnan.(s_norm_history)
+    obj_history = obj_history[valid_idx]
+    r_norm_history = r_norm_history[valid_idx]
+    s_norm_history = s_norm_history[valid_idx]
+    if !isempty(ρ_history)
+        ρ_history = ρ_history[valid_idx]
+    end
+    if !isempty(α_history)
+        α_history = α_history[valid_idx]
+    end
+
     # Set theme and colors (matching copper plate example)
     gr()
     theme(:mute)
@@ -1224,7 +1236,7 @@ function plot_tadmm_ldf_convergence(sol_tadmm, sol_bf, eps_pri::Float64, eps_dua
     line_colour_primal = :darkgreen     # Green for primal residual
     line_colour_dual = :darkorange2     # Orange for dual residual
     line_colour_rho = :purple           # Purple for ρ values
-    
+
     # Smart x-tick spacing based on number of iterations (avoid overlap)
     n_iter = length(obj_history)
     iterations = 1:n_iter

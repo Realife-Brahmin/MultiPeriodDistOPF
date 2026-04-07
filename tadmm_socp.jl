@@ -11,7 +11,7 @@ const RUN_CONFIG = (
     run_bf = false,                # Run brute-force (true) or skip (false)
     run_tadmm = true,              # Run tADMM (true) or skip (false)
     bf_timeout_sec = 600,          # Kill BF after this many seconds (600 = 10 min, 0 = no limit)
-    verbose = true                 # Print progress updates
+    verbose = false                # Print progress updates (DISABLED: too many OpenDSS warnings causing hangs)
 )
 # ============================================================================
 
@@ -124,9 +124,11 @@ rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base  # SQRT sc
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0) : rho_base  # Linear (was causing oscillations)
 # rho_tadmm = rho_scaling_with_T ? rho_base * (T / 24.0)^2 : rho_base
 max_iter_tadmm = 500  # Increased to allow convergence (was 250)
-eps_pri_tadmm = 8e-5  # Practical tolerance - plot shows oscillations around this (was 5e-5)
-eps_dual_tadmm = 3e-4  # Practical tolerance - give more room (was 2e-4)
+eps_pri_tadmm = 1e-4  # Compulsory primal residual threshold
+eps_dual_tadmm = 1e-2  # Loose dual residual (1e-2 for big systems like 10kC)
 adaptive_rho_tadmm = true  # Adaptive ρ enabled
+stagnation_window = 5  # Check improvement over last N iterations
+stagnation_threshold = 1e-3  # Stop if improvement < 0.1% over window
 
 # Warm-starting parameters
 enable_warm_start = true  # ENABLED to test warm-start with detailed timing - use previous iteration's solution to warm-start subproblems
@@ -1917,40 +1919,36 @@ begin # function solve MPOPF tadmm socp
                 end
             end
             
-            # Check convergence (residuals)
-            if r_norm ≤ eps_pri && s_norm ≤ eps_dual
-                converged = true
-                print(COLOR_SUCCESS)
-                @printf "🎉 tADMM converged at iteration %d\n" k
-                print(COLOR_RESET)
-                break
+            # NEW CONVERGENCE CRITERION: ‖r‖ ≤ 1e-4 AND (‖s‖ ≤ 1e-2 OR stagnation)
+
+            # Check stagnation: improvement < 0.01% over last 5 iterations
+            stagnation_detected = false
+            if length(obj_history) >= stagnation_window
+                recent_objs = obj_history[end-stagnation_window+1:end]
+                obj_min = minimum(recent_objs)
+                obj_max = maximum(recent_objs)
+                if obj_max > 0
+                    improvement_ratio = (obj_max - obj_min) / abs(obj_max)
+                    stagnation_detected = improvement_ratio < stagnation_threshold
+                end
             end
 
-            # Early stopping: s_norm threshold at 5e-3
-            s_threshold = 5e-3
-            if s_norm ≤ s_threshold
+            # Convergence: r tight AND (s loose OR stagnation)
+            r_converged = r_norm ≤ eps_pri
+            s_converged = s_norm ≤ eps_dual
+            either_exit_condition = s_converged || stagnation_detected
+
+            if r_converged && either_exit_condition
                 converged = true
-                print(COLOR_WARNING)
-                @printf "✓ Early stopping at iteration %d (‖s‖=%.2e ≤ %.2e threshold)\n" k s_norm s_threshold
-                @printf "  Final: ‖r‖=%.2e, ‖s‖=%.2e, obj=\$%.2f\n" r_norm s_norm true_objective
+                print(COLOR_SUCCESS)
+                if s_converged
+                    @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, ‖s‖=%.2e ≤ %.2e)\n" k r_norm eps_pri s_norm eps_dual
+                else
+                    @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, stagnation detected)\n" k r_norm eps_pri
+                end
+                @printf "  Final objective: \$%.2f\n" true_objective
                 print(COLOR_RESET)
                 break
-            end
-            
-            # Early termination: objective stagnation (practical convergence)
-            if k >= slow_progress_window + 5
-                recent_objs = obj_history[end-slow_progress_window+1:end]
-                obj_range = maximum(recent_objs) - minimum(recent_objs)
-                avg_obj = mean(recent_objs)
-                relative_obj_change = obj_range / abs(avg_obj)
-                
-                if relative_obj_change < slow_progress_threshold && r_norm < 2.0 * eps_pri && s_norm < 2.0 * eps_dual
-                    converged = true
-                    print(COLOR_WARNING)
-                    @printf "✓ Practical convergence at iteration %d (obj stagnant: Δrel=%.2e < %.1e, ‖r‖=%.2e, ‖s‖=%.2e)\n" k relative_obj_change slow_progress_threshold r_norm s_norm
-                    print(COLOR_RESET)
-                    break
-                end
             end
             
             final_iter = k  # Track last completed iteration
@@ -2534,14 +2532,31 @@ begin # tadmm socp solve
             r_h = hist[:r_norm_history],
             s_h = hist[:s_norm_history],
             ρ_h = hist[:ρ_history],
+            eff_times = sol_socp_tadmm[:timing][:iteration_effective_times],
+            iters_matrix = sol_socp_tadmm[:timing][:subproblem_iters_matrix],
             n_iter = length(obj_h)
 
             conv_csv = joinpath(system_dir, "convergence_data.csv")
             open(conv_csv, "w") do io
-                println(io, "iteration,objective,r_norm,s_norm,rho")
+                # Header: iteration, objective, r_norm, s_norm, rho, eff_time_this_k, cum_eff_time, max_sp_time_this_k, mean_ipopt_iters_this_k
+                println(io, "iteration,objective,r_norm,s_norm,rho,eff_time_this_k,cum_eff_time,max_sp_time_this_k,mean_ipopt_iters_this_k")
+
+                cum_eff_time = 0.0
                 for k in 1:n_iter
                     rho_val = k <= length(ρ_h) ? ρ_h[k] : NaN
-                    @printf(io, "%d,%.6f,%.10e,%.10e,%.2f\n", k, obj_h[k], r_h[k], s_h[k], rho_val)
+                    eff_time_k = k <= length(eff_times) ? eff_times[k] : NaN
+                    cum_eff_time += isnan(eff_time_k) ? 0.0 : eff_time_k
+
+                    # Get max sp time and mean ipopt iters for this iteration
+                    sp_times_k = sol_socp_tadmm[:timing][:subproblem_times_matrix][k, :]
+                    max_sp_time_k = maximum(sp_times_k)
+
+                    ipopt_iters_k = iters_matrix[k, :]
+                    ipopt_iters_nonzero = ipopt_iters_k[ipopt_iters_k .> 0]
+                    mean_ipopt_iters_k = isempty(ipopt_iters_nonzero) ? 0.0 : mean(ipopt_iters_nonzero)
+
+                    @printf(io, "%d,%.6f,%.10e,%.10e,%.2f,%.4f,%.4f,%.4f,%.2f\n",
+                            k, obj_h[k], r_h[k], s_h[k], rho_val, eff_time_k, cum_eff_time, max_sp_time_k, mean_ipopt_iters_k)
                 end
             end
             println(COLOR_SUCCESS, "✓ Convergence data CSV exported to $(conv_csv)", COLOR_RESET)
