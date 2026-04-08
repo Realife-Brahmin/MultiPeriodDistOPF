@@ -20,21 +20,21 @@ Total constraints: 69067
 Initial ρ: 1500.0
 Adaptive ρ: true
 Max iterations: 500
-Primal tolerance: 8.0e-05
-Dual tolerance: 3.0e-04
+Primal tolerance: 1.0e-04
+Dual tolerance: 1.0e-02
 
 --- ACCELERATION (FAADMM) ---
 FAADMM enabled: false
 
 --- CONVERGENCE ---
-Converged in 25 iterations
-Final primal residual: 3.20e-08
-Final dual residual: 7.17e-07
+Converged in 37 iterations
+Final primal residual: 1.06e-08
+Final dual residual: 0.00e+00
 
 --- OBJECTIVE VALUE ---
-Total Cost: $2919076.0934
+Total Cost: $2919076.0648
 Brute Force objective: $2919076.0709
-Absolute difference: $0.0225
+Absolute difference: $0.0061
 Relative difference: 0.0000%
 
 --- COMPUTATION TIME ---
@@ -42,12 +42,12 @@ Brute Force:
   Wall-clock time: 664.3480 seconds (actual time on machine)
   Solver time: 662.7790 seconds (reported by Ipopt)
 tADMM:
-  Wall-clock time: 587.5490 seconds (actual time on machine)
-  Effective time: 475.6690 seconds (max subproblem time per iter)
-  Sequential time: 2612.2670 seconds (sum of all subproblems)
+  Wall-clock time: 670.6450 seconds (actual time on machine)
+  Effective time: 594.2830 seconds (max subproblem time per iter)
+  Sequential time: 3233.1750 seconds (sum of all subproblems)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 1.13x
-  Parallel efficiency: 81.0% (0.81x speedup)
+  tADMM vs BF (wall-clock): 0.99x
+  Parallel efficiency: 88.6% (0.89x speedup)
 
 --- SOLUTION FEASIBILITY ---
 Status: ✓ FEASIBLE - All constraints satisfied
