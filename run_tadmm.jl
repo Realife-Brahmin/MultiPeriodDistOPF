@@ -375,7 +375,7 @@ function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, rho::Float64, t
         :P => P_vals,
         :Q => Q_vals,
         :v => v_vals,
-        :l => l_vals,
+        :ℓ => l_vals,
         :q_D => q_D_vals,
         :P_B => P_B_vals_all_times,
         :B_local => B_local,
@@ -843,7 +843,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
         :P => P_final,
         :Q => Q_final,
         :v => v_final,
-        :l => l_final,
+        :ℓ => l_final,
         :q_D => q_D_final,
         :P_B => P_B_final,
         :B => B_final,
@@ -946,8 +946,21 @@ function save_tadmm_results(sol, data)
         println(COLOR_WARNING, "BF results not found at $(bf_results_file), skipping comparison", COLOR_RESET)
     end
 
-    # Validate solution
-    tadmm_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false)
+    # --- Save serialized solution early (before validation that could fail) ---
+    sol_file = joinpath(SYSTEM_DIR, "sol_socp_tadmm.jls")
+    open(sol_file, "w") do io
+        serialize(io, sol)
+    end
+    println(COLOR_SUCCESS, "Solution saved: $(sol_file)", COLOR_RESET)
+
+    # Validate solution (wrapped in try-catch to never lose results)
+    tadmm_validation = nothing
+    try
+        tadmm_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false)
+    catch e
+        println(COLOR_WARNING, "WARNING: Validation failed, writing results without feasibility check.", COLOR_RESET)
+        println(COLOR_WARNING, "  Error: ", e, COLOR_RESET)
+    end
 
     # --- 4. Results text file ---
     results_file = joinpath(SYSTEM_DIR, "results_socp_tadmm.txt")
@@ -1005,7 +1018,9 @@ function save_tadmm_results(sol, data)
             @printf(io, "  tADMM vs BF (wall-clock): %.2fx\n", bf_wallclock / sol[:timing][:wallclock_time])
         end
         println(io, "\n--- SOLUTION FEASIBILITY ---")
-        if tadmm_validation[:feasible]
+        if isnothing(tadmm_validation)
+            println(io, "Status: VALIDATION SKIPPED (validator error)")
+        elseif tadmm_validation[:feasible]
             println(io, "Status: FEASIBLE - All constraints satisfied")
         else
             println(io, "Status: INFEASIBLE - $(tadmm_validation[:total_violations]) constraint violations")
@@ -1024,13 +1039,6 @@ function save_tadmm_results(sol, data)
         println(io, "="^80)
     end
     println(COLOR_SUCCESS, "Results: $(results_file)", COLOR_RESET)
-
-    # --- 5. Serialized solution (.jls, gitignored) ---
-    sol_file = joinpath(SYSTEM_DIR, "sol_socp_tadmm.jls")
-    open(sol_file, "w") do io
-        serialize(io, sol)
-    end
-    println(COLOR_SUCCESS, "Solution saved: $(sol_file)", COLOR_RESET)
 end
 
 # ============================================================================
@@ -1072,12 +1080,17 @@ else
     @printf "Effective:  %.2f seconds (%d iterations)\n" sol_socp_tadmm[:timing][:total_effective_time] length(sol_socp_tadmm[:timing][:iteration_effective_times])
     print(COLOR_RESET)
 
-    # Validate
+    # Validate (wrapped in try-catch to never lose a completed solve)
     println("\n" * "="^80)
     println(COLOR_INFO, "VALIDATING tADMM SOLUTION", COLOR_RESET)
     println("="^80)
-    tadmm_validation = validate_branch_flow_equations(sol_socp_tadmm, data; tol=1e-4, verbose=false)
-    print_validation_summary(tadmm_validation; solution_name="tADMM SOCP")
+    try
+        tadmm_validation = validate_branch_flow_equations(sol_socp_tadmm, data; tol=1e-4, verbose=false)
+        print_validation_summary(tadmm_validation; solution_name="tADMM SOCP")
+    catch e
+        println(COLOR_ERROR, "WARNING: Validation failed but solution is preserved.", COLOR_RESET)
+        println(COLOR_ERROR, "  Error: ", e, COLOR_RESET)
+    end
 
     save_tadmm_results(sol_socp_tadmm, data)
 

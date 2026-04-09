@@ -255,20 +255,25 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
         :P => has_values(model) ? value.(P) : P,
         :Q => has_values(model) ? value.(Q) : Q,
         :v => has_values(model) ? value.(v) : v,
-        :l => has_values(model) ? value.(l) : l,
+        :ℓ => has_values(model) ? value.(l) : l,
         :P_B => has_values(model) ? value.(P_B) : P_B,
         :B => has_values(model) ? value.(B) : B,
         :q_D => has_values(model) ? value.(q_D) : q_D,
         :model_stats => bf_model_stats,
     )
 
-    # Validate solution
+    # Validate solution (wrapped in try-catch to never lose a completed solve)
     if has_values(model)
-        println("\n" * "="^80)
-        println(COLOR_INFO, "VALIDATING BF SOLUTION", COLOR_RESET)
-        println("="^80)
-        bf_validation = validate_branch_flow_equations(result, data; tol=1e-4, verbose=false)
-        print_validation_summary(bf_validation; solution_name="Brute Force SOCP")
+        try
+            println("\n" * "="^80)
+            println(COLOR_INFO, "VALIDATING BF SOLUTION", COLOR_RESET)
+            println("="^80)
+            bf_validation = validate_branch_flow_equations(result, data; tol=1e-4, verbose=false)
+            print_validation_summary(bf_validation; solution_name="Brute Force SOCP")
+        catch e
+            println(COLOR_ERROR, "WARNING: Validation failed but solution is preserved.", COLOR_RESET)
+            println(COLOR_ERROR, "  Error: ", e, COLOR_RESET)
+        end
     end
 
     return result
@@ -287,8 +292,22 @@ function save_bf_results(sol, data)
         return
     end
 
-    # Validate solution
-    bf_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false)
+    # === SAVE SERIALIZED SOLUTION FIRST (before anything that could fail) ===
+    sol_save = Dict(k => v for (k, v) in sol if k != :model)
+    sol_file = joinpath(SYSTEM_DIR, "sol_socp_bf.jls")
+    open(sol_file, "w") do io
+        serialize(io, sol_save)
+    end
+    println(COLOR_SUCCESS, "Solution saved to $(sol_file)", COLOR_RESET)
+
+    # === VALIDATE (wrapped in try-catch so save always completes) ===
+    bf_validation = nothing
+    try
+        bf_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false)
+    catch e
+        println(COLOR_WARNING, "WARNING: Validation failed, writing results without feasibility check.", COLOR_RESET)
+        println(COLOR_WARNING, "  Error: ", e, COLOR_RESET)
+    end
 
     # Write results text file
     results_file = joinpath(SYSTEM_DIR, "results_socp_bf.txt")
@@ -321,7 +340,9 @@ function save_bf_results(sol, data)
             @printf(io, "Avg time per iteration: %.4f seconds\n", sol[:time_per_iter])
         end
         println(io, "\n--- SOLUTION FEASIBILITY ---")
-        if bf_validation[:feasible]
+        if isnothing(bf_validation)
+            println(io, "Status: VALIDATION SKIPPED (validator error)")
+        elseif bf_validation[:feasible]
             println(io, "Status: FEASIBLE - All constraints satisfied")
         else
             println(io, "Status: INFEASIBLE - $(bf_validation[:total_violations]) constraint violations")
@@ -340,14 +361,6 @@ function save_bf_results(sol, data)
         println(io, "="^80)
     end
     println(COLOR_SUCCESS, "Results written to $(results_file)", COLOR_RESET)
-
-    # Save serialized solution (.jls, gitignored)
-    sol_save = Dict(k => v for (k, v) in sol if k != :model)
-    sol_file = joinpath(SYSTEM_DIR, "sol_socp_bf.jls")
-    open(sol_file, "w") do io
-        serialize(io, sol_save)
-    end
-    println(COLOR_SUCCESS, "Solution saved to $(sol_file)", COLOR_RESET)
 end
 
 # ============================================================================
