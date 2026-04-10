@@ -524,11 +524,11 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
     rnorm_high_counter = 0
 
     # Output control
-    progress_interval = 5
+    progress_interval = 1
 
     println("\n" * "="^80)
     print(COLOR_INFO)
-    @printf "tADMM[SOCP]: T=%d, rho_init=%.1f, adaptive=%s, warm_start=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) rho adaptive_rho enable_warm_start length(Bset) length(data[:Nset]) length(data[:Lset])
+    @printf "🎯 tADMM[SOCP]: T=%d, ρ_init=%.1f, adaptive=%s, warm_start=%s, |Bset|=%d, |Nset|=%d, |Lset|=%d\n" length(Tset) rho adaptive_rho enable_warm_start length(Bset) length(data[:Nset]) length(data[:Lset])
     print(COLOR_RESET)
     println("="^80)
 
@@ -706,7 +706,9 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 if rnorm_high_counter >= rnorm_watchdog_window
                     rho_old = rho_current
                     rho_current = min(rho_max, rnorm_watchdog_factor * rho_current)
-                    @printf "  [k=%3d] RNORM WATCHDOG: rho %.1f -> %.1f (r=%.2e > %.1e for %d iters)\n" k rho_old rho_current r_norm eps_pri rnorm_high_counter
+                    print(COLOR_WARNING)
+                    @printf "  [k=%3d] 🐕 RNORM WATCHDOG: ρ %.1f → %.1f (‖r‖=%.2e > %.1e for %d iters)\n" k rho_old rho_current r_norm eps_pri rnorm_high_counter
+                    print(COLOR_RESET)
                     scale_factor = rho_old / rho_current
                     for t0 in Tset, j in Bset
                         for t_key in keys(u_collection[t0][j])
@@ -725,23 +727,31 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 if r_norm <= eps_pri && !primal_converged_once
                     primal_converged_once = true
                     phase1_only_increase = false
-                    @printf "  [k=%3d] Phase 1->2: primal converged\n" k
+                    print(COLOR_SUCCESS)
+                    @printf "  [k=%3d] Phase 1→2: primal converged\n" k
+                    print(COLOR_RESET)
                 end
 
                 if phase1_only_increase
                     if r_norm > mu_balance * s_norm
                         rho_current = min(rho_max, tau_incr * rho_current)
-                        @printf "  [PHASE1-UP] rho: %.1f -> %.1f (r/s=%.1f)\n" rho_old rho_current (r_norm/s_norm)
+                        print(COLOR_WARNING)
+                        @printf "  [PHASE1-UP] ρ: %.1f → %.1f (r/s=%.1f)\n" rho_old rho_current (r_norm/s_norm)
+                        print(COLOR_RESET)
                         rho_changed = true
                     end
                 else
                     if r_norm > mu_balance * s_norm
                         rho_current = min(rho_max, tau_incr * rho_current)
-                        @printf "  [k=%3d] rho %.1f -> %.1f (r/s=%.1f)\n" k rho_old rho_current (r_norm/s_norm)
+                        print(COLOR_WARNING)
+                        @printf "  [k=%3d] ρ %.1f → %.1f (r/s=%.1f)\n" k rho_old rho_current (r_norm/s_norm)
+                        print(COLOR_RESET)
                         rho_changed = true
                     elseif s_norm > mu_balance * r_norm && r_norm <= eps_pri
                         rho_current = max(rho_min, rho_current / tau_decr)
-                        @printf "  [k=%3d] rho %.1f -> %.1f (s/r=%.1f, r converged)\n" k rho_old rho_current (s_norm/r_norm)
+                        print(COLOR_INFO)
+                        @printf "  [k=%3d] ρ %.1f → %.1f (s/r=%.1f, ‖r‖ converged)\n" k rho_old rho_current (s_norm/r_norm)
+                        print(COLOR_RESET)
                         rho_changed = true
                     end
                 end
@@ -760,7 +770,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
             show_this_iter = (k % progress_interval == 0) || (k == 1)
             if show_this_iter
                 times = subproblem_times_k
-                @printf "k=%3d  obj=\$%.2f  r=%.2e  s=%.2e  rho=%.1f  sp_max=%.3fs  sp_med=%.3fs\n" k true_objective r_norm s_norm rho_current maximum(times) median(times)
+                @printf "k=%3d  obj=\$%.2f  ‖r‖=%.2e  ‖s‖=%.2e  ρ=%.1f  sp_max=%.3fs  sp_med=%.3fs\n" k true_objective r_norm s_norm rho_current maximum(times) median(times)
                 if mod(k, 10) == 0
                     elapsed = time() - tadmm_start_time
                     @printf "      [Progress] %.1fs elapsed, %d iters/min\n" elapsed round(Int, k / (elapsed/60))
@@ -787,9 +797,9 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 converged = true
                 print(COLOR_SUCCESS)
                 if s_converged
-                    @printf "tADMM converged at k=%d (r=%.2e <= %.2e, s=%.2e <= %.2e)\n" k r_norm eps_pri s_norm eps_dual
+                    @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, ‖s‖=%.2e ≤ %.2e)\n" k r_norm eps_pri s_norm eps_dual
                 else
-                    @printf "tADMM converged at k=%d (r=%.2e <= %.2e, stagnation)\n" k r_norm eps_pri
+                    @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, stagnation detected)\n" k r_norm eps_pri
                 end
                 @printf "  Final objective: \$%.2f\n" true_objective
                 print(COLOR_RESET)
@@ -800,7 +810,9 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
         end
     catch e
         if isa(e, InterruptException)
-            @printf "\ntADMM interrupted at iteration %d\n" final_iter
+            print(COLOR_WARNING)
+            @printf "\n⚠ tADMM interrupted at iteration %d\n" final_iter
+            print(COLOR_RESET)
         else
             rethrow(e)
         end
@@ -808,7 +820,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 
     if !converged
         print(COLOR_WARNING)
-        @printf "tADMM did NOT converge after %d iterations (r=%.2e, s=%.2e)\n" max_iter r_norm_history[end] s_norm_history[end]
+        @printf "⚠ tADMM did NOT converge after %d iterations (‖r‖=%.2e, ‖s‖=%.2e)\n" max_iter r_norm_history[end] s_norm_history[end]
         print(COLOR_RESET)
     end
 
@@ -827,7 +839,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 
     # Print performance summary
     println("\n" * "="^80)
-    println(COLOR_INFO, "SOLVER PERFORMANCE SUMMARY", COLOR_RESET)
+    println(COLOR_INFO, "📊 SOLVER PERFORMANCE ANALYSIS (optimize!() times only)", COLOR_RESET)
     println("="^80)
     @printf "Iterations:       %d\n" final_iter
     total_effective = sum(iteration_effective_times)
@@ -902,7 +914,7 @@ function save_tadmm_results(sol, data)
                     k, obj_h[k], r_h[k], s_h[k], rho_val, eff_time_k, cum_eff_time, max_sp_time_k, mean_ipopt_k)
         end
     end
-    println(COLOR_SUCCESS, "Convergence CSV: $(conv_csv)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ Convergence CSV: $(conv_csv)", COLOR_RESET)
 
     # --- 2. Subproblem timing CSV ---
     csv_file = joinpath(SYSTEM_DIR, "subproblem_timing_details.csv")
@@ -917,7 +929,7 @@ function save_tadmm_results(sol, data)
             end
         end
     end
-    println(COLOR_SUCCESS, "Subproblem timing CSV: $(csv_file)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ Subproblem timing CSV: $(csv_file)", COLOR_RESET)
 
     # --- 3. Load BF results for comparison (if available) ---
     bf_objective = NaN
@@ -951,7 +963,7 @@ function save_tadmm_results(sol, data)
     open(sol_file, "w") do io
         serialize(io, sol)
     end
-    println(COLOR_SUCCESS, "Solution saved: $(sol_file)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ Solution saved: $(sol_file)", COLOR_RESET)
 
     # Validate solution (wrapped in try-catch to never lose results)
     tadmm_validation = nothing
@@ -1038,7 +1050,7 @@ function save_tadmm_results(sol, data)
         println(io, "Decomposition: Temporal ADMM")
         println(io, "="^80)
     end
-    println(COLOR_SUCCESS, "Results: $(results_file)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ tADMM results written to $(results_file)", COLOR_RESET)
 end
 
 # ============================================================================
