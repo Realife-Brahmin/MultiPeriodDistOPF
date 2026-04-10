@@ -1,15 +1,20 @@
 # ============================================================================
 # plot_results.jl — Standalone plotting from CSV/TXT files
 # ============================================================================
-# Usage: edit the PLOT_CONFIG below, then run this script.
-# No running Julia session or solution objects needed — reads files only.
+# Usage: edit config.jl, then run this script.
+#   julia plot_results.jl
+# Reads system/T from config.jl — no running Julia session needed.
 # ============================================================================
 
 ENV["GKSwstype"] = "png"
+ENV["GKS_FILEPATH"] = tempname() * ".png"
+
+# Load shared configuration (SYSTEM_NAME, T, eps_pri_tadmm, etc.)
+include("config.jl")
 
 # Activate the tadmm environment (for Plots dependency)
 import Pkg
-Pkg.activate(joinpath(@__DIR__, "envs", "tadmm"))
+Pkg.activate(ENV_PATH)
 
 using Plots
 using Printf
@@ -20,11 +25,11 @@ gr()
 theme(:mute)
 
 # ============================================================================
-# PLOT CONFIGURATION — edit these
+# PLOT CONFIGURATION — derived from config.jl
 # ============================================================================
 const PLOT_CONFIG = (
-    system = "large10kC_1ph",
-    T = 24,
+    system = SYSTEM_NAME,
+    T = T,
     eps_pri = 1e-3,
     eps_dual = 1e-2,
     show_plots = false,
@@ -32,8 +37,7 @@ const PLOT_CONFIG = (
     dpi = 600,
 )
 
-const RESULTS_DIR = joinpath(@__DIR__, "envs", "tadmm", "processedData",
-                             "$(PLOT_CONFIG.system)_T$(PLOT_CONFIG.T)")
+const RESULTS_DIR = SYSTEM_DIR
 const CONV_DIR = joinpath(RESULTS_DIR, "convergence")
 
 # ============================================================================
@@ -344,15 +348,33 @@ function plot_timing(; config=PLOT_CONFIG)
 end
 
 # ============================================================================
-# RUN BOTH PLOTS
+# RUN PLOTS — handle all 4 cases gracefully
 # ============================================================================
 
 println("\n" * "="^80)
 println("GENERATING PLOTS FROM CSV/TXT FILES")
 println("="^80)
+println("System: $(PLOT_CONFIG.system), T=$(PLOT_CONFIG.T)")
 println("Results dir: $RESULTS_DIR")
 
-plot_convergence()
-plot_timing()
+has_bf = isfile(joinpath(RESULTS_DIR, "results_socp_bf.txt"))
+has_tadmm = isfile(joinpath(RESULTS_DIR, "convergence_data.csv"))
+
+if !has_bf && !has_tadmm
+    println("\n⚠ Neither BF nor tADMM results found in $RESULTS_DIR")
+    println("  Run run_bf.jl and/or run_tadmm.jl first.")
+elseif has_bf && !has_tadmm
+    println("\n✓ BF results found, but no tADMM convergence data — nothing to plot.")
+    println("  Run run_tadmm.jl to generate convergence/timing plots.")
+else
+    # has_tadmm (with or without BF)
+    if has_bf
+        println("✓ Both BF and tADMM results found — plotting with BF reference lines.")
+    else
+        println("⚠ tADMM results found, but no BF results — plotting without BF reference.")
+    end
+    plot_convergence()
+    plot_timing()
+end
 
 println("\nDone.")
