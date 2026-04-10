@@ -277,10 +277,10 @@ function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, rho::Float64, t
                 end
             end
         end
-        if !lindistflow && haskey(prev_solution, :l)
+        if !lindistflow && haskey(prev_solution, :ℓ)
             for (i, j) in Lset
-                if haskey(prev_solution[:l], (i, j))
-                    set_start_value(l_t0[(i, j)], prev_solution[:l][(i, j)])
+                if haskey(prev_solution[:ℓ], (i, j))
+                    set_start_value(l_t0[(i, j)], prev_solution[:ℓ][(i, j)])
                 end
             end
         end
@@ -591,7 +591,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                     for (i, j) in data[:Lset]
                         P_collection[(i, j)][t0] = result[:P][(i, j)]
                         Q_collection[(i, j)][t0] = result[:Q][(i, j)]
-                        l_collection[(i, j)][t0] = result[:l][(i, j)]
+                        l_collection[(i, j)][t0] = result[:ℓ][(i, j)]
                     end
                     for j in data[:Nset]
                         v_collection[j][t0] = result[:v][j]
@@ -644,7 +644,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                     for (i, j) in data[:Lset]
                         P_collection[(i, j)][t0] = result[:P][(i, j)]
                         Q_collection[(i, j)][t0] = result[:Q][(i, j)]
-                        l_collection[(i, j)][t0] = result[:l][(i, j)]
+                        l_collection[(i, j)][t0] = result[:ℓ][(i, j)]
                     end
                     for j in data[:Nset]
                         v_collection[j][t0] = result[:v][j]
