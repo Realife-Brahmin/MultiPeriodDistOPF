@@ -3,8 +3,8 @@
 # ============================================================================
 
 # System and time horizon
-const SYSTEM_NAME = "large10kC_1ph"  # "ieee123A_1ph", "ieee2552_1ph", "large10k_1ph", "large10kB_1ph", "large10kC_1ph"
-const T = 12                          # Time periods: 4, 6, 12, 24, 48, etc.
+const SYSTEM_NAME = haskey(ENV, "SYSTEM_OVERRIDE") ? ENV["SYSTEM_OVERRIDE"] : "large10kC_1ph"
+const T = haskey(ENV, "T_OVERRIDE") ? parse(Int, ENV["T_OVERRIDE"]) : 12  # 4, 6, 12, 24, 48, etc.
 const DELTA_T_H = 24.0 / T           # Time step duration in hours
 
 # Solver selection (Gurobi requires license)

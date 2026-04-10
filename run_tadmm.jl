@@ -72,6 +72,10 @@ includet(joinpath(ENV_PATH, "logger.jl"))
 rho_base = 3000.0
 rho_scaling_with_T = true
 rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
+if haskey(ENV, "RHO_OVERRIDE")
+    rho_tadmm = parse(Float64, ENV["RHO_OVERRIDE"])
+    println("RHO_OVERRIDE: using rho = $rho_tadmm")
+end
 max_iter_tadmm = 500
 eps_pri_tadmm = 1e-3
 eps_dual_tadmm = 1e-2
