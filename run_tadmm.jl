@@ -8,6 +8,7 @@
 
 # Fix GR backend display issues on headless/Windows environments
 ENV["GKSwstype"] = "png"
+ENV["GKS_FILEPATH"] = tempname() * ".png"
 
 # Load shared configuration
 include("config.jl")
