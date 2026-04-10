@@ -544,6 +544,14 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 
     tadmm_wallclock_start = time()
 
+    # Live log file — written every iteration, survives crashes
+    log_file = joinpath(SYSTEM_DIR, "tadmm_run.log")
+    mkpath(SYSTEM_DIR)
+    log_io = open(log_file, "w")
+    @printf(log_io, "# tADMM live log — %s T=%d, ρ_init=%.1f, adaptive=%s\n", SYSTEM_NAME, length(Tset), rho, adaptive_rho)
+    @printf(log_io, "# k, objective, r_norm, s_norm, rho, sp_max, sp_med, elapsed_s, event\n")
+    flush(log_io)
+
     try
         tadmm_start_time = time()
         for k in 1:max_iter
@@ -778,6 +786,13 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 end
             end
 
+            # Write to live log (every iteration, flushed)
+            elapsed_k = time() - tadmm_start_time
+            times = subproblem_times_k
+            @printf(log_io, "%d,%.6f,%.10e,%.10e,%.2f,%.4f,%.4f,%.2f,\n",
+                    k, true_objective, r_norm, s_norm, rho_current, maximum(times), median(times), elapsed_k)
+            flush(log_io)
+
             # Convergence check
             stagnation_detected = false
             if length(obj_history) >= stagnation_window
@@ -799,10 +814,13 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 print(COLOR_SUCCESS)
                 if s_converged
                     @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, ‖s‖=%.2e ≤ %.2e)\n" k r_norm eps_pri s_norm eps_dual
+                    @printf(log_io, "# CONVERGED at k=%d (r=%.2e <= %.2e, s=%.2e <= %.2e)\n", k, r_norm, eps_pri, s_norm, eps_dual)
                 else
                     @printf "🎉 tADMM converged at iteration %d (‖r‖=%.2e ≤ %.2e, stagnation detected)\n" k r_norm eps_pri
+                    @printf(log_io, "# CONVERGED at k=%d (r=%.2e <= %.2e, stagnation)\n", k, r_norm, eps_pri)
                 end
                 @printf "  Final objective: \$%.2f\n" true_objective
+                @printf(log_io, "# Final objective: \$%.6f\n", true_objective)
                 print(COLOR_RESET)
                 break
             end
@@ -814,9 +832,14 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
             print(COLOR_WARNING)
             @printf "\n⚠ tADMM interrupted at iteration %d\n" final_iter
             print(COLOR_RESET)
+            @printf(log_io, "# INTERRUPTED at k=%d\n", final_iter)
         else
+            @printf(log_io, "# CRASHED at k=%d: %s\n", final_iter, sprint(showerror, e))
             rethrow(e)
         end
+    finally
+        flush(log_io)
+        close(log_io)
     end
 
     if !converged
@@ -1143,6 +1166,29 @@ function save_tadmm_results(sol, data)
         println(io, "="^80)
     end
     println(COLOR_SUCCESS, "✓ tADMM results written to $(results_file)", COLOR_RESET)
+
+    # --- Trim live log to last 100 lines (full log served its crash-recovery purpose) ---
+    log_file = joinpath(SYSTEM_DIR, "tadmm_run.log")
+    if isfile(log_file)
+        all_lines = readlines(log_file)
+        # Keep header (comment lines at top) + last 100 data lines
+        header_lines = filter(l -> startswith(l, "# ") && !startswith(l, "# CONVERGED") &&
+                                   !startswith(l, "# INTERRUPTED") && !startswith(l, "# CRASHED") &&
+                                   !startswith(l, "# Final"), all_lines[1:min(2, length(all_lines))])
+        tail_lines = all_lines[max(1, length(all_lines) - 99):end]
+        open(log_file, "w") do io
+            for l in header_lines
+                println(io, l)
+            end
+            if length(all_lines) > 100 + length(header_lines)
+                println(io, "# ... trimmed $(length(all_lines) - 100 - length(header_lines)) earlier lines ...")
+            end
+            for l in tail_lines
+                println(io, l)
+            end
+        end
+        println(COLOR_SUCCESS, "✓ Live log trimmed to last 100 lines: $(log_file)", COLOR_RESET)
+    end
 end
 
 # ============================================================================

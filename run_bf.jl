@@ -99,7 +99,8 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
         set_optimizer(model, Ipopt.Optimizer)
         set_optimizer_attribute(model, "print_level", 5)
         set_optimizer_attribute(model, "max_iter", 5000)
-        set_optimizer_attribute(model, "output_file", "ipopt_bf.log")
+        mkpath(SYSTEM_DIR)
+        set_optimizer_attribute(model, "output_file", joinpath(SYSTEM_DIR, "ipopt_bf.log"))
     end
 
     # ========== VARIABLES ==========
@@ -299,7 +300,7 @@ function save_bf_results(sol, data)
     open(sol_file, "w") do io
         serialize(io, sol_save)
     end
-    println(COLOR_SUCCESS, "Solution saved to $(sol_file)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ Solution saved to $(sol_file)", COLOR_RESET)
 
     # === VALIDATE (wrapped in try-catch so save always completes) ===
     bf_validation = nothing
@@ -361,7 +362,26 @@ function save_bf_results(sol, data)
         println(io, "Formulation: SOCP (BFM-NL)")
         println(io, "="^80)
     end
-    println(COLOR_SUCCESS, "Results written to $(results_file)", COLOR_RESET)
+    println(COLOR_SUCCESS, "✓ Results written to $(results_file)", COLOR_RESET)
+
+    # --- Trim Ipopt log to last 100 lines (may fail if Ipopt still holds the file) ---
+    ipopt_log = joinpath(SYSTEM_DIR, "ipopt_bf.log")
+    try
+        if isfile(ipopt_log)
+            all_lines = readlines(ipopt_log)
+            if length(all_lines) > 100
+                open(ipopt_log, "w") do io
+                    println(io, "# ... trimmed $(length(all_lines) - 100) earlier lines ...")
+                    for l in all_lines[end-99:end]
+                        println(io, l)
+                    end
+                end
+            end
+            println(COLOR_SUCCESS, "✓ Ipopt log trimmed to last 100 lines: $(ipopt_log)", COLOR_RESET)
+        end
+    catch e
+        println(COLOR_WARNING, "⚠ Could not trim Ipopt log (file may be locked): ", e, COLOR_RESET)
+    end
 end
 
 # ============================================================================
