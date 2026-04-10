@@ -880,6 +880,48 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 end
 
 # ============================================================================
+# NEAR-OPTIMAL TIME (post-mortem analysis)
+# ============================================================================
+
+"""
+    compute_near_optimal_iteration(obj_h, r_h, s_h, eff_times; ref_obj=NaN, gap_tol=0.005)
+
+Find the earliest iteration where the objective is within `gap_tol` (0.5%) of the
+reference objective AND residuals are not pathologically large.
+
+Uses BF objective as reference if available, otherwise the final tADMM objective.
+Returns (iteration, cumulative_effective_time) or (nothing, NaN) if not found.
+"""
+function compute_near_optimal_iteration(obj_h, r_h, s_h, eff_times;
+                                         ref_obj=NaN, gap_tol=0.005)
+    n = length(obj_h)
+    n == 0 && return (nothing, NaN)
+
+    # Reference objective: prefer BF (ground truth), fall back to final tADMM
+    ref = isnan(ref_obj) ? obj_h[end] : ref_obj
+    abs(ref) == 0 && return (nothing, NaN)
+
+    # Final residuals as sanity baseline
+    r_final = r_h[end]
+    s_final = s_h[end]
+    # Allow residuals up to 100x the final converged values
+    r_ceiling = max(r_final * 100, 1e-1)
+    s_ceiling = max(s_final * 100, 1e-1)
+
+    # Scan forward to find the FIRST iteration meeting criteria
+    cum_eff = 0.0
+    for k in 1:n
+        cum_eff += (k <= length(eff_times) ? eff_times[k] : 0.0)
+        obj_gap = abs(obj_h[k] - ref) / abs(ref)
+        if obj_gap <= gap_tol && r_h[k] <= r_ceiling && s_h[k] <= s_ceiling
+            return (k, cum_eff)
+        end
+    end
+
+    return (nothing, NaN)
+end
+
+# ============================================================================
 # SAVE tADMM RESULTS
 # ============================================================================
 
@@ -958,6 +1000,42 @@ function save_tadmm_results(sol, data)
         println(COLOR_WARNING, "BF results not found at $(bf_results_file), skipping comparison", COLOR_RESET)
     end
 
+    # --- Compute near-optimal time (post-mortem) ---
+    near_opt_iter, near_opt_eff_time = compute_near_optimal_iteration(
+        obj_h, r_h, s_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective)
+    if !isnothing(near_opt_iter)
+        ref_label = isnan(bf_objective) ? "final tADMM" : "BF"
+        ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
+        gap_at_near = abs(obj_h[near_opt_iter] - ref_val) / abs(ref_val) * 100
+        println(COLOR_INFO, @sprintf("Near-optimal at k=%d (%.2fs eff): obj=\$%.2f, gap=%.3f%% vs %s, r=%.2e, s=%.2e",
+            near_opt_iter, near_opt_eff_time, obj_h[near_opt_iter], gap_at_near, ref_label,
+            r_h[near_opt_iter], s_h[near_opt_iter]), COLOR_RESET)
+    end
+
+    # --- 3b. Near-optimal summary CSV (one row) ---
+    near_opt_csv = joinpath(SYSTEM_DIR, "near_optimal_summary.csv")
+    open(near_opt_csv, "w") do io
+        println(io, "near_opt_iter,near_opt_eff_time,near_opt_obj,near_opt_gap_pct,near_opt_r_norm,near_opt_s_norm,total_iter,total_eff_time,final_obj,ref_obj,ref_source")
+        if !isnothing(near_opt_iter)
+            ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
+            ref_src = isnan(bf_objective) ? "final_tadmm" : "bf"
+            gap_pct = abs(obj_h[near_opt_iter] - ref_val) / abs(ref_val) * 100
+            @printf(io, "%d,%.4f,%.6f,%.4f,%.10e,%.10e,%d,%.4f,%.6f,%.6f,%s\n",
+                near_opt_iter, near_opt_eff_time, obj_h[near_opt_iter], gap_pct,
+                r_h[near_opt_iter], s_h[near_opt_iter],
+                n_iter, sol[:timing][:total_effective_time], obj_h[end], ref_val, ref_src)
+        else
+            ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
+            ref_src = isnan(bf_objective) ? "final_tadmm" : "bf"
+            @printf(io, ",,,,,,,%d,%.4f,%.6f,%.6f,%s\n",
+                n_iter, sol[:timing][:total_effective_time], obj_h[end], ref_val, ref_src)
+        end
+    end
+    if isnan(bf_objective)
+        println(COLOR_WARNING, "⚠ Near-optimal summary: BF reference objective needed for gap analysis (used final tADMM as fallback)", COLOR_RESET)
+    end
+    println(COLOR_SUCCESS, "✓ Near-optimal summary: $(near_opt_csv)", COLOR_RESET)
+
     # --- Save serialized solution early (before validation that could fail) ---
     sol_file = joinpath(SYSTEM_DIR, "sol_socp_tadmm.jls")
     open(sol_file, "w") do io
@@ -1023,11 +1101,24 @@ function save_tadmm_results(sol, data)
         end
         println(io, "tADMM:")
         @printf(io, "  Wall-clock time: %.4f seconds\n", sol[:timing][:wallclock_time])
-        @printf(io, "  Effective time: %.4f seconds\n", sol[:timing][:total_effective_time])
+        @printf(io, "  Effective time (true): %.4f seconds (%d iterations)\n", sol[:timing][:total_effective_time], n_iter)
+        if !isnothing(near_opt_iter)
+            ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
+            gap_at_near = abs(obj_h[near_opt_iter] - ref_val) / abs(ref_val) * 100
+            ref_label = isnan(bf_objective) ? "final tADMM" : "BF"
+            @printf(io, "  Effective time (near-optimal): %.4f seconds (k=%d, gap=%.3f%% vs %s, r=%.2e, s=%.2e)\n",
+                near_opt_eff_time, near_opt_iter, gap_at_near, ref_label, r_h[near_opt_iter], s_h[near_opt_iter])
+        else
+            println(io, "  Effective time (near-optimal): N/A (0.5% gap never reached)")
+        end
         @printf(io, "  Sequential time: %.4f seconds\n", sol[:timing][:total_sequential_time])
         if !isnan(bf_wallclock)
             println(io, "Speedup Metrics:")
             @printf(io, "  tADMM vs BF (wall-clock): %.2fx\n", bf_wallclock / sol[:timing][:wallclock_time])
+            @printf(io, "  tADMM eff(true) vs BF: %.2fx\n", bf_wallclock / sol[:timing][:total_effective_time])
+            if !isnothing(near_opt_iter)
+                @printf(io, "  tADMM eff(near-optimal) vs BF: %.2fx\n", bf_wallclock / near_opt_eff_time)
+            end
         end
         println(io, "\n--- SOLUTION FEASIBILITY ---")
         if isnothing(tadmm_validation)
