@@ -76,7 +76,7 @@ if haskey(ENV, "RHO_OVERRIDE")
     rho_tadmm = parse(Float64, ENV["RHO_OVERRIDE"])
     println("RHO_OVERRIDE: using rho = $rho_tadmm")
 end
-max_iter_tadmm = 500
+max_iter_tadmm = 100
 eps_pri_tadmm = 1e-3
 eps_dual_tadmm = 1e-2
 adaptive_rho_tadmm = true
