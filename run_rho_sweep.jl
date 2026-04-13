@@ -1,12 +1,14 @@
 # ============================================================================
-# run_rho_sweep.jl — Automated experiment pipeline
+# run_rho_sweep.jl — T=24 Rho sweep (vanilla ADMM, no adaptive rho)
 # ============================================================================
 # Usage:  julia run_rho_sweep.jl
 #   (threads are forwarded to subprocesses automatically)
 #
-# Phase 1: Rho sweep for T=12 (rho = 500, 1000, 1500)
-# Phase 2: T=24 BF solve
-# Phase 3: T=24 tADMM solve
+# Sweeps rho = 500, 1000, 1500, 2000 at T=24 with:
+#   - adaptive_rho = false (fixed rho throughout)
+#   - stagnation_window = 10 (hardcoded in run_tadmm.jl)
+#   - stagnation_threshold = 1e-3
+# BF results already exist in large10kC_1ph_T24/
 # ============================================================================
 
 using Printf
@@ -20,7 +22,7 @@ const JULIA = Base.julia_cmd()
 const SCRIPT_DIR = @__DIR__
 
 println("="^80)
-println("EXPERIMENT PIPELINE")
+println("T=24 RHO SWEEP — VANILLA ADMM (no adaptive rho)")
 println("="^80)
 println("Julia:   $JULIA")
 println("Threads: $N_THREADS")
@@ -62,17 +64,20 @@ function copy_results(src_dir, dst_dir; files=nothing)
 end
 
 # ============================================================================
-# PHASE 1: Rho sweep at T=12
+# RHO SWEEP: T=24, vanilla ADMM
 # ============================================================================
 
-const RHO_VALUES = [500.0, 1000.0, 1500.0]
-const T12_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T12")
-const SWEEP_DIR = joinpath(T12_DIR, "rho_sweep")
+const RHO_VALUES = [500.0, 1000.0, 1500.0, 2000.0]
+const T24_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T24")
+const SWEEP_DIR = joinpath(T24_DIR, "rho_sweep")
 
 println("\n" * "="^80)
-println("PHASE 1: RHO SWEEP (T=12)")
+println("RHO SWEEP (T=24, vanilla ADMM)")
 println("  Values: ", join([@sprintf("%.0f", r) for r in RHO_VALUES], ", "))
-println("  Estimated time: ~$(length(RHO_VALUES) * 35) minutes")
+println("  adaptive_rho = false")
+println("  stagnation_window = 10")
+println("  stagnation_threshold = 1e-3")
+println("  Estimated time: ~$(length(RHO_VALUES) * 60) minutes")
 println("="^80)
 
 for (i, rho_val) in enumerate(RHO_VALUES)
@@ -83,81 +88,29 @@ for (i, rho_val) in enumerate(RHO_VALUES)
 
     t_start = time()
     run_julia_script("run_tadmm.jl"; env_overrides=Dict(
-        "T_OVERRIDE" => "12",
+        "T_OVERRIDE" => "24",
         "RHO_OVERRIDE" => string(rho_val),
+        "ADAPTIVE_RHO_OVERRIDE" => "false",
     ))
     elapsed = time() - t_start
 
-    copy_results(T12_DIR, rho_dir)
+    copy_results(T24_DIR, rho_dir)
     @printf(">>> rho=%d done in %.1f minutes. Results saved to %s\n",
             round(Int, rho_val), elapsed / 60, rho_dir)
 end
-
-# Also generate plots for each rho (reads from the copied convergence_data.csv)
-println("\n>>> Generating plots for rho sweep...")
-for rho_val in RHO_VALUES
-    rho_label = @sprintf("rho_%d", round(Int, rho_val))
-    rho_dir = joinpath(SWEEP_DIR, rho_label)
-    # Plot generation would need convergence_data.csv in SYSTEM_DIR,
-    # but we don't want to overwrite. Plots can be generated manually.
-end
-
-# ============================================================================
-# PHASE 2: T=24 Brute Force
-# ============================================================================
-
-println("\n" * "="^80)
-println("PHASE 2: BRUTE FORCE (T=24)")
-println("  This may take 30-90+ minutes for large10kC")
-println("="^80)
-
-t_start = time()
-run_julia_script("run_bf.jl"; env_overrides=Dict(
-    "T_OVERRIDE" => "24",
-))
-elapsed = time() - t_start
-@printf(">>> BF T=24 done in %.1f minutes\n", elapsed / 60)
-
-# ============================================================================
-# PHASE 3: T=24 tADMM
-# ============================================================================
-
-println("\n" * "="^80)
-println("PHASE 3: tADMM (T=24)")
-println("  Using default rho scaling: 3000 * sqrt(24/24) = 3000")
-println("="^80)
-
-t_start = time()
-run_julia_script("run_tadmm.jl"; env_overrides=Dict(
-    "T_OVERRIDE" => "24",
-))
-elapsed = time() - t_start
-@printf(">>> tADMM T=24 done in %.1f minutes\n", elapsed / 60)
-
-# ============================================================================
-# PHASE 4: T=24 Plots
-# ============================================================================
-
-println("\n" * "="^80)
-println("PHASE 4: GENERATING T=24 PLOTS")
-println("="^80)
-
-run_julia_script("plot_results.jl"; env_overrides=Dict(
-    "T_OVERRIDE" => "24",
-))
 
 # ============================================================================
 # SUMMARY
 # ============================================================================
 
 println("\n" * "="^80)
-println("ALL EXPERIMENTS COMPLETE")
+println("T=24 RHO SWEEP COMPLETE")
 println("="^80)
 println("Results locations:")
 for rho_val in RHO_VALUES
     rho_label = @sprintf("rho_%d", round(Int, rho_val))
-    println("  T=12 rho=$rho_label: $(joinpath(SWEEP_DIR, rho_label))")
+    println("  rho=$rho_label: $(joinpath(SWEEP_DIR, rho_label))")
 end
-println("  T=24 BF+tADMM:    $(joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T24"))")
+println("  BF reference:  $(joinpath(T24_DIR, "results_socp_bf.txt"))")
 println("="^80)
 println("Done.")

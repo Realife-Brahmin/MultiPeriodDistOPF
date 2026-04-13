@@ -80,7 +80,11 @@ max_iter_tadmm = 500
 eps_pri_tadmm = 1e-3
 eps_dual_tadmm = 1e-2
 adaptive_rho_tadmm = true
-stagnation_window = 5
+if haskey(ENV, "ADAPTIVE_RHO_OVERRIDE")
+    adaptive_rho_tadmm = parse(Bool, ENV["ADAPTIVE_RHO_OVERRIDE"])
+    println("ADAPTIVE_RHO_OVERRIDE: adaptive_rho = $adaptive_rho_tadmm")
+end
+stagnation_window = 10
 stagnation_threshold = 1e-3
 
 enable_warm_start = true
