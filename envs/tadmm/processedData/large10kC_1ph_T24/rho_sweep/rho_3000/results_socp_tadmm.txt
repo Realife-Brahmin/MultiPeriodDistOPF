@@ -1,0 +1,59 @@
+================================================================================
+SOCP tADMM OPTIMIZATION RESULTS (RECONSTRUCTED FROM LOG — OOM CRASH AT k=92)
+================================================================================
+System: large10kC_1ph
+Time horizon: T=24 periods
+Time step: 1.0 hours
+Number of buses: 10321
+Number of branches: 10320
+Number of batteries: 1020
+Number of PV units: 1022
+
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 68825
+Linear constraints: 58747
+Quadratic constraints (SOCP): 10320
+Nonlinear constraints: 0
+Total constraints: 69067
+
+--- tADMM PARAMETERS ---
+Initial rho: 3000.0
+Adaptive rho: false
+Max iterations: 100
+Primal tolerance: 1.0e-03
+Dual tolerance: 1.0e-02
+
+--- CONVERGENCE ---
+Iterations: 92 (CRASHED — out of memory at subproblem t0=15)
+Final primal residual: 1.95e-05
+Final dual residual: 3.95e+00
+
+--- OBJECTIVE VALUE ---
+Total Cost: $3056196.4810
+Brute Force objective: $2970083.6847
+Absolute difference: $86112.7963
+Relative difference: 2.8993%
+
+--- COMPUTATION TIME ---
+Brute Force:
+  Wall-clock time: 4331.9990 seconds
+  Solver time: 4329.4940 seconds
+tADMM:
+  Wall-clock time: 19868.1200 seconds (includes hibernate stall at k=84)
+  Effective time (true): ~4900 seconds (92 iters, excluding hibernate stall)
+  Effective time (near-optimal): N/A (0.5% gap never reached)
+Speedup Metrics:
+  tADMM eff(true) vs BF: ~0.88x (estimate excluding stall)
+
+--- SOLUTION FEASIBILITY ---
+Status: INCOMPLETE — crashed before final validation
+
+--- SOLVER ---
+Subproblem solver: Ipopt
+Formulation: SOCP (BFM-NL)
+Decomposition: Temporal ADMM
+
+--- CRASH INFO ---
+Error: TaskFailedException — Subproblem t0=15 failed with status: MEMORY_LIMIT
+Occurred at iteration 93 (during primal update)
+================================================================================
