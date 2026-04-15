@@ -67,7 +67,7 @@ end
 # RHO SWEEP: T=24, vanilla ADMM
 # ============================================================================
 
-const RHO_VALUES = [2500.0, 3000.0, 3500.0]
+const RHO_VALUES = [25000.0, 10000.0, 12000.0]
 const T24_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T24")
 const SWEEP_DIR = joinpath(T24_DIR, "rho_sweep")
 

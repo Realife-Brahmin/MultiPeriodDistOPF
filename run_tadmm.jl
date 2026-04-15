@@ -143,12 +143,14 @@ function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, rho::Float64, t
         set_optimizer(model, Ipopt.Optimizer)
         set_silent(model)
         set_optimizer_attribute(model, "print_level", 0)
-        set_optimizer_attribute(model, "max_iter", 30)
+        set_optimizer_attribute(model, "max_iter", 50)
         set_optimizer_attribute(model, "tol", 1e-6)
         set_optimizer_attribute(model, "acceptable_tol", 1e-4)
         set_optimizer_attribute(model, "mu_strategy", "adaptive")
         set_optimizer_attribute(model, "linear_solver", "mumps")
+        set_optimizer_attribute(model, "mumps_mem_percent", 200)
         set_optimizer_attribute(model, "nlp_scaling_method", "gradient-based")
+        set_optimizer_attribute(model, "nlp_scaling_max_gradient", 100.0)
         set_optimizer_attribute(model, "bound_relax_factor", 1e-8)
     end
 
@@ -515,6 +517,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 
     # Adaptive rho parameters
     rho_current = rho
+    rho_initial = rho  # track initial value for watchdog recovery
     mu_balance = 5.0
     tau_incr = 2.0
     tau_decr = 2.0
@@ -737,10 +740,9 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
             end
 
             # STEP 5: Adaptive rho (two-phase)
-            if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
-                rho_old = rho_current
-                rho_changed = false
-
+            # Phase transition check runs regardless of adaptive_rho flag
+            # so watchdog recovery can use Phase 2 decrease logic
+            if k % update_interval == 0
                 if r_norm <= eps_pri && !primal_converged_once
                     primal_converged_once = true
                     phase1_only_increase = false
@@ -748,6 +750,11 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                     @printf "  [k=%3d] Phase 1→2: primal converged\n" k
                     print(COLOR_RESET)
                 end
+            end
+
+            if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
+                rho_old = rho_current
+                rho_changed = false
 
                 if phase1_only_increase
                     if r_norm > mu_balance * s_norm
@@ -778,6 +785,25 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                     for t0 in Tset, j in Bset
                         for t in keys(u_collection[t0][j])
                             u_collection[t0][j][t] *= scale_factor
+                        end
+                    end
+                end
+
+            elseif !adaptive_rho && rho_current > rho_initial && k % update_interval == 0
+                # Watchdog recovery: rho was bumped above initial by watchdog,
+                # allow decay back to rho_initial (but never below it)
+                if !phase1_only_increase && s_norm > mu_balance * r_norm && r_norm <= eps_pri
+                    rho_old = rho_current
+                    rho_current = max(rho_initial, rho_current / tau_decr)
+                    if rho_current != rho_old
+                        print(COLOR_INFO)
+                        @printf "  [k=%3d] 🔄 WATCHDOG RECOVERY: ρ %.1f → %.1f (s/r=%.1f, target=%.1f)\n" k rho_old rho_current (s_norm/r_norm) rho_initial
+                        print(COLOR_RESET)
+                        scale_factor = rho_old / rho_current
+                        for t0 in Tset, j in Bset
+                            for t in keys(u_collection[t0][j])
+                                u_collection[t0][j][t] *= scale_factor
+                            end
                         end
                     end
                 end
