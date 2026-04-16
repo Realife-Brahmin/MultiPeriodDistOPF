@@ -1,14 +1,13 @@
 # ============================================================================
-# run_rho_sweep.jl — T=24 Rho sweep (vanilla ADMM, no adaptive rho)
+# run_rho_sweep.jl — Rho sweep (vanilla ADMM, no adaptive rho)
 # ============================================================================
 # Usage:  julia run_rho_sweep.jl
 #   (threads are forwarded to subprocesses automatically)
 #
-# Sweeps rho = 500, 1000, 1500, 2000 at T=24 with:
+# Sweeps rho values with:
 #   - adaptive_rho = false (fixed rho throughout)
 #   - stagnation_window = 10 (hardcoded in run_tadmm.jl)
 #   - stagnation_threshold = 1e-3
-# BF results already exist in large10kC_1ph_T24/
 # ============================================================================
 
 using Printf
@@ -21,8 +20,10 @@ const N_THREADS = max(Threads.nthreads(), parse(Int, get(ENV, "JULIA_NUM_THREADS
 const JULIA = Base.julia_cmd()
 const SCRIPT_DIR = @__DIR__
 
+const SWEEP_T = haskey(ENV, "SWEEP_T") ? parse(Int, ENV["SWEEP_T"]) : 24
+
 println("="^80)
-println("T=24 RHO SWEEP — VANILLA ADMM (no adaptive rho)")
+println("T=$(SWEEP_T) RHO SWEEP — VANILLA ADMM (no adaptive rho)")
 println("="^80)
 println("Julia:   $JULIA")
 println("Threads: $N_THREADS")
@@ -67,12 +68,12 @@ end
 # RHO SWEEP: T=24, vanilla ADMM
 # ============================================================================
 
-const RHO_VALUES = [25000.0, 10000.0, 12000.0]
-const T24_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T24")
-const SWEEP_DIR = joinpath(T24_DIR, "rho_sweep")
+const RHO_VALUES = haskey(ENV, "SWEEP_RHOS") ? parse.(Float64, split(ENV["SWEEP_RHOS"], ",")) : [25000.0, 10000.0, 12000.0]
+const SWEEP_TDIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(SWEEP_T)")
+const SWEEP_DIR = joinpath(SWEEP_TDIR, "rho_sweep")
 
 println("\n" * "="^80)
-println("RHO SWEEP (T=24, vanilla ADMM)")
+println("RHO SWEEP (T=$(SWEEP_T), vanilla ADMM)")
 println("  Values: ", join([@sprintf("%.0f", r) for r in RHO_VALUES], ", "))
 println("  adaptive_rho = false")
 println("  stagnation_window = 10")
@@ -88,13 +89,13 @@ for (i, rho_val) in enumerate(RHO_VALUES)
 
     t_start = time()
     run_julia_script("run_tadmm.jl"; env_overrides=Dict(
-        "T_OVERRIDE" => "24",
+        "T_OVERRIDE" => string(SWEEP_T),
         "RHO_OVERRIDE" => string(rho_val),
         "ADAPTIVE_RHO_OVERRIDE" => "false",
     ))
     elapsed = time() - t_start
 
-    copy_results(T24_DIR, rho_dir)
+    copy_results(SWEEP_TDIR, rho_dir)
     @printf(">>> rho=%d done in %.1f minutes. Results saved to %s\n",
             round(Int, rho_val), elapsed / 60, rho_dir)
 end
@@ -104,13 +105,13 @@ end
 # ============================================================================
 
 println("\n" * "="^80)
-println("T=24 RHO SWEEP COMPLETE")
+println("T=$(SWEEP_T) RHO SWEEP COMPLETE")
 println("="^80)
 println("Results locations:")
 for rho_val in RHO_VALUES
     rho_label = @sprintf("rho_%d", round(Int, rho_val))
     println("  rho=$rho_label: $(joinpath(SWEEP_DIR, rho_label))")
 end
-println("  BF reference:  $(joinpath(T24_DIR, "results_socp_bf.txt"))")
+println("  BF reference:  $(joinpath(SWEEP_TDIR, "results_socp_bf.txt"))")
 println("="^80)
 println("Done.")
