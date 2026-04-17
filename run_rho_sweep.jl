@@ -1,11 +1,11 @@
 # ============================================================================
-# run_rho_sweep.jl — Rho sweep (vanilla ADMM, no adaptive rho)
+# run_rho_sweep.jl — Rho sweep (adaptive rho, varying initial rho)
 # ============================================================================
 # Usage:  julia run_rho_sweep.jl
 #   (threads are forwarded to subprocesses automatically)
 #
-# Sweeps rho values with:
-#   - adaptive_rho = false (fixed rho throughout)
+# Sweeps starting rho values with:
+#   - adaptive_rho = true (rho adjusts during solve)
 #   - stagnation_window = 10 (hardcoded in run_tadmm.jl)
 #   - stagnation_threshold = 1e-3
 # ============================================================================
@@ -23,7 +23,7 @@ const SCRIPT_DIR = @__DIR__
 const SWEEP_T = haskey(ENV, "SWEEP_T") ? parse(Int, ENV["SWEEP_T"]) : 24
 
 println("="^80)
-println("T=$(SWEEP_T) RHO SWEEP — VANILLA ADMM (no adaptive rho)")
+println("T=$(SWEEP_T) RHO SWEEP — adaptive rho, varying rho_init")
 println("="^80)
 println("Julia:   $JULIA")
 println("Threads: $N_THREADS")
@@ -65,7 +65,7 @@ function copy_results(src_dir, dst_dir; files=nothing)
 end
 
 # ============================================================================
-# RHO SWEEP: T=24, vanilla ADMM
+# RHO SWEEP: T=24, adaptive rho
 # ============================================================================
 
 const RHO_VALUES = haskey(ENV, "SWEEP_RHOS") ? parse.(Float64, split(ENV["SWEEP_RHOS"], ",")) : [25000.0, 10000.0, 12000.0]
@@ -73,9 +73,9 @@ const SWEEP_TDIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(SWEEP_T)")
 const SWEEP_DIR = joinpath(SWEEP_TDIR, "rho_sweep")
 
 println("\n" * "="^80)
-println("RHO SWEEP (T=$(SWEEP_T), vanilla ADMM)")
+println("RHO SWEEP (T=$(SWEEP_T), adaptive rho)")
 println("  Values: ", join([@sprintf("%.0f", r) for r in RHO_VALUES], ", "))
-println("  adaptive_rho = false")
+println("  adaptive_rho = true")
 println("  stagnation_window = 10")
 println("  stagnation_threshold = 1e-3")
 println("  Estimated time: ~$(length(RHO_VALUES) * 60) minutes")
@@ -91,7 +91,7 @@ for (i, rho_val) in enumerate(RHO_VALUES)
     run_julia_script("run_tadmm.jl"; env_overrides=Dict(
         "T_OVERRIDE" => string(SWEEP_T),
         "RHO_OVERRIDE" => string(rho_val),
-        "ADAPTIVE_RHO_OVERRIDE" => "false",
+        "ADAPTIVE_RHO_OVERRIDE" => "true",
     ))
     elapsed = time() - t_start
 

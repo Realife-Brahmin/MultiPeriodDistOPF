@@ -74,6 +74,7 @@ rho_scaling_with_T = true
 rho_tadmm = rho_scaling_with_T ? rho_base * sqrt(T / 24.0) : rho_base
 if haskey(ENV, "RHO_OVERRIDE")
     rho_tadmm = parse(Float64, ENV["RHO_OVERRIDE"])
+    rho_scaling_with_T = false
     println("RHO_OVERRIDE: using rho = $rho_tadmm")
 end
 max_iter_tadmm = 100
