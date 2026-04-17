@@ -78,7 +78,7 @@ if haskey(ENV, "RHO_OVERRIDE")
     println("RHO_OVERRIDE: using rho = $rho_tadmm")
 end
 max_iter_tadmm = 100
-eps_pri_tadmm = 1e-3
+eps_pri_tadmm = 2e-3
 eps_dual_tadmm = 1e-2
 adaptive_rho_tadmm = true
 if haskey(ENV, "ADAPTIVE_RHO_OVERRIDE")
@@ -521,7 +521,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
     rho_initial = rho  # track initial value for watchdog recovery
     mu_balance = 5.0
     tau_incr = 2.0
-    tau_decr = 5.0
+    tau_decr = 10.0
     rho_min = 1.0
     rho_max = 1e6
     update_interval = 5
@@ -1053,7 +1053,7 @@ function save_tadmm_results(sol, data)
 
     # --- Compute near-optimal time (post-mortem) ---
     near_opt_iter, near_opt_eff_time = compute_near_optimal_iteration(
-        obj_h, r_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective)
+        obj_h, r_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective, eps_pri=eps_pri)
     if !isnothing(near_opt_iter)
         ref_label = isnan(bf_objective) ? "final tADMM" : "BF"
         ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective

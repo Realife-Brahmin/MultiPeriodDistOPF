@@ -3,7 +3,7 @@
 
 using Printf
 
-const EPS_PRI = 1e-3
+const EPS_PRI = 2e-3
 const GAP_TOL = 0.005
 
 function parse_csv(filename)
