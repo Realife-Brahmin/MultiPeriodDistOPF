@@ -753,7 +753,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 end
             end
 
-            if adaptive_rho && k % update_interval == 0 && k < max_iter - 50
+            if adaptive_rho && k % update_interval == 0
                 rho_old = rho_current
                 rho_changed = false
 
@@ -943,36 +943,28 @@ end
 # ============================================================================
 
 """
-    compute_near_optimal_iteration(obj_h, r_h, s_h, eff_times; ref_obj=NaN, gap_tol=0.005)
+    compute_near_optimal_iteration(obj_h, r_h, eff_times; ref_obj=NaN, gap_tol=0.005, eps_pri=1e-3)
 
-Find the earliest iteration where the objective is within `gap_tol` (0.5%) of the
-reference objective AND residuals are not pathologically large.
+Find the earliest iteration where objective is within `gap_tol` (0.5%) of the
+reference objective AND primal residual is below `eps_pri`.
 
 Uses BF objective as reference if available, otherwise the final tADMM objective.
 Returns (iteration, cumulative_effective_time) or (nothing, NaN) if not found.
 """
-function compute_near_optimal_iteration(obj_h, r_h, s_h, eff_times;
-                                         ref_obj=NaN, gap_tol=0.005)
+function compute_near_optimal_iteration(obj_h, r_h, eff_times;
+                                         ref_obj=NaN, gap_tol=0.005,
+                                         eps_pri=1e-3)
     n = length(obj_h)
     n == 0 && return (nothing, NaN)
 
-    # Reference objective: prefer BF (ground truth), fall back to final tADMM
     ref = isnan(ref_obj) ? obj_h[end] : ref_obj
     abs(ref) == 0 && return (nothing, NaN)
 
-    # Final residuals as sanity baseline
-    r_final = r_h[end]
-    s_final = s_h[end]
-    # Allow residuals up to 100x the final converged values
-    r_ceiling = max(r_final * 100, 1e-1)
-    s_ceiling = max(s_final * 100, 1e-1)
-
-    # Scan forward to find the FIRST iteration meeting criteria
     cum_eff = 0.0
     for k in 1:n
         cum_eff += (k <= length(eff_times) ? eff_times[k] : 0.0)
         obj_gap = abs(obj_h[k] - ref) / abs(ref)
-        if obj_gap <= gap_tol && r_h[k] <= r_ceiling && s_h[k] <= s_ceiling
+        if obj_gap <= gap_tol && r_h[k] <= eps_pri
             return (k, cum_eff)
         end
     end
@@ -1061,7 +1053,7 @@ function save_tadmm_results(sol, data)
 
     # --- Compute near-optimal time (post-mortem) ---
     near_opt_iter, near_opt_eff_time = compute_near_optimal_iteration(
-        obj_h, r_h, s_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective)
+        obj_h, r_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective)
     if !isnothing(near_opt_iter)
         ref_label = isnan(bf_objective) ? "final tADMM" : "BF"
         ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
