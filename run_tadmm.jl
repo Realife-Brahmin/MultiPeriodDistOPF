@@ -1053,7 +1053,7 @@ function save_tadmm_results(sol, data)
 
     # --- Compute near-optimal time (post-mortem) ---
     near_opt_iter, near_opt_eff_time = compute_near_optimal_iteration(
-        obj_h, r_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective, eps_pri=eps_pri)
+        obj_h, r_h, eff_times; ref_obj=isnan(bf_objective) ? NaN : bf_objective, eps_pri=eps_pri_tadmm)
     if !isnothing(near_opt_iter)
         ref_label = isnan(bf_objective) ? "final tADMM" : "BF"
         ref_val = isnan(bf_objective) ? obj_h[end] : bf_objective
