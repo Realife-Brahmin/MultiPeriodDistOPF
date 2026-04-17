@@ -41,7 +41,7 @@ Brute Force:
 tADMM:
   Wall-clock time: 19868.1200 seconds (includes hibernate stall at k=84)
   Effective time (true): ~4900 seconds (92 iters, excluding hibernate stall)
-  Effective time (near-optimal): N/A (0.5% gap never reached)
+  Effective time (near-optimal): N/A (0.5% gap with r<=eps_pri never reached)
 Speedup Metrics:
   tADMM eff(true) vs BF: ~0.88x (estimate excluding stall)
 

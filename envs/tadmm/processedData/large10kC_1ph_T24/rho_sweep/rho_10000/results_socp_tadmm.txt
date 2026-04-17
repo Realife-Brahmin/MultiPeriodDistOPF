@@ -41,12 +41,12 @@ Brute Force:
 tADMM:
   Wall-clock time: 11916.3370 seconds
   Effective time (true): 7765.1330 seconds (100 iterations)
-  Effective time (near-optimal): 938.7810 seconds (k=6, gap=0.210% vs BF, r=7.00e-02, s=2.76e+02)
+  Effective time (near-optimal): N/A (0.5% gap with r<=eps_pri never reached)
   Sequential time: 113239.4260 seconds
 Speedup Metrics:
   tADMM vs BF (wall-clock): 0.36x
   tADMM eff(true) vs BF: 0.56x
-  tADMM eff(near-optimal) vs BF: 4.61x
+  tADMM eff(near-optimal) vs BF: N/A
 
 --- SOLUTION FEASIBILITY ---
 Status: FEASIBLE - All constraints satisfied
