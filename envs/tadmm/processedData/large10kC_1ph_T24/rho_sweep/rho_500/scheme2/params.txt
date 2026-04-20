@@ -1,0 +1,13 @@
+tADMM Hyperparameters — scheme2
+================================
+rho_init        = 500
+tau_incr        = 2.0
+tau_decr        = 10.0
+mu_balance      = 5.0
+update_interval = 5
+eps_pri         = 2e-3
+eps_dual        = 1e-2
+max_iter        = 100
+adaptive_rho    = true
+two_phase       = true (Phase 1: only increase; Phase 2: increase or decrease)
+watchdog        = true (window=15, factor=2.5, trigger=r>2*eps_pri)
