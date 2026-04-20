@@ -521,7 +521,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
     rho_initial = rho  # track initial value for watchdog recovery
     mu_balance = 5.0
     tau_incr = 2.0
-    tau_decr = 10.0
+    tau_decr = 5.0
     rho_min = 1.0
     rho_max = 1e6
     update_interval = 5
@@ -758,10 +758,10 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
                 rho_changed = false
 
                 if phase1_only_increase
-                    if r_norm > mu_balance * s_norm
+                    if r_norm > eps_pri
                         rho_current = min(rho_max, tau_incr * rho_current)
                         print(COLOR_WARNING)
-                        @printf "  [PHASE1-UP] ρ: %.1f → %.1f (r/s=%.1f)\n" rho_old rho_current (r_norm/s_norm)
+                        @printf "  [PHASE1-UP] ρ: %.1f → %.1f (‖r‖=%.2e > ε=%.1e)\n" rho_old rho_current r_norm eps_pri
                         print(COLOR_RESET)
                         rho_changed = true
                     end
