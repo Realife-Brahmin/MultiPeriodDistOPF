@@ -24,29 +24,39 @@ Primal tolerance: 2.0e-03
 Dual tolerance: 1.0e-02
 
 --- CONVERGENCE ---
-Iterations: 20
-Final primal residual: 9.90e-04
-Final dual residual: 3.01e+02
+Status: CRASHED at k=55 (Ipopt OTHER_ERROR on subproblem t0=48)
+Iterations completed: 55
+Final primal residual: 2.48e-03
+Final dual residual: 8.71e-01
+Converged: NO (r > eps_pri, s > eps_dual)
+
+--- RHO TRAJECTORY ---
+Peak rho: 160000.0 (k=15-19, Phase 1)
+Final rho: 51.2 (k=40-55, Phase 2 collapse)
+Root cause: rho collapsed to 51.2, subproblems became ill-conditioned
 
 --- OBJECTIVE VALUE ---
-Total Cost: $3151337.6251
+Total Cost (at crash): $3002167.7015
+Best objective seen: $2996144.2895 (k=47)
+BF reference: $2981033.0000 (preliminary, MUMPS OOM)
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 17479.0700 seconds
+  Wall-clock time: 17479.0700 seconds (preliminary, MUMPS OOM at k=1444)
   Solver time: 17332.6000 seconds
 tADMM:
-  Wall-clock time: 7271.3050 seconds
-  Effective time (true): 2343.9200 seconds (20 iterations)
-  Effective time (near-optimal): 1677.8610 seconds (k=11, gap=0.025% vs final tADMM, r=1.90e-03, s=1.45e+01)
-  Sequential time: 67836.5990 seconds
+  Wall-clock time: 23282.0600 seconds (at crash, k=55)
+  Effective time (at crash): 7665.2000 seconds (55 iterations)
+  Effective time (best obj): 5016.2300 seconds (k=47, obj=$2,996,144)
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 2.40x
-  tADMM eff(true) vs BF: 7.46x
-  tADMM eff(near-optimal) vs BF: 10.42x
+  tADMM eff(best obj) vs BF: 3.46x
 
---- SOLUTION FEASIBILITY ---
-Status: FEASIBLE - All constraints satisfied
+--- NOTES ---
+Stagnation criterion was DISABLED for this run.
+Previous run with stagnation exited at k=20 (see stagnation_exit/ subdirectory).
+Crash caused by Phase 2 rho collapse: rho decayed from 160k to 51.2, making
+the ADMM coupling penalty negligible. Subproblem t0=48 became ill-conditioned
+and Ipopt returned OTHER_ERROR.
 
 --- SOLVER ---
 Subproblem solver: Ipopt
