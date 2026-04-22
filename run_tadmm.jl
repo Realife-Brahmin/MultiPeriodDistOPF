@@ -842,7 +842,7 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
 
             r_converged = r_norm <= eps_pri
             s_converged = s_norm <= eps_dual
-            either_exit = s_converged || stagnation_detected
+            either_exit = s_converged
 
             if r_converged && either_exit
                 converged = true
