@@ -1,0 +1,22 @@
+================================================================================
+SYSTEM SUMMARY: large10kC_1ph
+================================================================================
+Based on 5x scaling of large10kB_1ph system.
+
+Buses:      10,321
+Branches:   10,320
+Loads:      10,320  x  100 kW / ~100 kVA each
+PV units:    1,022  x  350 kW / 420 kVA each
+Batteries:   1,020  x  333-500 kW / 1333-2000 kWh each
+
+--- GRID TOTALS ---
+Total Load:           1,032,000 kW
+Total PV:               357,700 kW
+Total Battery (kW):     425,340 kW  (avg ~417 kW per unit)
+Total Battery (kWh):  1,700,340 kWh (avg ~1667 kWh per unit)
+
+--- PENETRATION RATIOS ---
+PV / Load (kW):              34.7%
+Battery / Load (kW):         41.2%
+Battery / Load (kWh/kW):     1.65 hours of storage
+================================================================================

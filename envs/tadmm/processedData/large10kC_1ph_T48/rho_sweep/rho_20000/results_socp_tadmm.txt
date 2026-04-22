@@ -1,0 +1,65 @@
+================================================================================
+SOCP tADMM OPTIMIZATION RESULTS
+================================================================================
+System: large10kC_1ph
+Time horizon: T=48 periods
+Time step: 0.5 hours
+Number of buses: 10321
+Number of branches: 10320
+Number of batteries: 1020
+Number of PV units: 1022
+
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 93305
+Linear constraints: 58747
+Quadratic constraints (SOCP): 10320
+Nonlinear constraints: 0
+Total constraints: 69067
+
+--- tADMM PARAMETERS ---
+Initial rho: 20000.0
+Adaptive rho: true
+Max iterations: 100
+Primal tolerance: 2.0e-03
+Dual tolerance: 1.0e-02
+
+--- CONVERGENCE ---
+Status: CRASHED at k=55 (Ipopt OTHER_ERROR on subproblem t0=48)
+Iterations completed: 55
+Final primal residual: 2.48e-03
+Final dual residual: 8.71e-01
+Converged: NO (r > eps_pri, s > eps_dual)
+
+--- RHO TRAJECTORY ---
+Peak rho: 160000.0 (k=15-19, Phase 1)
+Final rho: 51.2 (k=40-55, Phase 2 collapse)
+Root cause: rho collapsed to 51.2, subproblems became ill-conditioned
+
+--- OBJECTIVE VALUE ---
+Total Cost (at crash): $3002167.7015
+Best objective seen: $2996144.2895 (k=47)
+BF reference: $2981033.0000 (preliminary, MUMPS OOM)
+
+--- COMPUTATION TIME ---
+Brute Force:
+  Wall-clock time: 17479.0700 seconds (preliminary, MUMPS OOM at k=1444)
+  Solver time: 17332.6000 seconds
+tADMM:
+  Wall-clock time: 23282.0600 seconds (at crash, k=55)
+  Effective time (at crash): 7665.2000 seconds (55 iterations)
+  Effective time (best obj): 5016.2300 seconds (k=47, obj=$2,996,144)
+Speedup Metrics:
+  tADMM eff(best obj) vs BF: 3.46x
+
+--- NOTES ---
+Stagnation criterion was DISABLED for this run.
+Previous run with stagnation exited at k=20 (see stagnation_exit/ subdirectory).
+Crash caused by Phase 2 rho collapse: rho decayed from 160k to 51.2, making
+the ADMM coupling penalty negligible. Subproblem t0=48 became ill-conditioned
+and Ipopt returned OTHER_ERROR.
+
+--- SOLVER ---
+Subproblem solver: Ipopt
+Formulation: SOCP (BFM-NL)
+Decomposition: Temporal ADMM
+================================================================================

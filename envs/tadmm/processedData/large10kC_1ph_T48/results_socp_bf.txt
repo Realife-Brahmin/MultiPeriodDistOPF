@@ -1,0 +1,53 @@
+================================================================================
+SOCP BRUTE-FORCED OPTIMIZATION RESULTS (PRELIMINARY)
+================================================================================
+System: large10kC_1ph
+Time horizon: T=48 periods
+Time step: 0.5 hours
+Number of buses: 10321
+Number of branches: 10320
+Number of batteries: 1020
+Number of PV units: 1022
+
+--- PROBLEM SIZE ---
+Number of variables: 2128560
+Total equality constraints: 1535184
+Total inequality constraints: 1137744
+  (includes SOCP rotated cone constraints)
+Nonzeros in Jacobian (eq): 4702260
+Nonzeros in Jacobian (ineq): 2623824
+Nonzeros in Hessian: 1535040
+
+--- OPTIMIZATION STATUS ---
+Status: OTHER_ERROR (Restoration Failed)
+Cause: MUMPS out-of-memory at iteration 1444 (requested 10492 MB allocation)
+Note: Solution was near-optimal at failure — constraints satisfied, barrier
+      tightening in progress (mu from 1e-3.8 to 1e-5.7)
+
+--- OBJECTIVE VALUE (PRELIMINARY) ---
+Last objective: $2981032.9166
+Constraint violation: 1.71e-06 (effectively zero)
+Dual infeasibility: 167.3 (barrier tightening incomplete)
+Complementarity: 4.25e-06
+
+--- COMPUTATION TIME ---
+Wall-clock time: 17479.0700 seconds (4.86 hours)
+Solver time: 17332.6000 seconds (4.81 hours)
+Ipopt iterations: 1444
+Avg time per iteration: 12.0031 seconds
+
+--- COMPARISON WITH T=24 ---
+T=24 BF: 4332.0s (574 iters), obj=$2970083.68, status=LOCALLY_SOLVED
+T=48 BF: 17333s (1444 iters), obj~$2981033 (preliminary), status=FAILED
+Time ratio T48/T24: 4.00x (superlinear scaling)
+Problem size ratio: 2.00x variables, 2.67x constraints
+
+--- SOLUTION FEASIBILITY ---
+Status: FEASIBLE (all constraints satisfied at failure point)
+Note: Validation passed despite non-optimal termination status
+
+--- SOLVER ---
+Solver: Ipopt (MUMPS linear solver)
+Formulation: SOCP (BFM-NL)
+Failure mode: MUMPS memory exhaustion during Hessian factorization
+================================================================================

@@ -1,0 +1,29 @@
+tADMM Hyperparameters
+=====================
+tau_incr = 2.0
+tau_decr = 10.0
+eps_pri = 2e-3
+eps_dual = 1e-2
+mu_balance = 5.0
+update_interval = 5
+rho_min = 1.0
+rho_max = 1e6
+
+Adaptive Rho
+============
+Phase 1: only increase (r > mu_balance * s → rho *= tau_incr)
+Phase 2 transition: at update_interval multiples when r <= eps_pri (one-way flip)
+Phase 2: increase (r > mu_balance * s) or decrease (s > mu_balance * r AND r <= eps_pri → rho /= tau_decr)
+
+Watchdog
+========
+enabled = true
+window = 15 consecutive iterations
+trigger = r > 2 * eps_pri for window iterations
+action = rho *= 2.5
+reset = r < 0.5 * eps_pri
+
+Stagnation Convergence
+======================
+enabled = true
+condition = r <= eps_pri AND objective change < threshold over window
