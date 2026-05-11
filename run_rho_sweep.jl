@@ -10,7 +10,7 @@
 #   - stagnation_threshold = 1e-3
 # ============================================================================
 
-using Printf
+using Printf, Dates
 
 # Load config just to know directory paths
 include("config.jl")
@@ -125,17 +125,38 @@ for (i, rho_val) in enumerate(RHO_VALUES)
     t_start = time()
     mkpath(rho_dir)
     stdout_log = joinpath(rho_dir, "run_stdout.log")
-    run_julia_script("run_tadmm.jl"; env_overrides=Dict(
-        "T_OVERRIDE" => string(SWEEP_T),
-        "RHO_OVERRIDE" => string(rho_val),
-        "ADAPTIVE_RHO_OVERRIDE" => get(ENV, "ADAPTIVE_RHO_OVERRIDE", "true"),
-    ), stdout_log=stdout_log)
+    crashed = false
+    try
+        run_julia_script("run_tadmm.jl"; env_overrides=Dict(
+            "T_OVERRIDE" => string(SWEEP_T),
+            "RHO_OVERRIDE" => string(rho_val),
+            "ADAPTIVE_RHO_OVERRIDE" => get(ENV, "ADAPTIVE_RHO_OVERRIDE", "true"),
+        ), stdout_log=stdout_log)
+    catch e
+        crashed = true
+        @printf(">>> rho=%d CRASHED: %s\n", round(Int, rho_val), sprint(showerror, e))
+        # Mark the failure in the rho_dir so we know later
+        open(joinpath(rho_dir, "CRASH.txt"), "w") do io
+            println(io, "Subprocess crashed at $(now()).")
+            println(io, "Error: ", sprint(showerror, e))
+            println(io, "Partial files (whatever made it to disk before crash) copied below.")
+        end
+    end
     elapsed = time() - t_start
 
-    copy_results(SWEEP_TDIR, rho_dir)
-    write_params_file(rho_dir, rho_val)
-    @printf(">>> rho=%d done in %.1f minutes. Results saved to %s\n",
-            round(Int, rho_val), elapsed / 60, rho_dir)
+    # Always copy whatever made it to disk -- even on crash, the latest
+    # tadmm_run.log etc. in the shared system_T dir is THIS rho's data,
+    # and the next rho would overwrite it. Snapshot it now.
+    try
+        copy_results(SWEEP_TDIR, rho_dir)
+        write_params_file(rho_dir, rho_val)
+    catch e2
+        @printf(">>> rho=%d copy_results failed: %s\n", round(Int, rho_val), sprint(showerror, e2))
+    end
+
+    status = crashed ? "CRASHED" : "done"
+    @printf(">>> rho=%d %s in %.1f minutes. Results saved to %s\n",
+            round(Int, rho_val), status, elapsed / 60, rho_dir)
 end
 
 # ============================================================================
