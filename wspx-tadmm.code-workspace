@@ -3,8 +3,21 @@
 		{
 			"path": "."
 		},
+		// IAS paper folder — multiple candidate paths so the workspace works on
+		// any machine regardless of how the surrounding folders are arranged.
+		// VS Code silently skips paths that don't exist; whichever one resolves
+		// gets loaded. Add a new candidate here when setting up a new machine.
 		{
 			"path": "../documentsCreated/IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition"
+		},
+		{
+			"path": "../../documentsCreated/IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition"
+		},
+		{
+			"path": "../../repos_addendum/documentsCreated/IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition"
+		},
+		{
+			"path": "../IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition"
 		}
 	],
 	"settings": {
