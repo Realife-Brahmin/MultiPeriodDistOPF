@@ -91,35 +91,26 @@ function generate_plot(csv_path, output_path)
     rho_init = first(ρ_history)
 
     gr()
-    theme(:mute)
-    line_colour_obj = :dodgerblue
-    line_colour_primal = :darkgreen
-    line_colour_dual = :darkorange2
-    line_colour_rho = :purple
+    theme(:default)
+    # Colorblind-friendly palette (Wong 2011)
+    line_colour_obj    = RGB(0/255, 114/255, 178/255)   # blue
+    line_colour_primal = RGB(0/255, 158/255, 115/255)   # bluish green
+    line_colour_dual   = RGB(230/255, 159/255, 0/255)   # orange
+    line_colour_rho    = RGB(204/255, 121/255, 167/255) # reddish purple
+    colour_bf_ref      = RGB(213/255, 94/255, 0/255)    # vermillion
+    colour_threshold   = RGB(80/255, 80/255, 80/255)    # neutral gray
 
     n_iter = length(obj_history)
     iterations = 1:n_iter
     println("Plotting $n_iter iterations")
 
-    markerstrokewidth = if n_iter <= 50
-        1.5
-    elseif n_iter <= 100
-        1.0
-    elseif n_iter <= 200
-        0.5
-    else
-        0.3
-    end
+    # Subsample marker indices: target ~20 markers regardless of iteration count
+    n_markers_target = 20
+    mark_step = max(1, div(n_iter, n_markers_target))
+    mark_idx = sort(unique(vcat(1, mark_step:mark_step:n_iter, n_iter)))
 
-    residual_markersize = if n_iter <= 50
-        4
-    elseif n_iter <= 100
-        3
-    elseif n_iter <= 200
-        2
-    else
-        1.5
-    end
+    markersize = 5.5
+    markerstrokewidth = 0.8
 
     xtick_vals = if n_iter <= 10
         collect(iterations)
@@ -147,28 +138,26 @@ function generate_plot(csv_path, output_path)
         xlabel="Iteration (k)",
         ylabel="Objective Function [\$]",
         title="Objective",
-        lw=3,
+        lw=2.5,
         color=line_colour_obj,
-        markershape=:circle,
-        markersize=4,
-        markerstrokecolor=:black,
-        markerstrokewidth=markerstrokewidth,
         label="tADMM Objective",
         legend=:topright,
         legendfontsize=9,
-        grid=true,
-        gridstyle=:solid,
-        gridalpha=0.3,
+        grid=true, gridalpha=0.25,
         minorgrid=false,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
         xlims=(0.5, n_iter + 0.5),
         xticks=xtick_vals,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        top_margin=2Plots.mm
+        top_margin=2Plots.mm,
+        background_color_inside=:white,
     )
+    scatter!(p1, iterations[mark_idx], obj_history[mark_idx],
+             markershape=:circle, markersize=markersize,
+             color=line_colour_obj,
+             markerstrokecolor=:white, markerstrokewidth=markerstrokewidth,
+             label="")
 
     final_obj_tadmm = last(obj_history)
     plot!(p1, [n_iter], [final_obj_tadmm],
@@ -176,7 +165,7 @@ function generate_plot(csv_path, output_path)
 
     if !isnan(bf_obj)
         hline!(p1, [bf_obj],
-               color=:darkorange, lw=2, linestyle=:dash, alpha=0.8,
+               color=colour_bf_ref, lw=1.8, linestyle=:dash, alpha=0.85,
                label="BF Optimal = \$$(round(bf_obj, digits=2))")
     end
 
@@ -186,31 +175,29 @@ function generate_plot(csv_path, output_path)
         xlabel="Iteration (k)",
         ylabel="Primal Residual ‖r‖ [log scale]",
         title="Primal Residual",
-        lw=3,
+        lw=2.5,
         color=line_colour_primal,
-        markershape=:square,
-        markersize=residual_markersize,
-        markerstrokecolor=:black,
-        markerstrokewidth=markerstrokewidth,
         yscale=:log10,
         label="Primal Residual (‖r‖)",
         legend=:topright,
         legendfontsize=9,
-        grid=true,
-        gridstyle=:solid,
-        gridalpha=0.3,
+        grid=true, gridalpha=0.25,
         minorgrid=false,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
         xlims=(0.5, n_iter + 0.5),
         xticks=xtick_vals,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern"
+        tickfontfamily="Computer Modern",
+        background_color_inside=:white,
     )
+    scatter!(p2, iterations[mark_idx], r_norm_history[mark_idx],
+             markershape=:square, markersize=markersize,
+             color=line_colour_primal,
+             markerstrokecolor=:white, markerstrokewidth=markerstrokewidth,
+             label="")
 
     hline!(p2, [eps_pri],
-           color=:red, lw=2, linestyle=:dash, alpha=0.7,
+           color=colour_threshold, lw=1.5, linestyle=:dash, alpha=0.75,
            label="Threshold ε_pri = $(eps_pri)")
 
     p3 = plot(
@@ -219,32 +206,30 @@ function generate_plot(csv_path, output_path)
         xlabel="Iteration (k)",
         ylabel="Dual Residual ‖s‖ [log scale]",
         title="Dual Residual",
-        lw=3,
+        lw=2.5,
         color=line_colour_dual,
-        markershape=:diamond,
-        markersize=residual_markersize,
-        markerstrokecolor=:black,
-        markerstrokewidth=markerstrokewidth,
         yscale=:log10,
         label="Dual Residual (‖s‖)",
         legend=:topright,
         legendfontsize=9,
-        grid=true,
-        gridstyle=:solid,
-        gridalpha=0.3,
+        grid=true, gridalpha=0.25,
         minorgrid=false,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
         xlims=(0.5, n_iter + 0.5),
         xticks=xtick_vals,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        bottom_margin=2Plots.mm
+        bottom_margin=2Plots.mm,
+        background_color_inside=:white,
     )
+    scatter!(p3, iterations[mark_idx], s_norm_history[mark_idx],
+             markershape=:diamond, markersize=markersize,
+             color=line_colour_dual,
+             markerstrokecolor=:white, markerstrokewidth=markerstrokewidth,
+             label="")
 
     hline!(p3, [eps_dual],
-           color=:red, lw=2, linestyle=:dash, alpha=0.7,
+           color=colour_threshold, lw=1.5, linestyle=:dash, alpha=0.75,
            label="Threshold ε_dual = $(eps_dual)")
 
     p4 = plot(
@@ -253,29 +238,27 @@ function generate_plot(csv_path, output_path)
         xlabel="Iteration (k)",
         ylabel="Penalty Parameter ρ [log scale]",
         title="Adaptive ρ Schedule",
-        lw=3,
+        lw=2.5,
         color=line_colour_rho,
-        markershape=:hexagon,
-        markersize=4,
-        markerstrokecolor=:black,
-        markerstrokewidth=markerstrokewidth,
         yscale=:log10,
         label="ρ value",
         legend=:topright,
         legendfontsize=9,
-        grid=true,
-        gridstyle=:solid,
-        gridalpha=0.3,
+        grid=true, gridalpha=0.25,
         minorgrid=false,
-        minorgridstyle=:solid,
-        minorgridalpha=0.15,
         xlims=(0.5, n_iter + 0.5),
         xticks=xtick_vals,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
-        bottom_margin=2Plots.mm
+        bottom_margin=2Plots.mm,
+        background_color_inside=:white,
     )
+    scatter!(p4, iterations[mark_idx], ρ_history[mark_idx],
+             markershape=:hexagon, markersize=markersize,
+             color=line_colour_rho,
+             markerstrokecolor=:white, markerstrokewidth=markerstrokewidth,
+             label="")
 
     rho_str = rho_init == round(rho_init) ? @sprintf("%.0f", rho_init) : @sprintf("%.1f", rho_init)
     p_combined = plot(p1, p2, p3, p4,
