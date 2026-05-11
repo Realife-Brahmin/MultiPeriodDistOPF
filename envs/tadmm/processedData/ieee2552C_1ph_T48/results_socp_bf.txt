@@ -1,0 +1,37 @@
+================================================================================
+SOCP BRUTE-FORCED OPTIMIZATION RESULTS
+================================================================================
+System: ieee2552C_1ph
+Time horizon: T=48 periods
+Time step: 0.5 hours
+Number of buses: 2522
+Number of branches: 2521
+Number of batteries: 250
+Number of PV units: 250
+
+--- PROBLEM SIZE ---
+Number of variables: 520176
+Linear constraints: 653280
+Quadratic constraints (SOCP): 121008
+Nonlinear constraints: 0
+Total constraints: 774288
+
+--- OPTIMIZATION STATUS ---
+Status: LOCALLY_SOLVED
+
+--- OBJECTIVE VALUE ---
+Total Cost: $8175.9018
+
+--- COMPUTATION TIME ---
+Wall-clock time: 630.6280 seconds
+Solver time: 628.1880 seconds
+Ipopt iterations: 174
+Avg time per iteration: 3.6103 seconds
+
+--- SOLUTION FEASIBILITY ---
+Status: FEASIBLE - All constraints satisfied
+
+--- SOLVER ---
+Solver: Ipopt
+Formulation: SOCP (BFM-NL)
+================================================================================
