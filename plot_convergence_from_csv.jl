@@ -30,8 +30,24 @@ end
 #   julia plot_convergence_from_csv.jl                     # default single dir
 #   julia plot_convergence_from_csv.jl --sweep-dir <path>  # all rho_* subdirs
 #   julia plot_convergence_from_csv.jl <csv> <output>      # explicit paths
-eps_pri = 1e-3
-eps_dual = 1e-2
+const DEFAULT_EPS_PRI  = 1e-3
+const DEFAULT_EPS_DUAL = 1e-2
+
+# Parse eps_pri / eps_dual from the run's results_socp_tadmm.txt so plotted
+# threshold lines reflect the actual config (not a hardcoded default).
+function parse_eps_thresholds(csv_path)
+    results_path = joinpath(dirname(csv_path), "results_socp_tadmm.txt")
+    eps_pri  = DEFAULT_EPS_PRI
+    eps_dual = DEFAULT_EPS_DUAL
+    isfile(results_path) || return (eps_pri, eps_dual)
+    for line in eachline(results_path)
+        m = match(r"Primal tolerance:\s*([\d.eE+-]+)", line)
+        if !isnothing(m); eps_pri = parse(Float64, m.captures[1]); end
+        m = match(r"Dual tolerance:\s*([\d.eE+-]+)", line)
+        if !isnothing(m); eps_dual = parse(Float64, m.captures[1]); end
+    end
+    return (eps_pri, eps_dual)
+end
 
 function find_bf_objective(csv_path)
     dir = dirname(csv_path)
@@ -89,6 +105,8 @@ function generate_plot(csv_path, output_path)
 
     bf_obj = find_bf_objective(csv_path)
     rho_init = first(ρ_history)
+    eps_pri, eps_dual = parse_eps_thresholds(csv_path)
+    @printf "  eps_pri=%.1e eps_dual=%.1e (parsed from results file)\n" eps_pri eps_dual
 
     gr()
     theme(:default)
