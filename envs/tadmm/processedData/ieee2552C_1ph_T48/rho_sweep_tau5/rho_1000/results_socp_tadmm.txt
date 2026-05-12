@@ -36,7 +36,7 @@ Relative difference: 0.8159%
 
 --- COMPUTATION TIME ---
 Brute Force:
-  Wall-clock time: 630.6280 seconds
+  Wall-clock time: 719.1630 seconds
   Solver time: 628.1880 seconds
 tADMM:
   Wall-clock time: 2787.3890 seconds
@@ -44,9 +44,9 @@ tADMM:
   Effective time (near-optimal): 815.4180 seconds (k=33, gap=0.476% vs BF, r=3.50e-04, s=4.19e-01)
   Sequential time: 33422.4480 seconds
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.23x
-  tADMM eff(true) vs BF: 0.45x
-  tADMM eff(near-optimal) vs BF: 0.77x
+  tADMM vs BF (wall-clock): 0.26x
+  tADMM eff(true) vs BF: 0.52x
+  tADMM eff(near-optimal) vs BF: 0.88x
 
 --- SOLUTION FEASIBILITY ---
 Status: FEASIBLE - All constraints satisfied
