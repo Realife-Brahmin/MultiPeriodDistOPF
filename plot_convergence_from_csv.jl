@@ -108,6 +108,49 @@ function generate_plot(csv_path, output_path)
     eps_pri, eps_dual = parse_eps_thresholds(csv_path)
     @printf "  eps_pri=%.1e eps_dual=%.1e (parsed from results file)\n" eps_pri eps_dual
 
+    # Cumulative effective tADMM time (per-iter) for time-annotated x-ticks
+    cum_eff_time = haskey(conv_data, "cum_eff_time") ? conv_data["cum_eff_time"][valid_idx] : Float64[]
+
+    # BF wall-clock for the vertical reference line
+    bf_wall_time = NaN
+    bf_results_path = nothing
+    let dir = dirname(csv_path)
+        for _ in 0:3
+            candidate = joinpath(dir, "results_socp_bf.txt")
+            if isfile(candidate); bf_results_path = candidate; break; end
+            dir = dirname(dir)
+        end
+    end
+    if !isnothing(bf_results_path)
+        for line in eachline(bf_results_path)
+            m = match(r"Wall-clock time:\s*([\d.]+)\s*seconds", line)
+            if !isnothing(m); bf_wall_time = parse(Float64, m.captures[1]); break; end
+        end
+    end
+
+    # Iteration at which cumulative tADMM time first exceeds BF wall-clock
+    bf_crossover_k = NaN
+    if !isnan(bf_wall_time) && !isempty(cum_eff_time)
+        idx = findfirst(t -> t >= bf_wall_time, cum_eff_time)
+        bf_crossover_k = isnothing(idx) ? NaN : float(idx)
+    end
+
+    # tADMM near-optimal iteration (parsed from results_socp_tadmm.txt)
+    near_opt_k = NaN
+    near_opt_time = NaN
+    let res_path = joinpath(dirname(csv_path), "results_socp_tadmm.txt")
+        if isfile(res_path)
+            for line in eachline(res_path)
+                m = match(r"Effective time \(near-optimal\):\s*([\d.]+)\s*seconds.*\(k=(\d+)", line)
+                if !isnothing(m)
+                    near_opt_time = parse(Float64, m.captures[1])
+                    near_opt_k = parse(Float64, m.captures[2])
+                    break
+                end
+            end
+        end
+    end
+
     gr()
     theme(:default)
     # Colorblind-friendly palette (Wong 2011)
@@ -150,6 +193,19 @@ function generate_plot(csv_path, output_path)
     end
     xtick_vals = sort(unique(xtick_vals))
 
+    # Build two-line tick labels: "k\n(Ts)" using cumulative effective time
+    function fmt_time(t)
+        t < 60        ? @sprintf("%ds", round(Int, t)) :
+        t < 3600      ? @sprintf("%.1fm", t/60) :
+                        @sprintf("%.2fh", t/3600)
+    end
+    xtick_labels = if !isempty(cum_eff_time)
+        [@sprintf("%d\n(%s)", k, fmt_time(cum_eff_time[k])) for k in xtick_vals]
+    else
+        [string(k) for k in xtick_vals]
+    end
+    xticks_pair = (xtick_vals, xtick_labels)
+
     p1 = plot(
         iterations, obj_history,
         dpi=600,
@@ -164,7 +220,7 @@ function generate_plot(csv_path, output_path)
         grid=true, gridalpha=0.25,
         minorgrid=false,
         xlims=(0.5, n_iter + 0.5),
-        xticks=xtick_vals,
+        xticks=xticks_pair,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -182,9 +238,35 @@ function generate_plot(csv_path, output_path)
           seriestype=:scatter, markersize=0, label="tADMM Final = \$$(round(final_obj_tadmm, digits=2))")
 
     if !isnan(bf_obj)
+        # Translucent +/-0.5% optimality band around BF objective
+        band_lo = bf_obj * 0.995
+        band_hi = bf_obj * 1.005
+        plot!(p1, [0.5, n_iter + 0.5], [band_lo, band_lo],
+              fillrange=[band_hi, band_hi], fillalpha=0.18, fillcolor=:limegreen,
+              linealpha=0, label="±0.5% band")
         hline!(p1, [bf_obj],
                color=colour_bf_ref, lw=1.8, linestyle=:dash, alpha=0.85,
                label="BF Optimal = \$$(round(bf_obj, digits=2))")
+    end
+
+    # BF wall-clock crossover marker: vertical line at the iter where
+    # tADMM cumulative effective time first matches BF wall-clock.
+    # If never, mark at the rightmost iter implicitly (no line drawn).
+    bf_xline_label = if !isnan(bf_crossover_k)
+        @sprintf("BF wall-clock = %s (k=%d)", fmt_time(bf_wall_time), Int(bf_crossover_k))
+    elseif !isnan(bf_wall_time)
+        # tADMM finished before BF time would have been reached
+        @sprintf("BF wall-clock = %s (tADMM finished sooner)", fmt_time(bf_wall_time))
+    else
+        ""
+    end
+    if !isnan(bf_crossover_k)
+        vline!(p1, [bf_crossover_k], color=colour_bf_ref, lw=1.5, linestyle=:dot, alpha=0.6,
+               label=bf_xline_label)
+    end
+    if !isnan(near_opt_k)
+        vline!(p1, [near_opt_k], color=:dodgerblue, lw=1.8, linestyle=:dash, alpha=0.85,
+               label=@sprintf("tADMM near-opt = %s (k=%d)", fmt_time(near_opt_time), Int(near_opt_k)))
     end
 
     p2 = plot(
@@ -202,7 +284,7 @@ function generate_plot(csv_path, output_path)
         grid=true, gridalpha=0.25,
         minorgrid=false,
         xlims=(0.5, n_iter + 0.5),
-        xticks=xtick_vals,
+        xticks=xticks_pair,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -217,6 +299,12 @@ function generate_plot(csv_path, output_path)
     hline!(p2, [eps_pri],
            color=colour_threshold, lw=1.5, linestyle=:dash, alpha=0.75,
            label="Threshold ε_pri = $(eps_pri)")
+    if !isnan(bf_crossover_k)
+        vline!(p2, [bf_crossover_k], color=colour_bf_ref, lw=1.5, linestyle=:dot, alpha=0.6, label="")
+    end
+    if !isnan(near_opt_k)
+        vline!(p2, [near_opt_k], color=:dodgerblue, lw=1.8, linestyle=:dash, alpha=0.85, label="")
+    end
 
     p3 = plot(
         iterations, s_norm_history,
@@ -233,7 +321,7 @@ function generate_plot(csv_path, output_path)
         grid=true, gridalpha=0.25,
         minorgrid=false,
         xlims=(0.5, n_iter + 0.5),
-        xticks=xtick_vals,
+        xticks=xticks_pair,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -249,6 +337,12 @@ function generate_plot(csv_path, output_path)
     hline!(p3, [eps_dual],
            color=colour_threshold, lw=1.5, linestyle=:dash, alpha=0.75,
            label="Threshold ε_dual = $(eps_dual)")
+    if !isnan(bf_crossover_k)
+        vline!(p3, [bf_crossover_k], color=colour_bf_ref, lw=1.5, linestyle=:dot, alpha=0.6, label="")
+    end
+    if !isnan(near_opt_k)
+        vline!(p3, [near_opt_k], color=:dodgerblue, lw=1.8, linestyle=:dash, alpha=0.85, label="")
+    end
 
     p4 = plot(
         iterations, ρ_history,
@@ -265,7 +359,7 @@ function generate_plot(csv_path, output_path)
         grid=true, gridalpha=0.25,
         minorgrid=false,
         xlims=(0.5, n_iter + 0.5),
-        xticks=xtick_vals,
+        xticks=xticks_pair,
         titlefont=font(12, "Computer Modern"),
         guidefont=font(12, "Computer Modern"),
         tickfontfamily="Computer Modern",
@@ -277,6 +371,12 @@ function generate_plot(csv_path, output_path)
              color=line_colour_rho,
              markerstrokecolor=:white, markerstrokewidth=markerstrokewidth,
              label="")
+    if !isnan(bf_crossover_k)
+        vline!(p4, [bf_crossover_k], color=colour_bf_ref, lw=1.5, linestyle=:dot, alpha=0.6, label="")
+    end
+    if !isnan(near_opt_k)
+        vline!(p4, [near_opt_k], color=:dodgerblue, lw=1.8, linestyle=:dash, alpha=0.85, label="")
+    end
 
     rho_str = rho_init == round(rho_init) ? @sprintf("%.0f", rho_init) : @sprintf("%.1f", rho_init)
     p_combined = plot(p1, p2, p3, p4,
