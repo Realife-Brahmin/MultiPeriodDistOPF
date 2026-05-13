@@ -20,32 +20,33 @@ Total constraints: 16881
 Initial rho: 15000.0
 Adaptive rho: true
 Max iterations: 100
-Primal tolerance: 1.0e-03
+Primal tolerance: 1.0e-04
 Dual tolerance: 5.0e-04
 
 --- CONVERGENCE ---
-Iterations: 45
-Final primal residual: 6.70e-04
-Final dual residual: 4.83e-04
+Iterations: 74
+Final primal residual: 9.83e-05
+Final dual residual: 3.18e-04
 
 --- OBJECTIVE VALUE ---
-Total Cost: $4323.9699
+Total Cost: $8188.8705
 Brute Force objective: $8208.4643
-Absolute difference: $3884.4944
-Relative difference: 47.3230%
+Absolute difference: $19.5938
+Relative difference: 0.2387%
 
 --- COMPUTATION TIME ---
 Brute Force:
   Wall-clock time: 1622.2030 seconds
   Solver time: 1618.9930 seconds
 tADMM:
-  Wall-clock time: 4970.4440 seconds
-  Effective time (true): 1692.8080 seconds (45 iterations)
-  Effective time (near-optimal): N/A (0.5% gap never reached)
-  Sequential time: 56774.0950 seconds
+  Wall-clock time: 8276.1380 seconds
+  Effective time (true): 2168.8650 seconds (74 iterations)
+  Effective time (near-optimal): 736.9280 seconds (k=27, gap=0.215% vs BF, r=9.63e-05, s=8.28e-01)
+  Sequential time: 108493.6030 seconds
 Speedup Metrics:
-  tADMM vs BF (wall-clock): 0.33x
-  tADMM eff(true) vs BF: 0.96x
+  tADMM vs BF (wall-clock): 0.20x
+  tADMM eff(true) vs BF: 0.75x
+  tADMM eff(near-optimal) vs BF: 2.20x
 
 --- SOLUTION FEASIBILITY ---
 Status: FEASIBLE - All constraints satisfied
