@@ -1,0 +1,58 @@
+================================================================================
+SOCP tADMM OPTIMIZATION RESULTS
+================================================================================
+System: ieee2552C_1ph
+Time horizon: T=144 periods
+Time step: 0.16666666666666666 hours
+Number of buses: 2522
+Number of branches: 2521
+Number of batteries: 250
+Number of PV units: 250
+
+--- SUBPROBLEM SIZE (one time period) ---
+Number of variables: 46837
+Linear constraints: 14360
+Quadratic constraints (SOCP): 2521
+Nonlinear constraints: 0
+Total constraints: 16881
+
+--- tADMM PARAMETERS ---
+Initial rho: 50000.0
+Adaptive rho: true
+Max iterations: 100
+Primal tolerance: 1.0e-04
+Dual tolerance: 1.0e-04
+
+--- CONVERGENCE ---
+Iterations: 90
+Final primal residual: 7.87e-05
+Final dual residual: 9.50e-05
+
+--- OBJECTIVE VALUE ---
+Total Cost: $8193.3517
+Brute Force objective: $8219.5724
+Absolute difference: $26.2207
+Relative difference: 0.3190%
+
+--- COMPUTATION TIME ---
+Brute Force:
+  Wall-clock time: 12780.1410 seconds
+  Solver time: 12774.2100 seconds
+tADMM:
+  Wall-clock time: 33316.9090 seconds
+  Effective time (true): 5586.8510 seconds (90 iterations)
+  Effective time (near-optimal): 1372.5950 seconds (k=26, gap=0.285% vs BF, r=8.80e-05, s=5.58e-01)
+  Sequential time: 455294.1210 seconds
+Speedup Metrics:
+  tADMM vs BF (wall-clock): 0.38x
+  tADMM eff(true) vs BF: 2.29x
+  tADMM eff(near-optimal) vs BF: 9.31x
+
+--- SOLUTION FEASIBILITY ---
+Status: FEASIBLE - All constraints satisfied
+
+--- SOLVER ---
+Subproblem solver: Ipopt
+Formulation: SOCP (BFM-NL)
+Decomposition: Temporal ADMM
+================================================================================
