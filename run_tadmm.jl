@@ -78,8 +78,14 @@ if haskey(ENV, "RHO_OVERRIDE")
     println("RHO_OVERRIDE: using rho = $rho_tadmm")
 end
 max_iter_tadmm = 100
-eps_pri_tadmm = 2e-3
-eps_dual_tadmm = 1e-2
+eps_pri_tadmm = haskey(ENV, "EPS_PRI_OVERRIDE")  ? parse(Float64, ENV["EPS_PRI_OVERRIDE"])  : 2e-3
+eps_dual_tadmm = haskey(ENV, "EPS_DUAL_OVERRIDE") ? parse(Float64, ENV["EPS_DUAL_OVERRIDE"]) : 1e-2
+if haskey(ENV, "EPS_PRI_OVERRIDE")
+    println("EPS_PRI_OVERRIDE: using eps_pri = $eps_pri_tadmm")
+end
+if haskey(ENV, "EPS_DUAL_OVERRIDE")
+    println("EPS_DUAL_OVERRIDE: using eps_dual = $eps_dual_tadmm")
+end
 adaptive_rho_tadmm = true
 if haskey(ENV, "ADAPTIVE_RHO_OVERRIDE")
     adaptive_rho_tadmm = parse(Bool, ENV["ADAPTIVE_RHO_OVERRIDE"])
@@ -519,12 +525,13 @@ function solve_MPOPF_SOCP_tADMM(data; rho::Float64=1.0,
     # Adaptive rho parameters
     rho_current = rho
     rho_initial = rho  # track initial value for watchdog recovery
-    mu_balance = 5.0
-    tau_incr = 2.0
-    tau_decr = 5.0
+    mu_balance      = haskey(ENV, "MU_BALANCE_OVERRIDE")      ? parse(Float64, ENV["MU_BALANCE_OVERRIDE"])      : 5.0
+    tau_incr        = haskey(ENV, "TAU_INCR_OVERRIDE")        ? parse(Float64, ENV["TAU_INCR_OVERRIDE"])        : 2.0
+    tau_decr        = haskey(ENV, "TAU_DECR_OVERRIDE")        ? parse(Float64, ENV["TAU_DECR_OVERRIDE"])        : 5.0
     rho_min = 1.0
     rho_max = 1e6
-    update_interval = 5
+    update_interval = haskey(ENV, "UPDATE_INTERVAL_OVERRIDE") ? parse(Int,     ENV["UPDATE_INTERVAL_OVERRIDE"]) : 5
+    @printf "  [tADMM hyperparams] mu_balance=%.2f tau_incr=%.2f tau_decr=%.2f update_interval=%d eps_pri=%.1e eps_dual=%.1e rho_init=%.1f adaptive=%s\n" mu_balance tau_incr tau_decr update_interval eps_pri eps_dual rho_initial adaptive_rho
 
     # Two-phase adaptive rho
     primal_converged_once = false

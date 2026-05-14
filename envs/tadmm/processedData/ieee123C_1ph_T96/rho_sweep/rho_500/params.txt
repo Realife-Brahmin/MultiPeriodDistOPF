@@ -1,0 +1,15 @@
+tADMM Hyperparameters -- T=96, rho=500
+============================================================
+system_override   = ieee123C_1ph
+T                 = 96
+rho_init          = 500.0
+adaptive_rho      = true
+tau_incr          = 2
+tau_decr          = 2
+mu_balance        = (default 5.0)
+update_interval   = (default 5)
+eps_pri           = 1e-3
+eps_dual          = 1e-3
+max_iter          = 100 (hardcoded)
+watchdog          = true (window=15, factor=2.5, trigger=r>2*eps_pri)
+two_phase         = true (Phase 1 unconditional increase; Phase 2 mu_balance-driven)

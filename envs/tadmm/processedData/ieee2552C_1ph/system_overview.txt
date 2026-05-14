@@ -1,0 +1,24 @@
+================================================================================
+SYSTEM OVERVIEW: ieee2552C_1ph
+================================================================================
+Buses        : 2,552  (including substation)
+Branches     : 2,520
+Batteries    : 250
+PV units     : 250
+Base voltage : 7.2 kV (L-L), 4.1569 kV (L-N)
+Solver       : Ipopt + MUMPS linear solver  (planned)
+Formulation  : SOCP (BFM-NL)
+Threads      : 16 parallel  (planned)
+
+--- STATUS ---
+No tADMM results available yet for the C variant.
+Results for T in {6, 12, 24, 48} are planned.
+
+NOTE: Non-C variant (ieee2552_1ph) has results for T=6,12,24 with 10 batteries
+      and 10 PV, but these use a different DER configuration and are NOT used
+      in the paper.
+
+--- EXPECTED PAPER ROLE ---
+Intermediate-scale benchmark bridging ieee123C (128 buses) and large10kC (10k buses).
+Will demonstrate tADMM at moderate scale once runs are complete.
+================================================================================

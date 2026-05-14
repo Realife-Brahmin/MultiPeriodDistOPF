@@ -32,3 +32,14 @@ envs/tadmm/processedData/**/model_summary*.txt
 
 # GR backend intermediate files
 gks*.png
+
+# tADMM scratch outputs at <system>_T<T>/ root level (overwritten by every
+# run; canonical results live under rho_sweep/rho_*/). The single-segment
+# wildcard means files inside rho_sweep/rho_*/ are NOT ignored.
+envs/tadmm/processedData/*/tadmm_run.log
+envs/tadmm/processedData/*/run_stdout.log
+envs/tadmm/processedData/*/results_socp_tadmm.txt
+envs/tadmm/processedData/*/convergence_data.csv
+envs/tadmm/processedData/*/near_optimal_summary.csv
+envs/tadmm/processedData/*/subproblem_timing_details.csv
+envs/tadmm/processedData/*/sol_socp_tadmm.jls
