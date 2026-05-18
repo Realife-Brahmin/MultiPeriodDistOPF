@@ -1,26 +1,43 @@
 #!/usr/bin/env julia
 # plot_bf_vs_tadmm_trajectory.jl
 #
-# Beautiful overlay of BF (Ipopt interior-point) vs tADMM convergence
-# trajectories on the same wall-clock time axis. Color-codes BF by
-# feasibility (red dashed = constraint-violating intermediate iterates,
-# green solid = feasible search) to highlight that BF cannot be early-stopped
-# while tADMM produces a feasible solution at every iteration.
+# Publication-quality overlay of BF (Ipopt interior-point) vs tADMM convergence
+# trajectories on a common wall-clock time axis.  Both algorithms are TRUNCATED
+# at their first feasible-and-near-optimal iterate ("first NO" milestone) —
+# beyond that point either algorithm would be terminated in practice.
+#
+# Color & style language:
+#   tADMM line                  = dodgerblue (matches convergence plot obj color)
+#   tADMM NO terminus marker    = darkorange diamond (matches BF-ref color)
+#   BF infeasible portion       = maroon dashed (constraint-violating search)
+#   BF feasible-but-pre-NO      = forestgreen solid (feasible, not yet ≤0.5%)
+#   BF NO terminus marker       = forestgreen square
+#   BF optimal horizontal ref   = black dotted thin line
+#   Grid                        = minor only, light gray
+#   Per-iter subsampled markers = ~20 per line, with notable iters preserved
 #
 # Usage:
-#   julia plot_bf_vs_tadmm_trajectory.jl <bf_dir> <tadmm_csv> [output_png]
-#
-# Example:
-#   julia plot_bf_vs_tadmm_trajectory.jl \
-#       envs/tadmm/processedData/large10kC_1ph_T48 \
-#       envs/tadmm/processedData/large10kC_1ph_T48/rho_sweep/rho_30000/convergence_data.csv
+#   julia --project=envs/tadmm plot_bf_vs_tadmm_trajectory.jl <bf_dir> <tadmm_csv> [output_png]
 
-using Plots, Printf, Statistics
+using Plots, Printf, Statistics, LaTeXStrings
 
 const FEAS_TOL = 1e-4   # primal infeasibility threshold for "feasible"
 const GAP_TOL  = 0.005  # 0.5% gap band
 
-# --- BF Ipopt log parser ------------------------------------------------------
+# Colors --------------------------------------------------------------------
+const COL_TADMM_LINE = :dodgerblue          # tADMM consensus-feasible portion (solid)
+const COL_TADMM_END  = :navy                # tADMM NO marker (same family, distinct shade)
+const COL_BF_INFEAS  = :maroon              # BF infeasible (wine red dashed)
+const COL_BF_FEAS    = :forestgreen         # BF feasible (forest green solid)
+const COL_BF_END     = :forestgreen         # BF NO marker
+const COL_TEXT       = :black
+const COL_BG         = :white
+const COL_GRID       = RGB(180/255, 180/255, 180/255)  # neutral soft gray
+
+# Marker target count -------------------------------------------------------
+const N_MARKERS = 20
+
+# --- BF Ipopt log parser ---------------------------------------------------
 
 """
 Parse Ipopt log file. Returns vector of (k, obj, inf_pr, inf_du) tuples.
@@ -52,7 +69,7 @@ function parse_bf_total_time(results_path::String)
     return NaN
 end
 
-# --- tADMM CSV parser ---------------------------------------------------------
+# --- tADMM CSV parser ------------------------------------------------------
 
 function parse_tadmm_csv(path::String)
     lines = readlines(path)
@@ -72,7 +89,22 @@ function parse_tadmm_csv(path::String)
     return cols
 end
 
-# --- main plotting -----------------------------------------------------------
+# --- Marker subsampling ----------------------------------------------------
+
+"""
+Return ~`target` indices in [1, n] that include all `notable` indices.
+"""
+function subsample_markers(n::Int, notable::Vector{Int}; target::Int=N_MARKERS)
+    n <= 0 && return Int[]
+    if n <= target
+        return collect(1:n)
+    end
+    sampled = round.(Int, range(1, n, length=target))
+    combined = sort(unique(vcat(sampled, filter(i -> 1 <= i <= n, notable))))
+    return combined
+end
+
+# --- main plotting ---------------------------------------------------------
 
 function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     println("\nLoading BF Ipopt log from: $bf_dir/ipopt_bf.log")
@@ -82,16 +114,10 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     println("Loading tADMM trajectory from: $tadmm_csv")
     tadmm = parse_tadmm_csv(tadmm_csv)
 
-    # Final objectives
     bf_final = bf_iters[end][2]
-    tadmm_final = last(tadmm["objective"])
-
-    # Use BF as the reference for "optimal"; tADMM gap is computed against it.
     ref_obj = bf_final
-    band_lo = ref_obj * (1 - GAP_TOL)
-    band_hi = ref_obj * (1 + GAP_TOL)
 
-    # Estimate per-iter time for BF (Ipopt doesn't log it; use uniform mean).
+    # BF per-iter timing (uniform mean since Ipopt doesn't log per-iter wall-clock)
     bf_n = length(bf_iters)
     dt_bf = bf_total_time / bf_n
     bf_t = [(i-1) * dt_bf for i in 1:bf_n]
@@ -99,22 +125,17 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     bf_inf  = [it[3] for it in bf_iters]
     bf_feas = bf_inf .<= FEAS_TOL
 
-    # Find first feasible and first feasible+near-optimal
     first_feas_idx = findfirst(bf_feas)
-    first_feas_t = isnothing(first_feas_idx) ? NaN : bf_t[first_feas_idx]
     first_near_idx = findfirst(i -> bf_feas[i] && abs(bf_obj[i] - ref_obj) <= GAP_TOL * ref_obj, 1:bf_n)
-    first_near_t = isnothing(first_near_idx) ? NaN : bf_t[first_near_idx]
 
-    # tADMM trajectory on cumulative effective time
-    t_tadmm = tadmm["cum_eff_time"]
-    obj_tadmm = tadmm["objective"]
-    r_tadmm = tadmm["r_norm"]
+    # tADMM cumulative effective time + parse eps_pri
+    t_tadmm_full = tadmm["cum_eff_time"]
+    obj_tadmm_full = tadmm["objective"]
+    r_tadmm_full = tadmm["r_norm"]
 
-    # Find tADMM near-optimal point (first k where r<=eps_pri and gap<=0.5%)
-    # Parse eps_pri from the run's results file so we use the actual tolerance.
     tadmm_dir = dirname(tadmm_csv)
     results_path = joinpath(tadmm_dir, "results_socp_tadmm.txt")
-    eps_pri = 1e-3  # fallback default
+    eps_pri = 1e-3
     if isfile(results_path)
         for line in eachline(results_path)
             m = match(r"Primal tolerance:\s*([\d.eE+-]+)", line)
@@ -122,18 +143,67 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
         end
     end
     @printf "Using tADMM eps_pri = %.2e (parsed from results file)\n" eps_pri
-    near_idx_t = findfirst(i -> r_tadmm[i] <= eps_pri && abs(obj_tadmm[i] - ref_obj) <= GAP_TOL * ref_obj, 1:length(obj_tadmm))
-    near_t_tadmm = isnothing(near_idx_t) ? NaN : t_tadmm[near_idx_t]
-    near_obj_tadmm = isnothing(near_idx_t) ? NaN : obj_tadmm[near_idx_t]
+    near_idx_t = findfirst(i -> r_tadmm_full[i] <= eps_pri && abs(obj_tadmm_full[i] - ref_obj) <= GAP_TOL * ref_obj,
+                            1:length(obj_tadmm_full))
 
-    # Split BF trajectory into infeasible / feasible segments for color-coding
-    bf_t_inf = [bf_feas[i] ? NaN : bf_t[i] for i in 1:bf_n]
-    bf_obj_inf = [bf_feas[i] ? NaN : bf_obj[i] for i in 1:bf_n]
-    bf_t_fea = [bf_feas[i] ? bf_t[i] : NaN for i in 1:bf_n]
-    bf_obj_fea = [bf_feas[i] ? bf_obj[i] : NaN for i in 1:bf_n]
+    # TRUNCATE both algorithms at their first NO iterate
+    tadmm_end = isnothing(near_idx_t) ? length(obj_tadmm_full) : near_idx_t
+    bf_end    = isnothing(first_near_idx) ? bf_n : first_near_idx
 
-    # Time unit autoscale
-    max_t = max(maximum(bf_t), last(t_tadmm))
+    # ---- tADMM: prepend (t=0, obj=obj[1]) so the trajectory starts at the origin,
+    # matching BF's k=0 initial-point convention.  At t=0, no consensus exists
+    # yet, so the leading point is treated as consensus-infeasible.
+    t_tadmm   = vcat([0.0],            t_tadmm_full[1:tadmm_end])
+    obj_tadmm = vcat([obj_tadmm_full[1]], obj_tadmm_full[1:tadmm_end])
+    r_tadmm   = vcat([Inf],             r_tadmm_full[1:tadmm_end])  # Inf at t=0 ⇒ "infeasible" leading point
+
+    # Split tADMM by consensus feasibility (r vs eps_pri).
+    # Mirrors BF's infeasible/feasible coloring, but for r-norm.
+    tadmm_feas_mask = r_tadmm .<= eps_pri
+    n_t = length(t_tadmm)
+
+    # NaN-gapped arrays for each line style (Plots draws across NaN as a gap).
+    # Keep transition points in BOTH arrays so dashes meet solids cleanly.
+    t_tadmm_inf  = Float64[]; obj_tadmm_inf  = Float64[]
+    t_tadmm_fea  = Float64[]; obj_tadmm_fea  = Float64[]
+    for i in 1:n_t
+        if tadmm_feas_mask[i]
+            push!(t_tadmm_fea, t_tadmm[i]); push!(obj_tadmm_fea, obj_tadmm[i])
+            push!(t_tadmm_inf, NaN);         push!(obj_tadmm_inf, NaN)
+        else
+            push!(t_tadmm_inf, t_tadmm[i]); push!(obj_tadmm_inf, obj_tadmm[i])
+            push!(t_tadmm_fea, NaN);         push!(obj_tadmm_fea, NaN)
+        end
+        # Add transition bridge: when status changes between i and i+1, plant
+        # the boundary point in the OTHER array too so the segments join
+        if i < n_t && tadmm_feas_mask[i] != tadmm_feas_mask[i+1]
+            # boundary point at i goes into both
+            if tadmm_feas_mask[i]
+                t_tadmm_inf[end] = t_tadmm[i]; obj_tadmm_inf[end] = obj_tadmm[i]
+            else
+                t_tadmm_fea[end] = t_tadmm[i]; obj_tadmm_fea[end] = obj_tadmm[i]
+            end
+        end
+    end
+
+    # BF infeasible vs feasible portions (within the truncated [1, bf_end] range)
+    if isnothing(first_feas_idx) || first_feas_idx > bf_end
+        bf_t_inf = bf_t[1:bf_end]; bf_obj_inf = bf_obj[1:bf_end]
+        bf_t_fea = Float64[]; bf_obj_fea = Float64[]
+    else
+        bf_t_inf = bf_t[1:first_feas_idx]
+        bf_obj_inf = bf_obj[1:first_feas_idx]
+        bf_t_fea = bf_t[first_feas_idx:bf_end]
+        bf_obj_fea = bf_obj[first_feas_idx:bf_end]
+    end
+
+    near_t_tadmm   = isnothing(near_idx_t) ? NaN : t_tadmm_full[near_idx_t]
+    near_obj_tadmm = isnothing(near_idx_t) ? NaN : obj_tadmm_full[near_idx_t]
+    bf_no_t        = isnothing(first_near_idx) ? NaN : bf_t[first_near_idx]
+    bf_no_obj      = isnothing(first_near_idx) ? NaN : bf_obj[first_near_idx]
+
+    # Time-unit autoscale (driven by the TRUNCATED endpoints)
+    max_t = max(isempty(bf_t_fea) ? maximum(bf_t_inf) : maximum(bf_t_fea), maximum(t_tadmm))
     if max_t > 3600
         scale = 1/3600; tunit = "hours"
     elseif max_t > 60
@@ -142,64 +212,100 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
         scale = 1.0; tunit = "seconds"
     end
 
+    # y-axis bounds: 95th-percentile cap (kill initial Ipopt objective spike)
+    obj_all = vcat(filter(!isnan, bf_obj[1:bf_end]), filter(!isnan, obj_tadmm))
+    yhi = quantile(obj_all, 0.95) * 1.05
+    ylo = minimum(obj_all) * 0.98
+
+    # Subsample markers (one per algorithm, full trajectory)
+    bf_inf_mark = subsample_markers(length(bf_t_inf), [1, length(bf_t_inf)])
+    bf_fea_mark = subsample_markers(length(bf_t_fea), [1, length(bf_t_fea)])
+    tadmm_mark  = subsample_markers(n_t,              [1, n_t])
+
     # ---- Plot ----
     gr()
-    theme(:mute)
-
-    title_str = @sprintf("BF vs tADMM Convergence Trajectory\n%s", basename(bf_dir))
+    title_str = "BF vs. tADMM Convergence on a Common Wall-Clock Axis"
 
     p = plot(
-        dpi=600, size=(1100, 700),
+        background_color=COL_BG,
+        foreground_color=COL_TEXT,
+        size=(1100, 650),
+        dpi=300,
         title=title_str,
+        titlefont=font(14, "Computer Modern"),
+        titlefontcolor=COL_TEXT,
         xlabel="Wall-clock time [$tunit]",
-        ylabel="Objective value [\$]",
-        titlefont=font(13, "Computer Modern"),
-        guidefont=font(12, "Computer Modern"),
-        tickfontfamily="Computer Modern",
-        legendfontsize=10,
+        ylabel="Objective f(x) [USD]",
+        guidefont=font(13, "Computer Modern"),
+        guidefontcolor=COL_TEXT,
+        tickfont=font(11, "Computer Modern"),
+        tickfontcolor=COL_TEXT,
         legend=:bottomright,
-        grid=true, gridalpha=0.3,
+        legendfont=font(10, "Computer Modern"),
+        legendfontcolor=COL_TEXT,
+        # Minor grid only
+        grid=false,
+        minorgrid=true,
+        minorgridcolor=COL_GRID,
+        minorgridlinewidth=0.6,
+        minorgridalpha=0.35,
+        minorgridstyle=:solid,
+        framestyle=:box,
+        xlims=(0, max_t * scale * 1.04),
+        ylims=(ylo, yhi),
         left_margin=10Plots.mm, right_margin=8Plots.mm,
-        top_margin=4Plots.mm, bottom_margin=8Plots.mm,
+        top_margin=6Plots.mm, bottom_margin=8Plots.mm,
     )
 
-    # ±0.5% gap band around BF optimal
-    plot!(p, [0, max_t*scale], [band_lo, band_lo],
-          fillrange=[band_hi, band_hi], fillalpha=0.15, fillcolor=:limegreen,
-          linealpha=0, label="±0.5% optimality band")
-
-    # BF infeasible portion (red dashed)
+    # BF infeasible (maroon dashed)
     plot!(p, bf_t_inf .* scale, bf_obj_inf,
-          lw=1.8, lc=:firebrick, ls=:dash, label="BF (infeasible search trajectory)")
+          lw=5, lc=COL_BF_INFEAS, ls=:dash,
+          label="BF: constraint-violating search")
+    # BF feasible (forest green solid)
+    if !isempty(bf_t_fea)
+        plot!(p, bf_t_fea .* scale, bf_obj_fea,
+              lw=6, lc=COL_BF_FEAS, ls=:solid,
+              label="BF: feasible iterates")
+    end
 
-    # BF feasible portion (green solid)
-    plot!(p, bf_t_fea .* scale, bf_obj_fea,
-          lw=2.5, lc=:darkgreen, label="BF (feasible iterates)")
+    # tADMM consensus-infeasible portion (dashed dodgerblue, r > eps_pri)
+    plot!(p, t_tadmm_inf .* scale, obj_tadmm_inf,
+          lw=5, lc=COL_TADMM_LINE, ls=:dash,
+          label="tADMM: consensus-violating iterates (r > ε_pri)")
+    # tADMM consensus-feasible portion (solid dodgerblue, r ≤ eps_pri)
+    plot!(p, t_tadmm_fea .* scale, obj_tadmm_fea,
+          lw=6, lc=COL_TADMM_LINE, ls=:solid,
+          label="tADMM: consensus-feasible iterates (r ≤ ε_pri)")
 
-    # tADMM trajectory (blue solid; feasible at every iteration)
-    plot!(p, t_tadmm .* scale, obj_tadmm,
-          lw=2.5, lc=:dodgerblue, marker=:circle, ms=3, msw=0.4,
-          label="tADMM (feasible per subproblem at every iter)")
+    # Per-iter subsampled markers — shape encodes algorithm (B&W-safe):
+    #   BF      : up-triangles, white-filled, line-color border
+    #   tADMM   : circles,     white-filled, line-color border
+    !isempty(bf_inf_mark) && scatter!(p, (bf_t_inf[bf_inf_mark]) .* scale, bf_obj_inf[bf_inf_mark],
+             marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_INFEAS, label="")
+    if !isempty(bf_t_fea)
+        scatter!(p, (bf_t_fea[bf_fea_mark]) .* scale, bf_obj_fea[bf_fea_mark],
+                 marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_FEAS, label="")
+    end
+    scatter!(p, (t_tadmm[tadmm_mark]) .* scale, obj_tadmm[tadmm_mark],
+             marker=:circle, mc=:white, ms=7, msw=1.6, msc=COL_TADMM_LINE, label="")
 
-    # Final objective horizontal line
-    hline!(p, [ref_obj], lw=1, lc=:black, ls=:dot, alpha=0.6,
+    # BF optimal: black dotted reference
+    hline!(p, [ref_obj], lw=1.5, lc=COL_TEXT, ls=:dot, alpha=0.7,
            label=@sprintf("BF optimal = \$%.2f", ref_obj))
 
-    # Annotate the milestones
-    if !isnan(first_feas_t)
-        scatter!(p, [first_feas_t * scale], [bf_obj[first_feas_idx]],
-                 mc=:darkgreen, ms=8, msw=1.5, msc=:black,
-                 label=@sprintf("BF first feasible (k=%d, %.1f%% of run)", first_feas_idx, 100*first_feas_idx/bf_n))
-    end
-    if !isnan(first_near_t)
-        scatter!(p, [first_near_t * scale], [bf_obj[first_near_idx]],
-                 mc=:gold, ms=10, msw=1.5, msc=:black, marker=:star5,
-                 label=@sprintf("BF first feasible+0.5%% (k=%d)", first_near_idx))
+    # ---- Terminus markers — same shape as per-iter (triangle for BF, circle
+    # for tADMM), just bigger and OPAQUE (solid fill) with thick black border.
+    # This is the "you arrived" signal in the same visual vocabulary as the
+    # per-iter footprints leading up to it.
+    if !isnan(bf_no_t)
+        scatter!(p, [bf_no_t * scale], [bf_no_obj],
+                 mc=COL_BF_END, ms=15, msw=2.2, msc=:black, marker=:utriangle,
+                 label="BF first near-optimal")
     end
     if !isnan(near_t_tadmm)
         scatter!(p, [near_t_tadmm * scale], [near_obj_tadmm],
-                 mc=:dodgerblue, ms=10, msw=1.5, msc=:black, marker=:diamond,
-                 label=@sprintf("tADMM near-optimal (k=%d)", near_idx_t))
+                 mc=COL_TADMM_END, ms=15, msw=2.2, msc=:black, marker=:circle,
+                 label="tADMM near-optimal")
     end
 
     mkpath(dirname(output))
@@ -211,27 +317,25 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     println("="^70)
     println("SUMMARY: $(basename(bf_dir))")
     println("="^70)
-    @printf("BF: %d iters, %.1f s total wall-clock, final obj \$%.2f\n", bf_n, bf_total_time, bf_final)
-    if !isnan(first_feas_t)
-        @printf("  First FEASIBLE (inf_pr<=%g): k=%d (%.1f%% of run, ~%.1f s)\n",
-                FEAS_TOL, first_feas_idx, 100*first_feas_idx/bf_n, first_feas_t)
+    @printf("BF: %d iters total, %.1f s wall-clock, final obj \$%.2f\n", bf_n, bf_total_time, bf_final)
+    if !isnothing(first_feas_idx)
+        @printf("  First FEASIBLE: k=%d (%.1f%% of run, ~%.1f s)\n",
+                first_feas_idx, 100*first_feas_idx/bf_n, bf_t[first_feas_idx])
     end
-    if !isnan(first_near_t)
-        @printf("  First feasible & ≤0.5%% gap: k=%d (%.1f%% of run, ~%.1f s)\n",
-                first_near_idx, 100*first_near_idx/bf_n, first_near_t)
+    if !isnothing(first_near_idx)
+        @printf("  First near-opt: k=%d (%.1f%% of run, ~%.1f s)  ← PLOT TRUNCATES HERE\n",
+                first_near_idx, 100*first_near_idx/bf_n, bf_t[first_near_idx])
     end
-    @printf("tADMM: %d iters, %.1f s effective time, final obj \$%.2f\n",
-            length(obj_tadmm), last(t_tadmm), tadmm_final)
-    if !isnan(near_t_tadmm)
-        @printf("  Near-optimal: k=%d at %.1f s\n", near_idx_t, near_t_tadmm)
-        if !isnan(first_near_t)
-            @printf("  Speedup vs BF first feasible+0.5%%: %.2fx\n", first_near_t / near_t_tadmm)
-        end
+    @printf("tADMM: %d iters total, plot truncates at k=%d (eff time %.1f s)\n",
+            length(obj_tadmm_full), tadmm_end, last(t_tadmm))
+    if !isnan(near_t_tadmm) && !isnothing(first_near_idx)
+        @printf("  Speedup (tADMM NO vs BF first feas+0.5%%): %.2fx\n",
+                bf_t[first_near_idx] / near_t_tadmm)
     end
     println("="^70)
 end
 
-# --- entry point --------------------------------------------------------------
+# --- entry point -----------------------------------------------------------
 
 if length(ARGS) < 2
     println("Usage: julia plot_bf_vs_tadmm_trajectory.jl <bf_dir> <tadmm_csv> [output_png]")
