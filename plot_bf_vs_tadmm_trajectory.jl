@@ -25,8 +25,9 @@ const FEAS_TOL = 1e-4   # primal infeasibility threshold for "feasible"
 const GAP_TOL  = 0.005  # 0.5% gap band
 
 # Colors --------------------------------------------------------------------
-const COL_TADMM_LINE = :dodgerblue          # tADMM consensus-feasible portion (solid)
-const COL_TADMM_END  = :navy                # tADMM NO marker (same family, distinct shade)
+const COL_TADMM_LINE = :dodgerblue          # tADMM trusted portion (solid)
+const COL_TADMM_BAD  = :firebrick           # tADMM untrusted portion (brick red dashdotdot)
+const COL_TADMM_END  = :dodgerblue           # tADMM NO marker — matches the trusted line color
 const COL_BF_INFEAS  = :maroon              # BF infeasible (wine red dashed)
 const COL_BF_FEAS    = :forestgreen         # BF feasible (forest green solid)
 const COL_BF_END     = :forestgreen         # BF NO marker
@@ -157,9 +158,11 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     obj_tadmm = vcat([obj_tadmm_full[1]], obj_tadmm_full[1:tadmm_end])
     r_tadmm   = vcat([Inf],             r_tadmm_full[1:tadmm_end])  # Inf at t=0 ⇒ "infeasible" leading point
 
-    # Split tADMM by consensus feasibility (r vs eps_pri).
-    # Mirrors BF's infeasible/feasible coloring, but for r-norm.
-    tadmm_feas_mask = r_tadmm .<= eps_pri
+    # Split tADMM by consensus feasibility (r vs eps_pri) AND objective
+    # sanity (obj >= f_BF).  Any iterate with f < f_BF cannot be truly
+    # feasible (else it would be the global optimum), so we conservatively
+    # mark those as infeasible regardless of r_norm.
+    tadmm_feas_mask = (r_tadmm .<= eps_pri) .& (obj_tadmm .>= ref_obj)
     n_t = length(t_tadmm)
 
     # NaN-gapped arrays for each line style (Plots draws across NaN as a gap).
@@ -217,10 +220,23 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     yhi = quantile(obj_all, 0.95) * 1.05
     ylo = minimum(obj_all) * 0.98
 
-    # Subsample markers (one per algorithm, full trajectory)
-    bf_inf_mark = subsample_markers(length(bf_t_inf), [1, length(bf_t_inf)])
-    bf_fea_mark = subsample_markers(length(bf_t_fea), [1, length(bf_t_fea)])
-    tadmm_mark  = subsample_markers(n_t,              [1, n_t])
+    # Subsample markers — UNIFIED across the full trajectory for each
+    # algorithm so density is constant in iteration-space.  Per-segment
+    # subsampling caused dense visual smudges in short feasible tails
+    # (e.g. BF's last ~20 feasible iters were drawn with 20 markers
+    # crammed into a sliver of wall-clock).  Sample globally, then split
+    # by segment for color assignment.
+    bf_marks_global    = subsample_markers(bf_end, [1, bf_end])
+    bf_marks_inf       = filter(i -> isnothing(first_feas_idx) || i < first_feas_idx, bf_marks_global)
+    bf_marks_fea       = filter(i -> !isnothing(first_feas_idx) && i >= first_feas_idx, bf_marks_global)
+    tadmm_mark         = subsample_markers(n_t, [1, n_t])
+
+    # Counts to surface in the legend so readers know exactly how many
+    # iterations BF spent feasible before NO.
+    n_bf_fea_iters     = isnothing(first_feas_idx) ? 0 : (bf_end - first_feas_idx + 1)
+    n_bf_inf_iters     = bf_end - n_bf_fea_iters
+    n_tadmm_trusted    = count(tadmm_feas_mask)
+    n_tadmm_untrusted  = length(tadmm_feas_mask) - n_tadmm_trusted
 
     # ---- Plot ----
     gr()
@@ -260,33 +276,40 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     # BF infeasible (maroon dashed)
     plot!(p, bf_t_inf .* scale, bf_obj_inf,
           lw=5, lc=COL_BF_INFEAS, ls=:dash,
-          label="BF: constraint-violating search")
+          label=@sprintf("BF: constraint-violating search (%d iters)", n_bf_inf_iters))
     # BF feasible (forest green solid)
     if !isempty(bf_t_fea)
         plot!(p, bf_t_fea .* scale, bf_obj_fea,
               lw=6, lc=COL_BF_FEAS, ls=:solid,
-              label="BF: feasible iterates")
+              label=@sprintf("BF: feasible iterates (%d before NO)", n_bf_fea_iters))
     end
 
-    # tADMM consensus-infeasible portion (dashed dodgerblue, r > eps_pri)
+    # tADMM untrusted portion (brick-red dashdotdot, full opacity)
     plot!(p, t_tadmm_inf .* scale, obj_tadmm_inf,
-          lw=5, lc=COL_TADMM_LINE, ls=:dash,
-          label="tADMM: consensus-violating iterates (r > ε_pri)")
-    # tADMM consensus-feasible portion (solid dodgerblue, r ≤ eps_pri)
+          lw=5, lc=COL_TADMM_BAD, ls=:dashdotdot,
+          label=@sprintf("tADMM: norms outside threshold (%d iters)", n_tadmm_untrusted))
+    # tADMM trusted portion (solid dodgerblue, full opacity)
     plot!(p, t_tadmm_fea .* scale, obj_tadmm_fea,
           lw=6, lc=COL_TADMM_LINE, ls=:solid,
-          label="tADMM: consensus-feasible iterates (r ≤ ε_pri)")
+          label=@sprintf("tADMM: norms within threshold (%d iters)", n_tadmm_trusted))
 
     # Per-iter subsampled markers — shape encodes algorithm (B&W-safe):
     #   BF      : up-triangles, white-filled, line-color border
     #   tADMM   : circles,     white-filled, line-color border
-    !isempty(bf_inf_mark) && scatter!(p, (bf_t_inf[bf_inf_mark]) .* scale, bf_obj_inf[bf_inf_mark],
+    # Use UNIFIED bf_marks_global indices (avoids dense smudge in short
+    # feasible-tail segments).
+    !isempty(bf_marks_inf) && scatter!(p, (bf_t[bf_marks_inf]) .* scale, bf_obj[bf_marks_inf],
              marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_INFEAS, label="")
-    if !isempty(bf_t_fea)
-        scatter!(p, (bf_t_fea[bf_fea_mark]) .* scale, bf_obj_fea[bf_fea_mark],
-                 marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_FEAS, label="")
-    end
-    scatter!(p, (t_tadmm[tadmm_mark]) .* scale, obj_tadmm[tadmm_mark],
+    !isempty(bf_marks_fea) && scatter!(p, (bf_t[bf_marks_fea]) .* scale, bf_obj[bf_marks_fea],
+             marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_FEAS, label="")
+    # tADMM markers: split by trust state — firebrick border on untrusted, dodgerblue on trusted
+    tadmm_mark_fea = filter(i -> tadmm_feas_mask[i], tadmm_mark)
+    tadmm_mark_inf = filter(i -> !tadmm_feas_mask[i], tadmm_mark)
+    !isempty(tadmm_mark_inf) && scatter!(p, (t_tadmm[tadmm_mark_inf]) .* scale,
+             obj_tadmm[tadmm_mark_inf],
+             marker=:circle, mc=:white, ms=7, msw=1.6, msc=COL_TADMM_BAD, label="")
+    !isempty(tadmm_mark_fea) && scatter!(p, (t_tadmm[tadmm_mark_fea]) .* scale,
+             obj_tadmm[tadmm_mark_fea],
              marker=:circle, mc=:white, ms=7, msw=1.6, msc=COL_TADMM_LINE, label="")
 
     # BF optimal: black dotted reference
@@ -328,6 +351,12 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     end
     @printf("tADMM: %d iters total, plot truncates at k=%d (eff time %.1f s)\n",
             length(obj_tadmm_full), tadmm_end, last(t_tadmm))
+    n_trusted = count(tadmm_feas_mask)
+    n_untrusted = length(tadmm_feas_mask) - n_trusted
+    n_obj_below = count(obj_tadmm .< ref_obj)
+    n_r_violate = count(r_tadmm .> eps_pri)
+    @printf("  tADMM split (plotted): %d trusted, %d untrusted (%d with r>eps_pri, %d with f<f_BF)\n",
+            n_trusted, n_untrusted, n_r_violate, n_obj_below)
     if !isnan(near_t_tadmm) && !isnothing(first_near_idx)
         @printf("  Speedup (tADMM NO vs BF first feas+0.5%%): %.2fx\n",
                 bf_t[first_near_idx] / near_t_tadmm)
