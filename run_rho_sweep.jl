@@ -105,7 +105,8 @@ end
 
 const RHO_VALUES = haskey(ENV, "SWEEP_RHOS") ? parse.(Float64, split(ENV["SWEEP_RHOS"], ",")) : [25000.0, 10000.0, 12000.0]
 const SWEEP_TDIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(SWEEP_T)")
-const SWEEP_DIR = joinpath(SWEEP_TDIR, "rho_sweep")
+const SWEEP_DIR_NAME = get(ENV, "SWEEP_DIR_NAME", "rho_sweep")
+const SWEEP_DIR = joinpath(SWEEP_TDIR, SWEEP_DIR_NAME)
 
 println("\n" * "="^80)
 println("RHO SWEEP (T=$(SWEEP_T), adaptive rho)")
