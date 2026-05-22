@@ -1,0 +1,15 @@
+T=24 rho=4000 / eps_pri=1e-4 eps_dual=1e-3: NUMERICAL_ERROR (Ipopt)
+
+Original sweep run (b5tpqioji): trajectory descended cleanly through Phase 1
+ramp to k=36 (obj $2776.77, gap 0.17%, ρ=1000 after auto-decay), then Ipopt
+threw NUMERICAL_ERROR on subproblem t0=11. The run_rho_sweep.jl wrapper did
+not surface the inner exception (silent crash), so the auto-copy step
+snapshotted stale rho_1000 data into this dir. That stale data has been
+removed.
+
+Direct rerun via `julia run_tadmm.jl RHO_OVERRIDE=4000`: also crashed with
+NUMERICAL_ERROR on subproblem t0=11 (this time earlier in the run). The
+combination of T=24 + ρ=4000 + eps_pri=1e-4 is numerically fragile in Ipopt.
+
+Outcome for paper: T=24 reported with rho_1000 (slow) and rho_16000 (winner,
+NO k=21, eff 22.5s, gap 0.31%). rho_4000 entry omitted from comparative tables.
