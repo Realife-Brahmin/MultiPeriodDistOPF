@@ -1,14 +1,16 @@
 #!/usr/bin/env julia
-# Two-panel scaling inflation figure across all 3 systems.
-# Both panels share log-x (T) and log-y (inflation factor) axes.
-# Left:  BF wall-clock / (T * BF_1) vs T
-# Right: tADMM NO eff time / (T * BF_1) vs T
-# Inflation = 1.0 means perfectly linear scaling in T.
+# Three-panel scaling inflation figure (one panel per system).
+# Within each panel: grouped bar chart with BF and tADMM bars per T.
+# y = inflation factor = time / (T * single-period BF time)
+# y = 1 line marks perfectly linear scaling in T.
 # Output: <paper>/figures/scaling_inflation.png
 
 using Plots, Printf
 
-# BF wall-clock time at T=1 (single-period reference) per system.
+# Use serif fonts to match the paper aesthetic.
+Plots.default(fontfamily = "Computer Modern")
+
+# Single-period BF wall-clock per system (T=1 reference).
 # Numbers match tab:scaling_inflation in results.tex.
 const BF_1 = Dict(
     "ieee123"     => 1.26,
@@ -16,11 +18,22 @@ const BF_1 = Dict(
     "large10k"    => 38.57,
 )
 
+# Bar palette: darker = BF, lighter = tADMM.
+# Hues match the row-colour vocabulary used in the paper tables:
+#   ieee123    = soft blue   (rowieee123)     -> steelblue family
+#   medium2552 = soft cream  (rowmedium2552)  -> goldenrod family
+#   large10k   = soft mint   (rowlarge10k)    -> forestgreen family
+const PALETTE = Dict(
+    "ieee123"    => (bf = RGB(31/255,  81/255, 134/255),  ta = RGB(120/255, 180/255, 220/255)),
+    "medium2552" => (bf = RGB(184/255, 134/255,  11/255), ta = RGB(238/255, 203/255, 110/255)),
+    "large10k"   => (bf = RGB(34/255,  120/255,  34/255), ta = RGB(120/255, 200/255, 130/255)),
+)
+
 # ----- ieee123: read live data from rho_sweep_eps1e-4 dirs -----
-const IEEE123_T_VALUES = [6, 12, 24, 48, 96, 144]
-const IEEE123_DATA_ROOT = joinpath(@__DIR__, "envs", "tadmm", "processedData")
-const IEEE123_SYSTEM = "ieee123C_1ph"
-const SWEEP_DIR_NAME = "rho_sweep_eps1e-4"
+const IEEE123_T_VALUES   = [6, 12, 24, 48, 96, 144]
+const IEEE123_DATA_ROOT  = joinpath(@__DIR__, "envs", "tadmm", "processedData")
+const IEEE123_SYSTEM     = "ieee123C_1ph"
+const SWEEP_DIR_NAME     = "rho_sweep_eps1e-4"
 
 function parse_bf_walltime(bf_file::AbstractString)
     isfile(bf_file) || return NaN
@@ -41,8 +54,8 @@ function pick_winner_no_time(sweep_dir::AbstractString)
         lines = readlines(csv)
         length(lines) >= 2 || continue
         header = split(lines[1], ",")
-        vals = split(lines[2], ",")
-        idx = findfirst(==("near_opt_eff_time"), header)
+        vals   = split(lines[2], ",")
+        idx    = findfirst(==("near_opt_eff_time"), header)
         isnothing(idx) && continue
         t = try parse(Float64, vals[idx]); catch; NaN; end
         isfinite(t) && t < best && (best = t)
@@ -57,15 +70,9 @@ for T in IEEE123_T_VALUES
     sysdir = joinpath(IEEE123_DATA_ROOT, "$(IEEE123_SYSTEM)_T$(T)")
     bf     = parse_bf_walltime(joinpath(sysdir, "results_socp_bf.txt"))
     ta     = pick_winner_no_time(joinpath(sysdir, SWEEP_DIR_NAME))
-    if isfinite(bf) && isfinite(ta)
-        push!(ieee123_T, Float64(T))
-        push!(ieee123_bf, bf)
-        push!(ieee123_ta, ta)
-    elseif isfinite(bf)  # BF only (e.g. T=96 tADMM pending)
-        push!(ieee123_T, Float64(T))
-        push!(ieee123_bf, bf)
-        push!(ieee123_ta, NaN)
-    end
+    push!(ieee123_T,  Float64(T))
+    push!(ieee123_bf, bf)
+    push!(ieee123_ta, ta)
 end
 
 # ----- medium2552 + large10k: hardcoded from tab:scaling_inflation -----
@@ -77,66 +84,65 @@ large_T   = [6.0,    12.0,    24.0,    48.0]
 large_bf  = [664.3,  1534.9,  4332.0,  17479.0]
 large_ta  = [594.3,  1113.9,  2264.6,  5709.3]
 
-# Compute inflation factors
-ieee123_bf_inf = ieee123_bf ./ (ieee123_T .* BF_1["ieee123"])
-ieee123_ta_inf = ieee123_ta ./ (ieee123_T .* BF_1["ieee123"])
-medium_bf_inf  = medium_bf  ./ (medium_T  .* BF_1["medium2552"])
-medium_ta_inf  = medium_ta  ./ (medium_T  .* BF_1["medium2552"])
-large_bf_inf   = large_bf   ./ (large_T   .* BF_1["large10k"])
-large_ta_inf   = large_ta   ./ (large_T   .* BF_1["large10k"])
+# Build one grouped-bar panel for a given system.
+function panel(Ts, bf_secs, ta_secs, sysname, palette;
+               panel_title, show_ylabel = false, show_legend = false)
+    n     = length(Ts)
+    xs    = collect(1.0:Float64(n))
+    width = 0.38
+    bf_inf = bf_secs ./ (Ts .* BF_1[sysname])
+    ta_inf = ta_secs ./ (Ts .* BF_1[sysname])
 
-# Drop NaNs per-line so missing tADMM points don't break plotting
-function strip_nan(xs, ys)
+    # Drop any NaN tADMM entries (e.g. ieee123 T=96 pending sweep)
+    bf_xs, bf_ys = filter_finite(xs .- width/2, bf_inf)
+    ta_xs, ta_ys = filter_finite(xs .+ width/2, ta_inf)
+
+    p = bar(bf_xs, bf_ys;
+        bar_width = width, color = palette.bf, linecolor = :black, linewidth = 0.4,
+        label = show_legend ? "BF" : "",
+        legend = show_legend ? :topleft : false,
+        xticks = (xs, string.(Int.(Ts))),
+        xlabel = "T",
+        ylabel = show_ylabel ? "Inflation factor" : "",
+        title  = panel_title,
+        titlefontsize = 11,
+        grid = true,
+        ylim = (0, max(maximum(skipnan(bf_inf)), maximum(skipnan(ta_inf))) * 1.15),
+    )
+    bar!(p, ta_xs, ta_ys;
+        bar_width = width, color = palette.ta, linecolor = :black, linewidth = 0.4,
+        label = show_legend ? "tADMM" : "",
+    )
+    hline!(p, [1.0]; line = (:dash, 1, :gray40), label = show_legend ? "linear" : "")
+
+    # Annotate the numeric value above each bar (small text).
+    for (x, y) in zip(bf_xs, bf_ys)
+        annotate!(p, x, y * 1.04, text(@sprintf("%.2f", y), 7, :center, :bottom))
+    end
+    for (x, y) in zip(ta_xs, ta_ys)
+        annotate!(p, x, y * 1.04, text(@sprintf("%.2f", y), 7, :center, :bottom))
+    end
+    return p
+end
+
+function filter_finite(xs, ys)
     keep = isfinite.(ys)
     return xs[keep], ys[keep]
 end
 
-# Colors picked to match the row-colour vocabulary in the paper tables
-const COL_IEEE123 = :tomato
-const COL_MEDIUM  = :goldenrod
-const COL_LARGE   = :steelblue
-const MARK_BF     = :circle
-const MARK_TA     = :diamond
+skipnan(v) = filter(isfinite, v)
 
-# Left panel — BF inflation
-p_left = plot(
-    xscale = :log10, yscale = :log10,
-    xlabel = "T (periods)", ylabel = "BF inflation: BF / (T · BF₁)",
-    title  = "Centralised BF scaling",
-    titlefontsize = 10,
-    legend = :topleft,
-    grid = true,
-    minorgrid = true,
-)
-plot!(p_left, ieee123_T, ieee123_bf_inf;
-    label = "ieee123",    marker = (MARK_BF, 7, COL_IEEE123), line = (:solid, 2, COL_IEEE123))
-plot!(p_left, medium_T, medium_bf_inf;
-    label = "medium2552", marker = (MARK_BF, 7, COL_MEDIUM),  line = (:solid, 2, COL_MEDIUM))
-plot!(p_left, large_T, large_bf_inf;
-    label = "large10k",   marker = (MARK_BF, 7, COL_LARGE),   line = (:solid, 2, COL_LARGE))
-hline!(p_left, [1.0]; line = (:dash, 1, :gray), label = "linear (1×)")
+p_ieee  = panel(ieee123_T, ieee123_bf, ieee123_ta, "ieee123",    PALETTE["ieee123"];
+                panel_title = "ieee123",    show_ylabel = true,  show_legend = true)
+p_med   = panel(medium_T,  medium_bf,  medium_ta,  "medium2552", PALETTE["medium2552"];
+                panel_title = "medium2552", show_ylabel = false, show_legend = false)
+p_large = panel(large_T,   large_bf,   large_ta,   "large10k",   PALETTE["large10k"];
+                panel_title = "large10k",   show_ylabel = false, show_legend = false)
 
-# Right panel — tADMM inflation
-p_right = plot(
-    xscale = :log10, yscale = :log10,
-    xlabel = "T (periods)", ylabel = "tADMM inflation: tADMM_NO / (T · BF₁)",
-    title  = "Temporal-ADMM scaling",
-    titlefontsize = 10,
-    legend = :topleft,
-    grid = true,
-    minorgrid = true,
-)
-xs, ys = strip_nan(ieee123_T, ieee123_ta_inf)
-plot!(p_right, xs, ys;
-    label = "ieee123",    marker = (MARK_TA, 7, COL_IEEE123), line = (:solid, 2, COL_IEEE123))
-plot!(p_right, medium_T, medium_ta_inf;
-    label = "medium2552", marker = (MARK_TA, 7, COL_MEDIUM),  line = (:solid, 2, COL_MEDIUM))
-plot!(p_right, large_T, large_ta_inf;
-    label = "large10k",   marker = (MARK_TA, 7, COL_LARGE),   line = (:solid, 2, COL_LARGE))
-hline!(p_right, [1.0]; line = (:dash, 1, :gray), label = "linear (1×)")
-
-fig = plot(p_left, p_right; layout = (1, 2), size = (1000, 400), dpi = 150,
-           left_margin = 6Plots.mm, bottom_margin = 5Plots.mm, top_margin = 3Plots.mm)
+fig = plot(p_ieee, p_med, p_large;
+           layout = (1, 3), size = (1200, 380), dpi = 150,
+           left_margin = 5Plots.mm, bottom_margin = 5Plots.mm,
+           top_margin = 3Plots.mm, right_margin = 2Plots.mm)
 
 const PAPER_FIG_DIR = joinpath(@__DIR__, "..",
     "IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition",
@@ -146,21 +152,17 @@ const OUTPUT_PATH = joinpath(PAPER_FIG_DIR, "scaling_inflation.png")
 mkpath(PAPER_FIG_DIR)
 savefig(fig, OUTPUT_PATH)
 
-# Echo the inflation values for sanity-checking against tab:scaling_inflation
-@printf("\n=== ieee123 (BF_1 = %.2f s) ===\n", BF_1["ieee123"])
-for i in eachindex(ieee123_T)
-    @printf("T=%3d  BF_inf=%.3f  tADMM_inf=%s\n",
-        Int(ieee123_T[i]), ieee123_bf_inf[i],
-        isnan(ieee123_ta_inf[i]) ? "NaN" : @sprintf("%.3f", ieee123_ta_inf[i]))
+# Echo numeric values for cross-checking against tab:scaling_inflation.
+function dump_panel(Ts, bf_secs, ta_secs, sysname)
+    @printf("\n=== %s (BF1 = %.2f s) ===\n", sysname, BF_1[sysname])
+    for i in eachindex(Ts)
+        bfi = bf_secs[i] / (Ts[i] * BF_1[sysname])
+        tai = ta_secs[i] / (Ts[i] * BF_1[sysname])
+        @printf("T=%3d  BF_inf=%.3f  tADMM_inf=%s\n",
+            Int(Ts[i]), bfi, isnan(tai) ? "NaN" : @sprintf("%.3f", tai))
+    end
 end
-@printf("\n=== medium2552 (BF_1 = %.2f s) ===\n", BF_1["medium2552"])
-for i in eachindex(medium_T)
-    @printf("T=%3d  BF_inf=%.3f  tADMM_inf=%.3f\n",
-        Int(medium_T[i]), medium_bf_inf[i], medium_ta_inf[i])
-end
-@printf("\n=== large10k (BF_1 = %.2f s) ===\n", BF_1["large10k"])
-for i in eachindex(large_T)
-    @printf("T=%3d  BF_inf=%.3f  tADMM_inf=%.3f\n",
-        Int(large_T[i]), large_bf_inf[i], large_ta_inf[i])
-end
+dump_panel(ieee123_T, ieee123_bf, ieee123_ta, "ieee123")
+dump_panel(medium_T,  medium_bf,  medium_ta,  "medium2552")
+dump_panel(large_T,   large_bf,   large_ta,   "large10k")
 @printf("\nSaved: %s\n", OUTPUT_PATH)
