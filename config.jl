@@ -23,10 +23,13 @@ const VERBOSE = false
 # ============================================================================
 
 # Load profile: sinusoidal variation around 0.8-1.0
-const LoadShapeLoad = 0.8 .+ 0.2 .* (sin.(range(0, 2pi, length=T) .- 0.8) .+ 1) ./ 2
+# T=1 special-case: midday-peak snapshot (matches PV=1.0 below)
+const LoadShapeLoad = T == 1 ? [0.97174] :
+    0.8 .+ 0.2 .* (sin.(range(0, 2pi, length=T) .- 0.8) .+ 1) ./ 2
 
 # Energy cost profile: time-varying $/kWh
-const LoadShapeCost = 0.08 .+ 0.12 .* (sin.(range(0, 2pi, length=T)) .+ 1) ./ 2
+const LoadShapeCost = T == 1 ? [0.14] :
+    0.08 .+ 0.12 .* (sin.(range(0, 2pi, length=T)) .+ 1) ./ 2
 
 # Solar PV profile: bell curve in middle 50% of horizon
 const LoadShapePV = let

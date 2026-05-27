@@ -1,0 +1,126 @@
+
+================================================================================
+PARALLELIZATION STATUS
+================================================================================
+Julia threads:       16
+Status:              Using 16 threads
+================================================================================
+RHO_OVERRIDE: using rho = 16000.0
+EPS_PRI_OVERRIDE: using eps_pri = 0.0001
+EPS_DUAL_OVERRIDE: using eps_dual = 0.0005
+ADAPTIVE_RHO_OVERRIDE: adaptive_rho = true
+
+================================================================================
+PARSING SYSTEM DATA
+================================================================================
+Loaded system: ieee2552C_1ph from C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\..\..\rawData\ieee2552C_1ph\Master.dss
+
+========================================
+Initial Powerflow
+========================================
+Powerflow completed successfully!
+
+[OpenDSS] Total system load: 2129.58 kW
+[OpenDSS] Substation power: 2187.53 kW
+[OpenDSS] Total PV dispatch: 0.00 kW
+[OpenDSS] Total battery dispatch: 0.00 kW
+[OpenDSS] Total system losses: 57.95 kW
+
+
+================================================================================
+[35;1mSOLVING MPOPF WITH SOCP (tADMM)[0m
+================================================================================
+[36;1mUsing fixed rho = 16000.0[0m
+  [tADMM hyperparams] mu_balance=5.00 tau_incr=2.00 tau_decr=4.00 update_interval=5 eps_pri=1.0e-04 eps_dual=5.0e-04 rho_init=16000.0 adaptive=true
+
+================================================================================
+[36;1m🎯 tADMM[SOCP]: T=12, ρ_init=16000.0, adaptive=true, warm_start=true, |Bset|=250, |Nset|=2522, |Lset|=2521
+[0m================================================================================
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+k=  1  obj=$4339.72  ‖r‖=5.19e-03  ‖s‖=1.30e+01  ρ=16000.0  sp_max=23.190s  sp_med=19.177s
+k=  2  obj=$5700.01  ‖r‖=3.40e-03  ‖s‖=1.76e+01  ρ=16000.0  sp_max=14.545s  sp_med=11.661s
+k=  3  obj=$7809.23  ‖r‖=1.03e-03  ‖s‖=9.16e+00  ρ=16000.0  sp_max=11.199s  sp_med=9.743s
+k=  4  obj=$8293.89  ‖r‖=1.03e-07  ‖s‖=8.37e+00  ρ=16000.0  sp_max=9.077s  sp_med=7.049s
+[32;1m  [k=  5] Phase 1→2: primal converged
+[0m[36;1m  [k=  5] ρ 16000.0 → 4000.0 (s/r=76500423.7, ‖r‖ converged)
+[0mk=  5  obj=$8258.48  ‖r‖=1.09e-07  ‖s‖=8.37e+00  ρ=4000.0  sp_max=6.950s  sp_med=6.213s
+k=  6  obj=$8134.21  ‖r‖=1.52e-04  ‖s‖=7.71e+00  ρ=4000.0  sp_max=12.057s  sp_med=11.138s
+k=  7  obj=$8061.67  ‖r‖=2.11e-04  ‖s‖=5.31e+00  ρ=4000.0  sp_max=8.541s  sp_med=6.118s
+k=  8  obj=$8032.73  ‖r‖=9.32e-05  ‖s‖=3.30e+00  ρ=4000.0  sp_max=8.559s  sp_med=6.138s
+k=  9  obj=$8021.64  ‖r‖=1.33e-05  ‖s‖=2.09e+00  ρ=4000.0  sp_max=8.022s  sp_med=6.165s
+[36;1m  [k= 10] ρ 4000.0 → 1000.0 (s/r=42156.3, ‖r‖ converged)
+[0mk= 10  obj=$8016.61  ‖r‖=3.84e-05  ‖s‖=1.62e+00  ρ=1000.0  sp_max=8.591s  sp_med=7.288s
+      [Progress] 129.7s elapsed, 5 iters/min
+k= 11  obj=$8001.91  ‖r‖=8.58e-05  ‖s‖=6.09e-01  ρ=1000.0  sp_max=9.188s  sp_med=6.647s
+k= 12  obj=$7980.99  ‖r‖=1.86e-04  ‖s‖=2.08e-01  ρ=1000.0  sp_max=7.808s  sp_med=6.188s
+k= 13  obj=$7991.50  ‖r‖=1.26e-04  ‖s‖=7.68e-02  ρ=1000.0  sp_max=8.080s  sp_med=5.595s
+k= 14  obj=$8007.23  ‖r‖=3.13e-05  ‖s‖=1.03e-01  ρ=1000.0  sp_max=8.318s  sp_med=6.494s
+[36;1m  [k= 15] ρ 1000.0 → 250.0 (s/r=1787.3, ‖r‖ converged)
+[0mk= 15  obj=$8014.20  ‖r‖=2.83e-05  ‖s‖=5.06e-02  ρ=250.0  sp_max=7.097s  sp_med=5.456s
+k= 16  obj=$8020.56  ‖r‖=7.55e-05  ‖s‖=1.32e-02  ρ=250.0  sp_max=8.347s  sp_med=5.890s
+k= 17  obj=$8015.55  ‖r‖=4.24e-05  ‖s‖=8.42e-03  ρ=250.0  sp_max=7.824s  sp_med=6.148s
+k= 18  obj=$8010.11  ‖r‖=4.30e-06  ‖s‖=9.78e-03  ρ=250.0  sp_max=7.848s  sp_med=6.360s
+k= 19  obj=$8008.11  ‖r‖=1.22e-05  ‖s‖=3.84e-03  ρ=250.0  sp_max=8.309s  sp_med=6.123s
+[36;1m  [k= 20] ρ 250.0 → 62.5 (s/r=98.5, ‖r‖ converged)
+[0mk= 20  obj=$8008.64  ‖r‖=8.93e-06  ‖s‖=8.80e-04  ρ=62.5  sp_max=8.232s  sp_med=6.312s
+      [Progress] 221.5s elapsed, 5 iters/min
+k= 21  obj=$8010.07  ‖r‖=1.70e-06  ‖s‖=5.93e-04  ρ=62.5  sp_max=8.186s  sp_med=5.658s
+k= 22  obj=$8010.41  ‖r‖=3.43e-06  ‖s‖=1.81e-04  ρ=62.5  sp_max=7.984s  sp_med=6.110s
+[32;1m🎉 tADMM converged at iteration 22 (‖r‖=3.43e-06 ≤ 1.00e-04, ‖s‖=1.81e-04 ≤ 5.00e-04)
+  Final objective: $8010.41
+[0m
+================================================================================
+[36;1m📊 SOLVER PERFORMANCE ANALYSIS (optimize!() times only)[0m
+================================================================================
+Iterations:       21
+Effective time:   207.95 seconds
+Wall-clock time:  240.06 seconds
+Overhead:         13.4%
+================================================================================
+
+--- tADMM RESULT ---
+[32;1mObjective: $8010.41
+Wall-clock: 240.06 seconds
+Effective:  207.95 seconds (22 iterations)
+[0m
+================================================================================
+[36;1mVALIDATING tADMM SOLUTION[0m
+================================================================================
+
+================================================================================
+SOLUTION VALIDATION: tADMM SOCP
+================================================================================
+✓ All constraints satisfied!
+================================================================================
+[32;1m✓ Convergence CSV: C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\convergence_data.csv[0m
+[32;1m✓ Subproblem timing CSV: C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\subproblem_timing_details.csv[0m
+[36;1mLoaded BF results from C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\results_socp_bf.txt[0m
+[36;1mNear-optimal at k=8 (94.12s eff): obj=$8032.73, gap=0.286% vs BF, r=9.32e-05, s=3.30e+00[0m
+[32;1m✓ Near-optimal summary: C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\near_optimal_summary.csv[0m
+[32;1m✓ Solution saved: C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\sol_socp_tadmm.jls[0m
+[32;1m✓ tADMM results written to C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\results_socp_tadmm.txt[0m
+[32;1m✓ Live log trimmed to last 100 lines: C:\repos_addendum\MultiPeriodDistOPF\envs\tadmm\processedData\ieee2552C_1ph_T12\tadmm_run.log[0m
+
+================================================================================
+[35;1mtADMM PIPELINE COMPLETE[0m
+================================================================================
