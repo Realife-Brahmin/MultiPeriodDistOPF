@@ -76,9 +76,11 @@ for T in IEEE123_T_VALUES
 end
 
 # ----- medium2552 + large10k: hardcoded from tab:scaling_inflation -----
-medium_T  = [48.0,    72.0,    96.0,    144.0]
-medium_bf = [719.16,  1155.32, 1622.20, 12780.14]
-medium_ta = [545.96,  736.46,  738.30,  1372.60]
+# medium2552 T=24 BF uses the worst-case of 6 reps (296.32 s) per Table I footnote.
+# T=24 tADMM = rho_14000 / tau_decr=5 winner (251.70 s, gap 0.45%).
+medium_T  = [6.0,    12.0,    24.0,    48.0,    72.0,    96.0,    144.0]
+medium_bf = [37.62,  127.01,  296.32,  719.16,  1155.32, 1622.20, 12780.14]
+medium_ta = [29.71,  94.12,   251.70,  545.96,  736.46,  738.30,  1372.60]
 
 large_T   = [6.0,    12.0,    24.0,    48.0]
 large_bf  = [664.3,  1534.9,  4332.0,  17479.0]
