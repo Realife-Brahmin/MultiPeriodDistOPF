@@ -105,6 +105,30 @@ function subsample_markers(n::Int, notable::Vector{Int}; target::Int=N_MARKERS)
     return combined
 end
 
+# --- system/horizon label from the BF directory name -----------------------
+
+"""
+Derive a human-friendly "<system>, T=<T>" title from a processedData dir name
+like "large10kC_1ph_T48" or "ieee2552C_1ph_T144".  Falls back to the raw
+basename if the pattern is unrecognized.
+"""
+function system_horizon_label(bf_dir::String)
+    base = basename(rstrip(bf_dir, ['/', '\\']))
+    m = match(r"^(.*?)_1ph_T(\d+)$", base)
+    isnothing(m) && return base
+    raw_sys, T = m.captures[1], m.captures[2]
+    sysname = if occursin("large10k", raw_sys)
+        "large10k"
+    elseif occursin("2552", raw_sys)
+        "medium2552"
+    elseif occursin("123", raw_sys)
+        "ieee123"
+    else
+        raw_sys
+    end
+    return "$sysname, T=$T"
+end
+
 # --- main plotting ---------------------------------------------------------
 
 function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
@@ -162,32 +186,14 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
     # sanity (obj >= f_BF).  Any iterate with f < f_BF cannot be truly
     # feasible (else it would be the global optimum), so we conservatively
     # mark those as infeasible regardless of r_norm.
+    # Consensus feasibility per iterate (r vs eps_pri) AND objective sanity
+    # (obj >= f_BF): any iterate with f < f_BF cannot be truly feasible (else
+    # it would be the global optimum), so we conservatively mark those
+    # infeasible regardless of r_norm.  Used to locate first feasibility; the
+    # redesigned plot draws tADMM as one continuous hero curve rather than
+    # separate feasible/infeasible segments.
     tadmm_feas_mask = (r_tadmm .<= eps_pri) .& (obj_tadmm .>= ref_obj)
     n_t = length(t_tadmm)
-
-    # NaN-gapped arrays for each line style (Plots draws across NaN as a gap).
-    # Keep transition points in BOTH arrays so dashes meet solids cleanly.
-    t_tadmm_inf  = Float64[]; obj_tadmm_inf  = Float64[]
-    t_tadmm_fea  = Float64[]; obj_tadmm_fea  = Float64[]
-    for i in 1:n_t
-        if tadmm_feas_mask[i]
-            push!(t_tadmm_fea, t_tadmm[i]); push!(obj_tadmm_fea, obj_tadmm[i])
-            push!(t_tadmm_inf, NaN);         push!(obj_tadmm_inf, NaN)
-        else
-            push!(t_tadmm_inf, t_tadmm[i]); push!(obj_tadmm_inf, obj_tadmm[i])
-            push!(t_tadmm_fea, NaN);         push!(obj_tadmm_fea, NaN)
-        end
-        # Add transition bridge: when status changes between i and i+1, plant
-        # the boundary point in the OTHER array too so the segments join
-        if i < n_t && tadmm_feas_mask[i] != tadmm_feas_mask[i+1]
-            # boundary point at i goes into both
-            if tadmm_feas_mask[i]
-                t_tadmm_inf[end] = t_tadmm[i]; obj_tadmm_inf[end] = obj_tadmm[i]
-            else
-                t_tadmm_fea[end] = t_tadmm[i]; obj_tadmm_fea[end] = obj_tadmm[i]
-            end
-        end
-    end
 
     # BF infeasible vs feasible portions (within the truncated [1, bf_end] range)
     if isnothing(first_feas_idx) || first_feas_idx > bf_end
@@ -215,32 +221,42 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
         scale = 1.0; tunit = "seconds"
     end
 
-    # y-axis bounds: 95th-percentile cap (kill initial Ipopt objective spike)
-    obj_all = vcat(filter(!isnan, bf_obj[1:bf_end]), filter(!isnan, obj_tadmm))
-    yhi = quantile(obj_all, 0.95) * 1.05
-    ylo = minimum(obj_all) * 0.98
+    # y-axis bounds: cap the enormous initial interior-point objective spike,
+    # but leave headroom above the converged optimum for the speedup callout.
+    obj_all  = vcat(filter(!isnan, bf_obj[1:bf_end]), filter(!isnan, obj_tadmm))
+    obj_conv = vcat(filter(!isnan, bf_obj_fea), filter(!isnan, obj_tadmm))
+    ycap     = quantile(obj_all, 0.95)
+    ypeak    = isempty(obj_conv) ? ycap : maximum(obj_conv)
+    yhi      = max(ycap, ypeak) * 1.14        # headroom for the "N× faster" arrow
+    ylo      = minimum(obj_all) * 0.96
 
-    # Subsample markers — UNIFIED across the full trajectory for each
-    # algorithm so density is constant in iteration-space.  Per-segment
-    # subsampling caused dense visual smudges in short feasible tails
-    # (e.g. BF's last ~20 feasible iters were drawn with 20 markers
-    # crammed into a sliver of wall-clock).  Sample globally, then split
-    # by segment for color assignment.
-    bf_marks_global    = subsample_markers(bf_end, [1, bf_end])
-    bf_marks_inf       = filter(i -> isnothing(first_feas_idx) || i < first_feas_idx, bf_marks_global)
-    bf_marks_fea       = filter(i -> !isnothing(first_feas_idx) && i >= first_feas_idx, bf_marks_global)
-    tadmm_mark         = subsample_markers(n_t, [1, n_t])
+    # Mask any point above the cap so the steep initial spikes don't "shoot
+    # out" the top of the frame as vertical streaks.
+    capy(y) = [(!isnan(v) && v > yhi) ? NaN : v for v in y]
+    bf_obj_inf = capy(bf_obj_inf)
+    bf_obj_fea = capy(bf_obj_fea)
 
-    # Counts to surface in the legend so readers know exactly how many
-    # iterations BF spent feasible before NO.
-    n_bf_fea_iters     = isnothing(first_feas_idx) ? 0 : (bf_end - first_feas_idx + 1)
-    n_bf_inf_iters     = bf_end - n_bf_fea_iters
-    n_tadmm_trusted    = count(tadmm_feas_mask)
-    n_tadmm_untrusted  = length(tadmm_feas_mask) - n_tadmm_trusted
+    # Money-unit y tick formatter (no scientific notation).
+    yref = max(abs(yhi), abs(ylo))
+    yfmt = if yref >= 1e6
+        v -> @sprintf("\$%.1fM", v/1e6)
+    elseif yref >= 1e3
+        v -> @sprintf("\$%.1fk", v/1e3)
+    else
+        v -> @sprintf("\$%.0f", v)
+    end
+
+    # Subsample markers (fewer than before for a cleaner, bolder look) and
+    # drop any that fall above the y-cap.
+    bf_marks_global = subsample_markers(bf_end, [1, bf_end]; target=14)
+    bf_marks_inf    = filter(i -> (isnothing(first_feas_idx) || i < first_feas_idx) && bf_obj[i] <= yhi, bf_marks_global)
+    bf_marks_fea    = filter(i -> (!isnothing(first_feas_idx) && i >= first_feas_idx) && bf_obj[i] <= yhi, bf_marks_global)
+    tadmm_mark      = subsample_markers(n_t, [1, n_t]; target=14)
 
     # ---- Plot ----
     gr()
-    title_str = "BF vs. tADMM Convergence on a Common Wall-Clock Axis"
+    # Short, croppable title; the caption carries the "BF vs. tADMM" framing.
+    title_str = system_horizon_label(bf_dir)
 
     p = plot(
         background_color=COL_BG,
@@ -248,23 +264,24 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
         size=(1100, 650),
         dpi=300,
         title=title_str,
-        titlefont=font(14, "Computer Modern"),
+        titlefont=font(16, "Computer Modern"),
         titlefontcolor=COL_TEXT,
         xlabel="Wall-clock time [$tunit]",
-        ylabel="Objective f(x) [USD]",
-        guidefont=font(13, "Computer Modern"),
+        ylabel="Objective f(x)",
+        guidefont=font(14, "Computer Modern"),
         guidefontcolor=COL_TEXT,
-        tickfont=font(11, "Computer Modern"),
+        tickfont=font(12, "Computer Modern"),
         tickfontcolor=COL_TEXT,
+        yformatter=yfmt,
         legend=:bottomright,
-        legendfont=font(10, "Computer Modern"),
+        legendfont=font(11, "Computer Modern"),
         legendfontcolor=COL_TEXT,
         # Minor grid only
         grid=false,
         minorgrid=true,
         minorgridcolor=COL_GRID,
         minorgridlinewidth=0.6,
-        minorgridalpha=0.35,
+        minorgridalpha=0.30,
         minorgridstyle=:solid,
         framestyle=:box,
         xlims=(0, max_t * scale * 1.04),
@@ -273,62 +290,55 @@ function generate_overlay(bf_dir::String, tadmm_csv::String, output::String)
         top_margin=6Plots.mm, bottom_margin=8Plots.mm,
     )
 
-    # BF infeasible (maroon dashed)
+    # BF infeasible search (maroon dashed) — the long slow interior-point climb
     plot!(p, bf_t_inf .* scale, bf_obj_inf,
-          lw=5, lc=COL_BF_INFEAS, ls=:dash,
-          label=@sprintf("BF: constraint-violating search (%d iters)", n_bf_inf_iters))
-    # BF feasible (forest green solid)
+          lw=4, lc=COL_BF_INFEAS, ls=:dash, label="BF — infeasible search")
+    # BF feasible (forest green solid) — the brief feasible tail before NO
     if !isempty(bf_t_fea)
         plot!(p, bf_t_fea .* scale, bf_obj_fea,
-              lw=6, lc=COL_BF_FEAS, ls=:solid,
-              label=@sprintf("BF: feasible iterates (%d before NO)", n_bf_fea_iters))
+              lw=6, lc=COL_BF_FEAS, ls=:solid, label="BF — feasible")
     end
+    # tADMM hero curve — one bold continuous line from first feasibility to the
+    # NO terminus.  The long low-objective ramp-up before first feasibility is
+    # omitted so the curve reads as a fast approach, not a vertical streak.
+    tfeas_first = findfirst(tadmm_feas_mask)
+    tadmm_lo    = isnothing(tfeas_first) ? 1 : tfeas_first
+    plot!(p, t_tadmm[tadmm_lo:end] .* scale, capy(obj_tadmm[tadmm_lo:end]),
+          lw=8, lc=COL_TADMM_LINE, ls=:solid, label="tADMM")
 
-    # tADMM untrusted portion (brick-red dashdotdot, full opacity)
-    plot!(p, t_tadmm_inf .* scale, obj_tadmm_inf,
-          lw=5, lc=COL_TADMM_BAD, ls=:dashdotdot,
-          label=@sprintf("tADMM: norms outside threshold (%d iters)", n_tadmm_untrusted))
-    # tADMM trusted portion (solid dodgerblue, full opacity)
-    plot!(p, t_tadmm_fea .* scale, obj_tadmm_fea,
-          lw=6, lc=COL_TADMM_LINE, ls=:solid,
-          label=@sprintf("tADMM: norms within threshold (%d iters)", n_tadmm_trusted))
-
-    # Per-iter subsampled markers — shape encodes algorithm (B&W-safe):
-    #   BF      : up-triangles, white-filled, line-color border
-    #   tADMM   : circles,     white-filled, line-color border
-    # Use UNIFIED bf_marks_global indices (avoids dense smudge in short
-    # feasible-tail segments).
+    # Per-iter markers — light texture; B&W-safe shapes (BF triangle, tADMM circle)
     !isempty(bf_marks_inf) && scatter!(p, (bf_t[bf_marks_inf]) .* scale, bf_obj[bf_marks_inf],
-             marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_INFEAS, label="")
+             marker=:utriangle, mc=:white, ms=6, msw=1.4, msc=COL_BF_INFEAS, label="")
     !isempty(bf_marks_fea) && scatter!(p, (bf_t[bf_marks_fea]) .* scale, bf_obj[bf_marks_fea],
-             marker=:utriangle, mc=:white, ms=7, msw=1.6, msc=COL_BF_FEAS, label="")
-    # tADMM markers: split by trust state — firebrick border on untrusted, dodgerblue on trusted
-    tadmm_mark_fea = filter(i -> tadmm_feas_mask[i], tadmm_mark)
-    tadmm_mark_inf = filter(i -> !tadmm_feas_mask[i], tadmm_mark)
-    !isempty(tadmm_mark_inf) && scatter!(p, (t_tadmm[tadmm_mark_inf]) .* scale,
-             obj_tadmm[tadmm_mark_inf],
-             marker=:circle, mc=:white, ms=7, msw=1.6, msc=COL_TADMM_BAD, label="")
-    !isempty(tadmm_mark_fea) && scatter!(p, (t_tadmm[tadmm_mark_fea]) .* scale,
-             obj_tadmm[tadmm_mark_fea],
-             marker=:circle, mc=:white, ms=7, msw=1.6, msc=COL_TADMM_LINE, label="")
+             marker=:utriangle, mc=:white, ms=6, msw=1.4, msc=COL_BF_FEAS, label="")
+    tadmm_mark_hero = filter(i -> i >= tadmm_lo && obj_tadmm[i] <= yhi, tadmm_mark)
+    !isempty(tadmm_mark_hero) && scatter!(p, (t_tadmm[tadmm_mark_hero]) .* scale,
+             obj_tadmm[tadmm_mark_hero],
+             marker=:circle, mc=:white, ms=6, msw=1.4, msc=COL_TADMM_LINE, label="")
 
-    # BF optimal: black dotted reference
-    hline!(p, [ref_obj], lw=1.5, lc=COL_TEXT, ls=:dot, alpha=0.7,
-           label=@sprintf("BF optimal = \$%.2f", ref_obj))
+    # Optimum reference line
+    hline!(p, [ref_obj], lw=1.6, lc=COL_TEXT, ls=:dot, alpha=0.7, label="optimum")
 
-    # ---- Terminus markers — same shape as per-iter (triangle for BF, circle
-    # for tADMM), just bigger and OPAQUE (solid fill) with thick black border.
-    # This is the "you arrived" signal in the same visual vocabulary as the
-    # per-iter footprints leading up to it.
+    # ---- Terminus "arrived" markers — bold stars, no legend clutter ----
     if !isnan(bf_no_t)
-        scatter!(p, [bf_no_t * scale], [bf_no_obj],
-                 mc=COL_BF_END, ms=15, msw=2.2, msc=:black, marker=:utriangle,
-                 label="BF first near-optimal")
+        scatter!(p, [bf_no_t * scale], [min(bf_no_obj, yhi)],
+                 mc=COL_BF_END, ms=18, msw=2.2, msc=:black, marker=:star5, label="")
     end
     if !isnan(near_t_tadmm)
-        scatter!(p, [near_t_tadmm * scale], [near_obj_tadmm],
-                 mc=COL_TADMM_END, ms=15, msw=2.2, msc=:black, marker=:circle,
-                 label="tADMM near-optimal")
+        scatter!(p, [near_t_tadmm * scale], [min(near_obj_tadmm, yhi)],
+                 mc=COL_TADMM_END, ms=18, msw=2.2, msc=:black, marker=:star5, label="")
+    end
+
+    # ---- Speedup callout — the headline ----
+    if !isnan(bf_no_t) && !isnan(near_t_tadmm) && near_t_tadmm < bf_no_t
+        spd  = bf_no_t / near_t_tadmm
+        xa   = near_t_tadmm * scale
+        xb   = bf_no_t * scale
+        yarr = yhi * 0.93
+        plot!(p, [xa, xb], [yarr, yarr], lc=:black, lw=2.2,
+              arrow=arrow(:closed, :both), label="")
+        annotate!(p, (xa + xb)/2, yhi*0.975,
+                  text(@sprintf("%.2f× faster", spd), 16, :black, "Computer Modern"))
     end
 
     mkpath(dirname(output))
