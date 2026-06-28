@@ -1,0 +1,17 @@
+system,T,rho0_winner,BF_time_s,tADMM_NO_time_s,speedup,notes
+ieee123,6,4000,1.99,2.41,0.83,validation (no speedup targeted)
+ieee123,12,8000,2.44,5.61,0.43,validation
+ieee123,24,16000,4.11,22.50,0.18,validation
+ieee123,48,32000,7.73,63.82,0.12,validation
+ieee123,96,64000,13.57,166.78,0.08,validation
+ieee123,144,96000,26.37,245.82,0.11,validation
+med2552,6,4000,37.62,29.71,1.27,
+med2552,12,16000,127.01,94.12,1.35,
+med2552,24,14000,296.32,251.70,1.18,
+med2552,48,15000,719.16,545.96,1.32,
+med2552,96,20000,1622.20,738.30,2.20,
+med2552,144,50000,12780.14,1372.60,9.31,
+large10k,6,500,664.3,594.3,1.12,
+large10k,12,500,1534.9,1113.9,1.38,
+large10k,24,15000,4332.0,2264.6,1.91,
+large10k,48,30000,17479.0,5709.3,3.06,BF time is wall-clock at MUMPS memory-exhaustion failure

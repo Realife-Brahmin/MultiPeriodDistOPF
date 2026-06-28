@@ -1,46 +1,22 @@
-/Manifest.toml
-tex/tadmm_formulation.aux
-tex/tadmm_formulation.fdb_latexmk
-tex/tadmm_formulation.fls
-tex/tadmm_formulation.log
-tex/tadmm_formulation.synctex.gz
-envs/multi_poi/Manifest.toml
-envs/ddp/tex/ddp_copperplate_formulation.aux
-envs/ddp/tex/ddp_copperplate_formulation.fdb_latexmk
-envs/ddp/tex/ddp_copperplate_formulation.fls
-envs/ddp/tex/ddp_copperplate_formulation.log
-envs/ddp/tex/ddp_copperplate_formulation.synctex.gz
-envs/tadmm/Manifest.toml
-envs/tadmm/tex/tadmm_formulation.aux
-envs/tadmm/tex/tadmm_formulation.fdb_latexmk
-envs/tadmm/tex/tadmm_formulation.fls
-envs/tadmm/tex/tadmm_formulation.log
-envs/tadmm/tex/tadmm_formulation.synctex.gz
-envs/tadmm/tex/tadmm_formulation.aux
-envs/tadmm/tex/tadmm_formulation.fdb_latexmk
-envs/tadmm/tex/tadmm_formulation.fls
-envs/tadmm/tex/tadmm_formulation.log
-envs/tadmm/tex/tadmm_formulation.synctex.gz
-envs/tadmm/Manifest.toml
-envs/tadmm/Manifest.toml
+# Julia resolved manifests (reproduced via `Pkg.instantiate()`)
+**/Manifest.toml
 
-# Intermediate conversion outputs (keep only final large10k_1ph)
-rawData/flexparams_10k_1ph/
+# Generated experiment outputs.
+# Regenerated locally by run_bf.jl / run_tadmm.jl / run_rho_sweep.jl.
+# The curated final-winner subset is tracked under results/ instead.
+envs/*/processedData/
+
+# Local review / scratch artifacts (not part of the repo)
 logs/
-envs/tadmm/processedData/**/*.jls
-envs/tadmm/processedData/**/model_summary*.txt
-
-# GR backend intermediate files
+pngs_review/
 gks*.png
 
-# tADMM scratch outputs at <system>_T<T>/ root level (overwritten by every
-# run; canonical results live under rho_sweep/rho_*/). The single-segment
-# wildcard means files inside rho_sweep/rho_*/ are NOT ignored.
-envs/tadmm/processedData/*/tadmm_run.log
-envs/tadmm/processedData/*/run_stdout.log
-envs/tadmm/processedData/*/results_socp_tadmm.txt
-envs/tadmm/processedData/*/convergence_data.csv
-envs/tadmm/processedData/*/near_optimal_summary.csv
-envs/tadmm/processedData/*/subproblem_timing_details.csv
-envs/tadmm/processedData/*/sol_socp_tadmm.jls
-pngs_review/
+# LaTeX build artifacts
+**/tex/*.aux
+**/tex/*.fdb_latexmk
+**/tex/*.fls
+**/tex/*.log
+**/tex/*.synctex.gz
+
+# Intermediate data-conversion outputs (only final systems kept in rawData/)
+rawData/flexparams_10k_1ph/
