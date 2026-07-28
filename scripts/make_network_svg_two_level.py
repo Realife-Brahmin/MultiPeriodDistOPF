@@ -32,6 +32,13 @@ from make_network_svg import (  # noqa: E402
 ACCENT = "#1f6f78"  # highlight for the representative feeder
 FONT = "Times New Roman, Times, serif"
 
+# Alternating stub tones. Deliberately two neighbours of the family grey
+# (#7b7b7b) rather than two distinct hues: strong alternation would read as two
+# *categories* of feeder, which would be a lie -- 100 of the 102 are identical.
+# These give a light-dark rhythm that survives grayscale printing.
+STUB_DARK = "#666666"
+STUB_LIGHT = "#9a9a9a"
+
 
 def subtree_nodes(root, children):
     out, stack = [], [root]
@@ -95,7 +102,13 @@ def tidy_tree(root, children, depth):
 
 
 def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="black",
-           panel="both"):
+           panel="both", alternate=None, labels=None, label_every=1, label_size=None):
+    # Labels are worth it on the standalone star, where there is room; on the
+    # two-panel figure the star is under half the width and they would be noise.
+    if labels is None:
+        labels = panel == "a"
+    if alternate is None:
+        alternate = True
     raw = REPO / "rawData" / system
     edges = parse_edges(raw / "BranchData.dss")
     pv = parse_buses(raw / "PVSystem.dss", "PVsystem")
@@ -136,7 +149,21 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
         VB_W = 540.0
         pb_x0, pb_w = 0.0, VB_W - 24.0
 
-    pa_r = min(pa_w / 2 - 16.0, plot_h / 2 - 22.0) if show_a else 0.0
+    # Radial labels sit outside the head-dot ring, so the star has to shrink by
+    # roughly the widest label to keep the figure inside its box.
+    #
+    # Thinning with --label-every frees tangential room, so the type grows to use
+    # it -- otherwise thinning would fix collisions while leaving the labels just
+    # as unreadably small. At label_every=1 the budget is ~12 units, which is
+    # ~3.3 pt at 88.9 mm; such a figure needs to be printed ~165 mm wide to reach
+    # 6 pt. render() warns when the effective point size falls below that.
+    if label_size:
+        lab_fs = label_size
+    else:
+        lab_fs = min(26.0, 13.0 * math.sqrt(max(label_every, 1)))
+    lab_room = (len(f"F{len(feeders)}") * lab_fs * 0.56 + 12.0) if labels else 0.0
+    pa_r = (min(pa_w / 2 - 16.0 - lab_room, plot_h / 2 - 22.0 - lab_room)
+            if show_a else 0.0)
     pa_cx, pa_cy = (VB_W / 2 if panel == "a" else 16.0 + pa_w / 2), top_pad + plot_h / 2
 
     lay = tidy_tree(rep, children, depth)
@@ -170,18 +197,25 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
     # ---------------- panel (a): macro ----------------
     n = len(feeders)
     if show_a:
-        tips = {}
-        for i, f in enumerate(sorted(feeders, key=lambda b: int(b) if b.isdigit() else 0)):
+        # Feeder index is positional: sorted by head-bus number, F1 outward from
+        # seed_angle. It is a figure label, not a bus name -- the head buses are
+        # 2, 1001, 2001, ... 100001.
+        ordered = sorted(feeders, key=lambda b: int(b) if b.isdigit() else 0)
+        tips, angles, index = {}, {}, {}
+        for i, f in enumerate(ordered):
             a = math.radians(seed_angle) + 2 * math.pi * i / n
             tips[f] = (pa_cx + pa_r * math.cos(a), pa_cy + pa_r * math.sin(a))
+            angles[f] = a
+            index[f] = i + 1
 
         p.append('<g id="panel-a-feeders" fill="none" stroke-linecap="round">')
         for f, (x2, y2) in tips.items():
             if f == rep:
                 continue  # drawn last, on top
+            stroke = (STUB_DARK if index[f] % 2 else STUB_LIGHT) if alternate else LINE_STROKE
             p.append(
                 f'<path d="M{pa_cx:.2f},{pa_cy:.2f}L{x2:.2f},{y2:.2f}" '
-                f'stroke="{LINE_STROKE}" stroke-width="1.6" stroke-opacity="0.75"/>'
+                f'stroke="{stroke}" stroke-width="1.6" stroke-opacity="0.85"/>'
             )
         p.append("</g>")
 
@@ -211,6 +245,34 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
                 f'<circle cx="{pa_cx:.2f}" cy="{pa_cy:.2f}" r="{head_r:.2f}" '
                 f'fill="#000000" fill-opacity="0.83"/>'
             )
+
+        # Feeder labels, rotated to run along their own spoke. At n=102 the
+        # tangential budget is 2*pi*pa_r/n ~ 13 units, so horizontal labels would
+        # collide outright; running them radially spends that budget on glyph
+        # height instead of width. Left-half labels are flipped 180 deg so none
+        # of them read upside down.
+        if labels:
+            p.append(f'<g id="panel-a-labels" font-size="{lab_fs:.1f}">')
+            lr = pa_r + head_r + 6.0
+            for f in ordered:
+                i = index[f]
+                if i % label_every and f != rep:
+                    continue
+                a = angles[f]
+                deg = math.degrees(a)
+                flip = 90 < (deg % 360) < 270
+                lx = pa_cx + lr * math.cos(a)
+                ly = pa_cy + lr * math.sin(a)
+                rot = deg + 180 if flip else deg
+                anchor = "end" if flip else "start"
+                fill = ACCENT if f == rep else "#171a18"
+                weight = ' font-weight="bold"' if f == rep else ""
+                p.append(
+                    f'<text x="{lx:.2f}" y="{ly:.2f}" fill="{fill}"{weight} '
+                    f'text-anchor="{anchor}" dominant-baseline="middle" '
+                    f'transform="rotate({rot:.2f} {lx:.2f} {ly:.2f})">F{i}</text>'
+                )
+            p.append("</g>")
 
     # ---------------- panel (b): one feeder ----------------
     pv_r, bess_r = 11.0, 7.5
@@ -335,6 +397,16 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text("\n".join(p))
+    if labels and show_a:
+        pt = lab_fs / VB_W * size_mm * 72.0 / 25.4
+        n_shown = sum(1 for i in range(1, n + 1) if i % label_every == 0)
+        print(f"  {n_shown} feeder labels at {lab_fs:.0f} units "
+              f"= {pt:.1f} pt when printed {size_mm:.0f} mm wide")
+        if pt < 6.0:
+            need = 6.0 * 25.4 / 72.0 * VB_W / lab_fs
+            print(f"  WARNING: below the ~6 pt floor for print. Either render this "
+                  f"figure >= {need:.0f} mm wide, or thin the labels "
+                  f"(--label-every 5 grows the type to fit).")
     print(
         f"  {system}: {len(order)} buses over {len(feeders)} feeders; "
         f"representative {rep} = {len(rep_nodes)} buses, {len(rep_pv)} PV, "
@@ -359,6 +431,16 @@ def main():
                     help="substation glyph: plain black bus dot, or the red marker")
     ap.add_argument("--panel", choices=("both", "a", "b"), default="both",
                     help="'a' emits the macro star alone (the top-level figure)")
+    ap.add_argument("--alternate", action=argparse.BooleanOptionalAction, default=None,
+                    help="alternate consecutive feeder stubs between two greys (default on)")
+    ap.add_argument("--labels", action=argparse.BooleanOptionalAction, default=None,
+                    help="label feeder heads F1..Fn, rotated along their spokes "
+                         "(default: on for --panel a, off for the two-panel figure)")
+    ap.add_argument("--label-every", type=int, default=1, metavar="N",
+                    help="label every Nth feeder (the highlighted one is always "
+                         "labelled); type size grows to use the freed room")
+    ap.add_argument("--label-size", type=float, default=None,
+                    help="override label size in viewBox units")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -366,7 +448,9 @@ def main():
     out = (Path(args.out) if args.out
            else REPO / "assets" / "networks" / f"{args.system}{suffix}.svg")
     render(args.system, out, args.size_mm, args.seed_angle,
-           head_r=args.head_r, substation_style=args.substation, panel=args.panel)
+           head_r=args.head_r, substation_style=args.substation, panel=args.panel,
+           alternate=args.alternate, labels=args.labels, label_every=args.label_every,
+           label_size=args.label_size)
 
 
 if __name__ == "__main__":
