@@ -1,321 +1,2071 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="88.9mm" height="111.70mm" viewBox="0 0 460.00 578.00" font-family="Times New Roman, Times, serif">
-<title>large10kC_1ph two-level network diagram</title>
-<desc>10321 buses, 10320 branches, 1022 PV, 1020 BESS across 102 feeders. Panel (a) macro view; panel (b) feeder 100001 in full (101 buses, 10 PV, 10 BESS, 40 levels), the shape shared by 100 of 102 feeders.</desc>
-<g id="panel-a-feeders" fill="none" stroke-linecap="round">
-<path d="M230.00,264.00L230.00,91.12" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L240.64,91.45" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L251.24,92.43" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L261.77,94.06" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L272.17,96.34" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L282.41,99.26" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L292.45,102.79" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L302.26,106.94" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L311.79,111.69" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L321.01,117.01" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L329.89,122.90" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L338.38,129.31" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L346.47,136.24" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L354.11,143.65" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L361.29,151.52" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L367.96,159.82" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L374.11,168.51" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L379.72,177.56" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L384.76,186.94" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L389.21,196.61" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L393.05,206.54" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L396.28,216.69" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L398.88,227.02" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L400.83,237.48" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L402.14,248.05" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L402.80,258.68" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L402.80,269.32" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L402.14,279.95" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L400.83,290.52" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L398.88,300.98" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L396.28,311.31" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L393.05,321.46" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L389.21,331.39" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L384.76,341.06" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L379.72,350.44" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L374.11,359.49" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L367.96,368.18" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L361.29,376.48" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L354.11,384.35" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L346.47,391.76" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L338.38,398.69" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L329.89,405.10" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L321.01,410.99" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L311.79,416.31" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L302.26,421.06" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L292.45,425.21" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L282.41,428.74" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L272.17,431.66" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L261.77,433.94" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L251.24,435.57" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L240.64,436.55" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L230.00,436.88" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L219.36,436.55" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L208.76,435.57" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L198.23,433.94" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L187.83,431.66" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L177.59,428.74" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L167.55,425.21" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L157.74,421.06" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L148.21,416.31" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L138.99,410.99" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L130.11,405.10" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L121.62,398.69" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L113.53,391.76" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L105.89,384.35" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L98.71,376.48" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L92.04,368.18" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L85.89,359.49" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L80.28,350.44" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L75.24,341.06" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L70.79,331.39" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L66.95,321.46" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L63.72,311.31" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L61.12,300.98" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L59.17,290.52" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L57.86,279.95" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L57.20,269.32" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L57.20,258.68" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L57.86,248.05" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L59.17,237.48" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L61.12,227.02" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L63.72,216.69" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L66.95,206.54" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L70.79,196.61" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L75.24,186.94" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L80.28,177.56" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L85.89,168.51" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L92.04,159.82" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L98.71,151.52" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L105.89,143.65" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L113.53,136.24" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L121.62,129.31" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L130.11,122.90" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L138.99,117.01" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L148.21,111.69" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L157.74,106.94" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L167.55,102.79" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L177.59,99.26" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L187.83,96.34" stroke="#666666" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L198.23,94.06" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-<path d="M230.00,264.00L219.36,91.45" stroke="#9a9a9a" stroke-width="1.6" stroke-opacity="0.85"/>
-</g>
-<g id="panel-a-heads" fill="#000000" fill-opacity="0.83">
-<circle cx="230.00" cy="91.12" r="3.20"/>
-<circle cx="240.64" cy="91.45" r="3.20"/>
-<circle cx="251.24" cy="92.43" r="3.20"/>
-<circle cx="261.77" cy="94.06" r="3.20"/>
-<circle cx="272.17" cy="96.34" r="3.20"/>
-<circle cx="282.41" cy="99.26" r="3.20"/>
-<circle cx="292.45" cy="102.79" r="3.20"/>
-<circle cx="302.26" cy="106.94" r="3.20"/>
-<circle cx="311.79" cy="111.69" r="3.20"/>
-<circle cx="321.01" cy="117.01" r="3.20"/>
-<circle cx="329.89" cy="122.90" r="3.20"/>
-<circle cx="338.38" cy="129.31" r="3.20"/>
-<circle cx="346.47" cy="136.24" r="3.20"/>
-<circle cx="354.11" cy="143.65" r="3.20"/>
-<circle cx="361.29" cy="151.52" r="3.20"/>
-<circle cx="367.96" cy="159.82" r="3.20"/>
-<circle cx="374.11" cy="168.51" r="3.20"/>
-<circle cx="379.72" cy="177.56" r="3.20"/>
-<circle cx="384.76" cy="186.94" r="3.20"/>
-<circle cx="389.21" cy="196.61" r="3.20"/>
-<circle cx="393.05" cy="206.54" r="3.20"/>
-<circle cx="396.28" cy="216.69" r="3.20"/>
-<circle cx="398.88" cy="227.02" r="3.20"/>
-<circle cx="400.83" cy="237.48" r="3.20"/>
-<circle cx="402.14" cy="248.05" r="3.20"/>
-<circle cx="402.80" cy="258.68" r="3.20"/>
-<circle cx="402.80" cy="269.32" r="3.20"/>
-<circle cx="402.14" cy="279.95" r="3.20"/>
-<circle cx="400.83" cy="290.52" r="3.20"/>
-<circle cx="398.88" cy="300.98" r="3.20"/>
-<circle cx="396.28" cy="311.31" r="3.20"/>
-<circle cx="393.05" cy="321.46" r="3.20"/>
-<circle cx="389.21" cy="331.39" r="3.20"/>
-<circle cx="384.76" cy="341.06" r="3.20"/>
-<circle cx="379.72" cy="350.44" r="3.20"/>
-<circle cx="374.11" cy="359.49" r="3.20"/>
-<circle cx="367.96" cy="368.18" r="3.20"/>
-<circle cx="361.29" cy="376.48" r="3.20"/>
-<circle cx="354.11" cy="384.35" r="3.20"/>
-<circle cx="346.47" cy="391.76" r="3.20"/>
-<circle cx="338.38" cy="398.69" r="3.20"/>
-<circle cx="329.89" cy="405.10" r="3.20"/>
-<circle cx="321.01" cy="410.99" r="3.20"/>
-<circle cx="311.79" cy="416.31" r="3.20"/>
-<circle cx="302.26" cy="421.06" r="3.20"/>
-<circle cx="292.45" cy="425.21" r="3.20"/>
-<circle cx="282.41" cy="428.74" r="3.20"/>
-<circle cx="272.17" cy="431.66" r="3.20"/>
-<circle cx="261.77" cy="433.94" r="3.20"/>
-<circle cx="251.24" cy="435.57" r="3.20"/>
-<circle cx="240.64" cy="436.55" r="3.20"/>
-<circle cx="230.00" cy="436.88" r="3.20"/>
-<circle cx="219.36" cy="436.55" r="3.20"/>
-<circle cx="208.76" cy="435.57" r="3.20"/>
-<circle cx="198.23" cy="433.94" r="3.20"/>
-<circle cx="187.83" cy="431.66" r="3.20"/>
-<circle cx="177.59" cy="428.74" r="3.20"/>
-<circle cx="167.55" cy="425.21" r="3.20"/>
-<circle cx="157.74" cy="421.06" r="3.20"/>
-<circle cx="148.21" cy="416.31" r="3.20"/>
-<circle cx="138.99" cy="410.99" r="3.20"/>
-<circle cx="130.11" cy="405.10" r="3.20"/>
-<circle cx="121.62" cy="398.69" r="3.20"/>
-<circle cx="113.53" cy="391.76" r="3.20"/>
-<circle cx="105.89" cy="384.35" r="3.20"/>
-<circle cx="98.71" cy="376.48" r="3.20"/>
-<circle cx="92.04" cy="368.18" r="3.20"/>
-<circle cx="85.89" cy="359.49" r="3.20"/>
-<circle cx="80.28" cy="350.44" r="3.20"/>
-<circle cx="75.24" cy="341.06" r="3.20"/>
-<circle cx="70.79" cy="331.39" r="3.20"/>
-<circle cx="66.95" cy="321.46" r="3.20"/>
-<circle cx="63.72" cy="311.31" r="3.20"/>
-<circle cx="61.12" cy="300.98" r="3.20"/>
-<circle cx="59.17" cy="290.52" r="3.20"/>
-<circle cx="57.86" cy="279.95" r="3.20"/>
-<circle cx="57.20" cy="269.32" r="3.20"/>
-<circle cx="57.20" cy="258.68" r="3.20"/>
-<circle cx="57.86" cy="248.05" r="3.20"/>
-<circle cx="59.17" cy="237.48" r="3.20"/>
-<circle cx="61.12" cy="227.02" r="3.20"/>
-<circle cx="63.72" cy="216.69" r="3.20"/>
-<circle cx="66.95" cy="206.54" r="3.20"/>
-<circle cx="70.79" cy="196.61" r="3.20"/>
-<circle cx="75.24" cy="186.94" r="3.20"/>
-<circle cx="80.28" cy="177.56" r="3.20"/>
-<circle cx="85.89" cy="168.51" r="3.20"/>
-<circle cx="92.04" cy="159.82" r="3.20"/>
-<circle cx="98.71" cy="151.52" r="3.20"/>
-<circle cx="105.89" cy="143.65" r="3.20"/>
-<circle cx="113.53" cy="136.24" r="3.20"/>
-<circle cx="121.62" cy="129.31" r="3.20"/>
-<circle cx="130.11" cy="122.90" r="3.20"/>
-<circle cx="138.99" cy="117.01" r="3.20"/>
-<circle cx="148.21" cy="111.69" r="3.20"/>
-<circle cx="157.74" cy="106.94" r="3.20"/>
-<circle cx="167.55" cy="102.79" r="3.20"/>
-<circle cx="177.59" cy="99.26" r="3.20"/>
-<circle cx="187.83" cy="96.34" r="3.20"/>
-<circle cx="198.23" cy="94.06" r="3.20"/>
-<circle cx="219.36" cy="91.45" r="3.20"/>
-</g>
-<path d="M230.00,264.00L208.76,92.43" fill="none" stroke="#1f6f78" stroke-width="4.2" stroke-linecap="round"/>
-<circle cx="208.76" cy="92.43" r="7" fill="#1f6f78"/>
-<circle cx="230.00" cy="264.00" r="3.20" fill="#000000" fill-opacity="0.83"/>
-<g id="panel-a-labels" font-size="13.0">
-<text x="230.00" y="81.92" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-90.00 230.00 81.92)">F1</text>
-<text x="241.21" y="82.27" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-86.47 241.21 82.27)">F2</text>
-<text x="252.38" y="83.30" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-82.94 252.38 83.30)">F3</text>
-<text x="263.46" y="85.02" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-79.41 263.46 85.02)">F4</text>
-<text x="274.41" y="87.42" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-75.88 274.41 87.42)">F5</text>
-<text x="285.20" y="90.49" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-72.35 285.20 90.49)">F6</text>
-<text x="295.77" y="94.22" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-68.82 295.77 94.22)">F7</text>
-<text x="306.10" y="98.59" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-65.29 306.10 98.59)">F8</text>
-<text x="316.14" y="103.59" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-61.76 316.14 103.59)">F9</text>
-<text x="325.85" y="109.19" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-58.24 325.85 109.19)">F10</text>
-<text x="335.20" y="115.39" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-54.71 335.20 115.39)">F11</text>
-<text x="344.15" y="122.15" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-51.18 344.15 122.15)">F12</text>
-<text x="352.67" y="129.44" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-47.65 352.67 129.44)">F13</text>
-<text x="360.72" y="137.25" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-44.12 360.72 137.25)">F14</text>
-<text x="368.27" y="145.54" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-40.59 368.27 145.54)">F15</text>
-<text x="375.30" y="154.27" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-37.06 375.30 154.27)">F16</text>
-<text x="381.78" y="163.43" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-33.53 381.78 163.43)">F17</text>
-<text x="387.69" y="172.96" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-30.00 387.69 172.96)">F18</text>
-<text x="392.99" y="182.84" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-26.47 392.99 182.84)">F19</text>
-<text x="397.68" y="193.03" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-22.94 397.68 193.03)">F20</text>
-<text x="401.73" y="203.48" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-19.41 401.73 203.48)">F21</text>
-<text x="405.13" y="214.17" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-15.88 405.13 214.17)">F22</text>
-<text x="407.86" y="225.05" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-12.35 407.86 225.05)">F23</text>
-<text x="409.93" y="236.07" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-8.82 409.93 236.07)">F24</text>
-<text x="411.30" y="247.20" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-5.29 411.30 247.20)">F25</text>
-<text x="411.99" y="258.39" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(-1.76 411.99 258.39)">F26</text>
-<text x="411.99" y="269.61" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(1.76 411.99 269.61)">F27</text>
-<text x="411.30" y="280.80" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(5.29 411.30 280.80)">F28</text>
-<text x="409.93" y="291.93" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(8.82 409.93 291.93)">F29</text>
-<text x="407.86" y="302.95" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(12.35 407.86 302.95)">F30</text>
-<text x="405.13" y="313.83" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(15.88 405.13 313.83)">F31</text>
-<text x="401.73" y="324.52" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(19.41 401.73 324.52)">F32</text>
-<text x="397.68" y="334.97" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(22.94 397.68 334.97)">F33</text>
-<text x="392.99" y="345.16" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(26.47 392.99 345.16)">F34</text>
-<text x="387.69" y="355.04" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(30.00 387.69 355.04)">F35</text>
-<text x="381.78" y="364.57" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(33.53 381.78 364.57)">F36</text>
-<text x="375.30" y="373.73" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(37.06 375.30 373.73)">F37</text>
-<text x="368.27" y="382.46" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(40.59 368.27 382.46)">F38</text>
-<text x="360.72" y="390.75" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(44.12 360.72 390.75)">F39</text>
-<text x="352.67" y="398.56" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(47.65 352.67 398.56)">F40</text>
-<text x="344.15" y="405.85" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(51.18 344.15 405.85)">F41</text>
-<text x="335.20" y="412.61" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(54.71 335.20 412.61)">F42</text>
-<text x="325.85" y="418.81" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(58.24 325.85 418.81)">F43</text>
-<text x="316.14" y="424.41" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(61.76 316.14 424.41)">F44</text>
-<text x="306.10" y="429.41" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(65.29 306.10 429.41)">F45</text>
-<text x="295.77" y="433.78" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(68.82 295.77 433.78)">F46</text>
-<text x="285.20" y="437.51" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(72.35 285.20 437.51)">F47</text>
-<text x="274.41" y="440.58" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(75.88 274.41 440.58)">F48</text>
-<text x="263.46" y="442.98" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(79.41 263.46 442.98)">F49</text>
-<text x="252.38" y="444.70" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(82.94 252.38 444.70)">F50</text>
-<text x="241.21" y="445.73" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(86.47 241.21 445.73)">F51</text>
-<text x="230.00" y="446.08" fill="#171a18" text-anchor="start" dominant-baseline="middle" transform="rotate(90.00 230.00 446.08)">F52</text>
-<text x="218.79" y="445.73" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(273.53 218.79 445.73)">F53</text>
-<text x="207.62" y="444.70" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(277.06 207.62 444.70)">F54</text>
-<text x="196.54" y="442.98" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(280.59 196.54 442.98)">F55</text>
-<text x="185.59" y="440.58" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(284.12 185.59 440.58)">F56</text>
-<text x="174.80" y="437.51" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(287.65 174.80 437.51)">F57</text>
-<text x="164.23" y="433.78" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(291.18 164.23 433.78)">F58</text>
-<text x="153.90" y="429.41" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(294.71 153.90 429.41)">F59</text>
-<text x="143.86" y="424.41" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(298.24 143.86 424.41)">F60</text>
-<text x="134.15" y="418.81" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(301.76 134.15 418.81)">F61</text>
-<text x="124.80" y="412.61" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(305.29 124.80 412.61)">F62</text>
-<text x="115.85" y="405.85" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(308.82 115.85 405.85)">F63</text>
-<text x="107.33" y="398.56" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(312.35 107.33 398.56)">F64</text>
-<text x="99.28" y="390.75" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(315.88 99.28 390.75)">F65</text>
-<text x="91.73" y="382.46" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(319.41 91.73 382.46)">F66</text>
-<text x="84.70" y="373.73" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(322.94 84.70 373.73)">F67</text>
-<text x="78.22" y="364.57" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(326.47 78.22 364.57)">F68</text>
-<text x="72.31" y="355.04" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(330.00 72.31 355.04)">F69</text>
-<text x="67.01" y="345.16" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(333.53 67.01 345.16)">F70</text>
-<text x="62.32" y="334.97" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(337.06 62.32 334.97)">F71</text>
-<text x="58.27" y="324.52" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(340.59 58.27 324.52)">F72</text>
-<text x="54.87" y="313.83" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(344.12 54.87 313.83)">F73</text>
-<text x="52.14" y="302.95" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(347.65 52.14 302.95)">F74</text>
-<text x="50.07" y="291.93" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(351.18 50.07 291.93)">F75</text>
-<text x="48.70" y="280.80" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(354.71 48.70 280.80)">F76</text>
-<text x="48.01" y="269.61" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(358.24 48.01 269.61)">F77</text>
-<text x="48.01" y="258.39" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(361.76 48.01 258.39)">F78</text>
-<text x="48.70" y="247.20" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(365.29 48.70 247.20)">F79</text>
-<text x="50.07" y="236.07" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(368.82 50.07 236.07)">F80</text>
-<text x="52.14" y="225.05" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(372.35 52.14 225.05)">F81</text>
-<text x="54.87" y="214.17" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(375.88 54.87 214.17)">F82</text>
-<text x="58.27" y="203.48" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(379.41 58.27 203.48)">F83</text>
-<text x="62.32" y="193.03" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(382.94 62.32 193.03)">F84</text>
-<text x="67.01" y="182.84" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(386.47 67.01 182.84)">F85</text>
-<text x="72.31" y="172.96" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(390.00 72.31 172.96)">F86</text>
-<text x="78.22" y="163.43" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(393.53 78.22 163.43)">F87</text>
-<text x="84.70" y="154.27" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(397.06 84.70 154.27)">F88</text>
-<text x="91.73" y="145.54" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(400.59 91.73 145.54)">F89</text>
-<text x="99.28" y="137.25" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(404.12 99.28 137.25)">F90</text>
-<text x="107.33" y="129.44" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(407.65 107.33 129.44)">F91</text>
-<text x="115.85" y="122.15" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(411.18 115.85 122.15)">F92</text>
-<text x="124.80" y="115.39" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(414.71 124.80 115.39)">F93</text>
-<text x="134.15" y="109.19" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(418.24 134.15 109.19)">F94</text>
-<text x="143.86" y="103.59" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(421.76 143.86 103.59)">F95</text>
-<text x="153.90" y="98.59" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(425.29 153.90 98.59)">F96</text>
-<text x="164.23" y="94.22" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(428.82 164.23 94.22)">F97</text>
-<text x="174.80" y="90.49" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(432.35 174.80 90.49)">F98</text>
-<text x="185.59" y="87.42" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(435.88 185.59 87.42)">F99</text>
-<text x="196.54" y="85.02" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(439.41 196.54 85.02)">F100</text>
-<text x="207.62" y="83.30" fill="#1f6f78" font-weight="bold" text-anchor="end" dominant-baseline="middle" transform="rotate(442.94 207.62 83.30)">F101</text>
-<text x="218.79" y="82.27" fill="#171a18" text-anchor="end" dominant-baseline="middle" transform="rotate(446.47 218.79 82.27)">F102</text>
-</g>
-<text x="230.00" y="530.00" text-anchor="middle" font-size="27">102 feeders</text>
-<text x="230.00" y="558.00" text-anchor="middle" font-size="27">10,321 buses</text>
-<g id="legend" font-size="28.0">
-</g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   width="88.9mm"
+   height="111.70mm"
+   viewBox="0 0 460.00 578.00"
+   font-family="Times New Roman, Times, serif"
+   id="svg306"
+   sodipodi:docname="large10kC_1ph_top_level.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs306" />
+  <sodipodi:namedview
+     id="namedview"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:showpageshadow="0"
+     inkscape:deskcolor="#c8c8c8"
+     inkscape:document-units="mm"
+     inkscape:zoom="2.8732282"
+     inkscape:cx="162.01289"
+     inkscape:cy="210.73857"
+     inkscape:window-width="2560"
+     inkscape:window-height="1417"
+     inkscape:window-x="2872"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="panel-a-labels" />
+  <title
+     id="title1">large10kC_1ph two-level network diagram</title>
+  <desc
+     id="desc1">10321 buses, 10320 branches, 1022 PV, 1020 BESS across 102 feeders. Panel (a) macro view; panel (b) feeder 100001 in full (101 buses, 10 PV, 10 BESS, 40 levels), the shape shared by 100 of 102 feeders.</desc>
+  <g
+     id="panel-a-feeders"
+     fill="none"
+     stroke-linecap="round">
+    <path
+       d="M230.00,264.00L230.00,91.12"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path1" />
+    <path
+       d="M230.00,264.00L240.64,91.45"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path2" />
+    <path
+       d="M230.00,264.00L251.24,92.43"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path3" />
+    <path
+       d="M230.00,264.00L261.77,94.06"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path4" />
+    <path
+       d="M230.00,264.00L272.17,96.34"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path5" />
+    <path
+       d="M230.00,264.00L282.41,99.26"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path6" />
+    <path
+       d="M230.00,264.00L292.45,102.79"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path7" />
+    <path
+       d="M230.00,264.00L302.26,106.94"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path8" />
+    <path
+       d="M230.00,264.00L311.79,111.69"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path9" />
+    <path
+       d="M230.00,264.00L321.01,117.01"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path10" />
+    <path
+       d="M230.00,264.00L329.89,122.90"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path11" />
+    <path
+       d="M230.00,264.00L338.38,129.31"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path12" />
+    <path
+       d="M230.00,264.00L346.47,136.24"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path13" />
+    <path
+       d="M230.00,264.00L354.11,143.65"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path14" />
+    <path
+       d="M230.00,264.00L361.29,151.52"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path15" />
+    <path
+       d="M230.00,264.00L367.96,159.82"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path16" />
+    <path
+       d="M230.00,264.00L374.11,168.51"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path17" />
+    <path
+       d="M230.00,264.00L379.72,177.56"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path18" />
+    <path
+       d="M230.00,264.00L384.76,186.94"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path19" />
+    <path
+       d="M230.00,264.00L389.21,196.61"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path20" />
+    <path
+       d="M230.00,264.00L393.05,206.54"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path21" />
+    <path
+       d="M230.00,264.00L396.28,216.69"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path22" />
+    <path
+       d="M230.00,264.00L398.88,227.02"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path23" />
+    <path
+       d="M230.00,264.00L400.83,237.48"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path24" />
+    <path
+       d="M230.00,264.00L402.14,248.05"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path25" />
+    <path
+       d="M230.00,264.00L402.80,258.68"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path26" />
+    <path
+       d="M230.00,264.00L402.80,269.32"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path27" />
+    <path
+       d="M230.00,264.00L402.14,279.95"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path28" />
+    <path
+       d="M230.00,264.00L400.83,290.52"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path29" />
+    <path
+       d="M230.00,264.00L398.88,300.98"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path30" />
+    <path
+       d="M230.00,264.00L396.28,311.31"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path31" />
+    <path
+       d="M230.00,264.00L393.05,321.46"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path32" />
+    <path
+       d="M230.00,264.00L389.21,331.39"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path33" />
+    <path
+       d="M230.00,264.00L384.76,341.06"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path34" />
+    <path
+       d="M230.00,264.00L379.72,350.44"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path35" />
+    <path
+       d="M230.00,264.00L374.11,359.49"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path36" />
+    <path
+       d="M230.00,264.00L367.96,368.18"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path37" />
+    <path
+       d="M230.00,264.00L361.29,376.48"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path38" />
+    <path
+       d="M230.00,264.00L354.11,384.35"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path39" />
+    <path
+       d="M230.00,264.00L346.47,391.76"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path40" />
+    <path
+       d="M230.00,264.00L338.38,398.69"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path41" />
+    <path
+       d="M230.00,264.00L329.89,405.10"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path42" />
+    <path
+       d="M230.00,264.00L321.01,410.99"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path43" />
+    <path
+       d="M230.00,264.00L311.79,416.31"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path44" />
+    <path
+       d="M230.00,264.00L302.26,421.06"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path45" />
+    <path
+       d="M230.00,264.00L292.45,425.21"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path46" />
+    <path
+       d="M230.00,264.00L282.41,428.74"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path47" />
+    <path
+       d="M230.00,264.00L272.17,431.66"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path48" />
+    <path
+       d="M230.00,264.00L261.77,433.94"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path49" />
+    <path
+       d="M230.00,264.00L251.24,435.57"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path50" />
+    <path
+       d="M230.00,264.00L240.64,436.55"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path51" />
+    <path
+       d="M230.00,264.00L230.00,436.88"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path52" />
+    <path
+       d="M230.00,264.00L219.36,436.55"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path53" />
+    <path
+       d="M230.00,264.00L208.76,435.57"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path54" />
+    <path
+       d="M230.00,264.00L198.23,433.94"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path55" />
+    <path
+       d="M230.00,264.00L187.83,431.66"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path56" />
+    <path
+       d="M230.00,264.00L177.59,428.74"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path57" />
+    <path
+       d="M230.00,264.00L167.55,425.21"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path58" />
+    <path
+       d="M230.00,264.00L157.74,421.06"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path59" />
+    <path
+       d="M230.00,264.00L148.21,416.31"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path60" />
+    <path
+       d="M230.00,264.00L138.99,410.99"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path61" />
+    <path
+       d="M230.00,264.00L130.11,405.10"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path62" />
+    <path
+       d="M230.00,264.00L121.62,398.69"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path63" />
+    <path
+       d="M230.00,264.00L113.53,391.76"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path64" />
+    <path
+       d="M230.00,264.00L105.89,384.35"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path65" />
+    <path
+       d="M230.00,264.00L98.71,376.48"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path66" />
+    <path
+       d="M230.00,264.00L92.04,368.18"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path67" />
+    <path
+       d="M230.00,264.00L85.89,359.49"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path68" />
+    <path
+       d="M230.00,264.00L80.28,350.44"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path69" />
+    <path
+       d="M230.00,264.00L75.24,341.06"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path70" />
+    <path
+       d="M230.00,264.00L70.79,331.39"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path71" />
+    <path
+       d="M230.00,264.00L66.95,321.46"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path72" />
+    <path
+       d="M230.00,264.00L63.72,311.31"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path73" />
+    <path
+       d="M230.00,264.00L61.12,300.98"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path74" />
+    <path
+       d="M230.00,264.00L59.17,290.52"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path75" />
+    <path
+       d="M230.00,264.00L57.86,279.95"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path76" />
+    <path
+       d="M230.00,264.00L57.20,269.32"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path77" />
+    <path
+       d="M230.00,264.00L57.20,258.68"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path78" />
+    <path
+       d="M230.00,264.00L57.86,248.05"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path79" />
+    <path
+       d="M230.00,264.00L59.17,237.48"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path80" />
+    <path
+       d="M230.00,264.00L61.12,227.02"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path81" />
+    <path
+       d="M230.00,264.00L63.72,216.69"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path82" />
+    <path
+       d="M230.00,264.00L66.95,206.54"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path83" />
+    <path
+       d="M230.00,264.00L70.79,196.61"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path84" />
+    <path
+       d="M230.00,264.00L75.24,186.94"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path85" />
+    <path
+       d="M230.00,264.00L80.28,177.56"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path86" />
+    <path
+       d="M230.00,264.00L85.89,168.51"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path87" />
+    <path
+       d="M230.00,264.00L92.04,159.82"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path88" />
+    <path
+       d="M230.00,264.00L98.71,151.52"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path89" />
+    <path
+       d="M230.00,264.00L105.89,143.65"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path90" />
+    <path
+       d="M230.00,264.00L113.53,136.24"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path91" />
+    <path
+       d="M230.00,264.00L121.62,129.31"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path92" />
+    <path
+       d="M230.00,264.00L130.11,122.90"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path93" />
+    <path
+       d="M230.00,264.00L138.99,117.01"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path94" />
+    <path
+       d="M230.00,264.00L148.21,111.69"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path95" />
+    <path
+       d="M230.00,264.00L157.74,106.94"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path96" />
+    <path
+       d="M230.00,264.00L167.55,102.79"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path97" />
+    <path
+       d="M230.00,264.00L177.59,99.26"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path98" />
+    <path
+       d="M230.00,264.00L187.83,96.34"
+       stroke="#666666"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path99" />
+    <path
+       d="M230.00,264.00L198.23,94.06"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path100" />
+    <path
+       d="M230.00,264.00L219.36,91.45"
+       stroke="#9a9a9a"
+       stroke-width="1.6"
+       stroke-opacity="0.85"
+       id="path101" />
+  </g>
+  <g
+     id="panel-a-heads"
+     fill="#000000"
+     fill-opacity="0.83">
+    <circle
+       cx="230.00"
+       cy="91.12"
+       r="3.20"
+       id="circle101" />
+    <circle
+       cx="240.64"
+       cy="91.45"
+       r="3.20"
+       id="circle102" />
+    <circle
+       cx="251.24"
+       cy="92.43"
+       r="3.20"
+       id="circle103" />
+    <circle
+       cx="261.77"
+       cy="94.06"
+       r="3.20"
+       id="circle104" />
+    <circle
+       cx="272.17"
+       cy="96.34"
+       r="3.20"
+       id="circle105" />
+    <circle
+       cx="282.41"
+       cy="99.26"
+       r="3.20"
+       id="circle106" />
+    <circle
+       cx="292.45"
+       cy="102.79"
+       r="3.20"
+       id="circle107" />
+    <circle
+       cx="302.26"
+       cy="106.94"
+       r="3.20"
+       id="circle108" />
+    <circle
+       cx="311.79"
+       cy="111.69"
+       r="3.20"
+       id="circle109" />
+    <circle
+       cx="321.01"
+       cy="117.01"
+       r="3.20"
+       id="circle110" />
+    <circle
+       cx="329.89"
+       cy="122.90"
+       r="3.20"
+       id="circle111" />
+    <circle
+       cx="338.38"
+       cy="129.31"
+       r="3.20"
+       id="circle112" />
+    <circle
+       cx="346.47"
+       cy="136.24"
+       r="3.20"
+       id="circle113" />
+    <circle
+       cx="354.11"
+       cy="143.65"
+       r="3.20"
+       id="circle114" />
+    <circle
+       cx="361.29"
+       cy="151.52"
+       r="3.20"
+       id="circle115" />
+    <circle
+       cx="367.96"
+       cy="159.82"
+       r="3.20"
+       id="circle116" />
+    <circle
+       cx="374.11"
+       cy="168.51"
+       r="3.20"
+       id="circle117" />
+    <circle
+       cx="379.72"
+       cy="177.56"
+       r="3.20"
+       id="circle118" />
+    <circle
+       cx="384.76"
+       cy="186.94"
+       r="3.20"
+       id="circle119" />
+    <circle
+       cx="389.21"
+       cy="196.61"
+       r="3.20"
+       id="circle120" />
+    <circle
+       cx="393.05"
+       cy="206.54"
+       r="3.20"
+       id="circle121" />
+    <circle
+       cx="396.28"
+       cy="216.69"
+       r="3.20"
+       id="circle122" />
+    <circle
+       cx="398.88"
+       cy="227.02"
+       r="3.20"
+       id="circle123" />
+    <circle
+       cx="400.83"
+       cy="237.48"
+       r="3.20"
+       id="circle124" />
+    <circle
+       cx="402.14"
+       cy="248.05"
+       r="3.20"
+       id="circle125" />
+    <circle
+       cx="402.80"
+       cy="258.68"
+       r="3.20"
+       id="circle126" />
+    <circle
+       cx="402.80"
+       cy="269.32"
+       r="3.20"
+       id="circle127" />
+    <circle
+       cx="402.14"
+       cy="279.95"
+       r="3.20"
+       id="circle128" />
+    <circle
+       cx="400.83"
+       cy="290.52"
+       r="3.20"
+       id="circle129" />
+    <circle
+       cx="398.88"
+       cy="300.98"
+       r="3.20"
+       id="circle130" />
+    <circle
+       cx="396.28"
+       cy="311.31"
+       r="3.20"
+       id="circle131" />
+    <circle
+       cx="393.05"
+       cy="321.46"
+       r="3.20"
+       id="circle132" />
+    <circle
+       cx="389.21"
+       cy="331.39"
+       r="3.20"
+       id="circle133" />
+    <circle
+       cx="384.76"
+       cy="341.06"
+       r="3.20"
+       id="circle134" />
+    <circle
+       cx="379.72"
+       cy="350.44"
+       r="3.20"
+       id="circle135" />
+    <circle
+       cx="374.11"
+       cy="359.49"
+       r="3.20"
+       id="circle136" />
+    <circle
+       cx="367.96"
+       cy="368.18"
+       r="3.20"
+       id="circle137" />
+    <circle
+       cx="361.29"
+       cy="376.48"
+       r="3.20"
+       id="circle138" />
+    <circle
+       cx="354.11"
+       cy="384.35"
+       r="3.20"
+       id="circle139" />
+    <circle
+       cx="346.47"
+       cy="391.76"
+       r="3.20"
+       id="circle140" />
+    <circle
+       cx="338.38"
+       cy="398.69"
+       r="3.20"
+       id="circle141" />
+    <circle
+       cx="329.89"
+       cy="405.10"
+       r="3.20"
+       id="circle142" />
+    <circle
+       cx="321.01"
+       cy="410.99"
+       r="3.20"
+       id="circle143" />
+    <circle
+       cx="311.79"
+       cy="416.31"
+       r="3.20"
+       id="circle144" />
+    <circle
+       cx="302.26"
+       cy="421.06"
+       r="3.20"
+       id="circle145" />
+    <circle
+       cx="292.45"
+       cy="425.21"
+       r="3.20"
+       id="circle146" />
+    <circle
+       cx="282.41"
+       cy="428.74"
+       r="3.20"
+       id="circle147" />
+    <circle
+       cx="272.17"
+       cy="431.66"
+       r="3.20"
+       id="circle148" />
+    <circle
+       cx="261.77"
+       cy="433.94"
+       r="3.20"
+       id="circle149" />
+    <circle
+       cx="251.24"
+       cy="435.57"
+       r="3.20"
+       id="circle150" />
+    <circle
+       cx="240.64"
+       cy="436.55"
+       r="3.20"
+       id="circle151" />
+    <circle
+       cx="230.00"
+       cy="436.88"
+       r="3.20"
+       id="circle152" />
+    <circle
+       cx="219.36"
+       cy="436.55"
+       r="3.20"
+       id="circle153" />
+    <circle
+       cx="208.76"
+       cy="435.57"
+       r="3.20"
+       id="circle154" />
+    <circle
+       cx="198.23"
+       cy="433.94"
+       r="3.20"
+       id="circle155" />
+    <circle
+       cx="187.83"
+       cy="431.66"
+       r="3.20"
+       id="circle156" />
+    <circle
+       cx="177.59"
+       cy="428.74"
+       r="3.20"
+       id="circle157" />
+    <circle
+       cx="167.55"
+       cy="425.21"
+       r="3.20"
+       id="circle158" />
+    <circle
+       cx="157.74"
+       cy="421.06"
+       r="3.20"
+       id="circle159" />
+    <circle
+       cx="148.21"
+       cy="416.31"
+       r="3.20"
+       id="circle160" />
+    <circle
+       cx="138.99"
+       cy="410.99"
+       r="3.20"
+       id="circle161" />
+    <circle
+       cx="130.11"
+       cy="405.10"
+       r="3.20"
+       id="circle162" />
+    <circle
+       cx="121.62"
+       cy="398.69"
+       r="3.20"
+       id="circle163" />
+    <circle
+       cx="113.53"
+       cy="391.76"
+       r="3.20"
+       id="circle164" />
+    <circle
+       cx="105.89"
+       cy="384.35"
+       r="3.20"
+       id="circle165" />
+    <circle
+       cx="98.71"
+       cy="376.48"
+       r="3.20"
+       id="circle166" />
+    <circle
+       cx="92.04"
+       cy="368.18"
+       r="3.20"
+       id="circle167" />
+    <circle
+       cx="85.89"
+       cy="359.49"
+       r="3.20"
+       id="circle168" />
+    <circle
+       cx="80.28"
+       cy="350.44"
+       r="3.20"
+       id="circle169" />
+    <circle
+       cx="75.24"
+       cy="341.06"
+       r="3.20"
+       id="circle170" />
+    <circle
+       cx="70.79"
+       cy="331.39"
+       r="3.20"
+       id="circle171" />
+    <circle
+       cx="66.95"
+       cy="321.46"
+       r="3.20"
+       id="circle172" />
+    <circle
+       cx="63.72"
+       cy="311.31"
+       r="3.20"
+       id="circle173" />
+    <circle
+       cx="61.12"
+       cy="300.98"
+       r="3.20"
+       id="circle174" />
+    <circle
+       cx="59.17"
+       cy="290.52"
+       r="3.20"
+       id="circle175" />
+    <circle
+       cx="57.86"
+       cy="279.95"
+       r="3.20"
+       id="circle176" />
+    <circle
+       cx="57.20"
+       cy="269.32"
+       r="3.20"
+       id="circle177" />
+    <circle
+       cx="57.20"
+       cy="258.68"
+       r="3.20"
+       id="circle178" />
+    <circle
+       cx="57.86"
+       cy="248.05"
+       r="3.20"
+       id="circle179" />
+    <circle
+       cx="59.17"
+       cy="237.48"
+       r="3.20"
+       id="circle180" />
+    <circle
+       cx="61.12"
+       cy="227.02"
+       r="3.20"
+       id="circle181" />
+    <circle
+       cx="63.72"
+       cy="216.69"
+       r="3.20"
+       id="circle182" />
+    <circle
+       cx="66.95"
+       cy="206.54"
+       r="3.20"
+       id="circle183" />
+    <circle
+       cx="70.79"
+       cy="196.61"
+       r="3.20"
+       id="circle184" />
+    <circle
+       cx="75.24"
+       cy="186.94"
+       r="3.20"
+       id="circle185" />
+    <circle
+       cx="80.28"
+       cy="177.56"
+       r="3.20"
+       id="circle186" />
+    <circle
+       cx="85.89"
+       cy="168.51"
+       r="3.20"
+       id="circle187" />
+    <circle
+       cx="92.04"
+       cy="159.82"
+       r="3.20"
+       id="circle188" />
+    <circle
+       cx="98.71"
+       cy="151.52"
+       r="3.20"
+       id="circle189" />
+    <circle
+       cx="105.89"
+       cy="143.65"
+       r="3.20"
+       id="circle190" />
+    <circle
+       cx="113.53"
+       cy="136.24"
+       r="3.20"
+       id="circle191" />
+    <circle
+       cx="121.62"
+       cy="129.31"
+       r="3.20"
+       id="circle192" />
+    <circle
+       cx="130.11"
+       cy="122.90"
+       r="3.20"
+       id="circle193" />
+    <circle
+       cx="138.99"
+       cy="117.01"
+       r="3.20"
+       id="circle194" />
+    <circle
+       cx="148.21"
+       cy="111.69"
+       r="3.20"
+       id="circle195" />
+    <circle
+       cx="157.74"
+       cy="106.94"
+       r="3.20"
+       id="circle196" />
+    <circle
+       cx="167.55"
+       cy="102.79"
+       r="3.20"
+       id="circle197" />
+    <circle
+       cx="177.59"
+       cy="99.26"
+       r="3.20"
+       id="circle198" />
+    <circle
+       cx="187.83"
+       cy="96.34"
+       r="3.20"
+       id="circle199" />
+    <circle
+       cx="198.23"
+       cy="94.06"
+       r="3.20"
+       id="circle200" />
+    <circle
+       cx="219.36"
+       cy="91.45"
+       r="3.20"
+       id="circle201" />
+  </g>
+  <path
+     d="M230.00,264.00L208.76,92.43"
+     fill="none"
+     stroke="#1f6f78"
+     stroke-width="4.2"
+     stroke-linecap="round"
+     id="path201" />
+  <circle
+     cx="208.76"
+     cy="92.43"
+     r="7"
+     fill="#1f6f78"
+     id="circle202" />
+  <circle
+     cx="230.00"
+     cy="264.00"
+     r="3.20"
+     fill="#000000"
+     fill-opacity="0.83"
+     id="circle203" />
+  <path
+     style="display:inline;opacity:0.83;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#2b2b2b;stroke-width:2.28157;stroke-dasharray:none;stroke-opacity:0.49"
+     id="path28494-1"
+     sodipodi:type="arc"
+     sodipodi:cx="229.70374"
+     sodipodi:cy="263.89502"
+     sodipodi:rx="12.376653"
+     sodipodi:ry="12.316368"
+     sodipodi:start="0.46461072"
+     sodipodi:end="0.43267107"
+     sodipodi:open="true"
+     sodipodi:arc-type="arc"
+     d="m 240.76841,269.41367 a 12.376653,12.316368 0 0 1 -16.52181,5.53585 12.376653,12.316368 0 0 1 -5.69469,-16.39662 12.376653,12.316368 0 0 1 16.43087,-5.79769 12.376653,12.316368 0 0 1 5.95709,16.30403" />
+  <g
+     id="panel-a-labels"
+     font-size="13.0">
+    <text
+       x="230.00"
+       y="81.92"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-90.00 230.00 81.92)"
+       id="text203">F1</text>
+    <text
+       x="241.21"
+       y="82.27"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-86.47 241.21 82.27)"
+       id="text204">F2</text>
+    <text
+       x="252.38"
+       y="83.30"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-82.94 252.38 83.30)"
+       id="text205">F3</text>
+    <text
+       x="263.46"
+       y="85.02"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-79.41 263.46 85.02)"
+       id="text206">F4</text>
+    <text
+       x="274.41"
+       y="87.42"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-75.88 274.41 87.42)"
+       id="text207">F5</text>
+    <text
+       x="285.20"
+       y="90.49"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-72.35 285.20 90.49)"
+       id="text208">F6</text>
+    <text
+       x="295.77"
+       y="94.22"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-68.82 295.77 94.22)"
+       id="text209">F7</text>
+    <text
+       x="306.10"
+       y="98.59"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-65.29 306.10 98.59)"
+       id="text210">F8</text>
+    <text
+       x="316.14"
+       y="103.59"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-61.76 316.14 103.59)"
+       id="text211">F9</text>
+    <text
+       x="325.85"
+       y="109.19"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-58.24 325.85 109.19)"
+       id="text212">F10</text>
+    <text
+       x="335.20"
+       y="115.39"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-54.71 335.20 115.39)"
+       id="text213">F11</text>
+    <text
+       x="344.15"
+       y="122.15"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-51.18 344.15 122.15)"
+       id="text214">F12</text>
+    <text
+       x="352.67"
+       y="129.44"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-47.65 352.67 129.44)"
+       id="text215">F13</text>
+    <text
+       x="360.72"
+       y="137.25"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-44.12 360.72 137.25)"
+       id="text216">F14</text>
+    <text
+       x="368.27"
+       y="145.54"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-40.59 368.27 145.54)"
+       id="text217">F15</text>
+    <text
+       x="375.30"
+       y="154.27"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-37.06 375.30 154.27)"
+       id="text218">F16</text>
+    <text
+       x="381.78"
+       y="163.43"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-33.53 381.78 163.43)"
+       id="text219">F17</text>
+    <text
+       x="387.69"
+       y="172.96"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-30.00 387.69 172.96)"
+       id="text220">F18</text>
+    <text
+       x="392.99"
+       y="182.84"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-26.47 392.99 182.84)"
+       id="text221">F19</text>
+    <text
+       x="397.68"
+       y="193.03"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-22.94 397.68 193.03)"
+       id="text222">F20</text>
+    <text
+       x="401.73"
+       y="203.48"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-19.41 401.73 203.48)"
+       id="text223">F21</text>
+    <text
+       x="405.13"
+       y="214.17"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-15.88 405.13 214.17)"
+       id="text224">F22</text>
+    <text
+       x="407.86"
+       y="225.05"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-12.35 407.86 225.05)"
+       id="text225">F23</text>
+    <text
+       x="409.93"
+       y="236.07"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-8.82 409.93 236.07)"
+       id="text226">F24</text>
+    <text
+       x="411.30"
+       y="247.20"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-5.29 411.30 247.20)"
+       id="text227">F25</text>
+    <text
+       x="411.99"
+       y="258.39"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-1.76 411.99 258.39)"
+       id="text228">F26</text>
+    <text
+       x="411.99"
+       y="269.61"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(1.76 411.99 269.61)"
+       id="text229">F27</text>
+    <text
+       x="411.30"
+       y="280.80"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(5.29 411.30 280.80)"
+       id="text230">F28</text>
+    <text
+       x="409.93"
+       y="291.93"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(8.82 409.93 291.93)"
+       id="text231">F29</text>
+    <text
+       x="407.86"
+       y="302.95"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(12.35 407.86 302.95)"
+       id="text232">F30</text>
+    <text
+       x="405.13"
+       y="313.83"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(15.88 405.13 313.83)"
+       id="text233">F31</text>
+    <text
+       x="401.73"
+       y="324.52"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(19.41 401.73 324.52)"
+       id="text234">F32</text>
+    <text
+       x="397.68"
+       y="334.97"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(22.94 397.68 334.97)"
+       id="text235">F33</text>
+    <text
+       x="392.99"
+       y="345.16"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(26.47 392.99 345.16)"
+       id="text236">F34</text>
+    <text
+       x="387.69"
+       y="355.04"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(30.00 387.69 355.04)"
+       id="text237">F35</text>
+    <text
+       x="381.78"
+       y="364.57"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(33.53 381.78 364.57)"
+       id="text238">F36</text>
+    <text
+       x="375.30"
+       y="373.73"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(37.06 375.30 373.73)"
+       id="text239">F37</text>
+    <text
+       x="368.27"
+       y="382.46"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(40.59 368.27 382.46)"
+       id="text240">F38</text>
+    <text
+       x="360.72"
+       y="390.75"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(44.12 360.72 390.75)"
+       id="text241">F39</text>
+    <text
+       x="352.67"
+       y="398.56"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(47.65 352.67 398.56)"
+       id="text242">F40</text>
+    <text
+       x="344.15"
+       y="405.85"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(51.18 344.15 405.85)"
+       id="text243">F41</text>
+    <text
+       x="335.20"
+       y="412.61"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(54.71 335.20 412.61)"
+       id="text244">F42</text>
+    <text
+       x="325.85"
+       y="418.81"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(58.24 325.85 418.81)"
+       id="text245">F43</text>
+    <text
+       x="316.14"
+       y="424.41"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(61.76 316.14 424.41)"
+       id="text246">F44</text>
+    <text
+       x="306.10"
+       y="429.41"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(65.29 306.10 429.41)"
+       id="text247">F45</text>
+    <text
+       x="295.77"
+       y="433.78"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(68.82 295.77 433.78)"
+       id="text248">F46</text>
+    <text
+       x="285.20"
+       y="437.51"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(72.35 285.20 437.51)"
+       id="text249">F47</text>
+    <text
+       x="274.41"
+       y="440.58"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(75.88 274.41 440.58)"
+       id="text250">F48</text>
+    <text
+       x="263.46"
+       y="442.98"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(79.41 263.46 442.98)"
+       id="text251">F49</text>
+    <text
+       x="252.38"
+       y="444.70"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(82.94 252.38 444.70)"
+       id="text252">F50</text>
+    <text
+       x="241.21"
+       y="445.73"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(86.47 241.21 445.73)"
+       id="text253">F51</text>
+    <text
+       x="230.00"
+       y="446.08"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(90.00 230.00 446.08)"
+       id="text254">F52</text>
+    <text
+       x="218.79"
+       y="445.73"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(273.53 218.79 445.73)"
+       id="text255">F53</text>
+    <text
+       x="207.62"
+       y="444.70"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(277.06 207.62 444.70)"
+       id="text256">F54</text>
+    <text
+       x="196.54"
+       y="442.98"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(280.59 196.54 442.98)"
+       id="text257">F55</text>
+    <text
+       x="185.59"
+       y="440.58"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(284.12 185.59 440.58)"
+       id="text258">F56</text>
+    <text
+       x="174.80"
+       y="437.51"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(287.65 174.80 437.51)"
+       id="text259">F57</text>
+    <text
+       x="164.23"
+       y="433.78"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(291.18 164.23 433.78)"
+       id="text260">F58</text>
+    <text
+       x="153.90"
+       y="429.41"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(294.71 153.90 429.41)"
+       id="text261">F59</text>
+    <text
+       x="143.86"
+       y="424.41"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(298.24 143.86 424.41)"
+       id="text262">F60</text>
+    <text
+       x="134.15"
+       y="418.81"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(301.76 134.15 418.81)"
+       id="text263">F61</text>
+    <text
+       x="124.80"
+       y="412.61"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(305.29 124.80 412.61)"
+       id="text264">F62</text>
+    <text
+       x="115.85"
+       y="405.85"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(308.82 115.85 405.85)"
+       id="text265">F63</text>
+    <text
+       x="107.33"
+       y="398.56"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(312.35 107.33 398.56)"
+       id="text266">F64</text>
+    <text
+       x="99.28"
+       y="390.75"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(315.88 99.28 390.75)"
+       id="text267">F65</text>
+    <text
+       x="91.73"
+       y="382.46"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(319.41 91.73 382.46)"
+       id="text268">F66</text>
+    <text
+       x="84.70"
+       y="373.73"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(322.94 84.70 373.73)"
+       id="text269">F67</text>
+    <text
+       x="78.22"
+       y="364.57"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(326.47 78.22 364.57)"
+       id="text270">F68</text>
+    <text
+       x="72.31"
+       y="355.04"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(330.00 72.31 355.04)"
+       id="text271">F69</text>
+    <text
+       x="67.01"
+       y="345.16"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(333.53 67.01 345.16)"
+       id="text272">F70</text>
+    <text
+       x="62.32"
+       y="334.97"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(337.06 62.32 334.97)"
+       id="text273">F71</text>
+    <text
+       x="58.27"
+       y="324.52"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(340.59 58.27 324.52)"
+       id="text274">F72</text>
+    <text
+       x="54.87"
+       y="313.83"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(344.12 54.87 313.83)"
+       id="text275">F73</text>
+    <text
+       x="52.14"
+       y="302.95"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(347.65 52.14 302.95)"
+       id="text276">F74</text>
+    <text
+       x="50.07"
+       y="291.93"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(351.18 50.07 291.93)"
+       id="text277">F75</text>
+    <text
+       x="48.70"
+       y="280.80"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(354.71 48.70 280.80)"
+       id="text278">F76</text>
+    <text
+       x="48.01"
+       y="269.61"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(358.24 48.01 269.61)"
+       id="text279">F77</text>
+    <text
+       x="48.01"
+       y="258.39"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(361.76 48.01 258.39)"
+       id="text280">F78</text>
+    <text
+       x="48.70"
+       y="247.20"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(365.29 48.70 247.20)"
+       id="text281">F79</text>
+    <text
+       x="50.07"
+       y="236.07"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(368.82 50.07 236.07)"
+       id="text282">F80</text>
+    <text
+       x="52.14"
+       y="225.05"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(372.35 52.14 225.05)"
+       id="text283">F81</text>
+    <text
+       x="54.87"
+       y="214.17"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(375.88 54.87 214.17)"
+       id="text284">F82</text>
+    <text
+       x="58.27"
+       y="203.48"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(379.41 58.27 203.48)"
+       id="text285">F83</text>
+    <text
+       x="62.32"
+       y="193.03"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(382.94 62.32 193.03)"
+       id="text286">F84</text>
+    <text
+       x="67.01"
+       y="182.84"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(386.47 67.01 182.84)"
+       id="text287">F85</text>
+    <text
+       x="72.31"
+       y="172.96"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(390.00 72.31 172.96)"
+       id="text288">F86</text>
+    <text
+       x="78.22"
+       y="163.43"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(393.53 78.22 163.43)"
+       id="text289">F87</text>
+    <text
+       x="84.70"
+       y="154.27"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(397.06 84.70 154.27)"
+       id="text290">F88</text>
+    <text
+       x="91.73"
+       y="145.54"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(400.59 91.73 145.54)"
+       id="text291">F89</text>
+    <text
+       x="99.28"
+       y="137.25"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(404.12 99.28 137.25)"
+       id="text292">F90</text>
+    <text
+       x="107.33"
+       y="129.44"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(407.65 107.33 129.44)"
+       id="text293">F91</text>
+    <text
+       x="115.85"
+       y="122.15"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(411.18 115.85 122.15)"
+       id="text294">F92</text>
+    <text
+       x="124.80"
+       y="115.39"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(414.71 124.80 115.39)"
+       id="text295">F93</text>
+    <text
+       x="134.15"
+       y="109.19"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(418.24 134.15 109.19)"
+       id="text296">F94</text>
+    <text
+       x="143.86"
+       y="103.59"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(421.76 143.86 103.59)"
+       id="text297">F95</text>
+    <text
+       x="153.90"
+       y="98.59"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(425.29 153.90 98.59)"
+       id="text298">F96</text>
+    <text
+       x="164.23"
+       y="94.22"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(428.82 164.23 94.22)"
+       id="text299">F97</text>
+    <text
+       x="174.80"
+       y="90.49"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(432.35 174.80 90.49)"
+       id="text300">F98</text>
+    <text
+       x="185.59"
+       y="87.42"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(435.88 185.59 87.42)"
+       id="text301">F99</text>
+    <text
+       x="196.54"
+       y="85.02"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(439.41 196.54 85.02)"
+       id="text302">F100</text>
+    <text
+       x="207.62"
+       y="83.30"
+       fill="#1f6f78"
+       font-weight="bold"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(442.94 207.62 83.30)"
+       id="text303">F101</text>
+    <text
+       x="218.79"
+       y="82.27"
+       fill="#171a18"
+       text-anchor="end"
+       dominant-baseline="middle"
+       transform="rotate(446.47 218.79 82.27)"
+       id="text304">F102</text>
+    <text
+       x="194.05754"
+       y="295.05795"
+       fill="#171a18"
+       text-anchor="start"
+       dominant-baseline="middle"
+       transform="rotate(-7.94)"
+       id="text205-6"
+       style="font-size:13px;stroke-width:1">1</text>
+  </g>
+  <text
+     x="230.00"
+     y="530.00"
+     text-anchor="middle"
+     font-size="27"
+     id="text305">102 feeders</text>
+  <text
+     x="230.00"
+     y="558.00"
+     text-anchor="middle"
+     font-size="27"
+     id="text306">10,321 buses</text>
+  <g
+     id="legend"
+     font-size="28.0" />
+  <g
+     id="g32466"
+     transform="matrix(3.037325,0,0,3.0489286,374.65291,-364.29502)"
+     style="display:inline"
+     inkscape:label="Substation1_if_alone">
+    <path
+       style="display:inline;opacity:0.83;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#2b2b2b;stroke-width:1.8;stroke-dasharray:none;stroke-opacity:0.494118"
+       id="path27712"
+       sodipodi:type="arc"
+       sodipodi:cx="-48.069801"
+       sodipodi:cy="206.05508"
+       sodipodi:rx="9.5019379"
+       sodipodi:ry="9.2105818"
+       sodipodi:start="0.46461072"
+       sodipodi:end="0.43267107"
+       sodipodi:open="true"
+       sodipodi:arc-type="arc"
+       d="m -39.575106,210.18211 a 9.5019379,9.2105818 0 0 1 -12.68431,4.13989 9.5019379,9.2105818 0 0 1 -4.371987,-12.26193 9.5019379,9.2105818 0 0 1 12.614491,-4.3357 9.5019379,9.2105818 0 0 1 4.573436,12.19269" />
+    <path
+       style="display:inline;opacity:0.83;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#2b2b2b;stroke-width:1.2;stroke-dasharray:none;stroke-opacity:0.49000001"
+       id="path28494"
+       sodipodi:type="arc"
+       sodipodi:cx="-48.069725"
+       sodipodi:cy="206.05507"
+       sodipodi:rx="6.595583"
+       sodipodi:ry="6.3933439"
+       sodipodi:start="0.46461072"
+       sodipodi:end="0.43267107"
+       sodipodi:open="true"
+       sodipodi:arc-type="arc"
+       d="m -42.1733,208.91977 a 6.595583,6.3933439 0 0 1 -8.804564,2.87362 6.595583,6.3933439 0 0 1 -3.034728,-8.51138 6.595583,6.3933439 0 0 1 8.7561,-3.00954 6.595583,6.3933439 0 0 1 3.17456,8.46331" />
+  </g>
 </svg>
