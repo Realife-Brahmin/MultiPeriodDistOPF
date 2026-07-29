@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from make_network_svg import (  # noqa: E402
     REPO, PV_FILL, PV_STROKE, BESS_FILL, BESS_STROKE, LINE_STROKE,
     SUBSTATION_FILL, SUBSTATION_STROKE, SVG_NS, namedview,
-    parse_edges, parse_buses, build_tree, force_layout,
+    parse_edges, parse_buses, build_tree, force_layout, ink_for, lighten,
 )
 
 BUS_FILL, BUS_STROKE = "#ffffff", "#3a3a3a"
@@ -110,7 +110,7 @@ def tidy_tree(root, children, depth):
 
 def _render_feeder_detailed(p, rep, rep_nodes, rep_pv, rep_bess, all_edges,
                             parent, children, depth, x0, w, top_pad, plot_h,
-                            aspect=2.5, bus_labels=False):
+                            aspect=2.5, bus_labels=False, ink="#000000"):
     """One-line diagram of a single feeder: every bus drawn and numbered.
 
     The earlier schematic did draw all 101 buses, but at r=2.1 against BESS rings
@@ -196,7 +196,7 @@ def _render_feeder_detailed(p, rep, rep_nodes, rep_pv, rep_bess, all_edges,
     #   BESS ring r     6.29 / bus_r     = 2.00   (concentric, behind the dot)
     #   label size      9.88 / bus_r     = 3.14
     br_w = bus_r * 0.48
-    p.append(f'<g id="feeder-branches" fill="none" stroke="#000000" '
+    p.append(f'<g id="feeder-branches" fill="none" stroke="{ink}" '
              f'stroke-opacity="0.83" stroke-width="{br_w:.2f}" '
              f'stroke-linecap="round" stroke-linejoin="round">')
     seg = [f"M{fx(parent[u]):.2f},{fy(parent[u]):.2f}L{fx(u):.2f},{fy(u):.2f}"
@@ -234,8 +234,8 @@ def _render_feeder_detailed(p, rep, rep_nodes, rep_pv, rep_bess, all_edges,
     # and the number as separate Times New Roman text beside it -- not a number
     # inside a white circle, which is what made this figure read as a different
     # drawing convention from the ieee123 one-line diagram.
-    p.append(f'<g id="feeder-buses" fill="#000000" fill-opacity="0.83" '
-             f'stroke="#000000" stroke-width="{bus_r * 0.1:.2f}">')
+    p.append(f'<g id="feeder-buses" fill="{ink}" fill-opacity="0.83" '
+             f'stroke="{ink}" stroke-width="{bus_r * 0.1:.2f}">')
     for u in rep_nodes:
         p.append(f'<circle cx="{fx(u):.2f}" cy="{fy(u):.2f}" r="{bus_r:.2f}"/>')
     p.append("</g>")
@@ -246,7 +246,7 @@ def _render_feeder_detailed(p, rep, rep_nodes, rep_pv, rep_bess, all_edges,
     # figure the labels fall to ~3.5 pt, below anything printable.
     vis = "" if bus_labels else 'style="display:none" '
     p.append(f'<g id="feeder-bus-labels" {vis}font-family="{FONT}" font-size="{fs:.2f}" '
-             f'fill="#000000" stroke="{LINE_STROKE}" '
+             f'fill="{ink}" stroke="{LINE_STROKE}" '
              f'stroke-width="{fs * 0.02:.2f}" stroke-opacity="0.63" '
              f'text-anchor="middle">')
     for u in rep_nodes:
@@ -265,7 +265,8 @@ def _render_feeder_detailed(p, rep, rep_nodes, rep_pv, rep_bess, all_edges,
 
 def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="black",
            panel="both", alternate=None, labels=None, label_every=1, label_size=None,
-           bare=False, feeder_style="detailed", feeder_aspect=2.5, bus_labels=False):
+           bare=False, feeder_style="detailed", feeder_aspect=2.5, bus_labels=False,
+           tint=None):
     # Labels are worth it on the standalone star, where there is room; on the
     # two-panel figure the star is under half the width and they would be noise.
     if labels is None:
@@ -365,6 +366,13 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
     ]
 
     # ---------------- panel (a): macro ----------------
+    # System ink replaces plain black for the network's own structure. The two
+    # alternating stub tones become light/dark steps of that ink rather than of
+    # neutral grey, so the alternation and the colour coding coexist.
+    ink = tint or "#000000"
+    stub_dark = lighten(ink, 0.36) if tint else STUB_DARK
+    stub_light = lighten(ink, 0.68) if tint else STUB_LIGHT
+
     n = len(feeders)
     if show_a:
         # Feeder index is positional: sorted by head-bus number, F1 outward from
@@ -382,7 +390,8 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
         for f, (x2, y2) in tips.items():
             if f == rep:
                 continue  # drawn last, on top
-            stroke = (STUB_DARK if index[f] % 2 else STUB_LIGHT) if alternate else LINE_STROKE
+            stroke = ((stub_dark if index[f] % 2 else stub_light) if alternate
+                      else (tint or LINE_STROKE))
             p.append(
                 f'<path d="M{pa_cx:.2f},{pa_cy:.2f}L{x2:.2f},{y2:.2f}" '
                 f'stroke="{stroke}" stroke-width="1.6" stroke-opacity="0.85"/>'
@@ -391,7 +400,7 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
 
         # Feeder-head bus at every stub tip. Adjacent tips sit 2*pi*pa_r/n apart
         # (~12 units at n=102), so head_r must stay under ~5 or the ring fuses solid.
-        p.append('<g id="panel-a-heads" fill="#000000" fill-opacity="0.83">')
+        p.append(f'<g id="panel-a-heads" fill="{ink}" fill-opacity="0.83">')
         for f, (x2, y2) in tips.items():
             if f == rep:
                 continue
@@ -413,7 +422,7 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
         else:
             p.append(
                 f'<circle cx="{pa_cx:.2f}" cy="{pa_cy:.2f}" r="{head_r:.2f}" '
-                f'fill="#000000" fill-opacity="0.83"/>'
+                f'fill="{ink}" fill-opacity="0.83"/>'
             )
 
         # Feeder labels, rotated to run along their own spoke. At n=102 the
@@ -452,7 +461,7 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
         _render_feeder_detailed(
             p, rep, rep_nodes, rep_pv, rep_bess, edges, parent, children, depth,
             pb_x0, pb_w, top_pad, plot_h, aspect=feeder_aspect,
-            bus_labels=bus_labels,
+            bus_labels=bus_labels, ink=ink,
         )
     elif show_b:
         p.append(
@@ -629,6 +638,10 @@ def main():
     ap.add_argument("--feeder-style", choices=("detailed", "schematic"), default="detailed",
                     help="'detailed' draws every bus as a numbered circle in an "
                          "organic layout; 'schematic' is the old dendrogram")
+    ap.add_argument("--tint", nargs="?", const="auto", default=None, metavar="HEX",
+                    help="colour buses, branches and feeder stubs with the "
+                         "system's ink; bare flag derives it from the system "
+                         "name, or pass a hex")
     ap.add_argument("--bus-labels", action=argparse.BooleanOptionalAction, default=False,
                     help="render the per-bus numbers in the feeder panel; when off "
                          "they are still written to the SVG but display:none, so "
@@ -649,7 +662,8 @@ def main():
            head_r=args.head_r, substation_style=args.substation, panel=args.panel,
            alternate=args.alternate, labels=args.labels, label_every=args.label_every,
            label_size=args.label_size, bare=args.bare, feeder_style=args.feeder_style,
-           feeder_aspect=args.feeder_aspect, bus_labels=args.bus_labels)
+           feeder_aspect=args.feeder_aspect, bus_labels=args.bus_labels,
+           tint=(ink_for(args.system) if args.tint == "auto" else args.tint))
 
 
 if __name__ == "__main__":

@@ -41,6 +41,38 @@ SVG_NS = (
 )
 
 
+# Per-system ink for buses and branches: the paper's system colour (ieeeC/medC/
+# lgC) mixed 45% into black. Applied to the network's own structure rather than
+# a background wash, and kept dark on purpose -- at full saturation med2552's
+# gold would be indistinguishable from the PV squares and ieee123's blue from
+# the teal BESS rings. Dark enough to read as near-black, tinted enough to
+# identify the system.
+SYSTEM_BASE = {
+    "ieee123": (31, 81, 134),    # ieeeC #1F5186  blue
+    "ieee2552": (184, 134, 11),  # medC  #B8860B  gold
+    "large10k": (34, 120, 34),   # lgC   #227822  green
+}
+INK_MIX = 0.45
+
+
+def _hex(rgb):
+    return "#%02x%02x%02x" % tuple(max(0, min(255, int(round(v)))) for v in rgb)
+
+
+def ink_for(system, mix=INK_MIX):
+    """System ink for buses/branches, or None if the system is unrecognised."""
+    for key, rgb in SYSTEM_BASE.items():
+        if system.lower().startswith(key):
+            return _hex(tuple(c * mix for c in rgb))
+    return None
+
+
+def lighten(hex_colour, amount):
+    """Blend a colour toward white; used for the alternating feeder stubs."""
+    r, g, b = (int(hex_colour[i:i + 2], 16) for i in (1, 3, 5))
+    return _hex(tuple(c + (255 - c) * amount for c in (r, g, b)))
+
+
 def namedview(page="#ffffff", desk="#c8c8c8"):
     """Inkscape document view settings, so the editing canvas opens white.
 
@@ -283,7 +315,8 @@ def legend_svg(vb_w, vb_h, corner, pv_size, bess_r, line_w,
 
 def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_path,
            depth_scale="linear", legend="top-left", edge_style="dendrogram",
-           layout="radial", force_iters=300, legend_visible=False, der_scale=1.0):
+           layout="radial", force_iters=300, legend_visible=False, der_scale=1.0,
+           tint=None):
     raw = REPO / "rawData" / system
     edges = parse_edges(raw / "BranchData.dss")
     if not edges:
@@ -348,8 +381,9 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
     bus_r = max(0.55, min(5.0, 0.30 * med_e))
 
     # --- branches -----------------------------------------------------------
+    ink = tint or "#000000"
     parts.append(
-        f'<g id="branches" fill="none" stroke="#000000" stroke-opacity="0.83" '
+        f'<g id="branches" fill="none" stroke="{ink}" stroke-opacity="0.83" '
         f'stroke-width="{bus_r * 0.48:.2f}" stroke-linecap="round" '
         f'stroke-linejoin="round">'
     )
@@ -428,7 +462,7 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
     parts.append("</g>")
 
     parts.append(
-        f'<g id="buses" fill="#000000" fill-opacity="0.83" stroke="#000000" '
+        f'<g id="buses" fill="{ink}" fill-opacity="0.83" stroke="{ink}" '
         f'stroke-width="{bus_r * 0.1:.2f}">'
     )
     for b in order:
@@ -485,6 +519,10 @@ def main():
     ap.add_argument("--legend", default="top-left",
                     choices=("top-left", "top-right", "bottom-left", "bottom-right", "none"),
                     help="legend corner, or 'none' to leave it out of the file entirely")
+    ap.add_argument("--tint", nargs="?", const="auto", default=None, metavar="HEX",
+                    help="colour the buses and branches with the system's ink "
+                         "(paper colour mixed into black); bare flag derives it "
+                         "from the system name, or pass a hex")
     ap.add_argument("--der-scale", type=float, default=1.0,
                     help="enlarge PV/BESS markers relative to the ieee123 ratio; "
                          "needed on dense feeders where the bus dot is tiny")
@@ -505,6 +543,7 @@ def main():
         force_iters=args.force_iters,
         legend_visible=args.legend_visible,
         der_scale=args.der_scale,
+        tint=(ink_for(args.system) if args.tint == "auto" else args.tint),
     )
 
 
