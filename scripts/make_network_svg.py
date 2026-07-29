@@ -30,6 +30,39 @@ LINE_STROKE = "#7b7b7b"
 SUBSTATION_FILL, SUBSTATION_STROKE = "#c51919", "#5c0000"
 
 
+# The sodipodi URI must be sodipodi-0.dtd exactly; sodipodi-0.0.dtd is a
+# different namespace and Inkscape then treats <sodipodi:namedview> as an
+# unknown element ("unknown type: sodipodi0:namedview") and ignores it.
+SVG_NS = (
+    'xmlns="http://www.w3.org/2000/svg" '
+    'xmlns:svg="http://www.w3.org/2000/svg" '
+    'xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" '
+    'xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"'
+)
+
+
+def namedview(page="#ffffff", desk="#c8c8c8"):
+    """Inkscape document view settings, so the editing canvas opens white.
+
+    Without this element Inkscape supplies its own defaults, which follow a dark
+    UI theme -- and any page colour set by hand is lost the next time the file is
+    regenerated. pageopacity matters as much as pagecolor: at 0 the page is
+    transparent and the (dark) desk shows straight through it, so a white
+    pagecolor alone still renders dark.
+
+    pageopacity=1 also makes exports land on opaque white rather than
+    transparent, which is what these figures want -- they are going onto a white
+    page, and a transparent background renders dark in some PDF viewers.
+    """
+    return (
+        f'<sodipodi:namedview id="namedview" pagecolor="{page}" '
+        f'bordercolor="#666666" borderopacity="1.0" '
+        f'inkscape:pageopacity="1" inkscape:pagecheckerboard="0" '
+        f'inkscape:showpageshadow="0" inkscape:deskcolor="{desk}" '
+        f'inkscape:document-units="mm"/>'
+    )
+
+
 def parse_edges(path):
     """Return [(bus1, bus2)] from `New Line.` records."""
     edges = []
@@ -186,7 +219,7 @@ def force_layout(order, edges, pos0, iterations=300, seed=0):
 
 
 def legend_svg(vb_w, vb_h, corner, pv_size, bess_r, line_w,
-               n_pv_only, n_bess_only, n_both, combo_r):
+               n_pv_only, n_bess_only, n_both, combo_r, hidden=False):
     """Legend block, sized in viewBox units, in Times to match the paper body font.
 
     Rows with a zero count are dropped, so ieee2552C (every DER bus hosts both)
@@ -212,7 +245,12 @@ def legend_svg(vb_w, vb_h, corner, pv_size, bess_r, line_w,
     x = pad if corner.endswith("left") else vb_w - pad - 0.34 * vb_w
     y = pad + slot if corner.startswith("top") else vb_h - pad - len(rows) * row
 
-    out = [f'<g id="legend" font-family="Times New Roman, Times, serif" font-size="{fs}">']
+    # Hidden rather than omitted: display:none keeps the group in the file and
+    # togglable from Inkscape's Objects panel, so the legend can be brought back
+    # without regenerating. The LaTeX caption carries this information instead.
+    vis = 'style="display:none" ' if hidden else ""
+    out = [f'<g id="legend" {vis}font-family="Times New Roman, Times, serif" '
+           f'font-size="{fs}">']
     for i, (kind, label) in enumerate(rows):
         cx, cy = x + slot, y + i * row
         if kind == "substation":
@@ -245,7 +283,7 @@ def legend_svg(vb_w, vb_h, corner, pv_size, bess_r, line_w,
 
 def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_path,
            depth_scale="linear", legend="top-left", edge_style="dendrogram",
-           layout="radial", force_iters=300):
+           layout="radial", force_iters=300, legend_visible=False, der_scale=1.0):
     raw = REPO / "rawData" / system
     edges = parse_edges(raw / "BranchData.dss")
     if not edges:
@@ -284,19 +322,36 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
     out_h_mm = size_mm * vb_h / vb_w
 
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+        f'<svg {SVG_NS} version="1.1" '
         f'width="{out_w_mm:.2f}mm" height="{out_h_mm:.2f}mm" '
         f'viewBox="0 0 {vb_w:.2f} {vb_h:.2f}">',
+        namedview(),
         f"<title>{system} radial network diagram</title>",
         f"<desc>{len(order)} buses, {len(edges)} branches, "
         f"{len(pv_buses)} PV, {len(bess_buses)} BESS. "
         f"Layout computed from topology (no bus coordinates in source data).</desc>",
     ]
 
+    # Cosmetics follow ieee123C so all three system figures read as one family.
+    # Ratios measured from that file against its bus-dot radius of 3.142:
+    #   branch stroke 1.50 -> 0.48   (black, opacity 0.83)
+    #   PV square     10.12 -> 3.22  (concentric, behind the dot)
+    #   BESS ring      6.29 -> 2.00  (concentric, behind the dot)
+    # The dot itself is sized from the layout's own median edge length, since
+    # these feeders differ hugely in density (2.5k vs 10.3k buses).
+    elens = sorted(
+        math.hypot(sx(pos[u][0]) - sx(pos[parent[u]][0]),
+                   sy(pos[u][1]) - sy(pos[parent[u]][1]))
+        for u in order if parent[u] is not None
+    )
+    med_e = elens[len(elens) // 2] if elens else 10.0
+    bus_r = max(0.55, min(5.0, 0.30 * med_e))
+
     # --- branches -----------------------------------------------------------
     parts.append(
-        f'<g id="branches" fill="none" stroke="{LINE_STROKE}" '
-        f'stroke-width="{line_w}" stroke-linecap="round" stroke-opacity="0.85">'
+        f'<g id="branches" fill="none" stroke="#000000" stroke-opacity="0.83" '
+        f'stroke-width="{bus_r * 0.48:.2f}" stroke-linecap="round" '
+        f'stroke-linejoin="round">'
     )
     seg = []
     for u in order:
@@ -334,25 +389,19 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
     both = pv_buses & bess_buses
     bess_only = bess_buses - both
     pv_only = pv_buses - both
-    combo_r = max(bess_r, pv_size * 0.78)
+    # ieee123's PV/BESS ratios hold at 128 buses. At 2.5k-10k buses the dot is
+    # tiny and the DER markers inherit that, becoming invisible at column width,
+    # so they scale independently. A deliberate departure from ieee123 -- the
+    # alternative is markers no reader can resolve.
+    pv_size = bus_r * 3.22 * der_scale
+    bess_r = bus_r * 2.00 * der_scale
+    combo_r = bess_r
 
+    # PV first (largest), then BESS, then every bus as a black dot on top -- the
+    # ieee123C stacking, so no marker buries the bus it belongs to.
     parts.append(
-        f'<g id="bess-indicators" fill="{BESS_FILL}" stroke="{BESS_STROKE}" '
-        f'stroke-width="{line_w * 1.6:.2f}" stroke-opacity="0.85">'
-    )
-    for b in sorted(bess_only):
-        if b in pos:
-            x, y = pos[b]
-            parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="{bess_r}"/>')
-    for b in sorted(both):
-        if b in pos:
-            x, y = pos[b]
-            parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="{combo_r:.2f}"/>')
-    parts.append("</g>")
-
-    parts.append(
-        f'<g id="pv-indicators" fill="{PV_FILL}" stroke="{PV_STROKE}" '
-        f'stroke-width="{line_w * 1.2:.2f}" stroke-opacity="0.8" fill-opacity="0.9">'
+        f'<g id="pv-indicators" fill="{PV_FILL}" fill-opacity="0.802" '
+        f'stroke="{PV_STROKE}" stroke-width="{bus_r * 0.48:.2f}">'
     )
     for b in sorted(pv_buses):
         if b not in pos:
@@ -360,22 +409,46 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
         x, y = pos[b]
         parts.append(
             f'<rect x="{sx(x) - pv_size / 2:.2f}" y="{sy(y) - pv_size / 2:.2f}" '
-            f'width="{pv_size}" height="{pv_size}"/>'
+            f'width="{pv_size:.2f}" height="{pv_size:.2f}"/>'
         )
+    parts.append("</g>")
+
+    parts.append(
+        f'<g id="bess-indicators" fill="{BESS_FILL}" fill-opacity="0.55" '
+        f'stroke="{BESS_STROKE}" stroke-width="{bus_r * 0.64:.2f}">'
+    )
+    for b in sorted(bess_only):
+        if b in pos:
+            x, y = pos[b]
+            parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="{bess_r:.2f}"/>')
+    for b in sorted(both):
+        if b in pos:
+            x, y = pos[b]
+            parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="{combo_r:.2f}"/>')
+    parts.append("</g>")
+
+    parts.append(
+        f'<g id="buses" fill="#000000" fill-opacity="0.83" stroke="#000000" '
+        f'stroke-width="{bus_r * 0.1:.2f}">'
+    )
+    for b in order:
+        x, y = pos[b]
+        parts.append(f'<circle cx="{sx(x):.2f}" cy="{sy(y):.2f}" r="{bus_r:.2f}"/>')
     parts.append("</g>")
 
     # --- substation ---------------------------------------------------------
     rx, ry = pos[root]
     parts.append(
         f'<g id="substation"><circle cx="{sx(rx):.2f}" cy="{sy(ry):.2f}" '
-        f'r="{bess_r * 2.6:.2f}" fill="{SUBSTATION_FILL}" stroke="{SUBSTATION_STROKE}" '
-        f'stroke-width="{line_w * 2:.2f}"/></g>'
+        f'r="{bus_r * 2.6:.2f}" fill="{SUBSTATION_FILL}" stroke="{SUBSTATION_STROKE}" '
+        f'stroke-width="{bus_r * 0.5:.2f}"/></g>'
     )
 
     if legend:
         parts.append(
-            legend_svg(vb_w, vb_h, legend, pv_size, bess_r, line_w,
-                       len(pv_only), len(bess_only), len(both), combo_r)
+            legend_svg(vb_w, vb_h, legend, pv_size, bess_r, bus_r * 0.48,
+                       len(pv_only), len(bess_only), len(both), combo_r,
+                       hidden=not legend_visible)
         )
 
     parts.append("</svg>")
@@ -411,7 +484,13 @@ def main():
                     help="dendrogram routing avoids edge crossings on deep feeders")
     ap.add_argument("--legend", default="top-left",
                     choices=("top-left", "top-right", "bottom-left", "bottom-right", "none"),
-                    help="legend corner, or 'none' to omit")
+                    help="legend corner, or 'none' to leave it out of the file entirely")
+    ap.add_argument("--der-scale", type=float, default=1.0,
+                    help="enlarge PV/BESS markers relative to the ieee123 ratio; "
+                         "needed on dense feeders where the bus dot is tiny")
+    ap.add_argument("--legend-visible", action=argparse.BooleanOptionalAction, default=False,
+                    help="render the legend; when off it is still written to the SVG "
+                         "but display:none, so it stays togglable in Inkscape")
     ap.add_argument("--out", default=None, help="output path (default assets/networks/<system>.svg)")
     args = ap.parse_args()
 
@@ -424,6 +503,8 @@ def main():
         edge_style=args.edge_style,
         layout=args.layout,
         force_iters=args.force_iters,
+        legend_visible=args.legend_visible,
+        der_scale=args.der_scale,
     )
 
 
