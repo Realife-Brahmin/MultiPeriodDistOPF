@@ -43,7 +43,7 @@ SVG_NS = (
 
 # Per-system ink for buses and branches: the paper's system colour (ieeeC/medC/
 # lgC) mixed 45% into black. Applied to the network's own structure rather than
-# a background wash, and kept dark on purpose -- at full saturation med2552's
+# a background wash, and kept dark on purpose -- at full saturation med2522's
 # gold would be indistinguishable from the PV squares and ieee123's blue from
 # the teal BESS rings. Dark enough to read as near-black, tinted enough to
 # identify the system.

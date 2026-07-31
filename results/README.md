@@ -13,7 +13,7 @@ vectors, model dumps) is *not* tracked — it is regenerated locally under
   the BF time is the wall-clock at MUMPS memory-exhaustion failure (BF never converges).
 
 - **`trajectory/`** — the raw convergence data for the two BF-vs-tADMM trajectory figures
-  (Figs. 2–3 of the paper): `med2552_T144/` (winner `rho0 = 50000`) and
+  (Figs. 2–3 of the paper): `med2522_T144/` (winner `rho0 = 50000`) and
   `large10k_T48/` (winner `rho0 = 30000`). Each contains the winning tADMM run's
   `convergence_data.csv`, `near_optimal_summary.csv`, `results_socp_tadmm.txt` plus the
   BF `results_socp_bf.txt` and `ipopt_bf.log`. These feed

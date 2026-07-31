@@ -56,7 +56,7 @@ Balanced single-phase OpenDSS feeders in [`rawData/`](rawData/):
 | Name | Buses | Notes |
 |------|-------|-------|
 | `ieee123C_1ph`  | 128    | IEEE 123-node, small (solution-quality reference) |
-| `ieee2552C_1ph` | 2,552  | synthetic medium feeder |
+| `ieee2552C_1ph` | 2,522  | synthetic medium feeder |
 | `large10kC_1ph` | 10,321 | synthetic large feeder (primary scalability benchmark) |
 
 ## Repository layout
@@ -87,7 +87,7 @@ takes the feeder directory name:
 | Paper | `SYSTEM_OVERRIDE` |
 |-------|-------------------|
 | ieee123  | `ieee123C_1ph`  |
-| med2552  | `ieee2552C_1ph` |
+| med2522  | `ieee2552C_1ph` |
 | large10k | `large10kC_1ph` |
 
 **Start here.** The cheapest cell that shows a real speedup takes well under a minute:

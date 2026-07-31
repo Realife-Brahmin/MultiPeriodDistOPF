@@ -14,7 +14,7 @@ PROC = "envs/tadmm/processedData"
 OUT  = "../IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition/figures"
 
 CASES = [
-    dict(key="med2552_T144", bf="ieee2552C_1ph_T144",
+    dict(key="med2522_T144", bf="ieee2552C_1ph_T144",
          tcsv="ieee2552C_1ph_T144/convergence_data.csv"),
     dict(key="large10k_T48", bf="large10kC_1ph_T48",
          tcsv="large10kC_1ph_T48/rho_sweep/rho_30000/convergence_data.csv"),
