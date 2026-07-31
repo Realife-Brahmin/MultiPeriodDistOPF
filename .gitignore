@@ -1,5 +1,8 @@
-# Julia resolved manifests (reproduced via `Pkg.instantiate()`)
+# Julia resolved manifests are ignored by default, with one deliberate exception:
+# envs/tadmm/Manifest.toml is tracked so that the published results reproduce
+# against the exact package versions they were produced with. Do not untrack it.
 **/Manifest.toml
+!envs/tadmm/Manifest.toml
 
 # Generated experiment outputs.
 # Regenerated locally by run_bf.jl / run_tadmm.jl / run_rho_sweep.jl.
@@ -20,3 +23,10 @@ gks*.png
 
 # Intermediate data-conversion outputs (only final systems kept in rawData/)
 rawData/flexparams_10k_1ph/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Assistant session notes -- local working material, not part of the repo
+.claude/

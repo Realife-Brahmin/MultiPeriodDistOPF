@@ -56,7 +56,7 @@ Balanced single-phase OpenDSS feeders in [`rawData/`](rawData/):
 | Name | Buses | Notes |
 |------|-------|-------|
 | `ieee123C_1ph`  | 128    | IEEE 123-node, small (solution-quality reference) |
-| `ieee2552C_1ph` | 2,552  | synthetic medium feeder |
+| `ieee2552C_1ph` | 2,522  | synthetic medium feeder |
 | `large10kC_1ph` | 10,321 | synthetic large feeder (primary scalability benchmark) |
 
 ## Repository layout
@@ -66,6 +66,7 @@ config.jl, run_bf.jl, run_tadmm.jl   core entry points (edit config, then run)
 run_rho_sweep.jl                     penalty (rho0) tuning sweep
 tadmm_socp.jl                        single-file interactive runner (VS Code)
 envs/tadmm/                          Julia project + parser/validators/logger/plotter
+envs/ddp/, envs/multi_poi/           other methods in this repo (not used by the paper)
 rawData/                             OpenDSS feeder models
 results/                            curated final-winner results (summary.csv + trajectories)
 plots/                               figure-generation scripts
@@ -75,8 +76,47 @@ docs/                                installation guide
 
 ## Reproducing paper results
 
-Winning `rho0` per `(system, T)` is listed in [`results/summary.csv`](results/summary.csv).
-To regenerate a cell's full penalty sweep:
+Every reported `(system, T)` cell — winning penalty `rho0`, BF time, tADMM near-optimal
+time, speedup — is in [`results/summary.csv`](results/summary.csv);
+[`results/README.md`](results/README.md) explains the layout and how the trajectory
+figures are produced.
+
+**Paper name → system ID.** `summary.csv` and the paper use the short names; the code
+takes the feeder directory name:
+
+| Paper | `SYSTEM_OVERRIDE` |
+|-------|-------------------|
+| ieee123  | `ieee123C_1ph`  |
+| med2522  | `ieee2552C_1ph` |
+| large10k | `large10kC_1ph` |
+
+**Start here.** The cheapest cell that shows a real speedup takes well under a minute:
+
+```bash
+SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=6 RHO_OVERRIDE=4000 \
+  JULIA_NUM_THREADS=16 julia run_tadmm.jl     # ~30 s, expect ~1.27x over BF
+```
+
+Reproduce any other cell by taking its `rho0_winner` from `summary.csv` and passing it
+as `RHO_OVERRIDE`, with `T_OVERRIDE` set to that row's `T`.
+
+**Know the cost before you start.** Times below are from a 16-thread run; tADMM parallelises
+over periods, so fewer threads will be proportionally slower.
+
+| Cell | tADMM | BF baseline | Note |
+|------|-------|-------------|------|
+| `ieee123C_1ph`, any `T` | seconds | seconds | solution-quality check; tADMM is *slower* here by design |
+| `ieee2552C_1ph`, `T=6..48` | 0.5–9 min | 0.6–12 min | good middle ground |
+| `ieee2552C_1ph`, `T=144` | ~23 min | ~3.5 h | the 9.31x headline |
+| `large10kC_1ph`, `T=48` | ~1.6 h | **fails after ~4.9 h** | see below |
+
+**The `large10k, T=48` BF run is *supposed* to fail.** That is the paper's headline
+result: the monolithic solve exhausts memory during MUMPS factorisation (~10.5 GB) and
+never converges, while tADMM completes. If you run `run_bf.jl` on that cell expecting a
+solution, you have not misconfigured anything — the reported "BF time" is the wall-clock
+at failure. Budget ~16 GB RAM to observe it.
+
+To regenerate a cell's full penalty sweep rather than a single run:
 
 ```bash
 SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia run_rho_sweep.jl
