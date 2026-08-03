@@ -9,6 +9,11 @@
 # The curated final-winner subset is tracked under results/ instead.
 envs/*/processedData/
 
+# Upstream clone of the authors' FilterDDP.jl, checked out under ddp/external/
+# for the FilterDDP evaluation. It carries its own .git, so tracking it here
+# would create an embedded repository.
+ddp/external/
+
 # Local review / scratch artifacts (not part of the repo)
 logs/
 pngs_review/
