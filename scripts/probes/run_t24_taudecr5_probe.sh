@@ -25,7 +25,7 @@ run_sweep() {
   TAU_INCR_OVERRIDE=2 \
   TAU_DECR_OVERRIDE="${TAUDECR}" \
   MU_BALANCE_OVERRIDE=5 \
-    julia --project=envs/tadmm --threads=16 run_rho_sweep.jl
+    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_rho_sweep.jl
   echo "[$(date +%H:%M:%S)] Done T=${T} rho=${RHO} tau_decr=${TAUDECR}"
 }
 

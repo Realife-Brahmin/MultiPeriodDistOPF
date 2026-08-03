@@ -61,6 +61,11 @@ const C_B = 1e-6 * minimum(LoadShapeCost)
 # OUTPUT DIRECTORIES
 # ============================================================================
 
-const ENV_PATH = joinpath(@__DIR__, "envs", "tadmm")
-const PROCESSED_DATA_DIR = joinpath(@__DIR__, "envs", "tadmm", "processedData")
+# These scripts live in envs/tadmm/root_level/ while tADMM is parked; they are
+# meant to sit at the repo root when it is the active project (same convention as
+# envs/ddp/root_level/ and envs/multi_poi/root_level/). Anchoring on the parent of
+# this directory keeps them working from either location.
+const ENV_PATH = basename(@__DIR__) == "root_level" ?
+    dirname(@__DIR__) : joinpath(@__DIR__, "envs", "tadmm")
+const PROCESSED_DATA_DIR = joinpath(ENV_PATH, "processedData")
 const SYSTEM_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(T)")

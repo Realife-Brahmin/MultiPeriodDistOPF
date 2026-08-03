@@ -13,7 +13,7 @@ for REP in 3 4 5 6; do
   echo "=================================================================="
   SYSTEM_OVERRIDE=ieee2552C_1ph \
   T_OVERRIDE=24 \
-    julia --project=envs/tadmm --threads=16 run_bf.jl
+    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_bf.jl
   cp "$DIR/results_socp_bf.txt" "$DIR/results_socp_bf_run${REP}.txt"
   cp "$DIR/ipopt_bf.log"        "$DIR/ipopt_bf_run${REP}.log"
   WT=$(grep 'Wall-clock' "$DIR/results_socp_bf.txt" | awk '{print $3}')

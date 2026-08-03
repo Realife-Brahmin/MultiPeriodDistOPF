@@ -3,7 +3,8 @@
 A small, version-controlled snapshot of the **final (winner) results** behind the
 IAS-Trans tADMM paper. Full per-run output (every `rho` in each sweep, solution `.jls`
 vectors, model dumps) is *not* tracked — it is regenerated locally under
-`envs/tadmm/processedData/` by `run_tadmm.jl` / `run_rho_sweep.jl`.
+`envs/tadmm/processedData/` by `envs/tadmm/root_level/run_tadmm.jl` /
+`envs/tadmm/root_level/run_rho_sweep.jl`.
 
 ## Contents
 
@@ -25,5 +26,5 @@ Winning `rho0` values per cell are in `summary.csv` (and the paper's Appendix A)
 regenerate any cell's full sweep:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia run_rho_sweep.jl
+SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
 ```

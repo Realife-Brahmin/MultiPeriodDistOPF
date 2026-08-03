@@ -9,6 +9,6 @@ echo "[$(date +%H:%M:%S)] Starting T=24 BF re-run"
 
 SYSTEM_OVERRIDE=ieee2552C_1ph \
 T_OVERRIDE=24 \
-  julia --project=envs/tadmm --threads=16 run_bf.jl
+  julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_bf.jl
 
 echo "[$(date +%H:%M:%S)] Done T=24 BF re-run"
