@@ -1,0 +1,49 @@
+﻿=== Stage 5 ===
+==============================================================================
+Stage 5 — copper-plate battery, T = 3, equality constraints only
+==============================================================================
+data: p_L = [1.0, 1.6, 1.2]
+      c   = [0.3, 0.55, 0.4]
+      C_B = 0.500, B_0 = 2.000, Δt = 1.000, w = 5.000  (lossless battery)
+
+--- independent reference solutions ---
+closed form : Psub = [ 1.1032258065  1.4532258065  1.2032258065]  J = 1.635766129032
+dense KKT   : Psub = [ 1.1032258065  1.4532258065  1.2032258065]  J = 1.635766129032
+agreement between the two references: max|ΔPsub| = 2.220e-16, |ΔJ| = 2.887e-15
+
+--- FilterDDP solves from three initial control trajectories ---
+init ū          iters status termination                     objective       |Δ J|     max bal     max dyn
+zeros               1      0 Optimal solution found           1.635766   0.000e+00   2.220e-16   0.000e+00
+flat-demand         1      0 Optimal solution found           1.635766   0.000e+00   0.000e+00   0.000e+00
+bad/far             1      0 Optimal solution found           1.635766   1.776e-15   2.887e-15   0.000e+00
+
+--- detailed result (init = zeros) ---
+iterations            : 1
+termination           : Optimal solution found (status 0)
+objective (solver)    : 1.635766129032
+objective (recomputed): 1.635766129032
+objective (reference) : 1.635766129032
+objective gap         : 0.000e+00
+primal inf (solver)   : 2.220e-16
+dual inf   (solver)   : 2.331e-15
+max power-balance res : 2.220e-16
+max dynamics res      : 0.000e+00
+time-index res        : 0.000e+00
+terminal energy res   : 4.032e-02   (B_end = 1.9596774194, target 2.0000000000)
+max |Psub - Psub_ref| : 8.882e-16
+max |P_B  - P_B_ref|  : 7.772e-16
+final regularisation  : 0.000e+00
+
+  t       Psub          P_B            B        Psub_ref      P_B_ref
+  1    1.1032258   -0.1032258    2.0000000    1.1032258   -0.1032258
+  2    1.4532258    0.1467742    2.1032258    1.4532258    0.1467742
+  3    1.2032258   -0.0032258    1.9564516    1.2032258   -0.0032258
+  4            -            -    1.9596774            -    1.9596774
+
+--- probe: w = 0 (terminal energy term removed) ---
+With w = 0 the horizon separates into T independent single-period problems,
+each with the unique minimiser P_B^t = c^t / (2·C_B).
+predicted P_B = [0.3, 0.55, 0.4]
+FilterDDP P_B = [0.3, 0.55, 0.4]   (iters 1, status 0)
+max deviation from the separable prediction: 5.551e-17
+=> confirms w > 0 is what couples the periods in the equality-only instance.

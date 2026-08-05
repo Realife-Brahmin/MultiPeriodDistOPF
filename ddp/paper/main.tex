@@ -1,0 +1,50 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,patterns}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage[table]{xcolor}
+\usepackage{titlesec}
+\usepackage{balance}
+
+\graphicspath{{./figures/}}
+
+% Same heading/float spacing as the tADMM paper, so this file can be lifted into
+% that document (or its successor) without visual drift.
+\titlespacing*{\section}{0pt}{1.5ex plus 0.4ex minus 1.2ex}{0.5ex plus 0.2ex minus 0.4ex}
+\titlespacing*{\subsection}{0pt}{1.2ex plus 0.3ex minus 1.0ex}{0.4ex plus 0.2ex minus 0.3ex}
+\titlespacing*{\subsubsection}{0pt}{1.0ex plus 0.3ex minus 0.8ex}{0.3ex plus 0.1ex minus 0.2ex}
+\setlength{\textfloatsep}{10pt plus 2pt minus 5pt}
+\setlength{\floatsep}{10pt plus 2pt minus 5pt}
+\setlength{\intextsep}{10pt plus 2pt minus 5pt}
+\setlength{\abovecaptionskip}{1ex plus 0.2ex minus 0.5ex}
+\setlength{\belowcaptionskip}{0.5ex plus 0.2ex minus 0.3ex}
+
+\begin{document}
+
+\title{A Minimal Copper-Plate Storage-Scheduling Benchmark for\\
+Differential Dynamic Programming}
+
+\author{Aryan Ritwajeet Jha,~\IEEEmembership{Student~Member,~IEEE}}
+
+\markboth{IEEE TRANSACTIONS ON INDUSTRY APPLICATIONS (WORKING NOTE)}%
+{Jha: A Minimal Copper-Plate Storage-Scheduling Benchmark for DDP}
+
+\maketitle
+
+% Only the optimization model is typeset at this stage.  Motivation, solver
+% description, numerical results and discussion are deliberately omitted.
+\input{sections/copper_plate_model}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

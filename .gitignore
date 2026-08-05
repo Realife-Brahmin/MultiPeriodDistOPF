@@ -14,8 +14,16 @@ envs/*/processedData/
 # would create an embedded repository.
 ddp/external/
 
+# Third-party papers fetched from arXiv for the FilterDDP evaluation, and their
+# text extractions. Not ours to redistribute from a public repo; re-fetch with
+# the commands in ddp/README_FILTERDDP_EXPERIMENT.md.
+ddp/papers/
+
 # Local review / scratch artifacts (not part of the repo)
 logs/
+# ...except the FilterDDP evaluation's logs, which are its evidence: the status
+# table in ddp/README_FILTERDDP_EXPERIMENT.md links to them.
+!ddp/logs/
 pngs_review/
 gks*.png
 

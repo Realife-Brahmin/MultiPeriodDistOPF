@@ -1,0 +1,101 @@
+# Changes made during the FilterDDP experiment
+
+## Changes to the authors' repository: none
+
+`ddp/external/FilterDDP.jl` is at upstream commit `513a104` and
+`git status --porcelain` on it is **empty**. No source file, example or result file was
+modified. Concretely:
+
+- **No code fixes were needed.** The repository installed, precompiled and ran its example
+  correctly on the first attempt under Julia 1.12.6. Nothing was patched, no warnings were
+  suppressed and no tolerance was loosened to obtain a passing run.
+- `Pkg.instantiate()` created `Manifest.toml` files inside the clone. These are
+  **gitignored upstream** (`.gitignore:24`), so they do not dirty the tree.
+- `Pkg.instantiate()` rewrote `experiments/filterddp/Project.toml` with CRLF line endings
+  on Windows. `git diff` showed **no content change**, only line endings. Restored with
+  `git checkout -- experiments/filterddp/Project.toml`.
+- Running `experiments/filterddp/double_integrator.jl` unmodified overwrites
+  `experiments/filterddp/results/double_integrator.txt` inside the authors' tree, because
+  the script writes there by design. The shipped file was copied to
+  `results/official_example/double_integrator_AUTHORS_shipped.txt` **before** the run, our
+  output was copied to `..._OUR_run.txt`, and the original was then restored. Both are kept
+  so the reproduction can be checked (they agree — see README).
+
+## Environment decisions
+
+| Decision | Reason |
+| --- | --- |
+| **Julia 1.12.6**, not 1.13.0-beta3 | `Project.toml` declares `julia = "1.12.4"`; 1.12.6 satisfies it. The paper's beta is a benchmarking detail, not a requirement. Everything ran clean, so no pin was needed. |
+| `--startup-file=no` on every invocation | The user's global `startup.jl` loads Revise and OhMyREPL, which emit precompile noise into the logs and are irrelevant to reproducibility. Discovered during the Stage 2 smoke test. |
+| Separate project at `ddp/env/` for our own examples | Keeps the Stage 5/6 work from depending on, or writing into, the authors' `experiments/filterddp` environment. |
+| Papers downloaded from arXiv | The brief said they would be at `papers/`; they were not present anywhere on disk. Fetched `2504.08278` and `2606.01487` and extracted text with `pdftotext -layout` (the PDF reader in use misreports these files as password-protected; they are not, and have no `/Encrypt` dictionary). |
+
+## Corrections to my own work
+
+- **`copper_plate_battery.jl`, Note 3.** I originally asserted that `w = 0` would make the
+  reduced Hessian singular and the solution non-unique, and wrote a probe to demonstrate it.
+  The probe **refuted the claim**: with `w = 0` the solve still converged in one iteration
+  with zero regularisation and returned the same trajectory from two very different
+  starting guesses. The reason is that the balance equality ties `pb` to `pg`, so the null
+  space of `∇_u c = [1,1]` is spanned by `(1,-1)`, along which the cost has curvature
+  `2a(τ) > 0`. The note and the probe's commentary were rewritten to state the negative
+  result. `w > 0` is about inter-period coupling and physical sense, not well-posedness.
+- **Stage 6, `T = 6` all-bounds configuration.** My first choice of bounds
+  (`pg ≤ 1.25`, `pb ≤ 0.4`) was **infeasible**: period 4 has `d = 1.8` but
+  `pg + pb ≤ 1.65`. The reference solver correctly reported no KKT point; I had it error
+  out rather than return `nothing`. Fixed both: the reference now returns `nothing` for an
+  empty feasible set, the `T = 6` case uses feasible bounds, and the infeasible
+  configuration was kept deliberately as probe **6g** because FilterDDP's behaviour on it
+  is informative.
+- **Objective changed to the tADMM paper's form (2026-08-04).** Stages 5-6 originally used
+  `Σ a^t(P_Subs^t)² + b^t P_Subs^t`, with `a^t > 0` chosen purely to get strict convexity
+  and a closed-form reference. That is not the objective the MPOPF work actually uses, and
+  it was not needed: the paper's `Σ c^t P_Subs^t Δt + C_B Σ (P_B^t)² Δt` is strictly convex
+  on the feasible set through `C_B` alone. Both example files, both reference solutions and
+  the model section were switched over. **This changed a reported result:** under the old
+  objective Stage 6d exited status 7 and the tolerance sweep failed below `~1e-9`; under
+  the new one it converges in 16 iterations and certifies to `1e-12`. The earlier "accuracy
+  floor" finding was an artefact of my objective choice and has been corrected in
+  `README_FILTERDDP_EXPERIMENT.md` and `MPOPF_APPLICABILITY.md` §4 and §7.
+- **Round-trip efficiency `η` removed entirely (2026-08-04).** The storage dynamic was
+  written `B^{t+1} = B^t − η·P_B^t·Δt` with `η = 1`. A single `η` applied to a *signed*
+  `P_B` cannot be right in both directions: charging stores `η_c·|P_B|`, but discharging
+  `P_B` into the bus must drain `P_B/η_d`, and `η` and `1/η` coincide only at `η = 1`.
+  Carrying the symbol at unity was an invitation for someone to later set it to `0.95` and
+  get a quietly wrong model, so it was dropped and the battery is now explicitly lossless —
+  matching the tADMM paper, which is also lossless. **No numerical result changed**, since
+  `η` was `1.0` throughout. The paper gained a paragraph on why, and a remark on what a
+  proper two-efficiency model would cost in the DDP setting: `P_c, P_d ≥ 0` map onto native
+  control bounds and keep the rank condition comfortably (`n_u = 3` vs `n_c = 1`), but
+  non-simultaneity `P_c·P_d = 0`, if ever imposed explicitly rather than left implicit,
+  becomes a complementarity constraint whose Jacobian loses rank exactly at the solutions
+  of interest.
+- **`Δt` is now carried symbolically in the code.** It previously existed only in the
+  model section, with the code hardcoding `Δt = 1`; the two agreed only because the
+  instance sets `Δt = 1`. Closed.
+- **Bug in my own reference solver, found by a nonsense result.** The active-set
+  enumeration accepted a subset whose KKT matrix is *singular* — e.g. `Psub[1] ≤ 1.35` and
+  `Psub[1] ≥ 0` both active. Julia's `\` does not always throw on those; it returned a
+  least-squares vector that happened to be primal and dual feasible, so it was accepted as
+  the optimum. This produced a "reference" objective of `317.555` against FilterDDP's
+  correct `3.676` at T = 6 — i.e. **the solver was right and my reference was wrong.**
+  Fixed by checking that the KKT system was actually solved (`‖K·sol − rhs‖` small), not
+  merely that its output looks feasible.
+- **Stage 6 bound sets corrected.** The T = 3 "all bounds" case combined the 6a and 6b caps,
+  which is infeasible: `Psub ≤ 1.35` with `P_B ≤ 0.10` caps period 2 at `1.45 < p_L = 1.6`.
+  Each bound worked alone only because the other variable was free to cover the peak.
+  Loosened so the combined set is feasible while still binding. The T = 6 all-bounds case
+  had no active constraints at all and was tightened so it tests something.
+- Two PowerShell quoting bugs of mine (not repository issues) produced spurious failures
+  that are visible in the logs and then corrected in place: the Stage 2 smoke test lost its
+  string quotes, and `Pkg.test("FilterDDP")` lost its argument to native-command argument
+  parsing. Both were rerun correctly; `logs/tests.log` contains the failed attempt followed
+  by the corrected one.
+
+## Things deliberately not done
+
+- No feasibility restoration phase was added, no penalty was substituted for FilterDDP's
+  method, and no convergence tolerance was weakened to turn a failure into a pass. Stage 6d
+  and 6g are reported as failures because they are failures.
+- No distribution-network architecture was built. Stopped at the copper-plate model, as
+  instructed.
