@@ -18,6 +18,14 @@
    git clone <repo-url>
    ```
    or just copy the folder.
+2. Fetch any reference papers not tracked in git:
+   ```bash
+   bash scripts/fetch_resources.sh
+   ```
+   This reads every `resources/MANIFEST.txt` in the repo and downloads whatever
+   listed file is missing locally. Safe to re-run any time — files already
+   present are left alone. Report any `[MISSING, no url given]` lines to
+   whoever maintains that folder.
 2. In VS Code, click File → Open Folder… and select the MultiPeriodDistOPF folder.
 
 ---
