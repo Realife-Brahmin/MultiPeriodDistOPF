@@ -18,7 +18,8 @@ genuine limitations surfaced and are documented below rather than smoothed over.
 > `C_B` carrying the reduced-Hessian curvature instead, the same case converges cleanly to
 > `1e-12`. Both are recorded because the contrast is itself the useful result.
 
-Everything here was run on 2026-08-03. The authors' clone is **unmodified** (see
+Stages 1-7 were run on 2026-08-03. Stage 8 was added, and every result regenerated
+against the tADMM instance data, on 2026-08-07. The authors' clone is **unmodified** (see
 [notes/CHANGES.md](notes/CHANGES.md)).
 
 ---
@@ -32,16 +33,16 @@ Everything here was run on 2026-08-03. The authors' clone is **unmodified** (see
 | 2 — official test suite | **NOT ATTEMPTED** | [logs/tests.log](logs/tests.log): no `test/` directory, no test target; `Pkg.test()` → *"Package FilterDDP did not provide a `test/runtests.jl` file"* | **the repository ships no tests** |
 | 3 — smallest official example | **PASS** | [logs/stage3_official_example.log](logs/stage3_official_example.log): 51 iters, obj `1.26574863e+00`, primal `8.09e-08` — **identical to the authors' shipped file to all 9 printed digits** | none |
 | 4 — document the API | **PASS** | [notes/FILTERDDP_API.md](notes/FILTERDDP_API.md), every claim sourced to a file:line | none |
-| 5 — copper-plate battery, T = 3, equality only | **PASS** | [results/copper_plate/stage5_output.log](results/copper_plate/stage5_output.log): objective gap **exactly `0.0`**, `max\|ΔPsub\| 8.9e-16`, balance residual `2.2e-16`, dynamics residual **exactly 0**, converged in 1 iteration from all 3 starts | none |
-| 6a — grid-power bound | **PASS** | [results/copper_plate/stage6_output.log](results/copper_plate/stage6_output.log): 9 iters, status 0, `\|ΔJ\| 0.0`, reference active set **empty** — substation import has no upper limit, and `P_Subs ≥ 0` never binds | none |
-| 6b — battery-power bounds | **PASS** | same log: 13 iters, status 0, `\|ΔJ\| 3.7e-11`, active set `P_B[2]≤0.10` matches | none |
-| 6c — energy bounds (slack reformulation) | **PASS** | same log: 14 iters, status 0, `\|ΔJ\| 1.1e-10`, all three active bounds `B[2]≤2.05`, `B[3]≥1.98`, `B[4]≥1.98` matched | none |
-| 6d — all bounds together, T = 3 | **PASS** | same log: 14 iters, status 0, `\|ΔJ\| 1.1e-10`, active set `B[2]≤2.05`, `B[3]≥1.98`, `B[4]≥1.98` matches | none |
-| 6f — tolerance sweep on 6d | **PASS** | same log: status 0 at every tolerance from `1e-6` down to `1e-12`, `\|ΔJ\|` falling monotonically to `6.0e-13` | none |
-| 6 — T = 6 | **PASS** | same log: grid bounds 15 iters, all-bounds 15 iters, both status 0, `\|ΔJ\| = 1.1e-10`, active sets matched | none |
-| 6g — infeasible bound set (probe) | **FAIL, as designed** | same log: returns status 7 with primal residual `0.225`; independent enumeration confirms the feasible set is empty | **no infeasibility diagnosis — status 7 means both "infeasible" and "hard"** |
+| 5 — copper-plate battery, T = 3, equality only | **PASS** | [results/copper_plate/stage5_output.log](results/copper_plate/stage5_output.log): objective gap `1.1e-16`, the two independent references agree to `2.0e-15`, converged in 1 iteration from all 3 starts | none |
+| 6a — grid-power bound | **PASS** | [results/copper_plate/stage6_output.log](results/copper_plate/stage6_output.log): 10 iters, status 0, `\|ΔJ\| 2.2e-16`, reference active set **empty** — substation import has no upper limit, and `P_Subs ≥ 0` never binds | none |
+| 6b — battery-power bounds | **PASS** | same log: 14 iters, status 0, `\|ΔJ\| 1.4e-10`, active set `P_B[1..3]≤0.004` (all three) matches | none |
+| 6c — energy bounds (slack reformulation) | **PASS** | same log: 18 iters, status 0, `\|ΔJ\| 2.0e-11`, both active bounds `B[2]≤1.995`, `B[4]≥1.9895` matched | none |
+| 6d — all bounds together, T = 3 | **PASS** | same log: 24 iters, status 0, `\|ΔJ\| 4.6e-11`, active set `B[4]≥1.9895` matches | none |
+| 6f — tolerance sweep on 6d | **PASS** | same log: status 0 at every tolerance from `1e-6` down to `1e-12`, `\|ΔJ\|` falling to `4.5e-13` (16 → 28 iterations) | none |
+| 6 — T = 6 | **PASS** | same log: all-bounds 19 iters, status 0, `\|ΔJ\| 1.9e-10`, five active bounds (`B[2]≤1.99`, `P_B[2]≤0.045`, `B[4]≥1.92`, `P_B[5]≥-0.045`, `B[6]≤1.99`) matched | none |
+| 6g — infeasible bound set (probe) | **FAIL, as designed** | same log: returns status 7 with primal residual `0.638`; independent enumeration confirms the feasible set is empty | **no infeasibility diagnosis — status 7 means both "infeasible" and "hard"** |
 | 7 — MPOPF applicability assessment | **PASS** | [notes/MPOPF_APPLICABILITY.md](notes/MPOPF_APPLICABILITY.md) | none |
-| 8 — centralized JuMP/Ipopt cross-check | **PASS** | all 7 feasible cases agree with a third, fully independent solver: worst objective gap `1.1e-10`, worst trajectory disagreement `1.7e-09`, machine precision (`2e-16`) on both base instances. Added 2026-08-07 | none |
+| 8 — centralized JuMP/Ipopt cross-check | **PASS** | all 7 feasible cases agree with a third, fully independent solver: worst objective gap `1.9e-10`, worst trajectory disagreement `6.3e-06` (case 6d, a tolerance effect — 6f drives it to `4.5e-13`), machine precision on both base instances. Added 2026-08-07 | none |
 
 Status labels are used strictly: no stage is PASS without a number behind it.
 
@@ -60,15 +61,17 @@ ddp/
 ├── logs/                            unedited terminal output for every stage
 ├── results/
 │   ├── official_example/            our run vs the authors' shipped numbers
-│   └── copper_plate/                Stage 5 and 6 output
+│   └── copper_plate/                Stage 5, 6 and 8 output
 ├── examples/power_system/
+│   ├── tadmm_profiles.jl            the shared tADMM load/price series
 │   ├── copper_plate_battery.jl      Stage 5 model + 2 independent references
 │   ├── copper_plate_battery_bounds.jl  Stage 6 bounds + active-set QP reference
 │   ├── copper_plate_centralized.jl  Stage 8: eq:cp_all in JuMP/Ipopt, no reduction
 │   └── verify_against_centralized.jl   Stage 8: FilterDDP vs that reference
 ├── papers/                          the two arXiv papers + text extractions
-├── env/                             our Julia project (FilterDDP dev'd from the clone)
 └── external/FilterDDP.jl/           unmodified upstream clone @ 513a104
+
+(the Julia environment lives at envs/ddp2026, outside this tree)
 ```
 
 ## Reproducing
@@ -102,9 +105,9 @@ julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/copper_
 julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/verify_against_centralized.jl
 ```
 
-Stages 5 and 6 were re-run under `envs/ddp2026` on 2026-08-07 and reproduce the
-recorded logs exactly (9 / 13 / 14 / 14 / 13 iterations, identical gaps). The
-original `ddp/env` was removed the same day: its `Manifest.toml` was never
+All logs were regenerated on 2026-08-07 after the instance data was switched to
+the tADMM profiles (see below), so the numbers in the table above are current.
+The original `ddp/env` was removed the same day: its `Manifest.toml` was never
 tracked, so it recorded nothing `envs/ddp2026/Project.toml` does not, and keeping
 two environments for one stack invites drift. It remains in git history.
 
@@ -141,7 +144,7 @@ nowhere else to live; `d(τ)`, `a(τ)`, `b(τ)` are Lagrange interpolants throug
 exact at `τ = 1,2,3` and smooth. The terminal energy target is a *cost*, not a constraint —
 see the next section. Verified against a closed-form solution **and** an independently
 constructed dense-KKT solve of the same QP; the two references agree with each other to
-`6.7e-16`.
+`2.0e-15`.
 
 ## Two limitations worth knowing before going further
 
@@ -180,16 +183,22 @@ through the slack control of `eq:ocp_slack`, and it carries `B^{T+1}` as an
 explicit variable. Agreement therefore tests the *reformulation*, not just the
 solver.
 
-| case | J (FilterDDP) | J (Ipopt) | `\|ΔJ\|` | max `\|ΔPsub\|` | max `\|ΔB\|` |
-| --- | --- | --- | --- | --- | --- |
-| base, T=3 | 1.63576613 | 1.63576613 | `2.2e-16` | `4.4e-16` | `4.4e-16` |
-| base, T=6 | 3.61219836 | 3.61219836 | `8.9e-16` | `4.4e-16` | `2.2e-16` |
-| 6a, T=3 | 1.63576613 | 1.63576613 | `0.0` | `4.5e-12` | `4.5e-12` |
-| 6b, T=3 | 1.63738095 | 1.63738095 | `3.7e-11` | `5.3e-10` | `3.7e-10` |
-| 6c, T=3 | 1.64220000 | 1.64220000 | `1.1e-10` | `7.4e-10` | `4.6e-10` |
-| 6d, T=3 | 1.64220000 | 1.64220000 | `1.1e-10` | `7.4e-10` | `4.6e-10` |
-| 6e, T=6 | 3.61288095 | 3.61288095 | `7.3e-11` | `1.2e-09` | `1.7e-09` |
-| 6g, T=6 | — | **LOCALLY_INFEASIBLE** | — | — | — |
+| case | iters | J (FilterDDP) | J (Ipopt) | `\|ΔJ\|` | max `\|ΔPsub\|` | max `\|ΔB\|` |
+| --- | --- | --- | --- | --- | --- | --- |
+| base, T=3 | 1 | 0.73496564 | 0.73496564 | `2.2e-16` | `4.4e-16` | `4.4e-16` |
+| base, T=6 | 1 | 1.50735130 | 1.50735130 | `2.2e-16` | `2.2e-16` | `4.4e-16` |
+| 6a, T=3 | 10 | 0.73496564 | 0.73496564 | `1.1e-16` | `1.8e-12` | `2.0e-12` |
+| 6b, T=3 | 14 | 0.73497803 | 0.73497803 | `1.4e-10` | `2.8e-09` | `8.5e-09` |
+| 6c, T=3 | 18 | 0.73501534 | 0.73501534 | `2.0e-11` | `4.4e-09` | `4.4e-09` |
+| 6d, T=3 | 24 | 0.73501365 | 0.73501365 | `4.6e-11` | `6.3e-06` | `6.3e-06` |
+| 6e, T=6 | 19 | 1.50764344 | 1.50764344 | `1.9e-10` | `2.3e-08` | `2.1e-08` |
+| 6g, T=6 | 12 | — | **LOCALLY_INFEASIBLE** | — | — | — |
+
+The `6.3e-06` on 6d is a barrier-tolerance effect, not a disagreement: the Stage 6f
+sweep drives the same case to `\|ΔJ\| = 4.5e-13` at `tol = 1e-12`. Objectives agree
+to `~1e-10` throughout. Iteration counts are roughly 1.5x those on the previous
+hand-picked data, because the tADMM price spread is narrower and the bounds that
+bind are correspondingly tighter.
 
 Ipopt also reproduces the closed form of `eq:cp_closed_form` on both base
 instances to `2e-16`, making three mutually independent references there.
@@ -199,16 +208,37 @@ On 6g the cross-check earns its keep: Ipopt returns `LOCALLY_INFEASIBLE` and so
 it returns for a merely hard problem. That is the missing feasibility-restoration
 phase showing up as a concrete difference in what a caller can conclude.
 
-> **Known weakness of the instance data.** Demand and price in
-> [Table `tab:cp_data`](paper/sections/copper_plate_model.tex) are almost exactly
-> collinear: Pearson `r = 0.9968`, `R² = 0.9935`, `c ≈ 0.4104·p_L − 0.107`. This
-> does not corrupt the optimum — from `eq:cp_closed_form` the optimal `P_B` depends
-> on `c` alone, with `p_L` entering only through the balance — but it badly weakens
-> the benchmark's *discriminating power*: a solver or reformulation that transposed
-> `c` and `p_L` (easy, since both are interpolants of the same `τ`) would barely
-> move the answer. Real day-ahead price/load correlation is nearer 0.6–0.8, and can
-> go negative midday under high solar. Decorrelating the price series would make
-> this a materially stronger test.
+> **Instance data: the tADMM profiles.** As of 2026-08-07 demand and price are the
+> same series the tADMM experiments use, taken from
+> `envs/tadmm/root_level/config.jl` and shared through
+> [examples/power_system/tadmm_profiles.jl](examples/power_system/tadmm_profiles.jl):
+> `p_L^t = 2·λ^t` with `λ^t = 0.8 + 0.1(sin(θ−0.8)+1)` and
+> `c^t = 0.08 + 0.06(sin θ + 1)`, sampled at `θ ∈ range(0, 2π, T)`.
+>
+> This **resolves** the collinearity weakness of the previous hand-picked series
+> (Pearson `r = 0.9968`). The `−0.8` rad phase offset on the load gives `r = 0.644`
+> at `T = 6` and `0.682` at `T = 24` — the range real day-ahead price/load
+> correlation actually occupies, and enough separation that transposing `c` and
+> `p_L` would now show up.
+>
+> Two properties of the sampling matter and are not defects to be fixed:
+> both endpoints of `[0, 2π]` are included, so `c^1 = c^T` for every `T`; and at
+> `T = 3` the samples land on `0, π, 2π` where `sin` vanishes, so **the price is
+> constant** and that instance has no arbitrage signal at all. Its optimal `P_B`
+> is identical in every period, set purely by the terminal penalty. T = 3 remains
+> a valid — and usefully symmetric — solver test, but the economics live at T = 6.
+>
+> The profiles **resample** with `T`: `tadmm_cost(3)` is not `tadmm_cost(6)[1:3]`.
+> Any code that slices a fixed vector is wrong.
+>
+> One thing was *not* adopted: tADMM sets `C_B = 1e-6·min(c) ≈ 8e-8`, which here
+> would be fatal. `C_B` is exactly the reduced-Hessian curvature, and at that
+> magnitude `Q = 2·C_B·Δt·I + 2·w·Δt²·11ᵀ` degenerates to a rank-1 matrix, so the
+> closed-form and active-set references stop being unique and the benchmark loses
+> the very thing that makes it a reference. `C_B = 0.5` is kept. The consequence
+> is that the battery here is cost-limited rather than bound-limited as it is in
+> tADMM, so its economic swing is small (`P_B ∈ [-0.055, 0.059]` at `T = 6`) and
+> the bounds chosen to bind are correspondingly tight.
 
 ## Where this leaves the MPOPF question
 

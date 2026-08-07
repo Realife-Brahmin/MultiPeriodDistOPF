@@ -40,8 +40,9 @@ const T_ = Float64
 # Data -- identical to copper_plate_battery_bounds.jl
 # ---------------------------------------------------------------------------
 
-const PL6 = T_[1.0, 1.6, 1.2, 1.8, 0.9, 1.4]        # demand p_L^t
-const C6  = T_[0.30, 0.55, 0.40, 0.62, 0.25, 0.48]  # energy price c^t
+# Demand p_L^t and price c^t come from the tADMM profiles; see tadmm_profiles.jl.
+include("tadmm_profiles.jl")
+
 const C_B = T_(0.5)                                 # throughput coefficient
 const Δt  = T_(1.0)                                 # period length
 const B_0 = T_(2.0)                                 # initial stored energy
@@ -60,8 +61,8 @@ bound set infeasible.
 """
 function centralized(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
                      B_lo = -Inf, B_hi = Inf, tol = 1e-12, verbose = false)
-    pL = PL6[1:T]
-    c  = C6[1:T]
+    pL = tadmm_pL(T)
+    c  = tadmm_cost(T)
 
     m = Model(Ipopt.Optimizer)
     verbose || set_silent(m)
@@ -128,7 +129,7 @@ end
 # ---------------------------------------------------------------------------
 
 function closed_form(T::Int)
-    pL = PL6[1:T]; c = C6[1:T]
+    pL = tadmm_pL(T); c = tadmm_cost(T)
     s  = sum(c) / (2 * C_B + 2 * T * W * Δt)
     pb = (c .- 2 * W * Δt * s) ./ (2 * C_B)
     psub = pL .- pb
@@ -148,10 +149,10 @@ const CASES = [
     ("base_T3", 3, NamedTuple()),
     ("base_T6", 6, NamedTuple()),
     ("6a_T3",   3, (ps_lo = 0.0,)),
-    ("6b_T3",   3, (pb_lo = -0.5, pb_hi = 0.10)),
-    ("6c_T3",   3, (B_lo = 1.98, B_hi = 2.05)),
-    ("6d_T3",   3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.10, B_lo = 1.98, B_hi = 2.05)),
-    ("6e_T6",   6, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.30, B_lo = 1.85, B_hi = 2.10)),
+    ("6b_T3",   3, (pb_lo = -0.5, pb_hi = 0.004)),
+    ("6c_T3",   3, (B_lo = 1.9895, B_hi = 1.995)),
+    ("6d_T3",   3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)),
+    ("6e_T6",   6, (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045, B_lo = 1.92, B_hi = 1.99)),
     ("6g_T6",   6, (ps_lo = 0.0, pb_lo = 0.0, pb_hi = 0.30, B_lo = 2.05, B_hi = 2.10)),
 ]
 
@@ -190,7 +191,8 @@ function main()
                     maximum(abs.(r.B .- cf.B)))
         end
 
-        bal = maximum(abs(r.psub[t] + r.pb[t] - PL6[t]) for t = 1:T)
+        pLc = tadmm_pL(T)
+        bal = maximum(abs(r.psub[t] + r.pb[t] - pLc[t]) for t = 1:T)
         dyn = maximum(abs(r.B[t+1] - (r.B[t] - r.pb[t] * Δt)) for t = 1:T)
         @printf("  max balance residual %.3e   max dynamics residual %.3e\n", bal, dyn)
 

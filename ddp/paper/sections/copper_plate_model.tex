@@ -115,8 +115,13 @@ P_B^k = \frac{c^k - 2 w \Delta t\, s}{2 C_B} .
 \toprule
 \textbf{Interval $t$} & $1$ & $2$ & $3$ & $4$ & $5$ & $6$ \\
 \midrule
-Demand $p_L^t$     & $1.0$  & $1.6$  & $1.2$  & $1.8$  & $0.9$  & $1.4$ \\
-Energy price $c^t$ & $0.30$ & $0.55$ & $0.40$ & $0.62$ & $0.25$ & $0.48$ \\
+\multicolumn{7}{l}{\textit{Horizon $T = 6$}} \\
+Demand $p_L^t$     & $1.657$ & $1.888$ & $1.998$ & $1.834$ & $1.623$ & $1.657$ \\
+Energy price $c^t$ & $0.140$ & $0.197$ & $0.175$ & $0.105$ & $0.083$ & $0.140$ \\
+\midrule
+\multicolumn{7}{l}{\textit{Horizon $T = 3$} --- resampled, \emph{not} a prefix of the above} \\
+Demand $p_L^t$     & $1.657$ & $1.943$ & $1.657$ & \multicolumn{3}{c}{---} \\
+Energy price $c^t$ & $0.140$ & $0.140$ & $0.140$ & \multicolumn{3}{c}{---} \\
 \bottomrule
 \end{tabular}
 
@@ -137,8 +142,8 @@ Throughput $C_B$         & $0.5$ & Terminal weight $w$  & $5.0$ \\
 \toprule
 \textit{Bounds, constrained variants only} & $T = 3$ & $T = 6$ \\
 \midrule
-$P_B^{\min},\,P_B^{\max}$    & $-0.5,\;0.10$ & $-0.5,\;0.30$ \\
-$B^{\min},\,B^{\max}$        & $1.98,\;2.05$ & $1.85,\;2.10$ \\
+$P_B^{\min},\,P_B^{\max}$    & $-0.5,\;0.004$    & $-0.045,\;0.045$ \\
+$B^{\min},\,B^{\max}$        & $1.9895,\;1.9965$ & $1.92,\;1.99$ \\
 \bottomrule
 \end{tabular}
 
@@ -146,7 +151,19 @@ $B^{\min},\,B^{\max}$        & $1.98,\;2.05$ & $1.85,\;2.10$ \\
 
 \raggedright
 \footnotesize All quantities are in per unit; with $\Delta t = 1$, power and
-energy are numerically interchangeable.  $T = 3$ uses the first three intervals,
-$T = 6$ all six.  Figs.~\ref{fig:input_curves} and~\ref{fig:schedule} both show
-the $T = 6$ case.
+energy are numerically interchangeable.  The series are the tADMM load and price
+profiles, $p_L^t = 2\,\lambda^t$ with
+$\lambda^t = 0.8 + 0.1(\sin(\theta^t - 0.8) + 1)$ and
+$c^t = 0.08 + 0.06(\sin\theta^t + 1)$, sampled at
+$\theta^t \in \mathrm{range}(0, 2\pi, T)$.  They therefore \emph{resample} with
+$T$: the $T = 3$ row is not the first three entries of the $T = 6$ row.  Two
+consequences of that sampling are worth stating plainly.  First, both endpoints
+of $[0, 2\pi]$ are included, so $c^1 = c^T$ for every $T$.  Second, at $T = 3$ the
+samples fall at $0$, $\pi$ and $2\pi$, where $\sin$ vanishes, so \emph{the price
+is constant} and the $T = 3$ instance carries no arbitrage signal at all --- its
+optimal $P_B^t$ is the same in every period and is set purely by the terminal
+penalty.  The $-0.8$ phase offset on the load is what keeps the two series from
+being collinear; their Pearson correlation is $0.644$ at $T = 6$.  Bounds apply
+only to the constrained variants.  Figs.~\ref{fig:input_curves}
+and~\ref{fig:schedule} both show the $T = 6$ case.
 \end{table}

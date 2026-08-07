@@ -12,8 +12,11 @@
 #
 # Run:  julia --startup-file=no ddp/paper/figures/make_input_curves.jl
 
-const PL = [1.0, 1.6, 1.2, 1.8, 0.9, 1.4]          # demand p_L^t   [p.u.]
-const C  = [0.30, 0.55, 0.40, 0.62, 0.25, 0.48]    # price   c^t    [$/p.u.h]
+# The per-period data are the tADMM profiles at T = 6, identical to
+# envs/tadmm/root_level/config.jl and to ddp/examples/power_system/tadmm_profiles.jl.
+const PL_RATED_ = 2.0
+const PL = PL_RATED_ .* (0.8 .+ 0.2 .* (sin.(range(0, 2pi, length = 6) .- 0.8) .+ 1) ./ 2)
+const C  = 0.08 .+ 0.12 .* (sin.(range(0, 2pi, length = 6)) .+ 1) ./ 2
 
 # Display conversions, so the figure carries the same quantities as the tADMM
 # paper's input-profile plot: a dimensionless load factor and a price in

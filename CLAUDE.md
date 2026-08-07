@@ -71,23 +71,23 @@ used to carry (why no `η`, why the terminal target is a penalty, why `C_B = 0.5
 here vs. `≈10⁻⁶·min c^t` in the tADMM paper) now survives only in
 `ddp/README_FILTERDDP_EXPERIMENT.md`.
 
-**Open question the user raised, not yet decided:** demand and price in
-`tab:cp_data` are nearly collinear (`r = 0.9968`). See the "Known weakness"
-note in the experiment README. Changing the price series invalidates every
-recorded number, so it is the user's call.
+**Instance data is now the tADMM profiles** (changed 2026-08-07 at the user's
+request). Demand and price come from `envs/tadmm/root_level/config.jl`, shared via
+`ddp/examples/power_system/tadmm_profiles.jl`. Three things to know:
 
-## What is and isn't verified (as of 2026-08-07)
+- They **resample with T** — `tadmm_cost(3)` is NOT `tadmm_cost(6)[1:3]`. Never
+  slice a fixed vector.
+- At **T = 3 the price is constant** (`sin` vanishes at `0, π, 2π`), so that
+  instance has no arbitrage signal; its optimal `P_B` is set purely by the
+  terminal penalty. T = 6 is the meaningful economic case.
+- This **closed** the earlier collinearity concern: `r` went from `0.9968` to
+  `0.644` at T = 6, thanks to the `−0.8` rad phase offset on the load.
 
-FilterDDP is cross-checked against a **centralized JuMP/Ipopt** solve of
-`eq:cp_all` on all 8 copper-plate cases (Stage 8 of the experiment README):
-`2e-16` agreement on the base instances, worst gap `1.1e-10` with bounds, and
-Ipopt independently certifies the 6g bound set infeasible. On the base instances
-there are three mutually independent references (closed form, active-set QP,
-Ipopt). **Do not redo this.**
-
-Not verified, so don't overclaim: anything with a network (no LinDistFlow, no
-BFM); horizons beyond `T = 6`; and **the user's own DDP algorithm, which has not
-been compared at all** — that is the pending task below.
+`C_B = 0.5` was deliberately **not** changed to tADMM's `1e-6·min(c) ≈ 8e-8`:
+`C_B` is the reduced-Hessian curvature, and at that magnitude the reduced Hessian
+becomes rank-1, destroying uniqueness of the closed-form and active-set
+references. Consequence: the battery here is cost-limited, not bound-limited as in
+tADMM, so its swing is small and the binding bounds are correspondingly tight.
 
 ## Pending task (do not start until asked)
 

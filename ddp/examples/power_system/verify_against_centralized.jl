@@ -25,7 +25,7 @@ function load_centralized(path)
     isfile(path) || error("""
         Centralized reference not found at
           $path
-        Run copper_plate_centralized.jl under --project=ddp/env_centralized first.""")
+        Run copper_plate_centralized.jl under --project=envs/ddp2026 first.""")
     acc = Dict{String,Any}()
     for (i, line) in enumerate(eachline(path))
         i == 1 && continue                       # header
@@ -60,12 +60,12 @@ const VERIFY_CASES = [
     ("base_T3", solve_ddp_bounds, 3, NamedTuple()),
     ("base_T6", solve_ddp_bounds, 6, NamedTuple()),
     ("6a_T3",   solve_ddp_bounds, 3, (ps_lo = 0.0,)),
-    ("6b_T3",   solve_ddp_bounds, 3, (pb_lo = -0.5, pb_hi = 0.10)),
-    ("6c_T3",   solve_ddp_energy, 3, (B_lo = 1.98, B_hi = 2.05)),
-    ("6d_T3",   solve_ddp_energy, 3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.10,
-                                      B_lo = 1.98, B_hi = 2.05)),
-    ("6e_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.30,
-                                      B_lo = 1.85, B_hi = 2.10)),
+    ("6b_T3",   solve_ddp_bounds, 3, (pb_lo = -0.5, pb_hi = 0.004)),
+    ("6c_T3",   solve_ddp_energy, 3, (B_lo = 1.9895, B_hi = 1.995)),
+    ("6d_T3",   solve_ddp_energy, 3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004,
+                                      B_lo = 1.9895, B_hi = 1.9965)),
+    ("6e_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045,
+                                      B_lo = 1.92, B_hi = 1.99)),
     ("6g_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = 0.0, pb_hi = 0.30,
                                       B_lo = 2.05, B_hi = 2.10)),
 ]
@@ -87,7 +87,7 @@ function verify()
         r = ref[name]
         g = solver_fn(T; cfg...)
         sd = g.solver.data
-        c = C6[1:T]
+        c = tadmm_cost(T)
         J = sum(c .* g.psub .* Δt) + C_B * sum(g.pb .^ 2) * Δt + W * (g.B[T+1] - B_0)^2
 
         if !r.feasible

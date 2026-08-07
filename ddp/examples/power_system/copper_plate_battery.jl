@@ -73,8 +73,16 @@ const N      = 3                       # = T, number of periods
 const nx     = 2                       # (B, τ)
 const nu     = 2                       # (Psub, P_B)
 
-const pL   = T_[1.0, 1.6, 1.2]         # demand, three unequal positive values
-const cvec = T_[0.30, 0.55, 0.40]      # energy price per period (> 0)
+# Demand and price are the tADMM profiles at T = 3; see tadmm_profiles.jl.
+# NOTE: at T = 3 the tADMM price formula samples sin at 0, pi and 2pi, so
+# cvec is CONSTANT (0.14 in every period). This instance therefore carries no
+# arbitrage signal -- the optimal P_B is identical in all three periods and is
+# set purely by the terminal penalty. It remains a valid solver test, and a
+# symmetric one, but the economics live at T = 6 (see copper_plate_battery_bounds.jl).
+include("tadmm_profiles.jl")
+
+const pL   = T_.(tadmm_pL(3))          # demand   [p.u.]
+const cvec = T_.(tadmm_cost(3))        # energy price per period (> 0)
 const C_B  = T_(0.5)                   # battery throughput coefficient (> 0)
 const Δt   = T_(1.0)                   # period length
 const B_0  = T_(2.0)                   # initial stored energy

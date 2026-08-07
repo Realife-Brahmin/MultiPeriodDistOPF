@@ -37,8 +37,10 @@ const T_ = Float64
 # Data
 # ---------------------------------------------------------------------------
 
-const PL6 = T_[1.0, 1.6, 1.2, 1.8, 0.9, 1.4]      # demand
-const C6  = T_[0.30, 0.55, 0.40, 0.62, 0.25, 0.48] # energy price
+# Demand and price come from the tADMM profiles; see tadmm_profiles.jl. They
+# resample with T, so they are called per horizon rather than sliced.
+include("tadmm_profiles.jl")
+
 const C_B = T_(0.5)
 const Δt  = T_(1.0)
 const B_0 = T_(2.0)
@@ -127,7 +129,7 @@ end
 
 function reference(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
                    B_lo = -Inf, B_hi = Inf)
-    pL = PL6[1:T]; c = C6[1:T]
+    pL = tadmm_pL(T); c = tadmm_cost(T)
     D = sum(pL)
     Q = 2 * C_B * Δt * Matrix{T_}(I, T, T) + 2 * W * Δt^2 * ones(T_, T, T)
     q = c .* Δt .- 2 * C_B * Δt .* pL .- 2 * W * Δt^2 * D
@@ -171,7 +173,7 @@ status_str(s) = get(STATUS, s, "status $s")
 function solve_ddp_bounds(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
                           tol = 1e-10)
     nx, nu = 2, 2
-    pL = PL6[1:T]; c = C6[1:T]
+    pL = tadmm_pL(T); c = tadmm_cost(T)
 
     dyn = Dynamics((x, u) -> [x[1] - u[2] * Δt, x[2] + 1.0], nx, nu)
     l = (x, u) -> lagrange(c, x[2]) * u[1] * Δt + C_B * u[2]^2 * Δt
@@ -199,7 +201,7 @@ end
 function solve_ddp_energy(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
                           B_lo, B_hi, tol = 1e-10)
     nx, nu = 2, 3          # u = (Psub, P_B, s)
-    pL = PL6[1:T]; c = C6[1:T]
+    pL = tadmm_pL(T); c = tadmm_cost(T)
 
     dyn = Dynamics((x, u) -> [x[1] - u[2] * Δt, x[2] + 1.0], nx, nu)
     l = (x, u) -> lagrange(c, x[2]) * u[1] * Δt + C_B * u[2]^2 * Δt
@@ -231,7 +233,7 @@ end
 # ---------------------------------------------------------------------------
 
 function report(name, T, got, ref; energy = false)
-    pL = PL6[1:T]; c = C6[1:T]
+    pL = tadmm_pL(T); c = tadmm_cost(T)
     J = sum(c .* got.psub .* Δt) + C_B * sum(got.pb .^ 2) * Δt + W * (got.B[T+1] - B_0)^2
     bal = maximum(abs(got.psub[t] + got.pb[t] - pL[t]) for t = 1:T)
     dyn = maximum(abs(got.B[t+1] - (got.B[t] - got.pb[t] * Δt)) for t = 1:T)
@@ -293,28 +295,28 @@ function main()
                solve_ddp_bounds(3; cfg...), reference(3; cfg...))))
 
     # ---- 6b: battery-power bounds only ----------------------------------
-    cfg = (pb_lo = -0.5, pb_hi = 0.10)
+    cfg = (pb_lo = -0.5, pb_hi = 0.004)
     push!(summary, ("6b battery-power bounds, T=3",
-        report("6b — battery-power bounds only, T = 3  (-0.5 <= P_B <= 0.10)", 3,
+        report("6b — battery-power bounds only, T = 3  (-0.5 <= P_B <= 0.004)", 3,
                solve_ddp_bounds(3; cfg...), reference(3; cfg...))))
 
     # ---- 6c: energy bounds only (slack reformulation) -------------------
-    cfg = (B_lo = 1.98, B_hi = 2.05)
+    cfg = (B_lo = 1.9895, B_hi = 1.995)
     push!(summary, ("6c energy bounds, T=3",
-        report("6c — energy bounds only, T = 3  (1.98 <= B <= 2.05), slack reformulation", 3,
+        report("6c — energy bounds only, T = 3  (1.9895 <= B <= 1.995), slack reformulation", 3,
                solve_ddp_energy(3; cfg...), reference(3; cfg...); energy = true)))
 
     # ---- 6d: all three ---------------------------------------------------
     # With the substation import unlimited above, the balance is always
     # satisfiable, so the binding constraints come from the battery and energy
     # limits alone.
-    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.10, B_lo = 1.98, B_hi = 2.05)
+    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)
     push!(summary, ("6d all bounds, T=3",
         report("6d — all bounds together, T = 3", 3,
                solve_ddp_energy(3; cfg...), reference(3; cfg...); energy = true)))
 
     # ---- 6e: T = 6 -------------------------------------------------------
-    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.30, B_lo = 1.85, B_hi = 2.10)
+    cfg = (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045, B_lo = 1.92, B_hi = 1.99)
     push!(summary, ("6e all bounds, T=6",
         report("6e — all bounds together, T = 6", 6,
                solve_ddp_energy(6; cfg...), reference(6; cfg...); energy = true)))
@@ -323,12 +325,12 @@ function main()
     println("\n" * "="^78)
     println("6f — tolerance sweep on case 6d")
     println("="^78)
-    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.10, B_lo = 1.98, B_hi = 2.05)
+    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)
     ref3 = reference(3; cfg...)
     @printf("%10s %6s %6s %-22s %11s %11s\n", "tol", "iters", "status", "termination", "|ΔJ|", "dual_inf")
     for tol in [1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-12]
         g = solve_ddp_energy(3; cfg..., tol = tol)
-        c3 = C6[1:3]
+        c3 = tadmm_cost(3)
         J = sum(c3 .* g.psub .* Δt) + C_B * sum(g.pb .^ 2) * Δt + W * (g.B[4] - B_0)^2
         @printf("%10.0e %6d %6d %-22s %11.3e %11.3e\n", tol, g.solver.data.k,
                 g.solver.data.status, status_str(g.solver.data.status),
@@ -354,7 +356,8 @@ function main()
     sd = g.solver.data
     @printf("FilterDDP: iters %d, status %d (%s), primal_inf %.3e, dual_inf %.3e\n",
             sd.k, sd.status, status_str(sd.status), sd.primal_inf, sd.dual_inf)
-    bal = maximum(abs(g.psub[t] + g.pb[t] - PL6[t]) for t = 1:6)
+    pL6g = tadmm_pL(6)
+    bal = maximum(abs(g.psub[t] + g.pb[t] - pL6g[t]) for t = 1:6)
     @printf("max power-balance residual of the returned point: %.3e\n", bal)
     println("NOTE: FilterDDP has no feasibility restoration phase, so an infeasible")
     println("      problem surfaces only as a non-zero status plus a residual the")

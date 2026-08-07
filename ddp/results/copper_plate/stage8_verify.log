@@ -1,0 +1,19 @@
+==============================================================================================
+FilterDDP  vs  centralized JuMP/Ipopt solution of eq:cp_all
+==============================================================================================
+case        iters  status  J (FilterDDP)      J (Ipopt)        |ΔJ|  max|ΔPsub|     max|ΔB|
+----------------------------------------------------------------------------------------------
+base_T3         1       0     0.73496564     0.73496564   2.220e-16   4.441e-16   4.441e-16
+base_T6         1       0     1.50735130     1.50735130   2.220e-16   2.220e-16   4.441e-16
+6a_T3          10       0     0.73496564     0.73496564   1.110e-16   1.770e-12   2.035e-12
+6b_T3          14       0     0.73497803     0.73497803   1.352e-10   2.817e-09   8.450e-09
+6c_T3          18       0     0.73501534     0.73501534   1.979e-11   4.391e-09   4.391e-09
+6d_T3          24       0     0.73501365     0.73501365   4.608e-11   6.256e-06   6.256e-06
+6e_T6          19       0     1.50764344     1.50764344   1.900e-10   2.272e-08   2.092e-08
+6g_T6          12       7     1.08248340     INFEASIBLE           -           -           -
+----------------------------------------------------------------------------------------------
+worst trajectory disagreement across all feasible cases: 6.256e-06
+Note on 6g_T6: Ipopt returns LOCALLY_INFEASIBLE and so certifies the bound set
+empty. FilterDDP returns status 7, which it also returns for a merely hard
+problem — the caller must inspect residuals to tell the two apart. This is the
+missing feasibility-restoration phase described in the experiment README.
