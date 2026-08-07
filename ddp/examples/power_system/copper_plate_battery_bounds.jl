@@ -369,4 +369,9 @@ function main()
     end
 end
 
-main()
+# Guarded so copper_plate_centralized.jl can `include` this file to reuse the
+# FilterDDP models and the active-set reference without re-running Stage 6.
+# Running this file directly behaves exactly as before.
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end
