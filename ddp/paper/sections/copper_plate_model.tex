@@ -1,36 +1,13 @@
 \section{Copper-Plate Storage-Scheduling Model}
 \label{sec:copper_plate}
 
-\subsection{Problem Statement}
-
-We consider the smallest multi-period scheduling problem that still exhibits the
-two features a differential dynamic programming (DDP) solver must contend with in
-an MPOPF setting: an inter-temporal state coupled by a discrete-time dynamic, and
-a nonlinear equality constraint that must hold in every period.  The network is
-collapsed to a single node---a copper plate---so that the model retains the
-temporal structure of the MPOPF of~\cite{Jha2025} while carrying none of its
-spatial structure.
-
-A single storage device and a single grid connection serve a known demand
-$p_L^t$ over a horizon of $T$ periods of length $\Delta t$.  Following the sign
-convention of the branch-flow formulation, $P_B^t > 0$ denotes discharging and
-$P_B^t < 0$ charging.  All quantities are in per unit on a common power base.
-
-\smallskip
-\noindent\textit{Remark on indexing.}\quad
-Unlike the end-of-period convention used for $B_j^t$ in the tADMM
-formulation, $B^t$ here denotes the energy at the \emph{start} of period $t$, so
-that $B^1$ is given and $B^{T+1}$ is the terminal energy.  This is required by
-the optimal-control form of Section~\ref{subsec:ocp}, in which the state entering
-a stage must be the quantity the stage acts upon.
-
 \subsection{Optimization Problem}
 
-The complete problem is stated in one place below; the paragraphs that follow
-comment on its parts but do not restate them.  The decision variables are the
-grid import $P_{\text{Subs}}^t$, the storage power $P_B^t$ and the stored energy
-$B^t$, over $t \in \mathcal{T} = \{1,\dots,T\}$, with $B^{T+1}$ the terminal
-energy:
+A single storage device and a single grid connection serve a known demand $p_L^t$
+over $T$ periods of length $\Delta t$, all quantities in per unit.  Following the
+sign convention of~\cite{Jha2025}, $P_B^t > 0$ discharges and $P_B^t < 0$ charges;
+$B^t$ is the energy at the \emph{start} of period $t$, so $B^1$ is given and
+$B^{T+1}$ is terminal.  With $t \in \mathcal{T} = \{1,\dots,T\}$:
 \begin{subequations}
 \label{eq:cp_all}
 \begin{alignat}{2}
@@ -54,68 +31,13 @@ energy:
 \label{eq:cp_soc_lim}
 \end{alignat}
 \end{subequations}
-
-\smallskip
-\noindent\textbf{Objective~\eqref{eq:cp_obj}.}\quad
-This is the objective of the tADMM formulation~\cite{Jha2025} unchanged: the cost
-of energy drawn from the substation at the time-varying price $c^t$, plus a small
-quadratic charge on battery throughput with coefficient $C_B$, whose role there is
-to discourage unnecessary cycling.  Only the terminal term is new.  Note that no
-quadratic term on $P_{\text{Subs}}^t$ is needed: $C_B > 0$ alone makes the
-objective strictly convex on the feasible set, which is what renders the instance
-solvable in closed form and therefore usable as a reference.  Concretely, with
-$n_u = 2$ and $n_c = 1$ the balance Jacobian is $[1\;\;1]$, its null space is
-spanned by $(1,-1)$, and the reduced Hessian along that direction evaluates to
-$C_B$.
-
-\smallskip
-\noindent\textbf{Power balance~\eqref{eq:cp_balance}.}\quad
-With the network collapsed to a single node, the nodal balance of~\cite{Jha2025}
-reduces to a single equality per period.
-
-\smallskip
-\noindent\textbf{Storage~\eqref{eq:cp_soc_init}--\eqref{eq:cp_soc_dyn}.}\quad
-A lossless energy reservoir, coupled sequentially in time.  This is the only
-coupling between periods.  No round-trip efficiency term appears, and its
-absence is deliberate: a single $\eta$ multiplying a signed $P_B^t$ cannot be
-correct in both directions, since charging stores $\eta_c |P_B^t|$ whereas
-discharging $P_B^t$ into the bus must drain $P_B^t/\eta_d$ from the device, and
-$\eta$ and $1/\eta$ agree only at $\eta = 1$.  Representing losses honestly
-requires split variables $P_c^t, P_d^t \geq 0$ with
-$B^{t+1} = B^t + \eta_c P_c^t \Delta t - P_d^t \Delta t / \eta_d$, which is the
-route taken if losses are wanted later (see the remark closing
-Section~\ref{subsec:ocp}).  The tADMM
-formulation of~\cite{Jha2025} models a lossless battery, so this benchmark does
-the same and drops the symbol rather than carrying it at unity.
-
-\smallskip
-\noindent\textbf{Operational limits~\eqref{eq:cp_pg_lim}--\eqref{eq:cp_soc_lim}.}\quad
-Introduced one at a time.  Substation import carries no upper limit; as
-in~\cite{Jha2025} it is only held non-negative, so that no energy is exported
-upstream.  The \emph{base instance} is the equality-constrained
-problem~\eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn} alone, with all three bounds
-dropped; it is studied on its own before any inequality is added.
-Fig.~\ref{fig:schedule} shows the instance solved with all three imposed, at
-$T = 6$; recall that $P_B^t > 0$ discharges, so a negative bar there is the
-battery charging.
-
-\smallskip
-\noindent\textbf{On the terminal energy.}\quad
-The natural requirement that the device return to its initial state of charge,
-$B^{T+1} = B^1$, is imposed here as the quadratic penalty in~\eqref{eq:cp_obj}
-rather than as a hard equality.  The reason is a restriction of the solver rather
-than of the model: the DDP formulation of Section~\ref{subsec:ocp} admits a
-single stagewise constraint function shared by all stages, so a terminal-only
-equality cannot be expressed.  The penalty is nevertheless \emph{exact} in the
-variables it uses, since $B^{T+1} = B^T - P_B^T \Delta t$ is available from
-the stage-$T$ state and control; the weight $w$ therefore trades terminal energy
-against operating cost without introducing any approximation of the dynamics.
+The \emph{base instance} is
+\eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn}, with all three bounds dropped.
 
 \subsection{Optimal-Control Form}
 \label{subsec:ocp}
 
-Problem~\eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn} is restated as a discrete-time
-optimal control problem over $N = T$ stages, in the form required by DDP:
+Restated over $N = T$ stages in the form required by DDP:
 \begin{align}
 \min_{x,u} \;\; & \sum_{t=1}^{N-1} \ell\bigl(x^t, u^t\bigr)
                   + \ell^{F}\bigl(x^N, u^N\bigr) \nonumber \\
@@ -125,37 +47,21 @@ optimal control problem over $N = T$ stages, in the form required by DDP:
                  & c\bigl(x^t, u^t\bigr) = 0,
                    \quad t \in \{1,\dots,N\}. \nonumber
 \end{align}
-
-\smallskip
-\noindent\textbf{States and controls.}\quad
-The state carries the stored energy and an explicit time index $\tau$; the
-control carries the two power set-points:
+with state, control and initial condition
 \begin{equation}
 x^t = \bigl(B^t,\; \tau^t\bigr)^\top \in \mathbb{R}^2,
 \qquad
 u^t = \bigl(P_{\text{Subs}}^t,\; P_B^t\bigr)^\top \in \mathbb{R}^2 ,
 \label{eq:ocp_xu}
 \end{equation}
-with $\hat{x}^1 = (B_0,\, 1)^\top$.
-
-The time index is a state out of necessity, not modeling preference.  The DDP
-formulation~\eqref{eq:ocp_form} admits one stage cost $\ell$ and one constraint
-function $c$ for the entire horizon, so per-period data cannot be indexed and
-must instead be recovered from the state.  We therefore carry $\tau$ and
-represent the period-varying data by the Lagrange interpolants through the nodes
-$\tau = 1,\dots,T$,
+$\hat{x}^1 = (B_0,\, 1)^\top$.  Period-varying data is carried by the time index
+$\tau$ through the Lagrange interpolants on the nodes $\tau = 1,\dots,T$,
 \begin{equation}
 p_L(\tau) = \sum_{k=1}^{T} p_L^k \prod_{\substack{m=1 \\ m \neq k}}^{T}
              \frac{\tau - m}{k - m},
 \label{eq:ocp_interp}
 \end{equation}
-and likewise for the price $c(\tau)$.  These are exact at every node and
-infinitely differentiable, as DDP requires; their degree grows with $T$, which
-bounds the horizons for which the device is practical.
-Fig.~\ref{fig:input_curves} plots them against the data they interpolate.
-
-\smallskip
-\noindent\textbf{Dynamics, costs and constraint.}\quad
+and likewise for the price $c(\tau)$.  The stage data is then
 \begin{align}
 f(x, u) &= \bigl(\, x_1 - u_2 \Delta t,\;\; x_2 + 1 \,\bigr)^\top,
 \label{eq:ocp_f} \\
@@ -167,35 +73,35 @@ c(x, u) &= u_1 + u_2 - p_L(x_2),
                &\qquad + w \bigl( x_1 - u_2 \Delta t - B_0 \bigr)^2 .
 \label{eq:ocp_lF}
 \end{align}
-The terminal cost~\eqref{eq:ocp_lF} depends on $u^N$ as well as $x^N$, which is
-what allows the terminal energy $B^{T+1}$ to appear exactly.  The bounds
-\eqref{eq:cp_pg_lim}--\eqref{eq:cp_pb_lim} map directly onto control limits
-$b^{L} \leq u^t \leq b^{U}$.  The energy
-bound~\eqref{eq:cp_soc_lim} is a state bound, which the formulation does not
-admit; it is introduced by appending a slack $s^t$ to the control vector and
-replacing~\eqref{eq:cp_soc_lim} with
+Bounds \eqref{eq:cp_pg_lim}--\eqref{eq:cp_pb_lim} map onto control limits
+$b^{L} \leq u^t \leq b^{U}$.  The state bound~\eqref{eq:cp_soc_lim} is appended as
+a second row of $c$ via a slack $s^t$ adjoined to the control, giving $n_c = 2$,
+$n_u = 3$:
 \begin{equation}
 \bigl(x_1 - u_2 \Delta t\bigr) - B^{\min} - s^t = 0,
-\qquad 0 \leq s^t \leq B^{\max} - B^{\min},
+\qquad 0 \leq s^t \leq B^{\max} - B^{\min}.
 \label{eq:ocp_slack}
 \end{equation}
-appended as a second row of $c$, so that $n_c = 2$ and $n_u = 3$.
 
-\smallskip
-\noindent\textit{Remark (adding conversion losses).}\quad
-\label{rem:eta}
-The split-variable storage model of Section~\ref{sec:copper_plate} maps into this
-form without difficulty: $P_c^t, P_d^t \geq 0$ become two controls carrying native
-lower bounds, the balance~\eqref{eq:cp_balance} becomes
-$P_{\text{Subs}}^t + P_d^t - P_c^t - p_L^t = 0$, and the dynamics stay linear, so
-$n_u = 3$ against $n_c = 1$ and the rank condition is comfortably met.  The
-difficulty is elsewhere.  Non-simultaneity, $P_c^t P_d^t = 0$, is normally left
-implicit on the grounds that with $\eta_c \eta_d < 1$ and a positive throughput
-cost, charging and discharging at once is never optimal.  Imposing it explicitly
-would make it a complementarity constraint, whose Jacobian loses rank exactly at
-the solutions of interest --- precisely the degeneracy the backward pass cannot
-absorb.  Conversion losses are therefore cheap to add to this model only for as
-long as the implicit argument holds.
+\subsection{Closed-Form Reference}
+
+The base instance is a strictly convex equality-constrained QP.  Eliminating
+$P_{\text{Subs}}^t = p_L^t - P_B^t$ and
+$B^{T+1} - B^1 = -\Delta t \sum_t P_B^t$ reduces it to
+\begin{align}
+J(P_B) = \text{const} & - \Delta t \sum_t c^t P_B^t
+       + C_B \Delta t \sum_t \bigl(P_B^t\bigr)^2 \nonumber \\
+       & + w (\Delta t)^2 s^2 ,
+\label{eq:cp_reduced}
+\end{align}
+with $s = \sum_t P_B^t$.  Stationarity divided through by $\Delta t$ is
+$-c^k + 2 C_B P_B^k + 2 w \Delta t\, s = 0$; summing over $k$ collapses it to
+\begin{equation}
+s = \frac{\sum_{t} c^t}{2 C_B + 2 T w \Delta t},
+\qquad
+P_B^k = \frac{c^k - 2 w \Delta t\, s}{2 C_B} .
+\label{eq:cp_closed_form}
+\end{equation}
 
 \input{figures/input_curves_fig}
 \input{figures/schedule_fig}
@@ -239,62 +145,8 @@ $B^{\min},\,B^{\max}$        & $1.98,\;2.05$ & $1.85,\;2.10$ \\
 \smallskip
 
 \raggedright
-\footnotesize All quantities are in per unit on a common power base.  With
-$\Delta t = 1$, power and energy are numerically interchangeable.  The $T = 3$
-instance uses the first three intervals of the series above; $T = 6$ uses all
-six.  Substation import is unlimited above in every variant, subject only to
-$P_{\text{Subs}}^t \geq 0$.  The bounds apply only to the constrained
-variants --- the base instance is the equality-constrained problem
-\eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn}, with none of them.  Figures
-\ref{fig:input_curves} and \ref{fig:schedule} both show the $T = 6$ case.
-The load factor of Fig.~\ref{fig:input_curves} is $p_L^t$ against a rated load of
-$2.0$ p.u., and its price axis takes $P_{\text{BASE}} = 1$ kW, so that
-$1$ p.u.h $= 1$ kWh.
+\footnotesize All quantities are in per unit; with $\Delta t = 1$, power and
+energy are numerically interchangeable.  $T = 3$ uses the first three intervals,
+$T = 6$ all six.  Figs.~\ref{fig:input_curves} and~\ref{fig:schedule} both show
+the $T = 6$ case.
 \end{table}
-
-\subsection{Problem Characteristics}
-
-The base instance is a strictly convex equality-constrained quadratic program:
-$3T$ variables, $T$ balance equalities~\eqref{eq:cp_balance} and $T+1$ storage
-equalities~\eqref{eq:cp_soc_init}--\eqref{eq:cp_soc_dyn}.  Eliminating
-$P_{\text{Subs}}^t = p_L^t - P_B^t$ and
-$B^{T+1} - B^1 = -\Delta t \sum_t P_B^t$ reduces it to the unconstrained
-quadratic
-\begin{align}
-J(P_B) = \text{const} & - \Delta t \sum_t c^t P_B^t
-       + C_B \Delta t \sum_t \bigl(P_B^t\bigr)^2 \nonumber \\
-       & + w (\Delta t)^2 s^2 ,
-\label{eq:cp_reduced}
-\end{align}
-with $s = \sum_t P_B^t$.  Dividing stationarity through by $\Delta t$ gives
-$-c^k + 2 C_B P_B^k + 2 w \Delta t\, s = 0$, and summing over $k$ collapses
-the system to a single scalar:
-\begin{equation}
-s = \frac{\sum_{t} c^t}{2 C_B + 2 T w \Delta t},
-\qquad
-P_B^k = \frac{c^k - 2 w \Delta t\, s}{2 C_B} .
-\label{eq:cp_closed_form}
-\end{equation}
-The instance therefore admits a closed-form reference solution against which any
-solver applied to it can be checked exactly, which is the reason for its
-construction.
-
-Storage~\eqref{eq:cp_soc_dyn} is the only coupling between periods; without the
-terminal term in~\eqref{eq:cp_obj} the objective would not depend on $P_B$ at
-all, and the problem would separate into $T$ independent single-period problems.
-
-\smallskip
-\noindent\textbf{Reference implementation.}\quad
-Problem~\eqref{eq:cp_all} is implemented in
-\texttt{copper\_plate\_battery.jl} (base instance) and
-\texttt{copper\_plate\_battery\_bounds.jl}
-(with~\eqref{eq:cp_pg_lim}--\eqref{eq:cp_soc_lim}), both under
-\texttt{ddp/examples/power\_system/}.
-Both carry $\Delta t$ symbolically, so the implementation matches
-\eqref{eq:cp_all} term for term.  One choice is worth flagging: $C_B$ is set to
-$0.5$ here, whereas the tADMM paper uses $C_B \approx 10^{-6} \min_t c^t$,
-deliberately near-zero so that battery throughput cannot compete with energy
-cost.  Since $C_B$ is exactly the reduced-Hessian curvature, that near-zero value
-makes the instance badly conditioned by construction; a healthy $C_B$ is used for
-the base test, and shrinking it toward the paper's value is better treated as a
-deliberate conditioning study than as the default.
