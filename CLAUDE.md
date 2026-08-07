@@ -83,11 +83,30 @@ request). Demand and price come from `envs/tadmm/root_level/config.jl`, shared v
 - This **closed** the earlier collinearity concern: `r` went from `0.9968` to
   `0.644` at T = 6, thanks to the `−0.8` rad phase offset on the load.
 
-`C_B = 0.5` was deliberately **not** changed to tADMM's `1e-6·min(c) ≈ 8e-8`:
-`C_B` is the reduced-Hessian curvature, and at that magnitude the reduced Hessian
-becomes rank-1, destroying uniqueness of the closed-form and active-set
-references. Consequence: the battery here is cost-limited, not bound-limited as in
-tADMM, so its swing is small and the binding bounds are correspondingly tight.
+`C_B = 0.05` since 2026-08-07 (was `0.5`). `C_B` sets how far the battery moves:
+`P_B^k = (c^k - 2wΔt·s)/(2C_B)`, so the swing scales as `1/C_B` — the bounds are not
+the knob. At `0.05` the T = 6 battery swings ±570 kW against a 1623-1998 kW load and
+cycles `B` from 2000 down to 1070 kWh: 46% depth of discharge, matching the
+`ieee123C_1ph` battery/load ratio of 44%. `cond(Q) = 601`, so the closed-form and
+active-set references stay exact to ~1e-14.
+
+Still **not** tADMM's own `C_B = 1e-6·min(c) ≈ 8e-8`: there `cond(Q) ≈ 3.6e8` and the
+battery goes purely bound-limited (±340 GW absent bounds) — the tADMM regime, but
+useless as a precision reference. An earlier note that this makes `Q` rank-1 was an
+overstatement: `Q = 2C_B Δt I + 2w Δt² 11ᵀ` is PD for any `C_B > 0`, rank-1 only in
+the limit.
+
+**Plot battery quantities in kW and kWh, never p.u.** (user preference, 2026-08-07).
+Base is tADMM's `kVA_B = 1000`: 1 p.u. = 1000 kW, 1 p.u.h = 1000 kWh. The model and
+Table I stay in p.u.; the figures convert. Reference asset sizes, for sanity checks:
+`ads10A_1ph` 87 kW load / 4.7 kW batt; `ieee123C_1ph` 1163 kW / 507 kW / 2027 kWh;
+`ieee123_5poi_1ph` 1163 kW / 1318 kW / 5273 kWh. SOC runs 30%-95% with B_0 at 62.5%.
+
+**Figures are generated, never hand-written.** `ddp/paper/figures/make_figure_data.jl`
+reads the verified centralized reference and emits `balance.csv`,
+`schedule_interval.csv`, `schedule_soc.csv`; the `.tex` files read those tables.
+Do not inline coordinates — `schedule_fig.tex` did, and went silently stale when the
+instance data changed.
 
 ## Pending task (do not start until asked)
 

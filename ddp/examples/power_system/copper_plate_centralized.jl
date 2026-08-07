@@ -43,7 +43,7 @@ const T_ = Float64
 # Demand p_L^t and price c^t come from the tADMM profiles; see tadmm_profiles.jl.
 include("tadmm_profiles.jl")
 
-const C_B = T_(0.5)                                 # throughput coefficient
+const C_B = T_(0.05)                                 # throughput coefficient
 const Δt  = T_(1.0)                                 # period length
 const B_0 = T_(2.0)                                 # initial stored energy
 const W   = T_(5.0)                                 # terminal-energy weight
@@ -152,7 +152,7 @@ const CASES = [
     ("6b_T3",   3, (pb_lo = -0.5, pb_hi = 0.004)),
     ("6c_T3",   3, (B_lo = 1.9895, B_hi = 1.995)),
     ("6d_T3",   3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)),
-    ("6e_T6",   6, (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045, B_lo = 1.92, B_hi = 1.99)),
+    ("6e_T6",   6, (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45, B_lo = 1.20, B_hi = 1.95)),
     ("6g_T6",   6, (ps_lo = 0.0, pb_lo = 0.0, pb_hi = 0.30, B_lo = 2.05, B_hi = 2.10)),
 ]
 

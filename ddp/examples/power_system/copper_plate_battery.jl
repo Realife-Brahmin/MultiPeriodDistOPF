@@ -83,7 +83,7 @@ include("tadmm_profiles.jl")
 
 const pL   = T_.(tadmm_pL(3))          # demand   [p.u.]
 const cvec = T_.(tadmm_cost(3))        # energy price per period (> 0)
-const C_B  = T_(0.5)                   # battery throughput coefficient (> 0)
+const C_B  = T_(0.05)                   # battery throughput coefficient (> 0)
 const Δt   = T_(1.0)                   # period length
 const B_0  = T_(2.0)                   # initial stored energy
 const w    = T_(5.0)                   # terminal-energy weight (see Note 2/3)

@@ -41,7 +41,7 @@ const T_ = Float64
 # resample with T, so they are called per horizon rather than sliced.
 include("tadmm_profiles.jl")
 
-const C_B = T_(0.5)
+const C_B = T_(0.05)
 const Δt  = T_(1.0)
 const B_0 = T_(2.0)
 const W   = T_(5.0)
@@ -316,7 +316,7 @@ function main()
                solve_ddp_energy(3; cfg...), reference(3; cfg...); energy = true)))
 
     # ---- 6e: T = 6 -------------------------------------------------------
-    cfg = (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045, B_lo = 1.92, B_hi = 1.99)
+    cfg = (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45, B_lo = 1.20, B_hi = 1.95)
     push!(summary, ("6e all bounds, T=6",
         report("6e — all bounds together, T = 6", 6,
                solve_ddp_energy(6; cfg...), reference(6; cfg...); energy = true)))

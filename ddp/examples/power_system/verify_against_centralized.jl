@@ -64,8 +64,8 @@ const VERIFY_CASES = [
     ("6c_T3",   solve_ddp_energy, 3, (B_lo = 1.9895, B_hi = 1.995)),
     ("6d_T3",   solve_ddp_energy, 3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004,
                                       B_lo = 1.9895, B_hi = 1.9965)),
-    ("6e_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.045, pb_hi = 0.045,
-                                      B_lo = 1.92, B_hi = 1.99)),
+    ("6e_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45,
+                                      B_lo = 1.20, B_hi = 1.95)),
     ("6g_T6",   solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = 0.0, pb_hi = 0.30,
                                       B_lo = 2.05, B_hi = 2.10)),
 ]
