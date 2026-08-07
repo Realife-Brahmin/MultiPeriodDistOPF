@@ -38,6 +38,57 @@ this is not a naive approach, it's a real first-order relative of DP. The gap
 is the missing curvature (`V_xx`) and the cross-iteration staleness, not the
 absence of backward-looking information altogether.
 
+## Julia environment: use `envs/ddp2026` for everything DDP
+
+Since 2026-08-07 there is **one** environment for all DDP work — FilterDDP, the
+centralized JuMP/Ipopt reference, and any further formulation:
+`envs/ddp2026` ([README](envs/ddp2026/README.md)). FilterDDP and JuMP coexist
+without conflict. Stages 5, 6 and 8 all reproduce under it.
+
+- `envs/ddp/Project.toml` (2025-11) is **superseded**. Its `Plots`/`Crayons`/
+  `Revise` deps existed because verification then meant a human reading formatted
+  output. Treat `envs/ddp/` as a **read-only reference** for what the user's own
+  algorithm did — not expected to be run again.
+- `ddp/env` (the FilterDDP-only env) was **removed** 2026-08-07. Its `Manifest`
+  was never tracked, so it preserved nothing `envs/ddp2026/Project.toml` doesn't,
+  and Stages 5/6 reproduce identically under the new env. It's in git history if
+  ever needed.
+- Pkg **strips all comments** from `Project.toml` on every `add`/`resolve`, so put
+  rationale in a README beside it, never in the file.
+- Julia via the **Bash** tool, not PowerShell: PowerShell mangles quotes in
+  `julia -e '...'` and has silently corrupted `Project.toml` this way.
+
+## Current copper-plate formulation
+
+`P_Subs^t` has **no upper bound** — only `P_Subs^t ≥ 0` (no export upstream).
+This is the latest formulation, confirmed by the user 2026-08-07. Older notes
+referring to an active `Psub[2] ≤ 1.35` or `≤ 1.45` are stale; the scripts and
+logs were already correct and the experiment README has been fixed to match.
+
+The paper section `ddp/paper/sections/copper_plate_model.tex` was cut down to
+equations only on 2026-08-07 at the user's request — the modeling rationale it
+used to carry (why no `η`, why the terminal target is a penalty, why `C_B = 0.5`
+here vs. `≈10⁻⁶·min c^t` in the tADMM paper) now survives only in
+`ddp/README_FILTERDDP_EXPERIMENT.md`.
+
+**Open question the user raised, not yet decided:** demand and price in
+`tab:cp_data` are nearly collinear (`r = 0.9968`). See the "Known weakness"
+note in the experiment README. Changing the price series invalidates every
+recorded number, so it is the user's call.
+
+## What is and isn't verified (as of 2026-08-07)
+
+FilterDDP is cross-checked against a **centralized JuMP/Ipopt** solve of
+`eq:cp_all` on all 8 copper-plate cases (Stage 8 of the experiment README):
+`2e-16` agreement on the base instances, worst gap `1.1e-10` with bounds, and
+Ipopt independently certifies the 6g bound set infeasible. On the base instances
+there are three mutually independent references (closed form, active-set QP,
+Ipopt). **Do not redo this.**
+
+Not verified, so don't overclaim: anything with a network (no LinDistFlow, no
+BFM); horizons beyond `T = 6`; and **the user's own DDP algorithm, which has not
+been compared at all** — that is the pending task below.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
