@@ -43,6 +43,7 @@ against the tADMM instance data, on 2026-08-07. The authors' clone is **unmodifi
 | 6g — infeasible bound set (probe) | **FAIL, as designed** | same log: returns status 7 with primal residual `0.638`; independent enumeration confirms the feasible set is empty | **no infeasibility diagnosis — status 7 means both "infeasible" and "hard"** |
 | 7 — MPOPF applicability assessment | **PASS** | [notes/MPOPF_APPLICABILITY.md](notes/MPOPF_APPLICABILITY.md) | none |
 | 8 — centralized JuMP/Ipopt cross-check | **PASS** | all 7 feasible cases agree with a third, fully independent solver: worst objective gap `2.2e-10`, worst trajectory disagreement `1.9e-05` (case 6d at T = 3, a tolerance effect — 6f drives it to `4.1e-13`), machine precision on both base instances. Added 2026-08-07 | none |
+| 9 — per-iteration convergence trace | **PASS** | [results/copper_plate/stage9_convergence.log](results/copper_plate/stage9_convergence.log): 6e (T=6) converges in **17** iterations, 6d (T=3) in **27**; regularisation never fires in either. Added 2026-08-07 | none |
 
 Status labels are used strictly: no stage is PASS without a number behind it.
 
@@ -61,13 +62,14 @@ ddp/
 ├── logs/                            unedited terminal output for every stage
 ├── results/
 │   ├── official_example/            our run vs the authors' shipped numbers
-│   └── copper_plate/                Stage 5, 6 and 8 output
+│   └── copper_plate/                Stage 5, 6, 8 and 9 output
 ├── examples/power_system/
 │   ├── tadmm_profiles.jl            the shared tADMM load/price series
 │   ├── copper_plate_battery.jl      Stage 5 model + 2 independent references
 │   ├── copper_plate_battery_bounds.jl  Stage 6 bounds + active-set QP reference
 │   ├── copper_plate_centralized.jl  Stage 8: eq:cp_all in JuMP/Ipopt, no reduction
-│   └── verify_against_centralized.jl   Stage 8: FilterDDP vs that reference
+│   ├── verify_against_centralized.jl   Stage 8: FilterDDP vs that reference
+│   └── convergence_trace.jl         Stage 9: per-iteration trace + figure data
 ├── papers/                          the two arXiv papers + text extractions
 └── external/FilterDDP.jl/           unmodified upstream clone @ 513a104
 
@@ -103,6 +105,9 @@ julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/copper_
 # Stage 8 — centralized cross-check (produce the reference, then diff against it)
 julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/copper_plate_centralized.jl
 julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/verify_against_centralized.jl
+
+# Stage 9 — per-iteration convergence trace (also writes the paper's figure data)
+julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/convergence_trace.jl
 ```
 
 All logs were regenerated on 2026-08-07 after the instance data was switched to
@@ -245,6 +250,47 @@ phase showing up as a concrete difference in what a caller can conclude.
 > is that the battery here is cost-limited rather than bound-limited as it is in
 > tADMM, so its economic swing is small (`P_B ∈ [-0.055, 0.059]` at `T = 6`) and
 > the bounds chosen to bind are correspondingly tight.
+
+## Stage 9 — how the iterations actually go
+
+`convergence_trace.jl` records what happens inside each iteration. FilterDDP keeps
+**no iteration history** — `SolverData` (`src/solver_data.jl:8-32`) holds only the
+current iterate — so the trace is captured from the verbose stream and parsed
+back. The clone stays unmodified.
+
+| | 6e, T = 6 | 6d, T = 3 |
+| --- | --- | --- |
+| iterations | **17** (`k = 0..16`) | **27** (`k = 0..26`) |
+| `pr_inf` | `1.0e+00` → `4.4e-16` | `9.4e-01` → `2.2e-16` |
+| `du_inf` | `9.2e-01` → `5.6e-13` | `8.6e-01` → `4.2e-16` |
+| `cs_inf` | `1.0e+00` → `3.7e-11` | `1.0e+00` → `6.4e-11` |
+| regularisation fired | **0** of 17 | **0** of 27 |
+| iterations that backtracked | 8 | 21 |
+
+The shape is the same in both and is worth stating: **feasibility is essentially
+free, and the iteration count is set by the barrier schedule.** Both `pr_inf` and
+`du_inf` fall to machine precision by `k = 4` and simply stay there; every
+remaining iteration is `μ` stepping down and dragging `cs_inf` with it. T = 3
+needs 10 more iterations than T = 6 not because it is a harder optimisation but
+because its bounds sit in a window a few kW wide, so `μ` has further to fall
+before complementarity is tight enough to certify.
+
+Two things the raw output gets wrong, both handled in the tracer rather than
+passed along:
+
+1. **The printed halves are one iteration out of step.** `iteration_status` is
+   called before `forward_pass!` (`src/solve.jl:38,40`), so the `alpha` and `ls`
+   on row `k` belong to iteration `k-1`. A table that pairs a backward pass with
+   the wrong forward pass is simply wrong, so the parser de-staggers them.
+
+2. **`ls` is not a line-search trial count**, despite the header. `forward_pass!`
+   backtracks from three places; the one at `src/forward_pass.jl:17` (rollout
+   failure, i.e. the fraction-to-boundary rule) halves the step **without**
+   incrementing `data.l`, while lines 25 and 37 increment. Every backtrack in
+   both traces came through line 17, which is why the raw output shows
+   `alpha = 0.5` alongside `ls = 0` — a contradiction on its face. The reliable
+   quantity is `alpha`; the tracer reports the true backtrack count as
+   `log2(1/alpha)` and relabels `l` as what it is, filter/decrease rejections only.
 
 ## Where this leaves the MPOPF question
 

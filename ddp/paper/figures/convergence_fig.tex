@@ -1,0 +1,91 @@
+% FilterDDP convergence for the two bounded cases.
+%
+% Data from figures/convergence_{6e_T6,6d_T3}.csv, written by
+% examples/power_system/convergence_trace.jl. FilterDDP keeps no iteration
+% history (src/solver_data.jl holds only the current iterate), so the trace is
+% captured from its verbose stream and parsed back; see that script's header,
+% including why the printed alpha/ls columns have to be de-staggered.
+%
+% B&W: each series carries colour AND a distinct dash pattern AND a distinct
+% marker, so it survives a greyscale printout on shape alone.
+%   pr_inf : blue  / solid     / circle
+%   du_inf : green / dashed    / square
+%   cs_inf : red   / dash-dot  / triangle
+%   mu     : grey  / dotted    / none
+%
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}
+\pgfplotsset{
+  convaxis/.style={
+    % NOTE: ymode/ymin/ymax are set per-axis below, not here. Carrying `ymode`
+    % inside a \pgfplotsset style makes it resolve against /tikz/ at \end{axis}
+    % and error out with "I do not know the key '/tikz/ymode'".
+    width=0.78\columnwidth, height=0.42\columnwidth, scale only axis,
+    tick align=outside,
+    tick label style={font=\scriptsize},
+    label style={font=\scriptsize},
+    axis line style={black, line width=0.6pt},
+    grid=both,
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.5},
+    ylabel near ticks,
+  },
+  convseries/.style={line width=1.0pt, mark size=1.3pt},
+}
+
+% ---------------- Panel 1: 6e, T = 6 ----------------
+\begin{axis}[
+    convaxis, name=axA,
+    ymode=log, ymin=1e-17, ymax=5e0, ytick={1e-16,1e-12,1e-8,1e-4,1e0},
+    xmin=-0.5, xmax=16.5, xtick={0,4,8,12,16},
+    xticklabels={},
+    ylabel={$T = 6$ residual},
+    legend style={at={(0.5,1.05)}, anchor=south, legend columns=4,
+                  draw=none, fill=none, column sep=0.7ex, font=\scriptsize},
+    legend cell align=left,
+]
+\addplot[convseries, cPr, mark=*, mark options={fill=cPr, draw=cPr}]
+  table[col sep=comma, x=k, y=pr] {figures/convergence_6e_T6.csv};
+\addlegendentry{$\mathrm{pr}_\infty$}
+\addplot[convseries, cDu, densely dashed, mark=square*,
+         mark options={fill=cDu, draw=cDu, solid}]
+  table[col sep=comma, x=k, y=du] {figures/convergence_6e_T6.csv};
+\addlegendentry{$\mathrm{du}_\infty$}
+\addplot[convseries, cCs, dash dot, mark=triangle*,
+         mark options={fill=cCs, draw=cCs, solid}]
+  table[col sep=comma, x=k, y=cs] {figures/convergence_6e_T6.csv};
+\addlegendentry{$\mathrm{cs}_\infty$}
+\addplot[convseries, cMu, densely dotted, line width=1.2pt]
+  table[col sep=comma, x=k, y=mu] {figures/convergence_6e_T6.csv};
+\addlegendentry{$\mu$}
+\end{axis}
+
+% ---------------- Panel 2: 6d, T = 3 ----------------
+\begin{axis}[
+    convaxis, at={(axA.below south west)}, anchor=north west, yshift=-2.5mm,
+    ymode=log, ymin=1e-17, ymax=5e0, ytick={1e-16,1e-12,1e-8,1e-4,1e0},
+    xmin=-0.5, xmax=26.5, xtick={0,5,10,15,20,25},
+    xlabel={Iteration $k$},
+    ylabel={$T = 3$ residual},
+]
+\addplot[convseries, cPr, mark=*, mark options={fill=cPr, draw=cPr}]
+  table[col sep=comma, x=k, y=pr] {figures/convergence_6d_T3.csv};
+\addplot[convseries, cDu, densely dashed, mark=square*,
+         mark options={fill=cDu, draw=cDu, solid}]
+  table[col sep=comma, x=k, y=du] {figures/convergence_6d_T3.csv};
+\addplot[convseries, cCs, dash dot, mark=triangle*,
+         mark options={fill=cCs, draw=cCs, solid}]
+  table[col sep=comma, x=k, y=cs] {figures/convergence_6d_T3.csv};
+\addplot[convseries, cMu, densely dotted, line width=1.2pt]
+  table[col sep=comma, x=k, y=mu] {figures/convergence_6d_T3.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{FilterDDP convergence, all bounds imposed: $T = 6$ (top, 17 iterations)
+and $T = 3$ (bottom, 27).  Feasibility is reached almost immediately --- both
+$\mathrm{pr}_\infty$ and $\mathrm{du}_\infty$ hit machine precision by $k = 4$
+--- after which progress is entirely the barrier parameter $\mu$ driving
+$\mathrm{cs}_\infty$ down alongside it.  Iteration count here is set by the
+$\mu$ schedule, not by the optimisation.}
+\label{fig:convergence}
+\end{figure}

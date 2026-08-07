@@ -171,7 +171,7 @@ status_str(s) = get(STATUS, s, "status $s")
 
 """Cases without energy bounds: nu = 2, nc = 1."""
 function solve_ddp_bounds(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                          tol = 1e-10)
+                          tol = 1e-10, verbose = false)
     nx, nu = 2, 2
     pL = tadmm_pL(T); c = tadmm_cost(T)
 
@@ -183,7 +183,7 @@ function solve_ddp_bounds(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi
     cl = ControlLimits(SVector{nu,T_}([ps_lo, pb_lo]), SVector{nu,T_}([ps_hi, pb_hi]))
 
     ocp = build_ocp(T, Objective(l, nx, nu), Objective(lN, nx, nu), dyn, cons, cl)
-    solver = Solver(ocp; options = Options{T_}(verbose = false, optimality_tolerance = tol))
+    solver = Solver(ocp; options = Options{T_}(verbose = verbose, optimality_tolerance = tol))
     x1 = SVector{nx,T_}([B_0, 1.0])
     ps0 = isfinite(ps_lo) && isfinite(ps_hi) ? (ps_lo + ps_hi) / 2 : 1.0
     pb0 = isfinite(pb_lo) && isfinite(pb_hi) ? (pb_lo + pb_hi) / 2 : 0.0
@@ -199,7 +199,7 @@ end
 
 """Cases with energy bounds: slack control, nu = 3, nc = 2."""
 function solve_ddp_energy(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                          B_lo, B_hi, tol = 1e-10)
+                          B_lo, B_hi, tol = 1e-10, verbose = false)
     nx, nu = 2, 3          # u = (Psub, P_B, s)
     pL = tadmm_pL(T); c = tadmm_cost(T)
 
@@ -216,7 +216,7 @@ function solve_ddp_energy(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi
                        SVector{nu,T_}([ps_hi, pb_hi, B_hi - B_lo]))
 
     ocp = build_ocp(T, Objective(l, nx, nu), Objective(lN, nx, nu), dyn, cons, cl)
-    solver = Solver(ocp; options = Options{T_}(verbose = false, optimality_tolerance = tol))
+    solver = Solver(ocp; options = Options{T_}(verbose = verbose, optimality_tolerance = tol))
     x1 = SVector{nx,T_}([B_0, 1.0])
     ū = [SVector{nu,T_}([1.0, 0.0, (B_hi - B_lo) / 2]) for _ = 1:T]
     solve!(solver, x1, ū)
