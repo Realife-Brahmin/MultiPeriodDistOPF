@@ -75,3 +75,8 @@ println("max |p_L(τ)| on [1,6] = ", round(mx_l, digits = 4),
         "   (node max ", maximum(PL), ")")
 println("max |c(τ)|   on [1,6] = ", round(mx_c, digits = 4),
         "   (node max ", maximum(C), ")")
+# Same overshoot in the units the FIGURE uses, which is what the caption quotes.
+println("  -> load factor  ", round(mx_l / PL_RATED, digits = 4),
+        " vs node max ", round(maximum(PL) / PL_RATED, digits = 4))
+println("  -> price cents  ", round(mx_c * CENTS, digits = 2),
+        " vs node max ", round(maximum(C) * CENTS, digits = 2))

@@ -16,10 +16,6 @@
 % Markers are the nodes. Data from make_input_curves.jl in this directory,
 % which converts to a load factor (p_L / 2.0 p.u.) and to cents/kWh.
 %
-\definecolor{cLoad}{HTML}{31748F}   % pine
-\definecolor{cPrice}{HTML}{1F7A4D}  % cash green ($ price)
-\definecolor{gridMajor}{HTML}{E8C4D4} % soft pink     -- major grid
-\definecolor{gridMinor}{HTML}{D4D4E8} % soft lavender -- minor grid
 %
 \begin{figure}[!t]
 \centering
@@ -67,10 +63,14 @@
 \end{axis}
 % ---- Right axis: energy price (cents/kWh), overlaid, right spine only ----
 \begin{axis}[
-    ymin=0, ymax=75,
+    % The tADMM price runs 8.3-19.7 cents. The axis still tops out well above
+    % that so the price trace stays clear of the load trace above it, but not so
+    % far that its shape is squashed flat -- the old ymax=75 was set for the
+    % previous 25-62 cent series and left this one in the bottom fifth.
+    ymin=0, ymax=40,
     xmin=1, xmax=6,
     xtick=\empty,
-    ytick={0,15,30,45,60,75},
+    ytick={0,10,20,30,40},
     scaled y ticks=false,
     yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=0},
     ylabel={Energy price [cents/kWh]},
@@ -87,17 +87,10 @@
   table[col sep=comma, x=tau, y=cents] {figures/input_nodes.csv};
 \end{axis}
 \end{tikzpicture}
-\caption{Input profiles over the $T = 6$ horizon: load factor on the left axis,
-energy price on the right, each specified at the $T$ horizon points.  Markers
-are the data; the curves are the Lagrange interpolants~\eqref{eq:ocp_interp}
-through them, and it is the curves, not the markers, that the solver evaluates.
-The two agree exactly at every node, by construction, but between nodes they
-need not be well behaved and already are not --- the load interpolant reaches
-$0.998$ against a node maximum of $0.9$, and the price interpolant
-$69.7$ cents/kWh against $62$.  Nothing samples those excursions here, because
-the time-index state advances by exactly one per stage and so only ever lands on
-a node; but the interpolant's \emph{derivatives} at the nodes are what the
-backward pass consumes, and its degree is $T-1$.  This is the device that does
-not survive a realistic horizon.}
+\caption{Input profiles at $T = 6$: load factor (left axis), energy price
+(right).  Markers are the data; the curves are the Lagrange
+interpolants, which is what the solver actually evaluates.
+Overshoot between nodes is slight ($1.0005$ against a node maximum of $0.999$),
+but the interpolant degree is $T-1$.}
 \label{fig:input_curves}
 \end{figure}

@@ -1,0 +1,37 @@
+% One semantic palette for every figure in this document.
+%
+% Defined ONCE, and \input from the preamble, so a given asset cannot end up one
+% colour in one figure and a different colour in another. That is not
+% hypothetical: substation power was black in schedule_fig.tex and steel blue in
+% balance_fig.tex because each file carried its own \definecolor block under a
+% slightly different name (cSubs vs cSubsB). Add new colours here, never locally.
+%
+% An asset keeps its colour across every figure it appears in:
+
+\definecolor{cSubs}{HTML}{000000}   % black          -- substation import, EVERYWHERE
+\definecolor{cLoad}{HTML}{B8860B}   % dark goldenrod -- load / served demand
+\definecolor{cPV}{HTML}{E07B39}     % sunset orange  -- RESERVED for PV, not yet used.
+                                    %   cLoad is deliberately yellow rather than
+                                    %   orange so the two never read as the same asset.
+\definecolor{cChg}{HTML}{008000}    % green    -- battery charging    (Plots.jl :green)
+\definecolor{cDis}{HTML}{800000}    % maroon   -- battery discharging (Plots.jl :maroon)
+\definecolor{cB0}{HTML}{4B0082}     % indigo   -- fixed initial SOC
+\definecolor{cSOC}{HTML}{800080}    % purple   -- optimised SOC
+\definecolor{cLim}{HTML}{8C1D1D}    % dark red -- binding limits
+
+% Convergence residuals. The primal/dual pair follows the variable-class
+% convention used across this work (blue = primal, green = dual); complementarity
+% has no counterpart there and takes the third hue.
+\definecolor{cPr}{HTML}{2C6FBB}     % blue   -- primal infeasibility
+\definecolor{cDu}{HTML}{1F8A3C}     % green  -- dual infeasibility
+\definecolor{cCs}{HTML}{B02418}     % red    -- complementarity error
+\definecolor{cMu}{HTML}{6B6B6B}     % grey   -- barrier parameter mu
+
+% Non-asset quantities.
+\definecolor{cPrice}{HTML}{1F7A4D}  % cash green -- energy price c^t
+\definecolor{cCost}{HTML}{006400}   % dark green -- period cost
+\definecolor{cRule}{HTML}{1A1A1A}   % near-black -- equal-height rule
+
+% Chrome.
+\definecolor{gridMajor}{HTML}{E8C4D4} % soft pink
+\definecolor{gridMinor}{HTML}{D4D4E8} % soft lavender

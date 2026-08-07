@@ -28,16 +28,6 @@
 % Per-interval quantities sit at the interval centre t-1/2 and node quantities
 % (B) at the nodes 0..T, so the three panels share one honest x-axis.
 %
-\definecolor{cSubs}{HTML}{000000}   % black      -- substation power
-\definecolor{cCost}{HTML}{006400}   % dark green -- period cost
-\definecolor{cLoad}{HTML}{31748F}   % pine       -- demand (added)
-\definecolor{cChg}{HTML}{008000}    % green      -- charging    (Plots.jl :green)
-\definecolor{cDis}{HTML}{800000}    % maroon     -- discharging (Plots.jl :maroon)
-\definecolor{cB0}{HTML}{4B0082}     % indigo     -- fixed initial SOC
-\definecolor{cSOC}{HTML}{800080}    % purple     -- optimised SOC
-\definecolor{cLim}{HTML}{8C1D1D}    % maroon     -- binding limits
-\definecolor{gridMajor}{HTML}{E8C4D4} % soft pink     -- major grid
-\definecolor{gridMinor}{HTML}{D4D4E8} % soft lavender -- minor grid
 %
 \begin{figure}[!t]
 \centering
@@ -115,12 +105,16 @@
                   font=\scriptsize, row sep=-2pt, inner sep=2pt},
     legend cell align=left,
 ]
+% Opposite hatch directions as well as colour: charge and discharge collapse to
+% nearly the same grey when IEEE prints this in B&W.
 \addplot[ybar, bar width=21pt, draw=cChg!70!black, fill=cChg, fill opacity=0.75,
-         line width=0.5pt]
+         line width=0.5pt,
+         postaction={pattern=north west lines, pattern color=white}]
   table[col sep=comma, x=tc, y=pc] {figures/schedule_interval.csv};
 \addlegendentry{Charging ($P_c$)}
 \addplot[ybar, bar width=21pt, draw=cDis!70!black, fill=cDis, fill opacity=0.75,
-         line width=0.5pt]
+         line width=0.5pt,
+         postaction={pattern=north east lines, pattern color=white}]
   table[col sep=comma, x=tc, y=pdneg] {figures/schedule_interval.csv};
 \addlegendentry{Discharging ($P_d$)}
 \addplot[black, line width=1.0pt, forget plot, domain=-1.0:6.5, samples=2] {0};
@@ -159,23 +153,10 @@
          domain=-1.0:6.5, samples=2] {1200};
 \end{axis}
 \end{tikzpicture}
-\caption{The benchmark solved at $T = 6$ with all bounds
-\eqref{eq:cp_pg_lim}--\eqref{eq:cp_soc_lim} imposed.  Battery actions use the
-convention of the tADMM study: charging is drawn upward in green and discharging
-downward in maroon, so a bar's direction reads as the device's action rather than
-as the sign of $P_B^t$.  Read it as one worked example.  The battery discharges
-through $t = 1$--$3$, hitting its $450$\,kW rail at $t = 2$ where the price peaks,
-and recharges through the two cheap intervals $t = 4, 5$, hitting the
-$-450$\,kW rail at $t = 5$ where energy is cheapest.
-That is why the substation trace in the top panel crosses the demand it serves:
-it is pulled down to $1438$\,kW at the demand-and-price peak and pushed up to
-$2073$\,kW in the cheap trough, where it is buying energy for the device rather
-than for the load.  Substation import is unlimited above, so the schedule is
-bounded only by the device, and it rides both of its limits: stored energy is
-drawn right down onto $B^{\min} = 1200$\,kWh after the interval-$3$ discharge and
-pushed back onto $B^{\max} = 1950$\,kWh at the end (dashed rules in the lower two
-panels).  Those bounds, together with the two power rails, are exactly the active
-set the independent reference solver reports.  Fig.~\ref{fig:balance} shows the
-same solution as a balance of supply against demand.}
+\caption{The benchmark at $T = 6$ with all bounds imposed.  Charging is drawn upward,
+discharging downward, so a bar's direction is the device's action rather than the
+sign of $P_B^t$.  The battery discharges through $t = 1$--$3$ and recharges at
+$t = 4, 5$, riding its $\pm 450$\,kW rails and both energy limits (dashed).
+Those five bounds are the active set the reference solver reports.}
 \label{fig:schedule}
 \end{figure}

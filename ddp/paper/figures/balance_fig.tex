@@ -17,13 +17,6 @@
 % stack, axis 3 the equal-height rule. All three share identical limits so the
 % bars register.
 %
-\definecolor{cSubsB}{HTML}{31708E}  % steel blue -- substation import
-\definecolor{cDisB}{HTML}{800000}   % maroon     -- discharging (as in schedule_fig)
-\definecolor{cLoadB}{HTML}{C08552}  % ochre      -- served demand
-\definecolor{cChgB}{HTML}{008000}   % green      -- charging    (as in schedule_fig)
-\definecolor{cRule}{HTML}{1A1A1A}   % near-black -- equal-height rule
-\definecolor{gridMajorB}{HTML}{E8C4D4}
-\definecolor{gridMinorB}{HTML}{D4D4E8}
 %
 \begin{figure}[!t]
 \centering
@@ -46,8 +39,8 @@
     balanceaxis, name=axBal,
     ybar stacked, bar width=13pt,
     grid=both,
-    major grid style={line width=0.6pt, color=gridMajorB, opacity=0.7},
-    minor grid style={line width=0.4pt, color=gridMinorB, opacity=0.6},
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.6},
     xlabel={Time interval $t$},
     ylabel={Power [kW]}, ylabel near ticks,
     legend style={at={(0.5,1.04)}, anchor=south, legend columns=4,
@@ -55,15 +48,20 @@
     legend image code/.code={\draw[#1] (0cm,-0.085cm) rectangle (0.24cm,0.085cm);},
     legend cell align=left,
 ]
-\addplot[draw=cSubsB!70!black, fill=cSubsB, fill opacity=0.85, line width=0.5pt]
+\addplot[draw=cSubs!70!black, fill=cSubs, fill opacity=0.85, line width=0.5pt]
   table[col sep=comma, x=tsup, y=psub] {figures/balance.csv};
 \addlegendentry{$P_{\text{Subs}}$}
-\addplot[draw=cDisB!70!black, fill=cDisB, fill opacity=0.85, line width=0.5pt]
+% The two battery series carry OPPOSITE hatch directions as well as different
+% colours. IEEE prints in B&W, where discharge maroon and charge green collapse
+% to nearly the same grey; the hatch is what keeps them apart there.
+\addplot[draw=cDis!70!black, fill=cDis, fill opacity=0.85, line width=0.5pt,
+         postaction={pattern=north east lines, pattern color=white}]
   table[col sep=comma, x=tsup, y=pd] {figures/balance.csv};
 \addlegendentry{$P_B > 0$ (discharge)}
-\addlegendimage{draw=cLoadB!70!black, fill=cLoadB, fill opacity=0.85}
+\addlegendimage{draw=cLoad!70!black, fill=cLoad, fill opacity=0.85}
 \addlegendentry{$p_L$}
-\addlegendimage{draw=cChgB!70!black, fill=cChgB, fill opacity=0.85}
+\addlegendimage{draw=cChg!70!black, fill=cChg, fill opacity=0.85,
+                postaction={pattern=north west lines, pattern color=white}}
 \addlegendentry{$P_B < 0$ (charge)}
 \end{axis}
 
@@ -73,9 +71,10 @@
     ybar stacked, bar width=13pt,
     axis lines=none, xtick=\empty, ytick=\empty, grid=none,
 ]
-\addplot[draw=cLoadB!70!black, fill=cLoadB, fill opacity=0.85, line width=0.5pt]
+\addplot[draw=cLoad!70!black, fill=cLoad, fill opacity=0.85, line width=0.5pt]
   table[col sep=comma, x=tdem, y=pl] {figures/balance.csv};
-\addplot[draw=cChgB!70!black, fill=cChgB, fill opacity=0.85, line width=0.5pt]
+\addplot[draw=cChg!70!black, fill=cChg, fill opacity=0.85, line width=0.5pt,
+         postaction={pattern=north west lines, pattern color=white}]
   table[col sep=comma, x=tdem, y=pc] {figures/balance.csv};
 \end{axis}
 
@@ -88,22 +87,11 @@
   table[col sep=comma, x=t, y=total] {figures/balance.csv};
 \end{axis}
 \end{tikzpicture}
-\caption{Where every kW comes from and goes, at $T = 6$ with all bounds imposed.
-Each interval carries two stacked bars: on the left what \emph{supplies} the
-node, substation import $P_{\text{Subs}}^t$ plus battery discharge; on the right
-what \emph{consumes} it, the served demand $p_L^t$ plus battery charging.  The
-two must reach the same height --- that equality \emph{is} the power balance
-\eqref{eq:cp_balance}, and the black rule marks the level they share.  Read the
-figure as one worked example.  In $t = 2$ the price peaks at $0.197$\,\$/kWh, and
-the battery discharges at its $450$\,kW rail, so the maroon block supplies
-$23.8\%$ of the $1888$\,kW the node needs and the substation is held down to
-$1438$\,kW even though demand is near its own peak.  Three intervals later the
-sign flips: at $t = 5$ the price bottoms at $0.083$\,\$/kWh, the battery charges
-at $-450$\,kW, and that charging appears on the \emph{demand} side, pushing
-substation import up to $2073$\,kW to serve only $1623$\,kW of actual load.  The
-device is doing arbitrage in the open.  Over the horizon the substation imports
-$10\,606$\,kWh against $10\,657$\,kWh of load served, the $51$\,kWh difference
-being the net the battery gives back as it returns from $B = 1200$\,kWh to
-$1950$\,kWh.  Bars are in kW on the tADMM base, $1$\,p.u.\ $= 1000$\,kW.}
+\caption{Power-balance composition at $T = 6$.  Per interval, supply
+($P_{\text{Subs}}^t$ plus discharge) on the left against demand ($p_L^t$ plus
+charge) on the right; the equal heights are the power balance,
+marked by the rule.  At $t = 2$ the battery supplies
+$23.8\%$ of the node's $1888$\,kW; at $t = 5$ its charging instead raises
+import to $2073$\,kW to serve $1623$\,kW of load.}
 \label{fig:balance}
 \end{figure}
