@@ -290,48 +290,42 @@ function main()
     # a check that an INACTIVE bound is identified as such and leaves the
     # equality-only solution untouched.
     cfg = (ps_lo = 0.0,)
-    push!(summary, ("6a grid lower bound, T=3",
-        report("6a — grid-power lower bound only, T = 3  (Psub >= 0, no export)", 3,
-               solve_ddp_bounds(3; cfg...), reference(3; cfg...))))
+    push!(summary, ("6a grid lower bound",
+        report("6a — grid-power lower bound only, T = 6  (Psub >= 0, no export)", 6,
+               solve_ddp_bounds(6; cfg...), reference(6; cfg...))))
 
     # ---- 6b: battery-power bounds only ----------------------------------
-    cfg = (pb_lo = -0.5, pb_hi = 0.004)
-    push!(summary, ("6b battery-power bounds, T=3",
-        report("6b — battery-power bounds only, T = 3  (-0.5 <= P_B <= 0.004)", 3,
-               solve_ddp_bounds(3; cfg...), reference(3; cfg...))))
+    cfg = (pb_lo = -0.45, pb_hi = 0.45)
+    push!(summary, ("6b battery-power bounds",
+        report("6b — battery-power bounds only, T = 6  (-0.45 <= P_B <= 0.45)", 6,
+               solve_ddp_bounds(6; cfg...), reference(6; cfg...))))
 
     # ---- 6c: energy bounds only (slack reformulation) -------------------
-    cfg = (B_lo = 1.9895, B_hi = 1.995)
-    push!(summary, ("6c energy bounds, T=3",
-        report("6c — energy bounds only, T = 3  (1.9895 <= B <= 1.995), slack reformulation", 3,
-               solve_ddp_energy(3; cfg...), reference(3; cfg...); energy = true)))
+    cfg = (B_lo = 1.20, B_hi = 1.95)
+    push!(summary, ("6c energy bounds",
+        report("6c — energy bounds only, T = 6  (1.20 <= B <= 1.95), slack reformulation", 6,
+               solve_ddp_energy(6; cfg...), reference(6; cfg...); energy = true)))
 
     # ---- 6d: all three ---------------------------------------------------
     # With the substation import unlimited above, the balance is always
     # satisfiable, so the binding constraints come from the battery and energy
     # limits alone.
-    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)
-    push!(summary, ("6d all bounds, T=3",
-        report("6d — all bounds together, T = 3", 3,
-               solve_ddp_energy(3; cfg...), reference(3; cfg...); energy = true)))
-
-    # ---- 6e: T = 6 -------------------------------------------------------
     cfg = (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45, B_lo = 1.20, B_hi = 1.95)
-    push!(summary, ("6e all bounds, T=6",
-        report("6e — all bounds together, T = 6", 6,
+    push!(summary, ("6d all bounds",
+        report("6d — all bounds together, T = 6", 6,
                solve_ddp_energy(6; cfg...), reference(6; cfg...); energy = true)))
 
     # ---- 6f: tolerance sweep on case 6d ----------------------------------
     println("\n" * "="^78)
     println("6f — tolerance sweep on case 6d")
     println("="^78)
-    cfg = (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004, B_lo = 1.9895, B_hi = 1.9965)
-    ref3 = reference(3; cfg...)
+    cfg = (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45, B_lo = 1.20, B_hi = 1.95)
+    ref3 = reference(6; cfg...)
     @printf("%10s %6s %6s %-22s %11s %11s\n", "tol", "iters", "status", "termination", "|ΔJ|", "dual_inf")
     for tol in [1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-12]
-        g = solve_ddp_energy(3; cfg..., tol = tol)
-        c3 = tadmm_cost(3)
-        J = sum(c3 .* g.psub .* Δt) + C_B * sum(g.pb .^ 2) * Δt + W * (g.B[4] - B_0)^2
+        g = solve_ddp_energy(6; cfg..., tol = tol)
+        c6 = tadmm_cost(6)
+        J = sum(c6 .* g.psub .* Δt) + C_B * sum(g.pb .^ 2) * Δt + W * (g.B[7] - B_0)^2
         @printf("%10.0e %6d %6d %-22s %11.3e %11.3e\n", tol, g.solver.data.k,
                 g.solver.data.status, status_str(g.solver.data.status),
                 abs(J - ref3.J), g.solver.data.dual_inf)

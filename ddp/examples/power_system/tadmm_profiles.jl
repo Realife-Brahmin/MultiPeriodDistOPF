@@ -16,12 +16,14 @@
 #      so c^1 == c^T for every T. The price series is periodic with a duplicated
 #      endpoint rather than a clean cycle of T distinct points.
 #
-#   2. At T = 3 the sample points are 0, pi, 2pi, where sin vanishes at all
-#      three, so the PRICE IS CONSTANT: c = [0.14, 0.14, 0.14]. The T = 3
-#      instance therefore has no arbitrage signal at all and its optimal P_B is
-#      the same in every period, set purely by the terminal penalty. It remains a
-#      valid solver test -- and a symmetric, mildly degenerate one, which is a
-#      useful thing to exercise -- but T = 6 is the meaningful economic case.
+#   2. CHECK THE PRICE BEFORE ADOPTING A NEW T. At T = 3 the sample points are
+#      0, pi and 2pi, where sin vanishes at all three, so the price comes out
+#      CONSTANT: c = [0.14, 0.14, 0.14]. Such an instance has no arbitrage signal
+#      at all -- the optimal P_B is identical in every period and set purely by
+#      the terminal penalty -- which makes it a poor storage benchmark however
+#      well the solver behaves on it. T = 3 was used and then dropped for exactly
+#      this reason; the committed results are T = 6 only. Any small T is worth
+#      inspecting the same way before it is used.
 #
 # The load profile is phase-shifted by -0.8 rad relative to the price. That
 # offset is what keeps the two series from being collinear: Pearson r is 0.644 at

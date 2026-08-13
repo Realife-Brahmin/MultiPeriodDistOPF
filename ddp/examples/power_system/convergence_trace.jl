@@ -125,11 +125,29 @@ end
 # ---------------------------------------------------------------------------
 
 const TRACE_CASES = [
-    ("6e_T6", solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45,
+    ("6d_T6", solve_ddp_energy, 6, (ps_lo = 0.0, pb_lo = -0.45, pb_hi = 0.45,
                                     B_lo = 1.20, B_hi = 1.95)),
-    ("6d_T3", solve_ddp_energy, 3, (ps_lo = 0.0, pb_lo = -0.5, pb_hi = 0.004,
-                                    B_lo = 1.9895, B_hi = 1.9965)),
 ]
+
+"""
+Objective of the CENTRALIZED JuMP/Ipopt solution for `case`, read from the
+verified reference written by copper_plate_centralized.jl. This is the level the
+FilterDDP objective should be converging to, and it is read rather than
+hardcoded so the two can never drift apart.
+"""
+function centralized_objective(case::String)
+    path = joinpath(@__DIR__, "..", "..", "results", "copper_plate",
+                    "centralized_reference.csv")
+    isfile(path) || error("""
+        $path not found. Run copper_plate_centralized.jl first -- the objective
+        baseline is taken from it, not from a literal in this file.""")
+    for (i, line) in enumerate(eachline(path))
+        i == 1 && continue
+        f = split(strip(line), ',')
+        length(f) == 7 && f[1] == case && f[7] != "NaN" && return parse(T_, f[7])
+    end
+    error("case $case not found in $path")
+end
 
 function main()
     outdir = joinpath(@__DIR__, "..", "..", "results", "copper_plate")
@@ -172,13 +190,22 @@ function main()
         @printf("pr_inf %.2e -> %.2e,  du_inf %.2e -> %.2e,  cs_inf %.2e -> %.2e\n",
                 rows[1].pr, rows[end].pr, rows[1].du, rows[end].du, rows[1].cs, rows[end].cs)
 
+        # Centralized baseline: the level the objective should be converging to.
+        jstar = centralized_objective(name)
+        @printf("objective %.10f -> %.10f;  centralized (Ipopt) %.10f,  final gap %.2e\n",
+                rows[1].obj, rows[end].obj, jstar, abs(rows[end].obj - jstar))
+
         # Figure data: one file per case, log-plottable (no zeros).
+        # jstar is written as a constant column so the baseline is drawn from the
+        # same table, spanning exactly the iterations plotted.
+        # gap is |J_k - J*|, floored so it survives a log axis.
         floor_(v) = max(v, 1e-17)
         open(joinpath(figdir, "convergence_$(name).csv"), "w") do io
-            println(io, "k,pr,du,cs,mu,obj")
+            println(io, "k,pr,du,cs,mu,obj,jstar,gap")
             for r in rows
                 println(io, r.k, ",", floor_(r.pr), ",", floor_(r.du), ",",
-                        floor_(r.cs), ",", 10.0^r.lgmu, ",", r.obj)
+                        floor_(r.cs), ",", 10.0^r.lgmu, ",", r.obj, ",", jstar,
+                        ",", floor_(abs(r.obj - jstar)))
             end
         end
         println("wrote ", joinpath(figdir, "convergence_$(name).csv"))

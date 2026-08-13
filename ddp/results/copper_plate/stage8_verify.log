@@ -3,16 +3,14 @@ FilterDDP  vs  centralized JuMP/Ipopt solution of eq:cp_all
 ==============================================================================================
 case        iters  status  J (FilterDDP)      J (Ipopt)        |ΔJ|  max|ΔPsub|     max|ΔB|
 ----------------------------------------------------------------------------------------------
-base_T3         1       0     0.73493729     0.73493729   0.000e+00   7.550e-15   7.550e-15
 base_T6         1       0     1.46683686     1.46683686   0.000e+00   9.548e-15   1.021e-14
-6a_T3           9       0     0.73493729     0.73493729   1.110e-16   2.114e-11   1.162e-11
-6b_T3          14       0     0.73495643     0.73495643   1.119e-10   1.904e-09   5.711e-09
-6c_T3          18       0     0.73499729     0.73499729   2.015e-11   4.552e-08   4.552e-08
-6d_T3          26       0     0.73499712     0.73499712   4.173e-11   1.897e-05   1.897e-05
-6e_T6          16       0     1.47517291     1.47517291   2.197e-10   6.834e-09   6.936e-09
+6a_T6          10       0     1.46683686     1.46683686   2.220e-16   6.553e-11   8.420e-11
+6b_T6          12       0     1.46829293     1.46829293   7.304e-11   3.389e-09   6.316e-09
+6c_T6          14       0     1.47494196     1.47494196   1.466e-10   4.116e-09   4.219e-09
+6d_T6          16       0     1.47517291     1.47517291   2.197e-10   6.834e-09   6.936e-09
 6g_T6          12       7     1.08247416     INFEASIBLE           -           -           -
 ----------------------------------------------------------------------------------------------
-worst trajectory disagreement across all feasible cases: 1.897e-05
+worst trajectory disagreement across all feasible cases: 6.936e-09
 Note on 6g_T6: Ipopt returns LOCALLY_INFEASIBLE and so certifies the bound set
 empty. FilterDDP returns status 7, which it also returns for a merely hard
 problem — the caller must inspect residuals to tell the two apart. This is the

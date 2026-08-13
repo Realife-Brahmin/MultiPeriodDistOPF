@@ -29,7 +29,7 @@
 # throughput. There is deliberately NO quadratic term on Psub — C_B alone makes
 # the problem strictly convex, which is all the closed-form reference needs.
 #
-# Horizon T = 3, mapped onto FilterDDP stages t = 1..N with N = T.
+# Horizon T = 6, mapped onto FilterDDP stages t = 1..N with N = T.
 #   state    x_t = (B_t, τ_t)      τ = time index (see note 1)
 #   control  u_t = (Psub_t, P_B_t)
 #
@@ -69,28 +69,34 @@ const T_ = Float64
 # Problem data (tiny, deterministic)
 # ---------------------------------------------------------------------------
 
-const N      = 3                       # = T, number of periods
+const N      = 6                       # = T, number of periods
 const nx     = 2                       # (B, τ)
 const nu     = 2                       # (Psub, P_B)
 
-# Demand and price are the tADMM profiles at T = 3; see tadmm_profiles.jl.
-# NOTE: at T = 3 the tADMM price formula samples sin at 0, pi and 2pi, so
-# cvec is CONSTANT (0.14 in every period). This instance therefore carries no
-# arbitrage signal -- the optimal P_B is identical in all three periods and is
-# set purely by the terminal penalty. It remains a valid solver test, and a
-# symmetric one, but the economics live at T = 6 (see copper_plate_battery_bounds.jl).
+# Demand and price are the tADMM profiles at T = 6; see tadmm_profiles.jl.
 include("tadmm_profiles.jl")
 
-const pL   = T_.(tadmm_pL(3))          # demand   [p.u.]
-const cvec = T_.(tadmm_cost(3))        # energy price per period (> 0)
+const pL   = T_.(tadmm_pL(N))          # demand   [p.u.]
+const cvec = T_.(tadmm_cost(N))        # energy price per period (> 0)
 const C_B  = T_(0.05)                   # battery throughput coefficient (> 0)
 const Δt   = T_(1.0)                   # period length
 const B_0  = T_(2.0)                   # initial stored energy
 const w    = T_(5.0)                   # terminal-energy weight (see Note 2/3)
 
-# quadratic Lagrange basis on nodes τ = 1, 2, 3
-lag(τ) = ((τ - 2) * (τ - 3) / 2, -(τ - 1) * (τ - 3), (τ - 1) * (τ - 2) / 2)
-interp(v, τ) = (L = lag(τ); v[1] * L[1] + v[2] * L[2] + v[3] * L[3])
+# Lagrange interpolant on the nodes τ = 1..N (degree N-1).
+function interp(v, τ)
+    n = length(v)
+    acc = zero(τ) * v[1]
+    for i = 1:n
+        term = v[i]
+        for j = 1:n
+            j == i && continue
+            term = term * (τ - j) / (i - j)
+        end
+        acc = acc + term
+    end
+    return acc
+end
 
 pL_of(τ) = interp(pL, τ)
 c_of(τ)  = interp(cvec, τ)
@@ -119,14 +125,14 @@ end
 # ---------------------------------------------------------------------------
 # Reference solution 2: independent dense KKT solve of the same QP
 # ---------------------------------------------------------------------------
-# Built from scratch over z = [psub1,pb1,psub2,pb2,psub3,pb3,B1,B2,B3,B4] with all
+# Built from scratch over z = [psub1,pb1,...,psubN,pbN,B1,...,B_{N+1}] with all
 # constraints written explicitly, so it shares no algebra with reference 1.
 
 function reference_kkt()
-    n = 10
+    n = 3N + 1                          # 2N controls + (N+1) stored energies
     ips(t) = 2t - 1
     ipb(t) = 2t
-    iB(t) = 6 + t                       # B1..B4 -> 7..10
+    iB(t) = 2N + t                      # B1..B_{N+1} -> 2N+1 .. 3N+1
 
     Q = zeros(T_, n, n)                 # J = ½ zᵀQz + qᵀz + const
     q = zeros(T_, n)
@@ -134,8 +140,8 @@ function reference_kkt()
         q[ips(t)] = cvec[t] * Δt        # linear energy cost
         Q[ipb(t), ipb(t)] = 2 * C_B * Δt  # battery throughput
     end
-    Q[iB(4), iB(4)] = 2 * w
-    q[iB(4)] = -2 * w * B_0
+    Q[iB(N + 1), iB(N + 1)] = 2 * w
+    q[iB(N + 1)] = -2 * w * B_0
 
     rows = Vector{Vector{T_}}()
     rhs = Vector{T_}()
@@ -222,15 +228,16 @@ function main()
     ref2 = reference_kkt()
 
     println("="^78)
-    println("Stage 5 — copper-plate battery, T = 3, equality constraints only")
+    println("Stage 5 — copper-plate battery, T = 6, equality constraints only")
     println("="^78)
     @printf("data: p_L = %s\n      c   = %s\n", pL, cvec)
     @printf("      C_B = %.3f, B_0 = %.3f, Δt = %.3f, w = %.3f  (lossless battery)\n\n",
             C_B, B_0, Δt, w)
 
     println("--- independent reference solutions ---")
-    @printf("closed form : Psub = [% .10f % .10f % .10f]  J = %.12f\n", ref1.psub..., ref1.J)
-    @printf("dense KKT   : Psub = [% .10f % .10f % .10f]  J = %.12f\n", ref2.psub..., ref2.J)
+    fmt(v) = "[" * join((@sprintf("% .8f", x) for x in v), " ") * "]"
+    @printf("closed form : Psub = %s  J = %.12f\n", fmt(ref1.psub), ref1.J)
+    @printf("dense KKT   : Psub = %s  J = %.12f\n", fmt(ref2.psub), ref2.J)
     @printf("agreement between the two references: max|ΔPsub| = %.3e, |ΔJ| = %.3e\n\n",
             maximum(abs.(ref1.psub .- ref2.psub)), abs(ref1.J - ref2.J))
 
@@ -285,8 +292,8 @@ function main()
         @printf("%3d  % 11.7f  % 11.7f  % 11.7f  % 11.7f  % 11.7f\n",
                 t, A.psub[t], A.pb[t], A.B[t], ref1.psub[t], ref1.pb[t])
     end
-    @printf("  4  %11s  %11s  % 11.7f  %11s  % 11.7f\n",
-            "-", "-", A.B_end, "-", ref1.B[N+1])
+    @printf("%3d  %11s  %11s  % 11.7f  %11s  % 11.7f\n",
+            N + 1, "-", "-", A.B_end, "-", ref1.B[N+1])
 
     # --- probe: w = 0 decouples the periods ---------------------------------
     println("\n--- probe: w = 0 (terminal energy term removed) ---")

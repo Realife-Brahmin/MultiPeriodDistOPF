@@ -77,9 +77,13 @@ request). Demand and price come from `envs/tadmm/root_level/config.jl`, shared v
 
 - They **resample with T** — `tadmm_cost(3)` is NOT `tadmm_cost(6)[1:3]`. Never
   slice a fixed vector.
-- At **T = 3 the price is constant** (`sin` vanishes at `0, π, 2π`), so that
-  instance has no arbitrage signal; its optimal `P_B` is set purely by the
-  terminal penalty. T = 6 is the meaningful economic case.
+- **Committed results are T = 6 only** (T = 3 removed 2026-08-07 at the user's
+  request; regenerating another `T` when analysis needs it is expected). But
+  **inspect the price before adopting a new `T`**: at T = 3 the samples land
+  where `sin` vanishes (`0, π, 2π`), so the price comes out constant and the
+  instance carries no arbitrage signal at all. That, plus binding bounds only a
+  few kW wide, made T = 3 both the weakest benchmark and the worst behaved
+  numerically (26 iterations, trajectory agreement only `1.9e-05`).
 - This **closed** the earlier collinearity concern: `r` went from `0.9968` to
   `0.644` at T = 6, thanks to the `−0.8` rad phase offset on the load.
 
@@ -107,6 +111,20 @@ reads the verified centralized reference and emits `balance.csv`,
 `schedule_interval.csv`, `schedule_soc.csv`; the `.tex` files read those tables.
 Do not inline coordinates — `schedule_fig.tex` did, and went silently stale when the
 instance data changed.
+
+## What is and isn't verified (as of 2026-08-07)
+
+FilterDDP is cross-checked against a **centralized JuMP/Ipopt** solve of
+`eq:cp_all` on all six T = 6 cases (Stage 8 of the experiment README): exact on
+the base instance, worst objective gap `2.2e-10` and worst trajectory gap
+`6.9e-09` with bounds, and Ipopt independently certifies the 6g bound set
+infeasible. The base instance carries three mutually independent references
+(closed form, dense KKT, Ipopt). Stage 9 records the per-iteration trace — 17
+iterations, regularisation never firing. **Do not redo any of this.**
+
+Not verified, so don't overclaim: anything with a network (no LinDistFlow, no
+BFM); any horizon other than `T = 6`; and **the user's own DDP algorithm, which
+has not been compared at all** — that is the pending task below.
 
 ## Pending task (do not start until asked)
 

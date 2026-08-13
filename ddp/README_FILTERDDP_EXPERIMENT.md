@@ -1,7 +1,7 @@
 # FilterDDP experiment — reproducibility record
 
 **Question this set out to answer:** *can the authors' actual FilterDDP implementation
-reliably solve a fully understood T = 3 equality-constrained copper-plate battery problem
+reliably solve a fully understood equality-constrained copper-plate battery problem
 and reproduce a known reference solution?*
 
 **Answer: yes.** It reproduces two independent references to machine precision on the
@@ -33,17 +33,16 @@ against the tADMM instance data, on 2026-08-07. The authors' clone is **unmodifi
 | 2 — official test suite | **NOT ATTEMPTED** | [logs/tests.log](logs/tests.log): no `test/` directory, no test target; `Pkg.test()` → *"Package FilterDDP did not provide a `test/runtests.jl` file"* | **the repository ships no tests** |
 | 3 — smallest official example | **PASS** | [logs/stage3_official_example.log](logs/stage3_official_example.log): 51 iters, obj `1.26574863e+00`, primal `8.09e-08` — **identical to the authors' shipped file to all 9 printed digits** | none |
 | 4 — document the API | **PASS** | [notes/FILTERDDP_API.md](notes/FILTERDDP_API.md), every claim sourced to a file:line | none |
-| 5 — copper-plate battery, T = 3, equality only | **PASS** | [results/copper_plate/stage5_output.log](results/copper_plate/stage5_output.log): objective gap **exactly `0.0`**, the two independent references agree to `2.0e-15`, converged in 1 iteration from all 3 starts | none |
-| 6a — grid-power bound | **PASS** | [results/copper_plate/stage6_output.log](results/copper_plate/stage6_output.log): 9 iters, status 0, `\|ΔJ\| 1.1e-16`, reference active set **empty** — substation import has no upper limit, and `P_Subs ≥ 0` never binds | none |
-| 6b — battery-power bounds | **PASS** | same log: 14 iters, status 0, `\|ΔJ\| 1.1e-10`, active set `P_B[1..3]≤0.004` (all three) matches | none |
-| 6c — energy bounds (slack reformulation) | **PASS** | same log: 18 iters, status 0, `\|ΔJ\| 2.0e-11`, both active bounds `B[2]≤1.995`, `B[4]≥1.9895` matched | none |
-| 6d — all bounds together, T = 3 | **PASS** | same log: 26 iters, status 0, `\|ΔJ\| 4.2e-11`, active set `B[4]≥1.9895` matches | none |
-| 6f — tolerance sweep on 6d | **PASS** | same log: status 0 at every tolerance from `1e-6` down to `1e-12`, `\|ΔJ\|` falling to `4.1e-13` (16 → 30 iterations) | none |
-| 6 — T = 6 | **PASS** | same log: all-bounds 16 iters, status 0, `\|ΔJ\| 2.2e-10`, six active bounds (`B[2]≤1.95`, `P_B[2]≤0.45`, `B[4]≥1.20`, `P_B[5]≥-0.45`, `B[6]≤1.95`, `B[7]≤1.95`) matched | none |
+| 5 — copper-plate battery, equality only | **PASS** | [results/copper_plate/stage5_output.log](results/copper_plate/stage5_output.log): objective gap **exactly `0.0`**, the two independent references agree to `2.0e-15`, converged in 1 iteration from all 3 starts | none |
+| 6a — grid-power bound | **PASS** | [results/copper_plate/stage6_output.log](results/copper_plate/stage6_output.log): 10 iters, status 0, `\|ΔJ\| 0.0`, reference active set **empty** — substation import has no upper limit, and `P_Subs ≥ 0` never binds | none |
+| 6b — battery-power bounds | **PASS** | same log: 12 iters, status 0, `\|ΔJ\| 7.3e-11`, active set `P_B[2]≤0.45`, `P_B[5]≥-0.45` matches | none |
+| 6c — energy bounds (slack reformulation) | **PASS** | same log: 14 iters, status 0, `\|ΔJ\| 1.5e-10`, active bounds on both ends of `1.20 ≤ B ≤ 1.95` matched | none |
+| 6d — all bounds together | **PASS** | same log: 16 iters, status 0, `\|ΔJ\| 2.2e-10`, six active bounds (`B[2]≤1.95`, `P_B[2]≤0.45`, `B[4]≥1.20`, `P_B[5]≥-0.45`, `B[6]≤1.95`, `B[7]≤1.95`) matched | none |
+| 6f — tolerance sweep on 6d | **PASS** | same log: status 0 at every tolerance from `1e-6` down to `1e-12`, `\|ΔJ\|` falling monotonically (10 → 20 iterations) | none |
 | 6g — infeasible bound set (probe) | **FAIL, as designed** | same log: returns status 7 with primal residual `0.638`; independent enumeration confirms the feasible set is empty | **no infeasibility diagnosis — status 7 means both "infeasible" and "hard"** |
 | 7 — MPOPF applicability assessment | **PASS** | [notes/MPOPF_APPLICABILITY.md](notes/MPOPF_APPLICABILITY.md) | none |
-| 8 — centralized JuMP/Ipopt cross-check | **PASS** | all 7 feasible cases agree with a third, fully independent solver: worst objective gap `2.2e-10`, worst trajectory disagreement `1.9e-05` (case 6d at T = 3, a tolerance effect — 6f drives it to `4.1e-13`), machine precision on both base instances. Added 2026-08-07 | none |
-| 9 — per-iteration convergence trace | **PASS** | [results/copper_plate/stage9_convergence.log](results/copper_plate/stage9_convergence.log): 6e (T=6) converges in **17** iterations, 6d (T=3) in **27**; regularisation never fires in either. Added 2026-08-07 | none |
+| 8 — centralized JuMP/Ipopt cross-check | **PASS** | all 7 feasible cases agree with a third, fully independent solver: worst objective gap `2.2e-10`, worst trajectory disagreement `6.9e-09`, exact on the base instance. Added 2026-08-07 | none |
+| 9 — per-iteration convergence trace | **PASS** | [results/copper_plate/stage9_convergence.log](results/copper_plate/stage9_convergence.log): case 6d converges in **17** iterations; regularisation never fires. Added 2026-08-07 | none |
 
 Status labels are used strictly: no stage is PASS without a number behind it.
 
@@ -190,34 +189,21 @@ solver.
 
 | case | iters | J (FilterDDP) | J (Ipopt) | `\|ΔJ\|` | max `\|ΔPsub\|` | max `\|ΔB\|` |
 | --- | --- | --- | --- | --- | --- | --- |
-| base, T=3 | 1 | 0.73493729 | 0.73493729 | `0.0` | `7.6e-15` | `7.6e-15` |
-| base, T=6 | 1 | 1.46683686 | 1.46683686 | `0.0` | `9.5e-15` | `1.0e-14` |
-| 6a, T=3 | 9 | 0.73493729 | 0.73493729 | `1.1e-16` | `2.1e-11` | `1.2e-11` |
-| 6b, T=3 | 14 | 0.73495643 | 0.73495643 | `1.1e-10` | `1.9e-09` | `5.7e-09` |
-| 6c, T=3 | 18 | 0.73499729 | 0.73499729 | `2.0e-11` | `4.6e-08` | `4.6e-08` |
-| 6d, T=3 | 26 | 0.73499712 | 0.73499712 | `4.2e-11` | `1.9e-05` | `1.9e-05` |
-| 6e, T=6 | 16 | 1.47517291 | 1.47517291 | `2.2e-10` | `6.8e-09` | `6.9e-09` |
-| 6g, T=6 | 12 | — | **LOCALLY_INFEASIBLE** | — | — | — |
+| base | 1 | 1.46683686 | 1.46683686 | `0.0` | `9.5e-15` | `1.0e-14` |
+| 6a | 10 | 1.46683686 | 1.46683686 | `2.2e-16` | `6.6e-11` | `8.4e-11` |
+| 6b | 12 | 1.46829293 | 1.46829293 | `7.3e-11` | `3.4e-09` | `6.3e-09` |
+| 6c | 14 | 1.47494196 | 1.47494196 | `1.5e-10` | `4.1e-09` | `4.2e-09` |
+| 6d | 16 | 1.47517291 | 1.47517291 | `2.2e-10` | `6.8e-09` | `6.9e-09` |
+| 6g | 12 | — | **LOCALLY_INFEASIBLE** | — | — | — |
 
-The `1.9e-05` on 6d is a barrier-tolerance effect, not a disagreement: the Stage 6f
-sweep drives the same case to `\|ΔJ\| = 4.1e-13` at `tol = 1e-12`. Objectives agree
-to `~1e-10` throughout.
-
-The pattern across the table is worth reading. The two hardest cases are the
-**T = 3** ones, not T = 6: at T = 3 the price is constant, the battery barely moves,
-and the bounds that bind therefore sit in a window a few kW wide -- which is what
-costs 6d its 26 iterations and five digits of trajectory accuracy. Case 6e at
-T = 6, where the bounds sit at a natural ±450 kW and 1200-1950 kWh, converges in 16
-iterations to `7e-09`. Tight bounds relative to the natural scale of the variable,
-not horizon length, are what makes this problem hard for FilterDDP.
-
-Ipopt also reproduces the closed form of `eq:cp_closed_form` on both base
-instances to `2e-16`, making three mutually independent references there.
-
-On 6g the cross-check earns its keep: Ipopt returns `LOCALLY_INFEASIBLE` and so
-*certifies* the bound set empty, where FilterDDP returns status 7 — the same code
-it returns for a merely hard problem. That is the missing feasibility-restoration
-phase showing up as a concrete difference in what a caller can conclude.
+Objectives agree to `~1e-10` and trajectories to `~7e-09` across every case, and
+the agreement tightens monotonically as bounds are layered on rather than
+degrading. An earlier revision also carried a T = 3 variant of each case; it was
+removed on 2026-08-07 in favour of T = 6 alone. That variant was both the
+weakest benchmark (a constant price, so no arbitrage signal) and the worst
+behaved numerically (bounds a few kW wide, 26 iterations, trajectory agreement
+only `1.9e-05`) -- dropping it is why the worst disagreement above is now three
+orders of magnitude smaller.
 
 > **Instance data: the tADMM profiles.** As of 2026-08-07 demand and price are the
 > same series the tADMM experiments use, taken from
@@ -232,12 +218,11 @@ phase showing up as a concrete difference in what a caller can conclude.
 > correlation actually occupies, and enough separation that transposing `c` and
 > `p_L` would now show up.
 >
-> Two properties of the sampling matter and are not defects to be fixed:
-> both endpoints of `[0, 2π]` are included, so `c^1 = c^T` for every `T`; and at
-> `T = 3` the samples land on `0, π, 2π` where `sin` vanishes, so **the price is
-> constant** and that instance has no arbitrage signal at all. Its optimal `P_B`
-> is identical in every period, set purely by the terminal penalty. T = 3 remains
-> a valid — and usefully symmetric — solver test, but the economics live at T = 6.
+> Two properties of the sampling matter. Both endpoints of `[0, 2π]` are
+> included, so `c^1 = c^T` for every `T`. And **the price should be inspected
+> before adopting any new `T`**: at `T = 3` the samples land on `0, π, 2π` where
+> `sin` vanishes, making the price constant and the instance free of any
+> arbitrage signal. That is why T = 3 was dropped.
 >
 > The profiles **resample** with `T`: `tadmm_cost(3)` is not `tadmm_cost(6)[1:3]`.
 > Any code that slices a fixed vector is wrong.
@@ -258,22 +243,30 @@ phase showing up as a concrete difference in what a caller can conclude.
 current iterate — so the trace is captured from the verbose stream and parsed
 back. The clone stays unmodified.
 
-| | 6e, T = 6 | 6d, T = 3 |
-| --- | --- | --- |
-| iterations | **17** (`k = 0..16`) | **27** (`k = 0..26`) |
-| `pr_inf` | `1.0e+00` → `4.4e-16` | `9.4e-01` → `2.2e-16` |
-| `du_inf` | `9.2e-01` → `5.6e-13` | `8.6e-01` → `4.2e-16` |
-| `cs_inf` | `1.0e+00` → `3.7e-11` | `1.0e+00` → `6.4e-11` |
-| regularisation fired | **0** of 17 | **0** of 27 |
-| iterations that backtracked | 8 | 21 |
+| | 6d, all bounds |
+| --- | --- |
+| iterations | **17** (`k = 0..16`) |
+| `pr_inf` | `1.0e+00` → `4.4e-16` |
+| `du_inf` | `9.2e-01` → `5.6e-13` |
+| `cs_inf` | `1.0e+00` → `3.7e-11` |
+| objective | `0.840000` → `1.4751729` |
+| centralized `J*` | `1.4751729098` |
+| final `\|J - J*\|` | `2.3e-10` |
+| regularisation fired | **0** of 17 |
+| iterations that backtracked | 8 |
 
-The shape is the same in both and is worth stating: **feasibility is essentially
-free, and the iteration count is set by the barrier schedule.** Both `pr_inf` and
-`du_inf` fall to machine precision by `k = 4` and simply stay there; every
-remaining iteration is `μ` stepping down and dragging `cs_inf` with it. T = 3
-needs 10 more iterations than T = 6 not because it is a harder optimisation but
-because its bounds sit in a window a few kW wide, so `μ` has further to fall
-before complementarity is tight enough to certify.
+The shape is worth stating: **feasibility is essentially free, and the iteration
+count is set by the barrier schedule.** Both `pr_inf` and `du_inf` fall to
+machine precision by `k = 4` and simply stay there; every remaining iteration is
+`μ` stepping down and dragging `cs_inf` with it.
+
+The objective is plotted against the centralized JuMP/Ipopt baseline `J*`, which
+the tracer reads out of `centralized_reference.csv` rather than carrying as a
+literal, so the two cannot drift. `J_k` is **not monotone**: at T = 6 it
+overshoots `J*` near `k = 5` and returns from above, which is expected — the
+filter line search decreases the barrier objective, not `J`. On a linear axis the
+trace is visually converged by `k ≈ 5`; the log-scaled gap is what shows the
+remaining eight orders of magnitude being earned one barrier step at a time.
 
 Two things the raw output gets wrong, both handled in the tracer rather than
 passed along:

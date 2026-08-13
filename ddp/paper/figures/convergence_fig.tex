@@ -1,91 +1,116 @@
-% FilterDDP convergence for the two bounded cases.
+% FilterDDP convergence on case 6d, T = 6, all bounds imposed.
 %
-% Data from figures/convergence_{6e_T6,6d_T3}.csv, written by
+% Data from figures/convergence_6d_T6.csv, written by
 % examples/power_system/convergence_trace.jl. FilterDDP keeps no iteration
 % history (src/solver_data.jl holds only the current iterate), so the trace is
 % captured from its verbose stream and parsed back; see that script's header,
 % including why the printed alpha/ls columns have to be de-staggered.
 %
-% B&W: each series carries colour AND a distinct dash pattern AND a distinct
-% marker, so it survives a greyscale printout on shape alone.
-%   pr_inf : blue  / solid     / circle
-%   du_inf : green / dashed    / square
-%   cs_inf : red   / dash-dot  / triangle
-%   mu     : grey  / dotted    / none
+% Panel 1 -- the three KKT residuals and the barrier parameter, log scale.
+% Panel 2 -- the objective against the centralized JuMP/Ipopt baseline J* on the
+%            left axis, and the gap |J_k - J*| on the right, log scaled. J* is
+%            read from the verified reference and written into the CSV as a
+%            constant column, so the baseline cannot drift from the solution the
+%            experiment certifies.
+%
+% B&W: every series carries colour AND a distinct dash pattern AND a distinct
+% marker, so the figure survives a greyscale printout on shape alone.
 %
 \begin{figure}[!t]
 \centering
 \begin{tikzpicture}
 \pgfplotsset{
   convaxis/.style={
-    % NOTE: ymode/ymin/ymax are set per-axis below, not here. Carrying `ymode`
-    % inside a \pgfplotsset style makes it resolve against /tikz/ at \end{axis}
-    % and error out with "I do not know the key '/tikz/ymode'".
-    width=0.78\columnwidth, height=0.42\columnwidth, scale only axis,
+    % ymode is set per-axis, never here: inside a \pgfplotsset style it resolves
+    % against /tikz/ at \end{axis} and errors as an unknown key.
+    width=0.78\columnwidth, height=0.40\columnwidth, scale only axis,
+    xmin=-0.5, xmax=16.5, xtick={0,2,4,6,8,10,12,14,16},
     tick align=outside,
     tick label style={font=\scriptsize},
     label style={font=\scriptsize},
     axis line style={black, line width=0.6pt},
-    grid=both,
-    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
-    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.5},
     ylabel near ticks,
   },
   convseries/.style={line width=1.0pt, mark size=1.3pt},
 }
 
-% ---------------- Panel 1: 6e, T = 6 ----------------
+% ---------------- Panel 1: KKT residuals ----------------
 \begin{axis}[
     convaxis, name=axA,
     ymode=log, ymin=1e-17, ymax=5e0, ytick={1e-16,1e-12,1e-8,1e-4,1e0},
-    xmin=-0.5, xmax=16.5, xtick={0,4,8,12,16},
     xticklabels={},
-    ylabel={$T = 6$ residual},
+    ylabel={residual},
+    grid=both,
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.5},
     legend style={at={(0.5,1.05)}, anchor=south, legend columns=4,
                   draw=none, fill=none, column sep=0.7ex, font=\scriptsize},
     legend cell align=left,
 ]
 \addplot[convseries, cPr, mark=*, mark options={fill=cPr, draw=cPr}]
-  table[col sep=comma, x=k, y=pr] {figures/convergence_6e_T6.csv};
+  table[col sep=comma, x=k, y=pr] {figures/convergence_6d_T6.csv};
 \addlegendentry{$\mathrm{pr}_\infty$}
 \addplot[convseries, cDu, densely dashed, mark=square*,
          mark options={fill=cDu, draw=cDu, solid}]
-  table[col sep=comma, x=k, y=du] {figures/convergence_6e_T6.csv};
+  table[col sep=comma, x=k, y=du] {figures/convergence_6d_T6.csv};
 \addlegendentry{$\mathrm{du}_\infty$}
 \addplot[convseries, cCs, dash dot, mark=triangle*,
          mark options={fill=cCs, draw=cCs, solid}]
-  table[col sep=comma, x=k, y=cs] {figures/convergence_6e_T6.csv};
+  table[col sep=comma, x=k, y=cs] {figures/convergence_6d_T6.csv};
 \addlegendentry{$\mathrm{cs}_\infty$}
 \addplot[convseries, cMu, densely dotted, line width=1.2pt]
-  table[col sep=comma, x=k, y=mu] {figures/convergence_6e_T6.csv};
+  table[col sep=comma, x=k, y=mu] {figures/convergence_6d_T6.csv};
 \addlegendentry{$\mu$}
 \end{axis}
 
-% ---------------- Panel 2: 6d, T = 3 ----------------
+% ---------------- Panel 2: objective vs the centralized baseline ------------
 \begin{axis}[
-    convaxis, at={(axA.below south west)}, anchor=north west, yshift=-2.5mm,
-    ymode=log, ymin=1e-17, ymax=5e0, ytick={1e-16,1e-12,1e-8,1e-4,1e0},
-    xmin=-0.5, xmax=26.5, xtick={0,5,10,15,20,25},
+    convaxis, name=axB, at={(axA.below south west)}, anchor=north west,
+    yshift=-2.5mm,
+    ymin=0.78, ymax=1.62, ytick={0.9,1.1,1.3,1.5},
+    yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=1},
     xlabel={Iteration $k$},
-    ylabel={$T = 3$ residual},
+    ylabel={$J$},
+    grid=both,
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.5},
+    legend style={at={(0.5,1.05)}, anchor=south, legend columns=3,
+                  draw=none, fill=none, column sep=0.9ex, font=\scriptsize},
+    legend cell align=left,
 ]
-\addplot[convseries, cPr, mark=*, mark options={fill=cPr, draw=cPr}]
-  table[col sep=comma, x=k, y=pr] {figures/convergence_6d_T3.csv};
-\addplot[convseries, cDu, densely dashed, mark=square*,
-         mark options={fill=cDu, draw=cDu, solid}]
-  table[col sep=comma, x=k, y=du] {figures/convergence_6d_T3.csv};
-\addplot[convseries, cCs, dash dot, mark=triangle*,
-         mark options={fill=cCs, draw=cCs, solid}]
-  table[col sep=comma, x=k, y=cs] {figures/convergence_6d_T3.csv};
-\addplot[convseries, cMu, densely dotted, line width=1.2pt]
-  table[col sep=comma, x=k, y=mu] {figures/convergence_6d_T3.csv};
+\addplot[cCen, densely dashed, line width=1.2pt]
+  table[col sep=comma, x=k, y=jstar] {figures/convergence_6d_T6.csv};
+\addlegendentry{centralized $J^\star$}
+\addplot[convseries, cObj, mark=*, mark options={fill=cObj, draw=cObj}]
+  table[col sep=comma, x=k, y=obj] {figures/convergence_6d_T6.csv};
+\addlegendentry{FilterDDP $J_k$}
+\addlegendimage{cGap, dash dot, line width=1.0pt, mark=triangle*, mark size=1.5pt,
+                mark options={fill=cGap, draw=cGap, solid}}
+\addlegendentry{$|J_k - J^\star|$}
+\end{axis}
+
+% right axis of panel 2: the gap, log scale
+\begin{axis}[
+    convaxis, at={(axB.south west)}, anchor=south west,
+    xtick=\empty,
+    ymode=log, ymin=1e-11, ymax=1e6, ytick={1e-10,1e-6,1e-2},
+    axis x line=none, axis y line*=right, grid=none,
+    ylabel={gap},
+]
+\addplot[cGap, dash dot, line width=1.0pt, mark=triangle*, mark size=1.5pt,
+         mark options={fill=cGap, draw=cGap, solid}]
+  table[col sep=comma, x=k, y=gap] {figures/convergence_6d_T6.csv};
 \end{axis}
 \end{tikzpicture}
-\caption{FilterDDP convergence, all bounds imposed: $T = 6$ (top, 17 iterations)
-and $T = 3$ (bottom, 27).  Feasibility is reached almost immediately --- both
-$\mathrm{pr}_\infty$ and $\mathrm{du}_\infty$ hit machine precision by $k = 4$
---- after which progress is entirely the barrier parameter $\mu$ driving
-$\mathrm{cs}_\infty$ down alongside it.  Iteration count here is set by the
-$\mu$ schedule, not by the optimisation.}
+\caption{FilterDDP convergence with all bounds imposed, 17 iterations.  Top: the
+KKT residuals and the barrier parameter.  Feasibility is reached almost
+immediately --- $\mathrm{pr}_\infty$ and $\mathrm{du}_\infty$ hit machine
+precision by $k = 4$ --- after which progress is entirely $\mu$ driving
+$\mathrm{cs}_\infty$ down alongside it, so the iteration count is set by the
+barrier schedule rather than by the optimisation.  Bottom: the objective against
+the centralized JuMP/Ipopt baseline $J^\star$, with the gap on the right axis.
+$J_k$ is not monotone --- it overshoots $J^\star$ near $k = 5$ and returns from
+above, because the line search decreases the barrier objective rather than $J$
+--- and the gap closes to $2.3\times10^{-10}$.}
 \label{fig:convergence}
 \end{figure}

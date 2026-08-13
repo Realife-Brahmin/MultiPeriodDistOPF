@@ -1,48 +1,51 @@
 ==============================================================================
-Stage 5 — copper-plate battery, T = 3, equality constraints only
+Stage 5 — copper-plate battery, T = 6, equality constraints only
 ==============================================================================
-data: p_L = [1.6565287818200956, 1.9434712181799045, 1.6565287818200956]
-      c   = [0.14, 0.14, 0.13999999999999999]
+data: p_L = [1.6565287818200956, 1.8881864465529687, 1.9979734394967152, 1.8341678679257223, 1.6231434642044986, 1.6565287818200956]
+      c   = [0.14, 0.1970633909777092, 0.1752671151375484, 0.10473288486245162, 0.08293660902229079, 0.13999999999999999]
       C_B = 0.050, B_0 = 2.000, Δt = 1.000, w = 5.000  (lossless battery)
 
 --- independent reference solutions ---
-closed form : Psub = [ 1.6518776190  1.9388200554  1.6518776190]  J = 0.734937285269
-dense KKT   : Psub = [ 1.6518776190  1.9388200554  1.6518776190]  J = 0.734937285269
-agreement between the two references: max|ΔPsub| = 4.441e-16, |ΔJ| = 3.331e-16
+closed form : Psub = [ 1.65419933  1.31522309  1.64297284  2.18450957  2.19144792  1.65419933]  J = 1.466836861351
+dense KKT   : Psub = [ 1.65419933  1.31522309  1.64297284  2.18450957  2.19144792  1.65419933]  J = 1.466836861351
+agreement between the two references: max|ΔPsub| = 2.887e-15, |ΔJ| = 1.332e-15
 
 --- FilterDDP solves from three initial control trajectories ---
 init ū          iters status termination                     objective       |Δ J|     max bal     max dyn
-zeros               1      0 Optimal solution found           0.734937   0.000e+00   2.220e-16   0.000e+00
-flat-demand         1      0 Optimal solution found           0.734937   0.000e+00   0.000e+00   0.000e+00
-bad/far             1      0 Optimal solution found           0.734937   2.220e-16   2.665e-15   0.000e+00
+zeros               1      0 Optimal solution found           1.466837   0.000e+00   2.220e-16   0.000e+00
+flat-demand         1      0 Optimal solution found           1.466837   0.000e+00   2.220e-16   0.000e+00
+bad/far             1      0 Optimal solution found           1.466837   4.441e-16   4.441e-15   0.000e+00
 
 --- detailed result (init = zeros) ---
 iterations            : 1
 termination           : Optimal solution found (status 0)
-objective (solver)    : 0.734937285269
-objective (recomputed): 0.734937285269
-objective (reference) : 0.734937285269
+objective (solver)    : 1.466836861351
+objective (recomputed): 1.466836861351
+objective (reference) : 1.466836861351
 objective gap         : 0.000e+00
 primal inf (solver)   : 2.220e-16
-dual inf   (solver)   : 3.914e-15
+dual inf   (solver)   : 3.081e-15
 max power-balance res : 2.220e-16
 max dynamics res      : 0.000e+00
 time-index res        : 0.000e+00
-terminal energy res   : 1.395e-02   (B_end = 1.9860465116, target 2.0000000000)
-max |Psub - Psub_ref| : 1.932e-14
-max |P_B  - P_B_ref|  : 1.952e-14
+terminal energy res   : 1.398e-02   (B_end = 1.9860232945, target 2.0000000000)
+max |Psub - Psub_ref| : 2.442e-14
+max |P_B  - P_B_ref|  : 2.442e-14
 final regularisation  : 0.000e+00
 
   t       Psub          P_B            B        Psub_ref      P_B_ref
-  1    1.6518776    0.0046512    2.0000000    1.6518776    0.0046512
-  2    1.9388201    0.0046512    1.9953488    1.9388201    0.0046512
-  3    1.6518776    0.0046512    1.9906977    1.6518776    0.0046512
-  4            -            -    1.9860465            -    1.9860465
+  1    1.6541993    0.0023295    2.0000000    1.6541993    0.0023295
+  2    1.3152231    0.5729634    1.9976705    1.3152231    0.5729634
+  3    1.6429728    0.3550006    1.4247072    1.6429728    0.3550006
+  4    2.1845096   -0.3503417    1.0697066    2.1845096   -0.3503417
+  5    2.1914479   -0.5683045    1.4200483    2.1914479   -0.5683045
+  6    1.6541993    0.0023295    1.9883527    1.6541993    0.0023295
+  7            -            -    1.9860233            -    1.9860233
 
 --- probe: w = 0 (terminal energy term removed) ---
 With w = 0 the horizon separates into T independent single-period problems,
 each with the unique minimiser P_B^t = c^t / (2·C_B).
-predicted P_B = [1.4, 1.4, 1.4]
-FilterDDP P_B = [1.4, 1.4, 1.4]   (iters 1, status 0)
+predicted P_B = [1.4, 1.97063391, 1.75267115, 1.04732885, 0.82936609, 1.4]
+FilterDDP P_B = [1.4, 1.97063391, 1.75267115, 1.04732885, 0.82936609, 1.4]   (iters 1, status 0)
 max deviation from the separable prediction: 2.220e-16
 => confirms w > 0 is what couples the periods in the equality-only instance.
