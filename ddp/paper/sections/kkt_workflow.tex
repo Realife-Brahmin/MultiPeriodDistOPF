@@ -1,0 +1,146 @@
+\subsection{What the Solver Actually Forms}
+\label{subsec:kkt}
+
+Section~\ref{subsec:ocp} states the model in the solver's generic objects
+$x, u, \ell, f, c$.  This subsection eliminates them: every quantity below is
+written in the variables of \eqref{eq:cp_all} and the multipliers attached to
+its constraints.  All expressions are verified against the derivative functions
+the solver actually builds.
+
+\subsubsection{Variables carried at stage $t$}
+The state is the stored energy and a counter, and the counter is not a degree of
+freedom --- $\tau^t = t$ always --- so $B^t$ is the only state that varies:
+\begin{equation}
+\underbrace{B^t}_{\text{state}}; \qquad
+\underbrace{P_{\text{Subs}}^t,\; P_B^t,\; s^t}_{\text{controls}} .
+\label{eq:kkt_vars}
+\end{equation}
+Each stage carries one multiplier per constraint:
+\begin{alignat}{3}
+&\varphi_{\text{bal}}^t   &\;\;:\;\;& P_{\text{Subs}}^t + P_B^t - p_L(\tau^t) = 0
+\label{eq:kkt_mult_bal}\\
+&\varphi_{\text{soc}}^t    && \bigl(B^t - P_B^t \Delta t\bigr) - B^{\min} - s^t = 0
+\label{eq:kkt_mult_soc}\\
+&\nu_{\text{Subs}}^t       && P_{\text{Subs}}^t \geq 0
+\label{eq:kkt_mult_ps}\\
+&\nu_{\min}^t,\; \nu_{\max}^t && P_B^{\min} \leq P_B^t \leq P_B^{\max}
+\label{eq:kkt_mult_pb}\\
+&\lambda_{B\min}^t,\; \lambda_{B\max}^t && 0 \leq s^t \leq B^{\max} - B^{\min} .
+\label{eq:kkt_mult_b}
+\end{alignat}
+The last line is the correspondence that matters: because $s^t$ is defined by
+\eqref{eq:kkt_mult_soc} as the slack of $B^{t+1}$ above $B^{\min}$, its two box
+multipliers \emph{are} the energy-bound multipliers,
+$\lambda_{B\min}^t$ on $B^{t+1} \geq B^{\min}$ and $\lambda_{B\max}^t$ on
+$B^{t+1} \leq B^{\max}$.  There is no separate state-constraint dual.
+$P_{\text{Subs}}^t$ has no upper bound, so no multiplier is attached to one.
+
+\subsubsection{Stage derivatives}
+With the dynamics $B^{t+1} = B^t - P_B^t \Delta t$ linear and the constraints
+\eqref{eq:kkt_mult_bal}--\eqref{eq:kkt_mult_soc} linear in the controls, every
+second derivative of $f$ and of $c$ with respect to the controls vanishes.  What
+remains is
+\begin{alignat}{2}
+&\frac{\partial c}{\partial(P_{\text{Subs}}, P_B, s)}
+  &&= \begin{bmatrix} 1 & 1 & 0 \\ 0 & -\Delta t & -1 \end{bmatrix}
+\label{eq:kkt_cu} \\
+&\frac{\partial c}{\partial (B, \tau)}
+  &&= \begin{bmatrix} 0 & -p_L'(\tau) \\ 1 & 0 \end{bmatrix}
+\label{eq:kkt_cx} \\
+&\frac{\partial B^{t+1}}{\partial P_B^t} &&= -\Delta t
+\label{eq:kkt_fu} \\
+&\frac{\partial^2 \ell}{\partial (P_{\text{Subs}}, P_B, s)^2}
+  &&= \operatorname{diag}\bigl(0,\; 2 C_B \Delta t,\; 0\bigr) .
+\label{eq:kkt_luu}
+\end{alignat}
+The terminal stage adds $2w$ to the $B$ curvature, $2w(\Delta t)^2$ to the
+$P_B$ curvature, and $-2w\Delta t$ to their cross term.
+
+\subsubsection{The matrix that is factorised}
+Write $V_{BB}^{t+1}$ for the curvature of the cost-to-go in the stored energy.
+Collecting \eqref{eq:kkt_fu}--\eqref{eq:kkt_luu} with the barrier terms, the
+stage Hessian is \emph{diagonal}:
+\begin{equation}
+\hat{H}^t = \operatorname{diag}\Bigl(
+  \underbrace{\tfrac{\nu_{\text{Subs}}^t}{P_{\text{Subs}}^t}}_{P_{\text{Subs}}},\;\;
+  \underbrace{2 C_B \Delta t + (\Delta t)^2 V_{BB}^{t+1} + \Sigma_{P_B}^t}_{P_B},\;\;
+  \underbrace{\Sigma_{s}^t}_{s}
+\Bigr),
+\label{eq:kkt_H}
+\end{equation}
+\begin{align}
+\Sigma_{P_B}^t &= \frac{\nu_{\min}^t}{P_B^t - P_B^{\min}}
+                + \frac{\nu_{\max}^t}{P_B^{\max} - P_B^t},
+\label{eq:kkt_sigma_pb} \\
+\Sigma_{s}^t   &= \frac{\lambda_{B\min}^t}{s^t}
+                + \frac{\lambda_{B\max}^t}{B^{\max} - B^{\min} - s^t} .
+\label{eq:kkt_sigma_s}
+\end{align}
+Three controls and two equalities leave a \emph{one}-dimensional null space, so
+after eliminating \eqref{eq:kkt_cu} exactly one direction survives:
+\begin{equation}
+d = \bigl(\Delta P_{\text{Subs}},\, \Delta P_B,\, \Delta s\bigr)
+  = \bigl(-1,\; +1,\; -\Delta t\bigr) ,
+\label{eq:kkt_null}
+\end{equation}
+which is the statement that the only freedom left at a stage is to move power
+between the substation and the battery, the energy slack following.  The
+quantity the solver factorises is therefore the \emph{scalar}
+\begin{equation}
+d^\top \hat{H}^t d
+ = \frac{\nu_{\text{Subs}}^t}{P_{\text{Subs}}^t}
+ + 2 C_B \Delta t + (\Delta t)^2 V_{BB}^{t+1}
+ + \Sigma_{P_B}^t + (\Delta t)^2\, \Sigma_{s}^t ,
+\label{eq:kkt_reduced}
+\end{equation}
+and the Cholesky whose failure triggers regularisation is a positivity test on
+this one number.  Dropping the energy bound removes $s^t$ and its two
+multipliers, leaving $d = (-1, +1)$ and
+$d^\top \hat{H}^t d = \nu_{\text{Subs}}^t / P_{\text{Subs}}^t + 2 C_B \Delta t
++ (\Delta t)^2 V_{BB}^{t+1} + \Sigma_{P_B}^t$; the base instance strips the
+barrier terms too, leaving $2 C_B \Delta t + (\Delta t)^2 V_{BB}^{t+1}$, which is
+where $C_B$ enters as the curvature that keeps the problem solvable.
+
+\subsubsection{What is passed backward}
+Let $V_B^t$ denote the gradient of the cost-to-go in the stored energy.  The
+backward recursion carried between stages is
+\begin{equation}
+V_B^{t} = V_B^{t+1} + \varphi_{\text{soc}}^t
+        + \bigl(\beta^\top \hat{Q}_u^t\bigr)_B + \bigl(\omega^\top c^t\bigr)_B ,
+\label{eq:kkt_Vx}
+\end{equation}
+\begin{equation}
+V_{BB}^{t} = V_{BB}^{t+1} + \bigl(\beta^\top \hat{B}^t\bigr)_{BB}
+           + \bigl(\omega^\top c_x^t\bigr)_{BB} ,
+\label{eq:kkt_Vxx}
+\end{equation}
+where $\beta$ and $\omega$ are the feedback gains produced by the stage solve.
+At a feasible iterate ($c^t = 0$) that has converged ($\hat{Q}_u^t = 0$),
+\eqref{eq:kkt_Vx} collapses to
+\begin{equation}
+V_B^{t} - V_B^{t+1} = \varphi_{\text{soc}}^t ,
+\label{eq:kkt_costate}
+\end{equation}
+i.e.\ the value gradient in stored energy is the discrete costate, and its
+stage-to-stage increment is exactly the multiplier on the energy relation.
+Equation~\eqref{eq:kkt_Vxx} has no counterpart in a first-order method: it is the
+curvature, and it is the object that a scheme passing only
+\eqref{eq:kkt_costate} between stages does not carry.
+
+\subsubsection{What is passed forward}
+With step size $\gamma$ and $\delta B = B^t - \bar{B}^t$ the deviation from the
+nominal trajectory, every quantity is updated by the same affine rule:
+\begin{alignat}{2}
+P_{\text{Subs}}^t &= \bar{P}_{\text{Subs}}^t + \gamma\,\alpha_{\text{Subs}}^t
+   + \beta_{\text{Subs}}^t\, \delta B , \quad&
+P_B^t &= \bar{P}_B^t + \gamma\,\alpha_{B}^t + \beta_{B}^t\, \delta B ,
+\label{eq:kkt_fwd_u} \\
+\varphi_\bullet^t &= \bar{\varphi}_\bullet^t + \gamma\,\psi_\bullet^t
+   + \omega_\bullet^t\, \delta B , &
+\nu_\bullet^t &= \bar{\nu}_\bullet^t + \gamma\,\chi_\bullet^t
+   + \zeta_\bullet^t\, \delta B ,
+\label{eq:kkt_fwd_mult}
+\end{alignat}
+so the primal variables, the equality multipliers and the bound multipliers are
+all propagated together along the same search direction, with a single $\gamma$
+accepted by the filter for all of them.
