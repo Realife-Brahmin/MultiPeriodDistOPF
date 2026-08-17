@@ -5,25 +5,35 @@ same ground truth. Session-local memory (`~/.claude/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
-## "DDP" means two different things in this repo — do not conflate them
+## Two DDP codebases here — both *Differential* Dynamic Programming
+
+**Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never
+"Distributed."** Corrected throughout on 2026-08-14, including the two source
+files that originally carried the wrong expansion
+(`envs/ddp/tex/ddp_copperplate_formulation.tex`,
+`envs/ddp/root_level/ddp_copperplate.jl`). An earlier version of this file
+recorded "Distributed" as a deliberate word choice; that was wrong. Do not
+reintroduce it anywhere, and do not describe the two codebases as different
+algorithms that merely share an initialism — they are both DDP, differing in
+**order**. (Unrelated: "Distributed Energy Resources" in `envs/multi_poi/` and
+`envs/tadmm/` is correct and must be left alone; and the repo name's "Dist"
+means *distribution* networks.)
 
 - `ddp/` (repo root) is the **FilterDDP** evaluation: a reproducibility study
-  of the authors' *Differential* Dynamic Programming solver
-  (github.com/mingu6/FilterDDP.jl, arXiv 2504.08278 / 2606.01487), done
-  2026-08-03 to present. Full status, findings, and the "poor fit for
-  BFM-scale MPOPF" conclusion are in
+  of the authors' solver (github.com/mingu6/FilterDDP.jl, arXiv 2504.08278 /
+  2606.01487), done 2026-08-03 to present. Full status, findings, and the
+  MPOPF-fit conclusion are in
   [ddp/README_FILTERDDP_EXPERIMENT.md](ddp/README_FILTERDDP_EXPERIMENT.md).
   The paper is at `ddp/resources/Xu_2026_FilterDDP.pdf` (and a duplicate at
   `envs/ddp/resources/Xu_2026_FilterDDP.pdf`, see manifests below).
 
-- `envs/ddp/` is the user's own, independently-derived decomposition scheme
-  for copper-plate MPOPF, titled **"Distributed Dynamic Programming"**
-  (`envs/ddp/tex/ddp_copperplate_formulation.tex`, committed 2025-11-12,
-  predates any Claude involvement in this repo — verified by git blame, not
-  AI-authored). "Distributed" here is the user's own word choice from that
-  session, not a Claude artifact.
+- `envs/ddp/` is the user's own, independently-derived **first-order** DDP
+  scheme for copper-plate MPOPF (committed 2025-11-12, predates any Claude
+  involvement — verified by git blame, not AI-authored). A clean minimal
+  restatement of it lives at
+  [ddp/examples/power_system/user_ddp.jl](ddp/examples/power_system/user_ddp.jl).
 
-**These are not the same algorithm** despite sharing the "DDP" initialism:
+**The difference is the order of the cost-to-go model, not the family:**
 
 | | `envs/ddp/` (user's own) | `ddp/` (FilterDDP, the paper) |
 |---|---|---|
@@ -34,9 +44,20 @@ establishes something a future session, on any machine, would need.
 
 Important nuance established 2026-08-05: `μ[t]` in the user's method **is**
 legitimately the same object as `V_x[t]` (the costate / value-gradient) —
-this is not a naive approach, it's a real first-order relative of DP. The gap
+this is not a naive approach, it's a genuine first-order DDP. The gap
 is the missing curvature (`V_xx`) and the cross-iteration staleness, not the
 absence of backward-looking information altogether.
+
+**Measured 2026-08-14** on the shared `T = 6` instance, via `user_ddp.jl`:
+the first-order scheme's *fixed point is correct* — fed the true `μ*` and `B*`,
+one sweep reproduces the centralized optimum to `1.7e-08` — but it does not
+converge to it from a cold start, settling into a period-two limit cycle
+`2.1e-03` short in objective and `121` kW out in dispatch. Damping shrinks the
+cycle without closing it (`a = 0.1` still `3.2e-05` short after 2000 sweeps),
+because started *at* the optimum the sweep returns `μ` off by `9.2e-04`: the
+optimum is not exactly a fixed point of the linearised map. FilterDDP reaches
+`2.2e-10` on the same instance in 16 iterations. That is the `V_xx` gap,
+quantified.
 
 ## Julia environment: use `envs/ddp2026` for everything DDP
 

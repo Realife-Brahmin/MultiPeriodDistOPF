@@ -22,7 +22,7 @@ settles `OrderedCollections` on 1.8.2.
 ## What it supersedes, and why
 
 **`envs/ddp/Project.toml`** (2025-11) — the environment for the user's own
-Distributed Dynamic Programming scheme. Unused for ~9 months and not trusted to
+first-order Differential Dynamic Programming scheme. Unused for ~9 months and not trusted to
 resolve as it once did. Its `Plots`, `Crayons`, `LaTeXStrings`, `Parameters` and
 `Revise` dependencies existed because verification then meant a human reading
 formatted output; the checks here are numerical and self-asserting, so none of
