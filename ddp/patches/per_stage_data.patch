@@ -1,0 +1,108 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+index 0ee5582..d0a3597 100644
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -6,7 +6,6 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+     δ_c = 0.
+     reg = 0.0
+ 
+-    constraints = ocp.constraints
+     dynamics = ocp.dynamics
+     cl = ocp.control_limits
+     ni = (cl.nl + cl.nu) * ocp.N
+@@ -30,6 +29,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+         
+         for t = ocp.N:-1:1
+             x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
++            # PATCH: per-stage data when supplied, else the shared function
++            constraints = stage_con(ocp, t)
++            objective_t = stage_obj(ocp, t)
+ 
+             # evaluate derivatives
+ 
+@@ -41,12 +43,12 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                 luu = ocp.term_objective.luu(x, u)
+                 data.objective += ocp.term_objective.l(x, u)[1]
+             else
+-                lx = ocp.stage_objective.lx(x, u)
+-                lu_ = ocp.stage_objective.lu(x, u)
+-                lxx = ocp.stage_objective.lxx(x, u)
+-                lux = ocp.stage_objective.lux(x, u)
+-                luu = ocp.stage_objective.luu(x, u)
+-                data.objective += ocp.stage_objective.l(x, u)[1]
++                lx = objective_t.lx(x, u)
++                lu_ = objective_t.lu(x, u)
++                lxx = objective_t.lxx(x, u)
++                lux = objective_t.lux(x, u)
++                luu = objective_t.luu(x, u)
++                data.objective += objective_t.l(x, u)[1]
+             end
+             
+             if nc > 0
+diff --git a/src/forward_pass.jl b/src/forward_pass.jl
+index 1883b4d..a7769ff 100644
+--- a/src/forward_pass.jl
++++ b/src/forward_pass.jl
+@@ -79,7 +79,7 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+ 
+         # evaluate constraints and violation
+         if nc > 0
+-            c = ocp.constraints.c(x, u)
++            c = stage_con(ocp, t).c(x, u)
+             data.primal_1_next += norm(c, 1)
+             data.barrier_lagrangian_next += dot(c, ϕ)
+         end
+@@ -113,7 +113,7 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+         if t == ocp.N
+             data.barrier_lagrangian_next += ocp.term_objective.l(x, u)[1]
+         else
+-            data.barrier_lagrangian_next += ocp.stage_objective.l(x, u)[1]
++            data.barrier_lagrangian_next += stage_obj(ocp, t).l(x, u)[1]
+         end
+ 
+         if t < ocp.N
+diff --git a/src/ocp/ocp.jl b/src/ocp/ocp.jl
+index dd5af53..9ad2f89 100644
+--- a/src/ocp/ocp.jl
++++ b/src/ocp/ocp.jl
+@@ -8,11 +8,31 @@ struct OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, O
+     dynamics::Dynamics{nx, nu, F1, F2, F3, F4, F5, F6}
+     constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}
+     control_limits::ControlLimits{T, nu}
++    # --- PATCH: optional per-stage data (see ddp/patches/per_stage_data.patch) ---
++    # Remark 1 of the global-convergence paper states that the objective,
++    # dynamics and constraint functions "can in general be time-varying"; the
++    # package only ever exposed one of each for the whole horizon. These two
++    # fields carry a distinct Objective / EqualityConstraints per stage when a
++    # problem needs one. Both default to `nothing`, in which case every call
++    # site falls back to the single shared function and the original code path
++    # is bit-for-bit unchanged.
++    stage_objectives::Union{Nothing, Vector}
++    stage_constraints::Union{Nothing, Vector}
+ end
+ 
++"""Objective in force at stage `t` (the shared one unless per-stage data was given)."""
++@inline stage_obj(ocp::OCP, t::Int) =
++    isnothing(ocp.stage_objectives) ? ocp.stage_objective : ocp.stage_objectives[t]
++
++"""Equality constraints in force at stage `t`."""
++@inline stage_con(ocp::OCP, t::Int) =
++    isnothing(ocp.stage_constraints) ? ocp.constraints : ocp.stage_constraints[t]
++
+ function build_ocp(N::Int64, stage_objective::Objective{nx, nu, OS1, OS2, OS3, OS4, OS5, OS6},
+         term_objective::Objective{nx, nu, OT1, OT2, OT3, OT4, OT5, OT6}, dynamics::Dynamics{nx, nu, F1, F2, F3, F4, F5, F6},
+-        constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}, control_limits::ControlLimits{T, nu}) where
++        constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}, control_limits::ControlLimits{T, nu};
++        stage_objectives::Union{Nothing, Vector} = nothing,
++        stage_constraints::Union{Nothing, Vector} = nothing) where
+                         {T<:Real, nx, nu, nc, F1<:RF, F2<:RF, F3<:RF, F4<:RF, F5<:RF, F6<:RF,
+                         C1<:RFN, C2<:RFN, C3<:RFN, C4<:RFN, C5<:RFN, C6<:RFN,
+                         OS1<:RF, OS2<:RF, OS3<:RF, OS4<:RF, OS5<:RF, OS6<:RF,
+@@ -23,5 +43,6 @@ function build_ocp(N::Int64, stage_objective::Objective{nx, nu, OS1, OS2, OS3, O
+     control_limits_ = isnothing(control_limits) ? ControlLimits(l, u) : control_limits
+     constraints_ = isnothing(constraints) ? EqualityConstraints(nx, nu) : constraints
+     return OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}(
+-        N, stage_objective, term_objective, dynamics, constraints_, control_limits_)
++        N, stage_objective, term_objective, dynamics, constraints_, control_limits_,
++        stage_objectives, stage_constraints)
+ end

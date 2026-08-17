@@ -1,6 +1,46 @@
 # Changes made during the FilterDDP experiment
 
-## Changes to the authors' repository: none
+## Changes to the authors' repository: one patch, added 2026-08-12
+
+`ddp/external/FilterDDP.jl` is at upstream commit `513a104` plus exactly one
+patch, saved as [`ddp/patches/per_stage_data.patch`](../patches/per_stage_data.patch)
+(108 lines, touching `src/ocp/ocp.jl`, `src/backward_pass.jl`,
+`src/forward_pass.jl` and nothing else).
+
+**What it does.** `OCP` held one `stage_objective` and one `constraints` for the
+whole horizon, so per-period data could not be indexed by `t`. The patch adds two
+optional fields, `stage_objectives` and `stage_constraints`, each a vector with
+one entry per stage, and two accessors `stage_obj(ocp, t)` / `stage_con(ocp, t)`
+that the two passes now call. Both fields default to `nothing`, in which case
+every call site falls back to the single shared function.
+
+**Why it is justified.** This is not an extension of the algorithm. Remark 1 of
+the global-convergence paper states plainly that the objective, dynamics and
+constraint functions *"can in general be time-varying but we avoid specifying
+this explicitly for notational simplicity."* The capability was in the method and
+merely absent from the implementation, because every example the authors ship is
+time-invariant (grep for a time index across `experiments/` returns nothing).
+
+**Regression evidence that the default path is unchanged.** The authors' own
+`experiments/filterddp/double_integrator.jl` was run on the patched clone:
+
+| | iterations | objective | primal infeasibility |
+| --- | --- | --- | --- |
+| Stage 3 record, unpatched | 51 | `1.26574863e+00` | `8.09e-08` |
+| same script, patched | 51 | `1.26574863e+00` | `8.0917e-08` |
+
+Identical. Their `results/` directory was restored with `git checkout` afterwards,
+so the only difference from upstream is the three patched source files.
+
+**What it bought.** The copper-plate model no longer needs the Lagrange
+interpolant or the time-index state: `nx` drops from 2 to 1, and the horizon
+ceiling disappears. With the interpolant, `T = 48` died with a
+`StackOverflowError` inside Symbolics while still *building* the constraint
+function. With per-stage data, `T = 192` builds and solves in 12 s to
+`|ΔJ| = 7.1e-15` against the closed form.
+
+## Previous status (Stages 1-10): no changes to the authors' repository
+
 
 `ddp/external/FilterDDP.jl` is at upstream commit `513a104` and
 `git status --porcelain` on it is **empty**. No source file, example or result file was
