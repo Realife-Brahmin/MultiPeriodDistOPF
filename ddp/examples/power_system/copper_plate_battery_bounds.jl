@@ -46,23 +46,6 @@ const Δt  = T_(1.0)
 const B_0 = T_(2.0)
 const W   = T_(5.0)
 
-# Lagrange interpolation through nodes τ = 1..n, exact at the nodes and smooth.
-# NOTE: degree n-1. Fine for n = 3 and n = 6; see notes/MPOPF_APPLICABILITY.md
-# for why this does NOT scale to the horizons an MPOPF actually needs.
-function lagrange(v, τ)
-    n = length(v)
-    acc = zero(τ) * v[1]
-    for i = 1:n
-        term = v[i]
-        for j = 1:n
-            j == i && continue
-            term = term * (τ - j) / (i - j)
-        end
-        acc = acc + term
-    end
-    return acc
-end
-
 # ---------------------------------------------------------------------------
 # Independent reference: strictly convex QP with linear inequalities G z <= h
 # ---------------------------------------------------------------------------
@@ -169,64 +152,86 @@ const STATUS = Dict(0 => "Optimal", 1 => "Backward pass failed", 7 => "Line sear
                     8 => "Max iterations")
 status_str(s) = get(STATUS, s, "status $s")
 
-"""Cases without energy bounds: nu = 2, nc = 1."""
-function solve_ddp_bounds(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                          tol = 1e-10, verbose = false)
-    nx, nu = 2, 2
+# The model, written stage by stage. Since ddp/patches/per_stage_data.patch each
+# stage carries its OWN price c^t and demand p_L^t, so there is no interpolant
+# and no time index in the state:
+#
+#     state    x = (B^t)                          nx = 1
+#     control  u = (P_Subs^t, P_B^t)              nu = 2
+#              u = (P_Subs^t, P_B^t, s^t)         nu = 3, when B is bounded
+#
+#     dynamics    B^{t+1} = B^t - P_B^t Δt
+#     stage cost  c^t P_Subs^t Δt + C_B (P_B^t)^2 Δt
+#     terminal    the same, plus w (B^{T+1} - B_0)^2
+#     constraint  P_Subs^t + P_B^t - p_L^t = 0
+#                 and, when B is bounded,
+#                 (B^t - P_B^t Δt) - B^min - s^t = 0,  0 <= s^t <= B^max - B^min,
+#                 which is exactly B^min <= B^{t+1} <= B^max.
+
+"""Dynamics shared by every stage: the lossless reservoir, and nothing else."""
+reservoir(nu) = Dynamics((x, u) -> [x[1] - u[2] * Δt], 1, nu)
+
+"""Stage cost at price `ct`."""
+stage_cost(ct, nu) = Objective((x, u) -> ct * u[1] * Δt + C_B * u[2]^2 * Δt, 1, nu)
+
+"""Terminal cost at price `cT`: stage cost plus the terminal-energy penalty."""
+terminal_cost(cT, nu) = Objective(
+    (x, u) -> cT * u[1] * Δt + C_B * u[2]^2 * Δt + W * (x[1] - u[2] * Δt - B_0)^2, 1, nu)
+
+"""Stage constraints at demand `pLt`; adds the energy slack row when `B_lo` is finite."""
+function stage_constraint(pLt, nu, B_lo)
+    isfinite(B_lo) ?
+        EqualityConstraints((x, u) -> [u[1] + u[2] - pLt,
+                                       (x[1] - u[2] * Δt) - B_lo - u[3]], 1, nu) :
+        EqualityConstraints((x, u) -> [u[1] + u[2] - pLt], 1, nu)
+end
+
+"""
+    solve_ddp(T; ps_lo, ps_hi, pb_lo, pb_hi, B_lo, B_hi, tol, verbose)
+
+Solve the copper-plate problem at horizon `T` with per-stage data. Finite
+`B_lo`/`B_hi` switch on the energy slack control.
+"""
+function build_per_stage_ocp(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
+                             B_lo = -Inf, B_hi = Inf)
     pL = tadmm_pL(T); c = tadmm_cost(T)
+    energy = isfinite(B_lo) && isfinite(B_hi)
+    nu = energy ? 3 : 2
 
-    dyn = Dynamics((x, u) -> [x[1] - u[2] * Δt, x[2] + 1.0], nx, nu)
-    l = (x, u) -> lagrange(c, x[2]) * u[1] * Δt + C_B * u[2]^2 * Δt
-    lN = (x, u) -> c[T] * u[1] * Δt + C_B * u[2]^2 * Δt +
-                   W * (x[1] - u[2] * Δt - B_0)^2
-    cons = EqualityConstraints((x, u) -> [u[1] + u[2] - lagrange(pL, x[2])], nx, nu)
-    cl = ControlLimits(SVector{nu,T_}([ps_lo, pb_lo]), SVector{nu,T_}([ps_hi, pb_hi]))
+    objs = Any[stage_cost(c[t], nu) for t = 1:T]
+    cons = Any[stage_constraint(pL[t], nu, energy ? B_lo : -Inf) for t = 1:T]
+    cl = energy ?
+        ControlLimits(SVector{nu,T_}([ps_lo, pb_lo, 0.0]),
+                      SVector{nu,T_}([ps_hi, pb_hi, B_hi - B_lo])) :
+        ControlLimits(SVector{nu,T_}([ps_lo, pb_lo]), SVector{nu,T_}([ps_hi, pb_hi]))
 
-    ocp = build_ocp(T, Objective(l, nx, nu), Objective(lN, nx, nu), dyn, cons, cl)
+    return build_ocp(T, objs[1], terminal_cost(c[T], nu), reservoir(nu), cons[1], cl;
+                     stage_objectives = objs, stage_constraints = cons), nu, energy
+end
+
+function solve_ddp(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
+                   B_lo = -Inf, B_hi = Inf, tol = 1e-10, verbose = false)
+    ocp, nu, energy = build_per_stage_ocp(T; ps_lo, ps_hi, pb_lo, pb_hi, B_lo, B_hi)
     solver = Solver(ocp; options = Options{T_}(verbose = verbose, optimality_tolerance = tol))
-    x1 = SVector{nx,T_}([B_0, 1.0])
+
     ps0 = isfinite(ps_lo) && isfinite(ps_hi) ? (ps_lo + ps_hi) / 2 : 1.0
     pb0 = isfinite(pb_lo) && isfinite(pb_hi) ? (pb_lo + pb_hi) / 2 : 0.0
-    ū = [SVector{nu,T_}([ps0, pb0]) for _ = 1:T]
-    solve!(solver, x1, ū)
+    u0 = energy ? T_[ps0, pb0, (B_hi - B_lo) / 2] : T_[ps0, pb0]
+    ū = [SVector{nu,T_}(u0) for _ = 1:T]
+    solve!(solver, SVector{1,T_}([B_0]), ū)
+
     x, u = get_trajectory(solver)
     psub = [u[t][1] for t = 1:T]; pb = [u[t][2] for t = 1:T]
     B = [x[t][1] for t = 1:T]; push!(B, B[T] - pb[T] * Δt)
     return (solver = solver, psub = psub, pb = pb, B = B,
+            s = energy ? [u[t][3] for t = 1:T] : T_[],
             zl = [solver.nominal[t].zl for t = 1:T],
             zu = [solver.nominal[t].zu for t = 1:T])
 end
 
-"""Cases with energy bounds: slack control, nu = 3, nc = 2."""
-function solve_ddp_energy(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                          B_lo, B_hi, tol = 1e-10, verbose = false)
-    nx, nu = 2, 3          # u = (Psub, P_B, s)
-    pL = tadmm_pL(T); c = tadmm_cost(T)
-
-    dyn = Dynamics((x, u) -> [x[1] - u[2] * Δt, x[2] + 1.0], nx, nu)
-    l = (x, u) -> lagrange(c, x[2]) * u[1] * Δt + C_B * u[2]^2 * Δt
-    lN = (x, u) -> c[T] * u[1] * Δt + C_B * u[2]^2 * Δt +
-                   W * (x[1] - u[2] * Δt - B_0)^2
-    # c1: power balance.  c2: slack defn for the NEXT energy, B_{t+1} - B_lo - s = 0
-    #     with s ∈ [0, B_hi - B_lo], which is exactly B_lo <= B_{t+1} <= B_hi.
-    cons = EqualityConstraints(
-        (x, u) -> [u[1] + u[2] - lagrange(pL, x[2]),
-                   (x[1] - u[2] * Δt) - B_lo - u[3]], nx, nu)
-    cl = ControlLimits(SVector{nu,T_}([ps_lo, pb_lo, 0.0]),
-                       SVector{nu,T_}([ps_hi, pb_hi, B_hi - B_lo]))
-
-    ocp = build_ocp(T, Objective(l, nx, nu), Objective(lN, nx, nu), dyn, cons, cl)
-    solver = Solver(ocp; options = Options{T_}(verbose = verbose, optimality_tolerance = tol))
-    x1 = SVector{nx,T_}([B_0, 1.0])
-    ū = [SVector{nu,T_}([1.0, 0.0, (B_hi - B_lo) / 2]) for _ = 1:T]
-    solve!(solver, x1, ū)
-    x, u = get_trajectory(solver)
-    psub = [u[t][1] for t = 1:T]; pb = [u[t][2] for t = 1:T]
-    B = [x[t][1] for t = 1:T]; push!(B, B[T] - pb[T] * Δt)
-    return (solver = solver, psub = psub, pb = pb, B = B, s = [u[t][3] for t = 1:T],
-            zl = [solver.nominal[t].zl for t = 1:T],
-            zu = [solver.nominal[t].zu for t = 1:T])
-end
+# Back-compat shims: the two entry points the rest of the suite already calls.
+solve_ddp_bounds(T::Int; kwargs...) = solve_ddp(T; kwargs...)
+solve_ddp_energy(T::Int; B_lo, B_hi, kwargs...) = solve_ddp(T; B_lo, B_hi, kwargs...)
 
 # ---------------------------------------------------------------------------
 # Reporting

@@ -1,26 +1,29 @@
 ==============================================================================
 Stage 10 — FilterDDP's objects, pinned to the copper-plate variables
 ==============================================================================
-evaluation point:  B = 1.63, τ = 3.0, P_Subs = 1.71, P_B = 0.22, s = 0.19
+state is B alone (nx = 1); stage 3 carries c^t = 0.1753, p_L^t = 1.9980
+evaluation point:  B = 1.63, P_Subs = 1.71, P_B = 0.22, s = 0.19
 
-  f_x  = I                                       max err 0.00e+00  ok
-  f_u  = [0 -Δt 0; 0 0 0]                        max err 0.00e+00  ok
+  f_x  = [1]                                     max err 0.00e+00  ok
+  f_u  = [0  -Δt  0]                             max err 0.00e+00  ok
   f_xx = 0                                       max err 0.00e+00  ok
   f_uu = 0                                       max err 0.00e+00  ok
   f_ux = 0                                       max err 0.00e+00  ok
-  l_x  = [0, c'(τ) P_Subs Δt]                    max err 1.63e-12  ok
-  l_u  = [c(τ)Δt, 2 C_B P_B Δt, 0]               max err 2.78e-17  ok
+  l_x  = [0] (cost does not depend on B)         max err 0.00e+00  ok
+  l_u  = [c^t Δt, 2 C_B P_B Δt, 0]               max err 0.00e+00  ok
   l_uu = diag(0, 2 C_B Δt, 0)                    max err 0.00e+00  ok
-  c    = [balance, slack]                        max err 2.22e-16  ok
+  l_ux = 0                                       max err 0.00e+00  ok
+  c    = [balance, slack]                        max err 5.55e-17  ok
   c_u  = [1 1 0; 0 -Δt -1]                       max err 0.00e+00  ok
-  c_x  = [0 -p_L'(τ); 1 0]                       max err 1.28e-11  ok
+  c_x  = [0; 1]                                  max err 0.00e+00  ok
   c_uu = 0 (linear in u)                         max err 0.00e+00  ok
   c_ux = 0                                       max err 0.00e+00  ok
   lN_u = [c^T Δt, 2C_B P_B Δt - 2wΔt(B^{T+1}-B_0), 0] max err 2.66e-15  ok
-  lN_xx[1,1] = 2w                                max err 0.00e+00  ok
-  lN_uu[2,2] = 2C_BΔt + 2wΔt²                    max err 0.00e+00  ok
+  lN_x  = 2w (B^{T+1} - B_0)                     max err 2.66e-15  ok
+  lN_xx = 2w                                     max err 0.00e+00  ok
+  lN_uu[2,2] = 2 C_B Δt + 2wΔt²                  max err 0.00e+00  ok
 
-worst disagreement over all 16 checks: 1.28e-11
+worst disagreement over all 18 checks: 2.66e-15
 
 ==============================================================================
 The per-stage reduced system
@@ -29,13 +32,16 @@ n_u = 3, n_c = 2  ->  null space of c_u has dimension 1
 free direction (normalised on P_B):  ΔP_Subs = -1.000, ΔP_B = +1.000, Δs = -1.000
   i.e. the ONLY freedom left at a stage is to move power between the
   substation and the battery, with the energy slack following.
-residual ‖c_u d‖ = 2.22e-16
+residual ||c_u d|| = 2.22e-16
 
-With f_uu = c_uu = 0, the stage Hessian is
-  Ĥ = diag(0, 2 C_B Δt, 0) + diag(Σ_L + Σ_U) + f_u' V_BB f_u + reg·I
+With f_uu = c_uu = l_ux = 0 the stage Hessian is DIAGONAL:
+  H = diag(0, 2 C_B Δt, 0) + diag(Sig_L + Sig_U) + f_u' V_BB f_u + reg*I
 so the reduced Hessian along the single free direction is the SCALAR
-  dᵀĤd = (Σ_L+Σ_U)_Psub + 2 C_B Δt + Δt² V_BB + (Σ_L+Σ_U)_P_B
-         + Δt² (Σ_L+Σ_U)_s ,        Σ_L = z_l/(u-l),  Σ_U = z_u/(u_hi-u)
+  d'Hd = (Sig_L+Sig_U)_Psub + 2 C_B Δt + Δt^2 V_BB + (Sig_L+Sig_U)_P_B
+         + Δt^2 (Sig_L+Sig_U)_s ,   Sig_L = z_l/(u-l),  Sig_U = z_u/(u_hi-u)
 
 The 'dense n_u x n_u KKT solve' is therefore a 1x1 division here, and
 the Cholesky that can fail is a positivity test on that one number.
+
+With nx = 1 the value derivatives V_B and V_BB are scalars too, so the
+whole backward recursion is scalar arithmetic at every stage.

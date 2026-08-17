@@ -1,0 +1,18 @@
+============================================================================================
+Stage 11b — Lagrange polynomial vs. the analytic profile it interpolates
+============================================================================================
+       degree-(T-1) Lagrange               analytic sinusoid                 
+    T     build   iters  max|dP_B| vs CF     build   iters  max|dP_B| vs CF
+--------------------------------------------------------------------------------------------
+    6        8s       1        9.640e-15        1s       1        9.640e-15
+   24       92s       1        1.094e-14        1s       1        1.116e-14
+Warning: detected a stack overflow; program state may be corrupted, so further execution might be unreliable.
+   48  STACKOVF       -                -        1s       1        1.147e-14
+Warning: detected a stack overflow; program state may be corrupted, so further execution might be unreliable.
+   96  STACKOVF       -                -        3s       1        1.116e-14
+
+'build' is wall time for the whole Symbolics build + solve; STACKOVF is a
+StackOverflowError raised while the constraint function is still being built,
+before any optimisation happens. Both columns are compared against the SAME
+closed-form reference, so agreement between them also shows the interpolant's
+derivatives never reach the control update.

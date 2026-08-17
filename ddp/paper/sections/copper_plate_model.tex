@@ -37,51 +37,59 @@ The \emph{base instance} is
 \subsection{Optimal-Control Form}
 \label{subsec:ocp}
 
-Restated over $N = T$ stages in the form required by DDP:
+Restated over $N = T$ stages in the form required by DDP, with a distinct cost
+and constraint at each stage:
 \begin{align}
-\min_{x,u} \;\; & \sum_{t=1}^{N-1} \ell\bigl(x^t, u^t\bigr)
+\min_{x,u} \;\; & \sum_{t=1}^{N-1} \ell^t\bigl(x^t, u^t\bigr)
                   + \ell^{F}\bigl(x^N, u^N\bigr) \nonumber \\
 \text{s.t.} \;\; & x^1 = \hat{x}^1, \label{eq:ocp_form} \\
                  & x^{t+1} = f\bigl(x^t, u^t\bigr),
                    \quad t \in \{1,\dots,N-1\}, \nonumber \\
-                 & c\bigl(x^t, u^t\bigr) = 0,
+                 & c^t\bigl(x^t, u^t\bigr) = 0,
                    \quad t \in \{1,\dots,N\}. \nonumber
 \end{align}
-with state, control and initial condition
+The state is the stored energy alone; the controls are the two power set-points:
 \begin{equation}
-x^t = \bigl(B^t,\; \tau^t\bigr)^\top \in \mathbb{R}^2,
+x^t = B^t \in \mathbb{R},
 \qquad
 u^t = \bigl(P_{\text{Subs}}^t,\; P_B^t\bigr)^\top \in \mathbb{R}^2 ,
 \label{eq:ocp_xu}
 \end{equation}
-$\hat{x}^1 = (B_0,\, 1)^\top$.  Period-varying data is carried by the time index
-$\tau$ through the Lagrange interpolants on the nodes $\tau = 1,\dots,T$,
-\begin{equation}
-p_L(\tau) = \sum_{k=1}^{T} p_L^k \prod_{\substack{m=1 \\ m \neq k}}^{T}
-             \frac{\tau - m}{k - m},
-\label{eq:ocp_interp}
-\end{equation}
-and likewise for the price $c(\tau)$.  The stage data is then
+with $\hat{x}^1 = B_0$.  Because stage $t$ carries its own $c^t$ and $p_L^t$,
+the per-period data enters directly and nothing is interpolated:
 \begin{align}
-f(x, u) &= \bigl(\, x_1 - u_2 \Delta t,\;\; x_2 + 1 \,\bigr)^\top,
+f(x, u) &= x - u_2 \Delta t,
 \label{eq:ocp_f} \\
-c(x, u) &= u_1 + u_2 - p_L(x_2),
+c^t(x, u) &= u_1 + u_2 - p_L^t,
 \label{eq:ocp_c} \\
-\ell(x, u) &= \bigl[\, c(x_2)\, u_1 + C_B\, u_2^2 \,\bigr] \Delta t,
+\ell^t(x, u) &= \bigl[\, c^t u_1 + C_B\, u_2^2 \,\bigr] \Delta t,
 \label{eq:ocp_l} \\
-\ell^{F}(x, u) &= \bigl[\, c^T u_1 + C_B\, u_2^2 \,\bigr] \Delta t \nonumber \\
-               &\qquad + w \bigl( x_1 - u_2 \Delta t - B_0 \bigr)^2 .
+\ell^{F}(x, u) &= \bigl[\, c^T u_1 + C_B\, u_2^2 \,\bigr] \Delta t
+                + w \bigl( x - u_2 \Delta t - B_0 \bigr)^2 .
 \label{eq:ocp_lF}
 \end{align}
 Bounds \eqref{eq:cp_pg_lim}--\eqref{eq:cp_pb_lim} map onto control limits
 $b^{L} \leq u^t \leq b^{U}$.  The state bound~\eqref{eq:cp_soc_lim} is appended as
-a second row of $c$ via a slack $s^t$ adjoined to the control, giving $n_c = 2$,
+a second row of $c^t$ via a slack $s^t$ adjoined to the control, giving $n_c = 2$,
 $n_u = 3$:
 \begin{equation}
-\bigl(x_1 - u_2 \Delta t\bigr) - B^{\min} - s^t = 0,
+\bigl(x - u_2 \Delta t\bigr) - B^{\min} - s^t = 0,
 \qquad 0 \leq s^t \leq B^{\max} - B^{\min}.
 \label{eq:ocp_slack}
 \end{equation}
+
+\smallskip
+\noindent\textit{Remark.}\quad
+A per-stage $\ell^t$ and $c^t$ is what the method assumes --- the objective,
+dynamics and constraint functions are time-varying in general --- but the
+reference implementation exposed only one of each for the whole horizon.  An
+earlier revision of this benchmark worked around that by adjoining a time index
+$\tau$ to the state and recovering $c^t$ and $p_L^t$ from a degree-$(T\!-\!1)$
+Lagrange interpolant of it.  That device is exact at the nodes and was
+numerically well behaved past $T = 24$, but its symbolic expression grows with
+the horizon and exhausted the code generator at $T = 48$.  Restoring per-stage
+data removes it, and with it the extra state: $n_x$ falls from $2$ to $1$ and the
+horizon ceiling disappears.
 
 \input{sections/kkt_workflow}
 
@@ -105,6 +113,7 @@ P_B^k = \frac{c^k - 2 w \Delta t\, s}{2 C_B} .
 \label{eq:cp_closed_form}
 \end{equation}
 
+\input{figures/workflow_fig}
 \input{figures/input_curves_fig}
 \input{figures/schedule_fig}
 \input{figures/balance_fig}

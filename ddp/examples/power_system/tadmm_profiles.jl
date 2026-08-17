@@ -43,3 +43,41 @@ const P_RATED = 2.0
 
 """Demand p_L^t in p.u. = rated load x load factor."""
 tadmm_pL(T::Int) = P_RATED .* tadmm_load(T)
+
+# ---------------------------------------------------------------------------
+# PARKED: the Lagrange interpolant
+# ---------------------------------------------------------------------------
+# Nothing in the suite calls this any more. It is kept because it is the only
+# way to carry per-period data if the upstream package CANNOT be patched.
+#
+# History: FilterDDP shipped with one stage cost and one constraint function for
+# the whole horizon, so c^t and p_L^t had nowhere to live but the state. The
+# model carried a counter tau with tau^{t+1} = tau^t + 1 and recovered the data
+# from the degree-(T-1) polynomial through the nodes tau = 1..T. That worked and
+# was exact at the nodes, but the expression grew with T: at T = 48 Symbolics
+# stack-overflowed while still BUILDING the constraint function. It was never a
+# limit of the algorithm (Remark 1 of the global-convergence paper says the
+# functions "can in general be time-varying"), so
+# ddp/patches/per_stage_data.patch lifted it instead and the state lost tau.
+#
+# If you ever need this again, note the two things measured at the time:
+#   * it is numerically fine well past T = 24 -- exact at the nodes to ~1e-15,
+#     no overshoot, nodal slopes SHRINKING with T, because these profiles are
+#     sinusoids and polynomial interpolation of an entire function on a uniform
+#     grid behaves; the Runge argument does not apply here;
+#   * its derivatives never reach the control update anyway, since tau^t = t
+#     exactly and f_u has no tau row.
+"""Degree-(n-1) Lagrange interpolant through (1,v[1]), ..., (n,v[n]), at tau."""
+function lagrange(v, τ)
+    n = length(v)
+    acc = zero(τ) * v[1]
+    for i = 1:n
+        term = v[i]
+        for j = 1:n
+            j == i && continue
+            term = term * (τ - j) / (i - j)
+        end
+        acc = acc + term
+    end
+    return acc
+end

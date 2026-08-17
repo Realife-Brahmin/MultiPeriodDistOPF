@@ -8,8 +8,7 @@ its constraints.  All expressions are verified against the derivative functions
 the solver actually builds.
 
 \subsubsection{Variables carried at stage $t$}
-The state is the stored energy and a counter, and the counter is not a degree of
-freedom --- $\tau^t = t$ always --- so $B^t$ is the only state that varies:
+The state is the stored energy, and nothing else:
 \begin{equation}
 \underbrace{B^t}_{\text{state}}; \qquad
 \underbrace{P_{\text{Subs}}^t,\; P_B^t,\; s^t}_{\text{controls}} .
@@ -17,7 +16,7 @@ freedom --- $\tau^t = t$ always --- so $B^t$ is the only state that varies:
 \end{equation}
 Each stage carries one multiplier per constraint:
 \begin{alignat}{3}
-&\varphi_{\text{bal}}^t   &\;\;:\;\;& P_{\text{Subs}}^t + P_B^t - p_L(\tau^t) = 0
+&\varphi_{\text{bal}}^t   &\;\;:\;\;& P_{\text{Subs}}^t + P_B^t - p_L^t = 0
 \label{eq:kkt_mult_bal}\\
 &\varphi_{\text{soc}}^t    && \bigl(B^t - P_B^t \Delta t\bigr) - B^{\min} - s^t = 0
 \label{eq:kkt_mult_soc}\\
@@ -38,14 +37,15 @@ $P_{\text{Subs}}^t$ has no upper bound, so no multiplier is attached to one.
 \subsubsection{Stage derivatives}
 With the dynamics $B^{t+1} = B^t - P_B^t \Delta t$ linear and the constraints
 \eqref{eq:kkt_mult_bal}--\eqref{eq:kkt_mult_soc} linear in the controls, every
-second derivative of $f$ and of $c$ with respect to the controls vanishes.  What
+second derivative of $f$ and of $c^t$ vanishes, as does the cross term
+$\partial^2 \ell^t / \partial u\, \partial B$.  What
 remains is
 \begin{alignat}{2}
 &\frac{\partial c}{\partial(P_{\text{Subs}}, P_B, s)}
   &&= \begin{bmatrix} 1 & 1 & 0 \\ 0 & -\Delta t & -1 \end{bmatrix}
 \label{eq:kkt_cu} \\
-&\frac{\partial c}{\partial (B, \tau)}
-  &&= \begin{bmatrix} 0 & -p_L'(\tau) \\ 1 & 0 \end{bmatrix}
+&\frac{\partial c}{\partial B}
+  &&= \begin{bmatrix} 0 \\ 1 \end{bmatrix}
 \label{eq:kkt_cx} \\
 &\frac{\partial B^{t+1}}{\partial P_B^t} &&= -\Delta t
 \label{eq:kkt_fu} \\
@@ -102,7 +102,9 @@ barrier terms too, leaving $2 C_B \Delta t + (\Delta t)^2 V_{BB}^{t+1}$, which i
 where $C_B$ enters as the curvature that keeps the problem solvable.
 
 \subsubsection{What is passed backward}
-Let $V_B^t$ denote the gradient of the cost-to-go in the stored energy.  The
+Let $V_B^t$ denote the gradient of the cost-to-go in the stored energy.  With a
+one-dimensional state, $V_B^t$ and $V_{BB}^t$ are scalars, so the whole backward
+recursion is scalar arithmetic.  The
 backward recursion carried between stages is
 \begin{equation}
 V_B^{t} = V_B^{t+1} + \varphi_{\text{soc}}^t

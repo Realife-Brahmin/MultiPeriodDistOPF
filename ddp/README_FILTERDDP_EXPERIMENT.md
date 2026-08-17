@@ -19,8 +19,11 @@ genuine limitations surfaced and are documented below rather than smoothed over.
 > `1e-12`. Both are recorded because the contrast is itself the useful result.
 
 Stages 1-7 were run on 2026-08-03. Stage 8 was added, and every result regenerated
-against the tADMM instance data, on 2026-08-07. The authors' clone is **unmodified** (see
-[notes/CHANGES.md](notes/CHANGES.md)).
+against the tADMM instance data, on 2026-08-07. The authors' clone was **unmodified through Stage 10**. On 2026-08-12 it received
+exactly one patch, [patches/per_stage_data.patch](patches/per_stage_data.patch),
+which lets the package accept a distinct objective and constraint function per
+stage. See [notes/CHANGES.md](notes/CHANGES.md) for what it changes and the
+regression evidence that the default path is untouched.
 
 ---
 

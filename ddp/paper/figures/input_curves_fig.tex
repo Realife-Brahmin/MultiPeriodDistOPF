@@ -88,9 +88,9 @@
 \end{axis}
 \end{tikzpicture}
 \caption{Input profiles at $T = 6$: load factor (left axis), energy price
-(right).  Markers are the data; the curves are the Lagrange
-interpolants, which is what the solver actually evaluates.
-Overshoot between nodes is slight ($1.0005$ against a node maximum of $0.999$),
-but the interpolant degree is $T-1$.}
+(right).  The markers are the data the solver uses --- one price and one demand
+per stage, taken directly; the curves are the underlying tADMM profiles they are
+sampled from, drawn only to show the shape.  The $-0.8$~rad phase offset between
+them is what keeps the two series from being collinear.}
 \label{fig:input_curves}
 \end{figure}
