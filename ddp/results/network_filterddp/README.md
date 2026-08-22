@@ -115,7 +115,7 @@ are not expected to be identical because the deterministic load, PV, and price
 curves are resampled at each `T`; the low-resolution `T = 3` and `T = 6`
 profiles in particular sample different operating points.
 
-### FilterDDP scalability attempt
+### Original dense FilterDDP scalability attempt
 
 The corrected `T = 3` data were exported with the 7.2-kV aggregate base and
 transcribed into the same loss-aware FilterDDP model used for IEEE123C. Its
@@ -143,6 +143,29 @@ per-stage dense factorization and proportionally more stages. A sparse or
 structure-exploiting null-space implementation is required before a genuine
 IEEE2522C FilterDDP timing sweep is possible. The machine-readable attempt
 record is `ieee2522c_filterddp_attempts.csv`.
+
+### Sparse-KKT FilterDDP result
+
+The dense architectural limit above was subsequently removed. Network
+derivative callbacks now emit sparse Jacobians and local Hessian blocks, and
+the backward pass solves the sparse saddle-point system directly instead of
+forming a dense QR null-space basis and `Z' * H * Z`. The existing dense path
+remains available for ordinary compact models.
+
+On the same corrected IEEE2522C `T = 3` instance, sparse FilterDDP completed
+56 iterations in 233.098 s, with objective 8515.880516246880 and maximum
+equality residual `5.631e-10`. The independently stored centralized reference
+has objective 8515.881250487677, giving an absolute gap of `7.342e-4`; the
+largest battery-energy difference was `1.439e-3` p.u.h. This converts the old
+zero-iteration failure into a verified solve, though generic sparse LU remains
+far slower than the 1.730-s native-conic Gurobi reference.
+
+Cross-checks used the same sparse path. IEEE123C `T = 3` converged in 48
+iterations and 13.856 s with objective gap `1.193e-4`; ADS10 `T = 3` converged
+in 39 iterations and 10.191 s. ADS10's larger objective gap (`5.470e-2`) and
+line-current discrepancy reflect weakly penalized slack/current degeneracy;
+IEEE123C and IEEE2522C agree closely in all reported physical variables. The
+machine-readable record is `sparse_kkt_filterddp_T3.csv`.
 
 ## Large10kC feasibility gate
 

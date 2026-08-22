@@ -150,11 +150,21 @@ diff against upstream commit `513a104` is tracked as
 The patch carries the previously recorded per-stage objective/constraint support, replaces
 large statically sized trajectory and solver fields with ordinary dynamic vectors and
 matrices, and erases generated-function types from `Solver` to avoid compiler recursion on
-network models. It also avoids allocating a full dense copy for `H + 0I` by applying only
-nonzero regularisation to the diagonal in place.
+network models. It also contains the later sparse-KKT follow-up described below, so applying
+this one patch reproduces the final working fork rather than only the intermediate failure.
 
-These changes let the IEEE2522C `T=3` model and dynamic solver storage construct, but they
-do not make FilterDDP sparse. Its backward pass still builds a 13,358-by-13,358 dense
-Hessian, performs dense QR on a 13,358-by-10,337 equality Jacobian, and materialises the
-full orthogonal matrix. The guarded run therefore completed zero iterations. This is
-reported as an architectural scalability limit, not as a successful FilterDDP solve.
+The initial dynamic-storage subset let the IEEE2522C `T=3` model and solver construct, but
+did not make FilterDDP sparse. At that intermediate revision the backward pass still built
+a 13,358-by-13,358 dense Hessian, performed dense QR on a 13,358-by-10,337 equality
+Jacobian, and materialised the full orthogonal matrix. The guarded run therefore completed
+zero iterations. This remains reported as an intermediate architectural scalability limit,
+not retroactively presented as a successful solve.
+
+## Sparse network KKT follow-up (2026-08-22)
+
+The dense limitation was subsequently removed with sparse derivative callbacks and a
+direct sparse saddle-point solve in the backward pass. IEEE2522C at `T = 3` now completes
+56 FilterDDP iterations in 233.098 s, matches the centralized objective within `7.342e-4`,
+and satisfies the equality equations to `5.631e-10`. The implementation and successful
+result are recorded separately so the original dense failure remains visible in the
+research chronology.
