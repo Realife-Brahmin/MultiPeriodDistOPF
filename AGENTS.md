@@ -39,7 +39,7 @@ means *distribution* networks.)
 |---|---|---|
 | Backward information | Passes `μ[t]`, the dynamics-constraint dual, backward one stage per **outer forward sweep** (`envs/ddp/root_level/ddp_copperplate.jl:539-550`, `mu_prev`/`mu_coupling`) | Backward pass sweeps `t=N→1` **within one iteration**, building both `V_x` and `V_xx` (Riccati recursion, `backward_pass.jl` in the FilterDDP clone) |
 | Order of approximation | First-order only: the coupling term `μ[t+1]·(B[t+1]−B[t]+Δt·P_B[t+1])` is linear in `B[t]` — no curvature crosses a stage boundary | Second-order: full local quadratic model of the cost-to-go |
-| Per-stage solve | Calls an external solver (Gurobi/Ipopt) per stage per sweep | Dense in-house `nu×nu` KKT solve inside the backward pass, with filter line-search globalization |
+| Per-stage solve | Calls an external solver (Gurobi/Ipopt) per stage per sweep | In-house KKT solve inside the backward pass, with filter line-search globalization; compact models retain the dense null-space route, while network models use the sparse saddle-point route added 2026-08-22 |
 | Propagation speed | Information from stage `T` reaches stage `1` after roughly `T` outer iterations (one stage per sweep) | Full-horizon propagation in one backward sweep per Newton-type iteration |
 
 Important nuance established 2026-08-05: `μ[t]` in the user's method **is**
@@ -133,7 +133,7 @@ reads the verified centralized reference and emits `balance.csv`,
 Do not inline coordinates — `schedule_fig.tex` did, and went silently stale when the
 instance data changed.
 
-## What is and isn't verified (as of 2026-08-07)
+## What is and isn't verified (as of 2026-08-22)
 
 FilterDDP is cross-checked against a **centralized JuMP/Ipopt** solve of
 `eq:cp_all` on all six T = 6 cases (Stage 8 of the experiment README): exact on
@@ -143,9 +143,22 @@ infeasible. The base instance carries three mutually independent references
 (closed form, dense KKT, Ipopt). Stage 9 records the per-iteration trace — 17
 iterations, regularisation never firing. **Do not redo any of this.**
 
-Not verified, so don't overclaim: anything with a network (no LinDistFlow, no
-BFM); any horizon other than `T = 6`; and **the user's own DDP algorithm, which
-has not been compared at all** — that is the pending task below.
+The loss-aware BFM-SOCP network transcription is also verified against stored
+centralized references. The sparse-KKT FilterDDP path solves ADS10, IEEE123C,
+and corrected IEEE2522C at `T = 3`. IEEE2522C now converges in 56 iterations
+and 233.098 s with objective gap `7.342e-4` and equality residual `5.631e-10`;
+this supersedes the earlier zero-iteration dense-QR failure without erasing it
+from the chronology. Full results are in
+`ddp/results/network_filterddp/README.md` and
+`sparse_kkt_filterddp_T3.csv`. IEEE123C has separately exported horizon data
+through `T = 96`; do not conflate exported/centralized horizon results with a
+sparse FilterDDP solve at every horizon.
+
+The user's own first-order DDP has now been compared, as quantified above.
+Still unverified: sparse FilterDDP on IEEE2522C beyond `T = 3`, any sparse
+FilterDDP run on large10kC, and whether symbolic-factorization reuse or a
+symmetric-indefinite solver materially reduces the current generic sparse-LU
+time and fill-in.
 
 ## Pending task (do not start until asked)
 
