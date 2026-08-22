@@ -1,8 +1,49 @@
+warning: in the working copy of 'Project.toml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/FilterDDP.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/backward_pass.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/forward_pass.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/ocp/constraints.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/ocp/control_limits.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/ocp/dynamics.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/ocp/objective.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/ocp/ocp.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/solve.jl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/solver.jl', LF will be replaced by CRLF the next time Git touches it
+diff --git a/Project.toml b/Project.toml
+index c3d44c6..124739c 100644
+--- a/Project.toml
++++ b/Project.toml
+@@ -9,6 +9,7 @@ FastLapackInterface = "29a986be-02c6-4525-aec4-84b980013641"
+ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+ RuntimeGeneratedFunctions = "7e49a35a-f44a-4d26-94aa-eba1b4ca6b47"
++SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+ 
+diff --git a/src/FilterDDP.jl b/src/FilterDDP.jl
+index c17fe6e..539fc6c 100644
+--- a/src/FilterDDP.jl
++++ b/src/FilterDDP.jl
+@@ -1,6 +1,7 @@
+ module FilterDDP
+ 
+ using LinearAlgebra 
++using SparseArrays
+ using Symbolics 
+ using Printf
+ using Crayons
 diff --git a/src/backward_pass.jl b/src/backward_pass.jl
-index 0ee5582..33a2c56 100644
+index 0ee5582..01f8148 100644
 --- a/src/backward_pass.jl
 +++ b/src/backward_pass.jl
-@@ -6,16 +6,15 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -1,3 +1,5 @@
++_derivative_matrix(A, m, n) = issparse(A) ? sparse(A) : reshape(vec(A), m, n)
++
+ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, nc},
+             traj::Vector{TrajectoryElement{T, nx, nu, nc}}, data::SolverData{T}, options::Options{T}; verbose::Bool=false
+             ) where {T, nx, nu, nc, nux, ncx}
+@@ -6,16 +8,15 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
      δ_c = 0.
      reg = 0.0
  
@@ -22,7 +63,7 @@ index 0ee5582..33a2c56 100644
  
          data.barrier_lagrangian_curr = T(0.0)
          data.primal_1_curr = T(0.0)
-@@ -30,43 +29,46 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -30,43 +31,46 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
          
          for t = ocp.N:-1:1
              x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
@@ -40,9 +81,9 @@ index 0ee5582..33a2c56 100644
 -                luu = ocp.term_objective.luu(x, u)
 +                lx = Vector(ocp.term_objective.lx(x, u))
 +                lu_ = Vector(ocp.term_objective.lu(x, u))
-+                lxx = reshape(vec(ocp.term_objective.lxx(x, u)), nx, nx)
-+                lux = reshape(vec(ocp.term_objective.lux(x, u)), nu, nx)
-+                luu = reshape(vec(ocp.term_objective.luu(x, u)), nu, nu)
++                lxx = _derivative_matrix(ocp.term_objective.lxx(x, u), nx, nx)
++                lux = _derivative_matrix(ocp.term_objective.lux(x, u), nu, nx)
++                luu = _derivative_matrix(ocp.term_objective.luu(x, u), nu, nu)
                  data.objective += ocp.term_objective.l(x, u)[1]
              else
 -                lx = ocp.stage_objective.lx(x, u)
@@ -53,9 +94,9 @@ index 0ee5582..33a2c56 100644
 -                data.objective += ocp.stage_objective.l(x, u)[1]
 +                lx = Vector(objective_t.lx(x, u))
 +                lu_ = Vector(objective_t.lu(x, u))
-+                lxx = reshape(vec(objective_t.lxx(x, u)), nx, nx)
-+                lux = reshape(vec(objective_t.lux(x, u)), nu, nx)
-+                luu = reshape(vec(objective_t.luu(x, u)), nu, nu)
++                lxx = _derivative_matrix(objective_t.lxx(x, u), nx, nx)
++                lux = _derivative_matrix(objective_t.lux(x, u), nu, nx)
++                luu = _derivative_matrix(objective_t.luu(x, u), nu, nu)
 +                data.objective += objective_t.l(x, u)[1]
              end
              
@@ -67,11 +108,11 @@ index 0ee5582..33a2c56 100644
 -                cux = constraints.cux(x, u, ϕ)
 -                cuu = constraints.cuu(x, u, ϕ)
 +                c = Vector(constraints.c(x, u))
-+                cx = reshape(vec(constraints.cx(x, u)), nc, nx)
-+                cu = reshape(vec(constraints.cu(x, u)), nc, nu)
-+                cxx = reshape(vec(constraints.cxx(x, u, ϕ)), nx, nx)
-+                cux = reshape(vec(constraints.cux(x, u, ϕ)), nu, nx)
-+                cuu = reshape(vec(constraints.cuu(x, u, ϕ)), nu, nu)
++                cx = _derivative_matrix(constraints.cx(x, u), nc, nx)
++                cu = _derivative_matrix(constraints.cu(x, u), nc, nu)
++                cxx = _derivative_matrix(constraints.cxx(x, u, ϕ), nx, nx)
++                cux = _derivative_matrix(constraints.cux(x, u, ϕ), nu, nx)
++                cuu = _derivative_matrix(constraints.cuu(x, u, ϕ), nu, nu)
                  
                  # evaluate constraint violation norms
                  data.primal_1_curr += norm(c, 1)
@@ -83,15 +124,34 @@ index 0ee5582..33a2c56 100644
 -            fxx = nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ)
 -            fux = nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ)
 -            fuu = nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ)
-+            fx = reshape(vec(dynamics.fx(x, u)), nx, nx)
-+            fu = reshape(vec(dynamics.fu(x, u)), nx, nu)
-+            fxx = reshape(vec(nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ)), nx, nx)
-+            fux = reshape(vec(nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ)), nu, nx)
-+            fuu = reshape(vec(nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ)), nu, nu)
++            fx = _derivative_matrix(dynamics.fx(x, u), nx, nx)
++            fu = _derivative_matrix(dynamics.fu(x, u), nx, nu)
++            fxx = _derivative_matrix(nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ), nx, nx)
++            fux = _derivative_matrix(nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ), nu, nx)
++            fuu = _derivative_matrix(nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ), nu, nu)
  
              # evaluate barrier Lagrangian
  
-@@ -109,17 +111,19 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -91,11 +95,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             # C = Lxx + fx' * Vxx * fx + V̄x ⋅ fxx
+             C = lxx + fx' * V̂xx * fx + fxx
+     
++            sparse_stage = issparse(luu) || issparse(fu) || (nc > 0 && (issparse(cu) || issparse(cuu)))
+             ux_tmp = fu' * V̂xx
+             # Ĥ = Luu + Σ + fu' * Vxx * fu + V̄x ⋅ fuu
+             Σ_L = inv_ul .* zl
+             Σ_U = inv_uu .* zu
+-            Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
++            if sparse_stage
++                Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
++                     sparse(fu)' * sparse(V̂xx) * sparse(fu) + sparse(fuu)
++            else
++                Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
++            end
+     
+             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
+             B = lux + ux_tmp * fx + fux
+@@ -109,17 +119,33 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              end
              
              # inertia correction / regularisation
@@ -104,8 +164,24 @@ index 0ee5582..33a2c56 100644
 +                end
 +            end
  
-             # factorise KKT system using nullspace method
-             if nc > 0
+-            # factorise KKT system using nullspace method
+-            if nc > 0
++            # Sparse network models use the full saddle-point system directly,
++            # avoiding a dense QR basis and the explicit reduced Hessian Z'HZ.
++            sparse_kkt = nc > 0 && (issparse(Ĥ) || issparse(cu))
++            if sparse_kkt
++                Ĥ = sparse(Symmetric(Ĥ))
++                K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
++                rhs = Matrix([-Qû -B; -c -cx])
++                kkt_solution = Matrix{T}(undef, 0, 0)
++                try
++                    kkt_solution = lu(K) \ rhs
++                    all(isfinite, kkt_solution) || (data.status = 1)
++                catch err
++                    verbose && @warn "Sparse KKT factorization failed" exception=(err, catch_backtrace())
++                    data.status = 1
++                end
++            elseif nc > 0
                  A = cu'
 -                z = @SMatrix zeros(T, nu, nu-nc)
 -                Q, R = qr([A z])
@@ -118,7 +194,28 @@ index 0ee5582..33a2c56 100644
                  
                  AY = A' * Y
                  fk = lu(AY)
-@@ -146,17 +150,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -131,7 +157,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             else
+                 ck = cholesky(Symmetric(Ĥ); check=false)
+             end
+-            ck.info != 0 && (data.status = 1)
++            !sparse_kkt && ck.info != 0 && (data.status = 1)
+             
+             if data.status == 1
+                 if iszero(reg) # initial setting of regularisation
+@@ -142,21 +168,28 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                 break
+             end
+ 
+-            if nc > 0
++            if sparse_kkt
++                α_β = kkt_solution[1:nu, :]
++                ψ_ω = kkt_solution[nu+1:end, :]
++                α = α_β[:, 1]
++                β = α_β[:, 2:nx+1]
++                ψ = ψ_ω[:, 1]
++                ω = ψ_ω[:, 2:nx+1]
++            elseif nc > 0
                  α_β_z = ck \ (Z' * ([-Qû -B] - Ĥ * Y * α_β_y))
                  α_β = Y * α_β_y + Z * α_β_z
                  α = α_β[:, 1]

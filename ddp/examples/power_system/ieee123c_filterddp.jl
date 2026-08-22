@@ -14,6 +14,7 @@ using JuMP
 using LinearAlgebra
 using Printf
 using Serialization
+using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 
@@ -32,15 +33,15 @@ function analytic_dynamics(nx, nu, pbidx, dt)
     f = (x,u) -> x .- dt .* u[pbidx]
     fx = (x,u) -> Matrix{Float64}(I, nx, nx)
     fu = function (x,u)
-        J = zeros(nx, nu)
+        J = spzeros(nx, nu)
         for b in 1:nx
             J[b, pbidx[b]] = -dt
         end
         J
     end
     zxx = (x,u,λ) -> zeros(nx, nx)
-    zux = (x,u,λ) -> zeros(nu, nx)
-    zuu = (x,u,λ) -> zeros(nu, nu)
+    zux = (x,u,λ) -> spzeros(nu, nx)
+    zuu = (x,u,λ) -> spzeros(nu, nu)
     FilterDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
         f, fx, fu, zxx, zux, zuu)
 end
@@ -55,9 +56,9 @@ function analytic_objective(nx, nu, psidx, pbidx, price, pbase, dt, C_B)
         g
     end
     lxx = (x,u) -> zeros(nx, nx)
-    lux = (x,u) -> zeros(nu, nx)
+    lux = (x,u) -> spzeros(nu, nx)
     luu = function (x,u)
-        H = zeros(nu, nu)
+        H = spzeros(nu, nu)
         for k in pbidx
             H[k,k] = 2C_B*pbase^2*dt
         end
@@ -157,7 +158,7 @@ function build_model(data)
         end
         nc = 2length(buses) + 2length(lines) + 1 + nx
         cx = function (x,u)
-            J = zeros(nc, nx)
+            J = spzeros(nc, nx)
             first_energy = 2length(buses) + 2length(lines) + 2
             for b in 1:nx
                 J[first_energy+b-1, b] = 1.0
@@ -165,7 +166,7 @@ function build_model(data)
             J
         end
         cu = function (x,u)
-            J = zeros(nc, nu)
+            J = spzeros(nc, nu)
             row = 1
             J[row, idx.ps] = 1.0
             for e in data[:L1set]
@@ -223,9 +224,9 @@ function build_model(data)
             J
         end
         cxx = (x,u,ϕ) -> zeros(nx, nx)
-        cux = (x,u,ϕ) -> zeros(nu, nx)
+        cux = (x,u,ϕ) -> spzeros(nu, nx)
         cuu = function (x,u,ϕ)
-            H = zeros(nu, nu)
+            H = spzeros(nu, nu)
             first_soc = 2length(buses) + length(lines) + 1
             for (e,(i,_)) in enumerate(lines)
                 weight = ϕ[first_soc+e-1]
