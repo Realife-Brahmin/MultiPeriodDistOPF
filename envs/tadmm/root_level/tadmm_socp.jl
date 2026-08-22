@@ -6,7 +6,7 @@ ENV["GKSwstype"] = "png"
 # ============================================================================
 # Simply change these values and press play (Ctrl+Shift+Enter in VS Code Julia)
 const RUN_CONFIG = (
-    system = "large10kC_1ph",     # System to solve: "large10kC_1ph", "large10kB_1ph", "large10k_1ph", "ieee2552_1ph", etc.
+    system = "large10kC_1ph",     # System to solve: "large10kC_1ph", "large10kB_1ph", "large10k_1ph", "ieee2522C_1ph", etc.
     T = 24,                        # Time periods: 4, 6, 12, 24, 48, etc.
     run_bf = false,                # Run brute-force (true) or skip (false)
     run_tadmm = true,              # Run tADMM (true) or skip (false)
@@ -311,8 +311,9 @@ begin # function mpopf socp bruteforced
                 P_B_j_t = (j in Bset) ? P_B[j, t] : 0.0
                 
                 # Power balance: Incoming = Outgoing + Load - PV - Battery
+                r_ij = rdict_pu[(i, j)]
                 @constraint(model,
-                    sum_Pjk - P_ij_t == P_B_j_t + p_D_j_t - p_L_j_t,
+                    sum_Pjk - P_ij_t + r_ij * ℓ[(i, j), t] == P_B_j_t + p_D_j_t - p_L_j_t,
                     base_name = "RealPowerBalance_Node$(j)_t$(t)")
             end
             
@@ -331,9 +332,9 @@ begin # function mpopf socp bruteforced
                 q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
                 q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
                 # q_D_j_t = 0.0  # PV operates at unity power factor
-                
+                x_ij = xdict_pu[(i, j)]
                 @constraint(model,
-                    sum_Qjk - Q_ij_t == q_D_j_t - q_L_j_t,
+                    sum_Qjk - Q_ij_t + x_ij * ℓ[(i, j), t] == q_D_j_t - q_L_j_t,
                     # Q_ij_t - sum_Qjk - q_L_j_t + q_D_j_t == 0,
                     base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
             end
@@ -903,7 +904,12 @@ begin # function primal update (update 1) tadmm socp
             p_L_j = (j in NLset) ? p_L_pu[j, t0] : 0.0
             p_D_j = (j in Dset) ? p_D_pu[j, t0] : 0.0
             P_B_j = (j in Bset) ? P_B_var[j, t0] : 0.0
-            @constraint(model, sum_Pjk - P_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+            if lindistflow
+                @constraint(model, sum_Pjk - P_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+            else
+                r_ij = rdict_pu[(i, j)]
+                @constraint(model, sum_Pjk - P_t0[(i, j)] + r_ij * ℓ_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+            end
         end
         
         # Reactive power balance - substation
@@ -915,7 +921,12 @@ begin # function primal update (update 1) tadmm socp
             sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q_t0[(j, k)] for k in children[j])
             q_L_j = (j in NLset) ? q_L_pu[j, t0] : 0.0
             q_D_j = (j in Dset) ? q_D_t0[j] : 0.0
-            @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
+            if lindistflow
+                @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
+            else
+                x_ij = xdict_pu[(i, j)]
+                @constraint(model, sum_Qjk - Q_t0[(i, j)] + x_ij * ℓ_t0[(i, j)] == q_D_j - q_L_j)
+            end
         end
         
         # Voltage drop constraints

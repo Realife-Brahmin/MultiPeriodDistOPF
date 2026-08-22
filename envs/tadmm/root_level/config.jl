@@ -6,14 +6,22 @@
 const SYSTEM_NAME = haskey(ENV, "SYSTEM_OVERRIDE") ? ENV["SYSTEM_OVERRIDE"] : "large10kC_1ph"
 const T = haskey(ENV, "T_OVERRIDE") ? parse(Int, ENV["T_OVERRIDE"]) : 12  # 4, 6, 12, 24, 48, etc.
 const DELTA_T_H = 24.0 / T           # Time step duration in hours
+const DEFAULT_NETWORK_KV_BASE = SYSTEM_NAME == "ieee2522C_1ph" ? 7.2 :
+    (SYSTEM_NAME == "large10kC_1ph" ? 12.47 : 2.4018)
+const NETWORK_KV_BASE = parse(Float64,
+    get(ENV, "NETWORK_KV_BASE_OVERRIDE", string(DEFAULT_NETWORK_KV_BASE)))
+const NETWORK_IMPEDANCE_SCALE = parse(Float64,
+    get(ENV, "NETWORK_IMPEDANCE_SCALE_OVERRIDE", "1.0"))
 
 # Solver selection (Gurobi requires license)
-const USE_GUROBI = false
-const USE_GUROBI_FOR_BF = false
+const USE_GUROBI = get(ENV, "USE_GUROBI_OVERRIDE", "false") == "true"
+const USE_GUROBI_FOR_BF = get(ENV, "USE_GUROBI_FOR_BF_OVERRIDE", "false") == "true"
 const USE_GUROBI_FOR_TADMM = false
 
 # BF-specific
 const BF_TIMEOUT_SEC = 0  # Kill BF after this many seconds (0 = no limit)
+const BF_MODEL = Symbol(get(ENV, "BF_MODEL_OVERRIDE", "socp"))
+const BF_RELAX_VOLTAGE_BOUNDS = get(ENV, "BF_RELAX_VOLTAGE_BOUNDS_OVERRIDE", "false") == "true"
 
 # Verbose output
 const VERBOSE = false

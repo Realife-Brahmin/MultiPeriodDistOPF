@@ -17,11 +17,10 @@ include("config.jl")
 import Pkg
 Pkg.activate(ENV_PATH)
 
-using Revise
 using LinearAlgebra
 using JuMP
 using Ipopt
-if USE_GUROBI
+if USE_GUROBI || USE_GUROBI_FOR_BF
     using Gurobi
 end
 using OpenDSSDirect
@@ -34,7 +33,7 @@ using Serialization
 const MOI = JuMP.MOI
 
 # Create shared Gurobi environment (suppresses repeated license messages)
-const GUROBI_ENV = USE_GUROBI ? Gurobi.Env() : nothing
+const GUROBI_ENV = (USE_GUROBI || USE_GUROBI_FOR_BF) ? Gurobi.Env() : nothing
 
 # Color scheme
 const COLOR_SUCCESS = Crayon(foreground = :green, bold = true)
@@ -45,10 +44,10 @@ const COLOR_HIGHLIGHT = Crayon(foreground = :magenta, bold = true)
 const COLOR_RESET = Crayon(reset = true)
 
 # Include utilities
-includet(joinpath(ENV_PATH, "parse_opendss.jl"))
-includet(joinpath(ENV_PATH, "opendss_validator.jl"))
-includet(joinpath(ENV_PATH, "solution_validator.jl"))
-includet(joinpath(ENV_PATH, "logger.jl"))
+include(joinpath(ENV_PATH, "parse_opendss.jl"))
+include(joinpath(ENV_PATH, "opendss_validator.jl"))
+include(joinpath(ENV_PATH, "solution_validator.jl"))
+include(joinpath(ENV_PATH, "logger.jl"))
 
 # ============================================================================
 # PARSE SYSTEM DATA
@@ -64,7 +63,9 @@ data = parse_system_from_dss(
     LoadShapeCost=LoadShapeCost,
     LoadShapePV=LoadShapePV,
     C_B=C_B,
-    delta_t_h=DELTA_T_H
+    delta_t_h=DELTA_T_H,
+    kV_B=NETWORK_KV_BASE,
+    impedance_scale=NETWORK_IMPEDANCE_SCALE
 )
 
 print_powerflow_summary(data)
@@ -87,6 +88,7 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
     dt = delta_t_h
     P_BASE = kVA_B
     j1 = substationBus
+    lindistflow = BF_MODEL == :lindistflow
 
     # ========== CREATE MODEL ==========
     model = Model()
@@ -134,8 +136,14 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
             p_L_j_t = (j in NLset) ? p_L_pu[j, t] : 0.0
             p_D_j_t = (j in Dset) ? p_D_pu[j, t] : 0.0
             P_B_j_t = (j in Bset) ? P_B[j, t] : 0.0
-            @constraint(model, sum_Pjk - P[(i, j), t] == P_B_j_t + p_D_j_t - p_L_j_t,
-                base_name = "RealPowerBalance_Node$(j)_t$(t)")
+            if lindistflow
+                @constraint(model, sum_Pjk - P[(i, j), t] == P_B_j_t + p_D_j_t - p_L_j_t,
+                    base_name = "RealPowerBalance_Node$(j)_t$(t)")
+            else
+                r_ij = rdict_pu[(i, j)]
+                @constraint(model, sum_Pjk - P[(i, j), t] + r_ij * l[(i, j), t] == P_B_j_t + p_D_j_t - p_L_j_t,
+                    base_name = "RealPowerBalance_Node$(j)_t$(t)")
+            end
         end
 
         # Reactive power balance - substation
@@ -148,24 +156,47 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
             sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q[(j, k), t] for k in children[j])
             q_L_j_t = (j in NLset) ? q_L_pu[j, t] : 0.0
             q_D_j_t = (j in Dset) ? q_D[j, t] : 0.0
-            @constraint(model, sum_Qjk - Q[(i, j), t] == q_D_j_t - q_L_j_t,
-                base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
+            if lindistflow
+                @constraint(model, sum_Qjk - Q[(i, j), t] == q_D_j_t - q_L_j_t,
+                    base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
+            else
+                x_ij = xdict_pu[(i, j)]
+                @constraint(model, sum_Qjk - Q[(i, j), t] + x_ij * l[(i, j), t] == q_D_j_t - q_L_j_t,
+                    base_name = "ReactivePowerBalance_Node$(j)_t$(t)")
+            end
         end
 
         # Voltage drop (BFM-NL)
         for (i, j) in Lset
             r_ij = rdict_pu[(i, j)]
             x_ij = xdict_pu[(i, j)]
-            @constraint(model,
-                v[j, t] == v[i, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) + (r_ij^2 + x_ij^2) * l[(i, j), t],
-                base_name = "VoltageDrop_Branch_$(i)_$(j)_t$(t)")
+            if lindistflow
+                @constraint(model,
+                    v[j, t] == v[i, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]),
+                    base_name = "VoltageDrop_Branch_$(i)_$(j)_t$(t)")
+            else
+                @constraint(model,
+                    v[j, t] == v[i, t] - 2 * (r_ij * P[(i, j), t] + x_ij * Q[(i, j), t]) + (r_ij^2 + x_ij^2) * l[(i, j), t],
+                    base_name = "VoltageDrop_Branch_$(i)_$(j)_t$(t)")
+            end
         end
 
-        # SOC relaxation
-        for (i, j) in Lset
-            @constraint(model,
-                P[(i, j), t]^2 + Q[(i, j), t]^2 <= v[i, t] * l[(i, j), t],
-                base_name = "SOC_Branch_$(i)_$(j)_t$(t)")
+        # SOC relaxation. For Gurobi, provide the native cone representation
+        # ||(2P, 2Q, v-l)||_2 <= v+l, exactly equivalent to P^2+Q^2 <= v*l
+        # because v >= 0 and l >= 0. Ipopt retains the paper-form inequality.
+        for (i, j) in (lindistflow ? Tuple{Int,Int}[] : Lset)
+            if solver == :gurobi
+                @constraint(model,
+                    [v[i, t] + l[(i, j), t],
+                     2 * P[(i, j), t],
+                     2 * Q[(i, j), t],
+                     v[i, t] - l[(i, j), t]] in SecondOrderCone(),
+                    base_name = "SOC_Branch_$(i)_$(j)_t$(t)")
+            else
+                @constraint(model,
+                    P[(i, j), t]^2 + Q[(i, j), t]^2 <= v[i, t] * l[(i, j), t],
+                    base_name = "SOC_Branch_$(i)_$(j)_t$(t)")
+            end
         end
 
         # Fixed substation voltage
@@ -173,7 +204,7 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
             base_name = "FixedSubstationVoltage_t$(t)")
 
         # Voltage limits
-        for j in Nset
+        for j in (BF_RELAX_VOLTAGE_BOUNDS ? Int[] : Nset)
             @constraint(model, Vminpu[j]^2 <= v[j, t] <= Vmaxpu[j]^2,
                 base_name = "VoltageLimits_Node$(j)_t$(t)")
         end
@@ -213,7 +244,8 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
     println("\n" * "="^80)
     println("STARTING BF OPTIMIZATION")
     println("="^80)
-    println("[BF] Launching Ipopt solver...")
+    active_solver_name = solver == :gurobi ? "Gurobi" : "Ipopt"
+    println("[BF] Launching $active_solver_name solver...")
 
     bf_wallclock_start = time()
 
@@ -270,7 +302,8 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
             println("\n" * "="^80)
             println(COLOR_INFO, "VALIDATING BF SOLUTION", COLOR_RESET)
             println("="^80)
-            bf_validation = validate_branch_flow_equations(result, data; tol=1e-4, verbose=false)
+            bf_validation = validate_branch_flow_equations(result, data; tol=1e-4, verbose=false,
+                lindistflow=lindistflow)
             print_validation_summary(bf_validation; solution_name="Brute Force SOCP")
         catch e
             println(COLOR_ERROR, "WARNING: Validation failed but solution is preserved.", COLOR_RESET)
@@ -305,7 +338,8 @@ function save_bf_results(sol, data)
     # === VALIDATE (wrapped in try-catch so save always completes) ===
     bf_validation = nothing
     try
-        bf_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false)
+        bf_validation = validate_branch_flow_equations(sol, data; tol=1e-4, verbose=false,
+            lindistflow=(BF_MODEL == :lindistflow))
     catch e
         println(COLOR_WARNING, "WARNING: Validation failed, writing results without feasibility check.", COLOR_RESET)
         println(COLOR_WARNING, "  Error: ", e, COLOR_RESET)
@@ -337,7 +371,7 @@ function save_bf_results(sol, data)
         println(io, "\n--- COMPUTATION TIME ---")
         @printf(io, "Wall-clock time: %.4f seconds\n", sol[:wallclock_time])
         @printf(io, "Solver time: %.4f seconds\n", sol[:solve_time])
-        @printf(io, "Ipopt iterations: %d\n", sol[:ipopt_iters])
+        @printf(io, "Solver iterations: %d\n", sol[:ipopt_iters])
         if sol[:ipopt_iters] > 0
             @printf(io, "Avg time per iteration: %.4f seconds\n", sol[:time_per_iter])
         end
@@ -359,7 +393,9 @@ function save_bf_results(sol, data)
         println(io, "\n--- SOLVER ---")
         solver_name = USE_GUROBI_FOR_BF ? "Gurobi" : "Ipopt"
         println(io, "Solver: $(solver_name)")
-        println(io, "Formulation: SOCP (BFM-NL)")
+        formulation_name = BF_MODEL == :lindistflow ? "LinDistFlow" :
+            (USE_GUROBI_FOR_BF ? "SOCP (native second-order cones)" : "SOCP (BFM-NL)")
+        println(io, "Formulation: $formulation_name")
         println(io, "="^80)
     end
     println(COLOR_SUCCESS, "✓ Results written to $(results_file)", COLOR_RESET)
@@ -403,7 +439,7 @@ if sol_socp_bf[:status] == MOI.OPTIMAL || sol_socp_bf[:status] == MOI.LOCALLY_SO
     @printf "Total Cost: \$%.2f\n" sol_socp_bf[:objective]
     @printf "Wall-clock time: %.2f seconds\n" sol_socp_bf[:wallclock_time]
     @printf "Solver time: %.2f seconds\n" sol_socp_bf[:solve_time]
-    @printf "Ipopt iterations: %d\n" sol_socp_bf[:ipopt_iters]
+    @printf "Solver iterations: %d\n" sol_socp_bf[:ipopt_iters]
     print(COLOR_RESET)
 else
     print(COLOR_ERROR)

@@ -200,7 +200,12 @@ function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, rho::Float64, t
         p_L_j = (j in NLset) ? p_L_pu[j, t0] : 0.0
         p_D_j = (j in Dset) ? p_D_pu[j, t0] : 0.0
         P_B_j = (j in Bset) ? P_B_var[j, t0] : 0.0
-        @constraint(model, sum_Pjk - P_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+        if lindistflow
+            @constraint(model, sum_Pjk - P_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+        else
+            r_ij = rdict_pu[(i, j)]
+            @constraint(model, sum_Pjk - P_t0[(i, j)] + r_ij * l_t0[(i, j)] == P_B_j + p_D_j - p_L_j)
+        end
     end
 
     # Reactive power balance
@@ -210,7 +215,12 @@ function primal_update_tadmm_socp!(B_local, Bhat, u_local, data, rho::Float64, t
         sum_Qjk = isempty(children[j]) ? 0.0 : sum(Q_t0[(j, k)] for k in children[j])
         q_L_j = (j in NLset) ? q_L_pu[j, t0] : 0.0
         q_D_j = (j in Dset) ? q_D_t0[j] : 0.0
-        @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
+        if lindistflow
+            @constraint(model, sum_Qjk - Q_t0[(i, j)] == q_D_j - q_L_j)
+        else
+            x_ij = xdict_pu[(i, j)]
+            @constraint(model, sum_Qjk - Q_t0[(i, j)] + x_ij * l_t0[(i, j)] == q_D_j - q_L_j)
+        end
     end
 
     # Voltage drop
