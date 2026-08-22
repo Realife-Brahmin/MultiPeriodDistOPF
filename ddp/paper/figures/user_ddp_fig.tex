@@ -1,107 +1,99 @@
-% ---------------------------------------------------------------------------
-% What the first-order DDP scheme exchanges, and how slowly. Drawn for T = 4
-% stages over 4 sweeps -- the smallest grid that shows terminal information
-% completing its walk from the last stage to the first.
-%
-% Reading the layout: ROWS are sweeps (one pass of the outer loop), COLUMNS are
-% stages. One cell is one small QP. The two couplings are deliberately drawn at
-% different angles because that difference IS the mechanism:
-%   horizontal, solid   B[t-1] from THIS sweep -- a hard constraint, so it moves
-%                       left to right within a row and is always current
-%   diagonal, dashed    mu[t+1] and B[t+1] from the PREVIOUS sweep -- a soft
-%                       linear term, so it can only step one column left per row
-% The diagonal is why the terminal stage's information needs T sweeps to reach
-% stage 1; the highlighted staircase traces exactly that walk.
-%
-% Colour semantics follow the tADMM exchange figure of the companion study, so
-% the same narrative carries across both:
-%   blue  = local / primal, owned by the sweep that solves it   (B[t])
-%   red   = stale, owned by no sweep in progress                (B[t+1] frozen)
-%   green = dual, the feedback that closes the loop             (mu[t+1])
-%
-% GREYSCALE PROOFING. Hue is never the only cue:
-%   solved cell     solid dark fill, sharp corners, heavy border
-%   stale parameter near-white fill, DASHED border
-%   dual            DASHED line only, never a fill, so it cannot collide with
-%                   red under deuteranopia
-%   the staircase   drawn heavier than every other arrow
-% ---------------------------------------------------------------------------
-\definecolor{ddpLoc}{HTML}{1F5186}     % deep blue -- primal, solved this sweep
-\definecolor{ddpLocE}{HTML}{143A61}
-\definecolor{ddpStale}{HTML}{C0392B}   % red       -- frozen from last sweep
-\definecolor{ddpStaleE}{HTML}{8E2A20}
-\definecolor{ddpDual}{HTML}{0F6B45}    % green     -- the dual mu
-
+% First-order DDP information flow in MPOPF notation. The upper half opens one
+% per-period solve and identifies exactly where each incoming quantity enters.
+% The lower half shows the resulting one-period-per-sweep propagation delay for
+% terminal marginal information on a T=3 horizon.
+\makeatletter
+\setlength{\@dblfptop}{0pt}
+\makeatother
 \begin{figure*}[!t]
 \centering
 \begin{tikzpicture}[
-  x=1mm, y=1mm, font=\small,
-  cell/.style ={draw=ddpLocE, line width=0.5pt, minimum width=16mm,
-                minimum height=7.6mm, inner sep=0pt, fill=ddpLoc, text=white},
-  hard/.style ={-{Stealth[length=1.6mm,width=1.3mm]}, draw=ddpLocE,
-                line width=0.7pt},
-  soft/.style ={-{Stealth[length=1.6mm,width=1.3mm]}, draw=ddpDual,
-                line width=0.5pt, densely dashed},
-  stair/.style={-{Stealth[length=2.0mm,width=1.6mm]}, draw=ddpStaleE,
-                line width=1.1pt, densely dashed},
-  hdr/.style  ={font=\small\bfseries},
+  x=1mm,y=1mm,font=\small,
+  stage/.style={draw=black,line width=0.65pt,rounded corners=1mm,
+                fill=black!3,minimum width=66mm,minimum height=29mm,
+                align=left,inner sep=2.5mm},
+  given/.style={draw=cGiven,line width=0.7pt,rounded corners=0.8mm,
+                fill=cGiven!7,minimum width=35mm,minimum height=9mm,align=center},
+  future/.style={draw=cFuture,line width=0.7pt,densely dashed,rounded corners=0.8mm,
+                 fill=cFuture!6,minimum width=35mm,minimum height=9mm,align=center},
+  output/.style={draw=black!75,line width=0.55pt,rounded corners=0.8mm,
+                 fill=white,minimum width=38mm,minimum height=9mm,align=center},
+  solve/.style={draw=black!75,line width=0.55pt,rounded corners=0.7mm,
+                fill=black!4,minimum width=22mm,minimum height=8mm,align=center},
+  hard/.style={-{Stealth[length=1.8mm,width=1.4mm]},draw=cGiven,line width=0.9pt},
+  soft/.style={-{Stealth[length=1.8mm,width=1.4mm]},draw=cFuture,
+               line width=0.9pt,densely dashed},
+  neutral/.style={-{Stealth[length=1.7mm,width=1.3mm]},draw=black!70,line width=0.7pt},
+  note/.style={draw=black!35,rounded corners=0.7mm,fill=white,
+               align=left,inner sep=1.7mm,font=\scriptsize},
 ]
-\def\cp{24}   % column pitch (stages)
-\def\rp{14}   % row pitch    (sweeps)
 
-% ---- headers ----
-\foreach \t in {1,2,3,4}
-  \node[hdr] at ({\cp*(\t-1)},{11}) {$t=\t$};
-\node[hdr, anchor=south, rotate=90] at (-25,{-\rp*1.5}) {sweep $k$};
+% Anatomy of one period solve.
+\node[font=\bfseries,anchor=west] at (-88,45) {What period $t$ actually receives and solves};
 
-% ---- the grid of stage solves ----
-\foreach \k in {1,2,3,4} {
-  \node[hdr, anchor=east] at (-14,{-\rp*(\k-1)}) {$k=\k$};
-  \foreach \t in {1,2,3,4}
-    \node[cell] (c\k\t) at ({\cp*(\t-1)},{-\rp*(\k-1)}) {$B^{\k}[\t]$};
+\node[given]  (Bin) at (-68,30) {$\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}$\\current sweep};
+
+\node[stage] (spopf) at (0,22.5) {%
+  \textbf{SPOPF $t$}\\
+  $\displaystyle \min\; c^tP_{\mathrm{Subs}}^t\Delta t
+       +C_B(P_B^t)^2\Delta t
+       -\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}B^t$\\
+  $P_{\mathrm{Subs}}^t+P_B^t=p_L^t$\\
+  $B^t-\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}+\Delta tP_B^t=0$,
+  \quad box limits};
+
+\node[output] (primal) at (68,34) {$P_{\mathrm{Subs}}^{k,t},\ P_B^{k,t},\ B^{k,t}$};
+\node[output] (dual)   at (68,22) {$\lambda_{\mathrm{soc}}^{k,t}$\\from SOC equality};
+\node[future] (Lin) at (68,10) {$\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}$\\from period $t+1$};
+
+\draw[hard] (Bin.east) -- node[above,font=\scriptsize] {fixed in constraint} (spopf.west |- Bin);
+\draw[neutral] (spopf.east |- primal) -- (primal.west);
+\draw[neutral] (spopf.east |- dual) -- (dual.west);
+\draw[soft] (Lin.west) -- node[below,font=\scriptsize] {linear objective term} (spopf.east |- Lin);
+
+\node[note,anchor=north west,text width=50mm] at (22,1.5) {%
+  $\textcolor{cGiven}{\boldsymbol{B^{k,t}}}$ goes immediately to period $t+1$;\\
+  $\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k,t}}}$ cannot affect period $t-1$\\
+  until the next outer sweep.};
+
+\node[note,anchor=north west,text width=45mm] at (-88,1.5) {%
+  Local data $c^t,p_L^t$ and all limits also enter the SPOPF.\\
+  At $t=T$, the future term is replaced by
+  $w(B^T-B_{\mathrm{init}})^2$.};
+
+% Consequence across sweeps.
+\node[font=\bfseries,anchor=west] at (-88,-18) {Consequence for a $T=3$ horizon};
+
+\def\xp{30}
+\def\yp{14}
+\foreach \t in {1,2,3}
+  \node[font=\scriptsize\bfseries] at ({-52+\xp*(\t-1)},-24) {period $t=\t$};
+\foreach \r/\lab in {0/k,1/{k+1},2/{k+2}} {
+  \node[font=\scriptsize\bfseries,anchor=east] at (-66,{-33-\yp*\r}) {sweep $\lab$};
+  \foreach \t in {1,2,3}
+    \node[solve] (q\r\t) at ({-52+\xp*(\t-1)},{-33-\yp*\r}) {$\mathrm{SPOPF}_{\t}^{\lab}$};
 }
 
-% ---- hard coupling: within a sweep, left to right ----
-\foreach \k in {1,2,3,4}
-  \foreach \t/\tn in {1/2, 2/3, 3/4}
-    \draw[hard] (c\k\t.east) -- (c\k\tn.west);
+% Current-sweep state propagation.
+\foreach \r in {0,1,2} {
+  \draw[hard] (q\r1.east) -- node[above,font=\scriptsize] {$B$} (q\r2.west);
+  \draw[hard] (q\r2.east) -- node[above,font=\scriptsize] {$B$} (q\r3.west);
+}
 
-% ---- soft coupling: from the previous sweep, one column left ----
-\foreach \k/\kp in {2/1, 3/2, 4/3}
-  \foreach \t/\tn in {1/2, 2/3, 3/4}
-    \draw[soft] (c\kp\tn.south) -- (c\k\t.north);
+% Highlighted path followed by terminal marginal information.
+\draw[soft,line width=1.4pt] (q03.south west) --
+  node[above left,font=\scriptsize,text=cFuture] {$\lambda_{\mathrm{soc}}^{k,3}$} (q12.north east);
+\draw[soft,line width=1.4pt] (q12.south west) --
+  node[above left,font=\scriptsize,text=cFuture] {$\lambda_{\mathrm{soc}}^{k+1,2}$} (q21.north east);
 
-% ---- the staircase: terminal information walking to stage 1 ----
-\draw[stair] (c14.south) -- (c23.north);
-\draw[stair] (c23.south) -- (c32.north);
-\draw[stair] (c32.south) -- (c41.north);
-
-% ---- legend: one horizontal row below the grid, so it cannot overrun the
-%      two-column text width however the entries are worded ----
-\def\ly{-62}
-\draw[hard] (-13,{\ly}) -- (-2,{\ly});
-\node[anchor=north west, align=left, text width=40mm] at (0,{\ly+3})
-  {\textbf{hard}: $B[t\!-\!1]$ from \emph{this} sweep, as a constraint};
-\draw[soft] (46,{\ly}) -- (57,{\ly});
-\node[anchor=north west, align=left, text width=42mm] at (59,{\ly+3})
-  {\textbf{soft}: $\mu[t\!+\!1]$, $B[t\!+\!1]$ \emph{frozen} from the last sweep,
-   entering the objective linearly};
-\draw[stair] (105,{\ly}) -- (116,{\ly});
-\node[anchor=north west, align=left, text width=38mm] at (118,{\ly+3})
-  {\textbf{the walk}: one terminal fact, reaching stage $1$ in sweep $T$};
+\node[note,anchor=west,text width=55mm] at (25,-41) {%
+  \textbf{Propagation delay.} Terminal marginal information produced in
+  sweep $k$ reaches period 2 in sweep $k+1$ and period 1 only in sweep $k+2$.};
+\node[note,anchor=west,text width=55mm] at (25,-59) {%
+  \textbf{What is missing.} Only $\lambda_{\mathrm{soc}}$ is passed backward.
+  No value-function curvature $V_{BB}$ crosses a period boundary.};
 
 \end{tikzpicture}
-\caption{What the first-order scheme passes between its subproblems, drawn
-for four stages over four sweeps.  Each cell is one small quadratic program.
-Read one row at a time.  Within a sweep the state moves left to right along the
-solid arrows and is always current --- stage $t$ is bound to the energy stage
-$t\!-\!1$ has just produced, as a hard constraint.  The information travelling
-the other way cannot do that.  Stage $t$ learns what the future is worth only
-through $\mu[t\!+\!1]$ and $B[t\!+\!1]$ as they stood when the \emph{previous}
-sweep finished, so that knowledge slides one column left per row and no faster.
-The heavy staircase follows a single fact on its way through: what the terminal
-stage discovers in sweep~$1$ does not reach stage~$1$ until sweep~$4$.  A
-horizon of $T$ periods therefore needs about $T$ sweeps before the first stage
-has heard from the last, and each sweep costs $T$ solver calls.}
+\caption{Information flow in the first-order DDP sweep.}
 \label{fig:userddp}
 \end{figure*}
