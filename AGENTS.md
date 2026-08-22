@@ -150,12 +150,14 @@ and 233.098 s with objective gap `7.342e-4` and equality residual `5.631e-10`;
 this supersedes the earlier zero-iteration dense-QR failure without erasing it
 from the chronology. Full results are in
 `ddp/results/network_filterddp/README.md` and
-`sparse_kkt_filterddp_T3.csv`. IEEE123C has separately exported horizon data
+`sparse_kkt_filterddp_sweep.csv`. IEEE123C has separately exported horizon data
 through `T = 96`; do not conflate exported/centralized horizon results with a
 sparse FilterDDP solve at every horizon.
 
 The user's own first-order DDP has now been compared, as quantified above.
-Still unverified: sparse FilterDDP on IEEE2522C beyond `T = 3`, any sparse
+IEEE2522C `T = 6` is also verified without a warm start: 82 iterations,
+836.933 s, objective gap `1.305e-3`, and equality residual `1.753e-9`.
+Still unverified: sparse FilterDDP on IEEE2522C beyond `T = 6`, any sparse
 FilterDDP run on large10kC, and whether symbolic-factorization reuse or a
 symmetric-indefinite solver materially reduces the current generic sparse-LU
 time and fill-in.

@@ -165,7 +165,12 @@ iterations and 13.856 s with objective gap `1.193e-4`; ADS10 `T = 3` converged
 in 39 iterations and 10.191 s. ADS10's larger objective gap (`5.470e-2`) and
 line-current discrepancy reflect weakly penalized slack/current degeneracy;
 IEEE123C and IEEE2522C agree closely in all reported physical variables. The
-machine-readable record is `sparse_kkt_filterddp_T3.csv`.
+machine-readable record is `sparse_kkt_filterddp_sweep.csv`.
+
+Without a warm start, IEEE2522C `T = 6` converged in 82 FilterDDP iterations
+and 836.933 s. Its objective gap against the stored centralized reference was
+`1.305e-3`, the maximum equality residual was `1.753e-9`, and the largest
+reported physical-variable difference was `9.716e-4`.
 
 ## Large10kC feasibility gate
 
