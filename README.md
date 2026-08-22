@@ -65,7 +65,7 @@ Balanced single-phase OpenDSS feeders in [`rawData/`](rawData/):
 | Name | Buses | Notes |
 |------|-------|-------|
 | `ieee123C_1ph`  | 128    | IEEE 123-node, small (solution-quality reference) |
-| `ieee2552C_1ph` | 2,522  | synthetic medium feeder |
+| `ieee2522C_1ph` | 2,522  | synthetic medium feeder |
 | `large10kC_1ph` | 10,321 | synthetic large feeder (primary scalability benchmark) |
 
 ## Repository layout
@@ -98,13 +98,13 @@ takes the feeder directory name:
 | Paper | `SYSTEM_OVERRIDE` |
 |-------|-------------------|
 | ieee123  | `ieee123C_1ph`  |
-| med2522  | `ieee2552C_1ph` |
+| med2522  | `ieee2522C_1ph` |
 | large10k | `large10kC_1ph` |
 
 **Start here.** The cheapest cell that shows a real speedup takes well under a minute:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=6 RHO_OVERRIDE=4000 \
+SYSTEM_OVERRIDE=ieee2522C_1ph T_OVERRIDE=6 RHO_OVERRIDE=4000 \
   JULIA_NUM_THREADS=16 julia envs/tadmm/root_level/run_tadmm.jl     # ~30 s, expect ~1.27x over BF
 ```
 
@@ -117,8 +117,8 @@ over periods, so fewer threads will be proportionally slower.
 | Cell | tADMM | BF baseline | Note |
 |------|-------|-------------|------|
 | `ieee123C_1ph`, any `T` | seconds | seconds | solution-quality check; tADMM is *slower* here by design |
-| `ieee2552C_1ph`, `T=6..48` | 0.5–9 min | 0.6–12 min | good middle ground |
-| `ieee2552C_1ph`, `T=144` | ~23 min | ~3.5 h | the 9.31x headline |
+| `ieee2522C_1ph`, `T=6..48` | 0.5–9 min | 0.6–12 min | good middle ground |
+| `ieee2522C_1ph`, `T=144` | ~23 min | ~3.5 h | the 9.31x headline |
 | `large10kC_1ph`, `T=48` | ~1.6 h | **fails after ~4.9 h** | see below |
 
 **The `large10k, T=48` BF run is *supposed* to fail.** That is the paper's headline
@@ -130,7 +130,7 @@ at failure. Budget ~16 GB RAM to observe it.
 To regenerate a cell's full penalty sweep rather than a single run:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
+SYSTEM_OVERRIDE=ieee2522C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
 ```
 
 ## Notes

@@ -109,7 +109,7 @@ end
 
 """
 Derive a human-friendly "<system>, T=<T>" title from a processedData dir name
-like "large10kC_1ph_T48" or "ieee2552C_1ph_T144".  Falls back to the raw
+like "large10kC_1ph_T48" or "ieee2522C_1ph_T144".  Falls back to the raw
 basename if the pattern is unrecognized.
 """
 function system_horizon_label(bf_dir::String)
@@ -119,7 +119,7 @@ function system_horizon_label(bf_dir::String)
     raw_sys, T = m.captures[1], m.captures[2]
     sysname = if occursin("large10k", raw_sys)
         "large10k"
-    elseif occursin("2552", raw_sys)
+    elseif occursin("2522", raw_sys)
         "medium2552"
     elseif occursin("123", raw_sys)
         "ieee123"

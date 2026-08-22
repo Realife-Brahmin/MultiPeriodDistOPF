@@ -26,5 +26,5 @@ Winning `rho0` values per cell are in `summary.csv` (and the paper's Appendix A)
 regenerate any cell's full sweep:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
+SYSTEM_OVERRIDE=ieee2522C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
 ```

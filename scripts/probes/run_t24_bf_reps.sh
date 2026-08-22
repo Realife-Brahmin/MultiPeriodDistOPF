@@ -5,13 +5,13 @@ set -euo pipefail
 
 cd /c/repos_addendum/MultiPeriodDistOPF
 
-DIR=envs/tadmm/processedData/ieee2552C_1ph_T24
+DIR=envs/tadmm/processedData/ieee2522C_1ph_T24
 
 for REP in 3 4 5 6; do
   echo "=================================================================="
   echo "[$(date +%H:%M:%S)] Starting T=24 BF rep $REP"
   echo "=================================================================="
-  SYSTEM_OVERRIDE=ieee2552C_1ph \
+  SYSTEM_OVERRIDE=ieee2522C_1ph \
   T_OVERRIDE=24 \
     julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_bf.jl
   cp "$DIR/results_socp_bf.txt" "$DIR/results_socp_bf_run${REP}.txt"

@@ -10,7 +10,7 @@ run_sweep() {
   echo "=================================================================="
   echo "[$(date +%H:%M:%S)] Starting T=${T} rho=${RHO}"
   echo "=================================================================="
-  SYSTEM_OVERRIDE=ieee2552C_1ph \
+  SYSTEM_OVERRIDE=ieee2522C_1ph \
   SWEEP_T="${T}" \
   SWEEP_RHOS="${RHO}" \
   ADAPTIVE_RHO_OVERRIDE=true \
