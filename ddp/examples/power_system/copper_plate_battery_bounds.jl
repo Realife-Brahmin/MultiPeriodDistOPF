@@ -193,8 +193,9 @@ Solve the copper-plate problem at horizon `T` with per-stage data. Finite
 `B_lo`/`B_hi` switch on the energy slack control.
 """
 function build_per_stage_ocp(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                             B_lo = -Inf, B_hi = Inf)
-    pL = tadmm_pL(T); c = tadmm_cost(T)
+                             B_lo = -Inf, B_hi = Inf,
+                             c = tadmm_cost(T), pL = tadmm_pL(T))
+    length(c) == T == length(pL) || error("profile lengths must equal T")
     energy = isfinite(B_lo) && isfinite(B_hi)
     nu = energy ? 3 : 2
 
@@ -210,8 +211,9 @@ function build_per_stage_ocp(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb
 end
 
 function solve_ddp(T::Int; ps_lo = -Inf, ps_hi = Inf, pb_lo = -Inf, pb_hi = Inf,
-                   B_lo = -Inf, B_hi = Inf, tol = 1e-10, verbose = false)
-    ocp, nu, energy = build_per_stage_ocp(T; ps_lo, ps_hi, pb_lo, pb_hi, B_lo, B_hi)
+                   B_lo = -Inf, B_hi = Inf, tol = 1e-10, verbose = false,
+                   c = tadmm_cost(T), pL = tadmm_pL(T))
+    ocp, nu, energy = build_per_stage_ocp(T; ps_lo, ps_hi, pb_lo, pb_hi, B_lo, B_hi, c, pL)
     solver = Solver(ocp; options = Options{T_}(verbose = verbose, optimality_tolerance = tol))
 
     ps0 = isfinite(ps_lo) && isfinite(ps_hi) ? (ps_lo + ps_hi) / 2 : 1.0

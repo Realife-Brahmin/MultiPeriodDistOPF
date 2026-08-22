@@ -44,6 +44,14 @@ const P_RATED = 2.0
 """Demand p_L^t in p.u. = rated load x load factor."""
 tadmm_pL(T::Int) = P_RATED .* tadmm_load(T)
 
+"""Three distinct phase samples for the T=3 tutorial (no duplicated endpoint)."""
+function tadmm_tutorial3()
+    theta = 2pi .* (0:2) ./ 3
+    load = 0.8 .+ 0.2 .* (sin.(theta .- 0.8) .+ 1) ./ 2
+    cost = 0.08 .+ 0.12 .* (sin.(theta) .+ 1) ./ 2
+    return cost, P_RATED .* load
+end
+
 # ---------------------------------------------------------------------------
 # PARKED: the Lagrange interpolant
 # ---------------------------------------------------------------------------

@@ -145,9 +145,11 @@ MEASURED, T = 6, case 6d (see the note at the bottom of this file):
 Damping shrinks the limit cycle but never closes it: every row above hit the
 iteration cap. See the closing note for why.
 """
-function ddp_solve(T; max_iter = 200, tol = 1e-8, verbose = true, damping = 1.0,
+function ddp_solve(c::AbstractVector, pL::AbstractVector;
+                   max_iter = 200, tol = 1e-8, verbose = true, damping = 1.0,
                    bounds...)
-    c, pL = tadmm_cost(T), tadmm_pL(T)
+    length(c) == length(pL) || error("cost and demand must have equal lengths")
+    T = length(c)
     B, mu = fill(B_0, T), zeros(T)                 # k = 0 initialisation
     P_B, P_Subs = zeros(T), zeros(T)
     history = NamedTuple[]
@@ -163,13 +165,16 @@ function ddp_solve(T; max_iter = 200, tol = 1e-8, verbose = true, damping = 1.0,
         err       = max(err_state, err_dual)
         J = sum(c .* P_Subs .* Δt) + C_B * sum(P_B .^ 2) * Δt + W * (B[T] - B_0)^2
         push!(history, (k = k, err_state = err_state, err_dual = err_dual,
-                        err = err, J = J))
+                        err = err, J = J, B = copy(B), mu = copy(mu),
+                        P_B = copy(P_B), P_Subs = copy(P_Subs)))
         verbose && @printf("  %3d   %11.3e %11.3e   %14.10f\n",
                            k, err_state, err_dual, J)
         err < tol && break
     end
     return (B = B, P_B = P_B, P_Subs = P_Subs, mu = mu, history = history)
 end
+
+ddp_solve(T::Int; kwargs...) = ddp_solve(tadmm_cost(T), tadmm_pL(T); kwargs...)
 
 # ---------------------------------------------------------------------------
 # 4. Report, against the verified centralized reference
