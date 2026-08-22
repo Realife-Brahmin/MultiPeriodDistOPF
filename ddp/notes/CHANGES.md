@@ -139,3 +139,22 @@ modified. Concretely:
   and 6g are reported as failures because they are failures.
 - No distribution-network architecture was built. Stopped at the copper-plate model, as
   instructed.
+
+## Network-scale local fork changes (2026-08-21--22)
+
+The later network evaluation necessarily changed the local ignored clone. The complete
+diff against upstream commit `513a104` is tracked as
+`ddp/patches/dynamic_network_scaling.patch`; apply it from inside the clone with
+`git apply ../../patches/dynamic_network_scaling.patch`.
+
+The patch carries the previously recorded per-stage objective/constraint support, replaces
+large statically sized trajectory and solver fields with ordinary dynamic vectors and
+matrices, and erases generated-function types from `Solver` to avoid compiler recursion on
+network models. It also avoids allocating a full dense copy for `H + 0I` by applying only
+nonzero regularisation to the diagonal in place.
+
+These changes let the IEEE2522C `T=3` model and dynamic solver storage construct, but they
+do not make FilterDDP sparse. Its backward pass still builds a 13,358-by-13,358 dense
+Hessian, performs dense QR on a 13,358-by-10,337 equality Jacobian, and materialises the
+full orthogonal matrix. The guarded run therefore completed zero iterations. This is
+reported as an architectural scalability limit, not as a successful FilterDDP solve.
