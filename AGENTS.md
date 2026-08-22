@@ -150,18 +150,20 @@ and 233.098 s with objective gap `7.342e-4` and equality residual `5.631e-10`;
 this supersedes the earlier zero-iteration dense-QR failure without erasing it
 from the chronology. Full results are in
 `ddp/results/network_filterddp/README.md` and
-`sparse_kkt_filterddp_sweep.csv`. IEEE123C has separately exported horizon data
+`sparse_kkt_filterddp_T3.csv`. IEEE123C has separately exported horizon data
 through `T = 96`; do not conflate exported/centralized horizon results with a
 sparse FilterDDP solve at every horizon.
 
 The user's own first-order DDP has now been compared, as quantified above.
-IEEE2522C is also verified without warm starts at `T = 6` (82 iterations,
-836.933 s) and `T = 12` (79 iterations, 1902.103 s), both closely matching
-centralized references. A symbolic-factorization cache was tested and rejected
-because it slowed the identical `T = 3` run from 233.098 s to 295.296 s.
-Still unverified: sparse FilterDDP on IEEE2522C beyond `T = 12`, any sparse
+Sparse FilterDDP on IEEE2522C is now verified through `T = 24`: `T = 6`
+converges in 82 iterations/836.933 s and `T = 12` in 79 iterations/1902.103 s,
+while `T = 24` converges in 84 iterations/3068.228 s; all closely match
+centralized references. A symbolic-factorization cache
+was tested and rejected because it slowed the identical `T = 3` run from
+233.098 s to 295.296 s. Still unverified: IEEE2522C at `T >= 48`, any sparse
 FilterDDP run on large10kC, and whether a symmetric-indefinite or feeder-
-structured solve materially reduces generic sparse-LU time and fill-in.
+structured numerical solve materially reduces the current generic sparse-LU
+time and fill-in.
 
 ## Pending task (do not start until asked)
 

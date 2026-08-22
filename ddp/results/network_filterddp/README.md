@@ -167,15 +167,13 @@ line-current discrepancy reflect weakly penalized slack/current degeneracy;
 IEEE123C and IEEE2522C agree closely in all reported physical variables. The
 machine-readable record is `sparse_kkt_filterddp_sweep.csv`.
 
-Without a warm start, IEEE2522C `T = 6` converged in 82 FilterDDP iterations
-and 836.933 s. Its objective gap against the stored centralized reference was
-`1.305e-3`, the maximum equality residual was `1.753e-9`, and the largest
-reported physical-variable difference was `9.716e-4`.
-
-IEEE2522C `T = 12`, again without a warm start, converged in 79 iterations
-and 1902.103 s (31.70 min). Its objective gap was `9.207e-5`, the maximum
-equality residual was `2.290e-8`, and the largest reported physical-variable
-difference was `4.382e-4`.
+The IEEE2522C sparse run was then extended without warm starts. At `T = 6`,
+FilterDDP converged in 82 iterations and 836.933 s, with objective gap
+`1.305e-3` and equality residual `1.753e-9`. At `T = 12`, it converged in 79
+iterations and 1902.103 s, with objective gap `9.207e-5` and equality residual
+`2.290e-8`. Thus memory and numerical convergence scale beyond `T = 3`, but
+runtime is approximately linear in horizon and already 31.70 minutes at
+`T = 12`.
 
 A symbolic-factorization-reuse experiment was rejected: rerunning the identical
 `T = 3` case took 295.296 s instead of 233.098 s, with the same 56 iterations
@@ -183,6 +181,15 @@ and solution. Generic UMFPACK symbolic analysis is therefore not the dominant
 cost here; retaining that cache would make the implementation more complicated
 and slower. Further scaling requires reducing numerical factorization/solve
 cost or exploiting feeder structure, not merely caching the ordering.
+
+At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
+and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
+stored centralized reference 8632.277094570018, an absolute gap of
+`1.219e-3`; the maximum equality residual was `3.609e-8`, and the largest
+reported physical-variable difference was `3.242e-4`. The solve therefore
+scales numerically and in memory to a full 24-hour horizon, but the nearly
+linear time growth projects to roughly 1.7 hours at `T = 48` without a better
+numerical factorization strategy.
 
 ## Large10kC feasibility gate
 
