@@ -172,6 +172,18 @@ and 836.933 s. Its objective gap against the stored centralized reference was
 `1.305e-3`, the maximum equality residual was `1.753e-9`, and the largest
 reported physical-variable difference was `9.716e-4`.
 
+IEEE2522C `T = 12`, again without a warm start, converged in 79 iterations
+and 1902.103 s (31.70 min). Its objective gap was `9.207e-5`, the maximum
+equality residual was `2.290e-8`, and the largest reported physical-variable
+difference was `4.382e-4`.
+
+A symbolic-factorization-reuse experiment was rejected: rerunning the identical
+`T = 3` case took 295.296 s instead of 233.098 s, with the same 56 iterations
+and solution. Generic UMFPACK symbolic analysis is therefore not the dominant
+cost here; retaining that cache would make the implementation more complicated
+and slower. Further scaling requires reducing numerical factorization/solve
+cost or exploiting feeder structure, not merely caching the ordering.
+
 ## Large10kC feasibility gate
 
 The original `large10kC_1ph` conversion was globally infeasible even at `T=1`.
