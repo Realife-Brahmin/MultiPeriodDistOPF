@@ -27,15 +27,23 @@
 \definecolor{cCs}{HTML}{B02418}     % red    -- complementarity error
 \definecolor{cMu}{HTML}{6B6B6B}     % grey   -- barrier parameter mu
 
+% Official method colours. Use these whenever methods, rather than physical
+% assets or residual classes, are compared.
+\definecolor{cUserDDP}{HTML}{7A004F}   % dark magenta -- first-order DDP
+\definecolor{cCentral}{HTML}{000000}   % black        -- centralized Ipopt
+\definecolor{cFilterDDP}{HTML}{00796B} % deep teal    -- FilterDDP
+
 % Objective convergence.
-\definecolor{cObj}{HTML}{1A1A1A}    % near-black -- FilterDDP objective J_k
-\definecolor{cCen}{HTML}{7A1FA2}    % violet -- centralized (Ipopt) baseline J*
+\definecolor{cObj}{HTML}{00796B}     % FilterDDP objective J_k
+\definecolor{cCen}{HTML}{000000}     % centralized (Ipopt) baseline J*
 \definecolor{cGap}{HTML}{C05621}    % burnt orange -- |J_k - J*|
 
 % Non-asset quantities.
 \definecolor{cPrice}{HTML}{1F7A4D}  % cash green -- energy price c^t
 \definecolor{cCost}{HTML}{006400}   % dark green -- period cost
 \definecolor{cRule}{HTML}{1A1A1A}   % near-black -- equal-height rule
+\definecolor{cGiven}{HTML}{1F5186}  % blue -- state supplied by the preceding SPOPF
+\definecolor{cFuture}{HTML}{722F37} % wine red -- multiplier supplied by a future SPOPF
 
 % Chrome.
 \definecolor{gridMajor}{HTML}{E8C4D4} % soft pink

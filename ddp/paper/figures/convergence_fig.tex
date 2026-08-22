@@ -78,10 +78,10 @@
                   draw=none, fill=none, column sep=0.9ex, font=\scriptsize},
     legend cell align=left,
 ]
-\addplot[cCen, densely dashed, line width=1.2pt]
+\addplot[cCentral, densely dotted, line width=1.2pt]
   table[col sep=comma, x=k, y=jstar] {figures/convergence_6d_T6.csv};
 \addlegendentry{centralized $J^\star$}
-\addplot[convseries, cObj, mark=*, mark options={fill=cObj, draw=cObj}]
+\addplot[convseries, cFilterDDP, mark=square*, mark options={fill=cFilterDDP, draw=cFilterDDP}]
   table[col sep=comma, x=k, y=obj] {figures/convergence_6d_T6.csv};
 \addlegendentry{FilterDDP $J_k$}
 \addlegendimage{cGap, dash dot, line width=1.0pt, mark=triangle*, mark size=1.5pt,

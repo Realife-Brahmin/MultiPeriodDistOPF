@@ -8,10 +8,10 @@
 % stale when the instance data changed.
 %
 % Units are kW and kWh throughout, never per unit: these are battery quantities,
-% and p.u. hides how large the device actually is. Base is the tADMM one,
+% and p.u. hides how large the device actually is. On the selected base,
 % 1 p.u. = 1000 kW and 1 p.u.h = 1000 kWh.
 %
-% One figure, three stacked panels, following envs/tadmm/Plotter.jl:
+% One figure with three stacked panels:
 %
 %   Panel 1 -- plot_substation_power_and_cost:
 %       substation power as a black line; period cost P_Subs * c * dt on a
@@ -142,7 +142,7 @@
 \addplot[ybar, bar width=21pt, draw=cB0!70!black, fill=cB0, fill opacity=0.85,
          line width=0.5pt]
   coordinates {(0,2000)};
-\addlegendentry{Initial $B_0$ (fixed)}
+\addlegendentry{Initial $B^0$ (fixed)}
 \addplot[ybar, bar width=21pt, draw=cSOC!70!black, fill=cSOC, fill opacity=0.75,
          line width=0.5pt, restrict x to domain=1:6]
   table[col sep=comma, x=node, y=B] {figures/schedule_soc.csv};

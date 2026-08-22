@@ -18,14 +18,15 @@
 # Run:  julia --startup-file=no ddp/paper/figures/make_balance.jl
 
 const CASE  = "6e_T6"
-const KVA_B = 1000.0            # tADMM's base: 1 p.u. = 1000 kW, 1 p.u.h = 1000 kWh
+const KVA_B = 1000.0            # 1 p.u. = 1000 kW, 1 p.u.h = 1000 kWh
 const CSV   = joinpath(@__DIR__, "..", "..", "results", "copper_plate",
                        "centralized_reference.csv")
 
-# tADMM profiles, needed for p_L (the reference CSV stores P_Subs, P_B and B).
-tadmm_load(T) = 0.8 .+ 0.2 .* (sin.(range(0, 2pi, length = T) .- 0.8) .+ 1) ./ 2
-tadmm_cost(T) = 0.08 .+ 0.12 .* (sin.(range(0, 2pi, length = T)) .+ 1) ./ 2
-tadmm_pL(T)   = 2.0 .* tadmm_load(T)
+# Analytic benchmark profiles, needed because the reference CSV stores only
+# P_Subs, P_B, and B.
+benchmark_load(T) = 0.8 .+ 0.2 .* (sin.(range(0, 2pi, length = T) .- 0.8) .+ 1) ./ 2
+benchmark_cost(T) = 0.08 .+ 0.12 .* (sin.(range(0, 2pi, length = T)) .+ 1) ./ 2
+benchmark_pL(T)   = 2.0 .* benchmark_load(T)
 
 isfile(CSV) || error("""
     $CSV not found. Generate it first:
@@ -47,8 +48,8 @@ for (i, line) in enumerate(eachline(CSV))
 end
 T > 0 || error("case $CASE not found in $CSV")
 
-pL = tadmm_pL(T)
-c  = tadmm_cost(T)
+pL = benchmark_pL(T)
+c  = benchmark_cost(T)
 
 # Verify the balance before drawing it -- the figure's whole claim is that the
 # two stacks match, so assert it rather than trusting the plot to look right.
@@ -79,7 +80,7 @@ println("wrote ", out)
 # Everything in kW and kWh, never per unit: battery quantities are read as
 # ratings, and p.u. hides how large the device actually is.
 #
-# Sign convention follows envs/tadmm/Plotter.jl: charging is drawn POSITIVE and
+# Plotting convention: charging is drawn POSITIVE and
 # discharging NEGATIVE, so a bar's direction is the device's action rather than
 # the sign of P_B. Interval quantities sit at the interval centre t-1/2; the
 # stored energy sits at the nodes 0..T, which is where B actually lives.

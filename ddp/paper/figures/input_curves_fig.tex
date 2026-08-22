@@ -1,5 +1,5 @@
 % Input time-series profiles (load factor, energy price) over the T = 6 horizon.
-% Styling follows input_profiles_fig.tex of the tADMM paper exactly: same
+% Styling follows the other input-profile figures in this study: same
 % colours, same axis geometry, same legend placement, same left/right axis
 % split. There is no PV module in this benchmark, so that series is absent.
 %
@@ -10,7 +10,7 @@
 %   Load factor  : pine       / solid    / filled circle
 %   Energy price : cash green / dash-dot / filled triangle
 %
-% Unlike the tADMM paper, the curves are NOT analytic shapes sampled at T
+% The curves are analytic shapes sampled at T
 % points. The data are given at the nodes; the curves are the Lagrange
 % interpolants through them, which is what the solver actually evaluates.
 % Markers are the nodes. Data from make_input_curves.jl in this directory,
@@ -63,7 +63,7 @@
 \end{axis}
 % ---- Right axis: energy price (cents/kWh), overlaid, right spine only ----
 \begin{axis}[
-    % The tADMM price runs 8.3-19.7 cents. The axis still tops out well above
+    % The benchmark price runs 8.3-19.7 cents. The axis still tops out well above
     % that so the price trace stays clear of the load trace above it, but not so
     % far that its shape is squashed flat -- the old ymax=75 was set for the
     % previous 25-62 cent series and left this one in the bottom fifth.
@@ -89,8 +89,8 @@
 \end{tikzpicture}
 \caption{Input profiles at $T = 6$: load factor (left axis), energy price
 (right).  The markers are the data the solver uses --- one price and one demand
-per stage, taken directly; the curves are the underlying tADMM profiles they are
-sampled from, drawn only to show the shape.  The $-0.8$~rad phase offset between
+per stage, taken directly; the curves show the underlying analytic profiles.
+The $-0.8$~rad phase offset between
 them is what keeps the two series from being collinear.}
 \label{fig:input_curves}
 \end{figure}

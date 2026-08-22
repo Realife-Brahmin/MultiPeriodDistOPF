@@ -1,178 +1,39 @@
-\section{Copper-Plate Storage-Scheduling Model}
+\section{Problem Formulations}
 \label{sec:copper_plate}
 
-\subsection{Optimization Problem}
+\subsection{Copper-Plate MPOPF}
 
-A single storage device and a single grid connection serve a known demand $p_L^t$
-over $T$ periods of length $\Delta t$, all quantities in per unit.  Following the
-sign convention of~\cite{Jha2025}, $P_B^t > 0$ discharges and $P_B^t < 0$ charges;
-$B^t$ is the energy at the \emph{start} of period $t$, so $B^1$ is given and
-$B^{T+1}$ is terminal.  With $t \in \mathcal{T} = \{1,\dots,T\}$:
+A storage device and grid connection serve demand $p_L^t$ over
+$\mathcal T=\{1,\ldots,T\}$.  Here $P_B^t>0$ discharges, and $B^t$ is the
+end-of-period energy; hence $B^0$ is initial and $B^T$ is terminal.  The sign
+convention follows~\cite{Jha2025}.
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+\small
 \begin{subequations}
 \label{eq:cp_all}
 \begin{alignat}{2}
 \min_{P_{\text{Subs}},\,P_B,\,B} \;\;
   & \sum_{t=1}^{T} \Bigl[ c^t P_{\text{Subs}}^t
                         + C_B \bigl(P_B^t\bigr)^2 \Bigr] \Delta t \nonumber \\[-2pt]
-  & \hspace{34pt} +\; w \bigl(B^{T+1} - B^1\bigr)^2
+  & \hspace{34pt} +\; w \bigl(B^{T} - B_{\text{init}}\bigr)^2
 \label{eq:cp_obj} \\[2pt]
 \text{s.t.} \;\;
   & P_{\text{Subs}}^t + P_B^t - p_L^t = 0, &\quad& t \in \mathcal{T}
 \label{eq:cp_balance} \\
-  & B^1 = B_0
+  & B^0 = B_{\text{init}}
 \label{eq:cp_soc_init} \\
-  & B^{t+1} = B^t - P_B^t \Delta t, && t \in \mathcal{T}
+  & B^{t} = B^{t-1} - P_B^t \Delta t, && t \in \mathcal{T}
 \label{eq:cp_soc_dyn} \\
   & P_{\text{Subs}}^t \geq 0, && t \in \mathcal{T}
 \label{eq:cp_pg_lim} \\
-  & P_B^{\min} \leq P_B^t \leq P_B^{\max}, && t \in \mathcal{T}
+  & \underline{P_B} \leq P_B^t \leq \overline{P_B}, && t \in \mathcal{T}
 \label{eq:cp_pb_lim} \\
-  & B^{\min} \leq B^{t+1} \leq B^{\max}, && t \in \mathcal{T}
+  & \underline B \leq B^{t} \leq \overline B, && t \in \mathcal{T}
 \label{eq:cp_soc_lim}
 \end{alignat}
 \end{subequations}
+\end{minipage}}
 The \emph{base instance} is
 \eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn}, with all three bounds dropped.
 
-\subsection{Optimal-Control Form}
-\label{subsec:ocp}
-
-Restated over $N = T$ stages in the form required by DDP, with a distinct cost
-and constraint at each stage:
-\begin{align}
-\min_{x,u} \;\; & \sum_{t=1}^{N-1} \ell^t\bigl(x^t, u^t\bigr)
-                  + \ell^{F}\bigl(x^N, u^N\bigr) \nonumber \\
-\text{s.t.} \;\; & x^1 = \hat{x}^1, \label{eq:ocp_form} \\
-                 & x^{t+1} = f\bigl(x^t, u^t\bigr),
-                   \quad t \in \{1,\dots,N-1\}, \nonumber \\
-                 & c^t\bigl(x^t, u^t\bigr) = 0,
-                   \quad t \in \{1,\dots,N\}. \nonumber
-\end{align}
-The state is the stored energy alone; the controls are the two power set-points:
-\begin{equation}
-x^t = B^t \in \mathbb{R},
-\qquad
-u^t = \bigl(P_{\text{Subs}}^t,\; P_B^t\bigr)^\top \in \mathbb{R}^2 ,
-\label{eq:ocp_xu}
-\end{equation}
-with $\hat{x}^1 = B_0$.  Because stage $t$ carries its own $c^t$ and $p_L^t$,
-the per-period data enters directly and nothing is interpolated:
-\begin{align}
-f(x, u) &= x - u_2 \Delta t,
-\label{eq:ocp_f} \\
-c^t(x, u) &= u_1 + u_2 - p_L^t,
-\label{eq:ocp_c} \\
-\ell^t(x, u) &= \bigl[\, c^t u_1 + C_B\, u_2^2 \,\bigr] \Delta t,
-\label{eq:ocp_l} \\
-\ell^{F}(x, u) &= \bigl[\, c^T u_1 + C_B\, u_2^2 \,\bigr] \Delta t
-                + w \bigl( x - u_2 \Delta t - B_0 \bigr)^2 .
-\label{eq:ocp_lF}
-\end{align}
-Bounds \eqref{eq:cp_pg_lim}--\eqref{eq:cp_pb_lim} map onto control limits
-$b^{L} \leq u^t \leq b^{U}$.  The state bound~\eqref{eq:cp_soc_lim} is appended as
-a second row of $c^t$ via a slack $s^t$ adjoined to the control, giving $n_c = 2$,
-$n_u = 3$:
-\begin{equation}
-\bigl(x - u_2 \Delta t\bigr) - B^{\min} - s^t = 0,
-\qquad 0 \leq s^t \leq B^{\max} - B^{\min}.
-\label{eq:ocp_slack}
-\end{equation}
-
-\smallskip
-\noindent\textit{Remark.}\quad
-A per-stage $\ell^t$ and $c^t$ is what the method assumes --- the objective,
-dynamics and constraint functions are time-varying in general --- but the
-reference implementation exposed only one of each for the whole horizon.  An
-earlier revision of this benchmark worked around that by adjoining a time index
-$\tau$ to the state and recovering $c^t$ and $p_L^t$ from a degree-$(T\!-\!1)$
-Lagrange interpolant of it.  That device is exact at the nodes and was
-numerically well behaved past $T = 24$, but its symbolic expression grows with
-the horizon and exhausted the code generator at $T = 48$.  Restoring per-stage
-data removes it, and with it the extra state: $n_x$ falls from $2$ to $1$ and the
-horizon ceiling disappears.
-
-\input{sections/kkt_workflow}
-
-\subsection{Closed-Form Reference}
-
-The base instance is a strictly convex equality-constrained QP.  Eliminating
-$P_{\text{Subs}}^t = p_L^t - P_B^t$ and
-$B^{T+1} - B^1 = -\Delta t \sum_t P_B^t$ reduces it to
-\begin{align}
-J(P_B) = \text{const} & - \Delta t \sum_t c^t P_B^t
-       + C_B \Delta t \sum_t \bigl(P_B^t\bigr)^2 \nonumber \\
-       & + w (\Delta t)^2 s^2 ,
-\label{eq:cp_reduced}
-\end{align}
-with $s = \sum_t P_B^t$.  Stationarity divided through by $\Delta t$ is
-$-c^k + 2 C_B P_B^k + 2 w \Delta t\, s = 0$; summing over $k$ collapses it to
-\begin{equation}
-s = \frac{\sum_{t} c^t}{2 C_B + 2 T w \Delta t},
-\qquad
-P_B^k = \frac{c^k - 2 w \Delta t\, s}{2 C_B} .
-\label{eq:cp_closed_form}
-\end{equation}
-
-\input{sections/user_ddp_workflow}
-
-\input{figures/workflow_fig}
-\input{figures/user_ddp_fig}
-\input{figures/input_curves_fig}
-\input{figures/schedule_fig}
-\input{figures/balance_fig}
-\input{figures/convergence_fig}
-\input{figures/convergence_table}
-
-\begin{table}[!t]
-\centering
-\caption{Instance Data}
-\label{tab:cp_data}
-\setlength{\tabcolsep}{5pt}
-\begin{tabular}{lcccccc}
-\toprule
-\textbf{Interval $t$} & $1$ & $2$ & $3$ & $4$ & $5$ & $6$ \\
-\midrule
-Demand $p_L^t$     & $1.657$ & $1.888$ & $1.998$ & $1.834$ & $1.623$ & $1.657$ \\
-Energy price $c^t$ & $0.140$ & $0.197$ & $0.175$ & $0.105$ & $0.083$ & $0.140$ \\
-\bottomrule
-\end{tabular}
-
-\smallskip
-
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{lc@{\hskip 10pt}lc}
-\toprule
-Period length $\Delta t$ & $1$   & Initial energy $B_0$ & $2.0$ \\
-Throughput $C_B$         & $0.05$ & Terminal weight $w$  & $5.0$ \\
-\bottomrule
-\end{tabular}
-
-\smallskip
-
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{lc}
-\toprule
-\textit{Bounds, constrained variants only} & \\
-\midrule
-$P_B^{\min},\,P_B^{\max}$    & $-0.45,\;0.45$ \\
-$B^{\min},\,B^{\max}$        & $1.20,\;1.95$ \\
-\bottomrule
-\end{tabular}
-
-\smallskip
-
-\raggedright
-\footnotesize All quantities are in per unit on the tADMM base, $1$~p.u.\ $=
-1000$~kW and $1$~p.u.h $= 1000$~kWh; with $\Delta t = 1$, power and energy are
-numerically interchangeable, and the bounds are $\pm 450$~kW and
-$1200$--$1950$~kWh.  Figs.~\ref{fig:schedule} and~\ref{fig:balance} report
-battery quantities in kW and kWh rather than per unit.  The series are the tADMM
-load and price profiles, $p_L^t = 2\,\lambda^t$ with
-$\lambda^t = 0.8 + 0.1(\sin(\theta^t - 0.8) + 1)$ and
-$c^t = 0.08 + 0.06(\sin\theta^t + 1)$, sampled at
-$\theta^t \in \mathrm{range}(0, 2\pi, T)$.  These \emph{resample} with $T$, so a
-shorter horizon is not a prefix of this row; both endpoints of $[0, 2\pi]$ are
-included, which is why $c^1 = c^T$.  The $-0.8$ phase offset on the load is what
-keeps the two series from being collinear; their Pearson correlation is $0.644$.
-Bounds apply only to the constrained variants.
-\end{table}
+\input{sections/network_mpopf_model}

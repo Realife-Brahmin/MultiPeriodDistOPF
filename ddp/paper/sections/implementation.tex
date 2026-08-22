@@ -1,0 +1,45 @@
+\section{Implementation}
+
+FilterDDP.jl was modified in two ways.  First, its optimal-control interface
+accepts per-stage objective and constraint vectors, representing time-varying
+data directly without an auxiliary interpolating state.  Second, the feeder
+path replaces large compile-time \texttt{SVector}/\texttt{SMatrix} workspaces
+with dynamic, LAPACK-backed factorizations and analytic derivatives.\footnote{The
+superseded $T=2$ stall in static solver construction motivated this rewrite.
+Xu \emph{et al.} similarly use LAPACK for larger problems~\cite{Xu2026FilterDDP}.}
+StaticArrays remains for compact stage inputs.
+Tests use Julia 1.12.6, FilterDDP 0.6.0 (revision \texttt{513a104}),
+StaticArrays 1.9.18, JuMP 1.31.1, and Ipopt 1.15.0.
+
+\subsection{IEEE123C Evaluation}
+
+The network model in Section~\ref{sec:network_mpopf} was evaluated on the
+single-phase IEEE123C feeder (128 buses, 127 branches, 51 batteries, and 51 PV
+units) for $T\in\{3,6,12,24,48,96\}$.  Both FilterDDP and the independent
+centralized JuMP/Ipopt reference include the $r_{ij}\ell_{ij}^t$ and
+$x_{ij}\ell_{ij}^t$ line-loss terms in the nodal balances.  Every centralized
+solution passed the constraint validator, and FilterDDP returned normally at
+all six horizons with maximum equality residual below $9\times10^{-8}$.
+
+At each stage, $n_x=51$, $n_u=791$, and $n_c=562$.  FilterDDP therefore forms a
+$51\times51$ value Hessian and a $791\times791$ control Hessian, factors a
+$562\times562$ equality block, and factors a $229\times229$ reduced Hessian.
+These dimensions are independent of $T$; the number of stage factorizations
+scales with $T$.
+
+\begin{table}[H]
+\centering
+\caption{IEEE123C Solution Times}
+\label{tab:ieee123_times}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{c r r r}
+\toprule
+$T$ & FilterDDP iterations & FilterDDP (s) & Ipopt (s) \\
+\midrule
+24 & 97  & 610.77  & 3.06 \\
+96 & 121 & 2021.41 & 12.57 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The complete horizon sweep is archived with the reproducibility results.

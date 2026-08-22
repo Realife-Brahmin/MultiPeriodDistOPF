@@ -1,0 +1,188 @@
+\section{First-Order DDP Derivation}
+\label{app:user_ddp}
+
+This appendix states the first-order Differential Dynamic Programming workflow
+directly in MPOPF notation.  Equality multipliers are denoted by $\lambda$ and
+inequality multipliers by $\mu$.  Thus the dynamics multiplier called $\mu[t]$
+in the earlier derivation is written $\lambda_{\mathrm{soc}}^t$ here.
+
+\subsection{Centralized Lagrangian}
+
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+Write every inequality as $g\leq0$.  The Lagrangian of
+\eqref{eq:cp_all} is
+\begin{align}
+\mathcal L={}&\sum_{t=1}^{T}\!\left[c^tP_{\mathrm{Subs}}^t
+ +C_B(P_B^t)^2\right]\Delta t
+ +w(B^T-B_{\mathrm{init}})^2 \nonumber\\
+&+\sum_{t=1}^{T}\lambda_{\mathrm{bal}}^t
+ (P_{\mathrm{Subs}}^t+P_B^t-p_L^t) \nonumber\\
+&+\sum_{t=1}^{T}\lambda_{\mathrm{soc}}^t
+ (B^t-B^{t-1}+\Delta t P_B^t) \nonumber\\
+&+\sum_{t=1}^{T}\mu_{\underline{P_{\mathrm{Subs}}}}^t
+ (-P_{\mathrm{Subs}}^t) \nonumber\\
+&+\sum_{t=1}^{T}\!\left[\mu_{\underline{P_B}}^t(\underline{P_B}-P_B^t)
+ +\mu_{\overline{P_B}}^t(P_B^t-\overline{P_B})\right] \nonumber\\
+&+\sum_{t=1}^{T}\!\left[\mu_{\underline B}^t(\underline B-B^t)
+ +\mu_{\overline B}^t(B^t-\overline B)\right].
+\label{eq:app_lagrangian}
+\end{align}
+\end{minipage}}
+
+\smallskip
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+\noindent\textbf{Four optimality conditions.}\quad
+Here $B^0=B_{\mathrm{init}}$ is fixed.  In addition to primal feasibility,
+dual feasibility $\mu\geq0$, and complementary slackness, stationarity gives
+four equations.  The first two hold for $t=1,\ldots,T$, the third for
+$t=1,\ldots,T-1$, and the fourth at $T$:
+\begin{align}
+0={}&c^t\Delta t+\lambda_{\mathrm{bal}}^t-\mu_{\underline{P_{\mathrm{Subs}}}}^t,
+\label{eq:app_kkt_ps}\\
+0={}&2C_BP_B^t\Delta t+\lambda_{\mathrm{bal}}^t
+ +\Delta t\lambda_{\mathrm{soc}}^t \nonumber\\
+&-\mu_{\underline{P_B}}^t+\mu_{\overline{P_B}}^t,
+\label{eq:app_kkt_pb}\\
+0={}&\lambda_{\mathrm{soc}}^t-\lambda_{\mathrm{soc}}^{t+1}
+ -\mu_{\underline B}^t+\mu_{\overline B}^t,
+\label{eq:app_kkt_b}\\
+0={}&2w(B^T-B_{\mathrm{init}})+\lambda_{\mathrm{soc}}^T
+ -\mu_{\underline B}^T+\mu_{\overline B}^T.
+\label{eq:app_kkt_terminal}
+\end{align}
+Equations~\eqref{eq:app_kkt_ps} and \eqref{eq:app_kkt_pb} are the power
+stationarity conditions visible inside a period.  Equations
+\eqref{eq:app_kkt_b} and \eqref{eq:app_kkt_terminal} make those individually
+optimal periods multi-period optimal by chaining the marginal value of energy
+through time and terminating that chain correctly.  All four residuals were
+checked against the centralized JuMP/Ipopt solution; the largest was
+$2.2\times10^{-15}$ for $T\in\{3,6\}$.
+\end{minipage}}
+
+\newpage
+\vspace*{5.5\baselineskip}
+\subsection{Per-Period Decomposition}
+
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+At sweep $k$, period $t$ receives $\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}$ from the period just solved and
+the successor multiplier $\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}$ from the previous
+sweep.  It solves
+\begin{align}
+\min_{P_{\mathrm{Subs}}^t,P_B^t,B^t}\quad
+&c^tP_{\mathrm{Subs}}^t\Delta t+C_B(P_B^t)^2\Delta t
+-\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}B^t
+\label{eq:app_stage_obj}\\
+\mathrm{s.t.}\quad
+&P_{\mathrm{Subs}}^t+P_B^t=p_L^t,
+\label{eq:app_stage_bal}\\
+&B^t-\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}+\Delta tP_B^t=0,
+\label{eq:app_stage_soc}\\
+&P_{\mathrm{Subs}}^t\geq0,\quad
+\underline{P_B}\leq P_B^t\leq\overline{P_B}, \nonumber\\
+&\underline B\leq B^t\leq\overline B.
+\label{eq:app_stage_limits}
+\end{align}
+For $t=T$, the last term of \eqref{eq:app_stage_obj} is replaced by
+$w(B^T-B_{\mathrm{init}})^2$.  After solving, the equality multiplier is read
+from the local SOC equation,
+\begin{equation}
+\lambda_{\mathrm{soc}}^{k,t}
+=-\operatorname{dual}\!\left(B^t-\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}+\Delta tP_B^t=0\right).
+\label{eq:app_dual_read}
+\end{equation}
+The term $-\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}B^t$ inserts the successor term
+missing from a standalone OPF's stationarity in $B^t$.  The earlier program
+wrote the equivalent expression
+\begin{equation}
+\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}
+\left(B^{k-1,t+1}-B^t+\Delta tP_B^{t+1}\right).
+\label{eq:app_original_coupling}
+\end{equation}
+Because $B^{k-1,t+1}$ is fixed and the auxiliary $P_B^{t+1}$ is not the next
+period's actual decision, only the $-\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}B^t$
+part supplies the intended inter-period sensitivity.
+\end{minipage}}
+
+\subsection{Sweep}
+
+The workflow is
+\begin{equation}
+t=1\rightarrow T:\quad
+\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}\rightarrow\eqref{eq:app_stage_obj}
+\rightarrow(B^{k,t},\lambda_{\mathrm{soc}}^{k,t}),
+\qquad k\leftarrow k+1,
+\label{eq:app_sweep}
+\end{equation}
+and stops when
+\begin{equation}
+\max\!\left(\lVert B^k-B^{k-1}\rVert_2,
+\lVert\lambda_{\mathrm{soc}}^k-\lambda_{\mathrm{soc}}^{k-1}\rVert_2\right)
+<\epsilon.
+\label{eq:app_stop}
+\end{equation}
+This passes only the first derivative of the future cost.  FilterDDP also
+passes its curvature $V_{BB}^t$; the first-order workflow has no corresponding
+quantity.
+
+\input{figures/user_ddp_fig}
+
+\input{figures/user_ddp_t3_results_fig}
+\clearpage
+
+\begin{table}[!t]
+\centering
+\caption{SOC equality multipliers during the two-cycle}
+\label{tab:user_ddp_t3_mu}
+\footnotesize
+\input{figures/user_ddp_t3_mu_table}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Identical-instance solver comparison}
+\label{tab:user_ddp_t3_solvers}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Method & Outcome & Iterations & Objective $J$ \\
+\midrule
+Centralized Ipopt & optimal & --- & $0.747650349$ \\
+FilterDDP & optimal & $14$ & $0.747650349$ \\
+First-order DDP & two-cycle & $>2000$ & $0.747650353/0.812950270$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The undamped sweep does not converge.  Through 2000 sweeps it remains in an
+exact period-two cycle: the residual in \eqref{eq:app_stop} is $0.602079$, and
+the objective alternates between $0.74765035$ and $0.81295027$.  The
+centralized objective is $0.747650349$; on the other branch the battery dispatch
+differs by as much as $0.850$~p.u. (850~kW).  Thus even this three-period
+copper-plate problem exposes the instability of the first-order iteration.
+On the identical data, bounds, and initialization, FilterDDP terminates normally
+in 14 iterations.  Its objective differs from centralized Ipopt by
+$1.48\times10^{-10}$, while its maximum battery-power and energy differences
+are $6.50\times10^{-9}$~p.u. and $3.71\times10^{-9}$~p.u.h, respectively.
+Consequently, the two-cycle is a property of the first-order DDP iteration, not
+of an unusual or ill-posed optimization instance.
+
+\subsection{LinDistFlow Diagnostic Model}
+\label{app:lindistflow}
+
+When a full branch-flow instance fails the centralized feasibility gate, the
+following LinDistFlow equations are used only to diagnose or initialize the
+network model:
+\begin{align}
+&\sum_{k\in\mathcal C(j)}P_{jk}^t-P_{ij}^t
+ =P_{B,j}^t+p_{D,j}^t-p_{L,j}^t,\\
+&\sum_{k\in\mathcal C(j)}Q_{jk}^t-Q_{ij}^t
+ =q_{D,j}^t-q_{L,j}^t,\\
+&v_j^t=v_i^t-2\bigl(r_{ij}P_{ij}^t+x_{ij}Q_{ij}^t\bigr).
+\end{align}
+They omit the $r_{ij}\ell_{ij}^t$ and $x_{ij}\ell_{ij}^t$ loss terms, the
+quadratic current term in the voltage equation, and the SOC current constraint.
+All device, storage, substation, and voltage-bound constraints are otherwise
+unchanged.  This approximation is not substituted for the loss-aware SOCP in
+reported OPF comparisons; it is identified explicitly whenever used as a
+feasibility diagnostic or starting-point construction.

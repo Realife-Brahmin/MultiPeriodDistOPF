@@ -38,17 +38,17 @@
 
 % ---------- duals, one line ----------
 \node[anchor=south, text=cDual!70!black, inner sep=1pt] at (7.5,0.52)
-  {duals per stage: $\varphi^t_{\text{bal}}, \varphi^t_{\text{soc}}$ (equalities),
-   $\nu^t, \lambda^t$ (bounds)};
+  {duals per stage: $\lambda^t_{\text{bal}}, \lambda^t_{\text{soc}}$ (equalities),
+   $\mu^t$ (inequalities)};
 
 % ---------- the tape ----------
-\node[st]  (B1) at (0.00,0) {$B^1$};
+\node[st]  (B1) at (0.00,0) {$B^0$};
 \node[stg] (S1) at (2.50,0) {$t\!=\!1$\\[-2pt]$c^1, p_L^1$};
-\node[st]  (B2) at (5.00,0) {$B^2$};
+\node[st]  (B2) at (5.00,0) {$B^1$};
 \node[stg] (S2) at (7.50,0) {$t\!=\!2$\\[-2pt]$c^2, p_L^2$};
-\node[st]  (B3) at (10.00,0) {$B^3$};
+\node[st]  (B3) at (10.00,0) {$B^2$};
 \node[stg] (S3) at (12.50,0) {$t\!=\!3$\\[-2pt]$c^3, p_L^3$};
-\node[st]  (B4) at (15.00,0) {$B^4$};
+\node[st]  (B4) at (15.00,0) {$B^3$};
 
 \foreach \a/\b in {B1/S1, S1/B2, B2/S2, S2/B3, B3/S3, S3/B4}
   \draw[->, black!70, line width=0.7pt] (\a) -- (\b);
@@ -56,13 +56,13 @@
 % ---------- primals, one line ----------
 \node[anchor=north, text=cPrim!80!black, inner sep=1pt] at (7.5,-0.40)
   {controls per stage: $P_{\text{Subs}}^t,\, P_B^t,\, s^t$ \;
-   ($B^1\!=\!B_0$ fixed, $B^4$ the terminal energy)};
+   ($B^0\!=\!B_{\text{init}}$ fixed, $B^3$ the terminal energy)};
 
 % ---------- forward sweep ----------
 \draw[->, cPrim, line width=1.1pt, densely dashed] (-0.4,-1.05) -- (15.4,-1.05);
 \node[anchor=north, text=cPrim, inner sep=1pt] at (7.5,-1.10)
   {\textbf{forward} $t\!=\!1 \to 3$: roll out at step $\gamma$, updating
-   $u, \varphi, \nu, \lambda$ together};
+   $u, \lambda, \mu$ together};
 
 % ---------- the two explanatory boxes, side by side across the full width ----
 \node[note, text width=7.4cm, anchor=north west, align=flush left] at (-0.4,-1.65)
@@ -86,18 +86,6 @@
       from step 1};
 
 \end{tikzpicture}
-\caption{How the copper-plate problem is actually solved, drawn at $T = 3$ so the
-tape fits; the structure is the same at any horizon, and the results reported
-here are $T = 6$.  Read it as one worked example.  Each stage owns its own price
-and demand, so nothing is interpolated and the state is the stored energy alone
---- which is why the cost-to-go derivatives $V_B$ and $V_{BB}$ carried backward
-along the top are single numbers rather than a vector and a matrix.  The backward
-sweep builds a local model at each stage and leaves behind an affine rule; the
-forward sweep applies those rules left to right at one step size $\gamma$, moving
-the powers, the equality multipliers and the bound multipliers together.  The
-stage solve is the interesting part: three controls against two equalities leave
-exactly one direction free, so the ``dense'' factorisation is a division by a
-single number, and the regularisation DDP is known for fires only if that number
-turns non-positive --- which on this problem it never did.}
+\caption{FilterDDP backward and forward passes for a three-period illustration.}
 \label{fig:workflow}
 \end{figure*}
