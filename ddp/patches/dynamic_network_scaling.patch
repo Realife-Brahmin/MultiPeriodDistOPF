@@ -1,0 +1,546 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+index 0ee5582..33a2c56 100644
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -6,16 +6,15 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+     δ_c = 0.
+     reg = 0.0
+ 
+-    constraints = ocp.constraints
+     dynamics = ocp.dynamics
+     cl = ocp.control_limits
+     ni = (cl.nl + cl.nu) * ocp.N
+     
+     while reg <= options.reg_max
+         data.status = 0
+-        V̂x = @SVector zeros(T, nx)
+-        V̂xx = @SMatrix zeros(T, nx, nx)
+-        λ = @SVector zeros(T, nx)
++        V̂x = zeros(T, nx)
++        V̂xx = zeros(T, nx, nx)
++        λ = zeros(T, nx)
+ 
+         data.barrier_lagrangian_curr = T(0.0)
+         data.primal_1_curr = T(0.0)
+@@ -30,43 +29,46 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+         
+         for t = ocp.N:-1:1
+             x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
++            # PATCH: per-stage data when supplied, else the shared function
++            constraints = stage_con(ocp, t)
++            objective_t = stage_obj(ocp, t)
+ 
+             # evaluate derivatives
+ 
+             if t == ocp.N
+-                lx = ocp.term_objective.lx(x, u)
+-                lu_ = ocp.term_objective.lu(x, u)
+-                lxx = ocp.term_objective.lxx(x, u)
+-                lux = ocp.term_objective.lux(x, u)
+-                luu = ocp.term_objective.luu(x, u)
++                lx = Vector(ocp.term_objective.lx(x, u))
++                lu_ = Vector(ocp.term_objective.lu(x, u))
++                lxx = reshape(vec(ocp.term_objective.lxx(x, u)), nx, nx)
++                lux = reshape(vec(ocp.term_objective.lux(x, u)), nu, nx)
++                luu = reshape(vec(ocp.term_objective.luu(x, u)), nu, nu)
+                 data.objective += ocp.term_objective.l(x, u)[1]
+             else
+-                lx = ocp.stage_objective.lx(x, u)
+-                lu_ = ocp.stage_objective.lu(x, u)
+-                lxx = ocp.stage_objective.lxx(x, u)
+-                lux = ocp.stage_objective.lux(x, u)
+-                luu = ocp.stage_objective.luu(x, u)
+-                data.objective += ocp.stage_objective.l(x, u)[1]
++                lx = Vector(objective_t.lx(x, u))
++                lu_ = Vector(objective_t.lu(x, u))
++                lxx = reshape(vec(objective_t.lxx(x, u)), nx, nx)
++                lux = reshape(vec(objective_t.lux(x, u)), nu, nx)
++                luu = reshape(vec(objective_t.luu(x, u)), nu, nu)
++                data.objective += objective_t.l(x, u)[1]
+             end
+             
+             if nc > 0
+-                c = constraints.c(x, u)
+-                cx = constraints.cx(x, u)
+-                cu = constraints.cu(x, u)
+-                cxx = constraints.cxx(x, u, ϕ)
+-                cux = constraints.cux(x, u, ϕ)
+-                cuu = constraints.cuu(x, u, ϕ)
++                c = Vector(constraints.c(x, u))
++                cx = reshape(vec(constraints.cx(x, u)), nc, nx)
++                cu = reshape(vec(constraints.cu(x, u)), nc, nu)
++                cxx = reshape(vec(constraints.cxx(x, u, ϕ)), nx, nx)
++                cux = reshape(vec(constraints.cux(x, u, ϕ)), nu, nx)
++                cuu = reshape(vec(constraints.cuu(x, u, ϕ)), nu, nu)
+                 
+                 # evaluate constraint violation norms
+                 data.primal_1_curr += norm(c, 1)
+                 data.primal_inf = max(data.primal_inf, norm(c, Inf))
+             end
+ 
+-            fx = dynamics.fx(x, u)
+-            fu = dynamics.fu(x, u)
+-            fxx = nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ)
+-            fux = nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ)
+-            fuu = nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ)
++            fx = reshape(vec(dynamics.fx(x, u)), nx, nx)
++            fu = reshape(vec(dynamics.fu(x, u)), nx, nu)
++            fxx = reshape(vec(nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ)), nx, nx)
++            fux = reshape(vec(nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ)), nu, nx)
++            fuu = reshape(vec(nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ)), nu, nu)
+ 
+             # evaluate barrier Lagrangian
+ 
+@@ -109,17 +111,19 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             end
+             
+             # inertia correction / regularisation
+-            reg_diag = @SVector ones(T, nu)
+-            reg_diag = reg_diag .* reg
+-            Ĥ = Ĥ + diagm(reg_diag)
++            if !iszero(reg)
++                @inbounds for i in axes(Ĥ, 1)
++                    Ĥ[i, i] += reg
++                end
++            end
+ 
+             # factorise KKT system using nullspace method
+             if nc > 0
+                 A = cu'
+-                z = @SMatrix zeros(T, nu, nu-nc)
+-                Q, R = qr([A z])
+-                Y = Q[:, SVector{nc, Int64}(1:nc)]
+-                Z = Q[:, SVector{nu-nc, Int64}(nc+1:nu)]
++                qrf = qr(A)
++                Q = Matrix(qrf.Q * Matrix{T}(I, nu, nu))
++                Y = Q[:, 1:nc]
++                Z = Q[:, nc+1:nu]
+                 
+                 AY = A' * Y
+                 fk = lu(AY)
+@@ -146,17 +150,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                 α_β_z = ck \ (Z' * ([-Qû -B] - Ĥ * Y * α_β_y))
+                 α_β = Y * α_β_y + Z * α_β_z
+                 α = α_β[:, 1]
+-                β = α_β[:, SVector{nx, Int64}(2:nx+1)]
++                β = α_β[:, 2:nx+1]
+ 
+                 ψ_ω = ((Y' * ([-Qû -B] - Ĥ * α_β))' / fk)'
+                 ψ = ψ_ω[:, 1]
+-                ω = ψ_ω[:, SVector{nx, Int64}(2:nx+1)]
++                ω = ψ_ω[:, 2:nx+1]
+             else
+                 α_β = ck \ [-Qû -B]
+                 α = α_β[:, 1]
+-                β = α_β[:, SVector{nx, Int64}(2:nx+1)]
+-                ψ = @SVector zeros(T, nc)
+-                ω = @SMatrix zeros(T, nc, nx)
++                β = α_β[:, 2:nx+1]
++                ψ = zeros(T, nc)
++                ω = zeros(T, nc, nx)
+             end
+ 
+             # update parameters of update rule for ineq. dual variables
+diff --git a/src/forward_pass.jl b/src/forward_pass.jl
+index 1883b4d..a7769ff 100644
+--- a/src/forward_pass.jl
++++ b/src/forward_pass.jl
+@@ -79,7 +79,7 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+ 
+         # evaluate constraints and violation
+         if nc > 0
+-            c = ocp.constraints.c(x, u)
++            c = stage_con(ocp, t).c(x, u)
+             data.primal_1_next += norm(c, 1)
+             data.barrier_lagrangian_next += dot(c, ϕ)
+         end
+@@ -113,7 +113,7 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+         if t == ocp.N
+             data.barrier_lagrangian_next += ocp.term_objective.l(x, u)[1]
+         else
+-            data.barrier_lagrangian_next += ocp.stage_objective.l(x, u)[1]
++            data.barrier_lagrangian_next += stage_obj(ocp, t).l(x, u)[1]
+         end
+ 
+         if t < ocp.N
+diff --git a/src/ocp/constraints.jl b/src/ocp/constraints.jl
+index b34c51c..91db672 100644
+--- a/src/ocp/constraints.jl
++++ b/src/ocp/constraints.jl
+@@ -1,6 +1,4 @@
+-RFN = Union{RuntimeGeneratedFunction, Nothing}
+-
+-struct EqualityConstraints{nx, nu, nc, F1<:RFN, F2<:RFN, F3<:RFN, F4<:RFN, F5<:RFN, F6<:RFN}
++struct EqualityConstraints{nx, nu, nc, F1, F2, F3, F4, F5, F6}
+     c::F1
+     cx::F2
+     cu::F3
+@@ -19,24 +17,20 @@ function EqualityConstraints(c::F, nx::Int64, nu::Int64) where F<:Function
+     nc = length(c_)
+ 
+     if nc > 0
+-        c_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), c_, x, u)[1])
+-        cx_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), cx, x, u)[1])
+-        cu_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), cu, x, u)[1])
++        compile(a, args...) = Symbolics.build_function(a, args...;
++            expression=Val(false), parallel=Symbolics.ShardedForm(), skipzeros=true)[1]
++        c_func = compile(c_, x, u)
++        cx_func = compile(cx, x, u)
++        cu_func = compile(cu, x, u)
+         
+         ϕ::Vector{Num} = Symbolics.variables(:ϕ, 1:nc)  # adjoint for second-order tensor contraction
+ 
+         cxx = Symbolics.simplify(Symbolics.hessian(c_' * ϕ, x))
+         cux = Symbolics.simplify(Symbolics.jacobian(cu' * ϕ, x))
+         cuu = Symbolics.simplify(Symbolics.hessian(c_' * ϕ, u))
+-        cxx_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), cxx, x, u, ϕ)[1])
+-        cux_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), cux, x, u, ϕ; skipzeros=false)[1])
+-        cuu_func = @RuntimeGeneratedFunction(
+-            Symbolics._build_function(Symbolics.JuliaTarget(), cuu, x, u, ϕ; skipzeros=false)[1])
++        cxx_func = compile(cxx, x, u, ϕ)
++        cux_func = compile(cux, x, u, ϕ)
++        cuu_func = compile(cuu, x, u, ϕ)
+     else
+         c_func = nothing
+         cx_func = nothing
+diff --git a/src/ocp/control_limits.jl b/src/ocp/control_limits.jl
+index 33421b3..44ef7bf 100644
+--- a/src/ocp/control_limits.jl
++++ b/src/ocp/control_limits.jl
+@@ -1,18 +1,20 @@
+ struct ControlLimits{T, nu}
+-    l::SVector{nu, T}
+-    u::SVector{nu, T}
+-    maskl::SVector{nu, Bool}
+-    masku::SVector{nu, Bool}
++    l::Vector{T}
++    u::Vector{T}
++    maskl::Vector{Bool}
++    masku::Vector{Bool}
+     nl::Int64
+     nu::Int64
+ end
+ 
+-function ControlLimits(l::SVector{nu, T}, u::SVector{nu, T}) where {T, nu}
++function ControlLimits(l::AbstractVector{T}, u::AbstractVector{T}) where T
+     @assert length(l) == length(u)
+     @assert all(u .>= l)
+     maskl = (l .!= -floatmax(T)) .&& .!isinf.(l)
+     masku = (u .!= floatmax(T)) .&& .!isinf.(u)
+     nlo = sum(maskl)
+     nup = sum(masku)
+-    return ControlLimits{T, nu}(l, u, maskl, masku, nlo, nup)
++    nu = length(l)
++    return ControlLimits{T, nu}(Vector{T}(l), Vector{T}(u),
++        Vector{Bool}(maskl), Vector{Bool}(masku), nlo, nup)
+ end
+diff --git a/src/ocp/dynamics.jl b/src/ocp/dynamics.jl
+index c30e7cd..3c5e4d5 100644
+--- a/src/ocp/dynamics.jl
++++ b/src/ocp/dynamics.jl
+@@ -1,6 +1,4 @@
+-RF = RuntimeGeneratedFunction
+-
+-struct Dynamics{nx, nu, F1<:RF, F2<:RF, F3<:RF, F4<:RF, F5<:RF, F6<:RF}
++struct Dynamics{nx, nu, F1, F2, F3, F4, F5, F6}
+     f::F1
+     fx::F2
+     fu::F3
+@@ -18,21 +16,18 @@ function Dynamics(f::F, nx::Int64, nu::Int64) where F<:Function
+     
+     fx = Symbolics.simplify(Symbolics.jacobian(y, x))
+     fu = Symbolics.simplify(Symbolics.jacobian(y, u))
+-    f_func = @RuntimeGeneratedFunction(Symbolics.build_function(y, x, u)[1])
+-    fx_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), fx, x, u; skipzeros=false)[1])
+-    fu_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), fu, x, u; skipzeros=false)[1])
++    compile(a, args...) = Symbolics.build_function(a, args...;
++        expression=Val(false), parallel=Symbolics.ShardedForm(), skipzeros=true)[1]
++    f_func = compile(y, x, u)
++    fx_func = compile(fx, x, u)
++    fu_func = compile(fu, x, u)
+     
+     fxx = Symbolics.simplify(Symbolics.hessian(λ' * y, x))
+     fux = Symbolics.simplify(Symbolics.jacobian(Symbolics.gradient(λ' * y, u), x))
+     fuu = Symbolics.simplify(Symbolics.hessian(λ' * y, u))
+-    fxx_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), fxx, x, u, λ; skipzeros=false)[1])
+-    fux_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), fux, x, u, λ; skipzeros=false)[1])
+-    fuu_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), fuu, x, u, λ; skipzeros=false)[1])
++    fxx_func = compile(fxx, x, u, λ)
++    fux_func = compile(fux, x, u, λ)
++    fuu_func = compile(fuu, x, u, λ)
+ 
+     return Dynamics{nx, nu, typeof(f_func), typeof(fx_func), typeof(fu_func),
+                     typeof(fxx_func), typeof(fux_func), typeof(fuu_func)}(
+diff --git a/src/ocp/objective.jl b/src/ocp/objective.jl
+index f2bbc9c..3bc3011 100644
+--- a/src/ocp/objective.jl
++++ b/src/ocp/objective.jl
+@@ -18,18 +18,16 @@ function Objective(l::F, nx::Int64, nu::Int64) where F<:Function
+     lux = Symbolics.simplify(Symbolics.jacobian(lu, x))
+     luu = Symbolics.simplify(Symbolics.jacobian(lu, u))
+ 
+-    l_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), [l_], x, u; skipzeros=false)[1])
+-    lx_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), lx, x, u; skipzeros=false)[1])
+-    lu_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), lu, x, u; skipzeros=false)[1])
+-    lxx_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), lxx, x, u; skipzeros=false)[1])
+-    lux_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), lux, x, u; skipzeros=false)[1])
+-    luu_func = @RuntimeGeneratedFunction(
+-        Symbolics._build_function(Symbolics.JuliaTarget(), luu, x, u; skipzeros=false)[1])
++    # Compile ordinary sharded functions. RuntimeGeneratedFunction cannot shard
++    # large array expressions and fails on network-scale dense Hessians.
++    compile(a, args...) = Symbolics.build_function(a, args...;
++        expression=Val(false), parallel=Symbolics.ShardedForm(), skipzeros=true)[1]
++    l_func = compile([l_], x, u)
++    lx_func = compile(lx, x, u)
++    lu_func = compile(lu, x, u)
++    lxx_func = compile(lxx, x, u)
++    lux_func = compile(lux, x, u)
++    luu_func = compile(luu, x, u)
+     
+     return Objective{nx, nu, typeof(l_func), typeof(lx_func), typeof(lu_func),
+                      typeof(lxx_func), typeof(lux_func), typeof(luu_func)}(
+diff --git a/src/ocp/ocp.jl b/src/ocp/ocp.jl
+index dd5af53..aff61ab 100644
+--- a/src/ocp/ocp.jl
++++ b/src/ocp/ocp.jl
+@@ -1,6 +1,3 @@
+-RF = RuntimeGeneratedFunction
+-RFN = Union{RuntimeGeneratedFunction, Nothing}
+-
+ struct OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
+     N::Int64
+     stage_objective::Objective{nx, nu, OS1, OS2, OS3, OS4, OS5, OS6}
+@@ -8,20 +5,40 @@ struct OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, O
+     dynamics::Dynamics{nx, nu, F1, F2, F3, F4, F5, F6}
+     constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}
+     control_limits::ControlLimits{T, nu}
++    # --- PATCH: optional per-stage data (see ddp/patches/per_stage_data.patch) ---
++    # Remark 1 of the global-convergence paper states that the objective,
++    # dynamics and constraint functions "can in general be time-varying"; the
++    # package only ever exposed one of each for the whole horizon. These two
++    # fields carry a distinct Objective / EqualityConstraints per stage when a
++    # problem needs one. Both default to `nothing`, in which case every call
++    # site falls back to the single shared function and the original code path
++    # is bit-for-bit unchanged.
++    stage_objectives::Union{Nothing, Vector}
++    stage_constraints::Union{Nothing, Vector}
+ end
+ 
++"""Objective in force at stage `t` (the shared one unless per-stage data was given)."""
++@inline stage_obj(ocp::OCP, t::Int) =
++    isnothing(ocp.stage_objectives) ? ocp.stage_objective : ocp.stage_objectives[t]
++
++"""Equality constraints in force at stage `t`."""
++@inline stage_con(ocp::OCP, t::Int) =
++    isnothing(ocp.stage_constraints) ? ocp.constraints : ocp.stage_constraints[t]
++
+ function build_ocp(N::Int64, stage_objective::Objective{nx, nu, OS1, OS2, OS3, OS4, OS5, OS6},
+         term_objective::Objective{nx, nu, OT1, OT2, OT3, OT4, OT5, OT6}, dynamics::Dynamics{nx, nu, F1, F2, F3, F4, F5, F6},
+-        constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}, control_limits::ControlLimits{T, nu}) where
+-                        {T<:Real, nx, nu, nc, F1<:RF, F2<:RF, F3<:RF, F4<:RF, F5<:RF, F6<:RF,
+-                        C1<:RFN, C2<:RFN, C3<:RFN, C4<:RFN, C5<:RFN, C6<:RFN,
+-                        OS1<:RF, OS2<:RF, OS3<:RF, OS4<:RF, OS5<:RF, OS6<:RF,
+-                        OT1<:RF, OT2<:RF, OT3<:RF, OT4<:RF, OT5<:RF, OT6<:RF}
+-    l = @SVector ones(T, nx)
++        constraints::EqualityConstraints{nx, nu, nc, C1, C2, C3, C4, C5, C6}, control_limits::ControlLimits{T, nu};
++        stage_objectives::Union{Nothing, Vector} = nothing,
++        stage_constraints::Union{Nothing, Vector} = nothing) where
++                        {T<:Real, nx, nu, nc, F1, F2, F3, F4, F5, F6,
++                        C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6,
++                        OT1, OT2, OT3, OT4, OT5, OT6}
++    l = ones(T, nx)
+     u = floatmax(T) .* l
+     l = -floatmax(T) .* l
+     control_limits_ = isnothing(control_limits) ? ControlLimits(l, u) : control_limits
+     constraints_ = isnothing(constraints) ? EqualityConstraints(nx, nu) : constraints
+     return OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}(
+-        N, stage_objective, term_objective, dynamics, constraints_, control_limits_)
++        N, stage_objective, term_objective, dynamics, constraints_, control_limits_,
++        stage_objectives, stage_constraints)
+ end
+diff --git a/src/solve.jl b/src/solve.jl
+index 8f1c4dd..30a6864 100644
+--- a/src/solve.jl
++++ b/src/solve.jl
+@@ -1,5 +1,5 @@
+-function solve!(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6},
+-        x1::SVector{nx, T}, u::Vector{SVector{nu, T}}; kwargs...) where {T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++function solve!(solver::Solver{T, nx, nu, nc, nux, ncx},
++        x1::AbstractVector, u::AbstractVector{<:AbstractVector}; kwargs...) where {T, nx, nu, nc, nux, ncx}
+     initialize_trajectory!(solver, u, x1)
+     status = solve!(solver; kwargs...)
+     return status
+diff --git a/src/solver.jl b/src/solver.jl
+index d7f8ae6..cc39889 100644
+--- a/src/solver.jl
++++ b/src/solver.jl
+@@ -1,49 +1,55 @@
+ struct TrajectoryElement{T, nx, nu, nc}
+-    x::SVector{nx, T}
+-    u::SVector{nu, T}
+-    ϕ::SVector{nc, T}
+-    zl::SVector{nu, T}
+-    zu::SVector{nu, T}
++    x::Vector{T}
++    u::Vector{T}
++    ϕ::Vector{T}
++    zl::Vector{T}
++    zu::Vector{T}
++    function TrajectoryElement{T, nx, nu, nc}(x::AbstractVector, u::AbstractVector,
++            ϕ::AbstractVector, zl::AbstractVector, zu::AbstractVector) where {T, nx, nu, nc}
++        new{T, nx, nu, nc}(Vector{T}(x), Vector{T}(u), Vector{T}(ϕ),
++            Vector{T}(zl), Vector{T}(zu))
++    end
+ end
+ 
+ function TrajectoryElement(T::T_, nx::Int, nu::Int, nc::Int) where T_
+     TrajectoryElement{T, nx, nu, nc}(
+-        SVector{nx, T}(zeros(T, nx)),
+-        SVector{nu, T}(zeros(T, nu)),
+-        SVector{nc, T}(zeros(T, nc)),
+-        SVector{nu, T}(zeros(T, nu)),
+-        SVector{nu, T}(zeros(T, nu))
++        zeros(T, nx), zeros(T, nu), zeros(T, nc), zeros(T, nu), zeros(T, nu)
+         )
+ end
+ 
+ struct UpdateRule{T, nx, nu, nc, nux, ncx}
+-    α::SVector{nu, T}
+-    ψ::SVector{nc, T}
+-    β::SMatrix{nu, nx, T, nux}
+-    ω::SMatrix{nc, nx, T, ncx}
+-    χl::SVector{nu, T}
+-    χu::SVector{nu, T}
+-    ζl::SMatrix{nu, nx, T, nux}
+-    ζu::SMatrix{nu, nx, T, nux}
++    α::Vector{T}
++    ψ::Vector{T}
++    β::Matrix{T}
++    ω::Matrix{T}
++    χl::Vector{T}
++    χu::Vector{T}
++    ζl::Matrix{T}
++    ζu::Matrix{T}
++    function UpdateRule{T, nx, nu, nc, nux, ncx}(α::AbstractVector,
++            ψ::AbstractVector, β::AbstractMatrix, ω::AbstractMatrix,
++            χl::AbstractVector, χu::AbstractVector, ζl::AbstractMatrix,
++            ζu::AbstractMatrix) where {T, nx, nu, nc, nux, ncx}
++        new{T, nx, nu, nc, nux, ncx}(Vector{T}(α), Vector{T}(ψ),
++            Matrix{T}(β), Matrix{T}(ω), Vector{T}(χl), Vector{T}(χu),
++            Matrix{T}(ζl), Matrix{T}(ζu))
++    end
+ end
+ 
+ function UpdateRule(T::T_, nx::Int, nu::Int, nc::Int) where T_
+     nux = nu * nx
+     ncx = nc * nx
+     UpdateRule{T, nx, nu, nc, nux, ncx}(
+-        SVector{nu, T}(zeros(T, nu)),
+-        SVector{nc, T}(zeros(T, nc)),
+-        SMatrix{nu, nx, T, nux}(zeros(T, nu, nx)),
+-        SMatrix{nc, nx, T, ncx}(zeros(T, nc, nx)),
+-        SVector{nu, T}(zeros(T, nu)),
+-        SVector{nu, T}(zeros(T, nu)),
+-        SMatrix{nu, nx, T, nux}(zeros(T, nu, nx)),
+-        SMatrix{nu, nx, T, nux}(zeros(T, nu, nx))
++        zeros(T, nu), zeros(T, nc), zeros(T, nu, nx), zeros(T, nc, nx),
++        zeros(T, nu), zeros(T, nu), zeros(T, nu, nx), zeros(T, nu, nx)
+     )
+ end
+ 
+-struct Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
+-    ocp::OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++struct Solver{T, nx, nu, nc, nux, ncx}
++    # Deliberately erase the many generated-function type parameters here.
++    # Keeping them in Solver's type makes inference recurse through very large
++    # symbolic expressions on network-scale models.
++    ocp::OCP
+     nominal::Vector{TrajectoryElement{T, nx, nu, nc}}
+     current::Vector{TrajectoryElement{T, nx, nu, nc}}
+     update::Vector{UpdateRule{T, nx, nu, nc, nux, ncx}}
+@@ -58,26 +64,27 @@ function Solver(ocp::OCP{T, nx, nu, nc, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4,
+     update = [UpdateRule(T, nx, nu, nc) for _ = 1:ocp.N]
+     data = solver_data(T)
+     options = isnothing(options) ? Options{T}() : options
+-	return Solver(ocp, nominal, current, update, data, options)
++	return Solver{T, nx, nu, nc, nx * nu, nx * nc}(
++        ocp, nominal, current, update, data, options)
+ end
+ 
+-function get_trajectory(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
+-        ) where {T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++function get_trajectory(solver::Solver{T, nx, nu, nc, nux, ncx}
++        ) where {T, nx, nu, nc, nux, ncx}
+     x = [nom.x for nom in solver.nominal]
+     u = [nom.u for nom in solver.nominal]
+ 	return x, u
+ end
+ 
+-function initialize_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6},
+-        u::Vector{SVector{nu, T}}, x1::SVector{nx, T}) where {T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++function initialize_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx},
++        u::AbstractVector{<:AbstractVector}, x1::AbstractVector) where {T, nx, nu, nc, nux, ncx}
+     options = solver.options
+     κ_1 = options.κ_1
+     κ_2 = options.κ_2
+ 
+     cl = solver.ocp.control_limits
+-    x = x1
++    x = Vector{T}(x1)
+     for t = 1:solver.ocp.N
+-        ūt = @SVector zeros(T, nu)
++        ūt = zeros(T, nu)
+         mask_lo = cl.maskl .* .!cl.masku
+         ūt = ūt + max.(u[t],  options.κ_1 .* max.(cl.l, 1.0) + cl.l) .* mask_lo
+ 
+@@ -92,10 +99,10 @@ function initialize_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2,
+         mask_none = .!cl.masku .* .!cl.maskl
+         ūt = ūt + u[t] .* mask_none
+ 
+-        ϕ = @SVector zeros(T, nc)
+-        tmp = @SVector ones(T, nu)
+-        zl = SVector{nu, T}(tmp .* cl.maskl)
+-        zu = SVector{nu, T}(tmp .* cl.masku)
++        ϕ = zeros(T, nc)
++        tmp = ones(T, nu)
++        zl = Vector{T}(tmp .* cl.maskl)
++        zu = Vector{T}(tmp .* cl.masku)
+ 
+         solver.nominal[t] = TrajectoryElement{T, nx, nu, nc}(x, ūt, ϕ, zl, zu)
+         
+@@ -105,16 +112,16 @@ function initialize_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2,
+     end
+ end
+ 
+-function update_nominal_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}) where
+-        {T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++function update_nominal_trajectory!(solver::Solver{T, nx, nu, nc, nux, ncx}) where
++        {T, nx, nu, nc, nux, ncx}
+     for t = 1:solver.ocp.N
+         solver.nominal[t] = solver.current[t]
+     end
+     return nothing
+ end
+ 
+-function get_feedback(solver::Solver{T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6},
+-        t::Int) where {T, nx, nu, nc, nux, ncx, F1, F2, F3, F4, F5, F6, C1, C2, C3, C4, C5, C6, OS1, OS2, OS3, OS4, OS5, OS6, OT1, OT2, OT3, OT4, OT5, OT6}
++function get_feedback(solver::Solver{T, nx, nu, nc, nux, ncx},
++        t::Int) where {T, nx, nu, nc, nux, ncx}
+     α = solver.update[t].α
+     β = solver.update[t].β
+     ū = solver.nominal[t].u
