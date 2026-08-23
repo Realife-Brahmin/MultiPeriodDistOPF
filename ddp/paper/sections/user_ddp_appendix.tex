@@ -166,23 +166,3 @@ $1.48\times10^{-10}$, while its maximum battery-power and energy differences
 are $6.50\times10^{-9}$~p.u. and $3.71\times10^{-9}$~p.u.h, respectively.
 Consequently, the two-cycle is a property of the first-order DDP iteration, not
 of an unusual or ill-posed optimization instance.
-
-\subsection{LinDistFlow Diagnostic Model}
-\label{app:lindistflow}
-
-When a full branch-flow instance fails the centralized feasibility gate, the
-following LinDistFlow equations are used only to diagnose or initialize the
-network model:
-\begin{align}
-&\sum_{k\in\mathcal C(j)}P_{jk}^t-P_{ij}^t
- =P_{B,j}^t+p_{D,j}^t-p_{L,j}^t,\\
-&\sum_{k\in\mathcal C(j)}Q_{jk}^t-Q_{ij}^t
- =q_{D,j}^t-q_{L,j}^t,\\
-&v_j^t=v_i^t-2\bigl(r_{ij}P_{ij}^t+x_{ij}Q_{ij}^t\bigr).
-\end{align}
-They omit the $r_{ij}\ell_{ij}^t$ and $x_{ij}\ell_{ij}^t$ loss terms, the
-quadratic current term in the voltage equation, and the SOC current constraint.
-All device, storage, substation, and voltage-bound constraints are otherwise
-unchanged.  This approximation is not substituted for the loss-aware SOCP in
-reported OPF comparisons; it is identified explicitly whenever used as a
-feasibility diagnostic or starting-point construction.

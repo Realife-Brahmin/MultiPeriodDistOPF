@@ -30,15 +30,11 @@ reference was $5.5\times10^{-4}$. Runtime increased from 74.9~s at $T=3$ to
 centralized solve required 12.57~s at $T=96$. This establishes functional
 horizon scaling, but not competitive runtime.
 
-\subsection{Corrected IEEE2522C}
+\subsection{IEEE2522C}
 
-The feeder previously labelled ``IEEE2552C'' was renamed IEEE2522C. Its
-one-phase aggregate conversion had also combined aggregate three-phase powers
-with a phase-voltage base, making per-unit line impedances nine times too
-large. Only the electrical base was corrected, to 7.2~kV on 1~MVA;
-physical impedances, powers, DER ratings, voltage limits, losses, and the SOC
-model were unchanged. With this correction, cold-start centralized models
-were globally optimal and independently validated through $T=96$.
+Cold-start centralized models were globally optimal and independently
+validated through $T=96$; Appendix~\ref{app:network_corrections} records the
+data correction made before these comparisons.
 
 Here $(n_x,n_u,n_c)=(250,13358,10337)$ per stage. The original dense
 backward pass could not complete one iteration because it attempted a dense
@@ -74,14 +70,10 @@ reuse alone.
 
 \subsection{Large10kC Boundary}
 
-The synthetic large10kC feeder also required a data correction before any OPF
-comparison was meaningful. Its aggregate voltage base was restored to
-12.47~kV, and uniform synthetic ordinary-line sections were shortened from
-$(r,x)=(0.07,0.01)~\Omega$ to $(0.0175,0.0025)~\Omega$; area-boundary
-sections use $(0.000025,0.000025)~\Omega$. Powers, DER capacities, voltage
-limits, loss terms, and SOC constraints were retained. Cold-start Gurobi
-solutions then validated at $T=1$ and $T=3$; the latter has 133035 variables,
-objective 2985281.3189, 27 barrier iterations, and 6.304~s solver time.
+Cold-start centralized large10kC solutions validated at $T=1$ and $T=3$
+after the data correction documented in Appendix~\ref{app:network_corrections}.
+The latter has 133035 variables, objective 2985281.3189, 27 barrier iterations,
+and 6.304~s solver time.
 
 For FilterDDP at $T=3$, the per-stage dimensions are
 $(n_x,n_u,n_c)=(1020,54665,42303)$. Blocking the multiple right-hand-side KKT
