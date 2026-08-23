@@ -59,6 +59,18 @@ optimum is not exactly a fixed point of the linearised map. FilterDDP reaches
 `2.2e-10` on the same instance in 16 iterations. That is the `V_xx` gap,
 quantified.
 
+**Three-dual rolling mean tested 2026-08-23** at Rahul's suggestion. The
+optional `dual_average_window=3` update in `user_ddp.jl` averages the raw dual
+vectors produced by the current sweep and the preceding two sweeps; it does not
+average the state trajectory. This materially reduces the cold-start error but
+does not converge. The original update has a period-2 cycle, objective gap
+`6.35e-4`--`2.09e-3`, and maximum battery-power error `52.7`--`120.6` kW. The
+three-dual mean settles into a period-4 cycle, objective gap
+`1.25e-4`--`2.94e-4`, and maximum battery-power error `15.0`--`34.0` kW. Its
+result is identical at 300 and 2000 sweeps. Reproduction script and data are
+`ddp/examples/power_system/first_order_dual_average_experiment.jl` and
+`ddp/results/copper_plate/first_order_dual_average.csv`.
+
 ## Julia environment: use `envs/ddp2026` for everything DDP
 
 Since 2026-08-07 there is **one** environment for all DDP work — FilterDDP, the
