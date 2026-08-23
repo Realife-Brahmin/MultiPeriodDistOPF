@@ -127,11 +127,16 @@ end
 # 3. The outer loop
 # ---------------------------------------------------------------------------
 """
-    ddp_solve(T; max_iter, tol, damping, ...)
+    ddp_solve(T; max_iter, tol, damping, dual_average_window, ...)
 
 Iterate sweeps until the state and dual trajectories stop moving. `damping = 1`
 is the scheme as written; `damping = a < 1` blends each sweep's output with the
 previous iterate, `x <- (1-a) x_old + a x_new`.
+
+`dual_average_window = 3` implements the proposed rolling-dual experiment:
+the dual used by the next sweep is the componentwise mean of the raw duals
+produced by the current sweep and the preceding two sweeps. The default value
+of one leaves the original algorithm unchanged.
 
 MEASURED, T = 6, case 6d (see the note at the bottom of this file):
 
@@ -147,18 +152,25 @@ iteration cap. See the closing note for why.
 """
 function ddp_solve(c::AbstractVector, pL::AbstractVector;
                    max_iter = 200, tol = 1e-8, verbose = true, damping = 1.0,
+                   dual_average_window::Int = 1,
                    bounds...)
     length(c) == length(pL) || error("cost and demand must have equal lengths")
+    dual_average_window >= 1 || error("dual_average_window must be positive")
     T = length(c)
     B, mu = fill(B_0, T), zeros(T)                 # k = 0 initialisation
     P_B, P_Subs = zeros(T), zeros(T)
     history = NamedTuple[]
+    raw_mu_history = Vector{Vector{Float64}}()
 
     for k = 1:max_iter
         B_old, mu_old = copy(B), copy(mu)
         Bn, P_B, P_Subs, mun = forward_sweep(T, c, pL, B_old, mu_old; bounds...)
+        push!(raw_mu_history, copy(mun))
+        first_raw = max(1, length(raw_mu_history) - dual_average_window + 1)
+        mu_decided = reduce(+, @view(raw_mu_history[first_raw:end])) ./
+                     (length(raw_mu_history) - first_raw + 1)
         B  = (1 - damping) .* B_old  .+ damping .* Bn
-        mu = (1 - damping) .* mu_old .+ damping .* mun
+        mu = (1 - damping) .* mu_old .+ damping .* mu_decided
 
         err_state = norm(B .- B_old)
         err_dual  = norm(mu .- mu_old)
@@ -166,7 +178,8 @@ function ddp_solve(c::AbstractVector, pL::AbstractVector;
         J = sum(c .* P_Subs .* Δt) + C_B * sum(P_B .^ 2) * Δt + W * (B[T] - B_0)^2
         push!(history, (k = k, err_state = err_state, err_dual = err_dual,
                         err = err, J = J, B = copy(B), mu = copy(mu),
-                        P_B = copy(P_B), P_Subs = copy(P_Subs)))
+                        raw_mu = copy(mun), P_B = copy(P_B),
+                        P_Subs = copy(P_Subs)))
         verbose && @printf("  %3d   %11.3e %11.3e   %14.10f\n",
                            k, err_state, err_dual, J)
         err < tol && break
