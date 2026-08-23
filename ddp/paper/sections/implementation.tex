@@ -3,82 +3,81 @@
 The network transcription uses analytic derivatives and accepts time-varying
 load, PV, and price data directly at each stage. Compact problems retain
 FilterDDP's dense null-space backward pass. For feeder models, sparse
-Jacobians and local Hessian blocks are instead assembled into the saddle-point
-system
+Jacobians and local Hessian blocks are instead assembled into
 \begin{equation}
 \begin{bmatrix}H&A^{\mathsf T}\\A&0\end{bmatrix}
 \begin{bmatrix}\Delta u\\\Delta\lambda\end{bmatrix}=b,
 \label{eq:sparse_kkt}
 \end{equation}
-which is solved by sparse LU without explicitly constructing a dense QR basis
-or reduced Hessian. The dense route has less overhead for small problems; the
-sparse route is required when those dense intermediate matrices no longer fit
-practical memory. Reported FilterDDP times include its optimization iterations,
-not model construction. Centralized references use the exact native
-second-order cone equivalent of (\ref{eq:net_soc}) in Gurobi and were checked by
-an independent constraint validator.
+and solved by sparse LU without explicitly constructing a dense QR basis or
+reduced Hessian. The dense route has less overhead for small problems; the
+sparse route is required when those dense intermediate matrices become
+impractical. Reported times include FilterDDP optimization iterations, not
+model construction. Every successful network result used the complete
+loss-aware SOCP model and was checked against an independently validated
+centralized Ipopt or Gurobi solution.
 
-\subsection{IEEE123C}
-
-The loss-aware model was first tested on IEEE123C (128 buses, 127 branches,
-51 batteries, and 51 PV units), with per-stage dimensions
-$(n_x,n_u,n_c)=(51,791,562)$. FilterDDP returned normally for
-$T\in\{3,6,12,24,48,96\}$; its largest equality residual was
-$8.9\times10^{-8}$ and its largest absolute objective gap from the centralized
-reference was $5.5\times10^{-4}$. Runtime increased from 74.9~s at $T=3$ to
-2021.4~s at $T=96$ (48 and 121 iterations, respectively). The corresponding
-centralized solve required 12.57~s at $T=96$. This establishes functional
-horizon scaling, but not competitive runtime.
-
-\subsection{IEEE2522C}
-
-Cold-start centralized models were globally optimal and independently
-validated through $T=96$; Appendix~\ref{app:network_corrections} records the
-data correction made before these comparisons.
-
-Here $(n_x,n_u,n_c)=(250,13358,10337)$ per stage. The original dense
-backward pass could not complete one iteration because it attempted a dense
-$13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
-KKT route removes that storage bottleneck and gives the verified results in
-Table~\ref{tab:ieee2522_filterddp}. All runs used full line-loss balances and
-the exact SOC constraint, without warm starts.
+\newcommand{\resultyes}{\textcolor{green!55!black}{\ensuremath{\checkmark}}}
+\newcommand{\resultno}{\textcolor{red!75!black}{\ensuremath{\times}}}
 
 \begin{table}[H]
 \centering
-\caption{Sparse FilterDDP on Corrected IEEE2522C}
-\label{tab:ieee2522_filterddp}
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{c r r r r}
+\caption{FilterDDP Network Test Summary. A check denotes agreement with the
+centralized solution at every listed horizon; it does not imply competitive
+runtime.}
+\label{tab:network_success}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l c l}
 \toprule
-$T$ & Iter. & Time (s) & $|J-J^\star|$ & Eq. residual \\
+System & Solved & Tested horizons $T$ \\
 \midrule
-3  & 56 & 233.098  & $7.34\times10^{-4}$ & $5.63\times10^{-10}$ \\
-6  & 82 & 836.933  & $1.30\times10^{-3}$ & $1.75\times10^{-9}$ \\
-12 & 79 & 1902.103 & $9.21\times10^{-5}$ & $2.29\times10^{-8}$ \\
-24 & 84 & 3068.228 & $1.22\times10^{-3}$ & $3.61\times10^{-8}$ \\
+ADS10A    & \resultyes & 3 \\
+IEEE123C  & \resultyes & 3, 6, 12, 24, 48, 96 \\
+IEEE2522C & \resultyes & 3, 6, 12, 24 \\
+large10kC & \resultno  & 3 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Thus the method is numerically and memory feasible at a 24-period horizon on
-this feeder, but remains slow: the $T=24$ run took 51.1~min, versus 27.2~s of
-Gurobi solver time for the centralized reference. Reusing UMFPACK's symbolic
-factorization did not help: the identical $T=3$ solution slowed from 233.1 to
-295.3~s. Better scaling therefore requires a more suitable numerical
-factorization or exploitation of feeder structure, rather than symbolic-cache
-reuse alone.
+\begin{table}[H]
+\centering
+\caption{Successful FilterDDP Network Solves}
+\label{tab:network_times}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l r r r}
+\toprule
+System & $T$ & Iterations & Solve time (s) \\
+\midrule
+ADS10A    & 3  & 39  & 10.191 \\
+IEEE123C  & 3  & 48  & 13.856 \\
+           & 6  & 60  & 143.647 \\
+           & 12 & 81  & 306.817 \\
+           & 24 & 97  & 610.766 \\
+           & 48 & 111 & 923.073 \\
+           & 96 & 121 & 2021.412 \\
+IEEE2522C & 3  & 56  & 233.098 \\
+           & 6  & 82  & 836.933 \\
+           & 12 & 79  & 1902.103 \\
+           & 24 & 84  & 3068.228 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Large10kC Boundary}
+IEEE123C has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
+IEEE2522C has $(250,13358,10337)$. The original dense IEEE2522C backward pass
+could not complete one iteration because it attempted a dense
+$13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
+KKT route removed that storage bottleneck and reached a realistic $T=24$
+horizon, but required 51.1~min; the corresponding centralized Gurobi solver
+time was 27.2~s. Reusing UMFPACK's symbolic factorization did not help: the
+identical $T=3$ solution slowed from 233.1 to 295.3~s. Thus the present result
+establishes correctness and memory feasibility, not computational
+competitiveness.
 
-Cold-start centralized large10kC solutions validated at $T=1$ and $T=3$
-after the data correction documented in Appendix~\ref{app:network_corrections}.
-The latter has 133035 variables, objective 2985281.3189, 27 barrier iterations,
-and 6.304~s solver time.
-
-For FilterDDP at $T=3$, the per-stage dimensions are
+For large10kC at $T=3$, the per-stage dimensions are
 $(n_x,n_u,n_c)=(1020,54665,42303)$. Blocking the multiple right-hand-side KKT
-solve bounded memory and avoided the earlier immediate allocation failure.
-However, the run produced no terminal iteration report after two hours and
-was stopped manually. Consequently, no FilterDDP convergence or timing claim
-is made for large10kC. The experiment instead identifies sparse numerical
-factorization and feedback-solve cost as the present scalability boundary.
+solve avoided the earlier immediate allocation failure. However, the run
+produced no terminal iteration report after two hours and was stopped
+manually. No FilterDDP convergence or timing claim is therefore made for this
+system. Appendix~\ref{app:network_corrections} records the test-data
+corrections made before the IEEE2522C and large10kC comparisons.
