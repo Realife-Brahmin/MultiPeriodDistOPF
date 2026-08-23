@@ -50,8 +50,8 @@ runtime.}
 \toprule
 System & Solved & Tested horizons $T$ \\
 \midrule
-IEEE123  & \resultyes & 3, 6, 12, 24, 48, 96 \\
-IEEE2522 & \resultyes & 3, 6, 12, 24 \\
+ieee123  & \resultyes & 3, 6, 12, 24, 48, 96 \\
+med2522 & \resultyes & 3, 6, 12, 24 \\
 large10k & \resultno  & 3 \\
 \bottomrule
 \end{tabular}
@@ -66,13 +66,13 @@ large10k & \resultno  & 3 \\
 \toprule
 System & $T$ & Iterations & Solve time (s) \\
 \midrule
-IEEE123   & 3  & 48  & 13.856 \\
+ieee123   & 3  & 48  & 13.856 \\
            & 6  & 60  & 143.647 \\
            & 12 & 81  & 306.817 \\
            & 24 & 97  & 610.766 \\
            & 48 & 111 & 923.073 \\
            & 96 & 121 & 2021.412 \\
-IEEE2522  & 3  & 56  & 233.098 \\
+med2522 & 3  & 56  & 233.098 \\
            & 6  & 82  & 836.933 \\
            & 12 & 79  & 1902.103 \\
            & 24 & 84  & 3068.228 \\
@@ -81,8 +81,8 @@ large10k  & 3  & \multicolumn{2}{c}{\resultno} \\
 \end{tabular}
 \end{table}
 
-IEEE123 has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
-IEEE2522 has $(250,13358,10337)$. The original dense IEEE2522 backward pass
+ieee123 has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
+med2522 has $(250,13358,10337)$. The original dense med2522 backward pass
 could not complete one iteration because it attempted a dense
 $13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
 KKT route removed that storage bottleneck and reached a realistic $T=24$
@@ -98,4 +98,4 @@ solve avoided the earlier immediate allocation failure. However, the run
 produced no terminal iteration report after two hours and was stopped
 manually. No FilterDDP convergence or timing claim is therefore made for this
 system. Appendix~\ref{app:network_corrections} records the test-data
-corrections made before the IEEE2522 and large10k comparisons.
+corrections made before the med2522 and large10k comparisons.

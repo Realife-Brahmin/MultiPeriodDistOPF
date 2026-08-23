@@ -101,7 +101,7 @@ $d^\top \hat{H}^t d = \mu_{\underline{P_{\mathrm{Subs}}}}^t / P_{\text{Subs}}^t 
 barrier terms too, leaving $2 C_B \Delta t + (\Delta t)^2 V_{BB}^{t+1}$, which is
 where $C_B$ enters as the curvature that keeps the problem solvable.
 
-\subsubsection{Dimension scaling and IEEE123}
+\subsubsection{Dimension scaling and ieee123}
 In general the stage matrices have dimensions
 \begin{equation}
 V_{xx}^t\in\mathbb{R}^{n_x\times n_x},\qquad
@@ -120,7 +120,7 @@ Thus $T$ does not enlarge an individual stage matrix, but it does multiply the
 number of derivative evaluations, factorizations, and stored stage-update
 objects.
 
-For the direct IEEE123 single-phase transcription (128 buses, 127 branches,
+For the direct ieee123 single-phase transcription (128 buses, 127 branches,
 51 batteries, and 51 PV inverters),
 \begin{equation}
 n_x=51,\qquad n_u=791,\qquad n_c=562,\qquad n_u-n_c=229.
