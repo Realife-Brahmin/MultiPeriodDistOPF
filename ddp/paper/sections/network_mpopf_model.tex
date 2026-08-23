@@ -9,6 +9,8 @@ MPOPF is
 \noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
 \footnotesize
 \setlength{\jot}{1pt}
+\begin{subequations}
+\label{eq:net_all}
 \begin{align}
 \min\quad
 &\sum_{t\in\mathcal T} c^t S_{\mathrm{base}}P_{\mathrm{Subs}}^t\Delta t
@@ -53,4 +55,5 @@ MPOPF is
 &-P_{B,j}^{R}\leq P_{B,j}^t\leq P_{B,j}^{R}.
 \label{eq:net_pb_bounds}
 \end{align}
+\end{subequations}
 \end{minipage}}
