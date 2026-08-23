@@ -1,8 +1,16 @@
 \section{First-Order DDP Derivation}
 \label{app:user_ddp}
 
-This appendix states the first-order Differential Dynamic Programming workflow
-directly in MPOPF notation.  Equality multipliers are denoted by $\lambda$ and
+The copper-plate problem below is included as the reference problem used to
+derive and test the first-order Differential Dynamic Programming workflow. It
+keeps the temporal battery coupling explicit without introducing network
+equations, so the information passed between period subproblems can be seen
+directly.
+
+\input{sections/copper_plate_model}
+\input{sections/simulation_setup}
+
+The derivation is stated directly in MPOPF notation. Equality multipliers are denoted by $\lambda$ and
 inequality multipliers by $\mu$.  Thus the dynamics multiplier called $\mu[t]$
 in the earlier derivation is written $\lambda_{\mathrm{soc}}^t$ here.
 
