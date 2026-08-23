@@ -5,8 +5,17 @@ load, PV, and price data directly at each stage. Compact problems retain
 FilterDDP's dense null-space backward pass. For feeder models, sparse
 Jacobians and local Hessian blocks are instead assembled into
 \begin{equation}
-\begin{bmatrix}H&A^{\mathsf T}\\A&0\end{bmatrix}
-\begin{bmatrix}\Delta u\\\Delta\lambda\end{bmatrix}=b,
+\begin{bmatrix}
+\underset{n_u\times n_u}{H} &
+\underset{n_u\times n_c}{A^{\mathsf T}}\\
+\underset{n_c\times n_u}{A} &
+\underset{n_c\times n_c}{0}
+\end{bmatrix}
+\begin{bmatrix}
+\underset{n_u\times1}{\Delta u}\\
+\underset{n_c\times1}{\Delta\lambda}
+\end{bmatrix}
+=\underset{(n_u+n_c)\times1}{b},
 \label{eq:sparse_kkt}
 \end{equation}
 For a stage with $n_u$ controls and $n_c$ equality constraints,
