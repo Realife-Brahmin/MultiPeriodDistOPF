@@ -1,45 +1,92 @@
-\section{Implementation}
+\section{Implementation and Results}
 
-FilterDDP.jl was modified in two ways.  First, its optimal-control interface
-accepts per-stage objective and constraint vectors, representing time-varying
-data directly without an auxiliary interpolating state.  Second, the feeder
-path replaces large compile-time \texttt{SVector}/\texttt{SMatrix} workspaces
-with dynamic, LAPACK-backed factorizations and analytic derivatives.\footnote{The
-superseded $T=2$ stall in static solver construction motivated this rewrite.
-Xu \emph{et al.} similarly use LAPACK for larger problems~\cite{Xu2026FilterDDP}.}
-StaticArrays remains for compact stage inputs.
-Tests use Julia 1.12.6, FilterDDP 0.6.0 (revision \texttt{513a104}),
-StaticArrays 1.9.18, JuMP 1.31.1, and Ipopt 1.15.0.
+The network transcription uses analytic derivatives and accepts time-varying
+load, PV, and price data directly at each stage. Compact problems retain
+FilterDDP's dense null-space backward pass. For feeder models, sparse
+Jacobians and local Hessian blocks are instead assembled into the saddle-point
+system
+\begin{equation}
+\begin{bmatrix}H&A^{\mathsf T}\\A&0\end{bmatrix}
+\begin{bmatrix}\Delta u\\\Delta\lambda\end{bmatrix}=b,
+\label{eq:sparse_kkt}
+\end{equation}
+which is solved by sparse LU without explicitly constructing a dense QR basis
+or reduced Hessian. The dense route has less overhead for small problems; the
+sparse route is required when those dense intermediate matrices no longer fit
+practical memory. Reported FilterDDP times include its optimization iterations,
+not model construction. Centralized references use the exact native
+second-order cone equivalent of (\ref{eq:net_soc}) in Gurobi and were checked by
+an independent constraint validator.
 
-\subsection{IEEE123C Evaluation}
+\subsection{IEEE123C}
 
-The network model in Section~\ref{sec:network_mpopf} was evaluated on the
-single-phase IEEE123C feeder (128 buses, 127 branches, 51 batteries, and 51 PV
-units) for $T\in\{3,6,12,24,48,96\}$.  Both FilterDDP and the independent
-centralized JuMP/Ipopt reference include the $r_{ij}\ell_{ij}^t$ and
-$x_{ij}\ell_{ij}^t$ line-loss terms in the nodal balances.  Every centralized
-solution passed the constraint validator, and FilterDDP returned normally at
-all six horizons with maximum equality residual below $9\times10^{-8}$.
+The loss-aware model was first tested on IEEE123C (128 buses, 127 branches,
+51 batteries, and 51 PV units), with per-stage dimensions
+$(n_x,n_u,n_c)=(51,791,562)$. FilterDDP returned normally for
+$T\in\{3,6,12,24,48,96\}$; its largest equality residual was
+$8.9\times10^{-8}$ and its largest absolute objective gap from the centralized
+reference was $5.5\times10^{-4}$. Runtime increased from 74.9~s at $T=3$ to
+2021.4~s at $T=96$ (48 and 121 iterations, respectively). The corresponding
+centralized solve required 12.57~s at $T=96$. This establishes functional
+horizon scaling, but not competitive runtime.
 
-At each stage, $n_x=51$, $n_u=791$, and $n_c=562$.  FilterDDP therefore forms a
-$51\times51$ value Hessian and a $791\times791$ control Hessian, factors a
-$562\times562$ equality block, and factors a $229\times229$ reduced Hessian.
-These dimensions are independent of $T$; the number of stage factorizations
-scales with $T$.
+\subsection{Corrected IEEE2522C}
+
+The feeder previously labelled ``IEEE2552C'' was renamed IEEE2522C. Its
+one-phase aggregate conversion had also combined aggregate three-phase powers
+with a phase-voltage base, making per-unit line impedances nine times too
+large. Only the electrical base was corrected, to 7.2~kV on 1~MVA;
+physical impedances, powers, DER ratings, voltage limits, losses, and the SOC
+model were unchanged. With this correction, cold-start centralized models
+were globally optimal and independently validated through $T=96$.
+
+Here $(n_x,n_u,n_c)=(250,13358,10337)$ per stage. The original dense
+backward pass could not complete one iteration because it attempted a dense
+$13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
+KKT route removes that storage bottleneck and gives the verified results in
+Table~\ref{tab:ieee2522_filterddp}. All runs used full line-loss balances and
+the exact SOC constraint, without warm starts.
 
 \begin{table}[H]
 \centering
-\caption{IEEE123C Solution Times}
-\label{tab:ieee123_times}
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{c r r r}
+\caption{Sparse FilterDDP on Corrected IEEE2522C}
+\label{tab:ieee2522_filterddp}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{c r r r r}
 \toprule
-$T$ & FilterDDP iterations & FilterDDP (s) & Ipopt (s) \\
+$T$ & Iter. & Time (s) & $|J-J^\star|$ & Eq. residual \\
 \midrule
-24 & 97  & 610.77  & 3.06 \\
-96 & 121 & 2021.41 & 12.57 \\
+3  & 56 & 233.098  & $7.34\times10^{-4}$ & $5.63\times10^{-10}$ \\
+6  & 82 & 836.933  & $1.30\times10^{-3}$ & $1.75\times10^{-9}$ \\
+12 & 79 & 1902.103 & $9.21\times10^{-5}$ & $2.29\times10^{-8}$ \\
+24 & 84 & 3068.228 & $1.22\times10^{-3}$ & $3.61\times10^{-8}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The complete horizon sweep is archived with the reproducibility results.
+Thus the method is numerically and memory feasible at a 24-period horizon on
+this feeder, but remains slow: the $T=24$ run took 51.1~min, versus 27.2~s of
+Gurobi solver time for the centralized reference. Reusing UMFPACK's symbolic
+factorization did not help: the identical $T=3$ solution slowed from 233.1 to
+295.3~s. Better scaling therefore requires a more suitable numerical
+factorization or exploitation of feeder structure, rather than symbolic-cache
+reuse alone.
+
+\subsection{Large10kC Boundary}
+
+The synthetic large10kC feeder also required a data correction before any OPF
+comparison was meaningful. Its aggregate voltage base was restored to
+12.47~kV, and uniform synthetic ordinary-line sections were shortened from
+$(r,x)=(0.07,0.01)~\Omega$ to $(0.0175,0.0025)~\Omega$; area-boundary
+sections use $(0.000025,0.000025)~\Omega$. Powers, DER capacities, voltage
+limits, loss terms, and SOC constraints were retained. Cold-start Gurobi
+solutions then validated at $T=1$ and $T=3$; the latter has 133035 variables,
+objective 2985281.3189, 27 barrier iterations, and 6.304~s solver time.
+
+For FilterDDP at $T=3$, the per-stage dimensions are
+$(n_x,n_u,n_c)=(1020,54665,42303)$. Blocking the multiple right-hand-side KKT
+solve bounded memory and avoided the earlier immediate allocation failure.
+However, the run produced no terminal iteration report after two hours and
+was stopped manually. Consequently, no FilterDDP convergence or timing claim
+is made for large10kC. The experiment instead identifies sparse numerical
+factorization and feedback-solve cost as the present scalability boundary.
