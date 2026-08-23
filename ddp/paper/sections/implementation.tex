@@ -9,6 +9,11 @@ Jacobians and local Hessian blocks are instead assembled into
 \begin{bmatrix}\Delta u\\\Delta\lambda\end{bmatrix}=b,
 \label{eq:sparse_kkt}
 \end{equation}
+For a stage with $n_u$ controls and $n_c$ equality constraints,
+$H\in\mathbb R^{n_u\times n_u}$, $A\in\mathbb R^{n_c\times n_u}$,
+$\Delta u\in\mathbb R^{n_u}$, $\Delta\lambda\in\mathbb R^{n_c}$, and
+$b\in\mathbb R^{n_u+n_c}$; hence the full block matrix is
+$(n_u+n_c)\times(n_u+n_c)$.
 At a high level, $H$ collects the local curvature terms used by the backward
 step, $A$ is the linearized equality-constraint Jacobian, and $\Delta u$ and
 $\Delta\lambda$ are the control and equality-multiplier updates; $b$ collects
