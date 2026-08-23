@@ -50,38 +50,39 @@ runtime.}
 \toprule
 System & Solved & Tested horizons $T$ \\
 \midrule
-IEEE123C  & \resultyes & 3, 6, 12, 24, 48, 96 \\
-IEEE2522C & \resultyes & 3, 6, 12, 24 \\
-large10kC & \resultno  & 3 \\
+IEEE123  & \resultyes & 3, 6, 12, 24, 48, 96 \\
+IEEE2522 & \resultyes & 3, 6, 12, 24 \\
+large10k & \resultno  & 3 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Successful FilterDDP Network Solves}
+\caption{FilterDDP Solve Times. A red cross denotes that no solve completed.}
 \label{tab:network_times}
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{l r r r}
 \toprule
 System & $T$ & Iterations & Solve time (s) \\
 \midrule
-IEEE123C  & 3  & 48  & 13.856 \\
+IEEE123   & 3  & 48  & 13.856 \\
            & 6  & 60  & 143.647 \\
            & 12 & 81  & 306.817 \\
            & 24 & 97  & 610.766 \\
            & 48 & 111 & 923.073 \\
            & 96 & 121 & 2021.412 \\
-IEEE2522C & 3  & 56  & 233.098 \\
+IEEE2522  & 3  & 56  & 233.098 \\
            & 6  & 82  & 836.933 \\
            & 12 & 79  & 1902.103 \\
            & 24 & 84  & 3068.228 \\
+large10k  & 3  & \multicolumn{2}{c}{\resultno} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-IEEE123C has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
-IEEE2522C has $(250,13358,10337)$. The original dense IEEE2522C backward pass
+IEEE123 has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
+IEEE2522 has $(250,13358,10337)$. The original dense IEEE2522 backward pass
 could not complete one iteration because it attempted a dense
 $13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
 KKT route removed that storage bottleneck and reached a realistic $T=24$
@@ -91,10 +92,10 @@ identical $T=3$ solution slowed from 233.1 to 295.3~s. Thus the present result
 establishes correctness and memory feasibility, not computational
 competitiveness.
 
-For large10kC at $T=3$, the per-stage dimensions are
+For large10k at $T=3$, the per-stage dimensions are
 $(n_x,n_u,n_c)=(1020,54665,42303)$. Blocking the multiple right-hand-side KKT
 solve avoided the earlier immediate allocation failure. However, the run
 produced no terminal iteration report after two hours and was stopped
 manually. No FilterDDP convergence or timing claim is therefore made for this
 system. Appendix~\ref{app:network_corrections} records the test-data
-corrections made before the IEEE2522C and large10kC comparisons.
+corrections made before the IEEE2522 and large10k comparisons.
