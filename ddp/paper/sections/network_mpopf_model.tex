@@ -2,8 +2,9 @@
 \label{sec:network_mpopf}
 
 Let $\mathcal N$, $\mathcal L$, $\mathcal B$, and $\mathcal D$ denote buses,
-directed branches, battery buses, and PV buses; $0$ is the substation and
-$\mathcal C(j)$ contains the children of $j$.  The network MPOPF is
+directed branches, battery buses, and PV buses; $j_{\mathrm{subs}}=1$ is the
+substation bus and $\mathcal C(j)$ contains the children of $j$. The network
+MPOPF is
 
 \noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
 \footnotesize
@@ -18,10 +19,12 @@ $\mathcal C(j)$ contains the children of $j$.  The network MPOPF is
 &+w\sum_{j\in\mathcal B}\bigl(B_j^T-B_{\mathrm{init},j}\bigr)^2
 \label{eq:net_obj}\\
 \mathrm{s.t.}\quad
-&P_{\mathrm{Subs}}^t-\sum_{(0,k)\in\mathcal L}P_{0k}^t=0,
+&P_{\mathrm{Subs}}^t-\sum_{(j_{\mathrm{subs}},k)\in\mathcal L}
+ P_{j_{\mathrm{subs}}k}^t=0,
 \label{eq:net_sub_p}\\
 &P_{\mathrm{Subs}}^t\geq0,\\
-&Q_{\mathrm{Subs}}^t-\sum_{(0,k)\in\mathcal L}Q_{0k}^t=0,
+&Q_{\mathrm{Subs}}^t-\sum_{(j_{\mathrm{subs}},k)\in\mathcal L}
+ Q_{j_{\mathrm{subs}}k}^t=0,
 \label{eq:net_sub_q}\\
 &\sum_{k\in\mathcal C(j)}P_{jk}^t-P_{ij}^t+r_{ij}\ell_{ij}^t
  =P_{B,j}^t+p_{D,j}^t-p_{L,j}^t,
@@ -35,7 +38,7 @@ $\mathcal C(j)$ contains the children of $j$.  The network MPOPF is
 &(P_{ij}^t)^2+(Q_{ij}^t)^2\leq v_i^t\ell_{ij}^t,
 \label{eq:net_soc}\\
 &\ell_{ij}^t\geq0,\\
-&v_0^t=1.05^2,\\
+&v_{\mathrm{Subs}}^t=1.05^2,\\
 &\underline V_j^2\leq v_j^t\leq\overline V_j^2,
 \label{eq:net_v_bounds}\\
 &-q_{D,j}^{\max,t}\leq q_{D,j}^t\leq q_{D,j}^{\max,t},
