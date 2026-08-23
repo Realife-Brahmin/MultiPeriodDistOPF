@@ -9,7 +9,12 @@ Jacobians and local Hessian blocks are instead assembled into
 \begin{bmatrix}\Delta u\\\Delta\lambda\end{bmatrix}=b,
 \label{eq:sparse_kkt}
 \end{equation}
-and solved by sparse LU without explicitly constructing a dense QR basis or
+At a high level, $H$ collects the local curvature terms used by the backward
+step, $A$ is the linearized equality-constraint Jacobian, and $\Delta u$ and
+$\Delta\lambda$ are the control and equality-multiplier updates; $b$ collects
+the corresponding first-order residual terms. A complete interpretation of
+these blocks requires the FilterDDP derivation and is beyond the present
+working note. The system is solved by sparse LU without explicitly constructing a dense QR basis or
 reduced Hessian. The dense route has less overhead for small problems; the
 sparse route is required when those dense intermediate matrices become
 impractical. Reported times include FilterDDP optimization iterations, not
