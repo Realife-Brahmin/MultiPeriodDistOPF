@@ -155,6 +155,9 @@ the objective alternates between $0.74765035$ and $0.81295027$.  The
 centralized objective is $0.747650349$; on the other branch the battery dispatch
 differs by as much as $0.850$~p.u. (850~kW).  Thus even this three-period
 copper-plate problem exposes the instability of the first-order iteration.
+As a separate stabilization check on the shared $T=6$ instance, averaging each
+new raw dual vector with the preceding two also failed to converge, settling
+instead into a smaller period-four cycle through 2000 sweeps.
 On the identical data, bounds, and initialization, FilterDDP terminates normally
 in 14 iterations.  Its objective differs from centralized Ipopt by
 $1.48\times10^{-10}$, while its maximum battery-power and energy differences
