@@ -74,11 +74,20 @@
     \node[solve] (q\r\t) at ({-52+\xp*(\t-1)},{-33-\yp*\r}) {$\mathrm{SPOPF}_{\t}^{\lab}$};
 }
 
-% Current-sweep state propagation.
-\foreach \r in {0,1,2} {
-  \draw[hard] (q\r1.east) -- node[above,font=\scriptsize] {$B$} (q\r2.west);
-  \draw[hard] (q\r2.east) -- node[above,font=\scriptsize] {$B$} (q\r3.west);
-}
+% Current-sweep state propagation. The labels match the bold blue state
+% notation used in the per-period equations.
+\draw[hard] (q01.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k,1}}}$} (q02.west);
+\draw[hard] (q02.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k,2}}}$} (q03.west);
+\draw[hard] (q11.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+1,1}}}$} (q12.west);
+\draw[hard] (q12.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+1,2}}}$} (q13.west);
+\draw[hard] (q21.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+2,1}}}$} (q22.west);
+\draw[hard] (q22.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+2,2}}}$} (q23.west);
 
 % Highlighted path followed by terminal marginal information.
 \draw[soft,line width=1.4pt] (q03.south west) --
