@@ -641,3 +641,13 @@ index d7f8ae6..cc39889 100644
      α = solver.update[t].α
      β = solver.update[t].β
      ū = solver.nominal[t].u
+diff --git a/src/print.jl b/src/print.jl
+index dd2e20a..be42401 100644
+--- a/src/print.jl
++++ b/src/print.jl
+@@ -25,4 +25,5 @@ function iteration_status(
+         data.k, data.objective, data.primal_inf, data.dual_inf, data.cs_inf_0,
+         log10(data.μ), data.reg_last == 0.0 ? "    -  " : @sprintf("% 2.4f", log10(data.reg_last)),
+         data.step_size, data.l)
++    flush(stdout)
+ end

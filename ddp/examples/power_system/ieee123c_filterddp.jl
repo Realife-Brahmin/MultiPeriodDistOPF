@@ -299,6 +299,18 @@ status = solve!(solver, x0, ubar)
 
 # Compare against the existing centralized JuMP/Ipopt result when available.
 xddp, uddp = get_trajectory(solver)
+solutionfile = joinpath(REPO, "ddp", "results", "network_filterddp",
+                        "filterddp_solution_$(system)_T$(T).jls")
+serialize(solutionfile, Dict(
+    :system => system,
+    :T => T,
+    :status => status,
+    :iterations => solver.data.k,
+    :x => xddp,
+    :u => uddp,
+))
+println("saved_solution=$solutionfile")
+flush(stdout)
 Jddp = 0.0
 max_eq = 0.0
 for t in 1:T

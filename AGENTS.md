@@ -172,10 +172,25 @@ converges in 82 iterations/836.933 s and `T = 12` in 79 iterations/1902.103 s,
 while `T = 24` converges in 84 iterations/3068.228 s; all closely match
 centralized references. A symbolic-factorization cache
 was tested and rejected because it slowed the identical `T = 3` run from
-233.098 s to 295.296 s. Still unverified: IEEE2522C at `T >= 48`, any sparse
-FilterDDP run on large10kC, and whether a symmetric-indefinite or feeder-
-structured numerical solve materially reduces the current generic sparse-LU
-time and fill-in.
+233.098 s to 295.296 s. Large10kC sparse FilterDDP is now tested through
+`T = 12`: `T = 3` converged strictly in 115 iterations/7123.782 s, and `T = 6`
+in 128 iterations/23490.218 s. `T = 12` reached the 200-iteration limit after
+69951.536 s with objective 2976105.092790690251, equality/primal residual
+`6.821e-13`, complementarity `1.053e-9`, and dual infeasibility `5.200e-7`;
+therefore it misses FilterDDP's strict `1e-7` stationarity tolerance but meets
+the separately reported practical `1e-6` large-network tolerance. Complete
+iteration traces are committed under `ddp/results/network_filterddp/`.
+
+The large10k matrix path is only partly sparse. The `96968 x 96968` KKT
+coefficient is sparse and uses generic sparse LU, but its `96968 x 1021`
+right-hand side is explicitly dense. Per-stage `beta` (`54665 x 1020`),
+`omega` (`42303 x 1020`), and both bound-dual sensitivity matrices are also
+dense and persist across the horizon (about 1.57 GiB/stage), while the value
+update includes dense `beta' * B`. This explains the near-linear memory growth
+and is at least as important a scaling target as sparse-LU fill-in. Still
+unverified: IEEE2522C at `T >= 48`, large10kC at `T >= 24`, and whether a
+symmetric-indefinite, feeder-structured, selected-RHS, or matrix-free solve
+materially reduces factorization, dense-sensitivity, and storage costs.
 
 ## Pending task (do not start until asked)
 

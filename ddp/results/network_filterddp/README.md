@@ -221,3 +221,41 @@ global optima and every constraint passed the independent validator:
   Gurobi 6.304 s, solve wall 8.241 s.
 
 The machine-readable record is `large10kc_corrected_gurobi_start.csv`.
+
+The sparse-KKT FilterDDP path subsequently completed the corrected `T = 3`
+instance without a warm start. It terminated with status 0 after 115
+iterations and 7123.782 s (1 h 58 min 44 s), with objective
+2985283.795395107940 and maximum equality residual `8.251e-9`. Against the
+stored native-conic objective 2985281.3189, the absolute objective difference
+is 2.4765 (`8.30e-7` relative). This establishes numerical convergence and
+feasibility on the 10,321-bus feeder; the small objective difference has not
+yet been decomposed into individual physical-variable differences.
+
+The same cold-start path completed `T = 6` with strict status 0 after 128
+iterations and 23490.218 s (6 h 31 min 30 s). Its objective was
+2944457.014902044553 and its maximum equality residual was `5.887e-9`.
+
+At `T = 12`, the objective stabilized at 2976105.092790690251, but the strict
+`1e-7` stationarity test did not terminate before the 200-iteration limit.
+The run returned normally after 69951.536 s (19 h 25 min 52 s), allowing the
+driver to evaluate the final trajectory before process exit. That driver
+version did not serialize the trajectory vectors, so only the metrics and full
+iteration history survive. Its final primal, dual, and complementarity
+infeasibilities were `6.821e-13`, `5.200e-7`, and `1.053e-9`, respectively. Thus it satisfies
+a practical `1e-6` large-network tolerance even though its recorded FilterDDP
+status is 8. After iteration 170, line-search steps collapsed from `0.25` to
+as little as `2.384e-7` while the objective was unchanged and dual
+infeasibility remained near `5.2e-7`; the extra iterations did not materially
+improve the solution.
+
+Machine-readable summaries and complete printed iteration histories are in
+`large10kc_filterddp_runs.csv`, `large10kc_filterddp_T6_trace.csv`, and
+`large10kc_filterddp_T12_trace.csv`. The trace extractor is
+`scripts/extract_filterddp_trace.ps1`. These traces contain every printed
+objective, infeasibility, barrier, regularization, step-size, and line-search
+value; this run did not timestamp individual rows, so per-iteration wall time
+cannot be reconstructed exactly.
+
+The driver now serializes `x`, `u`, status, and iteration count immediately
+after every subsequent normal `solve!` return, including an iteration-limit
+return. Generated solution files remain local and are ignored by Git.
