@@ -18,7 +18,7 @@
 \newcommand{\redB}[1]{\textcolor{redvar}{\mathbf{#1}}}        % Previous iteration B
 \newcommand{\greenmu}[1]{\textcolor{greenvar}{\mathbf{#1}}}   % Dual variables \mu
 
-\title{Distributed Dynamic Programming (DDP):\\Forward Pass Decomposition for Copper Plate MPOPF}
+\title{Differential Dynamic Programming (DDP):\\Forward Pass Decomposition for Copper Plate MPOPF}
 \author{}
 \date{\today}
 
@@ -27,7 +27,7 @@
 
 \section{Problem Overview}
 
-Distributed Dynamic Programming (DDP) decomposes a multi-period optimal power flow (MPOPF) problem into $T$ sequential subproblems using a forward pass approach. Each time step $t$ solves a local optimization problem that couples with adjacent time steps through:
+Differential Dynamic Programming (DDP) decomposes a multi-period optimal power flow (MPOPF) problem into $T$ sequential subproblems using a forward pass approach. Each time step $t$ solves a local optimization problem that couples with adjacent time steps through:
 \begin{itemize}
     \item \textbf{Backward coupling}: State trajectory from previous time step $t-1$ (current iteration)
     \item \textbf{Forward coupling}: Shadow prices (dual variables) from next time step $t+1$ (previous iteration)

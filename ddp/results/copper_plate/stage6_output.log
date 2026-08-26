@@ -1,0 +1,156 @@
+
+==============================================================================
+6a — grid-power lower bound only, T = 6  (Psub >= 0, no export)
+==============================================================================
+iterations 10, termination Optimal (status 0), reg_last 0.00e+00
+objective  FilterDDP 1.466836861351   reference 1.466836861351   gap 0.000e+00
+max |ΔPsub| 6.588e-11   max |ΔP_B| 6.588e-11   max |ΔB| 8.457e-11
+max power-balance residual 4.441e-16   max dynamics residual 0.000e+00
+solver primal_inf 2.220e-16  dual_inf 6.106e-16  cs_inf 3.668e-11  μ 3.67e-11
+
+  t      Psub        Psub_ref        P_B         P_B_ref        B          B_ref
+  1    1.654199    1.654199    0.002329    0.002329    2.000000    2.000000
+  2    1.315223    1.315223    0.572963    0.572963    1.997671    1.997671
+  3    1.642973    1.642973    0.355001    0.355001    1.424707    1.424707
+  4    2.184510    2.184510   -0.350342   -0.350342    1.069707    1.069707
+  5    2.191448    2.191448   -0.568304   -0.568304    1.420048    1.420048
+  6    1.654199    1.654199    0.002329    0.002329    1.988353    1.988353
+  7           -           -           -           -    1.986023    1.986023
+
+active set (reference, from KKT multipliers):
+  (none)
+bound multipliers from FilterDDP (zl / zu per stage; large => active):
+  t=1  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=2  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=3  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=4  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=5  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=6  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+
+==============================================================================
+6b — battery-power bounds only, T = 6  (-0.45 <= P_B <= 0.45)
+==============================================================================
+iterations 12, termination Optimal (status 0), reg_last 0.00e+00
+objective  FilterDDP 1.468292928718   reference 1.468292928644   gap 7.337e-11
+max |ΔPsub| 3.423e-09   max |ΔP_B| 3.423e-09   max |ΔB| 6.361e-09
+max power-balance residual 4.441e-16   max dynamics residual 0.000e+00
+solver primal_inf 4.441e-16  dual_inf 2.970e-15  cs_inf 3.668e-11  μ 3.67e-11
+
+  t      Psub        Psub_ref        P_B         P_B_ref        B          B_ref
+  1    1.653038    1.653038    0.003491    0.003491    2.000000    2.000000
+  2    1.438186    1.438186    0.450000    0.450000    1.996509    1.996509
+  3    1.641811    1.641811    0.356162    0.356162    1.546509    1.546509
+  4    2.183348    2.183348   -0.349180   -0.349180    1.190346    1.190346
+  5    2.073143    2.073143   -0.450000   -0.450000    1.539526    1.539526
+  6    1.653038    1.653038    0.003491    0.003491    1.989526    1.989526
+  7           -           -           -           -    1.986035    1.986035
+
+active set (reference, from KKT multipliers):
+  P_B[2] <= 0.45
+  P_B[5] >= -0.45
+bound multipliers from FilterDDP (zl / zu per stage; large => active):
+  t=1  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=2  zl = [0.0, 0.0]                 zu = [0.0, 0.0124]
+  t=3  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=4  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+  t=5  zl = [0.0, 0.0117]              zu = [0.0, 0.0]
+  t=6  zl = [0.0, 0.0]                 zu = [0.0, 0.0]
+
+==============================================================================
+6c — energy bounds only, T = 6  (1.20 <= B <= 1.95), slack reformulation
+==============================================================================
+iterations 14, termination Optimal (status 0), reg_last 0.00e+00
+objective  FilterDDP 1.474941963093   reference 1.474941962946   gap 1.467e-10
+max |ΔPsub| 4.132e-09   max |ΔP_B| 4.132e-09   max |ΔB| 4.234e-09
+max power-balance residual 4.441e-16   max dynamics residual 0.000e+00
+solver primal_inf 4.441e-16  dual_inf 8.882e-16  cs_inf 3.669e-11  μ 3.67e-11
+
+  t      Psub        Psub_ref        P_B         P_B_ref        B          B_ref
+  1    1.606529    1.606529    0.050000    0.050000    2.000000    2.000000
+  2    1.404205    1.404205    0.483981    0.483981    1.950000    1.950000
+  3    1.731955    1.731955    0.266019    0.266019    1.466019    1.466019
+  4    2.100186    2.100186   -0.266019   -0.266019    1.200000    1.200000
+  5    2.107125    2.107125   -0.483981   -0.483981    1.466019    1.466019
+  6    1.656529    1.656529   -0.000000   -0.000000    1.950000    1.950000
+  7           -           -           -           -    1.950000    1.950000
+
+active set (reference, from KKT multipliers):
+  B[2] <= 1.95
+  B[4] >= 1.2
+  B[6] <= 1.95
+  B[7] <= 1.95
+bound multipliers from FilterDDP (zl / zu per stage; large => active):
+  t=1  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0137]
+  t=2  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0]
+  t=3  zl = [0.0, 0.0, 0.0173]         zu = [0.0, 0.0, 0.0]
+  t=4  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0]
+  t=5  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0087]
+  t=6  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.36]
+energy slack s = [0.75, 0.266019, 0.0, 0.266019, 0.75, 0.75]
+
+==============================================================================
+6d — all bounds together, T = 6
+==============================================================================
+iterations 16, termination Optimal (status 0), reg_last 0.00e+00
+objective  FilterDDP 1.475172909993   reference 1.475172909773   gap 2.201e-10
+max |ΔPsub| 6.866e-09   max |ΔP_B| 6.866e-09   max |ΔB| 6.968e-09
+max power-balance residual 4.441e-16   max dynamics residual 0.000e+00
+solver primal_inf 4.441e-16  dual_inf 5.596e-13  cs_inf 3.670e-11  μ 3.67e-11
+
+  t      Psub        Psub_ref        P_B         P_B_ref        B          B_ref
+  1    1.606529    1.606529    0.050000    0.050000    2.000000    2.000000
+  2    1.438186    1.438186    0.450000    0.450000    1.950000    1.950000
+  3    1.697973    1.697973    0.300000    0.300000    1.500000    1.500000
+  4    2.134168    2.134168   -0.300000   -0.300000    1.200000    1.200000
+  5    2.073143    2.073143   -0.450000   -0.450000    1.500000    1.500000
+  6    1.656529    1.656529   -0.000000   -0.000000    1.950000    1.950000
+  7           -           -           -           -    1.950000    1.950000
+
+active set (reference, from KKT multipliers):
+  B[2] <= 1.95
+  P_B[2] <= 0.45
+  B[4] >= 1.2
+  P_B[5] >= -0.45
+  B[6] <= 1.95
+  B[7] <= 1.95
+bound multipliers from FilterDDP (zl / zu per stage; large => active):
+  t=1  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0103]
+  t=2  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0068, 0.0]
+  t=3  zl = [0.0, 0.0, 0.0105]         zu = [0.0, 0.0, 0.0]
+  t=4  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.0]
+  t=5  zl = [0.0, 0.0068, 0.0]         zu = [0.0, 0.0, 0.0053]
+  t=6  zl = [0.0, 0.0, 0.0]            zu = [0.0, 0.0, 0.36]
+energy slack s = [0.75, 0.3, 0.0, 0.3, 0.75, 0.75]
+
+==============================================================================
+6f — tolerance sweep on case 6d
+==============================================================================
+       tol  iters status termination                   |ΔJ|    dual_inf
+     1e-06     14      0 Optimal                  6.127e-07   2.651e-15
+     1e-07     14      0 Optimal                  3.535e-07   1.832e-15
+     1e-08     15      0 Optimal                  1.211e-08   2.909e-14
+     1e-09     16      0 Optimal                  6.000e-10   1.115e-12
+     1e-10     16      0 Optimal                  2.201e-10   5.596e-13
+     1e-12   1000      8 Max iterations           1.800e-12   5.924e-10
+
+==============================================================================
+6g — genuinely infeasible bounds, T = 6
+==============================================================================
+Elementary proof: P_B >= 0.00 forbids charging, so B can only fall:
+B^2 = B_0 - P_B^1 Δt <= B_0 = 2.00.  But B^{t+1} >= 2.05 is required,
+and 2.00 < 2.05, so no feasible trajectory exists.
+independent active-set enumeration: no KKT point exists (confirms infeasible)
+FilterDDP: iters 12, status 7 (Line search failed), primal_inf 6.378e-01, dual_inf 5.879e-01
+max power-balance residual of the returned point: 6.378e-01
+NOTE: FilterDDP has no feasibility restoration phase, so an infeasible
+      problem surfaces only as a non-zero status plus a residual the
+      caller must check. There is no 'infeasible' status code.
+
+==============================================================================
+STAGE 6 SUMMARY
+==============================================================================
+case                              iters status        |ΔJ|  max|ΔPsub|     max bal
+6a grid lower bound                  10      0   0.000e+00   6.588e-11   4.441e-16
+6b battery-power bounds              12      0   7.337e-11   3.423e-09   4.441e-16
+6c energy bounds                     14      0   1.467e-10   4.132e-09   4.441e-16
+6d all bounds                        16      0   2.201e-10   6.866e-09   4.441e-16

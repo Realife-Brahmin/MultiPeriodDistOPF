@@ -1,0 +1,108 @@
+% First-order DDP information flow in MPOPF notation. The upper half opens one
+% per-period solve and identifies exactly where each incoming quantity enters.
+% The lower half shows the resulting one-period-per-sweep propagation delay for
+% terminal marginal information on a T=3 horizon.
+\makeatletter
+\setlength{\@dblfptop}{0pt}
+\makeatother
+\begin{figure*}[!t]
+\centering
+\begin{tikzpicture}[
+  x=1mm,y=1mm,font=\small,
+  stage/.style={draw=black,line width=0.65pt,rounded corners=1mm,
+                fill=black!3,minimum width=66mm,minimum height=29mm,
+                align=left,inner sep=2.5mm},
+  given/.style={draw=cGiven,line width=0.7pt,rounded corners=0.8mm,
+                fill=cGiven!7,minimum width=35mm,minimum height=9mm,align=center},
+  future/.style={draw=cFuture,line width=0.7pt,densely dashed,rounded corners=0.8mm,
+                 fill=cFuture!6,minimum width=35mm,minimum height=9mm,align=center},
+  output/.style={draw=black!75,line width=0.55pt,rounded corners=0.8mm,
+                 fill=white,minimum width=38mm,minimum height=9mm,align=center},
+  solve/.style={draw=black!75,line width=0.55pt,rounded corners=0.7mm,
+                fill=black!4,minimum width=22mm,minimum height=8mm,align=center},
+  hard/.style={-{Stealth[length=1.8mm,width=1.4mm]},draw=cGiven,line width=0.9pt},
+  soft/.style={-{Stealth[length=1.8mm,width=1.4mm]},draw=cFuture,
+               line width=0.9pt,densely dashed},
+  neutral/.style={-{Stealth[length=1.7mm,width=1.3mm]},draw=black!70,line width=0.7pt},
+  note/.style={draw=black!35,rounded corners=0.7mm,fill=white,
+               align=left,inner sep=1.7mm,font=\scriptsize},
+]
+
+% Anatomy of one period solve.
+\node[font=\bfseries,anchor=west] at (-88,45) {What period $t$ actually receives and solves};
+
+\node[given]  (Bin) at (-68,30) {$\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}$\\current sweep};
+
+\node[stage] (spopf) at (0,22.5) {%
+  \textbf{SPOPF $t$}\\
+  $\displaystyle \min\; c^tP_{\mathrm{Subs}}^t\Delta t
+       +C_B(P_B^t)^2\Delta t
+       -\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}B^t$\\
+  $P_{\mathrm{Subs}}^t+P_B^t=p_L^t$\\
+  $B^t-\textcolor{cGiven}{\boldsymbol{B^{k,t-1}}}+\Delta tP_B^t=0$,
+  \quad box limits};
+
+\node[output] (primal) at (68,34) {$P_{\mathrm{Subs}}^{k,t},\ P_B^{k,t},\ B^{k,t}$};
+\node[output] (dual)   at (68,22) {$\lambda_{\mathrm{soc}}^{k,t}$\\from SOC equality};
+\node[future] (Lin) at (68,10) {$\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k-1,t+1}}}$\\from period $t+1$};
+
+\draw[hard] (Bin.east) -- node[above,font=\scriptsize] {fixed in constraint} (spopf.west |- Bin);
+\draw[neutral] (spopf.east |- primal) -- (primal.west);
+\draw[neutral] (spopf.east |- dual) -- (dual.west);
+\draw[soft] (Lin.west) -- node[below,font=\scriptsize] {linear objective term} (spopf.east |- Lin);
+
+\node[note,anchor=north west,text width=50mm] at (22,1.5) {%
+  $\textcolor{cGiven}{\boldsymbol{B^{k,t}}}$ goes immediately to period $t+1$;\\
+  $\textcolor{cFuture}{\boldsymbol{\lambda_{\mathrm{soc}}^{k,t}}}$ cannot affect period $t-1$\\
+  until the next outer sweep.};
+
+\node[note,anchor=north west,text width=45mm] at (-88,1.5) {%
+  Local data $c^t,p_L^t$ and all limits also enter the SPOPF.\\
+  At $t=T$, the future term is replaced by
+  $w(B^T-B_{\mathrm{init}})^2$.};
+
+% Consequence across sweeps.
+\node[font=\bfseries,anchor=west] at (-88,-18) {Consequence for a $T=3$ horizon};
+
+\def\xp{30}
+\def\yp{14}
+\foreach \t in {1,2,3}
+  \node[font=\scriptsize\bfseries] at ({-52+\xp*(\t-1)},-24) {period $t=\t$};
+\foreach \r/\lab in {0/k,1/{k+1},2/{k+2}} {
+  \node[font=\scriptsize\bfseries,anchor=east] at (-66,{-33-\yp*\r}) {sweep $\lab$};
+  \foreach \t in {1,2,3}
+    \node[solve] (q\r\t) at ({-52+\xp*(\t-1)},{-33-\yp*\r}) {$\mathrm{SPOPF}_{\t}^{\lab}$};
+}
+
+% Current-sweep state propagation. The labels match the bold blue state
+% notation used in the per-period equations.
+\draw[hard] (q01.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k,1}}}$} (q02.west);
+\draw[hard] (q02.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k,2}}}$} (q03.west);
+\draw[hard] (q11.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+1,1}}}$} (q12.west);
+\draw[hard] (q12.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+1,2}}}$} (q13.west);
+\draw[hard] (q21.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+2,1}}}$} (q22.west);
+\draw[hard] (q22.east) -- node[above,font=\scriptsize]
+  {$\textcolor{cGiven}{\boldsymbol{B^{k+2,2}}}$} (q23.west);
+
+% Highlighted path followed by terminal marginal information.
+\draw[soft,line width=1.4pt] (q03.south west) --
+  node[above left,font=\scriptsize,text=cFuture] {$\lambda_{\mathrm{soc}}^{k,3}$} (q12.north east);
+\draw[soft,line width=1.4pt] (q12.south west) --
+  node[above left,font=\scriptsize,text=cFuture] {$\lambda_{\mathrm{soc}}^{k+1,2}$} (q21.north east);
+
+\node[note,anchor=west,text width=55mm] at (25,-41) {%
+  \textbf{Propagation delay.} Terminal marginal information produced in
+  sweep $k$ reaches period 2 in sweep $k+1$ and period 1 only in sweep $k+2$.};
+\node[note,anchor=west,text width=55mm] at (25,-59) {%
+  \textbf{What is missing.} Only $\lambda_{\mathrm{soc}}$ is passed backward.
+  No value-function curvature $V_{BB}$ crosses a period boundary.};
+
+\end{tikzpicture}
+\caption{Information flow in the first-order DDP sweep.}
+\label{fig:userddp}
+\end{figure*}

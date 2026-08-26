@@ -1,0 +1,59 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amsfonts}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,patterns}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{float}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage[table]{xcolor}
+\usepackage{titlesec}
+\usepackage{balance}
+
+\graphicspath{{./figures/}}
+
+% One semantic palette for every figure; see the header of that file.
+\input{figures/colors}
+
+% Heading and float spacing match the companion manuscript so sections can be
+% moved between the two documents without visual drift.
+\titlespacing*{\section}{0pt}{1.5ex plus 0.4ex minus 1.2ex}{0.5ex plus 0.2ex minus 0.4ex}
+\titlespacing*{\subsection}{0pt}{1.2ex plus 0.3ex minus 1.0ex}{0.4ex plus 0.2ex minus 0.3ex}
+\titlespacing*{\subsubsection}{0pt}{1.0ex plus 0.3ex minus 0.8ex}{0.3ex plus 0.1ex minus 0.2ex}
+\setlength{\textfloatsep}{10pt plus 2pt minus 5pt}
+\setlength{\floatsep}{10pt plus 2pt minus 5pt}
+\setlength{\intextsep}{10pt plus 2pt minus 5pt}
+\setlength{\abovecaptionskip}{1ex plus 0.2ex minus 0.5ex}
+\setlength{\belowcaptionskip}{0.5ex plus 0.2ex minus 0.3ex}
+
+\begin{document}
+
+\title{Differential Dynamic Programming Formulations for\\
+Multi-Period Optimal Power Flow}
+
+\author{Aryan Ritwajeet Jha,~\IEEEmembership{Student~Member,~IEEE}}
+
+\markboth{IEEE TRANSACTIONS ON INDUSTRY APPLICATIONS (WORKING NOTE)}%
+{Jha: Differential Dynamic Programming for Multi-Period OPF}
+
+\maketitle
+
+\input{sections/network_mpopf_model}
+\input{sections/implementation}
+\input{sections/current_agenda}
+
+\appendices
+\input{sections/user_ddp_appendix}
+\input{sections/network_corrections_appendix}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,44 @@
+ERROR: LoadError: FieldError: type NamedTuple has no field `τ_res`, available fields: `psub`, `pb`, `B`, `B_end`, `bal`, `dyn`, `J`, `term`, `gap`, `psub_err`, `pb_err`
+Stacktrace:
+ [1] getproperty
+   @ .\Base_compiler.jl:54 [inlined]
+ [2] main()
+   @ Main C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\examples\power_system\copper_plate_battery.jl:269
+ [3] top-level scope
+   @ C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\examples\power_system\copper_plate_battery.jl:301
+ [4] include(mod::Module, _path::String)
+   @ Base .\Base.jl:306
+ [5] exec_options(opts::Base.JLOptions)
+   @ Base .\client.jl:317
+ [6] _start()
+   @ Base .\client.jl:550
+in expression starting at C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\examples\power_system\copper_plate_battery.jl:301
+==============================================================================
+Stage 5 — copper-plate battery, T = 6, equality constraints only
+==============================================================================
+data: p_L = [1.6565287818200956, 1.8881864465529687, 1.9979734394967152, 1.8341678679257223, 1.6231434642044986, 1.6565287818200956]
+      c   = [0.14, 0.1970633909777092, 0.1752671151375484, 0.10473288486245162, 0.08293660902229079, 0.13999999999999999]
+      C_B = 0.050, B_0 = 2.000, Δt = 1.000, w = 5.000  (lossless battery)
+
+--- independent reference solutions ---
+closed form : Psub = [ 1.65419933  1.31522309  1.64297284  2.18450957  2.19144792  1.65419933]  J = 1.466836861351
+dense KKT   : Psub = [ 1.65419933  1.31522309  1.64297284  2.18450957  2.19144792  1.65419933]  J = 1.466836861351
+agreement between the two references: max|ΔPsub| = 2.887e-15, |ΔJ| = 1.332e-15
+
+--- FilterDDP solves from three initial control trajectories ---
+init ū          iters status termination                     objective       |Δ J|     max bal     max dyn
+zeros               1      0 Optimal solution found           1.466837   0.000e+00   4.441e-16   0.000e+00
+flat-demand         1      0 Optimal solution found           1.466837   2.220e-16   2.220e-16   0.000e+00
+bad/far             1      0 Optimal solution found           1.466837   4.441e-16   4.441e-15   0.000e+00
+
+--- detailed result (init = zeros) ---
+iterations            : 1
+termination           : Optimal solution found (status 0)
+objective (solver)    : 1.466836861351
+objective (recomputed): 1.466836861351
+objective (reference) : 1.466836861351
+objective gap         : 0.000e+00
+primal inf (solver)   : 4.441e-16
+dual inf   (solver)   : 3.081e-15
+max power-balance res : 4.441e-16
+max dynamics res      : 0.000e+00

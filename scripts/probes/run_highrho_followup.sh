@@ -10,7 +10,7 @@ run_sweep() {
   echo "=================================================================="
   echo "[$(date +%H:%M:%S)] Starting T=${T} rho=${RHO}"
   echo "=================================================================="
-  SYSTEM_OVERRIDE=ieee2552C_1ph \
+  SYSTEM_OVERRIDE=ieee2522C_1ph \
   SWEEP_T="${T}" \
   SWEEP_RHOS="${RHO}" \
   ADAPTIVE_RHO_OVERRIDE=true \
@@ -19,7 +19,7 @@ run_sweep() {
   TAU_INCR_OVERRIDE=2 \
   TAU_DECR_OVERRIDE=4 \
   MU_BALANCE_OVERRIDE=5 \
-    julia --project=envs/tadmm --threads=16 run_rho_sweep.jl
+    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_rho_sweep.jl
   echo "[$(date +%H:%M:%S)] Done T=${T} rho=${RHO}"
 }
 

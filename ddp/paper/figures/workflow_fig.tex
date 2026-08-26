@@ -1,0 +1,91 @@
+% What FilterDDP actually does to solve the copper-plate problem.
+%
+% Drawn at T = 3 so the tape fits; the structure is identical at any T, and the
+% reported results are T = 6. Every element corresponds to something verified in
+% examples/power_system/kkt_structure.jl:
+%   * one Objective and one EqualityConstraints PER STAGE, each owning its c^t
+%     and p_L^t (since per_stage_data.patch)
+%   * state is B alone, so V_B and V_BB are scalars
+%   * n_u - n_c = 1, so the stage solve is a scalar division
+%
+% B&W: the three information classes differ by colour AND dash pattern AND
+% position (duals above the tape, primals below, cost-to-go on the top rule), so
+% the figure survives greyscale. Primal blue, duals green, cost-to-go red --
+% the variable-class convention used throughout this work.
+%
+\definecolor{cVal}{HTML}{B02418}    % red   -- cost-to-go, passed backward
+\definecolor{cPrim}{HTML}{2C6FBB}   % blue  -- primal variables
+\definecolor{cDual}{HTML}{1F8A3C}   % green -- multipliers
+%
+\begin{figure*}[!t]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  >=Latex,
+  st/.style  ={circle, draw=cPrim!70!black, fill=cPrim!12, minimum size=20pt,
+               inner sep=0pt, line width=0.6pt},
+  stg/.style ={rounded corners=2pt, draw=black!70, fill=black!4,
+               minimum width=58pt, minimum height=28pt, align=center,
+               line width=0.6pt},
+  note/.style={draw=black!45, rounded corners=2pt, fill=black!2,
+               line width=0.5pt, align=left, inner sep=5pt, font=\small},
+]
+
+% ---------- backward sweep ----------
+\draw[->, cVal, line width=1.1pt] (15.4,1.45) -- (-0.4,1.45);
+\node[anchor=south, text=cVal, inner sep=1pt] at (7.5,1.50)
+  {\textbf{backward} $t\!=\!3 \to 1$: pass $V_B, V_{BB}$ (scalars), build the gains};
+
+% ---------- duals, one line ----------
+\node[anchor=south, text=cDual!70!black, inner sep=1pt] at (7.5,0.52)
+  {duals per stage: $\lambda^t_{\text{bal}}, \lambda^t_{\text{soc}}$ (equalities),
+   $\mu^t$ (inequalities)};
+
+% ---------- the tape ----------
+\node[st]  (B1) at (0.00,0) {$B^0$};
+\node[stg] (S1) at (2.50,0) {$t\!=\!1$\\[-2pt]$c^1, p_L^1$};
+\node[st]  (B2) at (5.00,0) {$B^1$};
+\node[stg] (S2) at (7.50,0) {$t\!=\!2$\\[-2pt]$c^2, p_L^2$};
+\node[st]  (B3) at (10.00,0) {$B^2$};
+\node[stg] (S3) at (12.50,0) {$t\!=\!3$\\[-2pt]$c^3, p_L^3$};
+\node[st]  (B4) at (15.00,0) {$B^3$};
+
+\foreach \a/\b in {B1/S1, S1/B2, B2/S2, S2/B3, B3/S3, S3/B4}
+  \draw[->, black!70, line width=0.7pt] (\a) -- (\b);
+
+% ---------- primals, one line ----------
+\node[anchor=north, text=cPrim!80!black, inner sep=1pt] at (7.5,-0.40)
+  {controls per stage: $P_{\text{Subs}}^t,\, P_B^t,\, s^t$ \;
+   ($B^0\!=\!B_{\text{init}}$ fixed, $B^3$ the terminal energy)};
+
+% ---------- forward sweep ----------
+\draw[->, cPrim, line width=1.1pt, densely dashed] (-0.4,-1.05) -- (15.4,-1.05);
+\node[anchor=north, text=cPrim, inner sep=1pt] at (7.5,-1.10)
+  {\textbf{forward} $t\!=\!1 \to 3$: roll out at step $\gamma$, updating
+   $u, \lambda, \mu$ together};
+
+% ---------- the two explanatory boxes, side by side across the full width ----
+\node[note, text width=7.4cm, anchor=north west, align=flush left] at (-0.4,-1.65)
+  {\textbf{At each stage, backward:}\\[2pt]
+   1.~evaluate $\ell^t$, $c^t$, $f$ and their derivatives\\[1pt]
+   2.~form $\hat{H}^t$, which is \emph{diagonal} here since $f_{uu} = c_{uu} = 0$\\[1pt]
+   3.~eliminate $c_u$: three controls less two equalities leaves \emph{one} free
+      direction, $d = (-1, +1, -\Delta t)$\\[1pt]
+   4.~Cholesky $d^\top \hat{H}^t d$, a \emph{scalar}; if it is $\le 0$, regularise
+      and restart the sweep\\[1pt]
+   5.~emit the gains; update $V_B$, $V_{BB}$};
+
+\node[note, text width=7.4cm, anchor=north west, align=flush left] at (8.0,-1.65)
+  {\textbf{Then, per iteration:}\\[2pt]
+   6.~the forward pass tries $\gamma = 1$, halving whenever the
+      fraction-to-boundary rule or the filter rejects the step\\[1pt]
+   7.~stop if
+      $\max(\mathrm{pr}_\infty, \mathrm{du}_\infty, \mathrm{cs}_\infty)$
+      is below tolerance\\[1pt]
+   8.~otherwise, once the barrier subproblem is solved, shrink $\mu$ and repeat
+      from step 1};
+
+\end{tikzpicture}
+\caption{FilterDDP backward and forward passes for a three-period illustration.}
+\label{fig:workflow}
+\end{figure*}

@@ -1,0 +1,96 @@
+% Input time-series profiles (load factor, energy price) over the T = 6 horizon.
+% Styling follows the other input-profile figures in this study: same
+% colours, same axis geometry, same legend placement, same left/right axis
+% split. There is no PV module in this benchmark, so that series is absent.
+%
+% B&W readability uses THREE independent channels per curve so the figure
+% survives a grayscale printout: (i) colour (Rose Pine), (ii) line style,
+% (iii) marker shape -- shape is luminance-independent and disambiguates even
+% when tones collapse to similar greys.
+%   Load factor  : pine       / solid    / filled circle
+%   Energy price : cash green / dash-dot / filled triangle
+%
+% The curves are analytic shapes sampled at T
+% points. The data are given at the nodes; the curves are the Lagrange
+% interpolants through them, which is what the solver actually evaluates.
+% Markers are the nodes. Data from make_input_curves.jl in this directory,
+% which converts to a load factor (p_L / 2.0 p.u.) and to cents/kWh.
+%
+%
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}
+\pgfplotsset{
+  every axis/.append style={
+    width=0.64\columnwidth, height=0.50\columnwidth, scale only axis,
+    xmin=1, xmax=6,
+    tick align=outside,
+    tick label style={font=\footnotesize},
+    label style={font=\footnotesize},
+    axis line style={black, line width=0.6pt},
+  },
+}
+% ---- Left axis: load factor, grids, full box ----
+\begin{axis}[
+    name=axL,
+    ymin=0, ymax=1.08,
+    xtick={1,2,3,4,5,6}, minor x tick num=1,
+    ytick={0,0.2,0.4,0.6,0.8,1.0}, minor y tick num=1,
+    xlabel={Time interval $t$},
+    ylabel={Load factor $\lambda$},
+    ylabel near ticks,
+    grid=both,
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.6},
+    legend style={
+        at={(0.5,1.04)}, anchor=south,
+        legend columns=2, draw=none, fill=none,
+        column sep=1.0ex, font=\footnotesize,
+    },
+    legend image post style={line width=1.1pt},
+]
+% Load factor -- pine, solid, filled circles at the nodes
+\addplot[cLoad, line width=1.5pt]
+  table[col sep=comma, x=tau, y=lambda] {figures/input_curves.csv};
+\addlegendentry{Load}
+\addplot[only marks, mark=*, mark size=1.5pt, forget plot,
+         mark options={fill=cLoad, draw=cLoad}]
+  table[col sep=comma, x=tau, y=lambda] {figures/input_nodes.csv};
+% Proxy legend entry for the price curve (plotted on the right axis below)
+\addlegendimage{cPrice, dash dot, line width=1.5pt, mark=triangle*,
+                mark size=1.7pt, mark options={fill=cPrice, draw=cPrice}}
+\addlegendentry{Energy price}
+\end{axis}
+% ---- Right axis: energy price (cents/kWh), overlaid, right spine only ----
+\begin{axis}[
+    % The benchmark price runs 8.3-19.7 cents. The axis still tops out well above
+    % that so the price trace stays clear of the load trace above it, but not so
+    % far that its shape is squashed flat -- the old ymax=75 was set for the
+    % previous 25-62 cent series and left this one in the bottom fifth.
+    ymin=0, ymax=40,
+    xmin=1, xmax=6,
+    xtick=\empty,
+    ytick={0,10,20,30,40},
+    scaled y ticks=false,
+    yticklabel style={/pgf/number format/fixed, /pgf/number format/precision=0},
+    ylabel={Energy price [cents/kWh]},
+    ylabel near ticks,
+    axis x line=none,
+    axis y line*=right,
+    grid=none,
+]
+% Energy price -- cash green, dash-dot, filled triangles at the nodes
+\addplot[cPrice, dash dot, line width=1.5pt]
+  table[col sep=comma, x=tau, y=cents] {figures/input_curves.csv};
+\addplot[only marks, mark=triangle*, mark size=1.7pt,
+         mark options={fill=cPrice, draw=cPrice}]
+  table[col sep=comma, x=tau, y=cents] {figures/input_nodes.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{Input profiles at $T = 6$: load factor (left axis), energy price
+(right).  The markers are the data the solver uses --- one price and one demand
+per stage, taken directly; the curves show the underlying analytic profiles.
+The $-0.8$~rad phase offset between
+them is what keeps the two series from being collinear.}
+\label{fig:input_curves}
+\end{figure}

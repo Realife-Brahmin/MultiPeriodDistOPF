@@ -33,17 +33,26 @@ for a step-by-step VS Code walkthrough.
 The run scripts auto-activate `envs/tadmm`, so after instantiating you can just:
 
 ```bash
-julia run_bf.jl                       # monolithic Branch-Flow baseline
-JULIA_NUM_THREADS=16 julia run_tadmm.jl   # temporal ADMM (parallel over periods)
+julia envs/tadmm/root_level/run_bf.jl                       # monolithic Branch-Flow baseline
+JULIA_NUM_THREADS=16 julia envs/tadmm/root_level/run_tadmm.jl   # temporal ADMM (parallel over periods)
 ```
 
-Configure via [`config.jl`](config.jl), or override per run with environment variables:
+> **Where the run scripts live.** They sit in
+> [`envs/tadmm/root_level/`](envs/tadmm/root_level/) while tADMM is parked and other work is
+> active at the repo root — the same convention as `envs/ddp/root_level/` and
+> `envs/multi_poi/root_level/`. They resolve their own paths and run correctly from either
+> `envs/tadmm/root_level/` or the repo root, so moving them back up needs no code change.
+> The state of the repo behind the IAS-Trans paper, with these scripts at the root, is
+> archived in the [`260731-ias-trans-tadmm`](../../releases/tag/260731-ias-trans-tadmm) release.
+
+Configure via [`config.jl`](envs/tadmm/root_level/config.jl), or override per run with
+environment variables:
 
 ```bash
 # system + horizon
-SYSTEM_OVERRIDE=ieee123C_1ph T_OVERRIDE=24 julia run_tadmm.jl
+SYSTEM_OVERRIDE=ieee123C_1ph T_OVERRIDE=24 julia envs/tadmm/root_level/run_tadmm.jl
 # tADMM penalty / tolerances
-RHO_OVERRIDE=15000 EPS_PRI_OVERRIDE=1e-4 julia run_tadmm.jl
+RHO_OVERRIDE=15000 EPS_PRI_OVERRIDE=1e-4 julia envs/tadmm/root_level/run_tadmm.jl
 ```
 
 Outputs are written to `envs/tadmm/processedData/<system>_T<T>/` (gitignored — regenerated
@@ -56,16 +65,18 @@ Balanced single-phase OpenDSS feeders in [`rawData/`](rawData/):
 | Name | Buses | Notes |
 |------|-------|-------|
 | `ieee123C_1ph`  | 128    | IEEE 123-node, small (solution-quality reference) |
-| `ieee2552C_1ph` | 2,522  | synthetic medium feeder |
+| `ieee2522C_1ph` | 2,522  | synthetic medium feeder |
 | `large10kC_1ph` | 10,321 | synthetic large feeder (primary scalability benchmark) |
 
 ## Repository layout
 
 ```text
-config.jl, run_bf.jl, run_tadmm.jl   core entry points (edit config, then run)
-run_rho_sweep.jl                     penalty (rho0) tuning sweep
-tadmm_socp.jl                        single-file interactive runner (VS Code)
 envs/tadmm/                          Julia project + parser/validators/logger/plotter
+  root_level/config.jl               configuration (edit this, then run)
+  root_level/run_bf.jl               monolithic Branch-Flow baseline
+  root_level/run_tadmm.jl            temporal ADMM entry point
+  root_level/run_rho_sweep.jl        penalty (rho0) tuning sweep
+  root_level/tadmm_socp.jl           single-file interactive runner (VS Code)
 envs/ddp/, envs/multi_poi/           other methods in this repo (not used by the paper)
 rawData/                             OpenDSS feeder models
 results/                            curated final-winner results (summary.csv + trajectories)
@@ -87,14 +98,14 @@ takes the feeder directory name:
 | Paper | `SYSTEM_OVERRIDE` |
 |-------|-------------------|
 | ieee123  | `ieee123C_1ph`  |
-| med2522  | `ieee2552C_1ph` |
+| med2522  | `ieee2522C_1ph` |
 | large10k | `large10kC_1ph` |
 
 **Start here.** The cheapest cell that shows a real speedup takes well under a minute:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=6 RHO_OVERRIDE=4000 \
-  JULIA_NUM_THREADS=16 julia run_tadmm.jl     # ~30 s, expect ~1.27x over BF
+SYSTEM_OVERRIDE=ieee2522C_1ph T_OVERRIDE=6 RHO_OVERRIDE=4000 \
+  JULIA_NUM_THREADS=16 julia envs/tadmm/root_level/run_tadmm.jl     # ~30 s, expect ~1.27x over BF
 ```
 
 Reproduce any other cell by taking its `rho0_winner` from `summary.csv` and passing it
@@ -106,8 +117,8 @@ over periods, so fewer threads will be proportionally slower.
 | Cell | tADMM | BF baseline | Note |
 |------|-------|-------------|------|
 | `ieee123C_1ph`, any `T` | seconds | seconds | solution-quality check; tADMM is *slower* here by design |
-| `ieee2552C_1ph`, `T=6..48` | 0.5–9 min | 0.6–12 min | good middle ground |
-| `ieee2552C_1ph`, `T=144` | ~23 min | ~3.5 h | the 9.31x headline |
+| `ieee2522C_1ph`, `T=6..48` | 0.5–9 min | 0.6–12 min | good middle ground |
+| `ieee2522C_1ph`, `T=144` | ~23 min | ~3.5 h | the 9.31x headline |
 | `large10kC_1ph`, `T=48` | ~1.6 h | **fails after ~4.9 h** | see below |
 
 **The `large10k, T=48` BF run is *supposed* to fail.** That is the paper's headline
@@ -119,7 +130,7 @@ at failure. Budget ~16 GB RAM to observe it.
 To regenerate a cell's full penalty sweep rather than a single run:
 
 ```bash
-SYSTEM_OVERRIDE=ieee2552C_1ph T_OVERRIDE=144 julia run_rho_sweep.jl
+SYSTEM_OVERRIDE=ieee2522C_1ph T_OVERRIDE=144 julia envs/tadmm/root_level/run_rho_sweep.jl
 ```
 
 ## Notes

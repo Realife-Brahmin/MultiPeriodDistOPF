@@ -21,7 +21,8 @@ Returns a dictionary with validation results.
 # Returns
 - `results::Dict`: Validation results with counts of violations and max violations
 """
-function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose=false)
+function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose=false,
+                                        lindistflow=false)
     @unpack Nset, Lset, L1set, Nm1set, NLset, Dset, Bset, Tset = data
     @unpack substationBus, parent, children = data
     @unpack rdict_pu, xdict_pu, Vminpu, Vmaxpu = data
@@ -91,7 +92,8 @@ function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose
             p_D_j = (j in Dset) ? p_D_pu[j, t] : 0.0
             P_B_j = (j in Bset) ? P_B[j, t] : 0.0
             
-            lhs = sum_Pjk - P[(i, j), t]
+            lhs = sum_Pjk - P[(i, j), t] +
+                  (lindistflow ? 0.0 : rdict_pu[(i, j)] * ℓ[(i, j), t])
             rhs = P_B_j + p_D_j - p_L_j
             viol = abs(lhs - rhs)
             
@@ -124,7 +126,8 @@ function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose
             q_L_j = (j in NLset) ? q_L_pu[j, t] : 0.0
             q_D_j = (j in Dset) ? q_D[j, t] : 0.0
             
-            lhs = sum_Qjk - Q[(i, j), t]
+            lhs = sum_Qjk - Q[(i, j), t] +
+                  (lindistflow ? 0.0 : xdict_pu[(i, j)] * ℓ[(i, j), t])
             rhs = q_D_j - q_L_j
             viol = abs(lhs - rhs)
             
@@ -144,7 +147,8 @@ function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose
             x_ij = xdict_pu[(i, j)]
             
             lhs = v[j, t]
-            rhs = v[i, t] - 2*(r_ij*P[(i, j), t] + x_ij*Q[(i, j), t]) + (r_ij^2 + x_ij^2)*ℓ[(i, j), t]
+            rhs = v[i, t] - 2*(r_ij*P[(i, j), t] + x_ij*Q[(i, j), t]) +
+                  (lindistflow ? 0.0 : (r_ij^2 + x_ij^2)*ℓ[(i, j), t])
             viol = abs(lhs - rhs)
             
             if viol > tol
@@ -158,7 +162,7 @@ function validate_branch_flow_equations(sol::Dict, data::Dict; tol=1e-4, verbose
         end
         
         # 6. SOC relaxation constraints
-        for (i, j) in Lset
+        for (i, j) in (lindistflow ? Tuple{Int,Int}[] : Lset)
             lhs = P[(i, j), t]^2 + Q[(i, j), t]^2
             rhs = v[i, t] * ℓ[(i, j), t]
             viol = max(0.0, lhs - rhs)  # Only penalize if lhs > rhs

@@ -1,0 +1,59 @@
+\section{SOCP MPOPF Formulation}
+\label{sec:network_mpopf}
+
+Let $\mathcal N$, $\mathcal L$, $\mathcal B$, and $\mathcal D$ denote buses,
+directed branches, battery buses, and PV buses; $j_{\mathrm{subs}}=1$ is the
+substation bus and $\mathcal C(j)$ contains the children of $j$. The network
+MPOPF is
+
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+\footnotesize
+\setlength{\jot}{1pt}
+\begin{subequations}
+\label{eq:net_all}
+\begin{align}
+\min\quad
+&\sum_{t\in\mathcal T} c^t S_{\mathrm{base}}P_{\mathrm{Subs}}^t\Delta t
+\nonumber\\[-1pt]
+&+\sum_{t\in\mathcal T}\sum_{j\in\mathcal B}
+ C_B\bigl(S_{\mathrm{base}}P_{B,j}^t\bigr)^2\Delta t
+\nonumber\\[-1pt]
+&+w\sum_{j\in\mathcal B}\bigl(B_j^T-B_{\mathrm{init},j}\bigr)^2
+\label{eq:net_obj}\\
+\mathrm{s.t.}\quad
+&P_{\mathrm{Subs}}^t-\sum_{(j_{\mathrm{subs}},k)\in\mathcal L}
+ P_{j_{\mathrm{subs}}k}^t=0,
+\label{eq:net_sub_p}\\
+&P_{\mathrm{Subs}}^t\geq0,\\
+&Q_{\mathrm{Subs}}^t-\sum_{(j_{\mathrm{subs}},k)\in\mathcal L}
+ Q_{j_{\mathrm{subs}}k}^t=0,
+\label{eq:net_sub_q}\\
+&\sum_{k\in\mathcal C(j)}P_{jk}^t-P_{ij}^t+r_{ij}\ell_{ij}^t
+ =P_{B,j}^t+p_{D,j}^t-p_{L,j}^t,
+\label{eq:net_p_balance}\\
+&\sum_{k\in\mathcal C(j)}Q_{jk}^t-Q_{ij}^t+x_{ij}\ell_{ij}^t
+ =q_{D,j}^t-q_{L,j}^t,
+\label{eq:net_q_balance}\\
+&v_j^t=v_i^t-2(r_{ij}P_{ij}^t+x_{ij}Q_{ij}^t)
+ +(r_{ij}^2+x_{ij}^2)\ell_{ij}^t,
+\label{eq:net_voltage}\\
+&(P_{ij}^t)^2+(Q_{ij}^t)^2\leq v_i^t\ell_{ij}^t,
+\label{eq:net_soc}\\
+&\ell_{ij}^t\geq0,\\
+&v_{\mathrm{Subs}}^t=1.05^2,\\
+&\underline V_j^2\leq v_j^t\leq\overline V_j^2,
+\label{eq:net_v_bounds}\\
+&-q_{D,j}^{\max,t}\leq q_{D,j}^t\leq q_{D,j}^{\max,t},
+\label{eq:net_pv_bounds}\\
+&q_{D,j}^{\max,t}=\sqrt{S_{D,j}^2-(p_{D,j}^t)^2},\\
+&B_j^t=B_j^{t-1}-P_{B,j}^t\Delta t,
+\label{eq:net_b_dyn}\\
+&B_j^0=B_{\mathrm{init},j},\\
+&\mathrm{soc}_j^{\min}B_{R,j}\leq B_j^t
+ \leq\mathrm{soc}_j^{\max}B_{R,j},
+\label{eq:net_b_bounds}\\
+&-P_{B,j}^{R}\leq P_{B,j}^t\leq P_{B,j}^{R}.
+\label{eq:net_pb_bounds}
+\end{align}
+\end{subequations}
+\end{minipage}}

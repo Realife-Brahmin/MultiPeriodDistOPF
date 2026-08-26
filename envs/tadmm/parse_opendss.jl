@@ -58,6 +58,7 @@ function parse_system_from_dss(systemName::String, T::Int;
     LoadShapeCost=nothing,
     C_B=1e-6 * 0.08,
     delta_t_h=1.0,
+    impedance_scale=1.0,
     rawDataFolderPath=nothing,
     kwargs...)
     
@@ -95,7 +96,7 @@ function parse_system_from_dss(systemName::String, T::Int;
     parse_network_topology!(data)
     
     # Parse line impedances
-    parse_line_impedances!(data, kVA_B, kV_B)
+    parse_line_impedances!(data, kVA_B, kV_B; impedance_scale=impedance_scale)
     
     # Parse loads
     parse_loads!(data, T, LoadShapeLoad, kVA_B)
@@ -210,7 +211,8 @@ end
 
 Parse line resistance and reactance.
 """
-function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
+function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64;
+    impedance_scale::Float64=1.0)
     Z_B = kV_B^2 / (kVA_B / 1000)  # Base impedance in Ohms
     
     rdict = Dict{Tuple{Int,Int}, Float64}()
@@ -229,8 +231,8 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
         j = parse(Int, split(buses[2], ".")[1])
         
         # Get R and X (Ohms)
-        R_ohm = OpenDSSDirect.Lines.RMatrix()[1]  # First element of R matrix
-        X_ohm = OpenDSSDirect.Lines.XMatrix()[1]  # First element of X matrix
+        R_ohm = impedance_scale * OpenDSSDirect.Lines.RMatrix()[1]
+        X_ohm = impedance_scale * OpenDSSDirect.Lines.XMatrix()[1]
         
         rdict[(i,j)] = R_ohm
         xdict[(i,j)] = X_ohm
@@ -239,6 +241,7 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
     end
     
     data[:Z_B] = Z_B
+    data[:impedance_scale] = impedance_scale
     data[:rdict] = rdict
     data[:xdict] = xdict
     data[:rdict_pu] = rdict_pu

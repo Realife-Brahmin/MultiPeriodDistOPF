@@ -1,6 +1,6 @@
 """Render a single-phase OpenDSS radial feeder to SVG.
 
-Large synthetic feeders (large10kC, ieee2552C) ship without bus coordinates, so
+Large synthetic feeders (large10kC, ieee2522C) ship without bus coordinates, so
 the layout is computed from the topology: a radial tree rooted at the substation,
 with angular sector width allocated in proportion to subtree leaf count.
 
@@ -12,7 +12,7 @@ diagram) so the figures read as one family in the paper:
 
 Usage:
     python scripts/make_network_svg.py large10kC_1ph
-    python scripts/make_network_svg.py ieee2552C_1ph --arc 320 --rotate 100
+    python scripts/make_network_svg.py ieee2522C_1ph --arc 320 --rotate 100
 """
 
 import argparse
@@ -49,7 +49,7 @@ SVG_NS = (
 # identify the system.
 SYSTEM_BASE = {
     "ieee123": (31, 81, 134),    # ieeeC #1F5186  blue
-    "ieee2552": (184, 134, 11),  # medC  #B8860B  gold
+    "ieee2522": (184, 134, 11),  # medC  #B8860B  gold
     "large10k": (34, 120, 34),   # lgC   #227822  green
 }
 INK_MIX = 0.45
@@ -202,7 +202,7 @@ def radial_layout(order, depth, children, root, arc_deg, rotate_deg, dr,
 def force_layout(order, edges, pos0, iterations=300, seed=0):
     """Fruchterman-Reingold, seeded from the radial layout.
 
-    Deep feeders (ieee2552C: 275 levels, ~9 buses per level) look wrong under a
+    Deep feeders (ieee2522C: 275 levels, ~9 buses per level) look wrong under a
     radial tree -- the angular sweeps dominate and the interior goes empty. A
     spring layout instead spreads laterals into the organic sprawl that reads
     like a real distribution feeder. O(n^2) repulsion, fine at a few thousand
@@ -254,7 +254,7 @@ def legend_svg(vb_w, vb_h, corner, pv_size, bess_r, line_w,
                n_pv_only, n_bess_only, n_both, combo_r, hidden=False):
     """Legend block, sized in viewBox units, in Times to match the paper body font.
 
-    Rows with a zero count are dropped, so ieee2552C (every DER bus hosts both)
+    Rows with a zero count are dropped, so ieee2522C (every DER bus hosts both)
     shows a single "PV + BESS" row rather than three misleading ones.
     """
     scale = 2.6  # legend markers read larger than the in-plot ones
@@ -417,7 +417,7 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
     parts.append(f'<path d="{"".join(seg)}"/>')
     parts.append("</g>")
 
-    # A bus can host both. In ieee2552C every PV bus also hosts a BESS, so a
+    # A bus can host both. In ieee2522C every PV bus also hosts a BESS, so a
     # plain overlay would bury the teal circles entirely; co-located buses get a
     # circle wide enough to stay visible as a ring behind the gold square.
     both = pv_buses & bess_buses

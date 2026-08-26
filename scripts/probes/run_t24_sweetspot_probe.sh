@@ -11,7 +11,7 @@ run_sweep() {
   echo "=================================================================="
   echo "[$(date +%H:%M:%S)] Starting T=${T} rho=${RHO}"
   echo "=================================================================="
-  SYSTEM_OVERRIDE=ieee2552C_1ph \
+  SYSTEM_OVERRIDE=ieee2522C_1ph \
   SWEEP_T="${T}" \
   SWEEP_RHOS="${RHO}" \
   ADAPTIVE_RHO_OVERRIDE=true \
@@ -20,7 +20,7 @@ run_sweep() {
   TAU_INCR_OVERRIDE=2 \
   TAU_DECR_OVERRIDE=4 \
   MU_BALANCE_OVERRIDE=5 \
-    julia --project=envs/tadmm --threads=16 run_rho_sweep.jl
+    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_rho_sweep.jl
   echo "[$(date +%H:%M:%S)] Done T=${T} rho=${RHO}"
 }
 
@@ -33,7 +33,7 @@ echo "[$(date +%H:%M:%S)] All T=24 sweet-spot probe runs complete."
 echo "=================================================================="
 echo
 echo "Summary (NO eff_time per rho):"
-DIR=envs/tadmm/processedData/ieee2552C_1ph_T24/rho_sweep
+DIR=envs/tadmm/processedData/ieee2522C_1ph_T24/rho_sweep
 for RHO in 4000 8000 12000 14000 16000 18000 20000 24000 32000; do
   CSV="${DIR}/rho_${RHO}/near_optimal_summary.csv"
   if [ -f "${CSV}" ]; then

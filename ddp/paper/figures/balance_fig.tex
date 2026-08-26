@@ -1,0 +1,97 @@
+% Power-balance composition at T = 6, case 6e (all bounds imposed).
+%
+% eq:cp_balance says P_Subs^t + P_B^t - p_L^t = 0. Splitting the battery by sign,
+%   supply side   P_Subs^t + P_d^t,   P_d = max(P_B, 0)   (discharging)
+%   demand side   p_L^t    + P_c^t,   P_c = max(-P_B, 0)  (charging)
+% and the two sums are equal at every interval. The figure draws them as a pair
+% of stacked bars per interval: equal total height is the balance constraint, and
+% the segment split is each asset's share of the kW mix.
+%
+% Data comes from figures/balance.csv, written by make_balance.jl out of the
+% VERIFIED centralized reference (results/copper_plate/centralized_reference.csv,
+% case 6e_T6), not hand-copied. The generator asserts the balance to 1e-7 before
+% writing, so the figure's central claim is checked in code, not by eye.
+%
+% Three axes are overlaid because pgfplots stacks every ybar in one axis
+% together: axis 1 carries the supply stack and all ticks, axis 2 the demand
+% stack, axis 3 the equal-height rule. All three share identical limits so the
+% bars register.
+%
+%
+\begin{figure}[!t]
+\centering
+\begin{tikzpicture}
+\pgfplotsset{
+  balanceaxis/.style={
+    width=0.80\columnwidth, height=0.46\columnwidth, scale only axis,
+    xmin=0.45, xmax=6.55, ymin=0, ymax=2450,
+    xtick={1,2,3,4,5,6},
+    ytick={0,500,1000,1500,2000},
+    tick align=outside,
+    tick label style={font=\scriptsize},
+    label style={font=\scriptsize},
+    axis line style={black, line width=0.6pt},
+  },
+}
+
+% ---------------- axis 1: supply side (P_Subs + P_d), carries the ticks -------
+\begin{axis}[
+    balanceaxis, name=axBal,
+    ybar stacked, bar width=13pt,
+    grid=both,
+    major grid style={line width=0.6pt, color=gridMajor, opacity=0.7},
+    minor grid style={line width=0.4pt, color=gridMinor, opacity=0.6},
+    xlabel={Time interval $t$},
+    ylabel={Power [kW]}, ylabel near ticks,
+    legend style={at={(0.5,1.04)}, anchor=south, legend columns=4,
+                  draw=none, fill=none, column sep=0.7ex, font=\scriptsize},
+    legend image code/.code={\draw[#1] (0cm,-0.085cm) rectangle (0.24cm,0.085cm);},
+    legend cell align=left,
+]
+\addplot[draw=cSubs!70!black, fill=cSubs, fill opacity=0.85, line width=0.5pt]
+  table[col sep=comma, x=tsup, y=psub] {figures/balance.csv};
+\addlegendentry{$P_{\text{Subs}}$}
+% The two battery series carry OPPOSITE hatch directions as well as different
+% colours. IEEE prints in B&W, where discharge maroon and charge green collapse
+% to nearly the same grey; the hatch is what keeps them apart there.
+\addplot[draw=cDis!70!black, fill=cDis, fill opacity=0.85, line width=0.5pt,
+         postaction={pattern=north east lines, pattern color=white}]
+  table[col sep=comma, x=tsup, y=pd] {figures/balance.csv};
+\addlegendentry{$P_B > 0$ (discharge)}
+\addlegendimage{draw=cLoad!70!black, fill=cLoad, fill opacity=0.85}
+\addlegendentry{$p_L$}
+\addlegendimage{draw=cChg!70!black, fill=cChg, fill opacity=0.85,
+                postaction={pattern=north west lines, pattern color=white}}
+\addlegendentry{$P_B < 0$ (charge)}
+\end{axis}
+
+% ---------------- axis 2: demand side (p_L + P_c), overlaid ------------------
+\begin{axis}[
+    balanceaxis, at={(axBal.south west)}, anchor=south west,
+    ybar stacked, bar width=13pt,
+    axis lines=none, xtick=\empty, ytick=\empty, grid=none,
+]
+\addplot[draw=cLoad!70!black, fill=cLoad, fill opacity=0.85, line width=0.5pt]
+  table[col sep=comma, x=tdem, y=pl] {figures/balance.csv};
+\addplot[draw=cChg!70!black, fill=cChg, fill opacity=0.85, line width=0.5pt,
+         postaction={pattern=north west lines, pattern color=white}]
+  table[col sep=comma, x=tdem, y=pc] {figures/balance.csv};
+\end{axis}
+
+% ---------------- axis 3: the equal-height rule ------------------------------
+\begin{axis}[
+    balanceaxis, at={(axBal.south west)}, anchor=south west,
+    axis lines=none, xtick=\empty, ytick=\empty, grid=none,
+]
+\addplot[only marks, mark=-, mark size=15.5pt, cRule, line width=0.9pt]
+  table[col sep=comma, x=t, y=total] {figures/balance.csv};
+\end{axis}
+\end{tikzpicture}
+\caption{Power-balance composition at $T = 6$.  Per interval, supply
+($P_{\text{Subs}}^t$ plus discharge) on the left against demand ($p_L^t$ plus
+charge) on the right; the equal heights are the power balance,
+marked by the rule.  At $t = 2$ the battery supplies
+$23.8\%$ of the node's $1888$\,kW; at $t = 5$ its charging instead raises
+import to $2073$\,kW to serve $1623$\,kW of load.}
+\label{fig:balance}
+\end{figure}

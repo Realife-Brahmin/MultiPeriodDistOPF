@@ -87,9 +87,9 @@ For each subproblem $t_0 \in \{1, 2, \ldots, T\}$:
 \begin{align}
 \text{Power balance (substation):} \quad & P_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} P_{1j}^{t_0} = 0 \label{eq:pbal_sub}\\
 & Q_{\text{Subs}}^{t_0} - \sum_{(1,j) \in \mathcal{L}_1} Q_{1j}^{t_0} = 0 \label{eq:qbal_sub}\\
-\text{Power balance (nodes):} \quad & P_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} P_{jk}^{t_0} = P_{B,j}^{t_0} + p_{D,j}^{t_0} - p_{L,j}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:pbal_node}\\
-& Q_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} Q_{jk}^{t_0} = q_{D,j}^{t_0} - q_{L,j}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:qbal_node}\\
-\text{KVL (voltage drop):} \quad & v_j^{t_0} = v_i^{t_0} - 2(r_{ij} P_{ij}^{t_0} + x_{ij} Q_{ij}^{t_0}) + \ell_{ij}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:kvl}\\
+\text{Power balance (nodes):} \quad & P_{ij}^{t_0} - r_{ij}\ell_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} P_{jk}^{t_0} = p_{L,j}^{t_0} - p_{D,j}^{t_0} - P_{B,j}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:pbal_node}\\
+& Q_{ij}^{t_0} - x_{ij}\ell_{ij}^{t_0} - \sum_{(j,k) \in \mathcal{L}} Q_{jk}^{t_0} = q_{L,j}^{t_0} - q_{D,j}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:qbal_node}\\
+\text{KVL (voltage drop):} \quad & v_j^{t_0} = v_i^{t_0} - 2(r_{ij} P_{ij}^{t_0} + x_{ij} Q_{ij}^{t_0}) + (r_{ij}^2+x_{ij}^2)\ell_{ij}^{t_0}, \quad \forall (i,j) \in \mathcal{L} \label{eq:kvl}\\
 \text{SOCP relaxation:} \quad & \ell_{ij}^{t_0} \cdot v_i^{t_0} \geq (P_{ij}^{t_0})^2 + (Q_{ij}^{t_0})^2, \quad \forall (i,j) \in \mathcal{L} \label{eq:socp}\\
 \text{Voltage limits:} \quad & (V_{\min,j})^2 \leq v_j^{t_0} \leq (V_{\max,j})^2, \quad \forall j \in \mathcal{N} \label{eq:vlim}\\
 \text{Substation voltage:} \quad & v_1^{t_0} = (V_{\text{nom}})^2 \label{eq:vsub}\\

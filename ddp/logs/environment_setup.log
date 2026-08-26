@@ -1,0 +1,65 @@
+﻿=== FilterDDP environment setup ===
+date (local): 2026-08-03T02:40:10.1071254-07:00
+host OS: Microsoft Windows 11 Home build 10.0.22621.0
+cpu: 12th Gen Intel(R) Core(TM) i7-1255U
+repo commit: 513a104ccd67a881c95460736a4a3486d719804f
+
+--- julia --version ---
+julia version 1.12.6
+--- versioninfo() ---
+Julia Version 1.12.6
+Commit 15346901f0 (2026-04-09 19:20 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: Windows (x86_64-w64-mingw32)
+  CPU: 12 × 12th Gen Intel(R) Core(TM) i7-1255U
+  WORD_SIZE: 64
+  LLVM: libLLVM-18.1.7 (ORCJIT, alderlake)
+  GC: Built with stock GC
+Threads: 1 default, 1 interactive, 1 GC (on 12 virtual cores)
+--- instantiate core package env (c:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\external\FilterDDP.jl) ---
+Project FilterDDP v0.6.0
+Status `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\external\FilterDDP.jl\Project.toml`
+  [a8cc5b0e] Crayons v4.2.0 [loaded: v4.1.1]
+  [29a986be] FastLapackInterface v2.1.1
+  [7e49a35a] RuntimeGeneratedFunctions v0.5.24
+  [90137ffa] StaticArrays v1.9.18
+  [0c5d862f] Symbolics v7.35.0
+  [37e2e46d] LinearAlgebra v1.12.0
+  [de0858da] Printf v1.11.0
+core env exit code: 0
+--- instantiate experiments env (c:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\external\FilterDDP.jl\experiments\filterddp) ---
+Status `C:\Users\aryan\Documents\documents_general\MultiPeriodDistOPF\ddp\external\FilterDDP.jl\experiments\filterddp\Project.toml`
+  [6e4b80f9] BenchmarkTools v1.8.0
+  [3fc7acb0] FilterDDP v0.6.0 `..\..`
+  [b964fa9f] LaTeXStrings v1.4.0
+  [91a5bcdd] Plots v1.41.6
+  [90137ffa] StaticArrays v1.9.18
+  [de0858da] Printf v1.11.0
+experiments env exit code: 0
+--- smoke: load FilterDDP ---
+smoke exit code: 1
+=== setup script finished ===
+--- smoke: load FilterDDP (rerun, --startup-file=no) ---
+julia : ERROR: ParseError:
+At C:\Users\aryan\AppData\Local\Temp\claude\c--Users-aryan-Documents-documents-general-MultiPeriodDistOPF\2ba7f9d4-5696
+-4470-b15e-539e452c0eaa\scratchpad\stage23.ps1:12 char:1
++ julia --startup-file=no --project=$expr -e 'using FilterDDP; println( ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: ParseError::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+# Error @ none:1:35
+using FilterDDP; println(FilterDDP
+#                                 └ ── Expected `)` or `,`
+Stacktrace:
+ [1] top-level scope
+   @ none:1
+ [2] eval(m::Module, e::Any)
+   @ Core .\boot.jl:489
+ [3] exec_options(opts::Base.JLOptions)
+   @ Base .\client.jl:283
+ [4] _start()
+   @ Base .\client.jl:550
+smoke exit code: 1

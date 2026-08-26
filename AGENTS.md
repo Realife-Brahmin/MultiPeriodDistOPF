@@ -1,0 +1,223 @@
+# Repo-specific context for Codex
+
+This file is committed so any machine's Codex session starts from the
+same ground truth. Session-local memory (`~/.Codex/.../memory/`) does not
+travel between machines — this file does. Keep it updated when a session
+establishes something a future session, on any machine, would need.
+
+## Two DDP codebases here — both *Differential* Dynamic Programming
+
+**Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never
+"Distributed."** Corrected throughout on 2026-08-14, including the two source
+files that originally carried the wrong expansion
+(`envs/ddp/tex/ddp_copperplate_formulation.tex`,
+`envs/ddp/root_level/ddp_copperplate.jl`). An earlier version of this file
+recorded "Distributed" as a deliberate word choice; that was wrong. Do not
+reintroduce it anywhere, and do not describe the two codebases as different
+algorithms that merely share an initialism — they are both DDP, differing in
+**order**. (Unrelated: "Distributed Energy Resources" in `envs/multi_poi/` and
+`envs/tadmm/` is correct and must be left alone; and the repo name's "Dist"
+means *distribution* networks.)
+
+- `ddp/` (repo root) is the **FilterDDP** evaluation: a reproducibility study
+  of the authors' solver (github.com/mingu6/FilterDDP.jl, arXiv 2504.08278 /
+  2606.01487), done 2026-08-03 to present. Full status, findings, and the
+  MPOPF-fit conclusion are in
+  [ddp/README_FILTERDDP_EXPERIMENT.md](ddp/README_FILTERDDP_EXPERIMENT.md).
+  The paper is at `ddp/resources/Xu_2026_FilterDDP.pdf` (and a duplicate at
+  `envs/ddp/resources/Xu_2026_FilterDDP.pdf`, see manifests below).
+
+- `envs/ddp/` is the user's own, independently-derived **first-order** DDP
+  scheme for copper-plate MPOPF (committed 2025-11-12, predates any Codex
+  involvement — verified by git blame, not AI-authored). A clean minimal
+  restatement of it lives at
+  [ddp/examples/power_system/user_ddp.jl](ddp/examples/power_system/user_ddp.jl).
+
+**The difference is the order of the cost-to-go model, not the family:**
+
+| | `envs/ddp/` (user's own) | `ddp/` (FilterDDP, the paper) |
+|---|---|---|
+| Backward information | Passes `μ[t]`, the dynamics-constraint dual, backward one stage per **outer forward sweep** (`envs/ddp/root_level/ddp_copperplate.jl:539-550`, `mu_prev`/`mu_coupling`) | Backward pass sweeps `t=N→1` **within one iteration**, building both `V_x` and `V_xx` (Riccati recursion, `backward_pass.jl` in the FilterDDP clone) |
+| Order of approximation | First-order only: the coupling term `μ[t+1]·(B[t+1]−B[t]+Δt·P_B[t+1])` is linear in `B[t]` — no curvature crosses a stage boundary | Second-order: full local quadratic model of the cost-to-go |
+| Per-stage solve | Calls an external solver (Gurobi/Ipopt) per stage per sweep | In-house KKT solve inside the backward pass, with filter line-search globalization; compact models retain the dense null-space route, while network models use the sparse saddle-point route added 2026-08-22 |
+| Propagation speed | Information from stage `T` reaches stage `1` after roughly `T` outer iterations (one stage per sweep) | Full-horizon propagation in one backward sweep per Newton-type iteration |
+
+Important nuance established 2026-08-05: `μ[t]` in the user's method **is**
+legitimately the same object as `V_x[t]` (the costate / value-gradient) —
+this is not a naive approach, it's a genuine first-order DDP. The gap
+is the missing curvature (`V_xx`) and the cross-iteration staleness, not the
+absence of backward-looking information altogether.
+
+**Measured 2026-08-14** on the shared `T = 6` instance, via `user_ddp.jl`:
+the first-order scheme's *fixed point is correct* — fed the true `μ*` and `B*`,
+one sweep reproduces the centralized optimum to `1.7e-08` — but it does not
+converge to it from a cold start, settling into a period-two limit cycle
+`2.1e-03` short in objective and `121` kW out in dispatch. Damping shrinks the
+cycle without closing it (`a = 0.1` still `3.2e-05` short after 2000 sweeps),
+because started *at* the optimum the sweep returns `μ` off by `9.2e-04`: the
+optimum is not exactly a fixed point of the linearised map. FilterDDP reaches
+`2.2e-10` on the same instance in 16 iterations. That is the `V_xx` gap,
+quantified.
+
+**Three-dual rolling mean tested 2026-08-23** at Rahul's suggestion. The
+optional `dual_average_window=3` update in `user_ddp.jl` averages the raw dual
+vectors produced by the current sweep and the preceding two sweeps; it does not
+average the state trajectory. This materially reduces the cold-start error but
+does not converge. The original update has a period-2 cycle, objective gap
+`6.35e-4`--`2.09e-3`, and maximum battery-power error `52.7`--`120.6` kW. The
+three-dual mean settles into a period-4 cycle, objective gap
+`1.25e-4`--`2.94e-4`, and maximum battery-power error `15.0`--`34.0` kW. Its
+result is identical at 300 and 2000 sweeps. Reproduction script and data are
+`ddp/examples/power_system/first_order_dual_average_experiment.jl` and
+`ddp/results/copper_plate/first_order_dual_average.csv`.
+
+## Julia environment: use `envs/ddp2026` for everything DDP
+
+Since 2026-08-07 there is **one** environment for all DDP work — FilterDDP, the
+centralized JuMP/Ipopt reference, and any further formulation:
+`envs/ddp2026` ([README](envs/ddp2026/README.md)). FilterDDP and JuMP coexist
+without conflict. Stages 5, 6 and 8 all reproduce under it.
+
+- `envs/ddp/Project.toml` (2025-11) is **superseded**. Its `Plots`/`Crayons`/
+  `Revise` deps existed because verification then meant a human reading formatted
+  output. Treat `envs/ddp/` as a **read-only reference** for what the user's own
+  algorithm did — not expected to be run again.
+- `ddp/env` (the FilterDDP-only env) was **removed** 2026-08-07. Its `Manifest`
+  was never tracked, so it preserved nothing `envs/ddp2026/Project.toml` doesn't,
+  and Stages 5/6 reproduce identically under the new env. It's in git history if
+  ever needed.
+- Pkg **strips all comments** from `Project.toml` on every `add`/`resolve`, so put
+  rationale in a README beside it, never in the file.
+- Julia via the **Bash** tool, not PowerShell: PowerShell mangles quotes in
+  `julia -e '...'` and has silently corrupted `Project.toml` this way.
+
+## Current copper-plate formulation
+
+`P_Subs^t` has **no upper bound** — only `P_Subs^t ≥ 0` (no export upstream).
+This is the latest formulation, confirmed by the user 2026-08-07. Older notes
+referring to an active `Psub[2] ≤ 1.35` or `≤ 1.45` are stale; the scripts and
+logs were already correct and the experiment README has been fixed to match.
+
+The paper section `ddp/paper/sections/copper_plate_model.tex` was cut down to
+equations only on 2026-08-07 at the user's request — the modeling rationale it
+used to carry (why no `η`, why the terminal target is a penalty, why `C_B = 0.5`
+here vs. `≈10⁻⁶·min c^t` in the tADMM paper) now survives only in
+`ddp/README_FILTERDDP_EXPERIMENT.md`.
+
+**Instance data is now the tADMM profiles** (changed 2026-08-07 at the user's
+request). Demand and price come from `envs/tadmm/root_level/config.jl`, shared via
+`ddp/examples/power_system/tadmm_profiles.jl`. Three things to know:
+
+- They **resample with T** — `tadmm_cost(3)` is NOT `tadmm_cost(6)[1:3]`. Never
+  slice a fixed vector.
+- **Committed results are T = 6 only** (T = 3 removed 2026-08-07 at the user's
+  request; regenerating another `T` when analysis needs it is expected). But
+  **inspect the price before adopting a new `T`**: at T = 3 the samples land
+  where `sin` vanishes (`0, π, 2π`), so the price comes out constant and the
+  instance carries no arbitrage signal at all. That, plus binding bounds only a
+  few kW wide, made T = 3 both the weakest benchmark and the worst behaved
+  numerically (26 iterations, trajectory agreement only `1.9e-05`).
+- This **closed** the earlier collinearity concern: `r` went from `0.9968` to
+  `0.644` at T = 6, thanks to the `−0.8` rad phase offset on the load.
+
+`C_B = 0.05` since 2026-08-07 (was `0.5`). `C_B` sets how far the battery moves:
+`P_B^k = (c^k - 2wΔt·s)/(2C_B)`, so the swing scales as `1/C_B` — the bounds are not
+the knob. At `0.05` the T = 6 battery swings ±570 kW against a 1623-1998 kW load and
+cycles `B` from 2000 down to 1070 kWh: 46% depth of discharge, matching the
+`ieee123C_1ph` battery/load ratio of 44%. `cond(Q) = 601`, so the closed-form and
+active-set references stay exact to ~1e-14.
+
+Still **not** tADMM's own `C_B = 1e-6·min(c) ≈ 8e-8`: there `cond(Q) ≈ 3.6e8` and the
+battery goes purely bound-limited (±340 GW absent bounds) — the tADMM regime, but
+useless as a precision reference. An earlier note that this makes `Q` rank-1 was an
+overstatement: `Q = 2C_B Δt I + 2w Δt² 11ᵀ` is PD for any `C_B > 0`, rank-1 only in
+the limit.
+
+**Plot battery quantities in kW and kWh, never p.u.** (user preference, 2026-08-07).
+Base is tADMM's `kVA_B = 1000`: 1 p.u. = 1000 kW, 1 p.u.h = 1000 kWh. The model and
+Table I stay in p.u.; the figures convert. Reference asset sizes, for sanity checks:
+`ads10A_1ph` 87 kW load / 4.7 kW batt; `ieee123C_1ph` 1163 kW / 507 kW / 2027 kWh;
+`ieee123_5poi_1ph` 1163 kW / 1318 kW / 5273 kWh. SOC runs 30%-95% with B_0 at 62.5%.
+
+**Figures are generated, never hand-written.** `ddp/paper/figures/make_figure_data.jl`
+reads the verified centralized reference and emits `balance.csv`,
+`schedule_interval.csv`, `schedule_soc.csv`; the `.tex` files read those tables.
+Do not inline coordinates — `schedule_fig.tex` did, and went silently stale when the
+instance data changed.
+
+## What is and isn't verified (as of 2026-08-22)
+
+FilterDDP is cross-checked against a **centralized JuMP/Ipopt** solve of
+`eq:cp_all` on all six T = 6 cases (Stage 8 of the experiment README): exact on
+the base instance, worst objective gap `2.2e-10` and worst trajectory gap
+`6.9e-09` with bounds, and Ipopt independently certifies the 6g bound set
+infeasible. The base instance carries three mutually independent references
+(closed form, dense KKT, Ipopt). Stage 9 records the per-iteration trace — 17
+iterations, regularisation never firing. **Do not redo any of this.**
+
+The loss-aware BFM-SOCP network transcription is also verified against stored
+centralized references. The sparse-KKT FilterDDP path solves ADS10, IEEE123C,
+and corrected IEEE2522C at `T = 3`. IEEE2522C now converges in 56 iterations
+and 233.098 s with objective gap `7.342e-4` and equality residual `5.631e-10`;
+this supersedes the earlier zero-iteration dense-QR failure without erasing it
+from the chronology. Full results are in
+`ddp/results/network_filterddp/README.md` and
+`sparse_kkt_filterddp_T3.csv`. IEEE123C has separately exported horizon data
+through `T = 96`; do not conflate exported/centralized horizon results with a
+sparse FilterDDP solve at every horizon.
+
+The user's own first-order DDP has now been compared, as quantified above.
+Sparse FilterDDP on IEEE2522C is now verified through `T = 24`: `T = 6`
+converges in 82 iterations/836.933 s and `T = 12` in 79 iterations/1902.103 s,
+while `T = 24` converges in 84 iterations/3068.228 s; all closely match
+centralized references. A symbolic-factorization cache
+was tested and rejected because it slowed the identical `T = 3` run from
+233.098 s to 295.296 s. Large10kC sparse FilterDDP is now tested through
+`T = 12`: `T = 3` converged strictly in 115 iterations/7123.782 s, and `T = 6`
+in 128 iterations/23490.218 s. `T = 12` reached the 200-iteration limit after
+69951.536 s with objective 2976105.092790690251, equality/primal residual
+`6.821e-13`, complementarity `1.053e-9`, and dual infeasibility `5.200e-7`;
+therefore it misses FilterDDP's strict `1e-7` stationarity tolerance but meets
+the separately reported practical `1e-6` large-network tolerance. Complete
+iteration traces are committed under `ddp/results/network_filterddp/`.
+
+The large10k matrix path is only partly sparse. The `96968 x 96968` KKT
+coefficient is sparse and uses generic sparse LU, but its `96968 x 1021`
+right-hand side is explicitly dense. Per-stage `beta` (`54665 x 1020`),
+`omega` (`42303 x 1020`), and both bound-dual sensitivity matrices are also
+dense and persist across the horizon (about 1.57 GiB/stage), while the value
+update includes dense `beta' * B`. This explains the near-linear memory growth
+and is at least as important a scaling target as sparse-LU fill-in. Still
+unverified: IEEE2522C at `T >= 48`, large10kC at `T >= 24`, and whether a
+symmetric-indefinite, feeder-structured, selected-RHS, or matrix-free solve
+materially reduces factorization, dense-sensitivity, and storage costs.
+
+## Pending task (do not start until asked)
+
+Write a side-by-side workflow comparison — the user's exact DDP algorithm
+vs. FilterDDP's algorithm — **both grounded in the exact problem statement of
+the "dummy paper"**, `ddp/paper/sections/copper_plate_model.tex` (user has
+approved this problem statement as the shared reference point). Requirements:
+
+- Use **the user's own notation throughout**: `P_Subs^t`, `P_B^t`, `B^t`,
+  `c^t`, `C_B`, `p_L^t`, `w`, `B_0`, `P_B^{min/max}`, `B^{min/max}` (from
+  `copper_plate_model.tex`), plus `μ[t]`, `λ_Bmin[t]`, `λ_Bmax[t]` (from
+  `envs/ddp/tex/ddp_copperplate_formulation.tex`). **No unqualified generic
+  control-theory notation** (`L`, `l`, `Q`, `V_x`, `V_xx` unless explicitly
+  mapped to one of the user's own symbols first).
+- Every dual/auxiliary variable that plays the same role in both workflows
+  should be given the **same symbol** in both descriptions, with the
+  correspondence stated explicitly (e.g. `μ[t] ↔ V_x[t]`, the box-constraint
+  duals `λ_Bmin[t]`/`λ_Bmax[t]` vs. FilterDDP's interior-point bound
+  multipliers).
+- Where a concept exists in FilterDDP but has no analog in the user's method
+  (e.g. `V_xx`/curvature), say so explicitly rather than inventing a
+  correspondence.
+
+## Reference-paper bookkeeping
+
+Every `resources/` folder (`ddp/resources/`, `envs/ddp/resources/`,
+`envs/multi_poi/resources/`) has a `MANIFEST.txt` (`filename | url |
+description`). Run `bash scripts/fetch_resources.sh` from repo root to
+fetch anything missing — safe to re-run, present files are left alone. Blank
+`url` fields mean the source isn't tracked down yet; fill in when found.

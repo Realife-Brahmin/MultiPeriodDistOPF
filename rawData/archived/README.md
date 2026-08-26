@@ -21,6 +21,11 @@ those results use — `ieee123C_1ph`, `ieee2552C_1ph`, `large10kC_1ph` — remai
 | `case533mt_hi/` | 533-bus case |
 | `Data_Anup.xlsx` | source spreadsheet |
 | `LoadShapePSubsCostDefault0.dss` | superseded load-shape variant |
+| `ieee123A_1ph/` | earlier IEEE 123 variant, superseded by `ieee123C_1ph` |
+| `ieee2552_1ph/` | earlier IEEE 2552 variant, superseded by `ieee2552C_1ph` |
+| `ieee2552_rahul/` | original MATLAB/Excel source data (base case + 10/30/50% PV power flows) that `ieee2552_1ph` was converted from |
+| `large10k_1ph/`, `large10kB_1ph/` | earlier 10k-node variants, superseded by `large10kC_1ph` |
+| `convert_all_areas_10k.jl`, `convert_flexparams_10k_to_opendss.jl`, `convert_ieee2552_to_opendss.jl`, `convert_simple_10k.jl` | conversion scripts for the superseded variants above; no longer needed since the `C` variants are checked in directly |
 
 ## Restoring one
 

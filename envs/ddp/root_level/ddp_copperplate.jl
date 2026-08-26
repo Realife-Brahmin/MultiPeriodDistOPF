@@ -446,7 +446,7 @@ end
 """
     solve_CopperPlate_DDP(data; max_iter=100, tol=1e-5, solver=:gurobi, mu_init=nothing)
 
-Solve copper plate MPOPF using DDP (Distributed Dynamic Programming) with forward pass decomposition.
+Solve copper plate MPOPF using DDP (Differential Dynamic Programming) with forward pass decomposition.
 
 Algorithm:
 1. Initialize: B[t], μ[t], P_B[t] for all t

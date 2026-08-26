@@ -1,0 +1,101 @@
+\section{Implementation and Results}
+
+The network transcription uses analytic derivatives and accepts time-varying
+load, PV, and price data directly at each stage. Compact problems retain
+FilterDDP's dense null-space backward pass. For feeder models, sparse
+Jacobians and local Hessian blocks are instead assembled into
+\begin{equation}
+\begin{bmatrix}
+\underset{n_u\times n_u}{H} &
+\underset{n_u\times n_c}{A^{\mathsf T}}\\
+\underset{n_c\times n_u}{A} &
+\underset{n_c\times n_c}{0}
+\end{bmatrix}
+\begin{bmatrix}
+\underset{n_u\times1}{\Delta u}\\
+\underset{n_c\times1}{\Delta\lambda}
+\end{bmatrix}
+=\underset{(n_u+n_c)\times1}{b},
+\label{eq:sparse_kkt}
+\end{equation}
+For a stage with $n_u$ controls and $n_c$ equality constraints,
+$H\in\mathbb R^{n_u\times n_u}$, $A\in\mathbb R^{n_c\times n_u}$,
+$\Delta u\in\mathbb R^{n_u}$, $\Delta\lambda\in\mathbb R^{n_c}$, and
+$b\in\mathbb R^{n_u+n_c}$; hence the full block matrix is
+$(n_u+n_c)\times(n_u+n_c)$.
+At a high level, $H$ collects the local curvature terms used by the backward
+step, $A$ is the linearized equality-constraint Jacobian, and $\Delta u$ and
+$\Delta\lambda$ are the control and equality-multiplier updates; $b$ collects
+the corresponding first-order residual terms. A complete interpretation of
+these blocks requires the FilterDDP derivation and is beyond the present
+working note. The system is solved by sparse LU without explicitly constructing a dense QR basis or
+reduced Hessian. The dense route has less overhead for small problems; the
+sparse route is required when those dense intermediate matrices become
+impractical. Reported times include FilterDDP optimization iterations, not
+model construction. Every successful network result used the complete
+loss-aware SOCP model and was checked against an independently validated
+centralized Ipopt or Gurobi solution.
+
+\newcommand{\resultyes}{\textcolor{green!55!black}{\ensuremath{\checkmark}}}
+\newcommand{\resultno}{\textcolor{red!75!black}{\ensuremath{\times}}}
+
+\begin{table}[H]
+\centering
+\caption{FilterDDP Network Test Summary. A check denotes agreement with the
+centralized solution at every listed horizon; it does not imply competitive
+runtime.}
+\label{tab:network_success}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l c l}
+\toprule
+System & Solved & Tested horizons $T$ \\
+\midrule
+ieee123  & \resultyes & 3, 6, 12, 24, 48, 96 \\
+med2522 & \resultyes & 3, 6, 12, 24 \\
+large10k & \resultno  & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{FilterDDP Solve Times. A red cross denotes that no solve completed.}
+\label{tab:network_times}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l r r r}
+\toprule
+System & $T$ & Iterations & Solve time (s) \\
+\midrule
+ieee123   & 3  & 48  & 13.856 \\
+           & 6  & 60  & 143.647 \\
+           & 12 & 81  & 306.817 \\
+           & 24 & 97  & 610.766 \\
+           & 48 & 111 & 923.073 \\
+           & 96 & 121 & 2021.412 \\
+med2522 & 3  & 56  & 233.098 \\
+           & 6  & 82  & 836.933 \\
+           & 12 & 79  & 1902.103 \\
+           & 24 & 84  & 3068.228 \\
+large10k  & 3  & \multicolumn{2}{c}{\resultno} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+ieee123 has per-stage dimensions $(n_x,n_u,n_c)=(51,791,562)$, while
+med2522 has $(250,13358,10337)$. The original dense med2522 backward pass
+could not complete one iteration because it attempted a dense
+$13358\times13358$ QR basis and a reduced Hessian of order 3021. The sparse
+KKT route removed that storage bottleneck and reached a realistic $T=24$
+horizon, but required 51.1~min; the corresponding centralized Gurobi solver
+time was 27.2~s. Reusing UMFPACK's symbolic factorization did not help: the
+identical $T=3$ solution slowed from 233.1 to 295.3~s. Thus the present result
+establishes correctness and memory feasibility, not computational
+competitiveness.
+
+For large10k at $T=3$, the per-stage dimensions are
+$(n_x,n_u,n_c)=(1020,54665,42303)$. Blocking the multiple right-hand-side KKT
+solve avoided the earlier immediate allocation failure. However, the run
+produced no terminal iteration report after two hours and was stopped
+manually. No FilterDDP convergence or timing claim is therefore made for this
+system. Appendix~\ref{app:network_corrections} records the test-data
+corrections made before the med2522 and large10k comparisons.

@@ -15,7 +15,7 @@ run_sweep() {
   echo "=================================================================="
   echo "[$(date +%H:%M:%S)] Starting T=${T} rho=${RHO} tau_decr=${TAUDECR} (-> ${DIRNAME})"
   echo "=================================================================="
-  SYSTEM_OVERRIDE=ieee2552C_1ph \
+  SYSTEM_OVERRIDE=ieee2522C_1ph \
   SWEEP_T="${T}" \
   SWEEP_RHOS="${RHO}" \
   SWEEP_DIR_NAME="${DIRNAME}" \
@@ -25,7 +25,7 @@ run_sweep() {
   TAU_INCR_OVERRIDE=2 \
   TAU_DECR_OVERRIDE="${TAUDECR}" \
   MU_BALANCE_OVERRIDE=5 \
-    julia --project=envs/tadmm --threads=16 run_rho_sweep.jl
+    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_rho_sweep.jl
   echo "[$(date +%H:%M:%S)] Done T=${T} rho=${RHO} tau_decr=${TAUDECR}"
 }
 
@@ -43,7 +43,7 @@ echo "  rho=16000 tau_decr=4 -> 283.87s k=20 gap 0.26% (winner)"
 echo "  rho=20000 tau_decr=4 -> 379.82s k=20 gap 0.23%"
 echo
 echo "New results (tau_decr=5):"
-DIR=envs/tadmm/processedData/ieee2552C_1ph_T24/rho_sweep_taudecr5
+DIR=envs/tadmm/processedData/ieee2522C_1ph_T24/rho_sweep_taudecr5
 for RHO in 14000 16000 20000; do
   CSV="${DIR}/rho_${RHO}/near_optimal_summary.csv"
   if [ -f "${CSV}" ]; then

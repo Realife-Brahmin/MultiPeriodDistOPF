@@ -1,0 +1,45 @@
+\subsection{Reference Instance Data}
+
+\begin{table}[H]
+\centering
+\caption{Copper-Plate Instance Data}
+\label{tab:cp_data}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Interval $t$} & $1$ & $2$ & $3$ & $4$ & $5$ & $6$ \\
+\midrule
+Demand $p_L^t$     & $1.657$ & $1.888$ & $1.998$ & $1.834$ & $1.623$ & $1.657$ \\
+Energy price $c^t$ & $0.140$ & $0.197$ & $0.175$ & $0.105$ & $0.083$ & $0.140$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{lc@{\hskip 10pt}lc}
+\toprule
+Period length $\Delta t$ & $1$   & Initial energy $B_{\text{init}}$ & $2.0$ \\
+Throughput $C_B$         & $0.05$ & Terminal weight $w$  & $5.0$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lc}
+\toprule
+\textit{Bounds, constrained variants only} & \\
+\midrule
+$\underline{P_B},\,\overline{P_B}$ & $-0.45,\;0.45$ \\
+$\underline B,\,\overline B$       & $1.20,\;1.95$ \\
+\bottomrule
+\end{tabular}
+
+\smallskip
+
+\raggedright
+\footnotesize All quantities are in per unit on a 1000-kVA base, $1$~p.u.\ $=
+1000$~kW and $1$~p.u.h $= 1000$~kWh. Bounds apply only to the constrained
+variants.
+\end{table}

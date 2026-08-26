@@ -1,0 +1,15 @@
+\section{Network Data Corrections}
+\label{app:network_corrections}
+
+These corrections concern test-data conversion rather than the MPOPF model.
+The feeder formerly labelled ``ieee2552'' was renamed med2522. Its
+one-phase aggregate conversion combined aggregate three-phase powers with a
+phase-voltage base, making per-unit line impedances nine times too large. The
+electrical base was corrected to 7.2~kV on 1~MVA; physical impedances, powers,
+DER ratings, voltage limits, losses, and SOC constraints were unchanged.
+
+For the synthetic large10k feeder, the aggregate voltage base was restored to
+12.47~kV. Uniform synthetic ordinary-line sections were shortened from
+$(r,x)=(0.07,0.01)~\Omega$ to $(0.0175,0.0025)~\Omega$, while area-boundary
+sections use $(0.000025,0.000025)~\Omega$. Powers, DER capacities, voltage
+limits, loss terms, and SOC constraints were retained.

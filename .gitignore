@@ -5,12 +5,33 @@
 !envs/tadmm/Manifest.toml
 
 # Generated experiment outputs.
-# Regenerated locally by run_bf.jl / run_tadmm.jl / run_rho_sweep.jl.
+# Regenerated locally by envs/tadmm/root_level/{run_bf,run_tadmm,run_rho_sweep}.jl.
 # The curated final-winner subset is tracked under results/ instead.
 envs/*/processedData/
 
+# Upstream clone of the authors' FilterDDP.jl, checked out under ddp/external/
+# for the FilterDDP evaluation. It carries its own .git, so tracking it here
+# would create an embedded repository.
+ddp/external/
+
+# Third-party papers fetched from arXiv for the FilterDDP evaluation, and their
+# text extractions. Not ours to redistribute from a public repo; re-fetch with
+# the commands in ddp/README_FILTERDDP_EXPERIMENT.md.
+ddp/papers/
+
+# Locally downloaded reference papers. Keep their lightweight MANIFEST.txt
+# attendance records in git; already-tracked PDFs remain tracked.
+**/resources/*.pdf
+
 # Local review / scratch artifacts (not part of the repo)
 logs/
+tmp/
+.tools/
+ddp/results/network_filterddp/network_data_*.jls
+ddp/results/network_filterddp/filterddp_solution_*.jls
+# ...except the FilterDDP evaluation's logs, which are its evidence: the status
+# table in ddp/README_FILTERDDP_EXPERIMENT.md links to them.
+!ddp/logs/
 pngs_review/
 gks*.png
 

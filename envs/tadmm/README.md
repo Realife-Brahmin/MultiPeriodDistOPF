@@ -80,8 +80,8 @@ min Σ_t [LoadShapeCost[t] * P_Subs[t] * Δt + C_B * P_B[t]^2 * Δt]
 
 1. **Power Balance** (all non-substation nodes):
    ```
-   P_ij = Σ_k P_jk + p_L - p_D - P_B
-   Q_ij = Σ_k Q_jk + q_L - q_D
+   P_ij = Σ_k P_jk + p_L - p_D - P_B + r_ij * ℓ_ij
+   Q_ij = Σ_k Q_jk + q_L - q_D + x_ij * ℓ_ij
    ```
 
 2. **LinDistFlow (KVL)**:

@@ -1,0 +1,36 @@
+\label{sec:copper_plate}
+
+\subsection{Copper-Plate Reference Problem}
+
+A storage device and grid connection serve demand $p_L^t$ over
+$\mathcal T=\{1,\ldots,T\}$.  Here $P_B^t>0$ discharges, and $B^t$ is the
+end-of-period energy; hence $B^0$ is initial and $B^T$ is terminal.  The sign
+convention follows~\cite{Jha2025}.
+\noindent\fbox{\begin{minipage}{\dimexpr\columnwidth-2\fboxsep-2\fboxrule\relax}
+\small
+\begin{subequations}
+\label{eq:cp_all}
+\begin{alignat}{2}
+\min_{P_{\text{Subs}},\,P_B,\,B} \;\;
+  & \sum_{t=1}^{T} \Bigl[ c^t P_{\text{Subs}}^t
+                        + C_B \bigl(P_B^t\bigr)^2 \Bigr] \Delta t \nonumber \\[-2pt]
+  & \hspace{34pt} +\; w \bigl(B^{T} - B_{\text{init}}\bigr)^2
+\label{eq:cp_obj} \\[2pt]
+\text{s.t.} \;\;
+  & P_{\text{Subs}}^t + P_B^t - p_L^t = 0, &\quad& t \in \mathcal{T}
+\label{eq:cp_balance} \\
+  & B^0 = B_{\text{init}}
+\label{eq:cp_soc_init} \\
+  & B^{t} = B^{t-1} - P_B^t \Delta t, && t \in \mathcal{T}
+\label{eq:cp_soc_dyn} \\
+  & P_{\text{Subs}}^t \geq 0, && t \in \mathcal{T}
+\label{eq:cp_pg_lim} \\
+  & \underline{P_B} \leq P_B^t \leq \overline{P_B}, && t \in \mathcal{T}
+\label{eq:cp_pb_lim} \\
+  & \underline B \leq B^{t} \leq \overline B, && t \in \mathcal{T}
+\label{eq:cp_soc_lim}
+\end{alignat}
+\end{subequations}
+\end{minipage}}
+The \emph{base instance} is
+\eqref{eq:cp_obj}--\eqref{eq:cp_soc_dyn}, with all three bounds dropped.

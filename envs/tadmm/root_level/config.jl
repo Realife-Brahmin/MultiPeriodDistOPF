@@ -1,0 +1,79 @@
+# ============================================================================
+# SHARED CONFIGURATION - Edit this file, then run run_bf.jl or run_tadmm.jl
+# ============================================================================
+
+# System and time horizon
+const SYSTEM_NAME = haskey(ENV, "SYSTEM_OVERRIDE") ? ENV["SYSTEM_OVERRIDE"] : "large10kC_1ph"
+const T = haskey(ENV, "T_OVERRIDE") ? parse(Int, ENV["T_OVERRIDE"]) : 12  # 4, 6, 12, 24, 48, etc.
+const DELTA_T_H = 24.0 / T           # Time step duration in hours
+const DEFAULT_NETWORK_KV_BASE = SYSTEM_NAME == "ieee2522C_1ph" ? 7.2 :
+    (SYSTEM_NAME == "large10kC_1ph" ? 12.47 : 2.4018)
+const NETWORK_KV_BASE = parse(Float64,
+    get(ENV, "NETWORK_KV_BASE_OVERRIDE", string(DEFAULT_NETWORK_KV_BASE)))
+const NETWORK_IMPEDANCE_SCALE = parse(Float64,
+    get(ENV, "NETWORK_IMPEDANCE_SCALE_OVERRIDE", "1.0"))
+
+# Solver selection (Gurobi requires license)
+const USE_GUROBI = get(ENV, "USE_GUROBI_OVERRIDE", "false") == "true"
+const USE_GUROBI_FOR_BF = get(ENV, "USE_GUROBI_FOR_BF_OVERRIDE", "false") == "true"
+const USE_GUROBI_FOR_TADMM = false
+
+# BF-specific
+const BF_TIMEOUT_SEC = 0  # Kill BF after this many seconds (0 = no limit)
+const BF_MODEL = Symbol(get(ENV, "BF_MODEL_OVERRIDE", "socp"))
+const BF_RELAX_VOLTAGE_BOUNDS = get(ENV, "BF_RELAX_VOLTAGE_BOUNDS_OVERRIDE", "false") == "true"
+
+# Verbose output
+const VERBOSE = false
+
+# ============================================================================
+# LOAD SHAPES (deterministic profiles over T periods)
+# ============================================================================
+
+# Load profile: sinusoidal variation around 0.8-1.0
+# T=1 special-case: midday-peak snapshot (matches PV=1.0 below)
+const LoadShapeLoad = T == 1 ? [0.97174] :
+    0.8 .+ 0.2 .* (sin.(range(0, 2pi, length=T) .- 0.8) .+ 1) ./ 2
+
+# Energy cost profile: time-varying $/kWh
+const LoadShapeCost = T == 1 ? [0.14] :
+    0.08 .+ 0.12 .* (sin.(range(0, 2pi, length=T)) .+ 1) ./ 2
+
+# Solar PV profile: bell curve in middle 50% of horizon
+const LoadShapePV = let
+    pv = zeros(T)
+    if T >= 4
+        t_start = max(1, round(Int, 0.25 * T))
+        t_end = min(T, round(Int, 0.75 * T))
+        n_active = t_end - t_start + 1
+        if n_active >= 2
+            t_normalized = range(0, pi, length=n_active)
+            pv[t_start:t_end] = [sin(t_norm) for t_norm in t_normalized]
+        else
+            pv[t_start:t_end] .= 1.0
+        end
+    elseif T == 3
+        pv[2] = 1.0
+    elseif T == 2
+        pv .= 0.5
+    else
+        pv .= 1.0
+    end
+    pv
+end
+
+# Battery quadratic cost coefficient
+const C_B = 1e-6 * minimum(LoadShapeCost)
+
+# ============================================================================
+# OUTPUT DIRECTORIES
+# ============================================================================
+
+# These scripts live in envs/tadmm/root_level/ while tADMM is parked; they are
+# meant to sit at the repo root when it is the active project (same convention as
+# envs/ddp/root_level/ and envs/multi_poi/root_level/). Anchoring on the parent of
+# this directory keeps them working from either location.
+const ENV_PATH = basename(@__DIR__) == "root_level" ?
+    dirname(@__DIR__) : joinpath(@__DIR__, "envs", "tadmm")
+const PROCESSED_DATA_DIR = joinpath(ENV_PATH, "processedData")
+const SYSTEM_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(T)")
