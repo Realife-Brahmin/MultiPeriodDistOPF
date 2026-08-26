@@ -19,6 +19,10 @@ ddp/external/
 # the commands in ddp/README_FILTERDDP_EXPERIMENT.md.
 ddp/papers/
 
+# Locally downloaded reference papers. Keep their lightweight MANIFEST.txt
+# attendance records in git; already-tracked PDFs remain tracked.
+**/resources/*.pdf
+
 # Local review / scratch artifacts (not part of the repo)
 logs/
 tmp/
