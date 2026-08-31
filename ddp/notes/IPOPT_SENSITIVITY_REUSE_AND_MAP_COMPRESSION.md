@@ -94,3 +94,42 @@ constant factors and avoid repeated nonlinear solves; the rank result warns
 that it probably cannot remove the fundamental `O(nx)` information content of
 the control sensitivity map.
 
+## Native sIPOPT bridge spike on the lab Windows PC
+
+The official `parametric_cpp` example from Ipopt 3.14 was inspected and built
+against the exact headers and import libraries shipped by `Ipopt_jll` 3.14.19.
+It confirms the intended lifecycle:
+
+1. construct one `IpoptApplication` and one `SensApplication`;
+2. register the sIPOPT options;
+3. solve the TNLP once with `OptimizeTNLP`;
+4. pass the retained Ipopt algorithm objects to `SensApplication`;
+5. call `Run()` to obtain sensitivity states through Ipopt's KKT backsolver.
+
+For the MPOPF stage, the entering battery state must be represented inside the
+TNLP as `nx` parameter variables fixed by `nx` equality constraints. The
+constraints are tagged with `sens_init_constr`; the parameter variables and
+their perturbed values are tagged with `sens_state_1` and
+`sens_state_value_1`. The returned `sens_sol_state_1` metadata contains the
+perturbed primal solution, with corresponding dual metadata. Directional
+derivatives follow by dividing the reported perturbation by its magnitude.
+
+The local bridge could be compiled and linked, proving the headers and import
+libraries are usable. It could not be executed safely with the available C++
+toolchain: this PC only has Strawberry Perl's GCC 8.3, while Julia 1.12 ships a
+substantially newer MinGW C++ runtime. Loader dependencies were resolved, after
+which the official example failed at the C++ DLL boundary with Windows heap/
+access violations. This is an ABI failure, not an sIPOPT numerical result.
+No crashing executable or third-party source copy is retained in the repo.
+
+The next bridge attempt should use either:
+
+- a MinGW-w64 compiler matching Julia's BinaryBuilder toolchain; or
+- a Linux environment, where the C++ ABI and dependency setup are easier to
+  reproduce.
+
+Once the official parametric example runs cleanly, the first MPOPF milestone
+remains deliberately small: one IEEE123 stage and the same first-battery,
+middle-battery, and aggregate directions already validated against complete
+Ipopt re-solves. Do not implement all `nx` directions until those three match
+and the marginal sensitivity time is measured.

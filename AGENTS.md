@@ -244,6 +244,18 @@ remove the dominant control and bound sensitivities. See
 `ddp/notes/IPOPT_SENSITIVITY_REUSE_AND_MAP_COMPRESSION.md`; the next faithful
 prototype is a small sIPOPT bridge for the three already-validated directions.
 
+**sIPOPT bridge spike (2026-08-31):** the official C++ example confirms that
+sIPOPT retains Ipopt's algorithm/KKT objects and runs sensitivity steps after
+one TNLP solve. An MPOPF bridge should introduce the entering battery state as
+`nx` fixed parameter variables/constraints and attach `sens_init_constr`,
+`sens_state_1`, and `sens_state_value_1` metadata. The bundled headers/import
+libraries compile, but the lab PC's only compiler is Strawberry GCC 8.3 and
+the resulting executable crashes at the boundary with Julia 1.12's much newer
+MinGW C++ runtime after loader dependencies are resolved. Treat this as a
+Windows ABI/toolchain blocker, not a failed sensitivity algorithm. Retry with
+a BinaryBuilder-compatible MinGW toolchain or on Linux; first reproduce the
+three validated IEEE123 directions before scaling.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
