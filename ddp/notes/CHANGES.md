@@ -168,3 +168,17 @@ direct sparse saddle-point solve in the backward pass. IEEE2522C at `T = 3` now 
 and satisfies the equality equations to `5.631e-10`. The implementation and successful
 result are recorded separately so the original dense failure remains visible in the
 research chronology.
+
+## Factored bound sensitivities (2026-08-31)
+
+The sparse path originally retained two dense `nu x nx` bound-dual maps,
+`ζl = -Σ_L .* beta` and `ζu = Σ_U .* beta`, at every horizon stage. These are
+exact row-scaled copies of the already-retained feedback matrix `beta`. The
+follow-up patch stores only the two length-`nu` scale vectors and evaluates
+their action using the `beta*δx` product already required by rollout.
+
+Apply `ddp/patches/factor_bound_sensitivities.patch` after
+`dynamic_network_scaling.patch`. It reduces the measured large10k update-rule
+storage from 1606.982 MiB to 757.012 MiB per stage while reproducing the
+IEEE123C `T = 3` iteration count, objective, and residual exactly. Full details
+are in `ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md`.

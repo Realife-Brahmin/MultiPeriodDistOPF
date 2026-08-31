@@ -256,6 +256,16 @@ Windows ABI/toolchain blocker, not a failed sensitivity algorithm. Retry with
 a BinaryBuilder-compatible MinGW toolchain or on Linux; first reproduce the
 three validated IEEE123 directions before scaling.
 
+**Exact bound-sensitivity storage reduction (2026-08-31):** FilterDDP's two
+retained `nu x nx` bound-dual maps were merely row-scaled copies of `beta`:
+`ζl = -Σ_L .* beta` and `ζu = Σ_U .* beta`. Store only the two length-`nu`
+scale vectors and evaluate their action from the already-computed `beta*δx`
+during rollout. On large10k this reduces bound data from 850.804 MiB to
+0.834 MiB and the complete update rule from 1606.982 MiB to 757.012 MiB per
+stage, exactly preserving the IEEE123 `T = 3` result. See
+`ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and apply
+`ddp/patches/factor_bound_sensitivities.patch` after the dynamic-network patch.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
