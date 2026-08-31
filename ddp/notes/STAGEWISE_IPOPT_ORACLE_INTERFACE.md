@@ -56,3 +56,51 @@ attempting a full hybrid algorithm. It also reveals whether selected MPOPF
 directions contain enough structure to avoid the complete dense `nx`-column
 solve. A full-horizon hybrid should not be implemented until this equivalence
 test passes.
+
+## IEEE123 stage-1 result
+
+The experiment was implemented in
+`ddp/examples/power_system/stagewise_ipopt_oracle.jl` and run on stage 1 of the
+converged IEEE123C, `T = 3` trajectory. The Ipopt stage received the same fixed
+entering battery state and the same incoming quadratic future-cost message
+(`future_Vx`, `future_Vxx`) captured from FilterDDP. This is essential: an
+ordinary isolated one-period OPF without that message is a different problem.
+
+For three state directions, complete Ipopt stage solves at `x +/- h*d` were
+used to estimate the parametric sensitivities independently. Results were
+stable for `h = 1e-4`, `1e-5`, and `1e-6`. At `h = 1e-6`:
+
+| Direction | Relative error in `beta*d` | Relative error in `omega*d` |
+|---|---:|---:|
+| First battery | 0.994% | 0.165% |
+| Middle battery | 2.665% | 0.040% |
+| Unit aggregate battery direction | 2.742% | 0.049% |
+
+The perturbed Ipopt solves satisfy their stage equalities to about `2.8e-12`.
+JuMP's equality-dual sign is opposite to FilterDDP's convention and is mapped
+accordingly. The raw equality-multiplier levels should not be compared: the
+slack transcription is highly dual-degenerate/ill-scaled, with FilterDDP's
+captured multiplier infinity norm around `3.9e6` versus Ipopt's `1.2e3`.
+Despite that non-uniqueness in multiplier levels, their directional derivative
+`omega*d` agrees closely.
+
+The captured FilterDDP point precedes its final forward update. Its Ipopt stage
+re-optimization moves by `1.69e-3` in infinity norm, while FilterDDP's predicted
+feedforward step is `1.35e-3`; the displacement differs from that prediction by
+`3.37e-4`. This explains why exact primal equality is not expected in this
+snapshot.
+
+## Interpretation
+
+The equivalence test passes in the useful sense: when supplied with the same
+future-cost message, Ipopt reproduces FilterDDP's local control and equality-
+dual sensitivities to a few percent or better. But finite-differencing complete
+Ipopt solves is only a validation method. Recovering every column this way
+would require `2*nx` additional nonlinear solves per stage—102 on IEEE123 and
+2040 on large10k—which is plainly not the replacement algorithm.
+
+The next implementation question is therefore narrow: can Ipopt's linearized
+KKT system be reused to return selected sensitivity products, or can MPOPF be
+shown to need only a structured subset? The experiment supports an Ipopt-based
+local oracle, but it also confirms that obtaining the backward sensitivity
+message remains the central computational problem.

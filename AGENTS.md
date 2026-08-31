@@ -218,6 +218,19 @@ experiment is `ddp/notes/STAGEWISE_IPOPT_ORACLE_INTERFACE.md`: first verify a
 single IEEE123 stage and selected sensitivity columns, rather than attempting
 a full hybrid solver immediately.
 
+**Stagewise Ipopt oracle test (2026-08-31):** this IEEE123 `T = 3`, stage-1
+test now passes. Ipopt was given the same entering battery state and captured
+quadratic future-cost message as FilterDDP. Central differences of complete
+Ipopt stage re-solves reproduce FilterDDP's `beta*d` within 0.99--2.74% and
+`omega*d` within 0.04--0.17% for two individual-battery directions and one
+aggregate direction; results are stable for steps `1e-4` through `1e-6`.
+Raw equality multiplier levels are not comparable because the slack model is
+dual-degenerate/ill-scaled, but their directional sensitivities agree after
+mapping JuMP's opposite sign convention. This validates Ipopt as a local
+oracle; it does **not** solve the scaling problem, because finite-differencing
+all columns would require `2*nx` nonlinear solves per stage. The next target is
+reuse of Ipopt's linearized KKT system or a structured selected-direction map.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
