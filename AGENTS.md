@@ -195,6 +195,17 @@ unverified: large10kC at `T >= 24`, and whether a
 symmetric-indefinite, feeder-structured, selected-RHS, or matrix-free solve
 materially reduces factorization, dense-sensitivity, and storage costs.
 
+**Hessian bottleneck diagnosis (2026-08-31):** warm `T = 3` timing shows that
+the expensive "Hessian work" is predominantly propagation of dense
+second-order sensitivities, not evaluation of second-derivative callbacks. On
+IEEE2522C the second-order callbacks totalled about 0.046 s, versus 0.791 s for
+the `nx+1`-column solve and 1.585 s for policy/value updates. On large10k the
+dense RHS solve and value update together consumed about 61% of the measured
+backward pass, while sparse LU factorization was only 3.4%. Single-process
+MUMPS was slower than UMFPACK on captured IEEE123 and IEEE2522 stage systems.
+See `ddp/notes/FILTERDDP_HESSIAN_BOTTLENECK_PROFILE.md`; do not describe a
+factorizer swap alone as the likely scalability solution.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
