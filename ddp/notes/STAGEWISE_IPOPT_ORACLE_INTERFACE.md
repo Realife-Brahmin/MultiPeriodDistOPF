@@ -104,3 +104,9 @@ KKT system be reused to return selected sensitivity products, or can MPOPF be
 shown to need only a structured subset? The experiment supports an Ipopt-based
 local oracle, but it also confirms that obtaining the backward sensitivity
 message remains the central computational problem.
+
+The follow-up investigation is recorded in
+`IPOPT_SENSITIVITY_REUSE_AND_MAP_COMPRESSION.md`: ordinary Ipopt.jl does not
+expose factorization reuse, the bundled sIPOPT library is a viable integration
+target, and a simple low-rank/selected-column approximation of `beta` is not
+accurate enough on IEEE123.

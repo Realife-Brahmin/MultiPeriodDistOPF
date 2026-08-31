@@ -231,6 +231,19 @@ oracle; it does **not** solve the scaling problem, because finite-differencing
 all columns would require `2*nx` nonlinear solves per stage. The next target is
 reuse of Ipopt's linearized KKT system or a structured selected-direction map.
 
+**Sensitivity reuse/compression test (2026-08-31):** ordinary Ipopt.jl does
+not expose Ipopt's internal factorization for extra right-hand sides. The local
+Ipopt artifact does include `ipopt_sens.exe`, `libsipopt-3.dll`, and sIPOPT C++
+headers; a Julia-facing sIPOPT bridge is therefore possible but requires an
+AMPL-suffix workflow, a C++ bridge, or a new Ipopt.jl wrapper. IEEE123 stage-1
+compression rejects a simple low-rank/selected-battery shortcut for `beta`:
+the optimal ranks for 10%, 5%, and 1% Frobenius error are 38, 48, and 51 out
+of 51. Forty pivot-selected columns still have 10.4% global error and 42.8%
+worst-column error. `omega` is more compressible, but that alone does not
+remove the dominant control and bound sensitivities. See
+`ddp/notes/IPOPT_SENSITIVITY_REUSE_AND_MAP_COMPRESSION.md`; the next faithful
+prototype is a small sIPOPT bridge for the three already-validated directions.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
