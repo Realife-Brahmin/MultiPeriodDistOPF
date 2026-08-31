@@ -167,10 +167,13 @@ through `T = 96`; do not conflate exported/centralized horizon results with a
 sparse FilterDDP solve at every horizon.
 
 The user's own first-order DDP has now been compared, as quantified above.
-Sparse FilterDDP on IEEE2522C is now verified through `T = 24`: `T = 6`
-converges in 82 iterations/836.933 s and `T = 12` in 79 iterations/1902.103 s,
-while `T = 24` converges in 84 iterations/3068.228 s; all closely match
-centralized references. A symbolic-factorization cache
+Sparse FilterDDP on IEEE2522C is now verified through `T = 96`: `T = 6`
+converges in 82 iterations/836.933 s, `T = 12` in 79 iterations/1902.103 s,
+`T = 24` in 84 iterations/3068.228 s, `T = 48` in 84 iterations/4539.491 s,
+and `T = 96` in 93 iterations/9359.596 s. The `T = 96` objective gap against
+the stored centralized reference is `6.084e-3` (`6.96e-7` relative), and its
+maximum equality residual is `9.892e-8`; all horizons terminate strictly and
+have complete iteration traces. A symbolic-factorization cache
 was tested and rejected because it slowed the identical `T = 3` run from
 233.098 s to 295.296 s. Large10kC sparse FilterDDP is now tested through
 `T = 12`: `T = 3` converged strictly in 115 iterations/7123.782 s, and `T = 6`
@@ -188,7 +191,7 @@ right-hand side is explicitly dense. Per-stage `beta` (`54665 x 1020`),
 dense and persist across the horizon (about 1.57 GiB/stage), while the value
 update includes dense `beta' * B`. This explains the near-linear memory growth
 and is at least as important a scaling target as sparse-LU fill-in. Still
-unverified: IEEE2522C at `T >= 48`, large10kC at `T >= 24`, and whether a
+unverified: large10kC at `T >= 24`, and whether a
 symmetric-indefinite, feeder-structured, selected-RHS, or matrix-free solve
 materially reduces factorization, dense-sensitivity, and storage costs.
 

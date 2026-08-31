@@ -171,9 +171,8 @@ The IEEE2522C sparse run was then extended without warm starts. At `T = 6`,
 FilterDDP converged in 82 iterations and 836.933 s, with objective gap
 `1.305e-3` and equality residual `1.753e-9`. At `T = 12`, it converged in 79
 iterations and 1902.103 s, with objective gap `9.207e-5` and equality residual
-`2.290e-8`. Thus memory and numerical convergence scale beyond `T = 3`, but
-runtime is approximately linear in horizon and already 31.70 minutes at
-`T = 12`.
+`2.290e-8`. The same cold-start procedure now converges through `T = 96`;
+complete iteration traces are stored alongside the sweep table.
 
 A symbolic-factorization-reuse experiment was rejected: rerunning the identical
 `T = 3` case took 295.296 s instead of 233.098 s, with the same 56 iterations
@@ -186,10 +185,17 @@ At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
 `1.219e-3`; the maximum equality residual was `3.609e-8`, and the largest
-reported physical-variable difference was `3.242e-4`. The solve therefore
-scales numerically and in memory to a full 24-hour horizon, but the nearly
-linear time growth projects to roughly 1.7 hours at `T = 48` without a better
-numerical factorization strategy.
+reported physical-variable difference was `3.242e-4`.
+
+At `T = 48`, it converged in 84 iterations and 4539.491 s (1.26 h), with
+objective 8701.148876364638 versus the stored centralized value 8701.1489 and
+maximum equality residual `7.649e-8`. At `T = 96`, it converged in 93
+iterations and 9359.596 s (2.60 h), with objective 8737.654784107281 versus
+8737.6487, an absolute gap of `6.084e-3` (relative gap `6.96e-7`), and maximum
+equality residual `9.892e-8`. Both runs satisfy FilterDDP's strict `1e-7`
+termination test. These results establish numerical and memory feasibility
+through quarter-hour resolution, but the 121.305-s centralized `T = 96` solve
+remains about 77 times faster.
 
 ## Large10kC feasibility gate
 
