@@ -251,10 +251,11 @@ function build_model(data)
     return ocp, idx, nx, nu, length(stage_cons[1].c(zeros(nx), zeros(nu)))
 end
 
-system = length(ARGS) >= 1 ? ARGS[1] : "ieee123C_1ph"
-T = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 2
-mode = length(ARGS) >= 3 ? ARGS[3] : "dimensions"
-quiet = length(ARGS) >= 4 && ARGS[4] == "quiet"
+function main(args=ARGS)
+system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
+T = length(args) >= 2 ? parse(Int, args[2]) : 2
+mode = length(args) >= 3 ? args[3] : "dimensions"
+quiet = length(args) >= 4 && args[4] == "quiet"
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
                     "network_data_$(system)_T$(T).jls")
 data = deserialize(datafile)
@@ -314,9 +315,9 @@ flush(stdout)
 Jddp = 0.0
 max_eq = 0.0
 for t in 1:T
-    global Jddp += data[:LoadShapeCost][t]*data[:kVA_B]*data[:delta_t_h]*uddp[t][idx.ps]
-    global Jddp += data[:C_B]*data[:kVA_B]^2*data[:delta_t_h]*sum(uddp[t][k]^2 for k in idx.pb)
-    global max_eq = max(max_eq, norm(ocp.stage_constraints[t].c(xddp[t], uddp[t]), Inf))
+    Jddp += data[:LoadShapeCost][t]*data[:kVA_B]*data[:delta_t_h]*uddp[t][idx.ps]
+    Jddp += data[:C_B]*data[:kVA_B]^2*data[:delta_t_h]*sum(uddp[t][k]^2 for k in idx.pb)
+    max_eq = max(max_eq, norm(ocp.stage_constraints[t].c(xddp[t], uddp[t]), Inf))
 end
 @printf("FilterDDP objective=%.12f max_equality_residual=%.3e\n", Jddp, max_eq)
 
@@ -350,4 +351,9 @@ if isfile(reffile)
     for key in (:P_Subs,:Q_Subs,:P,:Q,:v,:ell,:P_B,:B,:q_D)
         @printf("max_abs_diff[%s]=%.3e\n", string(key), maxdiff[key])
     end
+end
+end
+
+if abspath(PROGRAM_FILE) == abspath(@__FILE__)
+    main()
 end

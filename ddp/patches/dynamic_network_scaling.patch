@@ -31,7 +31,7 @@ index c17fe6e..5e7a007 100644
  
  include(joinpath("ocp", "objective.jl"))
 diff --git a/src/backward_pass.jl b/src/backward_pass.jl
-index 0ee5582..54647a5 100644
+index 0ee5582..804d35f 100644
 --- a/src/backward_pass.jl
 +++ b/src/backward_pass.jl
 @@ -1,3 +1,5 @@
@@ -178,7 +178,7 @@ index 0ee5582..54647a5 100644
      
              # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
              B = lux + ux_tmp * fx + fux
-@@ -109,17 +148,63 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -109,17 +148,58 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              end
              
              # inertia correction / regularisation
@@ -210,11 +210,6 @@ index 0ee5582..54647a5 100644
 +                Ĥ = sparse(Symmetric(Ĥ))
 +                K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
 +                rhs = Matrix([-Qû -B; -c -cx])
-+                if haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
-+                        t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
-+                    Serialization.serialize(ENV["FILTERDDP_CAPTURE_KKT"],
-+                        (K=K, rhs=rhs, stage=t, nx=nx, nu=nu, nc=nc))
-+                end
 +                kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
 +                kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
 +                kkt_solution = Matrix{T}(undef, 0, 0)
@@ -251,7 +246,7 @@ index 0ee5582..54647a5 100644
                  
                  AY = A' * Y
                  fk = lu(AY)
-@@ -131,7 +216,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -131,7 +211,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              else
                  ck = cholesky(Symmetric(Ĥ); check=false)
              end
@@ -260,7 +255,7 @@ index 0ee5582..54647a5 100644
              
              if data.status == 1
                  if iszero(reg) # initial setting of regularisation
-@@ -142,21 +227,30 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -142,21 +222,40 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                  break
              end
  
@@ -294,10 +289,20 @@ index 0ee5582..54647a5 100644
 +                β = α_β[:, 2:nx+1]
 +                ψ = zeros(T, nc)
 +                ω = zeros(T, nc, nx)
++            end
++
++            if haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
++                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
++                Serialization.serialize(ENV["FILTERDDP_CAPTURE_KKT"], (
++                    K=K, rhs=rhs, stage=t, nx=nx, nu=nu, nc=nc,
++                    x=copy(x), u=copy(u), phi=copy(ϕ), zl=copy(zl), zu=copy(zu),
++                    barrier_mu=μ, future_Vx=copy(V̂x), future_Vxx=copy(V̂xx),
++                    next_state=copy(dynamics.f(x, u)), alpha=copy(α),
++                    beta=copy(β), psi=copy(ψ), omega=copy(ω)))
              end
  
              # update parameters of update rule for ineq. dual variables
-@@ -194,6 +288,26 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -194,6 +293,26 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              # evaluate sufficient decrease condition in forward pass
              data.expected_change_L += dot(Qû, α)
              nc > 0 && (data.expected_change_L += dot(c, ψ))
