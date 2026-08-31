@@ -206,6 +206,18 @@ MUMPS was slower than UMFPACK on captured IEEE123 and IEEE2522 stage systems.
 See `ddp/notes/FILTERDDP_HESSIAN_BOTTLENECK_PROFILE.md`; do not describe a
 factorizer swap alone as the likely scalability solution.
 
+**Allocation profile (2026-08-31):** the large10k sparse KKT coefficient is
+only 7--23 MiB at `T = 3`, while its dense RHS and solution are about 755 MiB
+each. A retained stage update is about 1607 MiB: `beta` 425 MiB, `omega`
+329 MiB, and the two bound-sensitivity matrices 851 MiB. Constructing the
+update creates about 6408 MiB of cumulative temporary allocation traffic per
+stage (not simultaneous peak RAM). `Vxx` itself is only 7.9 MiB; its importance
+is that it generates dense sensitivities, not that its own storage dominates.
+Raw rows are in `backward_pass_memory_profile_T3.csv`. The scoped next
+experiment is `ddp/notes/STAGEWISE_IPOPT_ORACLE_INTERFACE.md`: first verify a
+single IEEE123 stage and selected sensitivity columns, rather than attempting
+a full hybrid solver immediately.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

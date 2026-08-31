@@ -109,3 +109,39 @@ low-rank or structured representations of `Vxx`, matrix-free products, and
 using one or more stagewise Ipopt solves as an oracle for the local optimum and
 the particular sensitivity information the recursion actually needs.
 
+## Allocation and retained-memory profile
+
+A second diagnostic pass measured both Julia allocation traffic and the
+storage retained by the principal arrays. Allocation traffic is cumulative
+memory created during an operation; it is **not** the same as simultaneous
+peak RAM. Retained sizes are direct object-storage measurements. UMFPACK's
+native internal factor storage is not fully visible through Julia object-size
+inspection, so no unsupported factor-memory claim is made.
+
+On warmed IEEE2522 stages:
+
+- sparse `K`: 1.7--2.7 MiB;
+- dense RHS and its solution: 45.4 MiB each;
+- `beta`: 25.5 MiB; `omega`: 19.7 MiB;
+- two bound-sensitivity matrices: 51.0 MiB;
+- complete stored update rule: 96.5 MiB per stage;
+- temporary allocation traffic while building the update: about 386 MiB per
+  stage.
+
+On warmed large10k stages:
+
+- sparse `K`: 7.1--22.9 MiB;
+- dense RHS and its solution: 755.3 MiB each;
+- `beta`: 425.4 MiB; `omega`: 329.2 MiB;
+- two bound-sensitivity matrices: 850.8 MiB;
+- `Vxx`: only 7.9 MiB by itself;
+- complete stored update rule: 1607.0 MiB per stage;
+- temporary allocation traffic while building the update: about 6408 MiB per
+  stage.
+
+This sharpens the earlier conclusion. `Vxx` is important because it causes
+dense information to spread, but storing `Vxx` itself is not the main RAM
+consumer. The dominant retained storage consists of the tall `nu x nx` and
+`nc x nx` sensitivity matrices, especially the bound sensitivities. The raw
+profile rows are in
+`ddp/results/network_filterddp/backward_pass_memory_profile_T3.csv`.
