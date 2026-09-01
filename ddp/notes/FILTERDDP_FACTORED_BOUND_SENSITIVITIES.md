@@ -68,14 +68,17 @@ ordering and far below either stopping tolerance.
 | IEEE2522C | 3 | 233.098 s | 245.175 s | +5.18% | 56 | 52 |
 | large10kC | 3 | 7123.782 s | 6660.908 s | -6.50% | 115 | 111 |
 | IEEE2522C | 12 | 1902.103 s | 1183.039 s | -37.80% | 79 | 76 |
+| IEEE2522C | 24 | 3068.228 s | 2330.122 s | -24.06% | 84 | 80 |
 
 The small cases show that this is not a universal per-iteration speedup:
 startup noise and unchanged KKT work dominate when little memory is removed.
 The benefit appears when retained horizon storage becomes material. The
 large10k `T = 3` run saves about 2.49 GiB across three stages and is 6.5%
-faster. IEEE2522 `T = 12` saves about 609 MiB and is 37.8% faster in this
-single-run comparison. Because wall times are one historical run versus one
-new run, the exact memory reduction and identical convergence are stronger
+faster. IEEE2522 `T = 12` saves about 609 MiB and is 37.8% faster; the larger
+`T = 24` follow-up saves about 1.19 GiB and is 24.1% faster. The second
+horizon-scale speedup strengthens the evidence that reduced memory pressure
+matters, although each percentage still compares one historical run with one
+new run. The exact memory reduction and identical convergence are stronger
 claims than the precise speed percentages; repeated timings would be needed
 for confidence intervals.
 

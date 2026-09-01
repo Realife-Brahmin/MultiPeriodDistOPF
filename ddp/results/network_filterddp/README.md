@@ -186,8 +186,10 @@ The exact bound-sensitivity factorization follow-up removes two redundant
 strict regressions retained the old iteration counts and final solutions.
 large10kC `T = 3` fell from 7123.782 s to 6660.908 s (6.50%), while IEEE2522C
 `T = 12` fell from 1902.103 s to 1183.039 s (37.80%). IEEE123C and IEEE2522C
-at `T = 3` were slightly slower, confirming that this is primarily a
-memory-pressure improvement rather than cheaper KKT algebra. See
+at `T = 3` were slightly slower. The IEEE2522C `T = 24` follow-up retained 84
+iterations while falling from 3068.228 s to 2330.122 s (24.06%), strengthening
+the evidence that this is primarily a memory-pressure improvement rather than
+cheaper KKT algebra. See
 `ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and
 `factored_bound_sensitivity_regression.csv`.
 
