@@ -340,6 +340,19 @@ IEEE2522 `T = 12` retains its displayed 79-row trace and solves in 737.043 s,
 Apply `ddp/patches/type_constraint_residual_vector.patch` last; see
 `ddp/notes/FILTERDDP_TYPED_CONSTRAINT_VECTOR.md`. Timings are single runs.
 
+**In-place mixed-derivative assembly (2026-09-01):** after the dispatch fix,
+the expression forming `B = lux + ux_tmp*fx + fux + cux` still created a new
+dense `nu x nx` matrix for every `+`, although the three added derivative
+matrices are sparse. The code now forms the dense product once and accumulates
+the sparse terms into it. Warm large10k stage algebra allocation falls from
+2277.949 MiB to 1001.743 MiB (56.02%); the `B` phase falls from 1276.207 MiB
+to 425.402 MiB and its constraint addition from 450.971 MiB to 25.569 MiB.
+The strict IEEE123 `T = 3` trace is byte-for-byte identical. Apply
+`ddp/patches/in_place_B_assembly.patch` last; see
+`ddp/notes/FILTERDDP_IN_PLACE_B_ASSEMBLY.md`. The strict IEEE2522 `T = 12`
+trace is also byte-for-byte identical; runtime falls from 737.043 s to
+701.245 s (4.86%), or 63.13% below the original 1902.103-s sparse run.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

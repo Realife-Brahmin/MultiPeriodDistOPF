@@ -248,6 +248,18 @@ See `ddp/notes/FILTERDDP_TYPED_CONSTRAINT_VECTOR.md`,
 `typed_constraint_vector_profile.csv`, and
 `typed_constraint_vector_ieee2522C_1ph_T12_trace.csv`.
 
+The next exact cleanup targets construction of the dense mixed-derivative
+matrix `B`. Its dense product is now formed once, and the sparse derivative
+terms are accumulated into that owned buffer rather than producing three
+successive dense copies. On warm large10kC stages this reduces total stage
+algebra allocation from 2277.949 MiB to 1001.743 MiB (56.02%), while a strict
+IEEE123C `T = 3` regression remains byte-for-byte identical. See
+`ddp/notes/FILTERDDP_IN_PLACE_B_ASSEMBLY.md` and
+`in_place_B_assembly_memory.csv`. The strict IEEE2522C `T = 12` trajectory is
+also byte-for-byte identical, while runtime falls from 737.043 s to 701.245 s
+(4.86%). This is 63.13% below the original 1902.103-s sparse run. Runtime rows
+are in `in_place_B_assembly_runtime.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
