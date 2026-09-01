@@ -216,6 +216,16 @@ faster than the factored-only run (1183.039 s). It first met all practical
 `in_place_kkt_rhs_ieee2522C_1ph_T12_trace.csv`. These are single-run timing
 comparisons, while trajectory preservation and the buffer removal are exact.
 
+The sparse backward pass subsequently reuses each stage's already allocated
+update rule instead of copying the solved KKT blocks through intermediate
+matrices and replacing the rule. A large10kC probe reduced warm-stage update
+allocation from 3525.163 MiB to 2011.139 MiB (42.95%) without changing the
+757.012-MiB retained rule. The strict IEEE2522C `T = 12` trace remained exact,
+while runtime fell from 1092.507 s to 1039.905 s, a further single-run 4.82%
+reduction. See `ddp/notes/FILTERDDP_STAGE_RULE_REUSE.md`,
+`stage_rule_reuse_memory.csv`, and
+`reuse_stage_rule_ieee2522C_1ph_T12_trace.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

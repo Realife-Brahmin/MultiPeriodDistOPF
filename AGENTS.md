@@ -307,6 +307,17 @@ complete 79-iteration trace exactly and solves in 1092.507 s, versus
 `ddp/results/network_filterddp/in_place_kkt_rhs_runtime.csv`. Treat the timing
 percentages as single-run measurements, not statistical estimates.
 
+**Sparse stage-rule buffer reuse (2026-09-01):** after the in-place KKT solve,
+the sparse path still copied its solved blocks through large intermediate
+matrices and replaced an already allocated stage rule. It now copies directly
+into that rule's existing arrays. On large10k `T = 3`, warm-stage update
+allocation falls from 3525.163 MiB to 2011.139 MiB, saving 1514.024 MiB
+(42.95%) per construction while retained storage remains 757.012 MiB/stage.
+IEEE123 and IEEE2522 `T = 12` preserve their exact traces. IEEE2522 `T = 12`
+runtime is 1039.905 s, a further 4.82% below the in-place-RHS run. Apply
+`ddp/patches/reuse_stage_rule_buffers.patch` last; see
+`ddp/notes/FILTERDDP_STAGE_RULE_REUSE.md`. Timing is a single-run measurement.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

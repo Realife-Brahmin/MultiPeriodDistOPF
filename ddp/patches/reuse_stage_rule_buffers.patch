@@ -1,0 +1,53 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -231,12 +231,15 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             update_start_ns = time_ns()
+             update_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+             if sparse_kkt
+-                α_β = kkt_solution[1:nu, :]
+-                ψ_ω = kkt_solution[nu+1:end, :]
+-                α = α_β[:, 1]
+-                β = α_β[:, 2:nx+1]
+-                ψ = ψ_ω[:, 1]
+-                ω = ψ_ω[:, 2:nx+1]
++                update_rule = solver.update[t]
++                copyto!(update_rule.α, @view kkt_solution[1:nu, 1])
++                copyto!(update_rule.β, @view kkt_solution[1:nu, 2:nx+1])
++                copyto!(update_rule.ψ, @view kkt_solution[nu+1:end, 1])
++                copyto!(update_rule.ω, @view kkt_solution[nu+1:end, 2:nx+1])
++                α = update_rule.α
++                β = update_rule.β
++                ψ = update_rule.ψ
++                ω = update_rule.ω
+             elseif nc > 0
+                 α_β_z = ck \ (Z' * ([-Qû -B] - Ĥ * Y * α_β_y))
+                 α_β = Y * α_β_y + Z * α_β_z
+@@ -265,12 +268,18 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+-
++
+             # update parameters of update rule for ineq. dual variables
+-
++
+-            χl = inv_ul .* μ - zl - Σ_L .* α
+-
+-            χu = inv_uu .* μ - zu + Σ_U .* α
+-
+-            # update the update rule
+-            solver.update[t] = UpdateRule{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U)
++            if sparse_kkt
++                @. update_rule.χl = inv_ul * μ - zl - Σ_L * α
++                @. update_rule.χu = inv_uu * μ - zu + Σ_U * α
++                copyto!(update_rule.Σ_L, Σ_L)
++                copyto!(update_rule.Σ_U, Σ_U)
++                χl = update_rule.χl
++                χu = update_rule.χu
++            else
++                χl = inv_ul .* μ - zl - Σ_L .* α
++                χu = inv_uu .* μ - zu + Σ_U .* α
++                solver.update[t] = UpdateRule{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U)
++            end
+-
++
+             # evaluate optimality dual error
+             Lu = lu_ - zl + zu + fu' * λ
