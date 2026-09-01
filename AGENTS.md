@@ -353,6 +353,20 @@ The strict IEEE123 `T = 3` trace is byte-for-byte identical. Apply
 trace is also byte-for-byte identical; runtime falls from 737.043 s to
 701.245 s (4.86%), or 63.13% below the original 1902.103-s sparse run.
 
+**Cached network constraint Jacobian (2026-09-01):** post-seven-fix profiling
+showed that first-order construction, not Hessian callbacks, still consumed
+about 2.24 s per warm large10k stage. About 1.87--1.91 s was rebuilding the
+sparse `cu` matrix whose pattern and nearly all values are constant. The BFM
+driver now constructs one `cu` per stage and updates only four SOC derivatives
+per branch. Warm callback time falls to 0.002--0.003 s. IEEE123 `T = 3` and
+IEEE2522 `T = 12` retain byte-for-byte identical traces; IEEE2522 solve time
+falls from 701.245 s to 577.190 s (17.69%), or 69.66% below the original
+1902.103-s run. Build time rises from 1.415 s to 3.340 s. Source tracing also
+confirms that full `beta`/`omega` maps feed both the backward value recursion
+and every line-search rollout, so removing them requires a faithful new action
+representation rather than deleting stored columns. See
+`ddp/notes/FILTERDDP_CACHED_CONSTRAINT_JACOBIAN.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

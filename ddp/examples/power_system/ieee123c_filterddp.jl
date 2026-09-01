@@ -165,8 +165,11 @@ function build_model(data)
             end
             J
         end
-        cu = function (x,u)
-            J = spzeros(nc, nu)
+        # The constraint Jacobian has a fixed sparsity pattern. Build its
+        # constant entries once per stage and update only the four
+        # iterate-dependent SOC entries per line on each callback.
+        cu_J = spzeros(nc, nu)
+        let J = cu_J
             row = 1
             J[row, idx.ps] = 1.0
             for e in data[:L1set]
@@ -208,10 +211,12 @@ function build_model(data)
             end
             for (e,(i,_)) in enumerate(lines)
                 row += 1
-                J[row, idx.P[e]] = 2u[idx.P[e]]
-                J[row, idx.Q[e]] = 2u[idx.Q[e]]
-                J[row, idx.v[buspos[i]]] = -u[idx.ell[e]]
-                J[row, idx.ell[e]] = -u[idx.v[buspos[i]]]
+                # Nonzero placeholders retain these positions in the CSC
+                # structure until the first value update.
+                J[row, idx.P[e]] = 1.0
+                J[row, idx.Q[e]] = 1.0
+                J[row, idx.v[buspos[i]]] = 1.0
+                J[row, idx.ell[e]] = 1.0
                 J[row, idx.soc_slack[e]] = 1.0
             end
             row += 1
@@ -221,7 +226,19 @@ function build_model(data)
                 J[row, idx.pb[b]] = -dt
                 J[row, idx.energy_slack[b]] = -1.0
             end
-            J
+        end
+        cu = let J = cu_J
+            function (x,u)
+                row = 2length(buses) + length(lines)
+                for (e,(i,_)) in enumerate(lines)
+                    row += 1
+                    J[row, idx.P[e]] = 2u[idx.P[e]]
+                    J[row, idx.Q[e]] = 2u[idx.Q[e]]
+                    J[row, idx.v[buspos[i]]] = -u[idx.ell[e]]
+                    J[row, idx.ell[e]] = -u[idx.v[buspos[i]]]
+                end
+                J
+            end
         end
         cxx = (x,u,ϕ) -> zeros(nx, nx)
         cux = (x,u,ϕ) -> spzeros(nu, nx)

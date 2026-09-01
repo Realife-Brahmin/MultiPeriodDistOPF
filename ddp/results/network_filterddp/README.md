@@ -260,6 +260,19 @@ also byte-for-byte identical, while runtime falls from 737.043 s to 701.245 s
 (4.86%). This is 63.13% below the original 1902.103-s sparse run. Runtime rows
 are in `in_place_B_assembly_runtime.csv`.
 
+Post-optimization profiling then found that the network control-constraint
+Jacobian `cu` was reconstructed from scratch at every stage and iteration,
+although its sparsity pattern and all but four entries per branch are constant.
+The network callback now constructs the sparse pattern once per stage and
+updates only the SOC-dependent values. Warm large10k `cu` time falls from
+about 1.9 s to 0.002--0.003 s. The strict IEEE123C and IEEE2522C traces remain
+byte-for-byte identical; IEEE2522C `T = 12` solve time falls from 701.245 s to
+577.190 s (17.69%), 69.66% below the original sparse run. Model building rises
+only from 1.415 s to 3.340 s. See
+`ddp/notes/FILTERDDP_CACHED_CONSTRAINT_JACOBIAN.md`,
+`cached_constraint_jacobian_profile.csv`, and
+`cached_constraint_jacobian_runtime.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
