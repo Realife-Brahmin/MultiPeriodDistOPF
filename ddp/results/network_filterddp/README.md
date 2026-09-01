@@ -193,6 +193,14 @@ cheaper KKT algebra. See
 `ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and
 `factored_bound_sensitivity_regression.csv`.
 
+A subsequent ownership-only optimization removes a second constructor copy of
+the already-owned update arrays. Relative to the factored-bound version,
+IEEE2522C strict solve times improve consistently by 3.29% at `T = 3`, 4.40%
+at `T = 12`, and 3.47% at `T = 24`, with byte-for-byte-equivalent CSV traces.
+This is a modest allocation/garbage-collection improvement, not a change to
+the KKT work. See `ddp/notes/FILTERDDP_NO_COPY_UPDATE_RULE.md` and
+`no_copy_update_rule_runtime.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

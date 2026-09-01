@@ -282,6 +282,11 @@ allocation from 4282.176 MiB to 3525.163 MiB, exactly one 757.013-MiB update
 rule (17.68%), with unchanged persistent storage and an identical IEEE123
 full regression. Apply `ddp/patches/no_copy_update_rule.patch` last; see
 `ddp/notes/FILTERDDP_NO_COPY_UPDATE_RULE.md`.
+Full IEEE2522 strict regressions isolate a consistent modest runtime gain over
+the factored-only implementation: 3.29% at `T = 3`, 4.40% at `T = 12`, and
+3.47% at `T = 24`, with identical stored traces. This establishes the likely
+effect size; do not spend another two hours on large10k unless a large-system
+runtime number is specifically required.
 
 ## Pending task (do not start until asked)
 

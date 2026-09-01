@@ -2,7 +2,8 @@ param(
     [string[]]$Systems = @("ieee123C_1ph", "ieee2522C_1ph", "large10kC_1ph"),
     [int]$Horizon = 3,
     [double]$Tolerance = 1e-7,
-    [int]$MaxIterations = 200
+    [int]$MaxIterations = 200,
+    [string]$TagPrefix = "factored_bounds"
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,7 +25,7 @@ Remove-Item Env:FILTERDDP_MEMORY_DIAGNOSTIC -ErrorAction SilentlyContinue
 Remove-Item Env:FILTERDDP_TIMING_DIAGNOSTIC -ErrorAction SilentlyContinue
 
 foreach ($system in $Systems) {
-    $tag = "factored_bounds_${system}_T${Horizon}"
+    $tag = "${TagPrefix}_${system}_T${Horizon}"
     $stdout = Join-Path $logDir "${tag}.out.log"
     $stderr = Join-Path $logDir "${tag}.err.log"
     $trace = Join-Path $resultDir "${tag}_trace.csv"
