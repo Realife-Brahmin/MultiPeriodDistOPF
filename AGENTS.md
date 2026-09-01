@@ -265,6 +265,11 @@ during rollout. On large10k this reduces bound data from 850.804 MiB to
 stage, exactly preserving the IEEE123 `T = 3` result. See
 `ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and apply
 `ddp/patches/factor_bound_sensitivities.patch` after the dynamic-network patch.
+Full strict regressions preserve iteration counts and solutions. large10k
+`T = 3` improved from 7123.782 s to 6660.908 s (6.50%), and IEEE2522 `T = 12`
+from 1902.103 s to 1183.039 s (37.80%); the `T = 3` small/medium cases were
+slightly slower. Treat the exact storage reduction as established and these
+single-run runtime percentages as promising rather than statistical estimates.
 
 ## Pending task (do not start until asked)
 

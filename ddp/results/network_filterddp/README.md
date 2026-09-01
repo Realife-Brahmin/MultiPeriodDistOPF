@@ -181,6 +181,16 @@ cost here; retaining that cache would make the implementation more complicated
 and slower. Further scaling requires reducing numerical factorization/solve
 cost or exploiting feeder structure, not merely caching the ordering.
 
+The exact bound-sensitivity factorization follow-up removes two redundant
+`nu x nx` matrices per stage without changing the iteration equations. Full
+strict regressions retained the old iteration counts and final solutions.
+large10kC `T = 3` fell from 7123.782 s to 6660.908 s (6.50%), while IEEE2522C
+`T = 12` fell from 1902.103 s to 1183.039 s (37.80%). IEEE123C and IEEE2522C
+at `T = 3` were slightly slower, confirming that this is primarily a
+memory-pressure improvement rather than cheaper KKT algebra. See
+`ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and
+`factored_bound_sensitivity_regression.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

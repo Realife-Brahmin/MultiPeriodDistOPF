@@ -276,8 +276,10 @@ println("constructing dynamic Solver storage...")
 flush(stdout)
 t_solver = time()
 max_iterations = parse(Int, get(ENV, "FILTERDDP_MAX_ITERATIONS", "200"))
+optimality_tolerance = parse(Float64, get(ENV, "FILTERDDP_OPTIMALITY_TOLERANCE", "1e-7"))
 solver = Solver(ocp; options=Options{Float64}(verbose=!quiet,
-    optimality_tolerance=1e-7, max_iterations=max_iterations))
+    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations))
+@printf("optimality_tolerance=%.3e max_iterations=%d\n", optimality_tolerance, max_iterations)
 @printf("Solver construction complete: %.3f s\n", time()-t_solver)
 mode == "solver" && exit()
 x0 = Float64[data[:B0_pu][j] for j in data[:Bset]]
@@ -297,6 +299,8 @@ flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+@printf("final residuals: primal=%.12e dual=%.12e complementarity=%.12e\n",
+        solver.data.primal_inf, solver.data.dual_inf, solver.data.cs_inf_0)
 
 # Compare against the existing centralized JuMP/Ipopt result when available.
 xddp, uddp = get_trajectory(solver)

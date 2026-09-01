@@ -52,6 +52,37 @@ forward-policy representation, recomputation, or retained factorization. The
 bound matrices were uniquely attractive because they were exact row-scaled
 copies of `beta`.
 
+## Full convergence regressions
+
+Four strict `1e-7` end-to-end regressions were run with the factored update.
+The iteration counts and final solutions are unchanged. On large10k `T = 3`,
+all 116 printed rows (initial row plus 115 iterations) have identical
+objectives, primal/complementarity infeasibilities, step sizes, and line-search
+backtracks. The only printed trajectory difference is `1e-9` in dual
+infeasibility at iteration 105, consistent with floating-point operation
+ordering and far below either stopping tolerance.
+
+| System | Horizon | Historical | Factored | Runtime change | Strict iterations | First practical `1e-6` iteration |
+|---|---:|---:|---:|---:|---:|---:|
+| IEEE123C | 3 | 13.856 s | 15.635 s | +12.84% | 48 | 44 |
+| IEEE2522C | 3 | 233.098 s | 245.175 s | +5.18% | 56 | 52 |
+| large10kC | 3 | 7123.782 s | 6660.908 s | -6.50% | 115 | 111 |
+| IEEE2522C | 12 | 1902.103 s | 1183.039 s | -37.80% | 79 | 76 |
+
+The small cases show that this is not a universal per-iteration speedup:
+startup noise and unchanged KKT work dominate when little memory is removed.
+The benefit appears when retained horizon storage becomes material. The
+large10k `T = 3` run saves about 2.49 GiB across three stages and is 6.5%
+faster. IEEE2522 `T = 12` saves about 609 MiB and is 37.8% faster in this
+single-run comparison. Because wall times are one historical run versus one
+new run, the exact memory reduction and identical convergence are stronger
+claims than the precise speed percentages; repeated timings would be needed
+for confidence intervals.
+
+Raw traces and the comparison row set are stored as
+`factored_bounds_*_trace.csv` and
+`factored_bound_sensitivity_regression.csv` in the network results folder.
+
 ## Reproduction
 
 After applying `dynamic_network_scaling.patch`, apply
