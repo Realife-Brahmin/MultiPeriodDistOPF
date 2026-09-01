@@ -201,6 +201,15 @@ This is a modest allocation/garbage-collection improvement, not a change to
 the KKT work. See `ddp/notes/FILTERDDP_NO_COPY_UPDATE_RULE.md` and
 `no_copy_update_rule_runtime.csv`.
 
+The next exact ownership optimization overwrites the dense sparse-KKT
+right-hand side with its solution instead of allocating an equally sized
+second matrix. On large10kC this halves warm-stage solve allocation from
+1510.686 MiB to 755.343 MiB, removing one 755.343-MiB buffer while preserving
+the IEEE123C strict trajectory and KKT capture semantics. See
+`ddp/notes/FILTERDDP_IN_PLACE_KKT_RHS.md` and
+`in_place_kkt_rhs_memory.csv`. This bounded probe establishes memory savings,
+not a full-run timing claim.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

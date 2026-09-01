@@ -288,6 +288,17 @@ the factored-only implementation: 3.29% at `T = 3`, 4.40% at `T = 12`, and
 effect size; do not spend another two hours on large10k unless a large-system
 runtime number is specifically required.
 
+**In-place sparse-KKT RHS solve (2026-09-01):** the sparse backward pass used
+to retain its dense right-hand side while allocating a second dense solution
+matrix. It now uses `ldiv!` to overwrite the RHS, while explicit KKT-capture
+mode alone preserves a pre-solve copy. On large10k `T = 3`, warm-stage solve
+allocation falls exactly from 1510.686 MiB to 755.343 MiB (50%), removing one
+755.343-MiB buffer; update allocation is unchanged. The IEEE123 strict full
+trajectory is identical, and a captured system reproduces its solution with
+residual `3.19e-10`. Apply `ddp/patches/in_place_kkt_rhs.patch` after the
+no-copy patch. See `ddp/notes/FILTERDDP_IN_PLACE_KKT_RHS.md`. This was a
+bounded memory probe, not a full-run runtime benchmark.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
