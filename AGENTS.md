@@ -318,6 +318,16 @@ runtime is 1039.905 s, a further 4.82% below the in-place-RHS run. Apply
 `ddp/patches/reuse_stage_rule_buffers.patch` last; see
 `ddp/notes/FILTERDDP_STAGE_RULE_REUSE.md`. Timing is a single-run measurement.
 
+**Reusable KKT RHS workspace (2026-09-01):** the sparse path now lazily
+allocates one dense RHS per backward sweep, fills its four blocks in place,
+and reuses it across stages and regularization retries. This replaces per-stage
+matrix concatenation. On large10k `T = 3`, warm-stage KKT assembly allocation
+falls from 1760.525 MiB to 68.569 MiB, saving 1691.956 MiB (96.10%). IEEE123
+and IEEE2522 `T = 12` preserve exact traces. IEEE2522 `T = 12` runtime is
+962.181 s, 7.47% below stage-rule reuse and 49.41% below the original sparse
+1902.103-s run. Apply `ddp/patches/reuse_kkt_rhs_workspace.patch` last; see
+`ddp/notes/FILTERDDP_REUSABLE_KKT_RHS_WORKSPACE.md`. Timings are single runs.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

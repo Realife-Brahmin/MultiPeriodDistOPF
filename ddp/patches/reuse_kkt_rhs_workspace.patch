@@ -1,0 +1,29 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -11,6 +11,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+     dynamics = ocp.dynamics
+     cl = ocp.control_limits
+     ni = (cl.nl + cl.nu) * ocp.N
++    rhs_workspace = nothing
+     
+     while reg <= options.reg_max
+         data.status = 0
+@@ -170,7 +171,16 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                 kkt_start_ns = time_ns()
+                 Ĥ = sparse(Symmetric(Ĥ))
+                 K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
+-                rhs = Matrix([-Qû -B; -c -cx])
++                if isnothing(rhs_workspace)
++                    rhs_workspace = Matrix{T}(undef, nu + nc, nx + 1)
++                end
++                rhs = rhs_workspace
++                @views begin
++                    @. rhs[1:nu, 1] = -Qû
++                    @. rhs[1:nu, 2:nx+1] = -B
++                    @. rhs[nu+1:end, 1] = -c
++                    @. rhs[nu+1:end, 2:nx+1] = -cx
++                end
+                 capture_this_kkt = haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
+                     t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
+                 captured_rhs = capture_this_kkt ? copy(rhs) : nothing

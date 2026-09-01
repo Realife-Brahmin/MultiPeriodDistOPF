@@ -226,6 +226,16 @@ reduction. See `ddp/notes/FILTERDDP_STAGE_RULE_REUSE.md`,
 `stage_rule_reuse_memory.csv`, and
 `reuse_stage_rule_ieee2522C_1ph_T12_trace.csv`.
 
+Finally, one dense KKT right-hand-side workspace is reused across all stages of
+each backward sweep and filled blockwise rather than rebuilt by matrix
+concatenation. On large10kC, warm-stage KKT assembly allocation falls from
+1760.525 MiB to 68.569 MiB (96.10%). The strict IEEE2522C `T = 12` trace again
+remains exact, while runtime falls from 1039.905 s to 962.181 s, a further
+single-run 7.47% reduction and 49.41% below the original 1902.103-s sparse
+run. See `ddp/notes/FILTERDDP_REUSABLE_KKT_RHS_WORKSPACE.md`,
+`reusable_rhs_workspace_memory.csv`, and
+`reuse_rhs_workspace_ieee2522C_1ph_T12_trace.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
