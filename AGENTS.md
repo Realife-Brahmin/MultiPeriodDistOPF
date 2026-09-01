@@ -273,6 +273,16 @@ slightly slower. IEEE2522 `T = 24` then improved from 3068.228 s to 2330.122 s
 horizon. Treat the exact storage reduction as established and these single-run
 runtime percentages as promising rather than statistical estimates.
 
+**No-copy update-rule construction (2026-08-31):** after the exact bound-map
+factorization, the backward pass's owned `beta`, `omega`, and vector arrays
+were copied a second time by the converting `UpdateRule` constructor. A
+type-specific ownership constructor removes that copy while retaining the
+generic compatibility fallback. On large10k this reduces warm-stage update
+allocation from 4282.176 MiB to 3525.163 MiB, exactly one 757.013-MiB update
+rule (17.68%), with unchanged persistent storage and an identical IEEE123
+full regression. Apply `ddp/patches/no_copy_update_rule.patch` last; see
+`ddp/notes/FILTERDDP_NO_COPY_UPDATE_RULE.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

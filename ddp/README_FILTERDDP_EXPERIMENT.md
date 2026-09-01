@@ -86,6 +86,7 @@ git clone https://github.com/mingu6/FilterDDP.jl ddp/external/FilterDDP.jl
 git -C ddp/external/FilterDDP.jl checkout 513a104
 git -C ddp/external/FilterDDP.jl apply ../../patches/dynamic_network_scaling.patch
 git -C ddp/external/FilterDDP.jl apply ../../patches/factor_bound_sensitivities.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/no_copy_update_rule.patch
 
 # the two papers (gitignored -- not ours to redistribute)
 mkdir ddp/papers
