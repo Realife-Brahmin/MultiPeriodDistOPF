@@ -283,6 +283,17 @@ temporary workspace if a lower-memory mode becomes necessary. See
 `ddp/notes/FILTERDDP_KKT_RHS_BLOCK_BENCHMARK.md` and
 `large10k_kkt_rhs_block_benchmark.csv`.
 
+The mixed derivative `B` has a stronger exact MPOPF structure than its dense
+storage suggested. On large10k it has only 1020 active rows out of 54665: the
+battery-energy state enters only through the 1020 battery-power controls. A
+guarded sparse-path representation now forms only that `1020 x 1020` block and
+uses the matching packed rows of `beta` in the value update. Warm-stage algebra
+falls from about 1.2--1.4 s/1001.743 MiB to 0.134 s/174.839 MiB. IEEE123C and
+IEEE2522C traces remain byte-for-byte identical; IEEE2522C `T = 12` solve time
+falls from 577.190 s to 481.518 s (16.58%), 74.68% below the original sparse
+run. See `ddp/notes/FILTERDDP_ACTIVE_B_ROWS.md`, `active_B_rows_profile.csv`,
+and `active_B_rows_runtime.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

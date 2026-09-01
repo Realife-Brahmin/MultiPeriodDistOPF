@@ -376,6 +376,19 @@ peak temporary RHS storage from about 755 MiB to about 95 MiB if implemented
 as a direct-to-policy low-memory mode, but it is not a runtime improvement and
 is not enabled. See `ddp/notes/FILTERDDP_KKT_RHS_BLOCK_BENCHMARK.md`.
 
+**Active-row `B` representation (2026-09-01):** large10k `B` is stored as
+`54665 x 1020` dense but has exactly 1020 active rows (the battery-power
+controls), 1.866% total density. When sparse `fu` and zero `lux`/`fux`/`cux`
+prove this structure, the backward pass now forms only the dense `1020 x 1020`
+active block, writes it into the existing KKT RHS, and evaluates `beta'B` from
+the matching packed beta rows. The active block is exact and its value update
+agrees to `9.58e-16`. Warm large10k algebra falls from about 1.2--1.4 s and
+1001.743 MiB to 0.134 s and 174.839 MiB. IEEE123 and IEEE2522 traces are
+byte-for-byte identical; IEEE2522 `T = 12` falls from 577.190 s to 481.518 s
+(16.58%), or 74.68% below the original 1902.103-s run. Apply
+`ddp/patches/active_B_rows.patch` last; see
+`ddp/notes/FILTERDDP_ACTIVE_B_ROWS.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
