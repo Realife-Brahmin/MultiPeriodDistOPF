@@ -299,6 +299,14 @@ residual `3.19e-10`. Apply `ddp/patches/in_place_kkt_rhs.patch` after the
 no-copy patch. See `ddp/notes/FILTERDDP_IN_PLACE_KKT_RHS.md`. This was a
 bounded memory probe, not a full-run runtime benchmark.
 
+A subsequent strict cold-start IEEE2522 `T = 12` regression preserves the
+complete 79-iteration trace exactly and solves in 1092.507 s, versus
+1145.392 s for no-copy alone (4.62% faster) and 1183.039 s for factored-only
+(7.65% faster). Objective and final residuals are identical; all practical
+`1e-6` criteria are first met at iteration 76. See
+`ddp/results/network_filterddp/in_place_kkt_rhs_runtime.csv`. Treat the timing
+percentages as single-run measurements, not statistical estimates.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

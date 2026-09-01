@@ -208,7 +208,13 @@ second matrix. On large10kC this halves warm-stage solve allocation from
 the IEEE123C strict trajectory and KKT capture semantics. See
 `ddp/notes/FILTERDDP_IN_PLACE_KKT_RHS.md` and
 `in_place_kkt_rhs_memory.csv`. This bounded probe establishes memory savings,
-not a full-run timing claim.
+not by itself a full-run timing claim. A subsequent strict IEEE2522C `T = 12`
+run retained the exact 79-iteration trace and finished in 1092.507 s: 4.62%
+faster than the immediately preceding no-copy run (1145.392 s), and 7.65%
+faster than the factored-only run (1183.039 s). It first met all practical
+`1e-6` criteria at iteration 76. See `in_place_kkt_rhs_runtime.csv` and
+`in_place_kkt_rhs_ieee2522C_1ph_T12_trace.csv`. These are single-run timing
+comparisons, while trajectory preservation and the buffer removal are exact.
 
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the

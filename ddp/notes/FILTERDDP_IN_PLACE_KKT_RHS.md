@@ -24,11 +24,21 @@ no such copy.
   solve allocation from `1510.686 MiB` to `755.343 MiB`: exactly one
   `755.343 MiB` dense matrix, or 50%. The update-rule allocation remains
   `3525.163 MiB`, as expected.
+- A full strict IEEE2522C, `T = 12`, cold-start run preserved the complete
+  79-iteration trace exactly. It finished in `1092.507 s`, versus
+  `1145.392 s` for the immediately preceding no-copy implementation: a
+  `52.885 s` or 4.62% reduction. Relative to the factored-only run
+  (`1183.039 s`), the combined reduction is 7.65%. The final objective was
+  `8512.516760782939`, with primal infeasibility `2.290052331922e-8`, dual
+  infeasibility `8.669033484674e-8`, and complementarity
+  `6.803853214214e-10`. All three practical `1e-6` criteria were first met at
+  iteration 76.
 
-The one-iteration probe took 55.949 s, but it is not a runtime benchmark. The
-established result is the exact removal of the second dense KKT buffer. Full
-timing should only be repeated if a publication-quality runtime number is
-needed.
+The runtime percentages are single-run measurements, not statistical
+estimates. The exact results are the identical trajectory and removal of the
+second dense KKT buffer.
 
-Raw memory comparisons are in
-`ddp/results/network_filterddp/in_place_kkt_rhs_memory.csv`.
+Raw comparisons and the full trace are in
+`ddp/results/network_filterddp/in_place_kkt_rhs_memory.csv`,
+`ddp/results/network_filterddp/in_place_kkt_rhs_runtime.csv`, and
+`ddp/results/network_filterddp/in_place_kkt_rhs_ieee2522C_1ph_T12_trace.csv`.
