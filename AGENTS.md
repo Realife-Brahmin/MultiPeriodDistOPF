@@ -389,6 +389,17 @@ byte-for-byte identical; IEEE2522 `T = 12` falls from 577.190 s to 481.518 s
 `ddp/patches/active_B_rows.patch` last; see
 `ddp/notes/FILTERDDP_ACTIVE_B_ROWS.md`.
 
+**Parallel UMFPACK RHS solve rejected (2026-09-01):** on the captured large10k
+stage, four independent factors reduce the 1021-column solve from 3.150 s to
+1.611 s, but concurrent factor time rises from 0.494 s to 1.757 s, so total
+linear-algebra time improves only 7.59%. Eight workers are slower overall and
+independent factors add native memory. A shared factor leaves two- and
+four-worker solves effectively serial (~3.15--3.17 s), and a repeated stress
+run did not complete cleanly. Do not add a threaded UMFPACK production path;
+revisit parallelism only with a solver designed for it or after reducing the
+number of sensitivity columns. See
+`ddp/notes/FILTERDDP_PARALLEL_UMFPACK_RHS.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

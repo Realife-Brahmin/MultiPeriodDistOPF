@@ -294,6 +294,15 @@ falls from 577.190 s to 481.518 s (16.58%), 74.68% below the original sparse
 run. See `ddp/notes/FILTERDDP_ACTIVE_B_ROWS.md`, `active_B_rows_profile.csv`,
 and `active_B_rows_runtime.csv`.
 
+Parallel RHS solves were tested on the exact large10k stage system using 1, 2,
+4, and 8 independent UMFPACK factors. Four workers reduce solve time from
+3.150 s to 1.611 s, but concurrent factor creation grows from 0.494 s to
+1.757 s, leaving only a 7.59% total gain. Eight workers are slower. Sharing one
+factor leaves the solve effectively serial and is not a supported robust path.
+No production parallel mode is added. See
+`ddp/notes/FILTERDDP_PARALLEL_UMFPACK_RHS.md` and
+`large10k_umfpack_parallel_rhs.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
