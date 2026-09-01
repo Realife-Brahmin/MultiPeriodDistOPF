@@ -90,6 +90,7 @@ git -C ddp/external/FilterDDP.jl apply ../../patches/no_copy_update_rule.patch
 git -C ddp/external/FilterDDP.jl apply ../../patches/in_place_kkt_rhs.patch
 git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_stage_rule_buffers.patch
 git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_kkt_rhs_workspace.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/type_constraint_residual_vector.patch
 
 # the two papers (gitignored -- not ours to redistribute)
 mkdir ddp/papers

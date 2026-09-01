@@ -236,6 +236,18 @@ run. See `ddp/notes/FILTERDDP_REUSABLE_KKT_RHS_WORKSPACE.md`,
 `reusable_rhs_workspace_memory.csv`, and
 `reuse_rhs_workspace_ieee2522C_1ph_T12_trace.csv`.
 
+A post-optimization profile then exposed a dispatch bug rather than an
+algorithmic cost: the equality residual `c` was stored as `Vector{Any}`, so
+`omega' * c` used a generic dense multiplication. Constructing the same values
+as `Vector{T}` restores BLAS dispatch. On large10kC, warm-stage update
+allocation falls from 2011.138 MiB to 33.909 MiB (98.31%), and the identified
+product falls from about 3.98 s to 0.010 s. The strict IEEE2522C `T = 12` run
+retains the same displayed 79-row trace and finishes in 737.043 s: 23.40%
+below the reusable-workspace run and 61.25% below the original sparse run.
+See `ddp/notes/FILTERDDP_TYPED_CONSTRAINT_VECTOR.md`,
+`typed_constraint_vector_profile.csv`, and
+`typed_constraint_vector_ieee2522C_1ph_T12_trace.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

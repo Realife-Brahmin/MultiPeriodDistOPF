@@ -328,6 +328,18 @@ and IEEE2522 `T = 12` preserve exact traces. IEEE2522 `T = 12` runtime is
 1902.103-s run. Apply `ddp/patches/reuse_kkt_rhs_workspace.patch` last; see
 `ddp/notes/FILTERDDP_REUSABLE_KKT_RHS_WORKSPACE.md`. Timings are single runs.
 
+**Typed constraint residual dispatch fix (2026-09-01):** post-optimization
+profiling found that network constraint residual `c` was `Vector{Any}` while
+`omega` was `Matrix{Float64}`. Consequently, `omega' * c` used a generic path,
+allocating about 1975 MiB and taking about 4.0 s per warm large10k stage.
+Constructing `c` as `Vector{T}` restores BLAS without changing its values. The
+warm-stage update falls from 2011.138 MiB to 33.909 MiB allocation (98.31%),
+and that product to about 0.010 s/0.008 MiB. IEEE123 retains 48 iterations;
+IEEE2522 `T = 12` retains its displayed 79-row trace and solves in 737.043 s,
+23.40% below the preceding version and 61.25% below the original sparse run.
+Apply `ddp/patches/type_constraint_residual_vector.patch` last; see
+`ddp/notes/FILTERDDP_TYPED_CONSTRAINT_VECTOR.md`. Timings are single runs.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
