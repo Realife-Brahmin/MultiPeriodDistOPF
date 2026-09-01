@@ -273,6 +273,16 @@ only from 1.415 s to 3.340 s. See
 `cached_constraint_jacobian_profile.csv`, and
 `cached_constraint_jacobian_runtime.csv`.
 
+The remaining 1021-column large10k KKT solve was also tested with RHS block
+widths from 1 through 1021. The existing all-at-once solve is fastest at
+3.127 s; width 128 takes 3.192 s and the other layouts are no better. Total
+allocation remains about 755.34 MiB because every sensitivity column is still
+computed. Blocking is therefore rejected as a runtime optimization, although
+width 128 could trade a roughly 2.1% solve penalty for about 660 MiB less peak
+temporary workspace if a lower-memory mode becomes necessary. See
+`ddp/notes/FILTERDDP_KKT_RHS_BLOCK_BENCHMARK.md` and
+`large10k_kkt_rhs_block_benchmark.csv`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

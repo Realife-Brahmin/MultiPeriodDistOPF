@@ -367,6 +367,15 @@ and every line-search rollout, so removing them requires a faithful new action
 representation rather than deleting stored columns. See
 `ddp/notes/FILTERDDP_CACHED_CONSTRAINT_JACOBIAN.md`.
 
+**KKT RHS blocking rejected for speed (2026-09-01):** one captured large10k
+stage (`96968 x 96968`, 1021 RHS) was solved with UMFPACK block widths 1--1021.
+The existing all-at-once solve is fastest at 3.127 s; the best smaller block,
+width 128, takes 3.192 s (2.08% slower). Every layout allocates about 755.34
+MiB cumulatively because all columns remain necessary. Width 128 could reduce
+peak temporary RHS storage from about 755 MiB to about 95 MiB if implemented
+as a direct-to-policy low-memory mode, but it is not a runtime improvement and
+is not enabled. See `ddp/notes/FILTERDDP_KKT_RHS_BLOCK_BENCHMARK.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
