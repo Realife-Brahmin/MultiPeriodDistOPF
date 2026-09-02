@@ -326,6 +326,17 @@ This is an optional minimum-memory mode, not a speed optimization.  See
 `ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`, `blocked_value_rhs_results.csv`,
 and `ddp/patches/blocked_value_rhs.patch`.
 
+A large10k stage-1 feeder-distance analysis rejects a naive local truncation
+of the sensitivity maps.  Only battery-power feedback is concentrated at the
+perturbed battery bus.  Median 90%-energy radii are 18 edges for real branch
+power, 31 for voltage, 34 for current, and 53.5 for real-power-balance
+multipliers; worst columns extend beyond 80--125 edges.  At radius 8, only
+0.18% of the median real-power-balance multiplier energy is retained.  Any
+future spatial decomposition therefore needs explicit boundary/interface
+messages rather than simply dropping distant sensitivities.  See
+`ddp/notes/FILTERDDP_SENSITIVITY_LOCALITY.md` and the two
+`large10k_stage1_locality_*.csv` summaries.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

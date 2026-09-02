@@ -425,6 +425,17 @@ IEEE123 `T = 3` and IEEE2522 `T = 3` retain byte-for-byte identical traces.
 Apply `ddp/patches/blocked_value_rhs.patch` after the factor-backed patch; see
 `ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`.
 
+**Sensitivity locality rejected as a naive shortcut (2026-09-01):** an exact
+large10k stage-1 analysis grouped every `beta`/`omega` column by feeder distance
+from its perturbed battery.  Battery-power feedback is local (90% radius zero),
+but median 90%-energy radii are 18 edges for real branch power, 31 for voltage,
+34 for current, and 53.5 for real-power-balance multipliers; worst columns
+reach 82--125 edges.  Radius 8 retains only 0.18% of the median real-balance
+multiplier energy.  Do not implement a fixed-radius truncation or claim the
+network sensitivities are local.  Spatial decomposition remains possible only
+with explicit interface/boundary information.  See
+`ddp/notes/FILTERDDP_SENSITIVITY_LOCALITY.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
