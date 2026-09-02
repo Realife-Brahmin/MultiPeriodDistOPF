@@ -315,6 +315,17 @@ so this is a low-memory option rather than the default.  See
 `factor_backed_policy_runtime.csv`, and
 `ddp/patches/factor_backed_policy_actions.patch`.
 
+For the lowest-memory configuration, the backward value update can also solve
+its state sensitivities in blocks and immediately accumulate their exact
+contribution to `Vxx` and `Vx`.  With width 128, large10k's temporary RHS falls
+from `755.343 MiB` to `94.695 MiB` (87.46%), while retained policy storage
+stays at `34.888 MiB/stage`.  The first-stage RSS increase falls from
+`1589.223 MiB` to `242.652 MiB`, but the bounded solve is 32.27% slower.
+IEEE123 `T = 3` and IEEE2522 `T = 3` preserve byte-for-byte identical traces.
+This is an optional minimum-memory mode, not a speed optimization.  See
+`ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`, `blocked_value_rhs_results.csv`,
+and `ddp/patches/blocked_value_rhs.patch`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

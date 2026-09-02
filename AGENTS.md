@@ -414,6 +414,17 @@ path.  It does not remove the backward pass's `nx+1`-column solve.  Apply
 `active_B_rows.patch`; see
 `ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`.
 
+**Blocked value-update RHS (2026-09-01):** combined with factor-backed policy,
+the backward pass can solve sensitivity columns in blocks and immediately
+accumulate their exact `Vxx`/`Vx` contribution.  At width 128, large10k's RHS
+workspace falls from 755.343 MiB to 94.695 MiB (87.46%), retained policy stays
+34.888 MiB/stage, and first-stage RSS growth falls from 1589.223 MiB to
+242.652 MiB.  The bounded solve is 32.27% slower (37.179 s versus 28.109 s),
+so keep `FILTERDDP_BLOCKED_VALUE_RHS=1` as a minimum-memory option only.
+IEEE123 `T = 3` and IEEE2522 `T = 3` retain byte-for-byte identical traces.
+Apply `ddp/patches/blocked_value_rhs.patch` after the factor-backed patch; see
+`ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
