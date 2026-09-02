@@ -400,6 +400,20 @@ revisit parallelism only with a solver designed for it or after reducing the
 number of sensitivity columns. See
 `ddp/notes/FILTERDDP_PARALLEL_UMFPACK_RHS.md`.
 
+**Factor-backed policy actions (2026-09-01):** the rollout needs dense `beta`
+and `omega` only through their products with the current state displacement.
+Those products can instead be recovered exactly from one solve with the
+retained stage KKT factor and compact right-hand side.  IEEE123 `T = 3` and
+IEEE2522 `T = 12` retain byte-for-byte identical traces.  Large10k retained
+stage policy storage falls from 757.012 MiB to 34.888 MiB (95.39%); its
+isolated action is also faster, but IEEE2522 `T = 12` is 5.35% slower overall
+(507.278 s versus 481.518 s).  Keep this as the optional
+`FILTERDDP_FACTOR_BACKED_POLICY=1` low-memory mode, not the default runtime
+path.  It does not remove the backward pass's `nx+1`-column solve.  Apply
+`ddp/patches/factor_backed_policy_actions.patch` after
+`active_B_rows.patch`; see
+`ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

@@ -303,6 +303,18 @@ No production parallel mode is added. See
 `ddp/notes/FILTERDDP_PARALLEL_UMFPACK_RHS.md` and
 `large10k_umfpack_parallel_rhs.csv`.
 
+An optional factor-backed policy mode now avoids retaining the complete dense
+`beta` and `omega` maps after each backward stage.  Rollout actions are
+recovered exactly from one KKT solve using the retained stage factor and the
+compact active-row mixed derivative.  IEEE123 `T = 3` and IEEE2522 `T = 12`
+preserve their complete traces byte-for-byte.  On large10k, retained stage
+policy storage falls from `757.012 MiB` to `34.888 MiB` (95.39%).  IEEE2522
+`T = 12` takes `507.278 s`, 5.35% slower than the `481.518 s` dense-map path,
+so this is a low-memory option rather than the default.  See
+`ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`,
+`factor_backed_policy_runtime.csv`, and
+`ddp/patches/factor_backed_policy_actions.patch`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

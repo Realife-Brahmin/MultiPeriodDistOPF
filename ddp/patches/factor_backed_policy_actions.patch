@@ -1,0 +1,150 @@
+diff --git a/src/solver.jl b/src/solver.jl
+--- a/src/solver.jl
++++ b/src/solver.jl
+@@ -17,7 +17,16 @@ function TrajectoryElement(T::T_, nx::Int, nu::Int, nc::Int) where T_
+         )
+ end
+ 
+-struct UpdateRule{T, nx, nu, nc, nux, ncx}
++mutable struct FactorBackedPolicy{T}
++    factor::Any
++    active_rows::Vector{Int}
++    B_active::Matrix{T}
++    cx::SparseMatrixCSC{T, Int}
++    rhs::Vector{T}
++    Bδx::Vector{T}
++end
++
++mutable struct UpdateRule{T, nx, nu, nc, nux, ncx}
+     α::Vector{T}
+     ψ::Vector{T}
+     β::Matrix{T}
+@@ -26,11 +35,12 @@ struct UpdateRule{T, nx, nu, nc, nux, ncx}
+     χu::Vector{T}
+     Σ_L::Vector{T}
+     Σ_U::Vector{T}
++    factor_policy::Union{Nothing, FactorBackedPolicy{T}}
+     function UpdateRule{T, nx, nu, nc, nux, ncx}(α::Vector{T},
+             ψ::Vector{T}, β::Matrix{T}, ω::Matrix{T},
+             χl::Vector{T}, χu::Vector{T}, Σ_L::Vector{T},
+             Σ_U::Vector{T}) where {T, nx, nu, nc, nux, ncx}
+-        new{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U)
++        new{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U, nothing)
+     end
+     function UpdateRule{T, nx, nu, nc, nux, ncx}(α::AbstractVector,
+             ψ::AbstractVector, β::AbstractMatrix, ω::AbstractMatrix,
+@@ -42,11 +52,30 @@ struct UpdateRule{T, nx, nu, nc, nux, ncx}
+     end
+ end
+ 
++function policy_actions!(rule::UpdateRule{T}, δx::AbstractVector{T}) where T
++    policy = rule.factor_policy
++    if isnothing(policy)
++        return rule.β * δx, rule.ω * δx
++    end
++
++    nu = length(rule.α)
++    fill!(policy.rhs, zero(T))
++    mul!(policy.Bδx, policy.B_active, δx)
++    @views @. policy.rhs[policy.active_rows] = -policy.Bδx
++    mul!(@view(policy.rhs[nu+1:end]), policy.cx, δx)
++    @views policy.rhs[nu+1:end] .*= -one(T)
++    ldiv!(policy.factor, policy.rhs)
++    return @view(policy.rhs[1:nu]), @view(policy.rhs[nu+1:end])
++end
++
+ function UpdateRule(T::T_, nx::Int, nu::Int, nc::Int) where T_
+     nux = nu * nx
+     ncx = nc * nx
++    factor_backed = get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1"
++    β = factor_backed ? zeros(T, 0, 0) : zeros(T, nu, nx)
++    ω = factor_backed ? zeros(T, 0, 0) : zeros(T, nc, nx)
+     UpdateRule{T, nx, nu, nc, nux, ncx}(
+-        zeros(T, nu), zeros(T, nc), zeros(T, nu, nx), zeros(T, nc, nx),
++        zeros(T, nu), zeros(T, nc), β, ω,
+         zeros(T, nu), zeros(T, nu), zeros(T, nu), zeros(T, nu)
+     )
+ end
+@@ -129,9 +158,12 @@ end
+ function get_feedback(solver::Solver{T, nx, nu, nc, nux, ncx},
+         t::Int) where {T, nx, nu, nc, nux, ncx}
+     α = solver.update[t].α
+-    β = solver.update[t].β
++    rule = solver.update[t]
+     ū = solver.nominal[t].u
+     x̄ = solver.nominal[t].x
+-    f = x -> ū + α + β * (x - x̄)
++    f = x -> begin
++        βδx, _ = policy_actions!(rule, x - x̄)
++        ū + α + βδx
++    end
+     return f
+ end
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -205,6 +205,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                 kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
+                 kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
+                 kkt_solution = Matrix{T}(undef, 0, 0)
++                F = nothing
+                 try
+                     if timing_diagnostic || memory_diagnostic
+                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+@@ -261,13 +262,27 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             if sparse_kkt
+                 update_rule = solver.update[t]
+                 copyto!(update_rule.α, @view kkt_solution[1:nu, 1])
+-                copyto!(update_rule.β, @view kkt_solution[1:nu, 2:nx+1])
+                 copyto!(update_rule.ψ, @view kkt_solution[nu+1:end, 1])
+-                copyto!(update_rule.ω, @view kkt_solution[nu+1:end, 2:nx+1])
+                 α = update_rule.α
+-                β = update_rule.β
+                 ψ = update_rule.ψ
+-                ω = update_rule.ω
++                factor_backed_policy = get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" && structured_B
++                if factor_backed_policy
++                    β = @view kkt_solution[1:nu, 2:nx+1]
++                    ω = @view kkt_solution[nu+1:end, 2:nx+1]
++                    update_rule.β = zeros(T, 0, 0)
++                    update_rule.ω = zeros(T, 0, 0)
++                    update_rule.factor_policy = FactorBackedPolicy{T}(
++                        F, copy(active_B_rows), copy(B_active), sparse(cx),
++                        zeros(T, nu + nc), zeros(T, nx))
++                else
++                    size(update_rule.β) == (nu, nx) || (update_rule.β = zeros(T, nu, nx))
++                    size(update_rule.ω) == (nc, nx) || (update_rule.ω = zeros(T, nc, nx))
++                    copyto!(update_rule.β, @view kkt_solution[1:nu, 2:nx+1])
++                    copyto!(update_rule.ω, @view kkt_solution[nu+1:end, 2:nx+1])
++                    update_rule.factor_policy = nothing
++                    β = update_rule.β
++                    ω = update_rule.ω
++                end
+             elseif nc > 0
+                 α_β_z = ck \ (Z' * ([-Qû -B] - Ĥ * Y * α_β_y))
+                 α_β = Y * α_β_y + Z * α_β_z
+diff --git a/src/forward_pass.jl b/src/forward_pass.jl
+--- a/src/forward_pass.jl
++++ b/src/forward_pass.jl
+@@ -58,8 +58,7 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+         ϕ̄  = solver.nominal[t].ϕ
+         α = solver.update[t].α
+         ψ = solver.update[t].ψ
+-        β = solver.update[t].β
+-        ω = solver.update[t].ω
++        update_rule = solver.update[t]
+         zl̄ = solver.nominal[t].zl
+         zū = solver.nominal[t].zu
+         χl = solver.update[t].χl
+@@ -69,9 +68,9 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
+ 
+         δx = x - x̄
+ 
+-        βδx = β * δx
++        βδx, ωδx = policy_actions!(update_rule, δx)
+         u = ū + step_size .* α + βδx
+-        ϕ = ϕ̄  + step_size .* ψ + ω * δx
++        ϕ = ϕ̄  + step_size .* ψ + ωδx
+         zl = zl̄ + step_size .* χl - Σ_L .* βδx
+         zu = zū + step_size .* χu + Σ_U .* βδx
+         
