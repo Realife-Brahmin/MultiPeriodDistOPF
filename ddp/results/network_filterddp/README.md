@@ -342,6 +342,19 @@ messages rather than simply dropping distant sensitivities.  See
 `ddp/notes/FILTERDDP_SENSITIVITY_LOCALITY.md` and the two
 `large10k_stage1_locality_*.csv` summaries.
 
+### Optimized horizon timing matrix
+
+The complete validated optimization stack was rerun sequentially across the
+original timing matrix with factor-backed policies enabled and blocked RHS
+disabled. IEEE2522C solve times improve by 58--75% across `T=3--96`;
+large10kC improves by 63.03% at `T=3` and 36.95% at `T=6`. The optimized
+large10k peak working sets are 3808 and 4216 MiB, respectively. Stored
+IEEE2522 `T=12/48/96` and large10k `T=6` traces are byte-identical to their
+references. IEEE123 remains strictly converged, but some iteration counts
+differ from the oldest table and are explicitly flagged. See
+`optimized_timing_comparison.csv` and
+`../../notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of

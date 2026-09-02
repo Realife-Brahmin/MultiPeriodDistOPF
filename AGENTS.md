@@ -440,6 +440,20 @@ network sensitivities are local.  Spatial decomposition remains possible only
 with explicit interface/boundary information.  See
 `ddp/notes/FILTERDDP_SENSITIVITY_LOCALITY.md`.
 
+**Optimized horizon sweep (2026-09-02):** the complete validated patch stack,
+with factor-backed policies enabled and blocked RHS disabled, was rerun cold
+and sequentially over IEEE123C/IEEE2522C `T=3--96` and large10kC `T=3,6`.
+IEEE2522C improves by 58--75% across the sweep: `T=12` falls from 1902.103 s
+to 476.400 s and `T=96` from 9359.596 s to 3940.608 s. large10kC falls from
+7123.782 s to 2633.856 s at `T=3` (63.03%) and from 23490.218 s to 14809.508 s
+at `T=6` (36.95%), with sampled peaks of 3808 and 4216 MiB. IEEE2522
+`T=12/48/96` and large10k `T=6` preserve byte-identical traces. Some IEEE123
+iteration counts differ from the oldest baseline despite strict convergence;
+do not claim identical trajectories for those rows. See
+`ddp/results/network_filterddp/optimized_timing_comparison.csv` and
+`ddp/notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`. large10k `T=12` remains
+pending because the extrapolated run is still potentially half a day.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
