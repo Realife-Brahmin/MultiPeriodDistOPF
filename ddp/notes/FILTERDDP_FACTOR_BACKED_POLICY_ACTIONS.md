@@ -43,14 +43,16 @@ the isolated benchmark.
   `1.538 s` to `0.476 s`.  The bounded solve was `28.109 s`, versus `26.589 s`
   for the dense-map active-row version.
 - IEEE2522 `T = 12` preserved the complete 80-row trace byte-for-byte and
-  converged in 79 iterations.  Runtime was `507.278 s`, 5.35% slower than the
-  `481.518 s` dense-map active-row run.  The process stayed near `1.2--1.3 GiB`
-  during observation.  The mode avoids preallocating `542.336 MiB` of dense
-  beta/omega maps across this horizon, although retained native factor memory
-  means this number is not the net process-RAM reduction.
+  converged in 79 iterations.  An initial run while the PC was in use took
+  `507.278 s`, versus `481.518 s` for an earlier dense-map run.  A subsequent
+  sequential idle-machine comparison put dense and factor-backed modes under
+  the same conditions: `523.357 s` dense versus `474.091 s` factor-backed,
+  making factor-backed 9.41% faster.  The mode avoids preallocating
+  `542.336 MiB` of dense beta/omega maps across this horizon, although retained
+  native factor memory means this number is not the net process-RAM reduction.
 
-This is therefore an exact optional low-memory mode, not the default runtime
-path.  It attacks persistent horizon storage but does not reduce the backward
-pass's `nx+1` sensitivity solves.  Reducing those columns remains the deeper
-algorithmic target.
-
+This is therefore an exact low-memory mode with promising runtime behavior,
+not merely a memory fallback.  The controlled evidence supports making it the
+preferred network mode, while retaining the dense path as a compatibility
+reference.  It does not reduce the backward pass's `nx+1` sensitivity solves;
+reducing those columns remains the deeper algorithmic target.

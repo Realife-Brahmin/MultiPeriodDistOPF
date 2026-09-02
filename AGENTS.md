@@ -405,11 +405,13 @@ and `omega` only through their products with the current state displacement.
 Those products can instead be recovered exactly from one solve with the
 retained stage KKT factor and compact right-hand side.  IEEE123 `T = 3` and
 IEEE2522 `T = 12` retain byte-for-byte identical traces.  Large10k retained
-stage policy storage falls from 757.012 MiB to 34.888 MiB (95.39%); its
-isolated action is also faster, but IEEE2522 `T = 12` is 5.35% slower overall
-(507.278 s versus 481.518 s).  Keep this as the optional
-`FILTERDDP_FACTOR_BACKED_POLICY=1` low-memory mode, not the default runtime
-path.  It does not remove the backward pass's `nx+1`-column solve.  Apply
+stage policy storage falls from 757.012 MiB to 34.888 MiB (95.39%).  A matched
+idle-machine IEEE2522 `T = 12` comparison measured 474.091 s factor-backed
+versus 523.357 s dense (9.41% faster), with byte-identical traces; this
+supersedes the misleading busy-PC comparison of 507.278 s versus an earlier
+481.518-s dense run.  Prefer `FILTERDDP_FACTOR_BACKED_POLICY=1` for network
+problems while retaining dense maps as a reference.  It does not remove the
+backward pass's `nx+1`-column solve.  Apply
 `ddp/patches/factor_backed_policy_actions.patch` after
 `active_B_rows.patch`; see
 `ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`.
@@ -419,9 +421,11 @@ the backward pass can solve sensitivity columns in blocks and immediately
 accumulate their exact `Vxx`/`Vx` contribution.  At width 128, large10k's RHS
 workspace falls from 755.343 MiB to 94.695 MiB (87.46%), retained policy stays
 34.888 MiB/stage, and first-stage RSS growth falls from 1589.223 MiB to
-242.652 MiB.  The bounded solve is 32.27% slower (37.179 s versus 28.109 s),
-so keep `FILTERDDP_BLOCKED_VALUE_RHS=1` as a minimum-memory option only.
-IEEE123 `T = 3` and IEEE2522 `T = 3` retain byte-for-byte identical traces.
+242.652 MiB.  The isolated bounded solve is 32.27% slower (37.179 s versus
+28.109 s), but a matched full IEEE2522 `T = 12` run took 516.285 s: 8.90%
+slower than factor-backed alone and 1.35% faster than dense.  Keep
+`FILTERDDP_BLOCKED_VALUE_RHS=1` as the minimum-memory option.  IEEE123 `T = 3`,
+IEEE2522 `T = 3`, and the matched T = 12 modes retain byte-identical traces.
 Apply `ddp/patches/blocked_value_rhs.patch` after the factor-backed patch; see
 `ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`.
 

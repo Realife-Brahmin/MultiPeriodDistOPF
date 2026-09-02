@@ -309,8 +309,11 @@ recovered exactly from one KKT solve using the retained stage factor and the
 compact active-row mixed derivative.  IEEE123 `T = 3` and IEEE2522 `T = 12`
 preserve their complete traces byte-for-byte.  On large10k, retained stage
 policy storage falls from `757.012 MiB` to `34.888 MiB` (95.39%).  IEEE2522
-`T = 12` takes `507.278 s`, 5.35% slower than the `481.518 s` dense-map path,
-so this is a low-memory option rather than the default.  See
+An initial busy-PC `T = 12` run took `507.278 s`, but a controlled sequential
+idle-machine comparison measured `523.357 s` for dense maps and `474.091 s`
+for factor-backed policies: factor-backed was 9.41% faster under matched
+conditions.  Treat it as the preferred network mode while preserving the
+dense path as a reference.  See
 `ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`,
 `factor_backed_policy_runtime.csv`, and
 `ddp/patches/factor_backed_policy_actions.patch`.
@@ -322,7 +325,9 @@ from `755.343 MiB` to `94.695 MiB` (87.46%), while retained policy storage
 stays at `34.888 MiB/stage`.  The first-stage RSS increase falls from
 `1589.223 MiB` to `242.652 MiB`, but the bounded solve is 32.27% slower.
 IEEE123 `T = 3` and IEEE2522 `T = 3` preserve byte-for-byte identical traces.
-This is an optional minimum-memory mode, not a speed optimization.  See
+An idle-machine `T = 12` comparison measured `516.285 s`, 8.90% slower than
+factor-backed alone but 1.35% faster than dense, with all three traces
+byte-identical.  This remains the optional minimum-memory mode.  See
 `ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`, `blocked_value_rhs_results.csv`,
 and `ddp/patches/blocked_value_rhs.patch`.
 

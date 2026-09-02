@@ -56,3 +56,13 @@ remain preferable when memory is available.  A controlled runtime comparison
 can be repeated when the machine is idle, but cannot change the exact storage
 result.
 
+## Idle-machine runtime comparison
+
+A sequential IEEE2522 `T = 12` comparison on an otherwise idle machine used
+the same strict `1e-7` settings for all modes.  Dense policies took
+`523.357 s`, factor-backed policies took `474.091 s`, and factor-backed plus
+width-128 blocking took `516.285 s`.  All three complete traces have the same
+SHA-256 hash and therefore the same 79-iteration trajectory.  Blocking was
+8.90% slower than factor-backed alone, but 1.35% faster than dense in this run.
+It remains the minimum-memory mode; the test shows its memory reduction need
+not imply a large full-solve penalty.
