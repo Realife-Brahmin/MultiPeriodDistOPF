@@ -1,0 +1,75 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -128,25 +128,37 @@
+             C = lxx + fx' * V̂xx * fx + fxx
+     
+             sparse_stage = issparse(luu) || issparse(fu) || (nc > 0 && (issparse(cu) || issparse(cuu)))
+-            ux_tmp = fu' * V̂xx
++            structured_B = sparse_stage && issparse(fu) && nnz(lux) == 0 &&
++                nnz(fux) == 0 && (nc == 0 || nnz(cux) == 0)
++            active_B_rows = Int[]
++            B_active = Matrix{T}(undef, 0, 0)
++            ux_tmp = Matrix{T}(undef, 0, 0)
+             # Ĥ = Luu + Σ + fu' * Vxx * fu + V̄x ⋅ fuu
+             Σ_L = inv_ul .* zl
+             Σ_U = inv_uu .* zu
+             if sparse_stage
+                 Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
+                      sparse(fu)' * sparse(V̂xx) * sparse(fu) + sparse(fuu)
+             else
++                ux_tmp = fu' * V̂xx
+                 Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
+             end
+             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
+-            B = ux_tmp * fx
+-            B .+= lux
+-            B .+= fux
++            if structured_B
++                active_B_rows = sort!(unique(findnz(fu)[2]))
++                fu_active = Matrix(@view fu[:, active_B_rows])
++                B_active = fu_active' * V̂xx * fx
++            else
++                isempty(ux_tmp) && (ux_tmp = fu' * V̂xx)
++                B = ux_tmp * fx
++                B .+= lux
++                B .+= fux
++            end
+ 
+             if nc > 0
+                 data.barrier_lagrangian_curr += dot(c, ϕ)
+                 Qû = Qû + cu' * ϕ
+                 C = C + cxx
+                 Ĥ = Ĥ + cuu
+-                B .+= cux
++                !structured_B && (B .+= cux)
+             end
+@@ -180,7 +195,12 @@
+                 rhs = rhs_workspace
+                 @views begin
+                     @. rhs[1:nu, 1] = -Qû
+-                    @. rhs[1:nu, 2:nx+1] = -B
++                    if structured_B
++                        fill!(rhs[1:nu, 2:nx+1], zero(T))
++                        @. rhs[active_B_rows, 2:nx+1] = -B_active
++                    else
++                        @. rhs[1:nu, 2:nx+1] = -B
++                    end
+                     @. rhs[nu+1:end, 1] = -c
+                     @. rhs[nu+1:end, 2:nx+1] = -cx
+                 end
+@@ -319,7 +339,13 @@
+             ϕ_norm += norm(ϕ, 1)
+ 
+             # Update return V derivatives for next timestep Vxx = C + β' * B + ω' cx
+-            V̂xx = C + β' * B
++            if structured_B
++                beta_active = Matrix(@view β[active_B_rows, :])
++                beta_B = beta_active' * B_active
++            else
++                beta_B = β' * B
++            end
++            V̂xx = C + beta_B
+             V̂x = lx + β' * Qû + fx' * V̂x
+             λ = lx + fx' * λ
+             if nc > 0

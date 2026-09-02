@@ -1,0 +1,44 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -171,6 +171,9 @@
+                 Ĥ = sparse(Symmetric(Ĥ))
+                 K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
+                 rhs = Matrix([-Qû -B; -c -cx])
++                capture_this_kkt = haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
++                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
++                captured_rhs = capture_this_kkt ? copy(rhs) : nothing
+                 kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
+                 kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
+                 kkt_solution = Matrix{T}(undef, 0, 0)
+@@ -184,9 +187,12 @@
+                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+                         solve_start_ns = time_ns()
+-                        kkt_solution = F \ rhs
++                        ldiv!(F, rhs)
++                        kkt_solution = rhs
+                         solve_s = (time_ns() - solve_start_ns) / 1e9
+                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
+                     else
+-                        kkt_solution = K \ rhs
++                        F = lu(K)
++                        ldiv!(F, rhs)
++                        kkt_solution = rhs
+                     end
+                     all(isfinite, kkt_solution) || (data.status = 1)
+@@ -251,6 +257,5 @@
+-            if sparse_kkt && haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
+-                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
++            if sparse_kkt && capture_this_kkt
+                 Serialization.serialize(ENV["FILTERDDP_CAPTURE_KKT"], (
+-                    K=K, rhs=rhs, stage=t, nx=nx, nu=nu, nc=nc,
++                    K=K, rhs=captured_rhs, stage=t, nx=nx, nu=nu, nc=nc,
+                     x=copy(x), u=copy(u), phi=copy(ϕ), zl=copy(zl), zu=copy(zu),
+                     barrier_mu=μ, future_Vx=copy(V̂x), future_Vxx=copy(V̂xx),
+@@ -307,5 +312,5 @@
+                 sparse_kkt ? Base.summarysize(K) / 2.0^20 : 0.0,
+                 sparse_kkt ? Base.summarysize(rhs) / 2.0^20 : 0.0,
+-                sparse_kkt ? Base.summarysize(kkt_solution) / 2.0^20 : 0.0,
++                sparse_kkt && kkt_solution !== rhs ? Base.summarysize(kkt_solution) / 2.0^20 : 0.0,
+                 Base.summarysize(β) / 2.0^20, Base.summarysize(ω) / 2.0^20,
+                 (Base.summarysize(Σ_L) + Base.summarysize(Σ_U)) / 2.0^20,

@@ -15,6 +15,7 @@ julia --startup-file=no --project=envs/ddp2026 <script>
 | `FilterDDP` v0.6.0 | dev'd from the pinned clone at `ddp/external/FilterDDP.jl` (`513a104`) |
 | `JuMP` v1.31.1 + `Ipopt` v1.15.0 | the centralized reference formulation |
 | `StaticArrays` v1.9.18 | required by the FilterDDP stage models |
+| `MUMPS` v1.6.2 | diagnostic comparison against FilterDDP's UMFPACK KKT solve; not its active solver |
 
 FilterDDP and JuMP coexist without conflict — verified by a clean resolve, which
 settles `OrderedCollections` on 1.8.2.

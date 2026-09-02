@@ -165,8 +165,11 @@ function build_model(data)
             end
             J
         end
-        cu = function (x,u)
-            J = spzeros(nc, nu)
+        # The constraint Jacobian has a fixed sparsity pattern. Build its
+        # constant entries once per stage and update only the four
+        # iterate-dependent SOC entries per line on each callback.
+        cu_J = spzeros(nc, nu)
+        let J = cu_J
             row = 1
             J[row, idx.ps] = 1.0
             for e in data[:L1set]
@@ -208,10 +211,12 @@ function build_model(data)
             end
             for (e,(i,_)) in enumerate(lines)
                 row += 1
-                J[row, idx.P[e]] = 2u[idx.P[e]]
-                J[row, idx.Q[e]] = 2u[idx.Q[e]]
-                J[row, idx.v[buspos[i]]] = -u[idx.ell[e]]
-                J[row, idx.ell[e]] = -u[idx.v[buspos[i]]]
+                # Nonzero placeholders retain these positions in the CSC
+                # structure until the first value update.
+                J[row, idx.P[e]] = 1.0
+                J[row, idx.Q[e]] = 1.0
+                J[row, idx.v[buspos[i]]] = 1.0
+                J[row, idx.ell[e]] = 1.0
                 J[row, idx.soc_slack[e]] = 1.0
             end
             row += 1
@@ -221,7 +226,19 @@ function build_model(data)
                 J[row, idx.pb[b]] = -dt
                 J[row, idx.energy_slack[b]] = -1.0
             end
-            J
+        end
+        cu = let J = cu_J
+            function (x,u)
+                row = 2length(buses) + length(lines)
+                for (e,(i,_)) in enumerate(lines)
+                    row += 1
+                    J[row, idx.P[e]] = 2u[idx.P[e]]
+                    J[row, idx.Q[e]] = 2u[idx.Q[e]]
+                    J[row, idx.v[buspos[i]]] = -u[idx.ell[e]]
+                    J[row, idx.ell[e]] = -u[idx.v[buspos[i]]]
+                end
+                J
+            end
         end
         cxx = (x,u,ϕ) -> zeros(nx, nx)
         cux = (x,u,ϕ) -> spzeros(nu, nx)
@@ -251,10 +268,11 @@ function build_model(data)
     return ocp, idx, nx, nu, length(stage_cons[1].c(zeros(nx), zeros(nu)))
 end
 
-system = length(ARGS) >= 1 ? ARGS[1] : "ieee123C_1ph"
-T = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 2
-mode = length(ARGS) >= 3 ? ARGS[3] : "dimensions"
-quiet = length(ARGS) >= 4 && ARGS[4] == "quiet"
+function main(args=ARGS)
+system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
+T = length(args) >= 2 ? parse(Int, args[2]) : 2
+mode = length(args) >= 3 ? args[3] : "dimensions"
+quiet = length(args) >= 4 && args[4] == "quiet"
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
                     "network_data_$(system)_T$(T).jls")
 data = deserialize(datafile)
@@ -275,8 +293,10 @@ println("constructing dynamic Solver storage...")
 flush(stdout)
 t_solver = time()
 max_iterations = parse(Int, get(ENV, "FILTERDDP_MAX_ITERATIONS", "200"))
+optimality_tolerance = parse(Float64, get(ENV, "FILTERDDP_OPTIMALITY_TOLERANCE", "1e-7"))
 solver = Solver(ocp; options=Options{Float64}(verbose=!quiet,
-    optimality_tolerance=1e-7, max_iterations=max_iterations))
+    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations))
+@printf("optimality_tolerance=%.3e max_iterations=%d\n", optimality_tolerance, max_iterations)
 @printf("Solver construction complete: %.3f s\n", time()-t_solver)
 mode == "solver" && exit()
 x0 = Float64[data[:B0_pu][j] for j in data[:Bset]]
@@ -296,6 +316,8 @@ flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+@printf("final residuals: primal=%.12e dual=%.12e complementarity=%.12e\n",
+        solver.data.primal_inf, solver.data.dual_inf, solver.data.cs_inf_0)
 
 # Compare against the existing centralized JuMP/Ipopt result when available.
 xddp, uddp = get_trajectory(solver)
@@ -314,9 +336,9 @@ flush(stdout)
 Jddp = 0.0
 max_eq = 0.0
 for t in 1:T
-    global Jddp += data[:LoadShapeCost][t]*data[:kVA_B]*data[:delta_t_h]*uddp[t][idx.ps]
-    global Jddp += data[:C_B]*data[:kVA_B]^2*data[:delta_t_h]*sum(uddp[t][k]^2 for k in idx.pb)
-    global max_eq = max(max_eq, norm(ocp.stage_constraints[t].c(xddp[t], uddp[t]), Inf))
+    Jddp += data[:LoadShapeCost][t]*data[:kVA_B]*data[:delta_t_h]*uddp[t][idx.ps]
+    Jddp += data[:C_B]*data[:kVA_B]^2*data[:delta_t_h]*sum(uddp[t][k]^2 for k in idx.pb)
+    max_eq = max(max_eq, norm(ocp.stage_constraints[t].c(xddp[t], uddp[t]), Inf))
 end
 @printf("FilterDDP objective=%.12f max_equality_residual=%.3e\n", Jddp, max_eq)
 
@@ -350,4 +372,9 @@ if isfile(reffile)
     for key in (:P_Subs,:Q_Subs,:P,:Q,:v,:ell,:P_B,:B,:q_D)
         @printf("max_abs_diff[%s]=%.3e\n", string(key), maxdiff[key])
     end
+end
+end
+
+if abspath(PROGRAM_FILE) == abspath(@__FILE__)
+    main()
 end

@@ -1,0 +1,15 @@
+system,horizon,original_iterations,optimized_iterations,original_solve_s,optimized_solve_s,speedup_percent,peak_working_set_MiB,trajectory_validation
+ieee123C_1ph,3,48,48,13.856,13.699,1.13,NaN,final solution validated
+ieee123C_1ph,6,60,60,143.647,16.401,88.58,1070.590,final solution validated
+ieee123C_1ph,12,81,80,306.817,21.988,92.83,1075.316,strictly converged; iteration count changed
+ieee123C_1ph,24,97,95,610.766,35.898,94.12,1049.813,strictly converged; iteration count changed
+ieee123C_1ph,48,111,118,923.073,70.568,92.36,1101.313,strictly converged; iteration count changed
+ieee123C_1ph,96,121,118,2021.412,127.887,93.67,1230.258,strictly converged; iteration count changed
+ieee2522C_1ph,3,56,56,233.098,96.664,58.53,1220.941,strictly converged
+ieee2522C_1ph,6,82,82,836.933,265.273,68.30,1327.973,strictly converged
+ieee2522C_1ph,12,79,79,1902.103,476.400,74.95,1395.559,byte-identical trace
+ieee2522C_1ph,24,84,84,3068.228,965.103,68.55,1547.781,strictly converged
+ieee2522C_1ph,48,84,84,4539.491,1839.055,59.49,1951.285,byte-identical trace
+ieee2522C_1ph,96,93,93,9359.596,3940.608,57.90,2602.410,byte-identical trace
+large10kC_1ph,3,115,115,7123.782,2633.856,63.03,3808.031,identical final row
+large10kC_1ph,6,128,128,23490.218,14809.508,36.95,4216.469,byte-identical trace

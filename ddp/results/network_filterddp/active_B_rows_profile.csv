@@ -1,0 +1,6 @@
+system,horizon,stage,variant,B_rows,B_cols,B_nnz,B_density,B_active_rows,B_form_s,B_form_alloc_MiB,beta_B_s,beta_B_alloc_MiB,algebra_s,algebra_alloc_MiB,update_s,update_alloc_MiB
+large10kC_1ph,3,1,dense_B,54665,1020,1040400,0.01865910546,1020,0.6180226,450.971,0.3270711,7.938,1.2437395,1001.743,0.5921398,33.917
+large10kC_1ph,3,1,active_B_microbenchmark,1020,1020,1040400,1.0,1020,0.2588023,27.773,0.0405239,16.140,,,,
+large10kC_1ph,3,1,active_B_production,1020,1020,1040400,1.0,1020,,,,,0.1343286,174.839,0.1944351,41.854
+large10kC_1ph,3,2,dense_B,54665,1020,1040400,0.01865910546,1020,,,,,1.2032683,1001.743,0.5403994,33.917
+large10kC_1ph,3,2,active_B_production,1020,1020,1040400,1.0,1020,,,,,0.1336461,174.839,0.2006149,41.854

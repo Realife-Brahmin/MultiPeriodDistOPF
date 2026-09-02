@@ -171,9 +171,8 @@ The IEEE2522C sparse run was then extended without warm starts. At `T = 6`,
 FilterDDP converged in 82 iterations and 836.933 s, with objective gap
 `1.305e-3` and equality residual `1.753e-9`. At `T = 12`, it converged in 79
 iterations and 1902.103 s, with objective gap `9.207e-5` and equality residual
-`2.290e-8`. Thus memory and numerical convergence scale beyond `T = 3`, but
-runtime is approximately linear in horizon and already 31.70 minutes at
-`T = 12`.
+`2.290e-8`. The same cold-start procedure now converges through `T = 96`;
+complete iteration traces are stored alongside the sweep table.
 
 A symbolic-factorization-reuse experiment was rejected: rerunning the identical
 `T = 3` case took 295.296 s instead of 233.098 s, with the same 56 iterations
@@ -182,14 +181,195 @@ cost here; retaining that cache would make the implementation more complicated
 and slower. Further scaling requires reducing numerical factorization/solve
 cost or exploiting feeder structure, not merely caching the ordering.
 
+The exact bound-sensitivity factorization follow-up removes two redundant
+`nu x nx` matrices per stage without changing the iteration equations. Full
+strict regressions retained the old iteration counts and final solutions.
+large10kC `T = 3` fell from 7123.782 s to 6660.908 s (6.50%), while IEEE2522C
+`T = 12` fell from 1902.103 s to 1183.039 s (37.80%). IEEE123C and IEEE2522C
+at `T = 3` were slightly slower. The IEEE2522C `T = 24` follow-up retained 84
+iterations while falling from 3068.228 s to 2330.122 s (24.06%), strengthening
+the evidence that this is primarily a memory-pressure improvement rather than
+cheaper KKT algebra. See
+`ddp/notes/FILTERDDP_FACTORED_BOUND_SENSITIVITIES.md` and
+`factored_bound_sensitivity_regression.csv`.
+
+A subsequent ownership-only optimization removes a second constructor copy of
+the already-owned update arrays. Relative to the factored-bound version,
+IEEE2522C strict solve times improve consistently by 3.29% at `T = 3`, 4.40%
+at `T = 12`, and 3.47% at `T = 24`, with byte-for-byte-equivalent CSV traces.
+This is a modest allocation/garbage-collection improvement, not a change to
+the KKT work. See `ddp/notes/FILTERDDP_NO_COPY_UPDATE_RULE.md` and
+`no_copy_update_rule_runtime.csv`.
+
+The next exact ownership optimization overwrites the dense sparse-KKT
+right-hand side with its solution instead of allocating an equally sized
+second matrix. On large10kC this halves warm-stage solve allocation from
+1510.686 MiB to 755.343 MiB, removing one 755.343-MiB buffer while preserving
+the IEEE123C strict trajectory and KKT capture semantics. See
+`ddp/notes/FILTERDDP_IN_PLACE_KKT_RHS.md` and
+`in_place_kkt_rhs_memory.csv`. This bounded probe establishes memory savings,
+not by itself a full-run timing claim. A subsequent strict IEEE2522C `T = 12`
+run retained the exact 79-iteration trace and finished in 1092.507 s: 4.62%
+faster than the immediately preceding no-copy run (1145.392 s), and 7.65%
+faster than the factored-only run (1183.039 s). It first met all practical
+`1e-6` criteria at iteration 76. See `in_place_kkt_rhs_runtime.csv` and
+`in_place_kkt_rhs_ieee2522C_1ph_T12_trace.csv`. These are single-run timing
+comparisons, while trajectory preservation and the buffer removal are exact.
+
+The sparse backward pass subsequently reuses each stage's already allocated
+update rule instead of copying the solved KKT blocks through intermediate
+matrices and replacing the rule. A large10kC probe reduced warm-stage update
+allocation from 3525.163 MiB to 2011.139 MiB (42.95%) without changing the
+757.012-MiB retained rule. The strict IEEE2522C `T = 12` trace remained exact,
+while runtime fell from 1092.507 s to 1039.905 s, a further single-run 4.82%
+reduction. See `ddp/notes/FILTERDDP_STAGE_RULE_REUSE.md`,
+`stage_rule_reuse_memory.csv`, and
+`reuse_stage_rule_ieee2522C_1ph_T12_trace.csv`.
+
+Finally, one dense KKT right-hand-side workspace is reused across all stages of
+each backward sweep and filled blockwise rather than rebuilt by matrix
+concatenation. On large10kC, warm-stage KKT assembly allocation falls from
+1760.525 MiB to 68.569 MiB (96.10%). The strict IEEE2522C `T = 12` trace again
+remains exact, while runtime falls from 1039.905 s to 962.181 s, a further
+single-run 7.47% reduction and 49.41% below the original 1902.103-s sparse
+run. See `ddp/notes/FILTERDDP_REUSABLE_KKT_RHS_WORKSPACE.md`,
+`reusable_rhs_workspace_memory.csv`, and
+`reuse_rhs_workspace_ieee2522C_1ph_T12_trace.csv`.
+
+A post-optimization profile then exposed a dispatch bug rather than an
+algorithmic cost: the equality residual `c` was stored as `Vector{Any}`, so
+`omega' * c` used a generic dense multiplication. Constructing the same values
+as `Vector{T}` restores BLAS dispatch. On large10kC, warm-stage update
+allocation falls from 2011.138 MiB to 33.909 MiB (98.31%), and the identified
+product falls from about 3.98 s to 0.010 s. The strict IEEE2522C `T = 12` run
+retains the same displayed 79-row trace and finishes in 737.043 s: 23.40%
+below the reusable-workspace run and 61.25% below the original sparse run.
+See `ddp/notes/FILTERDDP_TYPED_CONSTRAINT_VECTOR.md`,
+`typed_constraint_vector_profile.csv`, and
+`typed_constraint_vector_ieee2522C_1ph_T12_trace.csv`.
+
+The next exact cleanup targets construction of the dense mixed-derivative
+matrix `B`. Its dense product is now formed once, and the sparse derivative
+terms are accumulated into that owned buffer rather than producing three
+successive dense copies. On warm large10kC stages this reduces total stage
+algebra allocation from 2277.949 MiB to 1001.743 MiB (56.02%), while a strict
+IEEE123C `T = 3` regression remains byte-for-byte identical. See
+`ddp/notes/FILTERDDP_IN_PLACE_B_ASSEMBLY.md` and
+`in_place_B_assembly_memory.csv`. The strict IEEE2522C `T = 12` trajectory is
+also byte-for-byte identical, while runtime falls from 737.043 s to 701.245 s
+(4.86%). This is 63.13% below the original 1902.103-s sparse run. Runtime rows
+are in `in_place_B_assembly_runtime.csv`.
+
+Post-optimization profiling then found that the network control-constraint
+Jacobian `cu` was reconstructed from scratch at every stage and iteration,
+although its sparsity pattern and all but four entries per branch are constant.
+The network callback now constructs the sparse pattern once per stage and
+updates only the SOC-dependent values. Warm large10k `cu` time falls from
+about 1.9 s to 0.002--0.003 s. The strict IEEE123C and IEEE2522C traces remain
+byte-for-byte identical; IEEE2522C `T = 12` solve time falls from 701.245 s to
+577.190 s (17.69%), 69.66% below the original sparse run. Model building rises
+only from 1.415 s to 3.340 s. See
+`ddp/notes/FILTERDDP_CACHED_CONSTRAINT_JACOBIAN.md`,
+`cached_constraint_jacobian_profile.csv`, and
+`cached_constraint_jacobian_runtime.csv`.
+
+The remaining 1021-column large10k KKT solve was also tested with RHS block
+widths from 1 through 1021. The existing all-at-once solve is fastest at
+3.127 s; width 128 takes 3.192 s and the other layouts are no better. Total
+allocation remains about 755.34 MiB because every sensitivity column is still
+computed. Blocking is therefore rejected as a runtime optimization, although
+width 128 could trade a roughly 2.1% solve penalty for about 660 MiB less peak
+temporary workspace if a lower-memory mode becomes necessary. See
+`ddp/notes/FILTERDDP_KKT_RHS_BLOCK_BENCHMARK.md` and
+`large10k_kkt_rhs_block_benchmark.csv`.
+
+The mixed derivative `B` has a stronger exact MPOPF structure than its dense
+storage suggested. On large10k it has only 1020 active rows out of 54665: the
+battery-energy state enters only through the 1020 battery-power controls. A
+guarded sparse-path representation now forms only that `1020 x 1020` block and
+uses the matching packed rows of `beta` in the value update. Warm-stage algebra
+falls from about 1.2--1.4 s/1001.743 MiB to 0.134 s/174.839 MiB. IEEE123C and
+IEEE2522C traces remain byte-for-byte identical; IEEE2522C `T = 12` solve time
+falls from 577.190 s to 481.518 s (16.58%), 74.68% below the original sparse
+run. See `ddp/notes/FILTERDDP_ACTIVE_B_ROWS.md`, `active_B_rows_profile.csv`,
+and `active_B_rows_runtime.csv`.
+
+Parallel RHS solves were tested on the exact large10k stage system using 1, 2,
+4, and 8 independent UMFPACK factors. Four workers reduce solve time from
+3.150 s to 1.611 s, but concurrent factor creation grows from 0.494 s to
+1.757 s, leaving only a 7.59% total gain. Eight workers are slower. Sharing one
+factor leaves the solve effectively serial and is not a supported robust path.
+No production parallel mode is added. See
+`ddp/notes/FILTERDDP_PARALLEL_UMFPACK_RHS.md` and
+`large10k_umfpack_parallel_rhs.csv`.
+
+An optional factor-backed policy mode now avoids retaining the complete dense
+`beta` and `omega` maps after each backward stage.  Rollout actions are
+recovered exactly from one KKT solve using the retained stage factor and the
+compact active-row mixed derivative.  IEEE123 `T = 3` and IEEE2522 `T = 12`
+preserve their complete traces byte-for-byte.  On large10k, retained stage
+policy storage falls from `757.012 MiB` to `34.888 MiB` (95.39%).  IEEE2522
+An initial busy-PC `T = 12` run took `507.278 s`, but a controlled sequential
+idle-machine comparison measured `523.357 s` for dense maps and `474.091 s`
+for factor-backed policies: factor-backed was 9.41% faster under matched
+conditions.  Treat it as the preferred network mode while preserving the
+dense path as a reference.  See
+`ddp/notes/FILTERDDP_FACTOR_BACKED_POLICY_ACTIONS.md`,
+`factor_backed_policy_runtime.csv`, and
+`ddp/patches/factor_backed_policy_actions.patch`.
+
+For the lowest-memory configuration, the backward value update can also solve
+its state sensitivities in blocks and immediately accumulate their exact
+contribution to `Vxx` and `Vx`.  With width 128, large10k's temporary RHS falls
+from `755.343 MiB` to `94.695 MiB` (87.46%), while retained policy storage
+stays at `34.888 MiB/stage`.  The first-stage RSS increase falls from
+`1589.223 MiB` to `242.652 MiB`, but the bounded solve is 32.27% slower.
+IEEE123 `T = 3` and IEEE2522 `T = 3` preserve byte-for-byte identical traces.
+An idle-machine `T = 12` comparison measured `516.285 s`, 8.90% slower than
+factor-backed alone but 1.35% faster than dense, with all three traces
+byte-identical.  This remains the optional minimum-memory mode.  See
+`ddp/notes/FILTERDDP_BLOCKED_VALUE_RHS.md`, `blocked_value_rhs_results.csv`,
+and `ddp/patches/blocked_value_rhs.patch`.
+
+A large10k stage-1 feeder-distance analysis rejects a naive local truncation
+of the sensitivity maps.  Only battery-power feedback is concentrated at the
+perturbed battery bus.  Median 90%-energy radii are 18 edges for real branch
+power, 31 for voltage, 34 for current, and 53.5 for real-power-balance
+multipliers; worst columns extend beyond 80--125 edges.  At radius 8, only
+0.18% of the median real-power-balance multiplier energy is retained.  Any
+future spatial decomposition therefore needs explicit boundary/interface
+messages rather than simply dropping distant sensitivities.  See
+`ddp/notes/FILTERDDP_SENSITIVITY_LOCALITY.md` and the two
+`large10k_stage1_locality_*.csv` summaries.
+
+### Optimized horizon timing matrix
+
+The complete validated optimization stack was rerun sequentially across the
+original timing matrix with factor-backed policies enabled and blocked RHS
+disabled. IEEE2522C solve times improve by 58--75% across `T=3--96`;
+large10kC improves by 63.03% at `T=3` and 36.95% at `T=6`. The optimized
+large10k peak working sets are 3808 and 4216 MiB, respectively. Stored
+IEEE2522 `T=12/48/96` and large10k `T=6` traces are byte-identical to their
+references. IEEE123 remains strictly converged, but some iteration counts
+differ from the oldest table and are explicitly flagged. See
+`optimized_timing_comparison.csv` and
+`../../notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
 `1.219e-3`; the maximum equality residual was `3.609e-8`, and the largest
-reported physical-variable difference was `3.242e-4`. The solve therefore
-scales numerically and in memory to a full 24-hour horizon, but the nearly
-linear time growth projects to roughly 1.7 hours at `T = 48` without a better
-numerical factorization strategy.
+reported physical-variable difference was `3.242e-4`.
+
+At `T = 48`, it converged in 84 iterations and 4539.491 s (1.26 h), with
+objective 8701.148876364638 versus the stored centralized value 8701.1489 and
+maximum equality residual `7.649e-8`. At `T = 96`, it converged in 93
+iterations and 9359.596 s (2.60 h), with objective 8737.654784107281 versus
+8737.6487, an absolute gap of `6.084e-3` (relative gap `6.96e-7`), and maximum
+equality residual `9.892e-8`. Both runs satisfy FilterDDP's strict `1e-7`
+termination test. These results establish numerical and memory feasibility
+through quarter-hour resolution, but the 121.305-s centralized `T = 96` solve
+remains about 77 times faster.
 
 ## Large10kC feasibility gate
 

@@ -1,31 +1,21 @@
-warning: in the working copy of 'Project.toml', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/FilterDDP.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/backward_pass.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/forward_pass.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/ocp/constraints.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/ocp/control_limits.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/ocp/dynamics.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/ocp/objective.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/ocp/ocp.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/solve.jl', LF will be replaced by CRLF the next time Git touches it
-warning: in the working copy of 'src/solver.jl', LF will be replaced by CRLF the next time Git touches it
 diff --git a/Project.toml b/Project.toml
-index c3d44c6..124739c 100644
+index c3d44c6..6400222 100644
 --- a/Project.toml
 +++ b/Project.toml
-@@ -9,6 +9,7 @@ FastLapackInterface = "29a986be-02c6-4525-aec4-84b980013641"
+@@ -9,6 +9,8 @@ FastLapackInterface = "29a986be-02c6-4525-aec4-84b980013641"
  LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
  Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
  RuntimeGeneratedFunctions = "7e49a35a-f44a-4d26-94aa-eba1b4ca6b47"
++Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 +SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
  StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
  Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
  
 diff --git a/src/FilterDDP.jl b/src/FilterDDP.jl
-index c17fe6e..539fc6c 100644
+index c17fe6e..5e7a007 100644
 --- a/src/FilterDDP.jl
 +++ b/src/FilterDDP.jl
-@@ -1,6 +1,7 @@
+@@ -1,12 +1,14 @@
  module FilterDDP
  
  using LinearAlgebra 
@@ -33,8 +23,15 @@ index c17fe6e..539fc6c 100644
  using Symbolics 
  using Printf
  using Crayons
+ using FastLapackInterface
+ using StaticArrays
+ using RuntimeGeneratedFunctions
++using Serialization
+ RuntimeGeneratedFunctions.init(@__MODULE__)
+ 
+ include(joinpath("ocp", "objective.jl"))
 diff --git a/src/backward_pass.jl b/src/backward_pass.jl
-index 0ee5582..01f8148 100644
+index 0ee5582..804d35f 100644
 --- a/src/backward_pass.jl
 +++ b/src/backward_pass.jl
 @@ -1,3 +1,5 @@
@@ -63,9 +60,15 @@ index 0ee5582..01f8148 100644
  
          data.barrier_lagrangian_curr = T(0.0)
          data.primal_1_curr = T(0.0)
-@@ -30,43 +31,46 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -29,44 +30,76 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+         z_norm = T(0.0) 
          
          for t = ocp.N:-1:1
++            timing_diagnostic = get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1"
++            memory_diagnostic = get(ENV, "FILTERDDP_MEMORY_DIAGNOSTIC", "0") == "1"
++            stage_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
++            stage_maxrss_start = memory_diagnostic ? Sys.maxrss() : 0
++            derivative_start_ns = time_ns()
              x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
 +            # PATCH: per-stage data when supplied, else the shared function
 +            constraints = stage_con(ocp, t)
@@ -73,18 +76,24 @@ index 0ee5582..01f8148 100644
  
              # evaluate derivatives
  
++            first_order_ns = 0
++            second_order_ns = 0
              if t == ocp.N
 -                lx = ocp.term_objective.lx(x, u)
 -                lu_ = ocp.term_objective.lu(x, u)
 -                lxx = ocp.term_objective.lxx(x, u)
 -                lux = ocp.term_objective.lux(x, u)
 -                luu = ocp.term_objective.luu(x, u)
++                callback_start_ns = time_ns()
 +                lx = Vector(ocp.term_objective.lx(x, u))
 +                lu_ = Vector(ocp.term_objective.lu(x, u))
+                 data.objective += ocp.term_objective.l(x, u)[1]
++                first_order_ns += time_ns() - callback_start_ns
++                callback_start_ns = time_ns()
 +                lxx = _derivative_matrix(ocp.term_objective.lxx(x, u), nx, nx)
 +                lux = _derivative_matrix(ocp.term_objective.lux(x, u), nu, nx)
 +                luu = _derivative_matrix(ocp.term_objective.luu(x, u), nu, nu)
-                 data.objective += ocp.term_objective.l(x, u)[1]
++                second_order_ns += time_ns() - callback_start_ns
              else
 -                lx = ocp.stage_objective.lx(x, u)
 -                lu_ = ocp.stage_objective.lu(x, u)
@@ -92,12 +101,16 @@ index 0ee5582..01f8148 100644
 -                lux = ocp.stage_objective.lux(x, u)
 -                luu = ocp.stage_objective.luu(x, u)
 -                data.objective += ocp.stage_objective.l(x, u)[1]
++                callback_start_ns = time_ns()
 +                lx = Vector(objective_t.lx(x, u))
 +                lu_ = Vector(objective_t.lu(x, u))
++                data.objective += objective_t.l(x, u)[1]
++                first_order_ns += time_ns() - callback_start_ns
++                callback_start_ns = time_ns()
 +                lxx = _derivative_matrix(objective_t.lxx(x, u), nx, nx)
 +                lux = _derivative_matrix(objective_t.lux(x, u), nu, nx)
 +                luu = _derivative_matrix(objective_t.luu(x, u), nu, nu)
-+                data.objective += objective_t.l(x, u)[1]
++                second_order_ns += time_ns() - callback_start_ns
              end
              
              if nc > 0
@@ -107,12 +120,16 @@ index 0ee5582..01f8148 100644
 -                cxx = constraints.cxx(x, u, ϕ)
 -                cux = constraints.cux(x, u, ϕ)
 -                cuu = constraints.cuu(x, u, ϕ)
++                callback_start_ns = time_ns()
 +                c = Vector(constraints.c(x, u))
 +                cx = _derivative_matrix(constraints.cx(x, u), nc, nx)
 +                cu = _derivative_matrix(constraints.cu(x, u), nc, nu)
++                first_order_ns += time_ns() - callback_start_ns
++                callback_start_ns = time_ns()
 +                cxx = _derivative_matrix(constraints.cxx(x, u, ϕ), nx, nx)
 +                cux = _derivative_matrix(constraints.cux(x, u, ϕ), nu, nx)
 +                cuu = _derivative_matrix(constraints.cuu(x, u, ϕ), nu, nu)
++                second_order_ns += time_ns() - callback_start_ns
                  
                  # evaluate constraint violation norms
                  data.primal_1_curr += norm(c, 1)
@@ -124,15 +141,25 @@ index 0ee5582..01f8148 100644
 -            fxx = nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ)
 -            fux = nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ)
 -            fuu = nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ)
++            callback_start_ns = time_ns()
 +            fx = _derivative_matrix(dynamics.fx(x, u), nx, nx)
 +            fu = _derivative_matrix(dynamics.fu(x, u), nx, nu)
++            first_order_ns += time_ns() - callback_start_ns
++            callback_start_ns = time_ns()
 +            fxx = _derivative_matrix(nc == 0 ? dynamics.fxx(x, u, V̂x) : dynamics.fxx(x, u, λ), nx, nx)
 +            fux = _derivative_matrix(nc == 0 ? dynamics.fux(x, u, V̂x) : dynamics.fux(x, u, λ), nu, nx)
 +            fuu = _derivative_matrix(nc == 0 ? dynamics.fuu(x, u, V̂x) : dynamics.fuu(x, u, λ), nu, nu)
++            second_order_ns += time_ns() - callback_start_ns
++            derivative_s = (time_ns() - derivative_start_ns) / 1e9
++            first_order_s = first_order_ns / 1e9
++            second_order_s = second_order_ns / 1e9
++            derivative_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - stage_alloc_start : 0
++            algebra_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
++            algebra_start_ns = time_ns()
  
              # evaluate barrier Lagrangian
  
-@@ -91,11 +95,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -91,11 +124,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              # C = Lxx + fx' * Vxx * fx + V̄x ⋅ fxx
              C = lxx + fx' * V̂xx * fx + fxx
      
@@ -151,7 +178,7 @@ index 0ee5582..01f8148 100644
      
              # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
              B = lux + ux_tmp * fx + fux
-@@ -109,17 +119,33 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -109,17 +148,58 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              end
              
              # inertia correction / regularisation
@@ -169,13 +196,38 @@ index 0ee5582..01f8148 100644
 +            # Sparse network models use the full saddle-point system directly,
 +            # avoiding a dense QR basis and the explicit reduced Hessian Z'HZ.
 +            sparse_kkt = nc > 0 && (issparse(Ĥ) || issparse(cu))
++            algebra_s = (time_ns() - algebra_start_ns) / 1e9
++            algebra_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - algebra_alloc_start : 0
++            kkt_assembly_s = 0.0
++            factor_s = 0.0
++            solve_s = 0.0
++            kkt_alloc_bytes = 0
++            factor_alloc_bytes = 0
++            solve_alloc_bytes = 0
 +            if sparse_kkt
++                kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
++                kkt_start_ns = time_ns()
 +                Ĥ = sparse(Symmetric(Ĥ))
 +                K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
 +                rhs = Matrix([-Qû -B; -c -cx])
++                kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
++                kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
 +                kkt_solution = Matrix{T}(undef, 0, 0)
 +                try
-+                    kkt_solution = lu(K) \ rhs
++                    if timing_diagnostic || memory_diagnostic
++                        factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
++                        factor_start_ns = time_ns()
++                        F = lu(K)
++                        factor_s = (time_ns() - factor_start_ns) / 1e9
++                        factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
++                        solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
++                        solve_start_ns = time_ns()
++                        kkt_solution = F \ rhs
++                        solve_s = (time_ns() - solve_start_ns) / 1e9
++                        solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
++                    else
++                        kkt_solution = lu(K) \ rhs
++                    end
 +                    all(isfinite, kkt_solution) || (data.status = 1)
 +                catch err
 +                    verbose && @warn "Sparse KKT factorization failed" exception=(err, catch_backtrace())
@@ -194,7 +246,7 @@ index 0ee5582..01f8148 100644
                  
                  AY = A' * Y
                  fk = lu(AY)
-@@ -131,7 +157,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -131,7 +211,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
              else
                  ck = cholesky(Symmetric(Ĥ); check=false)
              end
@@ -203,11 +255,13 @@ index 0ee5582..01f8148 100644
              
              if data.status == 1
                  if iszero(reg) # initial setting of regularisation
-@@ -142,21 +168,28 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -142,21 +222,40 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                  break
              end
  
 -            if nc > 0
++            update_start_ns = time_ns()
++            update_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
 +            if sparse_kkt
 +                α_β = kkt_solution[1:nu, :]
 +                ψ_ω = kkt_solution[nu+1:end, :]
@@ -235,9 +289,46 @@ index 0ee5582..01f8148 100644
 +                β = α_β[:, 2:nx+1]
 +                ψ = zeros(T, nc)
 +                ω = zeros(T, nc, nx)
++            end
++
++            if haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
++                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
++                Serialization.serialize(ENV["FILTERDDP_CAPTURE_KKT"], (
++                    K=K, rhs=rhs, stage=t, nx=nx, nu=nu, nc=nc,
++                    x=copy(x), u=copy(u), phi=copy(ϕ), zl=copy(zl), zu=copy(zu),
++                    barrier_mu=μ, future_Vx=copy(V̂x), future_Vxx=copy(V̂xx),
++                    next_state=copy(dynamics.f(x, u)), alpha=copy(α),
++                    beta=copy(β), psi=copy(ψ), omega=copy(ω)))
              end
  
              # update parameters of update rule for ineq. dual variables
+@@ -194,6 +293,26 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             # evaluate sufficient decrease condition in forward pass
+             data.expected_change_L += dot(Qû, α)
+             nc > 0 && (data.expected_change_L += dot(c, ψ))
++            update_s = (time_ns() - update_start_ns) / 1e9
++            update_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - update_alloc_start : 0
++            timing_diagnostic && @printf(
++                "FILTERDDP_TIMING stage=%d derivative_s=%.9f first_order_s=%.9f second_order_s=%.9f algebra_s=%.9f kkt_assembly_s=%.9f factor_s=%.9f solve_s=%.9f update_s=%.9f K_nnz=%d rhs_cols=%d Vxx_nnz=%d\n",
++                t, derivative_s, first_order_s, second_order_s, algebra_s, kkt_assembly_s, factor_s, solve_s,
++                update_s, sparse_kkt ? nnz(K) : 0, sparse_kkt ? size(rhs, 2) : 0,
++                count(!iszero, V̂xx))
++            memory_diagnostic && @printf(
++                "FILTERDDP_MEMORY stage=%d derivative_alloc_MiB=%.3f algebra_alloc_MiB=%.3f kkt_alloc_MiB=%.3f factor_alloc_MiB=%.3f solve_alloc_MiB=%.3f update_alloc_MiB=%.3f K_MiB=%.3f rhs_MiB=%.3f solution_MiB=%.3f beta_MiB=%.3f omega_MiB=%.3f bound_sens_MiB=%.3f Vxx_MiB=%.3f update_rule_MiB=%.3f maxrss_delta_MiB=%.3f\n",
++                t, derivative_alloc_bytes / 2.0^20, algebra_alloc_bytes / 2.0^20,
++                kkt_alloc_bytes / 2.0^20, factor_alloc_bytes / 2.0^20,
++                solve_alloc_bytes / 2.0^20, update_alloc_bytes / 2.0^20,
++                sparse_kkt ? Base.summarysize(K) / 2.0^20 : 0.0,
++                sparse_kkt ? Base.summarysize(rhs) / 2.0^20 : 0.0,
++                sparse_kkt ? Base.summarysize(kkt_solution) / 2.0^20 : 0.0,
++                Base.summarysize(β) / 2.0^20, Base.summarysize(ω) / 2.0^20,
++                (Base.summarysize(ζl) + Base.summarysize(ζu)) / 2.0^20,
++                Base.summarysize(V̂xx) / 2.0^20,
++                Base.summarysize(solver.update[t]) / 2.0^20,
++                max(Sys.maxrss() - stage_maxrss_start, 0) / 2.0^20)
+         end
+         scaling_dual = max(options.s_max, (ϕ_norm + z_norm) / max(ni + nc * ocp.N, 1.0))  / options.s_max
+         scaling_cs = max(options.s_max, z_norm / max(ni, 1.0))  / options.s_max
 diff --git a/src/forward_pass.jl b/src/forward_pass.jl
 index 1883b4d..a7769ff 100644
 --- a/src/forward_pass.jl
@@ -470,6 +561,18 @@ index dd5af53..aff61ab 100644
 +        N, stage_objective, term_objective, dynamics, constraints_, control_limits_,
 +        stage_objectives, stage_constraints)
  end
+diff --git a/src/print.jl b/src/print.jl
+index dd2e20a..be42401 100644
+--- a/src/print.jl
++++ b/src/print.jl
+@@ -25,6 +25,7 @@ function iteration_status(
+         data.k, data.objective, data.primal_inf, data.dual_inf, data.cs_inf_0,
+         log10(data.μ), data.reg_last == 0.0 ? "    -  " : @sprintf("% 2.4f", log10(data.reg_last)),
+         data.step_size, data.l)
++    flush(stdout)
+ end
+ 
+ function on_exit(data::SolverData)
 diff --git a/src/solve.jl b/src/solve.jl
 index 8f1c4dd..30a6864 100644
 --- a/src/solve.jl
@@ -641,13 +744,3 @@ index d7f8ae6..cc39889 100644
      α = solver.update[t].α
      β = solver.update[t].β
      ū = solver.nominal[t].u
-diff --git a/src/print.jl b/src/print.jl
-index dd2e20a..be42401 100644
---- a/src/print.jl
-+++ b/src/print.jl
-@@ -25,4 +25,5 @@ function iteration_status(
-         data.k, data.objective, data.primal_inf, data.dual_inf, data.cs_inf_0,
-         log10(data.μ), data.reg_last == 0.0 ? "    -  " : @sprintf("% 2.4f", log10(data.reg_last)),
-         data.step_size, data.l)
-+    flush(stdout)
- end

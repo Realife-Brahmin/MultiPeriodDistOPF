@@ -1,0 +1,20 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -141,4 +141,6 @@
+             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
+-            B = lux + ux_tmp * fx + fux
++            B = ux_tmp * fx
++            B .+= lux
++            B .+= fux
+ 
+             if nc > 0
+@@ -149,7 +151,7 @@
+                 Qû = Qû + cu' * ϕ
+                 C = C + cxx
+                 Ĥ = Ĥ + cuu
+-                B = B + cux
++                B .+= cux
+             end
+             
+             # inertia correction / regularisation

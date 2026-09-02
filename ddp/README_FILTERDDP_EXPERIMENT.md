@@ -84,6 +84,15 @@ ddp/
 # upstream clone (gitignored -- carries its own .git)
 git clone https://github.com/mingu6/FilterDDP.jl ddp/external/FilterDDP.jl
 git -C ddp/external/FilterDDP.jl checkout 513a104
+git -C ddp/external/FilterDDP.jl apply ../../patches/dynamic_network_scaling.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/factor_bound_sensitivities.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/no_copy_update_rule.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/in_place_kkt_rhs.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_stage_rule_buffers.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_kkt_rhs_workspace.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/type_constraint_residual_vector.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/in_place_B_assembly.patch
+git -C ddp/external/FilterDDP.jl apply ../../patches/active_B_rows.patch
 
 # the two papers (gitignored -- not ours to redistribute)
 mkdir ddp/papers
