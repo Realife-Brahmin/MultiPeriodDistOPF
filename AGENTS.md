@@ -451,8 +451,21 @@ at `T=6` (36.95%), with sampled peaks of 3808 and 4216 MiB. IEEE2522
 iteration counts differ from the oldest baseline despite strict convergence;
 do not claim identical trajectories for those rows. See
 `ddp/results/network_filterddp/optimized_timing_comparison.csv` and
-`ddp/notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`. large10k `T=12` remains
-pending because the extrapolated run is still potentially half a day.
+`ddp/notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`. At the time of this sweep,
+large10k `T=12` was deferred; the follow-up below now supersedes that status.
+
+**Optimized large10k `T=12` follow-up (2026-09-08):** the same factor-backed,
+non-blocked optimized configuration was run cold at the practical `1e-6`
+tolerance. It terminated normally at iteration 127 in 18826.264 s (5.23 h),
+versus the original 200-iteration/69951.536-s (19.43-h) run: 73.09% faster, or
+3.72x. Peak sampled working set was 4718.230 MiB (4.61 GiB). Final primal,
+dual, and complementarity residuals were `1.991e-7`, `5.697e-7`, and
+`1.983e-7`; objective `2976105.1459462` is `0.05316` (`1.79e-8` relative)
+above the old settled value. No independent centralized large10k `T=12`
+objective is stored, so do not claim a centralized objective comparison. The
+trace and summary are
+`optimized_large10k_t12_tol1e6_large10kC_1ph_T12_trace.csv` and
+`optimized_large10k_t12_tol1e6.csv`.
 
 ## Pending task (do not start until asked)
 

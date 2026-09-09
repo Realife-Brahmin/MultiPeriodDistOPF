@@ -1,5 +1,7 @@
 param(
     [switch]$IncludeLarge10kT12,
+    [switch]$OnlyLarge10kT12,
+    [double]$Tolerance = 1e-7,
     [string]$TagPrefix = "optimized_timing_matrix"
 )
 
@@ -21,7 +23,8 @@ $summary = Join-Path $resultDir "$TagPrefix.csv"
 New-Item -ItemType Directory -Force -Path $logDir | Out-Null
 $env:JULIA_DEPOT_PATH = $depot
 $env:FILTERDDP_MAX_ITERATIONS = "200"
-$env:FILTERDDP_OPTIMALITY_TOLERANCE = "1e-7"
+$toleranceText = $Tolerance.ToString("R", [Globalization.CultureInfo]::InvariantCulture)
+$env:FILTERDDP_OPTIMALITY_TOLERANCE = $toleranceText
 $env:FILTERDDP_FACTOR_BACKED_POLICY = "1"
 Remove-Item Env:FILTERDDP_BLOCKED_VALUE_RHS -ErrorAction SilentlyContinue
 Remove-Item Env:FILTERDDP_VALUE_BLOCK_WIDTH -ErrorAction SilentlyContinue
@@ -29,15 +32,17 @@ Remove-Item Env:FILTERDDP_MEMORY_DIAGNOSTIC -ErrorAction SilentlyContinue
 Remove-Item Env:FILTERDDP_TIMING_DIAGNOSTIC -ErrorAction SilentlyContinue
 
 $cases = [Collections.Generic.List[object]]::new()
-foreach ($system in @("ieee123C_1ph", "ieee2522C_1ph")) {
-    foreach ($horizon in @(3, 6, 12, 24, 48, 96)) {
-        $cases.Add([pscustomobject]@{ System = $system; Horizon = $horizon })
+if (-not $OnlyLarge10kT12) {
+    foreach ($system in @("ieee123C_1ph", "ieee2522C_1ph")) {
+        foreach ($horizon in @(3, 6, 12, 24, 48, 96)) {
+            $cases.Add([pscustomobject]@{ System = $system; Horizon = $horizon })
+        }
+    }
+    foreach ($horizon in @(3, 6)) {
+        $cases.Add([pscustomobject]@{ System = "large10kC_1ph"; Horizon = $horizon })
     }
 }
-foreach ($horizon in @(3, 6)) {
-    $cases.Add([pscustomobject]@{ System = "large10kC_1ph"; Horizon = $horizon })
-}
-if ($IncludeLarge10kT12) {
+if ($IncludeLarge10kT12 -or $OnlyLarge10kT12) {
     $cases.Add([pscustomobject]@{ System = "large10kC_1ph"; Horizon = 12 })
 }
 
@@ -45,7 +50,7 @@ if (-not (Test-Path -LiteralPath $summary)) {
     "system,horizon,iterations,status,wall_s,solve_s,peak_working_set_MiB,trace" |
         Set-Content -LiteralPath $summary
 }
-"$(Get-Date -Format o) QUEUE_START cases=$($cases.Count) factor_backed=1 tolerance=1e-7" |
+"$(Get-Date -Format o) QUEUE_START cases=$($cases.Count) factor_backed=1 tolerance=$toleranceText" |
     Set-Content -LiteralPath $statusLog
 
 foreach ($case in $cases) {
