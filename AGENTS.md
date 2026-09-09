@@ -5,6 +5,16 @@ same ground truth. Session-local memory (`~/.Codex/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
+## Active centralized IPOPT timing sweep
+
+New work belongs on `ddp-understanding-sep02`. Reconstruct the IAS-style
+centralized `C (s)` column with fresh JuMP--IPOPT runs by following
+`ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`. Use
+`scripts/run_centralized_ipopt_case.ps1`, one case at a time. A case is not
+finished until its validated row and raw log are pushed here and the matching
+TPEC table/PDF update is pushed to the TPEC repository. Resume from the first
+incomplete row; never replace missing data with an older Gurobi timing.
+
 ## Two DDP codebases here — both *Differential* Dynamic Programming
 
 **Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never

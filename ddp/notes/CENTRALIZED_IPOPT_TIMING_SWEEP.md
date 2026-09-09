@@ -1,0 +1,67 @@
+# Centralized IPOPT timing sweep
+
+This sweep reconstructs the centralized-time column, `C (s)`, using fresh,
+cold-start JuMP--IPOPT runs of the same BFM-NL MPOPF model and profiles used by
+the tADMM study. It does not substitute the older native-conic Gurobi timings.
+
+## Matrix and order
+
+- `ieee123C_1ph`: `T = 6, 12, 24, 48, 96, 144`
+- `ieee2522C_1ph`: `T = 6, 12, 24, 48, 96, 144`
+- `large10kC_1ph`: `T = 6, 12, 24, 48`
+
+Run only one case at a time, normally in the order above. The authoritative
+machine-readable table is
+`ddp/results/centralized_ipopt/centralized_ipopt_timing.csv`.
+
+## One-case command
+
+From repository root on Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_centralized_ipopt_case.ps1 `
+  -System ieee123C_1ph -Horizon 6
+```
+
+The runner forces IPOPT, disables the user Julia startup file, samples the
+Julia process working set, preserves the IPOPT log and validation summary, and
+upserts one CSV row. Never edit `config.jl` for a sweep case.
+
+## Required evidence per row
+
+Do not publish a `C (s)` value unless all of the following are retained:
+
+- system, `T`, `Delta t = 24/T`, cold-start status, and validation result;
+- objective, IPOPT iterations, IPOPT-reported time, JuMP solve time, and solve
+  wall time;
+- variable/constraint counts, Jacobian/Hessian nonzeros, IPOPT version and
+  linear solver;
+- sampled peak working set and the complete final IPOPT log;
+- an explicit failure reason instead of a fabricated timing if the run fails.
+
+Use `jump_solve_time_s` as the paper's `C (s)` value, matching the solver-time
+meaning of the existing computational table. Keep `ipopt_reported_s` and
+`solve_wall_s` beside it so that the choice remains auditable.
+
+## Transaction after every run
+
+1. Inspect the raw log and require an accepted solve status.
+2. Require the independent post-solve validator to report `FEASIBLE`.
+3. Sanity-check objective and dimensions against prior same-system results.
+4. Update this repository's CSV/README and any relevant shared context.
+5. Commit and push those files on `ddp-understanding-sep02`.
+6. Update the TPEC source table from the verified CSV row; compile and visually
+   inspect the PDF.
+7. Commit and push the TPEC source and PDF on its `main` branch.
+8. Only then start the next case. Never overlap cases.
+
+If interrupted, inspect the CSV, raw logs, both Git histories, and process list.
+Resume at the first row missing either a validated CSV entry or both pushed
+repository commits.
+
+## Pilot
+
+The initial `ieee123C_1ph`, `T = 6` run on 2026-09-09 used IPOPT 3.14.19 with
+MUMPS 5.8.2. It converged in 44 iterations to objective
+`2973.5533406443265`; all constraints passed validation. The fresh timing row,
+rather than the old IAS table value, is authoritative for this reconstruction.
