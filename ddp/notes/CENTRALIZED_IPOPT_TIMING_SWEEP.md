@@ -104,3 +104,8 @@ represented before touching the TPEC repository for this case.
 Decided 2026-09-10: hold off entirely. The TPEC repository is not touched
 for `ieee123C_1ph` `T = 144` until FilterDDP is actually run at that horizon.
 The centralized value stays recorded only in this repository's CSV/README.
+
+The `ieee2522C_1ph`, `T = 3` run on 2026-09-10 used the same build. It
+converged in 52 iterations to `8515.8800338502`; all constraints passed
+validation. This is the first IPOPT row for this system; it supersedes the
+old Gurobi-sourced TPEC entry of `1.730`.

@@ -72,5 +72,17 @@ stops at 96), so this centralized value has no `Optimized (s, x)` counterpart
 yet in the TPEC table's Table II. Recorded here per the sweep matrix; whether
 and how to add a Table II row is a paper-content decision left to the user.
 
+## Completed ieee2522 cases
+
+`T = 3` converged locally in 52 IPOPT iterations to `8515.8800338502`. The
+independent validator accepted every constraint. The fresh run recorded
+5.527 s inside IPOPT, 5.576 s from JuMP's solver timer, 6.783 s solve wall
+time, and a 1008.52 MiB sampled Julia-process working set. Problem size is
+32511 variables, 23448 equality and 17379 inequality constraints. This
+supersedes the old TPEC entry of `1.730` (Gurobi-sourced); the new IPOPT
+value is about 3.2x higher, reflecting a solver change rather than a
+regression, per the user's decision to switch med2522/large10k's Table II
+`C` column from Gurobi to IPOPT to match ieee123.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
