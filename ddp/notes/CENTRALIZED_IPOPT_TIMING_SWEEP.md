@@ -86,3 +86,11 @@ The `ieee123C_1ph`, `T = 96` run on 2026-09-10 used the same build. It
 converged in 46 iterations to `2857.16211357218`; all constraints passed
 validation. The fresh `jump_solve_time_s = 12.288` is 2.2% below the old
 TPEC entry of `12.570`.
+
+The `ieee123C_1ph`, `T = 144` run on 2026-09-10 used the same build. It
+converged in 50 iterations to `2861.42874574193`; all constraints passed
+validation. This completes the ieee123 matrix in this file's own order, but
+FilterDDP has never been run at `T = 144` for ieee123 (Table I stops at 96
+and Table II has no row for it), so there is no existing TPEC table cell to
+update. Do not invent a Table II row; ask the user how they want this
+represented before touching the TPEC repository for this case.

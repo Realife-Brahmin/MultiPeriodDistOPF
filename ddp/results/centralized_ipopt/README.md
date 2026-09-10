@@ -61,5 +61,16 @@ scales linearly at 664/435/408 per stage. The fresh 12.288 s is 2.2% below
 the old TPEC entry of 12.570 s — a moderate supersession, larger than `T = 24`
 (0.16%) but far smaller than `T = 3` (56%).
 
+`T = 144` converged locally in 50 IPOPT iterations to `2861.42874574193`. The
+independent validator accepted every constraint. The fresh run recorded
+20.848 s inside IPOPT, 20.917 s from JuMP's solver timer, 22.179 s solve wall
+time, and a 1105.289 MiB sampled Julia-process working set. Problem size
+(95616 variables, 62640 equality and 58752 inequality constraints) again
+scales linearly at 664/435/408 per stage. Unlike every other ieee123 row,
+FilterDDP has never been run at this horizon (Table I's tested-horizons list
+stops at 96), so this centralized value has no `Optimized (s, x)` counterpart
+yet in the TPEC table's Table II. Recorded here per the sweep matrix; whether
+and how to add a Table II row is a paper-content decision left to the user.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
