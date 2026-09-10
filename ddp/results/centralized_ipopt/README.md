@@ -84,5 +84,14 @@ value is about 3.2x higher, reflecting a solver change rather than a
 regression, per the user's decision to switch med2522/large10k's Table II
 `C` column from Gurobi to IPOPT to match ieee123.
 
+`T = 6` converged locally in 68 IPOPT iterations to `9040.01299652051`. The
+independent validator accepted every constraint. The fresh run recorded
+15.037 s inside IPOPT, 15.064 s from JuMP's solver timer, 16.108 s solve wall
+time, and a 1087.504 MiB sampled Julia-process working set. Problem size
+(65022 variables, 46896 equality and 34758 inequality constraints) scales
+linearly against `T = 3` at 10837/7816/5793 per stage. This supersedes the
+old TPEC entry of `5.334` (Gurobi-sourced); the new IPOPT value is about
+2.8x higher, the same direction as the `T = 3` change.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
