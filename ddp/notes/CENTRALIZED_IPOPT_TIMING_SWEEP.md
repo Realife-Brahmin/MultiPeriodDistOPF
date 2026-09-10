@@ -6,9 +6,9 @@ the tADMM study. It does not substitute the older native-conic Gurobi timings.
 
 ## Matrix and order
 
-- `ieee123C_1ph`: `T = 6, 12, 24, 48, 96, 144`
-- `ieee2522C_1ph`: `T = 6, 12, 24, 48, 96, 144`
-- `large10kC_1ph`: `T = 6, 12, 24, 48`
+- `ieee123C_1ph`: `T = 3, 6, 12, 24, 48, 96, 144`
+- `ieee2522C_1ph`: `T = 3, 6, 12, 24, 48, 96, 144`
+- `large10kC_1ph`: `T = 3, 6, 12, 24, 48`
 
 Run only one case at a time, normally in the order above. The authoritative
 machine-readable table is
@@ -59,9 +59,10 @@ If interrupted, inspect the CSV, raw logs, both Git histories, and process list.
 Resume at the first row missing either a validated CSV entry or both pushed
 repository commits.
 
-## Pilot
+## Initial cases
 
-The initial `ieee123C_1ph`, `T = 6` run on 2026-09-09 used IPOPT 3.14.19 with
-MUMPS 5.8.2. It converged in 44 iterations to objective
-`2973.5533406443265`; all constraints passed validation. The fresh timing row,
-rather than the old IAS table value, is authoritative for this reconstruction.
+The initial `ieee123C_1ph`, `T = 3` and `T = 6` runs on 2026-09-09 used IPOPT
+3.14.19 with MUMPS 5.8.2. They converged in 34 and 44 iterations to objectives
+`2808.92465122283` and `2973.5533406443265`; all constraints passed validation.
+These fresh timing rows, rather than old paper-table values, are authoritative
+for this reconstruction.

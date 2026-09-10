@@ -4,7 +4,7 @@ param(
     [string]$System,
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet(6, 12, 24, 48, 96, 144)]
+    [ValidateSet(3, 6, 12, 24, 48, 96, 144)]
     [int]$Horizon
 )
 
