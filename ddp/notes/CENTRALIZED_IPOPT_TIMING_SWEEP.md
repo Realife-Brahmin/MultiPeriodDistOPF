@@ -119,3 +119,8 @@ The `ieee2522C_1ph`, `T = 12` run on 2026-09-10 used the same build. It
 converged in 70 iterations to `8512.51541531388`; all constraints passed
 validation. Dimensions scale linearly at 10837/7816/5793 per stage.
 Supersedes the old Gurobi-sourced TPEC entry of `11.015`.
+
+The `ieee2522C_1ph`, `T = 24` run on 2026-09-10 used the same build. It
+converged in 74 iterations to `8632.27397397632`; all constraints passed
+validation. Dimensions scale linearly at 10837/7816/5793 per stage.
+Supersedes the old Gurobi-sourced TPEC entry of `27.224`.
