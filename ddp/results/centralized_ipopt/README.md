@@ -110,5 +110,16 @@ time, and a 1630.133 MiB sampled Julia-process working set. Problem size
 linearly at 10837/7816/5793 per stage. This supersedes the old TPEC entry of
 `27.224` (Gurobi-sourced); the new IPOPT value is about 2.5x higher.
 
+`T = 48` converged locally in 78 IPOPT iterations to `8701.14567443687`. The
+independent validator accepted every constraint. The fresh run recorded
+137.531 s inside IPOPT, 138.733 s from JuMP's solver timer, 140.475 s solve
+wall time, and a 2311.605 MiB sampled Julia-process working set. Problem
+size (520176 variables, 375168 equality and 278064 inequality constraints)
+scales linearly at 10837/7816/5793 per stage. This supersedes the old TPEC
+entry of `58.151` (Gurobi-sourced); the new IPOPT value is about 2.4x
+higher. This centralized objective also matches FilterDDP's own reported
+`T = 48` objective, `8701.148876`, to about 4e-7 relative — an independent
+cross-check that the two models solve the same problem.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

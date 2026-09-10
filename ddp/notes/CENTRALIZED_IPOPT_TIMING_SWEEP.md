@@ -124,3 +124,9 @@ The `ieee2522C_1ph`, `T = 24` run on 2026-09-10 used the same build. It
 converged in 74 iterations to `8632.27397397632`; all constraints passed
 validation. Dimensions scale linearly at 10837/7816/5793 per stage.
 Supersedes the old Gurobi-sourced TPEC entry of `27.224`.
+
+The `ieee2522C_1ph`, `T = 48` run on 2026-09-10 used the same build. It
+converged in 78 iterations to `8701.14567443687`; all constraints passed
+validation. Dimensions scale linearly at 10837/7816/5793 per stage.
+Supersedes the old Gurobi-sourced TPEC entry of `58.151`. Objective matches
+FilterDDP's own stored `T = 48` objective, `8701.148876`, to ~4e-7 relative.
