@@ -43,5 +43,14 @@ apart) rather than a large supersession — a useful cross-check that the
 reconstruction agrees with the prior measurement where the prior measurement
 happened to already be accurate.
 
+`T = 48` converged locally in 43 IPOPT iterations to `2844.65680064169`. The
+independent validator accepted every constraint. The fresh run recorded
+6.141 s inside IPOPT, 6.173 s from JuMP's solver timer, 7.528 s solve wall
+time, and a 991.754 MiB sampled Julia-process working set. Problem size
+(31872 variables, 20880 equality and 19584 inequality constraints) again
+scales linearly at 664/435/408 per stage. The TPEC table previously carried
+no centralized entry for this row (`---`), so this is a new value rather
+than a supersession.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

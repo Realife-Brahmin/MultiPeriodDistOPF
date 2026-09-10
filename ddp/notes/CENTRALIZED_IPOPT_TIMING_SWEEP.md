@@ -76,3 +76,8 @@ The `ieee123C_1ph`, `T = 24` run on 2026-09-10 used the same build. It
 converged in 42 iterations to `2821.36125475254`; all constraints passed
 validation. The fresh `jump_solve_time_s = 3.055` is close to the old TPEC
 entry of `3.060`, unlike the larger T=3 supersession.
+
+The `ieee123C_1ph`, `T = 48` run on 2026-09-10 used the same build. It
+converged in 43 iterations to `2844.65680064169`; all constraints passed
+validation. No prior centralized timing existed for this row in the TPEC
+table, so this is a new entry rather than a supersession.
