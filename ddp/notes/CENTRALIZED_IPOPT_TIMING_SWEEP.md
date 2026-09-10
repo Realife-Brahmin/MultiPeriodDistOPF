@@ -151,3 +151,8 @@ converged in 110 iterations to `2985283.79326033`; all constraints passed
 validation. Dimensions are 44345/31983/23703 per stage. Supersedes the old
 Gurobi-sourced TPEC entry of `6.304` with `jump_solve_time_s = 55.809`
 (about 8.85x higher, a larger gap than med2522 showed).
+
+The `large10kC_1ph`, `T = 6` run on 2026-09-10 used the same build. It
+converged in 99 iterations to `2944457.00867062`; all constraints passed
+validation. Dimensions match `T = 3` at 44345/31983/23703 per stage. No
+prior centralized timing was recorded for this row; new entry.

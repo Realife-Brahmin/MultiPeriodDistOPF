@@ -157,5 +157,14 @@ IPOPT-vs-Gurobi gap than med2522's 2.5-3x, plausible given Gurobi's native
 conic solver is far better suited to a huge SOCP than IPOPT's general
 interior-point method.
 
+`T = 6` converged locally in 99 IPOPT iterations to `2944457.00867062`. The
+independent validator accepted every constraint. The fresh run recorded
+104.760 s inside IPOPT, 104.843 s from JuMP's solver timer, 106.239 s solve
+wall time, and a 1758.609 MiB sampled Julia-process working set. Problem
+size (266070 variables, 191898 equality and 142218 inequality constraints)
+scales linearly against `T = 3` at 44345/31983/23703 per stage. No prior
+centralized timing was recorded for this row (`---`), so this is a new
+value rather than a supersession.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
