@@ -66,3 +66,8 @@ The initial `ieee123C_1ph`, `T = 3` and `T = 6` runs on 2026-09-09 used IPOPT
 `2808.92465122283` and `2973.5533406443265`; all constraints passed validation.
 These fresh timing rows, rather than old paper-table values, are authoritative
 for this reconstruction.
+
+The `ieee123C_1ph`, `T = 12` run on 2026-09-10 used the same IPOPT 3.14.19 /
+MUMPS 5.8.2. build. It converged in 41 iterations to `2781.5319546502`; all
+constraints passed validation. No prior centralized timing existed for this
+row in the TPEC table, so this is a new entry rather than a supersession.

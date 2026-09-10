@@ -22,5 +22,15 @@ fresh run recorded 0.640 s inside IPOPT, 0.654 s from JuMP's solver timer,
 The working set includes the Julia runtime and loaded packages and is not an
 IPOPT-only memory measurement.
 
+`T = 12` converged locally in 41 IPOPT iterations to `2781.5319546502`. The
+independent validator accepted every constraint. The fresh run recorded
+0.811 s inside IPOPT, 0.828 s from JuMP's solver timer, 1.561 s solve wall
+time, and a 937.926 MiB sampled Julia-process working set. Problem size
+(7968 variables, 5220 equality and 4896 inequality constraints) is exactly
+double the `T = 6` row and quadruple `T = 3`, consistent with the per-stage
+counts of 664 variables, 435 equality and 408 inequality constraints seen at
+every horizon so far. The TPEC table previously carried no centralized entry
+for this row (`---`), so this is a new value rather than a supersession.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
