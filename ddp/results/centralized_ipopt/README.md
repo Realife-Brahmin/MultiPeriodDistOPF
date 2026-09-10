@@ -52,5 +52,14 @@ scales linearly at 664/435/408 per stage. The TPEC table previously carried
 no centralized entry for this row (`---`), so this is a new value rather
 than a supersession.
 
+`T = 96` converged locally in 46 IPOPT iterations to `2857.16211357218`. The
+independent validator accepted every constraint. The fresh run recorded
+12.242 s inside IPOPT, 12.288 s from JuMP's solver timer, 13.406 s solve wall
+time, and a 1068.379 MiB sampled Julia-process working set. Problem size
+(63744 variables, 41760 equality and 39168 inequality constraints) again
+scales linearly at 664/435/408 per stage. The fresh 12.288 s is 2.2% below
+the old TPEC entry of 12.570 s — a moderate supersession, larger than `T = 24`
+(0.16%) but far smaller than `T = 3` (56%).
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
