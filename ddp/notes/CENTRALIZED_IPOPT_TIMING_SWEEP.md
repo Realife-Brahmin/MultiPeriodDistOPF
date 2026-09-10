@@ -164,3 +164,11 @@ already-cited FilterDDP `T = 12` stabilized value, `2,976,105.0928`, to
 ~1.5e-9 relative. Adopting this row into the TPEC table requires also
 fixing a now-stale sentence there claiming no independent centralized
 `T = 12` objective is stored for large10k.
+
+The `large10kC_1ph`, `T = 24` run on 2026-09-10 used the same build. It
+converged in 112 iterations to `2996960.01465613`; all constraints passed
+validation. Dimensions match `T = 3/6/12` at 44345/31983/23703 per stage.
+FilterDDP has never been run at this horizon for large10k either (Table I
+stops at `12†`, Table II has no row), so per the same hold-off precedent
+as the `T = 144` rows, this value is recorded here only; TPEC is not
+touched.

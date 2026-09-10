@@ -178,5 +178,17 @@ says no independent centralized `T = 12` objective is stored for large10k;
 that statement needs updating once this row is adopted into the TPEC
 table.
 
+`T = 24` converged locally in 112 IPOPT iterations to `2996960.01465613`.
+The independent validator accepted every constraint. The fresh run
+recorded 572.724 s inside IPOPT, 574.926 s from JuMP's solver timer,
+578.422 s solve wall time, and a 4270.617 MiB sampled Julia-process working
+set. Problem size (1064280 variables, 767592 equality and 568872
+inequality constraints) scales linearly at 44345/31983/23703 per stage.
+Unlike large10k `T = 3, 6, 12`, FilterDDP has never been run at this
+horizon (Table I's large10k tested-horizons list is `3, 6; 12†` only, and
+Table II has no row for it), so per the same hold-off precedent as the
+ieee123/med2522 `T = 144` rows, this value is recorded here only; the TPEC
+repository is not touched for this row.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
