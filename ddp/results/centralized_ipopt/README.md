@@ -133,5 +133,16 @@ the new IPOPT value is about 2.5x higher. The objective also matches the
 comparison to about 1e-7 relative, confirming it is the same reference
 value rather than a new one.
 
+`T = 144` converged locally in 88 IPOPT iterations to `8750.07667926917`.
+The independent validator accepted every constraint. The fresh run recorded
+483.091 s inside IPOPT, 483.468 s from JuMP's solver timer, 489.479 s solve
+wall time, and a 5555 MiB sampled Julia-process working set. Problem size
+(1560528 variables, 1125504 equality and 834192 inequality constraints)
+scales linearly at 10837/7816/5793 per stage. As with ieee123 `T = 144`,
+FilterDDP has never been run at this horizon for med2522 (Table I's
+tested-horizons list stops at 96, and Table II has no row for it), so per
+the same user decision this value is recorded here only; the TPEC
+repository is not touched for this row.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

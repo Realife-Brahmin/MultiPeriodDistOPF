@@ -137,3 +137,11 @@ validation. Dimensions scale linearly at 10837/7816/5793 per stage,
 completing the med2522 matrix. Supersedes the old Gurobi-sourced TPEC entry
 of `121.305`. Objective matches the paper's already-cited `T = 96`
 centralized value, `8737.6487`, to ~1e-7 relative.
+
+The `ieee2522C_1ph`, `T = 144` run on 2026-09-10 used the same build. It
+converged in 88 iterations to `8750.07667926917`; all constraints passed
+validation. Dimensions scale linearly at 10837/7816/5793 per stage. As with
+ieee123 `T = 144`, FilterDDP has never been run at this horizon for med2522
+either, so per the same 2026-09-10 hold-off decision this value stays
+recorded only in this repository's CSV/README; the TPEC repository is not
+touched for this row.
