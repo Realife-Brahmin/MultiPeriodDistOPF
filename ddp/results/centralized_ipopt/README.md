@@ -144,5 +144,18 @@ tested-horizons list stops at 96, and Table II has no row for it), so per
 the same user decision this value is recorded here only; the TPEC
 repository is not touched for this row.
 
+## Completed large10k cases
+
+`T = 3` converged locally in 110 IPOPT iterations to `2985283.79326033`. The
+independent validator accepted every constraint. The fresh run recorded
+55.762 s inside IPOPT, 55.809 s from JuMP's solver timer, 56.922 s solve wall
+time, and a 1333.93 MiB sampled Julia-process working set. Problem size is
+133035 variables, 95949 equality and 71109 inequality constraints (44345/
+31983/23703 per stage). This supersedes the old TPEC entry of `6.304`
+(Gurobi-sourced); the new IPOPT value is about 8.85x higher — a much larger
+IPOPT-vs-Gurobi gap than med2522's 2.5-3x, plausible given Gurobi's native
+conic solver is far better suited to a huge SOCP than IPOPT's general
+interior-point method.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

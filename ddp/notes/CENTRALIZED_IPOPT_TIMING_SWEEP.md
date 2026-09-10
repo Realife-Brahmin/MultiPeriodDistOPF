@@ -145,3 +145,9 @@ ieee123 `T = 144`, FilterDDP has never been run at this horizon for med2522
 either, so per the same 2026-09-10 hold-off decision this value stays
 recorded only in this repository's CSV/README; the TPEC repository is not
 touched for this row.
+
+The `large10kC_1ph`, `T = 3` run on 2026-09-10 used the same build. It
+converged in 110 iterations to `2985283.79326033`; all constraints passed
+validation. Dimensions are 44345/31983/23703 per stage. Supersedes the old
+Gurobi-sourced TPEC entry of `6.304` with `jump_solve_time_s = 55.809`
+(about 8.85x higher, a larger gap than med2522 showed).
