@@ -89,54 +89,74 @@ snapshotting `rhs` immediately after it is assembled, before the solve.
 Shapes are stage-invariant within each system (`nx, nu, nc` are
 backward-pass type parameters, fixed across the horizon):
 
-| System | nx | nu | nc | K shape |
-|---|---|---|---|---|
-| ieee123C_1ph | 51 | 791 | 562 | 1353x1353, ~0.3-0.4% dense |
-| ieee2522C_1ph | 250 | 13358 | 10337 | 23695x23695, ~0.02% dense |
-| large10kC_1ph | 1020 | 54665 | 42303 | 96968x96968, pending |
+| System | nx | nu | nc | K shape | outer iterations (T=3) |
+|---|---|---|---|---|---|
+| ieee123C_1ph | 51 | 791 | 562 | 1353x1353, ~0.3-0.4% dense | 48 |
+| ieee2522C_1ph | 250 | 13358 | 10337 | 23695x23695, ~0.02% dense | 56 |
+| large10kC_1ph | 1020 | 54665 | 42303 | 96968x96968, ~0.015% dense | 115 |
 
 **The terminal stage (t=N) is exactly, structurally different, not just
-numerically — confirmed on both ieee123 and ieee2522.** Its multi-RHS
-state-sensitivity block has *every* singular value equal to exactly `1.0`,
-at every sampled iteration, at both scales. This is not approximate
-compressibility — it is because at `t=N` the incoming value curvature `Vxx`
-is zero on the very first pass through this stage each outer iteration
-(there is no stage beyond the horizon), so the `B_active` term the RHS would
-otherwise carry vanishes, leaving the RHS built entirely from `-cx` — and the
-only state-dependence in the last stage's constraints is the per-battery
-energy-slack equality `x_b - dt*u_pb - emin - slack_b = 0`, whose Jacobian
-w.r.t. `x` is (up to zero rows) exactly `-I`. **This terminal-stage KKT solve
-should be exploiting the RHS's exact identity structure directly (row
-selection, not a dense multi-RHS solve at all) rather than treating it as
-`nx` generic dense columns** — this is a free, exact simplification, not an
-approximation, and it now holds at two very different network sizes.
+numerically — confirmed on all three systems, including large10k.** Its
+multi-RHS state-sensitivity block has *every* singular value equal to
+exactly `1.0`, at every sampled iteration, at all three scales. This is not
+approximate compressibility — it is because at `t=N` the incoming value
+curvature `Vxx` is zero on the very first pass through this stage each outer
+iteration (there is no stage beyond the horizon), so the `B_active` term the
+RHS would otherwise carry vanishes, leaving the RHS built entirely from `-cx`
+— and the only state-dependence in the last stage's constraints is the
+per-battery energy-slack equality `x_b - dt*u_pb - emin - slack_b = 0`,
+whose Jacobian w.r.t. `x` is (up to zero rows) exactly `-I`. **This
+terminal-stage KKT solve should be exploiting the RHS's exact identity
+structure directly (row selection, not a dense multi-RHS solve at all)
+rather than treating it as `nx` generic dense columns** — this is a free,
+exact simplification, not an approximation, and it holds at every scale
+tested so far, independent of everything below.
 
-**Stages 1-2 (the ones actually carrying a nonzero incoming value message)
-are not meaningfully rank-deficient early on, and compress later — more so,
-and more sharply, at the larger ieee2522 scale:**
+**Stages 1-2 (the ones actually carrying a nonzero incoming value message):
+the interior-stage picture does *not* scale monotonically with network
+size.** ieee2522 looked like the start of a "compresses more at larger
+scale" trend; large10k breaks it.
 
-- ieee123 (nx=51): at cold start and through `iter<=15`, the RHS needs
-  essentially its full basis even at 10% tolerance (`rhs_rank_10pct` =
-  48-51). By `iter=35-45`, `rhs_rank_10pct` drops to 10.
-- ieee2522 (nx=250): the same pattern, but sharper — by `iter=30-55`,
-  `rhs_rank_10pct` drops to 7-9 (out of 250, i.e. under 4%), and condition
-  number climbs to 1200-2400x (vs. ~150-280x on ieee123).
-- `omega` (equality-multiplier sensitivity) compresses noticeably more, and
-  earlier, than `beta` (control sensitivity), on both systems. On ieee2522
-  the gap is dramatic: by late iterations `omega_rank_5pct` is 13-17 (out of
-  250, ~6%) while `beta_rank_5pct` is 48-150 (20-60%). `beta` never
-  compresses nearly as hard as `omega`. If a compressed/reduced-column KKT
-  solve is worth pursuing, `omega` is the much better candidate; a uniform
-  low-rank treatment of the whole `[beta; omega]` stack would be limited by
-  `beta`.
-
-large10k findings pending (rerun in progress with the inline-stats mode).
+- **RHS-block compression is pronounced on ieee2522 and nearly absent on
+  ieee123 and large10k.** ieee123: `rhs_rank_10pct` drops from ~50 (out of
+  51) to 10 by `iter=35-45`. ieee2522: the sharpest case, dropping to 7-9
+  (out of 250, under 4%) by `iter=30-55`, condition number climbing to
+  1200-2400x. large10k: **the RHS barely compresses at all** —
+  `rhs_rank_5pct` stays at 920-1018 (out of 1020, 90-99%) for the *entire*
+  115-iteration run, and `rhs_rank_1pct` never drops below 1010. Whatever
+  makes ieee2522's RHS collapse late in the solve is not a generic
+  large-network effect; it is not present at 4x ieee2522's state dimension.
+- **`omega` compresses more than `beta` on all three systems, but the *depth*
+  of that gap is not monotonic in scale either.** ieee123: `omega_rank_5pct`
+  bottoms out around 2-4 (out of 51, near-total) then partially recovers to
+  14-23; `beta_rank_5pct` stays 28-50. ieee2522: the most dramatic case —
+  `omega_rank_5pct` down to 13-17 (out of 250, ~6%) against `beta_rank_5pct`
+  of 48-150 (20-60%). large10k: `omega_rank_5pct` only reaches 165-365 (out
+  of 1020, 16-36%) — a real gap below `beta`, but nowhere near ieee2522's
+  depth. Across all three, `omega` never compresses less than `beta` at the
+  same iteration; the ordering is robust even though the ieee2522 magnitude
+  does not generalize.
+- **large10k shows a late-iteration recovery the shorter runs never reach.**
+  `beta_rank_5pct` falls monotonically from 982 (96%) at `iter=0` to a
+  minimum of 562 (55%) at `iter=80`, then *rises back* to 936 (92%) by
+  `iter=115` — a U-shape, not a one-way decay. This coincides with the
+  barrier parameter `mu` collapsing from `1e0` toward its floor (`1e-8` by
+  the final iterations, per the CSV's `barrier_mu` column): the late-solve
+  regime the shorter ieee123/ieee2522 runs (48 and 56 iterations) never
+  reach at all. Any compression scheme would need to know it is in this
+  terminal-convergence phase and back off, not just use a fixed rank budget
+  or a monotonically shrinking one.
 
 ## Caveats
 
-- Three systems now covered at `T=3` only; whether the mid-to-late-iteration
-  RHS compression and the beta/omega asymmetry hold at larger `T` is
-  untested.
+- All three systems covered at `T=3` only; whether any of the interior-stage
+  patterns above hold at larger `T` is untested. Given they already don't
+  generalize cleanly across *systems* at fixed `T=3`, extrapolating to
+  larger `T` is speculative, not a natural next assumption.
+- The one pattern that *is* robust across all three systems and worth
+  building on is the terminal-stage exact-identity structure — everything
+  else in the interior-stage findings should be read as system-specific
+  data points, not a scaling law.
 - "Rank" here is the smallest truncation whose relative Frobenius-norm error
   is within tolerance — a data-analysis proxy for compressibility, not a
   demonstrated algorithmic speedup. Actually exploiting either finding (exact

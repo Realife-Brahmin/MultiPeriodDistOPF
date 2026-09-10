@@ -336,7 +336,18 @@ const DATA = {
       [50,250,51,13],[55,250,48,13],
     ],
   },
-  large10kC_1ph: null, // pending -- solve in progress, panel updates when it lands
+  large10kC_1ph: {
+    label: "large10kC_1ph",
+    dims: "n_x=1020  n_u=54665  n_c=42303",
+    rows: [
+      [0,1020,982,165],[5,1020,983,339],[10,1020,991,240],[15,1020,989,270],
+      [20,1020,983,308],[25,1020,970,337],[30,1020,947,355],[35,1020,909,364],
+      [40,1020,869,365],[45,1020,830,363],[50,1020,795,357],[55,1020,753,348],
+      [60,1020,706,334],[65,1020,671,323],[70,1020,626,312],[75,1020,578,307],
+      [80,1020,562,291],[85,1020,599,313],[90,1020,762,168],[95,1020,892,289],
+      [100,1020,931,354],[105,1020,935,349],[110,1020,936,348],[115,1020,936,348],
+    ],
+  },
 };
 
 const NS = "http://www.w3.org/2000/svg";
@@ -384,9 +395,13 @@ function buildPanel(container, key, entry) {
     t.textContent = p + "%";
     svg.appendChild(t);
   });
-  // x labels
+  // x labels: thin adaptively so ~8 labels show regardless of series length,
+  // and drop the second-to-last label if it would crowd the final one.
+  const labelStep = Math.max(1, Math.ceil(iters.length / 8));
   iters.forEach((it, i) => {
-    if (i % 2 !== 0 && it !== xMax) return;
+    const isLast = it === xMax;
+    if (!isLast && i % labelStep !== 0) return;
+    if (!isLast && i + labelStep >= iters.length - 1 && iters.length - 1 - i < labelStep) return;
     const t = svgEl("text", { class: "axis-label", x: x(it), y: H - 8,
       "text-anchor": "middle" });
     t.textContent = "k=" + it;
