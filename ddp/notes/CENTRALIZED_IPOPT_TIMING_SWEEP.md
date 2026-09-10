@@ -2,7 +2,13 @@
 
 This sweep reconstructs the centralized-time column, `C (s)`, using fresh,
 cold-start JuMP--IPOPT runs of the same BFM-NL MPOPF model and profiles used by
-the tADMM study. It does not substitute the older native-conic Gurobi timings.
+the tADMM study.
+
+Decided 2026-09-10: the sweep now covers all three systems and does
+supersede the older native-conic Gurobi timings for `ieee2522C_1ph` and
+`large10kC_1ph`, not just the already-IPOPT-attributed `ieee123C_1ph`. The
+TPEC Table II caption is updated to say IPOPT for all three systems once the
+first non-ieee123 row lands.
 
 ## Matrix and order
 
