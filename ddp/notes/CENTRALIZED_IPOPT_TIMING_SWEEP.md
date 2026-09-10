@@ -94,3 +94,7 @@ FilterDDP has never been run at `T = 144` for ieee123 (Table I stops at 96
 and Table II has no row for it), so there is no existing TPEC table cell to
 update. Do not invent a Table II row; ask the user how they want this
 represented before touching the TPEC repository for this case.
+
+Decided 2026-09-10: hold off entirely. The TPEC repository is not touched
+for `ieee123C_1ph` `T = 144` until FilterDDP is actually run at that horizon.
+The centralized value stays recorded only in this repository's CSV/README.
