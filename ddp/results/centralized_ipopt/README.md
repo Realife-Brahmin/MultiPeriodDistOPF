@@ -93,5 +93,14 @@ linearly against `T = 3` at 10837/7816/5793 per stage. This supersedes the
 old TPEC entry of `5.334` (Gurobi-sourced); the new IPOPT value is about
 2.8x higher, the same direction as the `T = 3` change.
 
+`T = 12` converged locally in 70 IPOPT iterations to `8512.51541531388`. The
+independent validator accepted every constraint. The fresh run recorded
+31.083 s inside IPOPT, 31.171 s from JuMP's solver timer, 32.39 s solve wall
+time, and a 1225.25 MiB sampled Julia-process working set. Problem size
+(130044 variables, 93792 equality and 69516 inequality constraints) scales
+linearly at 10837/7816/5793 per stage. This supersedes the old TPEC entry of
+`11.015` (Gurobi-sourced); the new IPOPT value is about 2.8x higher, the same
+direction as `T = 3` and `T = 6`.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
