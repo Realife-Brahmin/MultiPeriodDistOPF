@@ -121,5 +121,17 @@ higher. This centralized objective also matches FilterDDP's own reported
 `T = 48` objective, `8701.148876`, to about 4e-7 relative — an independent
 cross-check that the two models solve the same problem.
 
+`T = 96` converged locally in 83 IPOPT iterations to `8737.64779735172`. The
+independent validator accepted every constraint. The fresh run recorded
+304.973 s inside IPOPT, 305.233 s from JuMP's solver timer, 309.564 s solve
+wall time, and a 3853.211 MiB sampled Julia-process working set. Problem
+size (1040352 variables, 750336 equality and 556128 inequality constraints)
+scales linearly at 10837/7816/5793 per stage, completing the med2522
+matrix. This supersedes the old TPEC entry of `121.305` (Gurobi-sourced);
+the new IPOPT value is about 2.5x higher. The objective also matches the
+`8737.6487` value already cited in the paper's own `T = 96` FilterDDP
+comparison to about 1e-7 relative, confirming it is the same reference
+value rather than a new one.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
