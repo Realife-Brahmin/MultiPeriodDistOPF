@@ -32,5 +32,16 @@ counts of 664 variables, 435 equality and 408 inequality constraints seen at
 every horizon so far. The TPEC table previously carried no centralized entry
 for this row (`---`), so this is a new value rather than a supersession.
 
+`T = 24` converged locally in 42 IPOPT iterations to `2821.36125475254`. The
+independent validator accepted every constraint. The fresh run recorded
+3.035 s inside IPOPT, 3.055 s from JuMP's solver timer, 4.395 s solve wall
+time, and a 960.039 MiB sampled Julia-process working set. Problem size
+(15936 variables, 10440 equality and 9792 inequality constraints) again
+scales linearly at 664/435/408 per stage. Unlike the `T = 3` row, this
+fresh 3.055 s is close to the old TPEC entry of 3.060 s (0.005 s, 0.16%
+apart) rather than a large supersession — a useful cross-check that the
+reconstruction agrees with the prior measurement where the prior measurement
+happened to already be accurate.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

@@ -71,3 +71,8 @@ The `ieee123C_1ph`, `T = 12` run on 2026-09-10 used the same IPOPT 3.14.19 /
 MUMPS 5.8.2. build. It converged in 41 iterations to `2781.5319546502`; all
 constraints passed validation. No prior centralized timing existed for this
 row in the TPEC table, so this is a new entry rather than a supersession.
+
+The `ieee123C_1ph`, `T = 24` run on 2026-09-10 used the same build. It
+converged in 42 iterations to `2821.36125475254`; all constraints passed
+validation. The fresh `jump_solve_time_s = 3.055` is close to the old TPEC
+entry of `3.060`, unlike the larger T=3 supersession.
