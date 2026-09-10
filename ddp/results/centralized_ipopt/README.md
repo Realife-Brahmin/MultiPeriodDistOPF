@@ -190,5 +190,24 @@ Table II has no row for it), so per the same hold-off precedent as the
 ieee123/med2522 `T = 144` rows, this value is recorded here only; the TPEC
 repository is not touched for this row.
 
+`T = 48` converged locally, but only after 698 IPOPT iterations —
+qualitatively different from the smooth roughly-doubling trend seen at
+`T = 3, 6, 12, 24` (110, 99, 88, 112 iterations). It converged to
+`3008246.73849456`, recording 8261.854 s inside IPOPT, 8263.012 s from
+JuMP's solver timer, 8274.391 s solve wall time, and a 9173.344 MiB
+sampled Julia-process working set. Despite the much higher iteration
+count, the final residuals are still tiny (dual infeasibility 6.08e-12,
+constraint violation 3.22e-13, complementarity 2.80e-9) and the
+independent validator accepted every constraint, so this is a genuine
+optimum reached via a harder line-search path (roughly 8 function
+evaluations per iteration on average), not a degraded or forced exit.
+Problem size (2128560 variables, 1535184 equality and 1137744 inequality
+constraints) still scales linearly at 44345/31983/23703 per stage, matching
+every other large10k row exactly. As with `T = 24`, FilterDDP has never
+been run at this horizon (Table I stops at `12†`, Table II has no row), so
+per the same hold-off precedent this value is recorded here only. This
+completes the entire three-system, matrix-defined IPOPT reconstruction
+sweep.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.

@@ -172,3 +172,12 @@ FilterDDP has never been run at this horizon for large10k either (Table I
 stops at `12†`, Table II has no row), so per the same hold-off precedent
 as the `T = 144` rows, this value is recorded here only; TPEC is not
 touched.
+
+The `large10kC_1ph`, `T = 48` run on 2026-09-10 used the same build. It
+took 698 iterations (versus 110/99/88/112 at `T = 3/6/12/24`) but converged
+cleanly to `3008246.73849456` with dual infeasibility 6.08e-12,
+constraint violation 3.22e-13; independent validator accepted. Dimensions
+match every other large10k row at 44345/31983/23703 per stage. Same
+hold-off precedent as `T = 24`: no FilterDDP counterpart exists, so TPEC
+is not touched. This is the final case in the sweep matrix across all
+three systems.
