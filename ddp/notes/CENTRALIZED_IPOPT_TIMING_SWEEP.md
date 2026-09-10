@@ -156,3 +156,11 @@ The `large10kC_1ph`, `T = 6` run on 2026-09-10 used the same build. It
 converged in 99 iterations to `2944457.00867062`; all constraints passed
 validation. Dimensions match `T = 3` at 44345/31983/23703 per stage. No
 prior centralized timing was recorded for this row; new entry.
+
+The `large10kC_1ph`, `T = 12` run on 2026-09-10 used the same build. It
+converged in 88 iterations to `2976105.08846598`; all constraints passed
+validation. Dimensions match `T = 3`/`T = 6`. Objective matches the paper's
+already-cited FilterDDP `T = 12` stabilized value, `2,976,105.0928`, to
+~1.5e-9 relative. Adopting this row into the TPEC table requires also
+fixing a now-stale sentence there claiming no independent centralized
+`T = 12` objective is stored for large10k.

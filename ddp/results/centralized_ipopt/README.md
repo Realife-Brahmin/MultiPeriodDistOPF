@@ -166,5 +166,17 @@ scales linearly against `T = 3` at 44345/31983/23703 per stage. No prior
 centralized timing was recorded for this row (`---`), so this is a new
 value rather than a supersession.
 
+`T = 12` converged locally in 88 IPOPT iterations to `2976105.08846598`. The
+independent validator accepted every constraint. The fresh run recorded
+209.086 s inside IPOPT, 209.447 s from JuMP's solver timer, 211.369 s solve
+wall time, and a 2530.766 MiB sampled Julia-process working set. Problem
+size (532140 variables, 383796 equality and 284436 inequality constraints)
+scales linearly at 44345/31983/23703 per stage. This objective matches the
+paper's already-cited FilterDDP `T = 12` stabilized objective,
+`2,976,105.0928`, to about 1.5e-9 relative — the paper's text currently
+says no independent centralized `T = 12` objective is stored for large10k;
+that statement needs updating once this row is adopted into the TPEC
+table.
+
 Run and publication instructions are in
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`.
