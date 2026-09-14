@@ -1,0 +1,60 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -506,6 +506,6 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             update_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - update_alloc_start : 0
+             timing_diagnostic && @printf(
+-                "FILTERDDP_TIMING stage=%d derivative_s=%.9f first_order_s=%.9f second_order_s=%.9f algebra_s=%.9f kkt_assembly_s=%.9f factor_s=%.9f solve_s=%.9f update_s=%.9f K_nnz=%d rhs_cols=%d Vxx_nnz=%d\n",
+-                t, derivative_s, first_order_s, second_order_s, algebra_s, kkt_assembly_s, factor_s, solve_s,
++                "FILTERDDP_TIMING iteration=%d barrier_iteration=%d stage=%d derivative_s=%.9f first_order_s=%.9f second_order_s=%.9f algebra_s=%.9f kkt_assembly_s=%.9f factor_s=%.9f solve_s=%.9f update_s=%.9f K_nnz=%d rhs_cols=%d Vxx_nnz=%d\n",
++                data.k, data.j, t, derivative_s, first_order_s, second_order_s, algebra_s, kkt_assembly_s, factor_s, solve_s,
+                 update_s, sparse_kkt ? nnz(K) : 0, sparse_kkt ? size(rhs, 2) : 0,
+                 count(!iszero, V̂xx))
+diff --git a/src/solve.jl b/src/solve.jl
+--- a/src/solve.jl
++++ b/src/solve.jl
+@@ -17,7 +17,11 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, n
+ 
+     data.μ = options.μ_init
+     ni = (ocp.control_limits.nl + ocp.control_limits.nu) * ocp.N
++    timing_diagnostic = get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1"
+ 
+     while data.k < options.max_iterations
++        backward_start_ns = time_ns()
+         backward_pass!(solver, ocp, solver.nominal, data, options, verbose=options.verbose)
++        backward_s = (time_ns() - backward_start_ns) / 1e9
++        timing_diagnostic && flush(stdout)
+         data.status != 0 && break
+@@ -27,7 +31,17 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, n
+         opt_err_μ = max(data.dual_inf, data.cs_inf_μ, data.primal_inf)
+         opt_err_0 = max(data.dual_inf, data.cs_inf_0, data.primal_inf)
+ 
+-        opt_err_0 < options.optimality_tolerance && break
++        if opt_err_0 < options.optimality_tolerance
++            timing_diagnostic && @printf(
++                "FILTERDDP_ITER_TIMING iteration=%d barrier_iteration=%d backward_s=%.9f forward_s=0.000000000 total_s=%.9f outcome=converged step_size=%.9e backtracks=%d mu=%.9e\n",
++                data.k, data.j, backward_s, backward_s, data.step_size, data.l, data.μ)
++            timing_diagnostic && flush(stdout)
++            break
++        end
+         if opt_err_μ <= options.κ_ϵ * data.μ && ni > 0 && data.μ > options.optimality_tolerance / 10.0
++            timing_diagnostic && @printf(
++                "FILTERDDP_ITER_TIMING iteration=%d barrier_iteration=%d backward_s=%.9f forward_s=0.000000000 total_s=%.9f outcome=barrier_update step_size=%.9e backtracks=%d mu=%.9e\n",
++                data.k, data.j, backward_s, backward_s, data.step_size, data.l, data.μ)
++            timing_diagnostic && flush(stdout)
+             data.μ = max(options.optimality_tolerance / 10.0, min(options.κ_μ * data.μ, data.μ ^ options.θ_μ))
+             reset_filter!(data)
+@@ -37,6 +53,13 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, n
+         
+         options.verbose && iteration_status(data, options)
+ 
++        forward_start_ns = time_ns()
+         forward_pass!(solver, ocp, data, options, verbose=options.verbose)
++        forward_s = (time_ns() - forward_start_ns) / 1e9
++        timing_diagnostic && @printf(
++            "FILTERDDP_ITER_TIMING iteration=%d barrier_iteration=%d backward_s=%.9f forward_s=%.9f total_s=%.9f outcome=%s step_size=%.9e backtracks=%d mu=%.9e\n",
++            data.k, data.j, backward_s, forward_s, backward_s + forward_s,
++            data.status == 0 ? "accepted" : "forward_failed", data.step_size, data.l, data.μ)
++        timing_diagnostic && flush(stdout)
+         data.status != 0 && break
+         

@@ -515,6 +515,21 @@ reduction begins. Treat conditioning as a secondary robustness/cost multiplier;
 the repeated `T*(nx+1)` sensitivity workload remains primary. See
 `ddp/notes/FILTERDDP_CONDITIONING_CONVERGENCE_CORRELATION.md`.
 
+**Per-iteration timing breakdown (2026-09-14):** exact instrumentation records
+every stage operation, complete backward-sweep time, forward/line-search time,
+actual barrier `mu`, and whether a sweep produced an accepted step, barrier
+reduction, or final convergence. IEEE2522 `T=3/T=12` and large10k `T=3`
+preserve their prior optimized traces byte-for-byte. Their displayed
+56/79/115 accepted iterations require 67/90/126 full backward sweeps: ten
+barrier-update sweeps plus one final certification sweep are hidden from each
+iteration count. Factorization plus the `nx+1`-RHS solve consumes
+61.4%/74.3%/77.5% of measured algorithm time; KKT assembly only
+11.1%/5.0%/3.8%, and derivative callbacks 7.5%/8.1%/5.2%. This establishes
+across both horizon and system-size axes that repeated sensitivity linear
+algebra, not equation translation or Hessian evaluation, is the primary cost.
+See `ddp/notes/FILTERDDP_ITERATION_TIMING_BREAKDOWN.md` and
+`ddp/results/network_filterddp/iteration_timing_summary.csv`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

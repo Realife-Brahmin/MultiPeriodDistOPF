@@ -449,3 +449,16 @@ cannot be reconstructed exactly.
 The driver now serializes `x`, `u`, status, and iteration count immediately
 after every subsequent normal `solve!` return, including an iteration-limit
 return. Generated solution files remain local and are ignored by Git.
+
+## Per-iteration operation timing
+
+The optimized implementation now has exact per-sweep timing on IEEE2522
+`T=3/T=12` and large10k `T=3`. The strict runs preserve their prior convergence
+traces byte-for-byte and record 67/90/126 complete backward sweeps for
+56/79/115 accepted iterations. Ten barrier-update sweeps plus one final
+certification sweep explain the hidden work in every case. Factorization and
+the multi-right-hand-side sensitivity solve consume 61.4%, 74.3%, and 77.5%
+of measured algorithm time; derivative evaluation and KKT assembly are much
+smaller. See `iteration_timing_summary.csv`, the three
+`iteration_timing_*_T*.csv` files, and
+`ddp/notes/FILTERDDP_ITERATION_TIMING_BREAKDOWN.md`.
