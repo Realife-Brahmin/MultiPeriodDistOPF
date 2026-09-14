@@ -16,7 +16,7 @@ index 49954d8..5211b73 100644
                  kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
                  kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
                  kkt_solution = Matrix{T}(undef, 0, 0)
-@@ -367,6 +373,76 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+@@ -367,6 +373,83 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                      beta=copy(β), psi=copy(ψ), omega=copy(ω)))
              end
  
@@ -73,6 +73,13 @@ index 49954d8..5211b73 100644
 +                            (isempty(sv_beta) || sv_beta[end] == 0) ? Inf : sv_beta[1]/sv_beta[end],
 +                            μ, reg)
 +                    end
++                elseif get(ENV, "FILTERDDP_PERIODIC_CAPTURE_KKT_ONLY", "0") == "1"
++                    capture_file = joinpath(capture_dir,
++                        @sprintf("iter%04d_stage%03d.jls", data.k, t))
++                    Serialization.serialize(capture_file, (
++                        iteration=data.k, stage=t, nx=nx, nu=nu, nc=nc,
++                        K=copy(K), rhs=copy(@view periodic_rhs_snapshot[:, 1:1]),
++                        barrier_mu=μ, reg=reg))
 +                else
 +                    capture_file = joinpath(capture_dir,
 +                        @sprintf("iter%04d_stage%03d.jls", data.k, t))

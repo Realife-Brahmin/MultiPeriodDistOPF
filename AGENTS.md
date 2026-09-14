@@ -477,6 +477,21 @@ trace and summary are
 `optimized_large10k_t12_tol1e6_large10kC_1ph_T12_trace.csv` and
 `optimized_large10k_t12_tol1e6.csv`.
 
+**KKT numerical-difficulty probe (2026-09-14):** FilterDDP's stage matrix is
+indefinite by design, not as a pathology. At ieee123 `T=3`, the equilibrated
+initial matrix has exactly the expected inertia `(nu,nc,0)=(791,562,0)`. It
+does, however, approach numerical singularity as the barrier shrinks: the
+stage-1 equilibrated spectral condition grows from `5.77e4` at iteration 0 to
+about `5.38e15` at iteration 40, and the LU pivot ratio falls from `2.72e-4`
+to `1.17e-20`. IEEE2522 shows the same pivot collapse (`1.45e-6` to
+`2.51e-22` by iteration 50). Despite this, sampled solve residuals remain at
+most `1.35e-9` and LU fill/cost rises only modestly. Thus late-iteration
+conditioning is a real robustness/iteration-reduction target, but does not by
+itself explain the dominant runtime; repeated many-RHS sensitivity propagation
+remains the main measured cost. See
+`ddp/notes/FILTERDDP_KKT_NUMERICAL_DIFFICULTY.md` and
+`kkt_numerics_over_iterations.csv`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
