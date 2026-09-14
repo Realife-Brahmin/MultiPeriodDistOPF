@@ -503,6 +503,18 @@ collation and factorizer brand are not the main issue: obtaining and
 propagating the full state-sensitivity map is. See
 `ddp/notes/IPOPT_THREAD_AND_LINEAR_WORK_COMPARISON.md`.
 
+**Conditioning/convergence correlation (2026-09-14):** decreasing barrier and
+collapsing LU pivot ratio are nearly perfectly associated (log-log correlation
+0.980 on ieee123 and 0.988 on ieee2522). This does not cause a proportional
+runtime explosion: ieee123 factor/solve timing stays flat, while ieee2522 rises
+about 29%/53% from iteration 0 to 50 despite roughly 16 orders of pivot
+deterioration. Solve residuals remain accurate. It also does not explain filter
+rejection: ieee123/ieee2522 have zero sampled backtracks, and large10k's
+backtracks occur early while its barrier is still 1, disappearing after barrier
+reduction begins. Treat conditioning as a secondary robustness/cost multiplier;
+the repeated `T*(nx+1)` sensitivity workload remains primary. See
+`ddp/notes/FILTERDDP_CONDITIONING_CONVERGENCE_CORRELATION.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
