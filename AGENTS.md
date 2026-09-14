@@ -492,6 +492,17 @@ remains the main measured cost. See
 `ddp/notes/FILTERDDP_KKT_NUMERICAL_DIFFICULTY.md` and
 `kkt_numerics_over_iterations.csv`.
 
+**Nominal IPOPT threading probe (2026-09-14):** the lab PC's Julia Ipopt
+artifact uses `MUMPS_seq_jll`, so setting nominal thread counts 1/2/4/8 does
+not parallelize MUMPS. IEEE2522 `T=12` overall diagnostic time was 17.525 s at
+one thread and 18.396 s at eight; large10k `T=3` was 18.441 s and 19.796 s.
+Objectives and iteration counts were identical. A captured large10k stage
+needs 0.697 s for one UMFPACK factorization and 3.127 s for all 1021 RHS; doing
+1021 one-column blocks takes 3.249 s and copying only about 0.2 s. Therefore
+collation and factorizer brand are not the main issue: obtaining and
+propagating the full state-sensitivity map is. See
+`ddp/notes/IPOPT_THREAD_AND_LINEAR_WORK_COMPARISON.md`.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
