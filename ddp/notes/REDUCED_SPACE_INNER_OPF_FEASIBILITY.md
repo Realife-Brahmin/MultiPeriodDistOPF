@@ -594,10 +594,45 @@ approximation that drops directions is therefore fatal rather than merely
 inaccurate. It also explains `battery_only` -- `2.24*I` against a matrix reaching
 2482 is not an approximation of anything.
 
-The implied fix is an eigenvalue FLOOR: replace the truncated (~0) eigenvalues
-with the smallest captured one, which over-states curvature in the unexplored
-subspace and so shortens steps rather than letting them diverge. Implemented as
-`REDUCED_HESS_FLOOR` (default on); **not yet validated**.
+The implied fix -- an eigenvalue FLOOR replacing the truncated (~0) eigenvalues
+with the smallest captured one -- was implemented (`REDUCED_HESS_FLOOR`) and
+**tested: it helps but does not fix it.** Same rank-50+15 configuration on
+ieee2522 `T = 3`:
+
+| | iterations | dual residual | wall | verdict |
+|---|---|---|---|---|
+| Nystrom, no floor | 200 (cap) | `1.04e-02` | 447 s | stalled |
+| Nystrom, floored | 200 (cap) | `6.34e-04` | 640 s | stalled |
+
+The floor improves the dual residual 16x -- the diagnosis was right -- but does
+not reach the `1e-7` tolerance, and it costs more inner solves (2178 vs 810)
+because the over-stated curvature shortens every step. Confirming the diagnosis
+is not the same as fixing the method.
+
+### Curvature summary: only the exact per-stage Hessian converges
+
+| curvature model | cost | result |
+|---|---|---|
+| exact, recomputed per backward pass | `nB` solves per stage per iteration | converges (409 s, ieee123) |
+| **exact, frozen per stage** | `nB` solves per stage, once | **converges** (25.4 s / 369.6 s) |
+| Nystrom low-rank, floored | ~65 solves per stage, once | **stalls** at cap |
+| Nystrom low-rank, unfloored | ~65 solves per stage, once | **stalls** at cap |
+| battery term only | free | **stalls** at cap |
+
+Every approximation tried fails, and the reason is the `C_B = 1.4e-07` regime
+above: `d2Phi` is the whole curvature model, so there is nothing to fall back on
+when it is approximated. The remaining idea is therefore not a better
+approximation but a cheaper route to the EXACT Hessian: NLP sensitivity, where
+one factorisation of the inner KKT system at the inner solution yields all `nB`
+columns by back-substitution. The repository already contains multi-RHS
+UMFPACK machinery of exactly this shape
+(`ddp/results/network_filterddp/large10k_umfpack_parallel_rhs.csv`).
+
+**Recommendation on large10k: do not run it yet.** With the only convergent
+curvature model, its Hessian alone costs `1020 * 3 * 1.316 s = 4028 s` against
+**2569 s** for the entire full-space solve -- roughly 80 minutes to produce a
+result that loses. It becomes worth the machine time only once the Hessian is
+cheap and exact.
 
 Until a curvature approximation is found that actually converges, the honest
 statement is that the two-stage workflow is exact and convergent only with a
