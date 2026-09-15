@@ -1,6 +1,6 @@
 # Reduced-space MPOPF: is the network eliminable by a single-period inner OPF?
 
-Phase-1 structural diagnostic for the proposed decomposition
+Structural diagnostic for the proposed decomposition
 
 ```
 outer : B^{t-1}, P_B^t, battery dynamics, battery bounds
@@ -8,10 +8,24 @@ inner : given fixed P_B^t, solve every algebraic network quantity
         (P_Subs, Q_Subs, branch P/Q, v, ell, DER reactive, SOCP slacks)
 ```
 
-**Scope: IEEE123 (`ieee123C_1ph`), `T = 24` (hourly), one system only.** IEEE2522
-and large10k are deliberately not run yet; cost estimates are at the end.
-Nothing here modifies the production FilterDDP solver, and no full-horizon
-FilterDDP run was launched.
+**Scope: `ieee123C_1ph` and `ieee2522C_1ph`, `T = 24` (hourly). large10k not yet
+run.** Nothing here modifies the production FilterDDP solver, and no
+full-horizon FilterDDP run was launched.
+
+## Headline
+
+**The elimination is exact on both systems. The claim that the battery-power box
+is fully recourse-feasible is FALSE — it holds on IEEE123 and fails on
+IEEE2522.** IEEE123 alone could not have detected this: that network is so
+lightly constrained that no limit can activate (minimum voltage 1.0055 pu
+against a 0.95 floor, no ampacity constraints in the model at all, reverse
+export structurally impossible). IEEE2522 is genuinely voltage-constrained and
+rejects 8 of the same 111 dispatches, all by undervoltage under charging.
+
+Consequence for the proposal: an outer layer holding **only** battery energy,
+dispatch, dynamics and bounds is **not sufficient**. It would propose dispatches
+the network cannot serve — including one with essentially zero *aggregate*
+battery power.
 
 Code (all opt-in, nothing imported by the production path):
 
@@ -60,7 +74,7 @@ FilterDDP's own captured dispatch and solving the inner OPF reproduces
 FilterDDP's network solution to `5.8e-09` (`P_Subs`), `6.1e-07` (voltages) and
 `8.5e-09` (branch real power).
 
-## Feasibility survey
+## IEEE123 feasibility survey: the box IS fully recourse-feasible here
 
 111 inner solves: 3 demand levels x (13 structured patterns + 24 reproducible
 random dispatches). Demand levels chosen by **net** load (load minus PV):
@@ -103,17 +117,96 @@ worth flagging for the formulation.
 limit. Reactive capability is fully consumed because it reduces losses and hence
 `P_Subs`, which is the only priced quantity.
 
+## IEEE2522: the box is NOT fully recourse-feasible
+
+Same 111-solve protocol, same three demand levels (`t=13/22/6` by net load).
+250 batteries, 1.3301 pu total battery power, mean solve 1.78 s, 47 MiB peak
+per solve, whole survey 197 s. Validation residual against FilterDDP's own
+callback: worst `6.7e-11` over the 103 feasible solves.
+
+**8 of 111 infeasible. Every one diagnosed as undervoltage** by the restoration
+model; the reverse-export slack sits at zero in all 8.
+
+| pattern | low | medium | high |
+|---|---|---|---|
+| `all_max_charge` | INFEASIBLE | INFEASIBLE | INFEASIBLE |
+| `deep_max_charge` | INFEASIBLE | 0.9500 | INFEASIBLE |
+| `shallow_max_charge` | 0.9635 | 0.9500 | INFEASIBLE |
+| `struct_max_voltage_drop` | 0.9674 | 0.9558 | INFEASIBLE |
+| `opposing_deep_chg_shallow_dis` | 0.9608 | 0.9512 | INFEASIBLE |
+| `all_max_discharge` | 1.0301 | 1.0097 | 0.9952 |
+| `zero` | 0.9908 | 0.9718 | 0.9557 |
+| `centralized_optimal` | 0.9908 | 0.9949 | 0.9918 |
+
+(cells are `vmin` in pu where feasible; floor is 0.95)
+
+Three things this establishes:
+
+1. **The boundary is undervoltage under charging**, and it tightens with demand:
+   one pattern fails at low demand, one at medium, five at high. Restoration
+   depths reach `7.4e-2` in `v` units at `t=6` `all_max_charge`, i.e. about
+   0.91 pu voltage against a 0.95 floor.
+2. **Feasibility is not a function of aggregate battery power.**
+   `opposing_deep_chg_shallow_dis` has `sum(P_B) = -0.0170 pu` -- essentially
+   zero net battery power -- and is still infeasible at high demand. The
+   projected set `F_t` is genuinely multidimensional; it cannot be summarised as
+   a tightened bound on total power.
+3. **All 72 random interior draws were feasible** at all three hours. The
+   infeasible region is confined to the charging corners and faces, not
+   scattered through the interior.
+
+`centralized_optimal` stays comfortably inside (0.9908-0.9949), so the
+optimizer never approaches the boundary -- which is exactly why a study that
+only ever looked at optimal trajectories would never have found this.
+
+## A defect in the existing transcription, found in passing
+
+The root power-balance rows in `ieee123c_filterddp.jl` (lines 118 and 130) are
+`ps - sum(P_out)` and `qs - sum(Q_out)`: **no `pb`, `pD`, `pL` or `qD` term**,
+and the per-bus loops that follow cover only `Nm1set`. Any resource sitting *on
+the substation bus* is therefore invisible to the power balance.
+
+- `ieee123C_1ph`, `large10kC_1ph`: nothing at the root bus. Unaffected.
+- `ieee2522C_1ph`: has **both** a battery (bus 1, 0.00426 pu = 4.26 kW) **and**
+  a DER/PV (`S_D_R` = 0.00511 pu = 5.1 kVA) at the root. Both are inert: their
+  variables exist, carry bounds, appear in the energy-slack row and in the
+  `C_B*P_B^2` cost, but have no physical effect.
+
+**This has not corrupted anything published.** The centralized tADMM reference
+shares the convention: the inner OPF reproduces the centralized ieee2522
+solution to `2.3e-08`, and the centralized optimizer leaves that battery at
+exactly `0.000000` at all 24 hours -- which is what an inert variable carrying a
+positive quadratic cost does. Both models agree; the gap is representational.
+At 0.320% of each fleet it is numerically negligible.
+
+It did, however, break two things in this study's own probe code, both now
+fixed: `lambda_bal` returned `NaN` for a battery with no balance row (correct
+value is exactly `0.0` -- an inert battery genuinely has zero derivative), and
+`NaN * 0` then poisoned every directional derivative; and the shallowest-battery
+probe direction selected that inert battery, giving an identically flat probe.
+Probe directions now exclude root-bus batteries and report how many were
+excluded. Follow-up on whether to fix the transcription itself is tracked
+separately -- it is deliberately **not** changed here, since altering it would
+move published ieee2522 numbers.
+
 ## Reverse export
 
 `P_Subs >= 0` with no upper bound, so excessive discharge could in principle be
 infeasible. Scanned all 24 hours at `all_max_discharge`:
 
-**It cannot bind on this system.** Closest approach is `P_Subs = 0.12448 pu`
-(124 kW) at `t=13`. The reason is structural, not numerical: total battery power
-is 0.5066 pu against a minimum net load of 0.6291 pu, so full simultaneous
-discharge still leaves ~0.12 pu to import, before losses (which push `P_Subs`
-further up, never down). Reverse export would require a battery fleet ~24%
-larger, or a lighter minimum net load, than this system has.
+**It cannot bind on either system, for a structural reason.**
+
+| system | total battery | min net load | closest `P_Subs` to zero |
+|---|---|---|---|
+| ieee123C_1ph | 0.5066 pu | 0.6291 pu | 0.12448 pu at `t=13` |
+| ieee2522C_1ph | 1.3301 pu | (higher still) | 0.59872 pu at `t=13` |
+
+Full simultaneous discharge still leaves a positive import in both cases, before
+losses (which push `P_Subs` further up, never down). On IEEE123 reverse export
+would need a battery fleet ~24% larger than the system has. **Not one of the 8
+IEEE2522 infeasibilities is an export violation** -- that slack is zero in all
+of them. On the three study systems the `P_Subs >= 0` floor is simply not the
+active limit; undervoltage is.
 
 ## The reduced stage-value function
 
@@ -153,28 +246,40 @@ gradient.
    OPF?** On this evidence, yes. Given `P_B^t`, the inner solve reproduces the
    centralized and the FilterDDP network solutions to `1e-9`-`1e-7`, and the
    network block carries no inter-period coupling of its own.
-2. **Is the battery-power box empirically fully recourse-feasible?** For IEEE123
-   at `T=24`: yes, 111/111 including all box corners and 24 random interior
-   points. **This is empirical coverage, not certification** -- 24 random draws
-   plus 13 structured directions do not prove feasibility of an uncountable box.
-   A certificate would need either a constructive argument or a global feasibility
-   test, neither of which was attempted.
-3. **If not, which combinations and constraints define its boundary?** No
-   boundary was reached. The nearest thing to a limiting resource is DER reactive
-   capability, which saturates everywhere but never causes infeasibility.
+2. **Is the battery-power box empirically fully recourse-feasible?** **No.** It
+   is on IEEE123 (111/111) and it is **not** on IEEE2522 (103/111; 8 rejected by
+   undervoltage). `F_t` is a strict subset of the box on a genuinely
+   voltage-constrained network. Note also that even the IEEE123 "yes" is
+   empirical coverage, not certification.
+3. **If not, which combinations and constraints define its boundary?**
+   **Undervoltage under charging**, on IEEE2522. The boundary tightens with
+   demand (1 pattern fails at low demand, 1 at medium, 5 at high) and depends on
+   the *spatial* distribution of charging, not only its total: the
+   `opposing_deep_chg_shallow_dis` pattern has `sum(P_B) = -0.017 pu` and still
+   fails at high demand. `F_t` is therefore genuinely multidimensional and cannot
+   be expressed as a tightened bound on aggregate battery power. Reverse export
+   is never the binding limit on any of the three study systems.
 4. **Is `P_Subs` effectively determined by fixed battery dispatch and network
    losses?** Yes. `P_Subs = net_load - sum(P_B) + loss` holds identically, and
    the loss term varies only 0.002-0.049 pu across the entire survey. `P_Subs`
    is a dependent quantity, not an independent outer decision.
-5. **Which genuine network actuators must remain as outer decisions?** None were
-   identified for IEEE123. The only network actuator is DER reactive power, and
-   it is a pure within-period quantity with no inter-period state -- the inner
-   solve sets it optimally. Nothing in the network block couples periods.
+5. **Which genuine network actuators must remain as outer decisions?** None.
+   The only network actuator is DER reactive power, it carries no inter-period
+   state, and the inner solve already drives it to its limits (`|q_norm| = 1`
+   throughout on IEEE123, heavily active on IEEE2522). Promoting it to the outer
+   layer would buy nothing, because there is no unused reactive headroom left for
+   an outer layer to exploit. What must be added to the outer problem is not an
+   actuator but the *feasibility set* `F_t` itself.
 6. **Does `Phi_t` appear smooth and convex enough for a battery-only DDP
-   method?** Yes, locally: smooth, stable under `h` refinement, positive
-   curvature along all 6 directions at all 3 hours. Caveat: convexity is
-   established *along probed directions at probed points*, not globally, and
-   active-set changes are present.
+   method?** Where it is defined, yes, on both systems: first derivatives stable
+   across two decades of step size (worst relative spread `7.3e-06` on IEEE123,
+   `9.3e-05` on IEEE2522) and curvature positive in every usable probe (137/137
+   and 132/132). IEEE2522 shows many more active-set changes (40/132 vs 10/137)
+   without losing that stability. The real caveat is not smoothness but
+   **domain**: on IEEE2522 `Phi_t` is not defined on the whole box, and the
+   centralized optimum *rides* the boundary of its domain at 5 of the 24 hours
+   (the voltage floor is active at t = 1, 2, 17, 18, 19). Any outer method must
+   be able to sit on that boundary, not merely avoid it.
 7. **What must the inner solve return to reproduce FilterDDP's backward
    recursion?** At minimum `Phi_t` and `dPhi_t/dP_B` (the battery-bus balance
    duals, free from the solve). A second-order outer method also needs
@@ -182,11 +287,13 @@ gradient.
    getting it analytically would require a sensitivity solve against the inner
    KKT system -- exactly the cost structure the reduced space is meant to avoid,
    and the open question for phase 2.
-8. **Exact reformulation or approximation?** Exact, *conditional on* the inner
-   problem attaining its optimum and on the projected feasible set containing
-   the battery box. Both hold empirically here. The reduction is a genuine
-   variable elimination, not a relaxation: no constraint was dropped, the
-   eliminated variables are recovered exactly, and the duals match.
+8. **Exact reformulation or approximation?** The *elimination* is exact on both
+   systems -- no constraint is dropped, the eliminated variables are recovered to
+   `1e-9`-`1e-7`, and the gradient is analytic. But the reformulation is only
+   equivalent to the original problem if the outer layer also represents `F_t`.
+   Stated as originally proposed -- outer keeps only battery energy, dispatch,
+   dynamics and bounds -- it is **not** an exact reformulation on IEEE2522,
+   because it admits dispatches the network cannot serve.
 
 ## What this does not establish
 

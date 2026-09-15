@@ -194,9 +194,14 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     # analytic gradient of the inner optimal value with respect to that
     # battery's dispatch, available for free from the solve. Verified against
     # central differences to ~1e-9 relative in probe_reduced_value_function.jl.
+    # A battery sitting on the substation bus has NO balance row: the root row
+    # is `ps - sum(P_out)` and carries no pb term, so such a battery is inert in
+    # this transcription and its true derivative is exactly zero, not missing.
+    # (ieee2522C_1ph has one such battery, bus 1, rated 0.00426 pu. See
+    # ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md.)
     lambda_bal = Float64[]
     for j in g.batteries
-        push!(lambda_bal, haskey(bal_p, j) ? dual(bal_p[j]) : NaN)
+        push!(lambda_bal, haskey(bal_p, j) ? dual(bal_p[j]) : 0.0)
     end
 
     # bound margins over every bounded variable

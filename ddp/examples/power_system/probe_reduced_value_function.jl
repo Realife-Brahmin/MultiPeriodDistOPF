@@ -46,10 +46,22 @@ while !isempty(queue)
     for k in get(data[:children], j, Int[]); depth[k] = depth[j] + 1; push!(queue, k); end
 end
 bdepth = [depth[j] for j in Bset]
-med_depth = median(bdepth)
-deep = findall(>=(med_depth), bdepth); shallow = findall(<(med_depth), bdepth)
-i_shallowest = argmin(bdepth); i_deepest = argmax(bdepth)
-i_median = sortperm(bdepth)[cld(nB, 2)]
+
+# Exclude any battery sitting on the substation bus: the root balance row
+# carries no pb term, so such a battery is inert in this transcription and any
+# probe direction along it is identically flat. ieee2522C_1ph has exactly one.
+nonroot_set = Set(data[:Nm1set])
+effective = findall(b -> Bset[b] in nonroot_set, 1:nB)
+inert = setdiff(1:nB, effective)
+isempty(inert) || @printf("NOTE: %d battery(ies) on the substation bus are inert in this transcription and excluded from probe directions: bus %s\n",
+                          length(inert), [Bset[b] for b in inert])
+
+med_depth = median(bdepth[effective])
+deep    = [b for b in effective if bdepth[b] >= med_depth]
+shallow = [b for b in effective if bdepth[b] <  med_depth]
+i_shallowest = effective[argmin(bdepth[effective])]
+i_deepest    = effective[argmax(bdepth[effective])]
+i_median     = effective[sortperm(bdepth[effective])[cld(length(effective), 2)]]
 
 # unit directions in battery-power space
 function directions()
@@ -58,7 +70,8 @@ function directions()
                     ("single_deepest", i_deepest))
         d = zeros(nB); d[i] = 1.0; push!(ds, (nm, d))
     end
-    d = fill(1.0 / sqrt(nB), nB); push!(ds, ("aggregate_uniform", d))
+    d = zeros(nB); d[effective] .= 1.0 / sqrt(length(effective))
+    push!(ds, ("aggregate_uniform", d))
     d = zeros(nB); d[deep] .= 1.0 / sqrt(length(deep)); push!(ds, ("group_deep", d))
     d = zeros(nB); d[shallow] .= 1.0 / sqrt(length(shallow)); push!(ds, ("group_shallow", d))
     return ds
