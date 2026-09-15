@@ -684,6 +684,37 @@ With `eta != 1` the split becomes mandatory** (the SOC dynamics are not
 expressible in net power), and the quadratic must then be written on
 `P_C^2 + P_D^2` rather than on the net.
 
+## Measured crossover (2026-09-15), and the large10k result verified
+
+All at `T = 3` with BOTH formulations re-run at the same `C_B = 1e-3`, since a
+reference at a different `C_B` is a different problem:
+
+| | full-space | reduced (low-rank) | outcome |
+|---|---|---|---|
+| ieee123 (`nu` 791 -> 102) | 14.4 s / 46 it | 21.7 s / 26 it | 1.5x slower |
+| ieee2522 (`nu` 13358 -> 500) | 107.3 s / 56 it | 107.1 s / 33 it | parity |
+| large10k (`nu` 54665 -> 2040) | 1689.98 s / 100 it | **802.49 s / 13 it** | **2.07x faster** |
+
+**large10k verified, not just timed.** The full-space reference was regenerated
+at `C_B = 1e-3` (filename tagged so the `C_B = 1.4e-07` reference survives) and
+compared directly:
+
+| | value |
+|---|---|
+| full-space objective | `2998133.704778` USD |
+| reduced objective | `2998133.703480` USD |
+| objective gap | `4.330e-10` relative |
+| max `|dP_B|` | `6.0e-11` pu (0.0000 kW) |
+| max `|dB|` | `4.7e-10` pu |
+
+So the speedup is on the same solution, not a cheaper wrong one.
+
+Two trends worth carrying forward. Outer iteration counts move in opposite
+directions with size -- full-space 46 / 56 / 100, reduced 26 / 33 / **13** --
+because the reduced problem's dimension is set by battery count, not network
+size. And the bottleneck has moved: at ieee123 inner solves were ~70% of wall,
+at large10k they are **25%**, so further gains now come from the outer solve.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
