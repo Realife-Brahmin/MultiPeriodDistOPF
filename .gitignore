@@ -9,9 +9,10 @@
 # The curated final-winner subset is tracked under results/ instead.
 envs/*/processedData/
 
-# Upstream clone of the authors' FilterDDP.jl, checked out under ddp/external/
-# for the FilterDDP evaluation. It carries its own .git, so tracking it here
-# would create an embedded repository.
+# Optional unmodified upstream clone of the authors' FilterDDP.jl, needed only to
+# reproduce their own shipped example (Stage 3). The solver this repo actually
+# uses is the committed fork at ddp/DDP4OPF.jl. The clone carries its own .git,
+# so tracking it here would create an embedded repository.
 ddp/external/
 
 # Third-party papers fetched from arXiv for the FilterDDP evaluation, and their

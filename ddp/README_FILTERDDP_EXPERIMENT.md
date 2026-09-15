@@ -73,26 +73,28 @@ ddp/
 │   ├── verify_against_centralized.jl   Stage 8: FilterDDP vs that reference
 │   └── convergence_trace.jl         Stage 9: per-iteration trace + figure data
 ├── papers/                          the two arXiv papers + text extractions
-└── external/FilterDDP.jl/           unmodified upstream clone @ 513a104
+├── DDP4OPF.jl/                      THE SOLVER: our fork of FilterDDP.jl (see its NOTICE.md)
+├── patches/                         development history of that fork -- NOT a build recipe
+└── external/FilterDDP.jl/           optional unmodified upstream clone, only for Stage 3
 
 (the Julia environment lives at envs/ddp2026, outside this tree)
 ```
 
 ## Reproducing
 
+**The solver is committed.** Since 2026-09-15 it lives at `ddp/DDP4OPF.jl`, our
+MIT fork of FilterDDP.jl (provenance and attribution in its `NOTICE.md`). There
+is nothing to clone and nothing to patch.
+
+This replaced a patch recipe that had stopped working: applied to a clean
+upstream `513a104`, three of its nine patches failed, and the result differed
+from the solver that had actually produced the results in four source files.
+The working solver existed only as uncommitted edits in a gitignored clone. The
+fork was verified bit-identical to that clone -- 0 of 2526 full-space and 0 of 459
+reduced-space solution entries differed on ieee123 T=3. `ddp/patches/` is kept as
+the development record, not as a way to rebuild anything.
+
 ```powershell
-# upstream clone (gitignored -- carries its own .git)
-git clone https://github.com/mingu6/FilterDDP.jl ddp/external/FilterDDP.jl
-git -C ddp/external/FilterDDP.jl checkout 513a104
-git -C ddp/external/FilterDDP.jl apply ../../patches/dynamic_network_scaling.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/factor_bound_sensitivities.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/no_copy_update_rule.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/in_place_kkt_rhs.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_stage_rule_buffers.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/reuse_kkt_rhs_workspace.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/type_constraint_residual_vector.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/in_place_B_assembly.patch
-git -C ddp/external/FilterDDP.jl apply ../../patches/active_B_rows.patch
 
 # the two papers (gitignored -- not ours to redistribute)
 mkdir ddp/papers
@@ -105,7 +107,12 @@ curl -L -o ddp/papers/Xu_2026_FilterDDP_Global_Convergence.pdf https://arxiv.org
 # FilterDDP and centralized alike. See envs/ddp2026/README.md.
 julia --startup-file=no --project=envs/ddp2026 -e 'using Pkg; Pkg.instantiate()'
 
-# Stage 3 — the authors' example (writes into their results/ dir; back it up first)
+# Stage 3 — the authors' example, against THEIR unmodified code. This is the one
+# stage that needs the upstream clone, because it reproduces the authors' own
+# shipped numbers; DDP4OPF deliberately does not carry their experiments/.
+# (writes into their results/ dir; back it up first)
+git clone https://github.com/mingu6/FilterDDP.jl ddp/external/FilterDDP.jl
+git -C ddp/external/FilterDDP.jl checkout 513a104
 cd ddp/external/FilterDDP.jl/experiments/filterddp
 julia --startup-file=no --project=. double_integrator.jl
 

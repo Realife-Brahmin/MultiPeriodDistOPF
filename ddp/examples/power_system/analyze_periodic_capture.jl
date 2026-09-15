@@ -1,7 +1,7 @@
 # Summarize shapes and compressibility (singular-value decay, effective rank)
 # across a directory of periodic FilterDDP backward-pass captures produced by
 # the FILTERDDP_PERIODIC_CAPTURE_DIR instrumentation in
-# ddp/external/FilterDDP.jl/src/backward_pass.jl (diagnostic-only, not part of
+# ddp/DDP4OPF.jl/src/backward_pass.jl (diagnostic-only, not part of
 # the paper's optimization stack).
 #
 # The multi-RHS block captured is [-Qu | -B_active/-B ; -c | -cx], i.e. one

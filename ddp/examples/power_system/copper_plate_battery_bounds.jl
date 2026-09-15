@@ -26,7 +26,7 @@
 # The battery is lossless (no round-trip efficiency term); see the header of
 # copper_plate_battery.jl for why a single bidirectional η is not used.
 
-using FilterDDP
+using DDP4OPF
 using LinearAlgebra
 using Printf
 using StaticArrays

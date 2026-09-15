@@ -50,7 +50,7 @@
 #   julia --startup-file=no --project=envs/ddp2026 \
 #     ddp/examples/power_system/reduced_space_filterddp.jl [system] [T] [hessian]
 
-using FilterDDP
+using DDP4OPF
 using LinearAlgebra
 using Random
 using Printf
@@ -307,7 +307,7 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
         end
         H
     end
-    return FilterDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),
+    return DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),
                                typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu), cache
 end
@@ -336,7 +336,7 @@ function build_reduced_ocp(data::Dict; hessian_mode::Symbol=:exact)
     fxx = (x, u, w) -> zeros(nx, nx)
     fux = (x, u, w) -> spzeros(nu, nx)
     fuu = (x, u, w) -> spzeros(nu, nu)
-    dyn = FilterDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),
+    dyn = DDP4OPF.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),
                              typeof(fxx),typeof(fux),typeof(fuu)}(f, fx, fu, fxx, fux, fuu)
 
     # stage equality: x - dt*P_B - Bmin - s_E = 0  (same SOC box as full space)
@@ -353,7 +353,7 @@ function build_reduced_ocp(data::Dict; hessian_mode::Symbol=:exact)
     cxx = (x, u, p) -> zeros(nx, nx)
     cux = (x, u, p) -> spzeros(nu, nx)
     cuu = (x, u, p) -> spzeros(nu, nu)
-    con = FilterDDP.EqualityConstraints{nx,nu,nc,typeof(c),typeof(cx),typeof(cu),
+    con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(c),typeof(cx),typeof(cu),
                                         typeof(cxx),typeof(cux),typeof(cuu)}(
         c, cx, cu, cxx, cux, cuu)
 

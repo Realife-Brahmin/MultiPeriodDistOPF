@@ -9,7 +9,7 @@
 #         ddp/examples/power_system/ieee123c_filterddp.jl \
 #         [system] [T] [dimensions|build|solver|solve]
 
-using FilterDDP
+using DDP4OPF
 using JuMP
 using LinearAlgebra
 using Printf
@@ -42,7 +42,7 @@ function analytic_dynamics(nx, nu, pbidx, dt)
     zxx = (x,u,λ) -> zeros(nx, nx)
     zux = (x,u,λ) -> spzeros(nu, nx)
     zuu = (x,u,λ) -> spzeros(nu, nu)
-    FilterDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
+    DDP4OPF.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
         f, fx, fu, zxx, zux, zuu)
 end
 
@@ -64,7 +64,7 @@ function analytic_objective(nx, nu, psidx, pbidx, price, pbase, dt, C_B)
         end
         H
     end
-    FilterDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
+    DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu)
 end
 
@@ -256,7 +256,7 @@ function build_model(data)
             end
             H
         end
-        con = FilterDDP.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
+        con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
             equations, cx, cu, cxx, cux, cuu)
         push!(stage_cons, con)
     end
