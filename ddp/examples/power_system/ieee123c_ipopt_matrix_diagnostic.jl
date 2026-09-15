@@ -4,6 +4,7 @@
 
 using Ipopt
 using JuMP
+using LinearAlgebra
 using Serialization
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
@@ -23,8 +24,15 @@ dt, pbase = data[:delta_t_h], data[:kVA_B]
 model = Model(Ipopt.Optimizer)
 set_optimizer_attribute(model, "print_level", 5)
 set_optimizer_attribute(model, "print_timing_statistics", "yes")
-set_optimizer_attribute(model, "output_file", joinpath(REPO, "ddp", "results",
+output_file = get(ENV, "IPOPT_DIAGNOSTIC_OUTPUT", joinpath(REPO, "ddp", "results",
     "network_filterddp", "$(system)_ipopt_T$(T)_matrix.log"))
+mkpath(dirname(output_file))
+set_optimizer_attribute(model, "output_file", output_file)
+omp_threads = get(ENV, "OMP_NUM_THREADS", "unset")
+openblas_threads = get(ENV, "OPENBLAS_NUM_THREADS", "unset")
+println("IPOPT_DIAGNOSTIC runtime julia_threads=$(Threads.nthreads()) " *
+    "blas_threads=$(BLAS.get_num_threads()) OMP_NUM_THREADS=$omp_threads " *
+    "OPENBLAS_NUM_THREADS=$openblas_threads")
 
 @variable(model, P_Subs[Tset] >= 0)
 @variable(model, Q_Subs[Tset])

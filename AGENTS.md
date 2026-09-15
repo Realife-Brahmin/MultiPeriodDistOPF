@@ -5,6 +5,16 @@ same ground truth. Session-local memory (`~/.Codex/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
+## Active centralized IPOPT timing sweep
+
+New work belongs on `ddp-understanding-sep02`. Reconstruct the IAS-style
+centralized `C (s)` column with fresh JuMP--IPOPT runs by following
+`ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`. Use
+`scripts/run_centralized_ipopt_case.ps1`, one case at a time. A case is not
+finished until its validated row and raw log are pushed here and the matching
+TPEC table/PDF update is pushed to the TPEC repository. Resume from the first
+incomplete row; never replace missing data with an older Gurobi timing.
+
 ## Two DDP codebases here — both *Differential* Dynamic Programming
 
 **Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never
@@ -451,8 +461,74 @@ at `T=6` (36.95%), with sampled peaks of 3808 and 4216 MiB. IEEE2522
 iteration counts differ from the oldest baseline despite strict convergence;
 do not claim identical trajectories for those rows. See
 `ddp/results/network_filterddp/optimized_timing_comparison.csv` and
-`ddp/notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`. large10k `T=12` remains
-pending because the extrapolated run is still potentially half a day.
+`ddp/notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`. At the time of this sweep,
+large10k `T=12` was deferred; the follow-up below now supersedes that status.
+
+**Optimized large10k `T=12` follow-up (2026-09-08):** the same factor-backed,
+non-blocked optimized configuration was run cold at the practical `1e-6`
+tolerance. It terminated normally at iteration 127 in 18826.264 s (5.23 h),
+versus the original 200-iteration/69951.536-s (19.43-h) run: 73.09% faster, or
+3.72x. Peak sampled working set was 4718.230 MiB (4.61 GiB). Final primal,
+dual, and complementarity residuals were `1.991e-7`, `5.697e-7`, and
+`1.983e-7`; objective `2976105.1459462` is `0.05316` (`1.79e-8` relative)
+above the old settled value. No independent centralized large10k `T=12`
+objective is stored, so do not claim a centralized objective comparison. The
+trace and summary are
+`optimized_large10k_t12_tol1e6_large10kC_1ph_T12_trace.csv` and
+`optimized_large10k_t12_tol1e6.csv`.
+
+**KKT numerical-difficulty probe (2026-09-14):** FilterDDP's stage matrix is
+indefinite by design, not as a pathology. At ieee123 `T=3`, the equilibrated
+initial matrix has exactly the expected inertia `(nu,nc,0)=(791,562,0)`. It
+does, however, approach numerical singularity as the barrier shrinks: the
+stage-1 equilibrated spectral condition grows from `5.77e4` at iteration 0 to
+about `5.38e15` at iteration 40, and the LU pivot ratio falls from `2.72e-4`
+to `1.17e-20`. IEEE2522 shows the same pivot collapse (`1.45e-6` to
+`2.51e-22` by iteration 50). Despite this, sampled solve residuals remain at
+most `1.35e-9` and LU fill/cost rises only modestly. Thus late-iteration
+conditioning is a real robustness/iteration-reduction target, but does not by
+itself explain the dominant runtime; repeated many-RHS sensitivity propagation
+remains the main measured cost. See
+`ddp/notes/FILTERDDP_KKT_NUMERICAL_DIFFICULTY.md` and
+`kkt_numerics_over_iterations.csv`.
+
+**Nominal IPOPT threading probe (2026-09-14):** the lab PC's Julia Ipopt
+artifact uses `MUMPS_seq_jll`, so setting nominal thread counts 1/2/4/8 does
+not parallelize MUMPS. IEEE2522 `T=12` overall diagnostic time was 17.525 s at
+one thread and 18.396 s at eight; large10k `T=3` was 18.441 s and 19.796 s.
+Objectives and iteration counts were identical. A captured large10k stage
+needs 0.697 s for one UMFPACK factorization and 3.127 s for all 1021 RHS; doing
+1021 one-column blocks takes 3.249 s and copying only about 0.2 s. Therefore
+collation and factorizer brand are not the main issue: obtaining and
+propagating the full state-sensitivity map is. See
+`ddp/notes/IPOPT_THREAD_AND_LINEAR_WORK_COMPARISON.md`.
+
+**Conditioning/convergence correlation (2026-09-14):** decreasing barrier and
+collapsing LU pivot ratio are nearly perfectly associated (log-log correlation
+0.980 on ieee123 and 0.988 on ieee2522). This does not cause a proportional
+runtime explosion: ieee123 factor/solve timing stays flat, while ieee2522 rises
+about 29%/53% from iteration 0 to 50 despite roughly 16 orders of pivot
+deterioration. Solve residuals remain accurate. It also does not explain filter
+rejection: ieee123/ieee2522 have zero sampled backtracks, and large10k's
+backtracks occur early while its barrier is still 1, disappearing after barrier
+reduction begins. Treat conditioning as a secondary robustness/cost multiplier;
+the repeated `T*(nx+1)` sensitivity workload remains primary. See
+`ddp/notes/FILTERDDP_CONDITIONING_CONVERGENCE_CORRELATION.md`.
+
+**Per-iteration timing breakdown (2026-09-14):** exact instrumentation records
+every stage operation, complete backward-sweep time, forward/line-search time,
+actual barrier `mu`, and whether a sweep produced an accepted step, barrier
+reduction, or final convergence. IEEE2522 `T=3/T=12` and large10k `T=3`
+preserve their prior optimized traces byte-for-byte. Their displayed
+56/79/115 accepted iterations require 67/90/126 full backward sweeps: ten
+barrier-update sweeps plus one final certification sweep are hidden from each
+iteration count. Factorization plus the `nx+1`-RHS solve consumes
+61.4%/74.3%/77.5% of measured algorithm time; KKT assembly only
+11.1%/5.0%/3.8%, and derivative callbacks 7.5%/8.1%/5.2%. This establishes
+across both horizon and system-size axes that repeated sensitivity linear
+algebra, not equation translation or Hessian evaluation, is the primary cost.
+See `ddp/notes/FILTERDDP_ITERATION_TIMING_BREAKDOWN.md` and
+`ddp/results/network_filterddp/iteration_timing_summary.csv`.
 
 ## Pending task (do not start until asked)
 

@@ -49,6 +49,22 @@ solves for all state-sensitivity columns needed by the value recursion. The
 next algorithmic target remains an exact structured or Schur-complement
 treatment of that many-right-hand-side solve.
 
-large10k `T=12` was deliberately not launched. The original run took 19.43 h;
-even extrapolating the measured `T=6` improvement leaves a potentially
-half-day run, which is not justified solely to fill a timing-table cell.
+## Practical-tolerance large10k T=12 follow-up
+
+A subsequent cold-start run used the same optimized configuration with the
+stopping tolerance set to `1e-6`, matching the practical criterion already
+used to interpret the original 200-iteration result. It terminated normally at
+iteration 127 in `18826.264 s` (5.23 h), compared with `69951.536 s` (19.43 h)
+for the original run: a 73.09% reduction, or 3.72 times faster. Peak sampled
+working set was `4718.230 MiB` (4.61 GiB).
+
+The first and final iteration meeting all three `1e-6` residual criteria is
+iteration 127: primal `1.991e-7`, dual `5.697e-7`, and complementarity
+`1.983e-7`. Its objective is `2976105.1459462`, only `0.05316` (1.79e-8
+relative) above the original run's settled objective `2976105.0927907`. The
+two printed trajectories agree through iteration 123 apart from the expected
+barrier target change; small numerical differences then appear as the new run
+terminates at the requested practical tolerance. No independent centralized
+`T=12` objective is stored for large10k, so validation is against the prior
+FilterDDP run and its independently checked model formulation, not a new
+centralized solve.

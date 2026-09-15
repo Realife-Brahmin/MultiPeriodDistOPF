@@ -1,0 +1,19 @@
+---
+description: Preserve and publish each centralized IPOPT timing result before starting the next case
+alwaysApply: true
+---
+
+# Centralized IPOPT timing sweep
+
+When working on the centralized timing reconstruction, follow
+`ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md` exactly.
+
+- Work on `ddp-understanding-sep02`; do not add results to an older branch.
+- Use `scripts/run_centralized_ipopt_case.ps1`; do not edit `config.jl`.
+- Run one cold-start IPOPT case at a time and preserve failure logs.
+- A row is publishable only after accepted status and `FEASIBLE` validation.
+- Record IPOPT, JuMP, and wall time separately; paper `C (s)` uses JuMP solve
+  time.
+- After every case, update, commit, and push MultiPeriodDistOPF first, then
+  update, compile, verify, commit, and push the TPEC paper.
+- Never launch the next case until both repositories contain the preceding row.

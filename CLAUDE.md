@@ -5,6 +5,16 @@ same ground truth. Session-local memory (`~/.claude/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
+## Active centralized IPOPT timing sweep
+
+New work belongs on `ddp-understanding-sep02`. Reconstruct the IAS-style
+centralized `C (s)` column with fresh JuMP--IPOPT runs by following
+`ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`. Use
+`scripts/run_centralized_ipopt_case.ps1`, one case at a time. A case is not
+finished until its validated row and raw log are pushed here and the matching
+TPEC table/PDF update is pushed to the TPEC repository. Resume from the first
+incomplete row; never replace missing data with an older Gurobi timing.
+
 ## Two DDP codebases here — both *Differential* Dynamic Programming
 
 **Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never
@@ -86,10 +96,11 @@ This is the latest formulation, confirmed by the user 2026-08-07. Older notes
 referring to an active `Psub[2] ≤ 1.35` or `≤ 1.45` are stale; the scripts and
 logs were already correct and the experiment README has been fixed to match.
 
-The paper section `ddp/paper/sections/copper_plate_model.tex` was cut down to
-equations only on 2026-08-07 at the user's request — the modeling rationale it
-used to carry (why no `η`, why the terminal target is a penalty, why `C_B = 0.5`
-here vs. `≈10⁻⁶·min c^t` in the tADMM paper) now survives only in
+**The `ddp/paper/` write-up (including `copper_plate_model.tex`) was deleted
+2026-09-08** — it encoded a superseded formulation. The authoritative
+formulation now lives in the **TPEC repo**, not here. The modeling rationale
+that section used to carry (why no `η`, why the terminal target is a penalty,
+why `C_B = 0.5` here vs. `≈10⁻⁶·min c^t` in the tADMM paper) survives only in
 `ddp/README_FILTERDDP_EXPERIMENT.md`.
 
 **Instance data is now the tADMM profiles** (changed 2026-08-07 at the user's
@@ -127,11 +138,12 @@ Table I stay in p.u.; the figures convert. Reference asset sizes, for sanity che
 `ads10A_1ph` 87 kW load / 4.7 kW batt; `ieee123C_1ph` 1163 kW / 507 kW / 2027 kWh;
 `ieee123_5poi_1ph` 1163 kW / 1318 kW / 5273 kWh. SOC runs 30%-95% with B_0 at 62.5%.
 
-**Figures are generated, never hand-written.** `ddp/paper/figures/make_figure_data.jl`
-reads the verified centralized reference and emits `balance.csv`,
-`schedule_interval.csv`, `schedule_soc.csv`; the `.tex` files read those tables.
-Do not inline coordinates — `schedule_fig.tex` did, and went silently stale when the
-instance data changed.
+**Figures are generated, never hand-written** was the rule for the (now-deleted)
+`ddp/paper/figures/` — `make_figure_data.jl` read the verified centralized
+reference and emitted `balance.csv`, `schedule_interval.csv`, `schedule_soc.csv`
+for the `.tex` files to read. Keep the same discipline (generated data, no
+inlined coordinates) if/when figures are rebuilt against the TPEC repo's
+formulation.
 
 ## What is and isn't verified (as of 2026-08-07)
 
@@ -149,10 +161,17 @@ has not been compared at all** — that is the pending task below.
 
 ## Pending task (do not start until asked)
 
+**Blocked as of 2026-09-08**: this task's shared reference point,
+`ddp/paper/sections/copper_plate_model.tex`, was deleted along with the rest
+of `ddp/paper/` — that formulation is superseded and the authoritative one now
+lives in the **TPEC repo**. Before restarting this task, get the equivalent
+problem statement from the TPEC repo and re-approve it as the shared reference
+point; do not resurrect the deleted file from git history as a substitute.
+
 Write a side-by-side workflow comparison — the user's exact DDP algorithm
 vs. FilterDDP's algorithm — **both grounded in the exact problem statement of
-the "dummy paper"**, `ddp/paper/sections/copper_plate_model.tex` (user has
-approved this problem statement as the shared reference point). Requirements:
+the "dummy paper"** (previously `ddp/paper/sections/copper_plate_model.tex`,
+see blocker above). Requirements:
 
 - Use **the user's own notation throughout**: `P_Subs^t`, `P_B^t`, `B^t`,
   `c^t`, `C_B`, `p_L^t`, `w`, `B_0`, `P_B^{min/max}`, `B^{min/max}` (from

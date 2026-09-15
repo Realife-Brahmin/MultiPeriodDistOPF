@@ -355,6 +355,16 @@ differ from the oldest table and are explicitly flagged. See
 `optimized_timing_comparison.csv` and
 `../../notes/FILTERDDP_OPTIMIZED_TIMING_MATRIX.md`.
 
+The optimized large10kC `T=12` follow-up used the practical `1e-6` stopping
+criterion and terminated at iteration 127 in 18826.264 s (5.23 h), versus the
+original 200-iteration, 69951.536-s (19.43-h) run. This is a 73.09% runtime
+reduction. Peak sampled working set was 4718.230 MiB (4.61 GiB). Final primal,
+dual, and complementarity infeasibilities were `1.991e-7`, `5.697e-7`, and
+`1.983e-7`; the objective `2976105.1459462` differs from the old settled value
+by only `0.05316` (`1.79e-8` relative). No independent centralized large10k
+`T=12` result is stored, so this row is validated against the prior FilterDDP
+trajectory and residuals rather than a centralized objective.
+
 At the realistic `T = 24` horizon, sparse FilterDDP converged in 84 iterations
 and 3068.228 s (51.14 min). Its objective was 8632.275875192672 versus the
 stored centralized reference 8632.277094570018, an absolute gap of
@@ -439,3 +449,16 @@ cannot be reconstructed exactly.
 The driver now serializes `x`, `u`, status, and iteration count immediately
 after every subsequent normal `solve!` return, including an iteration-limit
 return. Generated solution files remain local and are ignored by Git.
+
+## Per-iteration operation timing
+
+The optimized implementation now has exact per-sweep timing on IEEE2522
+`T=3/T=12` and large10k `T=3`. The strict runs preserve their prior convergence
+traces byte-for-byte and record 67/90/126 complete backward sweeps for
+56/79/115 accepted iterations. Ten barrier-update sweeps plus one final
+certification sweep explain the hidden work in every case. Factorization and
+the multi-right-hand-side sensitivity solve consume 61.4%, 74.3%, and 77.5%
+of measured algorithm time; derivative evaluation and KKT assembly are much
+smaller. See `iteration_timing_summary.csv`, the three
+`iteration_timing_*_T*.csv` files, and
+`ddp/notes/FILTERDDP_ITERATION_TIMING_BREAKDOWN.md`.
