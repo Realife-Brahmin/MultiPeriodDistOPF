@@ -32,6 +32,9 @@ mutable struct PersistentInner
     rhs_const::Dict{Int,Float64}     # pD - pL contribution, fixed for this t
     allvars::Vector{VariableRef}
     allcons::Vector{Any}
+    svlo::Union{Nothing,Vector{VariableRef}}
+    svhi::Union{Nothing,Vector{VariableRef}}
+    rho::Float64
     solved_once::Bool
 end
 
@@ -43,7 +46,8 @@ applied by `solve_at!`. Hard voltage limits only -- the soft/penalty path stays
 in `inner_opf`, where the coefficient logic lives.
 """
 function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
-                          max_iter::Int=3000, silent::Bool=true)
+                          max_iter::Int=3000, silent::Bool=true,
+                          voltage_penalty::Float64=0.0)
     g = network_slice(data, t)
     nL = length(g.lines); nN = length(g.buses); nD = length(g.ders)
 
@@ -62,9 +66,26 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
     @variable(model, ell[1:nL] >= 0.0)
     @variable(model, -1.0 <= qnorm[1:nD] <= 1.0)
     @variable(model, soc_slack[1:nL] >= 0.0)
-    for (k, j) in enumerate(g.buses)
-        set_lower_bound(v[k], data[:Vminpu][j]^2)
-        set_upper_bound(v[k], data[:Vmaxpu][j]^2)
+    # Fixed-rho soft voltage limits, baked in at build time. The point is
+    # CONSISTENCY, not leniency: with a single fixed rho the stage value is one
+    # well-defined function of P_B everywhere on the box, which is the minimum a
+    # Newton-type outer method needs. The adaptive scheme varies rho per call and
+    # therefore hands the outer method a different function each evaluation.
+    soft = voltage_penalty > 0.0
+    svlo = nothing; svhi = nothing
+    if soft
+        @variable(model, slo[1:nN] >= 0.0)
+        @variable(model, shi[1:nN] >= 0.0)
+        for (k, j) in enumerate(g.buses)
+            @constraint(model, v[k] >= data[:Vminpu][j]^2 - slo[k])
+            @constraint(model, v[k] <= data[:Vmaxpu][j]^2 + shi[k])
+        end
+        svlo = collect(slo); svhi = collect(shi)
+    else
+        for (k, j) in enumerate(g.buses)
+            set_lower_bound(v[k], data[:Vminpu][j]^2)
+            set_upper_bound(v[k], data[:Vmaxpu][j]^2)
+        end
     end
     set_start_value(ps, 1.0); set_start_value(qs, 0.3)
     for k in 1:nN; set_start_value(v[k], 1.0); end
@@ -105,13 +126,19 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
     @constraint(model, v[g.buspos[g.root]] - 1.05^2 == 0.0)
 
     price = data[:LoadShapeCost][t]
-    @objective(model, Min, price * data[:kVA_B] * data[:delta_t_h] * ps)
+    if soft
+        @objective(model, Min, price * data[:kVA_B] * data[:delta_t_h] * ps +
+                               voltage_penalty * (sum(svlo) + sum(svhi)))
+    else
+        @objective(model, Min, price * data[:kVA_B] * data[:delta_t_h] * ps)
+    end
 
     return PersistentInner(model, data, t, g, ps, collect(v), collect(ell),
                            collect(P), collect(Q), collect(qnorm), bal_p, rhs_const,
                            all_variables(model),
                            Any[c for c in all_constraints(model;
-                               include_variable_in_set_constraints = true)], false)
+                               include_variable_in_set_constraints = true)],
+                           svlo, svhi, voltage_penalty, false)
 end
 
 """
@@ -161,16 +188,19 @@ function solve_at!(pin::PersistentInner, pb::Vector{Float64}; warm::Bool=true)
     if !ok
         return (; feasible = false, status = string(status), iterations = iters,
                 solve_time = st, substation_cost = NaN, lambda_bal = Float64[],
-                ps = NaN, vmin = NaN)
+                ps = NaN, vmin = NaN, total_violation = NaN, penalised = pin.rho > 0)
     end
     lam = Float64[haskey(pin.bal_p, j) ? dual(pin.bal_p[j]) : 0.0 for j in g.batteries]
     psv = value(pin.ps)
     price = pin.data[:LoadShapeCost][pin.t]
+    viol = pin.svlo === nothing ? 0.0 :
+           sum(value.(pin.svlo)) + sum(value.(pin.svhi))
     return (; feasible = true, status = string(status), iterations = iters,
             solve_time = st,
             substation_cost = price * pin.data[:kVA_B] * pin.data[:delta_t_h] * psv,
             lambda_bal = lam, ps = psv,
-            vmin = sqrt(max(minimum(value.(pin.v)), 0.0)))
+            vmin = sqrt(max(minimum(value.(pin.v)), 0.0)),
+            total_violation = viol, penalised = pin.rho > 0)
 end
 
 # ------------------------------------------------------------- self-check ---

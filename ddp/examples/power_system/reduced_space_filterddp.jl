@@ -84,8 +84,10 @@ struct PhiCache
     frozen::Base.RefValue{Union{Nothing,Matrix{Float64}}}
     maxslots::Int
 end
-PhiCache(data, t, stats; maxslots=6, persistent::Bool=true) =
-    PhiCache(data, t, persistent ? persistent_inner(data, t) : nothing, stats, Tuple{Vector{Float64},NamedTuple}[],
+PhiCache(data, t, stats; maxslots=6, persistent::Bool=true, rho::Float64=0.0) =
+    PhiCache(data, t,
+             persistent ? persistent_inner(data, t; voltage_penalty = rho) : nothing,
+             stats, Tuple{Vector{Float64},NamedTuple}[],
              Tuple{Vector{Float64},Matrix{Float64}}[],
              Ref{Union{Nothing,Matrix{Float64}}}(nothing), maxslots)
 
@@ -101,7 +103,25 @@ function phi(cache::PhiCache, pb::Vector{Float64})
     r = cache.pin === nothing ? inner_opf(cache.data, cache.t, pb) :
                                 solve_at!(cache.pin, pb)
     cache.stats.inner_solves += 1
-    out = if r.feasible
+    out = if cache.pin !== nothing && cache.pin.rho > 0.0
+        # FIXED-rho path. The penalised problem is solved at EVERY evaluation,
+        # feasible or not, so the outer method sees one function of P_B with a
+        # single definition. This is the whole point: the adaptive scheme chose
+        # rho per call, which handed the outer method a different objective each
+        # evaluation and is why T >= 12 diverged. Violation is still reported and
+        # counted -- a converged penalised solve with violation > 0 does NOT mean
+        # the dispatch is network-feasible.
+        if !r.feasible
+            (; value = 1e12, grad = zeros(length(pb)), feasible = false,
+               violation = Inf)
+        else
+            r.total_violation > 1e-7 && (cache.stats.infeasible_events += 1)
+            (; value = r.substation_cost + cache.pin.rho * r.total_violation,
+               grad = copy(r.lambda_bal),
+               feasible = r.total_violation <= 1e-7,
+               violation = r.total_violation)
+        end
+    elseif r.feasible
         (; value = r.substation_cost, grad = copy(r.lambda_bal),
            feasible = true, violation = 0.0)
     else
@@ -219,7 +239,8 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
     dt = data[:delta_t_h]; pbase = data[:kVA_B]
     cb = data[:C_B] * pbase^2 * dt
     cache = PhiCache(data, t, stats;
-                     persistent = get(ENV, "REDUCED_PERSISTENT", "1") == "1")
+                     persistent = get(ENV, "REDUCED_PERSISTENT", "1") == "1",
+                     rho = parse(Float64, get(ENV, "REDUCED_FIXED_RHO", "0.0")))
 
     l = function (x, u)
         pb = u[1:nB]
@@ -372,7 +393,10 @@ function main(args = ARGS)
     @printf("inner solves=%d  hessian solves=%d  cache hits=%d  inner time=%.1f s (%.0f%% of wall)\n",
             s.inner_solves, s.hessian_solves, s.cache_hits, s.inner_time,
             100 * s.inner_time / max(wall, 1e-9))
-    @printf("INFEASIBLE trial dispatches (penalty fallback used): %d\n", s.infeasible_events)
+    fixed_rho = parse(Float64, get(ENV, "REDUCED_FIXED_RHO", "0.0"))
+    fixed_rho > 0 && @printf("FIXED rho = %.3g (one penalised objective everywhere)
+", fixed_rho)
+    @printf("INFEASIBLE trial dispatches (violation > 0 at solution): %d\n", s.infeasible_events)
 
     xr, ur = get_trajectory(solver)
     cb = data[:C_B] * pbase^2 * dt
