@@ -59,6 +59,7 @@ solution and every diagnostic the survey records.
 function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
                    include_energy_row::Bool=false,
                    x_entering::Union{Nothing,Vector{Float64}}=nothing,
+                   voltage_penalty::Float64=0.0,
                    tol::Float64=1e-10, max_iter::Int=3000, silent::Bool=true)
     g = network_slice(data, t)
     dt = data[:delta_t_h]
@@ -89,9 +90,30 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     @variable(model, ell[1:nL] >= 0.0)
     @variable(model, -1.0 <= qnorm[1:nD] <= 1.0)
     @variable(model, soc_slack[1:nL] >= 0.0)
-    for (k, j) in enumerate(g.buses)
-        set_lower_bound(v[k], data[:Vminpu][j]^2)
-        set_upper_bound(v[k], data[:Vmaxpu][j]^2)
+
+    # Voltage limits: hard by default. With voltage_penalty > 0 they become
+    # soft, enforced by an L1 exact penalty on nonnegative violation slacks.
+    # "Situational" in the sense that matters: the penalty term is identically
+    # zero at any dispatch the network can actually serve, so wherever the hard
+    # problem is feasible the penalised problem has the same solution (provided
+    # the coefficient exceeds the largest voltage-constraint dual). Where the
+    # hard problem is infeasible, Phi_t is still defined and the penalty
+    # measures how far outside F_t the dispatch sits.
+    soft_voltage = voltage_penalty > 0.0
+    s_vlo = nothing; s_vhi = nothing
+    if soft_voltage
+        @variable(model, svlo[1:nN] >= 0.0)
+        @variable(model, svhi[1:nN] >= 0.0)
+        for (k, j) in enumerate(g.buses)
+            @constraint(model, v[k] >= data[:Vminpu][j]^2 - svlo[k])
+            @constraint(model, v[k] <= data[:Vmaxpu][j]^2 + svhi[k])
+        end
+        s_vlo = svlo; s_vhi = svhi
+    else
+        for (k, j) in enumerate(g.buses)
+            set_lower_bound(v[k], data[:Vminpu][j]^2)
+            set_upper_bound(v[k], data[:Vmaxpu][j]^2)
+        end
     end
     # warm start near flat voltage keeps Ipopt off the v*ell degeneracy
     set_start_value(ps, 1.0)
@@ -159,7 +181,12 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     # l = c^t * S_base * dt * P_Subs + C_B * S_base^2 * dt * sum(P_B^2)
     # with P_B fixed the second term is a constant; it is reported, not optimised.
     battery_term = data[:C_B] * pbase^2 * dt * sum(abs2, pb_fixed)
-    @objective(model, Min, price * pbase * dt * ps)
+    if soft_voltage
+        @objective(model, Min, price * pbase * dt * ps +
+                               voltage_penalty * (sum(s_vlo) + sum(s_vhi)))
+    else
+        @objective(model, Min, price * pbase * dt * ps)
+    end
 
     t_start = time()
     rss_start = Sys.maxrss()
@@ -177,6 +204,8 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
         return (; feasible = false, status = string(status), iterations = iters,
                 solve_time, alloc_mib, rss_delta_mib,
                 objective = NaN, substation_cost = NaN, battery_term,
+                soft_voltage, voltage_penalty, penalty_cost = NaN,
+                total_violation = NaN, max_violation = NaN, n_violated = -1,
                 ps = NaN, qs = NaN, vmin = NaN, vmax = NaN,
                 ell_max = NaN, imag_max = NaN, qnorm_absmax = NaN, qnorm_absmean = NaN,
                 min_bound_margin = NaN, ps_margin = NaN, reverse_export = false,
@@ -225,10 +254,22 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
         energy_ok = all(-1e-8 .<= esv .<= width .+ 1e-8)
     end
 
+    # Split the penalty back out so Phi_t stays comparable across hard and soft
+    # runs: substation_cost is always the priced substation energy alone.
+    vio_lo = soft_voltage ? value.(s_vlo) : zeros(nN)
+    vio_hi = soft_voltage ? value.(s_vhi) : zeros(nN)
+    total_violation = sum(vio_lo) + sum(vio_hi)
+    penalty_cost = voltage_penalty * total_violation
+    substation_cost = price * pbase * dt * psv
+
     return (; feasible = true, status = string(status), iterations = iters,
             solve_time, alloc_mib, rss_delta_mib,
-            objective = objective_value(model) + battery_term,
-            substation_cost = objective_value(model), battery_term,
+            objective = substation_cost + battery_term,
+            substation_cost, battery_term,
+            soft_voltage, voltage_penalty, penalty_cost,
+            total_violation, max_violation = max(maximum(vio_lo; init = 0.0),
+                                                 maximum(vio_hi; init = 0.0)),
+            n_violated = count(>(1e-9), vio_lo) + count(>(1e-9), vio_hi),
             ps = psv, qs = qsv,
             vmin = minimum(vmag), vmax = maximum(vmag),
             ell_max = maximum(ellv), imag_max = sqrt(maximum(ellv)),
