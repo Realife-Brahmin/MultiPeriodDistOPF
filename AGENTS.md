@@ -15,6 +15,47 @@ finished until its validated row and raw log are pushed here and the matching
 TPEC table/PDF update is pushed to the TPEC repository. Resume from the first
 incomplete row; never replace missing data with an older Gurobi timing.
 
+## Reduced-space MPOPF: phase-1 result (IEEE123 only, 2026-09-14)
+
+Established on `ieee123C_1ph`, `T = 24`, and **only** there — ieee2522 and
+large10k are not yet run. Full write-up and caveats in
+[ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md](ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md);
+raw CSVs in `ddp/results/reduced_space/`.
+
+The proposed decomposition — outer keeps `B^{t-1}`, `P_B^t`, battery dynamics
+and battery bounds; an inner single-period IPOPT solves every algebraic network
+quantity given a fixed `P_B^t` — is **well-posed on IEEE123**:
+
+- **The elimination is exact, not a relaxation.** With `P_B^t` fixed to the
+  centralized optimum the inner solve reproduces the centralized network
+  solution to `1e-9` (`P_Subs`) and `1e-7` (voltages); with `P_B` fixed to a
+  captured FilterDDP stage it reproduces FilterDDP's network solution to the
+  same order. Every one of 111 surveyed solves was re-checked through
+  FilterDDP's own constraint callback, worst residual `7.2e-12`.
+- **111/111 dispatches network-feasible**, including every box corner, both
+  depth-group and opposing-group directions, and 24 reproducible random
+  interior points. This is *empirical coverage, not a certificate*.
+- **Reverse export cannot bind on this system**: total battery power 0.5066 pu
+  against minimum net load 0.6291 pu, so full discharge still leaves
+  `P_Subs = 0.1245 pu`. Structural, not numerical.
+- **Voltage limits never bind** (min 1.0055 pu against a 0.95 floor). The
+  IEEE123 transcription carries **no branch ampacity constraint at all** — `ell`
+  has no upper bound in `build_model`. Worth knowing before anyone reports
+  "branch loading" for this model.
+- **`Phi_t(P_B^t)` is smooth and locally convex** along all probed directions:
+  first derivatives stable to `1e-9`–`1e-6` across two decades of step size,
+  second differences positive everywhere (4.7–398.8).
+- **`dPhi_t/dP_B` is analytic** — it is the real-power-balance dual at the
+  battery bus, matching central differences to median `6e-09`. The outer layer
+  never needs to finite-difference the inner solve. Second-order information is
+  *not* yet available analytically; that is the open phase-2 question.
+
+**Modelling decision to preserve:** the inner problem is network-only; the
+energy-slack row is an *outer* battery bound and is excluded. This is load
+bearing — only 5 of the 111 surveyed dispatches satisfy the SOC box, while all
+111 satisfy the network, so folding the two together answers the wrong question.
+The driver exposes `include_energy_row=true` for the combined variant.
+
 ## Two DDP codebases here — both *Differential* Dynamic Programming
 
 **Naming: the user's method is DIFFERENTIAL Dynamic Programming. It is never
