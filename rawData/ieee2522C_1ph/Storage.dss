@@ -1,8 +1,11 @@
-! Battery storage systems: 250 units distributed across system
+! Battery storage systems: 249 units distributed across system
 ! Sizing: rescaled to ~40%% load penetration with 4h discharge (originally oversized 31x)
 ! Co-located with PV systems for high DER penetration scenario
-
-New Storage.BESS1 Phases=1 Bus1=1.1 kV=7.2 kVA=5.108 kWrated=4.256 kWhrated=17.026 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+! BESS1 (Bus1=1.1, the substation bus) removed 2026-09-15: the BFM transcription's
+! root rows are P_Subs - sum(P_out) and Q_Subs - sum(Q_out) and carry no local
+! resource term, so a unit on the substation bus is inert -- it occupied a control
+! variable, a bound and an SOC row while contributing nothing, and its dPhi/dP_B
+! was identically zero. Removal verified bit-exact (Phi and gradients unchanged).
 New Storage.BESS11 Phases=1 Bus1=11.1 kV=7.2 kVA=5.747 kWrated=4.789 kWhrated=19.154 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
 New Storage.BESS21 Phases=1 Bus1=21.1 kV=7.2 kVA=6.385 kWrated=5.32 kWhrated=21.282 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
 New Storage.BESS31 Phases=1 Bus1=31.1 kV=7.2 kVA=7.024 kWrated=5.852 kWhrated=23.411 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External

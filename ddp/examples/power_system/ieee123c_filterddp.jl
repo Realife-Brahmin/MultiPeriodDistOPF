@@ -276,6 +276,13 @@ quiet = length(args) >= 4 && args[4] == "quiet"
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
                     "network_data_$(system)_T$(T).jls")
 data = deserialize(datafile)
+# Opt-in C_B override so the full-space reference can be regenerated at the same
+# battery cost as a reduced-space experiment. Default behaviour is unchanged.
+if haskey(ENV, "REDUCED_CB")
+    data[:C_B] = parse(Float64, ENV["REDUCED_CB"])
+    @printf("C_B OVERRIDE: %.6g
+", data[:C_B])
+end
 idx, nu = control_layout(data)
 nx = length(data[:Bset])
 nc = 2length(data[:Nset]) + 2length(data[:Lset]) + 1 + nx
@@ -322,8 +329,11 @@ status = solve!(solver, x0, ubar)
 # Compare against the existing centralized JuMP/Ipopt result when available.
 xddp, uddp = get_trajectory(solver)
 if get(ENV, "FILTERDDP_SKIP_SOLUTION_WRITE", "0") != "1"
+    # Tag the filename when C_B is overridden: the stored references are at the
+    # exported C_B and must not be silently replaced by a different problem.
+    cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     solutionfile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                            "filterddp_solution_$(system)_T$(T).jls")
+                            "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
     serialize(solutionfile, Dict(
         :system => system,
         :T => T,

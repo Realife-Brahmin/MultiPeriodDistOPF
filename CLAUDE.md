@@ -5,9 +5,15 @@ same ground truth. Session-local memory (`~/.claude/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
-## Active centralized IPOPT timing sweep
+## Working branch
 
-New work belongs on `ddp-understanding-sep02`. Reconstruct the IAS-style
+Current branch as of 2026-09-15 is `ddp-understanding-sep14` (`sep02` was merged
+to `master`). Create a new dated branch for new work rather than reusing it.
+
+## Centralized IPOPT timing sweep (complete)
+
+That sweep is finished across all three systems and all matrix horizons, with
+the TPEC table/caption/PDF updated. The procedure below is kept for reference. Reconstruct the IAS-style
 centralized `C (s)` column with fresh JuMP--IPOPT runs by following
 `ddp/notes/CENTRALIZED_IPOPT_TIMING_SWEEP.md`. Use
 `scripts/run_centralized_ipopt_case.ps1`, one case at a time. A case is not
@@ -119,7 +125,11 @@ request). Demand and price come from `envs/tadmm/root_level/config.jl`, shared v
 - This **closed** the earlier collinearity concern: `r` went from `0.9968` to
   `0.644` at T = 6, thanks to the `−0.8` rad phase offset on the load.
 
-`C_B = 0.05` since 2026-08-07 (was `0.5`). `C_B` sets how far the battery moves:
+`C_B = 0.05` since 2026-08-07 (was `0.5`). **This is the COPPER-PLATE value and
+does not apply to the network cases:** the exported `network_data_*.jls` files
+carry `C_B = 1.4e-07` with `dt = 8` (the tADMM regime). Established 2026-09-15 --
+the difference is not cosmetic, see the reduced-space section below. `C_B` sets
+how far the battery moves:
 `P_B^k = (c^k - 2wΔt·s)/(2C_B)`, so the swing scales as `1/C_B` — the bounds are not
 the knob. At `0.05` the T = 6 battery swings ±570 kW against a 1623-1998 kW load and
 cycles `B` from 2000 down to 1070 kWh: 46% depth of discharge, matching the
@@ -144,6 +154,51 @@ reference and emitted `balance.csv`, `schedule_interval.csv`, `schedule_soc.csv`
 for the `.tex` files to read. Keep the same discipline (generated data, no
 inlined coordinates) if/when figures are rebuilt against the TPEC repo's
 formulation.
+
+## Reduced-space MPOPF (2026-09-14/15): works, and `C_B` governs whether it is usable
+
+Full write-up and raw data:
+[ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md](ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md),
+`ddp/results/reduced_space/`. Nothing in `ddp/external/FilterDDP.jl` was
+modified -- the OCP is assembled from hand-written closures, which is forced
+anyway since an Ipopt solve is not automatically differentiable.
+
+The network can be eliminated exactly: FilterDDP optimises battery quantities
+only while an inner single-period OPF recovers every network variable, with the
+real-power balance duals supplying `dPhi/dP_B` for free. Verified against the
+stored full-space FilterDDP solutions to `6.0e-09` (ieee123) and `1.3e-08`
+(ieee2522) relative objective.
+
+**Measured crossover at `T = 3`, `C_B = 1e-3`, both formulations re-run at the
+same `C_B`:**
+
+| | full-space | reduced (low-rank) | outcome |
+|---|---|---|---|
+| ieee123 (`nu` 791 -> 102) | 14.4 s / 46 it | 21.7 s / 26 it | 1.5x slower |
+| ieee2522 (`nu` 13358 -> 500) | 107.3 s / 56 it | 107.1 s / 33 it | parity |
+| large10k (`nu` 54665 -> 2040) | 1658.2 s / 100 it | 802.5 s / 13 it | **2.07x faster** |
+
+So the decomposition is a LARGE-system technique; it loses below ~2500 buses.
+Outer iteration counts run the other way with size (full-space 46/56/100,
+reduced 26/33/13), and at large10k inner solves are only 25% of wall -- the
+bottleneck has moved to FilterDDP's own outer cost.
+
+**`C_B` decides whether any of this works.** It enters the stage Hessian only as
+a perfectly-conditioned diagonal `2*C_B*S^2*dt`, and on ieee2522 `d2Phi` spans
+`-0.148 .. 21194`. At the exported `C_B = 1.4e-07` that diagonal is **2.24**, so
+there is effectively no damping (cond ~10131) and EVERY cheap curvature model
+fails -- battery-term-only, low-rank Nystrom, and floored Nystrom all stall.
+Only an exact per-stage Hessian converges, and it is too expensive to win. At
+`C_B = 1e-3` the diagonal is 16000 (cond 2.32) and the low-rank Hessian
+converges, which is what produces the table above. Size `C_B` from measurement:
+`2*C_B*S^2*dt > -lambda_min(d2Phi)` is mandatory for positive definiteness, and
+`~ lambda_max/kappa` sets conditioning; `lambda_max` costs ~10 inner solves by
+power iteration since `H*d` is one solve.
+
+Two further results worth not re-deriving: the battery-power box is **not**
+recourse-feasible in general (true on ieee123, false on ieee2522 -- 8 of 111
+dispatches rejected, all undervoltage), and `F_t` is horizon-independent, so `T`
+only selects which load/PV snapshots get tested.
 
 ## What is and isn't verified (as of 2026-08-07)
 
