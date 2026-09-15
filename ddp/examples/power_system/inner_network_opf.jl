@@ -319,6 +319,65 @@ function filterddp_residual(ocp, idx, data::Dict, t::Int, res, pb_fixed::Vector{
 end
 
 """
+    inner_opf_adaptive(data, t, pb_fixed; kwargs...)
+
+Tuning-free wrapper around the soft-voltage inner OPF.
+
+A fixed penalty coefficient is per-system tuning: too small silently buys cost
+reductions with real voltage violations, too large wrecks the conditioning, and
+the threshold between them is roughly `max|voltage dual|`, which moves with the
+price level, the network and the operating point. This raises the coefficient
+until the answer settles, and decides feasibility from *how* it settles.
+
+The termination test uses a measured property rather than a magic ceiling: for a
+genuinely infeasible dispatch the minimum total violation is independent of the
+coefficient (verified across `rho` in 1e2..1e6 on ieee2522, identical to 1e-6
+relative), whereas for a feasible dispatch an under-weighted penalty shows a
+violation that collapses toward zero as `rho` grows. So:
+
+  * violation falls below `violation_tol`  -> network-feasible, penalty exact,
+    and `Phi_t` equals the hard-constrained value;
+  * violation stops moving between rounds  -> genuinely infeasible, and the
+    settled value measures how far outside `F_t` the dispatch sits;
+  * neither within `max_rounds`            -> inconclusive, reported as such
+    rather than guessed.
+
+Returns the last solve plus the full `rho` history.
+"""
+function inner_opf_adaptive(data::Dict, t::Int, pb_fixed::Vector{Float64};
+                            rho0::Float64=1e2, growth::Float64=10.0,
+                            max_rounds::Int=6, violation_tol::Float64=1e-7,
+                            stabilise_rel::Float64=1e-3)
+    rho = rho0
+    history = NamedTuple[]
+    prev_viol = NaN
+    last = nothing
+    for round in 1:max_rounds
+        res = inner_opf(data, t, pb_fixed; voltage_penalty = rho)
+        last = res
+        if !res.feasible      # solver failure, not a feasibility statement
+            return (; verdict = "solver_failure", network_feasible = missing,
+                    rho, rounds = round, res, history)
+        end
+        push!(history, (; rho, violation = res.total_violation,
+                        phi = res.substation_cost, iters = res.iterations))
+        if res.total_violation <= violation_tol
+            return (; verdict = "feasible", network_feasible = true,
+                    rho, rounds = round, res, history)
+        end
+        if !isnan(prev_viol) &&
+           abs(res.total_violation - prev_viol) <= stabilise_rel * max(prev_viol, eps())
+            return (; verdict = "infeasible", network_feasible = false,
+                    rho, rounds = round, res, history)
+        end
+        prev_viol = res.total_violation
+        rho *= growth
+    end
+    return (; verdict = "inconclusive", network_feasible = missing,
+            rho, rounds = max_rounds, res = last, history)
+end
+
+"""
     restore_feasibility(data, t, pb_fixed)
 
 DIAGNOSTIC ONLY -- never a feasibility claim for the original problem. Adds

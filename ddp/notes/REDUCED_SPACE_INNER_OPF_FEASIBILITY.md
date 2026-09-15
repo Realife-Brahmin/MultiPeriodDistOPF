@@ -306,6 +306,55 @@ gradient.
   phase is a structural diagnostic; it says the decomposition is well-posed on
   IEEE123, not that it pays.
 
+## Soft voltage limits: fixed vs adaptive penalty (IEEE2522, T = 3/6/12)
+
+Replacing the hard voltage box with an L1 penalty on violation slacks makes
+`Phi_t` defined on the whole battery-power box instead of only on `F_t`.
+
+**A fixed coefficient does not work, and fails in the dangerous direction.**
+Over 324 paired solves: at `rho = 1e2`, 10 of 90 feasible cases are not
+reproduced -- the penalty buys cost reductions with real voltage violations (up
+to `2.4e-4`, `Phi` off by 0.127 USD) and still reports a converged solve. At
+`rho = 1e4` all 90 are exact. At `rho = 1e6` the answer is physically right but
+numerically degraded by conditioning. The usable window is about two decades
+wide and its lower edge is roughly `max|voltage dual|`, which moves with price
+level, network and operating point -- so a hard-coded `rho` is per-system tuning
+whose failure mode is a *silent* voltage violation.
+
+**Convergence is universal, not cleaner.** Every penalised solve converges (0
+failures vs 18 infeasible under hard limits), but at the exact coefficient each
+solve costs more: mean iterations 35.8 -> 43.4, worst 52 -> 94, mean time
+0.90 -> 1.64 s.
+
+**The adaptive scheme removes the constant and reproduces the hard verdict
+exactly.** `inner_opf_adaptive` raises `rho` until the violation either vanishes
+(feasible) or stops moving between rounds (genuinely infeasible), using the
+measured fact that the minimum violation is `rho`-independent for a truly
+infeasible dispatch. Validated against the hard solve on 108 decisions:
+
+| metric | result |
+|---|---|
+| verdict agreement | **108 / 108** |
+| false "feasible" (silent voltage violation) | **0** |
+| false "infeasible" (legal dispatch discarded) | **0** |
+| inconclusive | **0** |
+| max `Phi` gap where both feasible | `2.0e-07` USD |
+| inner solves per decision | 1 .. 2, mean **1.26** |
+| wall time per decision | 2.13 s (vs 0.90 s for one hard solve) |
+
+The mechanism is visible in the round counts: 80 of 90 feasible cases settle in
+one round at `rho = 1e2`; the 10 that need a second round at `rho = 1e3` are
+*exactly* the 10 that a fixed `rho = 1e2` would have silently relaxed. All 18
+infeasible cases take two rounds and are identified by violation stabilisation,
+with settled violations spanning `0.55` to `64.6` -- a usable measure of how far
+outside `F_t` a dispatch sits.
+
+**What this still does not do.** It is a reliable *interface*, not yet an
+algorithm: it tells an outer layer whether a dispatch is servable and by how
+much it misses, but not what to do about it. And the L1 penalty is nonsmooth
+exactly at the constraint boundary -- where the centralized optimum sits at 5 of
+24 hours -- which cannot be tested until something iterates on top.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
