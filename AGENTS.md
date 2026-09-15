@@ -44,6 +44,25 @@ Consequences for the proposed decomposition:
   no unused headroom. What the outer problem is missing is `F_t` itself, not an
   actuator.
 
+**How to handle `F_t`: adaptive penalty, never a fixed coefficient.** Softening
+the voltage box with an L1 penalty makes `Phi_t` defined everywhere on the box,
+but a hard-coded coefficient is per-system tuning whose failure mode is *silent*
+— at `rho = 1e2` on IEEE2522, 10 of 90 feasible cases came back cheaper with
+real voltage violations and a converged status. The exactness threshold is
+roughly `max|voltage dual|`, which moves with price level, network and operating
+point. `inner_opf_adaptive` removes the constant: it raises `rho` until the
+violation either vanishes (feasible) or **stops moving between rounds**
+(infeasible), using the measured fact that a genuinely infeasible dispatch has a
+`rho`-independent minimum violation. Validated against the hard solve on 108
+decisions (IEEE2522, `T = 3/6/12`): **108/108 verdict agreement, 0 false
+feasible, 0 false infeasible, 0 inconclusive**, max `Phi` gap `2.0e-07` USD,
+mean 1.26 inner solves per decision. Do not reintroduce a fixed `rho`.
+
+Still open: this is an *interface*, not an algorithm — it says whether a
+dispatch is servable and by how much it misses, not what to do about it. And the
+L1 penalty is nonsmooth exactly at the boundary, where the centralized optimum
+sits 5 of 24 hours; that cannot be tested until an outer loop exists.
+
 Established on `ieee123C_1ph` and `ieee2522C_1ph` at `T = 24`. Full write-up in
 [ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md](ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md);
 raw CSVs in `ddp/results/reduced_space/`.
