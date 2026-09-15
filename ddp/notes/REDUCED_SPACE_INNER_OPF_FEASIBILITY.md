@@ -560,9 +560,49 @@ already measured rank-25 reproducing `H` to 2.6%, comfortably inside the ~6%
 that `frozen` is known to tolerate -- so ~35 probes per stage should replace
 `nB`. At ieee2522 that is 28 s of Hessian instead of 201 s.
 
-Until then the honest statement is that the two-stage workflow is exact and
-convergent but still slower than solving the problem whole, at both system sizes
-tested.
+### The low-rank Hessian: right idea, and it does not work as stated
+
+`H*d` for any direction costs one inner solve, so a randomised Nystrom sketch is
+available, and the required rank genuinely does NOT grow with the system:
+
+| | `nB` | effective rank @1% | ideal rank-25 error | Nystrom 25+10 | Nystrom 50+15 |
+|---|---|---|---|---|---|
+| ieee123 | 51 | 36 | 2.6% | 3.58% (35 solves) | -- |
+| ieee2522 | 250 | **59** | 2.3% | 5.36% (35 solves) | 2.74% (65 solves) |
+
+`nB` grows 5x while the effective rank goes 36 -> 59. So the sketch cost is
+roughly size-independent, which is exactly the property the large systems need.
+
+**But it does not converge.** rank-50+15 on ieee2522 `T = 3` (2.74% Hessian
+error) stalls at the 200-iteration cap, status 8, dual residual `1.0e-02` -- the
+same failure as `battery_only`, not a slowdown.
+
+**An inference made earlier in this work was wrong and is withdrawn.** From
+"`frozen` works while the Hessian drifts 1.1-6.3% between points" it was
+concluded that roughly 6% Hessian error is tolerable. That does not follow.
+Smooth drift perturbs the whole matrix consistently; low-rank truncation zeroes
+*specific directions*, and a Newton model with no curvature in a direction takes
+an unbounded step along it.
+
+**Why this system is unusually unforgiving, measured.** The network cases carry
+`C_B = 1.4e-07` and `dt = 8` (NOT the `C_B = 0.05` recorded in `CLAUDE.md`,
+which is the copper-plate value), so the battery term adds just **2.24** to the
+diagonal while `d2Phi` eigenvalues run **1.19 .. 2482**. This is the tADMM
+regime. The consequence is structural: **`d2Phi` is the entire curvature model**,
+there is no well-conditioned term underneath it to regularise the step, and any
+approximation that drops directions is therefore fatal rather than merely
+inaccurate. It also explains `battery_only` -- `2.24*I` against a matrix reaching
+2482 is not an approximation of anything.
+
+The implied fix is an eigenvalue FLOOR: replace the truncated (~0) eigenvalues
+with the smallest captured one, which over-states curvature in the unexplored
+subspace and so shortens steps rather than letting them diverge. Implemented as
+`REDUCED_HESS_FLOOR` (default on); **not yet validated**.
+
+Until a curvature approximation is found that actually converges, the honest
+statement is that the two-stage workflow is exact and convergent only with a
+per-stage exact Hessian, and on that basis it is still slower than solving the
+problem whole at both system sizes tested.
 
 ## Cost estimate for the larger systems
 

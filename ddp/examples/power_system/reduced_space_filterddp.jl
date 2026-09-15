@@ -52,6 +52,7 @@
 
 using FilterDDP
 using LinearAlgebra
+using Random
 using Printf
 using Serialization
 using SparseArrays
@@ -123,6 +124,65 @@ function phi(cache::PhiCache, pb::Vector{Float64})
 end
 
 """
+Randomised low-rank Hessian (Nystrom). `H*d` for ANY direction costs exactly one
+inner solve -- perturb along `d`, difference the gradients -- so a randomised
+range finder applies directly and needs `rank+oversample` solves instead of `nB`.
+
+Nystrom rather than a generic randomised SVD because it needs only the one
+sketch `Y = H*Omega` (no second pass), and it is valid precisely because `Phi` is
+convex: every eigenvalue of the measured Hessian is positive (1.19 .. 2482 on
+ieee123), so `H` is PSD and `H ~ Y (Omega'Y)^-1 Y'` is the right construction.
+
+The step `h` is larger here than for coordinate differences on purpose. A
+unit-norm random direction spreads the perturbation over all `nB` coordinates,
+so each one moves by only `h/sqrt(nB)`; at `h = 1e-6` on large10k that is `3e-8`
+per coordinate, below the level at which the duals are trustworthy. Since only
+~6% accuracy is needed (measured: `frozen` tolerates it), trading truncation
+error for noise is the right direction.
+"""
+function phi_hessian_lowrank(cache::PhiCache, pb::Vector{Float64};
+                             rank::Int=25, oversample::Int=10,
+                             h::Float64=1e-4, seed::Int=20260914,
+                             floor_eigs::Bool=true)
+    n = length(pb)
+    l = min(rank + oversample, n)
+    rng = MersenneTwister(seed + cache.t)
+    g0 = phi(cache, pb).grad
+    Om = zeros(n, l); Y = zeros(n, l)
+    t0 = time()
+    for i in 1:l
+        d = randn(rng, n); d ./= norm(d)
+        Om[:, i] = d
+        pert = pb .+ h .* d
+        r = cache.pin === nothing ? inner_opf(cache.data, cache.t, pert) :
+                                    solve_at!(cache.pin, pert)
+        cache.stats.hessian_solves += 1
+        Y[:, i] = r.feasible ? (r.lambda_bal .- g0) ./ h : zeros(n)
+    end
+    cache.stats.inner_time += time() - t0
+    C = Symmetric(0.5 .* (Om' * Y .+ (Om' * Y)'))
+    H = Y * (pinv(Matrix(C), 1e-8) * Y')
+    H = 0.5 .* (H .+ H')
+
+    # Eigenvalue FLOOR. Without it the truncated directions are handed curvature
+    # ~0, and since the battery term contributes only 2.24 against d2Phi
+    # eigenvalues reaching 2482 (C_B = 1.4e-07 in the network cases, the tADMM
+    # regime -- d2Phi IS the curvature model here), there is nothing to bound the
+    # Newton step in exactly the directions the sketch never measured. That is
+    # what makes plain Nystrom stall rather than merely slow down. Flooring at
+    # the smallest CAPTURED eigenvalue is deliberately conservative: it
+    # over-states curvature in the unexplored subspace, which shortens steps
+    # instead of letting them run away.
+    if floor_eigs
+        E = eigen(Symmetric(H))
+        pos = filter(>(0.0), E.values)
+        sigma = isempty(pos) ? 1.0 : minimum(pos)
+        return E.vectors * Diagonal(max.(E.values, sigma)) * E.vectors'
+    end
+    return H
+end
+
+"""
 `d2Phi/dP_B2` by forward differences on the analytic gradient: nB extra solves,
 then symmetrised. Forward (not central) differences because the gradient is
 already exact to solver tolerance, so the error is dominated by the step, and
@@ -182,6 +242,15 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
         elseif hessian_mode === :frozen
             if cache.frozen[] === nothing
                 cache.frozen[] = phi_hessian(cache, pb)
+            end
+            H[1:nB, 1:nB] .= cache.frozen[]
+        elseif hessian_mode === :lowrank
+            if cache.frozen[] === nothing
+                cache.frozen[] = phi_hessian_lowrank(cache, pb;
+                    rank = parse(Int, get(ENV, "REDUCED_HESS_RANK", "25")),
+                    oversample = parse(Int, get(ENV, "REDUCED_HESS_OVERSAMPLE", "10")),
+                    h = parse(Float64, get(ENV, "REDUCED_HESS_STEP", "1e-4")),
+                    floor_eigs = get(ENV, "REDUCED_HESS_FLOOR", "1") == "1")
             end
             H[1:nB, 1:nB] .= cache.frozen[]
         end
