@@ -1,5 +1,43 @@
 # Reduced-space MPOPF: is the network eliminable by a single-period inner OPF?
 
+> ## RETRACTION (2026-09-15): every `T = 3` result below is on a DEGENERATE instance
+>
+> The profile generator sampled `sin` at `range(0, 2pi, length=T)`. At `T = 3`
+> that lands on `0, pi, 2pi` -- all zero -- so **the price is exactly constant**
+> and the instance carries no arbitrage signal at all. Measured battery
+> utilisation confirms the consequence:
+>
+> | instance | price spread | max `|P_B|` / rating |
+> |---|---|---|
+> | large10k `T = 3` | **0.0%** | **0.054 - 0.057** |
+> | ieee2522 `T = 3` | **0.0%** | 0.16 - 0.26 |
+> | ieee123 `T = 3` | **0.0%** | 0.16 - 0.33 |
+> | ieee2522 `T = 12` | 147.3% | 0.009 - **0.971** |
+>
+> So the headline **2.07x large10k speedup was measured with the batteries
+> essentially idle** (5% of rating). It is a valid timing on that instance and
+> nothing more; it is NOT evidence that the decomposition works on a real
+> scheduling problem. The same applies to every other `T = 3` claim here: the
+> 13-iteration convergence, the frozen Hessian holding up, the zero infeasible
+> dispatches, and the "crossover" table. With `P_B` pinned near zero the active
+> set never moves, which is exactly the easy case.
+>
+> This also reframes the `T >= 12` failures. They were read as "the method breaks
+> at longer horizons"; the horizon is confounded with **whether the battery
+> actually does anything**. `T = 12` is the first instance with a real price
+> signal, so it is the first genuine test -- and the method fails it.
+>
+> A second defect in the same expression: `range(0, 2pi, length=T)` includes both
+> endpoints, so samples 1 and `T` share a phase at EVERY `T`, wasting a sample.
+>
+> Fixed by `PROFILE_PERIODIC=1` (phase `2*pi*(k-1)/T`, price spread 118% at
+> `T = 3`), which writes to its own `_periodic` filename so no existing instance
+> is silently replaced. The exporter now also prints price/load/PV spreads on
+> every run and warns loudly below 5%, and records `:profile_periodic` and
+> `:price_spread` inside the payload so any result can be traced to the instance
+> it came from.
+
+
 Structural diagnostic for the proposed decomposition
 
 ```
