@@ -715,6 +715,61 @@ because the reduced problem's dimension is set by battery count, not network
 size. And the bottleneck has moved: at ieee123 inner solves were ~70% of wall,
 at large10k they are **25%**, so further gains now come from the outer solve.
 
+## The method does not survive longer horizons (2026-09-15)
+
+Sweep over `T` and `C_B` on ieee2522, both formulations at matching `C_B`
+(`ddp/results/reduced_space/overnight/sweep.csv`, raw logs beside it):
+
+| `T` | `C_B` | full-space | reduced |
+|---|---|---|---|
+| 12 | 1e-5 | 545 s, 78 it, **status 0** | 3529 s, 200 it, **status 8** |
+| 12 | 1e-4 | 542 s, 78 it, **status 0** | 3857 s, 200 it, **status 8**, NaN objective |
+| 12 | 1e-3 | 544 s, 78 it, **status 0** | 2692 s, 200 it, **status 8** |
+| 24 | 1e-5 | 1112 s, 84 it, **status 0** | 3989 s, 200 it, **status 8**, NaN objective |
+| 24 | 1e-4 | 1107 s, 83 it, **status 0** | (operator-killed, no result) |
+
+Dual residuals `7.3e+02`, `1.0e+01`, `1.6e+04` -- diverging, not nearly
+converged. Full space is untouched by this and converges in 78-84 iterations
+throughout.
+
+**Cause: the feasibility machinery finally engages, and it is not sound.**
+
+```
+INFEASIBLE trial dispatches (penalty fallback used):   80   (T=12)
+                                                      108   (T=12)
+                                                      157   (T=24)
+```
+
+At `T = 3` this count was **zero on every system**, which is why the earlier
+runs looked healthy. This note previously recorded the adaptive penalty and the
+feasibility cuts as "insurance rather than load-bearing machinery ... not
+validated in situ". At `T >= 12` they become load-bearing and the insurance
+fails.
+
+The defect is not accuracy, it is **consistency**: where a dispatch is servable
+the outer method is handed `Phi`, and where it is not it is handed
+`Phi + rho*violation` with **`rho` chosen per call by the adaptive scheme**. The
+objective therefore changes definition between evaluations, and no Newton-type
+method can converge against that. The enormous dual residuals are the signature.
+
+**`C_B` is not the culprit here.** All three values fail alike, which confirms
+the `Delta t`-invariance algebra rather than contradicting it. The error was
+inferring that `T`-invariant *conditioning* implied `T`-invariant *behaviour*: a
+separate mechanism scales with horizon, since longer horizons force deeper
+battery cycling and push trial dispatches outside `F_t`.
+
+**Consequences for the two candidate fixes.** A single FIXED `rho` at least
+makes `Phi_rho` one well-defined function everywhere, which is the minimum bar
+for a Newton method; it does not remove the L1 kink at the boundary. The
+feasibility cuts already prototyped (0/168 validity violations, 43%
+transferable) are the principled route precisely because they keep the inner
+problem hard-constrained and exclude bad dispatches with linear constraints,
+leaving the objective a single smooth `Phi` on `F_t`. Neither is yet wired into
+the outer loop.
+
+Until one of them is, the `T = 3` results below stand and nothing above `T = 3`
+does.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
