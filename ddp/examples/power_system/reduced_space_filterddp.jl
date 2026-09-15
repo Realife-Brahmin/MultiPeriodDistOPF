@@ -385,8 +385,11 @@ function main(args = ARGS)
     @printf("reduced-space objective: %.10f USD\n", obj_red)
 
     # ---- compare against the full-space FilterDDP solution, when present ----
+    # Match the full-space reference to the C_B actually solved: a reference at a
+    # different C_B is a different problem and must not be compared against.
+    cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     reffile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                       "filterddp_solution_$(system)_T$(T).jls")
+                       "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
     if isfile(reffile)
         ref = deserialize(reffile)
         idx, _ = control_layout(data)
