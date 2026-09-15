@@ -459,7 +459,7 @@ FilterDDP optimum to `6.0e-09`). It is not *faster*. Measured, `T = 3`:
 | system | full-space `nu` | full-space wall | iters | per-iter | reduced `nu` | reduced wall |
 |---|---|---|---|---|---|---|
 | ieee123C_1ph | 791 | **18.4 s** | 48 | 0.38 s | 102 | **42.6 s** (2.3x slower) |
-| ieee2522C_1ph | 13358 | **99.7 s** | 67 | 1.49 s | 500 | projected ~1500 s |
+| ieee2522C_1ph | 13358 | **99.7 s** | 67 | 1.49 s | 500 | **926.8 s** (9.3x slower) |
 | large10kC_1ph | 54665 | **2569 s** | 126 | 20.4 s | 2040 | projected ~7 h |
 
 **Correcting an overstatement made earlier in this work.** The claim that the
@@ -485,6 +485,19 @@ therefore much smaller than quoted.
    inner Ipopt solve (~35 interior-point iterations) already costs more than one
    full-space FilterDDP iteration.
 
+The ieee2522 run confirms the projection and is otherwise a success on
+correctness: converged in **46** outer iterations (fewer than full-space), gap
+`1.29e-08` relative, max `|dP_B|` `0.0279` kW, with **95%** of the 926.8 s spent
+inside Ipopt (750 Hessian solves + 187 value/gradient at ~0.935 s each).
+
+**Zero infeasible trial dispatches, on both systems.** This is worth recording
+because it was not the expectation: ieee2522 rejects 8 of 111 *arbitrary*
+dispatches, yet FilterDDP never once proposed a dispatch outside `F_t` on the
+path from `P_B = 0` to the optimum. The adaptive-penalty fallback and the
+feasibility cuts are therefore insurance rather than load-bearing machinery on
+this trajectory -- they have not yet been exercised by a real run, and should
+not be described as validated in situ.
+
 **This does not invalidate the decomposition; it identifies what has to change.**
 Two standard fixes, both untried here:
 
@@ -495,6 +508,15 @@ Two standard fixes, both untried here:
   inner KKT system at the inner solution yields all `nB` Hessian columns by
   back-substitution, turning `O(nB)` *solves* into one solve plus `nB` cheap
   back-solves. This is the standard sIPOPT construction.
+
+The arithmetic says both are needed and neither suffices alone. At ieee2522,
+with a free Hessian the method still costs 175 s of value/gradient solves plus
+51 s overhead against 99.7 s full-space -- 2.3x slower. With a free Hessian
+*and* a 10x warm-start gain it lands near 68 s, which finally beats full-space.
+Warm-starting attacks both at once, and should help the Hessian most of all:
+those perturbed solves differ from the base solve by only `h = 1e-6`, so a warm
+start ought to converge them in one or two interior-point iterations instead of
+roughly 35.
 
 Until at least the first is done, the honest statement is that the two-stage
 workflow is exact and convergent but slower than solving the problem whole, at
