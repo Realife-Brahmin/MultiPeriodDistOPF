@@ -27,6 +27,22 @@
 > actually does anything**. `T = 12` is the first instance with a real price
 > signal, so it is the first genuine test -- and the method fails it.
 >
+> ### Substation-node DERs removed (`DROP_ROOT_DERS=1`)
+>
+> Only `ieee2522C_1ph` has them: 1 battery (`P_B_R = 0.00426` pu) and 1 DER
+> (`S_D_R = 0.00511` pu) at bus 1. They are **inert** in this transcription --
+> the root rows are `P_Subs - sum(P_out)` and `Q_Subs - sum(Q_out)`, carrying no
+> `pb`, `pD` or `qD` term -- so such a resource occupies a control variable, a
+> bound and an SOC row while contributing nothing, and its `dPhi/dP_B` is
+> identically zero. That is a silent trap, not a modelling choice.
+>
+> Removal verified to be a bit-exact no-op: over three random dispatches, `Phi`
+> matched to `0.000e+00`, `vmin` matched, gradients over the shared batteries
+> matched to `0.000e+00`, and the root entry's gradient was exactly zero.
+> `nB` and `nD` go 250 -> 249, so stored solution vectors from the 250-battery
+> instances are NOT shape-compatible. Written to a `_noroot` filename;
+> composable with `_periodic`.
+>
 > A second defect in the same expression: `range(0, 2pi, length=T)` includes both
 > endpoints, so samples 1 and `T` share a phase at EVERY `T`, wasting a sample.
 >

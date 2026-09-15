@@ -57,6 +57,26 @@ data = parse_system_from_dss(system, T;
     delta_t_h=dt,
     kV_B=network_kv_base)
 
+# Drop substation-node DERs and batteries. These are already INERT in this
+# transcription: the root balance rows are `P_Subs - sum(P_out)` and
+# `Q_Subs - sum(Q_out)`, carrying no pb, pD or qD term, so a resource sitting on
+# the substation bus contributes nothing to the network while still occupying a
+# control variable, a bound, and an SOC row. Its dPhi/dP_B is exactly zero,
+# which shows up downstream as a zero gradient entry and a zero Hessian
+# row/column -- a silent trap rather than a modelling choice. Removing them is
+# physically a no-op and only affects ieee2522C_1ph (1 battery, 1 DER at bus 1).
+drop_root = get(ENV, "DROP_ROOT_DERS", "0") == "1"
+if drop_root
+    root = data[:substationBus]
+    nb0, nd0 = length(data[:Bset]), length(data[:Dset])
+    data[:Bset] = [j for j in data[:Bset] if j != root]
+    data[:Dset] = [j for j in data[:Dset] if j != root]
+    @printf("DROP_ROOT_DERS: batteries %d -> %d, DERs %d -> %d (root bus %d)
+",
+            nb0, length(data[:Bset]), nd0, length(data[:Dset]), root)
+end
+data[:drop_root_ders] = drop_root
+
 outdir = joinpath(REPO, "ddp", "results", "network_filterddp")
 mkpath(outdir)
 # Degeneracy guard. A benchmark with no price spread cannot exercise a battery
@@ -84,7 +104,7 @@ end
 # Periodic instances get their OWN filename. Overwriting the default would make
 # every earlier result silently incomparable -- the same class of mistake as the
 # flat T=3 price itself, which is exactly what must not happen again.
-suffix = periodic ? "_periodic" : ""
+suffix = (periodic ? "_periodic" : "") * (drop_root ? "_noroot" : "")
 outfile = joinpath(outdir, "network_data_$(system)_T$(T)$(suffix).jls")
 data[:profile_periodic] = periodic
 data[:price_spread] = (maximum(cost_shape) - minimum(cost_shape)) / max(abs(minimum(cost_shape)), 1e-12)
