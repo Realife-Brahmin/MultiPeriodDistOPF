@@ -60,6 +60,7 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
                    include_energy_row::Bool=false,
                    x_entering::Union{Nothing,Vector{Float64}}=nothing,
                    voltage_penalty::Float64=0.0,
+                   pure_feasibility::Bool=false,
                    tol::Float64=1e-10, max_iter::Int=3000, silent::Bool=true)
     g = network_slice(data, t)
     dt = data[:delta_t_h]
@@ -99,6 +100,14 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     # the coefficient exceeds the largest voltage-constraint dual). Where the
     # hard problem is infeasible, Phi_t is still defined and the penalty
     # measures how far outside F_t the dispatch sits.
+    # `pure_feasibility` drops the cost term and minimises violation alone. That
+    # changes what the balance duals mean, and it is the whole point: with the
+    # priced substation term present the dual is d(cost + rho*violation)/d(P_B),
+    # a mixture with no clean interpretation once the dispatch is outside F_t.
+    # Minimising violation alone makes the same dual exactly d(violation)/d(P_B)
+    # -- the gradient a Benders feasibility cut needs.
+    pure_feasibility && voltage_penalty <= 0.0 &&
+        error("pure_feasibility=true requires voltage_penalty > 0 (it needs the slacks)")
     soft_voltage = voltage_penalty > 0.0
     s_vlo = nothing; s_vhi = nothing
     if soft_voltage
@@ -181,7 +190,9 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     # l = c^t * S_base * dt * P_Subs + C_B * S_base^2 * dt * sum(P_B^2)
     # with P_B fixed the second term is a constant; it is reported, not optimised.
     battery_term = data[:C_B] * pbase^2 * dt * sum(abs2, pb_fixed)
-    if soft_voltage
+    if pure_feasibility
+        @objective(model, Min, sum(s_vlo) + sum(s_vhi))
+    elseif soft_voltage
         @objective(model, Min, price * pbase * dt * ps +
                                voltage_penalty * (sum(s_vlo) + sum(s_vhi)))
     else
@@ -204,7 +215,7 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
         return (; feasible = false, status = string(status), iterations = iters,
                 solve_time, alloc_mib, rss_delta_mib,
                 objective = NaN, substation_cost = NaN, battery_term,
-                soft_voltage, voltage_penalty, penalty_cost = NaN,
+                soft_voltage, pure_feasibility, voltage_penalty, penalty_cost = NaN,
                 total_violation = NaN, max_violation = NaN, n_violated = -1,
                 ps = NaN, qs = NaN, vmin = NaN, vmax = NaN,
                 ell_max = NaN, imag_max = NaN, qnorm_absmax = NaN, qnorm_absmean = NaN,
@@ -266,7 +277,7 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
             solve_time, alloc_mib, rss_delta_mib,
             objective = substation_cost + battery_term,
             substation_cost, battery_term,
-            soft_voltage, voltage_penalty, penalty_cost,
+            soft_voltage, pure_feasibility, voltage_penalty, penalty_cost,
             total_violation, max_violation = max(maximum(vio_lo; init = 0.0),
                                                  maximum(vio_hi; init = 0.0)),
             n_violated = count(>(1e-9), vio_lo) + count(>(1e-9), vio_hi),

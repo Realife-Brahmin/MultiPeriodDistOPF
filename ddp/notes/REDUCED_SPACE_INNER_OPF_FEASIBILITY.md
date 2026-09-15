@@ -355,6 +355,58 @@ much it misses, but not what to do about it. And the L1 penalty is nonsmooth
 exactly at the constraint boundary -- where the centralized optimum sits at 5 of
 24 hours -- which cannot be tested until something iterates on top.
 
+## Feasibility cuts: representing `F_t` without writing it down
+
+The adaptive penalty is a diagnostic -- it says whether a dispatch is servable
+and by how much it misses, not which way to move. A Benders feasibility cut
+supplies the direction. At an infeasible `P_B^0`, solve the *pure feasibility*
+inner problem (`pure_feasibility=true`: minimise violation alone, no priced
+substation term, so the balance duals mean `dv/dP_B` rather than a
+cost-plus-violation mixture) and linearise:
+
+```
+v0 + g' (P_B - P_B^0) <= 0,    g = d v / d P_B = real-power balance duals
+```
+
+The inner problem is the BFM SOCP, so `v` is convex in `P_B` and its
+linearisation is a global under-estimator: the cut cannot remove a dispatch the
+network can serve. That is the claim, and it is what makes the route worth
+having -- the cut is built from duals alone, with no tuned constant and no
+per-system bus list.
+
+Tested on IEEE2522 at `T = 3/6/12`: 18 cuts generated at the 18 hard-infeasible
+dispatches, each evaluated against all 12 patterns at its own `(T, t)` -- 216
+evaluations.
+
+| check | result |
+|---|---|
+| **validity** -- cuts excluding a hard-feasible dispatch | **0 of 168** |
+| margin at the closest feasible dispatch | `-4.54` (median `-71.7`) |
+| self-exclusion -- cut removes the point that generated it | 18 / 18 |
+| **strength** -- other infeasible dispatches also removed | 13 of 30 (**43%**) |
+| gradient vs central differences | max rel err `6.9e-07` |
+| cut cost | 1.82 s, one extra inner solve |
+
+Validity holds with room, not marginally: no feasible dispatch comes within
+`4.5` of being cut off. Strength is the meaningful number -- **each cut already
+excludes 43% of the other infeasible dispatches it never saw**, so the cuts are
+learning the shape of `F_t` rather than memorising points one at a time.
+
+`g` has 249 nonzero entries out of 250 batteries. The single zero is the
+root-bus battery, which is the known transcription defect recorded below, not a
+property of the cut.
+
+**This also sidesteps the L1 kink.** The nonsmoothness concern applies to a
+penalty sitting in the objective at the boundary where the optimum lives. Cuts
+are *linear constraints* in the outer problem, kept out of the objective, so an
+outer method sits on them the way it sits on any active linear constraint. If
+the outer loop is built on cuts rather than on the penalty, the kink question
+does not arise.
+
+Still not established: nothing here iterates. Cut *accumulation* -- whether a
+growing bundle converges, and how many cuts a full horizon needs -- requires the
+outer loop, which does not exist yet.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
