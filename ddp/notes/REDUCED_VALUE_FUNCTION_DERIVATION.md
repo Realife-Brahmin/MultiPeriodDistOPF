@@ -154,13 +154,74 @@ implementation therefore computes `-mu sum log(slack)` over every finite
 variable bound explicitly and sets `bound_relax_factor = 0` so that accounting
 matches Ipopt's own.
 
+## 6a. The barrier remedy was tested and did NOT work
+
+Corrected run (ieee2522, `T = 12`, `mu = 1e-4`, fixed `rho`): status 8, `du_inf`
+oscillating between 15 and 154, `alpha` down to `1e-16`, 17-52 line-search
+backtracks per iteration. It never reached the `du_inf = 9.2e-03` that the
+UNSMOOTHED run achieved at iteration 14. **Section 6 is not supported by this
+test.**
+
+Getting there took two self-inflicted detours worth recording, because both
+produced convincing-looking failures that meant nothing:
+
+* `tol` must scale with `mu_target`. Ipopt's NLP error includes complementarity,
+  pinned at `~mu`, so `tol = 1e-10` at `mu = 1e-4` is unsatisfiable; it surfaces
+  as `SLOW_PROGRESS`, and 5 of 12 stages returned the `1e12` failure sentinel.
+  The giveaway was the failure count being non-monotonic in `mu` (9/12 at 1e-4,
+  10/12 at 1e-5, 0/12 at 1e-6).
+* `bound_relax_factor = 0`, set to make the barrier bookkeeping exact, stalled 5
+  of 12 stages on its own.
+
+Also: the "infeasible dispatch" counter is **meaningless under smoothing** (the
+barrier holds slacks off zero, so every evaluation trips a `>1e-7` test), and
+the barrier term itself was not the problem -- including or excluding it from
+the reported value moved value/gradient agreement only from `3.39e-02` to
+`3.37e-02`.
+
+## 6b. The gradient identity, verified on the system that fails
+
+Central differences against the balance dual, step-size study to separate
+finite-difference noise from genuine error:
+
+| configuration | best relative error | verdict |
+|---|---|---|
+| cold solves, `rho = 0` | `1.5e-11` | gradient **exact** |
+| cold solves, `rho = 1e4` | `1.0e-09` | gradient **exact** |
+| warm solves, `rho = 1e4` | `3.0e-04` .. `3.0e-03` | contaminated |
+
+So Section 2's identity holds exactly on ieee2522 `T = 12`, not merely on the
+ieee123 `T = 3` case where it was first checked.
+
+The warm-start error follows a clean `1/h` law (`3.020e-05`, `3.020e-04`,
+`3.020e-03` at `h = 1e-3, 1e-4, 1e-5`) -- the signature of a constant absolute
+error of about `8.7e-6` USD in the **values**. The duals are identical warm and
+cold to nine digits, so warm starting corrupts the value, not the gradient. That
+matters because FilterDDP's filter accepts or rejects steps by comparing values.
+
+**This is recorded as measured, not as the cause.** Per-step objective decreases
+near the breakdown are `~1e-2`, three orders above `8.7e-6`, so the arithmetic
+does not obviously support value noise as the blocker. The clean test is a cold
+run at `T = 12`; it costs roughly 4x.
+
 ## 7. Status
 
-Sections 1-5 are established: the formulation, the gradient identity, the
-regularity argument, and the trace that matches it. Section 6 is the implied
-remedy and is **under test**; convergence behaviour past iteration 15 is the
-criterion, not the objective value (a fixed `mu > 0` solves a perturbed problem
-by construction).
+Sections 1-4 are established: the formulation, the gradient identity (now
+verified to `1e-11` on the failing system, Section 6b), and the trace. Section 5
+remains the best available explanation of the T-dependence but is **inference
+from a matching signature, not a verified mechanism** -- no measurement yet
+counts active-set changes along the failing trajectory.
+
+Section 6's remedy was implemented and **failed** (Section 6a), so the
+piecewise-`C^2` diagnosis has not been confirmed by a successful fix. Either the
+diagnosis is incomplete, or barrier smoothing at a fixed `mu` is not the right
+form of it -- for example because the outer method runs its own barrier
+continuation and the two are not coupled.
+
+The direct test of Section 5 has still not been run: instrument the inner solves
+to record which bounds are active, and check whether the active set changes at
+exactly the iteration where `du_inf` jumps. That is cheap and would settle the
+diagnosis rather than adding another remedy on top of an unverified one.
 
 The broader lesson is structural: a nested value function is generically only
 piecewise smooth, so "exact inner solve + second-order outer method" was never a
