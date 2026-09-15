@@ -35,6 +35,7 @@ mutable struct PersistentInner
     svlo::Union{Nothing,Vector{VariableRef}}
     svhi::Union{Nothing,Vector{VariableRef}}
     rho::Float64
+    mu_target::Float64
     solved_once::Bool
 end
 
@@ -47,7 +48,7 @@ in `inner_opf`, where the coefficient logic lives.
 """
 function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
                           max_iter::Int=3000, silent::Bool=true,
-                          voltage_penalty::Float64=0.0)
+                          voltage_penalty::Float64=0.0, mu_target::Float64=0.0)
     g = network_slice(data, t)
     nL = length(g.lines); nN = length(g.buses); nD = length(g.ders)
 
@@ -57,6 +58,17 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
     set_optimizer_attribute(model, "constr_viol_tol", tol)
     set_optimizer_attribute(model, "acceptable_tol", tol * 1e2)
     set_optimizer_attribute(model, "max_iter", max_iter)
+    # Barrier smoothing of the reduced value function. Solved to mu_target = 0
+    # the inner problem resolves its active set exactly, and Phi_t is then only
+    # PIECEWISE C2 -- its Hessian jumps wherever a bound activates as P_B moves,
+    # which is fatal for a second-order outer method. With mu_target > 0 no
+    # inequality is ever active, so Phi^mu is C-infinity in P_B and its curvature
+    # varies smoothly. bound_relax_factor is zeroed so the barrier term computed
+    # below matches Ipopt's own accounting rather than a relaxed version of it.
+    if mu_target > 0.0
+        set_optimizer_attribute(model, "mu_target", mu_target)
+        set_optimizer_attribute(model, "bound_relax_factor", 0.0)
+    end
 
     @variable(model, ps >= 0.0)
     @variable(model, qs)
@@ -138,7 +150,27 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
                            all_variables(model),
                            Any[c for c in all_constraints(model;
                                include_variable_in_set_constraints = true)],
-                           svlo, svhi, voltage_penalty, false)
+                           svlo, svhi, voltage_penalty, mu_target, false)
+end
+
+"""
+Barrier term `-mu * sum(log(slack))` over every finite variable bound, which is
+what makes the reported value belong to the SAME function as the reported
+gradient. Returning the unbarriered cost alongside a barrier-problem dual would
+hand the outer method an inconsistent value/gradient pair.
+"""
+function _barrier_term(pin::PersistentInner)
+    pin.mu_target > 0.0 || return 0.0
+    acc = 0.0
+    for vr in pin.allvars
+        if has_lower_bound(vr)
+            acc += log(max(value(vr) - lower_bound(vr), 1e-300))
+        end
+        if has_upper_bound(vr)
+            acc += log(max(upper_bound(vr) - value(vr), 1e-300))
+        end
+    end
+    return -pin.mu_target * acc
 end
 
 """
@@ -188,7 +220,8 @@ function solve_at!(pin::PersistentInner, pb::Vector{Float64}; warm::Bool=true)
     if !ok
         return (; feasible = false, status = string(status), iterations = iters,
                 solve_time = st, substation_cost = NaN, lambda_bal = Float64[],
-                ps = NaN, vmin = NaN, total_violation = NaN, penalised = pin.rho > 0)
+                ps = NaN, vmin = NaN, total_violation = NaN, penalised = pin.rho > 0,
+                barrier = NaN)
     end
     lam = Float64[haskey(pin.bal_p, j) ? dual(pin.bal_p[j]) : 0.0 for j in g.batteries]
     psv = value(pin.ps)
@@ -200,7 +233,8 @@ function solve_at!(pin::PersistentInner, pb::Vector{Float64}; warm::Bool=true)
             substation_cost = price * pin.data[:kVA_B] * pin.data[:delta_t_h] * psv,
             lambda_bal = lam, ps = psv,
             vmin = sqrt(max(minimum(value.(pin.v)), 0.0)),
-            total_violation = viol, penalised = pin.rho > 0)
+            total_violation = viol, penalised = pin.rho > 0,
+            barrier = _barrier_term(pin))
 end
 
 # ------------------------------------------------------------- self-check ---

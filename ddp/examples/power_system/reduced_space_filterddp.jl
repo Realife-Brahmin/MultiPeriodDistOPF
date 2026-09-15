@@ -87,9 +87,11 @@ struct PhiCache
     pbr_norm::Float64
     maxslots::Int
 end
-PhiCache(data, t, stats; maxslots=6, persistent::Bool=true, rho::Float64=0.0) =
+PhiCache(data, t, stats; maxslots=6, persistent::Bool=true, rho::Float64=0.0,
+         mu_target::Float64=0.0) =
     PhiCache(data, t,
-             persistent ? persistent_inner(data, t; voltage_penalty = rho) : nothing,
+             persistent ? persistent_inner(data, t; voltage_penalty = rho,
+                                           mu_target = mu_target) : nothing,
              stats, Tuple{Vector{Float64},NamedTuple}[],
              Tuple{Vector{Float64},Matrix{Float64}}[],
              Ref{Union{Nothing,Matrix{Float64}}}(nothing),
@@ -121,13 +123,16 @@ function phi(cache::PhiCache, pb::Vector{Float64})
                violation = Inf)
         else
             r.total_violation > 1e-7 && (cache.stats.infeasible_events += 1)
-            (; value = r.substation_cost + cache.pin.rho * r.total_violation,
+            (; value = r.substation_cost + cache.pin.rho * r.total_violation +
+                       (hasproperty(r, :barrier) && isfinite(r.barrier) ? r.barrier : 0.0),
                grad = copy(r.lambda_bal),
                feasible = r.total_violation <= 1e-7,
                violation = r.total_violation)
         end
     elseif r.feasible
-        (; value = r.substation_cost, grad = copy(r.lambda_bal),
+        (; value = r.substation_cost +
+                   (hasproperty(r, :barrier) && isfinite(r.barrier) ? r.barrier : 0.0),
+           grad = copy(r.lambda_bal),
            feasible = true, violation = 0.0)
     else
         cache.stats.infeasible_events += 1
@@ -245,7 +250,8 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
     cb = data[:C_B] * pbase^2 * dt
     cache = PhiCache(data, t, stats;
                      persistent = get(ENV, "REDUCED_PERSISTENT", "1") == "1",
-                     rho = parse(Float64, get(ENV, "REDUCED_FIXED_RHO", "0.0")))
+                     rho = parse(Float64, get(ENV, "REDUCED_FIXED_RHO", "0.0")),
+                     mu_target = parse(Float64, get(ENV, "REDUCED_INNER_MU", "0.0")))
 
     l = function (x, u)
         pb = u[1:nB]
@@ -417,6 +423,10 @@ function main(args = ARGS)
     fixed_rho = parse(Float64, get(ENV, "REDUCED_FIXED_RHO", "0.0"))
     fixed_rho > 0 && @printf("FIXED rho = %.3g (one penalised objective everywhere)
 ", fixed_rho)
+    let mu_in = parse(Float64, get(ENV, "REDUCED_INNER_MU", "0.0"))
+        mu_in > 0 && @printf("INNER mu_target = %.3g (barrier-smoothed Phi)
+", mu_in)
+    end
     @printf("INFEASIBLE trial dispatches (violation > 0 at solution): %d\n", s.infeasible_events)
 
     xr, ur = get_trajectory(solver)
