@@ -639,6 +639,51 @@ statement is that the two-stage workflow is exact and convergent only with a
 per-stage exact Hessian, and on that basis it is still slower than solving the
 problem whole at both system sizes tested.
 
+## Sizing `C_B`, and why the charge/discharge split is not needed here
+
+`C_B` enters the stage Hessian only as a perfectly-conditioned diagonal
+`d = 2*C_B*S^2*dt` added to every eigenvalue of `d2Phi`, so it can be sized from
+measurement rather than tuned:
+
+* **Floor (mandatory):** `d > -lambda_min(d2Phi)`, or the stage Hessian is not
+  positive definite. Measured on ieee2522, `d2Phi` spans `-0.148 .. 21194`, so
+  `C_B > 9.3e-9`. The exported `C_B = 1.4e-07` clears this only barely.
+* **Conditioning target:** `d ~ lambda_max/kappa`. `kappa = 100` gives
+  `C_B ~ 1.3e-5`; `kappa = 10` gives `C_B ~ 1.3e-4`.
+
+This is usable because `lambda_max` is cheap: `H*d` costs one inner solve, so
+about ten power iterations price it. No per-system constant is involved.
+
+**A flat direction exists even with losses.** `lambda_min(d2Phi) = -0.148`
+against `lambda_max = 21194` on a 2522-bus network: network losses do NOT fully
+break the degeneracy that makes battery dispatch non-unique on a copper plate.
+So the regularisation has a real job at network scale, not merely a
+justification by appeal to operating cost. (The value is within about an order
+of magnitude of the finite-difference noise floor, so read it as "flat", not as
+established nonconvexity.)
+
+**Charge/discharge split: not needed in this formulation.** The model carries no
+round-trip efficiency -- there are no `eta`-like keys in the exported network
+data and the dynamics are `B^t = B^{t-1} - dt*P_B^t` -- so `P_C`/`P_D` would be
+pure redundancy. Two facts decide this generally:
+
+* `Phi` depends only on the net `P_B = P_D - P_C`, so in split coordinates
+  `d2Phi = [[H, -H], [-H, H]]`, rank `nB` out of `2nB`. The null direction
+  `(delta, delta)` is exactly the simultaneous-charge-and-discharge direction:
+  the network cannot see it at all.
+* A LINEAR throughput penalty `c*(P_C + P_D)` has zero Hessian. It suppresses
+  SCD at first order but contributes nothing to curvature, so on its own it
+  would leave the stage Hessian singular in `nB` directions.
+* A QUADRATIC on the SPLIT variables, `C_B*(P_C^2 + P_D^2)`, does both jobs:
+  minimising it subject to `P_D - P_C = p` with both nonnegative lands on
+  `P_C = 0` or `P_D = 0` automatically. The same quadratic written on the NET
+  `P_B^2` cannot, since SCD leaves `P_B` unchanged.
+
+Decision rule: **no efficiency -> net `P_B` with a quadratic `C_B`, no split.
+With `eta != 1` the split becomes mandatory** (the SOC dynamics are not
+expressible in net power), and the quadratic must then be written on
+`P_C^2 + P_D^2` rather than on the net.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
