@@ -142,10 +142,13 @@ model; the reverse-export slack sits at zero in all 8.
 
 Three things this establishes:
 
-1. **The boundary is undervoltage under charging**, and it tightens with demand:
-   one pattern fails at low demand, one at medium, five at high. Restoration
-   depths reach `7.4e-2` in `v` units at `t=6` `all_max_charge`, i.e. about
-   0.91 pu voltage against a 0.95 floor.
+1. **The boundary is undervoltage under charging.** Restoration depths reach
+   `7.4e-2` in `v` units at `t=6` `all_max_charge`, i.e. about 0.91 pu voltage
+   against a 0.95 floor. An earlier version of this note added "and it tightens
+   with demand"; **that is wrong** -- see the horizon-independence section below,
+   where the low-*net*-load hours turn out to be harder than the medium ones
+   because they are the high-PV hours, and PV output consumes the DER reactive
+   headroom that would otherwise hold voltage up.
 2. **Feasibility is not a function of aggregate battery power.**
    `opposing_deep_chg_shallow_dis` has `sum(P_B) = -0.0170 pu` -- essentially
    zero net battery power -- and is still infeasible at high demand. The
@@ -354,6 +357,47 @@ algorithm: it tells an outer layer whether a dispatch is servable and by how
 much it misses, but not what to do about it. And the L1 penalty is nonsmooth
 exactly at the constraint boundary -- where the centralized optimum sits at 5 of
 24 hours -- which cannot be tested until something iterates on top.
+
+## `F_t` is horizon-independent; `T` only selects which snapshots get tested
+
+Worth stating plainly because it governs how far these results generalise. The
+inner problem is a single snapshot: network equations, load and PV at instant
+`t`, `P_B^t` fixed. Nothing in it references `t-1`, `t+1`, `B^{t-1}` or `T`. So
+`F_t` is fixed by (network, load at `t`, PV at `t`) alone -- it is not even
+price-dependent, since price moves where in `F_t` the optimum sits, not where
+the boundary is. `T` enters only by choosing which snapshots the tADMM profiles
+resample to.
+
+Verified rather than assumed. Across `T = 3/6/12` the nine sampled slots are
+only **eight distinct snapshots**: `T=3` is degenerate (its "medium" and "high"
+are the same 2.7541 pu, and price is a constant 0.1400 -- the sampling artifact
+`CLAUDE.md` warns about at `T=3`). Three slots at 2.7541 pu -- `T=3` `t=1`,
+`T=3` `t=3`, `T=6` `t=1` -- return the identical infeasible pattern and the
+identical violation `v0 = 7.81`. Same snapshot, three horizons, same answer.
+
+**Difficulty is not monotone in demand, by either measure.** Ordered by net load:
+
+| net | gross load | PV | sum reactive headroom | `all_max_charge` violation |
+|---|---|---|---|---|
+| 1.9011 | 3.2312 | 1.3301 | 0.8826 | 19.8 |
+| 1.9567 | 3.2868 | 1.3301 | 0.8826 | 27.2 |
+| 1.9917 | 3.3218 | 1.3301 | 0.8826 | 32.2 |
+| 2.6667 | 2.6667 | 0 | 1.5963 | 2.28 |
+| 2.7541 | 2.7541 | 0 | 1.5963 | 7.81 |
+| 3.1043 | 3.1043 | 0 | 1.5963 | 58.6 |
+| 3.1393 | 3.1393 | 0 | 1.5963 | 64.5 |
+
+The low-net-load hours are the **highest gross load in the set** -- PV is masking
+1.33 pu of it -- and since `qmax = sqrt(S_D_R^2 - p_D^2)`, that same PV output
+consumes **45% of the DER reactive headroom** precisely when the feeder needs it
+for voltage support. Two effects fight (local PV injection helps voltage, lost
+reactive capability hurts it), and the result is monotone in neither net nor
+gross load.
+
+Consequence, and it is the same shape as the aggregate-battery-power result:
+**no scalar load index is a sufficient statistic for `F_t`.** An outer layer
+cannot pre-screen hours as "easy" or "hard" from a demand number; difficulty
+depends on the full spatial snapshot including inverter reactive headroom.
 
 ## Feasibility cuts: representing `F_t` without writing it down
 
