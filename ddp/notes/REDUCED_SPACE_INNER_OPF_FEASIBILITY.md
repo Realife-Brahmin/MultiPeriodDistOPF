@@ -518,9 +518,51 @@ those perturbed solves differ from the base solve by only `h = 1e-6`, so a warm
 start ought to converge them in one or two interior-point iterations instead of
 roughly 35.
 
-Until at least the first is done, the honest statement is that the two-stage
-workflow is exact and convergent but slower than solving the problem whole, at
-every system size tested.
+### Both fixes for the inner solve are now in; the gap narrowed but did not close
+
+Warm start (bound multipliers included -- primals alone leave the solve at 22-28
+interior-point iterations instead of ~6) plus a persistent model updated with
+`set_normalized_rhs` instead of rebuilt per call:
+
+| `T = 3` | full-space | reduced before | reduced now | still |
+|---|---|---|---|---|
+| ieee123C_1ph | 18.4 s | 42.6 s | **25.4 s** | 1.4x slower |
+| ieee2522C_1ph | 99.7 s | 926.8 s | **369.6 s** | 3.7x slower |
+
+Answers are unchanged: ieee2522 returns the identical objective
+(`8515.8804065391`, gap `1.29e-08` relative, max `|dP_B|` `0.0279` kW).
+
+**The warm start partly pays for itself, which is worth recording.** Warm-started
+solves return slightly looser duals (dual residual `8.9e-08` against `4.2e-09`
+cold), and the outer method then works harder: 50 outer iterations instead of 46
+and **442** value/gradient solves instead of 187. The per-solve saving still wins
+by 2.5x overall, but the naive "cheaper solve = proportionally cheaper run"
+accounting is wrong here.
+
+**Even a free Hessian would not close it at `T = 3`.** Of the 319 s now spent
+inside Ipopt, roughly 201 s is Hessian and 118 s value/gradient; zeroing the
+Hessian entirely leaves ~168 s against 99.7 s. The floor is that the reduced
+method needs about three inner solves per stage per outer iteration (2.4 s at
+`T = 3`) versus 1.49 s for one full-space iteration covering all stages.
+
+**So the case for the decomposition is now specifically a large-system case.**
+Full-space per-iteration cost grows steeply with `nu` (0.38 -> 1.49 -> 20.4 s
+across the three systems) while the reduced method's cost grows only with the
+inner solve. Extrapolating the measured inner cost to large10k gives roughly
+10.8 s per outer iteration against 20.4 s full-space -- the first size at which
+the reduced method would be ahead. That projection is untested and the
+one-time Hessian would still dominate unless the low-rank route below works.
+
+**Next, and the reason not to give up on the Hessian.** `H*d` for an arbitrary
+direction `d` costs exactly ONE inner solve (perturb along `d`, difference the
+gradients), so randomized low-rank SVD applies directly. The structure probe
+already measured rank-25 reproducing `H` to 2.6%, comfortably inside the ~6%
+that `frozen` is known to tolerate -- so ~35 probes per stage should replace
+`nB`. At ieee2522 that is 28 s of Hessian instead of 201 s.
+
+Until then the honest statement is that the two-stage workflow is exact and
+convergent but still slower than solving the problem whole, at both system sizes
+tested.
 
 ## Cost estimate for the larger systems
 
