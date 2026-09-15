@@ -15,16 +15,40 @@ finished until its validated row and raw log are pushed here and the matching
 TPEC table/PDF update is pushed to the TPEC repository. Resume from the first
 incomplete row; never replace missing data with an older Gurobi timing.
 
-## Reduced-space MPOPF: phase-1 result (IEEE123 only, 2026-09-14)
+## Reduced-space MPOPF: IEEE123 + IEEE2522 result (2026-09-14)
 
-Established on `ieee123C_1ph`, `T = 24`, and **only** there — ieee2522 and
-large10k are not yet run. Full write-up and caveats in
+**Headline: the network elimination is exact, but the battery-power box is NOT
+recourse-feasible in general.** It is on IEEE123 (111/111 dispatches) and is
+not on IEEE2522 (8 of the same 111 rejected, every one by undervoltage under
+charging). Do not generalise IEEE123 results to other systems: that network is
+so lightly constrained nothing can activate (min voltage 1.0055 pu against a
+0.95 floor, no ampacity constraints in the model at all, reverse export
+structurally impossible). large10k not yet run.
+
+Consequences for the proposed decomposition:
+
+- `F_t` (the set of battery dispatches the network can serve) is a strict subset
+  of the box, and **is not a function of aggregate battery power** — the
+  `opposing_deep_chg_shallow_dis` pattern carries `sum(P_B) = -0.017 pu`,
+  essentially zero net, and still fails at high demand. It cannot be reduced to
+  a tightened bound on total power.
+- **The centralized optimum rides the voltage floor at 5 of 24 hours** on
+  IEEE2522 (t = 1, 2, 17, 18, 19; global vmin 0.949999995). So an outer method
+  must be able to *sit on* the boundary of `F_t`, not merely avoid it — which
+  rules out shrinking the outer box conservatively.
+- An outer layer holding only battery energy, dispatch, dynamics and bounds is
+  therefore **not sufficient**, and the reformulation as originally stated is
+  not exact on IEEE2522.
+- Promoting DER reactive power to the outer layer is **not** a fix: the inner
+  solve already saturates it (`|q_norm| = 1` throughout on IEEE123), so there is
+  no unused headroom. What the outer problem is missing is `F_t` itself, not an
+  actuator.
+
+Established on `ieee123C_1ph` and `ieee2522C_1ph` at `T = 24`. Full write-up in
 [ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md](ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md);
 raw CSVs in `ddp/results/reduced_space/`.
 
-The proposed decomposition — outer keeps `B^{t-1}`, `P_B^t`, battery dynamics
-and battery bounds; an inner single-period IPOPT solves every algebraic network
-quantity given a fixed `P_B^t` — is **well-posed on IEEE123**:
+What holds on **both** systems:
 
 - **The elimination is exact, not a relaxation.** With `P_B^t` fixed to the
   centralized optimum the inner solve reproduces the centralized network
@@ -32,19 +56,19 @@ quantity given a fixed `P_B^t` — is **well-posed on IEEE123**:
   captured FilterDDP stage it reproduces FilterDDP's network solution to the
   same order. Every one of 111 surveyed solves was re-checked through
   FilterDDP's own constraint callback, worst residual `7.2e-12`.
-- **111/111 dispatches network-feasible**, including every box corner, both
-  depth-group and opposing-group directions, and 24 reproducible random
-  interior points. This is *empirical coverage, not a certificate*.
-- **Reverse export cannot bind on this system**: total battery power 0.5066 pu
-  against minimum net load 0.6291 pu, so full discharge still leaves
-  `P_Subs = 0.1245 pu`. Structural, not numerical.
-- **Voltage limits never bind** (min 1.0055 pu against a 0.95 floor). The
-  IEEE123 transcription carries **no branch ampacity constraint at all** — `ell`
+- **`Phi_t(P_B^t)` is smooth and locally convex** wherever it is defined: first
+  derivatives stable across two decades of step size (worst relative spread
+  `7.3e-06` IEEE123, `9.3e-05` IEEE2522), curvature positive in every usable
+  probe (137/137 and 132/132).
+- **Reverse export is never the binding limit** on any study system: full
+  discharge still leaves `P_Subs = 0.1245 pu` (IEEE123) and `0.5987 pu`
+  (IEEE2522). The active limit is undervoltage, not the export floor.
+- **No branch ampacity constraint exists in the transcription at all** — `ell`
   has no upper bound in `build_model`. Worth knowing before anyone reports
-  "branch loading" for this model.
-- **`Phi_t(P_B^t)` is smooth and locally convex** along all probed directions:
-  first derivatives stable to `1e-9`–`1e-6` across two decades of step size,
-  second differences positive everywhere (4.7–398.8).
+  "branch loading" for these models.
+- Per-system: IEEE123 accepted 111/111 dispatches and never came within 5
+  percentage points of a voltage limit; IEEE2522 rejected 8/111 and rides the
+  floor. Empirical coverage either way, not a certificate.
 - **`dPhi_t/dP_B` is analytic** — it is the real-power-balance dual at the
   battery bus, matching central differences to median `6e-09`. The outer layer
   never needs to finite-difference the inner solve. Second-order information is
@@ -53,8 +77,16 @@ quantity given a fixed `P_B^t` — is **well-posed on IEEE123**:
 **Modelling decision to preserve:** the inner problem is network-only; the
 energy-slack row is an *outer* battery bound and is excluded. This is load
 bearing — only 5 of the 111 surveyed dispatches satisfy the SOC box, while all
-111 satisfy the network, so folding the two together answers the wrong question.
-The driver exposes `include_energy_row=true` for the combined variant.
+111 satisfy the IEEE123 network, so folding the two together answers the wrong
+question. The driver exposes `include_energy_row=true` for the combined variant.
+
+**Also found, deliberately not fixed:** the root power-balance rows
+(`ieee123c_filterddp.jl:118` and `:130`) omit any resource on the substation
+bus. ieee2522 has both a battery (4.26 kW) and a PV (5.1 kVA) there, both
+silently inert. The centralized reference shares the convention — it parks that
+battery at exactly `0.000000` all 24 hours — so nothing published is wrong, and
+at 0.32% of each fleet it is negligible. Fixing it would move published ieee2522
+numbers, so it is tracked separately.
 
 ## Two DDP codebases here — both *Differential* Dynamic Programming
 
