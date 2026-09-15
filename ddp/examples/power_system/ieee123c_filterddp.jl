@@ -329,8 +329,11 @@ status = solve!(solver, x0, ubar)
 # Compare against the existing centralized JuMP/Ipopt result when available.
 xddp, uddp = get_trajectory(solver)
 if get(ENV, "FILTERDDP_SKIP_SOLUTION_WRITE", "0") != "1"
+    # Tag the filename when C_B is overridden: the stored references are at the
+    # exported C_B and must not be silently replaced by a different problem.
+    cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     solutionfile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                            "filterddp_solution_$(system)_T$(T).jls")
+                            "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
     serialize(solutionfile, Dict(
         :system => system,
         :T => T,
