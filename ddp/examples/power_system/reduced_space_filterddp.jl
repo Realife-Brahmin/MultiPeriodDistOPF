@@ -82,6 +82,9 @@ struct PhiCache
     slots::Vector{Tuple{Vector{Float64},NamedTuple}}   # small exact-match cache
     hslots::Vector{Tuple{Vector{Float64},Matrix{Float64}}}
     frozen::Base.RefValue{Union{Nothing,Matrix{Float64}}}
+    frozen_at::Base.RefValue{Union{Nothing,Vector{Float64}}}
+    refreshes::Base.RefValue{Int}
+    pbr_norm::Float64
     maxslots::Int
 end
 PhiCache(data, t, stats; maxslots=6, persistent::Bool=true, rho::Float64=0.0) =
@@ -89,7 +92,9 @@ PhiCache(data, t, stats; maxslots=6, persistent::Bool=true, rho::Float64=0.0) =
              persistent ? persistent_inner(data, t; voltage_penalty = rho) : nothing,
              stats, Tuple{Vector{Float64},NamedTuple}[],
              Tuple{Vector{Float64},Matrix{Float64}}[],
-             Ref{Union{Nothing,Matrix{Float64}}}(nothing), maxslots)
+             Ref{Union{Nothing,Matrix{Float64}}}(nothing),
+             Ref{Union{Nothing,Vector{Float64}}}(nothing), Ref(0),
+             norm(Float64[data[:P_B_R_pu][j] for j in data[:Bset]]), maxslots)
 
 """
 Value and gradient of `Phi_t` at `pb`. Hard solve first; adaptive penalty only
@@ -266,7 +271,23 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
             end
             H[1:nB, 1:nB] .= cache.frozen[]
         elseif hessian_mode === :lowrank
+            # Refresh the sketch when the iterate has travelled far from where it
+            # was taken. The Hessian was measured to drift only 1.1% between the
+            # start and the optimum at T=3, which is why freezing worked there --
+            # but at T=12 the battery cycles far deeper, so "computed once at
+            # P_B = 0" may be badly stale by iteration 200. Threshold is relative
+            # to the battery rating norm; 0 disables (previous behaviour).
+            refresh_tol = parse(Float64, get(ENV, "REDUCED_HESS_REFRESH", "0.0"))
+            if refresh_tol > 0.0 && cache.frozen[] !== nothing &&
+               cache.frozen_at[] !== nothing
+                scale = max(norm(cache.frozen_at[]), 1e-12)
+                if norm(pb .- cache.frozen_at[]) > refresh_tol * max(scale, cache.pbr_norm)
+                    cache.frozen[] = nothing
+                    cache.refreshes[] += 1
+                end
+            end
             if cache.frozen[] === nothing
+                cache.frozen_at[] = copy(pb)
                 cache.frozen[] = phi_hessian_lowrank(cache, pb;
                     rank = parse(Int, get(ENV, "REDUCED_HESS_RANK", "25")),
                     oversample = parse(Int, get(ENV, "REDUCED_HESS_OVERSAMPLE", "10")),
