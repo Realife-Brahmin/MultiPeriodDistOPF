@@ -54,9 +54,14 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
 
     model = Model(Ipopt.Optimizer)
     silent && set_silent(model)
-    set_optimizer_attribute(model, "tol", tol)
-    set_optimizer_attribute(model, "constr_viol_tol", tol)
-    set_optimizer_attribute(model, "acceptable_tol", tol * 1e2)
+    # The convergence tolerance must scale with the barrier target: Ipopt's NLP
+    # error includes complementarity, which is pinned at ~mu_target, so demanding
+    # tol = 1e-10 at mu = 1e-4 is unsatisfiable and shows up as SLOW_PROGRESS
+    # rather than as an obvious configuration error (9 of 12 stages stalled).
+    eff_tol = mu_target > 0.0 ? max(tol, mu_target * 1e-2) : tol
+    set_optimizer_attribute(model, "tol", eff_tol)
+    set_optimizer_attribute(model, "constr_viol_tol", eff_tol)
+    set_optimizer_attribute(model, "acceptable_tol", eff_tol * 1e2)
     set_optimizer_attribute(model, "max_iter", max_iter)
     # Barrier smoothing of the reduced value function. Solved to mu_target = 0
     # the inner problem resolves its active set exactly, and Phi_t is then only
@@ -67,7 +72,13 @@ function persistent_inner(data::Dict, t::Int; tol::Float64=1e-10,
     # below matches Ipopt's own accounting rather than a relaxed version of it.
     if mu_target > 0.0
         set_optimizer_attribute(model, "mu_target", mu_target)
-        set_optimizer_attribute(model, "bound_relax_factor", 0.0)
+        # bound_relax_factor is left at Ipopt's default. Zeroing it made the
+        # barrier bookkeeping exact but stalled 5 of 12 stages with
+        # SLOW_PROGRESS; the default relaxation is ~1e-8, which perturbs the
+        # barrier term far below the accuracy this needs.
+        if get(ENV, "REDUCED_BOUND_RELAX0", "0") == "1"
+            set_optimizer_attribute(model, "bound_relax_factor", 0.0)
+        end
     end
 
     @variable(model, ps >= 0.0)
@@ -202,7 +213,8 @@ function solve_at!(pin::PersistentInner, pb::Vector{Float64}; warm::Bool=true)
         set_optimizer_attribute(pin.model, "warm_start_slack_bound_push", 1e-9)
         set_optimizer_attribute(pin.model, "warm_start_slack_bound_frac", 1e-9)
         set_optimizer_attribute(pin.model, "warm_start_mult_bound_push", 1e-9)
-        set_optimizer_attribute(pin.model, "mu_init", 1e-7)
+        set_optimizer_attribute(pin.model, "mu_init",
+                                pin.mu_target > 0.0 ? pin.mu_target : 1e-7)
         for (vr, val) in zip(pin.allvars, prev)
             set_start_value(vr, val)
         end
