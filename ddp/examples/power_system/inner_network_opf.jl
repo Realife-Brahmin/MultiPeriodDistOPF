@@ -61,6 +61,7 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
                    x_entering::Union{Nothing,Vector{Float64}}=nothing,
                    voltage_penalty::Float64=0.0,
                    pure_feasibility::Bool=false,
+                   warm=nothing, return_warm::Bool=false,
                    tol::Float64=1e-10, max_iter::Int=3000, silent::Bool=true)
     g = network_slice(data, t)
     dt = data[:delta_t_h]
@@ -77,6 +78,21 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     set_optimizer_attribute(model, "constr_viol_tol", tol)
     set_optimizer_attribute(model, "acceptable_tol", tol * 1e2)
     set_optimizer_attribute(model, "max_iter", max_iter)
+    # Warm start. Ipopt only benefits if the BOUND multipliers come with the
+    # primal point, so the bundle carries duals for every constraint including
+    # the variable-bound ones; without them Ipopt resets them and re-walks the
+    # central path, which is most of the cost being avoided here. The push
+    # parameters are what stop it from shoving the supplied point back into the
+    # strict interior and undoing the warm start.
+    if warm !== nothing
+        set_optimizer_attribute(model, "warm_start_init_point", "yes")
+        set_optimizer_attribute(model, "warm_start_bound_push", 1e-9)
+        set_optimizer_attribute(model, "warm_start_bound_frac", 1e-9)
+        set_optimizer_attribute(model, "warm_start_slack_bound_push", 1e-9)
+        set_optimizer_attribute(model, "warm_start_slack_bound_frac", 1e-9)
+        set_optimizer_attribute(model, "warm_start_mult_bound_push", 1e-9)
+        set_optimizer_attribute(model, "mu_init", 1e-7)
+    end
 
     nL = length(g.lines)
     nN = length(g.buses)
@@ -199,6 +215,23 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
         @objective(model, Min, price * pbase * dt * ps)
     end
 
+    # Apply the warm-start bundle. Ordering is by JuMP's own enumeration of an
+    # identically-built model, so a bundle is only valid for the same system,
+    # same t-independent structure and same soft/hard voltage mode; the length
+    # checks below refuse it rather than silently mis-assigning values.
+    wvars = all_variables(model)
+    wcons = all_constraints(model; include_variable_in_set_constraints = true)
+    if warm !== nothing
+        if length(warm.x) == length(wvars) && length(warm.y) == length(wcons)
+            for (vr, val) in zip(wvars, warm.x); set_start_value(vr, val); end
+            for (cr, val) in zip(wcons, warm.y)
+                try; set_dual_start_value(cr, val); catch; end
+            end
+        else
+            @warn "warm-start bundle shape mismatch; ignoring" nv=length(wvars) nw=length(warm.x)
+        end
+    end
+
     t_start = time()
     rss_start = Sys.maxrss()
     gc_start = Base.gc_bytes()
@@ -221,7 +254,8 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
                 ell_max = NaN, imag_max = NaN, qnorm_absmax = NaN, qnorm_absmean = NaN,
                 min_bound_margin = NaN, ps_margin = NaN, reverse_export = false,
                 filterddp_residual = NaN, validation_pass = false,
-                loss = NaN, net_load = NaN, energy_slack_ok = missing)
+                loss = NaN, net_load = NaN, energy_slack_ok = missing,
+                warm = nothing)
     end
 
     psv = value(ps); qsv = value(qs)
@@ -239,6 +273,16 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
     # this transcription and its true derivative is exactly zero, not missing.
     # (ieee2522C_1ph has one such battery, bus 1, rated 0.00426 pu. See
     # ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md.)
+    warm_out = nothing
+    if return_warm
+        ws = [value(vr) for vr in wvars]
+        ys = Float64[]
+        for cr in wcons
+            push!(ys, try dual(cr) catch; 0.0 end)
+        end
+        warm_out = (; x = ws, y = ys)
+    end
+
     lambda_bal = Float64[]
     for j in g.batteries
         push!(lambda_bal, haskey(bal_p, j) ? dual(bal_p[j]) : 0.0)
@@ -290,7 +334,7 @@ function inner_opf(data::Dict, t::Int, pb_fixed::Vector{Float64};
             reverse_export = psv <= 1e-7,
             loss, net_load,
             energy_slack_ok = energy_ok,
-            lambda_bal,
+            lambda_bal, warm = warm_out,
             n_active_qnorm = count(x -> abs(abs(x) - 1.0) < 1e-6, qn),
             n_active_vmin = count(k -> vv[k] - data[:Vminpu][g.buses[k]]^2 < 1e-8, 1:nN),
             n_active_vmax = count(k -> data[:Vmaxpu][g.buses[k]]^2 - vv[k] < 1e-8, 1:nN),
@@ -405,6 +449,21 @@ function restore_feasibility(data::Dict, t::Int, pb_fixed::Vector{Float64};
     model = Model(Ipopt.Optimizer); set_silent(model)
     set_optimizer_attribute(model, "tol", tol)
     set_optimizer_attribute(model, "max_iter", max_iter)
+    # Warm start. Ipopt only benefits if the BOUND multipliers come with the
+    # primal point, so the bundle carries duals for every constraint including
+    # the variable-bound ones; without them Ipopt resets them and re-walks the
+    # central path, which is most of the cost being avoided here. The push
+    # parameters are what stop it from shoving the supplied point back into the
+    # strict interior and undoing the warm start.
+    if warm !== nothing
+        set_optimizer_attribute(model, "warm_start_init_point", "yes")
+        set_optimizer_attribute(model, "warm_start_bound_push", 1e-9)
+        set_optimizer_attribute(model, "warm_start_bound_frac", 1e-9)
+        set_optimizer_attribute(model, "warm_start_slack_bound_push", 1e-9)
+        set_optimizer_attribute(model, "warm_start_slack_bound_frac", 1e-9)
+        set_optimizer_attribute(model, "warm_start_mult_bound_push", 1e-9)
+        set_optimizer_attribute(model, "mu_init", 1e-7)
+    end
 
     @variable(model, ps)                       # relaxed: sign free here
     @variable(model, qs)

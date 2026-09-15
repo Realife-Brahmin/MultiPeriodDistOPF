@@ -58,6 +58,7 @@ using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 include(joinpath(@__DIR__, "inner_network_opf.jl"))
+include(joinpath(@__DIR__, "inner_opf_persistent.jl"))
 include(joinpath(@__DIR__, "ieee123c_filterddp.jl"))   # control_layout, for the reference
 
 # ---------------------------------------------------------------- Phi cache --
@@ -75,14 +76,15 @@ PhiStats() = PhiStats(0, 0, 0, 0, 0.0)
 struct PhiCache
     data::Dict
     t::Int
+    pin::Union{Nothing,PersistentInner}
     stats::PhiStats
     slots::Vector{Tuple{Vector{Float64},NamedTuple}}   # small exact-match cache
     hslots::Vector{Tuple{Vector{Float64},Matrix{Float64}}}
     frozen::Base.RefValue{Union{Nothing,Matrix{Float64}}}
     maxslots::Int
 end
-PhiCache(data, t, stats; maxslots=6) =
-    PhiCache(data, t, stats, Tuple{Vector{Float64},NamedTuple}[],
+PhiCache(data, t, stats; maxslots=6, persistent::Bool=true) =
+    PhiCache(data, t, persistent ? persistent_inner(data, t) : nothing, stats, Tuple{Vector{Float64},NamedTuple}[],
              Tuple{Vector{Float64},Matrix{Float64}}[],
              Ref{Union{Nothing,Matrix{Float64}}}(nothing), maxslots)
 
@@ -95,7 +97,8 @@ function phi(cache::PhiCache, pb::Vector{Float64})
         k == pb && (cache.stats.cache_hits += 1; return v)
     end
     t0 = time()
-    r = inner_opf(cache.data, cache.t, pb)
+    r = cache.pin === nothing ? inner_opf(cache.data, cache.t, pb) :
+                                solve_at!(cache.pin, pb)
     cache.stats.inner_solves += 1
     out = if r.feasible
         (; value = r.substation_cost, grad = copy(r.lambda_bal),
@@ -136,7 +139,8 @@ function phi_hessian(cache::PhiCache, pb::Vector{Float64}; h::Float64=1e-6)
     pert = copy(pb)
     for b in 1:n
         pert[b] = pb[b] + h
-        r = inner_opf(cache.data, cache.t, pert)
+        r = cache.pin === nothing ? inner_opf(cache.data, cache.t, pert) :
+                                    solve_at!(cache.pin, pert)
         cache.stats.hessian_solves += 1
         H[:, b] = r.feasible ? (r.lambda_bal .- g0) ./ h : zeros(n)
         pert[b] = pb[b]
@@ -154,7 +158,8 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
     nx = nB; nu = 2nB
     dt = data[:delta_t_h]; pbase = data[:kVA_B]
     cb = data[:C_B] * pbase^2 * dt
-    cache = PhiCache(data, t, stats)
+    cache = PhiCache(data, t, stats;
+                     persistent = get(ENV, "REDUCED_PERSISTENT", "1") == "1")
 
     l = function (x, u)
         pb = u[1:nB]
