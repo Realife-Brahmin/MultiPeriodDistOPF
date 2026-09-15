@@ -1,8 +1,9 @@
-! PV systems: 250 units distributed across system
+! PV systems: 249 units distributed across system
 ! Sizing: rescaled to ~40%% load penetration (originally oversized 31x)
 ! Co-located with battery systems for coordinated DER dispatch
-
-New PVsystem.PV1 irrad=1.0 Phases=1 Bus1=1.1 kV=7.2 kVA=5.108 Pmpp=4.256 %cutin=0.001 %cutout=0.001
+! PV1 (Bus1=1.1, the substation bus) removed 2026-09-15 alongside BESS1: inert in
+! the BFM transcription, whose root rows carry no local resource term. See
+! Storage.dss for the full rationale.
 New PVsystem.PV11 irrad=1.0 Phases=1 Bus1=11.1 kV=7.2 kVA=5.747 Pmpp=4.789 %cutin=0.001 %cutout=0.001
 New PVsystem.PV21 irrad=1.0 Phases=1 Bus1=21.1 kV=7.2 kVA=6.385 Pmpp=5.32 %cutin=0.001 %cutout=0.001
 New PVsystem.PV31 irrad=1.0 Phases=1 Bus1=31.1 kV=7.2 kVA=7.024 Pmpp=5.852 %cutin=0.001 %cutout=0.001
