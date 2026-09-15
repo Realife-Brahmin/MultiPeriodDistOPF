@@ -276,6 +276,13 @@ quiet = length(args) >= 4 && args[4] == "quiet"
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
                     "network_data_$(system)_T$(T).jls")
 data = deserialize(datafile)
+# Opt-in C_B override so the full-space reference can be regenerated at the same
+# battery cost as a reduced-space experiment. Default behaviour is unchanged.
+if haskey(ENV, "REDUCED_CB")
+    data[:C_B] = parse(Float64, ENV["REDUCED_CB"])
+    @printf("C_B OVERRIDE: %.6g
+", data[:C_B])
+end
 idx, nu = control_layout(data)
 nx = length(data[:Bset])
 nc = 2length(data[:Nset]) + 2length(data[:Lset]) + 1 + nx

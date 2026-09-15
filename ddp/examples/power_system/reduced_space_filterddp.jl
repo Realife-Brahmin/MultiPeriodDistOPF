@@ -331,6 +331,17 @@ function main(args = ARGS)
     datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
                         "network_data_$(system)_T$(T).jls")
     data = deserialize(datafile)
+    # Opt-in C_B override. C_B is the battery cycling cost and it sets how much
+    # perfectly-conditioned damping (2*C_B*S^2*dt*I) sits under d2Phi in the
+    # curvature model, so it governs how forgiving the problem is of curvature
+    # error. Changing it changes the PROBLEM, so any comparison must re-run the
+    # full-space reference at the same value.
+    if haskey(ENV, "REDUCED_CB")
+        data[:C_B] = parse(Float64, ENV["REDUCED_CB"])
+        @printf("C_B OVERRIDE: %.6g (battery diagonal 2*C_B*S^2*dt = %.6g)
+",
+                data[:C_B], 2 * data[:C_B] * data[:kVA_B]^2 * data[:delta_t_h])
+    end
     dt = data[:delta_t_h]; pbase = data[:kVA_B]
 
     t_build = time()
