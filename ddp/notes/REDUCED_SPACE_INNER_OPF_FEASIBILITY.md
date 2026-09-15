@@ -451,6 +451,55 @@ Still not established: nothing here iterates. Cut *accumulation* -- whether a
 growing bundle converges, and how many cuts a full horizon needs -- requires the
 outer loop, which does not exist yet.
 
+## Does the decomposition actually pay? Not yet -- it is currently dominated
+
+The reduced-space run is *correct* (see above: it reproduces the full-space
+FilterDDP optimum to `6.0e-09`). It is not *faster*. Measured, `T = 3`:
+
+| system | full-space `nu` | full-space wall | iters | per-iter | reduced `nu` | reduced wall |
+|---|---|---|---|---|---|---|
+| ieee123C_1ph | 791 | **18.4 s** | 48 | 0.38 s | 102 | **42.6 s** (2.3x slower) |
+| ieee2522C_1ph | 13358 | **99.7 s** | 67 | 1.49 s | 500 | projected ~1500 s |
+| large10kC_1ph | 54665 | **2569 s** | 126 | 20.4 s | 2040 | projected ~7 h |
+
+**Correcting an overstatement made earlier in this work.** The claim that the
+reduced space does "465x less work per iteration" came from comparing `nu^3`,
+i.e. assuming a dense backward pass. The measured per-iteration cost scales like
+`nu^1.3` (123 -> 2522) and `nu^1.85` (2522 -> 10k), nowhere near cubic: a dense
+factorisation at large10k would be 22.3 GB per stage and roughly 540 s per
+factorisation, against 2.25 s measured, so the production backward pass is
+plainly sparse (consistent with the UMFPACK multi-RHS artefacts in
+`ddp/results/network_filterddp/`). The theoretical advantage being chased was
+therefore much smaller than quoted.
+
+**Where the cost actually goes.** Two separate problems, both fatal on their own:
+
+1. *The finite-difference Hessian is O(nB) Ipopt solves per stage.* Even frozen
+   (computed once per stage rather than per backward pass) it costs
+   `T * nB * c_inner` = 10 s at ieee123, **1335 s** at ieee2522, **~24500 s** at
+   large10k -- that is 13x and 9.5x the entire full-space solve, just for
+   curvature.
+2. *Even with a free Hessian, the value/gradient solves lose.* The reduced
+   method needs `T` inner solves per outer iteration = 5.3 s at ieee2522,
+   against 1.49 s for a full-space iteration covering all stages. A single cold
+   inner Ipopt solve (~35 interior-point iterations) already costs more than one
+   full-space FilterDDP iteration.
+
+**This does not invalidate the decomposition; it identifies what has to change.**
+Two standard fixes, both untried here:
+
+* **Warm-start the inner solves.** Every inner solve is currently cold, from a
+  flat-voltage start. Between consecutive outer iterations `P_B` moves very
+  little, so a warm start should cut ~35 interior-point iterations to a handful.
+* **Replace finite differences with NLP sensitivity.** One factorisation of the
+  inner KKT system at the inner solution yields all `nB` Hessian columns by
+  back-substitution, turning `O(nB)` *solves* into one solve plus `nB` cheap
+  back-solves. This is the standard sIPOPT construction.
+
+Until at least the first is done, the honest statement is that the two-stage
+workflow is exact and convergent but slower than solving the problem whole, at
+every system size tested.
+
 ## Cost estimate for the larger systems
 
 Measured here: 111 survey solves in 7.3 s wall (mean 0.066 s), 180 probe solves,
