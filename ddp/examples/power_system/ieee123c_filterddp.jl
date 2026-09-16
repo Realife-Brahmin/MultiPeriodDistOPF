@@ -273,8 +273,9 @@ system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
 T = length(args) >= 2 ? parse(Int, args[2]) : 2
 mode = length(args) >= 3 ? args[3] : "dimensions"
 quiet = length(args) >= 4 && args[4] == "quiet"
+ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                    "network_data_$(system)_T$(T).jls")
+                    "network_data_$(system)_T$(T)$(ptag).jls")
 data = deserialize(datafile)
 # Opt-in C_B override so the full-space reference can be regenerated at the same
 # battery cost as a reduced-space experiment. Default behaviour is unchanged.
@@ -333,7 +334,7 @@ if get(ENV, "FILTERDDP_SKIP_SOLUTION_WRITE", "0") != "1"
     # exported C_B and must not be silently replaced by a different problem.
     cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     solutionfile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                            "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
+                            "filterddp_solution_$(system)_T$(T)$(ptag)$(cbtag).jls")
     serialize(solutionfile, Dict(
         :system => system,
         :T => T,

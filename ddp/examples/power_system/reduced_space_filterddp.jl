@@ -376,8 +376,12 @@ function main(args = ARGS)
     T      = length(args) >= 2 ? parse(Int, args[2]) : 3
     hmode  = Symbol(length(args) >= 3 ? args[3] : "exact")
 
+    # Instance variant. REDUCED_PROFILE=periodic selects the non-degenerate
+    # export (real price spread); unset keeps the historical default, which at
+    # T=3 has ZERO price spread and leaves the batteries nearly idle.
+    ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
     datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                        "network_data_$(system)_T$(T).jls")
+                        "network_data_$(system)_T$(T)$(ptag).jls")
     data = deserialize(datafile)
     # Opt-in C_B override. C_B is the battery cycling cost and it sets how much
     # perfectly-conditioned damping (2*C_B*S^2*dt*I) sits under d2Phi in the
@@ -390,6 +394,11 @@ function main(args = ARGS)
 ",
                 data[:C_B], 2 * data[:C_B] * data[:kVA_B]^2 * data[:delta_t_h])
     end
+    @printf("INSTANCE %s  periodic=%s  price spread=%.1f%%  nB=%d
+",
+            basename(datafile), get(data, :profile_periodic, "?"),
+            100 * (maximum(data[:LoadShapeCost]) - minimum(data[:LoadShapeCost])) /
+                  max(minimum(data[:LoadShapeCost]), 1e-12), length(data[:Bset]))
     dt = data[:delta_t_h]; pbase = data[:kVA_B]
 
     t_build = time()
@@ -444,7 +453,7 @@ function main(args = ARGS)
     # different C_B is a different problem and must not be compared against.
     cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     reffile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                       "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
+                       "filterddp_solution_$(system)_T$(T)$(ptag)$(cbtag).jls")
     if isfile(reffile)
         ref = deserialize(reffile)
         idx, _ = control_layout(data)
@@ -468,7 +477,7 @@ function main(args = ARGS)
     end
 
     outdir = joinpath(REPO, "ddp", "results", "reduced_space"); mkpath(outdir)
-    serialize(joinpath(outdir, "reduced_filterddp_$(system)_T$(T)_$(hmode).jls"),
+    serialize(joinpath(outdir, "reduced_filterddp_$(system)_T$(T)$(ptag)_$(hmode).jls"),
               Dict(:system => system, :T => T, :hessian => string(hmode),
                    :status => string(status), :iterations => solver.data.k,
                    :wall => wall, :objective => obj_red,
