@@ -1,8 +1,48 @@
 _derivative_matrix(A, m, n) = issparse(A) ? sparse(A) : reshape(vec(A), m, n)
 
+# ---------------------------------------------------------------- frozen KKT --
+# Fast-decoupled-style reuse of the per-stage KKT factorisation. FDPF freezes the
+# Jacobian because susceptance is genuinely constant; here K = [H cu'; cu 0] is
+# NOT constant -- it carries the barrier terms Sigma_L + Sigma_U, which scale
+# like mu/s^2 and move sharply as mu drops and iterates approach bounds. So this
+# is a quasi-Newton approximation whose worth is an empirical question: it saves
+# assembly+factorisation per stage per iteration, and pays for it in step
+# quality. Opt in with FILTERDDP_FREEZE_KKT=N (refactor every N backward passes);
+# N <= 1 is the default and reproduces exact behaviour bit for bit.
+const _FROZEN_KKT = Dict{Int,Any}()
+const _FROZEN_AT  = Dict{Int,Int}()
+const _FROZEN_STATS = Dict{Symbol,Int}(:factorisations => 0, :reuses => 0)
+
+_freeze_period() = parse(Int, get(ENV, "FILTERDDP_FREEZE_KKT", "1"))
+
+function _frozen_reset!()
+    empty!(_FROZEN_KKT); empty!(_FROZEN_AT)
+    _FROZEN_STATS[:factorisations] = 0; _FROZEN_STATS[:reuses] = 0
+    return nothing
+end
+
+function _frozen_lu(t::Int, K, iter::Int)
+    period = _freeze_period()
+    if period <= 1
+        _FROZEN_STATS[:factorisations] += 1
+        return lu(K)
+    end
+    if !haskey(_FROZEN_KKT, t) || (iter - _FROZEN_AT[t]) >= period
+        _FROZEN_KKT[t] = lu(K)
+        _FROZEN_AT[t] = iter
+        _FROZEN_STATS[:factorisations] += 1
+    else
+        _FROZEN_STATS[:reuses] += 1
+    end
+    return _FROZEN_KKT[t]
+end
+
+
 function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, nc},
             traj::Vector{TrajectoryElement{T, nx, nu, nc}}, data::SolverData{T}, options::Options{T}; verbose::Bool=false
             ) where {T, nx, nu, nc, nux, ncx}
+    # A stale factorisation must never leak between solves.
+    data.k == 0 && _frozen_reset!()
     reg::T = 0.0
     μ = data.μ
     δ_c = 0.
@@ -228,7 +268,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     if timing_diagnostic || memory_diagnostic
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
-                        F = lu(K)
+                        F = _frozen_lu(t, K, data.k)
                         factor_s = (time_ns() - factor_start_ns) / 1e9
                         factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
@@ -261,7 +301,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_s = (time_ns() - solve_start_ns) / 1e9
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
-                        F = lu(K)
+                        F = _frozen_lu(t, K, data.k)
                         if blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
