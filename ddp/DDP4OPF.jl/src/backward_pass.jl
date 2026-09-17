@@ -229,6 +229,13 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 kkt_start_ns = time_ns()
                 Ĥ = sparse(Symmetric(Ĥ))
                 K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
+                # Fill-in diagnostic: nnz of the coefficient before factorisation
+                # and of the LU factors after, per stage. Opt-in; this is what
+                # distinguishes "the matrix got denser" from "pivoting got worse"
+                # as the explanation for factorisation cost rising ~6x on an
+                # identically sized K when the batteries actually cycle.
+                nnz_diagnostic = get(ENV, "FILTERDDP_NNZ_DIAGNOSTIC", "0") == "1"
+
                 capture_this_kkt = haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
                     t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
                 blocked_value = get(ENV, "FILTERDDP_BLOCKED_VALUE_RHS", "0") == "1" &&
@@ -269,6 +276,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
                         F = _frozen_lu(t, K, data.k)
+                        if nnz_diagnostic
+                            # L and U extraction is costly, hence opt-in only
+                            nL = nnz(F.L); nU = nnz(F.U)
+                            @printf("FILTERDDP_NNZ iteration=%d stage=%d n=%d nnz_K=%d nnz_LU=%d fill_ratio=%.3f
+",
+                                    data.k, t, size(K, 1), nnz(K), nL + nU, (nL + nU) / max(nnz(K), 1))
+                            flush(stdout)
+                        end
                         factor_s = (time_ns() - factor_start_ns) / 1e9
                         factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
@@ -302,6 +317,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
                         F = _frozen_lu(t, K, data.k)
+                        if nnz_diagnostic
+                            # L and U extraction is costly, hence opt-in only
+                            nL = nnz(F.L); nU = nnz(F.U)
+                            @printf("FILTERDDP_NNZ iteration=%d stage=%d n=%d nnz_K=%d nnz_LU=%d fill_ratio=%.3f
+",
+                                    data.k, t, size(K, 1), nnz(K), nL + nU, (nL + nU) / max(nnz(K), 1))
+                            flush(stdout)
+                        end
                         if blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
