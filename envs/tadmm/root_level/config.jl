@@ -77,6 +77,21 @@ end
 # Battery quadratic cost coefficient
 const C_B = 1e-6 * minimum(LoadShapeCost)
 
+# Terminal state-of-charge penalty. The terminal SOC is a SOFT constraint: the
+# objective carries + GAMMA_TERMINAL * sum_j (B[j,T] - B0[j])^2, with B in p.u.
+# energy, rather than a hard B[j,T] == B0[j] equality. Added 2026-09-16 and
+# applied identically by the centralized reference, tADMM and FilterDDP -- a
+# different value in any one of them would make it a different optimization
+# problem and invalidate every comparison.
+#
+# Default scale: mean price times the 1000 kVA power base (parse_opendss sets
+# kVA_B = 1000 for every system), so a deviation of 0.1 p.u.h
+# costs about 1.4 USD, small against energy costs in the thousands but enough to
+# pin the terminal SOC. Override with GAMMA_TERMINAL_OVERRIDE.
+const GAMMA_TERMINAL = parse(Float64,
+    get(ENV, "GAMMA_TERMINAL_OVERRIDE",
+        string(sum(LoadShapeCost) / length(LoadShapeCost) * 1000.0)))
+
 # ============================================================================
 # OUTPUT DIRECTORIES
 # ============================================================================

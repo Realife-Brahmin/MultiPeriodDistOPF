@@ -38,6 +38,33 @@ function _frozen_lu(t::Int, K, iter::Int)
 end
 
 
+# ----------------------------------------------------- diagonal Hessian --
+# Agenda question (R. Gupta, 2026-09-18): "can we not just use a diagonalized
+# matrix?". FILTERDDP_DIAG_HESSIAN=1 replaces the stage Hessian block of
+# K = [H cu'; cu 0] with its diagonal, leaving the constraint Jacobian intact.
+#
+# Two things make this a real approximation rather than a cheap trick:
+#   * On ieee123 T=3 about 83% of nnz(H) IS the dense nB x nB block
+#     fu' * Vxx * fu -- the intertemporal curvature. Diagonalising deletes
+#     exactly the information that makes this a second-order method.
+#   * diag(H) is singular in general: at the terminal stage nnz(H) = 536
+#     against nu = 791, because line flows, voltages and currents pick up a
+#     diagonal entry only through cuu, and unbounded controls get no barrier
+#     term at all. Hence FILTERDDP_DIAG_HESSIAN_FLOOR (default 1e-8), which
+#     floors each diagonal entry from below.
+_diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0"
+_diag_hessian_floor() = parse(Float64, get(ENV, "FILTERDDP_DIAG_HESSIAN_FLOOR", "1e-8"))
+
+function _diagonalise_hessian(H)
+    floor_val = _diag_hessian_floor()
+    d = diag(H)
+    @inbounds for i in eachindex(d)
+        d[i] = max(d[i], floor_val)
+    end
+    return issparse(H) ? spdiagm(0 => d) : diagm(d)
+end
+
+
 function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, nc},
             traj::Vector{TrajectoryElement{T, nx, nu, nc}}, data::SolverData{T}, options::Options{T}; verbose::Bool=false
             ) where {T, nx, nu, nc, nux, ncx}
@@ -207,6 +234,11 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     Ĥ[i, i] += reg
                 end
             end
+
+            # Opt-in diagonal curvature model; see _diagonalise_hessian above.
+            # Applied after the inertia correction so that reg still reaches the
+            # diagonal, and before sparse_kkt is decided so the branch is unchanged.
+            _diag_hessian_enabled() && (Ĥ = _diagonalise_hessian(Ĥ))
 
             # Sparse network models use the full saddle-point system directly,
             # avoiding a dense QR basis and the explicit reduced Hessian Z'HZ.
