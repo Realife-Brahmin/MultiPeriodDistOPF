@@ -3,9 +3,11 @@
 Asked by R. Gupta for the 2026-09-18 meeting: *"Hessian -- can we not just use a
 diagonalized matrix? Does that converge? Time benefit?"*
 
-**Answer: yes it converges, to the same optimum, and it is a real but modest win
-that grows with system size.** On ieee2522 it cuts per-stage factorisation by 63%
-and total wall by 10.5%, paying 16% more iterations for it.
+**Answer: yes it converges, to the same optimum, and it is a real win that grows
+with system size, confirmed up to large10k (1020 batteries, `nu = 54665`).** On
+large10k it cuts per-stage factorisation by 90% and total wall by 57%, paying
+16.5% more iterations for it -- in line with the 16-20% iteration penalty
+already seen at ieee123 and ieee2522, so the penalty does not worsen with scale.
 
 This is the **full-space** question. Earlier cheap-curvature results in this repo
 (`battery_only`, Nystrom low-rank, floored Nystrom) are all **reduced-space** and
@@ -79,14 +81,32 @@ ieee123 T=3, same instance:
 A floor large enough to act as damping destroys convergence rather than
 stabilising it. Keep it at the smallest value that removes the structural zeros.
 
+## large10k, measured 2026-09-18
+
+`large10kC_1ph`, `T = 3`, periodic profile, `C_B = 1e-3`, same
+`FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8` as the other two systems:
+
+| | large10k exact | large10k diag |
+|---|---|---|
+| status | converged (0) | converged (0) |
+| iterations | 103 | 120 (**+16.5%**) |
+| objective | 3124025.510478886 | 3124025.509532730 |
+| obj rel diff | -- | **3.03e-10** |
+| max equality residual | 2.083e-09 | 9.391e-10 |
+| per-stage factorisation | 1669.76 ms | 164.53 ms (-90.1%) |
+| wall | 3434.995 s | 1467.627 s (-57.3%) |
+
+**Converges cleanly, to the same optimum, at the largest tested scale.** The
+iteration penalty (+16.5%) lands squarely inside the range already seen at
+ieee123 (+20%) and ieee2522 (+16%) -- it does not get worse with size, which
+was an open question. The earlier extrapolation in this note guessed roughly
+35% off wall from the ieee2522 arm; the measured reduction is 57.3%, well
+past that guess, because per-stage factorisation collapsed by 90% rather than
+scaling with the ieee2522 arm's 63%. `mean_nnz_LU` fell from 1.78M to 868K
+(-51.2%).
+
 ## What this does not yet establish
 
-- **large10k is not measured here.** It is the case that matters, because
-  factorisation is 68-70% of wall on the real-price large10k runs against 34% on
-  ieee2522 (`FILTERDDP_ITERATION_TIMING_BREAKDOWN.md` and the
-  `iteration_timing_large10kC_*.csv` traces). Naive extrapolation from the
-  ieee2522 arm -- per-iteration cost `0.70*0.37 + 0.30 = 0.56`, times 1.16
-  iterations -- predicts roughly 35% off wall. Unverified.
 - Only `T = 3`. The iteration penalty comes from discarding `Vxx`, whose
   influence should grow with the horizon, so the 16-20% figure is a lower bound
   on what longer horizons would pay.
