@@ -59,7 +59,12 @@ for SYS in $SYSTEMS; do
     say "A: $SYS T=3 $ARM"
     if [ "$ARM" = exact ]; then
       unset FILTERDDP_DIAG_HESSIAN FILTERDDP_DIAG_HESSIAN_FLOOR
+      # Section C needs one stage-1 KKT per system. Take it from this arm --
+      # capturing it separately would mean a second full solve (2.2 h at large10k).
+      export FILTERDDP_CAPTURE_KKT="$OUT/captures/${SYS}_T3_stage1.jls"
+      export FILTERDDP_CAPTURE_STAGE=1
     else
+      unset FILTERDDP_CAPTURE_KKT FILTERDDP_CAPTURE_STAGE
       export FILTERDDP_DIAG_HESSIAN=1
       export FILTERDDP_DIAG_HESSIAN_FLOOR="${ARM#diag}"
     fi
@@ -68,14 +73,20 @@ for SYS in $SYSTEMS; do
     finish "$LOG"
   done
 done
-unset FILTERDDP_DIAG_HESSIAN FILTERDDP_DIAG_HESSIAN_FLOOR
+unset FILTERDDP_DIAG_HESSIAN FILTERDDP_DIAG_HESSIAN_FLOOR FILTERDDP_CAPTURE_KKT FILTERDDP_CAPTURE_STAGE
 
 # ------------------------------------------------- B: stale-factor reuse -----
 # Needs every iteration's KKT, which is GBs at large10k, so the periodic dump is
 # capped at the two smaller systems. The mechanism (Sigma = z/s dominating K) is
 # instance-independent; only the step counts are not.
 for SYS in $SYSTEMS; do
-  [ "$SYS" = large10kC_1ph ] && { say "skip B large10k (capture too large)"; continue; }
+  # The per-iteration dump stores a DENSE (nu+nc) x (nx+1) RHS per snapshot:
+  # 1353x52 = 0.6 MB on ieee123 but 23695x251 = 47.6 MB on ieee2522, so a full
+  # 51-iteration x 3-stage run is ~7.3 GB there and far worse at large10k. A
+  # stride would save disk but breaks the study, which needs CONSECUTIVE
+  # iterations to measure lag-1 drift. The mechanism being measured (Sigma = z/s
+  # dominating K) is instance-independent, so ieee123 carries it.
+  [ "$SYS" = ieee123C_1ph ] || { say "skip B $SYS (per-iteration capture too large)"; continue; }
   CAPDIR="$OUT/captures/${SYS}_T3"
   LOG="$OUT/logs/B_capture_${SYS}.log"
   if ! done_marker "$LOG"; then
