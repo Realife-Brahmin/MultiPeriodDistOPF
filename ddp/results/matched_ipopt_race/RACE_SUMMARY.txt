@@ -6,6 +6,7 @@ system            T | ipopt           iters   ipopt s    bg | diag    iters    d
 ----------------------------------------------------------------------------------------------------------------------
 ieee123C_1ph      3 | LOCALLY_SOLVED     36       0.2   0.2 | OK         59      19.4   0.4 |   4.1e-08    99.64x |     0.3 s/34 it
 ieee123C_1ph      6 | LOCALLY_SOLVED     37       0.4   0.6 | OK         75      22.6   0.4 |   4.3e-08    60.07x |     0.6 s/44 it
+ieee123C_1ph     12 | LOCALLY_SOLVED     40       0.6   0.5 | --         --        --    -- |        --        -- |     0.8 s/41 it
 ----------------------------------------------------------------------------------------------------------------------
 ipopt s = Ipopt solve time. diag s = FilterDDP wall. diag/ip < 1.00x means FilterDDP is faster.
 obj rel = |Ipopt - FilterDDP| / |Ipopt|: small means the two solved the same problem.
