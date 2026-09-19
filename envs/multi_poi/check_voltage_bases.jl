@@ -37,7 +37,7 @@ const SYSTEMS = ["ads10A_1ph", "small2poi_1ph", "ieee123C_1ph",
                  "ieee123_5poi_1ph", "ieee2522C_1ph", "large10kC_1ph"]
 
 "Strip any node qualifier: \"12.1.2\" -> \"12\"."
-strip_nodes(bus) = split(bus, '.')[1]
+strip_nodes(bus) = String(split(bus, '.')[1])   # ODD's SetActiveBus accepts String only, not SubString
 
 "Compile and solve one system; return its Vsource rows plus circuit-wide stats."
 function probe(system::AbstractString)
