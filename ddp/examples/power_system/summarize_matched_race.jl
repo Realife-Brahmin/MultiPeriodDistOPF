@@ -68,14 +68,35 @@ sort!(unique!(keys_), by = k -> (get(sysorder, k[1], 9), k[2]))
 
 f1(x) = isnan(x) ? "--" : @sprintf("%.1f", x)
 
+# Median cores used by OTHER processes during a run (sample_background_load.jl).
+# Runs shorter than one 15 s sample fall back to the pre-run QUIET_WAIT reading.
+function background(csv, log)
+    vals = Float64[]
+    if isfile(csv)
+        for l in Iterators.drop(eachline(csv), 1)
+            f = split(l, ',')
+            length(f) >= 2 && (v = tryparse(Float64, f[2]); v === nothing || push!(vals, v))
+        end
+    end
+    if isempty(vals) && isfile(log)
+        m = match(r"QUIET_WAIT waited_s=\S+ other_cores=([\d.]+)", read(log, String))
+        m === nothing || push!(vals, parse(Float64, m.captures[1]))
+    end
+    isempty(vals) && return NaN
+    sort!(vals)
+    return vals[cld(length(vals), 2)]
+end
+const BUSY = 1.5
+bgstr(x) = isnan(x) ? "--" : @sprintf("%.1f%s", x, x > BUSY ? "*" : "")
+
 open(joinpath(race, "matched_race.csv"), "w") do io
-    println(io, "system,T,gamma,ipopt_status,ipopt_iterations,ipopt_solve_s,ipopt_objective,diag_status,diag_iterations,diag_wall_s,diag_objective,factor_backed,obj_rel_diff,diag_over_ipopt,oldfamily_ipopt_s,oldfamily_iterations")
+    println(io, "system,T,gamma,ipopt_status,ipopt_iterations,ipopt_solve_s,ipopt_objective,diag_status,diag_iterations,diag_wall_s,diag_objective,factor_backed,obj_rel_diff,diag_over_ipopt,oldfamily_ipopt_s,oldfamily_iterations,ipopt_background_cores,diag_background_cores")
     println("=" ^ 118)
     println("IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP (diagonal Hessian)")
     println("periodic profile, C_B = 1e-3, soft terminal SOC with per-system gamma (terminal_soc_penalty.jl)")
     println("=" ^ 118)
-    @printf("%-14s %4s | %-15s %5s %9s | %-7s %5s %9s | %9s %9s | %15s\n",
-            "system", "T", "ipopt", "iters", "ipopt s", "diag", "iters", "diag s",
+    @printf("%-14s %4s | %-15s %5s %9s %5s | %-7s %5s %9s %5s | %9s %9s | %15s\n",
+            "system", "T", "ipopt", "iters", "ipopt s", "bg", "diag", "iters", "diag s", "bg",
             "obj rel", "diag/ip", "old-family ref")
     println("-" ^ 118)
     for (sys, T) in keys_
@@ -86,21 +107,23 @@ open(joinpath(race, "matched_race.csv"), "w") do io
                 D.wall / I.solve : NaN
         o = get(old, (sys, T), (NaN, -1))
         gam = I !== nothing ? I.gamma : (D !== nothing ? D.gamma : NaN)
-        @printf(io, "%s,%d,%.6e,%s,%d,%.3f,%.12g,%s,%d,%.3f,%.12g,%d,%.3e,%.4f,%.3f,%d\n",
+        bgI = background(joinpath(logdir, "load_ipopt_$(sys)_T$(T).csv"), joinpath(logdir, "ipopt_$(sys)_T$(T).log"))
+        bgD = background(joinpath(logdir, "load_fddp_$(sys)_T$(T).csv"), joinpath(logdir, "fddp_diag_$(sys)_T$(T).log"))
+        @printf(io, "%s,%d,%.6e,%s,%d,%.3f,%.12g,%s,%d,%.3f,%.12g,%d,%.3e,%.4f,%.3f,%d,%.3f,%.3f\n",
                 sys, T, gam,
                 I === nothing ? "" : I.status, I === nothing ? -1 : I.iters,
                 I === nothing ? NaN : I.solve, I === nothing ? NaN : I.obj,
                 D === nothing ? "" : D.status, D === nothing ? -1 : D.iters,
                 D === nothing ? NaN : D.wall, D === nothing ? NaN : D.obj,
-                D === nothing ? 0 : D.fb, rel, ratio, o[1], o[2])
-        @printf("%-14s %4d | %-15s %5s %9s | %-7s %5s %9s | %9s %9s | %15s\n",
+                D === nothing ? 0 : D.fb, rel, ratio, o[1], o[2], bgI, bgD)
+        @printf("%-14s %4d | %-15s %5s %9s %5s | %-7s %5s %9s %5s | %9s %9s | %15s\n",
                 sys, T,
                 I === nothing ? "--" : first(I.status, 15),
                 I === nothing || I.iters < 0 ? "--" : string(I.iters),
-                I === nothing ? "--" : f1(I.solve),
+                I === nothing ? "--" : f1(I.solve), bgstr(bgI),
                 D === nothing ? "--" : D.status,
                 D === nothing || D.iters < 0 ? "--" : string(D.iters),
-                D === nothing ? "--" : f1(D.wall),
+                D === nothing ? "--" : f1(D.wall), bgstr(bgD),
                 isnan(rel) ? "--" : @sprintf("%.1e", rel),
                 isnan(ratio) ? "--" : @sprintf("%.2fx", ratio),
                 isnan(o[1]) ? "--" : @sprintf("%.1f s/%d it", o[1], o[2]))
@@ -109,5 +132,6 @@ end
 println("-" ^ 118)
 println("ipopt s = Ipopt solve time. diag s = FilterDDP wall. diag/ip < 1.00x means FilterDDP is faster.")
 println("obj rel = |Ipopt - FilterDDP| / |Ipopt|: small means the two solved the same problem.")
+println("bg = median cores used by OTHER processes during the run (idle floor ~0.4); * = above 1.5, timing suspect.")
 println("old-family ref = the paper's centralized sweep (C_B ~ 8.8e-8, old sampling, free terminal SOC):")
 println("  a DIFFERENT problem, shown only to locate the knee it exhibited.")
