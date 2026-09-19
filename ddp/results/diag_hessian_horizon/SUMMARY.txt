@@ -1,0 +1,13 @@
+======================================================================================================================
+EXACT vs DIAGONAL STAGE HESSIAN ACROSS HORIZONS  (periodic profile, C_B = 1e-3, floor 1e-8)
+======================================================================================================================
+system            T  FB | exact wall iters  status |  diag wall iters  status |  d wall d iters  d factor     obj rel
+----------------------------------------------------------------------------------------------------------------------
+ieee123C_1ph      3   0 |       17.0    50      OK |       15.3    60      OK |   -9.8%  +20.0%    -40.9%    1.65e-09
+ieee123C_1ph      6   0 |       20.6    61      OK |       19.4    77      OK |   -5.6%  +26.2%    -33.9%    1.75e-09
+ieee2522C_1ph     3   0 |      112.1    56      OK |      100.3    65      OK |  -10.5%  +16.1%    -63.4%    1.51e-09
+large10kC_1ph     3   0 |     2623.6   103      OK |     1409.8   120      OK |  -46.3%  +16.5%    -90.4%    3.03e-10
+----------------------------------------------------------------------------------------------------------------------
+FB = FILTERDDP_FACTOR_BACKED_POLICY for both arms. d = diag relative to exact.
+T = 3 rows come from the agenda pipeline logs; large10k T = 3 is the pipeline run
+(a second run gave -57% wall; see FILTERDDP_DIAGONAL_HESSIAN.md).
