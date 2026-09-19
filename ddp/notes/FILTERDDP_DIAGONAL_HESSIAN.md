@@ -5,8 +5,8 @@ diagonalized matrix? Does that converge? Time benefit?"*
 
 **Answer: yes it converges, to the same optimum, and it is a real win that grows
 with system size, confirmed up to large10k (1020 batteries, `nu = 54665`).** On
-large10k it cuts per-stage factorisation by 90% and total wall by 57%, paying
-16.5% more iterations for it -- in line with the 16-20% iteration penalty
+large10k it cuts per-stage factorisation by 90% and total wall by **46-57%**
+(two independent runs, see below), paying 16.5% more iterations for it -- in line with the 16-20% iteration penalty
 already seen at ieee123 and ieee2522, so the penalty does not worsen with scale.
 
 This is the **full-space** question. Earlier cheap-curvature results in this repo
@@ -104,6 +104,29 @@ was an open question. The earlier extrapolation in this note guessed roughly
 past that guess, because per-stage factorisation collapsed by 90% rather than
 scaling with the ieee2522 arm's 63%. `mean_nnz_LU` fell from 1.78M to 868K
 (-51.2%).
+
+**A second, independent run** (`run_agenda_pipeline.sh full`, 2026-09-17
+18:20-19:28, idle machine) reproduced the same trajectory exactly -- 103 and 120
+iterations, objectives identical to every printed digit, same `nnz` -- but with
+different wall times:
+
+| large10k | exact wall | diag wall | wall saving | per-stage factor |
+|---|---|---|---|---|
+| run above (2026-09-18) | 3434.995 s | 1467.627 s | -57.3% | 1669.76 -> 164.53 ms (-90.1%) |
+| pipeline (2026-09-17) | 2623.629 s | 1409.841 s | -46.3% | 2168.62 -> 208.34 ms (-90.4%) |
+
+The diag arm is stable across runs (1410 vs 1468 s, 4%); the exact arm is not
+(2624 vs 3435 s, 31%). Since both trajectories are bit-identical, that spread is
+machine timing noise concentrated in the arm that spends most of its time
+factorising. **Quote the saving as 46-57%, not as a single number.** The
+per-stage factorisation reduction (-90%) is robust across both.
+
+**Why the benefit scales so steeply:** the deleted block `fu' Vxx fu` is dense
+`nB x nB`, so it grows as the SQUARE of the battery count while the network part
+of `K` grows linearly. At large10k it is ~65% of `nnz(K)` by itself (1.11M ->
+0.39M mean); on ieee123 diagonalising removes 27%. After diagonalisation the
+factorisation is no longer the bottleneck at all -- the `nx+1`-column RHS solve
+is 54% of the diag arm's wall (764 s of 1410 s in the pipeline run).
 
 ## What this does not yet establish
 
