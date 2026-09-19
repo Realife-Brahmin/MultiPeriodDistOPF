@@ -72,6 +72,10 @@ summarise_and_push() {
   $JL --project=envs/ddp2026 ddp/examples/power_system/summarize_matched_race.jl \
       "$OUT" > "$OUT/RACE_SUMMARY.txt" 2>&1
   git add "$OUT/RACE_SUMMARY.txt" "$OUT/matched_race.csv" "$OUT/race_run.log" 2>/dev/null
+  # Also stage every TRACKED file these pipelines touch (e.g. the horizon sweep's
+  # log gets one last line after its final commit). An unstaged tracked change
+  # makes `git pull --rebase` refuse, and every push after it would fail.
+  git add -u -- "$OUT" "$SWEEP" 2>/dev/null
   if ! git diff --cached --quiet; then
     git commit -q -m "matched Ipopt race: $1 (auto-commit by run_matched_ipopt_race.sh)
 
