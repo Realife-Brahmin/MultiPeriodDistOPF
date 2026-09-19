@@ -39,6 +39,8 @@ function on_exit(data::SolverData)
         println("EXIT: Failed, line-search unable to find acceptable iterate in forward pass.")
     elseif data.status == 8
         println("EXIT: Failed, maximum solver iterations reached.")
+    elseif data.status == 9
+        println("EXIT: Near-optimal: feasible and within the gap of the centralized reference.")
     else
         println("DEBUG: This message should not display.")
     end

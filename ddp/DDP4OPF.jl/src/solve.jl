@@ -5,8 +5,30 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx},
     return status
 end
 
+# ------------------------------------------------------ near-optimal stop --
+# Standing rule (user, 2026-09-19): a run is scored by the time until its iterate
+# is FEASIBLE (primal infeasibility <= FILTERDDP_NEAR_OPT_PRIMAL, default 1e-6)
+# AND its objective is within FILTERDDP_NEAR_OPT_GAP (default 0.5%) of the
+# centralized reference FILTERDDP_NEAR_OPT_REFERENCE, which is always solved
+# first. The strict-tolerance tail (dual residual, mu -> 1e-8) does not count --
+# as with tADMM, the dual residual can keep a run going long after the answer is
+# in hand. Off unless the reference is set, so default behaviour is unchanged.
+# Stops with status 9 and prints one FILTERDDP_NEAR_OPT line.
+function _near_opt_settings()
+    haskey(ENV, "FILTERDDP_NEAR_OPT_REFERENCE") || return nothing
+    ref = parse(Float64, ENV["FILTERDDP_NEAR_OPT_REFERENCE"])
+    gap = parse(Float64, get(ENV, "FILTERDDP_NEAR_OPT_GAP", "0.005"))
+    primal = parse(Float64, get(ENV, "FILTERDDP_NEAR_OPT_PRIMAL", "1e-6"))
+    isfinite(ref) || error("FILTERDDP_NEAR_OPT_REFERENCE must be finite")
+    0.0 <= gap < 1.0 || error("FILTERDDP_NEAR_OPT_GAP must lie in [0, 1)")
+    primal >= 0.0 || error("FILTERDDP_NEAR_OPT_PRIMAL must be nonnegative")
+    return (ref = ref, gap = gap, primal = primal)
+end
+
 function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, nux, ncx,}
     (solver.options.verbose && solver.data.k==0) && solver_info()
+    solve_start_ns = time_ns()
+    near_opt = _near_opt_settings()
 
 	ocp = solver.ocp
     options = solver.options
@@ -25,6 +47,23 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
         backward_s = (time_ns() - backward_start_ns) / 1e9
         timing_diagnostic && flush(stdout)
         data.status != 0 && break
+
+        # near-optimal stop: feasible and within the gap of the centralized reference
+        if near_opt !== nothing && data.primal_inf <= near_opt.primal &&
+                abs(data.objective - near_opt.ref) <=
+                    near_opt.gap * max(abs(near_opt.ref), eps(Float64))
+            timing_diagnostic && @printf(
+                "FILTERDDP_ITER_TIMING iteration=%d barrier_iteration=%d backward_s=%.9f forward_s=0.000000000 total_s=%.9f outcome=near_optimal step_size=%.9e backtracks=%d mu=%.9e\n",
+                data.k, data.j, backward_s, backward_s, data.step_size, data.l, data.μ)
+            options.verbose && iteration_status(data, options)
+            @printf("FILTERDDP_NEAR_OPT iteration=%d elapsed_s=%.3f objective=%.12f reference=%.12f rel_gap=%.3e primal_inf=%.3e dual_inf=%.3e mu=%.3e\n",
+                data.k, (time_ns() - solve_start_ns) / 1e9, data.objective, near_opt.ref,
+                abs(data.objective - near_opt.ref) / max(abs(near_opt.ref), eps(Float64)),
+                data.primal_inf, data.dual_inf, data.μ)
+            flush(stdout)
+            data.status = 9
+            break
+        end
 
         # check (outer) overall problem convergence
         # check (inner) barrier problem convergence and update barrier parameter if so

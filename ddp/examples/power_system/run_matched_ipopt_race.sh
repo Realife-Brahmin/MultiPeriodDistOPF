@@ -88,9 +88,12 @@ $JL ddp/examples/power_system/hold_awake.jl "$LOCK" 40 > "$OUT/logs/hold_awake.l
 trap 'rm -f "$LOCK"' EXIT
 
 summarise_and_push() {
+  $JL --project=envs/ddp2026 ddp/examples/power_system/near_opt_from_logs.jl \
+      race "$OUT" > "$OUT/NEAR_OPT_SUMMARY.txt" 2>&1
   $JL --project=envs/ddp2026 ddp/examples/power_system/summarize_matched_race.jl \
       "$OUT" > "$OUT/RACE_SUMMARY.txt" 2>&1
-  git add "$OUT/RACE_SUMMARY.txt" "$OUT/matched_race.csv" "$OUT/race_run.log" 2>/dev/null
+  git add "$OUT/RACE_SUMMARY.txt" "$OUT/NEAR_OPT_SUMMARY.txt" "$OUT/near_opt.csv" \
+      "$OUT/matched_race.csv" "$OUT/race_run.log" 2>/dev/null
   # Also stage every TRACKED file these pipelines touch (e.g. the horizon sweep's
   # log gets one last line after its final commit). An unstaged tracked change
   # makes `git pull --rebase` refuse, and every push after it would fail.
@@ -149,11 +152,18 @@ run_fddp() {  # $1 system, $2 T  -- diagonal-Hessian arm
 
 run_fddp_job() {  # $1 system, $2 T, $3 factor_backed
   local SYS=$1 T=$2 FB=$3
+  local REF
+  REF=$(grep -oE "CENTRAL_IPOPT .*" "$OUT/logs/ipopt_${SYS}_T${T}.log" | \
+        grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
+  [ -n "$REF" ] || { echo "missing centralized objective for $SYS T=$T"; return 1; }
   (
     export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8
+    export FILTERDDP_NEAR_OPT_REFERENCE="$REF"
+    export FILTERDDP_NEAR_OPT_GAP=0.005
+    export FILTERDDP_NEAR_OPT_PRIMAL=1e-6
     if [ "$FB" = 1 ]; then export FILTERDDP_FACTOR_BACKED_POLICY=1
     else unset FILTERDDP_FACTOR_BACKED_POLICY; fi
-    echo "PIPELINE_ENV system=$SYS T=$T arm=diag factor_backed=$FB diag_floor=1e-8 terminal_soc_soft=$TERMINAL_SOC_SOFT max_iterations=$FILTERDDP_MAX_ITERATIONS C_B=$REDUCED_CB profile=$REDUCED_PROFILE started=$(date '+%Y-%m-%dT%H:%M:%S')"
+    echo "PIPELINE_ENV system=$SYS T=$T arm=diag factor_backed=$FB diag_floor=1e-8 terminal_soc_soft=$TERMINAL_SOC_SOFT max_iterations=$FILTERDDP_MAX_ITERATIONS C_B=$REDUCED_CB profile=$REDUCED_PROFILE near_opt_reference=$REF near_opt_gap=$FILTERDDP_NEAR_OPT_GAP near_opt_primal=$FILTERDDP_NEAR_OPT_PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
     $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
   )
 }
