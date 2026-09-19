@@ -5,6 +5,21 @@ same ground truth. Session-local memory (`~/.claude/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
+## Standing rules (user, 2026-09-18) -- read first
+
+- **Terminal SOC is always a SOFT constraint, in every algorithm** (FilterDDP,
+  centralized Ipopt, tADMM, run_bf): objective `+ gamma * sum_j (B_j^T - B_j^0)^2`.
+  `gamma` is fixed **per system** and never varies with the horizon `T`. Single
+  source of truth: `ddp/examples/power_system/terminal_soc_penalty.jl`
+  (ieee123 1.75e4, ieee2522 3.29e4, large10k 420). `gamma` is **not** `C_B`.
+  Currently wired into the FilterDDP driver and `centralized_ipopt_matched.jl`
+  behind `TERMINAL_SOC_SOFT=1`; tADMM and run_bf still need it before their next run.
+- **Solver timing comparisons only on a provably identical problem**: same
+  exported instance, `C_B`, `gamma` and profile, with objective agreement checked
+  before any timing is quoted. The paper's older centralized Ipopt sweep
+  (`ddp/results/centralized_ipopt/`) is on a DIFFERENT instance family
+  (`C_B ~ 8.8e-8`, old price sampling, free terminal SOC) -- do not race against it.
+
 ## Working branch
 
 Current branch as of 2026-09-15 is `ddp-understanding-sep15` (`sep14` was merged
