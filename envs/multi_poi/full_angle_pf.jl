@@ -59,31 +59,33 @@ busname(bus) = lowercase(String(split(bus, '.')[1]))
 nodes_of(bus) = [parse(Int, n) for n in split(bus, '.')[2:end]]
 
 """
-    compile_deck(system; sources = nothing, disable = String[], snapshot = false,
-                 stiff_sources = false, load_band = nothing)
+    compile_deck(system; extra = String[], sources = nothing, disable = String[],
+                 snapshot = false, stiff_sources = false, load_band = nothing)
 
 Compile `rawData/<system>/Master.dss`, then adjust it in memory -- the deck on disk is
 never modified:
+  * `extra`: DSS commands run right after the deck, e.g. a test battery to add;
   * `sources`: the Vsources to keep (by name); every other Vsource is disabled;
   * `disable`: element classes to switch off wholesale, e.g. ["PVSystem", "Storage"];
   * `snapshot`: snapshot mode, i.e. loads at their base kW with no loadshape applied;
   * `stiff_sources`: replace each kept Vsource's impedance with a 1e-8 ohm reactance;
-  * `load_band = (lo, hi)`: set every load's [Vminpu, Vmaxpu]. OpenDSS keeps a model=1
-    load constant-PQ only inside that band and makes it a constant impedance outside,
-    while the JuMP model is constant-PQ everywhere.
+  * `load_band = (lo, hi)`: set every load's and storage element's [Vminpu, Vmaxpu].
+    OpenDSS keeps a model=1 load constant-PQ only inside that band and makes it a
+    constant impedance outside, while the JuMP model is constant-PQ everywhere.
 OpenDSS's convergence tolerance is tightened from its default 1e-4 so that the
 cross-check measures the models, not OpenDSS's stopping rule.
 
 Returns `deck_load_band`, each load's (Vminpu, Vmaxpu) as the deck has it, so callers can
 still report against the deck's own band after widening it.
 """
-function compile_deck(system; sources = nothing, disable = String[], snapshot = false,
-                      stiff_sources = false, load_band = nothing, tolerance = 1e-12,
-                      max_iterations = 1000)
+function compile_deck(system; extra = String[], sources = nothing, disable = String[],
+                      snapshot = false, stiff_sources = false, load_band = nothing,
+                      tolerance = 1e-12, max_iterations = 1000)
     master = joinpath(REPO_ROOT, "rawData", system, "Master.dss")
     isfile(master) || error("Master.dss not found: $master")
     ODD.Text.Command("Clear")
     ODD.Text.Command("Redirect \"$master\"")
+    foreach(ODD.Text.Command, extra)
     for class in disable
         ODD.Text.Command("BatchEdit $class..* enabled=false")
     end
@@ -93,7 +95,14 @@ function compile_deck(system; sources = nothing, disable = String[], snapshot = 
         ODD.Loads.Name(name)
         deck_load_band[lowercase(name)] = (ODD.Loads.Vminpu(), ODD.Loads.Vmaxpu())
     end
-    load_band === nothing || ODD.Text.Command("BatchEdit Load..* Vminpu=$(load_band[1]) Vmaxpu=$(load_band[2])")
+    # Below Vlowpu (default 0.5) OpenDSS makes a load constant-Z whatever Vminpu says, so a
+    # band reaching below 0.5 pu lowers Vlowpu with it.
+    if load_band !== nothing
+        lo, hi = load_band
+        ODD.Text.Command("BatchEdit Load..* Vminpu=$lo Vmaxpu=$hi Vlowpu=$(min(0.5, lo))")
+        any(startswith(lowercase(el), "storage.") for el in ODD.Circuit.AllElementNames()) &&
+            ODD.Text.Command("BatchEdit Storage..* Vminpu=$lo Vmaxpu=$hi")
+    end
     kept = String[]
     for el in ODD.Circuit.AllElementNames()
         startswith(lowercase(el), "vsource.") || continue
@@ -125,7 +134,7 @@ Read the compiled circuit into the data `solve_full_angle` needs. Impedances and
 admittances stay in ohms and siemens here; `Y_base` converts them to per unit.
 """
 function read_network(; S_base_kVA = 1000.0)
-    lines, sources, loads = [], [], []
+    lines, sources, loads, batteries = [], [], [], []
     for el in ODD.Circuit.AllElementNames()
         ODD.Circuit.SetActiveElement(el)
         ODD.CktElement.Enabled() || continue
@@ -149,6 +158,12 @@ function read_network(; S_base_kVA = 1000.0)
             Int(ODD.Loads.Model()) == 1 || error("$el: only constant-PQ loads (model=1) are supported")
             push!(loads, (; name, bus = busname(refs[1]), kW = ODD.Loads.kW(), kvar = ODD.Loads.kvar(),
                           kV = ODD.Loads.kV(), vminpu = ODD.Loads.Vminpu(), vmaxpu = ODD.Loads.Vmaxpu()))
+        elseif class == "storage"
+            # A real-power resource here: output P_B within +-kWrated, no reactive power.
+            ODD.CktElement.NumPhases() == 1 || error("$el: only 1-phase storage is supported")
+            prop(p) = parse(Float64, ODD.Properties.Value(p))
+            push!(batteries, (; name, bus = busname(refs[1]), kW_rated = prop("kWrated"),
+                              kVA = prop("kVA"), kWh_rated = prop("kWhrated")))
         else
             error("$el: element class '$class' is not supported by the full-angle model")
         end
@@ -160,7 +175,7 @@ function read_network(; S_base_kVA = 1000.0)
     length(kV_bases) == 1 || error("Vsources disagree on basekv: $kV_bases")
     kV_base = only(kV_bases)
 
-    return (; buses = lowercase.(ODD.Circuit.AllBusNames()), lines, sources, loads,
+    return (; buses = lowercase.(ODD.Circuit.AllBusNames()), lines, sources, loads, batteries,
             kV_base, S_base_kVA, Y_base = S_base_kVA * 1e3 / (kV_base * 1e3)^2)
 end
 
@@ -210,6 +225,7 @@ end
 skipped(net, solver) = (; solver, status = :SKIPPED, ok = false, time = NaN, iterations = missing,
                         P_subs_kW = Dict(s.name => NaN for s in net.sources),
                         Q_subs_kvar = Dict(s.name => NaN for s in net.sources),
+                        P_B_kW = Dict(bt.name => NaN for bt in net.batteries),
                         V_pu = Dict(b => complex(NaN, NaN) for b in net.buses))
 
 # Ipopt's tolerance: in per unit on 1000 kVA this network's admittances run to ~5e3, so the
@@ -240,7 +256,8 @@ end
 
 """
     solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false,
-                     sense = MIN_SENSE, V_load_start = nothing)
+                     sense = MIN_SENSE, V_load_start = nothing,
+                     battery = :idle, no_backflow = false, V_guard = nothing)
 
 Full-angle AC power flow with each source's EMF fixed at `pu * cis(delta)`, where
 `delta_deg[name]` is that Vsource's angle in degrees, behind the source impedance OpenDSS
@@ -252,13 +269,34 @@ at its terminal bus.
 The other (low-voltage) power-flow root: Gurobi finds it globally with
 `sense = MAX_SENSE`; Ipopt, being local, converges to whichever root is nearest its
 start, so pass `V_load_start` (per unit) to start every bus that carries load low.
+
+Batteries (`net.batteries`) inject P_B, discharging positive -- the repo's convention --
+with no reactive power. `battery` is `:idle` (P_B = 0), a Dict of fixed outputs in kW by
+battery name, or `:optimize`: P_B free within +-kWrated, and the objective becomes the
+smallest dispatch, min sum(P_B^2). That is the OPF of interest with `no_backflow = true`,
+which adds P_Subs >= 0 at every source. `V_guard` (per unit) bounds every bus voltage
+from below, which keeps an optimizer off the low-voltage root -- where both substations
+import hugely -- as a spurious way to meet P_Subs >= 0.
 """
 function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false,
-                          sense = MIN_SENSE, V_load_start = nothing)
+                          sense = MIN_SENSE, V_load_start = nothing,
+                          battery = :idle, no_backflow = false, V_guard = nothing)
     model = new_model(solver)
     buses = net.buses
     names = [s.name for s in net.sources]
     E = Dict(s.name => s.pu * cis(deg2rad(delta_deg[s.name])) for s in net.sources)
+
+    bnames = [bt.name for bt in net.batteries]
+    @variable(model, P_B[bnames])                 # battery output, discharging > 0, per unit
+    for bt in net.batteries
+        if battery === :optimize
+            set_lower_bound(P_B[bt.name], -bt.kW_rated / net.S_base_kVA)
+            set_upper_bound(P_B[bt.name], bt.kW_rated / net.S_base_kVA)
+        else
+            kW = battery === :idle ? 0.0 : battery[bt.name]
+            fix(P_B[bt.name], kW / net.S_base_kVA; force = true)
+        end
+    end
 
     lines = [l.name for l in net.lines]
     @variable(model, -1.5 <= e[buses] <= 1.5)     # bus voltage V = e + jf, per unit
@@ -345,18 +383,27 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
     end
 
     # Power balance at every bus: out through lines + load = delivered by a source there
+    # plus the output of any battery there
     load_pu = Dict(b => 0.0im for b in buses)
     for d in net.loads
         load_pu[d.bus] += complex(d.kW, d.kvar) / net.S_base_kVA
     end
     src_at = Dict(s.bus => s.name for s in net.sources)
+    batt_at = Dict(b => [bt.name for bt in net.batteries if bt.bus == b] for b in buses)
     for b in buses
-        P_in = haskey(src_at, b) ? P_subs[src_at[b]] : 0.0
+        P_in = (haskey(src_at, b) ? P_subs[src_at[b]] : 0.0) + sum(P_B[k] for k in batt_at[b]; init = 0.0)
         Q_in = haskey(src_at, b) ? Q_subs[src_at[b]] : 0.0
         @constraint(model, sum(x.P for x in out[b]) + real(load_pu[b]) == P_in)
         @constraint(model, sum(x.Q for x in out[b]) + imag(load_pu[b]) == Q_in)
     end
-    @objective(model, sense, sum(P_subs))
+
+    no_backflow && @constraint(model, [k in names], P_subs[k] >= 0)
+    V_guard === nothing || @constraint(model, [b in buses], e[b]^2 + f[b]^2 >= V_guard^2)
+    if battery === :optimize
+        @objective(model, Min, sum((P_B[k]^2 for k in bnames); init = zero(QuadExpr)))
+    else
+        @objective(model, sense, sum(P_subs))
+    end
 
     optimize!(model)
     status = termination_status(model)
@@ -366,26 +413,36 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
     return (; solver, status, ok, time = solve_time(model), iterations,
             P_subs_kW = Dict(k => val(P_subs[k]) * net.S_base_kVA for k in names),
             Q_subs_kvar = Dict(k => val(Q_subs[k]) * net.S_base_kVA for k in names),
+            P_B_kW = Dict(k => val(P_B[k]) * net.S_base_kVA for k in bnames),
             V_pu = Dict(b => complex(val(e[b]), val(f[b])) for b in buses))
 end
 
 """
-    opendss_point(net, delta_deg)
+    opendss_point(net, delta_deg; P_B = nothing)
 
-Set each Vsource's angle, solve the compiled circuit, and read back what
+Set each Vsource's angle and each battery's output (`P_B`, kW by name, discharging
+positive; `nothing` = all zero), solve the compiled circuit, and read back what
 `solve_full_angle` returns: voltages in per unit of net.kV_base, and substation power in
 kW/kvar measured as the power leaving the source's bus through its lines, plus any load
-on that bus. (The Vsource's own power reading, kept as `S_vsource_kVA`, is the same
-quantity but loses digits when Zs is tiny: it evaluates Ys*(E - V) with |Ys| ~ 1e8 S.)
+on that bus, less any battery output there. (The Vsource's own power reading, kept as
+`S_vsource_kVA`, is the same quantity but loses digits when Zs is tiny: it evaluates
+Ys*(E - V) with |Ys| ~ 1e8 S.) `P_B_kW` is what each battery actually delivered.
+
+A battery is dispatched with `Edit Storage.<name> kW=<P_B>`, which OpenDSS turns into
+charging (P_B < 0) or discharging at exactly that terminal power; at P_B = 0 it idles
+and draws %IdlingkW, which must therefore be 0 for the two models to match.
 
 `pq_band` is false if any load left its constant-PQ band: outside [Vminpu, Vmaxpu]
 OpenDSS turns a model=1 load into a constant impedance, and the two models then
 legitimately differ.
 """
-function opendss_point(net, delta_deg)
+function opendss_point(net, delta_deg; P_B = nothing)
     for s in net.sources
         ODD.Vsources.Name(s.name)
         ODD.Vsources.AngleDeg(Float64(delta_deg[s.name]))
+    end
+    for bt in net.batteries
+        ODD.Text.Command(@sprintf("Edit Storage.%s kW=%.12g", bt.name, P_B === nothing ? 0.0 : P_B[bt.name]))
     end
     ODD.Solution.Solve()
 
@@ -393,6 +450,11 @@ function opendss_point(net, delta_deg)
     for b in net.buses
         ODD.Circuit.SetActiveBus(b)
         V[b] = first(ODD.Bus.Voltages()) / (net.kV_base * 1e3)
+    end
+    S_B = Dict{String,ComplexF64}()
+    for bt in net.batteries
+        ODD.Circuit.SetActiveElement("Storage." * bt.name)
+        S_B[bt.name] = -sum(ODD.CktElement.Powers())     # into the element -> delivered
     end
 
     P, Q, S_vsource = Dict{String,Float64}(), Dict{String,Float64}(), Dict{String,ComplexF64}()
@@ -409,13 +471,15 @@ function opendss_point(net, delta_deg)
             ODD.Circuit.SetActiveElement("Load." * d.name)
             S += sum(ODD.CktElement.Powers())
         end
+        S -= sum((S_B[bt.name] for bt in net.batteries if bt.bus == s.bus); init = 0.0im)
         P[s.name], Q[s.name] = real(S), imag(S)
         ODD.Circuit.SetActiveElement("Vsource." * s.name)
         S_vsource[s.name] = -ODD.CktElement.Powers()[1]  # into the element -> delivered
     end
     pq_band = all(d -> d.vminpu <= abs(V[d.bus]) * net.kV_base / d.kV <= d.vmaxpu, net.loads)
     return (; converged = ODD.Solution.Converged(), iterations = ODD.Solution.Iterations(),
-            P_subs_kW = P, Q_subs_kvar = Q, V_pu = V, S_vsource_kVA = S_vsource, pq_band)
+            P_subs_kW = P, Q_subs_kvar = Q, V_pu = V, S_vsource_kVA = S_vsource,
+            P_B_kW = Dict(k => real(v) for (k, v) in S_B), pq_band)
 end
 
 "Largest disagreement between two solutions: substation P (kW), Q (kvar), bus-voltage phasor (pu)."

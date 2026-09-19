@@ -9,6 +9,8 @@
 #     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl small2poi
 #     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123
 #     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123 subs1 subs4
+#     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123_wide
+# (small2poi_wide / ieee123_wide sweep the power-angle curve out to -150..150 deg.)
 #
 # Writes (gitignored) envs/multi_poi/processedData/<system>/angle_sweep_<a>_<b>/:
 #     sweep.csv   every point: JuMP-Ipopt, JuMP-Gurobi, OpenDSS, and their differences
@@ -28,20 +30,27 @@
 # the cross-check; where voltages leave the deck's own band is reported separately.
 
 include(joinpath(@__DIR__, "..", "full_angle_pf.jl"))
-using Plots
+include(joinpath(@__DIR__, "..", "sweep_common.jl"))
 
-# Per system: deck, default pair, what to switch off, sweep grid, plot ticks. Gurobi runs at
-# the base case only on ieee123: a global solve of a 130-bus nonconvex QCQP at every sweep
-# point could take hours.
+# Per system: deck, default pair, what to switch off, sweep grid, plot ticks, and the
+# constant-PQ band OpenDSS is given for the cross-check. The *_wide variants run the
+# power-angle curve out to +-150 deg; there load voltages fall far below 0.5 pu, so the band
+# goes lower. Much past that, the voltage null of the swing (its electrical centre) reaches
+# load buses, and constant-PQ loads cannot be served there: neither solver finds a power
+# flow. Gurobi runs at the base case only on ieee123: a global solve of a 130-bus nonconvex
+# QCQP at every sweep point could take hours.
+const SMALL2POI = (system = "small2poi_1ph", pair = ("grid1", "grid2"), disable = String[],
+                   snapshot = false, gurobi_everywhere = true)
+const IEEE123 = (system = "ieee123_5poi_1ph", pair = ("subs3", "subs4"),
+                 disable = ["PVSystem", "Storage"], snapshot = true, gurobi_everywhere = false)
+const NARROW = (load_band = (0.5, 1.5), tag = "")
+const WIDE = (ddelta = -150.0:2.0:150.0, dot_step = 30.0, xticks = -150:30:150,
+              load_band = (0.02, 2.0), tag = "_wide")
 const CONFIGS = Dict(
-    "small2poi" => (system = "small2poi_1ph", pair = ("grid1", "grid2"), disable = String[],
-                    snapshot = false, ddelta = -4.0:0.25:4.0, dot_step = 1.0, xticks = -4:1:4,
-                    gurobi_everywhere = true),
-    "ieee123" => (system = "ieee123_5poi_1ph", pair = ("subs3", "subs4"),
-                  disable = ["PVSystem", "Storage"], snapshot = true,
-                  ddelta = -2.0:0.05:2.0, dot_step = 0.25, xticks = -2:0.5:2,
-                  gurobi_everywhere = false))
-const LOAD_BAND = (0.5, 1.5)                          # constant-PQ band used for the cross-check
+    "small2poi" => (; SMALL2POI..., NARROW..., ddelta = -4.0:0.25:4.0, dot_step = 1.0, xticks = -4:1:4),
+    "ieee123" => (; IEEE123..., NARROW..., ddelta = -2.0:0.05:2.0, dot_step = 0.25, xticks = -2:0.5:2),
+    "small2poi_wide" => (; SMALL2POI..., WIDE...),
+    "ieee123_wide" => (; IEEE123..., WIDE..., gurobi_everywhere = false))
 const ROTATIONS = [0.0, -0.5, 14.0, -45.0, 120.0]     # common offsets for the invariance check
 const TOL_KW = 1e-3                                   # agreement demanded: 1 W, 1 var
 const TOL_V = 1e-8                                    # agreement demanded: pu voltage phasor
@@ -50,12 +59,7 @@ const KEY = isempty(ARGS) ? "small2poi" : lowercase(ARGS[1])
 haskey(CONFIGS, KEY) || error("unknown system '$KEY'; one of: $(join(sort(collect(keys(CONFIGS))), ", "))")
 const CFG = CONFIGS[KEY]
 const A, B = length(ARGS) >= 3 ? (lowercase(ARGS[2]), lowercase(ARGS[3])) : CFG.pair
-const OUT_DIR = normpath(joinpath(@__DIR__, "..", "processedData", CFG.system, "angle_sweep_$(A)_$(B)"))
-
-"\"subs3\" -> \"Subs 3\", \"grid1\" -> \"Subs 1\"."
-label(name) = (m = match(r"(\d+)$", name)) === nothing ? name : "Subs " * m.captures[1]
-"\"subs3\" -> \"δ3\"."
-dlabel(name) = (m = match(r"(\d+)$", name)) === nothing ? "δ_" * name : "δ" * m.captures[1]
+const OUT_DIR = normpath(joinpath(@__DIR__, "..", "processedData", CFG.system, "angle_sweep_$(A)_$(B)$(CFG.tag)"))
 
 const USE_GUROBI, GUROBI_WHY = gurobi_usable()
 USE_GUROBI || println("\nGUROBI SKIPPED -- ", GUROBI_WHY, "\nRunning Ipopt + OpenDSS only.")
@@ -71,27 +75,9 @@ function solve_all(net, da, db; gurobi = true, with_ideal = false)
             id = with_ideal ? solve_full_angle(net, delta; ideal_sources = true) : skipped(net, :ipopt))
 end
 
-"Voltage at every load, per unit of that load's own kV."
-load_V(net, x) = [abs(x.V_pu[d.bus]) * net.kV_base / d.kV for d in net.loads]
-"Does every load sit inside the (Vminpu, Vmaxpu) band given for it?"
-function in_band(net, band, x)
-    for (d, v) in zip(net.loads, load_V(net, x))
-        lo, hi = band[d.name]
-        lo <= v <= hi || return false
-    end
-    return true
-end
-losses(x, P_load) = x.P_subs_kW[A] + x.P_subs_kW[B] - P_load
-
-"Where P_Subs of `src` crosses zero along the sweep (linear interpolation), or nothing."
-function zero_crossing(r, src)
-    y = [x.ip.P_subs_kW[src] for x in r]
-    j = findfirst(i -> sign(y[i]) != sign(y[i+1]), 1:length(y)-1)
-    j === nothing && return nothing
-    return r[j].dd + (r[j+1].dd - r[j].dd) * y[j] / (y[j] - y[j+1])
-end
-
-ipopt_status(x) = string(x.status) * (x.iterations === missing ? "" : " ($(x.iterations) it)")
+"The both-import window of the sweep's Ipopt solutions (see import_window)."
+window(rows) = import_window([x.dd for x in rows], [x.ip.P_subs_kW[A] for x in rows],
+                             [x.ip.P_subs_kW[B] for x in rows])
 
 function print_row(label, status, x, net)
     Vl = load_V(net, x)
@@ -121,7 +107,7 @@ end
 
 # ---- the deck with only the chosen pair ----------------------------------------------------------
 dk = compile_deck(CFG.system; sources = [A, B], disable = CFG.disable, snapshot = CFG.snapshot,
-                  load_band = LOAD_BAND)
+                  load_band = CFG.load_band)
 const NET = read_network()
 const BAND = dk.deck_load_band
 const P_LOAD = sum(d.kW for d in NET.loads)
@@ -171,36 +157,48 @@ spread(f) = maximum(f(r) for r in same) - minimum(f(r) for r in same)
 @printf "  spread across rotations: Ipopt %.2e kW, OpenDSS %.2e kW\n" max(spread(r -> r.ip.P_subs_kW[A]), spread(r -> r.ip.P_subs_kW[B])) max(spread(r -> r.ds.P_subs_kW[A]), spread(r -> r.ds.P_subs_kW[B]))
 
 # ---- the sweep: delta_b = 0, delta_a over the grid -----------------------------------------------
+# Where a solver finds no power flow its values are blanked to NaN (gaps in the plot); the
+# flags ip.ok and ds.converged still record what happened.
 rows = []
 for dd in CFG.ddelta
     x = solve_all(NET, dd, 0.0; gurobi = CFG.gurobi_everywhere, with_ideal = true)
+    x = merge(x, (; ip = x.ip.ok ? x.ip : blank(x.ip), ds = x.ds.converged ? x.ds : blank(x.ds),
+                  id = x.id.ok ? x.id : blank(x.id)))
     push!(rows, (; deck_ok = in_band(NET, BAND, x.ds), x...))
 end
 
 # ---- summary -------------------------------------------------------------------------------------
 n = length(rows)
+solved = filter(x -> x.ip.ok, rows)
 println("\n", "="^104)
 @printf "Sweep: %s = 0, %s = %.2f .. %.2f deg (%d points; table every %.2g deg)\n" dlabel(B) dlabel(A) first(CFG.ddelta) last(CFG.ddelta) n CFG.dot_step
 @printf "  %9s %12s %12s %12s %12s %9s %9s %10s\n" "d_a-d_b" "P_$A kW" "P_$B kW" "Q_$A kvar" "Q_$B kvar" "Vmin pu" "Vmax pu" "losses kW"
 for x in rows
     isinteger(round(x.dd / CFG.dot_step; digits = 9)) || continue
+    if !x.ip.ok
+        @printf "  %9.2f   no power-flow solution (Ipopt: %s)\n" x.dd string(x.ip.status)
+        continue
+    end
     Vl = load_V(NET, x.ip)
     @printf "  %9.2f %12.2f %12.2f %12.2f %12.2f %9.5f %9.5f %10.2f\n" x.dd x.ip.P_subs_kW[A] x.ip.P_subs_kW[B] x.ip.Q_subs_kvar[A] x.ip.Q_subs_kvar[B] minimum(Vl) maximum(Vl) losses(x.ip, P_LOAD)
+end
+if length(solved) < n
+    @printf "  a power flow exists (Ipopt) at %d/%d points, %s - %s from %+.1f to %+.1f deg\n" length(solved) n dlabel(A) dlabel(B) minimum(x.dd for x in solved) maximum(x.dd for x in solved)
 end
 
 i0 = findfirst(x -> x.dd == 0, rows)
 slope = (rows[i0+1].ip.P_subs_kW[A] - rows[i0-1].ip.P_subs_kW[A]) / (rows[i0+1].dd - rows[i0-1].dd)
 @printf "  dP_%s/d(%s - %s) at 0: %.0f kW/deg\n" A dlabel(A) dlabel(B) slope
-zA, zB = zero_crossing(rows, A), zero_crossing(rows, B)
-if zA !== nothing && zB !== nothing
-    w1, w2 = extrema((zA, zB))
-    @printf "  both substations import for %s - %s in [%+.3f, %+.3f] deg (%.3f deg wide)\n" dlabel(A) dlabel(B) w1 w2 w2 - w1
+win = window(rows)
+if win === nothing
+    println("  the two substations do not both import at $(dlabel(A)) = $(dlabel(B))")
 else
-    println("  a substation does not cross zero within the sweep")
+    fmt(v) = v === nothing ? "beyond the sweep" : @sprintf("%+.3f", v)
+    @printf "  both substations import for %s - %s from %s to %s deg\n" dlabel(A) dlabel(B) fmt(win[1]) fmt(win[2])
 end
 L = [losses(x.ip, P_LOAD) for x in rows]
-i = argmin(L)
-if 1 < i < n                                      # parabola through the three lowest points
+i = argmin(map(v -> isnan(v) ? Inf : v, L))
+if 1 < i < n && all(isfinite, L[i-1:i+1])          # parabola through the three lowest points
     h, (y0, y1, y2) = rows[i+1].dd - rows[i].dd, (L[i-1], L[i], L[i+1])
     xs = rows[i].dd - h * (y2 - y0) / (2 * (y2 - 2y1 + y0))
     @printf "  network losses are least, %.3f kW, at %s - %s = %+.3f deg\n" y1 - (y2 - y0)^2 / (8 * (y2 - 2y1 + y0)) dlabel(A) dlabel(B) xs
@@ -213,27 +211,45 @@ if length(held) == n
 elseif isempty(held)
     @printf "  some load is outside the deck's own band (%s) at every point\n" band_str
 else
-    @printf "  every load inside the deck's own band (%s) at %d/%d points, %s - %s from %+.2f to %+.2f\n" band_str length(held) n dlabel(A) dlabel(B) minimum(held) maximum(held)
+    @printf "  every load inside the deck's own band (%s) at %d/%d points" band_str length(held) n
+    if rows[i0].deck_ok                            # the unbroken stretch through 0
+        l, r = stretch([x.deck_ok for x in rows], i0)
+        @printf "; unbroken from %s - %s = %+.2f to %+.2f deg\n" dlabel(A) dlabel(B) rows[l].dd rows[r].dd
+    else
+        println("; not at $(dlabel(A)) = $(dlabel(B))")
+    end
 end
 
-e_ip = [max_diff(x.ip, x.ds) for x in rows]
-ran_gu = filter(x -> x.gu.status != :SKIPPED, rows)
-e_gu = [max_diff(x.gu, x.ds) for x in ran_gu]
-worst(es, f) = maximum(f, es)
-its = [x.ip.iterations for x in rows if x.ip.iterations !== missing]
-n_ip, n_conv, n_pq = count(x -> x.ip.ok, rows), count(x -> x.ds.converged, rows), count(x -> x.ds.pq_band, rows)
-@printf "  Ipopt solved %d/%d (iterations: mean %.1f, max %d; %.3f s per solve), OpenDSS converged %d/%d, constant-PQ held %d/%d\n" n_ip n (isempty(its) ? NaN : sum(its) / length(its)) (isempty(its) ? -1 : maximum(its)) sum(x.ip.time for x in rows) / n n_conv n n_pq n
-@printf "  Gurobi (global): %s\n" (!USE_GUROBI ? "SKIPPED" : isempty(ran_gu) ? "base case only" : "solved $(count(x -> x.gu.ok, ran_gu))/$(length(ran_gu))")
+# Cross-check: compare wherever both found a constant-PQ power flow. OpenDSS "converging" with
+# some load outside its band means it fell back to constant impedance, so that is no constant-PQ
+# solution either. Where neither found one they agree none exists; where only one did, they
+# disagree.
+dss_pq(x) = x.ds.converged && x.ds.pq_band
+compared = filter(x -> x.ip.ok && dss_pq(x), rows)
+n_neither = count(x -> !x.ip.ok && !dss_pq(x), rows)
+onesided = filter(x -> x.ip.ok != dss_pq(x) && !(x.ip.ok && x.ds.converged), rows)
+n_outband = count(x -> x.ip.ok && x.ds.converged && !x.ds.pq_band, rows)
+gu_ran = filter(x -> x.gu.status != :SKIPPED && x.ip.ok, rows)
+gu_cmp = filter(x -> x.gu.ok && x in compared, gu_ran)
+e_ip = [max_diff(x.ip, x.ds) for x in compared]
+e_gu = [max_diff(x.gu, x.ds) for x in gu_cmp]
+worst(es, f) = isempty(es) ? NaN : maximum(f, es)
+its = [x.ip.iterations for x in solved if x.ip.iterations !== missing]
+@printf "  Ipopt solved %d/%d (iterations: mean %.1f, max %d; %.3f s per solve), OpenDSS converged %d/%d\n" length(solved) n (isempty(its) ? NaN : sum(its) / length(its)) (isempty(its) ? -1 : maximum(its)) sum(x.ip.time for x in rows) / n count(x -> x.ds.converged, rows) n
+@printf "  compared at %d points; neither found a power flow at %d; only one did at %d; OpenDSS loads left the constant-PQ band at %d\n" length(compared) n_neither length(onesided) n_outband
+isempty(onesided) || @printf("  only one solver found a power flow at %s - %s = %s deg\n", dlabel(A), dlabel(B),
+                             join((@sprintf("%+.1f", x.dd) for x in onesided), ", "))
+@printf "  Gurobi (global): %s\n" (!USE_GUROBI ? "SKIPPED" : isempty(gu_ran) ? "base case only" : "solved $(count(x -> x.gu.ok, gu_ran))/$(length(gu_ran))")
 @printf "  worst |Ipopt - OpenDSS|:  P %.2e kW  Q %.2e kvar  V %.2e pu\n" worst(e_ip, e -> e.dP) worst(e_ip, e -> e.dQ) worst(e_ip, e -> e.dV)
 isempty(e_gu) || @printf("  worst |Gurobi - OpenDSS|: P %.2e kW  Q %.2e kvar  V %.2e pu\n",
                          worst(e_gu, e -> e.dP), worst(e_gu, e -> e.dQ), worst(e_gu, e -> e.dV))
-passed = n_ip == n_conv == n_pq == n && all(x -> x.gu.ok, ran_gu) &&
+passed = !isempty(compared) && isempty(onesided) && n_outband == 0 && length(gu_cmp) == length(gu_ran) &&
          all(e -> e.dP <= TOL_KW && e.dQ <= TOL_KW && e.dV <= TOL_V, vcat(e_ip, e_gu))
 @printf "  => %s (tolerance %.0e kW/kvar, %.0e pu)\n" (passed ? "AGREE" : "DISAGREE") TOL_KW TOL_V
-good = filter(x -> x.id.ok, rows)
+good = filter(x -> x.id.ok && x.ip.ok, rows)
 d_ideal = isempty(good) ? NaN : maximum(max_diff(x.id, x.ip).dP for x in good)
-@printf "  ideal source (Zs = 0) vs the decks' 1e-8 ohm stand-in: max |ΔP_Subs| %.2e kW (ideal solved %d/%d)\n" d_ideal length(good) n
-d_vs = maximum(abs(x.ds.S_vsource_kVA[k] - complex(x.ds.P_subs_kW[k], x.ds.Q_subs_kvar[k])) for x in rows for k in (A, B))
+@printf "  ideal source (Zs = 0) vs the decks' 1e-8 ohm stand-in: max |ΔP_Subs| %.2e kW (ideal solved %d/%d)\n" d_ideal count(x -> x.id.ok, rows) n
+d_vs = worst([abs(x.ds.S_vsource_kVA[k] - complex(x.ds.P_subs_kW[k], x.ds.Q_subs_kvar[k])) for x in compared for k in (A, B)], identity)
 @printf "  OpenDSS's own Vsource power reading vs line-flow reading: max %.2e kVA\n" d_vs
 
 # ---- CSV ---------------------------------------------------------------------------------------
@@ -269,20 +285,9 @@ open(csv, "w") do io
 end
 
 # ---- plot ----------------------------------------------------------------------------------------
-# Reference palette on the light surface: categorical slots 1 and 2 (validated) for the two
-# substations; secondary ink for the single-quantity panels; a neutral wash for the window in
-# which both substations import.
-const SURFACE = colorant"#fcfcfb"
-const INK2, MUTED = colorant"#52514e", colorant"#898781"
-const GRIDC, AXISC, WASH = colorant"#e1e0d9", colorant"#c3c2b7", colorant"#f0efec"
-const SERIES = [(A, label(A), colorant"#2a78d6"), (B, label(B), colorant"#eb6834")]
-
-"Integer tick label with thousands separators: -12500 -> \"-12,500\"."
-function with_commas(v)
-    s = string(round(Int, abs(v)))
-    s = reverse(join((join(c) for c in Iterators.partition(reverse(s), 3)), ","))
-    return (round(Int, v) < 0 ? "-" : "") * s
-end
+# The two substations in categorical slots 1 and 2; secondary ink for the single-quantity
+# panels; a neutral wash for the window in which both substations import.
+const SERIES = [(A, label(A), SUB_COLORS[1]), (B, label(B), SUB_COLORS[2])]
 
 # Lines: JuMP at every sweep point. Dots: OpenDSS every `dot_step` -- every point is checked
 # numerically above, and a dot on each grid step would chop the line into dashes.
@@ -301,7 +306,8 @@ function panel(quantity, title; legend = false)
     if quantity == :V                             # the spread of load voltages, deck band edges in view
         vmin, vmax = x -> minimum(load_V(NET, x)), x -> maximum(load_V(NET, x))
         lo, hi = [vmin(x.ip) for x in rows], [vmax(x.ip) for x in rows]
-        edges = filter(e -> minimum(lo) - 0.002 <= e <= maximum(hi) + 0.002, unique(Iterators.flatten(values(BAND))))
+        edges = filter(e -> minimum(filter(isfinite, lo)) - 0.002 <= e <= maximum(filter(isfinite, hi)) + 0.002,
+                       unique(Iterators.flatten(values(BAND))))
         for edge in edges
             hline!(p, [edge]; color = MUTED, linewidth = 1, label = "")
         end
@@ -310,15 +316,19 @@ function panel(quantity, title; legend = false)
         plot!(p, xs, lo; color = INK2, linewidth = 2, label = "")
         scatter!(p, xd, [vmax(x.ds) for x in dots]; color = INK2, dot_style...)
         scatter!(p, xd, [vmin(x.ds) for x in dots]; color = INK2, dot_style...)
-        annotate!(p, endx, last(hi), text("highest load", 8, INK2, :left))
-        annotate!(p, endx, last(lo), text("lowest load", 8, INK2, :left))
+        if length(NET.loads) == 1
+            annotate!(p, endx, lastfinite(hi), text("load", 8, INK2, :left))
+        else
+            annotate!(p, endx, lastfinite(hi), text("highest load", 8, INK2, :left))
+            annotate!(p, endx, lastfinite(lo), text("lowest load", 8, INK2, :left))
+        end
         return p
     end
 
     if quantity == :P
-        zA, zB = zero_crossing(rows, A), zero_crossing(rows, B)
-        (zA === nothing || zB === nothing) ||
-            vspan!(p, collect(extrema((zA, zB))); color = WASH, linecolor = WASH, label = "both import")
+        win = window(rows)
+        win === nothing || vspan!(p, [something(win[1], first(xs)), something(win[2], last(xs))];
+                                  color = WASH, linecolor = WASH, label = "both import")
     end
     hline!(p, [0.0]; color = AXISC, linewidth = 1, label = "")
     if quantity == :loss
@@ -330,18 +340,14 @@ function panel(quantity, title; legend = false)
     for (k, name, c) in SERIES
         plot!(p, xs, [pick(x.ip, k) for x in rows]; color = c, linewidth = 2, label = name * " (JuMP)")
         scatter!(p, xd, [pick(x.ds, k) for x in dots]; color = c, dot_style...)
-        annotate!(p, endx, pick(last(rows).ip, k), text(name, 8, INK2, :left))
+        annotate!(p, endx, lastfinite([pick(x.ip, k) for x in rows]), text(name, 8, INK2, :left))
     end
     scatter!(p, [NaN], [NaN]; color = MUTED, markersize = 5, markerstrokecolor = SURFACE,
              markerstrokewidth = 1.5, label = "OpenDSS")
     return p
 end
 
-default(; fontfamily = "sans-serif", background_color = SURFACE, foreground_color_axis = AXISC,
-        foreground_color_border = AXISC, foreground_color_text = INK2, foreground_color_guide = INK2,
-        foreground_color_title = colorant"#0b0b0b", gridcolor = GRIDC, gridalpha = 1.0,
-        gridlinewidth = 1, gridstyle = :solid, titlefontsize = 11, guidefontsize = 10,
-        tickfontsize = 9, legendfontsize = 9, legend_foreground_color = GRIDC)
+plot_style!()
 
 fig = plot(panel(:P, "P_Subs"; legend = :top), panel(:Q, "Q_Subs"),
            panel(:loss, "Network losses"), panel(:V, "Load voltages");
