@@ -15,13 +15,16 @@
 # to, and a low-voltage one. The objective (minimum total substation power, i.e. minimum
 # losses) is only there to select the high-voltage root.
 #
-# SOURCES
-# -------
+# SOURCES AND LINES
+# -----------------
 # A Vsource is an EMF E = pu * cis(delta) behind its series impedance Zs, written in
 # impedance form, V_bus = E - Zs * I_source. That form is exact for any Zs including zero,
 # so the same model covers the deck as written and a "stiff" variant, where Zs is
 # OpenDSS's 1e-8 ohm stand-in for an ideal source (the form ieee2522C/large10kC use).
-# `ideal_sources = true` forces Zs = 0 exactly.
+# `ideal_sources = true` forces Zs = 0 exactly. Lines are in impedance form as well, with
+# an explicit series current each, so 1e-6 ohm jumpers do not wreck the scaling.
+# Rectangular voltages and currents keep every constraint linear or bilinear: the model
+# is a QCQP, which Gurobi can solve to global optimality.
 #
 # DATA
 # ----
@@ -43,6 +46,7 @@ using OpenDSSDirect
 using JuMP
 using Ipopt
 using Gurobi
+using LinearAlgebra
 using Printf
 
 const ODD = OpenDSSDirect
@@ -55,32 +59,63 @@ busname(bus) = lowercase(String(split(bus, '.')[1]))
 nodes_of(bus) = [parse(Int, n) for n in split(bus, '.')[2:end]]
 
 """
-    compile_deck(system; stiff_sources = false)
+    compile_deck(system; sources = nothing, disable = String[], snapshot = false,
+                 stiff_sources = false, load_band = nothing)
 
-Compile `rawData/<system>/Master.dss`. `stiff_sources = true` replaces every Vsource's
-impedance with a 1e-8 ohm reactance in memory; the deck on disk is never modified.
+Compile `rawData/<system>/Master.dss`, then adjust it in memory -- the deck on disk is
+never modified:
+  * `sources`: the Vsources to keep (by name); every other Vsource is disabled;
+  * `disable`: element classes to switch off wholesale, e.g. ["PVSystem", "Storage"];
+  * `snapshot`: snapshot mode, i.e. loads at their base kW with no loadshape applied;
+  * `stiff_sources`: replace each kept Vsource's impedance with a 1e-8 ohm reactance;
+  * `load_band = (lo, hi)`: set every load's [Vminpu, Vmaxpu]. OpenDSS keeps a model=1
+    load constant-PQ only inside that band and makes it a constant impedance outside,
+    while the JuMP model is constant-PQ everywhere.
 OpenDSS's convergence tolerance is tightened from its default 1e-4 so that the
 cross-check measures the models, not OpenDSS's stopping rule.
+
+Returns `deck_load_band`, each load's (Vminpu, Vmaxpu) as the deck has it, so callers can
+still report against the deck's own band after widening it.
 """
-function compile_deck(system; stiff_sources = false, tolerance = 1e-12, max_iterations = 1000)
+function compile_deck(system; sources = nothing, disable = String[], snapshot = false,
+                      stiff_sources = false, load_band = nothing, tolerance = 1e-12,
+                      max_iterations = 1000)
     master = joinpath(REPO_ROOT, "rawData", system, "Master.dss")
     isfile(master) || error("Master.dss not found: $master")
     ODD.Text.Command("Clear")
     ODD.Text.Command("Redirect \"$master\"")
-    if stiff_sources
-        for el in ODD.Circuit.AllElementNames()
-            startswith(lowercase(el), "vsource.") || continue
-            ODD.Circuit.SetActiveElement(el)
-            ODD.CktElement.Enabled() || continue
-            ODD.Text.Command("Edit $el R1=0 X1=0.00000001 R0=0 X0=0.00000001")
-        end
+    for class in disable
+        ODD.Text.Command("BatchEdit $class..* enabled=false")
     end
+    deck_load_band = Dict{String,Tuple{Float64,Float64}}()
+    for name in ODD.Loads.AllNames()
+        lowercase(name) == "none" && continue
+        ODD.Loads.Name(name)
+        deck_load_band[lowercase(name)] = (ODD.Loads.Vminpu(), ODD.Loads.Vmaxpu())
+    end
+    load_band === nothing || ODD.Text.Command("BatchEdit Load..* Vminpu=$(load_band[1]) Vmaxpu=$(load_band[2])")
+    kept = String[]
+    for el in ODD.Circuit.AllElementNames()
+        startswith(lowercase(el), "vsource.") || continue
+        ODD.Circuit.SetActiveElement(el)
+        ODD.CktElement.Enabled() || continue
+        name = lowercase(split(el, '.')[2])
+        if sources !== nothing && !(name in lowercase.(sources))
+            ODD.Text.Command("Edit $el enabled=false")
+            continue
+        end
+        push!(kept, name)
+        stiff_sources && ODD.Text.Command("Edit $el R1=0 X1=0.00000001 R0=0 X0=0.00000001")
+    end
+    sources === nothing || Set(kept) == Set(lowercase.(sources)) ||
+        error("asked for Vsources $(sources); enabled in the deck: $kept")
+    snapshot && ODD.Text.Command("Set mode=Snapshot")
     ODD.Text.Command("Set tolerance=$tolerance")
     ODD.Text.Command("Set maxiterations=$max_iterations")
     # An Edit marks YPrim stale; OpenDSS rebuilds it only when it next builds the system
     # Y matrix. Solve once so read_network() sees the impedances actually in use.
     ODD.Solution.Solve()
-    return master
+    return (; master, deck_load_band)
 end
 
 """
@@ -129,6 +164,29 @@ function read_network(; S_base_kVA = 1000.0)
             kV_base, S_base_kVA, Y_base = S_base_kVA * 1e3 / (kV_base * 1e3)^2)
 end
 
+"""
+    source_separation(net)
+
+Series impedance (ohm) between every pair of source buses, keyed by (name_a, name_b)
+with name_a < name_b: the Thevenin impedance between the two buses through the lines
+alone (no shunts, loads or source impedance). On a radial network it is simply the
+impedance of the path between them -- how electrically far apart two substations sit.
+"""
+function source_separation(net)
+    idx = Dict(b => i for (i, b) in enumerate(net.buses))
+    n = length(net.buses)
+    L = zeros(ComplexF64, n, n)                  # series-admittance Laplacian
+    for l in net.lines
+        y, i, j = -l.Y[1, 2], idx[l.from], idx[l.to]
+        L[i, i] += y; L[j, j] += y; L[i, j] -= y; L[j, i] -= y
+    end
+    Z = zeros(ComplexF64, n, n)
+    Z[1:n-1, 1:n-1] = inv(L[1:n-1, 1:n-1])      # last bus as the reference node
+    zeff(a, b) = Z[a, a] + Z[b, b] - 2 * Z[a, b]
+    return Dict((s.name, t.name) => zeff(idx[s.bus], idx[t.bus])
+                for s in net.sources, t in net.sources if s.name < t.name)
+end
+
 # One Gurobi environment for every solve, so the license is read once.
 const GRB_ENV = Ref{Gurobi.Env}()
 gurobi_env() = isassigned(GRB_ENV) ? GRB_ENV[] : (GRB_ENV[] = Gurobi.Env(; output_flag = 0))
@@ -149,7 +207,7 @@ function gurobi_usable()
 end
 
 "Result-shaped placeholder for a solver that did not run: status :SKIPPED, every value NaN."
-skipped(net, solver) = (; solver, status = :SKIPPED, ok = false, time = NaN,
+skipped(net, solver) = (; solver, status = :SKIPPED, ok = false, time = NaN, iterations = missing,
                         P_subs_kW = Dict(s.name => NaN for s in net.sources),
                         Q_subs_kvar = Dict(s.name => NaN for s in net.sources),
                         V_pu = Dict(b => complex(NaN, NaN) for b in net.buses))
@@ -202,18 +260,41 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
     names = [s.name for s in net.sources]
     E = Dict(s.name => s.pu * cis(deg2rad(delta_deg[s.name])) for s in net.sources)
 
+    lines = [l.name for l in net.lines]
     @variable(model, -1.5 <= e[buses] <= 1.5)     # bus voltage V = e + jf, per unit
     @variable(model, -1.5 <= f[buses] <= 1.5)
-    @variable(model, -1e5 <= ir[names] <= 1e5)    # source current I = ir + j*ii, per unit
+    @variable(model, -1e5 <= ir[names] <= 1e5)    # source current into its bus, I = ir + j*ii
     @variable(model, -1e5 <= ii[names] <= 1e5)
+    @variable(model, -1e5 <= lr[lines] <= 1e5)    # line series current, from -> to, I = lr + j*li
+    @variable(model, -1e5 <= li[lines] <= 1e5)
 
-    # Flat start rotated to the sources; buses carrying load optionally started low
+    # Flat start rotated to the sources (every current then starts at zero). For the
+    # low-voltage root, start the load buses low, the source buses at their EMF, and each
+    # current at what KVL and KCL give for that start -- the heavy-current regime the low
+    # root lives in, rather than zero current, which leads back to the high root.
     V0 = sum(values(E)) / length(E)
-    load_buses = Set(d.bus for d in net.loads)
+    Vs = Dict(b => V0 for b in buses)
+    if V_load_start !== nothing
+        for d in net.loads
+            Vs[d.bus] = V_load_start * cis(angle(V0))
+        end
+        for s in net.sources
+            Vs[s.bus] = E[s.name]
+        end
+        Is = Dict(l.name => (Vs[l.from] - Vs[l.to]) * l.Y[1, 2] / -net.Y_base for l in net.lines)
+        for l in net.lines
+            set_start_value(lr[l.name], real(Is[l.name]))
+            set_start_value(li[l.name], imag(Is[l.name]))
+        end
+        for s in net.sources
+            I = sum((l.from == s.bus ? 1 : -1) * Is[l.name] for l in net.lines if s.bus in (l.from, l.to))
+            set_start_value(ir[s.name], real(I))
+            set_start_value(ii[s.name], imag(I))
+        end
+    end
     for b in buses
-        V = (V_load_start !== nothing && b in load_buses) ? V_load_start * cis(angle(V0)) : V0
-        set_start_value(e[b], real(V))
-        set_start_value(f[b], imag(V))
+        set_start_value(e[b], real(Vs[b]))
+        set_start_value(f[b], imag(Vs[b]))
     end
 
     # Each source: V_bus = E - Zs * I, i.e. e = Re(E) - (R ir - X ii), f = Im(E) - (R ii + X ir).
@@ -229,21 +310,29 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
         end
     end
 
-    # Power leaving bus i into a line whose primitive row at i is (Yii, Yij):
-    #   S = V_i * conj(Yii * V_i + Yij * V_j)
-    function flow_out(i, j, Yii, Yij)
-        g1, b1 = reim(Yii)
-        g2, b2 = reim(Yij)
-        vv = e[i]^2 + f[i]^2
-        c = e[i] * e[j] + f[i] * f[j]             # Re(V_i * conj(V_j))
-        s = f[i] * e[j] - e[i] * f[j]             # Im(V_i * conj(V_j))
-        return (P = g1 * vv + g2 * c + b2 * s, Q = -b1 * vv + g2 * s - b2 * c)
+    # Each line: pi model read off its YPrim -- series Z = -1/Y12, shunt Y11 + Y12 and
+    # Y22 + Y21 at the two ends. The series branch is in impedance form too,
+    # V_from - V_to = Z * I, so near-zero jumpers (1e-6 ohm in ieee123_5poi_1ph, ~7e7 pu
+    # as an admittance) stay well scaled.
+    for l in net.lines
+        R, X = reim(-net.Y_base / l.Y[1, 2])      # series impedance, per unit
+        @constraint(model, e[l.from] - e[l.to] == R * lr[l.name] - X * li[l.name])
+        @constraint(model, f[l.from] - f[l.to] == R * li[l.name] + X * lr[l.name])
+    end
+
+    # Power leaving bus b into line l: S = V_b * conj(sigma * I_l + y_sh * V_b), where
+    # sigma = +1 at the from-end and -1 at the to-end, and y_sh is that end's shunt.
+    function line_out(b, l, sigma, y_sh)
+        g, bsh = reim(y_sh)
+        vv = e[b]^2 + f[b]^2
+        return (P = sigma * (e[b] * lr[l] + f[b] * li[l]) + g * vv,
+                Q = sigma * (f[b] * lr[l] - e[b] * li[l]) - bsh * vv)
     end
     out = Dict(b => [] for b in buses)
     for l in net.lines
         Y = l.Y ./ net.Y_base
-        push!(out[l.from], flow_out(l.from, l.to, Y[1, 1], Y[1, 2]))
-        push!(out[l.to], flow_out(l.to, l.from, Y[2, 2], Y[2, 1]))
+        push!(out[l.from], line_out(l.from, l.name, 1, Y[1, 1] + Y[1, 2]))
+        push!(out[l.to], line_out(l.to, l.name, -1, Y[2, 2] + Y[2, 1]))
     end
 
     # Power delivered by each source at its bus: S = V conj(I)
@@ -273,7 +362,8 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
     status = termination_status(model)
     ok = status in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED) && primal_status(model) == MOI.FEASIBLE_POINT
     val(x) = has_values(model) ? value(x) : NaN
-    return (; solver, status, ok, time = solve_time(model),
+    iterations = try barrier_iterations(model) catch; missing end
+    return (; solver, status, ok, time = solve_time(model), iterations,
             P_subs_kW = Dict(k => val(P_subs[k]) * net.S_base_kVA for k in names),
             Q_subs_kvar = Dict(k => val(Q_subs[k]) * net.S_base_kVA for k in names),
             V_pu = Dict(b => complex(val(e[b]), val(f[b])) for b in buses))
