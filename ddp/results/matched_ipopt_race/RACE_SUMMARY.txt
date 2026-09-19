@@ -8,7 +8,7 @@ ieee123C_1ph      3 | LOCALLY_SOLVED     36       0.2   0.2 | OK         59     
 ieee123C_1ph      6 | LOCALLY_SOLVED     37       0.4   0.6 | OK         75      22.6   0.4 |   4.3e-08    60.07x |     0.6 s/44 it
 ieee123C_1ph     12 | LOCALLY_SOLVED     40       0.6   0.5 | OK         88      27.3   0.3 |   5.2e-08    45.89x |     0.8 s/41 it
 ieee123C_1ph     24 | LOCALLY_SOLVED     38       1.3   0.2 | OK         93      36.3   0.2 |   5.6e-08    27.04x |     3.0 s/42 it
-ieee123C_1ph     48 | LOCALLY_SOLVED     61       5.4   0.2 | --         --        --    -- |        --        -- |     6.1 s/43 it
+ieee123C_1ph     48 | LOCALLY_SOLVED     61       5.4   0.2 | OK        114      61.8   0.2 |   5.3e-08    11.50x |     6.1 s/43 it
 ----------------------------------------------------------------------------------------------------------------------
 ipopt s = Ipopt solve time. diag s = FilterDDP wall. diag/ip < 1.00x means FilterDDP is faster.
 obj rel = |Ipopt - FilterDDP| / |Ipopt|: small means the two solved the same problem.
