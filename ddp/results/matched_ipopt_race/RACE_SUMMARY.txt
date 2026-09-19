@@ -20,6 +20,7 @@ large10kC_1ph     3 | LOCALLY_SOLVED     41      18.6   0.3 | --         --     
 large10kC_1ph     6 | LOCALLY_SOLVED     51      48.4   0.3 | --         --        --    -- |        --        -- |   104.8 s/99 it
 large10kC_1ph    12 | LOCALLY_SOLVED     49      94.5   0.2 | --         --        --    -- |        --        -- |   209.1 s/88 it
 large10kC_1ph    24 | LOCALLY_SOLVED     55     246.9   0.3 | --         --        --    -- |        --        -- |  572.7 s/112 it
+large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | --         --        --    -- |        --        -- | 8261.9 s/698 it
 ----------------------------------------------------------------------------------------------------------------------
 ipopt s = Ipopt solve time. diag s = FilterDDP wall. diag/ip < 1.00x means FilterDDP is faster.
 obj rel = |Ipopt - FilterDDP| / |Ipopt|: small means the two solved the same problem.
