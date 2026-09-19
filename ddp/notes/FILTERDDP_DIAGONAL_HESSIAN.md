@@ -141,3 +141,26 @@ is 54% of the diag arm's wall (764 s of 1410 s in the pipeline run).
   the rest). Since the network part of H is already nearly diagonal that variant
   would be close to exact and save almost nothing -- but it would isolate how much
   of the 16-20% iteration penalty is specifically `Vxx`.
+
+## Benchmark stopping rule (2026-09-19)
+
+Strict interior-point convergence is no longer the reported runtime target. For
+every new comparison, centralized Ipopt is solved first. FilterDDP stops at the
+first iterate satisfying both
+
+    primal_inf <= 1e-6
+    abs(objective - objective_ipopt) / abs(objective_ipopt) <= 0.005
+
+and returns status 9 (`NEAR_OPT`). The dual residual and barrier parameter may
+continue improving after this point, but that strict tail is not useful for the
+present engineering comparison. Raw historical logs are retained; their time to
+the same criterion is reconstructed by `near_opt_from_logs.jl` instead of quoting
+their eventual strict-convergence time.
+
+The matched-race report at
+`ddp/results/matched_ipopt_race/RACE_SUMMARY.txt` therefore contains only the
+near-optimal FilterDDP iteration and time. The interrupted large10k `T=48` run is
+still usable under this policy: it first qualified at iteration 109 after
+20499.506 s, although the obsolete strict run continued through iteration 125
+before being interrupted. Future runs receive the already-computed Ipopt
+objective through `FILTERDDP_NEAR_OPT_REFERENCE` and terminate automatically.

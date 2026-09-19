@@ -622,6 +622,28 @@ algebra, not equation translation or Hessian evaluation, is the primary cost.
 See `ddp/notes/FILTERDDP_ITERATION_TIMING_BREAKDOWN.md` and
 `ddp/results/network_filterddp/iteration_timing_summary.csv`.
 
+**Standing FilterDDP benchmark criterion (2026-09-19):** report and stop at
+near-optimality, not strict interior-point convergence. Centralized Ipopt must
+be solved first on the identical instance. FilterDDP qualifies when
+`primal_inf <= 1e-6` and its objective is within 0.5% of the Ipopt objective.
+Set `FILTERDDP_NEAR_OPT_REFERENCE` to that objective; the optional defaults are
+`FILTERDDP_NEAR_OPT_PRIMAL=1e-6` and `FILTERDDP_NEAR_OPT_GAP=0.005`. A qualifying
+run exits normally with status 9 and a `FILTERDDP_NEAR_OPT` record. Do not quote
+the later strict-convergence tail in tables or reports. Historical logs are
+rescored by `ddp/examples/power_system/near_opt_from_logs.jl`. The matched report
+is `ddp/results/matched_ipopt_race/RACE_SUMMARY.txt`. An end-to-end IEEE123
+`T=3` validation stopped exactly at iteration 52 with primal infeasibility
+`6.074e-7`, relative objective gap `8.104e-8`, and status 9.
+
+**Diagonal-Hessian matched race status (2026-09-19):** paired Ipopt/FilterDDP
+near-optimal results exist through IEEE123 and IEEE2522 `T=96`. The interrupted
+large10k `T=48` arm nevertheless first met the standing criterion at iteration
+109 after 20499.506 s, versus Ipopt's 556.416 s; iterations 110--125 were an
+unneeded strict tail. Remaining matched FilterDDP arms are large10k
+`T=3,6,12,24` and IEEE2522 `T=144,192,288`. The runner now injects each stored
+Ipopt objective and stops automatically. Do not restart a completed strict run
+merely to reproduce its near-optimal time; recover it from the iteration log.
+
 ## Pending task (do not start until asked)
 
 Write a side-by-side workflow comparison — the user's exact DDP algorithm

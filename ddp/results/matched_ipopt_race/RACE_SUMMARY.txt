@@ -1,21 +1,22 @@
 ======================================================================================================================
-IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP (diagonal Hessian)
+IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP time to near-optimality
 periodic profile, C_B = 1e-3, soft terminal SOC with per-system gamma (terminal_soc_penalty.jl)
+FilterDDP stop: primal infeasibility <= 1e-6 and objective within 0.5% of Ipopt; strict tail excluded
 ======================================================================================================================
-system            T | ipopt           iters   ipopt s    bg | diag    iters    diag s    bg |   obj rel   diag/ip |  old-family ref
+system            T | ipopt           iters   ipopt s    bg | near     iter    near s    bg |   obj gap   near/ip |  old-family ref
 ----------------------------------------------------------------------------------------------------------------------
-ieee123C_1ph      3 | LOCALLY_SOLVED     36       0.2   0.2 | OK         59      19.4   0.4 |   4.1e-08    99.64x |     0.3 s/34 it
-ieee123C_1ph      6 | LOCALLY_SOLVED     37       0.4   0.6 | OK         75      22.6   0.4 |   4.3e-08    60.07x |     0.6 s/44 it
-ieee123C_1ph     12 | LOCALLY_SOLVED     40       0.6   0.5 | OK         88      27.3   0.3 |   5.2e-08    45.89x |     0.8 s/41 it
-ieee123C_1ph     24 | LOCALLY_SOLVED     38       1.3   0.2 | OK         93      36.3   0.2 |   5.6e-08    27.04x |     3.0 s/42 it
-ieee123C_1ph     48 | LOCALLY_SOLVED     61       5.4   0.2 | OK        114      61.8   0.2 |   5.3e-08    11.50x |     6.1 s/43 it
-ieee123C_1ph     96 | LOCALLY_SOLVED     97      22.6   0.3 | OK        129     112.4   0.2 |   5.3e-08     4.99x |    12.2 s/46 it
-ieee2522C_1ph     3 | LOCALLY_SOLVED     39       2.9   0.4 | OK         68     113.2   0.3 |   5.2e-08    38.47x |     5.5 s/52 it
-ieee2522C_1ph     6 | LOCALLY_SOLVED     46       7.0   0.2 | OK         89     233.6   0.3 |   5.3e-08    33.15x |    15.0 s/68 it
-ieee2522C_1ph    12 | LOCALLY_SOLVED     55      18.1   0.2 | OK         87     406.0   0.2 |   1.4e-07    22.49x |    31.1 s/70 it
-ieee2522C_1ph    24 | LOCALLY_SOLVED     61      41.2   0.2 | OK         95     822.6   0.3 |   2.6e-07    19.99x |    66.6 s/74 it
-ieee2522C_1ph    48 | LOCALLY_SOLVED     72      99.8   0.2 | OK        104    1700.6   0.3 |   4.7e-07    17.04x |   137.5 s/78 it
-ieee2522C_1ph    96 | LOCALLY_SOLVED     78     214.2   0.3 | OK        112    3631.8   0.3 |   4.0e-07    16.95x |   305.0 s/83 it
+ieee123C_1ph      3 | LOCALLY_SOLVED     36       0.2   0.2 | NEAR_OPT    52      19.2   0.4 |   8.1e-08    98.31x |     0.3 s/34 it
+ieee123C_1ph      6 | LOCALLY_SOLVED     37       0.4   0.6 | NEAR_OPT    67      22.1   0.4 |   1.4e-07    58.69x |     0.6 s/44 it
+ieee123C_1ph     12 | LOCALLY_SOLVED     40       0.6   0.5 | NEAR_OPT    80      26.1   0.3 |   2.0e-07    43.85x |     0.8 s/41 it
+ieee123C_1ph     24 | LOCALLY_SOLVED     38       1.3   0.2 | NEAR_OPT    85      34.8   0.2 |   2.6e-07    25.94x |     3.0 s/42 it
+ieee123C_1ph     48 | LOCALLY_SOLVED     61       5.4   0.2 | NEAR_OPT   105      58.3   0.2 |   3.6e-07    10.86x |     6.1 s/43 it
+ieee123C_1ph     96 | LOCALLY_SOLVED     97      22.6   0.3 | NEAR_OPT   120     105.4   0.2 |   4.6e-07     4.67x |    12.2 s/46 it
+ieee2522C_1ph     3 | LOCALLY_SOLVED     39       2.9   0.4 | NEAR_OPT    58      99.5   0.3 |   5.6e-07    33.83x |     5.5 s/52 it
+ieee2522C_1ph     6 | LOCALLY_SOLVED     46       7.0   0.2 | NEAR_OPT    72     194.2   0.3 |   1.0e-06    27.56x |    15.0 s/68 it
+ieee2522C_1ph    12 | LOCALLY_SOLVED     55      18.1   0.2 | NEAR_OPT    79     369.9   0.2 |   9.0e-07    20.49x |    31.1 s/70 it
+ieee2522C_1ph    24 | LOCALLY_SOLVED     61      41.2   0.2 | NEAR_OPT    87     755.2   0.3 |   2.2e-06    18.35x |    66.6 s/74 it
+ieee2522C_1ph    48 | LOCALLY_SOLVED     72      99.8   0.2 | NEAR_OPT    96    1570.7   0.3 |   3.2e-06    15.74x |   137.5 s/78 it
+ieee2522C_1ph    96 | LOCALLY_SOLVED     78     214.2   0.3 | NEAR_OPT   104    3372.7   0.3 |   3.7e-06    15.74x |   305.0 s/83 it
 ieee2522C_1ph   144 | LOCALLY_SOLVED     79     334.3   0.3 | --         --        --    -- |        --        -- |   483.1 s/88 it
 ieee2522C_1ph   192 | LOCALLY_SOLVED     80     452.9   0.3 | --         --        --    -- |        --        -- |              --
 ieee2522C_1ph   288 | LOCALLY_SOLVED     83     720.5   0.3 | --         --        --    -- |        --        -- |              --
@@ -23,10 +24,11 @@ large10kC_1ph     3 | LOCALLY_SOLVED     41      18.6   0.3 | --         --     
 large10kC_1ph     6 | LOCALLY_SOLVED     51      48.4   0.3 | --         --        --    -- |        --        -- |   104.8 s/99 it
 large10kC_1ph    12 | LOCALLY_SOLVED     49      94.5   0.2 | --         --        --    -- |        --        -- |   209.1 s/88 it
 large10kC_1ph    24 | LOCALLY_SOLVED     55     246.9   0.3 | --         --        --    -- |        --        -- |  572.7 s/112 it
-large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | --         --        --    -- |        --        -- | 8261.9 s/698 it
+large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | NEAR_OPT   109   20499.5   0.3 |   1.5e-06    36.84x | 8261.9 s/698 it
 ----------------------------------------------------------------------------------------------------------------------
-ipopt s = Ipopt solve time. diag s = FilterDDP wall. diag/ip < 1.00x means FilterDDP is faster.
-obj rel = |Ipopt - FilterDDP| / |Ipopt|: small means the two solved the same problem.
+ipopt s = Ipopt solve time. near s = FilterDDP time to the approved near-optimal criterion.
+near/ip < 1.00x means FilterDDP reaches that criterion faster than Ipopt completes.
+obj gap = |Ipopt - FilterDDP| / |Ipopt| at the qualifying FilterDDP iterate.
 bg = median cores used by OTHER processes during the run (idle floor ~0.4); * = above 1.5, timing suspect.
 old-family ref = the paper's centralized sweep (C_B ~ 8.8e-8, old sampling, free terminal SOC):
   a DIFFERENT problem, shown only to locate the knee it exhibited.
