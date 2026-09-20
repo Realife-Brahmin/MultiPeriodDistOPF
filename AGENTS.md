@@ -1,5 +1,17 @@
 # Repo-specific context for Codex
 
+## Exact diagonal-Hessian rewrites (2026-09-20)
+
+Three independently switchable rewrites preserve the diagonal-Hessian
+FilterDDP trajectory: direct construction of `diag(fu'Vxx fu)`, triplet-based
+SOCP second derivatives, and reuse of the KKT sparsity pattern with fresh
+numerical values and a fresh factorization. Together they reduce IEEE2522
+`T=24` time to the same near-optimal iteration from `755.189 s` to `591.613 s`
+(21.66%). A matched large10k `T=6` combined run completed in `2330.671 s` at
+iteration 103, but has no exact pre-rewrite baseline. Do not compare it with
+older large10k instances. Full evidence and the large10k `T=24` rerun decision
+are in `ddp/notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md`.
+
 This file is committed so any machine's Codex session starts from the
 same ground truth. Session-local memory (`~/.Codex/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
