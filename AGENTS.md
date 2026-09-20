@@ -1,5 +1,17 @@
 # Repo-specific context for Codex
 
+## Exact Hessian-assembly rewrite sweep (2026-09-20)
+
+Three exact implementation rewrites--direct diagonal-Hessian construction,
+triplet second-derivative assembly, and cached KKT sparsity patterns--preserve
+the matched FilterDDP iteration trajectories. On med2522 they reduce runtime
+by 21.24--22.36% across T=6,12,24,48,96. On matched large10k T=24 they reduce
+runtime from 8310.130 s to 7664.855 s (7.76%) at the same iteration 96, with a
+6.371 GiB sampled peak. IEEE123 is effectively unchanged/slightly slower.
+Details and peak-RAM rows are in
+`ddp/notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md` and
+`ddp/results/hessian_rewrites/`.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian

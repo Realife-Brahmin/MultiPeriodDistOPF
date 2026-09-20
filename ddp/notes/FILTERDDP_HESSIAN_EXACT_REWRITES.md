@@ -59,6 +59,23 @@ started automatically: the completed large10k `T=6` run lacks an exact
 pre-rewrite baseline, while the already completed large10k `T=24` baseline is
 the proper comparison target.
 
+## Completed horizon sweep
+
+The matched large10k `T=24` rerun is now complete. It reaches the same stopping
+iteration 96 in `7664.855 s`, versus `8310.130 s` before the three rewrites: a
+`7.76%` reduction. Its objective is `3178547.19`, relative objective gap
+`1.613e-5`, maximum primal infeasibility `9.129e-5`, and sampled peak working
+set `6.371 GiB`.
+
+Across med2522 the reduction is notably stable: `22.36%` at `T=6`, `22.25%`
+at `T=12`, `21.66%` at `T=24`, `21.24%` at `T=48`, and `21.35%` at `T=96`.
+The corresponding sampled peak working sets are `1.705`, `2.207`, `2.813`,
+`4.076`, and `6.400 GiB`. IEEE123 is too small to benefit measurably: timings
+range from `0.21%` to `6.78%` slower, while peak working set rises only from
+`1.260 GiB` at `T=6` to `1.335 GiB` at `T=96`. Complete traces are in
+`ddp/results/hessian_rewrites/overnight/`; the dedicated RAM reruns are
+summarized in `ddp/results/hessian_rewrites/ram_recovery/peak_ram.csv`.
+
 Raw timing logs and complete iteration traces are under
 `ddp/results/hessian_rewrites/`; tabulated comparisons are in
 `runtime_comparison.csv` and `warm_allocation_comparison.csv`.
