@@ -79,8 +79,21 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
     cl = ocp.control_limits
     ni = (cl.nl + cl.nu) * ocp.N
     rhs_workspace = nothing
+    feasibility_diagnostic = get(ENV, "FILTERDDP_FEASIBILITY_DIAGNOSTIC", "0") == "1"
+    equality_ssq = T(0); equality_count = 0; equality_max = T(0)
+    equality_worst_stage = 0; equality_worst_index = 0
+    dynamics_ssq = T(0); dynamics_count = 0; dynamics_max = T(0)
+    dynamics_worst_stage = 0; dynamics_worst_index = 0
+    bound_ssq = T(0); bound_count = 0; bound_max = T(0)
+    bound_worst_stage = 0; bound_worst_index = 0; bound_worst_kind = "none"
     
     while reg <= options.reg_max
+        equality_ssq = T(0); equality_count = 0; equality_max = T(0)
+        equality_worst_stage = 0; equality_worst_index = 0
+        dynamics_ssq = T(0); dynamics_count = 0; dynamics_max = T(0)
+        dynamics_worst_stage = 0; dynamics_worst_index = 0
+        bound_ssq = T(0); bound_count = 0; bound_max = T(0)
+        bound_worst_stage = 0; bound_worst_index = 0; bound_worst_kind = "none"
         data.status = 0
         V̂x = zeros(T, nx)
         V̂xx = zeros(T, nx, nx)
@@ -152,6 +165,52 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 # evaluate constraint violation norms
                 data.primal_1_curr += norm(c, 1)
                 data.primal_inf = max(data.primal_inf, norm(c, Inf))
+                if feasibility_diagnostic
+                    equality_ssq += sum(abs2, c)
+                    equality_count += length(c)
+                    if !isempty(c)
+                        value, index = findmax(abs, c)
+                        if value > equality_max
+                            equality_max = value
+                            equality_worst_stage = t
+                            equality_worst_index = index
+                        end
+                    end
+                end
+            end
+
+            if feasibility_diagnostic
+                if t < ocp.N
+                    dynamics_residual = traj[t+1].x - dynamics.f(x, u)
+                    dynamics_ssq += sum(abs2, dynamics_residual)
+                    dynamics_count += length(dynamics_residual)
+                    if !isempty(dynamics_residual)
+                        value, index = findmax(abs, dynamics_residual)
+                        if value > dynamics_max
+                            dynamics_max = value
+                            dynamics_worst_stage = t
+                            dynamics_worst_index = index
+                        end
+                    end
+                end
+                @inbounds for i in eachindex(u)
+                    if cl.maskl[i]
+                        violation = max(cl.l[i] - u[i], zero(T))
+                        bound_ssq += violation^2; bound_count += 1
+                        if violation > bound_max
+                            bound_max = violation; bound_worst_stage = t
+                            bound_worst_index = i; bound_worst_kind = "lower"
+                        end
+                    end
+                    if cl.masku[i]
+                        violation = max(u[i] - cl.u[i], zero(T))
+                        bound_ssq += violation^2; bound_count += 1
+                        if violation > bound_max
+                            bound_max = violation; bound_worst_stage = t
+                            bound_worst_index = i; bound_worst_kind = "upper"
+                        end
+                    end
+                end
             end
 
             callback_start_ns = time_ns()
@@ -628,5 +687,18 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.status == 0 && break
     end
     data.reg_last = reg
+    if feasibility_diagnostic && data.status == 0
+        equality_rms = sqrt(equality_ssq / max(equality_count, 1))
+        dynamics_rms = sqrt(dynamics_ssq / max(dynamics_count, 1))
+        bound_rms = sqrt(bound_ssq / max(bound_count, 1))
+        @printf("FILTERDDP_FEASIBILITY iteration=%d barrier_iteration=%d equality_count=%d equality_rms=%.12e equality_max=%.12e equality_worst_stage=%d equality_worst_index=%d dynamics_count=%d dynamics_rms=%.12e dynamics_max=%.12e dynamics_worst_stage=%d dynamics_worst_index=%d bound_count=%d bound_rms=%.12e bound_max=%.12e bound_worst_stage=%d bound_worst_index=%d bound_worst_kind=%s\n",
+            data.k, data.j, equality_count, equality_rms, equality_max,
+            equality_worst_stage, equality_worst_index,
+            dynamics_count, dynamics_rms, dynamics_max,
+            dynamics_worst_stage, dynamics_worst_index,
+            bound_count, bound_rms, bound_max, bound_worst_stage,
+            bound_worst_index, bound_worst_kind)
+        flush(stdout)
+    end
     data.status != 0 && (verbose && (@warn "Backward pass failure, unable to find an iteration matrix with correct inertia."))
 end

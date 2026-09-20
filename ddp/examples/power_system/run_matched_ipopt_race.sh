@@ -18,6 +18,8 @@
 # terminal SOC. The race therefore runs its own FilterDDP arms, logged here.
 #
 #   bash ddp/examples/power_system/run_matched_ipopt_race.sh [outdir]
+#   bash ddp/examples/power_system/run_matched_ipopt_race.sh OUTDIR SYSTEM T
+# The three-argument form runs/resumes exactly one matched case and stops.
 #
 # Phases, resumable (finished logs skipped), summary pushed after every case:
 #   0  WAIT for run_diag_hessian_horizon_sweep.sh to finish (no timing overlap).
@@ -146,6 +148,11 @@ run_fddp() {  # $1 system, $2 T  -- diagonal-Hessian arm
   say "filterddp diag: $SYS T=$T (factor_backed=$FB; $QW)"
   echo "$QW" > "$LOG"
   sampled "$OUT/logs/load_fddp_${SYS}_T${T}.csv" run_fddp_job "$SYS" "$T" "$FB" >> "$LOG" 2>&1
+  local REF
+  REF=$(grep -oE "CENTRAL_IPOPT .*" "$OUT/logs/ipopt_${SYS}_T${T}.log" | \
+        grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
+  $JL --project=envs/ddp2026 ddp/examples/power_system/extract_filterddp_feasibility_trace.jl \
+      "$LOG" "$OUT/fddp_diag_${SYS}_T${T}_trace.csv" "$REF" >> "$LOG" 2>&1
   echo "PIPELINE_STEP_OK" >> "$LOG"
   summarise_and_push "filterddp diag $SYS T=$T"
 }
@@ -157,13 +164,16 @@ run_fddp_job() {  # $1 system, $2 T, $3 factor_backed
         grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
   [ -n "$REF" ] || { echo "missing centralized objective for $SYS T=$T"; return 1; }
   (
+    local PRIMAL=1e-6
+    [ "$SYS" = large10kC_1ph ] && PRIMAL=1e-4
     export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8
     export FILTERDDP_NEAR_OPT_REFERENCE="$REF"
     export FILTERDDP_NEAR_OPT_GAP=0.005
-    export FILTERDDP_NEAR_OPT_PRIMAL=1e-6
+    export FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+    export FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
     if [ "$FB" = 1 ]; then export FILTERDDP_FACTOR_BACKED_POLICY=1
     else unset FILTERDDP_FACTOR_BACKED_POLICY; fi
-    echo "PIPELINE_ENV system=$SYS T=$T arm=diag factor_backed=$FB diag_floor=1e-8 terminal_soc_soft=$TERMINAL_SOC_SOFT max_iterations=$FILTERDDP_MAX_ITERATIONS C_B=$REDUCED_CB profile=$REDUCED_PROFILE near_opt_reference=$REF near_opt_gap=$FILTERDDP_NEAR_OPT_GAP near_opt_primal=$FILTERDDP_NEAR_OPT_PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+    echo "PIPELINE_ENV system=$SYS T=$T arm=diag factor_backed=$FB diag_floor=1e-8 terminal_soc_soft=$TERMINAL_SOC_SOFT max_iterations=$FILTERDDP_MAX_ITERATIONS C_B=$REDUCED_CB profile=$REDUCED_PROFILE near_opt_reference=$REF near_opt_gap=$FILTERDDP_NEAR_OPT_GAP near_opt_primal=$FILTERDDP_NEAR_OPT_PRIMAL feasibility_diagnostic=1 started=$(date '+%Y-%m-%dT%H:%M:%S')"
     $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
   )
 }
@@ -175,6 +185,17 @@ rel_obj_diff() {  # $1 system, $2 T -> relative objective difference, or nan
   [ -n "$a" ] && [ -n "$b" ] || { echo nan; return; }
   python -c "a,b=float('$a'),float('$b'); print('%.3e' % (abs(a-b)/abs(a)))"
 }
+
+# One-case mode is used for supervised expensive runs. The centralized arm is
+# skipped when its validated PIPELINE_STEP_OK log already exists.
+if [ "$#" -ge 3 ]; then
+  CASE_SYS=$2; CASE_T=$3
+  run_ipopt "$CASE_SYS" "$CASE_T" || exit 1
+  run_fddp "$CASE_SYS" "$CASE_T" || exit 1
+  say "single case finished: $CASE_SYS T=$CASE_T"
+  summarise_and_push "single case finished $CASE_SYS T=$CASE_T"
+  exit 0
+fi
 
 # ------------------------------------------------------------------- 1 GATE --
 for T in 3 6; do run_ipopt ieee123C_1ph $T; run_fddp ieee123C_1ph $T; done

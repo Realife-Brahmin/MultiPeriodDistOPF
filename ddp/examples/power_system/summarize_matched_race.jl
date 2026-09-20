@@ -69,12 +69,14 @@ if isfile(nearcsv)
     ix(n) = findfirst(==(n), hdr)
     for l in lines[2:end]
         f = split(l, ',')
-        parse(Float64, f[ix("P")]) == 1e-6 || continue
-        near[(f[ix("system")], parse(Int, f[ix("T")]))] =
+        sys = f[ix("system")]
+        target = sys == "large10kC_1ph" ? 1e-4 : 1e-6
+        parse(Float64, f[ix("P")]) == target || continue
+        near[(sys, parse(Int, f[ix("T")]))] =
             (iters = parse(Int, f[ix("near_opt_iteration")]),
              time = parse(Float64, f[ix("near_opt_time_s")]),
              obj = parse(Float64, f[ix("near_opt_objective")]),
-             gap = parse(Float64, f[ix("near_opt_rel_gap")]))
+             gap = parse(Float64, f[ix("near_opt_rel_gap")]), primal = target)
     end
 end
 
@@ -110,11 +112,11 @@ const BUSY = 1.5
 bgstr(x) = isnan(x) ? "--" : @sprintf("%.1f%s", x, x > BUSY ? "*" : "")
 
 open(joinpath(race, "matched_race.csv"), "w") do io
-    println(io, "system,T,gamma,ipopt_status,ipopt_iterations,ipopt_solve_s,ipopt_objective,filterddp_near_status,filterddp_near_iteration,filterddp_near_s,filterddp_near_objective,factor_backed,near_obj_rel_gap,near_over_ipopt,oldfamily_ipopt_s,oldfamily_iterations,ipopt_background_cores,filterddp_background_cores")
+    println(io, "system,T,gamma,ipopt_status,ipopt_iterations,ipopt_solve_s,ipopt_objective,filterddp_near_status,filterddp_primal_threshold,filterddp_near_iteration,filterddp_near_s,filterddp_near_objective,factor_backed,near_obj_rel_gap,near_over_ipopt,oldfamily_ipopt_s,oldfamily_iterations,ipopt_background_cores,filterddp_background_cores")
     println("=" ^ 118)
     println("IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP time to near-optimality")
     println("periodic profile, C_B = 1e-3, soft terminal SOC with per-system gamma (terminal_soc_penalty.jl)")
-    println("FilterDDP stop: primal infeasibility <= 1e-6 and objective within 0.5% of Ipopt; strict tail excluded")
+    println("FilterDDP stop: objective within 0.5% of Ipopt; primal <=1e-6 (IEEE) or <=1e-4 (large10k)")
     println("=" ^ 118)
     @printf("%-14s %4s | %-15s %5s %9s %5s | %-7s %5s %9s %5s | %9s %9s | %15s\n",
             "system", "T", "ipopt", "iters", "ipopt s", "bg", "near", "iter", "near s", "bg",
@@ -128,11 +130,12 @@ open(joinpath(race, "matched_race.csv"), "w") do io
         gam = I !== nothing ? I.gamma : (D !== nothing ? D.gamma : NaN)
         bgI = background(joinpath(logdir, "load_ipopt_$(sys)_T$(T).csv"), joinpath(logdir, "ipopt_$(sys)_T$(T).log"))
         bgD = background(joinpath(logdir, "load_fddp_$(sys)_T$(T).csv"), joinpath(logdir, "fddp_diag_$(sys)_T$(T).log"))
-        @printf(io, "%s,%d,%.6e,%s,%d,%.3f,%.12g,%s,%d,%.3f,%.12g,%d,%.3e,%.4f,%.3f,%d,%.3f,%.3f\n",
+        @printf(io, "%s,%d,%.6e,%s,%d,%.3f,%.12g,%s,%.1e,%d,%.3f,%.12g,%d,%.3e,%.4f,%.3f,%d,%.3f,%.3f\n",
                 sys, T, gam,
                 I === nothing ? "" : I.status, I === nothing ? -1 : I.iters,
                 I === nothing ? NaN : I.solve, I === nothing ? NaN : I.obj,
-                N === nothing ? "" : "NEAR_OPT", N === nothing ? -1 : N.iters,
+                N === nothing ? "" : "NEAR_OPT", N === nothing ? NaN : N.primal,
+                N === nothing ? -1 : N.iters,
                 N === nothing ? NaN : N.time, N === nothing ? NaN : N.obj,
                 D === nothing ? 0 : D.fb, rel, ratio, o[1], o[2], bgI, bgD)
         @printf("%-14s %4d | %-15s %5s %9s %5s | %-7s %5s %9s %5s | %9s %9s | %15s\n",
