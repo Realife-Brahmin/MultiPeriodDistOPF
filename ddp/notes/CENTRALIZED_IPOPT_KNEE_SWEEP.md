@@ -41,3 +41,23 @@ There is no clear knee through this point. Solve time per period is `3.36 s` at
 `T=144`, `3.23 s` at `T=384`, and `3.41 s` at `T=576`; memory per period is
 also essentially linear between the last two points. A `T=768` run is therefore
 justified and is projected at roughly 45 minutes and 24--25 GiB peak.
+
+## med2522 T=768 failure
+
+The next point did not complete an optimization iteration. MUMPS returned
+`INFO(1)=-13` during the first factorization when requesting one additional
+contiguous `2147483647`-byte allocation. The model had 8,320,512 variables,
+6,001,920 equalities, and 4,446,720 inequalities. This brackets the centralized
+memory knee on this machine between the successful `T=576` point and failed
+`T=768`; the raw failed stdout is retained under `logs/`.
+
+## Matched periodic large10k T=96
+
+The matched periodic-profile case converged in 90 iterations with objective
+`3178495.9248074344`. JuMP solve time was `1682.259 s`, total driver wall time
+was `1769.549 s`, and sampled peak working set was `10205.840 MiB`
+(`9.966 GiB`). IPOPT's overall algorithm time was `1677.230 s`, including
+`1465.386 s` in `ComputeSearchDirection`, `308.779 s` in triangular
+back-solves, `1214.339 s` inferred factorization, and `60.720 s` in function
+evaluations. The full timing log and machine-readable row are in
+`ddp/results/centralized_ipopt_matched_knee/`.

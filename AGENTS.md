@@ -24,7 +24,14 @@ then large10k above T=48. See
 
 med2522 T=576 subsequently converged/validated in 100 iterations and 1963.617 s
 with an 18.155 GiB peak. Its per-period solve time and RAM remain approximately
-linear, so no knee is established through T=576; continue at T=768.
+linear through T=576. At T=768 MUMPS failed on the first factorization with
+`INFO(1)=-13` while requesting another contiguous 2 GiB allocation, bracketing
+the centralized memory knee between T=576 and T=768.
+
+The separate matched periodic large10k knee series reached T=96 in 90 IPOPT
+iterations and 1682.259 s solve time, with objective 3178495.9248074344 and a
+9.966 GiB sampled peak. Full IPOPT timing is retained in
+`ddp/results/centralized_ipopt_matched_knee/`; continue at T=144.
 
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
