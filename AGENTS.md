@@ -22,6 +22,10 @@ factorization, and 62.807 s function evaluation. Continue from med2522 T=576,
 then large10k above T=48. See
 `ddp/notes/CENTRALIZED_IPOPT_KNEE_SWEEP.md`.
 
+med2522 T=576 subsequently converged/validated in 100 iterations and 1963.617 s
+with an 18.155 GiB peak. Its per-period solve time and RAM remain approximately
+linear, so no knee is established through T=576; continue at T=768.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian
