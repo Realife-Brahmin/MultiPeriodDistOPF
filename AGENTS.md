@@ -33,6 +33,12 @@ iterations and 1682.259 s solve time, with objective 3178495.9248074344 and a
 9.966 GiB sampled peak. Full IPOPT timing is retained in
 `ddp/results/centralized_ipopt_matched_knee/`; continue at T=144.
 
+Matched periodic large10k T=144 subsequently converged in 100 iterations and
+3319.996 s solve time, with objective 3178495.9315857552 and a 15.756 GiB
+sampled peak. Solve time per period rose from 17.52 s at T=96 to 23.06 s at
+T=144 while memory remained approximately linear. Continue at T=192 to test
+whether the runtime knee is emerging.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian

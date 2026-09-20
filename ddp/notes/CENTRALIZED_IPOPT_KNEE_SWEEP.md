@@ -61,3 +61,15 @@ was `1769.549 s`, and sampled peak working set was `10205.840 MiB`
 back-solves, `1214.339 s` inferred factorization, and `60.720 s` in function
 evaluations. The full timing log and machine-readable row are in
 `ddp/results/centralized_ipopt_matched_knee/`.
+
+## Matched periodic large10k T=144
+
+The next horizon also converged, in 100 iterations with objective
+`3178495.9315857552`. JuMP solve time was `3319.996 s`, total driver wall time
+was `3460.443 s`, and sampled peak working set was `16133.801 MiB`
+(`15.756 GiB`). IPOPT's overall algorithm time was `3317.672 s`, including
+`2979.736 s` in `ComputeSearchDirection`, `520.931 s` in triangular
+back-solves, `2540.831 s` inferred factorization, and `98.789 s` in function
+evaluations. Memory remains close to linear in horizon, while solve time per
+period rises from `17.52 s` at `T=96` to `23.06 s` at `T=144`; continue at
+`T=192` to determine whether this is the beginning of the runtime knee.
