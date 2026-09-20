@@ -12,11 +12,13 @@ _derivative_matrix(A, m, n) = issparse(A) ? sparse(A) : reshape(vec(A), m, n)
 const _FROZEN_KKT = Dict{Int,Any}()
 const _FROZEN_AT  = Dict{Int,Int}()
 const _FROZEN_STATS = Dict{Symbol,Int}(:factorisations => 0, :reuses => 0)
+const _KKT_PATTERN_CACHE = Dict{Tuple{UInt,Int},Any}()
 
 _freeze_period() = parse(Int, get(ENV, "FILTERDDP_FREEZE_KKT", "1"))
 
 function _frozen_reset!()
     empty!(_FROZEN_KKT); empty!(_FROZEN_AT)
+    empty!(_KKT_PATTERN_CACHE)
     _FROZEN_STATS[:factorisations] = 0; _FROZEN_STATS[:reuses] = 0
     return nothing
 end
@@ -54,6 +56,7 @@ end
 #     floors each diagonal entry from below.
 _diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0"
 _diag_hessian_floor() = parse(Float64, get(ENV, "FILTERDDP_DIAG_HESSIAN_FLOOR", "1e-8"))
+_direct_diag_hessian_enabled() = get(ENV, "FILTERDDP_DIRECT_DIAG_HESSIAN", "0") != "0"
 
 function _diagonalise_hessian(H)
     floor_val = _diag_hessian_floor()
@@ -62,6 +65,66 @@ function _diagonalise_hessian(H)
         d[i] = max(d[i], floor_val)
     end
     return issparse(H) ? spdiagm(0 => d) : diagm(d)
+end
+
+_kkt_pattern_cache_enabled() = get(ENV, "FILTERDDP_CACHE_KKT_PATTERN", "0") != "0"
+
+function _same_sparse_pattern(A, colptr, rowval)
+    return A.colptr == colptr && A.rowval == rowval
+end
+
+function _cached_kkt!(key::Tuple{UInt,Int}, H::SparseMatrixCSC{T,Int},
+                      cu::SparseMatrixCSC{T,Int}, nu::Int, nc::Int) where {T}
+    entry = get(_KKT_PATTERN_CACHE, key, nothing)
+    if isnothing(entry) || !_same_sparse_pattern(H, entry.H_colptr, entry.H_rowval) ||
+            !_same_sparse_pattern(cu, entry.cu_colptr, entry.cu_rowval)
+        K = [H sparse(cu'); cu spzeros(T, nc, nc)]
+        locations = Dict{Tuple{Int,Int},Int}()
+        for col in axes(K, 2), p in nzrange(K, col)
+            locations[(K.rowval[p], col)] = p
+        end
+        hmap = Vector{Int}(undef, nnz(H))
+        for col in axes(H, 2), p in nzrange(H, col)
+            hmap[p] = locations[(H.rowval[p], col)]
+        end
+        lower = Vector{Int}(undef, nnz(cu))
+        upper = similar(lower)
+        for col in axes(cu, 2), p in nzrange(cu, col)
+            row = cu.rowval[p]
+            lower[p] = locations[(nu + row, col)]
+            upper[p] = locations[(col, nu + row)]
+        end
+        entry = (K=K, H_colptr=copy(H.colptr), H_rowval=copy(H.rowval),
+                 cu_colptr=copy(cu.colptr), cu_rowval=copy(cu.rowval),
+                 hmap=hmap, lower=lower, upper=upper)
+        _KKT_PATTERN_CACHE[key] = entry
+    end
+    K = entry.K
+    fill!(K.nzval, zero(T))
+    @views K.nzval[entry.hmap] .= H.nzval
+    @views K.nzval[entry.lower] .= cu.nzval
+    @views K.nzval[entry.upper] .= cu.nzval
+    return K
+end
+
+# Compute diag(A' * M * A) without materialising that full product.  Network
+# dynamics touch only the battery-power columns of A, so this avoids building
+# and immediately discarding the dense battery block in diagonal-Hessian mode.
+function _diagonal_quadratic_form(A::SparseMatrixCSC{T}, M, n::Int) where {T}
+    d = zeros(promote_type(T, eltype(M)), n)
+    @inbounds for j in axes(A, 2)
+        lo = A.colptr[j]
+        hi = A.colptr[j + 1] - 1
+        lo > hi && continue
+        rows = @view A.rowval[lo:hi]
+        vals = @view A.nzval[lo:hi]
+        acc = zero(eltype(d))
+        for a in eachindex(rows), b in eachindex(rows)
+            acc += vals[a] * M[rows[a], rows[b]] * vals[b]
+        end
+        d[j] = acc
+    end
+    return d
 end
 
 
@@ -261,8 +324,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             Σ_L = inv_ul .* zl
             Σ_U = inv_uu .* zu
             if sparse_stage
-                Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
-                     sparse(fu)' * sparse(V̂xx) * sparse(fu) + sparse(fuu)
+                fu_sparse = sparse(fu)
+                if _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+                    curvature_diag = _diagonal_quadratic_form(fu_sparse, V̂xx, nu)
+                    Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + curvature_diag) + sparse(fuu)
+                else
+                    Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
+                         fu_sparse' * sparse(V̂xx) * fu_sparse + sparse(fuu)
+                end
             else
                 ux_tmp = fu' * V̂xx
                 Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
@@ -319,7 +388,10 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                 kkt_start_ns = time_ns()
                 Ĥ = sparse(Symmetric(Ĥ))
-                K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
+                cu_sparse = sparse(cu)
+                K = _kkt_pattern_cache_enabled() ?
+                    _cached_kkt!((objectid(solver), t), Ĥ, cu_sparse, nu, nc) :
+                    [Ĥ sparse(cu_sparse'); cu_sparse spzeros(T, nc, nc)]
                 # Fill-in diagnostic: nnz of the coefficient before factorisation
                 # and of the LU factors after, per stage. Opt-in; this is what
                 # distinguishes "the matrix got denser" from "pivoting got worse"
