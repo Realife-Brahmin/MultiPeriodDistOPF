@@ -406,12 +406,13 @@ function save_bf_results(sol, data)
     end
     println(COLOR_SUCCESS, "✓ Results written to $(results_file)", COLOR_RESET)
 
-    # --- Trim Ipopt log to last 100 lines (may fail if Ipopt still holds the file) ---
+    # --- Trim Ipopt log unless a profiling run needs the full timing table. ---
     ipopt_log = joinpath(SYSTEM_DIR, "ipopt_bf.log")
     try
         if isfile(ipopt_log)
             all_lines = readlines(ipopt_log)
-            if length(all_lines) > 100
+            preserve_full_log = get(ENV, "PRESERVE_IPOPT_FULL_LOG", "0") == "1"
+            if !preserve_full_log && length(all_lines) > 100
                 open(ipopt_log, "w") do io
                     println(io, "# ... trimmed $(length(all_lines) - 100) earlier lines ...")
                     for l in all_lines[end-99:end]
@@ -419,7 +420,10 @@ function save_bf_results(sol, data)
                     end
                 end
             end
-            println(COLOR_SUCCESS, "✓ Ipopt log trimmed to last 100 lines: $(ipopt_log)", COLOR_RESET)
+            println(COLOR_SUCCESS,
+                preserve_full_log ? "✓ Full Ipopt log preserved: $(ipopt_log)" :
+                                    "✓ Ipopt log trimmed to last 100 lines: $(ipopt_log)",
+                COLOR_RESET)
         end
     catch e
         println(COLOR_WARNING, "⚠ Could not trim Ipopt log (file may be locked): ", e, COLOR_RESET)

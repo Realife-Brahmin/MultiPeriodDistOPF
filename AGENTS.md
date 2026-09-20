@@ -12,6 +12,16 @@ Details and peak-RAM rows are in
 `ddp/notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md` and
 `ddp/results/hessian_rewrites/`.
 
+## Centralized IPOPT knee sweep (2026-09-20)
+
+The first extended point, med2522 T=384, converged/validated in 95 iterations.
+JuMP solve time was 1235.065 s without internal timing and 1241.290 s with it
+(0.50% overhead); sampled peak was 12.0005 GiB. The profiled split is 1099.842 s
+search direction, 355.223 s triangular back-solve, 712.625 s inferred
+factorization, and 62.807 s function evaluation. Continue from med2522 T=576,
+then large10k above T=48. See
+`ddp/notes/CENTRALIZED_IPOPT_KNEE_SWEEP.md`.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian
