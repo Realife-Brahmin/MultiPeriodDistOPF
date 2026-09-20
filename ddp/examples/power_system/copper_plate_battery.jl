@@ -62,7 +62,7 @@
 # probe at the bottom of this file. Once Stage 6 adds SOC bounds, w can be dropped
 # and the coupling comes from the bounds exactly as in the paper.
 
-using FilterDDP
+using DDP4OPF
 using LinearAlgebra
 using Printf
 using StaticArrays

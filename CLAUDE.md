@@ -5,10 +5,51 @@ same ground truth. Session-local memory (`~/.claude/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session
 establishes something a future session, on any machine, would need.
 
+## Standing rules (user, 2026-09-18) -- read first
+
+- **Terminal SOC is always a SOFT constraint, in every algorithm** (FilterDDP,
+  centralized Ipopt, tADMM, run_bf): objective `+ gamma * sum_j (B_j^T - B_j^0)^2`.
+  `gamma` is fixed **per system** and never varies with the horizon `T`. Single
+  source of truth: `ddp/examples/power_system/terminal_soc_penalty.jl`
+  (ieee123 1.75e4, ieee2522 3.29e4, large10k 420). `gamma` is **not** `C_B`.
+  Currently wired into the FilterDDP driver and `centralized_ipopt_matched.jl`
+  behind `TERMINAL_SOC_SOFT=1`; tADMM and run_bf still need it before their next run.
+- **Solver timing comparisons only on a provably identical problem**: same
+  exported instance, `C_B`, `gamma` and profile, with objective agreement checked
+  before any timing is quoted. The paper's older centralized Ipopt sweep
+  (`ddp/results/centralized_ipopt/`) is on a DIFFERENT instance family
+  (`C_B ~ 8.8e-8`, old price sampling, free terminal SOC) -- do not race against it.
+
 ## Working branch
 
-Current branch as of 2026-09-15 is `ddp-understanding-sep14` (`sep02` was merged
-to `master`). Create a new dated branch for new work rather than reusing it.
+Current branch as of 2026-09-15 is `ddp-understanding-sep15` (`sep14` was merged
+to `master` as PR #158 and deleted). Create a new dated branch for new work
+rather than reusing it.
+
+## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
+
+Since 2026-09-15 the DDP solver is **our own MIT fork of FilterDDP.jl**, committed
+as source, named `DDP4OPF` with a fresh UUID (`005a218a-...`). `using DDP4OPF`
+everywhere; `FilterDDP` is no longer resolvable in `envs/ddp2026`. Mingda Xu's
+MIT notice is retained in its `LICENSE`, and `NOTICE.md` records the upstream
+repo, the fork point `513a104`, and what changed. Credit the original papers.
+
+Why it was forked rather than kept as a clone plus patches: the working solver
+existed only as uncommitted edits in a gitignored clone, and the documented patch
+recipe no longer rebuilt it (3 of 9 patches failed on a clean `513a104`; the
+result differed in 4 source files). The fork was verified **bit-identical** to
+that clone -- 0 of 2526 full-space and 0 of 459 reduced-space solution entries
+differed on ieee123 T=3.
+
+- A new name and UUID were **required**, not cosmetic: FilterDDP is registered in
+  the Julia General registry, and Julia identifies packages by UUID.
+- **`ddp/patches/` is history, not a build recipe.** Do not try to rebuild from it.
+- **Environment variables still use the `FILTERDDP_` prefix** on purpose: sweep and
+  queue scripts set them. Renaming them is a separate decision.
+- `ddp/external/FilterDDP.jl` (gitignored) is now only needed to reproduce the
+  authors' own shipped example (Stage 3).
+- Historical notes in `ddp/notes/` still cite `ddp/external/FilterDDP.jl` paths and
+  line numbers. They record the clone as it was at the time; leave them.
 
 ## Centralized IPOPT timing sweep (complete)
 
@@ -55,7 +96,7 @@ means *distribution* networks.)
 |---|---|---|
 | Backward information | Passes `μ[t]`, the dynamics-constraint dual, backward one stage per **outer forward sweep** (`envs/ddp/root_level/ddp_copperplate.jl:539-550`, `mu_prev`/`mu_coupling`) | Backward pass sweeps `t=N→1` **within one iteration**, building both `V_x` and `V_xx` (Riccati recursion, `backward_pass.jl` in the FilterDDP clone) |
 | Order of approximation | First-order only: the coupling term `μ[t+1]·(B[t+1]−B[t]+Δt·P_B[t+1])` is linear in `B[t]` — no curvature crosses a stage boundary | Second-order: full local quadratic model of the cost-to-go |
-| Per-stage solve | Calls an external solver (Gurobi/Ipopt) per stage per sweep | Dense in-house `nu×nu` KKT solve inside the backward pass, with filter line-search globalization |
+| Per-stage solve | Calls an external solver (Gurobi/Ipopt) per stage per sweep | In-house **sparse** `nu×nu` KKT solve (UMFPACK) inside the backward pass, with filter line-search globalization. An earlier version of this row said "dense"; measured at large10k a dense factorisation would need ~540 s and 22 GB per stage against 2.25 s actual |
 | Propagation speed | Information from stage `T` reaches stage `1` after roughly `T` outer iterations (one stage per sweep) | Full-horizon propagation in one backward sweep per Newton-type iteration |
 
 Important nuance established 2026-08-05: `μ[t]` in the user's method **is**
@@ -159,9 +200,9 @@ formulation.
 
 Full write-up and raw data:
 [ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md](ddp/notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md),
-`ddp/results/reduced_space/`. Nothing in `ddp/external/FilterDDP.jl` was
-modified -- the OCP is assembled from hand-written closures, which is forced
-anyway since an Ipopt solve is not automatically differentiable.
+`ddp/results/reduced_space/`. The reduced-space work did not modify the solver
+(now `ddp/DDP4OPF.jl`) -- the OCP is assembled from hand-written closures, which
+is forced anyway since an Ipopt solve is not automatically differentiable.
 
 The network can be eliminated exactly: FilterDDP optimises battery quantities
 only while an inner single-period OPF recovers every network variable, with the
@@ -169,8 +210,19 @@ real-power balance duals supplying `dPhi/dP_B` for free. Verified against the
 stored full-space FilterDDP solutions to `6.0e-09` (ieee123) and `1.3e-08`
 (ieee2522) relative objective.
 
+> **RETRACTED 2026-09-15 -- read before trusting the table below.** Every `T = 3`
+> instance has **exactly zero price spread**: the profile generator sampled `sin`
+> at `0, pi, 2pi`. With no arbitrage signal the batteries barely move (5% of
+> rating at large10k), so the table measures an idle-battery problem. It is a
+> valid timing on that instance and **not** evidence the decomposition works on a
+> real scheduling problem. On the first instance with a real price signal
+> (ieee2522 `T = 12`, 147% spread, batteries up to 97% of rating) the reduced
+> method **fails to converge** while full space converges. Why is still open. Use
+> `PROFILE_PERIODIC=1` exports (118% spread at `T = 3`); the exporter now warns on
+> flat profiles. Full account: `ddp/notes/FINDINGS_2026-09-14_15.md`.
+
 **Measured crossover at `T = 3`, `C_B = 1e-3`, both formulations re-run at the
-same `C_B`:**
+same `C_B` (degenerate instances -- see retraction above):**
 
 | | full-space | reduced (low-rank) | outcome |
 |---|---|---|---|
@@ -178,7 +230,9 @@ same `C_B`:**
 | ieee2522 (`nu` 13358 -> 500) | 107.3 s / 56 it | 107.1 s / 33 it | parity |
 | large10k (`nu` 54665 -> 2040) | 1658.2 s / 100 it | 802.5 s / 13 it | **2.07x faster** |
 
-So the decomposition is a LARGE-system technique; it loses below ~2500 buses.
+That was read as "the decomposition is a LARGE-system technique"; given the
+retraction, that conclusion is **unsupported** until it is re-measured on
+non-degenerate instances.
 Outer iteration counts run the other way with size (full-space 46/56/100,
 reduced 26/33/13), and at large10k inner solves are only 25% of wall -- the
 bottleneck has moved to FilterDDP's own outer cost.

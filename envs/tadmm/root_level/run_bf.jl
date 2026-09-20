@@ -103,6 +103,12 @@ function solve_MPOPF_with_SOCP_BruteForced(data; solver=:ipopt)
         set_optimizer_attribute(model, "max_iter", 5000)
         mkpath(SYSTEM_DIR)
         set_optimizer_attribute(model, "output_file", joinpath(SYSTEM_DIR, "ipopt_bf.log"))
+        # Opt-in: Ipopt's own per-phase timing, so the centralized reference can
+        # be decomposed the same way as the FilterDDP backward pass
+        # (LinearSystemFactorization vs LinearSystemBackSolve vs function evals).
+        if get(ENV, "IPOPT_TIMING_STATISTICS", "0") == "1"
+            set_optimizer_attribute(model, "print_timing_statistics", "yes")
+        end
     end
 
     # ========== VARIABLES ==========

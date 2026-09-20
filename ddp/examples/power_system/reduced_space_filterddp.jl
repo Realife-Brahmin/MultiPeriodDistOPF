@@ -50,7 +50,7 @@
 #   julia --startup-file=no --project=envs/ddp2026 \
 #     ddp/examples/power_system/reduced_space_filterddp.jl [system] [T] [hessian]
 
-using FilterDDP
+using DDP4OPF
 using LinearAlgebra
 using Random
 using Printf
@@ -307,7 +307,7 @@ function reduced_stage_objective(data::Dict, t::Int, nB::Int, stats::PhiStats,
         end
         H
     end
-    return FilterDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),
+    return DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),
                                typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu), cache
 end
@@ -336,7 +336,7 @@ function build_reduced_ocp(data::Dict; hessian_mode::Symbol=:exact)
     fxx = (x, u, w) -> zeros(nx, nx)
     fux = (x, u, w) -> spzeros(nu, nx)
     fuu = (x, u, w) -> spzeros(nu, nu)
-    dyn = FilterDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),
+    dyn = DDP4OPF.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),
                              typeof(fxx),typeof(fux),typeof(fuu)}(f, fx, fu, fxx, fux, fuu)
 
     # stage equality: x - dt*P_B - Bmin - s_E = 0  (same SOC box as full space)
@@ -353,7 +353,7 @@ function build_reduced_ocp(data::Dict; hessian_mode::Symbol=:exact)
     cxx = (x, u, p) -> zeros(nx, nx)
     cux = (x, u, p) -> spzeros(nu, nx)
     cuu = (x, u, p) -> spzeros(nu, nu)
-    con = FilterDDP.EqualityConstraints{nx,nu,nc,typeof(c),typeof(cx),typeof(cu),
+    con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(c),typeof(cx),typeof(cu),
                                         typeof(cxx),typeof(cux),typeof(cuu)}(
         c, cx, cu, cxx, cux, cuu)
 
@@ -376,8 +376,12 @@ function main(args = ARGS)
     T      = length(args) >= 2 ? parse(Int, args[2]) : 3
     hmode  = Symbol(length(args) >= 3 ? args[3] : "exact")
 
+    # Instance variant. REDUCED_PROFILE=periodic selects the non-degenerate
+    # export (real price spread); unset keeps the historical default, which at
+    # T=3 has ZERO price spread and leaves the batteries nearly idle.
+    ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
     datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                        "network_data_$(system)_T$(T).jls")
+                        "network_data_$(system)_T$(T)$(ptag).jls")
     data = deserialize(datafile)
     # Opt-in C_B override. C_B is the battery cycling cost and it sets how much
     # perfectly-conditioned damping (2*C_B*S^2*dt*I) sits under d2Phi in the
@@ -390,6 +394,11 @@ function main(args = ARGS)
 ",
                 data[:C_B], 2 * data[:C_B] * data[:kVA_B]^2 * data[:delta_t_h])
     end
+    @printf("INSTANCE %s  periodic=%s  price spread=%.1f%%  nB=%d
+",
+            basename(datafile), get(data, :profile_periodic, "?"),
+            100 * (maximum(data[:LoadShapeCost]) - minimum(data[:LoadShapeCost])) /
+                  max(minimum(data[:LoadShapeCost]), 1e-12), length(data[:Bset]))
     dt = data[:delta_t_h]; pbase = data[:kVA_B]
 
     t_build = time()
@@ -444,7 +453,7 @@ function main(args = ARGS)
     # different C_B is a different problem and must not be compared against.
     cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     reffile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                       "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
+                       "filterddp_solution_$(system)_T$(T)$(ptag)$(cbtag).jls")
     if isfile(reffile)
         ref = deserialize(reffile)
         idx, _ = control_layout(data)
@@ -468,7 +477,7 @@ function main(args = ARGS)
     end
 
     outdir = joinpath(REPO, "ddp", "results", "reduced_space"); mkpath(outdir)
-    serialize(joinpath(outdir, "reduced_filterddp_$(system)_T$(T)_$(hmode).jls"),
+    serialize(joinpath(outdir, "reduced_filterddp_$(system)_T$(T)$(ptag)_$(hmode).jls"),
               Dict(:system => system, :T => T, :hessian => string(hmode),
                    :status => string(status), :iterations => solver.data.k,
                    :wall => wall, :objective => obj_red,

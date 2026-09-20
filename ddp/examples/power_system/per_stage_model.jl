@@ -21,7 +21,7 @@
 #   julia --startup-file=no --project=envs/ddp2026 \
 #         ddp/examples/power_system/per_stage_model.jl
 
-using FilterDDP
+using DDP4OPF
 using LinearAlgebra
 using Printf
 using StaticArrays

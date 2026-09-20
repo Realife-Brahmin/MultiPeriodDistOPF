@@ -9,7 +9,7 @@
 #         ddp/examples/power_system/ieee123c_filterddp.jl \
 #         [system] [T] [dimensions|build|solver|solve]
 
-using FilterDDP
+using DDP4OPF
 using JuMP
 using LinearAlgebra
 using Printf
@@ -17,6 +17,7 @@ using Serialization
 using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
+include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
 
 function control_layout(data)
     N, L, B, D = length(data[:Nset]), length(data[:Lset]),
@@ -42,7 +43,7 @@ function analytic_dynamics(nx, nu, pbidx, dt)
     zxx = (x,u,λ) -> zeros(nx, nx)
     zux = (x,u,λ) -> spzeros(nu, nx)
     zuu = (x,u,λ) -> spzeros(nu, nu)
-    FilterDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
+    DDP4OPF.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
         f, fx, fu, zxx, zux, zuu)
 end
 
@@ -64,11 +65,43 @@ function analytic_objective(nx, nu, psidx, pbidx, price, pbase, dt, C_B)
         end
         H
     end
-    FilterDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
+    DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu)
 end
 
-function build_model(data)
+# Stage-T cost plus the soft terminal SOC penalty gamma * sum_b (B_b^T - B0_b)^2.
+# FilterDDP evaluates its terminal objective at the last stage's (x, u) -- there
+# is no state after it -- so the energy left at the end of the horizon is
+# B^T = x - dt*u[pb], which couples x and u (lux != 0 on this one stage).
+function soft_terminal_objective(base, nx, nu, pbidx, dt, B0, gamma)
+    r(x,u) = x .- dt .* u[pbidx] .- B0
+    l = (x,u) -> base.l(x,u) .+ gamma*sum(abs2, r(x,u))
+    lx = (x,u) -> base.lx(x,u) .+ 2gamma .* r(x,u)
+    lu = function (x,u)
+        g = base.lu(x,u)
+        g[pbidx] .-= 2gamma*dt .* r(x,u)
+        g
+    end
+    lxx = (x,u) -> base.lxx(x,u) .+ 2gamma .* Matrix{Float64}(I, nx, nx)
+    lux = function (x,u)
+        H = sparse(base.lux(x,u))
+        for b in 1:nx
+            H[pbidx[b], b] -= 2gamma*dt
+        end
+        H
+    end
+    luu = function (x,u)
+        H = sparse(base.luu(x,u))
+        for k in pbidx
+            H[k,k] += 2gamma*dt^2
+        end
+        H
+    end
+    DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
+        l, lx, lu, lxx, lux, luu)
+end
+
+function build_model(data; gamma=0.0)
     Nstage = data[:T]
     buses, lines = data[:Nset], data[:Lset]
     batteries, ders = data[:Bset], data[:Dset]
@@ -256,13 +289,17 @@ function build_model(data)
             end
             H
         end
-        con = FilterDDP.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
+        con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
             equations, cx, cu, cxx, cux, cuu)
         push!(stage_cons, con)
     end
 
-    # FilterDDP has a control at its final stage; use that stage's ordinary cost.
-    term = stage_objs[end]
+    # FilterDDP has a control at its final stage; use that stage's ordinary cost,
+    # plus the soft terminal SOC penalty when gamma > 0 (terminal_soc_penalty.jl).
+    term = gamma > 0 ?
+        soft_terminal_objective(stage_objs[end], nx, nu, idx.pb, dt,
+            Float64[data[:B0_pu][j] for j in batteries], gamma) :
+        stage_objs[end]
     ocp = build_ocp(Nstage, stage_objs[1], term, dyn, stage_cons[1], limits;
                     stage_objectives=stage_objs, stage_constraints=stage_cons)
     return ocp, idx, nx, nu, length(stage_cons[1].c(zeros(nx), zeros(nu)))
@@ -273,8 +310,9 @@ system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
 T = length(args) >= 2 ? parse(Int, args[2]) : 2
 mode = length(args) >= 3 ? args[3] : "dimensions"
 quiet = length(args) >= 4 && args[4] == "quiet"
+ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
 datafile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                    "network_data_$(system)_T$(T).jls")
+                    "network_data_$(system)_T$(T)$(ptag).jls")
 data = deserialize(datafile)
 # Opt-in C_B override so the full-space reference can be regenerated at the same
 # battery cost as a reduced-space experiment. Default behaviour is unchanged.
@@ -292,7 +330,9 @@ nc = 2length(data[:Nset]) + 2length(data[:Lset]) + 1 + nx
 mode == "dimensions" && exit()
 
 t0 = time()
-ocp, idx, nx, nu, nc_actual = build_model(data)
+gammaT = terminal_soc_soft() ? gamma_terminal(system) : 0.0
+@printf("TERMINAL_SOC soft=%d gamma=%.6e\n", gammaT > 0, gammaT)
+ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
 mode == "build" && exit()
 
@@ -333,7 +373,7 @@ if get(ENV, "FILTERDDP_SKIP_SOLUTION_WRITE", "0") != "1"
     # exported C_B and must not be silently replaced by a different problem.
     cbtag = haskey(ENV, "REDUCED_CB") ? "_CB$(ENV["REDUCED_CB"])" : ""
     solutionfile = joinpath(REPO, "ddp", "results", "network_filterddp",
-                            "filterddp_solution_$(system)_T$(T)$(cbtag).jls")
+                            "filterddp_solution_$(system)_T$(T)$(ptag)$(cbtag).jls")
     serialize(solutionfile, Dict(
         :system => system,
         :T => T,
@@ -353,6 +393,12 @@ for t in 1:T
     Jddp += data[:LoadShapeCost][t]*data[:kVA_B]*data[:delta_t_h]*uddp[t][idx.ps]
     Jddp += data[:C_B]*data[:kVA_B]^2*data[:delta_t_h]*sum(uddp[t][k]^2 for k in idx.pb)
     max_eq = max(max_eq, norm(ocp.stage_constraints[t].c(xddp[t], uddp[t]), Inf))
+end
+if gammaT > 0
+    for (b,j) in enumerate(data[:Bset])
+        BT = xddp[T][b] - data[:delta_t_h]*uddp[T][idx.pb[b]]
+        Jddp += gammaT*(BT - data[:B0_pu][j])^2
+    end
 end
 @printf("FilterDDP objective=%.12f max_equality_residual=%.3e\n", Jddp, max_eq)
 
