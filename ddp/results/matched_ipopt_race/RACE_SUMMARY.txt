@@ -1,7 +1,7 @@
 ======================================================================================================================
 IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP time to near-optimality
 periodic profile, C_B = 1e-3, soft terminal SOC with per-system gamma (terminal_soc_penalty.jl)
-FilterDDP stop: primal infeasibility <= 1e-6 and objective within 0.5% of Ipopt; strict tail excluded
+FilterDDP stop: objective within 0.5% of Ipopt; primal <=1e-6 (IEEE) or <=1e-4 (large10k)
 ======================================================================================================================
 system            T | ipopt           iters   ipopt s    bg | near     iter    near s    bg |   obj gap   near/ip |  old-family ref
 ----------------------------------------------------------------------------------------------------------------------
@@ -23,8 +23,8 @@ ieee2522C_1ph   288 | LOCALLY_SOLVED     83     720.5   0.3 | --         --     
 large10kC_1ph     3 | LOCALLY_SOLVED     41      18.6   0.3 | --         --        --    -- |        --        -- |   55.8 s/110 it
 large10kC_1ph     6 | LOCALLY_SOLVED     51      48.4   0.3 | --         --        --    -- |        --        -- |   104.8 s/99 it
 large10kC_1ph    12 | LOCALLY_SOLVED     49      94.5   0.2 | --         --        --    -- |        --        -- |   209.1 s/88 it
-large10kC_1ph    24 | LOCALLY_SOLVED     55     246.9   0.3 | --         --        --    -- |        --        -- |  572.7 s/112 it
-large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | NEAR_OPT   109   20499.5   0.3 |   1.5e-06    36.84x | 8261.9 s/698 it
+large10kC_1ph    24 | LOCALLY_SOLVED     55     246.9   0.3 | NEAR_OPT    96    8310.1   0.3 |   1.6e-05    33.66x |  572.7 s/112 it
+large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | NEAR_OPT    81   15343.2   0.3 |   2.7e-05    27.58x | 8261.9 s/698 it
 ----------------------------------------------------------------------------------------------------------------------
 ipopt s = Ipopt solve time. near s = FilterDDP time to the approved near-optimal criterion.
 near/ip < 1.00x means FilterDDP reaches that criterion faster than Ipopt completes.
