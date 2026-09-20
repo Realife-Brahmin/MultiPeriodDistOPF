@@ -90,8 +90,14 @@ try {
             throw
         }
 
-        & $julia --project=envs/ddp2026 ddp/examples/power_system/extract_filterddp_feasibility_trace.jl $log $trace $reference |
-            Tee-Object -LiteralPath $err -Append
+        # Windows PowerShell's Tee-Object writes UTF-16LE by default, while the
+        # Julia trace extractor expects UTF-8 text.
+        $utf8Log = "$log.utf8"
+        Get-Content -LiteralPath $log | Set-Content -LiteralPath $utf8Log -Encoding UTF8
+        Move-Item -LiteralPath $utf8Log -Destination $log -Force
+
+        & $julia --project=envs/ddp2026 ddp/examples/power_system/extract_filterddp_feasibility_trace.jl $log $trace $reference 2>&1 |
+            ForEach-Object { $_ | Add-Content -LiteralPath $err; $_ }
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $trace)) {
             throw "Trace extraction failed for $system T=$T"
         }
