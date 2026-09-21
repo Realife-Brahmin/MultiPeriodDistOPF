@@ -45,6 +45,12 @@ solve time more than doubled from 23.06 s at T=144 to 47.73 s at T=192 while
 RAM rose only 11.7%, establishing a runtime knee. The user authorized one final
 T=288 run to distinguish a bend from collapse; preserve any failure evidence.
 
+That final matched large10k T=288 run failed on its first MUMPS factorization:
+`INFO(1)=-13`, unable to allocate another 6705 MB, after reaching an 18.640
+GiB sampled peak. The model had 12.77 million variables. The centralized
+large10k limit is therefore bracketed between successful T=192 and failed
+T=288. Do not launch a larger case on this host without a changed memory plan.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian

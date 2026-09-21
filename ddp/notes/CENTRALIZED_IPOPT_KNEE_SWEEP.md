@@ -87,3 +87,16 @@ to `47.73 s` at T=192 while peak RAM rose by only 11.7%, establishing a clear
 runtime knee. One final T=288 point is authorized to determine whether the
 curve collapses or merely bends; preserve complete failure logs if it cannot
 finish.
+
+## Matched periodic large10k T=288 failure
+
+The final escalation point failed during the first MUMPS factorization.
+MUMPS returned `INFO(1)=-13` while requesting an additional `6705 MB`; IPOPT
+then exited from restoration after one iteration. The model had 12,771,360
+variables, 9,211,104 equalities, and 2,972,160 inequalities. Sampled peak
+working set before the failed allocation was `19086.961 MiB` (`18.640 GiB`).
+This brackets the matched large10k centralized limit between successful
+`T=192` and failed `T=288`: runtime had already bent sharply by `T=192`, and
+the next standard horizon encountered the physical-memory/factorization wall.
+No larger centralized run is justified on this host without changing the
+linear-solver memory behavior or adding RAM.
