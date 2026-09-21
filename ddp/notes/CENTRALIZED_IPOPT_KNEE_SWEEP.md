@@ -73,3 +73,17 @@ back-solves, `2540.831 s` inferred factorization, and `98.789 s` in function
 evaluations. Memory remains close to linear in horizon, while solve time per
 period rises from `17.52 s` at `T=96` to `23.06 s` at `T=144`; continue at
 `T=192` to determine whether this is the beginning of the runtime knee.
+
+## Matched periodic large10k T=192
+
+The case converged in 57 iterations with objective `3178495.9383642841`.
+JuMP solve time was `9164.712 s` (`2.55 h`), total driver wall time was
+`9354.272 s`, and sampled peak working set was `18026.996 MiB`
+(`17.604 GiB`). IPOPT's overall algorithm time was `9155.207 s`, including
+`8789.629 s` in `ComputeSearchDirection`, `396.417 s` in triangular
+back-solves, `8570.559 s` inferred factorization, and `68.406 s` in function
+evaluations. Solve time per period more than doubled from `23.06 s` at T=144
+to `47.73 s` at T=192 while peak RAM rose by only 11.7%, establishing a clear
+runtime knee. One final T=288 point is authorized to determine whether the
+curve collapses or merely bends; preserve complete failure logs if it cannot
+finish.

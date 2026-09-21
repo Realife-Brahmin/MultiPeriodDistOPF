@@ -39,6 +39,12 @@ sampled peak. Solve time per period rose from 17.52 s at T=96 to 23.06 s at
 T=144 while memory remained approximately linear. Continue at T=192 to test
 whether the runtime knee is emerging.
 
+Matched periodic large10k T=192 converged in 57 iterations and 9164.712 s
+(2.55 h), objective 3178495.9383642841, with a 17.604 GiB peak. Per-period
+solve time more than doubled from 23.06 s at T=144 to 47.73 s at T=192 while
+RAM rose only 11.7%, establishing a runtime knee. The user authorized one final
+T=288 run to distinguish a bend from collapse; preserve any failure evidence.
+
 ## Exact diagonal-Hessian rewrites (2026-09-20)
 
 Three independently switchable rewrites preserve the diagonal-Hessian
