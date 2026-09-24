@@ -30,6 +30,15 @@ const GAMMA_TERMINAL_BY_SYSTEM = Dict(
     "large10kC_1ph" => 4.20e2,
 )
 
+# Near-optimality primal infeasibility threshold -- per-system.
+# These are the paper's reporting thresholds (Table V in lean_results.tex).
+# The race script (run_matched_ipopt_race.sh) reads the same values.
+const NEAR_OPT_PRIMAL_BY_SYSTEM = Dict(
+    "ieee123C_1ph"  => 1e-6,
+    "ieee2522C_1ph" => 1e-5,
+    "large10kC_1ph" => 1e-4,
+)
+
 """True when the soft terminal SOC penalty is on (TERMINAL_SOC_SOFT=1).
 Opt-in only so that runs already in flight, which read the same driver file,
 keep their original formulation bit for bit."""
