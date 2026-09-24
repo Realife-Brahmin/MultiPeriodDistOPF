@@ -144,6 +144,7 @@ run_fddp() {  # $1 system, $2 T  -- diagonal-Hessian arm
   ensure_export "$SYS" "$T" || { say "export FAILED $SYS T=$T"; return 1; }
   [ "$SYS" = large10kC_1ph ] && [ "$T" -ge 12 ] && FB=1
   [ "$SYS" = ieee2522C_1ph ] && [ "$T" -ge 144 ] && FB=1
+  [ "${RACE_FB_ALL:-0}" = 1 ] && FB=1
   local QW; QW=$(quiet_wait)
   say "filterddp diag: $SYS T=$T (factor_backed=$FB; $QW)"
   echo "$QW" > "$LOG"
@@ -164,7 +165,11 @@ run_fddp_job() {  # $1 system, $2 T, $3 factor_backed
         grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
   [ -n "$REF" ] || { echo "missing centralized objective for $SYS T=$T"; return 1; }
   (
+    # Per-system primal infeasibility threshold for near-optimality.
+    # These are the paper's reporting thresholds (Table V); do not change
+    # without updating lean_results.tex and CLAUDE.md.
     local PRIMAL=1e-6
+    [ "$SYS" = ieee2522C_1ph ] && PRIMAL=1e-5
     [ "$SYS" = large10kC_1ph ] && PRIMAL=1e-4
     export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8
     export FILTERDDP_NEAR_OPT_REFERENCE="$REF"
