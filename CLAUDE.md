@@ -37,11 +37,43 @@ establishes something a future session, on any machine, would need.
   (`near_opt_from_logs.jl`) post-hoc from these logs. Without these env vars
   the run is unreportable — you cannot reconstruct the NO crossing point.
 
-## Working branch
+## Working branch — the name below is a snapshot, not the truth
 
-Current branch as of 2026-09-15 is `ddp-understanding-sep15` (`sep14` was merged
-to `master` as PR #158 and deleted). Create a new dated branch for new work
-rather than reusing it.
+**Any branch named in this file may already be stale.** It records what was
+current the last time someone edited this line, not what is current now. As of
+2026-09-17 this section said `ddp-understanding-sep14` while the remote's newest
+branch was `ddp-understanding-sep15` — assume that kind of drift by default.
+
+**Always resolve the branch from the remote before starting work:**
+
+```bash
+git fetch origin --prune
+git for-each-ref --sort=-committerdate refs/remotes/origin \
+    --format='%(committerdate:short)  %(refname:short)'
+```
+
+Then pick **the branch whose name matches the task you were given, taking the
+latest date among those** — not simply the newest branch in the list. The date
+suffix breaks ties within a workstream; it does not make an unrelated
+workstream's branch the right base.
+
+**Workstreams run on parallel dated branches and are expected to coexist.**
+The three use cases in this repo (tADMM, DDP, and MSOPF — the environment still
+on disk as `envs/multi_poi/`, being renamed **MultiSourceOPF**) share the same
+underlying optimization but are separate lines of work with separate branches.
+DDP work belongs on its own dated branch (`ddp-understanding-<date>`,
+`ddp-hessian-rewrites-<date>`, ...); MSOPF work belongs on its own, e.g.
+`msopf-initial-testing-sep17`. Do not retarget MSOPF work onto the current DDP
+branch (or vice versa) merely because that branch is newest.
+
+These branches are not expected to conflict: MSOPF's task is building a working
+OpenDSS-backed workflow, not running heavy optimization, so it touches largely
+different files. If you do find yourself resolving conflicts between two
+workstream branches, stop and confirm the base branch was chosen correctly
+before continuing.
+
+For genuinely new work, cut a new dated branch rather than reusing an existing
+one, and name it for the workstream it serves.
 
 ## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
 

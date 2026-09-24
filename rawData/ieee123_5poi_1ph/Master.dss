@@ -7,11 +7,16 @@ Clear
 New Circuit.ieee123_5poi_1ph basekv=11.5470 Bus1=1s pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001  
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
 
-New Vsource.subs1 Phases=1 Bus1=1s basekv=11.5470 pu=1.05 R1=0 X1=0.0001 R0=0 X0=0.0001
-New Vsource.subs2 Phases=1 Bus1=2s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs3 Phases=1 Bus1=3s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs4 Phases=1 Bus1=4s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
-New Vsource.subs5 Phases=1 Bus1=5s basekv=11.5470 pu=1.05 angle=0.0 x1r1=7.0 MVAsc3=500
+! Every substation is stiff: its bus voltage phasor (pu, angle) is fixed by construction.
+! A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 and Z0 are both set, to the same
+! 1e-8 ohm stand-in for an ideal source that the single-source decks use. (subs2-5 were
+! x1r1=7 MVAsc3=500, which left MVAsc1 at its 2100 MVA default; that forced Z0 negative
+! and gave them a negative source resistance, Zs = -0.0128 + j0.0622 ohm.)
+New Vsource.subs1 Phases=1 Bus1=1s basekv=11.5470 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs2 Phases=1 Bus1=2s basekv=11.5470 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs3 Phases=1 Bus1=3s basekv=11.5470 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs4 Phases=1 Bus1=4s basekv=11.5470 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs5 Phases=1 Bus1=5s basekv=11.5470 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
 
 Redirect BranchData.dss
 
