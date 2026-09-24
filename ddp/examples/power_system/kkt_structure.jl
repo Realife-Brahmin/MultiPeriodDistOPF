@@ -36,8 +36,8 @@ x = SVector{1,T_}([1.63])
 u = SVector{3,T_}([1.71, 0.22, 0.19])
 Bv, Psub, PB, sv = x[1], u[1], u[2], u[3]
 
-obj_t = FilterDDP.stage_obj(ocp, TSTAGE)
-con_t = FilterDDP.stage_con(ocp, TSTAGE)
+obj_t = DDP4OPF.stage_obj(ocp, TSTAGE)
+con_t = DDP4OPF.stage_con(ocp, TSTAGE)
 ct, pLt = cvec[TSTAGE], pL[TSTAGE]
 
 checks = Tuple{String,Any,Any}[]

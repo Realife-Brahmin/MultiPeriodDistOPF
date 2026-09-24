@@ -1,0 +1,100 @@
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+This is Ipopt version 3.14.19, running with linear solver MUMPS 5.9.0.
+
+Number of nonzeros in equality constraint Jacobian...: 34162980
+Number of nonzeros in inequality constraint Jacobian.: 11888640
+Number of nonzeros in Lagrangian Hessian.............:  9211260
+
+MUMPS returned INFO(1) =-13 - out of memory when trying to allocate 6705 MB.
+In some cases it helps to decrease the value of the option "mumps_mem_percent".
+Total number of variables............................: 12771360
+                     variables with only lower bounds:  2972448
+                variables with lower and upper bounds:  3854304
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:  9211104
+Total number of inequality constraints...............:  2972160
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:  2972160
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  1.2375691e+05 6.40e-01 9.85e+01  -1.0 0.00e+00    -  0.00e+00 0.00e+00   0
+MUMPS returned INFO(1) =-13 - out of memory when trying to allocate 6705 MB.
+In some cases it helps to decrease the value of the option "mumps_mem_percent".
+WARNING: Problem in step computation; switching to emergency mode.
+   1r 1.2375691e+05 6.40e-01 9.99e+02  -0.2 0.00e+00    -  0.00e+00 0.00e+00R  1
+MUMPS returned INFO(1) =-13 - out of memory when trying to allocate 6705 MB.
+In some cases it helps to decrease the value of the option "mumps_mem_percent".
+WARNING: Problem in step computation; switching to emergency mode.
+Cannot call restoration phase at point that is almost feasible for the restoration NLP (violation 0.000000e+00).
+Abort in line search due to no other fall back.
+Step computation in the restoration phase failed.
+
+Number of Iterations....: 1
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.2666101535275422e+04    1.2375691438260382e+05
+Dual infeasibility......:   9.8461540000000014e+01    5.3760000840000009e+02
+Constraint violation....:   6.4000001000000006e-01    6.4000001000000006e-01
+Variable bound violation:   0.0000000000000000e+00    0.0000000000000000e+00
+Complementarity.........:   1.2900000290000000e+00    7.0434001583400008e+00
+Overall NLP error.......:   9.8461540000000014e+01    5.3760000840000009e+02
+
+
+Number of objective function evaluations             = 2
+Number of objective gradient evaluations             = 2
+Number of equality constraint evaluations            = 2
+Number of inequality constraint evaluations          = 2
+Number of equality constraint Jacobian evaluations   = 2
+Number of inequality constraint Jacobian evaluations = 2
+Number of Lagrangian Hessian evaluations             = 2
+Total seconds in IPOPT (w/o function evaluations)    =    331.293
+Total seconds in NLP function evaluations            =      4.436
+
+
+Timing Statistics:
+
+OverallAlgorithm....................:    335.726 (sys:      0.000 wall:    335.729)
+ PrintProblemStatistics.............:      0.200 (sys:      0.000 wall:      0.194)
+ InitializeIterates.................:    325.677 (sys:      0.000 wall:    325.683)
+ UpdateHessian......................:      0.901 (sys:      0.000 wall:      0.906)
+ OutputIteration....................:      0.000 (sys:      0.000 wall:      0.001)
+ UpdateBarrierParameter.............:      0.097 (sys:      0.000 wall:      0.091)
+ ComputeSearchDirection.............:      0.561 (sys:      0.000 wall:      0.564)
+ ComputeAcceptableTrialPoint........:      7.752 (sys:      0.000 wall:      7.752)
+ AcceptTrialPoint...................:      0.000 (sys:      0.000 wall:      0.000)
+ CheckConvergence...................:      0.538 (sys:      0.000 wall:      0.538)
+PDSystemSolverTotal.................:      0.360 (sys:      0.000 wall:      0.363)
+ PDSystemSolverSolveOnce............:      0.000 (sys:      0.000 wall:      0.000)
+ ComputeResiduals...................:      0.000 (sys:      0.000 wall:      0.000)
+ StdAugSystemSolverMultiSolve.......:    321.260 (sys:      0.000 wall:    321.271)
+ LinearSystemScaling................:      0.000 (sys:      0.000 wall:      0.000)
+ LinearSystemSymbolicFactorization..:    319.831 (sys:      0.000 wall:    319.834)
+ LinearSystemFactorization..........:      0.000 (sys:      0.000 wall:      0.000)
+ LinearSystemBackSolve..............:      0.000 (sys:      0.000 wall:      0.000)
+ LinearSystemStructureConverter.....:      0.000 (sys:      0.000 wall:      0.000)
+  LinearSystemStructureConverterInit:      0.000 (sys:      0.000 wall:      0.000)
+QualityFunctionSearch...............:      0.000 (sys:      0.000 wall:      0.000)
+TryCorrector........................:      0.000 (sys:      0.000 wall:      0.000)
+Task1...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task2...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task3...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task4...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task5...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task6...............................:      0.000 (sys:      0.000 wall:      0.000)
+Function Evaluations................:      4.436 (sys:      0.000 wall:      4.436)
+ Objective function.................:      0.026 (sys:      0.000 wall:      0.026)
+ Objective function gradient........:      0.073 (sys:      0.000 wall:      0.075)
+ Equality constraints...............:      1.074 (sys:      0.000 wall:      1.075)
+ Inequality constraints.............:      0.819 (sys:      0.000 wall:      0.814)
+ Equality constraint Jacobian.......:      0.815 (sys:      0.000 wall:      0.816)
+ Inequality constraint Jacobian.....:      0.721 (sys:      0.000 wall:      0.720)
+ Lagrangian Hessian.................:      0.908 (sys:      0.000 wall:      0.911)
+
+EXIT: Restoration Failed!

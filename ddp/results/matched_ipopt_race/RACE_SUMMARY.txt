@@ -1,0 +1,34 @@
+======================================================================================================================
+IDENTICAL PROBLEMS: centralized Ipopt vs FilterDDP time to near-optimality
+periodic profile, C_B = 1e-3, soft terminal SOC with per-system gamma (terminal_soc_penalty.jl)
+FilterDDP stop: objective within 0.5% of Ipopt; primal <=1e-6 (IEEE) or <=1e-4 (large10k)
+======================================================================================================================
+system            T | ipopt           iters   ipopt s    bg | near     iter    near s    bg |   obj gap   near/ip |  old-family ref
+----------------------------------------------------------------------------------------------------------------------
+ieee123C_1ph      3 | LOCALLY_SOLVED     36       0.2   0.2 | NEAR_OPT    52      18.9   0.6 |   8.1e-08    96.74x |     0.3 s/34 it
+ieee123C_1ph      6 | LOCALLY_SOLVED     37       0.4   0.6 | NEAR_OPT    67      21.0   0.6 |   1.4e-07    55.58x |     0.6 s/44 it
+ieee123C_1ph     12 | LOCALLY_SOLVED     40       0.6   0.5 | NEAR_OPT    80      25.0   0.3 |   2.0e-07    42.00x |     0.8 s/41 it
+ieee123C_1ph     24 | LOCALLY_SOLVED     38       1.3   0.2 | NEAR_OPT    85      32.2   0.3 |   2.6e-07    24.02x |     3.0 s/42 it
+ieee123C_1ph     48 | LOCALLY_SOLVED     61       5.4   0.2 | NEAR_OPT   105      53.3   0.6 |   3.6e-07     9.93x |     6.1 s/43 it
+ieee123C_1ph     96 | LOCALLY_SOLVED     97      22.6   0.3 | NEAR_OPT   120      97.7   0.5 |   4.6e-07     4.33x |    12.2 s/46 it
+ieee2522C_1ph     3 | LOCALLY_SOLVED     39       2.9   0.4 | NEAR_OPT    58      96.4   0.5 |   5.6e-07    32.78x |     5.5 s/52 it
+ieee2522C_1ph     6 | LOCALLY_SOLVED     46       7.0   0.2 | NEAR_OPT    72     169.3   0.4 |   1.0e-06    24.02x |    15.0 s/68 it
+ieee2522C_1ph    12 | LOCALLY_SOLVED     55      18.1   0.2 | NEAR_OPT    79     322.4   0.3 |   9.0e-07    17.86x |    31.1 s/70 it
+ieee2522C_1ph    24 | LOCALLY_SOLVED     61      41.2   0.2 | NEAR_OPT    87     646.8   0.4 |   2.2e-06    15.72x |    66.6 s/74 it
+ieee2522C_1ph    48 | LOCALLY_SOLVED     72      99.8   0.2 | NEAR_OPT    96    1344.7   0.4 |   3.2e-06    13.47x |   137.5 s/78 it
+ieee2522C_1ph    96 | LOCALLY_SOLVED     78     214.2   0.3 | NEAR_OPT   104    2955.4   0.4 |   3.7e-06    13.80x |   305.0 s/83 it
+ieee2522C_1ph   144 | LOCALLY_SOLVED     79     334.3   0.3 | --         --        --    -- |        --        -- |   483.1 s/88 it
+ieee2522C_1ph   192 | LOCALLY_SOLVED     80     452.9   0.3 | --         --        --    -- |        --        -- |              --
+ieee2522C_1ph   288 | LOCALLY_SOLVED     83     720.5   0.3 | --         --        --    -- |        --        -- |              --
+large10kC_1ph     3 | LOCALLY_SOLVED     41      18.6   0.3 | --         --        --    -- |        --        -- |   55.8 s/110 it
+large10kC_1ph     6 | LOCALLY_SOLVED     51      48.4   0.3 | --         --        --    -- |        --        -- |   104.8 s/99 it
+large10kC_1ph    12 | LOCALLY_SOLVED     49      94.5   0.2 | --         --        --    -- |        --        -- |   209.1 s/88 it
+large10kC_1ph    24 | LOCALLY_SOLVED     55     246.9   0.3 | NEAR_OPT    96    8310.1   0.3 |   1.6e-05    33.66x |  572.7 s/112 it
+large10kC_1ph    48 | LOCALLY_SOLVED     66     556.4   0.3 | NEAR_OPT    81   15343.2   0.3 |   2.7e-05    27.58x | 8261.9 s/698 it
+----------------------------------------------------------------------------------------------------------------------
+ipopt s = Ipopt solve time. near s = FilterDDP time to the approved near-optimal criterion.
+near/ip < 1.00x means FilterDDP reaches that criterion faster than Ipopt completes.
+obj gap = |Ipopt - FilterDDP| / |Ipopt| at the qualifying FilterDDP iterate.
+bg = median cores used by OTHER processes during the run (idle floor ~0.4); * = above 1.5, timing suspect.
+old-family ref = the paper's centralized sweep (C_B ~ 8.8e-8, old sampling, free terminal SOC):
+  a DIFFERENT problem, shown only to locate the knee it exhibited.

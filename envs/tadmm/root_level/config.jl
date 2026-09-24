@@ -32,12 +32,24 @@ const VERBOSE = false
 
 # Load profile: sinusoidal variation around 0.8-1.0
 # T=1 special-case: midday-peak snapshot (matches PV=1.0 below)
+# Phase sampling. range(0, 2pi, length=T) repeats the endpoint, so samples 1 and
+# T share a phase at every T; at T=3 it samples sin at 0, pi, 2pi, all zero, and
+# the price comes out CONSTANT with no arbitrage signal. PROFILE_PERIODIC=1
+# selects proper periodic sampling, phase_k = 2*pi*(k-1)/T, which is
+# non-degenerate at every T. Opt-in, because it changes the instance that
+# existing committed results were measured on. It must match the setting used
+# for the corresponding FilterDDP export, since C_B below is derived from this
+# profile and a mismatch would compare two different optimization problems.
+const PROFILE_PERIODIC = get(ENV, "PROFILE_PERIODIC", "0") == "1"
+const _COST_PHASE = PROFILE_PERIODIC ? [2pi * (k - 1) / T for k in 1:T] :
+                                       collect(range(0, 2pi, length=T))
+
 const LoadShapeLoad = T == 1 ? [0.97174] :
-    0.8 .+ 0.2 .* (sin.(range(0, 2pi, length=T) .- 0.8) .+ 1) ./ 2
+    0.8 .+ 0.2 .* (sin.(_COST_PHASE .- 0.8) .+ 1) ./ 2
 
 # Energy cost profile: time-varying $/kWh
 const LoadShapeCost = T == 1 ? [0.14] :
-    0.08 .+ 0.12 .* (sin.(range(0, 2pi, length=T)) .+ 1) ./ 2
+    0.08 .+ 0.12 .* (sin.(_COST_PHASE) .+ 1) ./ 2
 
 # Solar PV profile: bell curve in middle 50% of horizon
 const LoadShapePV = let
@@ -64,6 +76,26 @@ end
 
 # Battery quadratic cost coefficient
 const C_B = 1e-6 * minimum(LoadShapeCost)
+
+# Terminal state-of-charge penalty. The terminal SOC is a SOFT constraint: the
+# objective carries + GAMMA_TERMINAL * sum_j (B[j,T] - B0[j])^2, with B in p.u.
+# energy, rather than a hard B[j,T] == B0[j] equality.
+#
+# NOT YET WIRED IN (as of 2026-09-18): nothing references this constant, so no
+# solver applies the penalty and it changes no result. It is waiting on the
+# gamma decision -- a per-system, measurement-derived value, sized the way C_B
+# was. When it is wired in, the centralized reference (run_bf.jl), tADMM
+# (tadmm_socp.jl) and FilterDDP must all read THIS constant: a different value
+# in any one of them makes it a different optimization problem and invalidates
+# every comparison.
+#
+# Default scale: mean price times the 1000 kVA power base (parse_opendss sets
+# kVA_B = 1000 for every system), so a deviation of 0.1 p.u.h
+# costs about 1.4 USD, small against energy costs in the thousands but enough to
+# pin the terminal SOC. Override with GAMMA_TERMINAL_OVERRIDE.
+const GAMMA_TERMINAL = parse(Float64,
+    get(ENV, "GAMMA_TERMINAL_OVERRIDE",
+        string(sum(LoadShapeCost) / length(LoadShapeCost) * 1000.0)))
 
 # ============================================================================
 # OUTPUT DIRECTORIES

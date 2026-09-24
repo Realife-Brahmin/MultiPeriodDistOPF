@@ -1,0 +1,14 @@
+system,T,variant,iterations,time_to_target_s,baseline_s,speedup_percent,trajectory_result
+ieee123C_1ph,3,baseline,52,19.170959,19.170959,0.00,reference
+ieee123C_1ph,3,direct_diagonal,52,16.814,19.170959,12.29,identical
+ieee123C_1ph,3,triplet_second_derivatives,52,16.755,19.170959,12.60,identical
+ieee123C_1ph,3,cached_kkt_pattern,52,17.227,19.170959,10.14,identical
+ieee123C_1ph,3,combined,52,16.310,19.170959,14.92,identical
+ieee2522C_1ph,3,baseline,58,99.498870,99.498870,0.00,reference
+ieee2522C_1ph,3,direct_diagonal,58,86.200,99.498870,13.37,identical
+ieee2522C_1ph,3,triplet_second_derivatives,58,82.582,99.498870,17.00,identical
+ieee2522C_1ph,3,cached_kkt_pattern,58,85.843,99.498870,13.72,identical
+ieee2522C_1ph,3,combined,58,82.834,99.498870,16.75,identical
+ieee2522C_1ph,24,baseline,87,755.189,755.189,0.00,reference
+ieee2522C_1ph,24,combined,87,591.613,755.189,21.66,identical
+large10kC_1ph,6,combined,103,2330.671,,,validated; no matched pre-rewrite baseline
