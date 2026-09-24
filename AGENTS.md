@@ -1,5 +1,68 @@
 # Repo-specific context for Codex
 
+## Exact Hessian-assembly rewrite sweep (2026-09-20)
+
+Three exact implementation rewrites--direct diagonal-Hessian construction,
+triplet second-derivative assembly, and cached KKT sparsity patterns--preserve
+the matched FilterDDP iteration trajectories. On med2522 they reduce runtime
+by 21.24--22.36% across T=6,12,24,48,96. On matched large10k T=24 they reduce
+runtime from 8310.130 s to 7664.855 s (7.76%) at the same iteration 96, with a
+6.371 GiB sampled peak. IEEE123 is effectively unchanged/slightly slower.
+Details and peak-RAM rows are in
+`ddp/notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md` and
+`ddp/results/hessian_rewrites/`.
+
+## Centralized IPOPT knee sweep (2026-09-20)
+
+The first extended point, med2522 T=384, converged/validated in 95 iterations.
+JuMP solve time was 1235.065 s without internal timing and 1241.290 s with it
+(0.50% overhead); sampled peak was 12.0005 GiB. The profiled split is 1099.842 s
+search direction, 355.223 s triangular back-solve, 712.625 s inferred
+factorization, and 62.807 s function evaluation. Continue from med2522 T=576,
+then large10k above T=48. See
+`ddp/notes/CENTRALIZED_IPOPT_KNEE_SWEEP.md`.
+
+med2522 T=576 subsequently converged/validated in 100 iterations and 1963.617 s
+with an 18.155 GiB peak. Its per-period solve time and RAM remain approximately
+linear through T=576. At T=768 MUMPS failed on the first factorization with
+`INFO(1)=-13` while requesting another contiguous 2 GiB allocation, bracketing
+the centralized memory knee between T=576 and T=768.
+
+The separate matched periodic large10k knee series reached T=96 in 90 IPOPT
+iterations and 1682.259 s solve time, with objective 3178495.9248074344 and a
+9.966 GiB sampled peak. Full IPOPT timing is retained in
+`ddp/results/centralized_ipopt_matched_knee/`; continue at T=144.
+
+Matched periodic large10k T=144 subsequently converged in 100 iterations and
+3319.996 s solve time, with objective 3178495.9315857552 and a 15.756 GiB
+sampled peak. Solve time per period rose from 17.52 s at T=96 to 23.06 s at
+T=144 while memory remained approximately linear. Continue at T=192 to test
+whether the runtime knee is emerging.
+
+Matched periodic large10k T=192 converged in 57 iterations and 9164.712 s
+(2.55 h), objective 3178495.9383642841, with a 17.604 GiB peak. Per-period
+solve time more than doubled from 23.06 s at T=144 to 47.73 s at T=192 while
+RAM rose only 11.7%, establishing a runtime knee. The user authorized one final
+T=288 run to distinguish a bend from collapse; preserve any failure evidence.
+
+That final matched large10k T=288 run failed on its first MUMPS factorization:
+`INFO(1)=-13`, unable to allocate another 6705 MB, after reaching an 18.640
+GiB sampled peak. The model had 12.77 million variables. The centralized
+large10k limit is therefore bracketed between successful T=192 and failed
+T=288. Do not launch a larger case on this host without a changed memory plan.
+
+## Exact diagonal-Hessian rewrites (2026-09-20)
+
+Three independently switchable rewrites preserve the diagonal-Hessian
+FilterDDP trajectory: direct construction of `diag(fu'Vxx fu)`, triplet-based
+SOCP second derivatives, and reuse of the KKT sparsity pattern with fresh
+numerical values and a fresh factorization. Together they reduce IEEE2522
+`T=24` time to the same near-optimal iteration from `755.189 s` to `591.613 s`
+(21.66%). A matched large10k `T=6` combined run completed in `2330.671 s` at
+iteration 103, but has no exact pre-rewrite baseline. Do not compare it with
+older large10k instances. Full evidence and the large10k `T=24` rerun decision
+are in `ddp/notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md`.
+
 This file is committed so any machine's Codex session starts from the
 same ground truth. Session-local memory (`~/.Codex/.../memory/`) does not
 travel between machines — this file does. Keep it updated when a session

@@ -4,7 +4,7 @@ param(
     [string]$System,
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet(3, 6, 12, 24, 48, 96, 144)]
+    [ValidateSet(3, 6, 12, 24, 48, 96, 144, 192, 288, 384, 576, 768, 1152)]
     [int]$Horizon
 )
 
@@ -41,6 +41,8 @@ $env:SYSTEM_OVERRIDE = $System
 $env:T_OVERRIDE = [string]$Horizon
 $env:USE_GUROBI_OVERRIDE = "false"
 $env:USE_GUROBI_FOR_BF_OVERRIDE = "false"
+$env:PRESERVE_IPOPT_FULL_LOG = "1"
+$env:IPOPT_TIMING_STATISTICS = "1"
 
 $startedUtc = [DateTime]::UtcNow
 $process = Start-Process -FilePath $julia `
@@ -68,6 +70,12 @@ $ipoptPath = Join-Path $generatedDir "ipopt_bf.log"
 if (-not (Test-Path -LiteralPath $summaryPath) -or -not (Test-Path -LiteralPath $ipoptPath)) {
     throw "Run completed without the expected summary or IPOPT log."
 }
+$timingDeadline = (Get-Date).AddSeconds(30)
+while ((Get-Date) -lt $timingDeadline) {
+    $probe = Get-Content -LiteralPath $ipoptPath -Raw -ErrorAction SilentlyContinue
+    if ($probe -match 'Timing Statistics:') { break }
+    Start-Sleep -Milliseconds 500
+}
 $summary = Get-Content -LiteralPath $summaryPath -Raw
 $ipopt = Get-Content -LiteralPath $ipoptPath -Raw
 
@@ -76,6 +84,24 @@ function Match-Value([string]$Text, [string]$Pattern, [string]$Name) {
     if (-not $match.Success) { throw "Could not parse $Name" }
     return $match.Groups[1].Value.Trim()
 }
+
+function Match-Timing-Wall([string]$Text, [string]$Name) {
+    $escaped = [regex]::Escape($Name)
+    $match = [regex]::Match($Text, "(?m)^\s*$escaped\.+:\s+[0-9.]+\s+\(sys:\s+[0-9.]+\s+wall:\s+([0-9.]+)\)")
+    if (-not $match.Success) { return [double]::NaN }
+    return [double]$match.Groups[1].Value
+}
+
+$overallWall = Match-Timing-Wall $ipopt 'OverallAlgorithm'
+$searchWall = Match-Timing-Wall $ipopt 'ComputeSearchDirection'
+$pdWall = Match-Timing-Wall $ipopt 'PDSystemSolverTotal'
+$augWall = Match-Timing-Wall $ipopt 'StdAugSystemSolverMultiSolve'
+$factorWall = Match-Timing-Wall $ipopt 'LinearSystemFactorization'
+$backsolveWall = Match-Timing-Wall $ipopt 'LinearSystemBackSolve'
+$functionWall = Match-Timing-Wall $ipopt 'Function Evaluations'
+$inferredFactorWall = if (-not [double]::IsNaN($augWall) -and -not [double]::IsNaN($backsolveWall)) {
+    [Math]::Max(0.0, $augWall - $backsolveWall)
+} else { [double]::NaN }
 
 $status = Match-Value $summary '^Status:\s*(\S+)' 'status'
 $validation = Match-Value $summary '^Status:\s*(FEASIBLE|INFEASIBLE|VALIDATION SKIPPED)' 'validation'
@@ -87,7 +113,7 @@ $row = [ordered]@{
     validated = ($validation -eq "FEASIBLE")
     objective_usd = [double](Match-Value $ipopt '^Objective.*?\s([-+0-9.eE]+)\s*$' 'objective')
     iterations = [int](Match-Value $ipopt '^Number of Iterations\.*:\s*(\d+)' 'iterations')
-    ipopt_reported_s = [double](Match-Value $ipopt '^Total seconds in IPOPT\s*=\s*([0-9.]+)' 'IPOPT time')
+    ipopt_reported_s = [double](Match-Value $ipopt '^Total seconds in IPOPT(?: \(w/o function evaluations\))?\s*=\s*([0-9.]+)' 'IPOPT time')
     jump_solve_time_s = [double](Match-Value $summary '^Solver time:\s*([0-9.]+)' 'JuMP solve time')
     solve_wall_s = [double](Match-Value $summary '^Wall-clock time:\s*([0-9.]+)' 'solve wall time')
     peak_working_set_mib = [Math]::Round($peakBytes / 1MB, 3)
@@ -100,13 +126,24 @@ $row = [ordered]@{
     linear_solver = Match-Value $ipopt '^This is Ipopt.*linear solver\s+([^\r\n]+)' 'linear solver'
     started_utc = $startedUtc.ToString("o")
     raw_log = "ddp/results/centralized_ipopt/raw/${tag}_ipopt.log"
+    timing_overall_wall_s = $overallWall
+    timing_search_direction_wall_s = $searchWall
+    timing_pd_system_wall_s = $pdWall
+    timing_augmented_system_wall_s = $augWall
+    timing_factorization_reported_wall_s = $factorWall
+    timing_backsolve_wall_s = $backsolveWall
+    timing_factorization_inferred_wall_s = $inferredFactorWall
+    timing_function_evaluations_wall_s = $functionWall
 }
 
 $rawTarget = Join-Path $rawDir "${tag}_ipopt.log"
 Copy-Item -LiteralPath $ipoptPath -Destination $rawTarget -Force
 Copy-Item -LiteralPath $summaryPath -Destination (Join-Path $rawDir "${tag}_summary.txt") -Force
 
-$csvPath = Join-Path $resultsDir "centralized_ipopt_timing.csv"
+$isKneeCase = ($System -eq "ieee2522C_1ph" -and $Horizon -gt 288) -or
+              ($System -eq "large10kC_1ph" -and $Horizon -gt 48)
+$csvName = if ($isKneeCase) { "centralized_ipopt_knee.csv" } else { "centralized_ipopt_timing.csv" }
+$csvPath = Join-Path $resultsDir $csvName
 $rows = if (Test-Path -LiteralPath $csvPath) { @(Import-Csv -LiteralPath $csvPath) } else { @() }
 $rows = @($rows | Where-Object { $_.system -ne $System -or [int]$_.T -ne $Horizon })
 $rows += [pscustomobject]$row

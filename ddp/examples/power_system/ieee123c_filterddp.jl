@@ -275,19 +275,51 @@ function build_model(data; gamma=0.0)
         end
         cxx = (x,u,ϕ) -> zeros(nx, nx)
         cux = (x,u,ϕ) -> spzeros(nu, nx)
-        cuu = function (x,u,ϕ)
-            H = spzeros(nu, nu)
-            first_soc = 2length(buses) + length(lines) + 1
+        cuu = if get(ENV, "FILTERDDP_TRIPLET_SECOND_DERIVATIVES", "0") != "0"
+            # The SOCP Hessian pattern is fixed.  Assemble its four entries per
+            # branch in one sparse constructor instead of repeatedly inserting
+            # into a CSC matrix.
+            I = Vector{Int}(undef, 4length(lines))
+            J = similar(I)
             for (e,(i,_)) in enumerate(lines)
-                weight = ϕ[first_soc+e-1]
                 p, q = idx.P[e], idx.Q[e]
                 v, ell = idx.v[buspos[i]], idx.ell[e]
-                H[p,p] += 2weight
-                H[q,q] += 2weight
-                H[v,ell] -= weight
-                H[ell,v] -= weight
+                k = 4(e - 1)
+                I[k+1], J[k+1] = p, p
+                I[k+2], J[k+2] = q, q
+                I[k+3], J[k+3] = v, ell
+                I[k+4], J[k+4] = ell, v
             end
-            H
+            first_soc = 2length(buses) + length(lines) + 1
+            let I=I, J=J, first_soc=first_soc
+                function (x,u,ϕ)
+                    V = Vector{eltype(ϕ)}(undef, length(I))
+                    @inbounds for e in eachindex(lines)
+                        weight = ϕ[first_soc+e-1]
+                        k = 4(e - 1)
+                        V[k+1] = 2weight
+                        V[k+2] = 2weight
+                        V[k+3] = -weight
+                        V[k+4] = -weight
+                    end
+                    sparse(I, J, V, nu, nu)
+                end
+            end
+        else
+            function (x,u,ϕ)
+                H = spzeros(nu, nu)
+                first_soc = 2length(buses) + length(lines) + 1
+                for (e,(i,_)) in enumerate(lines)
+                    weight = ϕ[first_soc+e-1]
+                    p, q = idx.P[e], idx.Q[e]
+                    v, ell = idx.v[buspos[i]], idx.ell[e]
+                    H[p,p] += 2weight
+                    H[q,q] += 2weight
+                    H[v,ell] -= weight
+                    H[ell,v] -= weight
+                end
+                H
+            end
         end
         con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
             equations, cx, cu, cxx, cux, cuu)
