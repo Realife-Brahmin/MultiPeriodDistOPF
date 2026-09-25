@@ -346,11 +346,35 @@ Re-running large10k `T=6` **with** the three rewrites (both arms,
 `RUN_TAG_SUFFIX=_rewrites`) gives 2991.9 -> 2103.9 s, a 30% saving: the
 rewrites shrink the rest of each iteration, so the solve's share and the
 saving grow. The rewrite baseline is still 28% slower than Table II's
-2330.7 s. The likely cause is threading: these pairs pin BLAS and OpenMP to one
-thread, while the matched race and the rewrite queue set no thread variables,
-so FilterDDP ran with Julia's default of 10 BLAS threads. **This is not yet
-verified.** A controlled pair with the default threads
-(`PIN_BLAS_THREADS=0`, `RUN_TAG_SUFFIX=_rewrites_blasdefault`) is running.
+2330.7 s.
+
+**Threading, verified with a controlled pair.** The matched race and the
+rewrite queue set no thread variables, so Table II's FilterDDP ran with
+Julia's default of **10 BLAS threads**, while every pair above pins BLAS and
+OpenMP to one. Re-running large10k `T=6` with the rewrites and default threads
+(`PIN_BLAS_THREADS=0`, `RUN_TAG_SUFFIX=_rewrites_blasdefault`; the log records
+`blas_threads=10`):
+
+| large10k T=6, rewrites | baseline | blocked | saving |
+|---|---:|---:|---:|
+| 1 BLAS thread | 2991.9 s | 2103.9 s | 30% |
+| 10 BLAS threads (Table II's setting) | 2545.6 s | 1782.9 s | 30% |
+
+All four runs take 103 iterations to the same objective. The threads cut the
+dense value-function update ("update" time 315 -> 168 s summed over the run)
+and leave the UMFPACK solve nearly unchanged (1503 -> 1433 s), so pinning to
+one thread makes FilterDDP 17% slower. The blocked solve does not use BLAS, so
+its 30% saving holds either way. The remaining 9% gap to Table II's 2330.7 s at
+identical settings is variation between sessions five days apart. The paper
+now states this in its protocol paragraph: Ipopt's MUMPS build is sequential,
+FilterDDP's Table II runs used ten BLAS threads.
+
+A side observation, not investigated: in the blocked runs the summed
+*factorization* time is often higher (e.g. 131 -> 188 s in the rewrite pair)
+although the factorization code is unchanged. The likely cause is garbage
+collection from the per-stage work arrays the blocked solve allocates, landing
+inside the factorization timer. Preallocating that workspace may recover a few
+percent.
 
 What this changes in the answers above: Q2 and Q7 stand for *factorization*,
 but the multi-RHS solve is a real lever. It can be pulled on the existing
