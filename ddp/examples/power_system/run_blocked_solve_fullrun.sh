@@ -6,10 +6,17 @@
 # comparison.
 #
 #   bash ddp/examples/power_system/run_blocked_solve_fullrun.sh <system> <T> <arm> <w> [repeats]
+#
+# Other FILTERDDP_* switches set by the caller (e.g. the exact assembly rewrites
+# FILTERDDP_DIRECT_DIAG_HESSIAN, FILTERDDP_TRIPLET_SECOND_DERIVATIVES,
+# FILTERDDP_CACHE_KKT_PATTERN) apply to both arms; give such runs a distinct
+# RUN_TAG_SUFFIX so their logs do not collide with plain ones.
 
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
 SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
+SUFFIX="${RUN_TAG_SUFFIX:-}"
+REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0}"
 OUT=ddp/results/kkt_ordering/fullrun_blocked
 SOLDIR=ddp/results/kkt_ordering/captures/solutions
 mkdir -p "$OUT" "$SOLDIR"
@@ -29,7 +36,7 @@ SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB1e-
 
 for r in $(seq 1 "$REP"); do
   for VARIANT in baseline "blocked_w$W"; do
-    TAG="${SYS}_T${T}_${ARM}_${VARIANT}_r${r}"
+    TAG="${SYS}_T${T}_${ARM}${SUFFIX}_${VARIANT}_r${r}"
     LOG="$OUT/fddp_${TAG}.log"
     [ -s "$LOG" ] && grep -q "solve complete" "$LOG" && { echo "skip $TAG"; continue; }
     QW=$($JL "$LOADJL" wait 10 1.5 2>/dev/null | grep QUIET_WAIT)
@@ -40,7 +47,7 @@ for r in $(seq 1 "$REP"); do
       if [ "$VARIANT" = baseline ]; then unset FILTERDDP_BLOCKED_SOLVE
       else export FILTERDDP_BLOCKED_SOLVE="$W"; fi
       echo "$QW"
-      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
       $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
     ) > "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null
