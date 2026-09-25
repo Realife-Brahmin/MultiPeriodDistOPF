@@ -487,7 +487,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                                 all(isfinite, rhs_block) || (data.status = 1; break)
                             end
                         else
-                            ldiv!(F, rhs)
+                            _kkt_wide_solve!(F, rhs)
                             kkt_solution = rhs
                         end
                         solve_s = (time_ns() - solve_start_ns) / 1e9
@@ -524,7 +524,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                                 all(isfinite, rhs_block) || (data.status = 1; break)
                             end
                         else
-                            ldiv!(F, rhs)
+                            _kkt_wide_solve!(F, rhs)
                             kkt_solution = rhs
                         end
                     end
