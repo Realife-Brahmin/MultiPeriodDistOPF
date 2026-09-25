@@ -56,9 +56,11 @@ across horizons; the existing sparsity plots of the three systems.
 a time, and that is fixable without a new solver.** A blocked solve over
 UMFPACK's own factors (16 columns at a time) is 1.9-3.0x faster on one thread,
 with identical numerics. In complete FilterDDP runs (diagonal Hessian) it cuts
-time to near-optimality by 13-21% at med2522 (`T` = 3 to 24) and **23-27% at
-large10k** (`T` = 3, 6), with the same iterations and objectives. This is a
-real saving, but it does not close the gap to centralized Ipopt.
+time to near-optimality by 13-21% at med2522 (`T` = 3 to 24) and **23-30% at
+large10k** (`T` = 3, 6; 30% in the paper's Table II configuration), with the
+same iterations and objectives. This is a real saving, but it does not close
+the gap to centralized Ipopt. These results are in the TPEC paper (Sections
+IV-E and IV-F, Tables V and VI, Fig. 10).
 
 ## 1. MA57 availability
 
@@ -240,7 +242,7 @@ configuration showed an improvement worth carrying to scale.
 
 - **Keep UMFPACK's factorization and default ordering, and replace only its
   solve** with the blocked multi-column solve (Section 6):
-  `FILTERDDP_BLOCKED_SOLVE=16`, opt-in, same answers, 13-27% faster FilterDDP
+  `FILTERDDP_BLOCKED_SOLVE=16`, opt-in, same answers, 13-30% faster FilterDDP
   runs measured so far. At present it is opt-in; making it the default is a
   one-line change once it has run on a longer horizon.
 - **Get the HSL academic licence** to close the MA57 question properly. It is
@@ -261,8 +263,9 @@ configuration showed an improvement worth carrying to scale.
     `[K R; R' 0]`. A solver that returns Schur complements (MUMPS `ICNTL(19)`,
     for example) could form it inside one factorization.
 - Nested dissection is the wrong family for these tree-like feeder KKT
-  systems. The comparison with NREL's documented large sparse systems (agenda
-  item 1.4) was not done tonight.
+  systems. (The comparison with NREL's documented ACOPF matrices, agenda item
+  1.4, already exists in the paper's KKT sparsity appendix; the new ordering
+  figure, Fig. 10, sits beside it.)
 
 ## 6. Blocked multi-column solve over UMFPACK's factors
 
@@ -313,6 +316,7 @@ primal thresholds, baseline and blocked alternated, median background load
 | med2522 T=24, diag | 79 | 613.8 -> 486.8 s | **21%** | 276.8 -> 123.7 s |
 | large10k T=3, diag | 99 | 1785.0 -> 1368.2 s | **23%** | 685.9 -> 277.3 s |
 | large10k T=6, diag | 103 | 3230.5 -> 2364.6 s | **27%** | 1489.1 -> 595.1 s |
+| large10k T=6, diag, with assembly rewrites (Table II configuration) | 103 | 2991.9 -> 2103.9 s | **30%** | 1502.5 -> 571.8 s |
 
 Every pair has the same iteration count, the same objective to every printed
 digit and the same final equality residual. The largest control difference is
@@ -335,7 +339,18 @@ Table V's large10k rows use. Both arms of every pair share the same settings,
 so the savings are fair, but the large10k baselines here (e.g. 3230.5 s at
 `T=6`) are slower than Table V (2330.7 s at `T=6`, same 103 iterations and
 objective). The med2522 rows of Table V did not use the rewrites and agree with
-the baselines here (613.8 s vs 587.6 s at `T=24`).
+the baselines here (613.8 s vs 587.6 s at `T=24`). (The paper numbers that
+table "Table II"; this note calls it Table V after the agenda.)
+
+Re-running large10k `T=6` **with** the three rewrites (both arms,
+`RUN_TAG_SUFFIX=_rewrites`) gives 2991.9 -> 2103.9 s, a 30% saving: the
+rewrites shrink the rest of each iteration, so the solve's share and the
+saving grow. The rewrite baseline is still 28% slower than Table II's
+2330.7 s. The likely cause is threading: these pairs pin BLAS and OpenMP to one
+thread, while the matched race and the rewrite queue set no thread variables,
+so FilterDDP ran with Julia's default of 10 BLAS threads. **This is not yet
+verified.** A controlled pair with the default threads
+(`PIN_BLAS_THREADS=0`, `RUN_TAG_SUFFIX=_rewrites_blasdefault`) is running.
 
 What this changes in the answers above: Q2 and Q7 stand for *factorization*,
 but the multi-RHS solve is a real lever. It can be pulled on the existing
