@@ -52,6 +52,14 @@ across horizons; the existing sparsity plots of the three systems.
    + solve at large10k, 77% and 61% at med2522. Only at ieee123 is it a
    minority.
 
+**Follow-up (Section 6): the solve is slow because UMFPACK solves one column at
+a time, and that is fixable without a new solver.** A blocked solve over
+UMFPACK's own factors (16 columns at a time) is 1.9-3.0x faster on one thread,
+with identical numerics. In complete FilterDDP runs it cuts time to
+near-optimality by 13-20% at med2522 and **23% at large10k `T=3`**, with the
+same iterations and objectives. This is a real saving, but it does not close
+the gap to centralized Ipopt.
+
 ## 1. MA57 availability
 
 Evidence: `ddp/results/kkt_ordering/ma57_availability_julia.txt`, from
@@ -230,24 +238,92 @@ configuration showed an improvement worth carrying to scale.
 
 ## 5. Recommendation for the meeting
 
-- **Keep UMFPACK with its default control.** At the sizes that matter, no
-  ordering and no symmetric-indefinite solver we can run beats it.
+- **Keep UMFPACK's factorization and default ordering, and replace only its
+  solve** with the blocked multi-column solve (Section 6):
+  `FILTERDDP_BLOCKED_SOLVE=16`, opt-in, same answers, 13-23% faster FilterDDP
+  runs measured so far. At present it is opt-in; making it the default is a
+  one-line change once it has run on a longer horizon.
 - **Get the HSL academic licence** to close the MA57 question properly. It is
-  the only blocker, and it needs no code change. Expect MA57 to matter only if
-  its multi-RHS solve is much faster than UMFPACK's: after diagonalization,
-  factorization is 7% of large10k stage linear algebra.
-- **The lever is the (n_x+1)-column solve** (89-91% at large10k), not the
-  ordering. Its columns feed only the value-function term
-  `beta' B + omega' c_x = -R' K^{-1} R` (with `R` the stacked `[B; c_x]`
-  right-hand side), which is the Schur complement of the bordered matrix
-  `[K R; R' 0]`. A solver that returns Schur complements (MUMPS `ICNTL(19)`,
-  for example) could form it inside one factorization instead of 1,021
-  triangular solves. The right-hand side is also sparse (active battery rows and
-  `c_x` only), which UMFPACK's column-by-column solve cannot exploit. **Both are
-  untested proposals.**
+  the only blocker, and it needs no code change. MA57 now has to beat the
+  blocked solve, not UMFPACK's column-by-column one. After diagonalization,
+  factorization is 7% of large10k stage linear algebra, so MA57's case rests on
+  its multi-RHS solve.
+- **None of this closes the gap to Ipopt.** Even free linear algebra would
+  leave FilterDDP roughly 12-18x slower at large10k. The rest is FilterDDP's
+  per-stage derivatives, assembly and rollout, and ~1.7x more iterations.
+- **Untested next steps on the same solve:**
+  - *Parallel blocks.* Column blocks are independent and the extracted factors
+    can be shared read-only, which UMFPACK's own solve could not do. That gave
+    6.5-9.2x on the isolated large10k solve with 8 threads.
+  - *Schur complement.* The columns only feed the value-function term
+    `beta' B + omega' c_x = -R' K^{-1} R` (with `R` the stacked `[B; c_x]`
+    right-hand side), which is the Schur complement of the bordered matrix
+    `[K R; R' 0]`. A solver that returns Schur complements (MUMPS `ICNTL(19)`,
+    for example) could form it inside one factorization.
 - Nested dissection is the wrong family for these tree-like feeder KKT
   systems. The comparison with NREL's documented large sparse systems (agenda
   item 1.4) was not done tonight.
+
+## 6. Blocked multi-column solve over UMFPACK's factors
+
+**The question.** UMFPACK's solve accepts one right-hand side per call, so
+`ldiv!(F, B)` walks the entire factor once per column: 1,021 times at large10k,
+at one multiply-add per factor entry read. Does solving many columns per pass
+help, on the same factors?
+
+**Method** (`blocked_multirhs_solve_benchmark.jl`). The same UMFPACK factors
+are used, `L U = (Rs .* K)[p, q]`, extracted with `F.L, F.U, F.p, F.q, F.Rs`.
+Columns are solved `w` at a time with the block stored transposed, so each
+factor entry becomes one contiguous update of length `w`. The arithmetic is
+identical to UMFPACK's. Extraction time is charged to the blocked method, and
+the baseline is exactly FilterDDP's `ldiv!`. Captures, repeats and load
+logging are as in Section 2, sequential. An 8-thread variant (blocks spread
+over threads) is reported separately.
+
+**Isolated result** (`blocked_multirhs_solve.csv`; speedup includes extraction):
+
+| System | Hessian | UMFPACK `ldiv!` (s) | blocked, 1 thread (best w) | blocked, 8 threads |
+|---|---|---:|---|---|
+| ieee123 | diag / exact | 0.0009 / 0.0015 | 1.27x / 1.61x | -- |
+| med2522 | diag | 0.10-0.12 | 1.87x (w=16) | 5.4x |
+| med2522 | exact | 0.18-0.20 | 2.64x (w=32) | 7.1x |
+| large10k | diag | 2.1-2.5 | 2.77x (w=16) | 6.5x |
+| large10k | exact | 3.6-3.7 | 3.02x (w=32) | 9.2x |
+
+Solutions match UMFPACK's to `5e-14` relative or better, with the same
+residuals. At `w=1` the kernel is slower than UMFPACK (0.38-0.64x), so the gain
+is the blocking, not a better kernel. The optimum is 16-32 columns, where one
+block stays in cache; at 256 or all 1,021 columns the gain disappears. Factor
+extraction costs under 1 ms (ieee123) to 13-46 ms (large10k).
+
+**Full FilterDDP runs** (`run_blocked_solve_fullrun.sh`, opt-in hook
+`FILTERDDP_BLOCKED_SOLVE=16` in `ddp/DDP4OPF.jl/src/blocked_solve.jl`).
+Matched protocol, full per-iteration logging, near-optimality at the per-system
+primal thresholds, baseline and blocked alternated, median background load
+0.26-0.35 cores in every run. Traces and logs are in
+`ddp/results/kkt_ordering/fullrun_blocked/`.
+
+| Case | iterations | time to near-optimality: baseline -> blocked | saving | wide solve inside the run |
+|---|---:|---|---:|---|
+| ieee123 T=3, diag (2 repeats) | 52 | 17.1, 17.6 -> 17.6, 17.8 s | none | 0.20 -> 0.12 s |
+| ieee123 T=3, exact (2 repeats) | 47 | 17.9, 17.8 -> 17.4, 18.0 s | none | 0.28 -> 0.17 s |
+| med2522 T=3, diag | 55 | 87.2 -> 75.8 s | **13%** | 24.6 -> 12.1 s |
+| med2522 T=3, exact | 42 | 91.5 -> 75.5 s | **17%** | 28.3 -> 11.2 s |
+| med2522 T=12, diag | 73 | 311.0 -> 247.8 s | **20%** | 132.7 -> 56.7 s |
+| large10k T=3, diag | 99 | 1785.0 -> 1368.2 s | **23%** | 685.9 -> 277.3 s |
+
+Every pair has the same iteration count, the same objective to every printed
+digit and the same final equality residual. The largest control difference is
+`1.7e-12` against controls of magnitude 1,004 at large10k, and states agree to
+`2e-16`. The saving is what the solve's share predicts: at large10k `T=3` the
+wide solve is 38% of the baseline run and becomes 2.5x faster, a 23% saving.
+Because that share rises with horizon (58% at large10k `T=24`, 45% at med2522
+`T=96`), longer horizons should save more (roughly a third at large10k
+`T=24`), but that is **not yet measured**.
+
+What this changes in the answers above: Q2 and Q7 stand for *factorization*,
+but the multi-RHS solve is a real lever. It can be pulled on the existing
+UMFPACK factors, so a new solver is not needed to get it.
 
 ## Reproduce
 
@@ -257,6 +333,8 @@ bash ddp/examples/power_system/run_kkt_ordering_benchmark.sh       # ~55 min, be
 python ddp/examples/power_system/summarize_kkt_ordering.py > ddp/results/kkt_ordering/SUMMARY_TABLES.md
 bash ddp/examples/power_system/run_umfpack_strategy_fullrun.sh ieee123C_1ph 3 2
 julia --project=envs/ddp2026 ddp/examples/power_system/ma57_availability_probe.jl
+bash ddp/examples/power_system/run_blocked_solve_benchmark.sh      # ~20 min, isolated blocked solve
+bash ddp/examples/power_system/run_blocked_solve_fullrun.sh large10kC_1ph 3 diag 16 1
 ```
 
 Figures: `kkt_ordering_patterns.jl` then `plot_kkt_ordering_patterns.py`
