@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Full FilterDDP runs: FilterDDP's ldiv!(F, rhs) against the blocked
+# multi-right-hand-side solve over the same UMFPACK factors
+# (FILTERDDP_BLOCKED_SOLVE=<w>). Matched protocol, full per-iteration logging,
+# baseline and blocked alternated, background load logged, solutions kept for
+# comparison.
+#
+#   bash ddp/examples/power_system/run_blocked_solve_fullrun.sh <system> <T> <arm> <w> [repeats]
+
+set -u
+cd "$(dirname "$0")/../../.." || exit 1
+SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
+OUT=ddp/results/kkt_ordering/fullrun_blocked
+SOLDIR=ddp/results/kkt_ordering/captures/solutions
+mkdir -p "$OUT" "$SOLDIR"
+REF=$(grep -oE "CENTRAL_IPOPT .*" "ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log" | \
+      grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
+[ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T"; exit 1; }
+case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL=1e-6;; esac
+
+export REDUCED_PROFILE=periodic REDUCED_CB=1e-3 TERMINAL_SOC_SOFT=1
+export FILTERDDP_MAX_ITERATIONS=400 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+export FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
+export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+if [ "$ARM" = diag ]; then export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8; fi
+JL="julia --startup-file=no"
+LOADJL=ddp/examples/power_system/sample_background_load.jl
+SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB1e-3.jls
+
+for r in $(seq 1 "$REP"); do
+  for VARIANT in baseline "blocked_w$W"; do
+    TAG="${SYS}_T${T}_${ARM}_${VARIANT}_r${r}"
+    LOG="$OUT/fddp_${TAG}.log"
+    [ -s "$LOG" ] && grep -q "solve complete" "$LOG" && { echo "skip $TAG"; continue; }
+    QW=$($JL "$LOADJL" wait 10 1.5 2>/dev/null | grep QUIET_WAIT)
+    STOP="$OUT/.sampling_$$"; touch "$STOP"
+    $JL "$LOADJL" sample "$STOP" "$OUT/load_${TAG}.csv" 15 > /dev/null 2>&1 &
+    SPID=$!
+    (
+      if [ "$VARIANT" = baseline ]; then unset FILTERDDP_BLOCKED_SOLVE
+      else export FILTERDDP_BLOCKED_SOLVE="$W"; fi
+      echo "$QW"
+      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+      $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
+    ) > "$LOG" 2>&1
+    rm -f "$STOP"; wait "$SPID" 2>/dev/null
+    cp "$SOL" "$SOLDIR/sol_${TAG}.jls" 2>/dev/null
+    $JL --project=envs/ddp2026 ddp/examples/power_system/extract_filterddp_feasibility_trace.jl \
+        "$LOG" "$OUT/trace_${TAG}.csv" "$REF" >> "$LOG" 2>&1
+    echo "[$(date '+%H:%M:%S')] $TAG: $(grep -E 'solve complete' "$LOG" | tail -1) | $(grep -oE 'FILTERDDP_NEAR_OPT iteration=[0-9]+ elapsed_s=[0-9.]+' "$LOG" | head -1) | $(grep -oE 'FilterDDP objective=[-0-9.eE+]+' "$LOG")"
+  done
+done
