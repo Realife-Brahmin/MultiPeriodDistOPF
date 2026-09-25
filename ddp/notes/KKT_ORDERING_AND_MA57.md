@@ -400,3 +400,36 @@ several of its MUMPS rows have relative residuals near `1e+22`, i.e. failed
 solves recorded as timings. This benchmark checks `INFOG(1)` and residuals on
 every solve and had no failures. The earlier conclusion (UMFPACK faster than
 MUMPS) stands on valid solves.
+
+## 7. Table II re-run with the blocked solve (2026-09-25)
+
+Every FilterDDP cell of the paper's Table II (`tab:near_opt`) was re-run with
+`FILTERDDP_BLOCKED_SOLVE=16` in Table II's configuration: diagonal Hessian,
+the three exact assembly rewrites, factor-backed policy (as the race used),
+Julia's default ten BLAS threads, per-system primal thresholds
+(`run_table2_blocked.sh`; logs `fullrun_blocked/*_tableII_*`). Only the blocked
+arm was run; the Ipopt column is unchanged.
+
+| System | T | iterations | earlier FilterDDP (s) | blocked (s) | ratio to Ipopt |
+|---|---:|---:|---:|---:|---:|
+| ieee123 | 6 | 67 | 21.0 | 21.6 | 57.2x |
+| ieee123 | 24 | 85 | 32.2 | 34.2 | 25.5x |
+| ieee123 | 96 | 120 | 97.7 | 97.0 | 4.3x |
+| med2522 | 6 | 69 | 161.9 | 136.7 | 19.4x |
+| med2522 | 24 | 79 | 587.6 | 471.7 | 11.5x |
+| med2522 | 96 | 94 | 2693.2 | 2139.9 | 10.0x |
+| large10k | 6 | 103 | 2330.7 | 1782.9 | 36.8x |
+| large10k | 24 | 96 | 7664.9 | 5332.9 | 21.6x |
+| large10k | 48 | 81 | 15343.2 (see below) | 8804.5 | 15.8x |
+
+Every run reaches near-optimality at the same iteration as its predecessor.
+ieee123 is unchanged within noise; med2522 and large10k fall 16-30%
+(large10k `T=48` 43% against a pre-rewrite baseline). The gap to Ipopt now
+narrows with horizon on all three feeders.
+
+**Threshold inconsistency found and fixed.** The earlier Table II entry for
+large10k `T=48` (iteration 109, 20499.5 s) was the run's time at primal
+`1e-6`, whereas large10k is reported at `1e-4`
+(`matched_ipopt_race/NEAR_OPT_SUMMARY.txt` lists 81 / 15343.2 s at `1e-4`).
+The blocked run qualifies at the same iteration 81 at `1e-4`. The paper's
+Table II now reports iteration 81 and says so in the text.
