@@ -23,14 +23,28 @@ function _frozen_reset!()
     return nothing
 end
 
+# Opt-in UMFPACK strategy/ordering, for the ordering experiments in
+# ddp/notes/KKT_ORDERING_AND_MA57.md. Values are UMFPACK's own codes, e.g.
+# FILTERDDP_UMFPACK_STRATEGY=3 (symmetric), FILTERDDP_UMFPACK_ORDERING=3 (METIS).
+# Unset (the default) calls lu(K) exactly as before.
+function _kkt_lu(K)
+    strategy = get(ENV, "FILTERDDP_UMFPACK_STRATEGY", "")
+    ordering = get(ENV, "FILTERDDP_UMFPACK_ORDERING", "")
+    isempty(strategy) && isempty(ordering) && return lu(K)
+    control = SparseArrays.UMFPACK.get_umfpack_control(Float64, Int64)
+    isempty(strategy) || (control[SparseArrays.LibSuiteSparse.UMFPACK_STRATEGY + 1] = parse(Float64, strategy))
+    isempty(ordering) || (control[SparseArrays.LibSuiteSparse.UMFPACK_ORDERING + 1] = parse(Float64, ordering))
+    return lu(K; control=control)
+end
+
 function _frozen_lu(t::Int, K, iter::Int)
     period = _freeze_period()
     if period <= 1
         _FROZEN_STATS[:factorisations] += 1
-        return lu(K)
+        return _kkt_lu(K)
     end
     if !haskey(_FROZEN_KKT, t) || (iter - _FROZEN_AT[t]) >= period
-        _FROZEN_KKT[t] = lu(K)
+        _FROZEN_KKT[t] = _kkt_lu(K)
         _FROZEN_AT[t] = iter
         _FROZEN_STATS[:factorisations] += 1
     else
