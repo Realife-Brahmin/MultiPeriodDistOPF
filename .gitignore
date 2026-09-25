@@ -55,3 +55,9 @@ __pycache__/
 
 # Per-stage KKT captures from run_agenda_pipeline.sh: large10k alone is 1.6 GB.
 ddp/results/agenda_pipeline/captures/
+
+# Captured stage KKT systems for the ordering/MA57 benchmark (~1.6 GB each at large10k)
+ddp/results/kkt_ordering/captures/
+# ...but that study's logs are its evidence (capture provenance, background load
+# during every timed case, raw benchmark output), as ddp/logs/ is above.
+!ddp/results/kkt_ordering/logs/
