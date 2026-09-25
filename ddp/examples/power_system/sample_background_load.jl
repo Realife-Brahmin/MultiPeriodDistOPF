@@ -21,7 +21,7 @@ using Dates, Printf
 
 const OURS = "ieee123c_filterddp.jl|centralized_ipopt_matched.jl|hold_awake.jl|" *
              "sample_background_load.jl|export_ieee123c_data.jl|summarize_|" *
-             "kkt_ordering_benchmark.jl"
+             "kkt_ordering_benchmark.jl|blocked_multirhs_solve_benchmark.jl"
 
 const PS = """
 \$w = @{}

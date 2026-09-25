@@ -1,0 +1,13 @@
+QUIET_WAIT waited_s=18 other_cores=0.49 timed_out=0
+ieee2522C_1ph exact: n=23691 nnz(K)=162818 rhs_cols=250 repeats=9 julia_threads=1
+  UMFPACK ldiv! (baseline) solve   0.1828 s  res 5.78e-12
+  factor extraction (L, U, p, q, Rs): 0.0062 s   nnz(L)+nnz(U)=431300
+  blocked          w=    1  solve   0.3666 s  +extract =   0.3728 s  speedup  0.49x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=    4  solve   0.1536 s  +extract =   0.1598 s  speedup  1.14x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=    8  solve   0.1259 s  +extract =   0.1321 s  speedup  1.38x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=   16  solve   0.0677 s  +extract =   0.0739 s  speedup  2.47x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=   32  solve   0.0629 s  +extract =   0.0691 s  speedup  2.64x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=   64  solve   0.0841 s  +extract =   0.0904 s  speedup  2.02x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=  128  solve   0.0776 s  +extract =   0.0838 s  speedup  2.18x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+  blocked          w=  250  solve   0.1202 s  +extract =   0.1264 s  speedup  1.45x  res 4.19e-12  max|dX|/max|X| 3.6e-11
+wrote ddp/results/kkt_ordering/blocked/blocked_ieee2522C_1ph_exact_t1.csv  finished=2026-09-24T21:34:44.755
