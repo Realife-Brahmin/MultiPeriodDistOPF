@@ -55,10 +55,10 @@ across horizons; the existing sparsity plots of the three systems.
 **Follow-up (Section 6): the solve is slow because UMFPACK solves one column at
 a time, and that is fixable without a new solver.** A blocked solve over
 UMFPACK's own factors (16 columns at a time) is 1.9-3.0x faster on one thread,
-with identical numerics. In complete FilterDDP runs it cuts time to
-near-optimality by 13-20% at med2522 and **23% at large10k `T=3`**, with the
-same iterations and objectives. This is a real saving, but it does not close
-the gap to centralized Ipopt.
+with identical numerics. In complete FilterDDP runs (diagonal Hessian) it cuts
+time to near-optimality by 13-21% at med2522 (`T` = 3 to 24) and **23-27% at
+large10k** (`T` = 3, 6), with the same iterations and objectives. This is a
+real saving, but it does not close the gap to centralized Ipopt.
 
 ## 1. MA57 availability
 
@@ -240,7 +240,7 @@ configuration showed an improvement worth carrying to scale.
 
 - **Keep UMFPACK's factorization and default ordering, and replace only its
   solve** with the blocked multi-column solve (Section 6):
-  `FILTERDDP_BLOCKED_SOLVE=16`, opt-in, same answers, 13-23% faster FilterDDP
+  `FILTERDDP_BLOCKED_SOLVE=16`, opt-in, same answers, 13-27% faster FilterDDP
   runs measured so far. At present it is opt-in; making it the default is a
   one-line change once it has run on a longer horizon.
 - **Get the HSL academic licence** to close the MA57 question properly. It is
@@ -310,16 +310,32 @@ primal thresholds, baseline and blocked alternated, median background load
 | med2522 T=3, diag | 55 | 87.2 -> 75.8 s | **13%** | 24.6 -> 12.1 s |
 | med2522 T=3, exact | 42 | 91.5 -> 75.5 s | **17%** | 28.3 -> 11.2 s |
 | med2522 T=12, diag | 73 | 311.0 -> 247.8 s | **20%** | 132.7 -> 56.7 s |
+| med2522 T=24, diag | 79 | 613.8 -> 486.8 s | **21%** | 276.8 -> 123.7 s |
 | large10k T=3, diag | 99 | 1785.0 -> 1368.2 s | **23%** | 685.9 -> 277.3 s |
+| large10k T=6, diag | 103 | 3230.5 -> 2364.6 s | **27%** | 1489.1 -> 595.1 s |
 
 Every pair has the same iteration count, the same objective to every printed
 digit and the same final equality residual. The largest control difference is
-`1.7e-12` against controls of magnitude 1,004 at large10k, and states agree to
-`2e-16`. The saving is what the solve's share predicts: at large10k `T=3` the
-wide solve is 38% of the baseline run and becomes 2.5x faster, a 23% saving.
-Because that share rises with horizon (58% at large10k `T=24`, 45% at med2522
-`T=96`), longer horizons should save more (roughly a third at large10k
-`T=24`), but that is **not yet measured**.
+`1.7e-12` against controls of magnitude ~1,000 at large10k, and states agree to
+`4e-16`. The saving is what the solve's share predicts: the wide solve becomes
+2.2-2.5x faster inside the run, and it was 38% (large10k `T=3`) and 46%
+(large10k `T=6`) of the baseline run.
+
+**Trend with horizon.** At med2522 the saving rises from 13% (`T=3`) to 20-21%
+(`T=12`, `T=24`) and levels off, because the solve's share does too (45% at
+`T=24`, and 44-45% at `T=48`/`96` in the race logs). At large10k it is still
+rising (23% -> 27%), and the solve's share keeps growing with horizon (58% at
+`T=24` in the race log), so roughly a third is expected at `T=24`. That is **not
+yet measured**.
+
+**Absolute times vs Table V.** These pairs run FilterDDP without the three
+exact assembly rewrites (`FILTERDDP_DIRECT_DIAG_HESSIAN`,
+`FILTERDDP_TRIPLET_SECOND_DERIVATIVES`, `FILTERDDP_CACHE_KKT_PATTERN`), which
+Table V's large10k rows use. Both arms of every pair share the same settings,
+so the savings are fair, but the large10k baselines here (e.g. 3230.5 s at
+`T=6`) are slower than Table V (2330.7 s at `T=6`, same 103 iterations and
+objective). The med2522 rows of Table V did not use the rewrites and agree with
+the baselines here (613.8 s vs 587.6 s at `T=24`).
 
 What this changes in the answers above: Q2 and Q7 stand for *factorization*,
 but the multi-RHS solve is a real lever. It can be pulled on the existing
