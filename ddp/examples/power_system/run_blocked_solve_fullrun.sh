@@ -16,7 +16,8 @@ set -u
 cd "$(dirname "$0")/../../.." || exit 1
 SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
 SUFFIX="${RUN_TAG_SUFFIX:-}"
-REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0}"
+VARIANTS="${VARIANTS:-baseline blocked_w$W}"      # VARIANTS=blocked_w16 runs the blocked arm only
+REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0}"
 OUT=ddp/results/kkt_ordering/fullrun_blocked
 SOLDIR=ddp/results/kkt_ordering/captures/solutions
 mkdir -p "$OUT" "$SOLDIR"
@@ -41,7 +42,7 @@ LOADJL=ddp/examples/power_system/sample_background_load.jl
 SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB1e-3.jls
 
 for r in $(seq 1 "$REP"); do
-  for VARIANT in baseline "blocked_w$W"; do
+  for VARIANT in $VARIANTS; do
     TAG="${SYS}_T${T}_${ARM}${SUFFIX}_${VARIANT}_r${r}"
     LOG="$OUT/fddp_${TAG}.log"
     [ -s "$LOG" ] && grep -q "solve complete" "$LOG" && { echo "skip $TAG"; continue; }
