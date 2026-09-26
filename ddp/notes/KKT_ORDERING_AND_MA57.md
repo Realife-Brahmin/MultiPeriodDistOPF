@@ -557,7 +557,9 @@ below `6e-12`. Every MA57/MA97 factorization reports the same inertia (e.g.
   elimination and needs no delays. The wide solve is 4.4-6.9x slower than
   UMFPACK column by column, more than the extra data explains; the rest is
   solve-phase overhead on many tiny fronts (largest front 18-38). Against
-  the blocked solve it is 9-15x slower.
+  the blocked solve it is 9-15x slower. Section 10 confirms the overhead is
+  the main cause: with the delays removed by regularization, MA57's solve
+  still takes 12.5 s.
 - **MA57's multi-RHS call is slower per column than its single-RHS call**
   (13-14 ms against 4.3-4.6 ms). Its best case, calling it one column at a
   time, extrapolates to about 4.4 s at large10k. That is still 2x UMFPACK's
@@ -606,3 +608,85 @@ paper's Table V called the doubled counts "stored entries" and doubled them
 again for the fill column (MA57 12.3-13.1, MA97 9.1). The CSV's `factor_entries`
 for MA57/MA97 is already twice the one-triangle count, and `fill_ratio` already
 follows Table V's convention: MA57 6.1-6.5, MA97 4.5-4.7. Both are now fixed.
+
+## 10. Ipopt-style constraint regularization (2026-09-25)
+
+Question (user): the KKT's constraint block `[H cu'; cu 0]` has a zero
+diagonal, which hurts MA57. Ipopt regularizes with `-δ_c I` there. Should
+FilterDDP, and how much does it change things?
+
+**What each code does.** Ipopt's matrix is `[W + Σ + δ_w I, Jᵀ; J, -δ_c I]`.
+`δ_w` is added only when the factorization reports the wrong inertia, and
+`δ_c` (about `1e-8 μ^{1/4}`) only when the matrix is singular. So Ipopt too
+normally factors a zero constraint block. DDP4OPF has the same `δ_w` logic
+(`reg`, applied to the stage Hessian diagonal). `δ_c` is declared
+(`backward_pass.jl`, `δ_c = 0.`) and never used. On the sparse KKT path `reg`
+fires only if UMFPACK fails, because LU gives no inertia. It never fired in any
+Table II run (`lg(reg)` is `-` at every iteration). With the diagonal Hessian
+floored at `1e-8` the stage Hessian is positive definite, so the inertia is
+right by construction.
+
+**1. The solution is very sensitive to δ_c** (`kkt_dual_reg_sensitivity.jl`,
+`dual_reg_sensitivity.csv`; UMFPACK, regularized against exact, relative change
+over all 1+n_x columns):
+
+| δ_c | ieee123 primal | ieee123 multipliers | med2522 primal | large10k primal |
+|---:|---:|---:|---:|---:|
+| 1e-12 | 4e-8 | 1.9% | 2e-5 | 2e-8 |
+| 1e-10 | 1e-6 | 63% | 0.19% | 1.5e-6 |
+| 1e-8 | 6e-6 | 96% | 16% | 1.5e-4 |
+| 1e-6 | 5e-4 | 97% | 85% | 1.5% |
+| 1e-4 | 2.4% | 97% | 97% | 120% |
+
+The diagonal Hessian spans `1e-8` (the floor) to `1e9`-`1e10` at ieee123 and
+med2522. Constraints whose variables all carry large (barrier-dominated)
+curvature have tiny entries in the multiplier Schur complement
+`cu H⁻¹ cu'`, and a `δ_c` of Ipopt's size swamps them. med2522 is the most
+sensitive: at `δ_c = 1e-8` the primal directions, and so FilterDDP's gains,
+move by 16%.
+
+**2. It does not rescue MA57** (`run_kkt_dual_reg.sh`,
+`dual_reg_benchmark.csv`; large10k, one thread):
+
+| δ_c | MA57 Ipopt settings: delayed | entries (x2) | wide solve (s) | MA57 defaults: delayed | MA97: delayed | solution change |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 19,159 | 2,414,760 | 13.38 | 22,832 | 16,564 | 0 |
+| 1e-12 | 19,159 | 2,414,760 | 12.77 | 22,832 | 16,564 | 2e-7 |
+| 1e-10 | 19,158 | 2,414,720 | 12.88 | 22,832 | 16,564 | 2e-5 |
+| 1e-8 | 17,868 | 2,358,704 | 12.98 | 22,832 | 16,564 | 2e-3 |
+| 1e-6 | 94 | 1,677,724 | 12.53 | 22,825 | 16,558 | 13% |
+
+Up to Ipopt's scale the delays barely move: MA57's default threshold
+(`u = 0.01`) rejects a `1e-8` pivot, and even Ipopt's `u = 1e-8` accepts only a
+few. Only at `1e-6` with Ipopt's threshold do they vanish, and the factor
+shrinks 30%. **Yet the wide solve is still 12.5 s**, against UMFPACK's 2.10 s on
+the exact matrix. So the delays were not what made MA57's solve slow: with
+none at all it still takes 6x longer. What costs is its solve phase, per
+column, on this matrix. med2522 shows the same pattern: delays vanish only at
+`1e-6` (3,536 -> 0), and the wide solve drops only 0.289 -> 0.260 s against
+UMFPACK's 0.12-0.15 s.
+
+**3. It would badly hurt UMFPACK.** Any `δ_c`, even `1e-12`, makes the
+diagonal structurally full, and UMFPACK's automatic strategy then switches
+from unsymmetric to symmetric. Verified by forcing each strategy
+(`kkt_dual_reg_umfpack_strategy.jl`, `logs/dual_reg_umfpack_strategy.log`;
+single warm solves):
+
+| large10k | δ_c = 0 | δ_c = 1e-8 |
+|---|---:|---:|
+| auto strategy, nnz(L)+nnz(U) | 870,685 (= unsymmetric) | 3,615,949 (= symmetric) |
+| auto, wide solve | 2.1 s | 6.5 s |
+| forced unsymmetric | 870,685, 2.1 s | 873,071, 2.4 s |
+
+med2522 behaves the same way (215,030 -> 335,724 entries under auto; 211,902
+forced unsymmetric).
+
+So the zero diagonal that hurts MA57 is exactly what steers UMFPACK to its
+good strategy. If FilterDDP ever regularizes the constraint block, it must
+also force `UMFPACK_STRATEGY` to unsymmetric (`FILTERDDP_UMFPACK_STRATEGY=1`).
+
+**Conclusion.** Do not add `δ_c` to FilterDDP's stage KKT. It never speeds up
+MA57 or MA97 enough to matter; it changes the stage solution by up to 16% at
+Ipopt's own scale (med2522); and it quadruples UMFPACK's factor unless the
+strategy is forced. The primal regularization FilterDDP already has is the
+right safeguard, and with the diagonal Hessian it is never needed.
