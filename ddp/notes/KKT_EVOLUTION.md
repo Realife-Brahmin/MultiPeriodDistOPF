@@ -42,7 +42,7 @@ much? Measured 2026-09-26 on the 309 lab PC. Nothing here is timed.
   system: power balance P and Q, voltage drop, root voltage and battery
   energy.
 - The only Jacobian rows that move are the branch-current (SOCP) rows
-  `P² + Q² − v·ℓ + s = 0`, one per line: 23% of the constraint rows.
+  `P² + Q² − v·ℓ + s = 0`, one per line: 23-24% of the constraint rows.
 - The constant cost curvature (`C_B`, terminal term) is fixed too.
 
 **2. Median change per iteration by block, split by phase.** "Barrier phase"
