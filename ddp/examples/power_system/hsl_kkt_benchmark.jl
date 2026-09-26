@@ -32,14 +32,23 @@ BLAS.set_num_threads(1)
 omp = get(ENV, "OMP_NUM_THREADS", "unset"); obl = get(ENV, "OPENBLAS_NUM_THREADS", "unset")
 
 cap = deserialize(input)
-K = SparseMatrixCSC{Float64, Int64}(cap.K)
+K0 = SparseMatrixCSC{Float64, Int64}(cap.K)
 B = Matrix{Float64}(cap.rhs)
-n, m = size(B); nnzK = nnz(K)
+n, m = size(B)
+# KKT_DUAL_REG=δ_c puts -δ_c on the (structurally zero) diagonal of the
+# constraint block, as Ipopt does when it finds the KKT matrix singular:
+# K = [H cu'; cu -δ_c I]. Residuals are taken against this regularized K; the
+# deviation columns measure how far its solution moves from the exact one.
+const δc = parse(Float64, get(ENV, "KKT_DUAL_REG", "0"))
+K = δc == 0 ? K0 : K0 - δc * sparse(Diagonal([zeros(cap.nu); ones(n - cap.nu)]))
+nnzK = nnz(K0)
 b1 = B[:, 1:1]
 Kl = tril(K)                                   # MA57/MA97 take one triangle
 relres(X, R) = norm(K * X - R) / norm(R)
-@printf("%s %s: n=%d nnz(K)=%d rhs=%d repeats=%d OMP=%s OPENBLAS=%s julia_threads=%d\n",
-        system, arm, n, nnzK, m, repeats, omp, obl, Threads.nthreads())
+Xref = lu(K0) \ B                              # exact (unregularized) solution
+dev(X, R) = norm(X - R) / norm(R)
+@printf("%s %s: n=%d nnz(K)=%d rhs=%d repeats=%d OMP=%s OPENBLAS=%s julia_threads=%d dual_reg=%.1e\n",
+        system, arm, n, nnzK, m, repeats, omp, obl, Threads.nthreads(), δc)
 
 rows = NamedTuple[]
 function record!(solver, config, threads, to, tf, t1, tw, entries, extra, X1, XW, note)
@@ -48,11 +57,12 @@ function record!(solver, config, threads, to, tf, t1, tw, entries, extra, X1, XW
          solve1_s = median(t1), solvewide_s = median(tw),
          factor_plus_wide_s = median(tf) + median(tw), total_s = median(to) + median(tf) + median(tw),
          factor_entries = entries, fill_ratio = entries / nnzK, stats = extra,
-         relres_1 = relres(X1, b1), relres_wide = relres(XW, B), note = note)
+         relres_1 = relres(X1, b1), relres_wide = relres(XW, B),
+         dual_reg = δc, dev_wide = dev(XW, Xref), note = note)
     push!(rows, r)
-    @printf("  %-8s %-26s thr %-3s ord %8.4f fact %8.4f solve1 %8.5f wide %8.4f f+w %8.4f | fill %5.2f res %.1e/%.1e %s\n",
+    @printf("  %-8s %-26s thr %-3s ord %8.4f fact %8.4f solve1 %8.5f wide %8.4f f+w %8.4f | fill %5.2f res %.1e/%.1e dev %.1e %s\n",
             solver, config, threads, r.ordering_s, r.factor_s, r.solve1_s, r.solvewide_s,
-            r.factor_plus_wide_s, r.fill_ratio, r.relres_1, r.relres_wide, extra)
+            r.factor_plus_wide_s, r.fill_ratio, r.relres_1, r.relres_wide, r.dev_wide, extra)
     flush(stdout)
 end
 
@@ -149,7 +159,7 @@ if "ma57" in families
             push!(rows, (system = system, arm = arm, n = n, nnz_K = nnzK, rhs_cols = m, solver = "MA57",
                          config = name, threads = obl, ordering_s = NaN, factor_s = NaN, solve1_s = NaN,
                          solvewide_s = NaN, factor_plus_wide_s = NaN, total_s = NaN, factor_entries = 0,
-                         fill_ratio = NaN, stats = "", relres_1 = NaN, relres_wide = NaN,
+                         fill_ratio = NaN, stats = "", relres_1 = NaN, relres_wide = NaN, dual_reg = δc, dev_wide = NaN,
                          note = "FAILED: " * first(split(sprint(showerror, err), '\n'))))
         end
     end
@@ -193,7 +203,7 @@ if "ma97" in families
             push!(rows, (system = system, arm = arm, n = n, nnz_K = nnzK, rhs_cols = m, solver = "MA97",
                          config = name, threads = omp, ordering_s = NaN, factor_s = NaN, solve1_s = NaN,
                          solvewide_s = NaN, factor_plus_wide_s = NaN, total_s = NaN, factor_entries = 0,
-                         fill_ratio = NaN, stats = "", relres_1 = NaN, relres_wide = NaN,
+                         fill_ratio = NaN, stats = "", relres_1 = NaN, relres_wide = NaN, dual_reg = δc, dev_wide = NaN,
                          note = "FAILED: " * first(split(sprint(showerror, err), '\n'))))
         end
     end
@@ -201,7 +211,7 @@ end
 
 cols = [:system, :arm, :n, :nnz_K, :rhs_cols, :solver, :config, :threads, :ordering_s, :factor_s,
         :solve1_s, :solvewide_s, :factor_plus_wide_s, :total_s, :factor_entries, :fill_ratio,
-        :stats, :relres_1, :relres_wide, :note]
+        :stats, :relres_1, :relres_wide, :dual_reg, :dev_wide, :note]
 cell(v) = v isa AbstractString ? "\"" * replace(v, "\"" => "'") * "\"" :
           v isa AbstractFloat ? @sprintf("%.6g", v) : string(v)
 mkpath(dirname(out_csv))
