@@ -13,11 +13,13 @@ across horizons; the existing sparsity plots of the three systems.
 
 ## Answers
 
-1. **Is MA57 available?** No. There is no HSL binary for Julia or Ipopt; the
-   only licensed MA57 on the machine is inside MATLAB, which would not run
-   headless. Nothing below is an MA57 result. (Section 1.)
-2. **Does exploiting symmetric-indefinite structure beat UMFPACK's LU?** Not
-   with the symmetric-indefinite solver we have. MUMPS LDLᵀ (`sym=2`, the same
+1. **Is MA57 available?** Now yes. At first there was no HSL binary for Julia
+   or Ipopt (Section 1); MA57 and HSL_MA97 have since been built locally from
+   the user's licensed HSL sources and measured directly (Section 9).
+2. **Does exploiting symmetric-indefinite structure beat UMFPACK's LU?** No,
+   and MA57 and MA97 themselves confirm it (Section 9): they factor 2.8-6.5x
+   faster at large10k but their 1,021-column solve is 4.4-6.9x slower.
+   Before HSL was available: MUMPS LDLᵀ (`sym=2`, the same
    algorithm family as MA57 and Ipopt's own solver) is **4.5-11x slower** on
    factorization plus wide solve in all six cases, and 3.7-13x slower at
    factorization alone. UMFPACK's own symmetric strategy is 1.5-2.5x slower at
@@ -465,3 +467,90 @@ one thread, far from linear. The thread count is also capped by the number of
 Not yet run at eight threads: ieee123 (all three horizons), med2522 `T=6`,
 large10k `T=24` and `T=48`. Table II keeps the one-thread blocked times until
 those are done, so that all its cells share one setting.
+
+## 9. MA57 and HSL_MA97, measured (2026-09-25)
+
+**Build.** From the user's licensed HSL packages (MA57 3.11.3, HSL_MA97
+2.8.1), compiled on the 309 PC with `hsl/build_hsl_windows.sh` (MinGW
+gfortran 8.3, `-O3 -march=haswell`, LP64 OpenBLAS32 from Julia's MUMPS
+artifact). METIS is replaced by HSL's placeholder, so the automatic orderings
+fall back to AMD. Sources and DLLs live in `Documents/hsl/`, outside the repo.
+MA57 is called directly (`ma57id/ad/bd/cd`), MA97 through the C shim
+`hsl/s97.c`. Every configuration factors the same stage-1 diagonal-Hessian
+captures as Sections 3 and 6 and solves the same `(n_x+1)`-column RHS in one
+call (`hsl_kkt_benchmark.jl`, `run_hsl_benchmark.sh`; CSV
+`hsl_kkt_benchmark.csv`, per-case files in `hsl/`). All residuals are at or
+below `6e-12`. Every MA57/MA97 factorization reports the same inertia (e.g.
+42,303 negative pivots at large10k) and full rank.
+
+**large10k (n = 96,968, 1,021 RHS), one thread unless marked:**
+
+| Configuration | order (s) | factor (s) | 1 RHS (ms) | 1,021 RHS (s) | factor + wide (s) | stored entries | delayed pivots |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| UMFPACK default (FilterDDP) | 0.069 | 0.146 | 2.5 | 2.10 | 2.24 | 870,685 (L+U) | -- |
+| UMFPACK + blocked w=16 | 0.069 | 0.146 | 2.5 | 0.99 | 1.13 | same | -- |
+| UMFPACK + blocked w=16, 8 threads | 0.056 | 0.134 | 2.5 | 0.32 | 0.45 | same | -- |
+| MA57 defaults (AMD) | 0.015 | 0.051 | 4.4 | 14.43 | 14.48 | 2,565,910 | 22,832 |
+| MA57 MA27 min. degree | 0.015 | 0.051 | 4.6 | 14.00 | 14.05 | 2,532,184 | 22,483 |
+| MA57, Ipopt's settings (pivtol 1e-8, no scaling) | 0.016 | 0.022 | 4.3 | 13.38 | 13.40 | 2,414,760 | 19,159 |
+| MA97 defaults (AMD) | 0.034 | 0.052 | 9.6 | 9.66 | 9.72 | 1,781,056 | 16,564 |
+| MA97, no scaling | 0.036 | 0.025 | 9.5 | 9.29 | 9.31 | 1,804,234 | 17,262 |
+| MA97 defaults, 8 OpenMP threads | 0.038 | 0.047 | 29.5 | 5.92 | 5.97 | same | same |
+| MA97 no scaling, 8 threads | 0.033 | 0.025 | 25.1 | 5.47 | 5.50 | same | same |
+
+**Reading.**
+
+- **Factorization is where MA57 wins**: 0.022-0.051 s against UMFPACK's
+  0.146 s, the fastest of every solver measured. But with the diagonal
+  Hessian factorization is 7% of the stage's linear algebra (Q7), so this
+  cannot pay for itself.
+- **The solve is where it loses.** A pattern-only symmetric ordering (AMD)
+  ignores that the constraint block of `K` has a zero diagonal. 17-23k of the
+  96,968 pivots are delayed, and the factors store 2.0x (MA97) to 2.9x (MA57)
+  as many entries as UMFPACK's L and U together, even though LDLᵀ stores only
+  one triangle. UMFPACK's unsymmetric COLAMD ordering pivots numerically
+  during elimination and gets a much sparser factor. Every RHS column
+  traverses the whole factor, so the wide solve is 4.4-6.9x slower than
+  UMFPACK column by column, and 9-15x slower than the blocked solve.
+- **MA57's multi-RHS call is slower per column than its single-RHS call**
+  (13-14 ms against 4.3-4.6 ms). Its best case, calling it one column at a
+  time, extrapolates to about 4.4 s at large10k. That is still 2x UMFPACK's
+  column-by-column solve and 4.4x the blocked one. This is an extrapolation,
+  not a measurement.
+- **MA97's OpenMP helps (9.3 -> 5.5 s) but not enough**: the 8-thread blocked
+  UMFPACK solve takes 0.32 s, 17x less.
+- Tuning barely matters: the ordering choice moves either solver's wide
+  solve by under 4%. Ipopt's settings (smaller pivot threshold, fewer delays)
+  are the best MA57 variant.
+
+**med2522 and ieee123.** Same ranking at med2522. Factor plus wide solve takes:
+
+| med2522 | factor + wide (s) |
+|---|---:|
+| UMFPACK | 0.146 |
+| UMFPACK blocked | 0.085 |
+| UMFPACK blocked, 8 threads | 0.052 |
+| MA57 | 0.29-0.36 |
+| MA97 | 0.34-0.35 |
+| MA97, 8 threads | 0.31-0.33 |
+
+At ieee123 everything is 2.0-3.3 ms per stage. MA57 with Ipopt's settings is
+the fastest there (2.0 ms against 2.3 ms blocked), which is immaterial in
+absolute terms.
+
+**Caveat.** Without METIS, the nested-dissection orderings of MA57/MA97 are
+untested. Section 3 found nested dissection never reduced fill on these
+radial-feeder KKTs (METIS and SCOTCH through UMFPACK and MUMPS), so it is
+unlikely to close a 4-7x solve gap. It is not measured here.
+
+**Answer for the agenda.** MA57 is not worth adopting for FilterDDP's stage
+solves. It would help a method dominated by factorization. FilterDDP with the
+diagonal Hessian is dominated by the `(n_x+1)`-column solve, and there UMFPACK's
+sparser unsymmetric factor, applied in blocks, is the fastest option measured.
+
+Reproduce (after building the DLLs):
+
+```bash
+bash ddp/examples/power_system/hsl/build_hsl_windows.sh <hsl_src_dir> <build_dir> <libopenblas.dll>
+HSL_LIB_DIR=<build_dir> bash ddp/examples/power_system/run_hsl_benchmark.sh
+```
