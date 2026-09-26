@@ -61,8 +61,12 @@ with identical numerics. In complete FilterDDP runs (diagonal Hessian) it cuts
 time to near-optimality by 13-21% at med2522 (`T` = 3 to 24) and **23-30% at
 large10k** (`T` = 3, 6; 30% in the paper's Table II configuration), with the
 same iterations and objectives. This is a real saving, but it does not close
-the gap to centralized Ipopt. These results are in the TPEC paper (Sections
-IV-E and IV-F, Tables V and VI, Fig. 10).
+the gap to centralized Ipopt. In the TPEC paper, the blocked solve has its
+own section and table. The ordering and solver study (Sections 2-5, 9, 10
+here) was closed by the user on 2026-09-26 as a negative result: the paper
+keeps one paragraph on it at the end of the diagonal-Hessian section, and its
+former table and appendix ordering figure were removed. This note stays the
+full record.
 
 ## 1. MA57 availability
 
