@@ -500,7 +500,7 @@ below `6e-12`. Every MA57/MA97 factorization reports the same inertia (e.g.
 
 **large10k (n = 96,968, 1,021 RHS), one thread unless marked:**
 
-| Configuration | order (s) | factor (s) | 1 RHS (ms) | 1,021 RHS (s) | factor + wide (s) | stored entries | delayed pivots |
+| Configuration | order (s) | factor (s) | 1 RHS (ms) | 1,021 RHS (s) | factor + wide (s) | factor entries read per RHS | delayed pivots |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | UMFPACK default (FilterDDP) | 0.069 | 0.146 | 2.5 | 2.10 | 2.24 | 870,685 (L+U) | -- |
 | UMFPACK + blocked w=16 | 0.069 | 0.146 | 2.5 | 0.99 | 1.13 | same | -- |
@@ -521,12 +521,15 @@ below `6e-12`. Every MA57/MA97 factorization reports the same inertia (e.g.
   cannot pay for itself.
 - **The solve is where it loses.** A pattern-only symmetric ordering (AMD)
   ignores that the constraint block of `K` has a zero diagonal. 17-23k of the
-  96,968 pivots are delayed, and the factors store 2.0x (MA97) to 2.9x (MA57)
-  as many entries as UMFPACK's L and U together, even though LDLᵀ stores only
-  one triangle. UMFPACK's unsymmetric COLAMD ordering pivots numerically
-  during elimination and gets a much sparser factor. Every RHS column
-  traverses the whole factor, so the wide solve is 4.4-6.9x slower than
-  UMFPACK column by column, and 9-15x slower than the blocked solve.
+  96,968 pivots are delayed. The factors store 1.0x (MA97) to 1.5x (MA57) as
+  many entries as UMFPACK's L and U together, but LDLᵀ reads its one stored
+  triangle twice per solve, so each RHS traverses 2.0-2.9x as much factor
+  data (the column above: 2 x INFO(14) for MA57, 2 x num_factor for MA97).
+  UMFPACK's unsymmetric COLAMD ordering pivots numerically during
+  elimination and needs no delays. The wide solve is 4.4-6.9x slower than
+  UMFPACK column by column, more than the extra data explains; the rest is
+  solve-phase overhead on many tiny fronts (largest front 18-38). Against
+  the blocked solve it is 9-15x slower.
 - **MA57's multi-RHS call is slower per column than its single-RHS call**
   (13-14 ms against 4.3-4.6 ms). Its best case, calling it one column at a
   time, extrapolates to about 4.4 s at large10k. That is still 2x UMFPACK's
@@ -569,3 +572,9 @@ Reproduce (after building the DLLs):
 bash ddp/examples/power_system/hsl/build_hsl_windows.sh <hsl_src_dir> <build_dir> <libopenblas.dll>
 HSL_LIB_DIR=<build_dir> bash ddp/examples/power_system/run_hsl_benchmark.sh
 ```
+
+**Correction (same day).** The first version of this section and of the
+paper's Table V called the doubled counts "stored entries" and doubled them
+again for the fill column (MA57 12.3-13.1, MA97 9.1). The CSV's `factor_entries`
+for MA57/MA97 is already twice the one-triangle count, and `fill_ratio` already
+follows Table V's convention: MA57 6.1-6.5, MA97 4.5-4.7. Both are now fixed.
