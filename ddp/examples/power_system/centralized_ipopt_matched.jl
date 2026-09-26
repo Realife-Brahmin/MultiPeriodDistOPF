@@ -136,3 +136,23 @@ solve_s = try solve_time(model) catch; NaN end
         system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
         iters, obj, solve_s, build_s, wall_s, num_variables(model),
         replace(string(MOI.get(model, MOI.SolverVersion())), ' ' => '_'))
+
+# How the batteries are used and what each objective term contributes. Printed
+# after the timed solve, so it does not affect any timing.
+if has_values(model)
+    pb = value.(P_B); bb = value.(B)
+    util = [abs(pb[j,t]) / max(data[:P_B_R_pu][j], eps()) for j in Bset, t in Tset]
+    energy_term = sum(data[:LoadShapeCost][t] * pbase * dt * value(P_Subs[t]) for t in Tset)
+    cb_term = sum(data[:C_B] * pbase^2 * dt * pb[j,t]^2 for j in Bset, t in Tset)
+    term_term = gammaT * sum((bb[j,T] - data[:B0_pu][j])^2 for j in Bset)
+    # Share of each battery's usable energy window (soc_min..soc_max of B_R)
+    # that its SOC trajectory, including B0, actually spans; averaged over batteries.
+    window = [begin
+                  traj = vcat(data[:B0_pu][j], [bb[j,t] for t in Tset])
+                  span = (data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j]
+                  (maximum(traj) - minimum(traj)) / max(span, eps())
+              end for j in Bset]
+    @printf("CENTRAL_IPOPT_BATTERY at_power_limit=%.3f mean_utilization=%.3f energy_window_used=%.3f throughput_pu_h=%.6e energy_term=%.6e cb_term=%.6e terminal_term=%.6e\n",
+            count(>=(0.99), util) / length(util), sum(util) / length(util),
+            sum(window) / length(window), sum(abs.(pb)) * dt, energy_term, cb_term, term_term)
+end

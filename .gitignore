@@ -61,3 +61,6 @@ ddp/results/kkt_ordering/captures/
 # ...but that study's logs are its evidence (capture provenance, background load
 # during every timed case, raw benchmark output), as ddp/logs/ is above.
 !ddp/results/kkt_ordering/logs/
+# Centralized Ipopt with and without the C_B battery term: the logs are the result.
+!ddp/results/ipopt_no_cb/logs/
+!ddp/results/ipopt_cb_1e-3/logs/
