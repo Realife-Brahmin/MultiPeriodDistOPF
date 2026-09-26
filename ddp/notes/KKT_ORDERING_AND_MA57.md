@@ -447,7 +447,7 @@ II's configuration (`RUN_TAG_SUFFIX=_tableII_jt8`, logs
 
 | System | T | iterations | blocked, 1 thread (s) | blocked, 8 threads (s) | saving | ratio to Ipopt |
 |---|---:|---:|---:|---:|---:|---:|
-| med2522 | 24 | 79 | 471.7 | 381.0 | 19% | 9.2x (was 11.5x) |
+| med2522 | 24 | 79 | 471.7 | 381.0 | 19% | 9.3x (was 11.5x) |
 | med2522 | 96 | 94 | 2139.9 | 1700.2 | 21% | 7.9x (was 10.0x) |
 | large10k | 6 | 103 | 1782.9 | 1353.0 | 24% | 28.0x (was 36.8x) |
 
@@ -479,9 +479,37 @@ leaves two cores for the OS and the load sampler. The remaining Table II
 cells are being re-run at eight threads (`run_table2_blocked.sh` with
 `JULIA_NUM_THREADS=8 RUN_TAG_SUFFIX=_tableII_jt8`).
 
-Not yet run at eight threads: ieee123 (all three horizons), med2522 `T=6`,
-large10k `T=24` and `T=48`. Table II keeps the one-thread blocked times until
-those are done, so that all its cells share one setting.
+**All Table II cells at eight threads (complete 2026-09-25).** Every run
+reaches near-optimality at the same iteration with the same objective as its
+one-thread blocked counterpart; background load below 2 other cores
+throughout (means 0.3-0.7).
+
+| System | T | iterations | 1 thread (s) | 8 threads (s) | change | ratio to Ipopt (8 threads) |
+|---|---:|---:|---:|---:|---:|---:|
+| ieee123 | 6 | 67 | 21.6 | 23.6 | +9% | -- |
+| ieee123 | 24 | 85 | 34.2 | 44.1 | +29% | -- |
+| ieee123 | 96 | 120 | 97.0 | 161.0 | +66% | -- |
+| med2522 | 6 | 69 | 136.7 | 107.2 | -22% | 15.2x |
+| med2522 | 24 | 79 | 471.7 | 381.0 | -19% | 9.3x |
+| med2522 | 96 | 94 | 2139.9 | 1700.2 | -21% | 7.9x |
+| large10k | 6 | 103 | 1782.9 | 1353.0 | -24% | 28.0x |
+| large10k | 24 | 96 | 5332.9 | 3875.3 | -27% | 15.7x |
+| large10k | 48 | 81 | 8804.5 | 6132.3 | -30% | 11.0x |
+
+**ieee123 gets slower.** Its 52 columns make only four blocks, and one stage
+solve takes about a millisecond. Every phase slows 1.5-2x at `T=96`, including
+the ones that use no Julia threads (UMFPACK factorization 39 -> 76 s,
+derivatives 10 -> 19 s, summed over the run). So the cost is running Julia
+with eight threads at all (most likely GC and thread-scheduling overhead on a
+small, allocation-heavy workload), not the threaded solve itself. The cause is
+not isolated; a run with `--gcthreads=1` would separate the GC part.
+
+**Paper.** Table II now uses eight threads for med2522 and large10k and one
+for ieee123, stated in its caption. The protocol, overview, Section IV-E and
+the conclusion follow. With the factorization and solve removed entirely,
+the remaining FilterDDP time is still 7.0x (T=48) to 20.9x (T=6) Ipopt's at
+large10k (summed `factor_s` and `solve_s` of the eight-thread runs), so the
+paper's earlier "an order of magnitude" is replaced by those numbers.
 
 ## 9. MA57 and HSL_MA97, measured (2026-09-25)
 
