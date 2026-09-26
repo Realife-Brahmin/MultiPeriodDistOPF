@@ -78,7 +78,8 @@ iterations:
 In the barrier phase the barrier entries grow by orders of magnitude within a
 few iterations. At large10k the 90th percentile of the 10-iteration change is
 `3e4`, concentrated at barrier-parameter updates. Once `μ` reaches its floor
-(`1e-8`), the matrix barely moves: ieee123 changes 3% over 10 iterations.
+(`1e-8`), the matrix barely moves: ieee123 changes 3% over 10 iterations;
+med2522 still changes 7% per iteration below `μ = 1e-6`.
 
 **5. Some tiny entries toggle.** The `P` and `Q` diagonal entries switch
 between the `1e-8` floor and `O(1)` curvature from the SOCP multipliers,
