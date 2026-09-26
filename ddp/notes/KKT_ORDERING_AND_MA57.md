@@ -460,9 +460,24 @@ take 35-42% off (e.g. large10k `T=6` 2330.7 -> 1353.0 s).
 logical); eight left two for the OS, the load sampler and other work. On a
 single stage solve at `w=16` it gives 2.3x (med2522) and 2.7x (large10k) over
 one thread, far from linear. The thread count is also capped by the number of
-16-column blocks: 4 at ieee123 (52 columns), 16 at med2522, 64 at large10k. A
-2/4/6/10-thread sweep on the captured stage KKTs is added to
-`run_blocked_solve_benchmark.sh` to settle the choice.
+16-column blocks: 4 at ieee123 (52 columns), 16 at med2522, 64 at large10k.
+
+**Thread sweep (isolated stage solve, `w=16`, diagonal Hessian, median
+seconds; `run_blocked_solve_benchmark.sh`).**
+
+| threads | 1 | 2 | 4 | 6 | 8 | 10 |
+|---|---:|---:|---:|---:|---:|---:|
+| med2522 | 0.051 | 0.054 | 0.035 | 0.024 | 0.023 | 0.018 |
+| large10k | 0.89 | 0.71 | 0.46 | 0.38 | 0.32 | 0.33 |
+
+The one-thread value is the median of the sequential rows recorded in each
+run. Scaling flattens after six threads. At large10k, 8 and 10 threads are
+equal (and `w=32` or `w=64` do not change that: 0.31-0.34 s). At med2522, 10
+threads is 0.005 s faster per stage solve, within the 20% spread of repeated
+one-thread measurements. Eight is therefore kept: it is at the knee, and it
+leaves two cores for the OS and the load sampler. The remaining Table II
+cells are being re-run at eight threads (`run_table2_blocked.sh` with
+`JULIA_NUM_THREADS=8 RUN_TAG_SUFFIX=_tableII_jt8`).
 
 Not yet run at eight threads: ieee123 (all three horizons), med2522 `T=6`,
 large10k `T=24` and `T=48`. Table II keeps the one-thread blocked times until
