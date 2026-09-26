@@ -433,3 +433,35 @@ large10k `T=48` (iteration 109, 20499.5 s) was the run's time at primal
 (`matched_ipopt_race/NEAR_OPT_SUMMARY.txt` lists 81 / 15343.2 s at `1e-4`).
 The blocked run qualifies at the same iteration 81 at `1e-4`. The paper's
 Table II now reports iteration 81 and says so in the text.
+
+## 8. Blocked solve on eight threads (2026-09-25)
+
+The blocked solve now splits its column blocks across Julia threads
+(`JULIA_NUM_THREADS`; `blocked_solve.jl`). Blocks write disjoint columns and
+only read the factors, and the result is bit-identical to one thread (ieee123
+`T=3`). Three Table II cells were re-run with eight threads, otherwise in Table
+II's configuration (`RUN_TAG_SUFFIX=_tableII_jt8`, logs
+`fullrun_blocked/*_tableII_jt8_*`, which record `julia_threads=8`):
+
+| System | T | iterations | blocked, 1 thread (s) | blocked, 8 threads (s) | saving | ratio to Ipopt |
+|---|---:|---:|---:|---:|---:|---:|
+| med2522 | 24 | 79 | 471.7 | 381.0 | 19% | 9.2x (was 11.5x) |
+| med2522 | 96 | 94 | 2139.9 | 1700.2 | 21% | 7.9x (was 10.0x) |
+| large10k | 6 | 103 | 1782.9 | 1353.0 | 24% | 28.0x (was 36.8x) |
+
+Every pair reaches near-optimality at the same iteration with the same
+objective to all printed digits. Background load stayed below 1.2 other cores
+throughout. Against the pre-blocked Table II times, the two changes together
+take 35-42% off (e.g. large10k `T=6` 2330.7 -> 1353.0 s).
+
+**Why eight.** It was not tuned. The machine has 10 physical cores (20
+logical); eight left two for the OS, the load sampler and other work. On a
+single stage solve at `w=16` it gives 2.3x (med2522) and 2.7x (large10k) over
+one thread, far from linear. The thread count is also capped by the number of
+16-column blocks: 4 at ieee123 (52 columns), 16 at med2522, 64 at large10k. A
+2/4/6/10-thread sweep on the captured stage KKTs is added to
+`run_blocked_solve_benchmark.sh` to settle the choice.
+
+Not yet run at eight threads: ieee123 (all three horizons), med2522 `T=6`,
+large10k `T=24` and `T=48`. Table II keeps the one-thread blocked times until
+those are done, so that all its cells share one setting.

@@ -36,6 +36,13 @@ for SYS in ieee2522C_1ph large10kC_1ph; do
   case $SYS in ieee2522C_1ph) R=9;; large10kC_1ph) R=3;; esac
   for ARM in diag exact; do run_case "$SYS" "$ARM" 8 "$R"; done
 done
+# Thread-count sweep, diagonal Hessian only. The machine (i9-10900X) has 10
+# physical cores; 8 above was a guess, not a tuned value. ieee123 is left out:
+# its 52 columns make only 4 blocks of 16, so more than 4 threads cannot help.
+for SYS in ieee2522C_1ph large10kC_1ph; do
+  case $SYS in ieee2522C_1ph) R=9;; large10kC_1ph) R=3;; esac
+  for TH in 2 4 6 10; do run_case "$SYS" diag "$TH" "$R"; done
+done
 
 MERGED=$OUT/blocked_multirhs_solve.csv
 first=1
