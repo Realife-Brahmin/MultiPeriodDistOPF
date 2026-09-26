@@ -11,6 +11,11 @@
 # FILTERDDP_DIRECT_DIAG_HESSIAN, FILTERDDP_TRIPLET_SECOND_DERIVATIVES,
 # FILTERDDP_CACHE_KKT_PATTERN) apply to both arms; give such runs a distinct
 # RUN_TAG_SUFFIX so their logs do not collide with plain ones.
+#
+# CB (default 1e-3, the matched race) sets REDUCED_CB for FilterDDP. With any
+# other value, e.g. CB=system (the per-system C_B of terminal_soc_penalty.jl),
+# the near-optimality reference is the Ipopt run of run_ipopt_cb_metrics.sh at
+# the same CB, and the caller must give a distinct RUN_TAG_SUFFIX.
 
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
@@ -21,12 +26,15 @@ REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TR
 OUT=ddp/results/kkt_ordering/fullrun_blocked
 SOLDIR=ddp/results/kkt_ordering/captures/solutions
 mkdir -p "$OUT" "$SOLDIR"
-REF=$(grep -oE "CENTRAL_IPOPT .*" "ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log" | \
+CB="${CB:-1e-3}"
+if [ "$CB" = 1e-3 ]; then IPLOG="ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log"
+else IPLOG="ddp/results/ipopt_cb_${CB}/logs/ipopt_cb${CB}_${SYS}_T${T}.log"; fi
+REF=$(grep -oE "CENTRAL_IPOPT .*" "$IPLOG" | \
       grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
-[ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T"; exit 1; }
+[ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T in $IPLOG"; exit 1; }
 case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL=1e-6;; esac
 
-export REDUCED_PROFILE=periodic REDUCED_CB=1e-3 TERMINAL_SOC_SOFT=1
+export REDUCED_PROFILE=periodic REDUCED_CB="$CB" TERMINAL_SOC_SOFT=1
 export FILTERDDP_MAX_ITERATIONS=400
 export FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
 export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
@@ -39,7 +47,7 @@ else unset OMP_NUM_THREADS OPENBLAS_NUM_THREADS; fi
 JL="julia --startup-file=no"
 BLAS_THREADS=$($JL -e 'using LinearAlgebra; print(BLAS.get_num_threads())')
 LOADJL=ddp/examples/power_system/sample_background_load.jl
-SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB1e-3.jls
+SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB${CB}.jls
 
 for r in $(seq 1 "$REP"); do
   for VARIANT in $VARIANTS; do
@@ -54,7 +62,7 @@ for r in $(seq 1 "$REP"); do
       if [ "$VARIANT" = baseline ]; then unset FILTERDDP_BLOCKED_SOLVE
       else export FILTERDDP_BLOCKED_SOLVE="$W"; fi
       echo "$QW"
-      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES blas_threads=$BLAS_THREADS julia_threads=${JULIA_NUM_THREADS:-1} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r cb=$CB blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES blas_threads=$BLAS_THREADS julia_threads=${JULIA_NUM_THREADS:-1} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
       $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
     ) > "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null

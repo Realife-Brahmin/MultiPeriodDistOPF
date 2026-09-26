@@ -44,7 +44,7 @@ mkpath(dirname(ipopt_log))
 
 wall_start = time()
 data = deserialize(datafile)
-haskey(ENV, "REDUCED_CB") && (data[:C_B] = parse(Float64, ENV["REDUCED_CB"]))
+haskey(ENV, "REDUCED_CB") && (data[:C_B] = battery_cb(system, ENV["REDUCED_CB"]))  # a number, or "system"
 
 Nset, Lset, Bset, Dset = data[:Nset], data[:Lset], data[:Bset], data[:Dset]
 Tset = 1:T

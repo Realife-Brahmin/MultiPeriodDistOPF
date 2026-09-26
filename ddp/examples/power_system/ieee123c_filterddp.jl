@@ -349,7 +349,7 @@ data = deserialize(datafile)
 # Opt-in C_B override so the full-space reference can be regenerated at the same
 # battery cost as a reduced-space experiment. Default behaviour is unchanged.
 if haskey(ENV, "REDUCED_CB")
-    data[:C_B] = parse(Float64, ENV["REDUCED_CB"])
+    data[:C_B] = battery_cb(system, ENV["REDUCED_CB"])   # a number, or "system"
     @printf("C_B OVERRIDE: %.6g
 ", data[:C_B])
 end
