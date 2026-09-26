@@ -122,3 +122,35 @@ value and 77 without the term.
 large10k 2.4e-5, med2522 1.9e-3 for a strictly uniform rule, or 1e-3 (`α` =
 5.7) kept as is, which already gives 99% of its no-penalty energy. Keeping
 med2522 at 1e-3 means only large10k has to be re-run.
+
+## Table II re-run at the per-system C_B (2026-09-26)
+
+Adopted by the user: one `C_B` per system from the median rating, alpha = 3
+(`CB_BY_SYSTEM` in `terminal_soc_penalty.jl`, `REDUCED_CB=system`). All nine
+Table II cells re-run with Ipopt (`run_ipopt_cb_metrics.sh` with `CB=system`,
+logs `ipopt_cb_system/logs/`) and FilterDDP in Table II's configuration
+(diagonal Hessian, exact rewrites, factor-backed policy, blocked solve; eight
+Julia threads for med2522/large10k, one for ieee123; logs
+`kkt_ordering/fullrun_blocked/*_cbsys_*`). Every FilterDDP run reaches
+near-optimality; background load below 1.1 other cores throughout.
+
+| System | T | C_B | Ipopt it / s | FilterDDP it / s | ratio | mean power use | energy window | at power limit |
+|---|---:|---|---|---|---:|---:|---:|---:|
+| ieee123 | 6 | 1.0e-3 | 37 / 0.32 | 67 / 20.7 | 64.2x | 20% | 100% | 0% |
+| ieee123 | 24 | 1.0e-3 | 38 / 1.25 | 85 / 32.1 | 25.6x | 34% | 100% | 6% |
+| ieee123 | 96 | 1.0e-3 | 97 / 22.8 | 120 / 95.3 | 4.2x | 34% | 100% | 6% |
+| med2522 | 6 | 1.9e-3 | 44 / 6.9 | 68 / 102.0 | 14.8x | 20% | 100% | 0% |
+| med2522 | 24 | 1.9e-3 | 60 / 41.3 | 77 / 371.4 | 9.0x | 33% | 100% | 4% |
+| med2522 | 96 | 1.9e-3 | 78 / 217.5 | 96 / 1751.2 | 8.1x | 34% | 100% | 4% |
+| large10k | 6 | 2.4e-5 | 53 / 51.7 | 101 / 1222.9 | 23.6x | 21% | 100% | 0% |
+| large10k | 24 | 2.4e-5 | 66 / 275.1 | 98 / 3983.5 | 14.5x | 34% | 100% | 7% |
+| large10k | 48 | 2.4e-5 | 75 / 618.8 | 85 / 6360.8 | 10.3x | 34% | 100% | 6% |
+
+(Battery columns are from the centralized solutions.) ieee123 is the same
+problem as before (`C_B` unchanged) and reproduces its earlier Ipopt objective
+exactly. The batteries now behave the same way on all three feeders. At
+large10k Ipopt needs more iterations than at the old `C_B` (53/66/75 against
+51/55/66) and FilterDDP about the same (101/98/85 against 103/96/81), so the
+large10k ratios improve (23.6/14.5/10.3x against 28.0/15.7/11.0x at the old
+`C_B` with the same solver settings). The paper's Table II, settings table
+and text now use these numbers.
