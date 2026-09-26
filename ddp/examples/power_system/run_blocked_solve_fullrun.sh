@@ -54,7 +54,7 @@ for r in $(seq 1 "$REP"); do
       if [ "$VARIANT" = baseline ]; then unset FILTERDDP_BLOCKED_SOLVE
       else export FILTERDDP_BLOCKED_SOLVE="$W"; fi
       echo "$QW"
-      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES blas_threads=$BLAS_THREADS near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES blas_threads=$BLAS_THREADS julia_threads=${JULIA_NUM_THREADS:-1} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
       $JL --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
     ) > "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null

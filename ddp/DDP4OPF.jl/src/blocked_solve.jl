@@ -50,27 +50,48 @@ function _blocked_upper!(Bt::Matrix{Float64}, U::SparseMatrixCSC{Float64, Int64}
     return Bt
 end
 
+function _solve_column_block!(R, work, cols, L, U, p, q, Rs)
+    n = size(R, 1)
+    Bb = length(cols) == size(work, 1) ? work : Matrix{Float64}(undef, length(cols), n)
+    @inbounds for i in 1:n
+        pi_ = p[i]; s = Rs[pi_]
+        for (r, c) in enumerate(cols)
+            Bb[r, i] = s * R[pi_, c]
+        end
+    end
+    _blocked_lower!(Bb, L)
+    _blocked_upper!(Bb, U)
+    @inbounds for i in 1:n
+        qi = q[i]
+        for (r, c) in enumerate(cols)
+            R[qi, c] = Bb[r, i]
+        end
+    end
+    return R
+end
+
 # Overwrites R with K \ R. Safe in place: each block of columns is fully read
-# into the work block before any of those columns is written back.
+# into its work block before any of those columns is written back. With more
+# than one Julia thread (JULIA_NUM_THREADS), the column blocks are split across
+# threads: blocks touch disjoint columns of R and only read the factors.
 function _blocked_umfpack_solve!(F, R::AbstractMatrix{Float64}, w::Int)
     L = F.L; U = F.U; p = F.p; q = F.q; Rs = F.Rs
     n, m = size(R)
-    work = Matrix{Float64}(undef, min(w, m), n)
-    for c0 in 1:w:m
-        cols = c0:min(c0 + w - 1, m)
-        Bb = length(cols) == size(work, 1) ? work : Matrix{Float64}(undef, length(cols), n)
-        @inbounds for i in 1:n
-            pi_ = p[i]; s = Rs[pi_]
-            for (r, c) in enumerate(cols)
-                Bb[r, i] = s * R[pi_, c]
-            end
+    starts = collect(1:w:m)
+    nt = min(Threads.nthreads(), length(starts))
+    if nt <= 1
+        work = Matrix{Float64}(undef, min(w, m), n)
+        for c0 in starts
+            _solve_column_block!(R, work, c0:min(c0 + w - 1, m), L, U, p, q, Rs)
         end
-        _blocked_lower!(Bb, L)
-        _blocked_upper!(Bb, U)
-        @inbounds for i in 1:n
-            qi = q[i]
-            for (r, c) in enumerate(cols)
-                R[qi, c] = Bb[r, i]
+    else
+        # One buffer per task. Reusing the name `work` from the branch above
+        # made it a single captured variable shared by every thread (garbage
+        # results, ~1e130); `local` and a distinct name keep it per task.
+        Threads.@threads for k in 1:nt
+            local thread_work = Matrix{Float64}(undef, min(w, m), n)
+            for c0 in starts[k:nt:end]
+                _solve_column_block!(R, thread_work, c0:min(c0 + w - 1, m), L, U, p, q, Rs)
             end
         end
     end
