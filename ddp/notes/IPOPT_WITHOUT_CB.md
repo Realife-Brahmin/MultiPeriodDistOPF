@@ -68,3 +68,57 @@ re-run (identical iterations and objective); their first logs are in
 Not yet done: FilterDDP without `C_B`. There, the diagonal `2 C_B S^2 dt`
 contribution to the stage Hessian (see CLAUDE.md, reduced-space section) is
 exactly what vanishes, so its behaviour may differ more than Ipopt's.
+
+## Sizing C_B (2026-09-26)
+
+**Rule.** Away from its bounds, a battery's power in the Ipopt objective
+(`c_t pbase dt P_Subs + C_B pbase^2 dt P_B^2`) follows
+`P_B(t) = (c_t - λ)/(2 C_B)` kW, with `λ` near the mean price for an
+energy-neutral cycle. Its peak swing is therefore
+`P* = (c_max - c̄)/(2 C_B)`, independent of battery size. Asking
+`P* = α P_rated` gives
+
+    C_B = (c_max - c̄) / (2 α P_rated)
+
+With `c_max - c̄ = 0.06 $/kWh` (the periodic profile at full resolution,
+identical on all three feeders; T=6 sampling gives 0.052, so the rule uses the
+unsampled value and `C_B` does not vary with `T`) and each system's median
+rating:
+
+| System | median P_rated | α at C_B = 1e-3 | C_B for α = 1 | C_B for α = 3 |
+|---|---:|---:|---:|---:|
+| ieee123 | 10.0 kW | 3.0 | 3.0e-3 | 1.0e-3 |
+| med2522 | 5.3 kW | 5.7 | 5.7e-3 | 1.9e-3 |
+| large10k | 416.7 kW | 0.072 | 7.2e-5 | 2.4e-5 |
+
+Ratings vary about ±33% within each system, so one value per system puts every
+battery between roughly 0.7α and 1.5α.
+
+**The ceiling is energy, not power.** All batteries are 4 h (E/P = 4) with a
+30-95% SOC window, i.e. 2.6 h of usable full-power energy, and the price has
+about two cycles a day. Without `C_B`, every feeder moves the same share of
+rated power (34%) and uses 100% of the energy window. So 34% mean power use is
+the most these instances allow; more battery action would need a different
+instance (more energy per kW), not a smaller `C_B`.
+
+**Check on large10k T=24** (`CB=<value> CELLS="large10kC_1ph:24"
+run_ipopt_cb_metrics.sh`, logs in `ipopt_cb_<value>/logs/`):
+
+| C_B | α | iterations | solve s | mean power use | energy window | at power limit | throughput (MWh) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1e-3 | 0.07 | 55 | 255.9 | 4.9% | 30% | 0% | 487 |
+| 7.2e-5 | 1 | 73 | 351.0 | 22.0% | 86% | 0% | 2,205 |
+| 2.4e-5 | 3 | 66 | 283.4 | 33.7% | 100% | 7% | 3,436 |
+| 0 | inf | 77 | 306.2 | 33.8% | 100% | 17% | 3,450 |
+
+`α = 3` moves 99.6% of the no-penalty energy, fills the window, and keeps the
+profile smooth (7% of battery-periods at the power limit against 17% without
+the term), the same behaviour ieee123 shows at its current `α = 3` (99% of the
+energy, 6% at the limit). `α = 1` is not enough: 64% of the energy, 86% of
+the window. Ipopt takes 66 iterations at `α = 3`, between the 55 with the old
+value and 77 without the term.
+
+**Recommendation.** `α = 3`, one `C_B` per system: ieee123 1.0e-3 (unchanged),
+large10k 2.4e-5, med2522 1.9e-3 for a strictly uniform rule, or 1e-3 (`α` =
+5.7) kept as is, which already gives 99% of its no-penalty energy. Keeping
+med2522 at 1e-3 means only large10k has to be re-run.
