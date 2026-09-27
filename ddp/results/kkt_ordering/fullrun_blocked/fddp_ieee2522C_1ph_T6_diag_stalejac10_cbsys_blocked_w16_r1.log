@@ -1,0 +1,85 @@
+QUIET_WAIT waited_s=18 other_cores=0.67 timed_out=0
+PIPELINE_ENV system=ieee2522C_1ph T=6 arm=diag variant=blocked_w16 repeat=1 cb=system blocked_solve=16 direct_diag=1 triplet=1 kkt_pattern_cache=1 factor_backed=1 blas_threads=10 julia_threads=8 near_opt_reference=9534.298086597722 near_opt_primal=1e-5 started=2026-09-27T01:03:40
+C_B OVERRIDE: 0.0019
+ieee2522C_1ph T=6: nx=249, nu=13355, nc=10336, dense nu^2=178356025, reduced=3019
+TERMINAL_SOC soft=1 gamma=3.290000e+04
+build complete: 3.374 s, nc=10336
+constructing dynamic Solver storage...
+optimality_tolerance=1.000e-07 max_iterations=400
+Solver construction complete: 0.386 s
+entering solve! ...
+[31;1m   
+ _____ _ _ _            ____  ____  ____  
+|  ___(_) | |_ ___ _ __|  _ \|  _ \|  _ \ 
+| |_  | | | __/ _ \ '__| | | | | | | |_) |
+|  _| | | | ||  __/ |  | |_| | |_| |  __/ 
+|_|   |_|_|\__\___|_|  |____/|____/|_|                 
+    
+[0mFILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=6 derivative_s=0.466535900 first_order_s=0.094849100 second_order_s=0.185808900 algebra_s=1.651831600 kkt_assembly_s=1.982943400 factor_s=0.399253800 solve_s=0.596094500 update_s=0.571231800 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=5 derivative_s=0.127697900 first_order_s=0.033740700 second_order_s=0.093840800 algebra_s=0.028662900 kkt_assembly_s=0.092288200 factor_s=0.033808000 solve_s=0.025787100 update_s=0.405301100 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=4 derivative_s=0.033280800 first_order_s=0.031414800 second_order_s=0.001737000 algebra_s=0.044542700 kkt_assembly_s=0.034066100 factor_s=0.035755600 solve_s=0.031854700 update_s=0.004650200 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=3 derivative_s=0.025084900 first_order_s=0.023939700 second_order_s=0.000935800 algebra_s=0.011024100 kkt_assembly_s=0.032745600 factor_s=0.089672200 solve_s=0.093476300 update_s=0.004423400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=2 derivative_s=0.021322600 first_order_s=0.020350300 second_order_s=0.000801800 algebra_s=0.011683600 kkt_assembly_s=0.029211900 factor_s=0.042715500 solve_s=0.030124000 update_s=0.004859000 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=0 barrier_iteration=0 stage=1 derivative_s=0.013117600 first_order_s=0.012512500 second_order_s=0.000481100 algebra_s=0.010329100 kkt_assembly_s=0.029900600 factor_s=0.054377700 solve_s=0.029875700 update_s=0.004814600 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_FEASIBILITY iteration=0 barrier_iteration=0 equality_count=62016 equality_rms=9.945813623256e-03 equality_max=1.000000000000e+00 equality_worst_stage=6 equality_worst_index=1 dynamics_count=1245 dynamics_rms=0.000000000000e+00 dynamics_max=0.000000000000e+00 dynamics_worst_stage=0 dynamics_worst_index=0 bound_count=69486 bound_rms=0.000000000000e+00 bound_max=0.000000000000e+00 bound_worst_stage=0 bound_worst_index=0 bound_worst_kind=none
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+     0   3.36000000e+03   1.0000e+00   7.6685e+02   1.0000e+00    0.00      -     0.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=0 barrier_iteration=0 backward_s=16.506031800 forward_s=1.300785000 total_s=17.806816800 outcome=accepted step_size=6.250000000e-02 backtracks=0 mu=1.000000000e+00
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=6 derivative_s=0.011500400 first_order_s=0.010793200 second_order_s=0.000599700 algebra_s=0.085368800 kkt_assembly_s=0.072008800 factor_s=0.034871800 solve_s=0.104812000 update_s=0.021400400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=5 derivative_s=0.013482100 first_order_s=0.011748300 second_order_s=0.001620900 algebra_s=0.008027600 kkt_assembly_s=0.009423800 factor_s=0.033917700 solve_s=0.026966200 update_s=0.006348200 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=4 derivative_s=0.031375400 first_order_s=0.029101600 second_order_s=0.002096400 algebra_s=0.032274000 kkt_assembly_s=0.024029900 factor_s=0.037369500 solve_s=0.068404300 update_s=0.004387400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=3 derivative_s=0.011582700 first_order_s=0.011012300 second_order_s=0.000460100 algebra_s=0.007057700 kkt_assembly_s=0.009216100 factor_s=0.033634800 solve_s=0.092038800 update_s=0.003903400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=2 derivative_s=0.011550100 first_order_s=0.010913600 second_order_s=0.000524700 algebra_s=0.005883200 kkt_assembly_s=0.009473900 factor_s=0.033433600 solve_s=0.032299500 update_s=0.004385000 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=1 barrier_iteration=0 stage=1 derivative_s=0.012311400 first_order_s=0.011715700 second_order_s=0.000484000 algebra_s=0.006669600 kkt_assembly_s=0.010226500 factor_s=0.034537700 solve_s=0.029772200 update_s=0.003846200 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_FEASIBILITY iteration=1 barrier_iteration=0 equality_count=62016 equality_rms=1.973162080417e-02 equality_max=9.375000000000e-01 equality_worst_stage=2 equality_worst_index=1 dynamics_count=1245 dynamics_rms=0.000000000000e+00 dynamics_max=0.000000000000e+00 dynamics_worst_stage=0 dynamics_worst_index=0 bound_count=69486 bound_rms=0.000000000000e+00 bound_max=0.000000000000e+00 bound_worst_stage=0 bound_worst_index=0 bound_worst_kind=none
+     1   4.49647452e+03   9.3750e-01   7.1892e+02   9.9991e-01    0.00      -     6.2500e-02   0
+FILTERDDP_ITER_TIMING iteration=1 barrier_iteration=0 backward_s=1.008439400 forward_s=0.140905200 total_s=1.149344600 outcome=accepted step_size=1.250000000e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=6 derivative_s=0.012710700 first_order_s=0.011313400 second_order_s=0.001292000 algebra_s=0.060117100 kkt_assembly_s=0.026042900 factor_s=0.034415200 solve_s=0.063256900 update_s=0.022921700 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=5 derivative_s=0.012309700 first_order_s=0.011527600 second_order_s=0.000657200 algebra_s=0.008025000 kkt_assembly_s=0.086626400 factor_s=0.035075800 solve_s=0.027519100 update_s=0.007020000 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=4 derivative_s=0.032329800 first_order_s=0.030329400 second_order_s=0.001854200 algebra_s=0.011298300 kkt_assembly_s=0.013241200 factor_s=0.034138000 solve_s=0.032994900 update_s=0.004218800 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=3 derivative_s=0.011761800 first_order_s=0.011193300 second_order_s=0.000449400 algebra_s=0.012057000 kkt_assembly_s=0.020310500 factor_s=0.035893700 solve_s=0.032526500 update_s=0.004672700 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=2 derivative_s=0.027384000 first_order_s=0.026501600 second_order_s=0.000726900 algebra_s=0.007766900 kkt_assembly_s=0.009326700 factor_s=0.040734200 solve_s=0.035740000 update_s=0.005732400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=2 barrier_iteration=0 stage=1 derivative_s=0.030530000 first_order_s=0.029455300 second_order_s=0.000880500 algebra_s=0.011329100 kkt_assembly_s=0.025662100 factor_s=0.041960200 solve_s=0.031376900 update_s=0.005359500 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_FEASIBILITY iteration=2 barrier_iteration=0 equality_count=62016 equality_rms=1.060129189760e-01 equality_max=1.688473518347e+00 equality_worst_stage=4 equality_worst_index=7568 dynamics_count=1245 dynamics_rms=0.000000000000e+00 dynamics_max=0.000000000000e+00 dynamics_worst_stage=0 dynamics_worst_index=0 bound_count=69486 bound_rms=0.000000000000e+00 bound_max=0.000000000000e+00 bound_worst_stage=0 bound_worst_index=0 bound_worst_kind=none
+     2   6.58343511e+03   1.6885e+00   6.2905e+02   9.9899e-01    0.00      -     1.2500e-01   0
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=0 backward_s=0.954085800 forward_s=0.193481200 total_s=1.147567000 outcome=accepted step_size=1.250000000e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=6 derivative_s=0.014376100 first_order_s=0.012482000 second_order_s=0.001718900 algebra_s=0.057786300 kkt_assembly_s=0.024260600 factor_s=0.038807200 solve_s=0.027746300 update_s=0.028264400 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=5 derivative_s=0.011900500 first_order_s=0.011155400 second_order_s=0.000635500 algebra_s=0.013867900 kkt_assembly_s=0.023068100 factor_s=0.036498800 solve_s=0.063127000 update_s=0.004198100 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=4 derivative_s=0.018993800 first_order_s=0.018210100 second_order_s=0.000665900 algebra_s=0.008773700 kkt_assembly_s=0.012511600 factor_s=0.112035700 solve_s=0.024214600 update_s=0.004522800 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=3 derivative_s=0.013561200 first_order_s=0.012844800 second_order_s=0.000605500 algebra_s=0.012843200 kkt_assembly_s=0.022788300 factor_s=0.034440900 solve_s=0.039257200 update_s=0.005858300 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=2 derivative_s=0.017650000 first_order_s=0.016560900 second_order_s=0.000963300 algebra_s=0.008242900 kkt_assembly_s=0.016149400 factor_s=0.035355300 solve_s=0.026541300 update_s=0.007617100 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=3 barrier_iteration=0 stage=1 derivative_s=0.033551300 first_order_s=0.031360100 second_order_s=0.002022400 algebra_s=0.018766300 kkt_assembly_s=0.013688100 factor_s=0.035177900 solve_s=0.033941200 update_s=0.005606200 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_FEASIBILITY iteration=3 barrier_iteration=0 equality_count=62016 equality_rms=2.036541185027e-01 equality_max=3.253928436089e+00 equality_worst_stage=4 equality_worst_index=7568 dynamics_count=1245 dynamics_rms=0.000000000000e+00 dynamics_max=0.000000000000e+00 dynamics_worst_stage=0 dynamics_worst_index=0 bound_count=69486 bound_rms=0.000000000000e+00 bound_max=0.000000000000e+00 bound_worst_stage=0 bound_worst_index=0 bound_worst_kind=none
+     3   7.87864559e+03   3.2539e+00   4.8807e+02   9.9796e-01    0.00      -     1.2500e-01   0
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=0 backward_s=1.025368500 forward_s=0.171869100 total_s=1.197237600 outcome=accepted step_size=2.500000000e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=6 derivative_s=0.015949200 first_order_s=0.015106900 second_order_s=0.000730900 algebra_s=0.150126600 kkt_assembly_s=0.023100400 factor_s=0.037177100 solve_s=0.028339600 update_s=0.027594600 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=5 derivative_s=0.016949600 first_order_s=0.016240900 second_order_s=0.000597000 algebra_s=0.010863500 kkt_assembly_s=0.023310600 factor_s=0.037778500 solve_s=0.027434500 update_s=0.016013800 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=4 derivative_s=0.014151000 first_order_s=0.013535000 second_order_s=0.000501800 algebra_s=0.007514900 kkt_assembly_s=0.009541400 factor_s=0.034156100 solve_s=0.026845400 update_s=0.004919600 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=3 derivative_s=0.019974500 first_order_s=0.018664700 second_order_s=0.001159900 algebra_s=0.046839200 kkt_assembly_s=0.022124900 factor_s=0.036521600 solve_s=0.027335000 update_s=0.005849200 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=2 derivative_s=0.095533200 first_order_s=0.021223200 second_order_s=0.074120600 algebra_s=0.005118100 kkt_assembly_s=0.009581900 factor_s=0.034424200 solve_s=0.022841200 update_s=0.004228500 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_TIMING iteration=4 barrier_iteration=0 stage=1 derivative_s=0.014863500 first_order_s=0.014190700 second_order_s=0.000555600 algebra_s=0.008834200 kkt_assembly_s=0.012922900 factor_s=0.034108300 solve_s=0.043403400 update_s=0.005298000 K_nnz=96025 rhs_cols=250 Vxx_nnz=62001
+FILTERDDP_FEASIBILITY iteration=4 barrier_iteration=0 equality_count=62016 equality_rms=3.589472001953e-01 equality_max=5.586520490988e+00 equality_worst_stage=4 equality_worst_index=7568 dynamics_count=1245 dynamics_rms=0.000000000000e+00 dynamics_max=0.000000000000e+00 dynamics_worst_stage=0 dynamics_worst_index=0 bound_count=69486 bound_rms=0.000000000000e+00 bound_max=0.000000000000e+00 bound_worst_stage=0 bound_worst_index=0 bound_worst_kind=none
+     4   9.57199801e+03   5.5865e+00   1.6882e+02   9.9240e-01    0.00      -     2.5000e-01   0
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=0 backward_s=0.993388300 forward_s=6.297222000 total_s=7.290610300 outcome=forward_failed step_size=1.110223025e-16 backtracks=51 mu=1.000000000e+00
+     4   9.57199801e+03   5.5865e+00   1.6882e+02   9.9240e-01    0.00      -     1.1102e-16  51
+
+
+EXIT: Failed, line-search unable to find acceptable iterate in forward pass.
+
+solve complete: 31.600 s, iterations=4, status=7
+final residuals: primal=5.586520490988e+00 dual=1.688158883421e+02 complementarity=9.924008021399e-01
+saved_solution=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\ddp\results\network_filterddp\filterddp_solution_ieee2522C_1ph_T6_periodic_CBsystem.jls
+┌ Warning: Line search failed to find a suitable iterate
+└ @ DDP4OPF C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\ddp\DDP4OPF.jl\src\forward_pass.jl:41
+FilterDDP objective=9571.998005439866 max_equality_residual=5.587e+00
+Ipopt objective=9040.012996520505 objective_gap=5.320e+02
+max_abs_diff[P_Subs]=9.672e-01
+max_abs_diff[Q_Subs]=2.755e-01
+max_abs_diff[P]=1.344e+00
+max_abs_diff[Q]=2.826e-01
+max_abs_diff[v]=6.504e-02
+max_abs_diff[ell]=1.230e+01
+max_abs_diff[P_B]=4.345e-03
+max_abs_diff[B]=1.111e-02
+max_abs_diff[q_D]=6.752e-03
+wrote ddp/results/kkt_ordering/fullrun_blocked/trace_ieee2522C_1ph_T6_diag_stalejac10_cbsys_blocked_w16_r1.csv (5 unique iterations)

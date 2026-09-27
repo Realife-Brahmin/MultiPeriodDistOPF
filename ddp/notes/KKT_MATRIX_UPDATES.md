@@ -74,3 +74,40 @@ essential.
   entries and 45% of the factor while moving the directions by only 2%. That
   would make an approximation worth a full run, but it cannot be assumed on
   other feeders.
+
+## 3. Can the KKT refresh be pinpointed? (stale Jacobian)
+
+**Motivation.** The evolution study showed which parts of the matrix move. The
+linear constraint rows never change, so they never need refreshing. Only the
+barrier diagonal and the SOCP rows of the Jacobian move. The barrier diagonal
+moves by orders of magnitude and must be refreshed. So the pinpointed
+question is whether the SOCP Jacobian rows can be refreshed less often.
+
+**Mechanism.** `FILTERDDP_STALE_JACOBIAN_PERIOD = p` (`backward_pass.jl`)
+builds the KKT matrix from each stage's Jacobian of the last iteration that
+was a multiple of `p`. Everything else stays current: Hessian, barrier terms,
+gradient `cu'φ`, residuals. The result is an inexact-Newton step.
+
+**Runs.** Table II configuration, per-system `C_B`, `run_stale_jacobian.sh`,
+logs `fullrun_blocked/*_stalejac<p>_cbsys_*`. `p = 1` is the Table II run.
+
+| system T=6 | p = 1 (Table II) | p = 2 | p = 5 | p = 10 |
+|---|---|---|---|---|
+| ieee123 | 67 it / 20.7 s | 83 it / 23.1 s | 97 it / 23.3 s | 113 it / 24.5 s |
+| med2522 | 68 it / 102.0 s | 66 it / 101.6 s | **fails** at iteration 4 (line search) | **fails** at iteration 4 |
+
+**Answer.**
+- **Short lags are tolerated.** A Jacobian one iteration old costs nothing on
+  med2522 and 24% more iterations on ieee123.
+- **Longer lags hurt.** On ieee123 they cost 45-69% more iterations. On
+  med2522 they fail at once: in the first iterations the iterates move far
+  and the stale linearization steers the step out of the filter's
+  acceptance.
+- **Nothing is gained either way.** The barrier diagonal changes every
+  iteration, so the matrix must be refactored every iteration regardless, and
+  the Jacobian evaluation that a stale Jacobian saves is a small share of a
+  backward pass. So there is no time saving to trade the extra iterations
+  against: every stale run above is slower than the fresh one or equal to it.
+- **Refresh can be pinpointed to the SOCP rows plus the diagonal**, which is
+  what DDP4OPF already does in effect: the kkt-pattern cache re-uses the
+  structure and rewrites only the values. Skipping even that is not worth it.
