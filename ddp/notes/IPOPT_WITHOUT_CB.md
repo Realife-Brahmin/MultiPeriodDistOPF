@@ -191,3 +191,28 @@ curvature on the battery powers is the barrier term plus the value-function
 term, so the stage KKT is close to singular in those directions; `C_B` supplies
 a well-conditioned diagonal. The per-system `C_B` keeps that benefit while
 letting the batteries use their full energy window.
+
+## The failure belongs to the diagonal Hessian (2026-09-26)
+
+Question (user): are diagonalization and `C_B` correlated? large10k `T=6`
+re-run with the EXACT stage Hessian, otherwise in Table II's configuration
+(`fullrun_blocked/*_T6_exact_tableII_jt8_*`):
+
+| large10k T=6 | Hessian | C_B | iterations to near-opt. | time (s) | s/iteration | KKT regularization |
+|---|---|---|---:|---:|---:|---:|
+| Table II | diagonal | 2.4e-5 | 101 | 1222.9 | 12.1 | never |
+| control | exact | 2.4e-5 | 97 | 5633.1 | 58.1 | never |
+| no C_B | diagonal | 0 | fails at 2 (line search) | -- | -- | -- |
+| no C_B | exact | 0 | 108 | 7690.2 | 71.2 | never |
+
+With the exact Hessian `C_B = 0` converges without any regularization, so the
+`C_B = 0` failure is a property of the diagonal approximation. The diagonal
+approximation keeps only `dt^2 diag(V_xx)` of the value-function curvature on
+the battery powers. With `C_B > 0` the constant `2 C_B S^2 dt` on those
+diagonals keeps the stage well conditioned; with `C_B = 0` the dropped
+off-diagonal `V_xx` coupling is what held it together. So diagonalizing is
+safe only while `C_B` (or the barrier) dominates the battery-power block --
+the diagonal-dominance measurement (`run_hessian_dominance.sh`, built but not
+yet run, user's decision 2026-09-26) would quantify that. As before, the exact
+Hessian needs fewer iterations (97 vs 101) but costs about 4.8x more per
+iteration here.
