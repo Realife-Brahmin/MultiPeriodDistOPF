@@ -83,6 +83,23 @@ end
 
 _kkt_pattern_cache_enabled() = get(ENV, "FILTERDDP_CACHE_KKT_PATTERN", "0") != "0"
 
+# Diagnostic (agenda of 2026-10-02: "can the KKT refresh be pinpointed?").
+# With FILTERDDP_STALE_JACOBIAN_PERIOD = p > 1, the KKT matrix uses each
+# stage's constraint Jacobian from the last iteration that was a multiple of p;
+# the Hessian, barrier terms, gradient (cu' * phi) and residuals stay current,
+# so only the matrix is approximate (an inexact Newton step). Every linear
+# constraint row is constant anyway, so this makes exactly the SOCP rows stale.
+# Off (p <= 1) by default: the Jacobian is used as is.
+const _STALE_CU = Dict{Int, Any}()
+function _stale_jacobian(t::Int, k::Int, cu)
+    p = parse(Int, get(ENV, "FILTERDDP_STALE_JACOBIAN_PERIOD", "0"))
+    p <= 1 && return cu
+    if k == 0 || k % p == 0 || !haskey(_STALE_CU, t)
+        _STALE_CU[t] = copy(cu)
+    end
+    return _STALE_CU[t]
+end
+
 function _same_sparse_pattern(A, colptr, rowval)
     return A.colptr == colptr && A.rowval == rowval
 end
@@ -402,7 +419,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                 kkt_start_ns = time_ns()
                 Ĥ = sparse(Symmetric(Ĥ))
-                cu_sparse = sparse(cu)
+                cu_sparse = _stale_jacobian(t, data.k, sparse(cu))
                 K = _kkt_pattern_cache_enabled() ?
                     _cached_kkt!((objectid(solver), t), Ĥ, cu_sparse, nu, nc) :
                     [Ĥ sparse(cu_sparse'); cu_sparse spzeros(T, nc, nc)]
