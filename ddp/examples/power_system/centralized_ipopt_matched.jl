@@ -57,6 +57,15 @@ set_optimizer_attribute(model, "print_level", 5)
 set_optimizer_attribute(model, "max_iter", 5000)
 set_optimizer_attribute(model, "print_timing_statistics", "yes")
 set_optimizer_attribute(model, "output_file", ipopt_log)
+# Extra Ipopt options, e.g. the linear solver:
+#   IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+# Values that parse as integers or floats are passed as numbers.
+for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty=false)
+    k, v = strip.(split(kv, '='; limit=2))
+    val = something(tryparse(Int, v), tryparse(Float64, v), String(v))
+    set_optimizer_attribute(model, String(k), val)
+    println("IPOPT_OPTION ", k, "=", val)
+end
 
 @variable(model, P_Subs[Tset] >= 0)
 @variable(model, Q_Subs[Tset])
