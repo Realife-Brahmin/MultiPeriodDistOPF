@@ -23,6 +23,10 @@ establishes something a future session, on any machine, would need.
   mostly idle (5% power use, 30% of the energy window); with these values every
   system uses 100% of its energy window. Derivation and checks:
   `ddp/notes/IPOPT_WITHOUT_CB.md`. `C_B` never varies with `T`.
+  **The diagonal Hessian relies on `C_B > 0`**: at `C_B = 0` diagonal-Hessian
+  FilterDDP fails large10k T=6 (line search, iteration 2) and med2522 T=96,
+  while the exact Hessian converges (large10k T=6, 108 iterations, no
+  regularization). Never pair `FILTERDDP_DIAG_HESSIAN=1` with `C_B = 0`.
 - **Solver timing comparisons only on a provably identical problem**: same
   exported instance, `C_B`, `gamma` and profile, with objective agreement checked
   before any timing is quoted. The paper's older centralized Ipopt sweep
