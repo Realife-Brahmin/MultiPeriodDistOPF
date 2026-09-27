@@ -154,3 +154,39 @@ large10k Ipopt needs more iterations than at the old `C_B` (53/66/75 against
 large10k ratios improve (23.6/14.5/10.3x against 28.0/15.7/11.0x at the old
 `C_B` with the same solver settings). The paper's Table II, settings table
 and text now use these numbers.
+
+## FilterDDP without C_B (2026-09-26)
+
+FilterDDP with `C_B = 0` on all nine Table II cells, in Table II's
+configuration, stopped against the `C_B = 0` Ipopt runs above (`CB=0` in
+`run_blocked_solve_fullrun.sh`, logs `fullrun_blocked/*_cb0_*`). Background
+load below 1.5 other cores. Seconds (iterations); "reg" counts iterations where
+FilterDDP's KKT regularization had to fire (it never fires at the per-system
+`C_B`).
+
+| System | T | Ipopt, C_B = 0 | FilterDDP, per-system C_B | FilterDDP, C_B = 0 | ratio, C_B = 0 | reg |
+|---|---:|---|---|---|---:|---:|
+| ieee123 | 6 | 0.34 (38) | 20.7 (67) | 21.6 (70) | 64.0x | 0 |
+| ieee123 | 24 | 1.50 (42) | 32.1 (85) | 33.4 (88) | 22.2x | 0 |
+| ieee123 | 96 | 19.5 (77) | 95.3 (120) | 139.0 (132) | 7.1x | 34 |
+| med2522 | 6 | 7.9 (47) | 102.0 (68) | 117.1 (78) | 14.9x | 0 |
+| med2522 | 24 | 44.1 (64) | 371.4 (77) | 397.3 (83) | 9.0x | 0 |
+| med2522 | 96 | 233.2 (82) | 1751.2 (96) | **fails** at 93: primal 1.2e-4 > 1e-5, objective within 0.03% | -- | 4 |
+| large10k | 6 | 76.7 (79) | 1222.9 (101) | **fails** at 2: line search | -- | 0 |
+| large10k | 24 | 306.2 (77) | 3983.5 (98) | 4511.1 (107) | 14.7x | 5 |
+| large10k | 48 | 687.3 (87) | 6360.8 (85) | 7197.5 (95) | 10.5x | 4 |
+
+The large10k `T=6` failure was re-run with every speedup off (no blocked
+solve, no factor-backed policy, one Julia thread; `*_plain_cb0_*`) and fails
+identically at iteration 2, so it belongs to the formulation, not the
+implementation.
+
+**Reading.** The penalty matters more to FilterDDP than to Ipopt. Without it
+Ipopt solves all nine cells, 2-59% slower. FilterDDP fails two of nine:
+large10k `T=6` at once, and med2522 `T=96` stalling just short of the primal
+threshold. Where it succeeds it is 4-46% slower, with 3-12 more iterations,
+and its KKT regularization fires on five cells. With `C_B = 0` the only
+curvature on the battery powers is the barrier term plus the value-function
+term, so the stage KKT is close to singular in those directions; `C_B` supplies
+a well-conditioned diagonal. The per-system `C_B` keeps that benefit while
+letting the batteries use their full energy window.
