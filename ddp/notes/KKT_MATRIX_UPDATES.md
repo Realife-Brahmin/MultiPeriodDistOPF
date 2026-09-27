@@ -174,3 +174,36 @@ feedback-gain columns, which carry most of the change above, still move.)
   costs one block solve and one multiplication by K. The 6-70 steps would
   have to be paid back by solving the areas in parallel, and at large10k a
   single solve is already the dominant cost.
+
+## 1. MA57 / MA97 in centralized Ipopt
+
+**Setup.** On the FilterDDP side this was settled earlier: on the stage KKT,
+MA57 and MA97 lose to UMFPACK's blocked solve (`KKT_ORDERING_AND_MA57.md`,
+Sections 9-10). Here the same locally built HSL libraries are loaded into
+centralized Ipopt through `hsllib` (`run_ipopt_hsl.sh`,
+`IPOPT_EXTRA_OPTIONS` in `centralized_ipopt_matched.jl`). The runs cover the
+nine Table II instances at the per-system `C_B`, with
+`linear_system_scaling = none` for every solver (MC19 is not in the licensed
+packages) and default BLAS threads, as in Table II. Logs are in
+`ddp/results/ipopt_hsl/logs/`.
+
+| system | T | MUMPS (s) | MA57 (s) | MA97, 1 thread (s) |
+|---|---:|---:|---:|---:|
+| ieee123 | 6 / 24 / 96 | 0.39 / 1.47 / 23.2 | 0.19 / 0.74 / 3.91 | 0.25 / 0.86 / 4.49 |
+| med2522 | 6 / 24 / 96 | 7.2 / 41.1 / 220.0 | 4.45 / 24.4 / 127.3 | 4.69 / 25.7 / 140.6 |
+| large10k | 6 / 24 / 48 | 51.2 / 283.0 / 623.7 | 27.6 / 144.7 / 440.7 | 28.5 / 132.4 / 272.0 |
+
+**Findings.**
+- **Same solutions.** Objectives agree to about `1e-15`, with the same
+  iteration counts except ieee123 `T=96` (44 iterations with HSL, 97 with
+  MUMPS).
+- **HSL is faster.** MA57 is 1.4-5.8x faster than MUMPS, and MA97 on one
+  thread is fastest at large10k `T=24` and `T=48`.
+- **MA97 on 8 OpenMP threads was slower here.** It competed with OpenBLAS's
+  own threads. A re-run with BLAS pinned to one thread
+  (`BLAS1=1 run_ipopt_hsl.sh`, logs tagged `_blas1`) is in progress.
+
+**Paper (user's decision, 2026-09-27).** Separate tables: Table II keeps
+Ipopt with MUMPS, and a new table compares the same FilterDDP runs with Ipopt
+using MA57. There FilterDDP is 14-110x slower (ieee123 110 / 43 / 24x,
+med2522 23 / 15 / 14x, large10k 44 / 28 / 14x), against 4-64x with MUMPS.
