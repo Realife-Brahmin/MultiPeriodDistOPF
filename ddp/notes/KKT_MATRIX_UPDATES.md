@@ -111,3 +111,66 @@ logs `fullrun_blocked/*_stalejac<p>_cbsys_*`. `p = 1` is the Table II run.
 - **Refresh can be pinpointed to the SOCP rows plus the diagonal**, which is
   what DDP4OPF already does in effect: the kkt-pattern cache re-uses the
   structure and rewrites only the values. Skipping even that is not worth it.
+
+## 2b. Can the Jacobian be block-diagonal?
+
+**Why not "diagonal" like the Hessian.** The Jacobian is rectangular: rows are
+constraints, columns are variables. Every constraint (a power balance, a
+voltage drop) necessarily involves several variables, so there is no "own"
+entry per row to keep.
+
+There is also a more basic difference:
+- **Approximating the Hessian** changes only the step's curvature. The
+  constraints stay exactly linearized, so every step still heads for
+  feasibility.
+- **Approximating the Jacobian** changes the linearized constraints
+  themselves, so feasibility progress is no longer guaranteed.
+
+The meaningful analogue is block-diagonal. Two readings are possible:
+- **By area**, tested here.
+- **By quantity**, as in fast-decoupled load flow: active vs reactive. Not
+  tested yet; to confirm with R. Gupta which he meant.
+
+**Test.** `kkt_block_jacobian.jl` and `run_kkt_block_jacobian.sh`, on the
+stage-1 captures at iteration 40 and near-optimality.
+- **Areas.** The radial feeder is cut into k subtree areas. Every variable
+  and constraint row is assigned to an area, and only the Jacobian entries
+  linking two areas are dropped. These sit at the cut lines: the parent bus's
+  balance-row entry for the outgoing flow, and the cut line's voltage-drop and
+  SOCP entries for the upstream voltage.
+- **Effect.** With the diagonal Hessian the KKT matrix then separates into k
+  independent blocks.
+- **Measured.** How far the Newton step moves, and whether block-Jacobi
+  iterative refinement (`x += M \ (b - K x)`) recovers the exact step, i.e.
+  whether the blocks at least work as a preconditioner.
+- **large10k areas.** The greedy cut groups nothing at the root, so at
+  large10k it only produces a real split at its natural ~100 areas
+  (`k = 128` gives 103). Smaller k leave one area, and those rows are empty.
+
+Change in the control directions / refinement steps to a `1e-10` residual:
+
+| system | areas | entries dropped | iteration 40 | near-optimality |
+|---|---:|---:|---|---|
+| ieee123 | 2 | 8 (0.15%) | 44% / 6 steps | 69% / exact already |
+| ieee123 | 29 | 224 (4.3%) | 61% / 56 steps | 95% / exact already |
+| med2522 | 2 | 8 (0.008%) | 81% / 27 steps | 80% / 1 step |
+| med2522 | 7 | 48 | 95% / 70 steps | 97% / **diverges** |
+| med2522 | 14-58 | 104-456 | **diverges** | **diverges** |
+| large10k | 103 (natural areas) | 816 (0.2%) | 90% / **diverges** | 64% / 49 steps |
+
+("exact already" means the first block solve already met the residual
+tolerance: the dropped entries hardly affected the feedforward column. The
+feedback-gain columns, which carry most of the change above, still move.)
+
+**Answer: no.**
+- **As a replacement.** Dropping as few as 8 of 96,025 entries on med2522
+  changes the feedback gains by 80%. Those gains are what FilterDDP
+  propagates backward, so the boundary couplings carry the whole
+  intertemporal and spatial sensitivity. The feedforward direction alone is
+  more robust (0.3-44%).
+- **As a preconditioner.** Block-Jacobi recovers the exact step only with few
+  areas, and it diverges for 8 or more areas on med2522 and for large10k's
+  103 natural areas mid-solve. Even where it converges, each refinement step
+  costs one block solve and one multiplication by K. The 6-70 steps would
+  have to be paid back by solving the areas in parallel, and at large10k a
+  single solve is already the dominant cost.
