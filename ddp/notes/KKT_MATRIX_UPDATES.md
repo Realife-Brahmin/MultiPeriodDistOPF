@@ -199,9 +199,17 @@ packages) and default BLAS threads, as in Table II. Logs are in
   MUMPS).
 - **HSL is faster.** MA57 is 1.4-5.8x faster than MUMPS, and MA97 on one
   thread is fastest at large10k `T=24` and `T=48`.
-- **MA97 on 8 OpenMP threads was slower here.** It competed with OpenBLAS's
-  own threads. A re-run with BLAS pinned to one thread
-  (`BLAS1=1 run_ipopt_hsl.sh`, logs tagged `_blas1`) is in progress.
+- **MA97 on 8 OpenMP threads is slower: 1.5-3.3x slower than on one thread.**
+  It is *not* a clash with OpenBLAS's threads, as first suspected. A full
+  re-run with OpenBLAS pinned to one thread (`BLAS1=1 run_ipopt_hsl.sh`, logs
+  tagged `_blas1`) reproduces every time within about 10% at small sizes and
+  2% at large10k, including the slow 8-thread MA97 (large10k `T=48`: 899.8 s
+  pinned, 882.9 s unpinned).
+  - The likely cause is that the fronts are tiny (at most about 40 rows), so
+    OpenMP task overhead and synchronization outweigh the work.
+  - This matches the stage-KKT benchmark only partly: there, 8 threads did
+    speed up MA97's many-right-hand-side solve (9.7 -> 5.9 s). Ipopt
+    factorizes every iteration and solves one right-hand side.
 
 **Paper (user's decision, 2026-09-27).** Separate tables: Table II keeps
 Ipopt with MUMPS, and a new table compares the same FilterDDP runs with Ipopt
