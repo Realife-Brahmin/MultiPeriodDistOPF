@@ -182,7 +182,8 @@ identically at iteration 2, so it belongs to the formulation, not the
 implementation.
 
 **Reading.** The penalty matters more to FilterDDP than to Ipopt. Without it
-Ipopt solves all nine cells, 2-59% slower. FilterDDP fails two of nine:
+Ipopt solves all nine cells, in 15% less to 48% more time than at the
+per-system `C_B`. FilterDDP fails two of nine:
 large10k `T=6` at once, and med2522 `T=96` stalling just short of the primal
 threshold. Where it succeeds it is 4-46% slower, with 3-12 more iterations,
 and its KKT regularization fires on five cells. With `C_B = 0` the only
