@@ -1,0 +1,16 @@
+system,iter,mu,criterion,tau,dropped,dropped_frac,dropped_H,dropped_J,nnz_K,nnz_LU,factor_s,solve_s,dev_all,dev_primal,dev_feedforward_primal,relres_exact_K
+ieee123C_1ph,40,3.200e-04,none,0,0,0,0,0,5269,10811,0.0022,0.0967,0,0,0,5.469e-17
+ieee123C_1ph,40,3.200e-04,relative,1e-12,18,3.4162e-03,0,18,5251,10779,0.0021,0.0009,4.303e-12,9.959e-07,2.591e-07,3.009e-18
+ieee123C_1ph,40,3.200e-04,relative,1e-10,22,4.1754e-03,0,22,5247,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,relative,1e-08,26,4.9345e-03,0,26,5243,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,relative,1e-06,100,1.8979e-02,0,100,5169,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,relative,1e-04,410,7.7814e-02,0,410,4859,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,relative,1e-03,956,1.8144e-01,0,956,4313,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,relative,1e-02,2064,3.9173e-01,0,2064,3205,singular,NaN,NaN,NaN,NaN,NaN,NaN
+ieee123C_1ph,40,3.200e-04,absolute,1e-12,18,3.4162e-03,0,18,5251,10779,0.0021,0.0011,4.303e-12,9.959e-07,2.591e-07,3.009e-18
+ieee123C_1ph,40,3.200e-04,absolute,1e-10,18,3.4162e-03,0,18,5251,10779,0.0105,0.0009,4.303e-12,9.959e-07,2.591e-07,3.009e-18
+ieee123C_1ph,40,3.200e-04,absolute,1e-08,20,3.7958e-03,0,20,5249,10778,0.0023,0.0009,4.303e-12,9.959e-07,2.591e-07,3.082e-18
+ieee123C_1ph,40,3.200e-04,absolute,1e-06,92,1.7461e-02,0,92,5177,10608,0.0021,0.0010,1.208e-05,1.318e-01,4.003e-04,3.576e-12
+ieee123C_1ph,40,3.200e-04,absolute,1e-04,228,4.3272e-02,0,228,5041,10389,0.0065,0.0010,1.208e-05,1.318e-01,4.002e-04,1.869e-11
+ieee123C_1ph,40,3.200e-04,absolute,1e-03,470,8.9201e-02,0,470,4799,10184,0.0023,0.0034,1.208e-05,1.318e-01,4.008e-04,9.936e-10
+ieee123C_1ph,40,3.200e-04,absolute,1e-02,1036,1.9662e-01,0,1036,4233,8751,0.0070,0.0024,1.210e-05,1.616e-01,5.019e-03,3.413e-08
