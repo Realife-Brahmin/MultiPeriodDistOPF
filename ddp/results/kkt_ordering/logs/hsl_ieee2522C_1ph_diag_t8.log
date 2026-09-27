@@ -1,0 +1,9 @@
+QUIET_WAIT waited_s=18 other_cores=0.67 timed_out=0
+ieee2522C_1ph diag: n=23691 nnz(K)=96025 rhs=250 repeats=9 OMP=8 OPENBLAS=1 julia_threads=8
+  UMFPACK  blocked w=16               thr 8   ord   0.0110 fact   0.0224 solve1  0.00048 wide   0.0294 f+w   0.0518 | fill  2.24 res 7.6e-16/4.8e-15 
+  MA97     auto, BLAS3 solve          thr 8   ord   0.0079 fact   0.0158 solve1  0.00268 wide   0.3101 f+w   0.3258 | fill  4.65 res 3.6e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     auto, BLAS2 solve          thr 8   ord   0.0073 fact   0.0150 solve1  0.00241 wide   0.3121 f+w   0.3271 | fill  4.65 res 3.1e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     AMD, BLAS3 solve           thr 8   ord   0.0055 fact   0.0146 solve1  0.00264 wide   0.3211 f+w   0.3357 | fill  4.65 res 3.6e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     MD (MA27), BLAS3           thr 8   ord   0.0062 fact   0.0149 solve1  0.00261 wide   0.3090 f+w   0.3239 | fill  4.67 res 3.1e-16/3.9e-15 ordering_used=2 neg=10336 delayed=4311 two_by_two=145 rank=23691 maxfront=21
+  MA97     auto, no scaling           thr 8   ord   0.0073 fact   0.0074 solve1  0.00264 wide   0.2988 f+w   0.3063 | fill  4.82 res 2.9e-16/1.3e-15 ordering_used=1 neg=10336 delayed=5438 two_by_two=58 rank=23691 maxfront=22
+wrote ddp/results/kkt_ordering/hsl/hsl_ieee2522C_1ph_diag_t8.csv (6 rows) finished=2026-09-25T18:52:45.890

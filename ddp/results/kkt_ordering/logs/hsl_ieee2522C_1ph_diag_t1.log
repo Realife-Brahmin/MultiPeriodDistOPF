@@ -1,0 +1,15 @@
+QUIET_WAIT waited_s=18 other_cores=0.75 timed_out=0
+ieee2522C_1ph diag: n=23691 nnz(K)=96025 rhs=250 repeats=9 OMP=1 OPENBLAS=1 julia_threads=1
+  UMFPACK  default (FilterDDP lu)     thr 1   ord   0.0114 fact   0.0231 solve1  0.00047 wide   0.1232 f+w   0.1462 | fill  2.24 res 7.6e-16/5.1e-15 
+  UMFPACK  blocked w=16               thr 1   ord   0.0114 fact   0.0231 solve1  0.00047 wide   0.0617 f+w   0.0848 | fill  2.24 res 7.6e-16/4.8e-15 
+  MA57     auto (ICNTL6=5)            thr 1   ord   0.0035 fact   0.0171 solve1  0.00103 wide   0.3306 f+w   0.3477 | fill  5.93 res 4.7e-16/3.6e-15 ordering_used=2 neg=10336 delayed=5052 two_by_two=760 rank=23691 maxfront=29
+  MA57     AMD MC47 (ICNTL6=2)        thr 1   ord   0.0035 fact   0.0169 solve1  0.00102 wide   0.3440 f+w   0.3609 | fill  5.93 res 4.7e-16/3.6e-15 ordering_used=2 neg=10336 delayed=5052 two_by_two=760 rank=23691 maxfront=29
+  MA57     AMD no-dense (ICNTL6=0)    thr 1   ord   0.0036 fact   0.0180 solve1  0.00106 wide   0.3371 f+w   0.3551 | fill  5.93 res 4.7e-16/3.6e-15 ordering_used=0 neg=10336 delayed=5052 two_by_two=760 rank=23691 maxfront=29
+  MA57     MA27 MD (ICNTL6=3)         thr 1   ord   0.0034 fact   0.0171 solve1  0.00103 wide   0.3055 f+w   0.3226 | fill  5.81 res 3.3e-16/3.5e-15 ordering_used=3 neg=10336 delayed=4827 two_by_two=1076 rank=23691 maxfront=29
+  MA57     Ipopt settings             thr 1   ord   0.0035 fact   0.0050 solve1  0.00093 wide   0.2894 f+w   0.2945 | fill  5.41 res 5.8e-16/1.5e-14 ordering_used=2 neg=10336 delayed=3536 two_by_two=246 rank=23691 maxfront=28
+  MA97     auto, BLAS3 solve          thr 1   ord   0.0076 fact   0.0150 solve1  0.00230 wide   0.3302 f+w   0.3452 | fill  4.65 res 3.6e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     auto, BLAS2 solve          thr 1   ord   0.0076 fact   0.0150 solve1  0.00170 wide   0.3326 f+w   0.3476 | fill  4.65 res 3.1e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     AMD, BLAS3 solve           thr 1   ord   0.0066 fact   0.0153 solve1  0.00226 wide   0.3206 f+w   0.3359 | fill  4.65 res 3.6e-16/3.6e-15 ordering_used=1 neg=10336 delayed=4680 two_by_two=142 rank=23691 maxfront=21
+  MA97     MD (MA27), BLAS3           thr 1   ord   0.0067 fact   0.0149 solve1  0.00216 wide   0.3228 f+w   0.3377 | fill  4.67 res 3.1e-16/3.9e-15 ordering_used=2 neg=10336 delayed=4311 two_by_two=145 rank=23691 maxfront=21
+  MA97     auto, no scaling           thr 1   ord   0.0139 fact   0.0082 solve1  0.00243 wide   0.3298 f+w   0.3379 | fill  4.82 res 2.9e-16/1.3e-15 ordering_used=1 neg=10336 delayed=5438 two_by_two=58 rank=23691 maxfront=22
+wrote ddp/results/kkt_ordering/hsl/hsl_ieee2522C_1ph_diag_t1.csv (12 rows) finished=2026-09-25T18:51:47.906

@@ -1,0 +1,14 @@
+QUIET_WAIT waited_s=18 other_cores=0.51 timed_out=0
+large10kC_1ph diag: n=96968 nnz(K)=393075 rhs_cols=1021 repeats=3 julia_threads=1
+  UMFPACK ldiv! (baseline) solve   2.4810 s  res 3.72e-16
+  factor extraction (L, U, p, q, Rs): 0.0310 s   nnz(L)+nnz(U)=870685
+  blocked          w=    1  solve   3.8663 s  +extract =   3.8973 s  speedup  0.64x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=    4  solve   1.4759 s  +extract =   1.5069 s  speedup  1.65x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=    8  solve   1.2923 s  +extract =   1.3234 s  speedup  1.87x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   16  solve   0.8648 s  +extract =   0.8959 s  speedup  2.77x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   32  solve   0.9846 s  +extract =   1.0156 s  speedup  2.44x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   64  solve   1.0573 s  +extract =   1.0883 s  speedup  2.28x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=  128  solve   1.0520 s  +extract =   1.0830 s  speedup  2.29x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=  256  solve   2.1709 s  +extract =   2.2020 s  speedup  1.13x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w= 1021  solve   3.0907 s  +extract =   3.1217 s  speedup  0.79x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+wrote ddp/results/kkt_ordering/blocked/blocked_large10kC_1ph_diag_t1.csv  finished=2026-09-24T21:36:58.929

@@ -1,0 +1,19 @@
+QUIET_WAIT waited_s=18 other_cores=0.71 timed_out=0
+KKT kkt_ieee2522C_1ph_T3_diag_iter20_stage1.jls  system=ieee2522C_1ph arm=diag  n=23691 (nu=13355 nc=10336)  nnz=96025  nnz(H)=13355  nnz(22)=0  rhs=23691x250  asym=0.00e+00  repeats=9  blas=1 omp=1 openblas=1 julia=1
+  UMFPACK_default              ord   0.0109  fact   0.0233  solve1  0.00049  wide   0.1125  f+w   0.1358 | fill   2.24  res1 7.6e-16  resW 5.1e-15  FilterDDP baseline: lu(K), Julia default control
+  UMFPACK_unsym_colamd         ord   0.0104  fact   0.0229  solve1  0.00047  wide   0.1221  f+w   0.1450 | fill   2.24  res1 7.6e-16  resW 5.1e-15  COLAMD on A'A
+  UMFPACK_sym_amd              ord   0.0085  fact   0.0327  solve1  0.00069  wide   0.1405  f+w   0.1732 | fill   2.89  res1 1.9e-16  resW 2.7e-15  AMD on A+A', diagonal preference
+  UMFPACK_unsym_metis          ord   0.1153  fact   0.0346  solve1  0.00069  wide   0.1663  f+w   0.2009 | fill   2.77  res1 2.3e-15  resW 1.3e-14  METIS on A'A
+  UMFPACK_sym_metis            ord   0.0935  fact   0.0378  solve1  0.00069  wide   0.1703  f+w   0.2081 | fill   3.07  res1 1.9e-15  resW 8.0e-15  METIS on A+A'
+  UMFPACK_cholmod              ord   0.0187  fact   0.0326  solve1  0.00046  wide   0.1242  f+w   0.1568 | fill   2.19  res1 8.9e-16  resW 8.8e-15  SuiteSparse C default: AMD/COLAMD, METIS if fill is high
+  UMFPACK_best                 ord   0.2379  fact   0.0233  solve1  0.00047  wide   0.1047  f+w   0.1280 | fill   2.23  res1 5.9e-16  resW 4.2e-15  tries AMD/COLAMD, METIS, NESDIS; keeps the least fill
+  MUMPS_sym_auto               ord   0.0480  fact   0.2964  solve1  0.03431  wide   1.1147  f+w   1.4111 | fill   5.73  res1 2.1e-16  resW 1.5e-15  MUMPS default ordering choice
+  MUMPS_sym_amd                ord   0.0181  fact   0.3658  solve1  0.03363  wide   1.1271  f+w   1.4929 | fill   6.30  res1 3.7e-16  resW 2.0e-15  AMD
+  MUMPS_sym_amf                ord   0.0466  fact   0.3039  solve1  0.03601  wide   1.1655  f+w   1.4694 | fill   5.73  res1 2.1e-16  resW 1.5e-15  approximate minimum fill
+  MUMPS_sym_qamd               ord   0.0183  fact   0.3431  solve1  0.03323  wide   1.1030  f+w   1.4461 | fill   6.30  res1 3.7e-16  resW 2.0e-15  AMD with quasi-dense row detection
+  MUMPS_sym_pord               ord   0.0782  fact   0.2811  solve1  0.03496  wide   1.1595  f+w   1.4406 | fill   6.99  res1 4.8e-16  resW 2.0e-15  PORD
+  MUMPS_sym_scotch             ord   0.0564  fact   0.3372  solve1  0.03053  wide   1.0341  f+w   1.3713 | fill   8.01  res1 2.2e-16  resW 8.8e-16  SCOTCH nested dissection
+  MUMPS_sym_metis              ord   0.0998  fact   0.3098  solve1  0.03462  wide   1.1020  f+w   1.4118 | fill   7.43  res1 5.3e-16  resW 2.2e-15  METIS nested dissection
+  MUMPS_sym_metis_compressed   ord   0.0992  fact   0.3041  solve1  0.03429  wide   1.1405  f+w   1.4446 | fill   7.43  res1 5.3e-16  resW 2.2e-15  METIS on the 2x2-compressed graph
+  MUMPS_sym_ipopt              ord   0.0472  fact   0.2756  solve1  0.03479  wide   1.1114  f+w   1.3871 | fill   5.64  res1 4.1e-12  resW 3.3e-11  Ipopt's MUMPS options (pivtol 1e-6)
+wrote ddp/results/kkt_ordering/bench/bench_ieee2522C_1ph_diag.csv  (16 rows)  finished=2026-09-24T19:43:41.216

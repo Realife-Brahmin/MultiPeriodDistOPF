@@ -1,0 +1,5 @@
+KKT kkt_ieee2522C_1ph_T3_diag_iter20_stage1.jls  system=ieee2522C_1ph arm=diag  n=23691 (nu=13355 nc=10336)  nnz=96025  nnz(H)=13355  nnz(22)=0  rhs=23691x250  asym=0.00e+00  repeats=9  blas=1 omp=1 openblas=1 julia=1
+  MUMPS_sym_amd_plain          ord   0.0059  fact   0.3161  solve1  0.03528  wide   1.0627  f+w   1.3788 | fill   5.95  res1 3.1e-16  resW 1.5e-15  AMD on the uncompressed graph
+  MUMPS_sym_amf_plain          ord   0.0073  fact   0.3195  solve1  0.03746  wide   1.1037  f+w   1.4232 | fill   6.28  res1 9.5e-16  resW 3.3e-15  AMF on the uncompressed graph
+  MUMPS_sym_metis_plain        ord   0.1222  fact   0.3332  solve1  0.03561  wide   1.1186  f+w   1.4518 | fill   7.09  res1 5.8e-16  resW 1.4e-15  METIS on the uncompressed graph
+wrote ddp/results/kkt_ordering/bench/bench_ieee2522C_1ph_diag_plain.csv  (3 rows)  finished=2026-09-24T20:34:39.947

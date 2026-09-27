@@ -1,0 +1,23 @@
+QUIET_WAIT waited_s=18 other_cores=0.63 timed_out=0
+large10kC_1ph diag: n=96968 nnz(K)=393075 rhs_cols=1021 repeats=3 julia_threads=4
+  UMFPACK ldiv! (baseline) solve   2.0865 s  res 3.72e-16
+  factor extraction (L, U, p, q, Rs): 0.0134 s   nnz(L)+nnz(U)=870685
+  blocked          w=    1  solve   3.8254 s  +extract =   3.8388 s  speedup  0.54x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=    4  solve   1.5243 s  +extract =   1.5376 s  speedup  1.36x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=    8  solve   1.2053 s  +extract =   1.2186 s  speedup  1.71x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   16  solve   0.9057 s  +extract =   0.9191 s  speedup  2.27x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   32  solve   0.9217 s  +extract =   0.9351 s  speedup  2.23x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=   64  solve   0.9859 s  +extract =   0.9993 s  speedup  2.09x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=  128  solve   1.0309 s  +extract =   1.0442 s  speedup  2.00x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w=  256  solve   2.1881 s  +extract =   2.2015 s  speedup  0.95x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked          w= 1021  solve   3.1078 s  +extract =   3.1212 s  speedup  0.67x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=    1  solve   1.6074 s  +extract =   1.6208 s  speedup  1.29x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=    4  solve   0.6989 s  +extract =   0.7123 s  speedup  2.93x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=    8  solve   0.5802 s  +extract =   0.5935 s  speedup  3.52x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=   16  solve   0.4555 s  +extract =   0.4689 s  speedup  4.45x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=   32  solve   0.4794 s  +extract =   0.4927 s  speedup  4.23x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=   64  solve   0.4662 s  +extract =   0.4796 s  speedup  4.35x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=  128  solve   0.5634 s  +extract =   0.5768 s  speedup  3.62x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w=  256  solve   1.0043 s  +extract =   1.0176 s  speedup  2.05x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+  blocked_threaded w= 1021  solve   3.1409 s  +extract =   3.1542 s  speedup  0.66x  res 7.37e-16  max|dX|/max|X| 4.9e-16
+wrote ddp/results/kkt_ordering/blocked/blocked_large10kC_1ph_diag_t4.csv  finished=2026-09-25T19:16:47.092

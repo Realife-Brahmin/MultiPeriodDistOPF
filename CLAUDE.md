@@ -14,6 +14,19 @@ establishes something a future session, on any machine, would need.
   (ieee123 1.75e4, ieee2522 3.29e4, large10k 420). `gamma` is **not** `C_B`.
   Currently wired into the FilterDDP driver and `centralized_ipopt_matched.jl`
   behind `TERMINAL_SOC_SOFT=1`; tADMM and run_bf still need it before their next run.
+- **`C_B` is fixed per system, one number each** (user, 2026-09-26), sized so
+  each battery's price-driven swing is 3x the system's MEDIAN battery rating:
+  `C_B = (c_max - cbar) / (2 * 3 * median P_rated)` = ieee123 1.0e-3, med2522
+  1.9e-3, large10k 2.4e-5. Same single source file as gamma
+  (`CB_BY_SYSTEM`), selected in both FilterDDP and Ipopt by `REDUCED_CB=system`.
+  The earlier uniform `C_B = 1e-3` left large10k's (417 kW median) batteries
+  mostly idle (5% power use, 30% of the energy window); with these values every
+  system uses 100% of its energy window. Derivation and checks:
+  `ddp/notes/IPOPT_WITHOUT_CB.md`. `C_B` never varies with `T`.
+  **The diagonal Hessian relies on `C_B > 0`**: at `C_B = 0` diagonal-Hessian
+  FilterDDP fails large10k T=6 (line search, iteration 2) and med2522 T=96,
+  while the exact Hessian converges (large10k T=6, 108 iterations, no
+  regularization). Never pair `FILTERDDP_DIAG_HESSIAN=1` with `C_B = 0`.
 - **Solver timing comparisons only on a provably identical problem**: same
   exported instance, `C_B`, `gamma` and profile, with objective agreement checked
   before any timing is quoted. The paper's older centralized Ipopt sweep

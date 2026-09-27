@@ -1,0 +1,14 @@
+QUIET_WAIT waited_s=18 other_cores=0.40 timed_out=0
+ieee123C_1ph diag: n=1353 nnz(K)=5269 rhs=52 repeats=21 OMP=1 OPENBLAS=1 julia_threads=1 dual_reg=1.0e-12
+  UMFPACK  default (FilterDDP lu)     thr 1   ord   0.0005 fact   0.0016 solve1  0.00004 wide   0.0011 f+w   0.0027 | fill  2.39 res 6.7e-15/1.1e-14 dev 1.9e-02 
+  MA57     auto (ICNTL6=5)            thr 1   ord   0.0002 fact   0.0008 solve1  0.00008 wide   0.0017 f+w   0.0025 | fill  4.94 res 8.3e-15/1.5e-14 dev 1.9e-02 ordering_used=2 neg=562 delayed=154 two_by_two=44 rank=1353 maxfront=26
+  MA57     AMD MC47 (ICNTL6=2)        thr 1   ord   0.0002 fact   0.0008 solve1  0.00009 wide   0.0017 f+w   0.0025 | fill  4.94 res 8.3e-15/1.5e-14 dev 1.9e-02 ordering_used=2 neg=562 delayed=154 two_by_two=44 rank=1353 maxfront=26
+  MA57     AMD no-dense (ICNTL6=0)    thr 1   ord   0.0002 fact   0.0008 solve1  0.00009 wide   0.0018 f+w   0.0026 | fill  4.94 res 8.3e-15/1.5e-14 dev 1.9e-02 ordering_used=0 neg=562 delayed=154 two_by_two=44 rank=1353 maxfront=26
+  MA57     MA27 MD (ICNTL6=3)         thr 1   ord   0.0002 fact   0.0008 solve1  0.00009 wide   0.0017 f+w   0.0026 | fill  4.89 res 8.0e-15/1.5e-14 dev 1.9e-02 ordering_used=3 neg=562 delayed=129 two_by_two=70 rank=1353 maxfront=27
+  MA57     Ipopt settings             thr 1   ord   0.0002 fact   0.0003 solve1  0.00008 wide   0.0015 f+w   0.0018 | fill  4.50 res 4.7e-16/3.9e-14 dev 1.9e-02 ordering_used=2 neg=562 delayed=75 two_by_two=18 rank=1353 maxfront=25
+  MA97     auto, BLAS3 solve          thr 1   ord   0.0005 fact   0.0009 solve1  0.00015 wide   0.0017 f+w   0.0026 | fill  4.34 res 1.1e-14/1.5e-14 dev 1.9e-02 ordering_used=1 neg=562 delayed=138 two_by_two=13 rank=1353 maxfront=19
+  MA97     auto, BLAS2 solve          thr 1   ord   0.0005 fact   0.0009 solve1  0.00011 wide   0.0016 f+w   0.0025 | fill  4.34 res 1.1e-14/1.5e-14 dev 1.9e-02 ordering_used=1 neg=562 delayed=138 two_by_two=13 rank=1353 maxfront=19
+  MA97     AMD, BLAS3 solve           thr 1   ord   0.0004 fact   0.0009 solve1  0.00016 wide   0.0016 f+w   0.0026 | fill  4.34 res 1.1e-14/1.5e-14 dev 1.9e-02 ordering_used=1 neg=562 delayed=138 two_by_two=13 rank=1353 maxfront=19
+  MA97     MD (MA27), BLAS3           thr 1   ord   0.0004 fact   0.0013 solve1  0.00016 wide   0.0016 f+w   0.0030 | fill  4.48 res 5.2e-15/1.4e-14 dev 1.9e-02 ordering_used=2 neg=562 delayed=114 two_by_two=14 rank=1353 maxfront=18
+  MA97     auto, no scaling           thr 1   ord   0.0005 fact   0.0007 solve1  0.00016 wide   0.0015 f+w   0.0022 | fill  4.83 res 1.4e-16/1.8e-16 dev 1.9e-02 ordering_used=1 neg=562 delayed=268 two_by_two=17 rank=1353 maxfront=22
+wrote ddp/results/kkt_ordering/dual_reg/dualreg_ieee123C_1ph_diag_d1e-12.csv (11 rows) finished=2026-09-25T22:35:47.671

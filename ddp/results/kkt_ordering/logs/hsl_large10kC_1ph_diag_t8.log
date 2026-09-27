@@ -1,0 +1,9 @@
+QUIET_WAIT waited_s=18 other_cores=0.75 timed_out=0
+large10kC_1ph diag: n=96968 nnz(K)=393075 rhs=1021 repeats=3 OMP=8 OPENBLAS=1 julia_threads=8
+  UMFPACK  blocked w=16               thr 8   ord   0.0558 fact   0.1342 solve1  0.00248 wide   0.3175 f+w   0.4517 | fill  2.22 res 4.9e-16/7.4e-16 
+  MA97     auto, BLAS3 solve          thr 8   ord   0.0383 fact   0.0465 solve1  0.02954 wide   5.9207 f+w   5.9672 | fill  4.53 res 1.3e-14/9.9e-15 ordering_used=1 neg=42303 delayed=16564 two_by_two=1422 rank=96968 maxfront=18
+  MA97     auto, BLAS2 solve          thr 8   ord   0.0329 fact   0.0455 solve1  0.01705 wide   6.0112 f+w   6.0567 | fill  4.53 res 1.4e-14/9.9e-15 ordering_used=1 neg=42303 delayed=16564 two_by_two=1422 rank=96968 maxfront=18
+  MA97     AMD, BLAS3 solve           thr 8   ord   0.0284 fact   0.0463 solve1  0.02805 wide   5.9284 f+w   5.9747 | fill  4.53 res 1.3e-14/9.9e-15 ordering_used=1 neg=42303 delayed=16564 two_by_two=1422 rank=96968 maxfront=18
+  MA97     MD (MA27), BLAS3           thr 8   ord   0.0314 fact   0.0459 solve1  0.03201 wide   6.1614 f+w   6.2073 | fill  4.74 res 1.3e-14/9.7e-15 ordering_used=2 neg=42303 delayed=14950 two_by_two=1421 rank=96968 maxfront=20
+  MA97     auto, no scaling           thr 8   ord   0.0334 fact   0.0252 solve1  0.02512 wide   5.4701 f+w   5.4953 | fill  4.59 res 2.1e-14/1.6e-14 ordering_used=1 neg=42303 delayed=17262 two_by_two=867 rank=96968 maxfront=116
+wrote ddp/results/kkt_ordering/hsl/hsl_large10kC_1ph_diag_t8.csv (6 rows) finished=2026-09-25T19:05:25.412
