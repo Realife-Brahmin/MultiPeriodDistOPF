@@ -72,8 +72,9 @@ substation back-feeds:
 - [`root_level/battery_angle_sweep.jl`](envs/multi_poi/root_level/battery_angle_sweep.jl):
   the same sweep with battery dispatch.
 
-MSOPF does not have its own README yet. Until it does, the header comment of
-each driver documents its usage.
+Setup, the driver list and deck notes are in
+[`envs/multi_poi/README.md`](envs/multi_poi/README.md); each driver's header comment
+documents its usage.
 
 ## Repository layout
 
