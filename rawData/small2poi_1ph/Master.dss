@@ -6,12 +6,14 @@ New Circuit.small2poi_1ph Frequency=60
 
 Disable Vsource.source
 
-! Both substations are stiff: each bus voltage phasor (pu, angle) is fixed by construction.
-! A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 and Z0 are both set, to the same
-! 1e-8 ohm stand-in for an ideal source that the other decks use. (Before, no impedance
-! was given, so OpenDSS's default applied: Zs = 0.0168 + j0.0612 ohm.)
-New Vsource.grid1 bus1=1s pu=1.07 angle=0.0 phases=1 basekv=11.547 Frequency=60 R1=0 X1=0.00000001 R0=0 X0=0.00000001
-New Vsource.grid2 bus1=2s pu=1.07 angle=-0.0 phases=1 basekv=11.547 Frequency=60 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+! Both substations are an EMF (pu, angle) behind a realistic source impedance Zs, the same
+! as ieee123_5poi_1ph (both are 20 kV): |Zs| = U^2/S_k with the typical 20 kV S_k = 0.50 GVA
+! (Traupmann & Kienberger 2020, Table 19) and X/R = 25 (IEEE C37.010-2016 Table 24:
+! 15-40), Zs = 0.032 + j0.799 ohm. A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1
+! and Z0 are both set. (Stiff 1e-8 ohm stand-ins until 2026-09-28; before 2026-09-19 no
+! impedance was given and OpenDSS's default applied: Zs = 0.0168 + j0.0612 ohm.)
+New Vsource.grid1 bus1=1s pu=1.07 angle=0.0 phases=1 basekv=11.547 Frequency=60 R1=0.032 X1=0.7994 R0=0.032 X0=0.7994
+New Vsource.grid2 bus1=2s pu=1.07 angle=-0.0 phases=1 basekv=11.547 Frequency=60 R1=0.032 X1=0.7994 R0=0.032 X0=0.7994
 // New Generator.gen2 bus1=2s phases=1 kv=11.547 kW=500 kvar=425 model=4 enabled=false
 // New Generator.gen2 bus1=2s phases=1 kv=12.35529 kW=500 kvar=425 model=4 enabled=false
 New Generator.gen2 bus1=2s phases=1 kv=12.35529 kW=500 model=3 enabled=false

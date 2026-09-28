@@ -276,11 +276,14 @@ battery name, or `:optimize`: P_B free within +-kWrated, and the objective becom
 smallest dispatch, min sum(P_B^2). That is the OPF of interest with `no_backflow = true`,
 which adds P_Subs >= 0 at every source. `V_guard` (per unit) bounds every bus voltage
 from below, which keeps an optimizer off the low-voltage root -- where both substations
-import hugely -- as a spurious way to meet P_Subs >= 0.
+import hugely -- as a spurious way to meet P_Subs >= 0. `V_band = (lo, hi)` (per unit)
+is the operating voltage band, lo <= |V| <= hi, on every bus except the substation buses,
+whose voltage the source sets; its lower edge does V_guard's job too.
 """
 function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false,
                           sense = MIN_SENSE, V_load_start = nothing,
-                          battery = :idle, no_backflow = false, V_guard = nothing)
+                          battery = :idle, no_backflow = false, V_guard = nothing,
+                          V_band = nothing)
     model = new_model(solver)
     buses = net.buses
     names = [s.name for s in net.sources]
@@ -399,6 +402,12 @@ function solve_full_angle(net, delta_deg; solver = :ipopt, ideal_sources = false
 
     no_backflow && @constraint(model, [k in names], P_subs[k] >= 0)
     V_guard === nothing || @constraint(model, [b in buses], e[b]^2 + f[b]^2 >= V_guard^2)
+    if V_band !== nothing
+        lo, hi = V_band
+        banded = [b for b in buses if !haskey(src_at, b)]
+        @constraint(model, [b in banded], e[b]^2 + f[b]^2 >= lo^2)
+        @constraint(model, [b in banded], e[b]^2 + f[b]^2 <= hi^2)
+    end
     if battery === :optimize
         @objective(model, Min, sum((P_B[k]^2 for k in bnames); init = zero(QuadExpr)))
     else
