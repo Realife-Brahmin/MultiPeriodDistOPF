@@ -43,7 +43,11 @@ trace:
 |---|---|---|---|---|
 | ieee123 `T=6` (1 thread) | 67 = 67 | 23.2 s | 19.0 s | -18% |
 | med2522 `T=24` | 77 = 77 | 374.4 s | 284.1 s | -24% |
-| large10k `T=24` | | 3986.1 s | PENDING | |
+| large10k `T=24` | 98 = 98 | 3986.1 s | clean rerun PENDING | |
+
+The first large10k run (r1) followed the identical trace in 3478.5 s, but
+overlapped the test-B runs from 12:48, so its time is not reported; the
+clean repeat is r2.
 
 med2522: derivatives 45.8 -> 9.9 s, forward pass 41.4 -> 11.1 s.
 
