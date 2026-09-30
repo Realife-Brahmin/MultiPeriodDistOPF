@@ -30,6 +30,7 @@ tmp/
 .tools/
 ddp/results/network_filterddp/network_data_*.jls
 ddp/results/network_filterddp/filterddp_solution_*.jls
+ddp/results/sparsity/filterddp_*/*.jls
 # ...except the FilterDDP evaluation's logs, which are its evidence: the status
 # table in ddp/README_FILTERDDP_EXPERIMENT.md links to them.
 !ddp/logs/
@@ -64,3 +65,4 @@ ddp/results/kkt_ordering/captures/
 # Centralized Ipopt with and without the C_B battery term: the logs are the result.
 !ddp/results/ipopt_no_cb/logs/
 !ddp/results/ipopt_cb_*/logs/
+!ddp/results/ipopt_hsl/logs/

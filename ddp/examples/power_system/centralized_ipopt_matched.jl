@@ -57,6 +57,15 @@ set_optimizer_attribute(model, "print_level", 5)
 set_optimizer_attribute(model, "max_iter", 5000)
 set_optimizer_attribute(model, "print_timing_statistics", "yes")
 set_optimizer_attribute(model, "output_file", ipopt_log)
+# Extra Ipopt options, e.g. the linear solver:
+#   IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+# Values that parse as integers or floats are passed as numbers.
+for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty=false)
+    k, v = strip.(split(kv, '='; limit=2))
+    val = something(tryparse(Int, v), tryparse(Float64, v), String(v))
+    set_optimizer_attribute(model, String(k), val)
+    println("IPOPT_OPTION ", k, "=", val)
+end
 
 @variable(model, P_Subs[Tset] >= 0)
 @variable(model, Q_Subs[Tset])
@@ -136,6 +145,9 @@ solve_s = try solve_time(model) catch; NaN end
         system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
         iters, obj, solve_s, build_s, wall_s, num_variables(model),
         replace(string(MOI.get(model, MOI.SolverVersion())), ' ' => '_'))
+# Peak resident memory of the whole process (model build + solve), for the
+# memory-knee comparison between linear solvers.
+@printf("CENTRAL_IPOPT_MEMORY maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)
 
 # How the batteries are used and what each objective term contributes. Printed
 # after the timed solve, so it does not affect any timing.
