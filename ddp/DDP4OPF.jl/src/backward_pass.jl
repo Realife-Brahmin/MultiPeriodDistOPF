@@ -19,6 +19,7 @@ _freeze_period() = parse(Int, get(ENV, "FILTERDDP_FREEZE_KKT", "1"))
 function _frozen_reset!()
     empty!(_FROZEN_KKT); empty!(_FROZEN_AT)
     empty!(_KKT_PATTERN_CACHE)
+    empty!(_LAGGED_CURV)
     _FROZEN_STATS[:factorisations] = 0; _FROZEN_STATS[:reuses] = 0
     return nothing
 end
@@ -98,6 +99,76 @@ function _stale_jacobian(t::Int, k::Int, cu)
         _STALE_CU[t] = copy(cu)
     end
     return _STALE_CU[t]
+end
+
+# ------------------------------------------------ lagged curvature --
+# Parallel-in-time experiment (agenda of 2026-10-07). In the diagonal-Hessian
+# stage KKT the ONLY entries that depend on stage t+1 are the battery-power
+# diagonal curvature diag(fu' * Vxx_{t+1} * fu) (_diagonal_quadratic_form
+# below); every other entry of K_t is a function of the current iterate at
+# stage t. With FILTERDDP_LAGGED_CURVATURE=1 those entries are taken from the
+# previous backward sweep, so every K_t is known before the sweep starts and
+# all T factorizations run in parallel on Julia threads (BLAS pinned to one
+# thread meanwhile). Right-hand sides, gains and the value recursion stay
+# exact; only the matrix is approximate, an inexact Newton step like the
+# diagonal Hessian itself. The first sweep of a solve has nothing to lag and
+# runs sequentially. Requires the direct diagonal path and dynamics with
+# fuu = 0 (checked).
+_lagged_curvature_enabled() = get(ENV, "FILTERDDP_LAGGED_CURVATURE", "0") != "0" &&
+    _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+const _LAGGED_CURV = Dict{Int, Vector{Float64}}()
+
+function _lagged_prefactor(ocp, traj, reg, nx::Int, nu::Int, nc::Int)
+    N = ocp.N
+    all(t -> haskey(_LAGGED_CURV, t), 1:N) || return nothing
+    cl = ocp.control_limits
+    dynamics = ocp.dynamics
+    factors = Vector{Any}(nothing, N)
+    blas_threads = BLAS.get_num_threads()
+    BLAS.set_num_threads(1)
+    try
+        Threads.@threads :dynamic for t in 1:N
+            factors[t] = try
+                x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
+                objective_t = t == N ? ocp.term_objective : stage_obj(ocp, t)
+                constraints = stage_con(ocp, t)
+                luu = _derivative_matrix(objective_t.luu(x, u), nu, nu)
+                cu = _derivative_matrix(constraints.cu(x, u), nc, nu)
+                cuu = _derivative_matrix(constraints.cuu(x, u, ϕ), nu, nu)
+                fuu = _derivative_matrix(dynamics.fuu(x, u, zeros(nx)), nu, nu)
+                nnz(sparse(fuu)) == 0 || error("FILTERDDP_LAGGED_CURVATURE needs fuu = 0")
+                # Same operations, same order, as the stage loop below.
+                ul = u - cl.l
+                uu = cl.u - u
+                inv_ul = inv.(ul) .* cl.maskl
+                inv_uu = inv.(uu) .* cl.masku
+                Σ_L = inv_ul .* zl
+                Σ_U = inv_uu .* zu
+                Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + _LAGGED_CURV[t]) + sparse(fuu)
+                Ĥ = Ĥ + cuu
+                if !iszero(reg)
+                    @inbounds for i in axes(Ĥ, 1)
+                        Ĥ[i, i] += reg
+                    end
+                end
+                Ĥ = sparse(Symmetric(_diagonalise_hessian(Ĥ)))
+                cu_sparse = sparse(cu)
+                _kkt_lu([Ĥ sparse(cu_sparse'); cu_sparse spzeros(eltype(Ĥ), nc, nc)])
+            catch err
+                err
+            end
+        end
+    finally
+        BLAS.set_num_threads(blas_threads)
+    end
+    return factors
+end
+
+function _stage_factor(t::Int, K, iter::Int, lagged)
+    isnothing(lagged) && return _frozen_lu(t, K, iter)
+    F = lagged[t]
+    F isa Exception && throw(F)
+    return F
 end
 
 function _same_sparse_pattern(A, colptr, rowval)
@@ -202,8 +273,19 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.dual_inf = T(0.0)
         data.expected_change_L = T(0.0)
         ϕ_norm = T(0.0)
-        z_norm = T(0.0) 
-        
+        z_norm = T(0.0)
+
+        # FILTERDDP_LAGGED_CURVATURE: factor every stage up front, in parallel.
+        lagged_factors = nothing
+        if _lagged_curvature_enabled()
+            prefactor_start_ns = time_ns()
+            lagged_factors = _lagged_prefactor(ocp, traj, reg, nx, nu, nc)
+            get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1" && @printf(
+                "FILTERDDP_PREFACTOR iteration=%d barrier_iteration=%d lagged=%d wall_s=%.9f threads=%d\n",
+                data.k, data.j, !isnothing(lagged_factors),
+                (time_ns() - prefactor_start_ns) / 1e9, Threads.nthreads())
+        end
+
         for t = ocp.N:-1:1
             timing_diagnostic = get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1"
             memory_diagnostic = get(ENV, "FILTERDDP_MEMORY_DIAGNOSTIC", "0") == "1"
@@ -358,6 +440,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 fu_sparse = sparse(fu)
                 if _diag_hessian_enabled() && _direct_diag_hessian_enabled()
                     curvature_diag = _diagonal_quadratic_form(fu_sparse, V̂xx, nu)
+                    _lagged_curvature_enabled() && (_LAGGED_CURV[t] = curvature_diag)
                     Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + curvature_diag) + sparse(fuu)
                 else
                     Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
@@ -469,7 +552,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     if timing_diagnostic || memory_diagnostic
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
-                        F = _frozen_lu(t, K, data.k)
+                        F = _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
@@ -510,7 +593,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_s = (time_ns() - solve_start_ns) / 1e9
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
-                        F = _frozen_lu(t, K, data.k)
+                        F = _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
