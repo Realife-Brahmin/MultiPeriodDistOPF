@@ -211,7 +211,9 @@ packages) and default BLAS threads, as in Table II. Logs are in
     speed up MA97's many-right-hand-side solve (9.7 -> 5.9 s). Ipopt
     factorizes every iteration and solves one right-hand side.
 
-**Paper (user's decision, 2026-09-27).** Separate tables: Table II keeps
-Ipopt with MUMPS, and a new table compares the same FilterDDP runs with Ipopt
-using MA57. There FilterDDP is 14-110x slower (ieee123 110 / 43 / 24x,
-med2522 23 / 15 / 14x, large10k 44 / 28 / 14x), against 4-64x with MUMPS.
+**Paper (user's decisions, 2026-09-27 and 2026-09-29).** Separate tables:
+Table II keeps Ipopt with MUMPS, and Table III compares the same FilterDDP
+runs with Ipopt using the faster of MA57 and MA97 (one thread) in each row.
+MA97 is used at large10k `T=24` and `T=48`, MA57 everywhere else. There
+FilterDDP is 14-110x slower (ieee123 110 / 43 / 24x, med2522 23 / 15 / 14x,
+large10k 44 / 30 / 23x), against 4-64x with MUMPS.
