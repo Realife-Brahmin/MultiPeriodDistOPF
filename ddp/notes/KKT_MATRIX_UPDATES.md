@@ -217,3 +217,49 @@ runs with Ipopt using the faster of MA57 and MA97 (one thread) in each row.
 MA97 is used at large10k `T=24` and `T=48`, MA57 everywhere else. There
 FilterDDP is 14-110x slower (ieee123 110 / 43 / 24x, med2522 23 / 15 / 14x,
 large10k 44 / 30 / 23x), against 4-64x with MUMPS.
+
+### Longer horizons and threads (2026-09-29/30)
+
+**Longer horizons.** MA57 against MA97 on one thread, per-system `C_B`,
+`run_ipopt_hsl.sh` with `CELLS`/`SOLVERS`. Seconds; the last column is peak
+resident memory (GiB) for MA57 / MA97.
+
+| system | T | MA57 | MA97 | faster | memory |
+|---|---:|---:|---:|---|---|
+| ieee123 | 192 / 288 | 8.0 / 13.2 | 8.6 / 14.2 | MA57, ~7% | 1.0 / 1.0 at T=288 |
+| med2522 | 144 / 192 / 288 | 212.7 / 276.6 / 446.1 | 239.8 / 322.7 / 502.4 | MA57, 11-17% | 3.8-6.9 / 4.1-7.3 |
+| large10k | 96 | 1871 | 926 | MA97 2.0x | 10.6 / 9.6 |
+| large10k | 144 | 5244 | 1739 | MA97 3.0x | 16.9 / 14.3 |
+| large10k | 192 | 6860 | 1433 | MA97 4.8x | 19.3 / 19.4 |
+
+- **Same solutions.** Every pair has identical iteration counts and
+  objectives.
+- **Why MA97 pulls ahead at large10k.** Its lead grows with the horizon
+  (1.1x at T=24, 1.6x at 48, then 2.0 / 3.0 / 4.8x). The factorization is
+  what differs: at T=192 MA57 spends 6367 s factorizing, against 788 s for
+  MA97, while MA97's back-solves are slower (309 vs 196 s).
+- **Probable explanation (not measured).** The fronts are set by the battery
+  count, about 1,020 at large10k and 250 at med2522, and MA97's dense-block
+  factorization pays off only on the wide ones. On the smaller feeders MA57's
+  faster back-solves win at every horizon.
+
+**Threads.** MA97 on 1, 4 and 8 OpenMP threads, with OpenBLAS pinned to one
+thread:
+
+| cell | 1 thread | 4 threads | 8 threads |
+|---|---:|---:|---:|
+| med2522 T=96 | 142.7 | 422.0 | 444.6 |
+| large10k T=24 | 129.0 | 368.9 | 406.0 |
+| large10k T=48 | 272.9 | 798.1 | 899.8 |
+| large10k T=96 | 926.5 | 2829.1 | -- |
+
+Four threads are already about 3x slower, nearly as slow as eight. So the
+cost does not scale with the number of threads: entering MA97's parallel
+code path is what costs.
+- **Likely causes.**
+  - Its task scheduling and synchronization over thousands of tiny tree
+    nodes.
+  - A long, thin elimination tree along the time chain.
+  - Possibly the MinGW OpenMP runtime.
+- **Consequence.** For Ipopt on these instances MA97 should run on one
+  thread. MA57 has no threads of its own.
