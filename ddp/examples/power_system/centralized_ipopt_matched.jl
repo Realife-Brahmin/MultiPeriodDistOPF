@@ -145,6 +145,9 @@ solve_s = try solve_time(model) catch; NaN end
         system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
         iters, obj, solve_s, build_s, wall_s, num_variables(model),
         replace(string(MOI.get(model, MOI.SolverVersion())), ' ' => '_'))
+# Peak resident memory of the whole process (model build + solve), for the
+# memory-knee comparison between linear solvers.
+@printf("CENTRAL_IPOPT_MEMORY maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)
 
 # How the batteries are used and what each objective term contributes. Printed
 # after the timed solve, so it does not affect any timing.

@@ -25,11 +25,20 @@ export PATH="$HSL:$PATH"
 JL="julia --startup-file=no"
 LOADJL=ddp/examples/power_system/sample_background_load.jl
 
-for cell in ieee123C_1ph:6 ieee123C_1ph:24 ieee123C_1ph:96 \
-            ieee2522C_1ph:6 ieee2522C_1ph:24 ieee2522C_1ph:96 \
-            large10kC_1ph:6 large10kC_1ph:24 large10kC_1ph:48; do
+# CELLS="system:T ..." and SOLVERS="ma57 ma97 ..." override the defaults (the
+# Table II cells, all four solvers). A missing periodic instance is exported
+# first (export_ieee123c_data.jl, PROFILE_PERIODIC=1).
+CELLS=${CELLS:-"ieee123C_1ph:6 ieee123C_1ph:24 ieee123C_1ph:96 ieee2522C_1ph:6 ieee2522C_1ph:24 ieee2522C_1ph:96 large10kC_1ph:6 large10kC_1ph:24 large10kC_1ph:48"}
+SOLVERS=${SOLVERS:-"mumps ma57 ma97 ma97t8"}
+for cell in $CELLS; do
   S=${cell%%:*}; T=${cell##*:}
-  for LS in mumps ma57 ma97 ma97t8; do
+  DATA="ddp/results/network_filterddp/network_data_${S}_T${T}_periodic.jls"
+  if [ ! -s "$DATA" ]; then
+    PROFILE_PERIODIC=1 $JL --project=envs/ddp2026 ddp/examples/power_system/export_ieee123c_data.jl "$S" "$T" \
+      > "$OUT/logs/export_${S}_T${T}.log" 2>&1
+    [ -s "$DATA" ] || { echo "export failed for $S T=$T"; continue; }
+  fi
+  for LS in $SOLVERS; do
     case $LS in
       mumps)  OPTS="linear_system_scaling=none"; OMP=1;;
       ma57)   OPTS="linear_solver=ma57;hsllib=$HSL/libma57.dll;linear_system_scaling=none"; OMP=1;;
