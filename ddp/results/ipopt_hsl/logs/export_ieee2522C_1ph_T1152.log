@@ -79,7 +79,7 @@ Info Given OpenDSSDirect was explicitly requested, output will be shown live [0
 [0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
 [0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
 [0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
-   4704.6 ms  ? OpenDSSDirect
+   5258.6 ms  ? OpenDSSDirect
 ┌ Warning: Result of running OpenDSS Command "? Storage.bess11.kWhrated" is: 19.154
 └ @ OpenDSSDirect.Text C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
 ┌ Warning: Result of running OpenDSS Command "? Storage.bess11.kWrated" is: 4.789
@@ -2571,6 +2571,6 @@ Info Given OpenDSSDirect was explicitly requested, output will be shown live [0
 ┌ Warning: Result of running OpenDSS Command "? Storage.bess2491.%reserve" is: 30
 └ @ OpenDSSDirect.Text C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:29
 Loaded system: ieee2522C_1ph from C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\envs\tadmm\..\..\rawData\ieee2522C_1ph\Master.dss
-PROFILE T=384 periodic=true  price spread=150.0%  load spread=25.0%  pv spread=100.0%
-exported=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\ddp\results\network_filterddp\network_data_ieee2522C_1ph_T384_periodic.jls
-T=384 buses=2522 branches=2521 batteries=249 pv=249 loads=1134
+PROFILE T=1152 periodic=true  price spread=150.0%  load spread=25.0%  pv spread=100.0%
+exported=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\ddp\results\network_filterddp\network_data_ieee2522C_1ph_T1152_periodic.jls
+T=1152 buses=2522 branches=2521 batteries=249 pv=249 loads=1134

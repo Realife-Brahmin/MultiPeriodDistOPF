@@ -263,3 +263,33 @@ code path is what costs.
   - Possibly the MinGW OpenMP runtime.
 - **Consequence.** For Ipopt on these instances MA97 should run on one
   thread. MA57 has no threads of its own.
+
+### med2522 to the memory limit (2026-09-30)
+
+**Setup.** MA57 and MA97 on one thread (BLAS pinned), per-system `C_B`, run
+by `run_ipopt_oom_sweep.sh`. A watchdog kills any Julia process above 27 GB
+of private memory; the PC has 32 GB. Seconds / peak resident memory in GiB:
+
+| T | MA57 | MA97 |
+|---:|---|---|
+| 384 | 589.8 / 9.0 | 691.2 / 9.3 |
+| 576 | 917.6 / 12.9 | 1067.8 / 13.9 |
+| 768 | 1263.7 / 15.9 | 1500.1 / 17.3 |
+| 1152 | 2045.5 / 19.9 | **out of memory** (killed at 28.9 GB) |
+| 1536 | **out of memory** (killed at 29.4 GB) | -- |
+
+- **Same solutions.** Every successful pair reaches the same objective; MA97
+  takes one extra iteration at T=768.
+- **MA57 stays ahead.** It is 15-19% faster than MA97 at every horizon here,
+  and its time grows about linearly: roughly 1.5-1.8 s per period.
+- **MA57 goes further.** Its last solved horizon is T=1152, against MA97's
+  T=768.
+- **The failures are sudden jumps, not smooth growth.** MA57 peaked at
+  19.9 GiB at T=1152, then passed 27 GB at T=1536. Both solvers grow their
+  factor storage in large steps when their forecast falls short.
+- **The limit is ours, not the machine's.** The 27 GB watchdog sits below
+  the 32 GB of RAM, so both limits may be conservative by one step in T.
+- **No like-for-like MUMPS comparison.** The earlier MUMPS escalation on
+  med2522 (Table IV of the paper) ran out of memory between T=576 and 768,
+  but on the original instance family (different `C_B` and price sampling),
+  so it is not directly comparable.
