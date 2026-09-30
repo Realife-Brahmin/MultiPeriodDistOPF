@@ -101,6 +101,98 @@ function soft_terminal_objective(base, nx, nu, pbidx, dt, B0, gamma)
         l, lx, lu, lxx, lux, luu)
 end
 
+# Type-stable stage residuals for FILTERDDP_TYPED_EQUATIONS=1. `equations` in
+# build_model pushes every residual into a Vector{Any} through Dict lookups:
+# ~0.1 s per call at large10k, and FilterDDP calls it for every stage of every
+# backward pass and every line-search rollout. This version resolves the
+# indices and constants once and then performs the SAME floating-point
+# operations in the SAME order (left-to-right sums, zero terms included), so
+# its output is bitwise identical -- checked by check_typed_equations.jl.
+function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
+    buses, lines = data[:Nset], data[:Lset]
+    batteries, ders = data[:Bset], data[:Dset]
+    nonroot, root = data[:Nm1set], data[:substationBus]
+    dt = data[:delta_t_h]
+    nx = length(batteries)
+    ps, qs = idx.ps, idx.qs
+    rootP = Int[idx.P[linepos[e]] for e in data[:L1set]]
+    rootQ = Int[idx.Q[linepos[e]] for e in data[:L1set]]
+    nn = length(nonroot)
+    inP = zeros(Int, nn); inQ = zeros(Int, nn); inell = zeros(Int, nn)
+    rin = zeros(nn); xin = zeros(nn)
+    childptr = ones(Int, nn + 1); childP = Int[]; childQ = Int[]
+    pbi = zeros(Int, nn); qni = zeros(Int, nn); qmaxv = zeros(nn)
+    pLv = zeros(nn); qLv = zeros(nn); pDv = zeros(nn)
+    for (k, j) in enumerate(nonroot)
+        line = (data[:parent][j], j)
+        inP[k], inQ[k], inell[k] = idx.P[linepos[line]], idx.Q[linepos[line]], idx.ell[linepos[line]]
+        rin[k], xin[k] = data[:rdict_pu][line], data[:xdict_pu][line]
+        for ch in data[:children][j]
+            push!(childP, idx.P[linepos[(j,ch)]]); push!(childQ, idx.Q[linepos[(j,ch)]])
+        end
+        childptr[k+1] = length(childP) + 1
+        pLv[k] = j in data[:NLset] ? data[:p_L_pu][j,t] : 0.0
+        qLv[k] = j in data[:NLset] ? data[:q_L_pu][j,t] : 0.0
+        pDv[k] = j in ders ? data[:p_D_pu][j,t] : 0.0
+        j in batteries && (pbi[k] = idx.pb[batpos[j]])
+        j in ders && (qni[k] = idx.qnorm[derpos[j]]; qmaxv[k] = qmax[j])
+    end
+    nl = length(lines)
+    lvi = zeros(Int, nl); lvj = zeros(Int, nl); lr = zeros(nl); lz = zeros(nl); lrz2 = zeros(nl)
+    for (e, (i, j)) in enumerate(lines)
+        lvi[e], lvj[e] = idx.v[buspos[i]], idx.v[buspos[j]]
+        r, z = data[:rdict_pu][(i,j)], data[:xdict_pu][(i,j)]
+        lr[e], lz[e], lrz2[e] = r, z, r^2 + z^2
+    end
+    vroot = idx.v[buspos[root]]
+    vref = 1.05^2
+    emin = Float64[data[:soc_min][j] * data[:B_R_pu][j] for j in batteries]
+    P, Q, ell, soc, pb, es = idx.P, idx.Q, idx.ell, idx.soc_slack, idx.pb, idx.energy_slack
+    nc = 2length(buses) + 2nl + 1 + nx
+    return function (x, u)
+        c = Vector{Float64}(undef, nc)
+        @inbounds begin
+            row = 1
+            s = u[rootP[1]]
+            for m in 2:length(rootP); s += u[rootP[m]]; end
+            c[row] = u[ps] - s
+            for k in 1:nn
+                o = 0.0
+                for m in childptr[k]:childptr[k+1]-1; o += u[childP[m]]; end
+                pbval = pbi[k] == 0 ? 0.0 : u[pbi[k]]
+                row += 1
+                c[row] = o - u[inP[k]] + rin[k]*u[inell[k]] - pbval - pDv[k] + pLv[k]
+            end
+            row += 1
+            s = u[rootQ[1]]
+            for m in 2:length(rootQ); s += u[rootQ[m]]; end
+            c[row] = u[qs] - s
+            for k in 1:nn
+                o = 0.0
+                for m in childptr[k]:childptr[k+1]-1; o += u[childQ[m]]; end
+                qD = qni[k] == 0 ? 0.0 : qmaxv[k]*u[qni[k]]
+                row += 1
+                c[row] = o - u[inQ[k]] + xin[k]*u[inell[k]] - qD + qLv[k]
+            end
+            for e in 1:nl
+                row += 1
+                c[row] = u[lvj[e]] - u[lvi[e]] + 2*(lr[e]*u[P[e]] + lz[e]*u[Q[e]]) - lrz2[e]*u[ell[e]]
+            end
+            for e in 1:nl
+                row += 1
+                c[row] = u[P[e]]^2 + u[Q[e]]^2 - u[lvi[e]]*u[ell[e]] + u[soc[e]]
+            end
+            row += 1
+            c[row] = u[vroot] - vref
+            for b in 1:nx
+                row += 1
+                c[row] = x[b] - dt*u[pb[b]] - emin[b] - u[es[b]]
+            end
+        end
+        c
+    end
+end
+
 function build_model(data; gamma=0.0)
     Nstage = data[:T]
     buses, lines = data[:Nset], data[:Lset]
@@ -145,7 +237,7 @@ function build_model(data; gamma=0.0)
             price, pbase, dt, data[:C_B]))
 
         qmax = Dict(j => sqrt(max(0.0, data[:S_D_R][j]^2 - data[:p_D_pu][j,t]^2)) for j in ders)
-        function equations(x,u)
+        function untyped_equations(x,u)
             c = Any[]
             # Real-power balance: root, then every non-root bus.
             push!(c, u[idx.ps] - sum(u[idx.P[linepos[e]]] for e in data[:L1set]))
@@ -189,6 +281,9 @@ function build_model(data; gamma=0.0)
             end
             c
         end
+        equations = get(ENV, "FILTERDDP_TYPED_EQUATIONS", "0") != "0" ?
+            typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos) :
+            untyped_equations
         nc = 2length(buses) + 2length(lines) + 1 + nx
         cx = function (x,u)
             J = spzeros(nc, nx)
