@@ -18,6 +18,8 @@ using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
+get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
+    include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 
 function control_layout(data)
     N, L, B, D = length(data[:Nset]), length(data[:Lset]),

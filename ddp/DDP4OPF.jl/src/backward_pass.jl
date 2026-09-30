@@ -164,6 +164,37 @@ function _lagged_prefactor(ocp, traj, reg, nx::Int, nu::Int, nc::Int)
     return factors
 end
 
+# ------------------------------------------------ battery-block value update --
+# Lead of 2026-09-30 (ddp/notes/PARALLEL_IN_TIME.md, Section 4). With the
+# factor-backed policy the n_x feedback columns of K \ rhs are used only in
+# the rows E = {battery powers, energy constraints}, which are also the only
+# nonzero rows of those right-hand-side columns, and beta' Qu + omega' c equals
+# B' alpha + cx' psi by symmetry of K. So the value update needs only
+# (K^{-1})_EE = S^{-1}, S the Schur complement of K onto E (2 n_B x 2 n_B),
+# and no n_x-column solve. FILTERDDP_BATTERY_SCHUR=1 computes it through
+# BATTERY_SCHUR_HOOK[] (K, E) -> S, which the driver sets (MUMPS, so that this
+# package takes no new dependency). Exact up to rounding; the stage
+# factorization is still used for the feedforward column and the policy.
+const BATTERY_SCHUR_HOOK = Ref{Any}(nothing)
+_battery_schur_enabled() = get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
+    !isnothing(BATTERY_SCHUR_HOOK[])
+
+function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
+    ldiv!(F, @view(rhs[:, 1:1]))
+    α = copy(@view rhs[1:nu, 1])
+    ψ = copy(@view rhs[nu+1:end, 1])
+    cx_s = sparse(cx)
+    energy_rows = sort!(unique(cx_s.rowval))
+    E = vcat(active_B_rows, nu .+ energy_rows)
+    S = BATTERY_SCHUR_HOOK[](K, E)
+    cxE = Matrix(cx_s[energy_rows, :])
+    X = lu!(S) \ vcat(-B_active, -cxE)
+    nB = length(active_B_rows)
+    Vxx_inc = (@view X[1:nB, :])' * B_active + (@view X[nB+1:end, :])' * cxE
+    Vx_inc = B_active' * α[active_B_rows] + cx_s' * ψ
+    return α, ψ, Vxx_inc, Vx_inc
+end
+
 function _stage_factor(t::Int, K, iter::Int, lagged)
     isnothing(lagged) && return _frozen_lu(t, K, iter)
     F = lagged[t]
@@ -518,8 +549,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 blocked_value = get(ENV, "FILTERDDP_BLOCKED_VALUE_RHS", "0") == "1" &&
                     get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
                     structured_B && !capture_this_kkt
+                # FILTERDDP_BATTERY_SCHUR reuses the blocked_value bookkeeping:
+                # it also returns alpha, psi and the two value increments.
+                battery_schur = _battery_schur_enabled() &&
+                    get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
+                    structured_B && !capture_this_kkt
+                battery_schur && (blocked_value = true)
                 block_width = min(parse(Int, get(ENV, "FILTERDDP_VALUE_BLOCK_WIDTH", "128")), nx)
-                rhs_width = blocked_value ? block_width : nx + 1
+                rhs_width = battery_schur ? 1 : blocked_value ? block_width : nx + 1
                 if isnothing(rhs_workspace)
                     rhs_workspace = Matrix{T}(undef, nu + nc, rhs_width)
                 end
@@ -565,7 +602,11 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         solve_start_ns = time_ns()
-                        if blocked_value
+                        if battery_schur
+                            blocked_α, blocked_ψ, blocked_Vxx, blocked_Vx =
+                                _battery_schur_value(K, F, rhs, nu, active_B_rows, B_active, cx)
+                            all(isfinite, blocked_Vxx) || (data.status = 1)
+                        elseif blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
                             blocked_ψ = copy(@view rhs[nu+1:end, 1])
@@ -602,7 +643,11 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                                     data.k, t, size(K, 1), nnz(K), nL + nU, (nL + nU) / max(nnz(K), 1))
                             flush(stdout)
                         end
-                        if blocked_value
+                        if battery_schur
+                            blocked_α, blocked_ψ, blocked_Vxx, blocked_Vx =
+                                _battery_schur_value(K, F, rhs, nu, active_B_rows, B_active, cx)
+                            all(isfinite, blocked_Vxx) || (data.status = 1)
+                        elseif blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
                             blocked_ψ = copy(@view rhs[nu+1:end, 1])
