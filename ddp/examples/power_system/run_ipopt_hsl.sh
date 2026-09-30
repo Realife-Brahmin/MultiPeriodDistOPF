@@ -34,7 +34,7 @@ for cell in $CELLS; do
   S=${cell%%:*}; T=${cell##*:}
   DATA="ddp/results/network_filterddp/network_data_${S}_T${T}_periodic.jls"
   if [ ! -s "$DATA" ]; then
-    PROFILE_PERIODIC=1 $JL --project=envs/ddp2026 ddp/examples/power_system/export_ieee123c_data.jl "$S" "$T" \
+    PROFILE_PERIODIC=1 $JL --project=envs/tadmm ddp/examples/power_system/export_ieee123c_data.jl "$S" "$T" \
       > "$OUT/logs/export_${S}_T${T}.log" 2>&1
     [ -s "$DATA" ] || { echo "export failed for $S T=$T"; continue; }
   fi
