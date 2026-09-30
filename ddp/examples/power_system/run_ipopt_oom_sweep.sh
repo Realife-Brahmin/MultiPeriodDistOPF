@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Push centralized Ipopt on med2522 (per-system C_B, periodic profile) to
-# longer horizons until each linear solver runs out of memory: MUMPS (Ipopt's
-# default), HSL MA57 and HSL MA97 on one thread. A solver is dropped from the
+# longer horizons until each linear solver runs out of memory: by default HSL
+# MA57 and HSL MA97 on one thread (SOLVERS="mumps ma57 ma97" adds MUMPS,
+# Ipopt's default). A solver is dropped from the
 # sweep after its first failure. A watchdog kills any julia.exe whose private
 # memory passes LIMIT_GB (default 27 of the PC's 32 GB) so that an allocation
 # spiral ends as a recorded out-of-memory instead of paging the machine to a
@@ -21,7 +22,7 @@ mkdir -p "$OUT/logs"
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1
 export PATH="$HSL:$PATH"
 JL="julia --startup-file=no"
-ALIVE="mumps ma57 ma97"
+ALIVE="${SOLVERS:-ma57 ma97}"
 
 watchdog() {  # kill any julia.exe above LIMIT_GB private memory; note it in $1
   while [ -f "$1.running" ]; do
