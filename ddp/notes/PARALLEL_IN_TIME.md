@@ -43,13 +43,16 @@ trace:
 |---|---|---|---|---|
 | ieee123 `T=6` (1 thread) | 67 = 67 | 23.2 s | 19.0 s | -18% |
 | med2522 `T=24` | 77 = 77 | 374.4 s | 284.1 s | -24% |
-| large10k `T=24` | 98 = 98 | 3986.1 s | clean rerun PENDING | |
+| large10k `T=24` | 98 = 98 | 3986.1 s | 2675.0 s | -33% |
 
 The first large10k run (r1) followed the identical trace in 3478.5 s, but
 overlapped the test-B runs from 12:48, so its time is not reported; the
 clean repeat is r2.
 
-med2522: derivatives 45.8 -> 9.9 s, forward pass 41.4 -> 11.1 s.
+med2522: derivatives 45.8 -> 9.9 s, forward pass 41.4 -> 11.1 s. large10k
+(r2, background load 0.33 cores): derivatives 307 -> 48 s, forward pass
+1052 -> 111 s, every other category within 4%; near-optimality at 2672.6 s
+against Table II's 3983.5 s.
 
 **Consequence for test A:** its budget was mostly this callback. With it at
 0.2 ms, what remains parallelizable exactly is a few ms per stage of
