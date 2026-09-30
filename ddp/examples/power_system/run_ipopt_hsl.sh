@@ -44,6 +44,7 @@ for cell in $CELLS; do
       ma57)   OPTS="linear_solver=ma57;hsllib=$HSL/libma57.dll;linear_system_scaling=none"; OMP=1;;
       ma97)   OPTS="linear_solver=ma97;hsllib=$HSL/libhsl_ma97.dll;linear_system_scaling=none"; OMP=1;;
       ma97t8) OPTS="linear_solver=ma97;hsllib=$HSL/libhsl_ma97.dll;linear_system_scaling=none"; OMP=8;;
+      ma97t4) OPTS="linear_solver=ma97;hsllib=$HSL/libhsl_ma97.dll;linear_system_scaling=none"; OMP=4;;
     esac
     LOG="$OUT/logs/ipopt_${LS}${TAG}_${S}_T${T}.log"
     [ -s "$LOG" ] && grep -q "CENTRAL_IPOPT " "$LOG" && { echo "skip $LS $S T=$T"; continue; }
