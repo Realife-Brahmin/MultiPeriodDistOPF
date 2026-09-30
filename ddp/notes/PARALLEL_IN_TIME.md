@@ -124,8 +124,34 @@ rows, so `V_xx = Q_xx - Q_ux' Q_uu^{-1} Q_ux` (constrained) needs only the
 battery x battery block of the constrained `Q_uu^{-1}`. This is where the
 MPOPF-specific derivation should land.
 
-How it could be computed, untested: a factorization with `E` ordered last
-leaves the Schur complement as its final dense block (MUMPS `ICNTL(19)`,
-PARDISO; UMFPACK does not expose it), at roughly the cost of a factorization
-plus a dense 2,040 x 2,040 block, against today's factorization plus a
-1,021-column solve.
+### Tested (2026-09-30): exact, and break-even with MUMPS off the shelf
+
+`battery_block_check.jl` on 20 captured stage systems: `E` has exactly
+`2 n_x` rows (102 of 1,353; 498 of 23,691; 2,040 of 96,968), the Schur-
+complement rows match the full solve to <= 3e-11, and the `V_x` identity
+holds to <= 5e-10.
+
+`FILTERDDP_BATTERY_SCHUR=1` computes the value increments from MUMPS's Schur
+complement (`battery_schur_hook.jl`; UMFPACK has no Schur interface). It skips
+the 1,021-column solve at every stage except the terminal one, where the soft
+terminal-SOC penalty makes `l_ux` nonzero. UMFPACK still factors each stage
+for the feedforward column and the forward-pass policy. Full runs reach
+near-optimality **at the same iteration with the same objective** as the full
+solve: ieee123 `T=6` (67), med2522 `T=24` (77, every digit), large10k `T=6`
+(101, every digit, also with the analysis reused).
+
+The stage KKT pattern is constant (393,075 nonzeros in all 2,520 large10k
+stage evaluations), so MUMPS's analysis runs once and later calls only
+refactor. Per large10k stage, informal (machine in use):
+
+| per stage | full solve (Table II) | Schur, fresh analysis | Schur, analysis reused |
+|---|---|---|---|
+| 1021-col solve, or Schur + dense solve | 0.37 s | 0.98 s | 0.60 s |
+| right-hand-side assembly | 0.22 s | 0.07 s | 0.07 s |
+| value update | 0.15 s | 0.10 s | 0.11 s |
+
+So off-the-shelf MUMPS makes the battery-block route about break-even. Of its
+0.60 s, 0.19 s is the dense 2,040 x 2,040 LU, and the separate UMFPACK
+factorization (0.2 s) is still paid. Next: one factorization for both (MUMPS
+reduced right-hand sides, `ICNTL(26)`), or a tree elimination that
+Kron-reduces the radial stage network onto the battery rows directly.
