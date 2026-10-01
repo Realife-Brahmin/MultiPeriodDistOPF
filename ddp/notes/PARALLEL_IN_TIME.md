@@ -269,3 +269,21 @@ with 249 batteries and gains 32-40%. At that size the feeder's dense block
 overhead. Only ieee123 (128 buses), where UMFPACK needs 4 ms per stage,
 loses. Per stage on captures: med2522 0.028 s against ~0.10 s for UMFPACK's
 factorization and blocked solve, large10k 0.076 s against ~0.53 s.
+
+### Robustness checks (2026-10-01, machine in casual use: timings indicative)
+
+Run to FilterDDP's strict tolerance instead of stopping at near-optimality,
+structured dynamics with UMFPACK (`sd`) against the tree solver:
+
+| case | sd | tree |
+|---|---|---|
+| med2522 `T=6` | 81 iterations, 91.5 s | 81 iterations, 66.9 s, identical objective and residuals |
+| med2522 `T=24` | 93 iterations, 327.2 s | 94 iterations, 214.3 s, objective equal to 1e-8 |
+| ieee123 `T=24` (8 threads) | 93 iterations, 41.8 s | 93 iterations, 38.6 s, identical objective |
+
+So the tree solver stays accurate through the whole barrier sequence.
+
+`C_B = 0` with the tree solver fails exactly as the UMFPACK runs did:
+large10k `T=6` line-search failure at iteration 2, med2522 `T=96` stalls at
+primal `1.2e-4` (iteration 93). Those failures belong to the diagonal
+Hessian, not to the linear solver.
