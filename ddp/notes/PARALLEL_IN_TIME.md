@@ -240,3 +240,32 @@ it needs the same low-rank idea applied at branch points inside a feeder.
 With every solve on the tree solver the stopping iteration can move by one
 where a criterion is borderline (ieee123 `T=6`: 68 against 67, primal
 residual 9.3e-7 against a 1e-6 threshold); the solves agree to rounding.
+
+### Clean overnight runs, all nine Table II cells (2026-10-01)
+
+Time to near-optimality; same iteration counts as Table II except ieee123
+`T=6` with the tree solver (68 against 67). `sd` = structured dynamics with
+UMFPACK; `tree` = structured dynamics + tree solver, after two fixes found by
+profiling med2522: the downward sweep computes only the rows a bus's
+children and battery read (it had been allocating a 10 x 252 matrix per
+bus), and the tree solver's dense steps run on one BLAS thread (a 498 x 498
+LU takes 22 ms on OpenBLAS's ten threads against 3 ms on one).
+
+| case | typed | sd | tree | tree vs typed | x Ipopt MUMPS / HSL |
+|---|---|---|---|---|---|
+| ieee123 `T=6` | 18.0 | **17.9** | 23.2 | +29% | 55 / 95 (sd) |
+| ieee123 `T=24` | 26.8 | **25.7** | 35.7 | +33% | 21 / 35 (sd) |
+| ieee123 `T=96` | 74.6 | **70.4** | 107.9 | +45% | 3.1 / 18 (sd) |
+| med2522 `T=6` | 85.1 | 76.9 | **57.5** | -32% | 8.4 / 12.9 |
+| med2522 `T=24` | 293.3 | 267.1 | **177.8** | -39% | 4.3 / 7.3 |
+| med2522 `T=96` | 1355.9 | 1263.3 | **811.7** | -40% | 3.7 / 6.4 |
+| large10k `T=6` | 842.9 | 645.0 | **259.7** | -69% | 5.0 / 9.4 |
+| large10k `T=24` | 2672.6 | (running) | **924.2** | -65% | 3.4 / 7.0 |
+| large10k `T=48` | 4491.6 | (running) | **1537.0** | -66% | 2.5 / 5.7 |
+
+So the tree solver is not only a many-feeder effect: med2522 is one feeder
+with 249 batteries and gains 32-40%. At that size the feeder's dense block
+(498 x 498) is cheap; what had made the first version slower there was
+overhead. Only ieee123 (128 buses), where UMFPACK needs 4 ms per stage,
+loses. Per stage on captures: med2522 0.028 s against ~0.10 s for UMFPACK's
+factorization and blocked solve, large10k 0.076 s against ~0.53 s.
