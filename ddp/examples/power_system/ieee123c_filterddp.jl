@@ -35,7 +35,11 @@ end
 
 function analytic_dynamics(nx, nu, pbidx, dt)
     f = (x,u) -> x .- dt .* u[pbidx]
-    fx = (x,u) -> Matrix{Float64}(I, nx, nx)
+    # The battery dynamics are x - dt*P_B: f_x is the identity. With
+    # FILTERDDP_STRUCTURED_DYNAMICS=1 it is returned sparse, so products such as
+    # f_x' V_xx f_x cost a copy instead of two dense n_x^3 multiplications.
+    fx = get(ENV, "FILTERDDP_STRUCTURED_DYNAMICS", "0") != "0" ?
+        ((x,u) -> sparse(1.0I, nx, nx)) : ((x,u) -> Matrix{Float64}(I, nx, nx))
     fu = function (x,u)
         J = spzeros(nx, nu)
         for b in 1:nx

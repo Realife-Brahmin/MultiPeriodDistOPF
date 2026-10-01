@@ -23,14 +23,15 @@ S_m = mumps_battery_schur(K, E)
 X_full = (lu(K) \ rhs)[E, 2:end]
 # Structured, with a dense check of S
 fac = tree_kkt_factor(lay, K)
-st = tree_kkt_structured(lay, fac, K; dense_check=true)
+stat = tree_kkt_static(lay, K)
+st = tree_kkt_structured(lay, stat, fac, K; dense_check=true)
 S_t = tree_kkt_schur_dense(st)
 X_t = tree_kkt_schur_solve(st, RE)
 @printf("STRUCT system=%s feeders=%d groups=%d rel_S_vs_mumps=%.3e rel_X_vs_full_solve=%.3e\n",
-        system, length(lay.children[lay.root]), length(st.groups),
+        system, length(lay.children[lay.root]), length(st.granges),
         norm(S_t - S_m) / norm(S_m), norm(X_t - X_full) / norm(X_full))
 # Full solver against UMFPACK: one column (the feedforward) and the battery rows
-sol = tree_kkt_solver(lay, K)
+sol = tree_kkt_solver(lay, stat, K)
 x1 = copy(rhs[:, 1]); ldiv!(sol, x1)
 x1_ref = lu(K) \ rhs[:, 1]
 @printf("SOLVER rel_full_solve_vs_umfpack=%.3e rel_battery_rows=%.3e
@@ -38,7 +39,7 @@ x1_ref = lu(K) \ rhs[:, 1]
         norm(x1 - x1_ref) / norm(x1_ref),
         norm(tree_kkt_battery_rows(sol, RE) - X_full) / norm(X_full))
 for _ in 1:2
-    t_all = @elapsed (sol = tree_kkt_solver(lay, K))
+    t_all = @elapsed (sol = tree_kkt_solver(lay, stat, K))
     t_one = @elapsed ldiv!(sol, copy(rhs[:, 1]))
     t_rows = @elapsed tree_kkt_battery_rows(sol, RE)
     @printf("SOLVER_TIMING build=%.3f one_column_solve=%.3f battery_rows=%.3f
@@ -47,7 +48,7 @@ end
 # Timing (warm): factor, structure, Woodbury solve; against MUMPS refactor and UMFPACK factor + full solve
 for _ in 1:2
     t_fac = @elapsed (fac = tree_kkt_factor(lay, K))
-    t_st = @elapsed (st = tree_kkt_structured(lay, fac, K))
+    t_st = @elapsed (st = tree_kkt_structured(lay, stat, fac, K))
     t_sol = @elapsed tree_kkt_schur_solve(st, RE)
     t_m = @elapsed mumps_battery_schur(K, E)
     t_u = @elapsed (F = lu(K)); t_us = @elapsed (F \ rhs)

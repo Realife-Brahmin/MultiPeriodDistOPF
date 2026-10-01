@@ -322,17 +322,35 @@ end
 # elimination with the root last gives, exactly,
 #     Ninv[Fc, Fc] = Bd + Psi * inv(M) * Psi',
 # Bd = blockdiag over feeders of the feeder-only inverse, M the root block
-# with all feeder contributions (already factored in tree_kkt_factor), and
-# Psi the feeder rows' response to the root unknowns (-1 on root-owned rows).
-# Under the diagonal Hessian K_EE couples a battery only to its own energy
-# row, so the Schur complement onto E is block diagonal by feeder plus a
-# rank-(root size) term:
+# with all feeder contributions, and Psi the feeder rows' response to the
+# root unknowns (-1 on root-owned rows). Under the diagonal Hessian K_EE
+# couples a battery only to its own energy row, so the Schur complement onto
+# E is block diagonal by feeder plus a rank-(root size) term:
 #     S = D - U * inv(M) * U',   U = K_E,Fc * Psi,
 # and S \ R follows from Woodbury with one small solve per feeder.
+#
+# Everything that depends only on the sparsity pattern (groups, positions in
+# nonzeros(K)) is computed once in TreeKKTStatic.
 
-function _feeder_of(lay::TreeKKTLayout)
+struct TreeKKTStatic
+    feeder::Vector{Int}                       # node -> feeder top (0 for the root)
+    gkeys::Vector{Int}                        # group key: feeder top, or -1 for root-coupled E
+    perm::Vector{Int}                         # E positions, grouped (permuted order)
+    granges::Vector{UnitRange{Int}}           # each group's range in the permuted order
+    kee::Vector{Vector{NTuple{3,Int}}}        # per group: (local row, local col, nz) of K_EE
+    kef::Vector{NTuple{3,Int}}                # (E pos, Fc pos, nz) of K_E,Fc
+    gkef::Vector{Vector{NTuple{3,Int}}}       # per group: (local row, feeder-local Fc col, nz)
+    iso_d::Vector{Int}                        # nz of each energy slack's diagonal
+    iso_e::Vector{Vector{NTuple{2,Int}}}      # per slack: (E pos, nz)
+    giso::Vector{Vector{NTuple{5,Int}}}       # per group: (local a, local b, nz a, nz b, slack)
+    colpos::Vector{Dict{Int,Int}}             # per feeder top: Fc pos -> local column
+    ooff::Vector{Int}                         # node -> offset of its own block in a flat buffer
+    nN::Int
+end
+
+function _feeder_of(lay)
     N = length(lay.own)
-    feeder = zeros(Int, N)                      # 0 for the root
+    feeder = zeros(Int, N)
     stack = [(c, c) for c in lay.children[lay.root]]
     while !isempty(stack)
         j, f = pop!(stack)
@@ -342,89 +360,24 @@ function _feeder_of(lay::TreeKKTLayout)
     return feeder
 end
 
-struct TreeKKTStructured
-    groups::Vector{Vector{Int}}     # positions in E of each group (feeders, then root)
-    Dfac::Vector{Any}               # LU of each group's diagonal block
-    U::Matrix{Float64}              # nE x m_root
-    M::Matrix{Float64}              # the root block M (small)
-    Dfull::Matrix{Float64}          # (verification only) dense D; empty in production
-end
-
-function tree_kkt_structured(lay::TreeKKTLayout, fac::TreeKKTFactor, K::SparseMatrixCSC; dense_check::Bool=false)
+function tree_kkt_static(lay, K::SparseMatrixCSC)
     N = length(lay.own); nF = length(lay.Fc); nE = length(lay.E)
-    root = lay.root; mr = length(lay.own[root])
     feeder = _feeder_of(lay)
     owner_node = zeros(Int, nF)
     for j in 1:N, t in lay.own_Fc[j]; owner_node[t] = j; end
-    Fc_feeder = [feeder[owner_node[t]] for t in 1:nF]
-
-    # Upward sweep of the unit Fc columns, stopping below the root.
-    Z = Vector{Matrix{Float64}}(undef, N)
-    msg = Vector{Matrix{Float64}}(undef, N)
-    for j in lay.post
-        j == root && continue
-        k = length(lay.cols[j]); k == 0 && continue
-        m = length(lay.own[j])
-        R = zeros(m, k)
-        for (t, pos) in enumerate(lay.own_Fc_pos[j]); R[pos, t] = 1.0; end
-        off = length(lay.own_Fc[j])
-        for c in lay.children[j]
-            kc = length(lay.cols[c]); kc == 0 && continue
-            @views R[lay.iface_pos[c], off+1:off+kc] .+= msg[c]
-            off += kc
-        end
-        Z[j] = fac.F[j] \ R
-        msg[j] = smallmul(fac.Aio[j], Z[j]); msg[j] .*= -1
-    end
-
-    # Downward sweeps per feeder: Bd (feeder-only inverse at its Fc rows) with
-    # zero root values, and Psi from unit root values (zero right-hand side).
-    Bd = Dict{Int, Matrix{Float64}}()         # feeder top => k_f x k_f in cols[top] order
-    Psi = zeros(nF, mr)
-    for top in lay.children[root]
-        kf = length(lay.cols[top]); kf == 0 && continue
-        colpos = Dict(t => s for (s, t) in enumerate(lay.cols[top]))
-        Bf = zeros(kf, kf)
-        ipos = lay.iface_pos[top]               # root positions this feeder touches
-        q = length(ipos)
-        # y (own x (kf + q)): first kf columns = Fc unit responses, last q = root basis responses
-        ytop = zeros(length(lay.own[top]), kf + q)
-        @views ytop[:, 1:kf] .= Z[top]
-        @views ytop[:, kf+1:end] .= -fac.W[top]          # y = -W * e_k
-        stack = [(top, ytop)]
-        while !isempty(stack)
-            j, yj = pop!(stack)
-            for (t, pos) in zip(lay.own_Fc[j], lay.own_Fc_pos[j])
-                @views Bf[colpos[t], :] .= yj[pos, 1:kf]
-                @views Psi[t, ipos] .= .-yj[pos, kf+1:end]  # Psi = -(response)
-            end
-            for c in lay.children[j]
-                isempty(lay.cols[c]) && continue
-                yc = smallmul(fac.W[c], @view yj[lay.iface_pos[c], :]); yc .*= -1
-                cidx = [colpos[t] for t in lay.cols[c]]
-                @views yc[:, cidx] .+= Z[c]
-                push!(stack, (c, yc))
-            end
-        end
-        Bd[top] = Bf
-    end
-    for (t, pos) in zip(lay.own_Fc[root], lay.own_Fc_pos[root])
-        Psi[t, pos] = -1.0
-    end
-
-    # Group E by feeder through each E index's Fc coupling (energy rows follow
-    # their battery power through K_EE).
     Epos = Dict(i => t for (t, i) in enumerate(lay.E))
     Fcpos = Dict(i => t for (t, i) in enumerate(lay.Fc))
-    rows, vals = rowvals(K), nonzeros(K)
-    E_group = zeros(Int, nE)                     # feeder top, or -1 for the root group
+    rows = rowvals(K)
+    E_group = zeros(Int, nE)
+    kef = NTuple{3,Int}[]
     for (a, i) in enumerate(lay.E), p in nzrange(K, i)
         t = get(Fcpos, rows[p], 0); t == 0 && continue
-        g = Fc_feeder[t] == 0 ? -1 : Fc_feeder[t]
+        push!(kef, (a, t, p))
+        f = feeder[owner_node[t]]; g = f == 0 ? -1 : f
         E_group[a] == 0 || E_group[a] == g || error("E index couples to two feeders")
         E_group[a] = g
     end
-    for _ in 1:2, (a, i) in enumerate(lay.E), p in nzrange(K, i)  # propagate along K_EE
+    for _ in 1:2, (a, i) in enumerate(lay.E), p in nzrange(K, i)   # follow K_EE
         b = get(Epos, rows[p], 0); b == 0 && continue
         if E_group[a] == 0 && E_group[b] != 0
             E_group[a] = E_group[b]
@@ -434,50 +387,178 @@ function tree_kkt_structured(lay::TreeKKTLayout, fac::TreeKKTFactor, K::SparseMa
     end
     all(!=(0), E_group) || error("E index with no feeder")
     gkeys = sort!(unique(E_group))
-    groups = [findall(==(g), E_group) for g in gkeys]
-
-    # U = K_E,Fc * Psi and the diagonal blocks D_g.
-    KEF = K[lay.E, lay.Fc]
-    U = Matrix(KEF * Psi)
-    Dfac = Vector{Any}(undef, length(groups))
-    Dfull = dense_check ? zeros(nE, nE) : zeros(0, 0)
-    for (gi, g) in enumerate(gkeys)
-        ga = groups[gi]
-        Dg = Matrix(K[lay.E[ga], lay.E[ga]])
-        if g != -1
-            fcs = lay.cols[g]                        # Fc positions of the feeder, Bd order
-            Kg = Matrix(KEF[ga, fcs])
-            Dg .-= Kg * Bd[g] * Kg'
-        end
-        # energy-slack terms: each slack couples to one energy row
-        gaset = Dict(a => s for (s, a) in enumerate(ga))
-        for i in lay.iso
-            nzE = [(gaset[Epos[rows[p]]], vals[p]) for p in nzrange(K, i)
-                   if haskey(Epos, rows[p]) && haskey(gaset, Epos[rows[p]])]
-            isempty(nzE) && continue
-            d = K[i, i]
-            for (a, va) in nzE, (b, vb) in nzE; Dg[a, b] -= va * vb / d; end
-        end
-        dense_check && (Dfull[ga, ga] .= Dg)
-        Dfac[gi] = lu(Dg)
+    gidx = Dict(g => t for (t, g) in enumerate(gkeys))
+    members = [Int[] for _ in gkeys]
+    for a in 1:nE; push!(members[gidx[E_group[a]]], a); end
+    perm = vcat(members...)
+    granges = UnitRange{Int}[]; off = 0
+    loc = zeros(Int, nE)
+    for m in members
+        push!(granges, off+1:off+length(m)); off += length(m)
+        for (t, a) in enumerate(m); loc[a] = t; end
     end
-    return TreeKKTStructured(groups, Dfac, U, fac.Mroot, Dfull)
+    kee = [NTuple{3,Int}[] for _ in gkeys]
+    for (a, i) in enumerate(lay.E), p in nzrange(K, i)
+        b = get(Epos, rows[p], 0); b == 0 && continue
+        push!(kee[gidx[E_group[a]]], (loc[b], loc[a], p))            # K[E_b, E_a]
+    end
+    colpos = [Dict{Int,Int}() for _ in 1:N]
+    for top in lay.children[lay.root], (s, t) in enumerate(lay.cols[top]); colpos[top][t] = s; end
+    gkef = [NTuple{3,Int}[] for _ in gkeys]
+    for (a, t, p) in kef
+        g = E_group[a]; g == -1 && continue
+        push!(gkef[gidx[g]], (loc[a], colpos[g][t], p))
+    end
+    iso_d = Int[]; iso_e = Vector{NTuple{2,Int}}[]
+    giso = [NTuple{5,Int}[] for _ in gkeys]
+    for (si, i) in enumerate(lay.iso)
+        es = NTuple{2,Int}[]; dp = 0
+        for p in nzrange(K, i)
+            r = rows[p]
+            r == i && (dp = p)
+            haskey(Epos, r) && push!(es, (Epos[r], p))
+        end
+        dp == 0 && error("energy slack without a diagonal entry")
+        push!(iso_d, dp); push!(iso_e, es)
+        for (a, pa) in es, (b, pb) in es
+            E_group[a] == E_group[b] || error("energy slack couples two groups")
+            push!(giso[gidx[E_group[a]]], (loc[a], loc[b], pa, pb, si))
+        end
+    end
+    ooff = zeros(Int, N); nN = 0
+    for j in 1:N; ooff[j] = nN; nN += length(lay.own[j]); end
+    return TreeKKTStatic(feeder, gkeys, perm, granges, kee, kef, gkef, iso_d, iso_e, giso,
+                         colpos, ooff, nN)
+end
+
+struct TreeKKTStructured
+    perm::Vector{Int}
+    granges::Vector{UnitRange{Int}}
+    Dfac::Vector{LU{Float64, Matrix{Float64}, Vector{Int}}}
+    Up::Matrix{Float64}             # U in the permuted (grouped) order, nE x m_root
+    DUp::Matrix{Float64}            # D \ U, same order
+    small::LU{Float64, Matrix{Float64}, Vector{Int}}   # M - U' (D \ U)
+    M::Matrix{Float64}
+    Dfull::Matrix{Float64}          # (verification only) dense D in E order
+end
+
+function tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC; dense_check::Bool=false)
+    N = length(lay.own); nF = length(lay.Fc); nE = length(lay.E)
+    root = lay.root; mr = length(lay.own[root])
+    nz = nonzeros(K)
+
+    # Upward sweep of the unit Fc columns, stopping below the root.
+    Z = Vector{Matrix{Float64}}(undef, N)
+    msg = Vector{Matrix{Float64}}(undef, N)
+    @inbounds for j in lay.post
+        j == root && continue
+        k = length(lay.cols[j]); k == 0 && continue
+        m = length(lay.own[j])
+        R = zeros(m, k)
+        for (t, pos) in enumerate(lay.own_Fc_pos[j]); R[pos, t] = 1.0; end
+        off = length(lay.own_Fc[j])
+        for c in lay.children[j]
+            kc = length(lay.cols[c]); kc == 0 && continue
+            pos = lay.iface_pos[c]; mc = msg[c]
+            for cc in 1:kc, t in eachindex(pos); R[pos[t], off+cc] += mc[t, cc]; end
+            off += kc
+        end
+        Zj = fac.F[j] \ R
+        Z[j] = Zj
+        mj = smallmul(fac.Aio[j], Zj); mj .*= -1
+        msg[j] = mj
+    end
+
+    # Downward sweeps per feeder: Bd with zero root values, Psi from unit root
+    # values. Each feeder works on its own k_f + q columns.
+    Bd = Vector{Matrix{Float64}}(undef, N)
+    Psi = zeros(nF, mr)
+    @inbounds for top in lay.children[root]
+        kf = length(lay.cols[top]); kf == 0 && continue
+        colpos = stat.colpos[top]
+        Bf = zeros(kf, kf)
+        ipos = lay.iface_pos[top]; q = length(ipos)
+        ytop = zeros(length(lay.own[top]), kf + q)
+        ytop[:, 1:kf] .= Z[top]
+        ytop[:, kf+1:end] .= .-fac.W[top]
+        stack = [(top, ytop)]
+        while !isempty(stack)
+            j, yj = pop!(stack)
+            for (t, pos) in zip(lay.own_Fc[j], lay.own_Fc_pos[j])
+                r = colpos[t]
+                for cc in 1:kf; Bf[r, cc] = yj[pos, cc]; end
+                for cc in 1:q; Psi[t, ipos[cc]] = -yj[pos, kf+cc]; end
+            end
+            for c in lay.children[j]
+                isempty(lay.cols[c]) && continue
+                yc = smallmul(fac.W[c], @view yj[lay.iface_pos[c], :]); yc .*= -1
+                Zc = Z[c]
+                for (s, t) in enumerate(lay.cols[c])
+                    col = colpos[t]
+                    for r in axes(Zc, 1); yc[r, col] += Zc[r, s]; end
+                end
+                push!(stack, (c, yc))
+            end
+        end
+        Bd[top] = Bf
+    end
+    @inbounds for (t, pos) in zip(lay.own_Fc[root], lay.own_Fc_pos[root])
+        Psi[t, pos] = -1.0
+    end
+
+    # U = K_E,Fc * Psi (permuted order) and the diagonal blocks D_g.
+    invp = invperm(stat.perm)
+    Up = zeros(nE, mr)
+    @inbounds for (a, t, p) in stat.kef
+        v = nz[p]; r = invp[a]
+        for c in 1:mr; Up[r, c] += v * Psi[t, c]; end
+    end
+    ng = length(stat.gkeys)
+    Dfac = Vector{LU{Float64, Matrix{Float64}, Vector{Int}}}(undef, ng)
+    DUp = similar(Up)
+    Dfull = dense_check ? zeros(nE, nE) : zeros(0, 0)
+    @inbounds for gi in 1:ng
+        rg = stat.granges[gi]; n = length(rg)
+        Dg = zeros(n, n)
+        for (b, a, p) in stat.kee[gi]; Dg[b, a] = nz[p]; end
+        if stat.gkeys[gi] != -1
+            Bf = Bd[stat.gkeys[gi]]
+            ge = stat.gkef[gi]
+            for (a, fa, pa) in ge, (b, fb, pb) in ge
+                Dg[a, b] -= nz[pa] * Bf[fa, fb] * nz[pb]
+            end
+        end
+        for (a, b, pa, pb, si) in stat.giso[gi]
+            Dg[a, b] -= nz[pa] * nz[pb] / nz[stat.iso_d[si]]
+        end
+        dense_check && (Dfull[stat.perm[rg], stat.perm[rg]] .= Dg)
+        F = lu!(Dg)
+        Dfac[gi] = F
+        DUp[rg, :] = F \ Up[rg, :]
+    end
+    small = lu!(fac.Mroot - Up' * DUp)
+    return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, small, fac.Mroot, Dfull)
 end
 
 # S \ R for S = D - U inv(M) U' (Woodbury): X = D\R + D\U * ((M - U' D\U) \ (U' D\R)).
+# Works in the grouped order so that each group is a contiguous row block.
 function tree_kkt_schur_solve(st::TreeKKTStructured, R::AbstractMatrix)
-    DR = Matrix{Float64}(undef, size(R)); DU = similar(st.U)
-    for (g, ga) in enumerate(st.groups)
-        F = st.Dfac[g]::LU{Float64, Matrix{Float64}, Vector{Int}}
-        DR[ga, :] = F \ R[ga, :]
-        DU[ga, :] = F \ st.U[ga, :]
+    Rp = R[st.perm, :]
+    for (g, rg) in enumerate(st.granges)
+        ldiv!(st.Dfac[g], view(Rp, rg, :))
     end
-    small = st.M - st.U' * DU
-    return DR + DU * (small \ (st.U' * DR))
+    T = st.small \ (st.Up' * Rp)
+    mul!(Rp, st.DUp, T, 1.0, 1.0)
+    X = Matrix{Float64}(undef, size(Rp))
+    X[st.perm, :] = Rp
+    return X
 end
 
-tree_kkt_schur_dense(st::TreeKKTStructured) =
-    st.Dfull - st.U * (st.M \ st.U')
+function tree_kkt_schur_dense(st::TreeKKTStructured)
+    invp = invperm(st.perm)
+    U = st.Up[invp, :]
+    return st.Dfull - U * (st.M \ U')
+end
 
 # ------------------------------------------------------------- full solver --
 # One object per stage that replaces the stage's sparse LU: full solves
@@ -489,71 +570,93 @@ tree_kkt_schur_dense(st::TreeKKTStructured) =
 
 struct TreeKKTSolver
     lay::TreeKKTLayout
+    stat::TreeKKTStatic
     fac::TreeKKTFactor
     st::TreeKKTStructured
-    KEF::SparseMatrixCSC{Float64,Int}      # E x Fc
-    KEiso::SparseMatrixCSC{Float64,Int}    # E x iso
-    diso::Vector{Float64}
+    nz::Vector{Float64}                    # copy of the K values the couplings are read from
     pre::Vector{Int}                       # nodes, parents before children
+    z::Vector{Float64}                     # flat work buffer for the network solves
+    y1::Vector{Float64}
+    y2::Vector{Float64}
+    t2::Vector{Float64}
 end
 
-function tree_kkt_solver(lay::TreeKKTLayout, K::SparseMatrixCSC)
+function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatrixCSC)
     fac = tree_kkt_factor(lay, K)
-    st = tree_kkt_structured(lay, fac, K)
-    return TreeKKTSolver(lay, fac, st, K[lay.E, lay.Fc], K[lay.E, lay.iso],
-                         Float64[K[i, i] for i in lay.iso], reverse(lay.post))
+    st = tree_kkt_structured(lay, stat, fac, K)
+    return TreeKKTSolver(lay, stat, fac, st, copy(nonzeros(K)), reverse(lay.post),
+                         zeros(stat.nN), zeros(lay.n), zeros(lay.n), zeros(lay.n))
 end
+tree_kkt_solver(lay::TreeKKTLayout, K::SparseMatrixCSC) = tree_kkt_solver(lay, tree_kkt_static(lay, K), K)
 
-# x[network rows] = N \ b[network rows]; other entries of x untouched.
+# x[network rows] = N \ b[network rows], with no allocation: z holds every
+# node's own block back to back, and must be zero on entry (it is on exit).
 function tree_kkt_network_solve!(x::AbstractVector, s::TreeKKTSolver, b::AbstractVector)
-    lay, fac = s.lay, s.fac
-    N = length(lay.own)
-    z = Vector{Matrix{Float64}}(undef, N)
-    msg = Vector{Matrix{Float64}}(undef, N)
+    lay, fac, z, ooff = s.lay, s.fac, s.z, s.stat.ooff
     @inbounds for j in lay.post
-        own = lay.own[j]; m = length(own)
-        r = Matrix{Float64}(undef, m, 1)
-        for t in 1:m; r[t, 1] = b[own[t]]; end
-        for c in lay.children[j]
-            pos = lay.iface_pos[c]; mc = msg[c]
-            for t in eachindex(pos); r[pos[t], 1] += mc[t, 1]; end
+        own = lay.own[j]; m = length(own); o = ooff[j]
+        F = fac.F[j]; A = F.A; perm = F.perm
+        # right-hand side = b + the children's messages (accumulated in z), pivoted
+        for t in 1:m; x[own[t]] = b[own[t]] + z[o+t]; end
+        for t in 1:m; z[o+t] = x[own[perm[t]]]; end
+        for i in 2:m
+            v = z[o+i]
+            for k in 1:i-1; v -= A[i, k] * z[o+k]; end
+            z[o+i] = v
         end
-        z[j] = fac.F[j] \ r
+        for i in m:-1:1
+            v = z[o+i]
+            for k in i+1:m; v -= A[i, k] * z[o+k]; end
+            z[o+i] = v / A[i, i]
+        end
         if j != lay.root
-            mj = smallmul(fac.Aio[j], z[j]); mj .*= -1
-            msg[j] = mj
+            po = ooff[lay.parent[j]]; pos = lay.iface_pos[j]; Bio = fac.Aio[j]
+            for q in eachindex(pos)
+                v = 0.0
+                for t in 1:m; v += Bio[q, t] * z[o+t]; end
+                z[po+pos[q]] -= v                                # message to the parent
+            end
         end
     end
     @inbounds for j in s.pre
-        own = lay.own[j]; zj = z[j]
+        own = lay.own[j]; m = length(own); o = ooff[j]
         if j != lay.root
-            p = lay.parent[j]; pos = lay.iface_pos[j]; W = fac.W[j]; zp = z[p]
+            po = ooff[lay.parent[j]]; pos = lay.iface_pos[j]; W = fac.W[j]
             for q in eachindex(pos)
-                yI = zp[pos[q], 1]
+                yI = z[po+pos[q]]
                 yI == 0 && continue
-                for t in eachindex(own); zj[t, 1] -= W[t, q] * yI; end
+                for t in 1:m; z[o+t] -= W[t, q] * yI; end
             end
         end
-        for t in eachindex(own); x[own[t]] = zj[t, 1]; end
+        for t in 1:m; x[own[t]] = z[o+t]; end
     end
+    fill!(z, 0.0)
     return x
 end
 
 function tree_kkt_solve!(s::TreeKKTSolver, b::AbstractVector)
-    lay = s.lay
-    y = zeros(lay.n)
+    lay, stat, nz = s.lay, s.stat, s.nz
+    y, y2, t2 = s.y1, s.y2, s.t2
     tree_kkt_network_solve!(y, s, b)
-    bE = b[lay.E]; biso = b[lay.iso]
-    rE = bE - s.KEF * y[lay.Fc] - s.KEiso * (biso ./ s.diso)
-    xE = vec(tree_kkt_schur_solve(s.st, reshape(rE, :, 1)))
-    t = zeros(lay.n)
-    t[lay.Fc] .= s.KEF' * xE
-    y2 = zeros(lay.n)
-    tree_kkt_network_solve!(y2, s, t)
-    xiso = (biso .- s.KEiso' * xE) ./ s.diso
-    for j in eachindex(lay.own), i in lay.own[j]; b[i] = y[i] - y2[i]; end
-    b[lay.E] .= xE
-    b[lay.iso] .= xiso
+    nE = length(lay.E)
+    rE = Matrix{Float64}(undef, nE, 1)
+    @inbounds for a in 1:nE; rE[a, 1] = b[lay.E[a]]; end
+    @inbounds for (a, t, p) in stat.kef; rE[a, 1] -= nz[p] * y[lay.Fc[t]]; end
+    @inbounds for (si, i) in enumerate(lay.iso)
+        w = b[i] / nz[stat.iso_d[si]]
+        for (a, p) in stat.iso_e[si]; rE[a, 1] -= nz[p] * w; end
+    end
+    xE = tree_kkt_schur_solve(s.st, rE)
+    fill!(t2, 0.0)
+    @inbounds for (a, f, p) in stat.kef; t2[lay.Fc[f]] += nz[p] * xE[a, 1]; end
+    tree_kkt_network_solve!(y2, s, t2)
+    @inbounds for (si, i) in enumerate(lay.iso)
+        v = b[i]
+        for (a, p) in stat.iso_e[si]; v -= nz[p] * xE[a, 1]; end
+        b[i] = v / nz[stat.iso_d[si]]
+    end
+    @inbounds for j in eachindex(lay.own), i in lay.own[j]; b[i] = y[i] - y2[i]; end
+    @inbounds for a in 1:nE; b[lay.E[a]] = xE[a, 1]; end
     return b
 end
 
@@ -578,13 +681,14 @@ function install_tree_kkt_hook(data, idx, nu::Int)
         st = state[]
         if isnothing(st) || st.colptr != K.colptr || st.rowval != K.rowval
             lay = tree_kkt_layout(data, idx, nu, K)
-            st = (lay=lay, colptr=copy(K.colptr), rowval=copy(K.rowval))
+            st = (lay=lay, stat=tree_kkt_static(lay, K), colptr=copy(K.colptr), rowval=copy(K.rowval))
             state[] = st
             println("TREE_KKT layout: nodes=", length(lay.own), " feeders=",
                     length(lay.children[lay.root]), " nE=", length(lay.E),
+                    " groups=", length(st.stat.gkeys),
                     " max_own=", maximum(length, lay.own), " max_iface=", maximum(length, lay.iface))
         end
-        return tree_kkt_solver(st.lay, K)
+        return tree_kkt_solver(st.lay, st.stat, K)
     end
     return nothing
 end

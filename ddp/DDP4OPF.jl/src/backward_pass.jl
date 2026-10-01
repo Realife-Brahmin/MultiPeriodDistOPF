@@ -187,6 +187,7 @@ _battery_schur_enabled() = get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
 # rows, so no second factorization is needed. Same battery-block value update
 # as above; the terminal stage (l_ux != 0) keeps the sparse LU.
 const TREE_KKT_HOOK = Ref{Any}(nothing)
+_structured_dynamics() = get(ENV, "FILTERDDP_STRUCTURED_DYNAMICS", "0") != "0"
 _tree_kkt_enabled() = get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && !isnothing(TREE_KKT_HOOK[])
 
 # Rows E of K \ R for right-hand sides R supported on E (given as R[E, :]).
@@ -200,10 +201,11 @@ function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
     cx_s = sparse(cx)
     energy_rows = sort!(unique(cx_s.rowval))
     E = vcat(active_B_rows, nu .+ energy_rows)
-    cxE = Matrix(cx_s[energy_rows, :])
-    X = battery_block_rows(F, K, E, vcat(-B_active, -cxE))
+    cxE = cx_s[energy_rows, :]                       # sparse: one entry per battery
+    X = battery_block_rows(F, K, E, vcat(-B_active, -Matrix(cxE)))
     nB = length(active_B_rows)
-    Vxx_inc = (@view X[1:nB, :])' * B_active + (@view X[nB+1:end, :])' * cxE
+    Vxx_inc = (@view X[1:nB, :])' * B_active
+    Vxx_inc .+= X[nB+1:end, :]' * cxE
     Vx_inc = B_active' * α[active_B_rows] + cx_s' * ψ
     return α, ψ, Vxx_inc, Vx_inc
 end
@@ -474,6 +476,16 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             sparse_stage = issparse(luu) || issparse(fu) || (nc > 0 && (issparse(cu) || issparse(cuu)))
             structured_B = sparse_stage && issparse(fu) && nnz(lux) == 0 &&
                 nnz(fux) == 0 && (nc == 0 || nnz(cux) == 0)
+            # FILTERDDP_STRUCTURED_DYNAMICS also treats a stage whose l_ux is
+            # confined to the rows fu acts on (the soft terminal SOC penalty
+            # couples x only to the battery powers) as structured: B is then
+            # still nonzero only in those rows.
+            lux_in_B = false
+            if !structured_B && _structured_dynamics() && sparse_stage && issparse(fu) &&
+                    issparse(lux) && nnz(fux) == 0 && (nc == 0 || nnz(cux) == 0)
+                lux_in_B = issubset(unique(findnz(lux)[1]), unique(findnz(fu)[2]))
+                structured_B = lux_in_B
+            end
             active_B_rows = Int[]
             B_active = Matrix{T}(undef, 0, 0)
             ux_tmp = Matrix{T}(undef, 0, 0)
@@ -497,8 +509,13 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
             if structured_B
                 active_B_rows = sort!(unique(findnz(fu)[2]))
-                fu_active = Matrix(@view fu[:, active_B_rows])
-                B_active = fu_active' * V̂xx * fx
+                # FILTERDDP_STRUCTURED_DYNAMICS keeps fu's active columns sparse
+                # (one entry per battery for MPOPF), so this is not a dense
+                # n_B x n_x x n_x product; same values up to the sign of zeros.
+                fu_active = _structured_dynamics() ? fu_sparse[:, active_B_rows] :
+                    Matrix(@view fu[:, active_B_rows])
+                B_active = Matrix(fu_active' * V̂xx * fx)
+                lux_in_B && (B_active .+= lux[active_B_rows, :])
             else
                 isempty(ux_tmp) && (ux_tmp = fu' * V̂xx)
                 B = ux_tmp * fx
