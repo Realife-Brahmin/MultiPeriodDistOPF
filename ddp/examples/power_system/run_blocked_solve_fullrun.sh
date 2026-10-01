@@ -22,7 +22,7 @@ cd "$(dirname "$0")/../../.." || exit 1
 SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
 SUFFIX="${RUN_TAG_SUFFIX:-}"
 VARIANTS="${VARIANTS:-baseline blocked_w$W}"      # VARIANTS=blocked_w16 runs the blocked arm only
-REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0} typed_equations=${FILTERDDP_TYPED_EQUATIONS:-0}"
+REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0} typed_equations=${FILTERDDP_TYPED_EQUATIONS:-0} structured_dynamics=${FILTERDDP_STRUCTURED_DYNAMICS:-0} tree_kkt=${FILTERDDP_TREE_KKT:-0}"
 OUT=ddp/results/kkt_ordering/fullrun_blocked
 SOLDIR=ddp/results/kkt_ordering/captures/solutions
 mkdir -p "$OUT" "$SOLDIR"
