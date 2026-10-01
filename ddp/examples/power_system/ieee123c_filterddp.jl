@@ -498,6 +498,9 @@ flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+# Peak resident memory of the whole process (build + solve), for the memory
+# comparison with centralized Ipopt.
+@printf("FILTERDDP_MEMORY_PEAK maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)
 @printf("final residuals: primal=%.12e dual=%.12e complementarity=%.12e\n",
         solver.data.primal_inf, solver.data.dual_inf, solver.data.cs_inf_0)
 

@@ -30,6 +30,9 @@ CB="${CB:-1e-3}"
 if [ "$CB" = 1e-3 ]; then IPLOG="ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log"
 elif [ "$CB" = 0 ]; then IPLOG="ddp/results/ipopt_no_cb/logs/ipopt_nocb_${SYS}_T${T}.log"
 else IPLOG="ddp/results/ipopt_cb_${CB}/logs/ipopt_cb${CB}_${SYS}_T${T}.log"; fi
+# IPOPT_REF_LOG overrides the reference log (same instance and C_B), e.g. an HSL
+# run at a horizon outside the Table II set.
+IPLOG="${IPOPT_REF_LOG:-$IPLOG}"
 REF=$(grep -oE "CENTRAL_IPOPT .*" "$IPLOG" | \
       grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
 [ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T in $IPLOG"; exit 1; }
