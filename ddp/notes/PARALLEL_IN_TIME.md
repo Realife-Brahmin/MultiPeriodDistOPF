@@ -260,8 +260,8 @@ LU takes 22 ms on OpenBLAS's ten threads against 3 ms on one).
 | med2522 `T=24` | 293.3 | 267.1 | **177.8** | -39% | 4.3 / 7.3 |
 | med2522 `T=96` | 1355.9 | 1263.3 | **811.7** | -40% | 3.7 / 6.4 |
 | large10k `T=6` | 842.9 | 645.0 | **259.7** | -69% | 5.0 / 9.4 |
-| large10k `T=24` | 2672.6 | (running) | **924.2** | -65% | 3.4 / 7.0 |
-| large10k `T=48` | 4491.6 | (running) | **1537.0** | -66% | 2.5 / 5.7 |
+| large10k `T=24` | 2672.6 | 2363.4 | **924.2** | -65% | 3.4 / 7.0 |
+| large10k `T=48` | 4491.6 | 4061.8 | **1537.0** | -66% | 2.5 / 5.7 |
 
 So the tree solver is not only a many-feeder effect: med2522 is one feeder
 with 249 batteries and gains 32-40%. At that size the feeder's dense block
