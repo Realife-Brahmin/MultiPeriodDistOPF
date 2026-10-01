@@ -179,6 +179,20 @@ const BATTERY_SCHUR_HOOK = Ref{Any}(nothing)
 _battery_schur_enabled() = get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     !isnothing(BATTERY_SCHUR_HOOK[])
 
+# FILTERDDP_TREE_KKT=1: TREE_KKT_HOOK[] (K) -> F replaces the stage's sparse
+# LU by a solver that exploits the radial network (tree_kkt.jl in the driver:
+# leaves-to-substation block elimination, battery block by feeder plus a
+# low-rank substation term). F must support ldiv!(F, b) for the feedforward
+# column and the forward-pass policy, and battery_block_rows for the feedback
+# rows, so no second factorization is needed. Same battery-block value update
+# as above; the terminal stage (l_ux != 0) keeps the sparse LU.
+const TREE_KKT_HOOK = Ref{Any}(nothing)
+_tree_kkt_enabled() = get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && !isnothing(TREE_KKT_HOOK[])
+
+# Rows E of K \ R for right-hand sides R supported on E (given as R[E, :]).
+# Default: dense solve with the Schur complement from BATTERY_SCHUR_HOOK.
+battery_block_rows(F, K, E, R) = lu!(BATTERY_SCHUR_HOOK[](K, E)) \ R
+
 function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
     ldiv!(F, @view(rhs[:, 1:1]))
     α = copy(@view rhs[1:nu, 1])
@@ -186,9 +200,8 @@ function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
     cx_s = sparse(cx)
     energy_rows = sort!(unique(cx_s.rowval))
     E = vcat(active_B_rows, nu .+ energy_rows)
-    S = BATTERY_SCHUR_HOOK[](K, E)
     cxE = Matrix(cx_s[energy_rows, :])
-    X = lu!(S) \ vcat(-B_active, -cxE)
+    X = battery_block_rows(F, K, E, vcat(-B_active, -cxE))
     nB = length(active_B_rows)
     Vxx_inc = (@view X[1:nB, :])' * B_active + (@view X[nB+1:end, :])' * cxE
     Vx_inc = B_active' * α[active_B_rows] + cx_s' * ψ
@@ -551,9 +564,10 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     structured_B && !capture_this_kkt
                 # FILTERDDP_BATTERY_SCHUR reuses the blocked_value bookkeeping:
                 # it also returns alpha, psi and the two value increments.
-                battery_schur = _battery_schur_enabled() &&
+                battery_schur = (_battery_schur_enabled() || _tree_kkt_enabled()) &&
                     get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
                     structured_B && !capture_this_kkt
+                tree_kkt = battery_schur && _tree_kkt_enabled()
                 battery_schur && (blocked_value = true)
                 block_width = min(parse(Int, get(ENV, "FILTERDDP_VALUE_BLOCK_WIDTH", "128")), nx)
                 rhs_width = battery_schur ? 1 : blocked_value ? block_width : nx + 1
@@ -589,7 +603,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     if timing_diagnostic || memory_diagnostic
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
-                        F = _stage_factor(t, K, data.k, lagged_factors)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
@@ -634,7 +648,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_s = (time_ns() - solve_start_ns) / 1e9
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
-                        F = _stage_factor(t, K, data.k, lagged_factors)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)

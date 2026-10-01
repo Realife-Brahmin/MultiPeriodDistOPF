@@ -20,6 +20,7 @@ const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
 get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
+get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
 
 function control_layout(data)
     N, L, B, D = length(data[:Nset]), length(data[:Lset]),
@@ -463,6 +464,7 @@ gammaT = terminal_soc_soft() ? gamma_terminal(system) : 0.0
 @printf("TERMINAL_SOC soft=%d gamma=%.6e\n", gammaT > 0, gammaT)
 ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
+get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && install_tree_kkt_hook(data, idx, nu)
 mode == "build" && exit()
 
 println("constructing dynamic Solver storage...")
