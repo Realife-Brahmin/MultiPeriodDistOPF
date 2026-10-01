@@ -166,7 +166,18 @@ against 2,672.6 s, i.e. **12% slower**. Per stage: Schur + dense solve
 0.74 s against the blocked solve's 0.33 s; assembly 0.17 -> 0.02 s, value
 update 0.09 -> 0.04 s. At `T=6` (informal) it was about break-even.
 
-So off-the-shelf MUMPS makes the battery-block route break-even at best. Of its
+So off-the-shelf MUMPS makes the battery-block route break-even at best.
+
+**Status (2026-09-30, closed with the user):** exact but not faster. UMFPACK
+cannot help: its permutations are known, but it pivots the battery rows into
+the middle of its elimination order, so reading off only those rows still
+needs essentially full triangular sweeps; only an ordering that puts them
+last (MUMPS's Schur option) makes them cheap, at the price of MUMPS's slower
+factorization and a dense 2,040 x 2,040 block. A single MUMPS factorization
+serving the step and the forward pass too would remove the second
+factorization but is still estimated at parity (0.33 + 0.23 s against
+0.20 + 0.33 s per large10k stage). The hand-written leaves-to-substation
+(Kron) sweep is parked as a discussion item for the 2026-10-07 meeting. Of its
 0.60 s, 0.19 s is the dense 2,040 x 2,040 LU, and the separate UMFPACK
 factorization (0.2 s) is still paid. Next: one factorization for both (MUMPS
 reduced right-hand sides, `ICNTL(26)`), or a tree elimination that
