@@ -346,6 +346,13 @@ struct TreeKKTStatic
     colpos::Vector{Dict{Int,Int}}             # per feeder top: Fc pos -> local column
     ooff::Vector{Int}                         # node -> offset of its own block in a flat buffer
     nN::Int
+    # Downward sweep: only the rows a node's children and its own Fc entries
+    # read are computed (the bus's two balance rows and its voltage).
+    need::Vector{Vector{Int}}                 # per node: positions in own
+    iface_in_need::Vector{Vector{Int}}        # per node: its iface rows within need[parent]
+    fc_in_need::Vector{Vector{Int}}           # per node: its own Fc entries within need
+    cidx::Vector{Vector{Int}}                 # per node: feeder-local columns of cols[node]
+    depth::Vector{Int}                        # depth below the feeder top (top = 1)
 end
 
 function _feeder_of(lay)
@@ -427,8 +434,44 @@ function tree_kkt_static(lay, K::SparseMatrixCSC)
     end
     ooff = zeros(Int, N); nN = 0
     for j in 1:N; ooff[j] = nN; nN += length(lay.own[j]); end
+    need = [Int[] for _ in 1:N]
+    for j in 1:N
+        isempty(lay.cols[j]) && continue
+        v = copy(lay.own_Fc_pos[j])
+        for c in lay.children[j]; isempty(lay.cols[c]) || append!(v, lay.iface_pos[c]); end
+        need[j] = sort!(unique(v))
+    end
+    iface_in_need = [Int[] for _ in 1:N]; fc_in_need = [Int[] for _ in 1:N]
+    cidx = [Int[] for _ in 1:N]; depth = zeros(Int, N)
+    for j in 1:N
+        (isempty(lay.cols[j]) || j == lay.root) && continue
+        f = feeder[j]
+        cidx[j] = [colpos[f][t] for t in lay.cols[j]]
+        fc_in_need[j] = [findfirst(==(pos), need[j]) for pos in lay.own_Fc_pos[j]]
+        if j != f
+            p = lay.parent[j]
+            iface_in_need[j] = [findfirst(==(pos), need[p]) for pos in lay.iface_pos[j]]
+        end
+        d = 1; k = j
+        while k != f; k = lay.parent[k]; d += 1; end
+        depth[j] = d
+    end
     return TreeKKTStatic(feeder, gkeys, perm, granges, kee, kef, gkef, iso_d, iso_e, giso,
-                         colpos, ooff, nN)
+                         colpos, ooff, nN, need, iface_in_need, fc_in_need, cidx, depth)
+end
+
+# The dense blocks here are small or mid-sized (a feeder's batteries), where
+# OpenBLAS's threading costs more than it gains: a 498 x 498 LU takes 22 ms on
+# ten threads and 3 ms on one. Run them on one BLAS thread.
+function _blas1(f)
+    n = BLAS.get_num_threads()
+    n == 1 && return f()
+    BLAS.set_num_threads(1)
+    try
+        return f()
+    finally
+        BLAS.set_num_threads(n)
+    end
 end
 
 struct TreeKKTStructured
@@ -442,7 +485,10 @@ struct TreeKKTStructured
     Dfull::Matrix{Float64}          # (verification only) dense D in E order
 end
 
-function tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC; dense_check::Bool=false)
+tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC; dense_check::Bool=false) =
+    _blas1(() -> _tree_kkt_structured(lay, stat, fac, K, dense_check))
+
+function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, dense_check::Bool)
     N = length(lay.own); nF = length(lay.Fc); nE = length(lay.E)
     root = lay.root; mr = length(lay.own[root])
     nz = nonzeros(K)
@@ -478,26 +524,44 @@ function tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::Sp
         colpos = stat.colpos[top]
         Bf = zeros(kf, kf)
         ipos = lay.iface_pos[top]; q = length(ipos)
-        ytop = zeros(length(lay.own[top]), kf + q)
-        ytop[:, 1:kf] .= Z[top]
-        ytop[:, kf+1:end] .= .-fac.W[top]
-        stack = [(top, ytop)]
+        # One buffer per depth holds the needed rows of the node being
+        # processed at that depth; a node's rows stay valid while its subtree
+        # is processed, since only deeper buffers are written meanwhile.
+        w = kf + q
+        bufs = Matrix{Float64}[]
+        ensure(d, nr) = (while length(bufs) < d; push!(bufs, zeros(max(nr, 4), w)); end;
+                         size(bufs[d], 1) < nr && (bufs[d] = zeros(nr, w)); bufs[d])
+        nd = stat.need[top]; y = ensure(1, length(nd))
+        Ztop = Z[top]; Wtop = fac.W[top]
+        for (r, pos) in enumerate(nd)
+            for cc in 1:kf; y[r, cc] = Ztop[pos, cc]; end
+            for cc in 1:q; y[r, kf+cc] = -Wtop[pos, cc]; end
+        end
+        stack = [top]
         while !isempty(stack)
-            j, yj = pop!(stack)
-            for (t, pos) in zip(lay.own_Fc[j], lay.own_Fc_pos[j])
-                r = colpos[t]
-                for cc in 1:kf; Bf[r, cc] = yj[pos, cc]; end
-                for cc in 1:q; Psi[t, ipos[cc]] = -yj[pos, kf+cc]; end
+            j = pop!(stack); d = stat.depth[j]
+            if j != top
+                # Rows of this node from its parent's (depth d-1), computed
+                # now, when the node is processed, so siblings cannot clash.
+                yp = bufs[d-1]; ndj = stat.need[j]; yj = ensure(d, length(ndj))
+                Wj = fac.W[j]; iin = stat.iface_in_need[j]; Zj = Z[j]; ci = stat.cidx[j]
+                for (r, pos) in enumerate(ndj)
+                    for cc in 1:w
+                        v = 0.0
+                        for qq in eachindex(iin); v -= Wj[pos, qq] * yp[iin[qq], cc]; end
+                        yj[r, cc] = v
+                    end
+                    for s in eachindex(ci); yj[r, ci[s]] += Zj[pos, s]; end
+                end
+            end
+            yj = bufs[d]
+            for (t, r) in zip(lay.own_Fc[j], stat.fc_in_need[j])
+                row = colpos[t]
+                for cc in 1:kf; Bf[row, cc] = yj[r, cc]; end
+                for cc in 1:q; Psi[t, ipos[cc]] = -yj[r, kf+cc]; end
             end
             for c in lay.children[j]
-                isempty(lay.cols[c]) && continue
-                yc = smallmul(fac.W[c], @view yj[lay.iface_pos[c], :]); yc .*= -1
-                Zc = Z[c]
-                for (s, t) in enumerate(lay.cols[c])
-                    col = colpos[t]
-                    for r in axes(Zc, 1); yc[r, col] += Zc[r, s]; end
-                end
-                push!(stack, (c, yc))
+                isempty(lay.cols[c]) || push!(stack, c)
             end
         end
         Bd[top] = Bf
@@ -544,8 +608,10 @@ end
 # Works in the grouped order so that each group is a contiguous row block.
 function tree_kkt_schur_solve(st::TreeKKTStructured, R::AbstractMatrix)
     Rp = R[st.perm, :]
-    for (g, rg) in enumerate(st.granges)
-        ldiv!(st.Dfac[g], view(Rp, rg, :))
+    _blas1() do
+        for (g, rg) in enumerate(st.granges)
+            ldiv!(st.Dfac[g], view(Rp, rg, :))
+        end
     end
     T = st.small \ (st.Up' * Rp)
     mul!(Rp, st.DUp, T, 1.0, 1.0)
