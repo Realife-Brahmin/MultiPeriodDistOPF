@@ -45,6 +45,16 @@ trace:
 | med2522 `T=24` | 77 = 77 | 374.4 s | 284.1 s | -24% |
 | large10k `T=24` | 98 = 98 | 3986.1 s | 2675.0 s | -33% |
 
+All nine Table II cells, clean evening session (2026-09-30,
+`run_table2_typed.sh`), time to near-optimality, same iterations and
+objectives as Table II: ieee123 `T=6/24/96` 18.0 / 26.8 / 74.6 s (-13 / -16 /
+-22%), med2522 85.1 / 293.3 / 1355.9 s (-17 / -21 / -23%), large10k `T=6/24/48`
+842.9 / 2672.6 / 4491.6 s (-31 / -33 / -29%). These replaced Tables II and
+III in the TPEC paper. Runs repeated after the user left were 4-6% slower
+than the same runs while they were at the machine (identical traces),
+probably the Balanced power plan; all table values come from the one
+session.
+
 The first large10k run (r1) followed the identical trace in 3478.5 s, but
 overlapped the test-B runs from 12:48, so its time is not reported; the
 clean repeat is r2.
@@ -150,7 +160,13 @@ refactor. Per large10k stage, informal (machine in use):
 | right-hand-side assembly | 0.22 s | 0.07 s | 0.07 s |
 | value update | 0.15 s | 0.10 s | 0.11 s |
 
-So off-the-shelf MUMPS makes the battery-block route about break-even. Of its
+Clean evening run, large10k `T=24` (background load 0.30 cores): near-optimal
+at iteration 98 with the same objective as the full solve, in 2,994.5 s
+against 2,672.6 s, i.e. **12% slower**. Per stage: Schur + dense solve
+0.74 s against the blocked solve's 0.33 s; assembly 0.17 -> 0.02 s, value
+update 0.09 -> 0.04 s. At `T=6` (informal) it was about break-even.
+
+So off-the-shelf MUMPS makes the battery-block route break-even at best. Of its
 0.60 s, 0.19 s is the dense 2,040 x 2,040 LU, and the separate UMFPACK
 factorization (0.2 s) is still paid. Next: one factorization for both (MUMPS
 reduced right-hand sides, `ICNTL(26)`), or a tree elimination that
