@@ -182,3 +182,61 @@ factorization but is still estimated at parity (0.33 + 0.23 s against
 factorization (0.2 s) is still paid. Next: one factorization for both (MUMPS
 reduced right-hand sides, `ICNTL(26)`), or a tree elimination that
 Kron-reduces the radial stage network onto the battery rows directly.
+
+## 5. The radial tree solver (2026-09-30/10-01): the battery block done cheaply
+
+The battery-block study (Section 4) was closed as "exact but not faster" with
+general solvers. Exploiting the feeder tree by hand changes that.
+
+**Structure.** Group the stage KKT by bus: a non-root bus owns its incoming
+line's `P, Q, ell`, SOC slack, its voltage, its DER control, and its
+P-balance, Q-balance, voltage-drop and SOC rows (at most 10 unknowns). Checked
+against the sparsity pattern on all three systems, each group couples only to
+its parent, through 3 unknowns (the parent's two balance rows and voltage).
+Eliminating groups from the leaves to the substation is block Gaussian
+elimination on the tree: a small dense LU per bus and a 3x3 update to the
+parent, no fill.
+
+**The battery block is feeder blocks plus a low-rank term.** The substation is
+the only place feeders meet, through 3 root unknowns. With the root last,
+`S = D - U inv(M) U'`: `D` block diagonal by feeder (large10k: 102 blocks of
+about 20), `M` the 6x6 root block, `U` of rank at most 6. `S \ R` is then
+Woodbury with one small solve per feeder; no 2,040 x 2,040 matrix is formed.
+The same factorization solves full systems `K \ b` with two tree sweeps, so
+it replaces the stage's sparse LU for the feedforward column, the battery
+rows and the forward-pass policy (`tree_kkt.jl`, `FILTERDDP_TREE_KKT=1`).
+
+**Exact.** On production-config captures: `S` against MUMPS 1e-16 (ieee123),
+3e-11 (med2522), 3e-13 (large10k); battery rows against a full UMFPACK solve
+5e-16, 3e-12, 8e-16; one-column solves 6e-14, 7e-12, 4e-15, with residuals no
+larger than UMFPACK's.
+
+**Two exact rewrites it exposed** (`FILTERDDP_STRUCTURED_DYNAMICS=1`): `f_x` is
+the identity and `f_u` is `-dt` times a selector, so the four dense `n_x^3`
+products per stage with them are replaced by sparse ones; and the soft
+terminal SOC penalty puts `l_ux` only in the battery-power rows, so the
+terminal stage is structured too (it had been building a dense `n_u x n_x`
+block, an UMFPACK factorization and the full 1021-column solve: 44% of a
+`T=6` backward pass once everything else was fast).
+
+**Full runs, large10k `T=6`** (same iterate path: near-optimal at iteration
+101, identical objective):
+
+| configuration | time | per stage (backward) |
+|---|---|---|
+| Table II on 2026-09-30 morning | 1222.9 s | |
+| typed residuals | 842.9 s | 1.19 s |
+| + tree solver | 679.3 s | |
+| + sparse dynamics products | 491.8 s | 0.66 s |
+| + structured terminal stage | **290.5 s** | 0.36 s |
+
+That is 10.5x Ipopt with MA57 (27.6 s), against 44x at the start of the day.
+Per stage now: assembly 0.008, tree build 0.071, solve 0.166, derivatives
+0.028, algebra 0.067, update 0.016 s; forward pass 54 s of the 290.
+
+**Limits.** med2522 is a single feeder, so `D` is one 498 x 498 block and the
+tree solver is no faster than UMFPACK there (110.0 against 85.1 s at `T=6`);
+it needs the same low-rank idea applied at branch points inside a feeder.
+With every solve on the tree solver the stopping iteration can move by one
+where a criterion is borderline (ieee123 `T=6`: 68 against 67, primal
+residual 9.3e-7 against a 1e-6 threshold); the solves agree to rounding.
