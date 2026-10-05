@@ -463,14 +463,26 @@ end
 # The dense blocks here are small or mid-sized (a feeder's batteries), where
 # OpenBLAS's threading costs more than it gains: a 498 x 498 LU takes 22 ms on
 # ten threads and 3 ms on one. Run them on one BLAS thread.
+const _BLAS_DEFAULT = Ref(BLAS.get_num_threads())
 function _blas1(f)
     n = BLAS.get_num_threads()
     n == 1 && return f()
+    _BLAS_DEFAULT[] = n
     BLAS.set_num_threads(1)
     try
         return f()
     finally
         BLAS.set_num_threads(n)
+    end
+end
+# A large dense block inside a _blas1 region: restore the threads for it.
+function _blas_full(f, n::Int)
+    (n < 1000 || BLAS.get_num_threads() == _BLAS_DEFAULT[]) && return f()
+    BLAS.set_num_threads(_BLAS_DEFAULT[])
+    try
+        return f()
+    finally
+        BLAS.set_num_threads(1)
     end
 end
 
@@ -483,12 +495,16 @@ struct TreeKKTStructured
     small::LU{Float64, Matrix{Float64}, Vector{Int}}   # M - U' (D \ U)
     M::Matrix{Float64}
     Dfull::Matrix{Float64}          # (verification only) dense D in E order
+    # Exact battery curvature: D is no longer block diagonal, so the whole
+    # Schur complement S = D + Vc - U inv(M) U' is factored densely instead.
+    Sfac::Union{Nothing, LU{Float64, Matrix{Float64}, Vector{Int}}}
 end
 
-tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC; dense_check::Bool=false) =
-    _blas1(() -> _tree_kkt_structured(lay, stat, fac, K, dense_check))
+tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC;
+                    dense_check::Bool=false, Vc=nothing) =
+    _blas1(() -> _tree_kkt_structured(lay, stat, fac, K, dense_check, Vc))
 
-function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, dense_check::Bool)
+function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, dense_check::Bool, Vc)
     N = length(lay.own); nF = length(lay.Fc); nE = length(lay.E)
     root = lay.root; mr = length(lay.own[root])
     nz = nonzeros(K)
@@ -581,6 +597,8 @@ function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::S
     Dfac = Vector{LU{Float64, Matrix{Float64}, Vector{Int}}}(undef, ng)
     DUp = similar(Up)
     Dfull = dense_check ? zeros(nE, nE) : zeros(0, 0)
+    exact = !isnothing(Vc)
+    Sdense = exact ? zeros(nE, nE) : zeros(0, 0)      # permuted (grouped) order
     @inbounds for gi in 1:ng
         rg = stat.granges[gi]; n = length(rg)
         Dg = zeros(n, n)
@@ -596,18 +614,38 @@ function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::S
             Dg[a, b] -= nz[pa] * nz[pb] / nz[stat.iso_d[si]]
         end
         dense_check && (Dfull[stat.perm[rg], stat.perm[rg]] .= Dg)
+        if exact
+            Sdense[rg, rg] .= Dg
+            continue
+        end
         F = lu!(Dg)
         Dfac[gi] = F
         DUp[rg, :] = F \ Up[rg, :]
     end
+    if exact
+        nB = size(Vc, 1)
+        (size(Vc) == (nB, nB) && nB <= nE) || error("battery curvature has the wrong size")
+        @inbounds for b in 1:nB, a in 1:nB
+            Sdense[invp[a], invp[b]] += Vc[a, b]      # battery powers are the first n_B of E
+        end
+        Sdense .-= Up * (fac.Mroot \ Up')
+        Sfac = _blas_full(() -> lu!(Sdense), nE)
+        return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, lu(fac.Mroot), fac.Mroot, Dfull, Sfac)
+    end
     small = lu!(fac.Mroot - Up' * DUp)
-    return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, small, fac.Mroot, Dfull)
+    return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, small, fac.Mroot, Dfull, nothing)
 end
 
 # S \ R for S = D - U inv(M) U' (Woodbury): X = D\R + D\U * ((M - U' D\U) \ (U' D\R)).
 # Works in the grouped order so that each group is a contiguous row block.
 function tree_kkt_schur_solve(st::TreeKKTStructured, R::AbstractMatrix)
     Rp = R[st.perm, :]
+    if !isnothing(st.Sfac)
+        ldiv!(st.Sfac, Rp)
+        X = Matrix{Float64}(undef, size(Rp))
+        X[st.perm, :] = Rp
+        return X
+    end
     _blas1() do
         for (g, rg) in enumerate(st.granges)
             ldiv!(st.Dfac[g], view(Rp, rg, :))
@@ -647,9 +685,9 @@ struct TreeKKTSolver
     t2::Vector{Float64}
 end
 
-function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatrixCSC)
+function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatrixCSC; Vc=nothing)
     fac = tree_kkt_factor(lay, K)
-    st = tree_kkt_structured(lay, stat, fac, K)
+    st = tree_kkt_structured(lay, stat, fac, K; Vc=Vc)
     return TreeKKTSolver(lay, stat, fac, st, copy(nonzeros(K)), reverse(lay.post),
                          zeros(stat.nN), zeros(lay.n), zeros(lay.n), zeros(lay.n))
 end
@@ -743,7 +781,7 @@ tree_kkt_battery_rows(s::TreeKKTSolver, RE::AbstractMatrix) = tree_kkt_schur_sol
 # pattern changes.
 function install_tree_kkt_hook(data, idx, nu::Int)
     state = Ref{Any}(nothing)
-    DDP4OPF.TREE_KKT_HOOK[] = function (K)
+    DDP4OPF.TREE_KKT_HOOK[] = function (K, Vc=nothing)
         st = state[]
         if isnothing(st) || st.colptr != K.colptr || st.rowval != K.rowval
             lay = tree_kkt_layout(data, idx, nu, K)
@@ -754,7 +792,7 @@ function install_tree_kkt_hook(data, idx, nu::Int)
                     " groups=", length(st.stat.gkeys),
                     " max_own=", maximum(length, lay.own), " max_iface=", maximum(length, lay.iface))
         end
-        return tree_kkt_solver(st.lay, st.stat, K)
+        return tree_kkt_solver(st.lay, st.stat, K; Vc=Vc)
     end
     return nothing
 end

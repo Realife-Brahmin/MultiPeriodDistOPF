@@ -188,6 +188,27 @@ _battery_schur_enabled() = get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
 # as above; the terminal stage (l_ux != 0) keeps the sparse LU.
 const TREE_KKT_HOOK = Ref{Any}(nothing)
 _structured_dynamics() = get(ENV, "FILTERDDP_STRUCTURED_DYNAMICS", "0") != "0"
+
+# Exact stage Hessian with the tree solver. The battery curvature
+# fu' * Vxx * fu is dense, but it lies entirely in the P_B x P_B block, which
+# the tree solver keeps (it eliminates the network onto the battery rows). So
+# with FILTERDDP_TREE_KKT=1 and without FILTERDDP_DIAG_HESSIAN it is not
+# assembled into K: K carries the rest of the exact Hessian (cost, barrier and
+# constraint curvature, off-diagonal terms included) and the dense block is
+# handed to the solver, which adds it to the battery Schur complement. Exact,
+# and the network elimination is the same as for the diagonal Hessian.
+#
+# The Hessian is built with a pattern that does not depend on the values
+# (explicit zeros kept), so the KKT pattern cache and the tree layout stay
+# valid across iterations.
+function _fixed_pattern_hessian(nu::Int, sigma::AbstractVector, blocks...)
+    I = collect(1:nu); J = collect(1:nu); V = Vector{Float64}(sigma)
+    for M in blocks
+        i, j, v = findnz(sparse(M))
+        append!(I, i); append!(J, j); append!(V, v)
+    end
+    return sparse(I, J, V, nu, nu)
+end
 _tree_kkt_enabled() = get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && !isnothing(TREE_KKT_HOOK[])
 
 # Rows E of K \ R for right-hand sides R supported on E (given as R[E, :]).
@@ -492,9 +513,18 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             # Ĥ = Luu + Σ + fu' * Vxx * fu + V̄x ⋅ fuu
             Σ_L = inv_ul .* zl
             Σ_U = inv_uu .* zu
+            # Exact Hessian with the tree solver: the battery curvature goes to
+            # the solver, not into K (see _fixed_pattern_hessian).
+            exact_batt = _tree_kkt_enabled() && !_diag_hessian_enabled() && sparse_stage &&
+                structured_B && nc > 0 && get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
+                !(haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
+                  t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1")))
+            battery_curvature = nothing
             if sparse_stage
                 fu_sparse = sparse(fu)
-                if _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+                if exact_batt
+                    Ĥ = _fixed_pattern_hessian(nu, Σ_L + Σ_U, luu, fuu, cuu)
+                elseif _diag_hessian_enabled() && _direct_diag_hessian_enabled()
                     curvature_diag = _diagonal_quadratic_form(fu_sparse, V̂xx, nu)
                     _lagged_curvature_enabled() && (_LAGGED_CURV[t] = curvature_diag)
                     Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + curvature_diag) + sparse(fuu)
@@ -516,6 +546,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     Matrix(@view fu[:, active_B_rows])
                 B_active = Matrix(fu_active' * V̂xx * fx)
                 lux_in_B && (B_active .+= lux[active_B_rows, :])
+                exact_batt && (battery_curvature = Matrix(fu_active' * V̂xx * fu_active))
             else
                 isempty(ux_tmp) && (ux_tmp = fu' * V̂xx)
                 B = ux_tmp * fx
@@ -527,7 +558,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 data.barrier_lagrangian_curr += dot(c, ϕ)
                 Qû = Qû + cu' * ϕ
                 C = C + cxx
-                Ĥ = Ĥ + cuu
+                exact_batt || (Ĥ = Ĥ + cuu)          # already included, fixed pattern
                 !structured_B && (B .+= cux)
             end
             
@@ -562,7 +593,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             if sparse_kkt
                 kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                 kkt_start_ns = time_ns()
-                Ĥ = sparse(Symmetric(Ĥ))
+                exact_batt || (Ĥ = sparse(Symmetric(Ĥ)))
                 cu_sparse = _stale_jacobian(t, data.k, sparse(cu))
                 K = _kkt_pattern_cache_enabled() ?
                     _cached_kkt!((objectid(solver), t), Ĥ, cu_sparse, nu, nc) :
@@ -620,7 +651,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     if timing_diagnostic || memory_diagnostic
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
-                        F = tree_kkt ? TREE_KKT_HOOK[](K) : _stage_factor(t, K, data.k, lagged_factors)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K, battery_curvature) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
@@ -665,7 +696,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_s = (time_ns() - solve_start_ns) / 1e9
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
-                        F = tree_kkt ? TREE_KKT_HOOK[](K) : _stage_factor(t, K, data.k, lagged_factors)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K, battery_curvature) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
