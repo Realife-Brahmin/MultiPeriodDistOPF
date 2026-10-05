@@ -331,3 +331,28 @@ demonstrated.
   15% to 25% of the run, consistent with the 20 GiB working set. On large10k
   the ratio moves with the two solvers' iteration counts (DDP 75 then 120,
   Ipopt 108 then 65).
+
+## 6. Agenda of 2026-10-07: singular values of the stage objects
+
+`sensitivity_spectra.jl` on production-config captures (stage 2 of `T=6`,
+one early and one late iteration where available). Rank needed to capture
+each matrix to 10% / 1% in Frobenius norm:
+
+| object | ieee123 (51) | med2522 (249) | large10k (1020) |
+|---|---|---|---|
+| `V_xx` incoming | 51 / 51 | 244-247 / 249 | 1005 / 1020 |
+| `V_xx` minus its diagonal | 23-24 / 46-47 | 15-69 / 160-209 | 703 / 952 |
+| `beta`, all controls | 2-50 / 47-51 | 6-74 / 190-247 | 995 / 1020 |
+| `beta_B`, battery rows | 51 / 51 | 245 / 249 | 1005 / 1020 |
+
+`V_xx` has a flat spectrum (largest / smallest singular value 1.1-7) and is
+nearly diagonal: its off-diagonal part is 0.7-1.0% of its Frobenius norm on
+ieee123, 1.3% (late) to 29.5% (early, `mu = 0.2`) on med2522, 11% on
+large10k. The off-diagonal part is not low-rank. The full sensitivity map is
+dominated by a few directions only early in the solve and only to 10%.
+
+So nothing here is compressible by rank. The structure is diagonal dominance
+of the battery block, which is why the diagonal Hessian works, and what it
+misses is a small full-rank remainder: carrying the full `V_xx` in the
+battery block (BATTERY_BLOCK_REDUCTION_EXPLAINED.md, Section 6) would capture
+it; a diagonal-plus-low-rank correction would not.
