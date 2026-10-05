@@ -356,3 +356,19 @@ of the battery block, which is why the diagonal Hessian works, and what it
 misses is a small full-rank remainder: carrying the full `V_xx` in the
 battery block (BATTERY_BLOCK_REDUCTION_EXPLAINED.md, Section 6) would capture
 it; a diagonal-plus-low-rank correction would not.
+
+**Wider sample (2026-10-04):** a middle stage of `T=24` at an early, middle
+and late iteration (ieee123, med2522) and large10k `T=6` stage 3 late, all in
+the current configuration (per-system `C_B`). Rank for 10% / 1%:
+
+| object | ieee123 (51) | med2522 (249) | large10k late (1020) |
+|---|---|---|---|
+| `V_xx` incoming | 51 / 51 | 243-247 / 249 | 1010 / 1020 |
+| `V_xx` minus its diagonal | 14-22 / 45-47 | 37-56 / 168-195 | 659 / 933 |
+| `beta`, all controls | 2-42 / 46-51 | 11-16 / 227-231 | 386 / 929 |
+| `beta_B`, battery rows | 51 / 51 | 244-247 / 249 | 1010 / 1020 |
+
+Off-diagonal share of `V_xx`: ieee123 1.1-1.2% throughout; med2522 26.7%
+early (`mu = 4e-2`), 4.1% mid, 3.4% late; large10k 1.8% late (11% early).
+Same conclusion: nothing is low-rank, `V_xx` is nearly diagonal, and it is
+least diagonal early in the barrier phase on med2522.
