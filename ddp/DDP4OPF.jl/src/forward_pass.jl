@@ -1,3 +1,24 @@
+# Which bound stops the step. The line search halves the step whenever a trial
+# point breaks the fraction-to-boundary rule (status 2); those halvings are not
+# counted in `data.l`. With FILTERDDP_FTB_DIAGNOSTIC=1 every such rejection is
+# printed: the stage, which of the four tests failed (control at its lower or
+# upper bound, or the multiplier of one), how many entries failed, and the
+# worst entry with its slack before and after. Read-only: no effect on iterates.
+_ftb_diagnostic() = get(ENV, "FILTERDDP_FTB_DIAGNOSTIC", "0") != "0"
+function _ftb_report(data, t::Int, kind::String, before, after, tau, mask)
+    worst = 0; ratio = Inf; n = 0
+    for i in eachindex(before)
+        (mask === nothing || mask[i]) || continue
+        before[i] * (1. - tau) > after[i] || continue
+        n += 1
+        r = after[i] / before[i]
+        r < ratio && (ratio = r; worst = i)
+    end
+    @printf("FILTERDDP_FTB iteration=%d step=%.6e stage=%d kind=%s failed=%d worst_index=%d before=%.6e after=%.6e\n",
+            data.k, data.step_size, t, kind, n, worst, before[worst], after[worst])
+    return nothing
+end
+
 function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
             ocp::OCP{T, nx, nu, nc}, data::SolverData{T},
             options::Options{T}; verbose=false) where {T, nx, nu, nc, nux, ncx}
@@ -92,18 +113,22 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu, n
 
         if any((ul̄ .* (1. - τ) .> ul) .* cl.maskl)
             data.status = 2
+            _ftb_diagnostic() && _ftb_report(data, t, "control_lower", ul̄, ul, τ, cl.maskl)
             return
         end
         if any((uū .* (1. - τ) .> uu) .* cl.masku)
             data.status = 2
+            _ftb_diagnostic() && _ftb_report(data, t, "control_upper", uū, uu, τ, cl.masku)
             return
         end
         if any(zl̄ .* (1. - τ) .> zl)
             data.status = 2
+            _ftb_diagnostic() && _ftb_report(data, t, "multiplier_lower", zl̄, zl, τ, nothing)
             return
         end
         if any(zū .* (1. - τ) .> zu)
             data.status = 2
+            _ftb_diagnostic() && _ftb_report(data, t, "multiplier_upper", zū, zu, τ, nothing)
             return
         end
 
