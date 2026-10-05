@@ -391,3 +391,32 @@ approximation is the weak point at long horizons, on this system. (It does
 not by itself explain the med2522 `T=1536` failure, which stopped at
 iteration 33, far earlier.) This is the case for routing the full `V_xx`
 through the battery block of the tree solver.
+
+## 8. Exact stage Hessian through the battery block (2026-10-05)
+
+`f_uᵀ V_xx f_u` is dense but lies entirely in the `P_B` x `P_B` block the tree
+solver keeps, so with `FILTERDDP_TREE_KKT=1` and no `FILTERDDP_DIAG_HESSIAN`
+it is not assembled into `K`: the network elimination is the diagonal case's,
+and the dense block is added to the battery Schur complement, which is then
+factored densely (2 `n_B` x 2 `n_B`). No sparse fill. Reproduces the original
+exact-Hessian path on ieee123 `T=96` (109 = 109 iterations, identical
+objective).
+
+Clean runs, time to near-optimality, tree solver in both columns:
+
+| case | diagonal: iters, time | exact: iters, time | change |
+|---|---|---|---|
+| ieee123 `T=6` | 68, 23.2 s | 56, 22.7 s | -2% |
+| ieee123 `T=24` | 85, 35.7 s | 85, 34.9 s | -2% |
+| ieee123 `T=96` | 120, 107.9 s | 100, 86.3 s | -20% |
+| med2522 `T=6` | 68, 57.5 s | 45, 46.0 s | -20% |
+| med2522 `T=24` | 77, 177.8 s | 67, 154.6 s | -13% |
+| med2522 `T=96` | 96, 811.7 s | 83, 687.9 s | -15% |
+| large10k `T=6` | 101, 259.7 s | 97, 362.3 s | +39% |
+| large10k `T=24` | 98, 924.2 s | 90, 1270.9 s | +38% |
+
+Per stage: med2522 0.064 s against 0.067 s (the 498 x 498 block is free);
+large10k 0.47 s against 0.31 s (the 2,040 x 2,040 block costs 0.17 s) for 4-8
+fewer iterations. So exact curvature pays on med2522 (5.4-10.3x HSL) and not,
+as implemented, on large10k. Eliminating the energy rows analytically would
+halve that block's dimension (about 8x less factorization work).
