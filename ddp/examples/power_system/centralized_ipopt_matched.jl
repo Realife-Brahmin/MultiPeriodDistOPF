@@ -32,6 +32,8 @@ using Serialization
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 const MOI = JuMP.MOI
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
+include(joinpath(@__DIR__, "voltage_screening.jl"))
+include(joinpath(@__DIR__, "loadflow_start.jl"))
 
 system = length(ARGS) >= 1 ? ARGS[1] : "ieee123C_1ph"
 T = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 3
@@ -131,6 +133,55 @@ for t in Tset
             @constraint(model, B[j,t] == B[j,t-1] - dt*P_B[j,t])
         end
     end
+end
+# The exact bound reductions of the FilterDDP driver (FILTERDDP_SCREEN there,
+# same item names; voltage_screening.jl), so that both solvers can be given
+# the identical model. Off by default.
+ipopt_screen = Set(String.(strip.(split(get(ENV, "IPOPT_SCREEN", ""), ','; keepempty=false))))
+"all" in ipopt_screen && (ipopt_screen = Set(["substation", "vupper", "vlower", "ell", "psubs"]))
+if !isempty(ipopt_screen)
+    isempty(setdiff(ipopt_screen, ["substation", "vupper", "vlower", "ell", "psubs"])) ||
+        error("IPOPT_SCREEN: unknown item in $(collect(ipopt_screen))")
+    vs = voltage_screen(data, T)
+    drop_lo = 0; drop_up = 0
+    for (n, j) in enumerate(vs.buses)
+        fixed = j == root && "substation" in ipopt_screen
+        if fixed || (j != root && "vlower" in ipopt_screen && !any(@view vs.keep_lo[n, :]))
+            for t in Tset; delete_lower_bound(v[j,t]); end
+            global drop_lo += 1
+        end
+        if fixed || (j != root && "vupper" in ipopt_screen && !any(@view vs.keep_up[n, :]))
+            for t in Tset; delete_upper_bound(v[j,t]); end
+            global drop_up += 1
+        end
+    end
+    drop_ell = "ell" in ipopt_screen
+    drop_ell && for e in Lset, t in Tset; delete_lower_bound(ell[e,t]); end
+    drop_ps = "psubs" in ipopt_screen && minimum(vs.psubs_min) > 0
+    drop_ps && for t in Tset; delete_lower_bound(P_Subs[t]); end
+    @printf("BOUND_SCREEN %s: voltage limits dropped %d lower, %d upper of %d buses; ell >= 0 dropped on %d lines; P_Subs >= 0 dropped: %s\n",
+            join(sort!(collect(ipopt_screen)), ","), drop_lo, drop_up, length(Nset), drop_ell ? length(Lset) : 0, drop_ps)
+end
+# IPOPT_LOADFLOW_START=1: the starting point the FilterDDP driver gets from
+# FILTERDDP_LOADFLOW_START (loadflow_start.jl): batteries idle, DERs at zero
+# reactive power, and the power flow of each period. Ipopt's own options are
+# left at their defaults (it still pushes the point inside the bounds).
+if get(ENV, "IPOPT_LOADFLOW_START", "0") != "0"
+    for t in Tset
+        vv, PP, QQ, LL, _ = loadflow_sweep(data, t)
+        for (n, j) in enumerate(Nset); set_start_value(v[j,t], vv[n]); end
+        ps0 = 0.0; qs0 = 0.0
+        for (le, e) in enumerate(Lset)
+            set_start_value(P[e,t], PP[le]); set_start_value(Q[e,t], QQ[le]); set_start_value(ell[e,t], LL[le])
+            if e[1] == root
+                ps0 += PP[le]; qs0 += QQ[le]
+            end
+        end
+        set_start_value(P_Subs[t], ps0); set_start_value(Q_Subs[t], qs0)
+        for j in Bset; set_start_value(P_B[j,t], 0.0); set_start_value(B[j,t], data[:B0_pu][j]); end
+        for j in Dset; set_start_value(q_D[j,t], 0.0); end
+    end
+    println("IPOPT_LOADFLOW_START applied")
 end
 build_s = time() - build_start
 

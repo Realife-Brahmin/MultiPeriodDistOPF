@@ -66,3 +66,5 @@ ddp/results/kkt_ordering/captures/
 !ddp/results/ipopt_no_cb/logs/
 !ddp/results/ipopt_cb_*/logs/
 !ddp/results/ipopt_hsl/logs/
+# voltage-limit masks written by constraint_activity.jl (regenerable)
+ddp/results/constraint_activity/*.jls
