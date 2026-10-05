@@ -372,3 +372,22 @@ Off-diagonal share of `V_xx`: ieee123 1.1-1.2% throughout; med2522 26.7%
 early (`mu = 4e-2`), 4.1% mid, 3.4% late; large10k 1.8% late (11% early).
 Same conclusion: nothing is low-rank, `V_xx` is nearly diagonal, and it is
 least diagonal early in the barrier phase on med2522.
+
+## 7. Does the diagonal Hessian degrade with horizon? (2026-10-04)
+
+`run_diag_vs_exact_horizon.sh`: ieee123, UMFPACK, structured dynamics, run to
+strict tolerance; both arms converge everywhere.
+
+| `T` | diagonal | exact | extra | time diag / exact |
+|---|---|---|---|---|
+| 96 | 129 | 109 | +18% | 76 / 98 s |
+| 384 | 155 | 153 | +1% | 300 / 437 s |
+| 1536 | 309 | 169 | **+83%** | 2473 / 2846 s |
+
+Not monotone, but at `T=1536` the diagonal Hessian needs nearly twice the
+iterations, 50 of them at the barrier floor against 20; the exact count grows
+only mildly with horizon. Objectives agree to 1e-8. So the diagonal
+approximation is the weak point at long horizons, on this system. (It does
+not by itself explain the med2522 `T=1536` failure, which stopped at
+iteration 33, far earlier.) This is the case for routing the full `V_xx`
+through the battery block of the tree solver.
