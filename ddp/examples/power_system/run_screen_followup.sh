@@ -3,7 +3,8 @@
 # was measured with the line search throttled by the substation voltage bound
 # (ddp/notes/CONSTRAINT_SCREENING.md), so the cases that fed a conclusion are
 # rerun in the new configuration (screening + power-flow start + exact step),
-# compilation excluded by a warm-up. One run at a time, quiet machine, full
+# compilation excluded by a warm-up (a full first solve on the Table II
+# cells, 8 iterations at long horizons). One run at a time, quiet machine, full
 # per-iteration logs. Completed logs are skipped.
 #
 #   A. longer horizons, diagonal Hessian, tree solver: med2522 T=192, 384 and
@@ -38,14 +39,14 @@ A)
   IPOPT_SCREEN=$SCREEN IPOPT_LOADFLOW_START=1 IPOPT_TAG_SUFFIX=_screen_lf SOLVERS="ma57 ma97" \
     CELLS="ieee2522C_1ph:192 large10kC_1ph:96 ieee2522C_1ph:384 large10kC_1ph:192" \
     bash ddp/examples/power_system/run_ipopt_hsl.sh
-  export FILTERDDP_WARMUP=1 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
+  export FILTERDDP_WARMUP=8 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
   IPOPT_REF_LOG=$H/ipopt_ma57_ieee2522C_1ph_T192.log      bash "$S" ieee2522C_1ph 192 diag 16 1
   IPOPT_REF_LOG=$H/ipopt_ma97_large10kC_1ph_T96.log       bash "$S" large10kC_1ph 96 diag 16 1
   IPOPT_REF_LOG=$H/ipopt_oom_ma57_ieee2522C_1ph_T384.log  bash "$S" ieee2522C_1ph 384 diag 16 1
   IPOPT_REF_LOG=$H/ipopt_ma97_large10kC_1ph_T192.log      bash "$S" large10kC_1ph 192 diag 16 1
   ;;
 B)
-  export FILTERDDP_WARMUP=3
+  export FILTERDDP_WARMUP=full
   for cell in ieee123C_1ph:6 ieee123C_1ph:24 ieee123C_1ph:96 ieee2522C_1ph:6 ieee2522C_1ph:24 \
               ieee2522C_1ph:96 large10kC_1ph:6 large10kC_1ph:24; do
     sys=${cell%%:*}; T=${cell##*:}
@@ -56,12 +57,12 @@ B)
   export JULIA_NUM_THREADS=8
   ;;
 C)
-  export FILTERDDP_WARMUP=3 RUN_TAG_SUFFIX=_tableII_jt8_cb0_typed_tree3_screen_warm
+  export FILTERDDP_WARMUP=full RUN_TAG_SUFFIX=_tableII_jt8_cb0_typed_tree3_screen_warm
   CB=0 bash "$S" large10kC_1ph 6 diag 16 1
   CB=0 bash "$S" ieee2522C_1ph 96 diag 16 1
   ;;
 D)
-  export FILTERDDP_WARMUP=1 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
+  export FILTERDDP_WARMUP=8 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
   IPOPT_REF_LOG=$H/ipopt_oom_ma57_ieee2522C_1ph_T1152.log bash "$S" ieee2522C_1ph 1152 diag 16 1
   LOG=ddp/results/kkt_ordering/fullrun_blocked/fddp_ieee2522C_1ph_T1536_diag_jt8_cbsys_typed_tree3_screen_warm_strict_r1.log
   if ! grep -q "solve complete" "$LOG" 2>/dev/null; then

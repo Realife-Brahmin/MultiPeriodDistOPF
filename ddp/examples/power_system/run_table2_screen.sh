@@ -9,8 +9,8 @@
 # FilterDDP: each system in its fastest diagonal-Hessian configuration
 # (ieee123: structured dynamics + UMFPACK on one thread; med2522 and large10k:
 # the tree solver on eight), once as before (tag _screen, compilation inside
-# the timed solve) and once after a 3-iteration warm-up (tag _screen_warm,
-# compilation excluded).
+# the timed solve) and once as the second solve in the same process
+# (FILTERDDP_WARMUP=full, tag _screen_warm: compilation excluded).
 # Ipopt: MUMPS, MA57, MA97 on 1 and 8 threads (run_ipopt_hsl.sh), logs tagged
 # _screen_lf in ddp/results/ipopt_hsl/logs/.
 #
@@ -36,7 +36,7 @@ export PIN_BLAS_THREADS=0 VARIANTS=blocked_w16 CB=system
 export FILTERDDP_DIRECT_DIAG_HESSIAN=1 FILTERDDP_TRIPLET_SECOND_DERIVATIVES=1 FILTERDDP_CACHE_KKT_PATTERN=1
 export FILTERDDP_FACTOR_BACKED_POLICY=1 FILTERDDP_TYPED_EQUATIONS=1 FILTERDDP_STRUCTURED_DYNAMICS=1
 export FILTERDDP_SCREEN=$SCREEN FILTERDDP_LOADFLOW_START=1 FILTERDDP_AFFINE_LINESEARCH=1
-for warm in 0 3; do
+for warm in 0 full; do
   [ $warm = 0 ] && { unset FILTERDDP_WARMUP; W=""; } || { export FILTERDDP_WARMUP=$warm; W=_warm; }
   for cell in $CELLS; do
     sys=${cell%%:*}; T=${cell##*:}

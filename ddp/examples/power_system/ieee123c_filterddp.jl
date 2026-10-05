@@ -536,20 +536,31 @@ if get(ENV, "FILTERDDP_LOADFLOW_START", "0") != "0"
     @printf("LOADFLOW_START sweeps=%d max_equality_residual=%.3e lowest_voltage=%.4f pu\n",
             sweeps, res0, sqrt(minimum(minimum(@view ubar[t][idx.v]) for t in 1:T)))
 end
-# FILTERDDP_WARMUP=<n>: run n iterations of the same solve first, silently, and
-# discard them. Julia compiles each method the first time it runs (15-30 s
-# here, all inside the first iteration), so without this the timed solve below
-# includes that one-time cost. The timed solve restarts from the same point.
-warmup = parse(Int, get(ENV, "FILTERDDP_WARMUP", "0"))
+# FILTERDDP_WARMUP=<n> or `full`: run the same solve first, silently, for n
+# iterations or to its normal stop, and discard it. Julia compiles each method
+# the first time it runs (15-30 s here, nearly all inside the first iteration),
+# so without this the timed solve below includes that one-time cost. `full`
+# reaches every code path (barrier updates, the stopping test); a small n is
+# for long horizons, where a second complete solve is too expensive. The timed
+# solve restarts from the same point and reproduces the same iterates.
+warmup_spec = get(ENV, "FILTERDDP_WARMUP", "0")
+warmup = warmup_spec == "full" ? typemax(Int) : parse(Int, warmup_spec)
 if warmup > 0
     keep_max = solver.options.max_iterations
-    solver.options.max_iterations = warmup
+    solver.options.max_iterations = min(warmup, keep_max)
     tw = time()
-    redirect_stdout(devnull) do
-        solve!(solver, x0, [copy(u) for u in ubar])
+    # To a scratch file, not devnull: the print methods are compiled per stream
+    # type, and the log is a file. With devnull about 1.7 s of compilation was
+    # left in the timed solve.
+    scratch = tempname()
+    open(scratch, "w") do io
+        redirect_stdout(io) do
+            solve!(solver, x0, [copy(u) for u in ubar])
+        end
     end
+    rm(scratch; force=true)
     solver.options.max_iterations = keep_max
-    @printf("WARMUP iterations=%d time_s=%.3f\n", warmup, time() - tw)
+    @printf("WARMUP %s iterations=%d time_s=%.3f\n", warmup_spec, solver.data.k, time() - tw)
 end
 t1 = time()
 println("entering solve! ...")
