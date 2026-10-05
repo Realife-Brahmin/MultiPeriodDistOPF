@@ -149,3 +149,70 @@ complement was not faster). On a radial network it is cheap:
   (untested).
 - ieee123 is slower with it (fixed overhead exceeds UMFPACK's 4 ms).
 - Retained storage per stage is not yet lean (PARALLEL_IN_TIME.md).
+
+## 10. A toy example (power balance and voltage drop only)
+
+```
+        0   substation, held at 240 V
+        |
+        1   load 1 kW
+       / \
+      2   3        loads: 2 kW at bus 2, 4 kW at bus 3
+     [A] [B]       batteries discharging pA, pB (kW)
+```
+
+Each line drops 1 V per kW it carries (linearized voltage drop). Unknowns:
+flows `P01, P12, P13`, voltages `v1, v2, v3`, battery powers `pA, pB`.
+
+```
+power balance (kW)              voltage drop / KVL (V)       battery rule (kW)
+bus 2:  P12 + pA = 2            v1 = 240 - P01               pA = 236 - v2
+bus 3:  P13 + pB = 4            v2 = v1  - P12               pB = 236 - v3
+bus 1:  P01 = P12 + P13 + 1     v3 = v1  - P13
+```
+
+The battery rule (1 kW per volt below 236 V) stands in for the battery's
+optimality condition, which is what those rows are in the real stage system.
+
+1. **Leaf bus 2** (`P12`, `v2`): `P12 = 2 - pA`, `v2 = v1 - 2 + pA`; battery
+   A's rule becomes `2 pA + v1 = 238`; bus 1's balance `P01 = 3 - pA + P13`.
+2. **Leaf bus 3** (`P13`, `v3`): `P13 = 4 - pB`, `v3 = v1 - 4 + pB`; battery
+   B's rule becomes `2 pB + v1 = 240`; bus 1's balance `P01 = 7 - pA - pB`.
+3. **Bus 1** (`P01`, `v1`): `v1 = 233 + pA + pB`, which gives the battery block
+
+```
+3 pA +   pB = 5
+  pA + 3 pB = 7        ->  pA = 1 kW, pB = 2 kW
+```
+
+The off-diagonal 1 is the shared line 0-1. Sweeping back down recovers the
+network: `P01 = 4`, `v1 = 236`; `P12 = 1`, `v2 = 235`; `P13 = 2`, `v3 = 234`.
+
+The real solver does the same with about ten unknowns per bus (`P`, `Q`,
+`ℓ`, `v`, a slack and the multipliers of its rows), so each elimination is a
+10 x 10 solve.
+
+## 11. Where the ingredients come from
+
+Nothing here is new as linear algebra; it is known techniques applied to the
+structure of the MPOPF stage system. Not a literature review.
+
+- **Kron reduction:** F. Dörfler and F. Bullo, "Kron Reduction of Graphs With
+  Applications to Electrical Networks", IEEE Trans. Circuits and Systems I,
+  60(1), 2013.
+- **Sweeps along the path to the root for sparse right-hand sides and
+  selected outputs:** W. F. Tinney, V. Brandwajn and S. M. Chan, "Sparse
+  Vector Methods", IEEE Trans. Power Apparatus and Systems, PAS-104, 1985.
+- **Fill-free elimination on a tree:** elimination trees and multifrontal
+  factorization (standard sparse direct methods); the same sweep shape as the
+  backward/forward sweep for radial load flow.
+- **Linear-time recursive KKT solves on trees:** M. C. Steinbach,
+  "Tree-Sparse Convex Programs" (scenario trees); Riccati solvers for
+  tree-structured QPs in MPC.
+- **Blocks joined by a small coupling block, solved by a Schur complement:**
+  arrowhead / Schur-complement interior-point decompositions, e.g. Kang, Cao,
+  Word and Laird, Computers & Chemical Engineering, 2014, and PIPS-NLP.
+
+Whether this exact combination (tree elimination of the stage KKT inside DDP
+for radial multi-period OPF, keeping the battery block) has been published
+was not established by a quick search.
