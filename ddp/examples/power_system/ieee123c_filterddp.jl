@@ -536,6 +536,21 @@ if get(ENV, "FILTERDDP_LOADFLOW_START", "0") != "0"
     @printf("LOADFLOW_START sweeps=%d max_equality_residual=%.3e lowest_voltage=%.4f pu\n",
             sweeps, res0, sqrt(minimum(minimum(@view ubar[t][idx.v]) for t in 1:T)))
 end
+# FILTERDDP_WARMUP=<n>: run n iterations of the same solve first, silently, and
+# discard them. Julia compiles each method the first time it runs (15-30 s
+# here, all inside the first iteration), so without this the timed solve below
+# includes that one-time cost. The timed solve restarts from the same point.
+warmup = parse(Int, get(ENV, "FILTERDDP_WARMUP", "0"))
+if warmup > 0
+    keep_max = solver.options.max_iterations
+    solver.options.max_iterations = warmup
+    tw = time()
+    redirect_stdout(devnull) do
+        solve!(solver, x0, [copy(u) for u in ubar])
+    end
+    solver.options.max_iterations = keep_max
+    @printf("WARMUP iterations=%d time_s=%.3f\n", warmup, time() - tw)
+end
 t1 = time()
 println("entering solve! ...")
 flush(stdout)
