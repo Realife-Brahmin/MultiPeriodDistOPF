@@ -287,3 +287,47 @@ So the tree solver stays accurate through the whole barrier sequence.
 large10k `T=6` line-search failure at iteration 2, med2522 `T=96` stalls at
 primal `1.2e-4` (iteration 93). Those failures belong to the diagonal
 Hessian, not to the linear solver.
+
+### Long horizons, one thread, repeats and memory (clean queue, 2026-10-01/02)
+
+`run_tree_long_horizon.sh`, tree solver + structured dynamics, quiet machine.
+
+**Repeats** (med2522, time to near-optimality): 58.3 / 178.3 / 813.9 s against
+57.5 / 177.8 / 811.7 s in the first run: reproducible to 1.4%.
+
+**One Julia thread:** large10k `T=6` 304.8 s (259.7 on eight), med2522 `T=24`
+215.2 s (177.8): 17-21% slower, same iterations.
+
+**Longer horizons**, against the HSL runs on the same instances (peak
+resident memory in GiB):
+
+| case | DDP iters | DDP time | DDP peak | Ipopt HSL time | Ipopt peak | ratio |
+|---|---|---|---|---|---|---|
+| med2522 `T=96` | 96 | 813.9 s | 2.5 | 127.3 s (MA57) | | 6.4 |
+| med2522 `T=192` | 108 | 1904.7 s | 4.0 | 276.7 s (MA57) | 4.6 | 6.9 |
+| med2522 `T=384` | 114 | 4744.7 s | 7.2 | 589.8 s (MA57) | 9.0 | 8.0 |
+| med2522 `T=1152` | 130 | 33364.4 s | 19.7 | 2045.5 s (MA57) | 19.9 | 16.3 |
+| large10k `T=96` | 75 | 2732.9 s | 7.3 | 926.5 s (MA97) | 9.4 | 2.9 |
+| large10k `T=192` | 120 | 9165.6 s | 13.9 | 1432.9 s (MA97) | 19.0 | 6.4 |
+
+Against MA57, large10k is 1.46x (`T=96`) and 1.34x (`T=192`).
+
+**med2522 `T=1536`** (MA57 and MA97 both ran out of memory there): FilterDDP
+**failed**, a line-search failure at iteration 33 (`mu = 4e-2`, steps of
+`6e-5` with the regularization active from about iteration 30), at 22.5 GiB
+peak. So a solution beyond the centralized memory limit is still not
+demonstrated.
+
+**What this shows.**
+- No memory advantage yet. Retained storage grows linearly, about 17.5 MiB
+  per med2522 stage and 74 MiB per large10k stage, so at med2522 `T=1152`
+  FilterDDP needs as much memory as Ipopt (19.7 against 19.9 GiB); at
+  large10k it needs about 25% less. Most of it is avoidable: every stage
+  keeps a tree solver made of thousands of small matrices (object overhead
+  ~2.5 kB per bus), its own copy of `K`'s values and its own work buffers.
+- The gap to HSL does not keep narrowing. On med2522 it widens with horizon
+  (6.4, 6.9, 8.0, 16.3): iterations grow (96 to 130) and the per-stage time
+  rises from 0.068 to 0.157 s at `T=1152`, with the forward pass going from
+  15% to 25% of the run, consistent with the 20 GiB working set. On large10k
+  the ratio moves with the two solvers' iteration counts (DDP 75 then 120,
+  Ipopt 108 then 65).
