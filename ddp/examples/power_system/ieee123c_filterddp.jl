@@ -18,6 +18,8 @@ using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
+include(joinpath(@__DIR__, "voltage_screening.jl"))
+include(joinpath(@__DIR__, "loadflow_start.jl"))
 get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
@@ -234,6 +236,43 @@ function build_model(data; gamma=0.0)
     end
     lower[idx.qnorm] .= -1.0; upper[idx.qnorm] .= 1.0
     lower[idx.soc_slack] .= 0.0
+    # Bound screening (voltage_screening.jl, ddp/notes/CONSTRAINT_SCREENING.md).
+    # FILTERDDP_SCREEN is a comma-separated list of exact reductions:
+    #   substation  no limits on the substation voltage: it is fixed by its own
+    #               equality row, at exactly its upper limit;
+    #   vupper      no upper voltage limit where the rules prove it cannot bind
+    #               in any period (limits here are per control, not per period);
+    #   vlower      likewise for lower voltage limits;
+    #   ell         no ell >= 0: implied by the SOC row, P^2 + Q^2 + s = v ell
+    #               with s >= 0 and v > 0;
+    #   psubs       no P_Subs >= 0 when the load exceeds everything the
+    #               batteries and DERs can inject, in every period.
+    # `all` selects every item.
+    screen_items = ["substation", "vupper", "vlower", "ell", "psubs"]
+    screen = Set(String.(strip.(split(get(ENV, "FILTERDDP_SCREEN", ""), ','; keepempty=false))))
+    "all" in screen && (screen = Set(screen_items))
+    isempty(setdiff(screen, screen_items)) || error("FILTERDDP_SCREEN: unknown item in $(collect(screen))")
+    if !isempty(screen)
+        vs = voltage_screen(data, Nstage)
+        rk = buspos[root]
+        drop_lo = 0; drop_up = 0
+        for k in eachindex(buses)
+            fixed = k == rk && "substation" in screen
+            if fixed || (k != rk && "vlower" in screen && !any(@view vs.keep_lo[k, :]))
+                lower[idx.v[k]] = -Inf; drop_lo += 1
+            end
+            if fixed || (k != rk && "vupper" in screen && !any(@view vs.keep_up[k, :]))
+                upper[idx.v[k]] = Inf; drop_up += 1
+            end
+        end
+        drop_ell = "ell" in screen
+        drop_ell && (lower[idx.ell] .= -Inf)
+        drop_ps = "psubs" in screen && minimum(vs.psubs_min) > 0
+        drop_ps && (lower[idx.ps] = -Inf)
+        @printf("BOUND_SCREEN %s: voltage limits dropped %d lower, %d upper of %d buses; ell >= 0 dropped on %d lines; P_Subs >= 0 dropped: %s (lossless lower bound %.3f p.u.)\n",
+                join(sort!(collect(screen)), ","), drop_lo, drop_up, length(buses),
+                drop_ell ? length(lines) : 0, drop_ps, minimum(vs.psubs_min))
+    end
     limits = ControlLimits(lower, upper)
 
     stage_objs = Any[]
@@ -452,8 +491,7 @@ data = deserialize(datafile)
 # battery cost as a reduced-space experiment. Default behaviour is unchanged.
 if haskey(ENV, "REDUCED_CB")
     data[:C_B] = battery_cb(system, ENV["REDUCED_CB"])   # a number, or "system"
-    @printf("C_B OVERRIDE: %.6g
-", data[:C_B])
+    @printf("C_B OVERRIDE: %.6g\n", data[:C_B])
 end
 idx, nu = control_layout(data)
 nx = length(data[:Bset])
@@ -492,6 +530,12 @@ for (b,j) in enumerate(data[:Bset])
     u0[idx.energy_slack[b]] = x0[b] - emin
 end
 ubar = [copy(u0) for _ in 1:T]
+if get(ENV, "FILTERDDP_LOADFLOW_START", "0") != "0"
+    sweeps = maximum(loadflow_start!(ubar[t], data, idx, t) for t in 1:T)
+    res0 = maximum(norm(ocp.stage_constraints[t].c(x0, ubar[t]), Inf) for t in 1:T)
+    @printf("LOADFLOW_START sweeps=%d max_equality_residual=%.3e lowest_voltage=%.4f pu\n",
+            sweeps, res0, sqrt(minimum(minimum(@view ubar[t][idx.v]) for t in 1:T)))
+end
 t1 = time()
 println("entering solve! ...")
 flush(stdout)
@@ -539,6 +583,21 @@ if gammaT > 0
     end
 end
 @printf("FilterDDP objective=%.12f max_equality_residual=%.3e\n", Jddp, max_eq)
+# Every screened quantity against its ORIGINAL limits, whether or not the limit
+# was in the solve (FILTERDDP_SCREEN): the after-the-fact certificate that a
+# dropped limit did not matter.
+let below = 0, above = 0, worst = 0.0, ellmin = Inf, psmin = Inf
+    for t in 1:T
+        for (k,j) in enumerate(data[:Nset])
+            lo = data[:Vminpu][j]^2 - uddp[t][idx.v[k]]; hi = uddp[t][idx.v[k]] - data[:Vmaxpu][j]^2
+            lo > 1e-8 && (below += 1); hi > 1e-8 && (above += 1)
+            worst = max(worst, lo, hi)
+        end
+        ellmin = min(ellmin, minimum(@view uddp[t][idx.ell])); psmin = min(psmin, uddp[t][idx.ps])
+    end
+    @printf("BOUND_CHECK screen=%s voltages below=%d above=%d worst_violation=%.3e min_ell=%.3e min_P_Subs=%.3e\n",
+            get(ENV, "FILTERDDP_SCREEN", "none"), below, above, worst, ellmin, psmin)
+end
 
 reffile = joinpath(REPO, "envs", "tadmm", "processedData", "$(system)_T$(T)", "sol_socp_bf.jls")
 if isfile(reffile)
