@@ -50,6 +50,25 @@ establishes something a future session, on any machine, would need.
   (`near_opt_from_logs.jl`) post-hoc from these logs. Without these env vars
   the run is unreportable — you cannot reconstruct the NO crossing point.
 
+- **Report solve time, not compile time** (user, 2026-10-05). Julia compiles
+  each method on first use: 15-30 s, all inside FilterDDP's first iteration
+  (14.7 of the 17.9 s once reported for ieee123 `T=6`). Timed FilterDDP runs
+  set `FILTERDDP_WARMUP=3` (1 at horizons of 192 or more): that many silent
+  iterations first, then the timed solve from the same start, same iterates.
+  Every FilterDDP time measured before 2026-10-05 includes compilation.
+- **Screened model and power-flow start, for both solvers** (2026-10-05, see
+  `ddp/notes/CONSTRAINT_SCREENING.md`). The substation voltage is fixed at
+  exactly its upper limit, which stopped FilterDDP from ever taking a full
+  step; every iteration count measured before 2026-10-05 carries that
+  throttle. Current configuration: `FILTERDDP_SCREEN=substation,vupper,ell,psubs`,
+  `FILTERDDP_LOADFLOW_START=1`, `FILTERDDP_AFFINE_LINESEARCH=1`. The reductions
+  are exact (same optimum), but they and the start also speed Ipopt up (53 to
+  12 iterations on large10k `T=6`), so any comparison gives Ipopt the same:
+  `IPOPT_SCREEN=<same list>`, `IPOPT_LOADFLOW_START=1`.
+- **Logs over 100 MB cannot be pushed to GitHub.** Per-iteration logs at
+  horizons of several hundred steps reach 75-140 MB: commit them gzipped, and
+  check after every push that the branch is not still ahead of the remote.
+
 ## Working branch — the name below is a snapshot, not the truth
 
 **Any branch named in this file may already be stale.** It records what was
