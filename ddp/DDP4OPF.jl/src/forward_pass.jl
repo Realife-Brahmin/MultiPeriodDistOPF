@@ -28,13 +28,17 @@ function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
     ΔL = data.expected_change_L
     μ = data.μ
     τ = max(options.τ_min, T(1.0) - μ)
+    # Affine dynamics: directions from one unit-step rollout, and the largest
+    # step the fraction-to-boundary rule allows (affine_linesearch.jl).
+    aff = _affine_linesearch() ? affine_directions(solver, ocp, data, τ) : nothing
+    aff === nothing || (data.step_size = aff.γmax)
 
     θ_prev = data.primal_1_curr
     L_prev = data.barrier_lagrangian_curr
     
     while data.step_size >= eps(T)
         γ = data.step_size
-        rollout!(solver, ocp, data, τ, γ)
+        aff === nothing ? rollout!(solver, ocp, data, τ, γ) : affine_rollout!(solver, ocp, data, aff, γ)
         data.status != 0 && (data.step_size *= 0.5, continue)
         
         # used for sufficient decrease from current iterate step acceptance criterion
