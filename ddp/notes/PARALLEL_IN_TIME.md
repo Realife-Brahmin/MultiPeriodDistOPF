@@ -420,3 +420,33 @@ large10k 0.47 s against 0.31 s (the 2,040 x 2,040 block costs 0.17 s) for 4-8
 fewer iterations. So exact curvature pays on med2522 (5.4-10.3x HSL) and not,
 as implemented, on large10k. Eliminating the energy rows analytically would
 halve that block's dimension (about 8x less factorization work).
+
+### The same comparisons at near-optimality, and longer horizons (2026-10-05)
+
+The ieee123 horizon test of Section 7 ran to strict tolerance because no
+Ipopt reference existed at `T=384`, 1536. With MA57 references now run
+(15.3 s and 60.3 s) and `near_opt_posthoc.py` reading the per-iteration logs
+(checked against a run that stopped at near-optimality itself: iteration 77
+and 180.6 s against 77 and 178.3 s), iteration and time to near-optimality:
+
+| ieee123 `T` | diagonal (UMFPACK) | exact (UMFPACK) | exact (tree) | diagonal's extra iterations |
+|---|---|---|---|---|
+| 96 | 120, 72 s | 100, 91 s | | +20% |
+| 384 | 142, 277 s | 140, 401 s | | +1% |
+| 1536 | 247, 1970 s | 148, 2511 s | 148, 1633 s | +67% |
+
+At `T=1536` the exact Hessian through the tree solver is the fastest of the
+three (27x MA57 against 33x for the diagonal), with the old exact path's
+iterations and objective. These timings are single runs on one thread.
+
+med2522 at longer horizons, clean runs, tree solver, near-optimality:
+
+| `T` | diagonal: iters, time, x MA57 | exact: iters, time, x MA57 | change |
+|---|---|---|---|
+| 96 | 96, 811.7 s, 6.4 | 83, 687.9 s, 5.4 | -15% |
+| 192 | 108, 1904.7 s, 6.9 | 92, 1595.4 s, 5.8 | -16% |
+| 384 | 114, 4744.7 s, 8.0 | 100, 4044.1 s, 6.9 | -15% |
+
+The exact Hessian saves 13-16 iterations at each horizon at no extra cost per
+stage, and the same peak memory (4.1 and 7.3 GiB). The ratio to MA57 still
+rises with horizon (5.4, 5.8, 6.9): iterations keep growing in both arms.
