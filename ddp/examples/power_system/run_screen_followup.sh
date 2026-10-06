@@ -7,6 +7,10 @@
 # cells, 8 iterations at long horizons). One run at a time, quiet machine, full
 # per-iteration logs. Completed logs are skipped.
 #
+#   E. the nine Table II cells to the solver's own tolerance. Near-optimality
+#      is now declared much earlier on the barrier path (objective gap up to
+#      0.34% against 1e-5 before), so the like-for-like figure is the time to a
+#      given gap, read from these logs afterwards (near_opt_posthoc.py);
 #   A. longer horizons, diagonal Hessian, tree solver: med2522 T=192, 384 and
 #      large10k T=96, 192, with Ipopt (MA57, MA97) on the same model and start;
 #   B. exact Hessian through the tree solver on the Table II cells;
@@ -24,7 +28,7 @@ cd "$(dirname "$0")/../../.." || exit 1
 if [ -n "${1:-}" ]; then until grep -q TABLE2_SCREEN_DONE "$1" 2>/dev/null; do sleep 30; done; fi
 until [ "$(tasklist //FI "IMAGENAME eq julia.exe" 2>/dev/null | grep -c julia.exe)" = "0" ]; do sleep 30; done
 echo "[$(date '+%H:%M:%S')] follow-up start"
-PARTS="${PARTS:-A B C D}"
+PARTS="${PARTS:-E A B C D}"
 S=ddp/examples/power_system/run_blocked_solve_fullrun.sh
 H=ddp/results/ipopt_hsl/logs
 SCREEN=substation,vupper,ell,psubs
@@ -35,6 +39,20 @@ export FILTERDDP_SCREEN=$SCREEN FILTERDDP_LOADFLOW_START=1 FILTERDDP_AFFINE_LINE
 export FILTERDDP_TREE_KKT=1 JULIA_NUM_THREADS=8
 
 for part in $PARTS; do case $part in
+E)
+  export STRICT=1
+  for cell in ieee123C_1ph:6:full ieee123C_1ph:24:full ieee123C_1ph:96:full ieee2522C_1ph:6:full               ieee2522C_1ph:24:full large10kC_1ph:6:full ieee2522C_1ph:96:8 large10kC_1ph:24:8 large10kC_1ph:48:8; do
+    IFS=: read sys T warm <<< "$cell"
+    export FILTERDDP_WARMUP=$warm
+    case $sys in
+      ieee123C_1ph) unset FILTERDDP_TREE_KKT; export JULIA_NUM_THREADS=1 RUN_TAG_SUFFIX=_tableII_cbsys_typed_sd_screen_warm_strict;;
+      *)            export FILTERDDP_TREE_KKT=1 JULIA_NUM_THREADS=8 RUN_TAG_SUFFIX=_tableII_jt8_cbsys_typed_tree3_screen_warm_strict;;
+    esac
+    bash "$S" "$sys" "$T" diag 16 1
+  done
+  unset STRICT
+  export FILTERDDP_TREE_KKT=1 JULIA_NUM_THREADS=8
+  ;;
 A)
   IPOPT_SCREEN=$SCREEN IPOPT_LOADFLOW_START=1 IPOPT_TAG_SUFFIX=_screen_lf SOLVERS="ma57 ma97" \
     CELLS="ieee2522C_1ph:192 large10kC_1ph:96 ieee2522C_1ph:384 large10kC_1ph:192" \

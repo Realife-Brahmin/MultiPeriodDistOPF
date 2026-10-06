@@ -41,7 +41,13 @@ case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL
 export REDUCED_PROFILE=periodic REDUCED_CB="$CB" TERMINAL_SOC_SOFT=1
 export FILTERDDP_MAX_ITERATIONS=400
 export FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
-export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+# STRICT=1: run to the solver's own tolerance instead of stopping at
+# near-optimality. The near-optimality point is then read from the log
+# afterwards, at any objective gap (near_opt_posthoc.py). Give such runs a
+# distinct RUN_TAG_SUFFIX.
+if [ "${STRICT:-0}" != 1 ]; then
+  export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+fi
 if [ "$ARM" = diag ]; then export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8; fi
 # BLAS/OpenMP pinned to one thread by default. PIN_BLAS_THREADS=0 leaves them
 # unset, which is how the matched race (Table II of the paper) ran; the thread
