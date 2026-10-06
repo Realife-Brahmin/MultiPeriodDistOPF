@@ -1,3 +1,7 @@
+! Rated real power of each unit is Pmpp (350 kW). These units carry a Daily
+! shape, so a unit's PRESENT output (the kW that OpenDSS reports) is zero when
+! the circuit is compiled in Daily mode at night. Read Pmpp, not kW: reading kW
+! gave every OPF instance of this system zero PV until 2026-10-05.
 New PVsystem.PV2 irrad=1.0 Phases=1 Bus1=2.1 kV=12.47 kVA=420.0 Pmpp=350.0 %cutin=0.001 %cutout=0.001 Daily=LoadShapePVDefault
 New PVsystem.PV12 irrad=1.0 Phases=1 Bus1=12.1 kV=12.47 kVA=420.0 Pmpp=350.0 %cutin=0.001 %cutout=0.001 Daily=LoadShapePVDefault
 New PVsystem.PV22 irrad=1.0 Phases=1 Bus1=22.1 kV=12.47 kVA=420.0 Pmpp=350.0 %cutin=0.001 %cutout=0.001 Daily=LoadShapePVDefault
