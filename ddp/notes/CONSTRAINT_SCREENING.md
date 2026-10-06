@@ -197,17 +197,19 @@ To the solver's own tolerance (1e-7), and Ipopt (MA57, its own 1e-8):
 
 ## 7. Caveats
 
-- **Near-optimality is now reached at a larger barrier parameter.** With the
-  power-flow start the iterate is feasible from the first iteration, so the
-  0.5% objective test decides. large10k `T=6` stops at `mu = 0.04` with the
-  objective 0.083% above the optimum and SOC slacks still loose (smallest
-  `ell` 0.42 p.u.); the baseline stopped at 0.004%. The strict counts above
-  are the like-for-like figure.
+- **Near-optimality is now declared at a much looser point.** Before, primal
+  feasibility arrived last, by which time the objective was within 1e-7 to
+  5e-5 of the optimum. Now the iterate is feasible early and the 0.5%
+  objective test decides: the gap at the stopping point is 0.19-0.28% on
+  med2522 and 0.03-0.34% on large10k (large10k `T=6`: `mu = 0.04`, smallest
+  `ell` 0.42 p.u., SOC slacks still loose). The like-for-like figure is the
+  time to a fixed, tighter gap or to the solver's own tolerance (Section 8).
 - **Timings so far included Julia's one-time compilation**: 15-30 s, all
   inside the first iteration. That is 14.7 of the 17.9 s reported for ieee123
   `T=6`, and 23 of 260 s for large10k `T=6`. Ipopt's solve time has no such
-  term. `FILTERDDP_WARMUP=3` runs three silent iterations first so the timed
-  solve excludes it (same iterates). Both figures are reported in Section 8.
+  term. `FILTERDDP_WARMUP=full` runs the whole solve once first, so the
+  timed (second) solve excludes it; same iterates. Reported times are solve
+  times from here on (user, 2026-10-05).
 - **The same model and start help Ipopt**, most on large10k. Comparisons
   must use Ipopt with `IPOPT_SCREEN` and `IPOPT_LOADFLOW_START`.
 - med2522 gains least: its remaining short steps come from genuinely active
@@ -215,7 +217,52 @@ To the solver's own tolerance (1e-7), and Ipopt (MA57, its own 1e-8):
 
 ## 8. Timed results
 
-Pending: `run_table2_screen.sh` (nine cells, both solvers).
+`run_table2_screen.sh`, 2026-10-05, 309 lab PC, Balanced power plan,
+background load logged per case (0.5-1.0 core, as in earlier clean runs).
+Both solvers on the screened model from the power-flow start. FilterDDP:
+diagonal Hessian, ieee123 with UMFPACK on one thread, med2522 and large10k
+with the tree solver on eight; time to near-optimality, compilation excluded.
+Ipopt: solve time to its own tolerance; HSL is the best of MA57 and MA97.
+
+| case | FilterDDP before | FilterDDP now | iterations | Ipopt MUMPS | Ipopt HSL | vs HSL | vs MUMPS |
+|---|---|---|---|---|---|---|---|
+| ieee123 T=6 | 17.9 | 1.0 | 67 -> 20 | 0.25 | 0.13 | 7.7x | 4.0x |
+| ieee123 T=24 | 25.7 | 2.9 | 85 -> 19 | 0.74 | 0.45 | 6.3x | 3.9x |
+| ieee123 T=96 | 70.4 | 32.4 | 120 -> 55 | 3.56 | 2.04 | 15.9x | 9.1x |
+| med2522 T=6 | 57.5 | 18.0 | 68 -> 33 | 5.25 | 3.11 | 5.8x | 3.4x |
+| med2522 T=24 | 177.8 | 82.5 | 77 -> 39 | 31.2 | 18.7 | 4.4x | 2.6x |
+| med2522 T=96 | 811.7 | 418.8 | 96 -> 49 | 158.9 | 90.0 | 4.7x | 2.6x |
+| large10k T=6 | 259.7 | 31.4 | 101 -> 11 | 12.3 | 5.0 | 6.3x | 2.6x |
+| large10k T=24 | 924.2 | 105.2 | 98 -> 9 | 65.2 | 28.6 | 3.7x | 1.6x |
+| large10k T=48 | 1537.0 | 279.4 | 85 -> 11 | 145.4 | 60.7 | 4.6x | 1.9x |
+
+"Before" is the fastest earlier configuration and includes compilation
+(15-30 s). The same runs with compilation inside: 17.0 / 19.2 / 43.3,
+38.8 / 101.3 / 422.8, 53.6 / 124.9 / 292.2 s.
+
+Ipopt on the same nine cells, before -> now (solve time, s):
+
+| | MUMPS | best HSL | iterations (MA57) |
+|---|---|---|---|
+| ieee123 T=6 / 24 / 96 | 0.39 / 1.47 / 23.2 -> 0.25 / 0.74 / 3.56 | 0.19 / 0.74 / 3.91 -> 0.13 / 0.45 / 2.04 | 37 / 38 / 44 -> 20 / 21 / 25 |
+| med2522 T=6 / 24 / 96 | 7.2 / 41.1 / 220.0 -> 5.2 / 31.2 / 158.9 | 4.4 / 24.4 / 127.3 -> 3.1 / 18.7 / 90.0 | 44 / 60 / 78 -> 39 / 53 / 64 |
+| large10k T=6 / 24 / 48 | 51.2 / 282.9 / 623.7 -> 12.3 / 65.2 / 145.4 | 27.6 / 132.4 / 272.0 -> 5.0 / 28.6 / 60.7 | 53 / 66 / 75 -> 12 / 17 / 18 |
+
+Reading:
+
+- FilterDDP is 1.9-2.0x faster on med2522 and 5.4-8.5x on large10k, compilation
+  aside (earlier runs less their first-iteration compile time). Ipopt gains 1.3-1.4x on med2522 and 4.5-5.5x on large10k from the
+  model and start alone.
+- Net: FilterDDP stands at 3.7-6.3x Ipopt's best HSL time and 1.6-3.4x MUMPS
+  on the two larger systems (5.7-12.9x and 2.5-8.3x before, compilation included).
+- Iteration counts are now comparable. What remains is the cost of one
+  iteration: 8.4 s against 1.7 s at large10k `T=24`, 1.8 s against 0.35 s at
+  med2522 `T=24` (FilterDDP against Ipopt-MA57).
+- ieee123 `T=96` is the outlier (55 iterations): not examined yet.
+- The FilterDDP figures stop at near-optimality, which is now a looser point
+  (Section 7); Ipopt runs to 1e-8. Strict-tolerance FilterDDP runs of the
+  nine cells are queued (`run_screen_followup.sh`, part E) to give the time
+  to a fixed gap.
 
 ## Files
 
