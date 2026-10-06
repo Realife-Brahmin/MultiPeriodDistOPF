@@ -561,6 +561,29 @@ both larger feeders (0.75-0.94 of its time) and behind at `T=6`.
 Before the halved block the same count was 35.3 / 70.7 s (large10k `T=24`, 48)
 and 23.4 / 95.3 s (med2522 `T=24`, 96): logs in `nine_cells_lean/`.
 
+### The exact Hessian in the same configuration
+
+Four cells with the exact battery-block Hessian, lean path and halved block
+(logs `*_exact_half.log`). These runs stop at a gap of `1e-5` to `1e-7`,
+because with exact curvature feasibility arrives last, so the comparison
+column is the diagonal Hessian carried to a gap of `1e-5` (its iteration count
+there from the strict runs of 2026-10-05, its time scaled from the run above).
+
+| case | exact: iterations, sequential, one worker per period | diagonal to a gap of 1e-5 (estimate) |
+|---|---|---|
+| large10k `T=6` | 12, 47.7 s, 34.4 s | 17 it, about 27 s |
+| large10k `T=24` | 12, 187.7 s, 126.4 s | 23 it, about 153 s |
+| med2522 `T=24` | 52, 93.2 s, 30.0 s | 62 it, about 99 s |
+| med2522 `T=96` | 66, 465.2 s, 121.9 s | 77 it, about 500 s |
+
+On med2522 the two are level at equal accuracy, as before. On large10k the
+diagonal Hessian is now ahead even at equal accuracy: its sequential part is
+57 ms per stage against 246 ms for the exact one (dense `n_B` block: 123 ms to
+assemble and factor, 62 ms for the feedback rows). The rewrites of this
+section went into the diagonal path first; the exact path still assembles the
+dense block at full size before reducing it. Against 2026-10-05 the exact
+runs themselves are 19% (large10k) and 5-24% (med2522) faster.
+
 ### What limits the count
 
 The sequential sweep: `T` times 57 ms (large10k) or 9 ms (med2522) per pass,
