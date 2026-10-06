@@ -24,16 +24,7 @@ get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
 
-function control_layout(data)
-    N, L, B, D = length(data[:Nset]), length(data[:Lset]),
-                  length(data[:Bset]), length(data[:Dset])
-    k = 0
-    take(n) = (r = (k+1):(k+n); k += n; r)
-    idx = (ps=first(take(1)), qs=first(take(1)), P=take(L), Q=take(L),
-           v=take(N), ell=take(L), pb=take(B), qnorm=take(D),
-           soc_slack=take(L), energy_slack=take(B))
-    return idx, k
-end
+include(joinpath(@__DIR__, "control_layout.jl"))
 
 function analytic_dynamics(nx, nu, pbidx, dt)
     f = (x,u) -> x .- dt .* u[pbidx]
