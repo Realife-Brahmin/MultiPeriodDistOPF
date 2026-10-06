@@ -505,6 +505,23 @@ tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatri
     _blas1(() -> _tree_kkt_structured(lay, stat, fac, K, dense_check, Vc))
 
 function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, dense_check::Bool, Vc)
+    Bd, Up = _tree_kkt_prepare(lay, stat, fac, K)
+    return _tree_kkt_finish(lay, stat, fac, K, Bd, Up, dense_check, Vc)
+end
+
+# The structured form in two steps, split by what they read.
+#
+# _tree_kkt_prepare reads the network factor and K_E,Fc only: the feeder
+# inverse blocks Bd and U = K_E,Fc * Psi. Like tree_kkt_factor it never reads
+# K_EE, which is the only place the next stage's value function enters a stage
+# matrix (the battery-power diagonal under the diagonal Hessian, Vc under the
+# exact one). So factor + prepare of every stage can be done before the
+# backward sweep, all stages at once (checked by tree_kkt_phase_check.jl,
+# which overwrites K_EE with NaN and compares).
+#
+# _tree_kkt_finish reads K_EE and Vc: the feeder blocks of the Schur
+# complement and their factorization. This is what the sweep does in sequence.
+function _tree_kkt_prepare(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC)
     N = length(lay.own); nF = length(lay.Fc); nE = length(lay.E)
     root = lay.root; mr = length(lay.own[root])
     nz = nonzeros(K)
@@ -586,13 +603,22 @@ function _tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::S
         Psi[t, pos] = -1.0
     end
 
-    # U = K_E,Fc * Psi (permuted order) and the diagonal blocks D_g.
+    # U = K_E,Fc * Psi (permuted order).
     invp = invperm(stat.perm)
     Up = zeros(nE, mr)
     @inbounds for (a, t, p) in stat.kef
         v = nz[p]; r = invp[a]
         for c in 1:mr; Up[r, c] += v * Psi[t, c]; end
     end
+    return Bd, Up
+end
+
+function _tree_kkt_finish(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, Bd, Up,
+                          dense_check::Bool, Vc)
+    nE = length(lay.E); mr = length(lay.own[lay.root])
+    nz = nonzeros(K)
+    invp = invperm(stat.perm)
+    # The diagonal blocks D_g.
     ng = length(stat.gkeys)
     Dfac = Vector{LU{Float64, Matrix{Float64}, Vector{Int}}}(undef, ng)
     DUp = similar(Up)
@@ -683,13 +709,24 @@ struct TreeKKTSolver
     y1::Vector{Float64}
     y2::Vector{Float64}
     t2::Vector{Float64}
+    # Seconds spent, by what the work needs from the next stage (see
+    # _tree_kkt_prepare): [1] factor + prepare (nothing), [2] finish (the value
+    # function), and accumulated over the solves [3] first network solve
+    # (nothing), [4] battery block solve, [5] second network solve (this
+    # stage's battery solution only).
+    times::Vector{Float64}
 end
 
 function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatrixCSC; Vc=nothing)
+    t0 = time_ns()
     fac = tree_kkt_factor(lay, K)
-    st = tree_kkt_structured(lay, stat, fac, K; Vc=Vc)
-    return TreeKKTSolver(lay, stat, fac, st, copy(nonzeros(K)), reverse(lay.post),
-                         zeros(stat.nN), zeros(lay.n), zeros(lay.n), zeros(lay.n))
+    Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
+    nzc = copy(nonzeros(K)); pre = reverse(lay.post)
+    z = zeros(stat.nN); y1 = zeros(lay.n); y2 = zeros(lay.n); t2 = zeros(lay.n)
+    t1 = time_ns()
+    st = _blas1(() -> _tree_kkt_finish(lay, stat, fac, K, Bd, Up, false, Vc))
+    times = [(t1 - t0) / 1e9, (time_ns() - t1) / 1e9, 0.0, 0.0, 0.0]
+    return TreeKKTSolver(lay, stat, fac, st, nzc, pre, z, y1, y2, t2, times)
 end
 tree_kkt_solver(lay::TreeKKTLayout, K::SparseMatrixCSC) = tree_kkt_solver(lay, tree_kkt_static(lay, K), K)
 
@@ -741,7 +778,9 @@ end
 function tree_kkt_solve!(s::TreeKKTSolver, b::AbstractVector)
     lay, stat, nz = s.lay, s.stat, s.nz
     y, y2, t2 = s.y1, s.y2, s.t2
+    t_a = time_ns()
     tree_kkt_network_solve!(y, s, b)
+    t_b = time_ns()
     nE = length(lay.E)
     rE = Matrix{Float64}(undef, nE, 1)
     @inbounds for a in 1:nE; rE[a, 1] = b[lay.E[a]]; end
@@ -751,6 +790,7 @@ function tree_kkt_solve!(s::TreeKKTSolver, b::AbstractVector)
         for (a, p) in stat.iso_e[si]; rE[a, 1] -= nz[p] * w; end
     end
     xE = tree_kkt_schur_solve(s.st, rE)
+    t_c = time_ns()
     fill!(t2, 0.0)
     @inbounds for (a, f, p) in stat.kef; t2[lay.Fc[f]] += nz[p] * xE[a, 1]; end
     tree_kkt_network_solve!(y2, s, t2)
@@ -761,6 +801,8 @@ function tree_kkt_solve!(s::TreeKKTSolver, b::AbstractVector)
     end
     @inbounds for j in eachindex(lay.own), i in lay.own[j]; b[i] = y[i] - y2[i]; end
     @inbounds for a in 1:nE; b[lay.E[a]] = xE[a, 1]; end
+    tm = s.times
+    tm[3] += (t_b - t_a) / 1e9; tm[4] += (t_c - t_b) / 1e9; tm[5] += (time_ns() - t_c) / 1e9
     return b
 end
 
@@ -801,3 +843,5 @@ function DDP4OPF.battery_block_rows(F::TreeKKTSolver, K, E, R)
     E == F.lay.E || error("battery rows differ from the tree layout's")
     return tree_kkt_battery_rows(F, R)
 end
+
+DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times

@@ -36,6 +36,34 @@ struct AffineDirections{T}
     γdual::T                    # NaN: the multipliers take the line-search step
 end
 
+# FILTERDDP_PARSIM: the part of the forward pass a coordinator would do in
+# sequence with one worker per period. The state depends on the controls only
+# through the battery powers, and their feedback rows were computed in the
+# backward sweep, so the states of all periods follow from a recursion of
+# n_B x n_x products; every period's full policy solve, its directions, ratio
+# test and trial evaluations can then run at once. The recursion is run here
+# beside the actual rollout and compared with it (rec_err). _PARSIM_FWD:
+# [1] sum and [2] max over periods of the per-period direction work, [3] the
+# recursion, [4] its largest state difference from the rollout, [5] trials,
+# [6] sum over trials of the per-period sums, [7] sum over trials of the
+# per-period maxima.
+function _parsim_state_step(solver, rule, nom, xr, xnext, elapsed)
+    pol = rule.factor_policy
+    if isnothing(pol) || isempty(pol.βB)      # no battery rows stored: this period in sequence
+        _PARSIM_FWD[3] += elapsed
+        return xnext
+    end
+    _PARSIM_FWD[1] += elapsed; _PARSIM_FWD[2] = max(_PARSIM_FWD[2], elapsed)
+    t0 = time_ns()
+    rows = pol.active_rows
+    ur = copy(nom.u)
+    @views ur[rows] .+= rule.α[rows] .+ pol.βB * (xr .- nom.x)
+    xr = solver.ocp.dynamics.f(xr, ur)
+    _PARSIM_FWD[3] += (time_ns() - t0) / 1e9
+    _PARSIM_FWD[4] = max(_PARSIM_FWD[4], norm(xr - xnext, Inf))
+    return xr
+end
+
 function affine_directions(solver, ocp, data, τ::T) where T
     N = ocp.N
     cl = ocp.control_limits
@@ -45,7 +73,10 @@ function affine_directions(solver, ocp, data, τ::T) where T
     split = _split_step()
     lim_t = 0; lim_i = 0; lim_kind = "none"
     x = solver.nominal[1].x
+    parsim = _parsim()
+    xr = x                              # PARSIM: the state from the battery rows alone
     for t in 1:N
+        ps_t0 = time_ns()
         nom = solver.nominal[t]; rule = solver.update[t]
         δx = x - nom.x
         βδx, ωδx = policy_actions!(rule, δx)        # views into the policy's buffer: copy below
@@ -94,7 +125,11 @@ function affine_directions(solver, ocp, data, τ::T) where T
                 norm(mid - ref, Inf) <= 1e-10 * (1 + norm(ref, Inf)) ||
                     error("FILTERDDP_AFFINE_LINESEARCH needs affine dynamics")
             end
+            parsim && (xr = _parsim_state_step(solver, rule, nom, xr, xnext, (time_ns() - ps_t0) / 1e9))
             x = xnext
+        elseif parsim
+            ps_el = (time_ns() - ps_t0) / 1e9
+            _PARSIM_FWD[1] += ps_el; _PARSIM_FWD[2] = max(_PARSIM_FWD[2], ps_el)
         end
     end
     _ftb_diagnostic() && @printf("FILTERDDP_STEP_LIMIT iteration=%d gamma_max=%.6e stage=%d kind=%s index=%d gamma_dual=%.6e\n",
@@ -110,7 +145,10 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
     data.primal_1_next = T(0.0)
     data.barrier_lagrangian_next = T(0.0)
     γz = isnan(dir.γdual) ? γ : dir.γdual
+    parsim = _parsim()
+    ps_sum = 0.0; ps_max = 0.0
     for t = 1:ocp.N
+        ps_t0 = time_ns()
         nom = solver.nominal[t]
         x = nom.x .+ γ .* dir.dx[t]
         u = nom.u .+ γ .* dir.du[t]
@@ -132,6 +170,7 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
         if any((ul .<= 0) .* cl.maskl) || any((uu .<= 0) .* cl.masku) ||
            any((zl .<= 0) .* cl.maskl) || any((zu .<= 0) .* cl.masku)
             data.status = 2
+            parsim && (_PARSIM_FWD[5] += 1; _PARSIM_FWD[6] += ps_sum; _PARSIM_FWD[7] += ps_max)
             return
         end
 
@@ -142,5 +181,9 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
         else
             data.barrier_lagrangian_next += stage_obj(ocp, t).l(x, u)[1]
         end
+        if parsim
+            ps_el = (time_ns() - ps_t0) / 1e9; ps_sum += ps_el; ps_max = max(ps_max, ps_el)
+        end
     end
+    parsim && (_PARSIM_FWD[5] += 1; _PARSIM_FWD[6] += ps_sum; _PARSIM_FWD[7] += ps_max)
 end
