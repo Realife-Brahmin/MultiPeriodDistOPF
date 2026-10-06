@@ -264,6 +264,34 @@ Reading:
   nine cells are queued (`run_screen_followup.sh`, part E) to give the time
   to a fixed gap.
 
+### Time to a fixed objective gap
+
+From the strict-tolerance runs (`run_screen_followup.sh`, part E;
+`near_opt_posthoc.py --gaps=...`), same primal thresholds. Seven of nine
+cells so far. Starred times are from runs with other load on the machine
+(iterations valid, times indicative); large10k `T=48` not run yet.
+
+| case | gap 0.5% | gap 1e-4 | gap 1e-5 | own tolerance | Ipopt HSL | at 1e-5 vs HSL |
+|---|---|---|---|---|---|---|
+| ieee123 T=6 | 20 it, 1.1 s | 20, 1.1 | 23, 1.2 | 31, 1.4 | 0.13 | 9x |
+| ieee123 T=24 | 19, 2.6 | 23, 3.0 | 26, 3.4 | 33, 4.4 | 0.45 | 7.5x |
+| ieee123 T=96 | 55, 26.6 | 55, 26.6 | 55, 26.6 | 61, 29.5 | 2.04 | 13x |
+| med2522 T=6 | 33, 18.1 | 48, 26.6 | 51, 28.4 | 67, 37.1 | 3.11 | 9.1x |
+| med2522 T=24 | 39, 80.6 | 57, 116.2 | 62, 126.8 | 77, 157.0 | 18.7 | 6.8x |
+| med2522 T=96 | 49, 409.8* | 71, 582.7* | 77, 630.5* | 94, 757.0* | 90.0 | 7.0x* |
+| large10k T=6 | 11, 31.3 | 16, 46.1 | 17, 50.3 | 24, 74.0 | 5.0 | 10.1x |
+| large10k T=24 | 9, 122.4* | 21, 257.5* | 24, 300.1* | 38, 445.2* | 28.6 | 10.5x* |
+
+- The earlier near-optimal points sat at a gap of 1e-7 to 5e-5, so the
+  1e-5 column is the like-for-like one. There FilterDDP is 7-10x Ipopt's
+  best HSL time on the two larger systems: about where it stood before
+  (5.7-12.9x). Both solvers got faster; the ratio did not move much.
+- At equal accuracy the changes save med2522 about 20% of its iterations
+  (62 against 77 at `T=24`) and large10k about 80% (17 against 101 at `T=6`).
+  Ipopt's gain from the same model and start is of the same size on each.
+- The 3.7-6.3x figure above holds only under the 0.5% rule, whose stopping
+  point is now looser. Which criterion the paper uses is open (user).
+
 ## Files
 
 | | |
