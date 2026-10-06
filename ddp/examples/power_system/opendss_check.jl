@@ -20,8 +20,9 @@
 # PV systems and batteries are disabled and re-injected as constant-power
 # elements at the dispatched values, and loads are held at constant power
 # outside 0.95-1.05 pu as well, since that is the model the OPF solves. The
-# source is set to 1.05 pu, the value the OPF fixes (the ieee123 DSS file says
-# 1.03). Battery efficiency is not modelled by the OPF and plays no role here.
+# source is set to 1.05 pu, the value the OPF fixes; the header line reports
+# what the DSS file says, so a disagreement shows. Battery efficiency is not
+# modelled by the OPF and plays no role here.
 # Devices on the substation bus are skipped: the OPF's balance rows ignore them.
 #
 #   REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1 \
