@@ -87,6 +87,31 @@ establishes something a future session, on any machine, would need.
 - **Logs over 100 MB cannot be pushed to GitHub.** Per-iteration logs at
   horizons of several hundred steps reach 75-140 MB: commit them gzipped, and
   check after every push that the branch is not still ahead of the remote.
+- **Exact rewrites of 2026-10-06, and the parallel-in-time count**
+  (`ddp/notes/PARALLEL_IN_TIME.md`, Section 9). `FILTERDDP_LEAN_VALUE=1`
+  (identical iterates) and `FILTERDDP_HALF_BLOCK=1` (battery block at half
+  size; iterates agree to rounding, check with `compare_runs.py`) make the
+  sequential run 43-44% faster on large10k and 24-27% on med2522 than the
+  2026-10-05 configuration. They are not yet in the paper and not yet in the
+  standard run scripts other than `run_parsim.sh`. `FILTERDDP_PARSIM=1` times
+  each stage as what needs nothing from `t+1` / what needs the value function
+  / what follows it, and `parsim_from_log.py` counts one worker per period
+  (the slowest period for the independent parts). The user accepts that
+  simulated count ("like my tADMM Ipopt solve"); always state that it assumes
+  one core per period, no communication, and that Ipopt is a single process.
+- **`NO_COLOR` in the environment defeats the warm-up** (found 2026-10-06).
+  Julia then wraps stdout in an IOContext and every print is compiled again in
+  the timed solve (0.7 s; 1.5-2.3 s with the PARSIM lines). Processes started
+  from PowerShell carry it. `run_parsim.sh` and `run_blocked_solve_fullrun.sh`
+  unset it; the driver prints `WARMUP_STREAM_MISMATCH` when it happens. Any new
+  timed launcher must unset `NO_COLOR` and `FORCE_COLOR` too. Do not edit solver
+  sources while a queued batch is running: each run loads them afresh.
+- **Scope of interest (user, 2026-10-06).** Methods must help every test
+  system: no speedup that exploits the topology of one system and does nothing
+  for another (large10k is, to `1e-7`, 102 independent feeders; that is a
+  caveat about the test system, not a method to build). Horizons of interest
+  are the practical ones, `T=6` to `T=96` (up to a few hundred at most): med2522
+  `T=1152` and `T=1536` were cancelled and are not to be requeued.
 
 ## Working branch — the name below is a snapshot, not the truth
 
