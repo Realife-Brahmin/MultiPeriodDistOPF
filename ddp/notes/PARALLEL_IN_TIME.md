@@ -591,12 +591,52 @@ about 80% of the count at the longer horizons. What is left in it is dense
 `n_B`-sized algebra on the value Hessian: on large10k mostly one
 `n_B x n_B x n_x` product and the memory traffic around it.
 
-Not started: making the sweep itself parallel in time. It is a Riccati-type
-recursion on the battery states, and such recursions can be combined pairwise
-in about `2 log2 T` rounds. That needs the exact battery-block Hessian (the
-diagonal approximation is not of the linear-fractional form the combination
-relies on), each round costs more than one sweep step, and the gain is small
-at `T=24` and grows with `T`.
+### The sweep in parallel: what it would take (assessment, nothing built)
+
+After the network is eliminated, what the sweep solves is a linear-quadratic
+problem in the battery energies alone. Per stage, with `x = B^{t-1}`,
+`p = P_B^t` and `x+ = x - dt p`:
+
+- the network leaves a quadratic in the battery powers, `1/2 dp' N_t dp + g' dp`,
+  where `N_t` is the stage matrix reduced onto the battery powers (the halved
+  block without the value term): dense `n_B x n_B`;
+- the energy window leaves a diagonal quadratic in the next state,
+  `1/2 dx+' Sigma_t dx+` (this is what eliminating the energy rows produces);
+- the dynamics are `dx+ = dx - dt dp`.
+
+With the exact battery-block Hessian the value Hessian then obeys
+
+    P_{t-1} = W - dt^2 W (N_t + dt^2 W)^{-1} W,      W = Sigma_t + P_t,
+
+that is, `inv(P_{t-1}) = inv(Sigma_t + P_t) + dt^2 inv(N_t)`: a Riccati
+recursion with identity dynamics. Compositions of such linear-fractional maps
+are again of that form, so the `T` steps can be combined pairwise in about
+`2 log2 T` rounds (the conditional-value-function scan of Sarkka and
+Garcia-Fernandez for LQ control is the numerically stable way; multiplying
+chain matrices is not). The diagonal Hessian does not fit: it puts only
+`diag(P_t)` into the stage matrix, which is not a linear-fractional map of
+`P_t`.
+
+Rough cost, from the measured sizes. One sweep step is now about 3 dense
+`n_B^3` operations (57 ms on large10k with ten BLAS threads, 9 ms on med2522);
+one pairwise combination is about 20 (two solves with `n_B` right-hand sides
+and several products).
+
+| | sweep per pass | scan per pass, one core per worker | scan, ten cores per worker |
+|---|---|---|---|
+| med2522 `T=24` | 0.22 s | 0.07 s | |
+| med2522 `T=96` | 0.86 s | 0.10 s | |
+| large10k `T=24` | 1.4 s | about 4.5 s | about 0.6 s |
+| large10k `T=48` | 2.7 s | about 5 s | about 0.7 s |
+| large10k `T=96` | 5.5 s | about 6 s | about 0.8 s |
+
+So it would pay clearly on med2522 (the count at `T=96` would go from 67 s to
+roughly 25 s, against 90 s for Ipopt), and on large10k only if each worker has
+several cores or the horizon is long: with 1,020 batteries one combination
+costs as much as a third of a 24-period sweep. It also changes the algorithm
+to the exact battery-block Hessian, whose iteration counts differ (fewer at
+tight accuracy, more at the 0.5% stop on med2522). These are estimates from
+operation counts, not measurements. Days of work; a decision for the user.
 
 ### An observation about large10k, not used
 
