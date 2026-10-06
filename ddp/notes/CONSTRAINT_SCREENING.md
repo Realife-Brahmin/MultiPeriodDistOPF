@@ -292,6 +292,138 @@ cells so far. Starred times are from runs with other load on the machine
 - The 3.7-6.3x figure above holds only under the 0.5% rule, whose stopping
   point is now looser. Which criterion the paper uses is open (user).
 
+## 9. Follow-up (2026-10-05 evening to 2026-10-06)
+
+### large10k with its PV units
+
+Every large10k number above is from the instance without PV (CLAUDE.md). On
+the corrected instance (logs tagged `pv`):
+
+- Counts are unchanged at this resolution: 23.0% of 1,137,720 inequalities
+  active at `T=24`, 1.9% without the conic rows, 0.5% of the voltage limits.
+  The rules now keep 189 of 247,680 upper voltage limits at `T=24` (30 at
+  `T=6`), where PV can raise the voltage, and 18.6% of the lower limits.
+- Iterations to near-optimality at `T=6`: earlier configuration 100,
+  substation limits dropped 82, S+P 21, S+E 59, S+P+E 10. To the solver's own
+  tolerance: 120 against 23. (`ddp/results/screen_ablation/`)
+- Step rejections of the earlier configuration: no full step in 100
+  iterations, 66 at 1/4 or less; the step was set by the energy window in 42%
+  of iterations, the substation voltage limit in 33%, the multiplier of
+  `P_Subs >= 0` in 13% and of `ell >= 0` in 9%.
+
+| large10k (PV) | `T=6` | `T=24` | `T=48` |
+|---|---|---|---|
+| Ipopt unscreened, iterations | 256 | 65 | 69 |
+| ... MA57 / MA97 / MUMPS (s) | 115.2 / 321.0 / 206.5 | 130.6 / 113.2 / 238.0 | 362.6 / 224.2 / 506.6 |
+| Ipopt screened + start, iterations | 12 | 18 | 19 |
+| ... MA57 / MA97 / MUMPS (s) | 5.0 / 5.2 / 12.3 | 30.2 / 31.8 / 67.2 | 65.3 / 75.2 / 147.8 |
+| FilterDDP to near-optimality | 10 it, 28.8 s | 11 it, 128.9 s | 11 it, 272.1 s |
+| FilterDDP to its own tolerance | 23 it, 82.5 s | 37 it, 465.6 s | 32 it, 838.0 s |
+| FilterDDP to a gap of 1e-5 | 17 it, 58.5 s | 23 it, 300.9 s | 21 it, 584.1 s |
+
+MA97 needs 670 iterations on the unscreened `T=6` instance (321 s is its time
+there). The FilterDDP times in this table are those of 2026-10-05; the faster
+sequential times of 2026-10-06 are in `PARALLEL_IN_TIME.md`, Section 9.
+
+### Ipopt was not throttled the way FilterDDP was
+
+Its step is already a ratio test and it relaxes every bound by a relative
+`1e-8`. One bound dropped at a time, large10k `T=6`, MA57:
+
+| dropped | nothing | substation limits | upper voltage limits | `ell >= 0` | `P_Subs >= 0` | all four | all four + start |
+|---|---|---|---|---|---|---|---|
+| iterations | 256 | 95 | 79 | 30 | 1126 | 39 | 12 |
+
+Its gain from screening is real but erratic and not tied to one bound.
+
+### Longer horizons, current configuration
+
+FilterDDP to near-optimality against the faster of MA57 and MA97 on the same
+screened model and start:
+
+| case | FilterDDP | Ipopt HSL | ratio | before |
+|---|---|---|---|---|
+| med2522 `T=192` | 51 it, 1102 s | 225 s | 4.9 | 108 it, 1905 s, 6.9 |
+| med2522 `T=384` | 64 it, 2897 s | 474 s | 6.1 | 114 it, 4745 s, 8.0 |
+| large10k `T=96` | 12 it, 646 s | 139 s | 4.6 | |
+| large10k `T=192` | 13 it, 1249 s | 328 s | 3.8 | |
+
+Peak memory: 7.3 against 8.3 GiB at med2522 `T=384`, 13.4 against 17.8 GiB at
+large10k `T=192`. med2522 `T=1152` and `T=1536` were cancelled (user,
+2026-10-06: horizons that long will not be reported).
+
+### `C_B = 0` with the diagonal Hessian
+
+Both cases that failed now reach near-optimality: large10k `T=6` in 17
+iterations (48.2 s; Ipopt-MA57 on the screened model 22 iterations, 8.5 s;
+806 iterations and 376 s unscreened) and med2522 `T=96` in 55 iterations
+(443.7 s).
+
+### Exact against diagonal Hessian
+
+At the 0.5% stop the diagonal Hessian is faster on the two larger feeders, but
+it stops at a gap of 0.1-0.3% while the exact-Hessian runs, whose feasibility
+arrives last, stop at `1e-5` to `1e-7`. At a gap of `1e-5`:
+
+| case | diagonal | exact |
+|---|---|---|
+| med2522 `T=6` | 51 it, 28.4 s | 42 it, 24.4 s |
+| med2522 `T=24` | 62 it, 126.8 s | 52 it, 122.4 s |
+| med2522 `T=96` | 77 it, 787 s | 66 it, 488 s (gap 2.7e-5) |
+| large10k `T=6` | 17 it, 58.5 s | 12 it, 58.9 s |
+| large10k `T=24` | 23 it, 300.9 s | 12 it, 225.8 s |
+
+So which Hessian is faster depends on the accuracy asked for. (Single runs of
+the overnight queue.)
+
+### Gurobi 13, for reference
+
+Unscreened model, default threads / one thread (s): ieee123 `T=24` 0.80 / 0.62,
+`T=96` 9.1 / 3.5; med2522 `T=6` 4.5 / 3.4, `T=24` 24.6 / 28.5, `T=96`
+219 / 102.5; large10k `T=6` 17.5 / 27.0, `T=24` 49.5 / 57.4. Its presolve
+removes almost nothing here (12 rows on large10k `T=6`). Not yet run on the
+screened model, which needs the cone stated explicitly once `ell >= 0` is
+dropped (Gurobi recognises a rotated cone only with nonnegative variables).
+
+### Check against OpenDSS
+
+33 dispatches of the current configuration, horizons up to `T=384`
+(`run_opendss_check_all.sh`, `ddp/results/opendss_check/`). OpenDSS converges
+on all and no voltage limit is violated in any.
+
+| stopping point | dispatches | voltages agree to | import overstated by |
+|---|---|---|---|
+| solver's own tolerance | 9 | 9.2e-8 pu | 0 |
+| 0.5% stop, diagonal Hessian | 13 | 1.1e-3 pu | 0.0004% to 0.37% |
+| 0.5% stop, exact Hessian | 8 | 8.3e-6 pu | up to 0.003% |
+
+At the 0.5% stop the conic relaxation is not yet tight, so part of the
+optimizer's loss is not physical and the dispatch costs less than the
+objective reports.
+
+### Where the four findings stand in the literature
+
+From the review of 2026-10-06 (DOIs checked in Crossref; the paper's Section
+on iteration reduction cites them):
+
+- The no-interior bound: Waechter and Biegler (2006), Sec. 3.5, name the
+  structure and relax bounds against it; presolvers remove the fixed variable
+  (Gondzio 1997). The step throttling it causes under a halving line search
+  was not found reported.
+- The screening rules: the voltage bound is Lemma 1 of Gan, Li, Topcu and Low
+  (2015), used there and in Low (2014) as a condition for exactness of the
+  relaxation, not as a screening rule. `ell >= 0` from the cone is elementary;
+  the substation import bound is standard presolve.
+- The power-flow start: reported for interior-point AC OPF on transmission
+  systems (Kardos et al. 2022). Not found for branch-flow multi-period OPF or
+  interior-point DDP.
+- The exact step: the ratio test is standard for all-at-once interior-point
+  methods and for Riccati-based MPC with linear dynamics (Rao, Wright and
+  Rawlings 1998); the closest DDP work applies it to a linearized slack
+  direction (Prabhu, Rangarajan and Kothare 2025). That linear dynamics make
+  the DDP rollout affine in the step, hence the test exact, was not found
+  stated.
+
 ## Files
 
 | | |
