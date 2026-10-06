@@ -666,22 +666,35 @@ end
 # Works in the grouped order so that each group is a contiguous row block.
 function tree_kkt_schur_solve(st::TreeKKTStructured, R::AbstractMatrix)
     Rp = R[st.perm, :]
+    tree_kkt_schur_solve_grouped!(st, Rp)
+    X = Matrix{Float64}(undef, size(Rp))
+    X[st.perm, :] = Rp
+    return X
+end
+
+# The same solve in place, on a right-hand side already in the grouped order.
+# The feeder blocks are independent: with several columns they are solved on
+# the Julia threads (each on one BLAS thread), with identical results.
+function tree_kkt_schur_solve_grouped!(st::TreeKKTStructured, Rp::AbstractMatrix)
     if !isnothing(st.Sfac)
         ldiv!(st.Sfac, Rp)
-        X = Matrix{Float64}(undef, size(Rp))
-        X[st.perm, :] = Rp
-        return X
+        return Rp
     end
+    ng = length(st.granges)
     _blas1() do
-        for (g, rg) in enumerate(st.granges)
-            ldiv!(st.Dfac[g], view(Rp, rg, :))
+        if Threads.nthreads() > 1 && ng > 1 && size(Rp, 2) > 1
+            Threads.@threads for g in 1:ng
+                ldiv!(st.Dfac[g], view(Rp, st.granges[g], :))
+            end
+        else
+            for (g, rg) in enumerate(st.granges)
+                ldiv!(st.Dfac[g], view(Rp, rg, :))
+            end
         end
     end
     T = st.small \ (st.Up' * Rp)
     mul!(Rp, st.DUp, T, 1.0, 1.0)
-    X = Matrix{Float64}(undef, size(Rp))
-    X[st.perm, :] = Rp
-    return X
+    return Rp
 end
 
 function tree_kkt_schur_dense(st::TreeKKTStructured)
@@ -818,6 +831,32 @@ end
 # Battery rows (in lay.E order) of K \ R for right-hand sides supported on E.
 tree_kkt_battery_rows(s::TreeKKTSolver, RE::AbstractMatrix) = tree_kkt_schur_solve(s.st, RE)
 
+# Battery rows of K \ R for R = -[B; cxE], B dense on the battery-power rows
+# and cxE sparse on the energy rows (the feedback right-hand side), in the
+# grouped order: row invp[i] of the result is row i of E. The right-hand side
+# is written in that order directly and solved in place.
+const _ROWS_WORK = Ref(zeros(0, 0))
+function tree_kkt_battery_rows_grouped(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseMatrixCSC)
+    st = s.st; nB, nx = size(B); nE = length(st.perm)
+    (size(cxE) == (nE - nB, nx)) || return nothing
+    invp = invperm(st.perm)
+    # The result is used by the caller before the next stage is solved, so one
+    # workspace serves every stage: no 2 n_B x n_x allocation per stage.
+    size(_ROWS_WORK[]) == (nE, nx) || (_ROWS_WORK[] = Matrix{Float64}(undef, nE, nx))
+    Rp = _ROWS_WORK[]
+    @inbounds for j in 1:nx
+        for k in 1:nB; Rp[invp[k], j] = -B[k, j]; end
+        for k in nB+1:nE; Rp[invp[k], j] = 0.0; end
+    end
+    rv = rowvals(cxE); nzv = nonzeros(cxE)
+    @inbounds for j in 1:nx, q in nzrange(cxE, j)
+        Rp[invp[nB + rv[q]], j] = -nzv[q]
+    end
+    tree_kkt_schur_solve_grouped!(st, Rp)
+    return Rp, invp
+end
+
+
 # Driver hook for FILTERDDP_TREE_KKT=1. The layout depends only on the network
 # and on K's sparsity pattern, so it is built once and rebuilt only if the
 # pattern changes.
@@ -845,3 +884,5 @@ function DDP4OPF.battery_block_rows(F::TreeKKTSolver, K, E, R)
 end
 
 DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times
+DDP4OPF.battery_block_rows_grouped(F::TreeKKTSolver, E, B, cxE) =
+    E == F.lay.E ? tree_kkt_battery_rows_grouped(F, B, cxE) : nothing

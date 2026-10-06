@@ -234,6 +234,74 @@ const _PARSIM_FWD = zeros(7)                    # forward pass: see affine_lines
 # [6] value increments, [7] value update; and [8] the feedforward solve.
 const _PARSIM_SUB = zeros(8)
 
+# FILTERDDP_LEAN_VALUE=1: the value-function part of a stage, the part that
+# cannot be done before the sweep, without its avoidable dense work. With
+# the battery dynamics f_x = I and f_u a scaled selector, so
+#   C  = l_xx + V_xx + f_xx          (no products with f_x),
+#   B  = rows of V_xx scaled        (no sparse-dense products),
+# and the feedback rows are solved in the tree solver's grouped order, from
+# a right-hand side written there directly (battery_block_rows_grouped):
+# four 2 n_B x n_x copies fewer per stage, and the feeder blocks solved on
+# the Julia threads. Every entry is computed by the same operations as
+# before, so the iterates are unchanged.
+_lean_value() = get(ENV, "FILTERDDP_LEAN_VALUE", "0") != "0"
+battery_block_rows_grouped(F, E, B, cxE) = nothing
+function _is_identity(A)
+    A isa SparseMatrixCSC || return false
+    n = size(A, 1)
+    (size(A, 2) == n && nnz(A) == n) || return false
+    rv = rowvals(A); nzv = nonzeros(A)
+    @inbounds for j in 1:n
+        q = A.colptr[j]
+        (A.colptr[j+1] == q + 1 && rv[q] == j && nzv[q] == 1) || return false
+    end
+    return true
+end
+# (lxx + V) + fxx
+function _lean_C(lxx, V::Matrix, fxx)
+    lxx isa SparseMatrixCSC || return lxx + V + fxx
+    C = copy(V)
+    rv = rowvals(lxx); nzv = nonzeros(lxx)
+    @inbounds for j in axes(lxx, 2), q in nzrange(lxx, j)
+        C[rv[q], j] = nzv[q] + C[rv[q], j]
+    end
+    if fxx isa SparseMatrixCSC
+        rv = rowvals(fxx); nzv = nonzeros(fxx)
+        @inbounds for j in axes(fxx, 2), q in nzrange(fxx, j)
+            C[rv[q], j] += nzv[q]
+        end
+    else
+        C .+= fxx
+    end
+    return C
+end
+# A[i, j] += X[row[j], i] * val[j] for the columns j that have a row, in
+# cache-sized blocks: X is read down its columns and A written down its own.
+function _add_scaled_rows_transposed!(A::Matrix, X::Matrix, row::Vector{Int}, val::Vector)
+    n = size(A, 1); m = size(A, 2); bs = 64
+    @inbounds for j0 in 1:bs:m, i0 in 1:bs:n
+        for j in j0:min(j0 + bs - 1, m)
+            r = row[j]; r == 0 && continue
+            v = val[j]
+            for i in i0:min(i0 + bs - 1, n)
+                A[i, j] += X[r, i] * v
+            end
+        end
+    end
+    return A
+end
+# fa' * V for fa with exactly one entry per column
+function _lean_B(fa::SparseMatrixCSC, V::Matrix)
+    nB = size(fa, 2); nx = size(V, 2)
+    all(k -> fa.colptr[k+1] == fa.colptr[k] + 1, 1:nB) || return Matrix(fa' * V)
+    rv = rowvals(fa); nzv = nonzeros(fa)
+    B = Matrix{eltype(V)}(undef, nB, nx)
+    @inbounds for j in 1:nx, k in 1:nB
+        B[k, j] = nzv[k] * V[rv[k], j]
+    end
+    return B
+end
+
 # Rows E of K \ R for right-hand sides R supported on E (given as R[E, :]).
 # Default: dense solve with the Schur complement from BATTERY_SCHUR_HOOK.
 battery_block_rows(F, K, E, R) = lu!(BATTERY_SCHUR_HOOK[](K, E)) \ R
@@ -248,16 +316,46 @@ function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
     energy_rows = sort!(unique(cx_s.rowval))
     E = vcat(active_B_rows, nu .+ energy_rows)
     cxE = cx_s[energy_rows, :]                       # sparse: one entry per battery
-    R = vcat(-B_active, -Matrix(cxE))
-    t_c = time_ns()
-    X = battery_block_rows(F, K, E, R)
-    t_d = time_ns()
     nB = length(active_B_rows)
-    if _parsim()
-        t0 = time_ns(); _PARSIM_BETA_B[] = X[1:nB, :]; _PARSIM_SKIP_NS[] += time_ns() - t0
+    t_g0 = time_ns()
+    grouped = _lean_value() ? battery_block_rows_grouped(F, E, B_active, cxE) : nothing
+    t_g1 = time_ns()
+    if isnothing(grouped)
+        R = vcat(-B_active, -Matrix(cxE))
+        t_c = time_ns()
+        X = battery_block_rows(F, K, E, R)
+        t_d = time_ns()
+        if _parsim()
+            t0 = time_ns(); _PARSIM_BETA_B[] = X[1:nB, :]; _PARSIM_SKIP_NS[] += time_ns() - t0
+        end
+        Vxx_inc = (@view X[1:nB, :])' * B_active
+        Vxx_inc .+= X[nB+1:end, :]' * cxE
+    else
+        # Xp: the same rows in the solver's grouped order, row invp[i] holding row i of E
+        Xp, invp = grouped
+        t_c = t_g0; t_d = t_g1                # the right-hand side is written inside the solve
+        nx = size(B_active, 2)
+        XB = Matrix{eltype(Xp)}(undef, nB, nx)
+        nEn = size(cxE, 1)
+        XE = Matrix{eltype(Xp)}(undef, nEn, nx)
+        @inbounds for j in 1:nx
+            for k in 1:nB; XB[k, j] = Xp[invp[k], j]; end
+            for k in 1:nEn; XE[k, j] = Xp[invp[nB + k], j]; end
+        end
+        _parsim() && (_PARSIM_BETA_B[] = XB)
+        Vxx_inc = XB' * B_active
+        # + XE' * cxE, one entry of cxE per column
+        rv = rowvals(cxE); nzv = nonzeros(cxE)
+        if all(j -> cxE.colptr[j+1] - cxE.colptr[j] <= 1, 1:nx)
+            row = zeros(Int, nx); val = zeros(eltype(nzv), nx)
+            @inbounds for j in 1:nx, q in nzrange(cxE, j)
+                row[j] = rv[q]; val[j] = nzv[q]
+            end
+            _add_scaled_rows_transposed!(Vxx_inc, XE, row, val)
+        else
+            Vxx_inc .+= XE' * cxE
+        end
     end
-    Vxx_inc = (@view X[1:nB, :])' * B_active
-    Vxx_inc .+= X[nB+1:end, :]' * cxE
     Vx_inc = B_active' * α[active_B_rows] + cx_s' * ψ
     _PARSIM_SUB[8] = (t_b - t_a) / 1e9; _PARSIM_SUB[4] = (t_c - t_b) / 1e9
     _PARSIM_SUB[5] = (t_d - t_c) / 1e9; _PARSIM_SUB[6] = (time_ns() - t_d) / 1e9
@@ -528,11 +626,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             inv_uu = inv.(uu) .* cl.masku
 
             # Qû = Lu' -μŪ^{-1}e + fu' * V̂x
+            ps_m1 = time_ns()
             _ps0 = time_ns()
             Qû = lu_ + fu' * V̂x + μ .* (inv_uu - inv_ul)
             # C = Lxx + fx' * Vxx * fx + V̄x ⋅ fxx
-            C = lxx + fx' * V̂xx * fx + fxx
+            lean_fx = _lean_value() && V̂xx isa Matrix && _is_identity(fx)
+            C = lean_fx ? _lean_C(lxx, V̂xx, fxx) : lxx + fx' * V̂xx * fx + fxx
             _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[1] = _ps1 / 1e9
+            ps_m2 = time_ns()
     
             sparse_stage = issparse(luu) || issparse(fu) || (nc > 0 && (issparse(cu) || issparse(cuu)))
             structured_B = sparse_stage && issparse(fu) && nnz(lux) == 0 &&
@@ -560,6 +661,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 !(haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
                   t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1")))
             battery_curvature = nothing
+            ps_m3 = time_ns()
             if sparse_stage
                 fu_sparse = sparse(fu)
                 if exact_batt
@@ -578,6 +680,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 ux_tmp = fu' * V̂xx
                 Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
             end
+            ps_m4 = time_ns()
             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
             if structured_B
                 active_B_rows = sort!(unique(findnz(fu)[2]))
@@ -587,7 +690,8 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 fu_active = _structured_dynamics() ? fu_sparse[:, active_B_rows] :
                     Matrix(@view fu[:, active_B_rows])
                 _ps0 = time_ns()
-                B_active = Matrix(fu_active' * V̂xx * fx)
+                B_active = (lean_fx && fu_active isa SparseMatrixCSC) ? _lean_B(fu_active, V̂xx) :
+                    Matrix(fu_active' * V̂xx * fx)
                 lux_in_B && (B_active .+= lux[active_B_rows, :])
                 exact_batt && (battery_curvature = Matrix(fu_active' * V̂xx * fu_active))
                 _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[3] = _ps1 / 1e9
@@ -598,14 +702,16 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 B .+= fux
             end
 
+            ps_m5 = time_ns()
             if nc > 0
                 data.barrier_lagrangian_curr += dot(c, ϕ)
                 Qû = Qû + cu' * ϕ
-                C = C + cxx
+                (lean_fx && cxx isa SparseMatrixCSC && nnz(cxx) == 0) || (C = C + cxx)
                 exact_batt || (Ĥ = Ĥ + cuu)          # already included, fixed pattern
                 !structured_B && (B .+= cux)
             end
             
+            ps_m6 = time_ns()
             # inertia correction / regularisation
             if !iszero(reg)
                 @inbounds for i in axes(Ĥ, 1)
@@ -970,7 +1076,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             # Update return V derivatives for next timestep Vxx = C + β' * B + ω' cx
             _ps0 = time_ns()
             if blocked_value
-                V̂xx = C + blocked_Vxx
+                V̂xx = lean_fx ? (C .+= blocked_Vxx) : C + blocked_Vxx
                 V̂x = lx + blocked_Vx + fx' * V̂x
             elseif structured_B
                 beta_active = Matrix(@view β[active_B_rows, :])
@@ -1017,10 +1123,13 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 ps_att[4] += ps_post; ps_att[5] = max(ps_att[5], ps_post)
                 ps_stages += 1
                 isnothing(ps_pt) || @printf(
-                    "FILTERDDP_PARSIM_STAGE iteration=%d stage=%d pre_s=%.6f seq_s=%.6f post_s=%.6f qc_s=%.6f curv_s=%.6f b_s=%.6f finish_s=%.6f block_s=%.6f rhs_s=%.6f rows_s=%.6f vinc_s=%.6f value_s=%.6f prepare_s=%.6f net1_s=%.6f net2_s=%.6f deriv_s=%.6f algebra_s=%.6f assembly_s=%.6f update_s=%.6f\n",
+                    "FILTERDDP_PARSIM_STAGE iteration=%d stage=%d pre_s=%.6f seq_s=%.6f post_s=%.6f qc_s=%.6f curv_s=%.6f b_s=%.6f finish_s=%.6f block_s=%.6f rhs_s=%.6f rows_s=%.6f vinc_s=%.6f value_s=%.6f prepare_s=%.6f net1_s=%.6f net2_s=%.6f deriv_s=%.6f algebra_s=%.6f assembly_s=%.6f update_s=%.6f barrier_s=%.6f struct_s=%.6f hess_s=%.6f bsel_s=%.6f nc_s=%.6f reg_s=%.6f\n",
                     data.k, t, ps_pre, ps_seq, ps_post, _PARSIM_SUB[1], _PARSIM_SUB[2], _PARSIM_SUB[3], ps_pt[2], ps_pt[4],
                     _PARSIM_SUB[4], _PARSIM_SUB[5], _PARSIM_SUB[6] - ps_skip, _PARSIM_SUB[7], ps_pt[1], ps_pt[3], ps_pt[5],
-                    derivative_s, algebra_s, kkt_assembly_s, update_s)
+                    derivative_s, algebra_s, kkt_assembly_s, update_s,
+                    (ps_m1 - algebra_start_ns) / 1e9, (ps_m3 - ps_m2) / 1e9, (ps_m4 - ps_m3) / 1e9 - _PARSIM_SUB[2],
+                    (ps_m5 - ps_m4) / 1e9 - _PARSIM_SUB[3], (ps_m6 - ps_m5) / 1e9,
+                    algebra_s - (ps_m6 - algebra_start_ns) / 1e9)
             end
             update_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - update_alloc_start : 0
             timing_diagnostic && @printf(
