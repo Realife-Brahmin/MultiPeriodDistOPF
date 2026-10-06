@@ -7,16 +7,22 @@
 # cells, 8 iterations at long horizons). One run at a time, quiet machine, full
 # per-iteration logs. Completed logs are skipped.
 #
-#   E. the nine Table II cells to the solver's own tolerance. Near-optimality
-#      is now declared much earlier on the barrier path (objective gap up to
-#      0.34% against 1e-5 before), so the like-for-like figure is the time to a
-#      given gap, read from these logs afterwards (near_opt_posthoc.py);
+#   E. ieee123 and med2522 Table II cells to the solver's own tolerance.
+#      Near-optimality is now declared much earlier on the barrier path
+#      (objective gap up to 0.34% against 1e-5 before), so the like-for-like
+#      figure is the time to a given gap, read from these logs afterwards
+#      (near_opt_posthoc.py);
 #   A. longer horizons, diagonal Hessian, tree solver: med2522 T=192, 384 and
 #      large10k T=96, 192, with Ipopt (MA57, MA97) on the same model and start;
 #   B. exact Hessian through the tree solver on the Table II cells;
 #   C. C_B = 0 with the diagonal Hessian, where it failed before
 #      (large10k T=6, med2522 T=96);
 #   D. med2522 T=1152, and T=1536 (failed before; no Ipopt reference, strict).
+#
+# large10k runs use the instance corrected on 2026-10-05 (PV restored, see
+# run_large10k_pv_rerun.sh, which also covers its Table II cells) and carry
+# the tag `pv`; their near-optimality references are Ipopt runs on that
+# instance.
 #
 # Waits for the file given as $1 to contain TABLE2_SCREEN_DONE (or for no
 # julia.exe if no argument). PARTS="A B" selects parts.
@@ -41,7 +47,7 @@ export FILTERDDP_TREE_KKT=1 JULIA_NUM_THREADS=8
 for part in $PARTS; do case $part in
 E)
   export STRICT=1
-  for cell in ieee123C_1ph:6:full ieee123C_1ph:24:full ieee123C_1ph:96:full ieee2522C_1ph:6:full               ieee2522C_1ph:24:full large10kC_1ph:6:full ieee2522C_1ph:96:8 large10kC_1ph:24:8 large10kC_1ph:48:8; do
+  for cell in ieee123C_1ph:6:full ieee123C_1ph:24:full ieee123C_1ph:96:full ieee2522C_1ph:6:full ieee2522C_1ph:24:full ieee2522C_1ph:96:8; do
     IFS=: read sys T warm <<< "$cell"
     export FILTERDDP_WARMUP=$warm
     case $sys in
@@ -55,29 +61,45 @@ E)
   ;;
 A)
   IPOPT_SCREEN=$SCREEN IPOPT_LOADFLOW_START=1 IPOPT_TAG_SUFFIX=_screen_lf SOLVERS="ma57 ma97" \
-    CELLS="ieee2522C_1ph:192 large10kC_1ph:96 ieee2522C_1ph:384 large10kC_1ph:192" \
-    bash ddp/examples/power_system/run_ipopt_hsl.sh
-  export FILTERDDP_WARMUP=8 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
-  IPOPT_REF_LOG=$H/ipopt_ma57_ieee2522C_1ph_T192.log      bash "$S" ieee2522C_1ph 192 diag 16 1
-  IPOPT_REF_LOG=$H/ipopt_ma97_large10kC_1ph_T96.log       bash "$S" large10kC_1ph 96 diag 16 1
-  IPOPT_REF_LOG=$H/ipopt_oom_ma57_ieee2522C_1ph_T384.log  bash "$S" ieee2522C_1ph 384 diag 16 1
-  IPOPT_REF_LOG=$H/ipopt_ma97_large10kC_1ph_T192.log      bash "$S" large10kC_1ph 192 diag 16 1
+    CELLS="ieee2522C_1ph:192 ieee2522C_1ph:384" bash ddp/examples/power_system/run_ipopt_hsl.sh
+  IPOPT_SCREEN=$SCREEN IPOPT_LOADFLOW_START=1 IPOPT_TAG_SUFFIX=_screen_lf_pv SOLVERS="ma57 ma97" \
+    CELLS="large10kC_1ph:96 large10kC_1ph:192" bash ddp/examples/power_system/run_ipopt_hsl.sh
+  export FILTERDDP_WARMUP=8
+  RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm IPOPT_REF_LOG=$H/ipopt_ma57_ieee2522C_1ph_T192.log \
+    bash "$S" ieee2522C_1ph 192 diag 16 1
+  RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm_pv IPOPT_REF_LOG=$H/ipopt_ma57_screen_lf_pv_large10kC_1ph_T96.log \
+    bash "$S" large10kC_1ph 96 diag 16 1
+  RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm IPOPT_REF_LOG=$H/ipopt_oom_ma57_ieee2522C_1ph_T384.log \
+    bash "$S" ieee2522C_1ph 384 diag 16 1
+  RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm_pv IPOPT_REF_LOG=$H/ipopt_ma57_screen_lf_pv_large10kC_1ph_T192.log \
+    bash "$S" large10kC_1ph 192 diag 16 1
   ;;
 B)
   export FILTERDDP_WARMUP=full
   for cell in ieee123C_1ph:6 ieee123C_1ph:24 ieee123C_1ph:96 ieee2522C_1ph:6 ieee2522C_1ph:24 \
               ieee2522C_1ph:96 large10kC_1ph:6 large10kC_1ph:24; do
     sys=${cell%%:*}; T=${cell##*:}
-    case $sys in ieee123C_1ph) export JULIA_NUM_THREADS=1 RUN_TAG_SUFFIX=_tableII_cbsys_typed_tree4_screen_warm;;
-                 *)            export JULIA_NUM_THREADS=8 RUN_TAG_SUFFIX=_tableII_jt8_cbsys_typed_tree4_screen_warm;; esac
-    bash "$S" "$sys" "$T" exact 16 1
+    case $sys in
+      ieee123C_1ph)  JULIA_NUM_THREADS=1 RUN_TAG_SUFFIX=_tableII_cbsys_typed_tree4_screen_warm bash "$S" "$sys" "$T" exact 16 1;;
+      large10kC_1ph) RUN_TAG_SUFFIX=_tableII_jt8_cbsys_typed_tree4_screen_warm_pv \
+                       IPOPT_REF_LOG=$H/ipopt_ma57_screen_lf_pv_large10kC_1ph_T$T.log bash "$S" "$sys" "$T" exact 16 1;;
+      *)             RUN_TAG_SUFFIX=_tableII_jt8_cbsys_typed_tree4_screen_warm bash "$S" "$sys" "$T" exact 16 1;;
+    esac
   done
-  export JULIA_NUM_THREADS=8
   ;;
 C)
-  export FILTERDDP_WARMUP=full RUN_TAG_SUFFIX=_tableII_jt8_cb0_typed_tree3_screen_warm
-  CB=0 bash "$S" large10kC_1ph 6 diag 16 1
-  CB=0 bash "$S" ieee2522C_1ph 96 diag 16 1
+  export FILTERDDP_WARMUP=full
+  # C_B = 0 reference for large10k on the corrected instance
+  NOCB=ddp/results/ipopt_no_cb/logs/ipopt_nocb_pv_large10kC_1ph_T6.log
+  if ! grep -q "CENTRAL_IPOPT " "$NOCB" 2>/dev/null; then
+    HSL="${HSL_LIB_DIR:-C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build}"
+    PATH="$HSL:$PATH" REDUCED_PROFILE=periodic REDUCED_CB=0 TERMINAL_SOC_SOFT=1 \
+    IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=$HSL/libma57.dll;linear_system_scaling=none" \
+      julia --startup-file=no --project=envs/ddp2026 ddp/examples/power_system/centralized_ipopt_matched.jl \
+      large10kC_1ph 6 "${NOCB%.log}_ipoptlog.txt" > "$NOCB" 2>&1
+  fi
+  CB=0 RUN_TAG_SUFFIX=_tableII_jt8_cb0_typed_tree3_screen_warm_pv IPOPT_REF_LOG=$NOCB bash "$S" large10kC_1ph 6 diag 16 1
+  CB=0 RUN_TAG_SUFFIX=_tableII_jt8_cb0_typed_tree3_screen_warm bash "$S" ieee2522C_1ph 96 diag 16 1
   ;;
 D)
   export FILTERDDP_WARMUP=8 RUN_TAG_SUFFIX=_jt8_cbsys_typed_tree3_screen_warm
