@@ -246,6 +246,8 @@ const _PARSIM_SUB = zeros(8)
 # before, so the iterates are unchanged.
 _lean_value() = get(ENV, "FILTERDDP_LEAN_VALUE", "0") != "0"
 battery_block_rows_grouped(F, E, B, cxE) = nothing
+# Feedback rows and value increment from the halved battery block, if the solver has one
+battery_value_halved(F, E, B, cxE) = nothing
 # FILTERDDP_VXX_SEPARABILITY=1 (diagnostic, with the lean path): how much of a
 # stage's value-Hessian increment couples batteries on different feeders.
 battery_groups(F, nB) = nothing
@@ -359,9 +361,14 @@ function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
     cxE = cx_s[energy_rows, :]                       # sparse: one entry per battery
     nB = length(active_B_rows)
     t_g0 = time_ns()
-    grouped = _lean_value() ? battery_block_rows_grouped(F, E, B_active, cxE) : nothing
+    halved = _lean_value() ? battery_value_halved(F, E, B_active, cxE) : nothing
+    grouped = (isnothing(halved) && _lean_value()) ? battery_block_rows_grouped(F, E, B_active, cxE) : nothing
     t_g1 = time_ns()
-    if isnothing(grouped)
+    if !isnothing(halved)
+        XB, Vxx_inc = halved
+        t_c = t_g0; t_d = t_g1
+        _parsim() && (_PARSIM_BETA_B[] = XB)
+    elseif isnothing(grouped)
         R = vcat(-B_active, -Matrix(cxE))
         t_c = time_ns()
         X = battery_block_rows(F, K, E, R)

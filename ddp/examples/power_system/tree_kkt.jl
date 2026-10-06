@@ -486,6 +486,18 @@ function _blas_full(f, n::Int)
     end
 end
 
+# FILTERDDP_HALF_BLOCK=1: factor the battery block at half size. E holds the
+# battery powers and the energy rows; the energy rows couple to the powers
+# and, once the energy slacks are eliminated, to themselves only, so their
+# block is diagonal. Eliminating them leaves a block in the powers alone:
+#     Shat = S_PP - S_PN inv(S_NN) S_NP,
+# an eighth of the factorization work and a quarter of the multi-column solve,
+# whatever the feeder topology. The same linear system in another elimination
+# order: results agree to rounding. Falls back to the full block if a group's
+# rows are not [powers; energy rows], its energy block is not diagonal, or the
+# energy rows couple to the network.
+_half_block() = get(ENV, "FILTERDDP_HALF_BLOCK", "0") != "0"
+
 struct TreeKKTStructured
     perm::Vector{Int}
     granges::Vector{UnitRange{Int}}
@@ -498,6 +510,14 @@ struct TreeKKTStructured
     # Exact battery curvature: D is no longer block diagonal, so the whole
     # Schur complement S = D + Vc - U inv(M) U' is factored densely instead.
     Sfac::Union{Nothing, LU{Float64, Matrix{Float64}, Vector{Int}}}
+    # FILTERDDP_HALF_BLOCK: each group's rows are [power rows; energy rows] and the
+    # energy rows' block is diagonal, so they are eliminated and only the power
+    # rows are factored (Dfac, or Sfac under the exact Hessian). Empty nP: not halved.
+    nP::Vector{Int}                 # per group: number of power rows
+    Ninv::Vector{Vector{Float64}}   # per group: inverse of the energy rows' diagonal
+    PN::Vector{SparseMatrixCSC{Float64, Int}}   # per group: power x energy block (one entry per battery)
+    NP::Vector{SparseMatrixCSC{Float64, Int}}   # per group: energy x power block
+    prow::Vector{Int}               # grouped positions of all power rows (exact Hessian)
 end
 
 tree_kkt_structured(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC;
@@ -625,6 +645,7 @@ function _tree_kkt_finish(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::Spars
     Dfull = dense_check ? zeros(nE, nE) : zeros(0, 0)
     exact = !isnothing(Vc)
     Sdense = exact ? zeros(nE, nE) : zeros(0, 0)      # permuted (grouped) order
+    Dgs = Vector{Matrix{Float64}}(undef, ng)
     @inbounds for gi in 1:ng
         rg = stat.granges[gi]; n = length(rg)
         Dg = zeros(n, n)
@@ -640,26 +661,88 @@ function _tree_kkt_finish(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::Spars
             Dg[a, b] -= nz[pa] * nz[pb] / nz[stat.iso_d[si]]
         end
         dense_check && (Dfull[stat.perm[rg], stat.perm[rg]] .= Dg)
-        if exact
-            Sdense[rg, rg] .= Dg
-            continue
+        Dgs[gi] = Dg
+    end
+    # Can the energy rows be eliminated? Power rows are the E rows coupled to the network.
+    half = _half_block()
+    nPv = Int[]; Ninv = Vector{Float64}[]; prow = Int[]
+    PN = SparseMatrixCSC{Float64, Int}[]; NP = SparseMatrixCSC{Float64, Int}[]
+    if half
+        isP = falses(nE)
+        for (a, t, p) in stat.kef; isP[a] = true; end
+        nPv = zeros(Int, ng)
+        for gi in 1:ng
+            rg = stat.granges[gi]; n = length(rg); Dg = Dgs[gi]
+            np = count(l -> isP[stat.perm[rg[l]]], 1:n)
+            ok = all(l -> isP[stat.perm[rg[l]]] == (l <= np), 1:n)
+            for l2 in np+1:n, l1 in np+1:n
+                ok &= l1 == l2 ? Dg[l1, l1] != 0 : Dg[l1, l2] == 0
+            end
+            ok &= all(iszero, @view Up[rg[np+1:n], :])
+            if !ok
+                half = false; nPv = Int[]
+                break
+            end
+            nPv[gi] = np
         end
-        F = lu!(Dg)
-        Dfac[gi] = F
-        DUp[rg, :] = F \ Up[rg, :]
+    end
+    if half
+        for gi in 1:ng
+            rg = stat.granges[gi]; n = length(rg); np = nPv[gi]; Dg = Dgs[gi]
+            push!(Ninv, [1 / Dg[l, l] for l in np+1:n])
+            push!(PN, sparse(Dg[1:np, np+1:n])); push!(NP, sparse(Dg[np+1:n, 1:np]))
+            append!(prow, rg[1:np])
+        end
+        # the halved value update uses S_NP = S_PN'
+        if !all(gi -> PN[gi] == sparse(NP[gi]'), 1:ng)
+            half = false; nPv = Int[]; empty!(Ninv); empty!(PN); empty!(NP); empty!(prow)
+        end
     end
     if exact
         nB = size(Vc, 1)
         (size(Vc) == (nB, nB) && nB <= nE) || error("battery curvature has the wrong size")
+        @inbounds for gi in 1:ng
+            rg = stat.granges[gi]
+            Sdense[rg, rg] .= Dgs[gi]
+        end
         @inbounds for b in 1:nB, a in 1:nB
             Sdense[invp[a], invp[b]] += Vc[a, b]      # battery powers are the first n_B of E
         end
         Sdense .-= Up * (fac.Mroot \ Up')
-        Sfac = _blas_full(() -> lu!(Sdense), nE)
-        return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, lu(fac.Mroot), fac.Mroot, Dfull, Sfac)
+        if half
+            Sh = Sdense[prow, prow]
+            off = 0
+            @inbounds for gi in 1:ng
+                np = nPv[gi]
+                Sh[off+1:off+np, off+1:off+np] .-= Matrix(PN[gi] * (Diagonal(Ninv[gi]) * NP[gi]))
+                off += np
+            end
+            Sfac = _blas_full(() -> lu!(Sh), length(prow))
+        else
+            Sfac = _blas_full(() -> lu!(Sdense), nE)
+        end
+        return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, lu(fac.Mroot), fac.Mroot, Dfull, Sfac,
+                                 nPv, Ninv, PN, NP, prow)
+    end
+    @inbounds for gi in 1:ng
+        rg = stat.granges[gi]; Dg = Dgs[gi]
+        if half
+            np = nPv[gi]; rP = rg[1:np]
+            Sh = Dg[1:np, 1:np]
+            Sh .-= Matrix(PN[gi] * (Diagonal(Ninv[gi]) * NP[gi]))
+            F = lu!(Sh)
+            Dfac[gi] = F
+            DUp[rP, :] = F \ Up[rP, :]
+            DUp[rg[np+1:end], :] .= 0.0
+        else
+            F = lu!(Dg)
+            Dfac[gi] = F
+            DUp[rg, :] = F \ Up[rg, :]
+        end
     end
     small = lu!(fac.Mroot - Up' * DUp)
-    return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, small, fac.Mroot, Dfull, nothing)
+    return TreeKKTStructured(stat.perm, stat.granges, Dfac, Up, DUp, small, fac.Mroot, Dfull, nothing,
+                             nPv, Ninv, PN, NP, prow)
 end
 
 # S \ R for S = D - U inv(M) U' (Woodbury): X = D\R + D\U * ((M - U' D\U) \ (U' D\R)).
@@ -676,24 +759,66 @@ end
 # The feeder blocks are independent: with several columns they are solved on
 # the Julia threads (each on one BLAS thread), with identical results.
 function tree_kkt_schur_solve_grouped!(st::TreeKKTStructured, Rp::AbstractMatrix)
-    if !isnothing(st.Sfac)
-        ldiv!(st.Sfac, Rp)
-        return Rp
-    end
     ng = length(st.granges)
-    _blas1() do
-        if Threads.nthreads() > 1 && ng > 1 && size(Rp, 2) > 1
-            Threads.@threads for g in 1:ng
-                ldiv!(st.Dfac[g], view(Rp, st.granges[g], :))
+    halved = !isempty(st.nP)
+    threaded = Threads.nthreads() > 1 && ng > 1 && size(Rp, 2) > 1
+    # Halved block: r_P -= S_PN inv(S_NN) r_N, leaving inv(S_NN) r_N in the energy rows
+    fold!(g) = begin
+        rg = st.granges[g]; np = st.nP[g]
+        rN = view(Rp, rg[np+1:end], :)
+        lmul!(Diagonal(st.Ninv[g]), rN)
+        mul!(view(Rp, rg[1:np], :), st.PN[g], rN, -1.0, 1.0)
+    end
+    # ... and x_N = inv(S_NN) (r_N - S_NP x_P)
+    unfold!(g) = begin
+        rg = st.granges[g]; np = st.nP[g]
+        tmp = st.NP[g] * view(Rp, rg[1:np], :)
+        lmul!(Diagonal(st.Ninv[g]), tmp)
+        view(Rp, rg[np+1:end], :) .-= tmp
+    end
+    if !isnothing(st.Sfac)
+        if halved
+            _blas1() do
+                for g in 1:ng; fold!(g); end
+            end
+            Xc = Rp[st.prow, :]
+            ldiv!(st.Sfac, Xc)
+            Rp[st.prow, :] = Xc
+            _blas1() do
+                for g in 1:ng; unfold!(g); end
             end
         else
-            for (g, rg) in enumerate(st.granges)
-                ldiv!(st.Dfac[g], view(Rp, rg, :))
-            end
+            ldiv!(st.Sfac, Rp)
+        end
+        return Rp
+    end
+    block!(g) = begin
+        rg = st.granges[g]
+        if halved
+            fold!(g)
+            ldiv!(st.Dfac[g], view(Rp, rg[1:st.nP[g]], :))
+        else
+            ldiv!(st.Dfac[g], view(Rp, rg, :))
+        end
+    end
+    _blas1() do
+        if threaded
+            Threads.@threads for g in 1:ng; block!(g); end
+        else
+            for g in 1:ng; block!(g); end
         end
     end
     T = st.small \ (st.Up' * Rp)
     mul!(Rp, st.DUp, T, 1.0, 1.0)
+    if halved
+        _blas1() do
+            if threaded
+                Threads.@threads for g in 1:ng; unfold!(g); end
+            else
+                for g in 1:ng; unfold!(g); end
+            end
+        end
+    end
     return Rp
 end
 
@@ -882,6 +1007,78 @@ function DDP4OPF.battery_block_rows(F::TreeKKTSolver, K, E, R)
     E == F.lay.E || error("battery rows differ from the tree layout's")
     return tree_kkt_battery_rows(F, R)
 end
+
+# The value update on the halved block (FILTERDDP_HALF_BLOCK), on the power rows
+# only. With R = -[B; cxE] and X = S \ R, eliminating the energy rows gives
+#     Rhat = -B + S_PN inv(S_NN) cxE,     X_P = Shat \ Rhat,
+#     X' [B; cxE] = -X_P' Rhat - cxE' inv(S_NN) cxE      (S_NP = S_PN'),
+# so the energy rows of X are never formed: one n_B x n_x right-hand side, one
+# solve on it and one product, instead of 2 n_B rows, two gathers and a second
+# term. Returns the battery rows of the feedback (in E order) and the value
+# increment, or nothing if the block is not halved or cxE has a row with more
+# than one entry.
+const _HALF_WORK = Ref((zeros(0, 0), zeros(0, 0)))
+function tree_kkt_value_halved(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseMatrixCSC)
+    st = s.st
+    (isempty(st.nP) || !isnothing(st.Sfac)) && return nothing
+    nB, nx = size(B); nE = length(st.perm); ng = length(st.granges)
+    (length(st.prow) == nB && size(cxE) == (nE - nB, nx)) || return nothing
+    ecol = zeros(Int, nE - nB); ecx = zeros(nE - nB)            # the one entry of each energy row
+    rv = rowvals(cxE); nzv = nonzeros(cxE)
+    for j in 1:nx, q in nzrange(cxE, j)
+        ecol[rv[q]] == 0 || return nothing
+        ecol[rv[q]] = j; ecx[rv[q]] = nzv[q]
+    end
+    size(_HALF_WORK[][1]) == (nB, nx) || (_HALF_WORK[] = (Matrix{Float64}(undef, nB, nx), Matrix{Float64}(undef, nB, nx)))
+    Rhat, Xc = _HALF_WORK[]
+    bat = Vector{Int}(undef, nB)                                 # battery row of each compact row
+    for k in 1:nB
+        b = st.perm[st.prow[k]]; b <= nB || return nothing
+        bat[k] = b
+    end
+    @inbounds for j in 1:nx, k in 1:nB
+        Rhat[k, j] = -B[bat[k], j]
+    end
+    Vinc = Matrix{Float64}(undef, nx, nx)
+    dterm = zeros(nx)                                            # diagonal of cxE' inv(S_NN) cxE
+    off = 0
+    for g in 1:ng
+        rg = st.granges[g]; np = st.nP[g]; PNg = st.PN[g]; ninv = st.Ninv[g]
+        prv = rowvals(PNg); pnz = nonzeros(PNg)
+        for l in 1:length(rg) - np
+            er = st.perm[rg[np + l]] - nB; j = ecol[er]; j == 0 && continue
+            c = ecx[er]
+            dterm[j] += c * ninv[l] * c
+            for q in nzrange(PNg, l)
+                Rhat[off + prv[q], j] += pnz[q] * ninv[l] * c
+            end
+        end
+        off += np
+    end
+    copyto!(Xc, Rhat)
+    offs = cumsum(vcat(0, st.nP))
+    _blas1() do
+        if Threads.nthreads() > 1 && ng > 1
+            Threads.@threads for g in 1:ng
+                ldiv!(st.Dfac[g], view(Xc, offs[g]+1:offs[g+1], :))
+            end
+        else
+            for g in 1:ng; ldiv!(st.Dfac[g], view(Xc, offs[g]+1:offs[g+1], :)); end
+        end
+    end
+    UpP = st.Up[st.prow, :]
+    T = st.small \ (UpP' * Xc)
+    mul!(Xc, st.DUp[st.prow, :], T, 1.0, 1.0)
+    mul!(Vinc, Xc', Rhat, -1.0, 0.0)
+    @inbounds for j in 1:nx; Vinc[j, j] -= dterm[j]; end
+    XB = Matrix{Float64}(undef, nB, nx)
+    @inbounds for j in 1:nx, k in 1:nB
+        XB[bat[k], j] = Xc[k, j]
+    end
+    return XB, Vinc
+end
+DDP4OPF.battery_value_halved(F::TreeKKTSolver, E, B, cxE) =
+    E == F.lay.E ? tree_kkt_value_halved(F, B, cxE) : nothing
 
 DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times
 # Feeder group of each battery (its power row's block of the Schur complement)
