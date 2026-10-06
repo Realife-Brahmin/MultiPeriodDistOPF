@@ -70,3 +70,5 @@ ddp/results/kkt_ordering/captures/
 ddp/results/constraint_activity/*.jls
 # T = 1536 per-iteration logs are 75-140 MB raw: committed gzipped (GitHub rejects files over 100 MB)
 ddp/results/diag_vs_exact_horizon/*_T1536_*.log
+# Gurobi 13 on the matched instances: the logs are the result.
+!ddp/results/gurobi_matched/logs/
