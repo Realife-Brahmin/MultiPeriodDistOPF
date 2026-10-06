@@ -450,3 +450,164 @@ med2522 at longer horizons, clean runs, tree solver, near-optimality:
 The exact Hessian saves 13-16 iterations at each horizon at no extra cost per
 stage, and the same peak memory (4.1 and 7.3 GiB). The ratio to MA57 still
 rises with horizon (5.4, 5.8, 6.9): iterations keep growing in both arms.
+
+## 9. Parallel in time, exactly: what in a stage waits for `t+1` (2026-10-06)
+
+Test B (Section 3) decoupled the periods by lagging the battery curvature and
+failed. This section does it without approximation, in the configuration of
+`CONSTRAINT_SCREENING.md` (screened model, power-flow start, exact step,
+diagonal Hessian, tree solver).
+
+### The split
+
+With the tree solver the value function of stage `t+1` reaches stage `t` in
+two places only, both inside the block `E` the solver keeps (battery powers
+and energy rows): the battery-power diagonal of the stage matrix, and the
+battery-power rows of the right-hand side. So a stage's backward work falls
+into three parts:
+
+| part | what | needs |
+|---|---|---|
+| pre | derivatives, barrier terms, KKT assembly, network factorization and Schur preparation (`_tree_kkt_prepare`), first network solve of the feedforward column | nothing from `t+1` |
+| seq | products with `V_xx`, the battery block (assembly, factorization, feedback rows), the value update | the value function of `t+1` |
+| post | second network solve (back-substitution), multiplier updates, stored policy | this stage's battery solution |
+
+The forward pass splits the same way. The state depends on the controls only
+through the battery powers, and their feedback rows come out of the backward
+sweep, so the states of all periods follow from a recursion of `n_B x n_x`
+products; each period's full policy solve, its directions, the ratio test and
+the trial evaluations are then independent.
+
+With one worker per period a pass costs `max_t(pre) + sum_t(seq) + max_t(post)`
+instead of the sum of all three.
+
+### Checks
+
+- `tree_kkt_phase_check.jl` overwrites every entry of `K_EE`, and the `E` and
+  energy-slack entries of the right-hand side, with NaN: the network factor,
+  the preparation and the first network solve come out bit-identical on
+  captured stage matrices of all three systems (153, 747 and 3,060 entries
+  destroyed), and the finish step does read them.
+- The instrumented run (`FILTERDDP_PARSIM=1`) is the ordinary sequential run
+  with timers: it reproduces the committed ieee123 `T=6` run to the last digit
+  of the objective and of every residual line.
+- The state recursion is run beside the actual rollout: largest difference
+  `1e-14`.
+
+### The accounting, and what it assumes
+
+`parsim_from_log.py` replaces sums over periods by maxima for the pre and post
+parts and the per-period forward work, and keeps everything else as measured.
+This is the accounting of the tADMM paper: per-period work is run in sequence
+and the slowest period is counted. It assumes one core per period for the
+independent parts (they are single-threaded here) and the machine's threads
+for the sequential sweep, and it ignores communication and memory contention.
+The maxima include whatever garbage-collection pause lands in one period (on
+med2522 the largest pre is about 0.2 s against a mean of 0.04 s), so they are
+pessimistic. Ipopt, in every comparison below, is a single process.
+
+### Exact rewrites found on the way
+
+The first count showed that the sequential part was most of a stage, and that
+almost none of it was the battery-block factorization (1.3 ms of 197 ms on
+large10k). Three rewrites followed. The first two change no floating-point
+operation (identical residual lines on every pass); the third changes the
+elimination order (iterates agree to rounding: `compare_runs.py`, residuals
+within `1e-8` relative, objectives identical to 16 digits).
+
+| flag | what | large10k stage |
+|---|---|---|
+| `FILTERDDP_LEAN_VALUE=1` | `C = l_xx + V_xx + f_xx` without products by `f_x = I`; `B` as scaled rows of `V_xx`; the feedback right-hand side written in the solver's grouped order into one reused workspace and solved in place, feeder blocks on the Julia threads | seq 197 -> 81 ms |
+| (same flag) | the diagonal stage Hessian added up as a dense vector: the code summed the sparse matrices, took `diag()` (a SparseVector), floored it entry by entry and rebuilt a sparse diagonal | pre 165 -> 105 ms |
+| `FILTERDDP_HALF_BLOCK=1` | the energy rows of `E` have a diagonal block once the energy slacks are eliminated, so they are eliminated too: the battery block is `n_B` instead of `2 n_B`, and the value increment is `-X_P' Rhat - cxE' inv(S_NN) cxE` with one `n_B x n_x` right-hand side (agenda 4) | seq 81 -> 57 ms |
+
+On med2522 the same three give pre 47 -> 40 ms and seq 15 -> 9 ms.
+
+### Results (2026-10-06, idle machine, compilation excluded)
+
+Per stage, in ms, with all three rewrites:
+
+| | pre | seq | post |
+|---|---|---|---|
+| large10k | 108 | 57 | 16 |
+| med2522 | 40 | 9 | 3.5 |
+| ieee123 | 3 | 2 | 0.2 |
+
+Seconds to near-optimality. "Sequential, 10-05" is the configuration committed
+on 2026-10-05 (the table in the paper); Ipopt is the faster of MA57 and MA97
+on the same screened model and start.
+
+| case | sequential, 10-05 | sequential, now | one worker per period | Ipopt HSL |
+|---|---|---|---|---|
+| large10k `T=6` | 28.8 | 16.1 | 7.8 | 5.0 |
+| large10k `T=24` | 128.9 | 73.3 | 26.8 | 30.2 |
+| large10k `T=48` | 272.1 | 154.9 | 54.3 | 65.3 |
+| med2522 `T=6` | 18.0 | 13.2 | 5.6 | 3.1 |
+| med2522 `T=24` | 82.5 | 62.5 | 17.6 | 18.7 |
+| med2522 `T=96` | 418.8 | 319.2 | 67.2 | 90.0 |
+| ieee123 `T=6` | 1.0 | 1.4 | 1.0 | 0.13 |
+| ieee123 `T=24` | 2.9 | 3.6 | 1.8 | 0.45 |
+| ieee123 `T=96` | 32.4 | 37.1 | 19.0 | 2.04 |
+
+(The 10-05 column for ieee123 used UMFPACK, which is faster than the tree
+solver on a feeder that small; the other columns use the tree solver.)
+
+Sequential FilterDDP is 43-44% faster than on 2026-10-05 on large10k and
+24-27% on med2522, with the same iterates: 2.4 times Ipopt-HSL at large10k
+`T=24`, 48 (4.2-4.3 before) and 3.3-3.5 times at med2522 `T=24`, 96 (4.4-4.7).
+Counted with one worker per period it is ahead of Ipopt-HSL from `T=24` up on
+both larger feeders (0.75-0.94 of its time) and behind at `T=6`.
+
+Before the halved block the same count was 35.3 / 70.7 s (large10k `T=24`, 48)
+and 23.4 / 95.3 s (med2522 `T=24`, 96): logs in `nine_cells_lean/`.
+
+### What limits the count
+
+The sequential sweep: `T` times 57 ms (large10k) or 9 ms (med2522) per pass,
+about 80% of the count at the longer horizons. What is left in it is dense
+`n_B`-sized algebra on the value Hessian: on large10k mostly one
+`n_B x n_B x n_x` product and the memory traffic around it.
+
+Not started: making the sweep itself parallel in time. It is a Riccati-type
+recursion on the battery states, and such recursions can be combined pairwise
+in about `2 log2 T` rounds. That needs the exact battery-block Hessian (the
+diagonal approximation is not of the linear-fractional form the combination
+relies on), each round costs more than one sweep step, and the gain is small
+at `T=24` and grows with `T`.
+
+### An observation about large10k, not used
+
+`FILTERDDP_VXX_SEPARABILITY=1` measures how much of the value-Hessian update
+couples batteries on different feeders: at most `7e-10` in any entry against
+828 within a feeder (Frobenius ratio `2e-7` at worst over the 78 stage solves
+of a `T=6` run). The 102 feeders meet only at the substation, whose voltage is
+fixed and whose import has a linear cost and, after screening, no bound; what
+couples them is the `1e-8` Hessian floor on the substation variables. So
+large10k is, to that accuracy, 102 independent feeder problems. A value update
+by feeder would make its sequential part nearly free, but it would do nothing
+for a single feeder such as med2522 and is a property of this test system, so
+it was not built (user, 2026-10-06). It is worth remembering when large10k
+results are read: Ipopt could equally be run one feeder at a time.
+
+### Measurement lessons
+
+- **`NO_COLOR` defeats the warm-up.** With it in the environment Julia wraps
+  stdout in an IOContext; prints compiled during the warm-up (a plain
+  IOStream) are compiled again in the first pass of the timed solve: 0.7 s in
+  an ordinary run, 1.5-2.3 s with the accounting lines. Job queues started
+  from PowerShell carry it. The run scripts now unset it and the driver prints
+  `WARMUP_STREAM_MISMATCH` if it happens. The overnight queue of 2026-10-05/06
+  carries about 0.7 s per run, which matters only at `T=6`.
+- A `@printf` with more than 32 arguments is not specialised.
+- A queued batch loads the solver source afresh for every run: no source edits
+  while one is running.
+
+### Files
+
+| | |
+|---|---|
+| `DDP4OPF.jl/src/backward_pass.jl`, `affine_linesearch.jl` | the timers (`FILTERDDP_PARSIM`), the lean value path, the separability diagnostic |
+| `tree_kkt.jl` | `_tree_kkt_prepare` / `_tree_kkt_finish`, grouped feedback rows, the halved block |
+| `tree_kkt_phase_check.jl` | the NaN test |
+| `run_parsim.sh`, `parsim_from_log.py`, `compare_runs.py` | one run, the count, the iterate comparison |
+| `results/parallel_in_time/nine_cells_half/`, `nine_cells_lean/` | logs and summaries of the nine cells |
