@@ -27,6 +27,10 @@ establishes something a future session, on any machine, would need.
   FilterDDP fails large10k T=6 (line search, iteration 2) and med2522 T=96,
   while the exact Hessian converges (large10k T=6, 108 iterations, no
   regularization). Never pair `FILTERDDP_DIAG_HESSIAN=1` with `C_B = 0`.
+  (Those failures were measured before the 2026-10-05 configuration. In it,
+  both cases reach near-optimality with the diagonal Hessian at `C_B = 0`:
+  large10k T=6 in 17 iterations, med2522 T=96 in 55. The rule stands until the
+  user lifts it.)
 - **Solver timing comparisons only on a provably identical problem**: same
   exported instance, `C_B`, `gamma` and profile, with objective agreement checked
   before any timing is quoted. The paper's older centralized Ipopt sweep
@@ -53,8 +57,11 @@ establishes something a future session, on any machine, would need.
 - **Report solve time, not compile time** (user, 2026-10-05). Julia compiles
   each method on first use: 15-30 s, all inside FilterDDP's first iteration
   (14.7 of the 17.9 s once reported for ieee123 `T=6`). Timed FilterDDP runs
-  set `FILTERDDP_WARMUP=3` (1 at horizons of 192 or more): that many silent
-  iterations first, then the timed solve from the same start, same iterates.
+  set `FILTERDDP_WARMUP=full` on the Table II cells: the whole solve once,
+  silently, then the timed solve from the same start, same iterates. (A few
+  warm-up iterations are not enough: they leave about 1.7 s of compilation in
+  code reached later in the solve.) At horizons of 192 or more a full extra
+  solve is too long; use `FILTERDDP_WARMUP=8` there.
   Every FilterDDP time measured before 2026-10-05 includes compilation.
 - **Screened model and power-flow start, for both solvers** (2026-10-05, see
   `ddp/notes/CONSTRAINT_SCREENING.md`). The substation voltage is fixed at
