@@ -65,6 +65,18 @@ establishes something a future session, on any machine, would need.
   are exact (same optimum), but they and the start also speed Ipopt up (53 to
   12 iterations on large10k `T=6`), so any comparison gives Ipopt the same:
   `IPOPT_SCREEN=<same list>`, `IPOPT_LOADFLOW_START=1`.
+- **large10k had no PV real power until 2026-10-05.** `envs/tadmm/parse_opendss.jl`
+  read each PV rating as `PVsystems.kW()`, the unit's present output. large10k's
+  units carry `Daily=LoadShapePVDefault`, so all 1,022 read as 0 kW (350 kW each,
+  357.7 MW in total); ieee123 and ieee2522 have no daily shape and were
+  unaffected. Found by the OpenDSS check (`ddp/examples/power_system/opendss_check.jl`),
+  fixed to read `Pmpp`. The large10k instances were re-exported; the old ones are
+  kept locally as `network_data_large10kC_1ph_T*_periodic_nopv.jls`. **Every
+  large10k result dated before this, for either solver, is on the PV-less
+  system** (still a matched comparison); logs on the corrected instance carry
+  the tag `pv`, and Ipopt references must come from it. The MSOPF parsers in
+  `envs/multi_poi` still use the same call. Standing practice (user): check a
+  dispatch against OpenDSS before trusting an instance or a result.
 - **Logs over 100 MB cannot be pushed to GitHub.** Per-iteration logs at
   horizons of several hundred steps reach 75-140 MB: commit them gzipped, and
   check after every push that the branch is not still ahead of the remote.
