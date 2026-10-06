@@ -884,5 +884,14 @@ function DDP4OPF.battery_block_rows(F::TreeKKTSolver, K, E, R)
 end
 
 DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times
+# Feeder group of each battery (its power row's block of the Schur complement)
+function DDP4OPF.battery_groups(F::TreeKKTSolver, nB)
+    st = F.st; g = zeros(Int, nB)
+    for (gi, rg) in enumerate(st.granges), r in rg
+        k = st.perm[r]
+        k <= nB && (g[k] = gi)
+    end
+    return g
+end
 DDP4OPF.battery_block_rows_grouped(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_battery_rows_grouped(F, B, cxE) : nothing
