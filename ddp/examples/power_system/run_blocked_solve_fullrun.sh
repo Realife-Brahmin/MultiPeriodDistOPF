@@ -19,6 +19,12 @@
 
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
+# NO_COLOR (or FORCE_COLOR) makes Julia wrap stdout in an IOContext. The warm-up
+# solve prints to a plain IOStream, so every print statement would then be
+# compiled again in the first pass of the timed solve: about 0.7 s, and 1.5-2.3 s
+# with the FILTERDDP_PARSIM lines. Found 2026-10-06 in runs launched from a
+# PowerShell-started queue, whose environment carries NO_COLOR.
+unset NO_COLOR FORCE_COLOR
 SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
 SUFFIX="${RUN_TAG_SUFFIX:-}"
 VARIANTS="${VARIANTS:-baseline blocked_w$W}"      # VARIANTS=blocked_w16 runs the blocked arm only

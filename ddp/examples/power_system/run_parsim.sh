@@ -11,6 +11,12 @@
 # Logs go to ddp/results/parallel_in_time/logs/.
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
+# NO_COLOR (or FORCE_COLOR) makes Julia wrap stdout in an IOContext. The warm-up
+# solve prints to a plain IOStream, so every print statement would then be
+# compiled again in the first pass of the timed solve: about 0.7 s, and 1.5-2.3 s
+# with the FILTERDDP_PARSIM lines. Found 2026-10-06 in runs launched from a
+# PowerShell-started queue, whose environment carries NO_COLOR.
+unset NO_COLOR FORCE_COLOR
 SYS=$1; T=$2; ARM=$3; TAG=${4:-parsim}
 OUT=ddp/results/parallel_in_time/logs; mkdir -p "$OUT"
 H=ddp/results/ipopt_hsl/logs

@@ -544,14 +544,22 @@ if warmup > 0
     # type, and the log is a file. With devnull about 1.7 s of compilation was
     # left in the timed solve.
     scratch = tempname()
+    warm_stream = Ref{Any}(nothing)
     open(scratch, "w") do io
         redirect_stdout(io) do
+            warm_stream[] = typeof(stdout)
             solve!(solver, x0, [copy(u) for u in ubar])
         end
     end
     rm(scratch; force=true)
     solver.options.max_iterations = keep_max
     @printf("WARMUP %s iterations=%d time_s=%.3f\n", warmup_spec, solver.data.k, time() - tw)
+    # The warm-up only helps if the timed solve prints to the same stream type.
+    # With NO_COLOR or FORCE_COLOR in the environment Julia wraps stdout in an
+    # IOContext, and every print statement is compiled again in the first pass
+    # of the timed solve (0.7 s, more with diagnostics): the run scripts unset both.
+    warm_stream[] == typeof(stdout) || println("WARMUP_STREAM_MISMATCH warm-up printed to ", warm_stream[],
+        ", the timed solve prints to ", typeof(stdout), ": its first pass includes print compilation")
 end
 t1 = time()
 println("entering solve! ...")
