@@ -1,0 +1,11 @@
+OPENDSS_CHECK large10k T=6 DDP strict | large10kC_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 3.5e+02 | line C1 3.4 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1 1002304.83 1002304.83   0.0000  9413.194  9413.191     0.001  1.92e-05   0.9875   1.0500      0      0
+    2  824966.31  824966.30   0.0000  6368.523  6368.516     0.001  1.93e-05   0.9940   1.0500      0      0
+    3  894763.47  532536.07  68.0193  7472.151  2944.749     0.001  2.15e-02   1.0118   1.0500      0      0
+    4 1012403.58 1012403.57   0.0000  9572.428  9572.418     0.001  1.92e-05   0.9843   1.0500      0      0
+    5  966038.37  966038.37   0.0000  8717.527  8717.521     0.002  1.92e-05   0.9888   1.0500      0      0
+    6  893346.73  893346.73   0.0000  7463.489  7463.487     0.002  1.93e-05   0.9931   1.0500      0      0
+OPENDSS_SUMMARY large10k T=6 DDP strict | import: optimizer 22375293.18 kWh, OpenDSS 20926383.46 kWh (+6.9238%) | losses: optimizer 196029.24, OpenDSS 177919.53 kWh, of which not physical 0.03 kWh
+OPENDSS_SUMMARY large10k T=6 DDP strict | voltage: largest difference 2.15e-02 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY large10k T=6 DDP strict | objective: optimizer 3114759.075691, with OpenDSS import 2836624.163355 (-8.9296%)
