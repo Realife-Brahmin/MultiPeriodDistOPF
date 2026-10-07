@@ -1,0 +1,11 @@
+OPENDSS_CHECK ieee2522C_1ph_T6_exact_tableII_jt8_cbsys_typed_tree4_screen_warm_blocked_w16_r1 | ieee2522C_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 9.9e-32 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1    3433.02    3433.00   0.0004   247.995   247.980     0.013  1.06e-06   0.9561   1.0499      0      0
+    2    2566.28    2566.27   0.0004   134.951   134.941     0.010  7.62e-07   0.9792   1.0500      0      0
+    3    1840.89    1840.87   0.0006    73.331    73.320     0.010  7.74e-07   0.9904   1.0500      0      0
+    4    3487.27    3487.26   0.0004   256.093   256.078     0.013  1.06e-06   0.9536   1.0499      0      0
+    5    3268.79    3268.77   0.0007   223.859   223.836     0.020  1.70e-06   0.9604   1.0499      0      0
+    6    3069.68    3069.66   0.0008   198.304   198.280     0.021  1.73e-06   0.9660   1.0500      0      0
+OPENDSS_SUMMARY ieee2522C_1ph_T6_exact_tableII_jt8_cbsys_typed_tree4_screen_warm_blocked_w16_r1 | import: optimizer 70663.73 kWh, OpenDSS 70663.34 kWh (+0.0006%) | losses: optimizer 4538.13, OpenDSS 4537.74 kWh, of which not physical 0.34 kWh
+OPENDSS_SUMMARY ieee2522C_1ph_T6_exact_tableII_jt8_cbsys_typed_tree4_screen_warm_blocked_w16_r1 | voltage: largest difference 1.73e-06 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY ieee2522C_1ph_T6_exact_tableII_jt8_cbsys_typed_tree4_screen_warm_blocked_w16_r1 | objective: optimizer 9534.354130, with OpenDSS import 9534.304309 (-0.0005%)

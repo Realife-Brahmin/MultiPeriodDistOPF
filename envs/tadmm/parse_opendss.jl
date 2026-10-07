@@ -339,8 +339,14 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
             bus_num = parse(Int, split(bus_full, ".")[1])
             
-            # Get generator rating
-            kW_rated = OpenDSSDirect.PVsystems.kW()
+            # Get generator rating: Pmpp, the rated maximum power. Not
+            # PVsystems.kW(), which is the unit's PRESENT output: for a unit
+            # with a daily shape it is zero at the hour the circuit was
+            # compiled. That read every large10k unit (Daily=
+            # LoadShapePVDefault, 350 kW each) as 0 kW until 2026-10-05; units
+            # without a daily shape (ieee123, ieee2522) were unaffected.
+            kW_rated = parse(Float64, OpenDSSDirect.Text.Command("? PVSystem.$gen_name.Pmpp"))
+            kW_rated > 0 || error("PV unit $gen_name has no rated power (Pmpp = $kW_rated)")
             kVA_rated = OpenDSSDirect.PVsystems.kVARated()
 
             # Convert to per-unit

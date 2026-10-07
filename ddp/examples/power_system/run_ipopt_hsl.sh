@@ -20,6 +20,9 @@ OUT=ddp/results/ipopt_hsl
 mkdir -p "$OUT/logs"
 TAG=""
 if [ "${BLAS1:-0}" = 1 ]; then export OPENBLAS_NUM_THREADS=1; TAG=_blas1; fi
+# IPOPT_TAG_SUFFIX names a variant of the model, e.g. _screen_lf for runs with
+# IPOPT_SCREEN and IPOPT_LOADFLOW_START set (centralized_ipopt_matched.jl).
+TAG="${TAG}${IPOPT_TAG_SUFFIX:-}"
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1
 export PATH="$HSL:$PATH"
 JL="julia --startup-file=no"
@@ -56,7 +59,7 @@ for cell in $CELLS; do
       $JL --project=envs/ddp2026 ddp/examples/power_system/centralized_ipopt_matched.jl \
       "$S" "$T" "$OUT/logs/ipopt_${LS}${TAG}_${S}_T${T}_ipoptlog.txt" >> "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null
-    echo "[$(date '+%H:%M:%S')] $LS $(grep -oE 'CENTRAL_IPOPT system=\S+ T=[0-9]+ .*status=\S+ iterations=[0-9]+ objective=\S+ solve_time_s=\S+' "$LOG")"
+    echo "[$(date '+%H:%M:%S')] $LS$TAG $(grep -oE 'CENTRAL_IPOPT system=\S+ T=[0-9]+ .*status=\S+ iterations=[0-9]+ objective=\S+ solve_time_s=\S+' "$LOG")"
   done
 done
 echo "IPOPT_HSL_DONE"

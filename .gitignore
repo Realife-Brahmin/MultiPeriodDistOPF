@@ -66,3 +66,9 @@ ddp/results/kkt_ordering/captures/
 !ddp/results/ipopt_no_cb/logs/
 !ddp/results/ipopt_cb_*/logs/
 !ddp/results/ipopt_hsl/logs/
+# voltage-limit masks written by constraint_activity.jl (regenerable)
+ddp/results/constraint_activity/*.jls
+# T = 1536 per-iteration logs are 75-140 MB raw: committed gzipped (GitHub rejects files over 100 MB)
+ddp/results/diag_vs_exact_horizon/*_T1536_*.log
+# Gurobi 13 on the matched instances: the logs are the result.
+!ddp/results/gurobi_matched/logs/

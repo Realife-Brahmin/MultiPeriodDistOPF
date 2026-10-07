@@ -1,0 +1,73 @@
+QUIET_WAIT waited_s=18 other_cores=0.23 timed_out=0
+Set parameter Username
+Set parameter LicenseID to value 2866376
+Academic license - for non-commercial use only - expires 2027-09-22
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_large10kC_1ph_T6_gurobilog.txt"
+Set parameter Threads to value 0
+Set parameter Threads to value 0
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_large10kC_1ph_T6_gurobilog.txt"
+Warning for adding constraints: zero or small (< 1e-13) coefficients, ignored
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (win64 - Windows 11+.0 (26200.2))
+
+CPU model: Intel(R) Core(TM) i9-10900X CPU @ 3.70GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 10 physical cores, 20 logical processors, using up to 20 threads
+
+Optimize a model with 191898 rows, 266070 columns and 710124 nonzeros (Min)
+Model fingerprint: 0x267a6a0c
+Model has 1026 linear objective coefficients and an objective constant of 4.7412723928499722e+05
+Model has 7140 quadratic objective terms
+Model has 61920 quadratic constraints
+Coefficient statistics:
+  Matrix range     [1e-08, 4e+00]
+  QMatrix range    [1e+00, 1e+00]
+  Objective range  [4e+02, 1e+03]
+  QObjective range [2e+02, 8e+02]
+  Bounds range     [2e-01, 2e+00]
+  RHS range        [8e-03, 1e+00]
+Presolve removed 12 rows and 12 columns
+Presolve time: 0.50s
+Presolved: 316747 rows, 389900 columns, 1080206 nonzeros
+Presolved model has 61921 second-order cone constraints
+Ordering time: 0.12s
+
+Barrier statistics:
+ Dense cols : 1
+ AA' NZ     : 1.468e+06
+ Factor NZ  : 4.051e+06 (roughly 300 MB of memory)
+ Factor Ops : 6.015e+07 (less than 1 second per iteration)
+ Threads    : 10
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.02998587e+07 -9.74977986e+07  4.71e+03 1.57e+03  1.98e+06     1s
+   1   1.93691124e+07 -1.09311546e+08  1.09e+03 5.88e+02  5.70e+05     1s
+   2   1.70058549e+07 -1.13799537e+08  2.35e+01 9.71e+01  5.00e+04     2s
+   3   1.69198975e+07 -8.98715438e+07  4.88e+00 3.83e+00  3.28e+03     2s
+   4   1.65735717e+07 -6.66296045e+07  9.15e-01 8.58e-01  7.83e+02     2s
+   5   1.50625507e+07 -3.75510358e+07  3.01e-01 2.35e-01  2.64e+02     3s
+   6   1.06398590e+07 -1.42848813e+07  9.29e-04 5.16e-02  6.69e+01     3s
+   7   5.04010182e+06 -1.35759489e+06  1.18e-05 1.31e-02  1.49e+01     3s
+   8   3.28737222e+06  1.52323019e+06  1.50e-06 7.85e-03  3.88e+00     3s
+   9   2.92517228e+06  2.31354618e+06  2.82e-07 3.51e-02  1.33e+00     4s
+  10   2.84908549e+06  2.77453137e+06  1.96e-08 3.82e-03  1.61e-01     4s
+  11   2.83867435e+06  2.82832671e+06  4.28e-09 2.96e-04  2.23e-02     5s
+  12   2.83692301e+06  2.83560438e+06  4.38e-10 2.43e-04  2.84e-03     6s
+  13   2.83665660e+06  2.83648938e+06  2.08e-10 8.06e-05  3.60e-04     7s
+  14   2.83659418e+06  2.83657624e+06  2.33e-09 2.61e-04  3.86e-05     8s
+  15   2.83658905e+06  2.83657644e+06  2.01e-08 1.36e-03  2.71e-05     9s
+  16   2.83658805e+06  2.83657646e+06  1.53e-08 2.76e-04  2.49e-05    10s
+  17   2.83658772e+06  2.83657646e+06  6.95e-06 7.53e-04  2.46e-05    11s
+  18   2.83658835e+06  2.83657646e+06  1.76e-05 1.82e-03  2.46e-05    12s
+  19   2.83658906e+06  2.83657646e+06  4.56e-05 1.29e-04  2.46e-05    13s
+  20   2.83659109e+06  2.83657646e+06  1.26e-04 1.58e-03  2.46e-05    15s
+  21   2.83658765e+06  2.83657646e+06  1.05e-05 2.20e-04  2.47e-05    17s
+
+Barrier solved model in 21 iterations and 17.47 seconds (8.02 work units)
+Optimal objective 2.83658765e+06
+
+
+User-callback calls 214, time in user-callback 0.01 sec
+GUROBI_OPTION Threads=0
+CENTRAL_GUROBI system=large10kC_1ph T=6 profile=periodic C_B=2.400000e-05 gamma=4.200000e+02 status=OPTIMAL iterations=21 objective=2836587.654577459674 solve_time_s=17.526 build_s=10.130 wall_s=31.181 variables=266070 solver=13.0.0
+CENTRAL_GUROBI_MEMORY maxrss_mib=1340.8
+CENTRAL_GUROBI_BATTERY at_power_limit=0.000 mean_utilization=0.205 energy_window_used=1.000 throughput_pu_h=2.098030e+03 energy_term=2.825326e+06 cb_term=6.102476e+03 terminal_term=5.159836e+03

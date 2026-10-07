@@ -27,6 +27,10 @@ establishes something a future session, on any machine, would need.
   FilterDDP fails large10k T=6 (line search, iteration 2) and med2522 T=96,
   while the exact Hessian converges (large10k T=6, 108 iterations, no
   regularization). Never pair `FILTERDDP_DIAG_HESSIAN=1` with `C_B = 0`.
+  (Those failures were measured before the 2026-10-05 configuration. In it,
+  both cases reach near-optimality with the diagonal Hessian at `C_B = 0`:
+  large10k T=6 in 17 iterations, med2522 T=96 in 55. The rule stands until the
+  user lifts it.)
 - **Solver timing comparisons only on a provably identical problem**: same
   exported instance, `C_B`, `gamma` and profile, with objective agreement checked
   before any timing is quoted. The paper's older centralized Ipopt sweep
@@ -49,6 +53,67 @@ establishes something a future session, on any machine, would need.
   (`extract_filterddp_feasibility_trace.jl`) and the NO-point summary
   (`near_opt_from_logs.jl`) post-hoc from these logs. Without these env vars
   the run is unreportable — you cannot reconstruct the NO crossing point.
+
+- **Report solve time, not compile time** (user, 2026-10-05). Julia compiles
+  each method on first use: 15-30 s, all inside FilterDDP's first iteration
+  (14.7 of the 17.9 s once reported for ieee123 `T=6`). Timed FilterDDP runs
+  set `FILTERDDP_WARMUP=full` on the Table II cells: the whole solve once,
+  silently, then the timed solve from the same start, same iterates. (A few
+  warm-up iterations are not enough: they leave about 1.7 s of compilation in
+  code reached later in the solve.) At horizons of 192 or more a full extra
+  solve is too long; use `FILTERDDP_WARMUP=8` there.
+  Every FilterDDP time measured before 2026-10-05 includes compilation.
+- **Screened model and power-flow start, for both solvers** (2026-10-05, see
+  `ddp/notes/CONSTRAINT_SCREENING.md`). The substation voltage is fixed at
+  exactly its upper limit, which stopped FilterDDP from ever taking a full
+  step; every iteration count measured before 2026-10-05 carries that
+  throttle. Current configuration: `FILTERDDP_SCREEN=substation,vupper,ell,psubs`,
+  `FILTERDDP_LOADFLOW_START=1`, `FILTERDDP_AFFINE_LINESEARCH=1`. The reductions
+  are exact (same optimum), but they and the start also speed Ipopt up (53 to
+  12 iterations on large10k `T=6`), so any comparison gives Ipopt the same:
+  `IPOPT_SCREEN=<same list>`, `IPOPT_LOADFLOW_START=1`.
+- **large10k had no PV real power until 2026-10-05.** `envs/tadmm/parse_opendss.jl`
+  read each PV rating as `PVsystems.kW()`, the unit's present output. large10k's
+  units carry `Daily=LoadShapePVDefault`, so all 1,022 read as 0 kW (350 kW each,
+  357.7 MW in total); ieee123 and ieee2522 have no daily shape and were
+  unaffected. Found by the OpenDSS check (`ddp/examples/power_system/opendss_check.jl`),
+  fixed to read `Pmpp`. The large10k instances were re-exported; the old ones are
+  kept locally as `network_data_large10kC_1ph_T*_periodic_nopv.jls`. **Every
+  large10k result dated before this, for either solver, is on the PV-less
+  system** (still a matched comparison); logs on the corrected instance carry
+  the tag `pv`, and Ipopt references must come from it. The MSOPF parsers in
+  `envs/multi_poi` still use the same call. Standing practice (user): check a
+  dispatch against OpenDSS before trusting an instance or a result.
+- **Logs over 100 MB cannot be pushed to GitHub.** Per-iteration logs at
+  horizons of several hundred steps reach 75-140 MB: commit them gzipped, and
+  check after every push that the branch is not still ahead of the remote.
+- **Exact rewrites of 2026-10-06, and the parallel-in-time count**
+  (`ddp/notes/PARALLEL_IN_TIME.md`, Section 9). `FILTERDDP_LEAN_VALUE=1`
+  (identical iterates) and `FILTERDDP_HALF_BLOCK=1` (battery block at half
+  size; iterates agree to rounding, check with `compare_runs.py`) make the
+  sequential run 43-44% faster on large10k and 24-27% on med2522 than the
+  2026-10-05 configuration. They are in the TPEC paper since 2026-10-06 (its
+  results table and Section "Cost of One Iteration") but not yet in the
+  standard run scripts other than `run_parsim.sh`; for ieee123 (UMFPACK, no
+  tree solver) pass `FILTERDDP_LEAN_VALUE=1` to `run_blocked_solve_fullrun.sh`. `FILTERDDP_PARSIM=1` times
+  each stage as what needs nothing from `t+1` / what needs the value function
+  / what follows it, and `parsim_from_log.py` counts one worker per period
+  (the slowest period for the independent parts). The user accepts that
+  simulated count ("like my tADMM Ipopt solve"); always state that it assumes
+  one core per period, no communication, and that Ipopt is a single process.
+- **`NO_COLOR` in the environment defeats the warm-up** (found 2026-10-06).
+  Julia then wraps stdout in an IOContext and every print is compiled again in
+  the timed solve (0.7 s; 1.5-2.3 s with the PARSIM lines). Processes started
+  from PowerShell carry it. `run_parsim.sh` and `run_blocked_solve_fullrun.sh`
+  unset it; the driver prints `WARMUP_STREAM_MISMATCH` when it happens. Any new
+  timed launcher must unset `NO_COLOR` and `FORCE_COLOR` too. Do not edit solver
+  sources while a queued batch is running: each run loads them afresh.
+- **Scope of interest (user, 2026-10-06).** Methods must help every test
+  system: no speedup that exploits the topology of one system and does nothing
+  for another (large10k is, to `1e-7`, 102 independent feeders; that is a
+  caveat about the test system, not a method to build). Horizons of interest
+  are the practical ones, `T=6` to `T=96` (up to a few hundred at most): med2522
+  `T=1152` and `T=1536` were cancelled and are not to be requeued.
 
 ## Working branch — the name below is a snapshot, not the truth
 

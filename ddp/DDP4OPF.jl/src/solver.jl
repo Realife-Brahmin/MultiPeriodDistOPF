@@ -24,6 +24,7 @@ mutable struct FactorBackedPolicy{T}
     cx::SparseMatrixCSC{T, Int}
     rhs::Vector{T}
     Bδx::Vector{T}
+    βB::Matrix{T}        # battery rows of the feedback; filled under FILTERDDP_PARSIM only
 end
 
 mutable struct UpdateRule{T, nx, nu, nc, nux, ncx}

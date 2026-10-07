@@ -19,6 +19,7 @@ _freeze_period() = parse(Int, get(ENV, "FILTERDDP_FREEZE_KKT", "1"))
 function _frozen_reset!()
     empty!(_FROZEN_KKT); empty!(_FROZEN_AT)
     empty!(_KKT_PATTERN_CACHE)
+    empty!(_LAGGED_CURV)
     _FROZEN_STATS[:factorisations] = 0; _FROZEN_STATS[:reuses] = 0
     return nothing
 end
@@ -98,6 +99,323 @@ function _stale_jacobian(t::Int, k::Int, cu)
         _STALE_CU[t] = copy(cu)
     end
     return _STALE_CU[t]
+end
+
+# ------------------------------------------------ lagged curvature --
+# Parallel-in-time experiment (agenda of 2026-10-07). In the diagonal-Hessian
+# stage KKT the ONLY entries that depend on stage t+1 are the battery-power
+# diagonal curvature diag(fu' * Vxx_{t+1} * fu) (_diagonal_quadratic_form
+# below); every other entry of K_t is a function of the current iterate at
+# stage t. With FILTERDDP_LAGGED_CURVATURE=1 those entries are taken from the
+# previous backward sweep, so every K_t is known before the sweep starts and
+# all T factorizations run in parallel on Julia threads (BLAS pinned to one
+# thread meanwhile). Right-hand sides, gains and the value recursion stay
+# exact; only the matrix is approximate, an inexact Newton step like the
+# diagonal Hessian itself. The first sweep of a solve has nothing to lag and
+# runs sequentially. Requires the direct diagonal path and dynamics with
+# fuu = 0 (checked).
+_lagged_curvature_enabled() = get(ENV, "FILTERDDP_LAGGED_CURVATURE", "0") != "0" &&
+    _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+const _LAGGED_CURV = Dict{Int, Vector{Float64}}()
+
+function _lagged_prefactor(ocp, traj, reg, nx::Int, nu::Int, nc::Int)
+    N = ocp.N
+    all(t -> haskey(_LAGGED_CURV, t), 1:N) || return nothing
+    cl = ocp.control_limits
+    dynamics = ocp.dynamics
+    factors = Vector{Any}(nothing, N)
+    blas_threads = BLAS.get_num_threads()
+    BLAS.set_num_threads(1)
+    try
+        Threads.@threads :dynamic for t in 1:N
+            factors[t] = try
+                x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
+                objective_t = t == N ? ocp.term_objective : stage_obj(ocp, t)
+                constraints = stage_con(ocp, t)
+                luu = _derivative_matrix(objective_t.luu(x, u), nu, nu)
+                cu = _derivative_matrix(constraints.cu(x, u), nc, nu)
+                cuu = _derivative_matrix(constraints.cuu(x, u, ϕ), nu, nu)
+                fuu = _derivative_matrix(dynamics.fuu(x, u, zeros(nx)), nu, nu)
+                nnz(sparse(fuu)) == 0 || error("FILTERDDP_LAGGED_CURVATURE needs fuu = 0")
+                # Same operations, same order, as the stage loop below.
+                ul = u - cl.l
+                uu = cl.u - u
+                inv_ul = inv.(ul) .* cl.maskl
+                inv_uu = inv.(uu) .* cl.masku
+                Σ_L = inv_ul .* zl
+                Σ_U = inv_uu .* zu
+                Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + _LAGGED_CURV[t]) + sparse(fuu)
+                Ĥ = Ĥ + cuu
+                if !iszero(reg)
+                    @inbounds for i in axes(Ĥ, 1)
+                        Ĥ[i, i] += reg
+                    end
+                end
+                Ĥ = sparse(Symmetric(_diagonalise_hessian(Ĥ)))
+                cu_sparse = sparse(cu)
+                _kkt_lu([Ĥ sparse(cu_sparse'); cu_sparse spzeros(eltype(Ĥ), nc, nc)])
+            catch err
+                err
+            end
+        end
+    finally
+        BLAS.set_num_threads(blas_threads)
+    end
+    return factors
+end
+
+# ------------------------------------------------ battery-block value update --
+# Lead of 2026-09-30 (ddp/notes/PARALLEL_IN_TIME.md, Section 4). With the
+# factor-backed policy the n_x feedback columns of K \ rhs are used only in
+# the rows E = {battery powers, energy constraints}, which are also the only
+# nonzero rows of those right-hand-side columns, and beta' Qu + omega' c equals
+# B' alpha + cx' psi by symmetry of K. So the value update needs only
+# (K^{-1})_EE = S^{-1}, S the Schur complement of K onto E (2 n_B x 2 n_B),
+# and no n_x-column solve. FILTERDDP_BATTERY_SCHUR=1 computes it through
+# BATTERY_SCHUR_HOOK[] (K, E) -> S, which the driver sets (MUMPS, so that this
+# package takes no new dependency). Exact up to rounding; the stage
+# factorization is still used for the feedforward column and the policy.
+const BATTERY_SCHUR_HOOK = Ref{Any}(nothing)
+_battery_schur_enabled() = get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
+    !isnothing(BATTERY_SCHUR_HOOK[])
+
+# FILTERDDP_TREE_KKT=1: TREE_KKT_HOOK[] (K) -> F replaces the stage's sparse
+# LU by a solver that exploits the radial network (tree_kkt.jl in the driver:
+# leaves-to-substation block elimination, battery block by feeder plus a
+# low-rank substation term). F must support ldiv!(F, b) for the feedforward
+# column and the forward-pass policy, and battery_block_rows for the feedback
+# rows, so no second factorization is needed. Same battery-block value update
+# as above; the terminal stage (l_ux != 0) keeps the sparse LU.
+const TREE_KKT_HOOK = Ref{Any}(nothing)
+_structured_dynamics() = get(ENV, "FILTERDDP_STRUCTURED_DYNAMICS", "0") != "0"
+
+# Exact stage Hessian with the tree solver. The battery curvature
+# fu' * Vxx * fu is dense, but it lies entirely in the P_B x P_B block, which
+# the tree solver keeps (it eliminates the network onto the battery rows). So
+# with FILTERDDP_TREE_KKT=1 and without FILTERDDP_DIAG_HESSIAN it is not
+# assembled into K: K carries the rest of the exact Hessian (cost, barrier and
+# constraint curvature, off-diagonal terms included) and the dense block is
+# handed to the solver, which adds it to the battery Schur complement. Exact,
+# and the network elimination is the same as for the diagonal Hessian.
+#
+# The Hessian is built with a pattern that does not depend on the values
+# (explicit zeros kept), so the KKT pattern cache and the tree layout stay
+# valid across iterations.
+function _fixed_pattern_hessian(nu::Int, sigma::AbstractVector, blocks...)
+    I = collect(1:nu); J = collect(1:nu); V = Vector{Float64}(sigma)
+    for M in blocks
+        i, j, v = findnz(sparse(M))
+        append!(I, i); append!(J, j); append!(V, v)
+    end
+    return sparse(I, J, V, nu, nu)
+end
+_tree_kkt_enabled() = get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && !isnothing(TREE_KKT_HOOK[])
+
+# FILTERDDP_PARSIM=1: accounting for one worker per period (with the tree
+# solver). Nothing is reordered and no result changes; each stage's backward
+# work is timed in three parts, by what it needs from stage t+1:
+#   pre   nothing: derivatives, barrier terms, KKT assembly, network
+#         factorization and the Schur preparation, the first network solve;
+#   seq   the value function of t+1: its products, the battery block
+#         (assembly, factorization, feedback rows), the value update;
+#   post  this stage's battery solution only: the second network solve, the
+#         multiplier updates and the stored policy.
+# One worker per period would take max(pre) + sum(seq) + max(post) for the
+# sweep. The value function reaches a stage matrix only through the battery
+# block (tree_kkt.jl, _tree_kkt_prepare), which is what makes `pre` free of
+# it; ddp/examples/power_system/tree_kkt_phase_check.jl checks that.
+_parsim() = get(ENV, "FILTERDDP_PARSIM", "0") != "0"
+stage_phase_times(F) = nothing
+const _PARSIM_BETA_B = Ref{Any}(nothing)        # battery rows of the feedback, last stage solved
+const _PARSIM_SKIP_NS = Ref{UInt64}(0)          # accounting-only work, left out of the times
+const _PARSIM_FWD = zeros(7)                    # forward pass: see affine_linesearch.jl
+# Seconds of the stage being solved, parts of `seq`: [1] Q_u and C, [2] curvature
+# diagonal, [3] B, [4] right-hand side of the battery rows, [5] battery rows,
+# [6] value increments, [7] value update; and [8] the feedforward solve.
+const _PARSIM_SUB = zeros(8)
+
+# FILTERDDP_LEAN_VALUE=1: the value-function part of a stage, the part that
+# cannot be done before the sweep, without its avoidable dense work. With
+# the battery dynamics f_x = I and f_u a scaled selector, so
+#   C  = l_xx + V_xx + f_xx          (no products with f_x),
+#   B  = rows of V_xx scaled        (no sparse-dense products),
+# and the feedback rows are solved in the tree solver's grouped order, from
+# a right-hand side written there directly (battery_block_rows_grouped):
+# four 2 n_B x n_x copies fewer per stage, and the feeder blocks solved on
+# the Julia threads. Every entry is computed by the same operations as
+# before, so the iterates are unchanged.
+_lean_value() = get(ENV, "FILTERDDP_LEAN_VALUE", "0") != "0"
+battery_block_rows_grouped(F, E, B, cxE) = nothing
+# Feedback rows and value increment from the halved battery block, if the solver has one
+battery_value_halved(F, E, B, cxE) = nothing
+# FILTERDDP_VXX_SEPARABILITY=1 (diagnostic, with the lean path): how much of a
+# stage's value-Hessian increment couples batteries on different feeders.
+battery_groups(F, nB) = nothing
+function _vxx_separability(F, Vinc, nB)
+    grp = battery_groups(F, nB)
+    (isnothing(grp) || size(Vinc, 1) != nB) && return nothing
+    w = 0.0; c = 0.0; mw = 0.0; mc = 0.0
+    @inbounds for j in 1:nB, i in 1:nB
+        v = abs(Vinc[i, j])
+        if grp[i] == grp[j]
+            w += v^2; mw = max(mw, v)
+        else
+            c += v^2; mc = max(mc, v)
+        end
+    end
+    @printf("FILTERDDP_VXX_SEP groups=%d within_fro=%.6e cross_fro=%.6e within_max=%.6e cross_max=%.6e
+",
+            maximum(grp), sqrt(w), sqrt(c), mw, mc)
+    return nothing
+end
+function _is_identity(A)
+    A isa SparseMatrixCSC || return false
+    n = size(A, 1)
+    (size(A, 2) == n && nnz(A) == n) || return false
+    rv = rowvals(A); nzv = nonzeros(A)
+    @inbounds for j in 1:n
+        q = A.colptr[j]
+        (A.colptr[j+1] == q + 1 && rv[q] == j && nzv[q] == 1) || return false
+    end
+    return true
+end
+# (lxx + V) + fxx
+function _lean_C(lxx, V::Matrix, fxx)
+    lxx isa SparseMatrixCSC || return lxx + V + fxx
+    C = copy(V)
+    rv = rowvals(lxx); nzv = nonzeros(lxx)
+    @inbounds for j in axes(lxx, 2), q in nzrange(lxx, j)
+        C[rv[q], j] = nzv[q] + C[rv[q], j]
+    end
+    if fxx isa SparseMatrixCSC
+        rv = rowvals(fxx); nzv = nonzeros(fxx)
+        @inbounds for j in axes(fxx, 2), q in nzrange(fxx, j)
+            C[rv[q], j] += nzv[q]
+        end
+    else
+        C .+= fxx
+    end
+    return C
+end
+# A[i, j] += X[row[j], i] * val[j] for the columns j that have a row, in
+# cache-sized blocks: X is read down its columns and A written down its own.
+function _add_scaled_rows_transposed!(A::Matrix, X::Matrix, row::Vector{Int}, val::Vector)
+    n = size(A, 1); m = size(A, 2); bs = 64
+    @inbounds for j0 in 1:bs:m, i0 in 1:bs:n
+        for j in j0:min(j0 + bs - 1, m)
+            r = row[j]; r == 0 && continue
+            v = val[j]
+            for i in i0:min(i0 + bs - 1, n)
+                A[i, j] += X[r, i] * v
+            end
+        end
+    end
+    return A
+end
+# fa' * V for fa with exactly one entry per column
+function _lean_B(fa::SparseMatrixCSC, V::Matrix)
+    nB = size(fa, 2); nx = size(V, 2)
+    all(k -> fa.colptr[k+1] == fa.colptr[k] + 1, 1:nB) || return Matrix(fa' * V)
+    rv = rowvals(fa); nzv = nonzeros(fa)
+    B = Matrix{eltype(V)}(undef, nB, nx)
+    @inbounds for j in 1:nx, k in 1:nB
+        B[k, j] = nzv[k] * V[rv[k], j]
+    end
+    return B
+end
+# Diagonal of a sparse matrix as a dense vector, zero where no entry is stored
+function _dense_diag(A::SparseMatrixCSC)
+    n = min(size(A, 1), size(A, 2))
+    d = zeros(eltype(A), n)
+    rv = rowvals(A); nzv = nonzeros(A)
+    @inbounds for j in 1:n, q in nzrange(A, j)
+        rv[q] == j && (d[j] = nzv[q])
+    end
+    return d
+end
+_dense_diag(A) = Vector(diag(A))
+# The sparse diagonal matrix _diagonalise_hessian returns, from the dense diagonal
+function _floored_diagonal(d::Vector)
+    floor_val = _diag_hessian_floor()
+    n = length(d)
+    v = Vector{eltype(d)}(undef, n)
+    @inbounds for i in 1:n
+        v[i] = max(d[i], floor_val)
+    end
+    return SparseMatrixCSC(n, n, collect(1:n+1), collect(1:n), v)
+end
+
+# Rows E of K \ R for right-hand sides R supported on E (given as R[E, :]).
+# Default: dense solve with the Schur complement from BATTERY_SCHUR_HOOK.
+battery_block_rows(F, K, E, R) = lu!(BATTERY_SCHUR_HOOK[](K, E)) \ R
+
+function _battery_schur_value(K, F, rhs, nu::Int, active_B_rows, B_active, cx)
+    t_a = time_ns()
+    ldiv!(F, @view(rhs[:, 1:1]))
+    α = copy(@view rhs[1:nu, 1])
+    ψ = copy(@view rhs[nu+1:end, 1])
+    t_b = time_ns()
+    cx_s = sparse(cx)
+    energy_rows = sort!(unique(cx_s.rowval))
+    E = vcat(active_B_rows, nu .+ energy_rows)
+    cxE = cx_s[energy_rows, :]                       # sparse: one entry per battery
+    nB = length(active_B_rows)
+    t_g0 = time_ns()
+    halved = _lean_value() ? battery_value_halved(F, E, B_active, cxE) : nothing
+    grouped = (isnothing(halved) && _lean_value()) ? battery_block_rows_grouped(F, E, B_active, cxE) : nothing
+    t_g1 = time_ns()
+    if !isnothing(halved)
+        XB, Vxx_inc = halved
+        t_c = t_g0; t_d = t_g1
+        _parsim() && (_PARSIM_BETA_B[] = XB)
+    elseif isnothing(grouped)
+        R = vcat(-B_active, -Matrix(cxE))
+        t_c = time_ns()
+        X = battery_block_rows(F, K, E, R)
+        t_d = time_ns()
+        if _parsim()
+            t0 = time_ns(); _PARSIM_BETA_B[] = X[1:nB, :]; _PARSIM_SKIP_NS[] += time_ns() - t0
+        end
+        Vxx_inc = (@view X[1:nB, :])' * B_active
+        Vxx_inc .+= X[nB+1:end, :]' * cxE
+    else
+        # Xp: the same rows in the solver's grouped order, row invp[i] holding row i of E
+        Xp, invp = grouped
+        t_c = t_g0; t_d = t_g1                # the right-hand side is written inside the solve
+        nx = size(B_active, 2)
+        XB = Matrix{eltype(Xp)}(undef, nB, nx)
+        nEn = size(cxE, 1)
+        XE = Matrix{eltype(Xp)}(undef, nEn, nx)
+        @inbounds for j in 1:nx
+            for k in 1:nB; XB[k, j] = Xp[invp[k], j]; end
+            for k in 1:nEn; XE[k, j] = Xp[invp[nB + k], j]; end
+        end
+        _parsim() && (_PARSIM_BETA_B[] = XB)
+        Vxx_inc = XB' * B_active
+        # + XE' * cxE, one entry of cxE per column
+        rv = rowvals(cxE); nzv = nonzeros(cxE)
+        if all(j -> cxE.colptr[j+1] - cxE.colptr[j] <= 1, 1:nx)
+            row = zeros(Int, nx); val = zeros(eltype(nzv), nx)
+            @inbounds for j in 1:nx, q in nzrange(cxE, j)
+                row[j] = rv[q]; val[j] = nzv[q]
+            end
+            _add_scaled_rows_transposed!(Vxx_inc, XE, row, val)
+        else
+            Vxx_inc .+= XE' * cxE
+        end
+        get(ENV, "FILTERDDP_VXX_SEPARABILITY", "0") != "0" && _vxx_separability(F, Vxx_inc, nB)
+    end
+    Vx_inc = B_active' * α[active_B_rows] + cx_s' * ψ
+    _PARSIM_SUB[8] = (t_b - t_a) / 1e9; _PARSIM_SUB[4] = (t_c - t_b) / 1e9
+    _PARSIM_SUB[5] = (t_d - t_c) / 1e9; _PARSIM_SUB[6] = (time_ns() - t_d) / 1e9
+    return α, ψ, Vxx_inc, Vx_inc
+end
+
+function _stage_factor(t::Int, K, iter::Int, lagged)
+    isnothing(lagged) && return _frozen_lu(t, K, iter)
+    F = lagged[t]
+    F isa Exception && throw(F)
+    return F
 end
 
 function _same_sparse_pattern(A, colptr, rowval)
@@ -181,6 +499,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
     bound_ssq = T(0); bound_count = 0; bound_max = T(0)
     bound_worst_stage = 0; bound_worst_index = 0; bound_worst_kind = "none"
     
+    parsim = _parsim()
+    ps_tot = zeros(5)                    # pre_sum, sum of per-attempt pre_max, seq_sum, post_sum, sum of post_max
+    ps_stages = 0
     while reg <= options.reg_max
         equality_ssq = T(0); equality_count = 0; equality_max = T(0)
         equality_worst_stage = 0; equality_worst_index = 0
@@ -202,14 +523,27 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.dual_inf = T(0.0)
         data.expected_change_L = T(0.0)
         ϕ_norm = T(0.0)
-        z_norm = T(0.0) 
-        
+        z_norm = T(0.0)
+        ps_att = zeros(5)                # pre_sum, pre_max, seq_sum, post_sum, post_max
+
+        # FILTERDDP_LAGGED_CURVATURE: factor every stage up front, in parallel.
+        lagged_factors = nothing
+        if _lagged_curvature_enabled()
+            prefactor_start_ns = time_ns()
+            lagged_factors = _lagged_prefactor(ocp, traj, reg, nx, nu, nc)
+            get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1" && @printf(
+                "FILTERDDP_PREFACTOR iteration=%d barrier_iteration=%d lagged=%d wall_s=%.9f threads=%d\n",
+                data.k, data.j, !isnothing(lagged_factors),
+                (time_ns() - prefactor_start_ns) / 1e9, Threads.nthreads())
+        end
+
         for t = ocp.N:-1:1
             timing_diagnostic = get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1"
             memory_diagnostic = get(ENV, "FILTERDDP_MEMORY_DIAGNOSTIC", "0") == "1"
             stage_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
             stage_maxrss_start = memory_diagnostic ? Sys.maxrss() : 0
             derivative_start_ns = time_ns()
+            ps_seq_ns = UInt64(0); ps_val_ns = UInt64(0); _PARSIM_SKIP_NS[] = 0; fill!(_PARSIM_SUB, 0.0)
             x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
             # PATCH: per-stage data when supplied, else the shared function
             constraints = stage_con(ocp, t)
@@ -341,24 +675,59 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             inv_uu = inv.(uu) .* cl.masku
 
             # Qû = Lu' -μŪ^{-1}e + fu' * V̂x
+            ps_m1 = time_ns()
+            _ps0 = time_ns()
             Qû = lu_ + fu' * V̂x + μ .* (inv_uu - inv_ul)
             # C = Lxx + fx' * Vxx * fx + V̄x ⋅ fxx
-            C = lxx + fx' * V̂xx * fx + fxx
+            lean_fx = _lean_value() && V̂xx isa Matrix && _is_identity(fx)
+            C = lean_fx ? _lean_C(lxx, V̂xx, fxx) : lxx + fx' * V̂xx * fx + fxx
+            _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[1] = _ps1 / 1e9
+            ps_m2 = time_ns()
     
             sparse_stage = issparse(luu) || issparse(fu) || (nc > 0 && (issparse(cu) || issparse(cuu)))
             structured_B = sparse_stage && issparse(fu) && nnz(lux) == 0 &&
                 nnz(fux) == 0 && (nc == 0 || nnz(cux) == 0)
+            # FILTERDDP_STRUCTURED_DYNAMICS also treats a stage whose l_ux is
+            # confined to the rows fu acts on (the soft terminal SOC penalty
+            # couples x only to the battery powers) as structured: B is then
+            # still nonzero only in those rows.
+            lux_in_B = false
+            if !structured_B && _structured_dynamics() && sparse_stage && issparse(fu) &&
+                    issparse(lux) && nnz(fux) == 0 && (nc == 0 || nnz(cux) == 0)
+                lux_in_B = issubset(unique(findnz(lux)[1]), unique(findnz(fu)[2]))
+                structured_B = lux_in_B
+            end
             active_B_rows = Int[]
             B_active = Matrix{T}(undef, 0, 0)
             ux_tmp = Matrix{T}(undef, 0, 0)
             # Ĥ = Luu + Σ + fu' * Vxx * fu + V̄x ⋅ fuu
             Σ_L = inv_ul .* zl
             Σ_U = inv_uu .* zu
+            # Exact Hessian with the tree solver: the battery curvature goes to
+            # the solver, not into K (see _fixed_pattern_hessian).
+            exact_batt = _tree_kkt_enabled() && !_diag_hessian_enabled() && sparse_stage &&
+                structured_B && nc > 0 && get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
+                !(haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
+                  t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1")))
+            battery_curvature = nothing
+            lean_hd = nothing
+            ps_m3 = time_ns()
             if sparse_stage
                 fu_sparse = sparse(fu)
-                if _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+                if exact_batt
+                    Ĥ = _fixed_pattern_hessian(nu, Σ_L + Σ_U, luu, fuu, cuu)
+                elseif _diag_hessian_enabled() && _direct_diag_hessian_enabled()
+                    _ps0 = time_ns()
                     curvature_diag = _diagonal_quadratic_form(fu_sparse, V̂xx, nu)
-                    Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + curvature_diag) + sparse(fuu)
+                    _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[2] = _ps1 / 1e9
+                    _lagged_curvature_enabled() && (_LAGGED_CURV[t] = curvature_diag)
+                    if _lean_value() && luu isa SparseMatrixCSC && fuu isa SparseMatrixCSC
+                        lean_hd = _dense_diag(luu) .+ (Σ_L + Σ_U + curvature_diag)
+                        lean_hd .+= _dense_diag(fuu)
+                        Ĥ = luu                      # not used: the diagonal is in lean_hd
+                    else
+                        Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U + curvature_diag) + sparse(fuu)
+                    end
                 else
                     Ĥ = sparse(luu) + spdiagm(0 => Σ_L + Σ_U) +
                          fu_sparse' * sparse(V̂xx) * fu_sparse + sparse(fuu)
@@ -367,11 +736,21 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 ux_tmp = fu' * V̂xx
                 Ĥ = luu + diagm(Σ_L) + diagm(Σ_U) + ux_tmp * fu + fuu
             end
+            ps_m4 = time_ns()
             # B = Lux + fu' * Vxx * fx + V̄x ⋅ fux
             if structured_B
                 active_B_rows = sort!(unique(findnz(fu)[2]))
-                fu_active = Matrix(@view fu[:, active_B_rows])
-                B_active = fu_active' * V̂xx * fx
+                # FILTERDDP_STRUCTURED_DYNAMICS keeps fu's active columns sparse
+                # (one entry per battery for MPOPF), so this is not a dense
+                # n_B x n_x x n_x product; same values up to the sign of zeros.
+                fu_active = _structured_dynamics() ? fu_sparse[:, active_B_rows] :
+                    Matrix(@view fu[:, active_B_rows])
+                _ps0 = time_ns()
+                B_active = (lean_fx && fu_active isa SparseMatrixCSC) ? _lean_B(fu_active, V̂xx) :
+                    Matrix(fu_active' * V̂xx * fx)
+                lux_in_B && (B_active .+= lux[active_B_rows, :])
+                exact_batt && (battery_curvature = Matrix(fu_active' * V̂xx * fu_active))
+                _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[3] = _ps1 / 1e9
             else
                 isempty(ux_tmp) && (ux_tmp = fu' * V̂xx)
                 B = ux_tmp * fx
@@ -379,25 +758,35 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 B .+= fux
             end
 
+            ps_m5 = time_ns()
             if nc > 0
                 data.barrier_lagrangian_curr += dot(c, ϕ)
                 Qû = Qû + cu' * ϕ
-                C = C + cxx
-                Ĥ = Ĥ + cuu
+                (lean_fx && cxx isa SparseMatrixCSC && nnz(cxx) == 0) || (C = C + cxx)
+                if !isnothing(lean_hd)
+                    lean_hd .+= _dense_diag(cuu)
+                elseif !exact_batt
+                    Ĥ = Ĥ + cuu
+                end
                 !structured_B && (B .+= cux)
             end
             
+            ps_m6 = time_ns()
             # inertia correction / regularisation
             if !iszero(reg)
-                @inbounds for i in axes(Ĥ, 1)
-                    Ĥ[i, i] += reg
+                if !isnothing(lean_hd)
+                    lean_hd .+= reg
+                else
+                    @inbounds for i in axes(Ĥ, 1)
+                        Ĥ[i, i] += reg
+                    end
                 end
             end
 
             # Opt-in diagonal curvature model; see _diagonalise_hessian above.
             # Applied after the inertia correction so that reg still reaches the
             # diagonal, and before sparse_kkt is decided so the branch is unchanged.
-            _diag_hessian_enabled() && (Ĥ = _diagonalise_hessian(Ĥ))
+            _diag_hessian_enabled() && (Ĥ = isnothing(lean_hd) ? _diagonalise_hessian(Ĥ) : _floored_diagonal(lean_hd))
 
             # Sparse network models use the full saddle-point system directly,
             # avoiding a dense QR basis and the explicit reduced Hessian Z'HZ.
@@ -418,7 +807,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             if sparse_kkt
                 kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                 kkt_start_ns = time_ns()
-                Ĥ = sparse(Symmetric(Ĥ))
+                (exact_batt || !isnothing(lean_hd)) || (Ĥ = sparse(Symmetric(Ĥ)))
                 cu_sparse = _stale_jacobian(t, data.k, sparse(cu))
                 K = _kkt_pattern_cache_enabled() ?
                     _cached_kkt!((objectid(solver), t), Ĥ, cu_sparse, nu, nc) :
@@ -435,8 +824,15 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 blocked_value = get(ENV, "FILTERDDP_BLOCKED_VALUE_RHS", "0") == "1" &&
                     get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
                     structured_B && !capture_this_kkt
+                # FILTERDDP_BATTERY_SCHUR reuses the blocked_value bookkeeping:
+                # it also returns alpha, psi and the two value increments.
+                battery_schur = (_battery_schur_enabled() || _tree_kkt_enabled()) &&
+                    get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
+                    structured_B && !capture_this_kkt
+                tree_kkt = battery_schur && _tree_kkt_enabled()
+                battery_schur && (blocked_value = true)
                 block_width = min(parse(Int, get(ENV, "FILTERDDP_VALUE_BLOCK_WIDTH", "128")), nx)
-                rhs_width = blocked_value ? block_width : nx + 1
+                rhs_width = battery_schur ? 1 : blocked_value ? block_width : nx + 1
                 if isnothing(rhs_workspace)
                     rhs_workspace = Matrix{T}(undef, nu + nc, rhs_width)
                 end
@@ -469,7 +865,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     if timing_diagnostic || memory_diagnostic
                         factor_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         factor_start_ns = time_ns()
-                        F = _frozen_lu(t, K, data.k)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K, battery_curvature) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
@@ -482,7 +878,11 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
                         solve_start_ns = time_ns()
-                        if blocked_value
+                        if battery_schur
+                            blocked_α, blocked_ψ, blocked_Vxx, blocked_Vx =
+                                _battery_schur_value(K, F, rhs, nu, active_B_rows, B_active, cx)
+                            all(isfinite, blocked_Vxx) || (data.status = 1)
+                        elseif blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
                             blocked_ψ = copy(@view rhs[nu+1:end, 1])
@@ -510,7 +910,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                         solve_s = (time_ns() - solve_start_ns) / 1e9
                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
                     else
-                        F = _frozen_lu(t, K, data.k)
+                        F = tree_kkt ? TREE_KKT_HOOK[](K, battery_curvature) : _stage_factor(t, K, data.k, lagged_factors)
                         if nnz_diagnostic
                             # L and U extraction is costly, hence opt-in only
                             nL = nnz(F.L); nU = nnz(F.U)
@@ -519,7 +919,11 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                                     data.k, t, size(K, 1), nnz(K), nL + nU, (nL + nU) / max(nnz(K), 1))
                             flush(stdout)
                         end
-                        if blocked_value
+                        if battery_schur
+                            blocked_α, blocked_ψ, blocked_Vxx, blocked_Vx =
+                                _battery_schur_value(K, F, rhs, nu, active_B_rows, B_active, cx)
+                            all(isfinite, blocked_Vxx) || (data.status = 1)
+                        elseif blocked_value
                             ldiv!(F, @view(rhs[:, 1:1]))
                             blocked_α = copy(@view rhs[1:nu, 1])
                             blocked_ψ = copy(@view rhs[nu+1:end, 1])
@@ -601,7 +1005,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     update_rule.ω = zeros(T, 0, 0)
                     update_rule.factor_policy = FactorBackedPolicy{T}(
                         F, copy(active_B_rows), copy(B_active), sparse(cx),
-                        zeros(T, nu + nc), zeros(T, nx))
+                        zeros(T, nu + nc), zeros(T, nx), zeros(T, 0, 0))
                 else
                     size(update_rule.β) == (nu, nx) || (update_rule.β = zeros(T, nu, nx))
                     size(update_rule.ω) == (nc, nx) || (update_rule.ω = zeros(T, nc, nx))
@@ -734,8 +1138,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             ϕ_norm += norm(ϕ, 1)
 
             # Update return V derivatives for next timestep Vxx = C + β' * B + ω' cx
+            _ps0 = time_ns()
             if blocked_value
-                V̂xx = C + blocked_Vxx
+                V̂xx = lean_fx ? (C .+= blocked_Vxx) : C + blocked_Vxx
                 V̂x = lx + blocked_Vx + fx' * V̂x
             elseif structured_B
                 beta_active = Matrix(@view β[active_B_rows, :])
@@ -756,11 +1161,45 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 V̂x = V̂x + cx' * ϕ
                 λ = λ + cx' * ϕ
             end
+            ps_val_ns += time_ns() - _ps0; _PARSIM_SUB[7] = ps_val_ns / 1e9
 
             # evaluate sufficient decrease condition in forward pass
             data.expected_change_L += dot(Qû, α)
             nc > 0 && (data.expected_change_L += dot(c, ψ))
             update_s = (time_ns() - update_start_ns) / 1e9
+            if parsim
+                timing_diagnostic || error("FILTERDDP_PARSIM needs FILTERDDP_TIMING_DIAGNOSTIC=1")
+                ps_skip = _PARSIM_SKIP_NS[] / 1e9
+                ps_stage = (time_ns() - derivative_start_ns) / 1e9 - ps_skip
+                ps_pt = sparse_kkt ? stage_phase_times(F) : nothing
+                if isnothing(ps_pt)                 # not the tree solver: all of it in sequence
+                    ps_seq = ps_stage; ps_post = 0.0
+                else
+                    ps_seq = (ps_seq_ns + ps_val_ns) / 1e9 + ps_pt[2] +
+                        (solve_s - ps_pt[3] - ps_pt[5] - ps_skip)
+                    ps_post = ps_pt[5] + (update_s - ps_val_ns / 1e9)
+                    fp = solver.update[t].factor_policy
+                    isnothing(fp) || isnothing(_PARSIM_BETA_B[]) || (fp.βB = _PARSIM_BETA_B[])
+                    _PARSIM_BETA_B[] = nothing
+                end
+                ps_pre = ps_stage - ps_seq - ps_post
+                ps_att[1] += ps_pre; ps_att[2] = max(ps_att[2], ps_pre); ps_att[3] += ps_seq
+                ps_att[4] += ps_post; ps_att[5] = max(ps_att[5], ps_post)
+                ps_stages += 1
+                # Two calls: a format with more than 32 arguments is not specialised and
+                # cost about 2 s on the first pass of every timed solve.
+                if !isnothing(ps_pt)
+                    @printf("FILTERDDP_PARSIM_STAGE iteration=%d stage=%d pre_s=%.6f seq_s=%.6f post_s=%.6f qc_s=%.6f curv_s=%.6f b_s=%.6f finish_s=%.6f block_s=%.6f rhs_s=%.6f rows_s=%.6f vinc_s=%.6f value_s=%.6f",
+                        data.k, t, ps_pre, ps_seq, ps_post, _PARSIM_SUB[1], _PARSIM_SUB[2], _PARSIM_SUB[3], ps_pt[2], ps_pt[4],
+                        _PARSIM_SUB[4], _PARSIM_SUB[5], _PARSIM_SUB[6] - ps_skip, _PARSIM_SUB[7])
+                    @printf(" prepare_s=%.6f net1_s=%.6f net2_s=%.6f deriv_s=%.6f algebra_s=%.6f assembly_s=%.6f update_s=%.6f barrier_s=%.6f struct_s=%.6f hess_s=%.6f bsel_s=%.6f nc_s=%.6f reg_s=%.6f
+",
+                        ps_pt[1], ps_pt[3], ps_pt[5], derivative_s, algebra_s, kkt_assembly_s, update_s,
+                        (ps_m1 - algebra_start_ns) / 1e9, (ps_m3 - ps_m2) / 1e9, (ps_m4 - ps_m3) / 1e9 - _PARSIM_SUB[2],
+                        (ps_m5 - ps_m4) / 1e9 - _PARSIM_SUB[3], (ps_m6 - ps_m5) / 1e9,
+                        algebra_s - (ps_m6 - algebra_start_ns) / 1e9)
+                end
+            end
             update_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - update_alloc_start : 0
             timing_diagnostic && @printf(
                 "FILTERDDP_TIMING iteration=%d barrier_iteration=%d stage=%d derivative_s=%.9f first_order_s=%.9f second_order_s=%.9f algebra_s=%.9f kkt_assembly_s=%.9f factor_s=%.9f solve_s=%.9f update_s=%.9f K_nnz=%d rhs_cols=%d Vxx_nnz=%d\n",
@@ -781,6 +1220,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 Base.summarysize(solver.update[t]) / 2.0^20,
                 max(Sys.maxrss() - stage_maxrss_start, 0) / 2.0^20)
         end
+        ps_tot .+= ps_att
         scaling_dual = max(options.s_max, (ϕ_norm + z_norm) / max(ni + nc * ocp.N, 1.0))  / options.s_max
         scaling_cs = max(options.s_max, z_norm / max(ni, 1.0))  / options.s_max
         data.dual_inf /= scaling_dual
@@ -790,6 +1230,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.status == 0 && break
     end
     data.reg_last = reg
+    parsim && @printf(
+        "FILTERDDP_PARSIM_BACKWARD iteration=%d stages=%d pre_sum_s=%.9f pre_max_s=%.9f seq_sum_s=%.9f post_sum_s=%.9f post_max_s=%.9f\n",
+        data.k, ps_stages, ps_tot[1], ps_tot[2], ps_tot[3], ps_tot[4], ps_tot[5])
     if feasibility_diagnostic && data.status == 0
         equality_rms = sqrt(equality_ssq / max(equality_count, 1))
         dynamics_rms = sqrt(dynamics_ssq / max(dynamics_count, 1))
