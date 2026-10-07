@@ -92,8 +92,10 @@ establishes something a future session, on any machine, would need.
   (identical iterates) and `FILTERDDP_HALF_BLOCK=1` (battery block at half
   size; iterates agree to rounding, check with `compare_runs.py`) make the
   sequential run 43-44% faster on large10k and 24-27% on med2522 than the
-  2026-10-05 configuration. They are not yet in the paper and not yet in the
-  standard run scripts other than `run_parsim.sh`. `FILTERDDP_PARSIM=1` times
+  2026-10-05 configuration. They are in the TPEC paper since 2026-10-06 (its
+  results table and Section "Cost of One Iteration") but not yet in the
+  standard run scripts other than `run_parsim.sh`; for ieee123 (UMFPACK, no
+  tree solver) pass `FILTERDDP_LEAN_VALUE=1` to `run_blocked_solve_fullrun.sh`. `FILTERDDP_PARSIM=1` times
   each stage as what needs nothing from `t+1` / what needs the value function
   / what follows it, and `parsim_from_log.py` counts one worker per period
   (the slowest period for the independent parts). The user accepts that
