@@ -153,6 +153,22 @@ before continuing.
 For genuinely new work, cut a new dated branch rather than reusing an existing
 one, and name it for the workstream it serves.
 
+## MSOPF quick facts (2026-09-28)
+
+- Setup, drivers and decks: [`envs/multi_poi/README.md`](envs/multi_poi/README.md).
+  The full-angle drivers run in **`envs/tadmm`** (tracked Manifest; checked from a
+  fresh clone), not `envs/multi_poi`.
+- The paper is the separate **`PESGM2027_Multi-Source-Multi-Period-OPF`** repo. Its
+  Section II documents `solve_full_angle` in `envs/multi_poi/full_angle_pf.jl`, so
+  keep the two in sync. Do not confuse it with the rejected PESGM2026 repo.
+- Decks `ieee123_5poi_1ph` and `small2poi_1ph` carry a realistic source impedance,
+  Zs = 0.032 + j0.799 ohm (cited in the deck comments). `ideal_sources = true` gives
+  the old stiff sources.
+- Battery model: one variable `P_B` per battery, lossless, with an optional
+  `C_B * P_B^2` cycling cost (the user's standard). Feasibility means the network
+  equations, no-backflow (`P_Subs >= 0`, the key constraint) and the 0.95-1.05 pu
+  band on buses not set by a substation.
+
 ## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
 
 Since 2026-09-15 the DDP solver is **our own MIT fork of FilterDDP.jl**, committed
