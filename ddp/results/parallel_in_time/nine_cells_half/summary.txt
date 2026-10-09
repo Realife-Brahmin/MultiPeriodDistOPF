@@ -1,0 +1,81 @@
+PARSIM fddp_large10kC_1ph_T6_diag_half.log
+  passes=13 stage_solves=78 reported_solve_s=16.096 setup_s=0.04
+  backward: measured 14.53 s = pre 8.68 + seq 4.45 + post 1.28 (+ 0.11 outside the stages)
+            per stage: pre 111.3 ms, seq 57.1 ms, post 16.4 ms
+            one worker per period: 7.44 s (max pre 2.45 + seq 4.45 + max post 0.42)
+  forward:  measured 1.53 s; directions 1.06 (max 0.21), state recursion 0.045, 10 trials 0.43 (max 0.11); recursion error 1.2e-14
+            one worker per period: 0.36 s
+  solve: measured 16.1 s -> one worker per period 7.8 s (2.1x); per pass 1.24 -> 0.60 s
+  near-optimality at iteration 10: 16.1 s -> 7.8 s
+PARSIM fddp_large10kC_1ph_T24_diag_half.log
+  passes=15 stage_solves=360 reported_solve_s=73.451 setup_s=0.13
+  backward: measured 65.49 s = pre 39.08 + seq 20.53 + post 5.52 (+ 0.35 outside the stages)
+            per stage: pre 108.5 ms, seq 57.0 ms, post 15.3 ms
+            one worker per period: 25.47 s (max pre 3.91 + seq 20.53 + max post 0.68)
+  forward:  measured 7.83 s; directions 5.39 (max 0.72), state recursion 0.231, 11 trials 2.20 (max 0.38); recursion error 3.6e-15
+            one worker per period: 1.34 s
+  solve: measured 73.5 s -> one worker per period 26.9 s (2.7x); per pass 4.89 -> 1.79 s
+  near-optimality at iteration 11: 73.3 s -> 26.8 s
+PARSIM fddp_large10kC_1ph_T48_diag_half.log
+  passes=16 stage_solves=768 reported_solve_s=155.157 setup_s=0.23
+  backward: measured 138.75 s = pre 80.76 + seq 44.38 + post 12.86 (+ 0.76 outside the stages)
+            per stage: pre 105.2 ms, seq 57.8 ms, post 16.7 ms
+            one worker per period: 51.93 s (max pre 5.04 + seq 44.38 + max post 1.76)
+  forward:  measured 16.17 s; directions 10.35 (max 0.52), state recursion 0.745, 11 trials 5.07 (max 1.09); recursion error 1.4e-15
+            one worker per period: 2.36 s
+  solve: measured 155.2 s -> one worker per period 54.5 s (2.8x); per pass 9.68 -> 3.39 s
+  near-optimality at iteration 11: 154.9 s -> 54.3 s
+PARSIM fddp_ieee2522C_1ph_T6_diag_half.log
+  passes=38 stage_solves=228 reported_solve_s=13.226 setup_s=0.02
+  backward: measured 12.00 s = pre 9.34 + seq 1.93 + post 0.67 (+ 0.05 outside the stages)
+            per stage: pre 41.0 ms, seq 8.5 ms, post 3.0 ms
+            one worker per period: 5.23 s (max pre 3.12 + seq 1.93 + max post 0.13)
+  forward:  measured 1.21 s; directions 0.80 (max 0.28), state recursion 0.011, 33 trials 0.40 (max 0.08); recursion error 2.4e-16
+            one worker per period: 0.38 s
+  solve: measured 13.2 s -> one worker per period 5.6 s (2.4x); per pass 0.35 -> 0.15 s
+  near-optimality at iteration 33: 13.2 s -> 5.6 s
+PARSIM fddp_ieee2522C_1ph_T24_diag_half.log
+  passes=45 stage_solves=1080 reported_solve_s=62.643 setup_s=0.15
+  backward: measured 56.40 s = pre 42.65 + seq 10.11 + post 3.47 (+ 0.17 outside the stages)
+            per stage: pre 39.5 ms, seq 9.4 ms, post 3.2 ms
+            one worker per period: 16.45 s (max pre 5.83 + seq 10.11 + max post 0.34)
+  forward:  measured 6.10 s; directions 3.63 (max 0.60), state recursion 0.057, 39 trials 2.40 (max 0.51); recursion error 2.2e-16
+            one worker per period: 1.17 s
+  solve: measured 62.6 s -> one worker per period 17.8 s (3.5x); per pass 1.39 -> 0.39 s
+  near-optimality at iteration 39: 62.5 s -> 17.6 s
+PARSIM fddp_ieee2522C_1ph_T96_diag_half.log
+  passes=56 stage_solves=5376 reported_solve_s=319.302 setup_s=0.12
+  backward: measured 285.54 s = pre 215.53 + seq 49.25 + post 19.98 (+ 0.78 outside the stages)
+            per stage: pre 40.1 ms, seq 9.2 ms, post 3.7 ms
+            one worker per period: 62.91 s (max pre 10.65 + seq 49.25 + max post 2.24)
+  forward:  measured 33.64 s; directions 17.95 (max 1.01), state recursion 0.411, 49 trials 15.26 (max 2.78); recursion error 6.1e-16
+            one worker per period: 4.23 s
+  solve: measured 319.3 s -> one worker per period 67.3 s (4.7x); per pass 5.70 -> 1.20 s
+  near-optimality at iteration 49: 319.2 s -> 67.2 s
+PARSIM fddp_ieee123C_1ph_T6_diag_half.log
+  passes=27 stage_solves=162 reported_solve_s=1.421 setup_s=0.02
+  backward: measured 1.31 s = pre 0.50 + seq 0.76 + post 0.03 (+ 0.02 outside the stages)
+            per stage: pre 3.1 ms, seq 4.7 ms, post 0.2 ms
+            one worker per period: 0.97 s (max pre 0.19 + seq 0.76 + max post 0.01)
+  forward:  measured 0.09 s; directions 0.08 (max 0.02), state recursion 0.001, 20 trials 0.01 (max 0.00); recursion error 9.7e-17
+            one worker per period: 0.02 s
+  solve: measured 1.4 s -> one worker per period 1.0 s (1.4x); per pass 0.05 -> 0.04 s
+  near-optimality at iteration 20: 1.4 s -> 1.0 s
+PARSIM fddp_ieee123C_1ph_T24_diag_half.log
+  passes=26 stage_solves=624 reported_solve_s=3.603 setup_s=0.00
+  backward: measured 3.29 s = pre 2.00 + seq 1.10 + post 0.14 (+ 0.05 outside the stages)
+            per stage: pre 3.2 ms, seq 1.8 ms, post 0.2 ms
+            one worker per period: 1.81 s (max pre 0.63 + seq 1.10 + max post 0.03)
+  forward:  measured 0.31 s; directions 0.25 (max 0.02), state recursion 0.004, 19 trials 0.05 (max 0.00); recursion error 5.6e-17
+            one worker per period: 0.03 s
+  solve: measured 3.6 s -> one worker per period 1.8 s (2.0x); per pass 0.14 -> 0.07 s
+  near-optimality at iteration 19: 3.6 s -> 1.8 s
+PARSIM fddp_ieee123C_1ph_T96_diag_half.log
+  passes=64 stage_solves=6144 reported_solve_s=37.099 setup_s=0.02
+  backward: measured 34.09 s = pre 18.53 + seq 13.43 + post 1.69 (+ 0.44 outside the stages)
+            per stage: pre 3.0 ms, seq 2.2 ms, post 0.3 ms
+            one worker per period: 18.65 s (max pre 4.30 + seq 13.43 + max post 0.48)
+  forward:  measured 2.99 s; directions 2.53 (max 0.14), state recursion 0.044, 55 trials 0.40 (max 0.14); recursion error 2.1e-17
+            one worker per period: 0.34 s
+  solve: measured 37.1 s -> one worker per period 19.0 s (2.0x); per pass 0.58 -> 0.30 s
+  near-optimality at iteration 55: 37.1 s -> 19.0 s

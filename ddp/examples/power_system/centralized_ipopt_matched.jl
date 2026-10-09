@@ -32,6 +32,8 @@ using Serialization
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 const MOI = JuMP.MOI
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
+include(joinpath(@__DIR__, "voltage_screening.jl"))
+include(joinpath(@__DIR__, "loadflow_start.jl"))
 
 system = length(ARGS) >= 1 ? ARGS[1] : "ieee123C_1ph"
 T = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 3
@@ -52,11 +54,43 @@ root, nonroot = data[:substationBus], data[:Nm1set]
 dt, pbase = data[:delta_t_h], data[:kVA_B]
 
 build_start = time()
-model = Model(Ipopt.Optimizer)
-set_optimizer_attribute(model, "print_level", 5)
-set_optimizer_attribute(model, "max_iter", 5000)
-set_optimizer_attribute(model, "print_timing_statistics", "yes")
-set_optimizer_attribute(model, "output_file", ipopt_log)
+# CENTRAL_SOLVER=gurobi solves the same JuMP model with Gurobi instead (the
+# model is a convex QCQP: quadratic cost, rotated second-order cones). Run it
+# from an environment that has Gurobi (envs/tadmm). Its result lines are tagged
+# CENTRAL_GUROBI, so nothing can mistake them for an Ipopt reference, and its
+# log (presolve statistics included) goes to the same log path.
+#   GUROBI_EXTRA_OPTIONS="Method=2;Crossover=0;Threads=1"
+# Leave IPOPT_SCREEN unset with Gurobi: it recognises the cone
+# P^2 + Q^2 <= v ell only while v and ell keep their lower bounds.
+central_solver = lowercase(get(ENV, "CENTRAL_SOLVER", "ipopt"))
+central_solver in ("ipopt", "gurobi") || error("CENTRAL_SOLVER must be ipopt or gurobi")
+result_tag = central_solver == "gurobi" ? "CENTRAL_GUROBI" : "CENTRAL_IPOPT"
+if central_solver == "gurobi"
+    using Gurobi
+    model = Model(Gurobi.Optimizer)
+    set_optimizer_attribute(model, "LogFile", ipopt_log)
+    for kv in split(get(ENV, "GUROBI_EXTRA_OPTIONS", ""), ';'; keepempty=false)
+        k, v = strip.(split(kv, '='; limit=2))
+        val = something(tryparse(Int, v), tryparse(Float64, v), String(v))
+        set_optimizer_attribute(model, String(k), val)
+        println("GUROBI_OPTION ", k, "=", val)
+    end
+else
+    model = Model(Ipopt.Optimizer)
+    set_optimizer_attribute(model, "print_level", 5)
+    set_optimizer_attribute(model, "max_iter", 5000)
+    set_optimizer_attribute(model, "print_timing_statistics", "yes")
+    set_optimizer_attribute(model, "output_file", ipopt_log)
+    # Extra Ipopt options, e.g. the linear solver:
+    #   IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+    # Values that parse as integers or floats are passed as numbers.
+    for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty=false)
+        k, v = strip.(split(kv, '='; limit=2))
+        val = something(tryparse(Int, v), tryparse(Float64, v), String(v))
+        set_optimizer_attribute(model, String(k), val)
+        println("IPOPT_OPTION ", k, "=", val)
+    end
+end
 
 @variable(model, P_Subs[Tset] >= 0)
 @variable(model, Q_Subs[Tset])
@@ -123,6 +157,55 @@ for t in Tset
         end
     end
 end
+# The exact bound reductions of the FilterDDP driver (FILTERDDP_SCREEN there,
+# same item names; voltage_screening.jl), so that both solvers can be given
+# the identical model. Off by default.
+ipopt_screen = Set(String.(strip.(split(get(ENV, "IPOPT_SCREEN", ""), ','; keepempty=false))))
+"all" in ipopt_screen && (ipopt_screen = Set(["substation", "vupper", "vlower", "ell", "psubs"]))
+if !isempty(ipopt_screen)
+    isempty(setdiff(ipopt_screen, ["substation", "vupper", "vlower", "ell", "psubs"])) ||
+        error("IPOPT_SCREEN: unknown item in $(collect(ipopt_screen))")
+    vs = voltage_screen(data, T)
+    drop_lo = 0; drop_up = 0
+    for (n, j) in enumerate(vs.buses)
+        fixed = j == root && "substation" in ipopt_screen
+        if fixed || (j != root && "vlower" in ipopt_screen && !any(@view vs.keep_lo[n, :]))
+            for t in Tset; delete_lower_bound(v[j,t]); end
+            global drop_lo += 1
+        end
+        if fixed || (j != root && "vupper" in ipopt_screen && !any(@view vs.keep_up[n, :]))
+            for t in Tset; delete_upper_bound(v[j,t]); end
+            global drop_up += 1
+        end
+    end
+    drop_ell = "ell" in ipopt_screen
+    drop_ell && for e in Lset, t in Tset; delete_lower_bound(ell[e,t]); end
+    drop_ps = "psubs" in ipopt_screen && minimum(vs.psubs_min) > 0
+    drop_ps && for t in Tset; delete_lower_bound(P_Subs[t]); end
+    @printf("BOUND_SCREEN %s: voltage limits dropped %d lower, %d upper of %d buses; ell >= 0 dropped on %d lines; P_Subs >= 0 dropped: %s\n",
+            join(sort!(collect(ipopt_screen)), ","), drop_lo, drop_up, length(Nset), drop_ell ? length(Lset) : 0, drop_ps)
+end
+# IPOPT_LOADFLOW_START=1: the starting point the FilterDDP driver gets from
+# FILTERDDP_LOADFLOW_START (loadflow_start.jl): batteries idle, DERs at zero
+# reactive power, and the power flow of each period. Ipopt's own options are
+# left at their defaults (it still pushes the point inside the bounds).
+if get(ENV, "IPOPT_LOADFLOW_START", "0") != "0"
+    for t in Tset
+        vv, PP, QQ, LL, _ = loadflow_sweep(data, t)
+        for (n, j) in enumerate(Nset); set_start_value(v[j,t], vv[n]); end
+        ps0 = 0.0; qs0 = 0.0
+        for (le, e) in enumerate(Lset)
+            set_start_value(P[e,t], PP[le]); set_start_value(Q[e,t], QQ[le]); set_start_value(ell[e,t], LL[le])
+            if e[1] == root
+                ps0 += PP[le]; qs0 += QQ[le]
+            end
+        end
+        set_start_value(P_Subs[t], ps0); set_start_value(Q_Subs[t], qs0)
+        for j in Bset; set_start_value(P_B[j,t], 0.0); set_start_value(B[j,t], data[:B0_pu][j]); end
+        for j in Dset; set_start_value(q_D[j,t], 0.0); end
+    end
+    println("IPOPT_LOADFLOW_START applied")
+end
 build_s = time() - build_start
 
 optimize!(model)
@@ -132,10 +215,13 @@ status = termination_status(model)
 obj = has_values(model) ? objective_value(model) : NaN
 iters = try MOI.get(model, MOI.BarrierIterations()) catch; -1 end
 solve_s = try solve_time(model) catch; NaN end
-@printf("CENTRAL_IPOPT system=%s T=%d profile=%s C_B=%.6e gamma=%.6e status=%s iterations=%d objective=%.12f solve_time_s=%.3f build_s=%.3f wall_s=%.3f variables=%d solver=%s\n",
-        system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
+@printf("%s system=%s T=%d profile=%s C_B=%.6e gamma=%.6e status=%s iterations=%d objective=%.12f solve_time_s=%.3f build_s=%.3f wall_s=%.3f variables=%d solver=%s\n",
+        result_tag, system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
         iters, obj, solve_s, build_s, wall_s, num_variables(model),
         replace(string(MOI.get(model, MOI.SolverVersion())), ' ' => '_'))
+# Peak resident memory of the whole process (model build + solve), for the
+# memory-knee comparison between linear solvers.
+@printf("%s_MEMORY maxrss_mib=%.1f\n", result_tag, Sys.maxrss() / 2^20)
 
 # How the batteries are used and what each objective term contributes. Printed
 # after the timed solve, so it does not affect any timing.
@@ -152,7 +238,7 @@ if has_values(model)
                   span = (data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j]
                   (maximum(traj) - minimum(traj)) / max(span, eps())
               end for j in Bset]
-    @printf("CENTRAL_IPOPT_BATTERY at_power_limit=%.3f mean_utilization=%.3f energy_window_used=%.3f throughput_pu_h=%.6e energy_term=%.6e cb_term=%.6e terminal_term=%.6e\n",
-            count(>=(0.99), util) / length(util), sum(util) / length(util),
+    @printf("%s_BATTERY at_power_limit=%.3f mean_utilization=%.3f energy_window_used=%.3f throughput_pu_h=%.6e energy_term=%.6e cb_term=%.6e terminal_term=%.6e\n",
+            result_tag, count(>=(0.99), util) / length(util), sum(util) / length(util),
             sum(window) / length(window), sum(abs.(pb)) * dt, energy_term, cb_term, term_term)
 end

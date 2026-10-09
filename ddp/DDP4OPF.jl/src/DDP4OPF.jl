@@ -22,6 +22,7 @@ include("solver.jl")
 include("blocked_solve.jl")
 include("backward_pass.jl")
 include("forward_pass.jl")
+include("affine_linesearch.jl")
 include("print.jl")
 include("solve.jl")
 

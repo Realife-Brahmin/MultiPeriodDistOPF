@@ -1,0 +1,79 @@
+QUIET_WAIT waited_s=18 other_cores=0.20 timed_out=0
+Set parameter Username
+Set parameter LicenseID to value 2866376
+Academic license - for non-commercial use only - expires 2027-09-22
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_ieee123C_1ph_T24_gurobilog.txt"
+Set parameter Threads to value 0
+Set parameter Threads to value 0
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_ieee123C_1ph_T24_gurobilog.txt"
+Warning for adding constraints: zero or small (< 1e-13) coefficients, ignored
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (win64 - Windows 11+.0 (26200.2))
+
+CPU model: Intel(R) Core(TM) i9-10900X CPU @ 3.70GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 10 physical cores, 20 logical processors, using up to 20 threads
+
+Optimize a model with 10440 rows, 15936 columns and 39453 nonzeros (Min)
+Model fingerprint: 0x018f5734
+Model has 75 linear objective coefficients and an objective constant of 582.0714870425
+Model has 1275 quadratic objective terms
+Model has 3048 quadratic constraints
+Coefficient statistics:
+  Matrix range     [6e-10, 1e+00]
+  QMatrix range    [1e+00, 1e+00]
+  Objective range  [8e+01, 1e+03]
+  QObjective range [2e+03, 4e+04]
+  Bounds range     [4e-03, 1e+00]
+  RHS range        [4e-05, 1e+00]
+Presolve removed 315 rows and 411 columns
+Presolve time: 0.02s
+Presolved: 17497 rows, 21623 columns, 58052 nonzeros
+Presolved model has 3049 second-order cone constraints
+Ordering time: 0.01s
+
+Barrier statistics:
+ Dense cols : 1
+ AA' NZ     : 8.719e+04
+ Factor NZ  : 2.864e+05 (roughly 18 MB of memory)
+ Factor Ops : 7.652e+06 (less than 1 second per iteration)
+ Threads    : 10
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   1.99345379e+03 -8.98906284e+04  1.81e+02 6.44e+01  3.51e+03     0s
+   1   1.82594699e+05 -1.66223133e+05  8.26e+01 1.70e+01  1.48e+03     0s
+   2   2.14693343e+05 -1.79896331e+05  2.58e+01 1.07e+01  5.40e+02     0s
+   3   1.73419757e+05 -1.87443520e+05  8.61e+00 4.44e+00  1.92e+02     0s
+   4   9.62820214e+04 -1.77943508e+05  2.57e+00 1.38e+00  5.88e+01     0s
+   5   3.92867515e+04 -1.50584894e+05  9.05e-01 7.46e-01  2.31e+01     0s
+   6   2.73885077e+04 -1.01582279e+05  5.83e-01 3.06e-01  1.35e+01     0s
+   7   1.22723176e+04 -7.77263005e+04  1.84e-01 1.78e-01  5.83e+00     0s
+   8   5.87526554e+03 -1.87105890e+04  3.13e-02 1.59e-03  1.09e+00     0s
+   9   4.30150915e+03 -1.13889246e+03  4.46e-03 2.50e-04  1.95e-01     0s
+  10   3.32408792e+03  2.15598370e+03  1.06e-03 3.13e-05  4.02e-02     0s
+  11   3.04880759e+03  2.34498084e+03  2.70e-04 2.36e-05  2.39e-02     0s
+  12   2.95622320e+03  2.74192297e+03  1.99e-05 7.21e-06  7.23e-03     0s
+  13   2.93943056e+03  2.85309019e+03  9.35e-06 2.64e-06  2.91e-03     0s
+  14   2.93255568e+03  2.87714392e+03  5.16e-06 1.71e-06  1.87e-03     0s
+  15   2.92884765e+03  2.89823087e+03  2.68e-06 1.78e-06  1.03e-03     0s
+  16   2.92686268e+03  2.91040624e+03  1.44e-06 1.38e-06  5.55e-04     0s
+  17   2.92564797e+03  2.91724512e+03  6.73e-07 2.53e-06  2.83e-04     0s
+  18   2.92501622e+03  2.92160573e+03  2.74e-07 9.20e-07  1.15e-04     0s
+  19   2.92480254e+03  2.92311965e+03  1.57e-07 4.15e-07  5.67e-05     0s
+  20   2.92465398e+03  2.92375006e+03  8.83e-08 2.17e-07  3.05e-05     1s
+  21   2.92457987e+03  2.92410459e+03  4.87e-08 1.64e-07  1.60e-05     1s
+  22   2.92453828e+03  2.92425988e+03  2.96e-08 9.40e-08  9.39e-06     1s
+  23   2.92450108e+03  2.92438781e+03  1.14e-08 7.71e-09  3.82e-06     1s
+  24   2.92448686e+03  2.92443566e+03  5.74e-09 9.43e-06  1.73e-06     1s
+  25   2.92447556e+03  2.92446517e+03  1.23e-09 5.11e-05  3.50e-07     1s
+  26   2.92447286e+03  2.92447010e+03  1.11e-08 1.74e-04  9.30e-08     1s
+  27   2.92447203e+03  2.92447184e+03  2.13e-09 7.35e-05  6.30e-09     1s
+
+Barrier solved model in 27 iterations and 0.80 seconds (0.36 work units)
+Optimal objective 2.92447203e+03
+
+
+User-callback calls 108, time in user-callback 0.05 sec
+GUROBI_OPTION Threads=0
+CENTRAL_GUROBI system=ieee123C_1ph T=24 profile=periodic C_B=1.000000e-03 gamma=1.750000e+04 status=OPTIMAL iterations=27 objective=2924.472025284325 solve_time_s=0.804 build_s=6.124 wall_s=9.429 variables=15936 solver=13.0.0
+CENTRAL_GUROBI_MEMORY maxrss_mib=668.3
+CENTRAL_GUROBI_BATTERY at_power_limit=0.059 mean_utilization=0.336 energy_window_used=1.000 throughput_pu_h=4.066395e+00 energy_term=2.889397e+03 cb_term=2.759313e+01 terminal_term=7.481733e+00

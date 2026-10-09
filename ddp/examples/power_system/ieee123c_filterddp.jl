@@ -18,21 +18,21 @@ using SparseArrays
 
 const REPO = normpath(joinpath(@__DIR__, "..", "..", ".."))
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
+include(joinpath(@__DIR__, "voltage_screening.jl"))
+include(joinpath(@__DIR__, "loadflow_start.jl"))
+get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
+    include(joinpath(@__DIR__, "battery_schur_hook.jl"))
+get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
 
-function control_layout(data)
-    N, L, B, D = length(data[:Nset]), length(data[:Lset]),
-                  length(data[:Bset]), length(data[:Dset])
-    k = 0
-    take(n) = (r = (k+1):(k+n); k += n; r)
-    idx = (ps=first(take(1)), qs=first(take(1)), P=take(L), Q=take(L),
-           v=take(N), ell=take(L), pb=take(B), qnorm=take(D),
-           soc_slack=take(L), energy_slack=take(B))
-    return idx, k
-end
+include(joinpath(@__DIR__, "control_layout.jl"))
 
 function analytic_dynamics(nx, nu, pbidx, dt)
     f = (x,u) -> x .- dt .* u[pbidx]
-    fx = (x,u) -> Matrix{Float64}(I, nx, nx)
+    # The battery dynamics are x - dt*P_B: f_x is the identity. With
+    # FILTERDDP_STRUCTURED_DYNAMICS=1 it is returned sparse, so products such as
+    # f_x' V_xx f_x cost a copy instead of two dense n_x^3 multiplications.
+    fx = get(ENV, "FILTERDDP_STRUCTURED_DYNAMICS", "0") != "0" ?
+        ((x,u) -> sparse(1.0I, nx, nx)) : ((x,u) -> Matrix{Float64}(I, nx, nx))
     fu = function (x,u)
         J = spzeros(nx, nu)
         for b in 1:nx
@@ -101,6 +101,98 @@ function soft_terminal_objective(base, nx, nu, pbidx, dt, B0, gamma)
         l, lx, lu, lxx, lux, luu)
 end
 
+# Type-stable stage residuals for FILTERDDP_TYPED_EQUATIONS=1. `equations` in
+# build_model pushes every residual into a Vector{Any} through Dict lookups:
+# ~0.1 s per call at large10k, and FilterDDP calls it for every stage of every
+# backward pass and every line-search rollout. This version resolves the
+# indices and constants once and then performs the SAME floating-point
+# operations in the SAME order (left-to-right sums, zero terms included), so
+# its output is bitwise identical -- checked by check_typed_equations.jl.
+function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
+    buses, lines = data[:Nset], data[:Lset]
+    batteries, ders = data[:Bset], data[:Dset]
+    nonroot, root = data[:Nm1set], data[:substationBus]
+    dt = data[:delta_t_h]
+    nx = length(batteries)
+    ps, qs = idx.ps, idx.qs
+    rootP = Int[idx.P[linepos[e]] for e in data[:L1set]]
+    rootQ = Int[idx.Q[linepos[e]] for e in data[:L1set]]
+    nn = length(nonroot)
+    inP = zeros(Int, nn); inQ = zeros(Int, nn); inell = zeros(Int, nn)
+    rin = zeros(nn); xin = zeros(nn)
+    childptr = ones(Int, nn + 1); childP = Int[]; childQ = Int[]
+    pbi = zeros(Int, nn); qni = zeros(Int, nn); qmaxv = zeros(nn)
+    pLv = zeros(nn); qLv = zeros(nn); pDv = zeros(nn)
+    for (k, j) in enumerate(nonroot)
+        line = (data[:parent][j], j)
+        inP[k], inQ[k], inell[k] = idx.P[linepos[line]], idx.Q[linepos[line]], idx.ell[linepos[line]]
+        rin[k], xin[k] = data[:rdict_pu][line], data[:xdict_pu][line]
+        for ch in data[:children][j]
+            push!(childP, idx.P[linepos[(j,ch)]]); push!(childQ, idx.Q[linepos[(j,ch)]])
+        end
+        childptr[k+1] = length(childP) + 1
+        pLv[k] = j in data[:NLset] ? data[:p_L_pu][j,t] : 0.0
+        qLv[k] = j in data[:NLset] ? data[:q_L_pu][j,t] : 0.0
+        pDv[k] = j in ders ? data[:p_D_pu][j,t] : 0.0
+        j in batteries && (pbi[k] = idx.pb[batpos[j]])
+        j in ders && (qni[k] = idx.qnorm[derpos[j]]; qmaxv[k] = qmax[j])
+    end
+    nl = length(lines)
+    lvi = zeros(Int, nl); lvj = zeros(Int, nl); lr = zeros(nl); lz = zeros(nl); lrz2 = zeros(nl)
+    for (e, (i, j)) in enumerate(lines)
+        lvi[e], lvj[e] = idx.v[buspos[i]], idx.v[buspos[j]]
+        r, z = data[:rdict_pu][(i,j)], data[:xdict_pu][(i,j)]
+        lr[e], lz[e], lrz2[e] = r, z, r^2 + z^2
+    end
+    vroot = idx.v[buspos[root]]
+    vref = 1.05^2
+    emin = Float64[data[:soc_min][j] * data[:B_R_pu][j] for j in batteries]
+    P, Q, ell, soc, pb, es = idx.P, idx.Q, idx.ell, idx.soc_slack, idx.pb, idx.energy_slack
+    nc = 2length(buses) + 2nl + 1 + nx
+    return function (x, u)
+        c = Vector{Float64}(undef, nc)
+        @inbounds begin
+            row = 1
+            s = u[rootP[1]]
+            for m in 2:length(rootP); s += u[rootP[m]]; end
+            c[row] = u[ps] - s
+            for k in 1:nn
+                o = 0.0
+                for m in childptr[k]:childptr[k+1]-1; o += u[childP[m]]; end
+                pbval = pbi[k] == 0 ? 0.0 : u[pbi[k]]
+                row += 1
+                c[row] = o - u[inP[k]] + rin[k]*u[inell[k]] - pbval - pDv[k] + pLv[k]
+            end
+            row += 1
+            s = u[rootQ[1]]
+            for m in 2:length(rootQ); s += u[rootQ[m]]; end
+            c[row] = u[qs] - s
+            for k in 1:nn
+                o = 0.0
+                for m in childptr[k]:childptr[k+1]-1; o += u[childQ[m]]; end
+                qD = qni[k] == 0 ? 0.0 : qmaxv[k]*u[qni[k]]
+                row += 1
+                c[row] = o - u[inQ[k]] + xin[k]*u[inell[k]] - qD + qLv[k]
+            end
+            for e in 1:nl
+                row += 1
+                c[row] = u[lvj[e]] - u[lvi[e]] + 2*(lr[e]*u[P[e]] + lz[e]*u[Q[e]]) - lrz2[e]*u[ell[e]]
+            end
+            for e in 1:nl
+                row += 1
+                c[row] = u[P[e]]^2 + u[Q[e]]^2 - u[lvi[e]]*u[ell[e]] + u[soc[e]]
+            end
+            row += 1
+            c[row] = u[vroot] - vref
+            for b in 1:nx
+                row += 1
+                c[row] = x[b] - dt*u[pb[b]] - emin[b] - u[es[b]]
+            end
+        end
+        c
+    end
+end
+
 function build_model(data; gamma=0.0)
     Nstage = data[:T]
     buses, lines = data[:Nset], data[:Lset]
@@ -135,6 +227,43 @@ function build_model(data; gamma=0.0)
     end
     lower[idx.qnorm] .= -1.0; upper[idx.qnorm] .= 1.0
     lower[idx.soc_slack] .= 0.0
+    # Bound screening (voltage_screening.jl, ddp/notes/CONSTRAINT_SCREENING.md).
+    # FILTERDDP_SCREEN is a comma-separated list of exact reductions:
+    #   substation  no limits on the substation voltage: it is fixed by its own
+    #               equality row, at exactly its upper limit;
+    #   vupper      no upper voltage limit where the rules prove it cannot bind
+    #               in any period (limits here are per control, not per period);
+    #   vlower      likewise for lower voltage limits;
+    #   ell         no ell >= 0: implied by the SOC row, P^2 + Q^2 + s = v ell
+    #               with s >= 0 and v > 0;
+    #   psubs       no P_Subs >= 0 when the load exceeds everything the
+    #               batteries and DERs can inject, in every period.
+    # `all` selects every item.
+    screen_items = ["substation", "vupper", "vlower", "ell", "psubs"]
+    screen = Set(String.(strip.(split(get(ENV, "FILTERDDP_SCREEN", ""), ','; keepempty=false))))
+    "all" in screen && (screen = Set(screen_items))
+    isempty(setdiff(screen, screen_items)) || error("FILTERDDP_SCREEN: unknown item in $(collect(screen))")
+    if !isempty(screen)
+        vs = voltage_screen(data, Nstage)
+        rk = buspos[root]
+        drop_lo = 0; drop_up = 0
+        for k in eachindex(buses)
+            fixed = k == rk && "substation" in screen
+            if fixed || (k != rk && "vlower" in screen && !any(@view vs.keep_lo[k, :]))
+                lower[idx.v[k]] = -Inf; drop_lo += 1
+            end
+            if fixed || (k != rk && "vupper" in screen && !any(@view vs.keep_up[k, :]))
+                upper[idx.v[k]] = Inf; drop_up += 1
+            end
+        end
+        drop_ell = "ell" in screen
+        drop_ell && (lower[idx.ell] .= -Inf)
+        drop_ps = "psubs" in screen && minimum(vs.psubs_min) > 0
+        drop_ps && (lower[idx.ps] = -Inf)
+        @printf("BOUND_SCREEN %s: voltage limits dropped %d lower, %d upper of %d buses; ell >= 0 dropped on %d lines; P_Subs >= 0 dropped: %s (lossless lower bound %.3f p.u.)\n",
+                join(sort!(collect(screen)), ","), drop_lo, drop_up, length(buses),
+                drop_ell ? length(lines) : 0, drop_ps, minimum(vs.psubs_min))
+    end
     limits = ControlLimits(lower, upper)
 
     stage_objs = Any[]
@@ -145,7 +274,7 @@ function build_model(data; gamma=0.0)
             price, pbase, dt, data[:C_B]))
 
         qmax = Dict(j => sqrt(max(0.0, data[:S_D_R][j]^2 - data[:p_D_pu][j,t]^2)) for j in ders)
-        function equations(x,u)
+        function untyped_equations(x,u)
             c = Any[]
             # Real-power balance: root, then every non-root bus.
             push!(c, u[idx.ps] - sum(u[idx.P[linepos[e]]] for e in data[:L1set]))
@@ -189,6 +318,9 @@ function build_model(data; gamma=0.0)
             end
             c
         end
+        equations = get(ENV, "FILTERDDP_TYPED_EQUATIONS", "0") != "0" ?
+            typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos) :
+            untyped_equations
         nc = 2length(buses) + 2length(lines) + 1 + nx
         cx = function (x,u)
             J = spzeros(nc, nx)
@@ -350,8 +482,7 @@ data = deserialize(datafile)
 # battery cost as a reduced-space experiment. Default behaviour is unchanged.
 if haskey(ENV, "REDUCED_CB")
     data[:C_B] = battery_cb(system, ENV["REDUCED_CB"])   # a number, or "system"
-    @printf("C_B OVERRIDE: %.6g
-", data[:C_B])
+    @printf("C_B OVERRIDE: %.6g\n", data[:C_B])
 end
 idx, nu = control_layout(data)
 nx = length(data[:Bset])
@@ -366,6 +497,7 @@ gammaT = terminal_soc_soft() ? gamma_terminal(system) : 0.0
 @printf("TERMINAL_SOC soft=%d gamma=%.6e\n", gammaT > 0, gammaT)
 ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
+get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && install_tree_kkt_hook(data, idx, nu)
 mode == "build" && exit()
 
 println("constructing dynamic Solver storage...")
@@ -389,12 +521,55 @@ for (b,j) in enumerate(data[:Bset])
     u0[idx.energy_slack[b]] = x0[b] - emin
 end
 ubar = [copy(u0) for _ in 1:T]
+if get(ENV, "FILTERDDP_LOADFLOW_START", "0") != "0"
+    sweeps = maximum(loadflow_start!(ubar[t], data, idx, t) for t in 1:T)
+    res0 = maximum(norm(ocp.stage_constraints[t].c(x0, ubar[t]), Inf) for t in 1:T)
+    @printf("LOADFLOW_START sweeps=%d max_equality_residual=%.3e lowest_voltage=%.4f pu\n",
+            sweeps, res0, sqrt(minimum(minimum(@view ubar[t][idx.v]) for t in 1:T)))
+end
+# FILTERDDP_WARMUP=<n> or `full`: run the same solve first, silently, for n
+# iterations or to its normal stop, and discard it. Julia compiles each method
+# the first time it runs (15-30 s here, nearly all inside the first iteration),
+# so without this the timed solve below includes that one-time cost. `full`
+# reaches every code path (barrier updates, the stopping test); a small n is
+# for long horizons, where a second complete solve is too expensive. The timed
+# solve restarts from the same point and reproduces the same iterates.
+warmup_spec = get(ENV, "FILTERDDP_WARMUP", "0")
+warmup = warmup_spec == "full" ? typemax(Int) : parse(Int, warmup_spec)
+if warmup > 0
+    keep_max = solver.options.max_iterations
+    solver.options.max_iterations = min(warmup, keep_max)
+    tw = time()
+    # To a scratch file, not devnull: the print methods are compiled per stream
+    # type, and the log is a file. With devnull about 1.7 s of compilation was
+    # left in the timed solve.
+    scratch = tempname()
+    warm_stream = Ref{Any}(nothing)
+    open(scratch, "w") do io
+        redirect_stdout(io) do
+            warm_stream[] = typeof(stdout)
+            solve!(solver, x0, [copy(u) for u in ubar])
+        end
+    end
+    rm(scratch; force=true)
+    solver.options.max_iterations = keep_max
+    @printf("WARMUP %s iterations=%d time_s=%.3f\n", warmup_spec, solver.data.k, time() - tw)
+    # The warm-up only helps if the timed solve prints to the same stream type.
+    # With NO_COLOR or FORCE_COLOR in the environment Julia wraps stdout in an
+    # IOContext, and every print statement is compiled again in the first pass
+    # of the timed solve (0.7 s, more with diagnostics): the run scripts unset both.
+    warm_stream[] == typeof(stdout) || println("WARMUP_STREAM_MISMATCH warm-up printed to ", warm_stream[],
+        ", the timed solve prints to ", typeof(stdout), ": its first pass includes print compilation")
+end
 t1 = time()
 println("entering solve! ...")
 flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+# Peak resident memory of the whole process (build + solve), for the memory
+# comparison with centralized Ipopt.
+@printf("FILTERDDP_MEMORY_PEAK maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)
 @printf("final residuals: primal=%.12e dual=%.12e complementarity=%.12e\n",
         solver.data.primal_inf, solver.data.dual_inf, solver.data.cs_inf_0)
 
@@ -433,6 +608,21 @@ if gammaT > 0
     end
 end
 @printf("FilterDDP objective=%.12f max_equality_residual=%.3e\n", Jddp, max_eq)
+# Every screened quantity against its ORIGINAL limits, whether or not the limit
+# was in the solve (FILTERDDP_SCREEN): the after-the-fact certificate that a
+# dropped limit did not matter.
+let below = 0, above = 0, worst = 0.0, ellmin = Inf, psmin = Inf
+    for t in 1:T
+        for (k,j) in enumerate(data[:Nset])
+            lo = data[:Vminpu][j]^2 - uddp[t][idx.v[k]]; hi = uddp[t][idx.v[k]] - data[:Vmaxpu][j]^2
+            lo > 1e-8 && (below += 1); hi > 1e-8 && (above += 1)
+            worst = max(worst, lo, hi)
+        end
+        ellmin = min(ellmin, minimum(@view uddp[t][idx.ell])); psmin = min(psmin, uddp[t][idx.ps])
+    end
+    @printf("BOUND_CHECK screen=%s voltages below=%d above=%d worst_violation=%.3e min_ell=%.3e min_P_Subs=%.3e\n",
+            get(ENV, "FILTERDDP_SCREEN", "none"), below, above, worst, ellmin, psmin)
+end
 
 reffile = joinpath(REPO, "envs", "tadmm", "processedData", "$(system)_T$(T)", "sol_socp_bf.jls")
 if isfile(reffile)

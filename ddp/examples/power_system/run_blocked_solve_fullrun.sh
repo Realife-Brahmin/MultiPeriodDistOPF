@@ -19,10 +19,16 @@
 
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
+# NO_COLOR (or FORCE_COLOR) makes Julia wrap stdout in an IOContext. The warm-up
+# solve prints to a plain IOStream, so every print statement would then be
+# compiled again in the first pass of the timed solve: about 0.7 s, and 1.5-2.3 s
+# with the FILTERDDP_PARSIM lines. Found 2026-10-06 in runs launched from a
+# PowerShell-started queue, whose environment carries NO_COLOR.
+unset NO_COLOR FORCE_COLOR
 SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
 SUFFIX="${RUN_TAG_SUFFIX:-}"
 VARIANTS="${VARIANTS:-baseline blocked_w$W}"      # VARIANTS=blocked_w16 runs the blocked arm only
-REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0}"
+REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0} typed_equations=${FILTERDDP_TYPED_EQUATIONS:-0} structured_dynamics=${FILTERDDP_STRUCTURED_DYNAMICS:-0} tree_kkt=${FILTERDDP_TREE_KKT:-0} screen=${FILTERDDP_SCREEN:-none} loadflow_start=${FILTERDDP_LOADFLOW_START:-0} affine_linesearch=${FILTERDDP_AFFINE_LINESEARCH:-0} warmup=${FILTERDDP_WARMUP:-0}"
 OUT=ddp/results/kkt_ordering/fullrun_blocked
 SOLDIR=ddp/results/kkt_ordering/captures/solutions
 mkdir -p "$OUT" "$SOLDIR"
@@ -30,6 +36,9 @@ CB="${CB:-1e-3}"
 if [ "$CB" = 1e-3 ]; then IPLOG="ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log"
 elif [ "$CB" = 0 ]; then IPLOG="ddp/results/ipopt_no_cb/logs/ipopt_nocb_${SYS}_T${T}.log"
 else IPLOG="ddp/results/ipopt_cb_${CB}/logs/ipopt_cb${CB}_${SYS}_T${T}.log"; fi
+# IPOPT_REF_LOG overrides the reference log (same instance and C_B), e.g. an HSL
+# run at a horizon outside the Table II set.
+IPLOG="${IPOPT_REF_LOG:-$IPLOG}"
 REF=$(grep -oE "CENTRAL_IPOPT .*" "$IPLOG" | \
       grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
 [ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T in $IPLOG"; exit 1; }
@@ -38,7 +47,13 @@ case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL
 export REDUCED_PROFILE=periodic REDUCED_CB="$CB" TERMINAL_SOC_SOFT=1
 export FILTERDDP_MAX_ITERATIONS=400
 export FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
-export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+# STRICT=1: run to the solver's own tolerance instead of stopping at
+# near-optimality. The near-optimality point is then read from the log
+# afterwards, at any objective gap (near_opt_posthoc.py). Give such runs a
+# distinct RUN_TAG_SUFFIX.
+if [ "${STRICT:-0}" != 1 ]; then
+  export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+fi
 if [ "$ARM" = diag ]; then export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8; fi
 # BLAS/OpenMP pinned to one thread by default. PIN_BLAS_THREADS=0 leaves them
 # unset, which is how the matched race (Table II of the paper) ran; the thread
