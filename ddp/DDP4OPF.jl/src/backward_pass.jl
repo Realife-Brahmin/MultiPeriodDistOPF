@@ -211,6 +211,23 @@ function _fixed_pattern_hessian(nu::Int, sigma::AbstractVector, blocks...)
 end
 _tree_kkt_enabled() = get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && !isnothing(TREE_KKT_HOOK[])
 
+# FILTERDDP_PINT_SCAN=1 (diagnostic; exact Hessian with the tree solver): on the
+# backward passes selected by FILTERDDP_PINT_SCAN_STRIDE / _OFFSET, every stage
+# hands its battery-level data to PINT_SCAN_HOOK[] (pint_scan.jl in the driver),
+# which redoes the value recursion by pairwise combination of the periods and
+# compares it with this sweep. Nothing it computes is used by the solve.
+const PINT_SCAN_HOOK = Ref{Any}(nothing)
+# With FILTERDDP_FEASIBILITY_DIAGNOSTIC=1: PRIMAL_ORIGINAL_HOOK[](t, x, u, c) -> the
+# largest violation of stage t's constraints as posed (an inequality that the model
+# writes as an equation with a slack counts only if the inequality itself is
+# violated). primal_inf counts the residual of the equation instead. One
+# FILTERDDP_ORIGINAL_PRIMAL line per backward pass; for comparison with the
+# infeasibility an NLP solver reports for the same inequality.
+const PRIMAL_ORIGINAL_HOOK = Ref{Any}(nothing)
+_pint_scan(k::Int) = !isnothing(PINT_SCAN_HOOK[]) && get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" &&
+    k % parse(Int, get(ENV, "FILTERDDP_PINT_SCAN_STRIDE", "1")) ==
+        parse(Int, get(ENV, "FILTERDDP_PINT_SCAN_OFFSET", "0"))
+
 # FILTERDDP_PARSIM=1: accounting for one worker per period (with the tree
 # solver). Nothing is reordered and no result changes; each stage's backward
 # work is timed in three parts, by what it needs from stage t+1:
@@ -322,6 +339,19 @@ function _lean_B(fa::SparseMatrixCSC, V::Matrix)
         B[k, j] = nzv[k] * V[rv[k], j]
     end
     return B
+end
+# fa' * V * fa for fa with exactly one entry per column (FILTERDDP_LEAN_EXACT):
+# each entry by the same two products as the sparse-dense-sparse product.
+_lean_exact_enabled() = get(ENV, "FILTERDDP_LEAN_EXACT", "0") != "0"
+function _lean_curvature(fa::SparseMatrixCSC, V::Matrix)
+    nB = size(fa, 2)
+    all(k -> fa.colptr[k+1] == fa.colptr[k] + 1, 1:nB) || return Matrix(fa' * V * fa)
+    rv = rowvals(fa); nzv = nonzeros(fa)
+    Vc = Matrix{eltype(V)}(undef, nB, nB)
+    @inbounds for l in 1:nB, k in 1:nB
+        Vc[k, l] = (nzv[k] * V[rv[k], rv[l]]) * nzv[l]
+    end
+    return Vc
 end
 # Diagonal of a sparse matrix as a dense vector, zero where no entry is stored
 function _dense_diag(A::SparseMatrixCSC)
@@ -525,6 +555,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         ϕ_norm = T(0.0)
         z_norm = T(0.0)
         ps_att = zeros(5)                # pre_sum, pre_max, seq_sum, post_sum, post_max
+        original_max = T(0)
+        pint = _pint_scan(data.k)
+        pint && PINT_SCAN_HOOK[](:reset, nothing)
 
         # FILTERDDP_LAGGED_CURVATURE: factor every stage up front, in parallel.
         lagged_factors = nothing
@@ -545,6 +578,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             derivative_start_ns = time_ns()
             ps_seq_ns = UInt64(0); ps_val_ns = UInt64(0); _PARSIM_SKIP_NS[] = 0; fill!(_PARSIM_SUB, 0.0)
             x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
+            pint_Vx = V̂x; pint_Vxx = V̂xx; pint_seq_s = NaN      # this stage's incoming value function
             # PATCH: per-stage data when supplied, else the shared function
             constraints = stage_con(ocp, t)
             objective_t = stage_obj(ocp, t)
@@ -594,6 +628,8 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 data.primal_1_curr += norm(c, 1)
                 data.primal_inf = max(data.primal_inf, norm(c, Inf))
                 if feasibility_diagnostic
+                    isnothing(PRIMAL_ORIGINAL_HOOK[]) ||
+                        (original_max = max(original_max, PRIMAL_ORIGINAL_HOOK[](t, x, u, c)))
                     equality_ssq += sum(abs2, c)
                     equality_count += length(c)
                     if !isempty(c)
@@ -749,7 +785,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 B_active = (lean_fx && fu_active isa SparseMatrixCSC) ? _lean_B(fu_active, V̂xx) :
                     Matrix(fu_active' * V̂xx * fx)
                 lux_in_B && (B_active .+= lux[active_B_rows, :])
-                exact_batt && (battery_curvature = Matrix(fu_active' * V̂xx * fu_active))
+                exact_batt && (battery_curvature =
+                    (_lean_exact_enabled() && lean_fx && fu_active isa SparseMatrixCSC) ?
+                        _lean_curvature(fu_active, V̂xx) : Matrix(fu_active' * V̂xx * fu_active))
                 _ps1 = time_ns() - _ps0; ps_seq_ns += _ps1; _PARSIM_SUB[3] = _ps1 / 1e9
             else
                 isempty(ux_tmp) && (ux_tmp = fu' * V̂xx)
@@ -858,6 +896,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     data.k % parse(Int, get(ENV, "FILTERDDP_PERIODIC_CAPTURE_STRIDE", "5")) == 0
                 periodic_rhs_snapshot = periodic_capture_active ? copy(rhs) : nothing
                 kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
+                pint_rhs0 = (pint && exact_batt && tree_kkt) ? copy(@view rhs[:, 1]) : nothing
                 kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
                 kkt_solution = Matrix{T}(undef, 0, 0)
                 F = nothing
@@ -1183,6 +1222,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                     _PARSIM_BETA_B[] = nothing
                 end
                 ps_pre = ps_stage - ps_seq - ps_post
+                pint_seq_s = ps_seq
                 ps_att[1] += ps_pre; ps_att[2] = max(ps_att[2], ps_pre); ps_att[3] += ps_seq
                 ps_att[4] += ps_post; ps_att[5] = max(ps_att[5], ps_post)
                 ps_stages += 1
@@ -1201,6 +1241,12 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
                 end
             end
             update_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - update_alloc_start : 0
+            if pint && sparse_kkt && !isnothing(pint_rhs0)
+                PINT_SCAN_HOOK[](:stage, (t=t, k=data.k, N=ocp.N, K=K, F=F, rhs0=pint_rhs0, nu=nu,
+                    active_B_rows=active_B_rows, fu_active=fu_active, Vx_in=pint_Vx, Vxx_in=pint_Vxx,
+                    lx=lx, lxx=lxx, lux=lux, cx=cx, phi=ϕ, Vx_out=V̂x, Vxx_out=V̂xx,
+                    alpha=solver.update[t].α, seq_s=pint_seq_s, reg=reg, mu=μ))
+            end
             timing_diagnostic && @printf(
                 "FILTERDDP_TIMING iteration=%d barrier_iteration=%d stage=%d derivative_s=%.9f first_order_s=%.9f second_order_s=%.9f algebra_s=%.9f kkt_assembly_s=%.9f factor_s=%.9f solve_s=%.9f update_s=%.9f K_nnz=%d rhs_cols=%d Vxx_nnz=%d\n",
                 data.k, data.j, t, derivative_s, first_order_s, second_order_s, algebra_s, kkt_assembly_s, factor_s, solve_s,
@@ -1227,6 +1273,10 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.cs_inf_0 /= scaling_cs
         data.cs_inf_μ /= scaling_cs
         data.barrier_lagrangian_curr += data.objective
+        pint && data.status == 0 && PINT_SCAN_HOOK[](:finish, (k=data.k, mu=μ, reg=reg))
+        feasibility_diagnostic && data.status == 0 && !isnothing(PRIMAL_ORIGINAL_HOOK[]) && @printf(
+            "FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e\n",
+            data.k, data.j, original_max, data.primal_inf)
         data.status == 0 && break
     end
     data.reg_last = reg

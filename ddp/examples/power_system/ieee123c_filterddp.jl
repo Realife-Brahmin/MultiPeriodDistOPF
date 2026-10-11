@@ -23,6 +23,7 @@ include(joinpath(@__DIR__, "loadflow_start.jl"))
 get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
+get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && include(joinpath(@__DIR__, "pint_scan.jl"))
 
 include(joinpath(@__DIR__, "control_layout.jl"))
 
@@ -469,6 +470,28 @@ function build_model(data; gamma=0.0)
     return ocp, idx, nx, nu, length(stage_cons[1].c(zeros(nx), zeros(nu)))
 end
 
+# Largest violation of a stage's constraints as posed, for FILTERDDP_ORIGINAL_PRIMAL
+# lines (DDP4OPF.PRIMAL_ORIGINAL_HOOK): the cone row P^2 + Q^2 - v ell + s = 0 counts
+# only by how far P^2 + Q^2 exceeds v ell, and the energy row only by how far the
+# energy after the stage is outside its window; the balances, the voltage drops and
+# the substation voltage count as they are. Rows as in `equations` of build_model.
+function install_original_primal_hook(data, idx)
+    N, L, bats = length(data[:Nset]), length(data[:Lset]), data[:Bset]
+    width = [(data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j] for j in bats]
+    DDP4OPF.PRIMAL_ORIGINAL_HOOK[] = function (t, x, u, c)
+        v = 0.0
+        @inbounds for i in 1:2N+L; v = max(v, abs(c[i])); end
+        @inbounds for e in 1:L; v = max(v, c[2N+L+e] - u[idx.soc_slack[e]]); end
+        v = max(v, abs(c[2N+2L+1]))
+        @inbounds for b in eachindex(bats)
+            w = c[2N+2L+1+b] + u[idx.energy_slack[b]]
+            v = max(v, -w, w - width[b])
+        end
+        return v
+    end
+    return nothing
+end
+
 function main(args=ARGS)
 system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
 T = length(args) >= 2 ? parse(Int, args[2]) : 2
@@ -498,6 +521,8 @@ gammaT = terminal_soc_soft() ? gamma_terminal(system) : 0.0
 ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && install_tree_kkt_hook(data, idx, nu)
+get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && install_pint_scan_hook()
+get(ENV, "FILTERDDP_FEASIBILITY_DIAGNOSTIC", "0") == "1" && install_original_primal_hook(data, idx)
 mode == "build" && exit()
 
 println("constructing dynamic Solver storage...")

@@ -509,7 +509,7 @@ struct TreeKKTStructured
     Dfull::Matrix{Float64}          # (verification only) dense D in E order
     # Exact battery curvature: D is no longer block diagonal, so the whole
     # Schur complement S = D + Vc - U inv(M) U' is factored densely instead.
-    Sfac::Union{Nothing, LU{Float64, Matrix{Float64}, Vector{Int}}}
+    Sfac::Union{Nothing, LU{Float64, Matrix{Float64}, Vector{Int}}, Cholesky{Float64, Matrix{Float64}}}
     # FILTERDDP_HALF_BLOCK: each group's rows are [power rows; energy rows] and the
     # energy rows' block is diagonal, so they are eliminated and only the power
     # rows are factored (Dfac, or Sfac under the exact Hessian). Empty nP: not halved.
@@ -745,6 +745,104 @@ function _tree_kkt_finish(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::Spars
                              nPv, Ninv, PN, NP, prow)
 end
 
+# FILTERDDP_LEAN_EXACT=1 (exact battery-block Hessian, with FILTERDDP_HALF_BLOCK=1).
+# Without it the exact path builds the battery block at 2 n_B with the curvature
+# inside, reduces it and factors it, all in the sweep (_tree_kkt_finish). But
+# the curvature only adds to the power rows, so the halved block is
+#     Shat = Shat0 + Vc,   Shat0 = blockdiag_g(D_PP - D_PN inv(D_NN) D_NP) - U_P inv(M) U_P',
+# and Shat0 reads nothing from the next stage. _tree_kkt_finish0 builds it
+# before the sweep, at its final size n_B; the sweep (_tree_kkt_finishV) adds
+# Vc and factors, by Cholesky (LU if that fails). Same linear system: results
+# agree with the plain exact path to rounding.
+_lean_exact() = get(ENV, "FILTERDDP_LEAN_EXACT", "0") != "0"
+
+struct TreeKKTBlock0
+    Sh0::Matrix{Float64}            # row/column k = grouped row prow[k]
+    bat::Vector{Int}                # battery (index in E) of each of those rows
+    nP::Vector{Int}
+    Ninv::Vector{Vector{Float64}}
+    PN::Vector{SparseMatrixCSC{Float64, Int}}
+    NP::Vector{SparseMatrixCSC{Float64, Int}}
+    prow::Vector{Int}
+    Up::Matrix{Float64}
+end
+
+# Returns nothing if the block cannot be halved (same conditions as in
+# _tree_kkt_finish, whose group assembly and checks are repeated here).
+function _tree_kkt_finish0(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::SparseMatrixCSC, Bd, Up, nB::Int)
+    nE = length(lay.E); nz = nonzeros(K)
+    ng = length(stat.gkeys)
+    Dgs = Vector{Matrix{Float64}}(undef, ng)
+    @inbounds for gi in 1:ng
+        rg = stat.granges[gi]; n = length(rg)
+        Dg = zeros(n, n)
+        for (b, a, p) in stat.kee[gi]; Dg[b, a] = nz[p]; end
+        if stat.gkeys[gi] != -1
+            Bf = Bd[stat.gkeys[gi]]
+            ge = stat.gkef[gi]
+            for (a, fa, pa) in ge, (b, fb, pb) in ge
+                Dg[a, b] -= nz[pa] * Bf[fa, fb] * nz[pb]
+            end
+        end
+        for (a, b, pa, pb, si) in stat.giso[gi]
+            Dg[a, b] -= nz[pa] * nz[pb] / nz[stat.iso_d[si]]
+        end
+        Dgs[gi] = Dg
+    end
+    isP = falses(nE)
+    for (a, t, p) in stat.kef; isP[a] = true; end
+    nPv = zeros(Int, ng)
+    for gi in 1:ng
+        rg = stat.granges[gi]; n = length(rg); Dg = Dgs[gi]
+        np = count(l -> isP[stat.perm[rg[l]]], 1:n)
+        ok = all(l -> isP[stat.perm[rg[l]]] == (l <= np), 1:n)
+        for l2 in np+1:n, l1 in np+1:n
+            ok &= l1 == l2 ? Dg[l1, l1] != 0 : Dg[l1, l2] == 0
+        end
+        ok &= all(iszero, @view Up[rg[np+1:n], :])
+        ok || return nothing
+        nPv[gi] = np
+    end
+    Ninv = Vector{Float64}[]; prow = Int[]
+    PN = SparseMatrixCSC{Float64, Int}[]; NP = SparseMatrixCSC{Float64, Int}[]
+    for gi in 1:ng
+        rg = stat.granges[gi]; n = length(rg); np = nPv[gi]; Dg = Dgs[gi]
+        push!(Ninv, [1 / Dg[l, l] for l in np+1:n])
+        push!(PN, sparse(Dg[1:np, np+1:n])); push!(NP, sparse(Dg[np+1:n, 1:np]))
+        append!(prow, rg[1:np])
+    end
+    all(gi -> PN[gi] == sparse(NP[gi]'), 1:ng) || return nothing
+    n = length(prow)
+    bat = [stat.perm[prow[k]] for k in 1:n]
+    (n == nB && all(<=(nB), bat)) || return nothing
+    Sh0 = zeros(n, n)
+    off = 0
+    @inbounds for gi in 1:ng
+        np = nPv[gi]
+        blk = Dgs[gi][1:np, 1:np]
+        blk .-= Matrix(PN[gi] * (Diagonal(Ninv[gi]) * NP[gi]))
+        Sh0[off+1:off+np, off+1:off+np] .= blk
+        off += np
+    end
+    UpP = Up[prow, :]
+    Sh0 .-= UpP * (fac.Mroot \ UpP')
+    return TreeKKTBlock0(Sh0, bat, nPv, Ninv, PN, NP, prow, Up)
+end
+
+function _tree_kkt_finishV(stat::TreeKKTStatic, fac::TreeKKTFactor, b0::TreeKKTBlock0, Vc::AbstractMatrix)
+    bat = b0.bat; n = length(bat)
+    shat() = begin
+        Sh = Matrix{Float64}(undef, n, n)
+        @inbounds for l in 1:n, k in 1:n; Sh[k, l] = b0.Sh0[k, l] + Vc[bat[k], bat[l]]; end
+        Sh
+    end
+    C = _blas_full(() -> cholesky!(Symmetric(shat()); check=false), n)
+    Sfac = issuccess(C) ? C : _blas_full(() -> lu!(shat()), n)
+    return TreeKKTStructured(stat.perm, stat.granges, LU{Float64, Matrix{Float64}, Vector{Int}}[], b0.Up,
+                             similar(b0.Up), lu(fac.Mroot), fac.Mroot, zeros(0, 0), Sfac,
+                             b0.nP, b0.Ninv, b0.PN, b0.NP, b0.prow)
+end
+
 # S \ R for S = D - U inv(M) U' (Woodbury): X = D\R + D\U * ((M - U' D\U) \ (U' D\R)).
 # Works in the grouped order so that each group is a contiguous row block.
 function tree_kkt_schur_solve(st::TreeKKTStructured, R::AbstractMatrix)
@@ -861,8 +959,11 @@ function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatri
     Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
     nzc = copy(nonzeros(K)); pre = reverse(lay.post)
     z = zeros(stat.nN); y1 = zeros(lay.n); y2 = zeros(lay.n); t2 = zeros(lay.n)
+    b0 = (!isnothing(Vc) && _lean_exact() && _half_block()) ?
+        _blas1(() -> _tree_kkt_finish0(lay, stat, fac, K, Bd, Up, size(Vc, 1))) : nothing
     t1 = time_ns()
-    st = _blas1(() -> _tree_kkt_finish(lay, stat, fac, K, Bd, Up, false, Vc))
+    st = isnothing(b0) ? _blas1(() -> _tree_kkt_finish(lay, stat, fac, K, Bd, Up, false, Vc)) :
+        _blas1(() -> _tree_kkt_finishV(stat, fac, b0, Vc))
     times = [(t1 - t0) / 1e9, (time_ns() - t1) / 1e9, 0.0, 0.0, 0.0]
     return TreeKKTSolver(lay, stat, fac, st, nzc, pre, z, y1, y2, t2, times)
 end
@@ -1020,7 +1121,9 @@ end
 const _HALF_WORK = Ref((zeros(0, 0), zeros(0, 0)))
 function tree_kkt_value_halved(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseMatrixCSC)
     st = s.st
-    (isempty(st.nP) || !isnothing(st.Sfac)) && return nothing
+    isempty(st.nP) && return nothing
+    exact = !isnothing(st.Sfac)
+    exact && !_lean_exact() && return nothing
     nB, nx = size(B); nE = length(st.perm); ng = length(st.granges)
     (length(st.prow) == nB && size(cxE) == (nE - nB, nx)) || return nothing
     ecol = zeros(Int, nE - nB); ecx = zeros(nE - nB)            # the one entry of each energy row
@@ -1054,6 +1157,40 @@ function tree_kkt_value_halved(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseM
             end
         end
         off += np
+    end
+    if exact
+        # FILTERDDP_LEAN_EXACT: the block is one dense n_B x n_B factor. With a
+        # Cholesky factor U'U the increment needs only Y = U' \ Rhat:
+        #     -Rhat' inv(Shat) Rhat = -Y'Y.
+        # The battery rows of the feedback, inv(U) Y, are not needed by the
+        # sweep; they are formed for the one-worker-per-period accounting only
+        # and timed with the stage's own back-substitution (times[5]).
+        F = st.Sfac
+        copyto!(Xc, Rhat)
+        XB = zeros(0, 0)
+        if F isa Cholesky
+            _blas1(() -> _blas_full(nB) do
+                ldiv!(F.U', Xc)
+                BLAS.syrk!('U', 'T', -1.0, Xc, 0.0, Vinc)
+            end)
+            LinearAlgebra.copytri!(Vinc, 'U')
+            if DDP4OPF._parsim()
+                t0 = time_ns()
+                _blas1(() -> _blas_full(() -> ldiv!(F.U, Xc), nB))
+                XB = Matrix{Float64}(undef, nB, nx)
+                @inbounds for j in 1:nx, k in 1:nB; XB[bat[k], j] = Xc[k, j]; end
+                s.times[5] += (time_ns() - t0) / 1e9
+            end
+        else
+            _blas1(() -> _blas_full(nB) do
+                ldiv!(F, Xc)
+                mul!(Vinc, Xc', Rhat, -1.0, 0.0)
+            end)
+            XB = Matrix{Float64}(undef, nB, nx)
+            @inbounds for j in 1:nx, k in 1:nB; XB[bat[k], j] = Xc[k, j]; end
+        end
+        @inbounds for j in 1:nx; Vinc[j, j] -= dterm[j]; end
+        return XB, Vinc
     end
     copyto!(Xc, Rhat)
     offs = cumsum(vcat(0, st.nP))
@@ -1092,3 +1229,59 @@ function DDP4OPF.battery_groups(F::TreeKKTSolver, nB)
 end
 DDP4OPF.battery_block_rows_grouped(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_battery_rows_grouped(F, B, cxE) : nothing
+
+# ------------------------------------------------------------- pint_scan.jl --
+# Battery-level data of a stage that does not depend on the next stage's value
+# function (diagnostic, FILTERDDP_PINT_SCAN; see pint_scan.jl). Neither function
+# is on the solve path.
+
+# r_E = b_E - K_EF (N \ b_F) - K_E,iso (b_iso ./ d_iso): the right-hand side of the
+# battery block for a full right-hand side b, in lay.E order. Same operations as
+# the first half of tree_kkt_solve!.
+function tree_kkt_reduced_rhs(s::TreeKKTSolver, b::AbstractVector)
+    lay, stat, nz = s.lay, s.stat, s.nz
+    y = zeros(lay.n)
+    tree_kkt_network_solve!(y, s, b)
+    nE = length(lay.E)
+    rE = Vector{Float64}(undef, nE)
+    @inbounds for a in 1:nE; rE[a] = b[lay.E[a]]; end
+    @inbounds for (a, t, p) in stat.kef; rE[a] -= nz[p] * y[lay.Fc[t]]; end
+    @inbounds for (si, i) in enumerate(lay.iso)
+        w = b[i] / nz[stat.iso_d[si]]
+        for (a, p) in stat.iso_e[si]; rE[a] -= nz[p] * w; end
+    end
+    return rE
+end
+
+# The halved battery block without the battery curvature, in lay.E order:
+#   S0   = S_PP - S_PN inv(S_NN) S_NP   (n_B x n_B, row/column k = battery k of E),
+#   ninv = diagonal of inv(S_NN)        (entry e = energy row e of E),
+#   SPN  = S_PN                         (battery x energy row, sparse).
+# Recomputes prepare and finish with a zero curvature; needs FILTERDDP_HALF_BLOCK=1.
+function tree_kkt_block0(s::TreeKKTSolver, K::SparseMatrixCSC, nB::Int)
+    lay, stat, fac = s.lay, s.stat, s.fac
+    Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
+    st0 = _blas1(() -> _tree_kkt_finish(lay, stat, fac, K, Bd, Up, false, zeros(nB, nB)))
+    (isempty(st0.nP) || isnothing(st0.Sfac)) && error("tree_kkt_block0 needs the halved block (FILTERDDP_HALF_BLOCK=1)")
+    Fh = st0.Sfac
+    Sh = (Fh.L * Fh.U)[invperm(Fh.p), :]
+    length(st0.prow) == nB || error("the halved block has $(length(st0.prow)) power rows, expected $nB")
+    bat = [st0.perm[st0.prow[k]] for k in 1:nB]
+    all(<=(nB), bat) || error("a power row of the halved block is not a battery power")
+    S0 = Matrix{Float64}(undef, nB, nB)
+    @inbounds for l in 1:nB, k in 1:nB; S0[bat[k], bat[l]] = Sh[k, l]; end
+    nN = length(st0.perm) - nB
+    ninv = zeros(nN)
+    I_ = Int[]; J_ = Int[]; V_ = Float64[]
+    for (g, rg) in enumerate(st0.granges)
+        npg = st0.nP[g]; PNg = st0.PN[g]; rv = rowvals(PNg); nzv = nonzeros(PNg)
+        for l in 1:length(rg) - npg
+            e = st0.perm[rg[npg + l]] - nB
+            ninv[e] = st0.Ninv[g][l]
+            for q in nzrange(PNg, l)
+                push!(I_, st0.perm[rg[rv[q]]]); push!(J_, e); push!(V_, nzv[q])
+            end
+        end
+    end
+    return S0, ninv, sparse(I_, J_, V_, nB, nN)
+end
