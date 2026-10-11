@@ -435,3 +435,28 @@ on iteration reduction cites them):
 | `DDP4OPF.jl/src/forward_pass.jl`, `step_blockers.py` | step-rejection diagnostic and its summary |
 | `ieee123c_filterddp.jl` | `FILTERDDP_SCREEN`, `FILTERDDP_LOADFLOW_START`, `FILTERDDP_WARMUP`, `BOUND_CHECK` |
 | `centralized_ipopt_matched.jl` | `IPOPT_SCREEN`, `IPOPT_LOADFLOW_START` |
+
+## 10. The fixed-voltage rule against the other three (2026-10-09)
+
+Asked by the user: what do the rules other than the substation one buy?
+That had not been run. `run_screen_rule_ablation.sh`, untimed, diagonal
+Hessian, tree solver, iterations to near-optimality (ieee123 and med2522 at
+`T=24`, large10k with PV at `T=6`); logs `ddp/results/screen_ablation/rules_*`.
+
+| limits removed | start + exact step | ieee123 | med2522 | large10k |
+|---|---|---|---|---|
+| none (earlier runs) | no | 85 | 77 | 100 |
+| substation rule | no | 33 | 53 | 82 |
+| all four rules | no | 32 | 47 | 68 |
+| substation rule | yes | 26 | 40 | 17 |
+| all four rules | yes | 19 | 39 | 10 |
+
+- The rows measured before (33 / 53 / 82 and 19 / 39 / 10) are reproduced.
+- The upper-voltage, `ell >= 0` and `P_Subs >= 0` rules together are worth
+  1 / 6 / 14 iterations under the halving step and 7 / 1 / 7 with the
+  power-flow start and exact step. Not separated from each other.
+- `BOUND_CHECK` reports no violation of the original limits in any of the
+  twelve runs.
+- In the TPEC paper since 2026-10-09: Section "Problem Reduction: Limits
+  That Cannot Bind" (its own section, apart from the start and step rule),
+  with this table.
