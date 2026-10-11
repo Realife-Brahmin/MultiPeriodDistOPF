@@ -41,8 +41,9 @@ def analyse(path):
             fwd.append(fields(line))
         elif line.startswith("FILTERDDP_ITER_TIMING"):
             f = fields(line)
-            b = {k: sum(x[k] for x in back) for k in
-                 ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "stages")} if back else None
+            b = {k: sum(x.get(k, 0.0) for x in back) for k in
+                 ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "stages",
+                  "pair_sum_s", "pair_max_s")} if back else None
             w = {k: sum(x[k] for x in fwd) for k in
                  ("dir_sum_s", "dir_max_s", "rec_s", "trial_sum_s", "trial_max_s", "trials")} if fwd else None
             err = max((x["rec_err"] for x in fwd), default=0.0)
@@ -61,7 +62,9 @@ def analyse(path):
     B = {k: sum(r[1][k] for r in rows if r[1]) for k in rows[0][1]}
     W = {k: sum(r[2][k] for r in rows if r[2]) for k in
          ("dir_sum_s", "dir_max_s", "rec_s", "trial_sum_s", "trial_max_s", "trials")}
-    save_b = (B["pre_sum_s"] - B["pre_max_s"]) + (B["post_sum_s"] - B["post_max_s"])
+    # pair_*: pairwise combinations of a paired pass (paired_pass.jl), one worker each
+    save_b = ((B["pre_sum_s"] - B["pre_max_s"]) + (B["post_sum_s"] - B["post_max_s"])
+              + (B["pair_sum_s"] - B["pair_max_s"]))
     save_f = (W["dir_sum_s"] - W["dir_max_s"]) + (W["trial_sum_s"] - W["trial_max_s"])
     setup = (reported - tot) if reported is not None else float("nan")
     n = len(rows)

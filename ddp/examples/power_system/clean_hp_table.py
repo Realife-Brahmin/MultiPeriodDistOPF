@@ -29,9 +29,10 @@ import sys
 ROOT = "ddp/results"
 KV = re.compile(r"(\w+)=([-+0-9.eE]+)")
 THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-5}
-CASES = [("ieee123C_1ph", 6), ("ieee123C_1ph", 24), ("ieee123C_1ph", 96),
-         ("ieee2522C_1ph", 6), ("ieee2522C_1ph", 24), ("ieee2522C_1ph", 96),
-         ("large10kC_1ph", 6), ("large10kC_1ph", 24), ("large10kC_1ph", 48), ("large10kC_1ph", 96)]
+CASES = [("ieee123C_1ph", 6), ("ieee123C_1ph", 24), ("ieee123C_1ph", 96), ("ieee123C_1ph", 144),
+         ("ieee2522C_1ph", 6), ("ieee2522C_1ph", 24), ("ieee2522C_1ph", 96), ("ieee2522C_1ph", 144),
+         ("large10kC_1ph", 6), ("large10kC_1ph", 24), ("large10kC_1ph", 48), ("large10kC_1ph", 96),
+         ("large10kC_1ph", 144)]
 NAME = {"ieee123C_1ph": "ieee123", "ieee2522C_1ph": "med2522", "large10kC_1ph": "large10k"}
 
 
@@ -96,7 +97,8 @@ def ddp(path):
             fwd.append(fields(line))
         elif line.startswith("FILTERDDP_ITER_TIMING"):
             f = fields(line)
-            b = {k: sum(x[k] for x in back) for k in ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "seq_max_s")} if back else None
+            # pair_*: the pairwise combinations of a paired pass (paired_pass.jl); absent otherwise
+            b = {k: sum(x.get(k, 0.0) for x in back) for k in ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "seq_max_s", "pair_sum_s", "pair_max_s")} if back else None
             w = {k: sum(x[k] for x in fwd) for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")} if fwd else {k: 0.0 for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")}
             passes.append((int(f["iteration"]), f, b, w, len(back)))
             back, fwd = [], []
@@ -116,7 +118,8 @@ def ddp_at(run, ref, gap, primal, original, pair=None):
     seen = set()
     for k, f, b, w, nb in run["passes"]:
         save_f = (w["dir_sum_s"] - w["dir_max_s"]) + (w["trial_sum_s"] - w["trial_max_s"])
-        back_cnt = f["backward_s"] - (b["pre_sum_s"] - b["pre_max_s"]) - (b["post_sum_s"] - b["post_max_s"])
+        back_cnt = (f["backward_s"] - (b["pre_sum_s"] - b["pre_max_s"]) - (b["post_sum_s"] - b["post_max_s"])
+                    - (b["pair_sum_s"] - b["pair_max_s"]))
         # paired: the sweep's sum over stages becomes the rounds plus the slowest stage
         back_pair = back_cnt - b["seq_sum_s"] + b["seq_max_s"] + nb * (pair[0] + pair[1]) if pair else float("nan")
         if k not in seen and k in run["rows"]:
