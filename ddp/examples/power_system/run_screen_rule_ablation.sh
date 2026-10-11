@@ -6,6 +6,11 @@
 # exact step. Otherwise the configuration of run_parsim.sh.
 #
 #   bash ddp/examples/power_system/run_screen_rule_ablation.sh
+#   ABL_CELLS="large10kC_1ph:6" ABL_TAG=_p1e5 ABL_NONE=1 bash .../run_screen_rule_ablation.sh
+#
+# ABL_CELLS picks the cases, ABL_TAG is appended to the log names (the logs of
+# 2026-10-10 for large10k are at its earlier primal threshold of 1e-4 and are
+# kept), ABL_NONE=1 adds the run with no rule, no start and the halving step.
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
 unset NO_COLOR FORCE_COLOR
@@ -20,7 +25,7 @@ run() {  # system T variant screen loadflow affine
   esac
   local OBJ; OBJ=$(grep -oE "CENTRAL_IPOPT .*" "$REF" | grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
   [ -n "$OBJ" ] || { echo "no Ipopt reference in $REF"; return; }
-  local LOG="$OUT/rules_${SYS}_T${T}_${V}.log"
+  local LOG="$OUT/rules_${SYS}_T${T}_${V}${ABL_TAG:-}.log"
   (
     export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1
     export FILTERDDP_MAX_ITERATIONS=400 FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
@@ -39,11 +44,12 @@ run() {  # system T variant screen loadflow affine
   echo "[$(date '+%H:%M:%S')] $SYS T=$T $V: $(grep -oE 'FILTERDDP_NEAR_OPT iteration=[0-9]+' "$LOG" | head -1) | $(grep -oE 'BOUND_CHECK.*' "$LOG" | cut -c1-110)"
 }
 ALL=substation,vupper,ell,psubs
-for cell in ieee123C_1ph:24 ieee2522C_1ph:24 large10kC_1ph:6; do
+for cell in ${ABL_CELLS:-ieee123C_1ph:24 ieee2522C_1ph:24 large10kC_1ph:6}; do
   S=${cell%%:*}; T=${cell##*:}
   run "$S" "$T" full_PE   "$ALL"     1 1     # current configuration (control)
   run "$S" "$T" sub_PE    substation 1 1     # substation rule only, with start and step
   run "$S" "$T" sub_only  substation 0 0     # substation rule only
   run "$S" "$T" full_only "$ALL"     0 0     # all four rules, nothing else
+  [ "${ABL_NONE:-0}" = 1 ] && run "$S" "$T" none "" 0 0   # no rule at all
 done
 echo SCREEN_RULE_ABLATION_DONE

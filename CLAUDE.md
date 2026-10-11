@@ -127,6 +127,9 @@ establishes something a future session, on any machine, would need.
   `T=96` (15 minutes, the standing goal-post) the points are `T=144` (10
   minutes) and `T=288` (5 minutes), not `T=192`. Several days is a possible
   later step, once a solve is cheap enough.
+  Naming them is not a request to run them: the user stopped queued `T=288`
+  runs the same day ("I only want 144", for med2522, large10k optional). Ask
+  before any `T=288` run.
 
 - **The OpenDSS check is part of every run** (user, 2026-10-11). Stop the
   timer, keep the dispatch, hand it to OpenDSS, log the discrepancy, then start
