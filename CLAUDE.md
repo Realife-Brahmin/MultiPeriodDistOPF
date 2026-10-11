@@ -115,6 +115,45 @@ establishes something a future session, on any machine, would need.
   are the practical ones, `T=6` to `T=96` (up to a few hundred at most): med2522
   `T=1152` and `T=1536` were cancelled and are not to be requeued.
 
+- **The OpenDSS check is part of every run** (user, 2026-10-11). Stop the
+  timer, keep the dispatch, hand it to OpenDSS, log the discrepancy, then start
+  the next run; there is no timing conflict in that order. `run_parsim.sh` does
+  it by default (`OPENDSS_CHECK=1`); any new launcher must, the centralized
+  ones included ("everything goes into OpenDSS"). Never set
+  `FILTERDDP_SKIP_SOLUTION_WRITE=1` in a run whose result may be reported.
+- **Stopping rules** (user, 2026-10-10). Near-optimality always means the
+  objective criterion AND the primal-infeasibility criterion together.
+  FilterDDP runs go to a tolerance of `1e-5` and centralized runs to `1e-6`,
+  with the objective and the infeasibility of every iteration logged
+  (`IPOPT_TRACE=1` for Ipopt), and the reported criterion is chosen
+  afterwards, the same for both solvers. Two primal infeasibilities exist and
+  differ a great deal: the internal one (an inequality counted through its
+  slack: FilterDDP's `primal_inf`, Ipopt's callback) and the as-posed one
+  (Ipopt's iteration table, `FILTERDDP_ORIGINAL_PRIMAL`). Never compare one
+  solver's internal figure with the other's as-posed one.
+- **Power plan.** The 309 PC under High performance is 14-24% faster per
+  iteration than under Balanced (same runs, 2026-10-05/06 against 10-09;
+  indicative). Every time in the TPEC table up to 2026-10-10 was measured
+  under Balanced, for both solvers; the clean batch of 2026-10-11
+  (`run_clean_hp_batch.sh`, logs tagged `hp`) is under High performance. Never
+  mix the two in one comparison; record the plan with the run.
+- **Exact Hessian and the pairwise sweep** (2026-10-10/11,
+  `ddp/notes/PARALLEL_IN_TIME.md`, Section 10). `FILTERDDP_LEAN_EXACT=1` (with
+  `FILTERDDP_HALF_BLOCK=1`, no `FILTERDDP_DIAG_HESSIAN`) builds the halved
+  battery block before the sweep: same iterates as the plain exact path, and
+  its step B costs about what the diagonal path's does. `pint_scan.jl`
+  (`FILTERDDP_PINT_SCAN=1`) redoes the value recursion by pairwise combination
+  of the periods (Sarkka and Garcia-Fernandez, 2023): exact, slower at `T=6`,
+  1.7-2.0 times faster at `T=24` and 4.6-5.1 times at `T=96` on step B, as a
+  count; no solve uses it yet. The user asked for exact-Hessian runs beside
+  the diagonal ones; which of the two the paper leads with is undecided.
+- **Gurobi** works on the 309 PC (Gurobi 13, licence to 2027-09-22) and is
+  run for reference (user, 2026-10-06 and 2026-10-11). It needs `v` and `ell`
+  nonnegative to recognise the cone, so its reduced model keeps those two and
+  drops the other screened limits; its barrier method takes no starting point
+  for a conic problem (Gurobi documentation, "Warm Start Options"), so the
+  power-flow start has no effect on it.
+
 ## Working branch — the name below is a snapshot, not the truth
 
 **Any branch named in this file may already be stale.** It records what was

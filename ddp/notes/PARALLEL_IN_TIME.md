@@ -674,3 +674,175 @@ results are read: Ipopt could equally be run one feeder at a time.
 | `tree_kkt_phase_check.jl` | the NaN test |
 | `run_parsim.sh`, `parsim_from_log.py`, `compare_runs.py` | one run, the count, the iterate comparison |
 | `results/parallel_in_time/nine_cells_half/`, `nine_cells_lean/` | logs and summaries of the nine cells |
+
+## 10. The sweep by pairwise combination, and a lean exact step (2026-10-10/11)
+
+Asked by the user after reading Sarkka and Garcia-Fernandez, "Temporal
+Parallelization of Dynamic Programming and Linear Quadratic Control" (IEEE TAC
+68(2), 2023; arXiv 2104.03186): implement it for the three systems at
+`T = 6, 24, 96`, with the exact battery-block Hessian. The assessment in
+Section 9 ("what it would take") is superseded by the measurements here.
+
+### What was built
+
+`pint_scan.jl` (`FILTERDDP_PINT_SCAN=1`, `run_pint_scan.sh`). A diagnostic
+inside an ordinary exact-Hessian solve: on the selected backward passes every
+stage hands over its battery-level data, and the value recursion is redone
+from that data in two ways, the ordinary sweep and the pairwise combination.
+The solve itself is unchanged.
+
+With `a` the state before a stage, `dp` its battery powers and `b = a + f .* dp`
+the state after it (`f = -dt`), the stage leaves
+
+    q(a, dp) = 1/2 dp' S0 dp - (rhat + Rhat a)' dp + 1/2 a' D a + d' a,
+
+where `S0` is the halved battery block without the curvature term and none of
+the five objects depends on the next stage. The sweep is
+`V_new(a) = min_dp q(a, dp) + V(a + f .* dp)`. The pairwise scheme writes each
+stage as a function of both end states, `G(a, b) = q(a, (b - a) ./ f)`, combines
+neighbours by minimising over the state between them (one Cholesky of size
+`n_B`, two triangular solves with `n_B` right-hand sides, three products), and
+does the combinations level by level: in every block of `2^(r+1)` positions
+each entry of the left half is combined with the first entry of the right
+half. `ceil(log2(T+1))` levels: 3, 5, 7 for `T = 6, 24, 96`. A combination whose
+right operand already reaches the end of the horizon costs as much as a sweep
+step.
+
+Because `f` is invertible here (one battery power per battery energy), the
+two-ended function is an ordinary quadratic in `(a, b)`; the dual
+parameterisation of the paper, needed when there are fewer controls than
+states, is not.
+
+### It is exact
+
+57 backward passes over the nine cases (`pint_*_scan2.log`): the value
+functions of the pairwise scheme agree with the solver's to `7e-10` relative
+or better on 56 of them, `2.5e-7` on one late med2522 `T=96` pass (`mu` near
+its floor). The same holds for the sweep redone from the stage data, so the
+difference is conditioning, not the scheme. No Cholesky failure in any
+combination or step.
+
+### Step B only: the count
+
+One worker per period, one BLAS thread each. *sweep*: the value recursion in
+sequence from the stage data. *paired*: slowest combination of each level,
+plus the slowest stage function and the slowest final battery solve.
+Milliseconds per backward pass, medians over the scanned passes; the garbage
+collector is kept out of the timed operations (it had inflated the slowest
+combination by 4 to 20 times in the first batch).
+
+| | `T` | sweep | paired | times faster | one combination / one step |
+|---|---|---|---|---|---|
+| ieee123 (51) | 6 | 0.37 | 0.45 | 0.8 | 0.09 / 0.05 |
+| | 24 | 1.33 | 0.77 | 1.7 | |
+| | 96 | 5.1 | 1.1 | 4.6 | |
+| med2522 (249) | 6 | 11.3 | 13.1 | 0.8 | 3.8 / 1.8 |
+| | 24 | 44.2 | 24.5 | 1.8 | |
+| | 96 | 192 | 38.2 | 5.1 | |
+| large10k (1,020) | 6 | 348 | 413 | 0.8 | 129 / 58 |
+| | 24 | 1,364 | 705 | 2.0 | |
+| | 96 | 5,615 | 1,188 | 4.7 | |
+
+With the typical (median) combination instead of the slowest: 0.9-1.2, 2.0-2.6
+and 5.9-7.1. A combination costs a little over two steps at every size, so
+the ratio is set by the horizon, not by the number of batteries. The paper
+reports losing its advantage at state dimension 256-512; there the sequential
+baseline runs on a GPU that already parallelises each step.
+
+Not measured: a solve that uses the scheme. It is a count on step B from a
+serial run, under the High performance power plan.
+
+### A lean exact step B (in the solver)
+
+The sweep redone from the stage data turned out 2.5 to 4.5 times cheaper than
+the sequential part of the solver under the exact Hessian (14 times on
+ieee123). The solver built the battery block at `2 n_B` with the curvature
+inside, reduced it and factored it, all in the sweep. But
+
+    Shat = Shat0 + Vc,   Shat0 = blockdiag_g(D_PP - D_PN inv(D_NN) D_NP) - U_P inv(M) U_P',
+
+and `Shat0` reads nothing from the next stage. `FILTERDDP_LEAN_EXACT=1` (with
+`FILTERDDP_HALF_BLOCK=1`): `_tree_kkt_finish0` builds `Shat0` before the sweep
+at its final size; the sweep adds `Vc`, factors by Cholesky (LU if that
+fails) and forms the value increment from one triangular solve and one
+symmetric product. The battery rows of the feedback are not needed by the
+sweep; under `FILTERDDP_PARSIM` they are formed and timed with the
+back-substitution of the stage. The battery curvature is formed entry by
+entry (`_lean_curvature`) instead of by a sparse-dense-sparse product.
+
+Same iterates as the plain exact path (`compare_runs.py`): ieee123 `T=6`,
+med2522 `T=24`, large10k `T=6`, residuals within `1.5e-9` relative, objectives
+identical to 16 digits.
+
+| exact Hessian | step B per stage | sequential | one worker per period |
+|---|---|---|---|
+| large10k `T=6`, plain | 165 ms | 34.2 s | 23.7 s |
+| large10k `T=6`, lean | 58 ms | 24.4 s | 12.3 s |
+| med2522 `T=24`, plain (2026-10-06, Balanced plan) | 13.6 ms | 93.2 s | 30.0 s |
+| med2522 `T=24`, lean | 3.7 ms | 64.4 s | 14.3 s |
+
+(Check runs, near-optimality stop, High performance plan; the clean figures
+are those of the batch below.) With it step B of the exact path costs about
+what that of the diagonal path does (57 ms on large10k), so what remains in
+favour of the diagonal Hessian is its iteration count on med2522 at the 0.5%
+stop.
+
+### Power plan
+
+Same configuration, same instance, same iterates, backward pass per iteration:
+med2522 `T=24` 1.68 s (2026-10-05) and 1.62 s (2026-10-06) under Balanced,
+1.28 s under High performance (2026-10-09); large10k `T=6` 1.98 against
+1.70 s. One run each on different days, load not logged for the last, so
+indicative: 14-24%. Every time in the TPEC table was measured under Balanced,
+for both solvers.
+
+### Stopping rules on one footing
+
+- `IPOPT_TRACE=1` (`centralized_ipopt_matched.jl`): one `IPOPT_ITER` line per
+  iteration through the intermediate callback of Ipopt (clock, objective,
+  primal and dual infeasibility, barrier parameter). `ipopt_trace_posthoc.py`
+  reads off when a rule was first met, as `near_opt_posthoc.py` does for
+  FilterDDP. Same iterations and objective with and without it.
+- **Two primal infeasibilities, and they differ a great deal.** The iteration
+  table of Ipopt prints the violation of the constraints as posed: zero for
+  the cone whenever `P^2 + Q^2 <= v ell` holds. Its callback gives the
+  internal one, which counts an inequality through its slack. The
+  `primal_inf` of FilterDDP is of the internal kind (the cone row carries an
+  explicit slack). By the internal measure Ipopt reaches the 0.5% point at
+  83-84% of its solve time on ieee123 `T=24` and med2522 `T=6`; by its printed
+  one, at 64-65%. FilterDDP now logs both (`FILTERDDP_ORIGINAL_PRIMAL`, the
+  as-posed one through `install_original_primal_hook`); `near_opt_posthoc.py
+  --primal=original` uses it. Which one the paper applies is the call of the
+  user; it must be the same for both solvers.
+- User, 2026-10-10: near-optimality always means the objective criterion and
+  the infeasibility criterion together; FilterDDP runs go to a tolerance of
+  `1e-5` and centralized runs to `1e-6`, with the objective and infeasibility
+  of every iteration logged, and the reported criterion is chosen afterwards.
+
+### The OpenDSS check belongs to the run
+
+`run_parsim.sh` now keeps the dispatch of each run and hands it to OpenDSS
+before anything else starts (`OPENDSS_CHECK=1`, default). It had skipped the
+solution write; there is no timing conflict in checking after the timer has
+stopped. User, 2026-10-11: every dispatch goes through OpenDSS, the
+centralized ones included.
+
+### Clean batch (2026-10-11, in progress when this was written)
+
+`run_clean_hp_batch.sh`: Ipopt (MA57, MA97, MUMPS; `tol = 1e-6`; trace) and
+FilterDDP (tolerance `1e-5`; diagonal Hessian, and exact Hessian with the lean
+step B) on ieee123 and med2522 at `T = 6, 24, 96` and large10k at
+`T = 6, 24, 48, 96`, High performance plan, quiet wait and background load
+logged per case, full warm-up. Logs: `results/ipopt_hsl/logs/*_hp_*`,
+`results/parallel_in_time/logs/*_hp_tol1e5.log`, `results/opendss_check/parsim_*`.
+
+### Files
+
+| | |
+|---|---|
+| `pint_scan.jl`, `run_pint_scan.sh`, `pint_scan_summary.py` | the pairwise scheme, its launcher, the summary |
+| `tree_kkt.jl` | `tree_kkt_block0`, `tree_kkt_reduced_rhs` (stage data for the diagnostic); `_tree_kkt_finish0` / `_tree_kkt_finishV` (lean exact step) |
+| `DDP4OPF.jl/src/backward_pass.jl` | `PINT_SCAN_HOOK`, `PRIMAL_ORIGINAL_HOOK`, `_lean_curvature` |
+| `centralized_ipopt_matched.jl`, `ipopt_trace_posthoc.py` | the Ipopt trace |
+| `run_clean_hp_batch.sh`, `run_clean_hp_opendss.sh` | the clean batch; dispatches at a looser stop |
+| `results/pint_scan/logs/` | `*_scan.log` (first batch), `*_scan2.log` (collector kept out of the timings) |
