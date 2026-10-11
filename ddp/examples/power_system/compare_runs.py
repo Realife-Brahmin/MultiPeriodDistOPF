@@ -45,7 +45,12 @@ same_trace = len(ia) == len(ib) and all(
     for x, y in zip(ia, ib))
 step = max((reldiff(x["step_size"], y["step_size"]) for x, y in zip(ia, ib)), default=0.0)
 mu = max((reldiff(x["mu"], y["mu"]) for x, y in zip(ia, ib)), default=0.0)
-res = max((reldiff(x[k], y[k]) for x, y in zip(fa, fb) for k in ("equality_rms", "equality_max")), default=0.0)
+# A pass that reuses the factors after a barrier update (FILTERDDP_REUSE_BARRIER)
+# prints no FILTERDDP_FEASIBILITY line, so those are matched by iteration, not by position.
+fkey = lambda d: (d["iteration"], d["barrier_iteration"])
+fbk = {fkey(y): y for y in fb}
+pairs = [(x, fbk[fkey(x)]) for x in fa if fkey(x) in fbk]
+res = max((reldiff(x[k], y[k]) for x, y in pairs for k in ("equality_rms", "equality_max")), default=0.0)
 oa, ob = objective(ref), objective(new)
 print(f"passes {len(ia)} vs {len(ib)}; same outcomes and backtracks: {same_trace}; "
       f"largest relative difference: step {step:.1e}, mu {mu:.1e}, equality residuals {res:.1e}; "
