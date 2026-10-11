@@ -846,3 +846,150 @@ logged per case, full warm-up. Logs: `results/ipopt_hsl/logs/*_hp_*`,
 | `centralized_ipopt_matched.jl`, `ipopt_trace_posthoc.py` | the Ipopt trace |
 | `run_clean_hp_batch.sh`, `run_clean_hp_opendss.sh` | the clean batch; dispatches at a looser stop |
 | `results/pint_scan/logs/` | `*_scan.log` (first batch), `*_scan2.log` (collector kept out of the timings) |
+
+## 11. Clean batch results, reuse after a barrier update, barrier schedules, the passes on threads (2026-10-11)
+
+Branch `ddp-oct10-new-tests`.
+
+### The clean batch
+
+All 20 FilterDDP runs converged and all 20 dispatches passed OpenDSS (no
+voltage outside its limits; voltages within `1e-5` pu of the optimizer's).
+Time to the 0.5% point in seconds, primal infeasibility below `1e-6` (ieee123)
+or `1e-5` (med2522, large10k), each solver's own (internal) infeasibility.
+"Count" is one worker per period: one core each, no communication; Ipopt is
+one process. `clean_hp_table.py` prints this and the other rules.
+
+| case | Ipopt MA57 | DDP diagonal, sequential | DDP diagonal, count | DDP exact, count |
+|---|---|---|---|---|
+| ieee123 `T=6` | 0.10 | 0.33 | 0.19 | 0.16 |
+| ieee123 `T=24` | 0.33 | 1.31 | 0.63 | not met |
+| ieee123 `T=96` | 1.68 | 16.5 | 9.38 | 4.34 |
+| med2522 `T=6` | 2.62 | 10.3 | 4.56 | 5.79 |
+| med2522 `T=24` | 15.2 | 47.9 | 14.3 | 14.8 |
+| med2522 `T=96` | 76.5 | 245 | 55.2 | 49.7 |
+| large10k `T=6` | 5.16 | 16.3 | 7.56 | 13.5 |
+| large10k `T=24` | 22.0 | 57.5 | 19.3 | 39.3 |
+| large10k `T=48` | 47.2 | 125 | 37.0 | 70.9 |
+| large10k `T=96` | 101 | 263 | 67.1 | 150 |
+
+- **large10k's threshold is `1e-5` since this batch** (user, 2026-10-11; it was
+  `1e-4`). At `1e-4` the Ipopt column reads 4.83 / 20.5 / 44.3 / 84.1 and the
+  diagonal count 5.98 at `T=6`, unchanged otherwise: Ipopt's own infeasibility
+  falls below `1e-5` only near the end of its solve, the FilterDDP iterate at
+  the 0.5% point is already below it from `T=24` up.
+- **The table depends on the infeasibility measure.** With the violation of
+  the constraints as posed (`--primal=original`) Ipopt qualifies much earlier
+  (large10k `T=96`: 32.5 s, iteration 3) and FilterDDP's count is ahead only
+  on med2522 with the exact Hessian (`T=24`: 9.0 against 10.3 s; `T=96`: 31.8
+  against 45.2 s). On large10k the power-flow start, batteries idle, is
+  feasible as posed to `1.2e-6` and 3 to 4% from the optimum; a few
+  iterations bring the objective within 0.5%, and by that measure an iterate
+  whose inequalities hold counts as feasible whatever its slack residuals.
+- **Run to tolerance, the exact Hessian is faster than the diagonal one in all
+  ten cases** (large10k `T=96`: 505 s and 16 iterations against 1085 s and
+  58), and sequential FilterDDP is 3 to 5 times slower than MA57 (0.10 / 0.36
+  / 1.90, 2.93 / 17.2 / 83.5, 5.17 / 25.1 / 53.0 / 113 s).
+- **Why the exact Hessian qualifies late by the internal measure.** It leaves
+  each barrier level after three or four iterations, as soon as the level's
+  own tolerance (ten times the barrier parameter) is met, and the first steps
+  at the next level are long again; the residual of the cone rows, which is
+  second order in the step, has no time to settle. The diagonal Hessian stays
+  longer at each level and ends it with a residual of `1e-7` or less. On
+  ieee123 `T=24` the exact run ends at `3.7e-6` against the threshold of
+  `1e-6` ("not met"): a FilterDDP tolerance of `1e-5` is not tight enough for
+  that threshold with the exact Hessian.
+- **FilterDDP at tolerance `1e-5` stops with the barrier parameter at `1e-6`**
+  (a tenth of the tolerance), which leaves its objective above Ipopt's by up
+  to `2.7e-5` (med2522 `T=96`): a `1e-5` objective rule cannot be met there.
+
+### No new factorization after a barrier update (`FILTERDDP_REUSE_BARRIER=1`)
+
+When a barrier problem is solved, `solve!` lowers the barrier parameter and
+repeats the backward pass at the same trajectory: 8 times in a run to `1e-5`
+with the default schedule, 10 to 27% of the passes. No stage matrix depends
+on the barrier parameter (the barrier terms of the Hessian are `z ./ slack`,
+and the value Hessian is built from the stage matrices), only the right-hand
+side of the step does. `reuse_pass.jl` therefore keeps every stage's factor
+for the repeated pass: one solve per stage and vector work, no derivatives,
+no assembly, no factorization. A reused pass takes 6 ms against 43 ms on
+ieee123 `T=24` and about 0.2 s against 1.0 s on large10k `T=6`.
+
+The iterates are those of the full pass exactly: on ieee123 `T=6/24/96`,
+med2522 `T=6/24` and large10k `T=6/24`, both Hessians, the runs follow the
+clean batch step for step with objectives equal to all 16 digits
+(`compare_runs.py`, which now matches residual lines by iteration).
+
+### Barrier schedule and hybrid Hessian (132 untimed runs)
+
+`run_barrier_sweep.sh`, `barrier_sweep_summary.py`. The solver's schedule is
+`mu <- max(tol/10, min(kappa_mu mu, mu^theta_mu))` from `mu_init`, a level
+being left when its error is below `kappa_eps mu`: defaults (1, 0.2, 1.2, 10),
+9 levels down to `1e-6`; Ipopt's defaults (0.1, 0.2, 1.5, 10), 6 levels.
+Iterations to tolerance summed over ieee123 `T=24/96`, med2522 `T=6/24`,
+large10k `T=6/24`:
+
+| schedule | diagonal | exact |
+|---|---|---|
+| base (1, 0.2, 1.2, 10) | 252 | 165 |
+| Ipopt's (0.1, 0.2, 1.5, 10) | 187 | 157 |
+| `mu_init` 0.1 alone | 212 | 148 |
+| `mu_init` 0.01, `theta_mu` 1.5 | 188 | 158 |
+| `theta_mu` 1.5 alone | 271 | 168 |
+| `kappa_eps` 30 | 225 | 163 |
+
+The largest single effect is ieee123 `T=96` with the diagonal Hessian: 56
+iterations at base, 22 with Ipopt's schedule (at base it spends 32 iterations
+at two late levels). To the 0.5% rule with the internal infeasibility the
+picture is mixed for the diagonal Hessian: Ipopt's schedule gives
+20 / 21 / 38 / 39 / 15 / 14 iterations against 19 / 55 / 33 / 39 / 13 / 11 at
+base. It repairs ieee123 `T=96` and costs two or three iterations on
+large10k, where the base schedule is the best one tried. No schedule is best
+everywhere.
+
+The hybrid (diagonal Hessian until the barrier parameter falls to a value,
+exact from then on; `FILTERDDP_HYBRID_MU`) ends with the exact Hessian's
+iteration counts (167 against 165 with the base schedule) and at the 0.5%
+rule is never ahead of the better of the two Hessians. Nothing gained.
+
+### The passes on threads (`threaded_pass.jl`, `FILTERDDP_THREADED=1`)
+
+One worker per period was a count read from a sequential run. The passes
+now exist in that form, on Julia threads, loaded through
+`BACKWARD_PASS_HOOK`, `AFFINE_DIRECTIONS_HOOK` and `AFFINE_ROLLOUT_HOOK`:
+
+- backward, phase 1, all stages at once: derivatives, barrier terms, the
+  stage matrix, the network factorization and its preparation for the battery
+  block, the first network solve;
+- phase 2, in sequence: what carries the value function of `t+1` (battery
+  right-hand side, battery block, battery solution, value update);
+- phase 3, all stages at once: the second network solve, the multiplier
+  updates, the stored policy and the battery rows of the feedback;
+- forward: the states of all periods from a recursion on those rows, then
+  every period's policy solve, directions and ratio test at once, and every
+  period's part of each trial point at once.
+
+Each stage does the solver's own operations in the solver's order, so the
+backward pass reproduces the sequential iterates to the last bit (ieee123
+`T=6/24`, med2522 `T=6`, large10k `T=6`, both Hessians, with and without
+reuse, 4 to 8 threads). With the threaded forward pass the accepted steps and
+backtracks are the same and the objectives agree to `1e-16`; the state
+recursion differs from the rollout in rounding. Outside the supported
+configuration, or on a failed factorization, the solver's own pass runs.
+
+Checked for correctness only. The user does not want parallel timings from
+the 309 PC; this is the code for a machine with a core per period (Kamiak
+account requested 2026-10-11, ticket KSD-7186). Still sequential: phase 2,
+which for the exact Hessian is where the pairwise combination of Section 10
+would go.
+
+### Files
+
+| | |
+|---|---|
+| `DDP4OPF.jl/src/reuse_pass.jl` | the repeated pass after a barrier update |
+| `threaded_pass.jl` | the backward and forward passes with one task per period |
+| `tree_kkt.jl` | `tree_kkt_feedback_rows` (battery rows of the feedback after the exact sweep) |
+| `run_barrier_sweep.sh`, `barrier_sweep_summary.py` | barrier schedules and the hybrid, iteration counts |
+| `clean_hp_table.py` | times at a stopping rule; `--primal=original`, `--threshold=`, `--tag=`, `--arms=` |
+| `results/barrier_sweep/logs/`, `results/threaded_pass/` | the sweep; the first threaded runs |

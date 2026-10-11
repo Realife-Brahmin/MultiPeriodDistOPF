@@ -166,6 +166,25 @@ establishes something a future session, on any machine, would need.
   drops the other screened limits; its barrier method takes no starting point
   for a conic problem (Gurobi documentation, "Warm Start Options"), so the
   power-flow start has no effect on it.
+- **Night of 2026-10-11** (`ddp/notes/PARALLEL_IN_TIME.md`, Section 11;
+  branch `ddp-oct10-new-tests`). Three things a later session should know:
+  - `FILTERDDP_REUSE_BARRIER=1`: the backward pass that `solve!` repeats
+    after lowering the barrier parameter keeps every stage's factor (no stage
+    matrix depends on that parameter). Identical iterates, checked on all
+    three systems with both Hessians. Use it in timed runs from now on; logs
+    carry the tag `reuse`.
+  - Barrier schedule and hybrid Hessian, 132 untimed runs: Ipopt's schedule
+    (`FILTERDDP_MU_INIT=0.1`, `_THETA_MU=1.5`) cuts the iterations to
+    tolerance (252 to 187 over six cases with the diagonal Hessian) but is
+    mixed at the 0.5% rule and costs iterations on large10k; the hybrid
+    (`FILTERDDP_HYBRID_MU`) gains nothing. The default schedule stays until
+    the user decides otherwise.
+  - `FILTERDDP_THREADED=1` (`threaded_pass.jl`): the backward and forward
+    passes with one task per period, same iterates as the sequential run
+    (bit for bit backward, to rounding forward). Correctness only: the user
+    does not want parallel timings from the 309 PC. It is the code for a
+    machine with a core per period; a Kamiak account was requested on
+    2026-10-11 (ticket KSD-7186, PI Dubey).
 
 ## Working branch — the name below is a snapshot, not the truth
 
