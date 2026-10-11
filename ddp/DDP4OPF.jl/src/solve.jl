@@ -37,8 +37,8 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
     reset!(data)
     reset_filter!(data)
     reuse_reset!()
-    _HYBRID_EXACT[] = false
     hybrid_mu = _hybrid_mu()
+    _HYBRID_EXACT[] = !isnothing(hybrid_mu) && _hybrid_reverse()
 
     data.μ = options.μ_init
     ni = (ocp.control_limits.nl + ocp.control_limits.nu) * ocp.N
@@ -91,9 +91,10 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
                 data.k, data.j, backward_s, backward_s, data.step_size, data.l, data.μ)
             timing_diagnostic && flush(stdout)
             data.μ = max(options.optimality_tolerance / 10.0, min(options.κ_μ * data.μ, data.μ ^ options.θ_μ))
-            if !isnothing(hybrid_mu) && !_HYBRID_EXACT[] && data.μ <= hybrid_mu
-                _HYBRID_EXACT[] = true
-                @printf("FILTERDDP_HYBRID_SWITCH iteration=%d barrier_iteration=%d mu=%.9e\n", data.k, data.j + 1, data.μ)
+            if !isnothing(hybrid_mu) && data.μ <= hybrid_mu && _HYBRID_EXACT[] == _hybrid_reverse()
+                _HYBRID_EXACT[] = !_hybrid_reverse()
+                @printf("FILTERDDP_HYBRID_SWITCH iteration=%d barrier_iteration=%d mu=%.9e to_exact=%d\n",
+                        data.k, data.j + 1, data.μ, _HYBRID_EXACT[])
             end
             reset_filter!(data)
             data.j += 1

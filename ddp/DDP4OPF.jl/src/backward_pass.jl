@@ -73,7 +73,10 @@ end
 # FILTERDDP_HYBRID_MU=<value> (with FILTERDDP_DIAG_HESSIAN=1): the diagonal
 # Hessian while the barrier parameter is above the value, the exact one from
 # then on. solve! sets the switch when it lowers the barrier parameter.
+# FILTERDDP_HYBRID_REVERSE=1 turns the order round: exact first, diagonal
+# once the barrier parameter has fallen to the value.
 const _HYBRID_EXACT = Ref(false)
+_hybrid_reverse() = get(ENV, "FILTERDDP_HYBRID_REVERSE", "0") != "0"
 const BACKWARD_PASS_HOOK = Ref{Any}(nothing)        # see solve!
 # The affine line search's two steps, likewise replaceable by the driver (forward_pass!):
 #   AFFINE_DIRECTIONS_HOOK[] (solver, ocp, data, τ) -> AffineDirections, or nothing for the solver's own;

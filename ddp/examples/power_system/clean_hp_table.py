@@ -169,16 +169,18 @@ print(f"FilterDDP logs: {ddp_tag}; arms: {arms[0]}, {arms[1]}")
 print(f"primal infeasibility: {'original (constraints as posed)' if original else 'internal (each solver`s own)'}; times in seconds")
 for gap in gaps:
     print(f"\n=== objective within {gap:g} of the optimum, primal below the system threshold ===")
-    print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {arms[0] + ' seq':>8s} {'count':>7s} it | {arms[1] + ' seq':>9s} {'count':>7s} {'paired':>7s} it")
+    print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} {'MA57ad':>7s} it | {arms[0] + ' seq':>8s} {'count':>7s} it | {arms[1] + ' seq':>9s} {'count':>7s} {'paired':>7s} it")
     for S, T in CASES:
         tag = "_screen_lf_pv_hp" if S == "large10kC_1ph" else "_screen_lf_hp"
         ref_run = ipopt(f"{H}/ipopt_ma57{tag}_{S}_T{T}.log", gap, THR[S], original)
         if ref_run is None:
             continue
         ref = ref_run[4]
-        ip = [ipopt(f"{H}/ipopt_{ls}{tag}_{S}_T{T}.log", gap, THR[S], original, ref) for ls in ("ma57", "ma97", "mumps")]
+        # MA57ad: MA57 with Ipopt's adaptive barrier update (mu_strategy=adaptive), same reference objective
+        ip = [ipopt(f"{H}/ipopt_{ls}{tag}{sfx}_{S}_T{T}.log", gap, THR[S], original, ref)
+              for ls, sfx in (("ma57", ""), ("ma97", ""), ("mumps", ""), ("ma57", "_adaptive"))]
         cells = [fmt(x[0]) if x else "     --" for x in ip]
-        out = f"{NAME[S] + ' T=' + str(T):14s} | {cells[0]} {cells[1]} {cells[2]} {str(ip[0][1] if ip[0] else '--'):>2s} |"
+        out = f"{NAME[S] + ' T=' + str(T):14s} | {cells[0]} {cells[1]} {cells[2]} {cells[3]} {str(ip[0][1] if ip[0] else '--'):>2s} |"
         for pos, arm in enumerate(arms):
             run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag}.log")
             if run is None:
@@ -192,10 +194,11 @@ for gap in gaps:
                 out += f" {fmt(seq, 9)} {fmt(cnt)} {fmt(par)} {str(k if k is not None else '--'):>2s}"
         print(out)
 print("\n=== full runs: Ipopt to tol 1e-6, FilterDDP to its tolerance 1e-5 ===")
-print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {arms[0] + ' seq':>8s} it st | {arms[1] + ' seq':>9s} it st")
+print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} {'MA57ad':>7s} it | {arms[0] + ' seq':>8s} it st | {arms[1] + ' seq':>9s} it st")
 for S, T in CASES:
     tag = "_screen_lf_pv_hp" if S == "large10kC_1ph" else "_screen_lf_hp"
-    ip = [ipopt(f"{H}/ipopt_{ls}{tag}_{S}_T{T}.log", 1.0, float("inf"), False) for ls in ("ma57", "ma97", "mumps")]
+    ip = [ipopt(f"{H}/ipopt_{ls}{tag}{sfx}_{S}_T{T}.log", 1.0, float("inf"), False)
+          for ls, sfx in (("ma57", ""), ("ma97", ""), ("mumps", ""), ("ma57", "_adaptive"))]
     if ip[0] is None:
         continue
     out = f"{NAME[S] + ' T=' + str(T):14s} | " + " ".join(fmt(x[2]) if x else "     --" for x in ip) + f" {ip[0][3]:2d} |"
