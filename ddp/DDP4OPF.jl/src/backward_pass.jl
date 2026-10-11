@@ -69,7 +69,14 @@ end
 #     diagonal entry only through cuu, and unbounded controls get no barrier
 #     term at all. Hence FILTERDDP_DIAG_HESSIAN_FLOOR (default 1e-8), which
 #     floors each diagonal entry from below.
-_diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0"
+#
+# FILTERDDP_HYBRID_MU=<value> (with FILTERDDP_DIAG_HESSIAN=1): the diagonal
+# Hessian while the barrier parameter is above the value, the exact one from
+# then on. solve! sets the switch when it lowers the barrier parameter.
+const _HYBRID_EXACT = Ref(false)
+const BACKWARD_PASS_HOOK = Ref{Any}(nothing)        # see solve!
+_hybrid_mu() = haskey(ENV, "FILTERDDP_HYBRID_MU") ? parse(Float64, ENV["FILTERDDP_HYBRID_MU"]) : nothing
+_diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0" && !_HYBRID_EXACT[]
 _diag_hessian_floor() = parse(Float64, get(ENV, "FILTERDDP_DIAG_HESSIAN_FLOOR", "1e-8"))
 _direct_diag_hessian_enabled() = get(ENV, "FILTERDDP_DIRECT_DIAG_HESSIAN", "0") != "0"
 
@@ -512,6 +519,17 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             ) where {T, nx, nu, nc, nux, ncx}
     # A stale factorisation must never leak between solves.
     data.k == 0 && _frozen_reset!()
+    # FILTERDDP_REUSE_BARRIER: the pass after a barrier update, at the same
+    # trajectory, reuses every stage's factor (reuse_pass.jl).
+    reuse_cached = _reuse_candidate(solver, data)
+    if !isnothing(reuse_cached)
+        _backward_pass_reuse!(solver, ocp, traj, data, reuse_cached)
+        data.status == 0 && return nothing
+        reuse_reset!()                      # not finite: the full pass below
+    end
+    reuse_on = _reuse_barrier()
+    reuse_stages = reuse_on ? Vector{ReuseStage{T}}(undef, ocp.N) : nothing
+    reuse_ok = reuse_on
     reg::T = 0.0
     μ = data.μ
     δ_c = 0.
@@ -556,6 +574,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         z_norm = T(0.0)
         ps_att = zeros(5)                # pre_sum, pre_max, seq_sum, post_sum, post_max
         original_max = T(0)
+        reuse_ok = reuse_on && iszero(reg)
         pint = _pint_scan(data.k)
         pint && PINT_SCAN_HOOK[](:reset, nothing)
 
@@ -1205,6 +1224,13 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
             # evaluate sufficient decrease condition in forward pass
             data.expected_change_L += dot(Qû, α)
             nc > 0 && (data.expected_change_L += dot(c, ψ))
+            if reuse_ok
+                if sparse_kkt && battery_schur && lean_fx && !isnothing(solver.update[t].factor_policy)
+                    reuse_stages[t] = _reuse_stage(c, lu_, cu, ϕ, lx, cx, fu, u, cl)
+                else
+                    reuse_ok = false
+                end
+            end
             update_s = (time_ns() - update_start_ns) / 1e9
             if parsim
                 timing_diagnostic || error("FILTERDDP_PARSIM needs FILTERDDP_TIMING_DIAGNOSTIC=1")
@@ -1273,6 +1299,9 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
         data.cs_inf_0 /= scaling_cs
         data.cs_inf_μ /= scaling_cs
         data.barrier_lagrangian_curr += data.objective
+        reuse_on && (_REUSE_CACHE[] = (data.status == 0 && reuse_ok) ?
+            ReusePass{T}(objectid(solver), data.k, _diag_hessian_enabled(), reuse_stages, data.primal_1_curr,
+                         data.primal_inf, data.objective, data.dual_inf, data.cs_inf_0, scaling_cs) : nothing)
         pint && data.status == 0 && PINT_SCAN_HOOK[](:finish, (k=data.k, mu=μ, reg=reg))
         feasibility_diagnostic && data.status == 0 && !isnothing(PRIMAL_ORIGINAL_HOOK[]) && @printf(
             "FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e\n",

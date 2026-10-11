@@ -1218,6 +1218,7 @@ DDP4OPF.battery_value_halved(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_value_halved(F, B, cxE) : nothing
 
 DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times
+DDP4OPF.reset_phase_times!(F::TreeKKTSolver) = (fill!(F.times, 0.0); nothing)
 # Feeder group of each battery (its power row's block of the Schur complement)
 function DDP4OPF.battery_groups(F::TreeKKTSolver, nB)
     st = F.st; g = zeros(Int, nB)

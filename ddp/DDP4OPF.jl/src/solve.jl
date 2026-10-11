@@ -36,6 +36,9 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
     
     reset!(data)
     reset_filter!(data)
+    reuse_reset!()
+    _HYBRID_EXACT[] = false
+    hybrid_mu = _hybrid_mu()
 
     data.μ = options.μ_init
     ni = (ocp.control_limits.nl + ocp.control_limits.nu) * ocp.N
@@ -43,7 +46,12 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
 
     while data.k < options.max_iterations
         backward_start_ns = time_ns()
-        backward_pass!(solver, ocp, solver.nominal, data, options, verbose=options.verbose)
+        # BACKWARD_PASS_HOOK[] (solver, ocp, traj, data, options) -> true if it did
+        # the pass (the driver's own implementation, e.g. one worker per period);
+        # false, or no hook, and the pass below runs.
+        pass_hook = BACKWARD_PASS_HOOK[]
+        (isnothing(pass_hook) || !pass_hook(solver, ocp, solver.nominal, data, options)) &&
+            backward_pass!(solver, ocp, solver.nominal, data, options, verbose=options.verbose)
         backward_s = (time_ns() - backward_start_ns) / 1e9
         timing_diagnostic && flush(stdout)
         data.status != 0 && break
@@ -83,6 +91,10 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
                 data.k, data.j, backward_s, backward_s, data.step_size, data.l, data.μ)
             timing_diagnostic && flush(stdout)
             data.μ = max(options.optimality_tolerance / 10.0, min(options.κ_μ * data.μ, data.μ ^ options.θ_μ))
+            if !isnothing(hybrid_mu) && !_HYBRID_EXACT[] && data.μ <= hybrid_mu
+                _HYBRID_EXACT[] = true
+                @printf("FILTERDDP_HYBRID_SWITCH iteration=%d barrier_iteration=%d mu=%.9e\n", data.k, data.j + 1, data.μ)
+            end
             reset_filter!(data)
             data.j += 1
             continue
