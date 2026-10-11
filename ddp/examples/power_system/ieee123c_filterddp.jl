@@ -600,12 +600,19 @@ if warmup > 0
     warm_stream[] == typeof(stdout) || println("WARMUP_STREAM_MISMATCH warm-up printed to ", warm_stream[],
         ", the timed solve prints to ", typeof(stdout), ": its first pass includes print compilation")
 end
+# The warm-up's garbage is not the timed solve's: collect it now, so that the
+# first collection inside the timed solve does not pay for it (one pass of
+# 0.38 s in a 0.3 s solve, ieee123 T=6 on 2026-10-11). The time the collector
+# takes inside the timed solve is printed, for what it is worth at small sizes.
+warmup > 0 && GC.gc()
+gc_before = Base.gc_time_ns()
 t1 = time()
 println("entering solve! ...")
 flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+@printf("FILTERDDP_GC_TIME gc_s=%.3f collected_before_solve=%d\n", (Base.gc_time_ns() - gc_before) / 1e9, warmup > 0)
 # Peak resident memory of the whole process (build + solve), for the memory
 # comparison with centralized Ipopt.
 @printf("FILTERDDP_MEMORY_PEAK maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)
