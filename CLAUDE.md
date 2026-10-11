@@ -113,7 +113,11 @@ establishes something a future session, on any machine, would need.
   for another (large10k is, to `1e-7`, 102 independent feeders; that is a
   caveat about the test system, not a method to build). Horizons of interest
   are the practical ones, `T=6` to `T=96` (up to a few hundred at most): med2522
-  `T=1152` and `T=1536` were cancelled and are not to be requeued.
+  `T=1152` and `T=1536` were cancelled and are not to be requeued. A horizon
+  must mean something (user, 2026-10-11): one day at a standard step. Beyond
+  `T=96` (15 minutes, the standing goal-post) the points are `T=144` (10
+  minutes) and `T=288` (5 minutes), not `T=192`. Several days is a possible
+  later step, once a solve is cheap enough.
 
 - **The OpenDSS check is part of every run** (user, 2026-10-11). Stop the
   timer, keep the dispatch, hand it to OpenDSS, log the discrepancy, then start
