@@ -461,3 +461,171 @@ Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp12
 OSError: [Errno 22] Invalid argument
   QUIET_WAIT waited_s=17 other_cores=0.26 timed_out=0
 CLEAN_HP_BATCH_DONE part=ddp end=2026-10-11T11:11:33
+CLEAN_HP_BATCH part=ddp start=2026-10-11T11:51:57 plan=(High performance)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_diag_reuse_gc_hp_tol1e5 | import: optimizer 23395.35 kWh, OpenDSS 23395.30 kWh (+0.0002%) | losses: optimizer 433.77, OpenDSS 433.71 kWh, of which not physical 0.05 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 3.11e-07 pu | OpenDSS range 1.0195-1.0500 pu (optimizer lowest 1.0195) | below limit: 0 of 762 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_diag_reuse_gc_hp_tol1e5 | objective: optimizer 3143.127049, with OpenDSS import 3143.119972 (-0.0002%)
+[11:53:33] ieee123C_1ph T=6 diag reuse_gc_hp_tol1e5: solve complete: 0.346 s, iterations=24, status=0 |  | FilterDDP objective=3143.127049091096
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.42 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_diag_reuse_gc_hp_tol1e5 | import: optimizer 21515.59 kWh, OpenDSS 21515.57 kWh (+0.0001%) | losses: optimizer 386.56, OpenDSS 386.53 kWh, of which not physical 0.02 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 1.47e-07 pu | OpenDSS range 1.0136-1.0500 pu (optimizer lowest 1.0136) | below limit: 0 of 3048 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_diag_reuse_gc_hp_tol1e5 | objective: optimizer 2924.476860, with OpenDSS import 2924.473807 (-0.0001%)
+[11:55:16] ieee123C_1ph T=24 diag reuse_gc_hp_tol1e5: solve complete: 1.864 s, iterations=27, status=0 |  | FilterDDP objective=2924.476860169345
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.41 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_diag_reuse_gc_hp_tol1e5 | import: optimizer 21483.48 kWh, OpenDSS 21483.38 kWh (+0.0004%) | losses: optimizer 382.66, OpenDSS 382.56 kWh, of which not physical 0.09 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 5.90e-07 pu | OpenDSS range 1.0129-1.0500 pu (optimizer lowest 1.0129) | below limit: 0 of 12192 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_diag_reuse_gc_hp_tol1e5 | objective: optimizer 2956.080009, with OpenDSS import 2956.067811 (-0.0004%)
+[11:57:39] ieee123C_1ph T=96 diag reuse_gc_hp_tol1e5: solve complete: 15.106 s, iterations=56, status=0 |  | FilterDDP objective=2956.080009009917
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.39 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_diag_reuse_gc_hp_tol1e5 | import: optimizer 70663.44 kWh, OpenDSS 70663.32 kWh (+0.0002%) | losses: optimizer 4537.84, OpenDSS 4537.72 kWh, of which not physical 0.10 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 5.20e-07 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_diag_reuse_gc_hp_tol1e5 | objective: optimizer 9534.315087, with OpenDSS import 9534.299962 (-0.0002%)
+[11:59:49] ieee2522C_1ph T=6 diag reuse_gc_hp_tol1e5: solve complete: 15.740 s, iterations=55, status=0 |  | FilterDDP objective=9534.315087423824
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.39 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_reuse_gc_hp_tol1e5 | import: optimizer 20926103.80 kWh, OpenDSS 20926103.30 kWh (+0.0000%) | losses: optimizer 177639.86, OpenDSS 177639.37 kWh, of which not physical 0.48 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 1.84e-09 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_reuse_gc_hp_tol1e5 | objective: optimizer 2836587.949109, with OpenDSS import 2836587.886773 (-0.0000%)
+[12:02:43] large10kC_1ph T=6 diag reuse_gc_hp_tol1e5: solve complete: 23.040 s, iterations=21, status=0 |  | FilterDDP objective=2836587.949108692352
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.38 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_diag_reuse_gc_hp_tol1e5 | import: optimizer 19617294.46 kWh, OpenDSS 19617292.50 kWh (+0.0000%) | losses: optimizer 164003.79, OpenDSS 164001.84 kWh, of which not physical 1.93 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_diag_reuse_gc_hp_tol1e5 | objective: optimizer 2682722.226522, with OpenDSS import 2682721.978876 (-0.0000%)
+[12:10:06] large10kC_1ph T=24 diag reuse_gc_hp_tol1e5: solve complete: 117.791 s, iterations=28, status=0 |  | FilterDDP objective=2682722.226522461046
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.38 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_exact_reuse_gc_hp_tol1e5 | import: optimizer 23395.29 kWh, OpenDSS 23395.28 kWh (+0.0000%) | losses: optimizer 433.70, OpenDSS 433.69 kWh, of which not physical 0.01 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 3.34e-08 pu | OpenDSS range 1.0195-1.0500 pu (optimizer lowest 1.0195) | below limit: 0 of 762 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T6_exact_reuse_gc_hp_tol1e5 | objective: optimizer 3143.117191, with OpenDSS import 3143.116425 (-0.0000%)
+[12:11:44] ieee123C_1ph T=6 exact reuse_gc_hp_tol1e5: solve complete: 0.242 s, iterations=18, status=0 |  | FilterDDP objective=3143.117191316511
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.18 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_exact_reuse_gc_hp_tol1e5 | import: optimizer 21515.59 kWh, OpenDSS 21515.57 kWh (+0.0001%) | losses: optimizer 386.56, OpenDSS 386.53 kWh, of which not physical 0.02 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 1.46e-07 pu | OpenDSS range 1.0136-1.0500 pu (optimizer lowest 1.0136) | below limit: 0 of 3048 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_exact_reuse_gc_hp_tol1e5 | objective: optimizer 2924.476881, with OpenDSS import 2924.473847 (-0.0001%)
+[12:13:27] ieee123C_1ph T=24 exact reuse_gc_hp_tol1e5: solve complete: 1.126 s, iterations=20, status=0 |  | FilterDDP objective=2924.476880777501
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.31 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_exact_reuse_gc_hp_tol1e5 | import: optimizer 21483.48 kWh, OpenDSS 21483.38 kWh (+0.0004%) | losses: optimizer 382.66, OpenDSS 382.56 kWh, of which not physical 0.09 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 5.90e-07 pu | OpenDSS range 1.0129-1.0500 pu (optimizer lowest 1.0129) | below limit: 0 of 12192 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_exact_reuse_gc_hp_tol1e5 | objective: optimizer 2956.080009, with OpenDSS import 2956.067813 (-0.0004%)
+[12:15:36] ieee123C_1ph T=96 exact reuse_gc_hp_tol1e5: solve complete: 7.040 s, iterations=24, status=0 |  | FilterDDP objective=2956.080009155660
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.22 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_exact_reuse_gc_hp_tol1e5 | import: optimizer 70663.73 kWh, OpenDSS 70663.34 kWh (+0.0005%) | losses: optimizer 4538.13, OpenDSS 4537.74 kWh, of which not physical 0.34 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 1.70e-06 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_exact_reuse_gc_hp_tol1e5 | objective: optimizer 9534.353227, with OpenDSS import 9534.304211 (-0.0005%)
+[12:17:38] ieee2522C_1ph T=6 exact reuse_gc_hp_tol1e5: solve complete: 12.346 s, iterations=42, status=0 |  | FilterDDP objective=9534.353227046446
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.31 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_exact_reuse_gc_hp_tol1e5 | import: optimizer 20926103.80 kWh, OpenDSS 20926103.30 kWh (+0.0000%) | losses: optimizer 177639.86, OpenDSS 177639.37 kWh, of which not physical 0.48 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 1.84e-09 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_exact_reuse_gc_hp_tol1e5 | objective: optimizer 2836587.949108, with OpenDSS import 2836587.886772 (-0.0000%)
+[12:20:30] large10kC_1ph T=6 exact reuse_gc_hp_tol1e5: solve complete: 19.495 s, iterations=13, status=0 |  | FilterDDP objective=2836587.949107538909
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.22 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_exact_reuse_gc_hp_tol1e5 | import: optimizer 19617294.04 kWh, OpenDSS 19617292.09 kWh (+0.0000%) | losses: optimizer 164003.72, OpenDSS 164001.76 kWh, of which not physical 1.93 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_exact_reuse_gc_hp_tol1e5 | objective: optimizer 2682722.226823, with OpenDSS import 2682721.979080 (-0.0000%)
+[12:26:36] large10kC_1ph T=24 exact reuse_gc_hp_tol1e5: solve complete: 82.164 s, iterations=14, status=0 |  | FilterDDP objective=2682722.226822592318
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.16 timed_out=0
+CLEAN_HP_BATCH_DONE part=ddp end=2026-10-11T12:26:44
+CLEAN_HP_BATCH part=ddp start=2026-10-11T12:26:44 plan=(High performance)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 21515.59 kWh, OpenDSS 21515.57 kWh (+0.0001%) | losses: optimizer 386.56, OpenDSS 386.53 kWh, of which not physical 0.02 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 1.47e-07 pu | OpenDSS range 1.0136-1.0500 pu (optimizer lowest 1.0136) | below limit: 0 of 3048 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 2924.476860, with OpenDSS import 2924.473807 (-0.0001%)
+[12:28:28] ieee123C_1ph T=24 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 1.865 s, iterations=24, status=0 |  | FilterDDP objective=2924.476860169345
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.25 timed_out=0
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 21483.48 kWh, OpenDSS 21483.38 kWh (+0.0004%) | losses: optimizer 382.66, OpenDSS 382.56 kWh, of which not physical 0.09 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 5.90e-07 pu | OpenDSS range 1.0129-1.0500 pu (optimizer lowest 1.0129) | below limit: 0 of 12192 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 2956.080009, with OpenDSS import 2956.067811 (-0.0004%)
+[12:30:34] ieee123C_1ph T=96 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 7.880 s, iterations=26, status=0 |  | FilterDDP objective=2956.080009009846
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.36 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 70663.44 kWh, OpenDSS 70663.32 kWh (+0.0002%) | losses: optimizer 4537.84, OpenDSS 4537.72 kWh, of which not physical 0.10 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 5.20e-07 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 9534.315087, with OpenDSS import 9534.299962 (-0.0002%)
+[12:32:42] ieee2522C_1ph T=6 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 15.511 s, iterations=52, status=0 |  | FilterDDP objective=9534.315087423822
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.29 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 65356.80 kWh, OpenDSS 65356.32 kWh (+0.0007%) | losses: optimizer 4021.33, OpenDSS 4020.85 kWh, of which not physical 0.42 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 2.29e-06 pu | OpenDSS range 0.9500-1.0500 pu (optimizer lowest 0.9500) | below limit: 0 of 60504 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 8910.859855, with OpenDSS import 8910.799518 (-0.0007%)
+[12:36:49] ieee2522C_1ph T=24 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 71.207 s, iterations=61, status=0 |  | FilterDDP objective=8910.859854910455
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.29 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 65257.49 kWh, OpenDSS 65255.58 kWh (+0.0029%) | losses: optimizer 3992.25, OpenDSS 3990.34 kWh, of which not physical 1.68 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 9.15e-06 pu | OpenDSS range 0.9500-1.0500 pu (optimizer lowest 0.9500) | below limit: 0 of 242016 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T96_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 8999.078253, with OpenDSS import 8998.836920 (-0.0027%)
+[12:50:32] ieee2522C_1ph T=96 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 347.965 s, iterations=72, status=0 |  | FilterDDP objective=8999.078253399506
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.33 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 20926103.80 kWh, OpenDSS 20926103.30 kWh (+0.0000%) | losses: optimizer 177639.86, OpenDSS 177639.37 kWh, of which not physical 0.48 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 1.84e-09 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 2836587.949109, with OpenDSS import 2836587.886822 (-0.0000%)
+[12:53:27] large10kC_1ph T=6 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 22.412 s, iterations=15, status=0 |  | FilterDDP objective=2836587.949108695146
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.32 timed_out=0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | import: optimizer 19617294.46 kWh, OpenDSS 19617292.51 kWh (+0.0000%) | losses: optimizer 164003.79, OpenDSS 164001.84 kWh, of which not physical 1.93 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T24_hybrid_rev4e-4_reuse_gc_hp_tol1e5 | objective: optimizer 2682722.226522, with OpenDSS import 2682721.978900 (-0.0000%)
+[13:00:28] large10kC_1ph T=24 hybrid rev4e-4_reuse_gc_hp_tol1e5: solve complete: 105.691 s, iterations=20, status=0 |  | FilterDDP objective=2682722.226522450801
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.25 timed_out=0
+CLEAN_HP_BATCH_DONE part=ddp end=2026-10-11T13:00:37
+CLEAN_HP_BATCH part=ddp start=2026-10-11T13:15:18 plan=(High performance)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_diag_reuse_gc_hp_tol1e5 | import: optimizer 21481.53 kWh, OpenDSS 21481.39 kWh (+0.0007%) | losses: optimizer 382.34, OpenDSS 382.19 kWh, of which not physical 0.14 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 8.85e-07 pu | OpenDSS range 1.0129-1.0500 pu (optimizer lowest 1.0129) | below limit: 0 of 18288 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_diag_reuse_gc_hp_tol1e5 | objective: optimizer 2959.910577, with OpenDSS import 2959.892283 (-0.0006%)
+[13:17:36] ieee123C_1ph T=144 diag reuse_gc_hp_tol1e5: solve complete: 19.995 s, iterations=46, status=0 |  | FilterDDP objective=2959.910577086275
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.41 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_diag_reuse_gc_hp_tol1e5 | import: optimizer 65250.00 kWh, OpenDSS 65247.14 kWh (+0.0044%) | losses: optimizer 3989.12, OpenDSS 3986.25 kWh, of which not physical 2.53 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_diag_reuse_gc_hp_tol1e5 | voltage: largest difference 1.37e-05 pu | OpenDSS range 0.9500-1.0500 pu (optimizer lowest 0.9500) | below limit: 0 of 363024 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_diag_reuse_gc_hp_tol1e5 | objective: optimizer 9009.898403, with OpenDSS import 9009.536401 (-0.0040%)
+[13:38:38] ieee2522C_1ph T=144 diag reuse_gc_hp_tol1e5: solve complete: 571.366 s, iterations=77, status=0 |  | FilterDDP objective=9009.898403323217
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+CLEAN_HP_BATCH part=ddp start=2026-10-11T13:39:32 plan=(High performance)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_exact_reuse_gc_hp_tol1e5 | import: optimizer 21481.53 kWh, OpenDSS 21481.39 kWh (+0.0007%) | losses: optimizer 382.34, OpenDSS 382.19 kWh, of which not physical 0.14 kWh
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 8.85e-07 pu | OpenDSS range 1.0129-1.0500 pu (optimizer lowest 1.0129) | below limit: 0 of 18288 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee123C_1ph_T144_exact_reuse_gc_hp_tol1e5 | objective: optimizer 2959.910577, with OpenDSS import 2959.892285 (-0.0006%)
+[13:41:32] ieee123C_1ph T=144 exact reuse_gc_hp_tol1e5: solve complete: 10.257 s, iterations=23, status=0 |  | FilterDDP objective=2959.910577494058
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.33 timed_out=0
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_exact_reuse_gc_hp_tol1e5 | import: optimizer 65250.00 kWh, OpenDSS 65247.14 kWh (+0.0044%) | losses: optimizer 3989.11, OpenDSS 3986.25 kWh, of which not physical 2.53 kWh
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_exact_reuse_gc_hp_tol1e5 | voltage: largest difference 1.37e-05 pu | OpenDSS range 0.9500-1.0500 pu (optimizer lowest 0.9500) | below limit: 0 of 363024 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_ieee2522C_1ph_T144_exact_reuse_gc_hp_tol1e5 | objective: optimizer 9009.898434, with OpenDSS import 9009.536563 (-0.0040%)
+[14:00:44] ieee2522C_1ph T=144 exact reuse_gc_hp_tol1e5: solve complete: 511.136 s, iterations=69, status=0 |  | FilterDDP objective=9009.898433626226
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
+  QUIET_WAIT waited_s=17 other_cores=0.53 timed_out=0
+CLEAN_HP_BATCH_DONE part=ddp end=2026-10-11T14:00:54
+CLEAN_HP_BATCH part=ddp start=2026-10-11T14:00:54 plan=(High performance)
