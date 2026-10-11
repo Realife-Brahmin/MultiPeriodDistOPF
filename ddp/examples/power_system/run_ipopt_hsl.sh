@@ -12,6 +12,11 @@
 # and tags the logs _blas1, so the only parallelism left is MA97's OpenMP.
 #
 #   bash ddp/examples/power_system/run_ipopt_hsl.sh
+#
+# OPENDSS_CHECK=1 (default since 2026-10-11): each solve keeps its dispatch
+# (written after the solve, outside its timer) and OpenDSS checks it before
+# the next case starts, as run_parsim.sh does for FilterDDP. OPENDSS_CHECK=0
+# skips both.
 
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
@@ -57,11 +62,26 @@ for cell in $CELLS; do
     SPID=$!
     # IPOPT_MORE_OPTIONS adds to every solver's options, e.g. "tol=1e-6".
     OPTS="$OPTS${IPOPT_MORE_OPTIONS:+;$IPOPT_MORE_OPTIONS}"
+    RUNTAG="ipopt_${LS}${TAG}_${S}_T${T}"
+    if [ "${OPENDSS_CHECK:-1}" = 1 ]; then
+      SOLDIR=ddp/results/kkt_ordering/captures/solutions; mkdir -p "$SOLDIR"
+      export IPOPT_SAVE_DISPATCH="$SOLDIR/sol_$RUNTAG.jls"; rm -f "$IPOPT_SAVE_DISPATCH"
+    else
+      unset IPOPT_SAVE_DISPATCH
+    fi
     IPOPT_EXTRA_OPTIONS="$OPTS" OMP_NUM_THREADS=$OMP \
       $JL --project=envs/ddp2026 ddp/examples/power_system/centralized_ipopt_matched.jl \
       "$S" "$T" "$OUT/logs/ipopt_${LS}${TAG}_${S}_T${T}_ipoptlog.txt" >> "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null
     echo "[$(date '+%H:%M:%S')] $LS$TAG $(grep -oE 'CENTRAL_IPOPT system=\S+ T=[0-9]+ .*status=\S+ iterations=[0-9]+ objective=\S+ solve_time_s=\S+' "$LOG")"
+    if [ "${OPENDSS_CHECK:-1}" = 1 ]; then
+      if [ -s "$IPOPT_SAVE_DISPATCH" ]; then
+        bash ddp/examples/power_system/run_opendss_check.sh "$S" "$T" "$IPOPT_SAVE_DISPATCH" "$RUNTAG" 2>&1 \
+          | grep -E "OPENDSS_SUMMARY|FAILED" | cut -c1-330
+      else
+        echo "OPENDSS_CHECK: no dispatch saved by this run ($RUNTAG)"
+      fi
+    fi
   done
 done
 echo "IPOPT_HSL_DONE"

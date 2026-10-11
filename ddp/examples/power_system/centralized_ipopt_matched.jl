@@ -34,6 +34,7 @@ const MOI = JuMP.MOI
 include(joinpath(@__DIR__, "terminal_soc_penalty.jl"))
 include(joinpath(@__DIR__, "voltage_screening.jl"))
 include(joinpath(@__DIR__, "loadflow_start.jl"))
+include(joinpath(@__DIR__, "control_layout.jl"))
 
 system = length(ARGS) >= 1 ? ARGS[1] : "ieee123C_1ph"
 T = length(ARGS) >= 2 ? parse(Int, ARGS[2]) : 3
@@ -60,8 +61,10 @@ build_start = time()
 # CENTRAL_GUROBI, so nothing can mistake them for an Ipopt reference, and its
 # log (presolve statistics included) goes to the same log path.
 #   GUROBI_EXTRA_OPTIONS="Method=2;Crossover=0;Threads=1"
-# Leave IPOPT_SCREEN unset with Gurobi: it recognises the cone
-# P^2 + Q^2 <= v ell only while v and ell keep their lower bounds.
+# Gurobi recognises the cone P^2 + Q^2 <= v ell only while v and ell are
+# declared nonnegative, so with IPOPT_SCREEN it keeps those: every lower
+# voltage limit (the substation's included) and ell >= 0 stay; the screened
+# upper voltage limits and P_Subs >= 0 go, as for Ipopt.
 central_solver = lowercase(get(ENV, "CENTRAL_SOLVER", "ipopt"))
 central_solver in ("ipopt", "gurobi") || error("CENTRAL_SOLVER must be ipopt or gurobi")
 result_tag = central_solver == "gurobi" ? "CENTRAL_GUROBI" : "CENTRAL_IPOPT"
@@ -167,9 +170,10 @@ if !isempty(ipopt_screen)
         error("IPOPT_SCREEN: unknown item in $(collect(ipopt_screen))")
     vs = voltage_screen(data, T)
     drop_lo = 0; drop_up = 0
+    keep_cone = central_solver == "gurobi"     # v >= 0 and ell >= 0 stay (see above)
     for (n, j) in enumerate(vs.buses)
         fixed = j == root && "substation" in ipopt_screen
-        if fixed || (j != root && "vlower" in ipopt_screen && !any(@view vs.keep_lo[n, :]))
+        if !keep_cone && (fixed || (j != root && "vlower" in ipopt_screen && !any(@view vs.keep_lo[n, :])))
             for t in Tset; delete_lower_bound(v[j,t]); end
             global drop_lo += 1
         end
@@ -178,7 +182,7 @@ if !isempty(ipopt_screen)
             global drop_up += 1
         end
     end
-    drop_ell = "ell" in ipopt_screen
+    drop_ell = "ell" in ipopt_screen && !keep_cone
     drop_ell && for e in Lset, t in Tset; delete_lower_bound(ell[e,t]); end
     drop_ps = "psubs" in ipopt_screen && minimum(vs.psubs_min) > 0
     drop_ps && for t in Tset; delete_lower_bound(P_Subs[t]); end
@@ -256,6 +260,31 @@ end
 # Peak resident memory of the whole process (model build + solve), for the
 # memory-knee comparison between linear solvers.
 @printf("%s_MEMORY maxrss_mib=%.1f\n", result_tag, Sys.maxrss() / 2^20)
+
+# IPOPT_SAVE_DISPATCH=<file>: the solution in the FilterDDP control layout
+# (control_layout.jl; slacks left at zero), so that opendss_check.jl checks a
+# centralized dispatch exactly as it checks a FilterDDP one. Written after the
+# solve, outside every timer. Any CENTRAL_SOLVER.
+if haskey(ENV, "IPOPT_SAVE_DISPATCH") && has_values(model)
+    lay, nu_lay = control_layout(data)
+    u_save = [zeros(nu_lay) for _ in Tset]
+    for t in Tset
+        ut = u_save[t]
+        ut[lay.ps] = value(P_Subs[t]); ut[lay.qs] = value(Q_Subs[t])
+        for (k, e) in enumerate(Lset)
+            ut[lay.P[k]] = value(P[e,t]); ut[lay.Q[k]] = value(Q[e,t]); ut[lay.ell[k]] = value(ell[e,t])
+        end
+        for (k, j) in enumerate(Nset); ut[lay.v[k]] = value(v[j,t]); end
+        for (k, j) in enumerate(Bset); ut[lay.pb[k]] = value(P_B[j,t]); end
+        for (k, j) in enumerate(Dset)
+            qmax = sqrt(max(0.0, data[:S_D_R][j]^2 - data[:p_D_pu][j,t]^2))
+            ut[lay.qnorm[k]] = qmax > 0 ? value(q_D[j,t]) / qmax : 0.0
+        end
+    end
+    serialize(ENV["IPOPT_SAVE_DISPATCH"], Dict(:system => system, :T => T, :status => string(status),
+        :iterations => iters, :objective => obj, :u => u_save))
+    println("saved_dispatch=", ENV["IPOPT_SAVE_DISPATCH"])
+end
 
 # How the batteries are used and what each objective term contributes. Printed
 # after the timed solve, so it does not affect any timing.

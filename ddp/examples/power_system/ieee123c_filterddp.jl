@@ -530,9 +530,19 @@ flush(stdout)
 t_solver = time()
 max_iterations = parse(Int, get(ENV, "FILTERDDP_MAX_ITERATIONS", "200"))
 optimality_tolerance = parse(Float64, get(ENV, "FILTERDDP_OPTIMALITY_TOLERANCE", "1e-7"))
-solver = Solver(ocp; options=Options{Float64}(verbose=!quiet,
-    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations))
+# Barrier schedule (run_barrier_sweep.sh): mu starts at FILTERDDP_MU_INIT and,
+# once the barrier problem is solved to FILTERDDP_KAPPA_EPS * mu, becomes
+# max(tol / 10, min(FILTERDDP_KAPPA_MU * mu, mu ^ FILTERDDP_THETA_MU)).
+barrier_options = Dict{Symbol, Float64}()
+for (name, key) in (("FILTERDDP_MU_INIT", :μ_init), ("FILTERDDP_KAPPA_MU", :κ_μ),
+                    ("FILTERDDP_THETA_MU", :θ_μ), ("FILTERDDP_KAPPA_EPS", :κ_ϵ))
+    haskey(ENV, name) && (barrier_options[key] = parse(Float64, ENV[name]))
+end
+solver = Solver(ocp; options=Options{Float64}(; verbose=!quiet,
+    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations, barrier_options...))
 @printf("optimality_tolerance=%.3e max_iterations=%d\n", optimality_tolerance, max_iterations)
+@printf("BARRIER_OPTIONS mu_init=%g kappa_mu=%g theta_mu=%g kappa_eps=%g\n", solver.options.μ_init,
+        solver.options.κ_μ, solver.options.θ_μ, solver.options.κ_ϵ)
 @printf("Solver construction complete: %.3f s\n", time()-t_solver)
 mode == "solver" && exit()
 x0 = Float64[data[:B0_pu][j] for j in data[:Bset]]
