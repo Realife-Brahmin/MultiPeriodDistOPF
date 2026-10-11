@@ -24,6 +24,9 @@ get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
 get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && include(joinpath(@__DIR__, "pint_scan.jl"))
+# FILTERDDP_THREADED=1: the backward and forward passes with the periods on
+# Julia threads (threaded_pass.jl); needs the tree solver.
+get(ENV, "FILTERDDP_THREADED", "0") != "0" && include(joinpath(@__DIR__, "threaded_pass.jl"))
 
 include(joinpath(@__DIR__, "control_layout.jl"))
 
@@ -522,6 +525,7 @@ ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && install_tree_kkt_hook(data, idx, nu)
 get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && install_pint_scan_hook()
+get(ENV, "FILTERDDP_THREADED", "0") != "0" && install_threaded_pass(data, idx)
 get(ENV, "FILTERDDP_FEASIBILITY_DIAGNOSTIC", "0") == "1" && install_original_primal_hook(data, idx)
 mode == "build" && exit()
 

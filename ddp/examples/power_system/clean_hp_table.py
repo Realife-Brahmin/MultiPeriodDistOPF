@@ -150,19 +150,26 @@ def fmt(x, w=7):
 args = sys.argv[1:]
 gaps = [5e-3, 1e-4, 1e-5]
 original = False
+ddp_tag = "hp_tol1e5"                # --tag=<tag>: FilterDDP logs fddp_<system>_T<T>_<arm>_<tag>.log
+arms = ("diag", "exact")             # --arms=a,b: the two FilterDDP arms shown (diag, exact, hybrid)
 for a in args:
     if a.startswith("--gaps="):
         gaps = [float(g) for g in a.split("=", 1)[1].split(",")]
     elif a == "--primal=original":
         original = True
+    elif a.startswith("--tag="):
+        ddp_tag = a.split("=", 1)[1]
+    elif a.startswith("--arms="):
+        arms = tuple(a.split("=", 1)[1].split(","))
     elif a.startswith("--threshold="):          # one primal threshold for every system
         THR = {S: float(a.split("=", 1)[1]) for S in THR}
 H = f"{ROOT}/ipopt_hsl/logs"
 P = f"{ROOT}/parallel_in_time/logs"
+print(f"FilterDDP logs: {ddp_tag}; arms: {arms[0]}, {arms[1]}")
 print(f"primal infeasibility: {'original (constraints as posed)' if original else 'internal (each solver`s own)'}; times in seconds")
 for gap in gaps:
     print(f"\n=== objective within {gap:g} of the optimum, primal below the system threshold ===")
-    print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {'diag seq':>8s} {'count':>7s} it | {'exact seq':>9s} {'count':>7s} {'paired':>7s} it")
+    print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {arms[0] + ' seq':>8s} {'count':>7s} it | {arms[1] + ' seq':>9s} {'count':>7s} {'paired':>7s} it")
     for S, T in CASES:
         tag = "_screen_lf_pv_hp" if S == "large10kC_1ph" else "_screen_lf_hp"
         ref_run = ipopt(f"{H}/ipopt_ma57{tag}_{S}_T{T}.log", gap, THR[S], original)
@@ -172,27 +179,27 @@ for gap in gaps:
         ip = [ipopt(f"{H}/ipopt_{ls}{tag}_{S}_T{T}.log", gap, THR[S], original, ref) for ls in ("ma57", "ma97", "mumps")]
         cells = [fmt(x[0]) if x else "     --" for x in ip]
         out = f"{NAME[S] + ' T=' + str(T):14s} | {cells[0]} {cells[1]} {cells[2]} {str(ip[0][1] if ip[0] else '--'):>2s} |"
-        for arm in ("diag", "exact"):
-            run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_hp_tol1e5.log")
+        for pos, arm in enumerate(arms):
+            run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag}.log")
             if run is None:
-                out += f" {'--':>8s} {'--':>7s} --" + (" |" if arm == "diag" else "")
+                out += f" {'--':>8s} {'--':>7s} --" + (" |" if pos == 0 else "")
                 continue
             pr = pairing(S, T) if arm == "exact" else None
             seq, cnt, par, k = ddp_at(run, ref, gap, THR[S], original, pr)
-            if arm == "diag":
+            if pos == 0:
                 out += f" {fmt(seq, 8)} {fmt(cnt)} {str(k if k is not None else '--'):>2s} |"
             else:
                 out += f" {fmt(seq, 9)} {fmt(cnt)} {fmt(par)} {str(k if k is not None else '--'):>2s}"
         print(out)
 print("\n=== full runs: Ipopt to tol 1e-6, FilterDDP to its tolerance 1e-5 ===")
-print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {'diag seq':>8s} it st | {'exact seq':>9s} it st")
+print(f"{'case':14s} | {'MA57':>7s} {'MA97':>7s} {'MUMPS':>7s} it | {arms[0] + ' seq':>8s} it st | {arms[1] + ' seq':>9s} it st")
 for S, T in CASES:
     tag = "_screen_lf_pv_hp" if S == "large10kC_1ph" else "_screen_lf_hp"
     ip = [ipopt(f"{H}/ipopt_{ls}{tag}_{S}_T{T}.log", 1.0, float("inf"), False) for ls in ("ma57", "ma97", "mumps")]
     if ip[0] is None:
         continue
     out = f"{NAME[S] + ' T=' + str(T):14s} | " + " ".join(fmt(x[2]) if x else "     --" for x in ip) + f" {ip[0][3]:2d} |"
-    for arm in ("diag", "exact"):
-        run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_hp_tol1e5.log")
-        out += f" {fmt(run['solve_s'], 8 if arm == 'diag' else 9)} {run['iters']:2d} {run['status']:>2s}" + (" |" if arm == "diag" else "") if run else f" {'--':>8s} -- --" + (" |" if arm == "diag" else "")
+    for pos, arm in enumerate(arms):
+        run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag}.log")
+        out += f" {fmt(run['solve_s'], 8 if pos == 0 else 9)} {run['iters']:2d} {run['status']:>2s}" + (" |" if pos == 0 else "") if run else f" {'--':>8s} -- --" + (" |" if pos == 0 else "")
     print(out)

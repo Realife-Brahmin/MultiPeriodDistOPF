@@ -75,6 +75,11 @@ end
 # then on. solve! sets the switch when it lowers the barrier parameter.
 const _HYBRID_EXACT = Ref(false)
 const BACKWARD_PASS_HOOK = Ref{Any}(nothing)        # see solve!
+# The affine line search's two steps, likewise replaceable by the driver (forward_pass!):
+#   AFFINE_DIRECTIONS_HOOK[] (solver, ocp, data, τ) -> AffineDirections, or nothing for the solver's own;
+#   AFFINE_ROLLOUT_HOOK[] (solver, ocp, data, directions, γ) -> true if it built the trial point.
+const AFFINE_DIRECTIONS_HOOK = Ref{Any}(nothing)
+const AFFINE_ROLLOUT_HOOK = Ref{Any}(nothing)
 _hybrid_mu() = haskey(ENV, "FILTERDDP_HYBRID_MU") ? parse(Float64, ENV["FILTERDDP_HYBRID_MU"]) : nothing
 _diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0" && !_HYBRID_EXACT[]
 _diag_hessian_floor() = parse(Float64, get(ENV, "FILTERDDP_DIAG_HESSIAN_FLOOR", "1e-8"))

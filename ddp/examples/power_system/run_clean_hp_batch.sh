@@ -21,7 +21,7 @@ set -u
 cd "$(dirname "$0")/../../.." || exit 1
 unset NO_COLOR FORCE_COLOR
 PART=${1:-all}
-TAG=hp_tol1e5
+TAG=${CLEAN_TAG:-hp_tol1e5}            # CLEAN_TAG, CLEAN_ARMS, CLEAN_CELLS: a later batch in another configuration
 OUT=ddp/results/clean_hp; mkdir -p "$OUT"
 JL="julia --startup-file=no"
 LOADJL=ddp/examples/power_system/sample_background_load.jl
@@ -43,9 +43,9 @@ fi
 if [ "$PART" = ddp ] || [ "$PART" = all ]; then
   export FILTERDDP_LEAN_VALUE=1 FILTERDDP_HALF_BLOCK=1 STRICT=1 FILTERDDP_OPTIMALITY_TOLERANCE=1e-5
   unset FILTERDDP_PINT_SCAN
-  for ARM in diag exact; do
-    [ $ARM = exact ] && export FILTERDDP_LEAN_EXACT=1 || unset FILTERDDP_LEAN_EXACT
-    for cell in $SMALL $LARGE; do
+  for ARM in ${CLEAN_ARMS:-diag exact}; do
+    case $ARM in exact) export FILTERDDP_LEAN_EXACT=1;; *) unset FILTERDDP_LEAN_EXACT;; esac
+    for cell in ${CLEAN_CELLS:-$SMALL $LARGE}; do
       S=${cell%%:*}; T=${cell##*:}
       LOG=ddp/results/parallel_in_time/logs/fddp_${S}_T${T}_${ARM}_${TAG}.log
       [ -s "$LOG" ] && grep -q "solve complete" "$LOG" && { echo "skip $S T=$T $ARM"; continue; }

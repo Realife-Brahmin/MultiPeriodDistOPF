@@ -230,7 +230,7 @@ function _tp_seq(S, V̂x, V̂xx, diag::Bool, nu::Int, nc::Int)
 
     hv = tree_kkt_value_halved(s, B_active, S.cxE)
     isnothing(hv) && return nothing
-    _, Vinc = hv
+    XB, Vinc = hv
     all(isfinite, Vinc) || return nothing
     ψE = zeros(nc)
     @inbounds for (q, r) in enumerate(S.energy_rows); ψE[r] = xE[nB+q, 1]; end
@@ -238,12 +238,12 @@ function _tp_seq(S, V̂x, V̂xx, diag::Bool, nu::Int, nc::Int)
     V̂xx_new = (C .+= Vinc)
     V̂x_new = S.lx + Vx_inc + S.fx' * V̂x
     V̂x_new = V̂x_new + S.cxϕ
-    return (; s, xE, Qû, B_active), V̂x_new, V̂xx_new
+    return (; s, xE, Qû, B_active, XB), V̂x_new, V̂xx_new
 end
 
 # Phase 3 of stage t: the rest of tree_kkt_solve!, the multiplier updates and
 # the stored policy. λnext is the multiplier recursion's value from stage t+1.
-function _tp_post(solver, S, R, t::Int, μ, λnext, nx::Int, nu::Int, nc::Int, keep_reuse::Bool, cl)
+function _tp_post(solver, S, R, t::Int, μ, λnext, nx::Int, nu::Int, nc::Int, keep_reuse::Bool, keep_rows::Bool, cl)
     lay, stat = S.lay, S.stat
     b = S.b; nz = S.nzc; y = S.y1; y2 = S.y2; t2 = S.t2; xE = R.xE
     nE = length(lay.E)
@@ -266,9 +266,12 @@ function _tp_post(solver, S, R, t::Int, μ, λnext, nx::Int, nu::Int, nc::Int, k
     ψ = rule.ψ
     rule.β = zeros(Float64, 0, 0)
     rule.ω = zeros(Float64, 0, 0)
+    # Battery rows of the feedback, for the forward pass's state recursion. The
+    # exact Hessian's sweep does not form them (it needs only the value update).
+    βB = (keep_rows && isempty(R.XB)) ? tree_kkt_feedback_rows(R.s, R.B_active, S.cxE) : R.XB
     rule.factor_policy = DDP4OPF.FactorBackedPolicy{Float64}(
         R.s, copy(S.active), copy(R.B_active), sparse(S.cx),
-        zeros(Float64, nu + nc), zeros(Float64, nx), zeros(Float64, 0, 0))
+        zeros(Float64, nu + nc), zeros(Float64, nx), keep_rows ? βB : zeros(Float64, 0, 0))
     inv_ul, inv_uu, Σ_L, Σ_U, zl, zu = S.inv_ul, S.inv_uu, S.Σ_L, S.Σ_U, S.zl, S.zu
     @. rule.χl = inv_ul * μ - zl - Σ_L * α
     @. rule.χu = inv_uu * μ - zu + Σ_U * α
@@ -334,11 +337,12 @@ function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, tra
 
     # Phase 3.
     keep_reuse = DDP4OPF._reuse_barrier()
+    keep_rows = isdefined(DDP4OPF, :AFFINE_DIRECTIONS_HOOK) && !isnothing(DDP4OPF.AFFINE_DIRECTIONS_HOOK[])
     P = Vector{Any}(undef, N)
     BLAS.set_num_threads(1)
     try
         Threads.@threads for t in 1:N
-            P[t] = _tp_post(solver, S[t], R[t], t, μ, λs[t], nx, nu, nc, keep_reuse, cl)
+            P[t] = _tp_post(solver, S[t], R[t], t, μ, λs[t], nx, nu, nc, keep_reuse, keep_rows, cl)
         end
     finally
         BLAS.set_num_threads(blas_threads)
@@ -395,11 +399,131 @@ function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, tra
     return true
 end
 
+# ------------------------------------------------------------ forward pass --
+# The line search for affine dynamics (affine_linesearch.jl), with the periods
+# at once. The state depends on the controls only through the battery powers,
+# whose feedback rows the backward pass stored (policy.βB), so the states of
+# all periods follow from a recursion of n_B x n_x products. Given its state,
+# a period's policy solve, directions and ratio test need no other period,
+# and neither does its part of a trial point. The states come from the
+# recursion, not from the full policy solves, so the directions agree with the
+# sequential ones to rounding, not bit for bit.
+
+function threaded_affine_directions(solver, ocp, d, τ::T) where T
+    N = ocp.N
+    cl = ocp.control_limits
+    xs = Vector{Vector{T}}(undef, N)
+    xs[1] = solver.nominal[1].x
+    for t in 1:N-1
+        nom = solver.nominal[t]; rule = solver.update[t]; pol = rule.factor_policy
+        (isnothing(pol) || isempty(pol.βB)) && return nothing      # no stored rows: the sequential rollout
+        rows = pol.active_rows
+        ur = copy(nom.u)
+        @views ur[rows] .+= rule.α[rows] .+ pol.βB * (xs[t] .- nom.x)
+        xs[t+1] = ocp.dynamics.f(xs[t], ur)
+    end
+    dx = Vector{Vector{T}}(undef, N); du = Vector{Vector{T}}(undef, N)
+    dϕ = Vector{Vector{T}}(undef, N); dzl = Vector{Vector{T}}(undef, N); dzu = Vector{Vector{T}}(undef, N)
+    γs = ones(T, N); γds = ones(T, N)
+    split = DDP4OPF._split_step()
+    blas_threads = BLAS.get_num_threads()
+    BLAS.set_num_threads(1)
+    try
+        Threads.@threads for t in 1:N
+            nom = solver.nominal[t]; rule = solver.update[t]
+            δx = xs[t] - nom.x
+            βδx, ωδx = DDP4OPF.policy_actions!(rule, δx)
+            dx[t] = δx
+            du[t] = rule.α .+ βδx
+            dϕ[t] = rule.ψ .+ ωδx
+            dzl[t] = rule.χl .- rule.Σ_L .* βδx
+            dzu[t] = rule.χu .+ rule.Σ_U .* βδx
+            dd, el, eu = du[t], dzl[t], dzu[t]
+            γ = one(T); γd = one(T)
+            @inbounds for i in eachindex(dd)
+                if cl.maskl[i]
+                    dd[i] < 0 && (γ = min(γ, τ * (nom.u[i] - cl.l[i]) / -dd[i]))
+                    if el[i] < 0
+                        g = τ * nom.zl[i] / -el[i]
+                        split ? (γd = min(γd, g)) : (γ = min(γ, g))
+                    end
+                end
+                if cl.masku[i]
+                    dd[i] > 0 && (γ = min(γ, τ * (cl.u[i] - nom.u[i]) / dd[i]))
+                    if eu[i] < 0
+                        g = τ * nom.zu[i] / -eu[i]
+                        split ? (γd = min(γd, g)) : (γ = min(γ, g))
+                    end
+                end
+            end
+            γs[t] = γ; γds[t] = γd
+        end
+    finally
+        BLAS.set_num_threads(blas_threads)
+    end
+    γmax = minimum(γs)
+    return DDP4OPF.AffineDirections{T}(dx, du, dϕ, dzl, dzu, γmax, split ? minimum(γds) : T(NaN))
+end
+
+function threaded_affine_rollout!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, d, dir, γ::T) where {T, nx, nu, nc}
+    μ = d.μ
+    cl = ocp.control_limits
+    N = ocp.N
+    γz = isnan(dir.γdual) ? γ : dir.γdual
+    c1 = zeros(T, N); cϕ = zeros(T, N); logl = zeros(T, N); logu = zeros(T, N); lv = zeros(T, N)
+    bad = falses(N)
+    Threads.@threads for t in 1:N
+        nom = solver.nominal[t]
+        x = nom.x .+ γ .* dir.dx[t]
+        u = nom.u .+ γ .* dir.du[t]
+        ϕ = nom.ϕ .+ γ .* dir.dϕ[t]
+        zl = nom.zl .+ γz .* dir.dzl[t]
+        zu = nom.zu .+ γz .* dir.dzu[t]
+        solver.current[t] = DDP4OPF.TrajectoryElement{T, nx, nu, nc}(x, u, ϕ, zl, zu)
+        if nc > 0
+            c = DDP4OPF.stage_con(ocp, t).c(x, u)
+            c1[t] = norm(c, 1)
+            cϕ[t] = dot(c, ϕ)
+        end
+        ul = u - cl.l
+        uu = cl.u - u
+        if any((ul .<= 0) .* cl.maskl) || any((uu .<= 0) .* cl.masku) ||
+           any((zl .<= 0) .* cl.maskl) || any((zu .<= 0) .* cl.masku)
+            bad[t] = true
+        else
+            logl[t] = dot(log.(ul), cl.maskl)
+            logu[t] = dot(log.(uu), cl.masku)
+            lv[t] = t == N ? ocp.term_objective.l(x, u)[1] : DDP4OPF.stage_obj(ocp, t).l(x, u)[1]
+        end
+    end
+    d.status = 0
+    d.primal_1_next = T(0.0)
+    d.barrier_lagrangian_next = T(0.0)
+    for t in 1:N                                   # sums in the order of the sequential rollout
+        if nc > 0
+            d.primal_1_next += c1[t]
+            d.barrier_lagrangian_next += cϕ[t]
+        end
+        if bad[t]
+            d.status = 2
+            return true
+        end
+        d.barrier_lagrangian_next -= μ * logl[t]
+        d.barrier_lagrangian_next -= μ * logu[t]
+        d.barrier_lagrangian_next += lv[t]
+    end
+    return true
+end
+
 function install_threaded_pass(data, idx)
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
     DDP4OPF.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
         threaded_backward_pass!(solver, ocp, traj, d, options, data, idx)
+    if isdefined(DDP4OPF, :AFFINE_DIRECTIONS_HOOK) && get(ENV, "FILTERDDP_THREADED_FORWARD", "1") != "0"
+        DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = threaded_affine_directions
+        DDP4OPF.AFFINE_ROLLOUT_HOOK[] = threaded_affine_rollout!
+    end
     println("THREADED_PASS installed: ", Threads.nthreads(), " Julia threads")
     return nothing
 end

@@ -44,7 +44,7 @@ for cell in $CELLS; do
     STOP="$OUT/logs/.sampling_$$"; touch "$STOP"
     $JL "$LOADJL" sample "$STOP" "$OUT/logs/load_$TAG.csv" 15 > /dev/null 2>&1 &
     SPID=$!
-    GUROBI_EXTRA_OPTIONS="Threads=$TH" IPOPT_SAVE_DISPATCH="$SOLDIR/sol_$TAG.jls" \
+    GUROBI_EXTRA_OPTIONS="Threads=$TH${GUROBI_MORE_OPTIONS:+;$GUROBI_MORE_OPTIONS}" IPOPT_SAVE_DISPATCH="$SOLDIR/sol_$TAG.jls" \
       $JL --project=envs/tadmm ddp/examples/power_system/centralized_ipopt_matched.jl \
       "$S" "$T" "$OUT/logs/${TAG}_gurobilog.txt" >> "$LOG" 2>&1
     rm -f "$STOP"; wait "$SPID" 2>/dev/null

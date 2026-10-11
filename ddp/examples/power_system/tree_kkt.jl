@@ -1214,6 +1214,51 @@ function tree_kkt_value_halved(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseM
     end
     return XB, Vinc
 end
+# Battery rows (in E order) of the feedback from the halved exact block alone:
+# Shat \ Rhat with the right-hand side of tree_kkt_value_halved. The exact
+# Hessian's sweep does not form these rows (the value update needs only
+# U' \ Rhat); this is for a caller that wants them afterwards, e.g. for the
+# state recursion of a forward pass run with the periods at once. It has its
+# own work matrix, so several stages may call it at the same time. Returns an
+# empty matrix if the block is not the halved exact one.
+function tree_kkt_feedback_rows(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseMatrixCSC)
+    st = s.st
+    (isempty(st.nP) || isnothing(st.Sfac)) && return zeros(0, 0)
+    nB, nx = size(B); nE = length(st.perm); ng = length(st.granges)
+    (length(st.prow) == nB && size(cxE) == (nE - nB, nx)) || return zeros(0, 0)
+    ecol = zeros(Int, nE - nB); ecx = zeros(nE - nB)
+    rv = rowvals(cxE); nzv = nonzeros(cxE)
+    for j in 1:nx, q in nzrange(cxE, j)
+        ecol[rv[q]] == 0 || return zeros(0, 0)
+        ecol[rv[q]] = j; ecx[rv[q]] = nzv[q]
+    end
+    bat = Vector{Int}(undef, nB)
+    for k in 1:nB
+        b = st.perm[st.prow[k]]; b <= nB || return zeros(0, 0)
+        bat[k] = b
+    end
+    X = Matrix{Float64}(undef, nB, nx)
+    @inbounds for j in 1:nx, k in 1:nB
+        X[k, j] = -B[bat[k], j]
+    end
+    off = 0
+    for g in 1:ng
+        rg = st.granges[g]; np = st.nP[g]; PNg = st.PN[g]; ninv = st.Ninv[g]
+        prv = rowvals(PNg); pnz = nonzeros(PNg)
+        for l in 1:length(rg) - np
+            er = st.perm[rg[np + l]] - nB; j = ecol[er]; j == 0 && continue
+            c = ecx[er]
+            for q in nzrange(PNg, l)
+                X[off + prv[q], j] += pnz[q] * ninv[l] * c
+            end
+        end
+        off += np
+    end
+    ldiv!(st.Sfac, X)
+    XB = Matrix{Float64}(undef, nB, nx)
+    @inbounds for j in 1:nx, k in 1:nB; XB[bat[k], j] = X[k, j]; end
+    return XB
+end
 DDP4OPF.battery_value_halved(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_value_halved(F, B, cxE) : nothing
 

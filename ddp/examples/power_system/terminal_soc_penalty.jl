@@ -62,7 +62,7 @@ end
 const NEAR_OPT_PRIMAL_BY_SYSTEM = Dict(
     "ieee123C_1ph"  => 1e-6,
     "ieee2522C_1ph" => 1e-5,
-    "large10kC_1ph" => 1e-4,
+    "large10kC_1ph" => 1e-5,       # 1e-4 until 2026-10-11 (user: "1e-5 is the sweet spot")
 )
 
 """True when the soft terminal SOC penalty is on (TERMINAL_SOC_SOFT=1).
