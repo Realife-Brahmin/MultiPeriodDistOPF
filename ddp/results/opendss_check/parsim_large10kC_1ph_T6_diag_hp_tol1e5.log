@@ -1,0 +1,11 @@
+OPENDSS_CHECK parsim_large10kC_1ph_T6_diag_hp_tol1e5 | large10kC_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 6.3e-30 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1 1002304.85 1002304.83   0.0000  9413.211  9413.193     0.018  1.22e-09   0.9875   1.0500      0      0
+    2  812942.30  812942.28   0.0000  6146.726  6146.713     0.013  8.14e-10   0.9968   1.0500      0      0
+    3  544490.06  544490.04   0.0000  3096.511  3096.498     0.013  8.04e-10   1.0090   1.0500      0      0
+    4 1012403.59 1012403.57   0.0000  9572.446  9572.427     0.018  1.21e-09   0.9843   1.0500      0      0
+    5  966038.44  966038.41   0.0000  8717.555  8717.526     0.029  1.83e-09   0.9888   1.0500      0      0
+    6  893346.72  893346.69   0.0000  7463.516  7463.486     0.029  1.84e-09   0.9931   1.0500      0      0
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_hp_tol1e5 | import: optimizer 20926103.80 kWh, OpenDSS 20926103.30 kWh (+0.0000%) | losses: optimizer 177639.86, OpenDSS 177639.37 kWh, of which not physical 0.48 kWh
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_hp_tol1e5 | voltage: largest difference 1.84e-09 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY parsim_large10kC_1ph_T6_diag_hp_tol1e5 | objective: optimizer 2836587.949109, with OpenDSS import 2836587.886773 (-0.0000%)
