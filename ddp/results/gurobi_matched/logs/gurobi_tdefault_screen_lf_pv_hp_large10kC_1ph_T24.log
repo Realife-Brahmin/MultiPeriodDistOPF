@@ -1,0 +1,80 @@
+QUIET_WAIT waited_s=17 other_cores=0.27 timed_out=0
+Set parameter Username
+Set parameter LicenseID to value 2866376
+Academic license - for non-commercial use only - expires 2027-09-22
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T24_gurobilog.txt"
+Set parameter Threads to value 0
+Set parameter TimeLimit to value 7200
+Set parameter Threads to value 0
+Set parameter TimeLimit to value 7200
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T24_gurobilog.txt"
+Warning for adding constraints: zero or small (< 1e-13) coefficients, ignored
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (win64 - Windows 11+.0 (26200.2))
+
+CPU model: Intel(R) Core(TM) i9-10900X CPU @ 3.70GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 10 physical cores, 20 logical processors, using up to 20 threads
+
+Non-default parameters:
+TimeLimit  7200
+
+Optimize a model with 767592 rows, 1064280 columns and 2843556 nonzeros (Min)
+Model fingerprint: 0xc98ed491
+Model has 1044 linear objective coefficients and an objective constant of 4.7412723928499722e+05
+Model has 25500 quadratic objective terms
+Model has 247680 quadratic constraints
+Coefficient statistics:
+  Matrix range     [1e-08, 1e+00]
+  QMatrix range    [1e+00, 1e+00]
+  Objective range  [8e+01, 1e+03]
+  QObjective range [5e+01, 8e+02]
+  Bounds range     [2e-01, 2e+00]
+  RHS range        [3e-03, 1e+00]
+Presolve removed 1092 rows and 13596 columns
+Presolve time: 2.32s
+Presolved: 1287361 rows, 1546046 columns, 4328282 nonzeros
+Presolved model has 247681 second-order cone constraints
+Ordering time: 0.52s
+
+Barrier statistics:
+ Dense cols : 1
+ AA' NZ     : 5.927e+06
+ Factor NZ  : 1.634e+07 (roughly 1.3 GB of memory)
+ Factor Ops : 2.366e+08 (less than 1 second per iteration)
+ Threads    : 10
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   2.12086303e+06 -2.40250259e+08  5.23e+03 1.65e+03  2.12e+06     5s
+   1   1.85595075e+07 -4.82629812e+08  1.12e+03 3.73e+02  4.76e+05     6s
+   2   1.87778807e+07 -5.43979312e+08  2.34e+01 7.57e+00  1.03e+04     7s
+   3   1.89039506e+07 -4.66712303e+08  3.62e+00 4.69e-01  1.40e+03     9s
+   4   1.72835681e+07 -2.57762143e+08  2.10e+00 7.98e-02  5.55e+02    10s
+   5   1.08776544e+07 -2.15250556e+08  1.33e-02 4.97e-02  1.53e+02    11s
+   6   9.31668442e+06 -8.06287398e+07  4.06e-03 1.84e-02  5.92e+01    12s
+   7   7.69924378e+06 -2.61646539e+07  2.15e-03 7.92e-03  2.17e+01    13s
+   8   3.95469363e+06 -4.22971643e+06  8.03e-05 1.09e-01  5.02e+00    14s
+   9   3.11492355e+06  2.19967568e+04  1.91e-05 9.77e-03  1.88e+00    15s
+  10   2.95167097e+06  1.54544285e+06  1.04e-05 1.32e-02  8.52e-01    18s
+  11   2.83435439e+06  2.00969472e+06  5.56e-06 6.28e-03  4.99e-01    20s
+  12   2.71568322e+06  2.54972152e+06  9.62e-07 8.06e-04  1.00e-01    23s
+  13   2.69010231e+06  2.64390686e+06  2.29e-07 8.27e-05  2.79e-02    25s
+  14   2.68459897e+06  2.67407577e+06  2.77e-08 5.90e-04  6.35e-03    29s
+  15   2.68346498e+06  2.68221834e+06  1.34e-09 8.65e-05  7.52e-04    33s
+  16   2.68278455e+06  2.68267102e+06  2.14e-10 2.64e-04  6.85e-05    37s
+  17   2.68273379e+06  2.68271124e+06  1.81e-10 1.48e-04  1.36e-05    41s
+  18   2.68272418e+06  2.68272081e+06  2.20e-10 2.85e-04  2.03e-06    44s
+  19   2.68272236e+06  2.68272189e+06  1.12e-08 7.66e-05  2.81e-07    48s
+
+Barrier solved model in 19 iterations and 47.79 seconds (20.34 work units)
+Optimal objective 2.68272236e+06
+
+
+User-callback calls 541, time in user-callback 0.02 sec
+GUROBI_OPTION Threads=0
+GUROBI_OPTION TimeLimit=7200
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 0 lower, 10269 upper of 10321 buses; ell >= 0 dropped on 0 lines; P_Subs >= 0 dropped: true
+IPOPT_LOADFLOW_START applied
+CENTRAL_GUROBI system=large10kC_1ph T=24 profile=periodic C_B=2.400000e-05 gamma=4.200000e+02 status=OPTIMAL iterations=19 objective=2682722.359340931755 solve_time_s=48.047 build_s=32.704 wall_s=88.457 variables=1064280 solver=13.0.0
+CENTRAL_GUROBI_MEMORY maxrss_mib=3709.7
+saved_dispatch=ddp/results/kkt_ordering/captures/solutions/sol_gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T24.jls
+CENTRAL_GUROBI_BATTERY at_power_limit=0.071 mean_utilization=0.337 energy_window_used=1.000 throughput_pu_h=3.435706e+03 energy_term=2.653459e+06 cb_term=2.324354e+04 terminal_term=6.019677e+03

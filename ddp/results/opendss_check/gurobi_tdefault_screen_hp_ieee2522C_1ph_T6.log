@@ -1,0 +1,11 @@
+OPENDSS_CHECK gurobi_tdefault_screen_hp_ieee2522C_1ph_T6 | ieee2522C_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 9.9e-32 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1    3433.01    3433.01   0.0000   247.981   247.980     0.001  5.36e-08   0.9561   1.0499      0      0
+    2    2566.25    2566.25   0.0000   134.938   134.937     0.000  3.74e-08   0.9792   1.0500      0      0
+    3    1840.88    1840.88   0.0000    73.321    73.320     0.001  4.03e-08   0.9904   1.0500      0      0
+    4    3487.26    3487.26   0.0000   256.078   256.077     0.001  5.03e-08   0.9536   1.0499      0      0
+    5    3268.75    3268.75   0.0000   223.833   223.832     0.001  7.90e-08   0.9604   1.0499      0      0
+    6    3069.68    3069.68   0.0000   198.283   198.282     0.001  8.14e-08   0.9660   1.0500      0      0
+OPENDSS_SUMMARY gurobi_tdefault_screen_hp_ieee2522C_1ph_T6 | import: optimizer 70663.34 kWh, OpenDSS 70663.32 kWh (+0.0000%) | losses: optimizer 4537.73, OpenDSS 4537.71 kWh, of which not physical 0.02 kWh
+OPENDSS_SUMMARY gurobi_tdefault_screen_hp_ieee2522C_1ph_T6 | voltage: largest difference 8.14e-08 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY gurobi_tdefault_screen_hp_ieee2522C_1ph_T6 | objective: optimizer 9534.300680, with OpenDSS import 9534.298347 (-0.0000%) | solver-reported 9534.300848
