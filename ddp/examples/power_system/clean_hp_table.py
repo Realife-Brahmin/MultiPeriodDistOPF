@@ -165,6 +165,17 @@ for a in args:
         THR = {S: float(a.split("=", 1)[1]) for S in THR}
 H = f"{ROOT}/ipopt_hsl/logs"
 P = f"{ROOT}/parallel_in_time/logs"
+
+
+def ddp_log(S, T, arm):
+    # --tag=a,b: the first of the tags that has a log for this case
+    for tag in ddp_tag.split(","):
+        path = f"{P}/fddp_{S}_T{T}_{arm}_{tag}.log"
+        if os.path.exists(path):
+            return path
+    return f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag.split(',')[0]}.log"
+
+
 print(f"FilterDDP logs: {ddp_tag}; arms: {arms[0]}, {arms[1]}")
 print(f"primal infeasibility: {'original (constraints as posed)' if original else 'internal (each solver`s own)'}; times in seconds")
 for gap in gaps:
@@ -182,7 +193,7 @@ for gap in gaps:
         cells = [fmt(x[0]) if x else "     --" for x in ip]
         out = f"{NAME[S] + ' T=' + str(T):14s} | {cells[0]} {cells[1]} {cells[2]} {cells[3]} {str(ip[0][1] if ip[0] else '--'):>2s} |"
         for pos, arm in enumerate(arms):
-            run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag}.log")
+            run = ddp(ddp_log(S, T, arm))
             if run is None:
                 out += f" {'--':>8s} {'--':>7s} --" + (" |" if pos == 0 else "")
                 continue
@@ -203,6 +214,6 @@ for S, T in CASES:
         continue
     out = f"{NAME[S] + ' T=' + str(T):14s} | " + " ".join(fmt(x[2]) if x else "     --" for x in ip) + f" {ip[0][3]:2d} |"
     for pos, arm in enumerate(arms):
-        run = ddp(f"{P}/fddp_{S}_T{T}_{arm}_{ddp_tag}.log")
+        run = ddp(ddp_log(S, T, arm))
         out += f" {fmt(run['solve_s'], 8 if pos == 0 else 9)} {run['iters']:2d} {run['status']:>2s}" + (" |" if pos == 0 else "") if run else f" {'--':>8s} -- --" + (" |" if pos == 0 else "")
     print(out)
