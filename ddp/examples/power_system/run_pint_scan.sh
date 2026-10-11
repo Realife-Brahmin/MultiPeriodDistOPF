@@ -20,7 +20,7 @@ H=ddp/results/ipopt_hsl/logs
 case $SYS in
   ieee123C_1ph)  PRIMAL=1e-6; REF=$H/ipopt_ma57_screen_lf_${SYS}_T$T.log; THREADS=1;;
   ieee2522C_1ph) PRIMAL=1e-5; REF=$H/ipopt_ma57_screen_lf_${SYS}_T$T.log; THREADS=8;;
-  large10kC_1ph) PRIMAL=1e-4; REF=$H/ipopt_ma57_screen_lf_pv_${SYS}_T$T.log; THREADS=8;;
+  large10kC_1ph) PRIMAL=1e-5; REF=$H/ipopt_ma57_screen_lf_pv_${SYS}_T$T.log; THREADS=8;;
 esac
 OBJ=$(grep -oE "CENTRAL_IPOPT .*" "$REF" | grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
 [ -n "$OBJ" ] || { echo "no Ipopt reference in $REF"; exit 1; }

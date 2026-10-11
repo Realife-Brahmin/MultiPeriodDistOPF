@@ -39,11 +39,20 @@ establishes something a future session, on any machine, would need.
 - **Near-optimality primal infeasibility thresholds are per-system** (user,
   2026-09-23). FilterDDP "time to near-optimality" (Table V in the TPEC paper)
   is the first iteration with objective within 0.5% of Ipopt AND primal_inf
-  below the system threshold: ieee123 `1e-6`, ieee2522 `1e-5`, large10k `1e-4`.
+  below the system threshold: ieee123 `1e-6`, ieee2522 `1e-5`, large10k `1e-5`.
   Single source of truth: `NEAR_OPT_PRIMAL_BY_SYSTEM` in
   `ddp/examples/power_system/terminal_soc_penalty.jl`. The race script
   (`run_matched_ipopt_race.sh`) reads matching values. Do not use a uniform
   threshold across systems.
+  **large10k was `1e-4` until 2026-10-11.** The user moved it to `1e-5` after
+  seeing the clean batch re-read at both ("1e-5 is the sweet spot"; `1e-4` a
+  bit too loose, `5e-5` too arbitrary): Ipopt's own infeasibility falls below
+  `1e-5` only near the end of its solve, the diagonal FilterDDP iterate at
+  the 0.5% point is already below it from `T=24` up. Every large10k
+  near-optimality figure dated before that, in the notes and in the TPEC
+  paper (results table, screening-ablation column), is at `1e-4`. Runs that
+  stopped at near-optimality cannot be re-read at `1e-5`; runs to tolerance
+  (the clean batch) can (`clean_hp_table.py`).
 - **Every timed FilterDDP run must enable full per-iteration logging** (user,
   2026-09-23). Set `FILTERDDP_TIMING_DIAGNOSTIC=1` and
   `FILTERDDP_FEASIBILITY_DIAGNOSTIC=1`. This emits per-iteration: objective,

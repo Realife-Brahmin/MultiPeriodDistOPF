@@ -38,7 +38,7 @@ for ARM in $ARMS; do
     case $S in
       ieee123C_1ph)  PRIMAL=1e-6; PV="";    REF=$H/ipopt_ma57_screen_lf_hp_${S}_T$T.log;    export JULIA_NUM_THREADS=1;;
       ieee2522C_1ph) PRIMAL=1e-5; PV="";    REF=$H/ipopt_ma57_screen_lf_hp_${S}_T$T.log;    export JULIA_NUM_THREADS=8;;
-      large10kC_1ph) PRIMAL=1e-4; PV="_pv"; REF=$H/ipopt_ma57_screen_lf_pv_hp_${S}_T$T.log; export JULIA_NUM_THREADS=8;;
+      large10kC_1ph) PRIMAL=1e-5; PV="_pv"; REF=$H/ipopt_ma57_screen_lf_pv_hp_${S}_T$T.log; export JULIA_NUM_THREADS=8;;
     esac
     unset FILTERDDP_NEAR_OPT_REFERENCE FILTERDDP_NEAR_OPT_GAP FILTERDDP_NEAR_OPT_PRIMAL
     STOP=tol1e5

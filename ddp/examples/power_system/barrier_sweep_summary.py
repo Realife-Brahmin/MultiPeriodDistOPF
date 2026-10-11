@@ -16,7 +16,7 @@ import sys
 
 KV = re.compile(r"(\w+)=([-+0-9.eE]+)")
 ROW = re.compile(r"^\s+(\d+)\s+([-0-9.]+e[-+]\d+)\s+([0-9.]+e[-+]\d+)\s")
-THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-4}
+THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-5}
 NAME = {"ieee123C_1ph": "ieee123", "ieee2522C_1ph": "med2522", "large10kC_1ph": "large10k"}
 H = "ddp/results/ipopt_hsl/logs"
 

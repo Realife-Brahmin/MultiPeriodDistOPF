@@ -170,7 +170,7 @@ run_fddp_job() {  # $1 system, $2 T, $3 factor_backed
     # without updating lean_results.tex and CLAUDE.md.
     local PRIMAL=1e-6
     [ "$SYS" = ieee2522C_1ph ] && PRIMAL=1e-5
-    [ "$SYS" = large10kC_1ph ] && PRIMAL=1e-4
+    [ "$SYS" = large10kC_1ph ] && PRIMAL=1e-5
     export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8
     export FILTERDDP_NEAR_OPT_REFERENCE="$REF"
     export FILTERDDP_NEAR_OPT_GAP=0.005

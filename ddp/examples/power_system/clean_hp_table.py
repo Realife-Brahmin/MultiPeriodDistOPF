@@ -4,7 +4,7 @@ For every case, both solvers under one stopping rule: the first iterate whose
 objective is within GAP of the reference optimum (the MA57 run's final
 objective) and whose primal infeasibility is below the system threshold.
 
-    python ddp/examples/power_system/clean_hp_table.py [--gaps=5e-3,1e-4,1e-5] [--primal=internal|original]
+    python ddp/examples/power_system/clean_hp_table.py [--gaps=5e-3,1e-4,1e-5] [--primal=internal|original] [--threshold=1e-5]
 
 Ipopt: time of that iterate from its trace (IPOPT_TRACE), per linear solver,
 and its full solve time (tol 1e-6).
@@ -28,7 +28,7 @@ import sys
 
 ROOT = "ddp/results"
 KV = re.compile(r"(\w+)=([-+0-9.eE]+)")
-THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-4}
+THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-5}
 CASES = [("ieee123C_1ph", 6), ("ieee123C_1ph", 24), ("ieee123C_1ph", 96),
          ("ieee2522C_1ph", 6), ("ieee2522C_1ph", 24), ("ieee2522C_1ph", 96),
          ("large10kC_1ph", 6), ("large10kC_1ph", 24), ("large10kC_1ph", 48), ("large10kC_1ph", 96)]
@@ -155,6 +155,8 @@ for a in args:
         gaps = [float(g) for g in a.split("=", 1)[1].split(",")]
     elif a == "--primal=original":
         original = True
+    elif a.startswith("--threshold="):          # one primal threshold for every system
+        THR = {S: float(a.split("=", 1)[1]) for S in THR}
 H = f"{ROOT}/ipopt_hsl/logs"
 P = f"{ROOT}/parallel_in_time/logs"
 print(f"primal infeasibility: {'original (constraints as posed)' if original else 'internal (each solver`s own)'}; times in seconds")
