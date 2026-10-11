@@ -55,6 +55,8 @@ for cell in $CELLS; do
     STOP="$OUT/logs/.sampling_$$"; touch "$STOP"
     $JL "$LOADJL" sample "$STOP" "$OUT/logs/load_${LS}${TAG}_${S}_T${T}.csv" 15 > /dev/null 2>&1 &
     SPID=$!
+    # IPOPT_MORE_OPTIONS adds to every solver's options, e.g. "tol=1e-6".
+    OPTS="$OPTS${IPOPT_MORE_OPTIONS:+;$IPOPT_MORE_OPTIONS}"
     IPOPT_EXTRA_OPTIONS="$OPTS" OMP_NUM_THREADS=$OMP \
       $JL --project=envs/ddp2026 ddp/examples/power_system/centralized_ipopt_matched.jl \
       "$S" "$T" "$OUT/logs/ipopt_${LS}${TAG}_${S}_T${T}_ipoptlog.txt" >> "$LOG" 2>&1

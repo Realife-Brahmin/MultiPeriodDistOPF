@@ -10,9 +10,14 @@ backward sweep, so
     t_k = setup + sum(total_s of earlier passes) + backward_s of pass k,
     setup = reported solve time - sum(all total_s).
 
-    python near_opt_posthoc.py [--gaps=5e-3,1e-4] <primal_threshold> <ipopt_log> <filterddp_log> [...]
+    python near_opt_posthoc.py [--gaps=5e-3,1e-4] [--primal=original] <primal_threshold> <ipopt_log> <filterddp_log> [...]
     (pairs of ipopt_log filterddp_log may be repeated; --gaps lists the
     objective gaps to report, default 5e-3)
+
+--primal=original takes the primal infeasibility from the
+FILTERDDP_ORIGINAL_PRIMAL lines (violation of the constraints as posed: the
+cone as an inequality) instead of the iteration table's primal_inf (residual of
+the cone row with its slack). ipopt_trace_posthoc.py reports both kinds for Ipopt.
 """
 import re
 import sys
@@ -28,8 +33,9 @@ def ipopt_objective(path):
     raise SystemExit(f"no CENTRAL_IPOPT line in {path}")
 
 
-def near_opt(path, ref, primal, gap=GAP):
+def near_opt(path, ref, primal, gap=GAP, original=False):
     rows = {}            # iteration -> (objective, primal_inf)
+    orig = {}            # iteration -> violation of the constraints as posed
     passes = []          # (iteration, backward_s, total_s)
     solve_s = None
     row = re.compile(r"^\s+(\d+)\s+([-0-9.]+e[-+]\d+)\s+([0-9.]+e[-+]\d+)\s")
@@ -37,6 +43,10 @@ def near_opt(path, ref, primal, gap=GAP):
         m = row.match(line)
         if m:
             rows.setdefault(int(m.group(1)), (float(m.group(2)), float(m.group(3))))
+            continue
+        if line.startswith("FILTERDDP_ORIGINAL_PRIMAL"):
+            d = dict(kv.split("=") for kv in line.split()[1:] if "=" in kv)
+            orig.setdefault(int(d["iteration"]), float(d["original_max"]))
             continue
         if line.startswith("FILTERDDP_ITER_TIMING"):
             d = dict(kv.split("=") for kv in line.split()[1:] if "=" in kv)
@@ -52,6 +62,8 @@ def near_opt(path, ref, primal, gap=GAP):
         if k not in seen and k in rows:
             seen.add(k)
             obj, pr = rows[k]
+            if original:
+                pr = orig.get(k, float("inf"))
             if abs(obj - ref) / abs(ref) <= gap and pr <= primal:
                 return k, setup + elapsed + backward, final_it, solve_s, status
         elapsed += total
@@ -63,12 +75,15 @@ if __name__ == "__main__":
     gaps = [GAP]
     if argv and argv[0].startswith("--gaps="):
         gaps = [float(g) for g in argv.pop(0).split("=", 1)[1].split(",")]
+    original = bool(argv) and argv[0] == "--primal=original"
+    if original:
+        argv.pop(0)
     primal = float(argv[0])
     args = argv[1:]
     for ip, fd in zip(args[0::2], args[1::2]):
         ref, ip_s = ipopt_objective(ip)
         for gap in gaps:
-            k, t, final_it, solve_s, status = near_opt(fd, ref, primal, gap)
+            k, t, final_it, solve_s, status = near_opt(fd, ref, primal, gap, original)
             name = fd.replace("\\", "/").split("/")[-1] + (f" gap<={gap:g}" if len(gaps) > 1 else "")
             if k is None:
                 print(f"NEAR_OPT_POSTHOC {name}: not reached (strict: {final_it} iterations, {solve_s:.1f} s, status {status})")

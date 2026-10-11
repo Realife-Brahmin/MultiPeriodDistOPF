@@ -208,13 +208,47 @@ if get(ENV, "IPOPT_LOADFLOW_START", "0") != "0"
 end
 build_s = time() - build_start
 
+# IPOPT_TRACE=1: record every iteration through Ipopt's intermediate callback
+# (clock, objective, primal and dual infeasibility, barrier parameter) and
+# print one IPOPT_ITER line per iteration after the solve. The time at which
+# any looser criterion was first met can then be read from one run to the
+# solver's own tolerance (ipopt_trace_posthoc.py), as near_opt_posthoc.py does
+# for FilterDDP. The callback only stores six numbers; nothing is printed
+# during the solve. The objective is the unscaled one of Ipopt's iteration
+# table. inf_pr is Ipopt's internal primal infeasibility, which counts an
+# inequality through its slack (d(x) - s); the iteration table prints the
+# violation of the original constraints instead, which is zero whenever an
+# inequality holds. FilterDDP's primal_inf is of the internal kind (the cone
+# rows carry an explicit slack), so the two are compared like for like;
+# ipopt_trace_posthoc.py reports both.
+ipopt_trace = Tuple{Int, UInt64, Float64, Float64, Float64, Float64}[]
+if central_solver == "ipopt" && get(ENV, "IPOPT_TRACE", "0") != "0"
+    function ipopt_trace_callback(alg_mod::Cint, iter_count::Cint, obj_value::Float64, inf_pr::Float64,
+                                  inf_du::Float64, mu::Float64, d_norm::Float64, regularization_size::Float64,
+                                  alpha_du::Float64, alpha_pr::Float64, ls_trials::Cint)
+        push!(ipopt_trace, (Int(iter_count), time_ns(), obj_value, inf_pr, inf_du, mu))
+        return true
+    end
+    MOI.set(model, Ipopt.CallbackFunction(), ipopt_trace_callback)
+    # Compile it now: its first call would otherwise cost about 50 ms inside the solve.
+    ipopt_trace_callback(Cint(0), Cint(0), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Cint(0)); empty!(ipopt_trace)
+    println("IPOPT_TRACE on")
+end
+
 optimize!(model)
+ipopt_end_ns = time_ns()
 wall_s = time() - wall_start
 
 status = termination_status(model)
 obj = has_values(model) ? objective_value(model) : NaN
 iters = try MOI.get(model, MOI.BarrierIterations()) catch; -1 end
 solve_s = try solve_time(model) catch; NaN end
+# elapsed_s counts from the start of Ipopt's own solve time, so that the last
+# line's elapsed_s is the reported solve time (to the return of optimize!).
+for (k, tns, o, ip, id, m) in ipopt_trace
+    @printf("IPOPT_ITER iteration=%d elapsed_s=%.6f objective=%.12e inf_pr=%.6e inf_du=%.6e mu=%.6e\n",
+            k, solve_s - (ipopt_end_ns - tns) / 1e9, o, ip, id, m)
+end
 @printf("%s system=%s T=%d profile=%s C_B=%.6e gamma=%.6e status=%s iterations=%d objective=%.12f solve_time_s=%.3f build_s=%.3f wall_s=%.3f variables=%d solver=%s\n",
         result_tag, system, T, isempty(ptag) ? "default" : ptag[2:end], data[:C_B], gammaT, string(status),
         iters, obj, solve_s, build_s, wall_s, num_variables(model),
