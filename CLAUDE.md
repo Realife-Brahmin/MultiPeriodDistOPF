@@ -161,8 +161,10 @@ establishes something a future session, on any machine, would need.
   (`FILTERDDP_PINT_SCAN=1`) redoes the value recursion by pairwise combination
   of the periods (Sarkka and Garcia-Fernandez, 2023): exact, slower at `T=6`,
   1.7-2.0 times faster at `T=24` and 4.6-5.1 times at `T=96` on step B, as a
-  count; no solve uses it yet. The user asked for exact-Hessian runs beside
-  the diagonal ones; which of the two the paper leads with is undecided.
+  count. Since the night of 2026-10-11 a solve uses it (`paired_pass.jl`,
+  bullet below), and the TPEC paper's counted column is the exact Hessian
+  with the pairwise sweep; the diagonal Hessian stays the faster sequential
+  arrangement on the two larger feeders.
 - **Gurobi** works on the 309 PC (Gurobi 13, licence to 2027-09-22) and is
   run for reference (user, 2026-10-06 and 2026-10-11). It needs `v` and `ell`
   nonnegative to recognise the cone, so its reduced model keeps those two and
@@ -188,6 +190,39 @@ establishes something a future session, on any machine, would need.
     does not want parallel timings from the 309 PC. It is the code for a
     machine with a core per period; a Kamiak account was requested on
     2026-10-11 (ticket KSD-7186, PI Dubey).
+- **The pairwise sweep in the solve, and the collector in the count**
+  (2026-10-11 night; `ddp/notes/PARALLEL_IN_TIME.md`, Section 12).
+  - `paired_pass.jl` does the battery sweep by pairs inside the solve: same
+    iterations and objective as the ordinary exact solve on all twelve cases.
+    Launcher: `bash ddp/results/paired_pass/run_paired.sh <system> <T> count
+    <tag>` (OpenDSS check included; `PAIRED_ROUNDS=0` runs the ordinary sweep
+    in the same pass for a count on the same timing; `PAIRED_WARMUP=full`, 8
+    on large10k `T=96`). The driver has no switch of its own for it yet.
+  - **The count charges garbage collection per worker** (user, 2026-10-11:
+    "our default assumption", and the paper must say so). Julia's collector
+    takes 17-22% of a run; its pauses used to land inside one stage's time
+    and make it the slowest. Counting runs now time each stage without the
+    pauses in it and print the collector's time (`FILTERDDP_PARSIM_GCNET=1`,
+    set by the launcher), and the scripts give each worker `1/T` of it;
+    `clean_hp_table.py --gc=sequential` gives the other reading. Logs before
+    this (the clean batch, tags `count_hp_tol1e5` and `inplace_hp_tol1e5`)
+    are on the old timing: never put their counts beside the new ones as
+    like for like. Always state the three assumptions: one core per period,
+    no time for passing data, a memory per worker; and that Ipopt is one
+    process. A real parallel run should be one process per period, not
+    threads in one program.
+  - Result at the 0.5% rule (same at 0.1%), Ipopt / DDP counted, seconds:
+    med2522 13.3 / 4.2 (`T=24`), 67.8 / 8.4 (`T=96`), 110.2 / 14.4 (`T=144`);
+    large10k 21.9 / 12.4, 44.4 / 15.8 (`T=48`), 101.4 / 22.6 (`T=96`). At
+    `T=6`: level on med2522, half Ipopt's speed on large10k. With every
+    collection in sequence only large10k `T=48` and `T=96` stay ahead. One
+    process runs the pairwise arrangement slower than the ordinary sweep.
+  - Do not retry "run the collector less often": held off for a whole pass
+    and run once it costs the same (its cost follows the volume allocated),
+    and the allocation has no single source.
+  - No FilterDDP run exists on large10k `T=144` (the PC has 31.7 GB; Ipopt
+    alone takes 13.6 GB there). ieee123 `T=24` needs tolerance 1e-6
+    (`PAIRED_TOL`) to meet its 1e-6 infeasibility threshold.
 
 ## Working branch — the name below is a snapshot, not the truth
 

@@ -993,3 +993,176 @@ would go.
 | `run_barrier_sweep.sh`, `barrier_sweep_summary.py` | barrier schedules and the hybrid, iteration counts |
 | `clean_hp_table.py` | times at a stopping rule; `--primal=original`, `--threshold=`, `--tag=`, `--arms=` |
 | `results/barrier_sweep/logs/`, `results/threaded_pass/` | the sweep; the first threaded runs |
+
+## 12. The pairwise sweep inside the solve, and the collector in the count (2026-10-11 afternoon to night)
+
+Branch `ddp-oct10-new-tests`. High performance plan throughout. Every run
+below was followed by its OpenDSS check; none violates a voltage limit.
+
+### `T=144`
+
+Ipopt MA57 at the reporting rule, default barrier update / adaptive:
+ieee123 3.62 s / not met (3.44 s to tolerance), med2522 119.5 / 110.2 s,
+large10k 157.0 / 138.9 s. FilterDDP with the ordinary sweep, sequential /
+counted: med2522 483.3 / 106.9 s (diagonal) and 511.1 / 70.1 s (exact);
+ieee123 17.9 / 10.4 s and 10.3 / 5.1 s. The exact Hessian's iterations hardly
+move from `T=96` (66) to `T=144` (69) on med2522; the diagonal's go from 49
+to 65. No FilterDDP run on large10k `T=144`: the user wanted it only "maybe",
+and the PC has 31.7 GB (Ipopt alone takes 13.6 GB there). `T=288` is not to
+be run without asking.
+
+### The sweep by pairs in a real solve (`paired_pass.jl`)
+
+A pass is: step 1, every stage at once (`_tp_pre` of `threaded_pass.jl`, and
+the stage as a function `G_t(a,b)` of the battery energies before and after
+it); step 2, the rounds (`ceil(log2(T+1))` of them, in each of which every
+function is combined with the first one of the block to its right); step 3,
+every stage at once with the value function after it. `FILTERDDP_PAIRED_SWEEP=count`
+does all of it in sequence on one BLAS thread and times every piece;
+`=1` runs the three steps on Julia threads (correctness only). It runs
+through the wrapper `results/paired_pass/paired_main.jl` and the launcher
+`results/paired_pass/run_paired.sh <system> <T> <count|1> [tag]`; the driver
+has no switch of its own yet.
+
+Same iterations as the ordinary exact solve in every case run (twelve),
+objectives equal to 15 digits, value functions within 1.2e-9 of the ordinary
+sweep's where the two were run side by side (`PAIRED_CHECK=1`).
+
+The first counted run (med2522 `T=96`, allocating version) gave 65.0 s
+against 47.1 s for the ordinary exact run, although the rounds counted
+0.037 s a pass against 0.41 s for the sweep. The rest of that section is why.
+
+### Kept storage (`FILTERDDP_PAIRED_INPLACE=1`, the launcher's default)
+
+Each stage's function lives in storage kept from pass to pass, and a
+combination writes its result over its left operand with three `n_B x n_B`
+blocks of scratch per worker. In a round the left operands are distinct and
+none of them is a right operand, so this is safe on threads. Before, a pass
+allocated three blocks per stage and six per combination (1.1 GB on med2522
+`T=96`, 18 GB on large10k). Same solve as the allocating version.
+
+### The collector
+
+Measured, not assumed:
+
+- It takes 17-22% of a run on the two larger feeders (74 of 421 s on med2522
+  `T=96`, pairwise).
+- A pass of med2522 `T=24` allocates 0.71 GiB in step 1 (29 MB a stage),
+  nothing in the rounds (kept storage) and 0.11 GiB in step 3; the collector
+  takes about 0.2 s of a 1.25 s pass, nearly all in step 1.
+- Held off for the whole pass and run once, it takes 0.15 s and the stages
+  get slower by as much (fresh memory instead of reused). Its cost follows
+  the volume allocated, not how often it runs. No switch was kept for this.
+- The allocation has no single source (`alloc_profile.jl` with
+  `FILTERDDP_PAIRED_SWEEP` set): the largest site is 8.6% of the bytes; the
+  tree solver's per-node arrays are about a third of the allocations.
+  `tree_kkt_inplace.jl` (written, not wired, untested) would take the factor's
+  share only.
+- A pause lands in whichever stage is on the clock. In the forward pass of
+  med2522 `T=144` single periods showed 0.16 to 0.80 s against a mean of 5 to
+  7 ms, and the forward pass was 22.6 of 33.5 s counted.
+
+So the timing was changed. Counting runs take each stage's time without the
+collections that fell in it and print the collector's time separately:
+`pre_gc_s`, `post_gc_s`, `pair_gc_s` on `FILTERDDP_PARSIM_BACKWARD` (and the
+volumes on `FILTERDDP_PAIRED_GC`), and, with `FILTERDDP_PARSIM_GCNET=1`,
+`gc_s` and `stages` on `FILTERDDP_PARSIM_FORWARD` (solver source:
+`affine_linesearch.jl`). `parsim_from_log.py` and `clean_hp_table.py` then
+count a worker per period as collecting its own share, `1/stages` of the
+collection in the per-period work; `--gc=sequential` (table script) counts
+all of it in sequence. Collections during sequential work stay sequential.
+
+**The user's decision (2026-10-11): per-worker collection is the default
+assumption of the count, and the paper says so.** It is the same premise as
+the rest of the count: one worker per period, with its own memory. It also
+means a real parallel run should be one process per period, not threads in
+one program, where every pause stops all the threads.
+
+Logs dated before this (the clean batch, the first pairwise batch tagged
+`inplace_hp_tol1e5`) have the pauses inside the stage times: the slowest stage
+of a pass carries its longest pause and the pauses in the other stages are
+dropped. Their counts are upper bounds of the per-worker reading, not the
+same thing.
+
+### The ordinary sweep on the same timing (`FILTERDDP_PAIRED_ROUNDS=0`)
+
+Steps 1 and 3 as in the pairwise pass and the ordinary sweep (`_tp_seq`)
+between them, stage after stage. One BLAS thread like the rest of the pass,
+which costs the sweep on large10k: 103 ms a step against 66 ms in the
+solver's own exact pass, which lets the sweep use all cores. For large10k
+the solver's own counts (clean batch: 9.4, 27.3, 51.6, 110.1 s) are the
+ordinary sweep's best figures.
+
+### Results (0.5% rule, per-system thresholds; the pairwise figures are the same at 0.1%)
+
+Seconds. Ipopt: its faster variant. Ord. and pair.: counted, one worker per
+period, per-worker collection, exact Hessian. In seq.: the pairwise count
+with every collection in sequence. One proc.: the pairwise run as measured.
+
+| | `T` | Ipopt | ord. | pair. | Ipopt/pair. | in seq. | one proc. |
+|---|---|---|---|---|---|---|---|
+| ieee123 | 6 | 0.10 | 0.09 | 0.07 | 1.4 | 0.07 | 0.24 |
+| | 24 | 0.33 | 0.23 | 0.14 | 2.4 | 0.66 | 1.59 |
+| | 96 | 1.68 | 1.30 | 0.27 | 6.2 | 3.09 | 7.43 |
+| | 144 | 3.62 | 1.66 | 0.35 | 10.3 | 4.11 | 10.5 |
+| med2522 | 6 | 2.58 | 3.42 | 2.61 | 0.99 | 4.81 | 13.2 |
+| | 24 | 13.3 | 9.25 | 4.16 | 3.2 | 16.7 | 71.9 |
+| | 96 | 67.8 | 42.2 | 8.43 | 8.0 | 81.0 | 421.4 |
+| | 144 | 110.2 | 72.0 | 14.4 | 7.7 | 153.1 | 750.3 |
+| large10k | 6 | 3.97 | 12.3 | 8.32 | 0.48 | 11.5 | 34.1 |
+| | 24 | 21.9 | 40.8 | 12.4 | 1.8 | 24.0 | 173.2 |
+| | 48 | 44.4 | 78.0 | 15.8 | 2.8 | 37.6 | 390.3 |
+| | 96 | 101.4 | 175.1 | 22.6 | 4.5 | 70.2 | 973.2 |
+
+ieee123 `T=24` was run to a tolerance of 1e-6 (`PAIRED_TOL`): at 1e-5 it ends
+with infeasibility 3.7e-6, above its 1e-6 threshold, and never meets the rule.
+
+Where a counted pass goes, per pass at `T=96`: med2522 0.04 s slowest stage
+of step 1, 0.03 s the seven rounds, 0.01 s step 3, 0.02 s forward; large10k
+0.13, 1.0, 0.12 and 0.1 s. On large10k the rounds are the largest part: a
+combination of 1020 batteries takes 0.14 s on one core.
+
+Run with:
+
+    python ddp/examples/power_system/clean_hp_table.py --tag=pairwise_gc_hp_tol1e5,reuse_gc_hp_tol1e5,reuse_hp_tol1e5 --arms=exact,paired --gaps=5e-3,1e-3
+    python ddp/examples/power_system/clean_hp_table.py --tag=ordinary_gc_hp_tol1e5 --arms=exact,paired --gaps=5e-3
+
+(the `paired` column is the log `fddp_<system>_T<T>_paired_<tag>.log`; the
+`exact` column is the clean batch's own exact run).
+
+### What the count leaves out, and what is open
+
+- It is a count from one machine: one core per period and per combination,
+  each worker with its own memory, no time for passing data. A combination
+  needs three `n_B x n_B` blocks of another period: 1.5 MB on med2522, 25 MB
+  on large10k. Ipopt is one process.
+- One process runs the pairwise arrangement slower than the ordinary sweep
+  (973 against 351 s on large10k `T=96`): it does every combination in a row.
+- The repeated passes after a barrier update are counted in sequence (0.8 s
+  of the 8.4 s on med2522 `T=96`); they could be split like the others.
+- Allocation: reducing what a pass allocates would shrink the collector under
+  either way of charging it. No single source; not started.
+- Not measured: any of this on a machine with a core per period (Kamiak,
+  ticket KSD-7186, one process per period).
+
+### Corrections to commit messages
+
+- `66d38fb9` gives 137 s and 74 s for the pairwise counts with every
+  collection in sequence at med2522 `T=144` and large10k `T=96`. The measured
+  figures are 153.1 s and 70.2 s (table above).
+- `71b96878` states that collector pauses land in the slowest stage of step 1.
+  At that point it was an inference from the 12-fold gap between the slowest
+  and the mean stage; it was measured afterwards (the forward-pass figures
+  above, and the net-of-collection maxima: 0.04 s against 0.5 s a pass).
+
+### Files
+
+| | |
+|---|---|
+| `paired_pass.jl` | the pairwise pass; kept storage; `FILTERDDP_PAIRED_ROUNDS=0` for the ordinary sweep on the same timing |
+| `results/paired_pass/run_paired.sh`, `paired_main.jl` | launcher (OpenDSS check included) and wrapper; `PAIRED_WARMUP`, `PAIRED_INPLACE`, `PAIRED_ROUNDS`, `PAIRED_TOL`, `PAIRED_CHECK`, `PAIRED_MAIN` |
+| `DDP4OPF.jl/src/affine_linesearch.jl`, `backward_pass.jl`, `forward_pass.jl` | `FILTERDDP_PARSIM_GCNET=1`: forward per-period times without collections |
+| `clean_hp_table.py`, `parsim_from_log.py` | read the collector fields; `--gc=sequential` |
+| `alloc_profile.jl` | allocation profile, of the pairwise pass when `FILTERDDP_PAIRED_SWEEP` is set |
+| `tree_kkt_inplace.jl` | the tree factor in kept storage: written, not wired, untested |
+| logs `*_paired_pairwise_gc_hp_tol1e5.log`, `*_paired_ordinary_gc_hp_tol1e5.log` | the final runs; `*_paired_inplace_hp_tol1e5.log` the first batch (forward pass on the old timing); `*_paired_count_hp_tol1e5.log` the allocating version |
