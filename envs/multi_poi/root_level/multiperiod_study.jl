@@ -27,6 +27,9 @@
 #   three     three substations (subs1 the angle reference): the feasible REGION in the
 #             plane (delta_3 - delta_1, delta_4 - delta_1), by rays from equal angles;
 #   five      all five substations: one substation's angle moved against the other four;
+#   bound     what limits the battery window: the circulating power per degree, the angle at
+#             which a substation's daily energy import reaches zero, and the windows against
+#             battery energy and power;
 #   tables    rebuild the LaTeX tables from the CSVs (no solves).
 #
 # Run from the repo root:
@@ -43,7 +46,7 @@ const MAIN_PAIR = ("subs3", "subs4")
 const ALL_SUBS = ["subs1", "subs2", "subs3", "subs4", "subs5"]
 const X_OVER_R = 25.0
 const OUT_DIR = normpath(joinpath(@__DIR__, "..", "results", "multiperiod"))
-const STAGES = isempty(ARGS) ? ["main", "horizon", "zs", "duration", "pairs", "three", "five", "tables"] : lowercase.(ARGS)
+const STAGES = isempty(ARGS) ? ["main", "horizon", "zs", "duration", "pairs", "three", "five", "bound", "tables"] : lowercase.(ARGS)
 mkpath(OUT_DIR)
 say(args...) = (println(args...); flush(stdout))
 
@@ -383,6 +386,93 @@ if "five" in STAGES
             csv_rows(io, a, w)
         end
     end
+end
+
+# ---- stage: bound ------------------------------------------------------------------------------------------
+# What limits the window batteries can sustain? A constant angle difference drives a roughly
+# constant circulating power, and a battery can only move energy between hours. So the most
+# a fleet can do is trade the worst hour's import margin for the day's average: the window
+# should end where the constrained substation's DAILY ENERGY import reaches zero, and storage
+# beyond what flattens the day should add nothing. Tested here:
+#   (a) batteries idle, no-backflow NOT imposed: each substation's hourly import and daily
+#       energy against the angle difference -- the transfer per degree and both zero crossings;
+#   (b) the windows against battery energy (hours at the same kW) and power (kW at the same
+#       kWh), for the soft terminal SOC and for the hard end = start diagnostic.
+if "bound" in STAGES
+    A, B = MAIN_PAIR
+    deck, pvs = load_sources([A, B])
+    s = setup(deck, pvs; T = 24)
+    say("\n", "="^110, "\nBOUND  $A + $B, T = 24: circulating power, and the window against battery size")
+    dds = -1.2:0.1:1.2
+    sweep = []
+    for dd in dds
+        x = solve_multiperiod(deck, Dict(A => dd, B => 0.0); problem(s, :nobatt)..., no_backflow = false)
+        x.ok || (say("  ** idle sweep failed at ", dd, ": ", x.status); continue)
+        push!(sweep, (; dd, Pa = x.P_subs_kW[A], Pb = x.P_subs_kW[B]))
+    end
+    dt = 24 / s.T
+    Ea(y) = sum(y.Pa) * dt                               # kWh over the day
+    Eb(y) = sum(y.Pb) * dt
+    "x where the line through the two points bracketing a sign change of f crosses zero"
+    function crossing(f)
+        for i in 1:length(sweep)-1
+            a, b = f(sweep[i]), f(sweep[i+1])
+            a * b <= 0 && a != b && return sweep[i].dd + (sweep[i+1].dd - sweep[i].dd) * a / (a - b)
+        end
+        return NaN
+    end
+    i0 = findfirst(y -> abs(y.dd) < 1e-9, sweep)
+    K = [(sweep[i0+1].Pa[t] - sweep[i0-1].Pa[t]) / (sweep[i0+1].dd - sweep[i0-1].dd) for t in 1:s.T]   # kW per degree, into A
+    hour_hi, hour_lo = crossing(y -> minimum(y.Pb)), crossing(y -> minimum(y.Pa))     # first hour to back-feed
+    day_hi, day_lo = crossing(Eb), crossing(Ea)                                       # daily energy import to zero
+    say(@sprintf("  transfer per degree: %.0f to %.0f kW/deg over the day (mean %.0f)", minimum(K), maximum(K), sum(K) / length(K)))
+    say(@sprintf("  imports at equal angles: %s %.0f-%.0f kW (%.0f kWh/day), %s %.0f-%.0f kW (%.0f kWh/day)", A, extrema(sweep[i0].Pa)..., Ea(sweep[i0]), B, extrema(sweep[i0].Pb)..., Eb(sweep[i0])))
+    say(@sprintf("  first hour back-feeds at   [%+.3f, %+.3f] deg   (the no-battery window)", hour_lo, hour_hi))
+    say(@sprintf("  daily energy import zero at [%+.3f, %+.3f] deg   (predicted limit for batteries)", day_lo, day_hi))
+    open(joinpath(OUT_DIR, "bound_sweep.csv"), "w") do io
+        println(io, "ddelta_deg,daily_import_a_kWh,daily_import_b_kWh,min_hourly_import_a_kW,min_hourly_import_b_kW")
+        for y in sweep
+            @printf io "%.2f,%.3f,%.3f,%.4f,%.4f\n" y.dd Ea(y) Eb(y) minimum(y.Pa) minimum(y.Pb)
+        end
+    end
+
+    with_power(net, k) = merge(net, (; batteries = [merge(bt, (; kW_rated = k * bt.kW_rated)) for bt in net.batteries]))
+    sizes = vcat([(; kind = "hours", value = h, net = with_duration(deck, h)) for h in (0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0)],
+                 [(; kind = "power", value = k, net = with_power(deck, k)) for k in (0.25, 0.5, 2.0, 4.0)])
+    rows = []
+    for z in sizes
+        sz = setup(z.net, pvs; T = 24)
+        w = Dict(case => window(sz, case, A) for case in (:soft, :cyclic))
+        say(@sprintf("  %-5s x %-5s  soft %s | cyclic %s%s", z.kind, string(z.value), fmt(w[:soft]), fmt(w[:cyclic]), w[:soft].bad + w[:cyclic].bad == 0 ? "" : "   ** failed checks"))
+        push!(rows, (; z.kind, z.value, w))
+    end
+    open(joinpath(OUT_DIR, "bound_storage.csv"), "w") do io
+        println(io, "varied,value,case,lo_deg,hi_deg,failed_checks,predicted_lo_deg,predicted_hi_deg,no_battery_lo_deg,no_battery_hi_deg")
+        for r in rows, case in (:soft, :cyclic)
+            @printf io "%s,%g,%s,%.6f,%.6f,%d,%.6f,%.6f,%.6f,%.6f\n" r.kind r.value case r.w[case].lo r.w[case].hi r.w[case].bad day_lo day_hi hour_lo hour_hi
+        end
+    end
+
+    plot_style!()
+    SOFT, CYC = colorant"#7a4fd0", colorant"#1c8a5a"
+    x = [y.dd for y in sweep]
+    p1 = plot(x, [Ea(y) / 1000 for y in sweep]; label = label(A), color = SUB_COLORS[1], lw = 2, xlabel = "$(dlabel(A)) − $(dlabel(B)) (deg)", ylabel = "MWh per day",
+              title = "Daily energy imported, batteries idle", legend = :top)
+    plot!(p1, x, [Eb(y) / 1000 for y in sweep]; label = label(B), color = SUB_COLORS[2], lw = 2)
+    hline!(p1, [0]; color = MUTED, lw = 1, label = "")
+    vline!(p1, [hour_lo, hour_hi]; color = SUB_COLORS[1], lw = 1, ls = :dash, label = "First hour back-feeds")
+    vline!(p1, [day_lo, day_hi]; color = CYC, lw = 1.5, ls = :dash, label = "Daily import reaches zero")
+    hrs = [r for r in rows if r.kind == "hours"]
+    hv = [r.value for r in hrs]
+    p2 = plot(hv, [r.w[:soft].hi for r in hrs]; label = "Soft end SOC", color = SOFT, lw = 2, marker = :circle, xscale = :log2, xticks = (hv, string.(hv)),
+              xlabel = "Battery duration (h) at the same kW", ylabel = "Window edge (deg)", title = "Window against stored energy", legend = :right)
+    plot!(p2, hv, [r.w[:soft].lo for r in hrs]; label = "", color = SOFT, lw = 2, marker = :circle)
+    plot!(p2, hv, [r.w[:cyclic].hi for r in hrs]; label = "End = start", color = CYC, lw = 2, marker = :diamond)
+    plot!(p2, hv, [r.w[:cyclic].lo for r in hrs]; label = "", color = CYC, lw = 2, marker = :diamond)
+    hline!(p2, [day_lo, day_hi]; color = CYC, lw = 1.5, ls = :dash, label = "Daily import reaches zero")
+    hline!(p2, [hour_lo, hour_hi]; color = SUB_COLORS[1], lw = 1, ls = :dash, label = "No batteries")
+    savefig(plot(p1, p2; layout = (1, 2), size = (1150, 400), left_margin = 6Plots.mm, bottom_margin = 6Plots.mm), joinpath(OUT_DIR, "fig_bound.png"))
+    say("  wrote bound_sweep.csv, bound_storage.csv, fig_bound.png")
 end
 
 # ---- stage: tables ------------------------------------------------------------------------------------------
