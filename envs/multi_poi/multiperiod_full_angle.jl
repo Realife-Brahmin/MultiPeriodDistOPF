@@ -23,9 +23,12 @@
 # Objective, in dollars, with the conventions of ddp/examples/power_system:
 #     sum_t c[t] * dt * sum_s P_Subs[s,t]                     energy bought (equal prices)
 #   + C_B * dt * sum_{k,t} P_B[k,t]^2                         battery cycling cost, P_B in kW
-#   + gamma * sum_k (B[k,T] - B[k,0])^2                       soft terminal SOC, B in p.u.h
-# `terminal = :soft` (the standing rule), `:cyclic` (B[T] == B[0], a day that can repeat) or
-# `:free` (no terminal term).
+#   + gamma * sum_k (B[k,T] - B[k,0])^2                       only with terminal = :soft
+# Terminal state of charge: `terminal = :cyclic` (the default) is the HARD B[T] == B[0], a
+# day that can repeat -- the user's choice for MSOPF, where feasibility is the question.
+# `:soft` replaces it with the gamma penalty above, the DDP standing rule; here it lets the
+# batteries end the day fuller, so its feasible window is one day's borrowing and grows
+# without bound with battery size. `:free` has no terminal term at all.
 #
 # PROFILES
 # --------
@@ -93,7 +96,7 @@ angle_at(delta_deg, name, t) = (d = delta_deg[name]; d isa AbstractVector ? d[t]
 """
     solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24/T, pvs = [], pv_factor = zeros(T),
                       pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
-                      terminal = :soft, C_B = 0.0, gamma = 0.0, no_backflow = true,
+                      terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                       V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000)
 
 The T-period problem described at the top of this file. `delta_deg[name]` is each source's
@@ -122,7 +125,7 @@ Returns powers in kW/kvar, energies in kWh, voltages in per unit; `cost` splits 
 """
 function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T, pvs = [], pv_factor = zeros(T),
                            pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
-                           terminal = :soft, C_B = 0.0, gamma = 0.0, no_backflow = true,
+                           terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0)
     model = new_model(:ipopt)

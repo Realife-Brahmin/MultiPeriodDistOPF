@@ -171,14 +171,23 @@ one, and name it for the workstream it serves.
 - **Multi-period MSOPF (2026-10-11):** `envs/multi_poi/multiperiod_full_angle.jl`
   and `root_level/multiperiod_study.jl`; results in
   `envs/multi_poi/results/multiperiod/`. User decisions: the angle difference is
-  constant over the day; terminal SOC is SOFT, as in DDP (a hard end = start rule
-  is a CSV diagnostic only, never the reported result); `C_B` and `gamma` by the
-  DDP sizing rules on this deck's fleet; PV real power fixed, PV reactive power an
-  optimization variable. Headline: over a 24 h day batteries roughly double the
-  feasible angle window (subs3+4, PV on: 0.51 -> 1.09 deg), about half of what
-  hour-by-hour solves suggest, and the widest window found anywhere is +-1.6 deg.
-  Method notes that cost hours are in `envs/multi_poi/README.md` (never ask Ipopt
-  to prove infeasibility; release each Ipopt problem; stop Julia by PID).
+  constant over the day; **terminal SOC is HARD in MSOPF, `B[T] == B[0]`** (an
+  MSOPF-only exception to the soft standing rule above, which still holds for DDP
+  and tADMM: feasibility is the question here, and a soft terminal lets batteries
+  end the day fuller, so its window grows without bound with battery size); `C_B`
+  by the DDP sizing rule on this deck's fleet; PV real power fixed, PV reactive
+  power an optimization variable. **No new grid assets, ever** (no phase shifters,
+  soft open points or added storage as a "solution"): only dispatch of what
+  exists. **Commit and push MSOPF work as it is done**, code and paper alike.
+  Headline: over a 24 h day batteries roughly double the feasible angle window
+  (subs3+4, PV on: 0.51 -> 1.05 deg), about half of what hour-by-hour solves
+  suggest. What limits it: a constant angle difference drives a constant
+  circulating power (826 kW/deg here = V^2/|Z_loop|), batteries only move energy
+  between hours, so the sustainable difference is about Pbar*|Z|/V^2 rad (the
+  constrained substation's mean import), and more storage or power beyond what
+  flattens the day adds nothing. Method notes that cost hours are in
+  `envs/multi_poi/README.md` (never ask Ipopt to prove infeasibility; release
+  each Ipopt problem; stop Julia by PID).
 
 ## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
 

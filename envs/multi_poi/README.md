@@ -59,9 +59,13 @@ period and links the periods through each battery's energy. Its conventions foll
 
 - **Profiles:** load, price and PV shapes from `envs/tadmm/root_level/config.jl`, with periodic sampling.
 - **Batteries:** one power variable each, lossless, 30–95% state of charge from 62.5%.
-- **Costs:** `C_B` and the soft terminal weight `gamma` come from the sizing rules in
+- **Costs:** `C_B` comes from the sizing rule in
   `ddp/examples/power_system/terminal_soc_penalty.jl`, applied to this deck's fleet.
-- **Terminal SOC is soft.** A hard end = start rule (`terminal = :cyclic`) is kept only as a diagnostic.
+- **Terminal SOC is hard: every battery ends the day where it started** (`terminal = :cyclic`, the
+  default). This is an MSOPF-only exception to the DDP rule of a soft terminal SOC, decided by the user on
+  2026-10-11 because feasibility is the question here. The soft rule (`terminal = :soft`, with `gamma`
+  from the same sizing file) is kept as a diagnostic: it lets batteries end the day fuller, so its
+  feasible window grows without bound with battery size, while the hard rule levels off.
 - **PV:** real power is fixed at `lambda_PV * Pmpp`; reactive power is a decision within the inverter rating.
 
 Three things to know before running sweeps with it (each cost hours on 2026-10-11):

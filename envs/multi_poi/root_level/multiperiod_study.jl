@@ -9,9 +9,12 @@
 #   nobatt    batteries idle (PV reactive power, where PV is on, is still dispatched);
 #   hourly    batteries, each hour solved alone with unlimited energy: the intersection of
 #             the hourly windows -- what a snapshot study reports;
-#   soft      batteries with SOC dynamics and the soft terminal SOC -- the user's standing
-#             rule, and THE multi-period result reported in tables and figures;
-#   cyclic    the same with a hard B[T] == B[0]; a diagnostic kept in the CSVs only.
+#   cyclic    batteries with SOC dynamics and a HARD terminal SOC, B[T] == B[0]: a day that
+#             can repeat. THE multi-period result reported in tables and figures (user,
+#             2026-10-11: feasibility is the concern here, so the terminal SOC is hard);
+#   soft      the same with only the soft terminal penalty of the DDP work; a diagnostic kept
+#             in the CSVs. Its window is one day's borrowing: the batteries may end fuller,
+#             so it grows without bound with battery size (stage "bound").
 # Containment nobatt <= cyclic <= soft <= hourly is checked and printed.
 #
 # PV modes: "off"; "unity" (real power only); "qfree" (each unit's reactive power a decision
@@ -72,6 +75,7 @@ function setup(net, pvs; T, pv = "qfree", ideal = false)
     return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal)
 end
 
+const DAY = :cyclic            # the whole-day case that is reported: hard terminal SOC
 const VTOL = 1e-4              # per unit: total limit violation below this counts as feasible
 const LIMIT = 20.0             # degrees: how far a ray is followed
 const RAY_OK = (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
@@ -218,14 +222,14 @@ if "main" in STAGES
         end
     end
 
-    # The cost-optimal day (soft terminal SOC, PV reactive power free) at equal angles and at an
-    # angle only batteries make feasible: halfway between the no-battery edge and the soft edge.
+    # The cost-optimal day (hard terminal SOC, PV reactive power free) at equal angles and at an
+    # angle only batteries make feasible: halfway between the no-battery edge and the day's edge.
     s, w = S["qfree"], res["qfree"][1]
-    d_star = round((w[:nobatt].hi + w[:soft].hi) / 2; digits = 2)
+    d_star = round((w[:nobatt].hi + w[DAY].hi) / 2; digits = 2)
     days = []
     for dd in (0.0, d_star)
         d = Dict(A => dd, B => 0.0)
-        x = solve_case(s, d, :soft)
+        x = solve_case(s, d, DAY)
         rp = replay_opendss(net, x, d; load_factor = s.lam, pvs = s.P, pv_factor = s.F)
         say(@sprintf("  day at %+.2f deg: %s, cost \$%.2f (energy %.2f, cycling %.2f); OpenDSS replay |dP| %.1e kW, |dQ| %.1e kvar, |dV| %.1e pu, converged %s, PQ %s", dd, x.status, x.cost.total, x.cost.energy, x.cost.cycling, rp.dP, rp.dQ, rp.dV, rp.converged, rp.pq_band))
         push!(days, (; dd, x, rp))
@@ -263,7 +267,7 @@ if "main" in STAGES
         plot!(p, hrs, [h.batt.lo for h in hw]; color = BATT, lw = 1.2, label = "")
         plot!(p, hrs, [h.nobatt.hi for h in hw]; fillrange = [h.nobatt.lo for h in hw], fillalpha = 0.30, color = SUB_COLORS[1], lw = 1.2, label = "No batteries")
         plot!(p, hrs, [h.nobatt.lo for h in hw]; color = SUB_COLORS[1], lw = 1.2, label = "")
-        r[:soft].feasible && hline!(p, [r[:soft].lo, r[:soft].hi]; color = SOFT, lw = 2, label = "Batteries, whole day")
+        r[DAY].feasible && hline!(p, [r[DAY].lo, r[DAY].hi]; color = SOFT, lw = 2, label = "Batteries, whole day")
         hline!(p, [0]; color = MUTED, lw = 1, label = "")
         push!(panels, p)
     end
@@ -361,7 +365,7 @@ if "three" in STAGES
     plot_style!()
     p = plot(; xlabel = "$(dlabel(A)) − $(dlabel(REF)) (deg)", ylabel = "$(dlabel(B)) − $(dlabel(REF)) (deg)", aspect_ratio = :equal, legend = :outerright,
              title = "Feasible angle region, three substations (T = 24)", size = (820, 560))
-    for (case, col, lab, alpha) in ((:soft, colorant"#7a4fd0", "Batteries, whole day", 0.18), (:nobatt, SUB_COLORS[1], "No batteries", 0.35))
+    for (case, col, lab, alpha) in ((DAY, colorant"#7a4fd0", "Batteries, whole day", 0.18), (:nobatt, SUB_COLORS[1], "No batteries", 0.35))
         reg[case].feasible || continue
         xs = reg[case].r .* cos.(ths); ys = reg[case].r .* sin.(ths)
         plot!(p, [xs; xs[1]], [ys; ys[1]]; seriestype = :shape, fillalpha = alpha, color = col, lw = 1.5, linecolor = col, label = lab)
@@ -488,9 +492,10 @@ if "tables" in STAGES
         end
         return d, order
     end
-    # Tables report the soft terminal SOC only; the cyclic diagnostic stays in the CSVs.
-    cols = Dict("nobatt" => "No batteries", "hourly" => "Batt., hourly", "soft" => "Batt., whole day")   # must fit one IEEE column
-    three = ("nobatt", "soft")
+    # Tables report the hard terminal SOC (DAY) only; the soft diagnostic stays in the CSVs.
+    day = string(DAY)
+    cols = Dict("nobatt" => "No batteries", "hourly" => "Batt., hourly", day => "Batt., whole day")   # must fit one IEEE column
+    three = ("nobatt", day)
     open(joinpath(OUT_DIR, "tables.tex"), "w") do io
         println(io, "% Generated by envs/multi_poi/root_level/multiperiod_study.jl -- do not edit by hand.")
         function table(file, nkey, caption, lab, head, keyfmt; cases = three)
@@ -505,7 +510,7 @@ if "tables" in STAGES
             println(io, "\\hline\n\\end{tabular}\n\\end{table}\n")
         end
         pvname = Dict("off" => "Off", "unity" => "On, unity p.f.", "qfree" => "On, \$q\$ free")
-        table("main_horizon_windows.csv", 1, "Feasible window of a constant \$\\delta_{s_3}-\\delta_{s_4}\$ (deg) over a 24\\,h day, ieee123. ``Hourly'': each hour solved alone, batteries without memory.", "tab:mp-main", "PV", k -> pvname[k[1]]; cases = ("nobatt", "hourly", "soft"))
+        table("main_horizon_windows.csv", 1, "Feasible window of a constant \$\\delta_{s_3}-\\delta_{s_4}\$ (deg) over a 24\\,h day, ieee123. ``Hourly'': each hour solved alone, batteries without memory.", "tab:mp-main", "PV", k -> pvname[k[1]]; cases = ("nobatt", "hourly", day))
         table("horizon_windows.csv", 1, "The same window versus horizon length \$T\$ (\$\\Delta t = 24/T\$\\,h).", "tab:mp-horizon", "\$T\$", k -> k[1])
         table("zs_windows.csv", 1, "The same window versus source impedance \$|Z_s|\$ (\$\\Omega\$), \$T=24\$.", "tab:mp-zs", "\$|Z_s|\$", k -> k[1] == "0.0" ? "0 (stiff)" : (k[1] == "0.8" ? "0.8 (typical)" : k[1]))
         table("duration_windows.csv", 1, "The same window versus battery duration (kWh per kW), \$T=24\$.", "tab:mp-duration", "Hours", k -> k[1])
