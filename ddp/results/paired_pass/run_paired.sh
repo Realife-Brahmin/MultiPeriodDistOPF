@@ -29,6 +29,11 @@ export FILTERDDP_SCREEN=substation,vupper,ell,psubs FILTERDDP_LOADFLOW_START=1 F
 export FILTERDDP_LEAN_VALUE=1 FILTERDDP_HALF_BLOCK=1 FILTERDDP_LEAN_EXACT=1 FILTERDDP_REUSE_BARRIER=1
 unset FILTERDDP_DIAG_HESSIAN FILTERDDP_DIAG_HESSIAN_FLOOR FILTERDDP_SKIP_SOLUTION_WRITE FILTERDDP_NEAR_OPT_REFERENCE FILTERDDP_THREADED FILTERDDP_PINT_SCAN
 export FILTERDDP_PAIRED_SWEEP=$MODE FILTERDDP_PAIRED_CHECK=${PAIRED_CHECK:-0}
+# PAIRED_INPLACE=0: the stages' functions and the combinations allocated afresh every
+# pass, as before 2026-10-11 (same solve; checked on ieee123 T=6, 24 and med2522 T=6).
+# PAIRED_MAIN: another script in place of the wrapper, e.g. alloc_profile.jl.
+export FILTERDDP_PAIRED_INPLACE=${PAIRED_INPLACE:-1}
+[ -n "${PAIRED_MAX_ITERATIONS:-}" ] && export FILTERDDP_MAX_ITERATIONS=$PAIRED_MAX_ITERATIONS
 if [ "$MODE" = count ]; then
   export FILTERDDP_PARSIM=1 FILTERDDP_WARMUP=${PAIRED_WARMUP:-3}
   case $SYS in ieee123C_1ph) export JULIA_NUM_THREADS=1;; *) export JULIA_NUM_THREADS=${JULIA_NUM_THREADS:-8};; esac
@@ -37,7 +42,7 @@ else
 fi
 LOG="$OUT/fddp_${SYS}_T${T}_paired_${TAG}.log"
 MARK="$OUT/.mark_$$"; touch "$MARK"
-julia --startup-file=no --project=envs/ddp2026 ddp/results/paired_pass/paired_main.jl "$SYS" "$T" solve > "$LOG" 2>&1
+julia --startup-file=no --project=envs/ddp2026 "${PAIRED_MAIN:-ddp/results/paired_pass/paired_main.jl}" "$SYS" "$T" solve > "$LOG" 2>&1
 SOL=ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CBsystem.jls
 SOLDIR=ddp/results/kkt_ordering/captures/solutions; mkdir -p "$SOLDIR"
 RUNTAG="parsim_${SYS}_T${T}_paired_${TAG}"
