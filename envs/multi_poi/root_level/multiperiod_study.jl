@@ -33,7 +33,13 @@
 #   bound     what limits the battery window: the circulating power per degree, the angle at
 #             which a substation's daily energy import reaches zero, and the windows against
 #             battery energy and power;
+#   estimate  that limit as an estimate (worst hour without batteries, daily mean with them)
+#             against the measured windows of stage main, per PV mode;
 #   tables    rebuild the LaTeX tables from the CSVs (no solves).
+# Two more, heavy and run only when named:
+#   ieee2522  the 2522-bus deck with a second substation added in memory at several buses:
+#             no-battery and whole-day windows, the same limit estimate, an OpenDSS replay;
+#   large10k  the same on the 10k-bus deck, a substation at the end of one feeder.
 #
 # Run from the repo root:
 #     julia --project=envs/tadmm envs/multi_poi/root_level/multiperiod_study.jl [stage ...]
@@ -42,24 +48,24 @@
 
 include(joinpath(@__DIR__, "..", "multiperiod_full_angle.jl"))
 include(joinpath(@__DIR__, "..", "sweep_common.jl"))
-using Logging
+using Logging, SparseArrays
 
 const SYSTEM = "ieee123_5poi_1ph"
 const MAIN_PAIR = ("subs3", "subs4")
 const ALL_SUBS = ["subs1", "subs2", "subs3", "subs4", "subs5"]
 const X_OVER_R = 25.0
 const OUT_DIR = normpath(joinpath(@__DIR__, "..", "results", "multiperiod"))
-const STAGES = isempty(ARGS) ? ["main", "horizon", "zs", "duration", "pairs", "three", "five", "bound", "tables"] : lowercase.(ARGS)
+const STAGES = isempty(ARGS) ? ["main", "horizon", "zs", "duration", "pairs", "three", "five", "bound", "estimate", "tables"] : lowercase.(ARGS)
 mkpath(OUT_DIR)
 say(args...) = (println(args...); flush(stdout))
 
 # ---- setup -------------------------------------------------------------------------------------------
-function load_sources(srcs)
-    kw = (; sources = collect(srcs), snapshot = true, load_band = (0.5, 1.5))
+function load_sources(srcs; system = SYSTEM, extra = String[])
+    kw = (; sources = collect(srcs), snapshot = true, load_band = (0.5, 1.5), extra)
     pvs = with_logger(NullLogger()) do                  # "? PVSystem.x.Pmpp" logs a warning per unit
-        read_pv(SYSTEM; kw...)
+        read_pv(system; kw...)
     end
-    compile_deck(SYSTEM; disable = ["PVSystem"], kw...)
+    compile_deck(system; disable = ["PVSystem"], kw...)
     return read_network(), pvs
 end
 
@@ -114,8 +120,12 @@ function rays(s, case, dirs; hour = nothing, check = :inside)
     at0 = solve_multiperiod(net, equal_angles(net); kw..., objective = :violation)
     feasible = solved(at0) && at0.violation <= VTOL
     r, capped, bad = fill(NaN, length(dirs)), fill(false, length(dirs)), 0
-    feasible || return (; feasible, r, capped, bad)
+    # What the edge solution sits against: the smallest substation import over the day (kW;
+    # ~0 when no-backflow binds) and the voltage extremes (pu; 0.95 / 1.05 when the band binds).
+    bind = fill((; minP = NaN, vmin = NaN, vmax = NaN), length(dirs))
+    feasible || return (; feasible, r, capped, bad, bind)
     tag = hour === nothing ? string(case) : "$case, hour $hour"
+    nb = banded(net)
     for (i, dir) in enumerate(dirs)
         x = solve_multiperiod(net, equal_angles(net); kw..., objective = :ray, ray_dir = dir, ray_limit = LIMIT, start = at0)
         if !(x.status in RAY_OK) || !isfinite(x.r)
@@ -124,6 +134,8 @@ function rays(s, case, dirs; hour = nothing, check = :inside)
             continue
         end
         r[i], capped[i] = x.r, x.r >= LIMIT - 1e-6
+        bind[i] = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
+                   vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
         (check === :none || x.r <= 1e-6) && continue
         inn = solve_multiperiod(net, Dict(k => 0.99 * x.r * v for (k, v) in dir); kw..., objective = :violation, start = x)
         good = solved(inn) && inn.violation <= VTOL
@@ -133,14 +145,15 @@ function rays(s, case, dirs; hour = nothing, check = :inside)
         end
         good || (bad += 1; say(@sprintf("  ** edge check failed (%s): r = %.4f deg", tag, x.r)))
     end
-    return (; feasible, r, capped, bad)
+    return (; feasible, r, capped, bad, bind)
 end
 
 "Window of delta_a, every other source at 0: the two rays along +a and -a."
 function window(s, case, a; kwargs...)
     dir(sgn) = Dict(x.name => (x.name == a ? sgn : 0.0) for x in s.net.sources)
     y = rays(s, case, [dir(+1.0), dir(-1.0)]; kwargs...)
-    return (; y.feasible, lo = -y.r[2], hi = y.r[1], lo_capped = y.capped[2], hi_capped = y.capped[1], y.bad)
+    return (; y.feasible, lo = -y.r[2], hi = y.r[1], lo_capped = y.capped[2], hi_capped = y.capped[1], y.bad,
+            lo_bind = y.bind[2], hi_bind = y.bind[1])
 end
 
 function intersect_windows(ws)
@@ -479,6 +492,163 @@ if "bound" in STAGES
     say("  wrote bound_sweep.csv, bound_storage.csv, fig_bound.png")
 end
 
+# ---- stage: estimate --------------------------------------------------------------------------------------
+"""
+    import_estimate(s, a, b; h = 0.1)
+
+Where the window of delta_a - delta_b should close if a constant angle difference only adds a
+constant circulating power. Batteries idle and no-backflow off: the imports at equal angles
+and their slope per degree (central difference over +-h). Returns the worst-hour estimate
+`hour` (no batteries: the first hour to back-feed) and the daily-mean estimate `day`
+(batteries that end the day where they started: the daily energy import reaches zero).
+"""
+function import_estimate(s, a, b; h = 0.1)
+    idle(dd) = solve_multiperiod(s.net, Dict(a => dd, b => 0.0); problem(s, :nobatt)..., no_backflow = false)
+    x0, xp, xm = idle(0.0), idle(+h), idle(-h)
+    (x0.ok && xp.ok && xm.ok) || return nothing
+    Ka = (xp.P_subs_kW[a] .- xm.P_subs_kW[a]) ./ 2h       # kW per degree into a
+    Kb = (xm.P_subs_kW[b] .- xp.P_subs_kW[b]) ./ 2h       # ... and out of b
+    Pa, Pb = x0.P_subs_kW[a], x0.P_subs_kW[b]
+    return (; hour = (-minimum(Pa ./ Ka), minimum(Pb ./ Kb)), day = (-sum(Pa) / sum(Ka), sum(Pb) / sum(Kb)),
+            K = sum(Ka) / length(Ka), Pa = sum(Pa) / length(Pa), Pb = sum(Pb) / length(Pb), minPa = minimum(Pa), minPb = minimum(Pb))
+end
+
+# The estimate against the measured windows of stage "main", per PV mode. With PV off or at
+# unity power factor nothing but the batteries can be dispatched and the estimate should be
+# exact; with reactive power free, the edge solve steers it and the estimate (which uses the
+# cost-optimal reactive power at equal angles) does not.
+function estimate_stage()
+    A, B = MAIN_PAIR
+    net, pvs = load_sources([A, B])
+    file = joinpath(OUT_DIR, "main_horizon_windows.csv")
+    isfile(file) || (say("  ** estimate needs main_horizon_windows.csv: run stage main first"); return)
+    measured = Dict((String(r[1]), String(r[2])) => (parse(Float64, r[4]), parse(Float64, r[5])) for r in (split(l, ',') for l in readlines(file)[2:end]))
+    say("\n", "="^110, "\nESTIMATE  $A + $B, T = 24: constant circulating power against the measured windows")
+    open(joinpath(OUT_DIR, "bound_estimate.csv"), "w") do io
+        println(io, "pv,case,estimate_lo_deg,estimate_hi_deg,measured_lo_deg,measured_hi_deg,kW_per_deg,mean_import_a_kW,mean_import_b_kW,min_import_a_kW,min_import_b_kW")
+        for m in ("off", "unity", "qfree")
+            e = import_estimate(setup(net, pvs; T = 24, pv = m), A, B)
+            e === nothing && (say("  ** idle solves failed for PV ", m); continue)
+            for (case, est) in (("nobatt", e.hour), (string(DAY), e.day))
+                lo, hi = measured[(m, case)]
+                say(@sprintf("  PV %-5s %-6s estimate [%+.3f, %+.3f], measured [%+.3f, %+.3f]", m, case, est[1], est[2], lo, hi))
+                @printf io "%s,%s,%.6f,%.6f,%.6f,%.6f,%.3f,%.3f,%.3f,%.3f,%.3f\n" m case est[1] est[2] lo hi e.K e.Pa e.Pb e.minPa e.minPb
+            end
+        end
+    end
+    say("  wrote bound_estimate.csv")
+end
+"estimate" in STAGES && estimate_stage()
+
+# ---- stages: ieee2522, large10k ---------------------------------------------------------------------------
+# The two big decks have one substation. A second one is added in memory (the decks on disk are
+# untouched): a Vsource at 1.05 pu behind the source impedance, tied to a chosen bus by a
+# 1e-6 ohm jumper. Where it goes is a dimension of the study, so each deck lists several buses.
+#   ieee2522: Zs = 0.311 ohm, the 0.5 GVA short-circuit level of the 20 kV decks applied at
+#             12.47 kV (an assumption: the literature value is for 20 kV). Buses 947, 996, 1120
+#             and 1216 lie along the main trunk (3.4 to 10.1 ohm from the substation); 546 is
+#             the electrically farthest bus, the tip of a thin lateral.
+#   large10k: 102 identical feeders in a star, 1032 MW in total; the head bus is an aggregate,
+#             so the sources stay stiff. Bus 1120 is the end of one feeder.
+# Not in the default stage list (heavy): pass the stage name. LARGE_AT=bus[,bus] and LARGE_T=n
+# restrict a run; rows are merged into the CSV by (system, bus, T), so runs can be split.
+const LARGE = Dict(
+    "ieee2522" => (; system = "ieee2522C_1ph", kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
+    "large10k" => (; system = "large10kC_1ph", kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
+const LARGE_HEADER = "system,bus,T,case,feasible_at_equal_angles,lo_deg,hi_deg,lo_at_limit,hi_at_limit,failed_checks," *
+                     "predicted_lo_deg,predicted_hi_deg,lo_min_import_kW,lo_vmin_pu,lo_vmax_pu,hi_min_import_kW,hi_vmin_pu,hi_vmax_pu," *
+                     "z_between_ohm,kW_per_deg,mean_import_new_kW,mean_import_old_kW,load_kW,seconds"
+
+"Impedance between the two sources' buses by one sparse solve (source_separation is dense: 1.7 GB at 10k buses)."
+function separation_sparse(net)
+    idx, n = Dict(b => i for (i, b) in enumerate(net.buses)), length(net.buses)
+    I, J, V = Int[], Int[], ComplexF64[]
+    for l in net.lines
+        y, i, j = -l.Y[1, 2], idx[l.from], idx[l.to]
+        append!(I, (i, j, i, j)); append!(J, (i, j, j, i)); append!(V, (y, y, -y, -y))
+    end
+    L = sparse(I, J, V, n, n)[1:n-1, 1:n-1]            # last bus as the reference node
+    a, b = idx[net.sources[1].bus], idx[net.sources[2].bus]
+    e = zeros(ComplexF64, n - 1)
+    a < n && (e[a] += 1); b < n && (e[b] -= 1)
+    x = L \ e
+    return (a < n ? x[a] : 0.0im) - (b < n ? x[b] : 0.0im)
+end
+
+"Replace the rows of `path` whose first `nkey` fields match any of `rows`, keep the rest."
+function merge_csv(path, header, nkey, rows)
+    key(l) = join(split(l, ',')[1:nkey], ',')
+    old = isfile(path) ? readlines(path)[2:end] : String[]
+    new = Set(key.(rows))
+    open(path, "w") do io
+        println(io, header)
+        foreach(l -> println(io, l), filter(l -> !(key(l) in new), old))
+        foreach(l -> println(io, l), rows)
+    end
+end
+
+function large_stage(name)
+    cfg = LARGE[name]
+    T = parse(Int, get(ENV, "LARGE_T", string(cfg.T)))
+    at = haskey(ENV, "LARGE_AT") ? String.(split(ENV["LARGE_AT"], ',')) : cfg.at
+    A, B = "subs2", "source"                              # the added substation and the deck's own
+    rz = cfg.zs / sqrt(1 + X_OVER_R^2)
+    imp = cfg.zs == 0 ? "R1=0 X1=1e-8 R0=0 X0=1e-8" : @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
+    say("\n", "="^110, "\n", uppercase(name), "  $(cfg.system) with a second substation, T = $T (dt = $(24 / T) h), Zs = $(cfg.zs) ohm")
+    for far in at
+        t0 = time()
+        extra = ["New Line.poi2 Phases=1 Bus1=2s Bus2=$far r1=1e-06 x1=1e-06 c1=0 c0=0",
+                 "New Vsource.subs2 Phases=1 Bus1=2s basekv=$(cfg.kV) pu=1.05 angle=0 $imp",
+                 "Edit Vsource.source $imp"]
+        net, pvs = load_sources([B, A]; system = cfg.system, extra)
+        s = setup(net, pvs; T)
+        PL = sum(d.kW for d in net.loads)
+        zsep = abs(separation_sparse(net))
+        zloop = abs(separation_sparse(net) + sum(x.z_series for x in net.sources))
+        say(@sprintf("\n  substation at bus %s: %d buses, load %.0f kW, %d batteries %.0f kW / %.0f kWh, %d PV %.0f kW; |Z| between the two %.3f ohm (loop %.3f)",
+                     far, length(net.buses), PL, length(net.batteries), sum(b.kW_rated for b in net.batteries), sum(b.kWh_rated for b in net.batteries), length(pvs), sum(p.kW for p in pvs), zsep, zloop))
+
+        e = import_estimate(s, A, B)
+        pred = (; nobatt = (NaN, NaN), cyclic = (NaN, NaN))
+        K = Pa = Pb = NaN
+        if e !== nothing
+            K, Pa, Pb, pred = e.K, e.Pa, e.Pb, (; nobatt = e.hour, cyclic = e.day)
+            say(@sprintf("    idle: imports at equal angles %s %.0f kW mean (%.0f min), %s %.0f kW mean (%.0f min); %.0f kW/deg (V^2/|Z_loop| = %.0f)",
+                         A, Pa, e.minPa, B, Pb, e.minPb, K, (1.05 * cfg.kV)^2 * 1e3 / zloop * pi / 180))
+        else
+            say("    ** idle solves failed")
+        end
+
+        rows = String[]
+        for case in (:nobatt, DAY)
+            tc = time()
+            w = window(s, case, A)
+            p = case === :nobatt ? pred.nobatt : pred.cyclic
+            say(@sprintf("    %-6s window %s deg, predicted [%+.3f, %+.3f]%s   (%.0f s, peak RSS %.1f GB)", case, fmt(w), p[1], p[2], w.bad == 0 ? "" : "   ** failed checks", time() - tc, Sys.maxrss() / 2^30))
+            w.feasible && say(@sprintf("           lower edge: smallest import %.2f kW, V %.4f-%.4f pu; upper edge: smallest import %.2f kW, V %.4f-%.4f pu",
+                                       w.lo_bind.minP, w.lo_bind.vmin, w.lo_bind.vmax, w.hi_bind.minP, w.hi_bind.vmin, w.hi_bind.vmax))
+            push!(rows, @sprintf("%s,%s,%d,%s,%s,%.6f,%.6f,%s,%s,%d,%.6f,%.6f,%.4f,%.6f,%.6f,%.4f,%.6f,%.6f,%.6f,%.3f,%.3f,%.3f,%.3f,%.0f",
+                                 cfg.system, far, T, case, w.feasible, w.lo, w.hi, w.lo_capped, w.hi_capped, w.bad, p[1], p[2],
+                                 w.lo_bind.minP, w.lo_bind.vmin, w.lo_bind.vmax, w.hi_bind.minP, w.hi_bind.vmin, w.hi_bind.vmax, zsep, K, Pa, Pb, PL, time() - tc))
+        end
+        merge_csv(joinpath(OUT_DIR, "large_windows.csv"), LARGE_HEADER, 3, rows)
+
+        # Standing practice: check a dispatch against OpenDSS before trusting the instance.
+        d0 = equal_angles(net)
+        x = solve_case(s, d0, DAY)
+        if x.ok
+            rp = replay_opendss(net, x, d0; load_factor = s.lam, pvs = s.P, pv_factor = s.F)
+            say(@sprintf("    cost-optimal day at equal angles: %s, \$%.2f; OpenDSS replay |dP| %.1e kW, |dQ| %.1e kvar, |dV| %.1e pu, converged %s, PQ %s",
+                         x.status, x.cost.total, rp.dP, rp.dQ, rp.dV, rp.converged, rp.pq_band))
+        else
+            say("    ** cost-optimal day at equal angles failed: ", x.status)
+        end
+        say(@sprintf("    bus %s done in %.0f s", far, time() - t0))
+    end
+    say("  wrote large_windows.csv")
+end
+foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k"]))
+
 # ---- stage: tables ------------------------------------------------------------------------------------------
 if "tables" in STAGES
     readcsv(f) = (p = joinpath(OUT_DIR, f); isfile(p) && filesize(p) > 0 ? [split(l, ',') for l in readlines(p)[2:end]] : nothing)
@@ -516,6 +686,17 @@ if "tables" in STAGES
         table("duration_windows.csv", 1, "The same window versus battery duration (kWh per kW), \$T=24\$.", "tab:mp-duration", "Hours", k -> k[1])
         table("pairs_windows.csv", 3, "Windows for every substation pair, \$T=24\$; \$|Z|\$ is the feeder impedance between the pair.", "tab:mp-pairs", "Pair (\$|Z|\$, \$\\Omega\$)", k -> @sprintf("%s--%s (%.2f)", replace(k[1], "subs" => ""), replace(k[2], "subs" => ""), parse(Float64, k[3])))
         table("five_windows.csv", 1, "All five substations: window of one substation's angle against the other four (deg), \$T=24\$.", "tab:mp-five", "Moved", k -> "Subs " * replace(k[1], "subs" => ""))
+        est = readcsv("bound_estimate.csv")
+        if est !== nothing
+            iv(lo, hi) = @sprintf("\$[%.3f, %+.3f]\$", parse(Float64, lo), parse(Float64, hi))
+            short = Dict("off" => "Off", "unity" => "Unity p.f.", "qfree" => "\$q\$ free")
+            println(io, "\\begin{table}[!t]\n\\centering\n\\caption{Constant circulating power as an estimate of the window (deg), \$T=24\$: the worst hour without batteries, the daily mean with them.}\n\\label{tab:mp-estimate}\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llll}\n\\hline")
+            println(io, "PV & Batteries & Estimate & Measured \\\\\n\\hline")
+            for r in est
+                println(io, short[r[1]], " & ", r[2] == "nobatt" ? "No" : "Whole day", " & ", iv(r[3], r[4]), " & ", iv(r[5], r[6]), " \\\\")
+            end
+            println(io, "\\hline\n\\end{tabular}\n\\end{table}\n")
+        end
     end
     say("\nwrote ", joinpath(OUT_DIR, "tables.tex"))
 end
