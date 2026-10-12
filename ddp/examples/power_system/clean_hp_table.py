@@ -17,6 +17,12 @@ FilterDDP (tolerance 1e-5, diagonal and exact Hessian): time of that iterate
           combination (rounds from the pint_scan2 logs of the same system and
           T, slowest combination of each round) and every stage's own
           sequential work counted as the slowest stage
+Collections (logs of paired_pass.jl with pre_gc_s, post_gc_s): the stage times
+are without the collections that fell in them, and a worker per period is
+counted as collecting its own garbage, 1/stages of the pass's; --gc=sequential
+counts all of it in sequence instead. Older logs have the collections inside
+the stage times: the slowest stage of a pass carries its longest pause and the
+pauses in the other stages are not counted.
 Primal infeasibility: `internal` is each solver's own (an inequality counted
 through its slack); `original` is the violation of the constraints as posed.
 """
@@ -91,6 +97,9 @@ def ddp(path):
         elif line.startswith("FILTERDDP_PARSIM_BACKWARD"):
             d = fields(line)
             d["seq_max_s"] = max(stage_seq) if stage_seq else 0.0
+            # paired_pass.jl since 2026-10-11: stage times are without the collections
+            # that fell in them; with a worker per period each collects 1/stages of it
+            d["gc_par_s"] = (d.get("pre_gc_s", 0.0) + d.get("post_gc_s", 0.0)) * (1.0 - 1.0 / max(d.get("stages", 1.0), 1.0))
             back.append(d)
             stage_seq = []
         elif line.startswith("FILTERDDP_PARSIM_FORWARD"):
@@ -98,7 +107,7 @@ def ddp(path):
         elif line.startswith("FILTERDDP_ITER_TIMING"):
             f = fields(line)
             # pair_*: the pairwise combinations of a paired pass (paired_pass.jl); absent otherwise
-            b = {k: sum(x.get(k, 0.0) for x in back) for k in ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "seq_max_s", "pair_sum_s", "pair_max_s")} if back else None
+            b = {k: sum(x.get(k, 0.0) for x in back) for k in ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "seq_max_s", "pair_sum_s", "pair_max_s", "gc_par_s")} if back else None
             w = {k: sum(x[k] for x in fwd) for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")} if fwd else {k: 0.0 for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")}
             passes.append((int(f["iteration"]), f, b, w, len(back)))
             back, fwd = [], []
@@ -119,7 +128,7 @@ def ddp_at(run, ref, gap, primal, original, pair=None):
     for k, f, b, w, nb in run["passes"]:
         save_f = (w["dir_sum_s"] - w["dir_max_s"]) + (w["trial_sum_s"] - w["trial_max_s"])
         back_cnt = (f["backward_s"] - (b["pre_sum_s"] - b["pre_max_s"]) - (b["post_sum_s"] - b["post_max_s"])
-                    - (b["pair_sum_s"] - b["pair_max_s"]))
+                    - (b["pair_sum_s"] - b["pair_max_s"]) - (0.0 if GC_SEQUENTIAL else b["gc_par_s"]))
         # paired: the sweep's sum over stages becomes the rounds plus the slowest stage
         back_pair = back_cnt - b["seq_sum_s"] + b["seq_max_s"] + nb * (pair[0] + pair[1]) if pair else float("nan")
         if k not in seen and k in run["rows"]:
@@ -155,6 +164,7 @@ gaps = [5e-3, 1e-4, 1e-5]
 original = False
 ddp_tag = "hp_tol1e5"                # --tag=<tag>: FilterDDP logs fddp_<system>_T<T>_<arm>_<tag>.log
 arms = ("diag", "exact")             # --arms=a,b: the two FilterDDP arms shown (diag, exact, hybrid)
+GC_SEQUENTIAL = "--gc=sequential" in args   # count every collection in sequence, not 1/stages per worker
 for a in args:
     if a.startswith("--gaps="):
         gaps = [float(g) for g in a.split("=", 1)[1].split(",")]

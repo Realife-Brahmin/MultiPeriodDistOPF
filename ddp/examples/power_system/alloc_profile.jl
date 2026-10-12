@@ -15,6 +15,17 @@ using Profile
 
 include(joinpath(@__DIR__, "ieee123c_filterddp.jl"))      # defines main(); does not run it
 
+# With FILTERDDP_PAIRED_SWEEP set, the pass of paired_pass.jl is the one profiled.
+if get(ENV, "FILTERDDP_PAIRED_SWEEP", "0") != "0"
+    include(joinpath(@__DIR__, "paired_pass.jl"))
+    let system = ARGS[1], T = parse(Int, ARGS[2])
+        ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
+        data = deserialize(joinpath(REPO, "ddp", "results", "network_filterddp", "network_data_$(system)_T$(T)$(ptag).jls"))
+        idx, _ = control_layout(data)
+        install_paired_pass(data, idx)
+    end
+end
+
 function alloc_site(st)
     for f in st
         file = String(f.file)
