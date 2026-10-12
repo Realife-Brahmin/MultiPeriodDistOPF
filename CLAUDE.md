@@ -239,11 +239,14 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
   it (dense, 1.7 GB; the stage uses `separation_sparse`); the second substation
   sits at bus 1120, the end of one feeder, so it can only ever carry part of
   that feeder's ~10 MW.
-- **Paper: hands off.** Since 2026-10-12 the user has ChatGPT editing the
-  PESGM2027 paper. Do not edit its `.tex` files or `main.pdf` until asked.
-  New results go in this repo (`tables.tex` is ready to paste) and in chat.
-  The paper has the ieee123 results through commit `1af6d36`; it does not have
-  the ieee2522 or large10k tables.
+- **Paper: edit only when asked.** Since 2026-10-12 the user also has ChatGPT
+  editing the PESGM2027 paper; it rewrote the draft as prose with booktabs
+  tables (one file per table, `tables/mp_*.tex`) and vector figures rendered by
+  `scripts/render_figures.py`. Always pull first, match that style, and do not
+  regenerate its tables or figures from this repo's `tables.tex` or PNGs.
+  The paper has the ieee123 results and, since commit `c160f83` (added at the
+  user's request), the ieee2522 subsection and `tables/mp_ieee2522.tex`. It
+  has nothing on large10k.
 - **Still open:** per-line ampacity ratings (not modeled; the user is collecting
   them), and the substation voltage setpoint (1.05 pu sits on the band edge).
 
