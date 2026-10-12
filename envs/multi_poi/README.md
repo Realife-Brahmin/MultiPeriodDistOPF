@@ -49,7 +49,31 @@ Run from the repo root with `julia --project=envs/tadmm <script> [args]`.
 | `root_level/two_source_angle_sweep.jl small2poi \| ieee123 [subsA subsB]` | power flow over the substation angle difference, checked point by point against OpenDSS | `processedData/` (gitignored) |
 | `root_level/battery_angle_sweep.jl small2poi \| ieee123` | the no-backflow window with and without battery dispatch | `processedData/` (gitignored) |
 | `root_level/source_impedance_study.jl` | no-backflow windows versus the source impedance, with and without batteries and the 0.95–1.05 pu band | `results/source_impedance/` (**tracked**: `windows.csv`, and `table_windows.tex` for the paper) |
+| `root_level/multiperiod_study.jl [stage ...]` | the same model over a whole day, with battery state of charge: how far a constant angle difference can go. Stages: `main horizon zs duration pairs three five tables` | `results/multiperiod/` (**tracked**: CSVs, figures, and `tables.tex` for the paper) |
 | `check_voltage_bases.jl` | checks each deck's `VoltageBases` against its Vsource setpoints | stdout |
+
+## Multi-period model
+
+[`multiperiod_full_angle.jl`](multiperiod_full_angle.jl) repeats the single-period equations in every
+period and links the periods through each battery's energy. Its conventions follow the DDP work:
+
+- **Profiles:** load, price and PV shapes from `envs/tadmm/root_level/config.jl`, with periodic sampling.
+- **Batteries:** one power variable each, lossless, 30–95% state of charge from 62.5%.
+- **Costs:** `C_B` and the soft terminal weight `gamma` come from the sizing rules in
+  `ddp/examples/power_system/terminal_soc_penalty.jl`, applied to this deck's fleet.
+- **Terminal SOC is soft.** A hard end = start rule (`terminal = :cyclic`) is kept only as a diagnostic.
+- **PV:** real power is fixed at `lambda_PV * Pmpp`; reactive power is a decision within the inverter rating.
+
+Three things to know before running sweeps with it (each cost hours on 2026-10-11):
+
+- **Do not ask Ipopt to prove a point infeasible.** That takes 500+ iterations, about 30 s at T = 24.
+  To find a window edge, maximize the angle directly (`objective = :ray`): one solve per edge. To test
+  one point, use `objective = :violation`, which adds slacks and is feasible exactly when the minimum
+  violation is zero.
+- **Each solve must release its Ipopt problem** (`release_solver!`, called inside `solve_multiperiod`).
+  Otherwise about 22 MB of solver memory per solve piles up outside Julia's heap, and a few hundred
+  solves swap a 16 GB machine to a standstill.
+- **On Windows, stopping a background job does not stop its Julia process.** Stop it by process ID.
 
 ## Decks
 

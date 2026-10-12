@@ -168,6 +168,17 @@ one, and name it for the workstream it serves.
   `C_B * P_B^2` cycling cost (the user's standard). Feasibility means the network
   equations, no-backflow (`P_Subs >= 0`, the key constraint) and the 0.95-1.05 pu
   band on buses not set by a substation.
+- **Multi-period MSOPF (2026-10-11):** `envs/multi_poi/multiperiod_full_angle.jl`
+  and `root_level/multiperiod_study.jl`; results in
+  `envs/multi_poi/results/multiperiod/`. User decisions: the angle difference is
+  constant over the day; terminal SOC is SOFT, as in DDP (a hard end = start rule
+  is a CSV diagnostic only, never the reported result); `C_B` and `gamma` by the
+  DDP sizing rules on this deck's fleet; PV real power fixed, PV reactive power an
+  optimization variable. Headline: over a 24 h day batteries roughly double the
+  feasible angle window (subs3+4, PV on: 0.51 -> 1.09 deg), about half of what
+  hour-by-hour solves suggest, and the widest window found anywhere is +-1.6 deg.
+  Method notes that cost hours are in `envs/multi_poi/README.md` (never ask Ipopt
+  to prove infeasibility; release each Ipopt problem; stop Julia by PID).
 
 ## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
 
