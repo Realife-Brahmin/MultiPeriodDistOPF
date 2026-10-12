@@ -189,6 +189,56 @@ one, and name it for the workstream it serves.
   `envs/multi_poi/README.md` (never ask Ipopt to prove infeasibility; release
   each Ipopt problem; stop Julia by PID).
 
+### MSOPF handoff (written 2026-10-12 on the Surface, for a session on any machine)
+
+Branch `msopf-oct09-further-investigations` (re-resolve from the remote first).
+Everything below is one driver, `envs/multi_poi/root_level/multiperiod_study.jl`,
+run from the repo root as
+`julia --project=envs/tadmm envs/multi_poi/root_level/multiperiod_study.jl <stage ...>`;
+results are tracked in `envs/multi_poi/results/multiperiod/`.
+
+- **Done, ieee123 (five substations):** stages `main horizon zs duration pairs
+  three five bound estimate tables`, all under the hard terminal SOC.
+- **Done, the limit is explained and checked:** stage `estimate`. With batteries
+  idle, the imports at equal angles and their slope per degree give the window:
+  the worst hour without batteries, the daily mean with them. It matches the
+  measured windows to 0.001 deg when only batteries are dispatched (PV off or
+  unity power factor). With PV reactive power free the measured upper edge is
+  0.07 deg wider, because reactive power moves 20-40 kW between the substations.
+- **ieee2522 (stage `ieee2522`):** a second substation is added in memory at
+  buses 947, 996, 1120, 1216 (along the main trunk) and 546 (farthest bus), with
+  Zs = 0.311 ohm, T = 12. Rows land in `large_windows.csv`, merged by
+  (system, bus, T), so a run can be split with `LARGE_AT=bus[,bus]` and
+  `LARGE_T=n`. Windows there are several degrees wide (ieee123: about half a
+  degree) and every edge is no-backflow-limited. Check the CSV for which of the
+  five buses have rows at T = 12; any missing one is still to run. About 3 GB of
+  memory and 10-35 minutes per bus on the Surface.
+- **NOT RUN: large10k (stage `large10k`).** The stage is written but has never
+  been executed, so its first run is a test. The Surface cannot hold it (1-3 GB
+  free). **The user will ask for it on the 309 PC: do not start it unprompted,
+  and when asked, check first that it will not take memory or cores from the DDP
+  simulations running there.** Suggested order:
+  1. `LARGE_T=2 julia ... multiperiod_study.jl large10k` to see whether the
+     instance is feasible at equal angles, how long a solve takes and the peak
+     memory (printed per case). ieee2522 at T = 12 needs about 3 GB, and
+     large10k has four times the buses, so expect roughly 1 GB per period.
+  2. Then the configured T = 6, or T = 12 if memory allows (on ieee123 the
+     window is converged in the horizon from T = 12; T = 6 reads 13% wide).
+  3. `... multiperiod_study.jl tables`, then commit `large_windows.csv` and
+     `tables.tex` with what was measured.
+  Things that are easy to get wrong there: the sources stay stiff (the head bus
+  is an aggregate of 102 feeders, 1032 MW); never call `source_separation` on
+  it (dense, 1.7 GB; the stage uses `separation_sparse`); the second substation
+  sits at bus 1120, the end of one feeder, so it can only ever carry part of
+  that feeder's ~10 MW.
+- **Paper: hands off.** Since 2026-10-12 the user has ChatGPT editing the
+  PESGM2027 paper. Do not edit its `.tex` files or `main.pdf` until asked.
+  New results go in this repo (`tables.tex` is ready to paste) and in chat.
+  The paper has the ieee123 results through commit `1af6d36`; it does not have
+  the ieee2522 or large10k tables.
+- **Still open:** per-line ampacity ratings (not modeled; the user is collecting
+  them), and the substation voltage setpoint (1.05 pu sits on the band edge).
+
 ## The solver is `DDP4OPF`, committed at `ddp/DDP4OPF.jl`
 
 Since 2026-09-15 the DDP solver is **our own MIT fork of FilterDDP.jl**, committed
