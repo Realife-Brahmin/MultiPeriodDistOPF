@@ -697,6 +697,23 @@ if "tables" in STAGES
             end
             println(io, "\\hline\n\\end{tabular}\n\\end{table}\n")
         end
+        big = readcsv("large_windows.csv")              # columns: see LARGE_HEADER
+        for name in ("ieee2522", "large10k")
+            big === nothing && break
+            cfg = LARGE[name]
+            rows = [r for r in big if r[1] == cfg.system && r[3] == string(cfg.T)]
+            isempty(rows) && continue
+            println(io, "\\begin{table}[!t]\n\\centering\n\\caption{$name with a second substation at the given bus (\$|Z|\$ to the first, \$\\Omega\$): window of the new substation's angle against the first (deg), \$T=$(cfg.T)\$. Estimate: the daily-mean rule.}\n\\label{tab:mp-$name}\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llll}\n\\hline")
+            println(io, "Bus (\$|Z|\$) & No batteries & Batt., whole day & Estimate \\\\\n\\hline")
+            for bus in unique(String(r[2]) for r in rows)
+                pick(case) = (m = [r for r in rows if r[2] == bus && r[4] == case]; isempty(m) ? nothing : m[end])
+                nb, dy = pick("nobatt"), pick(day)
+                c(r) = r === nothing ? "--" : cell(r[6], r[7], r[5], r[8], r[9])
+                est = dy === nothing ? "--" : @sprintf("\$[%.2f, %+.2f]\$", parse(Float64, dy[11]), parse(Float64, dy[12]))
+                println(io, @sprintf("%s (%.1f)", bus, parse(Float64, something(nb, dy)[19])), " & ", c(nb), " & ", c(dy), " & ", est, " \\\\")
+            end
+            println(io, "\\hline\n\\end{tabular}\n\\end{table}\n")
+        end
     end
     say("\nwrote ", joinpath(OUT_DIR, "tables.tex"))
 end
