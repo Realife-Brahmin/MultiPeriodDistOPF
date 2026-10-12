@@ -108,7 +108,10 @@ def ddp(path):
             f = fields(line)
             # pair_*: the pairwise combinations of a paired pass (paired_pass.jl); absent otherwise
             b = {k: sum(x.get(k, 0.0) for x in back) for k in ("pre_sum_s", "pre_max_s", "seq_sum_s", "post_sum_s", "post_max_s", "seq_max_s", "pair_sum_s", "pair_max_s", "gc_par_s")} if back else None
-            w = {k: sum(x[k] for x in fwd) for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")} if fwd else {k: 0.0 for k in ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s")}
+            FK = ("dir_sum_s", "dir_max_s", "trial_sum_s", "trial_max_s", "gc_par_s")
+            for x in fwd:      # FILTERDDP_PARSIM_GCNET: collector time in the per-period work, 1/stages per worker
+                x["gc_par_s"] = x.get("gc_s", 0.0) * (1.0 - 1.0 / max(x.get("stages", 1.0), 1.0))
+            w = {k: sum(x[k] for x in fwd) for k in FK} if fwd else {k: 0.0 for k in FK}
             passes.append((int(f["iteration"]), f, b, w, len(back)))
             back, fwd = [], []
         else:
@@ -126,7 +129,8 @@ def ddp_at(run, ref, gap, primal, original, pair=None):
     el_seq = el_cnt = el_pair = run["setup"]
     seen = set()
     for k, f, b, w, nb in run["passes"]:
-        save_f = (w["dir_sum_s"] - w["dir_max_s"]) + (w["trial_sum_s"] - w["trial_max_s"])
+        save_f = ((w["dir_sum_s"] - w["dir_max_s"]) + (w["trial_sum_s"] - w["trial_max_s"])
+                  + (0.0 if GC_SEQUENTIAL else w["gc_par_s"]))
         back_cnt = (f["backward_s"] - (b["pre_sum_s"] - b["pre_max_s"]) - (b["post_sum_s"] - b["post_max_s"])
                     - (b["pair_sum_s"] - b["pair_max_s"]) - (0.0 if GC_SEQUENTIAL else b["gc_par_s"]))
         # paired: the sweep's sum over stages becomes the rounds plus the slowest stage

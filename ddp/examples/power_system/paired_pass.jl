@@ -42,6 +42,12 @@ isdefined(@__MODULE__, :PintElem) || include(joinpath(@__DIR__, "pint_scan.jl"))
 isdefined(@__MODULE__, :threaded_backward_pass!) || include(joinpath(@__DIR__, "threaded_pass.jl"))
 
 _paired_mode() = get(ENV, "FILTERDDP_PAIRED_SWEEP", "0")
+# FILTERDDP_PAIRED_ROUNDS=0: steps 1 and 3 as here, and between them the ordinary
+# sweep, stage after stage (_tp_seq of threaded_pass.jl), timed like the rest.
+# The solve is the ordinary exact one; its count is then on the accounting of
+# the pairwise one (stage times without collections), which the solver's own
+# FILTERDDP_PARSIM lines are not.
+_paired_rounds() = get(ENV, "FILTERDDP_PAIRED_ROUNDS", "1") != "0"
 
 # FILTERDDP_PAIRED_INPLACE=1: the stages' functions live in storage kept from
 # pass to pass, and a combination writes its result over its left operand, with
@@ -305,15 +311,17 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
     info = nothing; t_1 = t_2 = t_3 = t_start; err_V = NaN; err_v = NaN
     keep_reuse = DDP4OPF._reuse_barrier()
     keep_rows = DDP4OPF._parsim() || !isnothing(DDP4OPF.AFFINE_DIRECTIONS_HOOK[])
-    inplace = _paired_inplace()
+    ordinary = !_paired_rounds()
+    inplace = _paired_inplace() && !ordinary
     inplace && _pp_storage!(N, nx, timed ? 1 : Threads.nthreads())
+    seq_sum = 0.0
     g_0 = g_1 = g_2 = g_3 = _pp_gcstat()
     try
         # 1. stage data and the stage as a function of its end states
         step1 = t -> begin
             t0 = time_ns(); c0 = Base.gc_num().total_time
             S[t] = _tp_pre(solver, ocp, traj, t, d.k, μ, false, nx, nu, nc, data, idx, serial)
-            E[t] = isnothing(S[t]) ? nothing : _pp_elem(S[t], t, nx)
+            E[t] = isnothing(S[t]) ? nothing : (ordinary ? true : _pp_elem(S[t], t, nx))
             pre_t[t] = (time_ns() - t0) / 1e9
             # counting: the stage's time without the collections that fell in it
             timed && (pre_t[t] -= (Base.gc_num().total_time - c0) / 1e9)
@@ -326,14 +334,26 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
         (any(isnothing, S) || any(isnothing, E)) && return false
         t_1 = time_ns(); g_1 = _pp_gcstat()
 
-        # 2. the rounds
+        # 2. the rounds, or the ordinary sweep
         xs = Vector{Any}(undef, N + 1)
-        for t in 1:N; xs[t] = E[t]; end
-        xs[N+1] = inplace ? _PP_END[] : PintVal(zeros(nx, nx), zeros(nx))
-        info = _pp_rounds!(xs, timed, inplace)
+        if ordinary
+            V̂x = zeros(nx); V̂xx = zeros(nx, nx)
+            for t in N:-1:1
+                t0 = time_ns(); c0 = Base.gc_num().total_time
+                out = _tp_seq(S[t], V̂x, V̂xx, false, nu, nc)
+                isnothing(out) && return false
+                R[t], V̂x, V̂xx = out
+                seq_sum += (time_ns() - t0) / 1e9 - (Base.gc_num().total_time - c0) / 1e9
+            end
+            info = (; rounds=0, merges=0, pair_sum=0.0, pair_max=0.0)
+        else
+            for t in 1:N; xs[t] = E[t]; end
+            xs[N+1] = inplace ? _PP_END[] : PintVal(zeros(nx, nx), zeros(nx))
+            info = _pp_rounds!(xs, timed, inplace)
+        end
         t_2 = time_ns(); g_2 = _pp_gcstat()
 
-        if get(ENV, "FILTERDDP_PAIRED_CHECK", "0") != "0"        # the ordinary sweep, to compare
+        if !ordinary && get(ENV, "FILTERDDP_PAIRED_CHECK", "0") != "0"   # the ordinary sweep, to compare
             V̂x = zeros(nx); V̂xx = zeros(nx, nx); err_V = 0.0; err_v = 0.0
             for t in N:-1:1
                 out = _tp_seq(S[t], V̂x, V̂xx, false, nu, nc)
@@ -356,8 +376,10 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
         # 3. every stage with the value function after it
         step3 = t -> begin
             t0 = time_ns(); c0 = Base.gc_num().total_time
-            Vn = xs[t+1]
-            R[t] = _pp_solve(S[t], Vn.v, Vn.V)
+            if !ordinary
+                Vn = xs[t+1]
+                R[t] = _pp_solve(S[t], Vn.v, Vn.V)
+            end
             P[t] = isnothing(R[t]) ? nothing : _tp_post(solver, S[t], R[t], t, μ, λs[t], nx, nu, nc, keep_reuse, keep_rows, cl)
             post_t[t] = (time_ns() - t0) / 1e9
             timed && (post_t[t] -= (Base.gc_num().total_time - c0) / 1e9)
@@ -429,7 +451,7 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
         # and clean_hp_table.py count it that way, or all of it in sequence.
         timed && @printf(
             "FILTERDDP_PARSIM_BACKWARD iteration=%d stages=%d pre_sum_s=%.9f pre_max_s=%.9f seq_sum_s=%.9f post_sum_s=%.9f post_max_s=%.9f pair_sum_s=%.9f pair_max_s=%.9f pre_gc_s=%.9f post_gc_s=%.9f pair_gc_s=%.9f\n",
-            d.k, N, sum(pre_t), maximum(pre_t), 0.0, sum(post_t), maximum(post_t), info.pair_sum, info.pair_max,
+            d.k, N, sum(pre_t), maximum(pre_t), seq_sum, sum(post_t), maximum(post_t), info.pair_sum, info.pair_max,
             g_1[1] - g_0[1], g_3[1] - g_2[1], g_2[1] - g_1[1])
         @printf("FILTERDDP_PAIRED_GC iteration=%d inplace=%d step1_gc_s=%.6f rounds_gc_s=%.6f step3_gc_s=%.6f step1_gib=%.3f rounds_gib=%.3f step3_gib=%.3f collections=%d full=%d\n",
                 d.k, inplace, g_1[1] - g_0[1], g_2[1] - g_1[1], g_3[1] - g_2[1], g_1[2] - g_0[2], g_2[2] - g_1[2],
