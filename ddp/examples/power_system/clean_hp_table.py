@@ -36,7 +36,7 @@ ROOT = "ddp/results"
 KV = re.compile(r"(\w+)=([-+0-9.eE]+)")
 THR = {"ieee123C_1ph": 1e-6, "ieee2522C_1ph": 1e-5, "large10kC_1ph": 1e-5}
 CASES = [("ieee123C_1ph", 6), ("ieee123C_1ph", 24), ("ieee123C_1ph", 96), ("ieee123C_1ph", 144),
-         ("ieee2522C_1ph", 6), ("ieee2522C_1ph", 24), ("ieee2522C_1ph", 96), ("ieee2522C_1ph", 144),
+         ("ieee2522C_1ph", 6), ("ieee2522C_1ph", 24), ("ieee2522C_1ph", 96), ("ieee2522C_1ph", 144), ("ieee2522C_1ph", 288),
          ("large10kC_1ph", 6), ("large10kC_1ph", 24), ("large10kC_1ph", 48), ("large10kC_1ph", 96),
          ("large10kC_1ph", 144)]
 NAME = {"ieee123C_1ph": "ieee123", "ieee2522C_1ph": "med2522", "large10kC_1ph": "large10k"}
