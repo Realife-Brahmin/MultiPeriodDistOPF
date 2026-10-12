@@ -220,9 +220,15 @@ establishes something a future session, on any machine, would need.
   - Do not retry "run the collector less often": held off for a whole pass
     and run once it costs the same (its cost follows the volume allocated),
     and the allocation has no single source.
-  - No FilterDDP run exists on large10k `T=144` (the PC has 31.7 GB; Ipopt
-    alone takes 13.6 GB there). ieee123 `T=24` needs tolerance 1e-6
-    (`PAIRED_TOL`) to meet its 1e-6 infeasibility threshold.
+  - Longer horizons (user's go, 2026-10-12): med2522 `T=288` counts 26.4 s
+    against 255.2 s for Ipopt (9.7 times). large10k `T=144` counts 80.6 s
+    against 138.9 s, but the PC (31.7 GB) runs short of memory there and the
+    count carries the stalls (about 45 s without them, an estimate): say so
+    wherever that figure appears, and rerun it only with the other
+    applications closed. large10k `T=288` cannot run on this PC. Warm-up 12
+    for med2522 `T=288`, 8 for large10k `T=144`.
+  - ieee123 `T=24` needs tolerance 1e-6 (`PAIRED_TOL`) to meet its 1e-6
+    infeasibility threshold.
 
 ## Working branch — the name below is a snapshot, not the truth
 

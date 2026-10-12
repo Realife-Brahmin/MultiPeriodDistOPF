@@ -1145,6 +1145,37 @@ Run with:
 - Not measured: any of this on a machine with a core per period (Kamiak,
   ticket KSD-7186, one process per period).
 
+### Longer horizons: med2522 `T=288` and large10k `T=144` (2026-10-12, user's go)
+
+At the 0.5% rule (pairwise figures the same at 0.1%), seconds:
+
+| | Ipopt | DDP seq. (diag / exact) | ord., same timing | pair. | Ipopt/pair. | in seq. | one proc. |
+|---|---|---|---|---|---|---|---|
+| med2522 `T=288` | 255.2 | 1072.3 / 1248.8 | 203.4 | 26.4 | 9.7 | 495.7 | 2036 |
+| large10k `T=144` | 138.9 | 401.2 / 632.8 | 351.9 | 80.6 | 1.7 | 192.9 | 2238 |
+
+Ipopt: the adaptive variant in both (default 255.7 and 157.0 s). The solver's
+own passes count 237.7 s (diagonal) and 173.7 s (exact) on med2522 `T=288`,
+99.9 and 194.9 s on large10k `T=144`. Same iterations for the two sweeps (75
+and 18), objectives equal to 15 digits, all ten dispatches pass OpenDSS.
+Warm-up 12 iterations on med2522 `T=288` (its first barrier update is near
+iteration 9), 8 on large10k.
+
+**large10k `T=144` is short of memory on the 309 PC (31.7 GB).** A
+three-iteration test (`chk_memprobe`) showed Julia at 17-20 GB with 1.5-5 GB
+free. In the timed pairwise run the slowest period of step 3 takes 1.3-2.4 s
+in 15 of 19 passes (0.2-0.4 s in the other four, 0.12 s at `T=96`) and the
+last four passes have one combination of about 2 s against 0.14 s. The
+80.6 s carries those stalls; about 45 s without them, which is an estimate.
+The cause of the slow combinations in the last passes was not established
+(memory, or very small numbers late in the solve). A clean figure needs a
+rerun with the other applications closed, or a machine with more memory;
+`T=288` on large10k cannot run here at all.
+
+On med2522 `T=288` the collector takes about a quarter of the one-machine
+run, which is why the in-sequence figure (495.7 s) is so far from the
+per-worker one.
+
 ### Corrections to commit messages
 
 - `66d38fb9` gives 137 s and 74 s for the pairwise counts with every
