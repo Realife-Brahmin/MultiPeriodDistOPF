@@ -260,7 +260,22 @@ _parsim() = get(ENV, "FILTERDDP_PARSIM", "0") != "0"
 stage_phase_times(F) = nothing
 const _PARSIM_BETA_B = Ref{Any}(nothing)        # battery rows of the feedback, last stage solved
 const _PARSIM_SKIP_NS = Ref{UInt64}(0)          # accounting-only work, left out of the times
-const _PARSIM_FWD = zeros(7)                    # forward pass: see affine_linesearch.jl
+const _PARSIM_FWD = zeros(8)                    # forward pass: see affine_linesearch.jl
+# FILTERDDP_PARSIM_GCNET=1: the forward pass's per-period times are taken without
+# the collections that fell in them, and the collector's time in that work is
+# printed beside them (gc_s), as paired_pass.jl does for the backward pass. A
+# pause otherwise lands in one period's time and becomes the slowest period:
+# 0.80 s against a mean of 7 ms on med2522 T=144 (2026-10-11).
+_parsim_gcnet() = get(ENV, "FILTERDDP_PARSIM_GCNET", "0") != "0"
+_gc_seconds() = Base.gc_num().total_time / 1e9
+# Seconds since t0; with gcnet, without the collections since g0, which go to _PARSIM_FWD[8].
+function _parsim_elapsed(t0::UInt64, g0::Float64, gcnet::Bool)
+    el = (time_ns() - t0) / 1e9
+    gcnet || return el
+    g = _gc_seconds() - g0
+    _PARSIM_FWD[8] += g
+    return el - g
+end
 # Seconds of the stage being solved, parts of `seq`: [1] Q_u and C, [2] curvature
 # diagonal, [3] B, [4] right-hand side of the battery rows, [5] battery rows,
 # [6] value increments, [7] value update; and [8] the feedforward solve.

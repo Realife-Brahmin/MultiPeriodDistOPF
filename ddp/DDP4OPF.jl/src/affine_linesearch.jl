@@ -46,7 +46,8 @@ end
 # [1] sum and [2] max over periods of the per-period direction work, [3] the
 # recursion, [4] its largest state difference from the rollout, [5] trials,
 # [6] sum over trials of the per-period sums, [7] sum over trials of the
-# per-period maxima.
+# per-period maxima, [8] collector time inside the per-period work
+# (FILTERDDP_PARSIM_GCNET, which also takes it out of [1], [2], [6], [7]).
 function _parsim_state_step(solver, rule, nom, xr, xnext, elapsed)
     pol = rule.factor_policy
     if isnothing(pol) || isempty(pol.βB)      # no battery rows stored: this period in sequence
@@ -74,9 +75,11 @@ function affine_directions(solver, ocp, data, τ::T) where T
     lim_t = 0; lim_i = 0; lim_kind = "none"
     x = solver.nominal[1].x
     parsim = _parsim()
+    gcnet = parsim && _parsim_gcnet()
     xr = x                              # PARSIM: the state from the battery rows alone
     for t in 1:N
         ps_t0 = time_ns()
+        ps_g0 = gcnet ? _gc_seconds() : 0.0
         nom = solver.nominal[t]; rule = solver.update[t]
         δx = x - nom.x
         βδx, ωδx = policy_actions!(rule, δx)        # views into the policy's buffer: copy below
@@ -125,10 +128,10 @@ function affine_directions(solver, ocp, data, τ::T) where T
                 norm(mid - ref, Inf) <= 1e-10 * (1 + norm(ref, Inf)) ||
                     error("FILTERDDP_AFFINE_LINESEARCH needs affine dynamics")
             end
-            parsim && (xr = _parsim_state_step(solver, rule, nom, xr, xnext, (time_ns() - ps_t0) / 1e9))
+            parsim && (xr = _parsim_state_step(solver, rule, nom, xr, xnext, _parsim_elapsed(ps_t0, ps_g0, gcnet)))
             x = xnext
         elseif parsim
-            ps_el = (time_ns() - ps_t0) / 1e9
+            ps_el = _parsim_elapsed(ps_t0, ps_g0, gcnet)
             _PARSIM_FWD[1] += ps_el; _PARSIM_FWD[2] = max(_PARSIM_FWD[2], ps_el)
         end
     end
@@ -146,9 +149,11 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
     data.barrier_lagrangian_next = T(0.0)
     γz = isnan(dir.γdual) ? γ : dir.γdual
     parsim = _parsim()
+    gcnet = parsim && _parsim_gcnet()
     ps_sum = 0.0; ps_max = 0.0
     for t = 1:ocp.N
         ps_t0 = time_ns()
+        ps_g0 = gcnet ? _gc_seconds() : 0.0
         nom = solver.nominal[t]
         x = nom.x .+ γ .* dir.dx[t]
         u = nom.u .+ γ .* dir.du[t]
@@ -182,7 +187,7 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
             data.barrier_lagrangian_next += stage_obj(ocp, t).l(x, u)[1]
         end
         if parsim
-            ps_el = (time_ns() - ps_t0) / 1e9; ps_sum += ps_el; ps_max = max(ps_max, ps_el)
+            ps_el = _parsim_elapsed(ps_t0, ps_g0, gcnet); ps_sum += ps_el; ps_max = max(ps_max, ps_el)
         end
     end
     parsim && (_PARSIM_FWD[5] += 1; _PARSIM_FWD[6] += ps_sum; _PARSIM_FWD[7] += ps_max)

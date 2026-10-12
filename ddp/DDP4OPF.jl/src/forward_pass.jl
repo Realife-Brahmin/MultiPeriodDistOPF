@@ -75,9 +75,9 @@ function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
         break
     end
     _parsim() && @printf(
-        "FILTERDDP_PARSIM_FORWARD iteration=%d dir_sum_s=%.9f dir_max_s=%.9f rec_s=%.9f rec_err=%.3e trials=%d trial_sum_s=%.9f trial_max_s=%.9f\n",
+        "FILTERDDP_PARSIM_FORWARD iteration=%d dir_sum_s=%.9f dir_max_s=%.9f rec_s=%.9f rec_err=%.3e trials=%d trial_sum_s=%.9f trial_max_s=%.9f gc_s=%.9f stages=%d\n",
         data.k, _PARSIM_FWD[1], _PARSIM_FWD[2], _PARSIM_FWD[3], _PARSIM_FWD[4],
-        Int(_PARSIM_FWD[5]), _PARSIM_FWD[6], _PARSIM_FWD[7])
+        Int(_PARSIM_FWD[5]), _PARSIM_FWD[6], _PARSIM_FWD[7], _PARSIM_FWD[8], ocp.N)
     data.step_size < eps(T) && (data.status = 7)
     data.status != 0 && (verbose && (@warn "Line search failed to find a suitable iterate"))
 end
