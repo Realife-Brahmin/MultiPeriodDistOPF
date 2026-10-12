@@ -205,14 +205,22 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
   measured windows to 0.001 deg when only batteries are dispatched (PV off or
   unity power factor). With PV reactive power free the measured upper edge is
   0.07 deg wider, because reactive power moves 20-40 kW between the substations.
-- **ieee2522 (stage `ieee2522`):** a second substation is added in memory at
-  buses 947, 996, 1120, 1216 (along the main trunk) and 546 (farthest bus), with
-  Zs = 0.311 ohm, T = 12. Rows land in `large_windows.csv`, merged by
-  (system, bus, T), so a run can be split with `LARGE_AT=bus[,bus]` and
-  `LARGE_T=n`. Windows there are several degrees wide (ieee123: about half a
-  degree) and every edge is no-backflow-limited. Check the CSV for which of the
-  five buses have rows at T = 12; any missing one is still to run. About 3 GB of
-  memory and 10-35 minutes per bus on the Surface.
+- **Done, ieee2522 (stage `ieee2522`, finished 2026-10-12):** a second
+  substation is added in memory at buses 947, 996, 1120, 1216 (along the main
+  trunk) and 546 (farthest bus), with Zs = 0.311 ohm, T = 12. Rows are in
+  `large_windows.csv`, merged by (system, bus, T), so a run can be split with
+  `LARGE_AT=bus[,bus]` and `LARGE_T=n`; the table is in `tables.tex`. All five
+  cost-optimal days replay in OpenDSS to 2e-5 kW, with no failed edge checks.
+  - Windows are several degrees wide (ieee123: about half a degree) and widen
+    with distance: with batteries, [-8.3, +3.7] deg at bus 947 (3.4 ohm away),
+    [-12.7, +10.7] at bus 1120 (6.1 ohm). Batteries widen them about 1.3x.
+  - **The estimate only holds while no-backflow is the binding limit.** At 947,
+    996 and 1120 both edges sit at zero import and the daily-mean estimate is
+    4-19% narrow. At 1216 (10.1 ohm) and 546 (14.7 ohm) the upper edge is set by
+    the voltage band with hundreds of kW of import to spare ([-19.2, +3.4] and
+    [<= -20, +2.2] deg), and the estimate is far off (+23.8 against +3.4).
+  - The whole run took 75 minutes on the Surface, of which about 10 were CPU:
+    the rest was swapping. With free memory expect about 2 minutes per bus.
 - **NOT RUN: large10k (stage `large10k`).** The stage is written but has never
   been executed, so its first run is a test. The Surface cannot hold it (1-3 GB
   free). **The user will ask for it on the 309 PC: do not start it unprompted,
