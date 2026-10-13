@@ -224,8 +224,10 @@ establishes something a future session, on any machine, would need.
     against 255.2 s for Ipopt (9.7 times). large10k `T=144` counts 80.6 s
     against 138.9 s, but the PC (31.7 GB) runs short of memory there and the
     count carries the stalls (about 45 s without them, an estimate): say so
-    wherever that figure appears, and rerun it only with the other
-    applications closed. large10k `T=288` cannot run on this PC. Warm-up 12
+    wherever that figure appears (an asterisk in the paper's table, explained
+    in the text). A clean rerun needs the other applications closed; the
+    user parked it on 2026-10-12 until there is access to a parallel machine.
+    large10k `T=288` cannot run on this PC. Warm-up 12
     for med2522 `T=288`, 8 for large10k `T=144`.
   - ieee123 `T=24` needs tolerance 1e-6 (`PAIRED_TOL`) to meet its 1e-6
     infeasibility threshold.
