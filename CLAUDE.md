@@ -231,6 +231,17 @@ establishes something a future session, on any machine, would need.
     for med2522 `T=288`, 8 for large10k `T=144`.
   - ieee123 `T=24` needs tolerance 1e-6 (`PAIRED_TOL`) to meet its 1e-6
     infeasibility threshold.
+- **The paper targets IEEE Transactions on Power Systems** (user,
+  2026-10-12; it was drafted as an Industry Applications paper, and the
+  repository is still named `TPEC-2027-DDP-MPOPF`). PES rules, from the PES
+  authors' page: 10 pages at submission (returned without review above
+  that), 12 before mandatory overlength charges; abstract of about 150-200
+  words in one paragraph with no abbreviations, references or equations;
+  three or four keywords; **AI-generated content must be disclosed in the
+  Acknowledgments** (system, sections, level of use). As of that date the
+  abstract (111 words, with abbreviations, written before the results), the
+  keywords and the acknowledgment were still to do, and are the user's to
+  word.
 
 ## Working branch — the name below is a snapshot, not the truth
 
