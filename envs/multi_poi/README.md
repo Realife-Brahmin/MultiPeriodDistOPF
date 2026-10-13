@@ -79,6 +79,16 @@ Three things to know before running sweeps with it (each cost hours on 2026-10-1
   solves swap a 16 GB machine to a standstill.
 - **On Windows, stopping a background job does not stop its Julia process.** Stop it by process ID.
 
+On the 10k-bus decks (2026-10-13):
+
+- **Use HSL MA57 in Ipopt** through `IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"`
+  (the DDP scripts' convention; the library is built locally, not in the repository).
+- **Gurobi's nonconvex solver is not an alternative there.** `solve_multiperiod(...; solver = :gurobi)` builds the
+  same model, but on large10kD at T = 2 it found no feasible point in 15 minutes (8 threads), with or without
+  batteries, where Ipopt with MA57 solves the same import-margin problem in under 30 s.
+- **Do not find window edges with `objective = :ray` there.** It stopped early, ran out of iterations or ended
+  locally infeasible. `window_secant` (a secant on the import margin) needs six or seven solves per window.
+
 ## Decks
 
 - `rawData/ieee123_5poi_1ph` has five substations; `rawData/small2poi_1ph` has two. Both are 20 kV line-to-line.

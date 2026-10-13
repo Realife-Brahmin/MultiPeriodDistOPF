@@ -140,16 +140,23 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0,
-                           tol = IPOPT_TOL, constr_viol_tol = tol)
-    model = new_model(:ipopt)
-    set_attribute(model, "max_iter", max_iter)
-    set_attribute(model, "tol", tol)
-    set_attribute(model, "constr_viol_tol", constr_viol_tol)
-    # Further Ipopt options as "key=value;key=value", the convention of the DDP scripts: e.g.
-    # IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
-    for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty = false)
-        k, v = strip.(split(kv, '='; limit = 2))
-        set_attribute(model, String(k), something(tryparse(Int, v), tryparse(Float64, v), String(v)))
+                           tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
+    # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
+    # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
+    model = new_model(solver)
+    if solver === :ipopt
+        set_attribute(model, "max_iter", max_iter)
+        set_attribute(model, "tol", tol)
+        set_attribute(model, "constr_viol_tol", constr_viol_tol)
+        # Further Ipopt options as "key=value;key=value", the convention of the DDP scripts: e.g.
+        # IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+        for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty = false)
+            k, v = strip.(split(kv, '='; limit = 2))
+            set_attribute(model, String(k), something(tryparse(Int, v), tryparse(Float64, v), String(v)))
+        end
+    end
+    for (k, v) in solver_attributes
+        set_attribute(model, k, v)
     end
     S = net.S_base_kVA
     buses, lines = net.buses, [l.name for l in net.lines]
