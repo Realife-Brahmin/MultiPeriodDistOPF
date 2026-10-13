@@ -121,15 +121,30 @@ result carries `r`; `r == ray_limit` means the search limit was reached. A local
 the edge of the feasible set it starts in, so start it from a feasible point (`start`) and
 check the edge with `objective = :violation` just inside and just outside.
 
+`objective = :margin` measures how much room no-backflow has at the given angles: it maximizes
+m subject to every substation importing at least m in every period (`margin_kW`; batteries
+and PV reactive power are free to raise it). The margin is zero at a window edge set by
+no-backflow and close to linear in the angle there (its slope is the angle-to-import
+sensitivity), so a secant iteration on it finds the edge in a few solves. Band violations are
+priced at 100 per unit, not forbidden; check `max_violation`.
+
+`tol` and `constr_viol_tol` are Ipopt's convergence and constraint-violation tolerances (both
+1e-9 by default). With a looser `tol` the slacks of the feasibility test end near `tol`, not
+zero, so their sum grows with the number of limits; judge feasibility by `max_violation`, the
+largest single slack, against a threshold above `tol`.
+
 Returns powers in kW/kvar, energies in kWh, voltages in per unit; `cost` splits the objective.
 """
 function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T, pvs = [], pv_factor = zeros(T),
                            pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
-                           objective = :cost, ray_dir = nothing, ray_limit = 20.0)
+                           objective = :cost, ray_dir = nothing, ray_limit = 20.0,
+                           tol = IPOPT_TOL, constr_viol_tol = tol)
     model = new_model(:ipopt)
     set_attribute(model, "max_iter", max_iter)
+    set_attribute(model, "tol", tol)
+    set_attribute(model, "constr_viol_tol", constr_viol_tol)
     S = net.S_base_kVA
     buses, lines = net.buses, [l.name for l in net.lines]
     names, bnames = [s.name for s in net.sources], [bt.name for bt in net.batteries]
@@ -213,10 +228,16 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
 
     # Slacks of the feasibility test: backflow at each source, band violation at each bus.
     elastic = objective === :violation
+    # The import margin: the largest m with every substation importing at least m in every
+    # period (per unit; negative when some backflow is unavoidable). The band keeps slacks,
+    # heavily priced, so the problem has a solution at any angle.
+    marg = objective === :margin
+    eband = elastic || marg
     bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b)]
     @variable(model, s_back[elastic && no_backflow ? names : String[], Ts] >= 0, start = 0.0)
-    @variable(model, s_vlo[elastic ? bandbuses : String[], Ts] >= 0, start = 0.0)
-    @variable(model, s_vhi[elastic ? bandbuses : String[], Ts] >= 0, start = 0.0)
+    @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
+    @variable(model, s_vhi[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
+    m_imp = marg ? @variable(model, base_name = "m_imp", start = 0.0) : 0.0
 
     # The ray: one scalar r moves the angles along ray_dir, constant over the horizon.
     objective === :ray && ray_dir === nothing && error("objective = :ray needs ray_dir")
@@ -262,11 +283,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             @constraint(model, out_P[b] + P_fix == P_in)
             @constraint(model, out_Q[b] + load_factor[t] * imag(base_load[b]) == Q_in)
             if V_band !== nothing && !haskey(src_at, b)
-                @constraint(model, e[b, t]^2 + f[b, t]^2 + (elastic ? s_vlo[b, t] : 0.0) >= V_band[1]^2)
-                @constraint(model, e[b, t]^2 + f[b, t]^2 - (elastic ? s_vhi[b, t] : 0.0) <= V_band[2]^2)
+                @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2)
+                @constraint(model, e[b, t]^2 + f[b, t]^2 - (eband ? s_vhi[b, t] : 0.0) <= V_band[2]^2)
             end
         end
-        no_backflow && @constraint(model, [n in names], P_subs[n, t] + (elastic ? s_back[n, t] : 0.0) >= 0)
+        no_backflow && @constraint(model, [n in names], P_subs[n, t] + (elastic ? s_back[n, t] : 0.0) >= m_imp)
     end
 
     energy = sum(price[t] * dt_h * S * P_subs[n, t] for n in names, t in Ts)
@@ -277,6 +298,8 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         @objective(model, Min, viol + 1e-6 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
     elseif objective === :ray
         @objective(model, Max, r_ray - 1e-7 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
+    elseif marg
+        @objective(model, Max, m_imp - 100 * viol - 1e-7 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
     else
         @objective(model, Min, energy + cycling + term)
     end
@@ -287,8 +310,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     val(x) = has_values(model) ? value(x) : NaN
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
-            violation = elastic ? val(viol) : 0.0, r = objective === :ray ? val(r_ray) : 0.0,
+            violation = eband ? val(viol) : 0.0, r = objective === :ray ? val(r_ray) : 0.0,
             backflow_kW = elastic ? val(sum(s_back; init = zero(AffExpr))) * S : 0.0,
+            margin_kW = marg ? val(m_imp) * S : NaN,
+            # largest single limit violation: backflow in per unit, band in per unit squared
+            max_violation = eband && has_values(model) ? maximum(maximum(value.(c); init = 0.0) for c in (s_back, s_vlo, s_vhi)) : (eband ? NaN : 0.0),
             cost = (; energy = val(energy), cycling = val(cycling), terminal = val(term), total = val(energy) + val(cycling) + val(term)),
             P_subs_kW = series(P_subs, names, S), Q_subs_kvar = series(Q_subs, names, S),
             P_B_kW = series(P_B, bnames, S), Q_PV_kvar = series(Q_PV, pnames, S),

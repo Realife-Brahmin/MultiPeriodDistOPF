@@ -76,10 +76,15 @@ with_duration(net, hours) = merge(net, (; batteries = [merge(bt, (; kWh_rated = 
 banded(net) = [b for b in net.buses if !(b in Set(s.bus for s in net.sources))]
 
 "Everything one configuration needs: profiles, the PV mode's inputs, and the cost weights."
-function setup(net, pvs; T, pv = "qfree", ideal = false)
+# `feas` (per unit) is the feasibility tolerance the user's DDP work uses, 1e-5 (2026-10-12): no
+# limit violated by more than `feas`, with Ipopt's constraint tolerance at `feas` and its
+# convergence tolerance a decade tighter so that a slack at zero ends well below it. `nothing`
+# keeps the tight default, 1e-9, and the summed-slack test (VTOL).
+function setup(net, pvs; T, pv = "qfree", ideal = false, feas = nothing)
     lam, c, pvf = load_profile(T), price_profile(T), pv_profile(T)
     P, F = pv == "off" ? ([], zeros(T)) : (pvs, pvf)
-    return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal)
+    ipopt = feas === nothing ? (; tol = IPOPT_TOL, constr_viol_tol = IPOPT_TOL) : (; tol = feas / 10, constr_viol_tol = feas)
+    return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal, feas, ipopt)
 end
 
 const DAY = :cyclic            # the whole-day case that is reported: hard terminal SOC
@@ -95,7 +100,7 @@ Keyword arguments of solve_multiperiod for one case of setup `s`: over the whole
 :batt).
 """
 function problem(s, case; hour = nothing)
-    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize)
+    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...)
     hour === nothing && return (; common..., T = s.T, load_factor = s.lam, price = s.c, pv_factor = s.F, gamma = s.GAM,
                                 terminal = case === :cyclic ? :cyclic : :soft)
     return (; common..., T = 1, dt_h = 24 / s.T, load_factor = [s.lam[hour]], price = [s.c[hour]], pv_factor = [s.F[hour]],
@@ -557,9 +562,9 @@ end
 # Not in the default stage list (heavy): pass the stage name. LARGE_AT=bus[,bus] and LARGE_T=n
 # restrict a run; rows are merged into the CSV by (system, bus, T), so runs can be split.
 const LARGE = Dict(
-    "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, ray = true, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
-    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, ray = false, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
-    "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, ray = false, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
+    "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, ray = true, feas = nothing, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
+    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
+    "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
 const LARGE_HEADER = "system,bus,T,case,feasible_at_equal_angles,lo_deg,hi_deg,lo_at_limit,hi_at_limit,failed_checks," *
                      "predicted_lo_deg,predicted_hi_deg,lo_min_import_kW,lo_vmin_pu,lo_vmax_pu,hi_min_import_kW,hi_vmin_pu,hi_vmax_pu," *
                      "z_between_ohm,kW_per_deg,mean_import_new_kW,mean_import_old_kW,load_kW,seconds"
@@ -609,7 +614,8 @@ function window_bracketed(s, case, a; ray = true)
     kw, net, nb = problem(s, case), s.net, banded(s.net)
     function test(sgn, r, prev)
         x = solve_multiperiod(net, Dict(k.name => (k.name == a ? sgn * r : 0.0) for k in net.sources); kw..., objective = :violation, start = prev)
-        return x.status in RAY_OK && isfinite(x.violation) && x.violation <= VTOL, x
+        within = s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas
+        return x.status in RAY_OK && isfinite(x.violation) && within, x
     end
     bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
                   vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
@@ -657,6 +663,74 @@ function window_bracketed(s, case, a; ray = true)
     return (; feasible = true, lo = -lo.r, hi = hi.r, lo_capped = lo.capped, hi_capped = hi.capped, bad, lo_bind = lo.bind, hi_bind = hi.bind)
 end
 
+const MTOL_KW = 0.05           # kW: an import margin this small is the edge (2e-4 deg at 239 kW/deg)
+
+"""
+    window_secant(s, case, a, K, pred_hi)
+
+The window of delta_a from the import margin instead of a search. `objective = :margin` gives
+the largest import every substation can be guaranteed at a fixed angle; it is zero at an edge
+set by no-backflow and falls almost linearly with the angle, at the angle-to-import
+sensitivity `K` (kW per degree, from `import_estimate`). So:
+  1. the margin at equal angles, m0 (negative: infeasible there);
+  2. lower edge: first guess m0 / K, then secant steps on the margin until |m| <= MTOL_KW;
+  3. upper edge: the estimate `pred_hi`; beyond the search limit, one feasibility test there;
+  4. each finite edge is confirmed by the violation test 0.02 deg inside and outside.
+A margin solve that fails, a margin that does not fall, or a failed confirmation (an edge set
+by the voltage band, say) hands the whole window to `window_bracketed`.
+"""
+function window_secant(s, case, a, K, pred_hi)
+    kw, net, nb = problem(s, case), s.net, banded(s.net)
+    at(sgn, r) = Dict(k.name => (k.name == a ? sgn * r : 0.0) for k in net.sources)
+    vtol = something(s.feas, 1e-5)
+    nm, nt = Ref(0), Ref(0)
+    function margin(sgn, r, prev)
+        x = solve_multiperiod(net, at(sgn, r); kw..., objective = :margin, start = prev); nm[] += 1
+        return x.status in RAY_OK && isfinite(x.margin_kW) && x.max_violation <= vtol, x
+    end
+    function test(sgn, r, prev)
+        x = solve_multiperiod(net, at(sgn, r); kw..., objective = :violation, start = prev); nt[] += 1
+        within = s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas
+        return x.status in RAY_OK && isfinite(x.violation) && within, x
+    end
+    bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
+                  vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
+    giveup(why) = (say("  ** ", case, ": secant on the import margin gave up (", why, "); bracketing instead"); window_bracketed(s, case, a; ray = false))
+    ok0, x0 = margin(+1.0, 0.0, nothing)
+    ok0 || return giveup("margin solve at equal angles: " * string(x0.status))
+    nobind = (; minP = NaN, vmin = NaN, vmax = NaN)
+    x0.margin_kW >= -MTOL_KW || return (; feasible = false, lo = NaN, hi = NaN, lo_capped = false, hi_capped = false, bad = 0, lo_bind = nobind, hi_bind = nobind)
+    function edge(sgn, guess)
+        if !isfinite(guess) || guess >= LIMIT             # nothing binds before the search limit, if the estimate is right
+            okc, xc = test(sgn, LIMIT, x0)
+            okc && return (; r = LIMIT, capped = true, bind = bind_of(xc))
+            guess = LIMIT / 2
+        end
+        ra, ma, rb, xb, mb = 0.0, x0.margin_kW, clamp(guess, 0.02, LIMIT), x0, NaN
+        for _ in 1:6
+            okb, xb = margin(sgn, rb, xb)
+            okb || return "margin solve at $(round(sgn * rb; digits = 3)) deg: $(xb.status), max violation $(xb.max_violation)"
+            mb = xb.margin_kW
+            abs(mb) <= MTOL_KW && break
+            slope = (mb - ma) / (rb - ra)
+            slope < -1e-6 || (slope = -abs(K))            # the margin must fall with distance: use the sensitivity
+            rn = clamp(rb - mb / slope, 0.0, LIMIT)
+            ra, ma, rb = rb, mb, rn
+        end
+        abs(mb) <= MTOL_KW || return "no convergence in 6 margin solves"
+        okin, _ = test(sgn, max(rb - 0.02, 0.0), xb)
+        okout, _ = test(sgn, rb + 0.02, xb)
+        (okin && !okout) || return @sprintf("edge %.4f deg not confirmed: inside feasible %s, outside feasible %s", sgn * rb, okin, okout)
+        return (; r = rb, capped = false, bind = bind_of(xb))
+    end
+    lo = edge(-1.0, x0.margin_kW / abs(K))
+    lo isa String && return giveup("lower edge, " * lo)
+    hi = edge(+1.0, pred_hi)
+    hi isa String && return giveup("upper edge, " * hi)
+    say(@sprintf("           %s: import margin at equal angles %.1f kW; edges from %d margin solves and %d feasibility tests", case, x0.margin_kW, nm[], nt[]))
+    return (; feasible = true, lo = -lo.r, hi = hi.r, lo_capped = lo.capped, hi_capped = hi.capped, bad = 0, lo_bind = lo.bind, hi_bind = hi.bind)
+end
+
 function large_stage(name)
     cfg = LARGE[name]
     T = parse(Int, get(ENV, "LARGE_T", string(cfg.T)))
@@ -678,7 +752,7 @@ function large_stage(name)
                                 batteries = [merge(b, (; kW_rated = b.kW_rated / k, kVA = b.kVA / k, kWh_rated = b.kWh_rated / k)) for b in net.batteries]))
             pvs = [merge(p, (; kW = p.kW / k, kVA = p.kVA / k)) for p in pvs]
         end
-        s = setup(net, pvs; T)
+        s = setup(net, pvs; T, cfg.feas)
         PL = sum(d.kW for d in net.loads)
         zsep = abs(separation_sparse(net))
         zloop = abs(separation_sparse(net) + sum(x.z_series for x in net.sources))
@@ -699,8 +773,9 @@ function large_stage(name)
         rows = String[]
         for case in (:nobatt, DAY)
             tc = time()
-            w = window_bracketed(s, case, A; ray = cfg.ray)
             p = case === :nobatt ? pred.nobatt : pred.cyclic
+            edges = Symbol(get(ENV, "LARGE_EDGES", cfg.ray ? "ray" : "secant"))     # ray | bracket | secant
+            w = edges === :secant && e !== nothing ? window_secant(s, case, A, K, p[2]) : window_bracketed(s, case, A; ray = edges === :ray)
             say(@sprintf("    %-6s window %s deg, predicted [%+.3f, %+.3f]%s   (%.0f s, peak RSS %.1f GB)", case, fmt(w), p[1], p[2], w.bad == 0 ? "" : "   ** failed checks", time() - tc, Sys.maxrss() / 2^30))
             w.feasible && say(@sprintf("           lower edge: smallest import %.2f kW, V %.4f-%.4f pu; upper edge: smallest import %.2f kW, V %.4f-%.4f pu",
                                        w.lo_bind.minP, w.lo_bind.vmin, w.lo_bind.vmax, w.hi_bind.minP, w.hi_bind.vmin, w.hi_bind.vmax))
