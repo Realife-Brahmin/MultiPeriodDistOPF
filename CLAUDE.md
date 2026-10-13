@@ -242,6 +242,22 @@ establishes something a future session, on any machine, would need.
   abstract (111 words, with abbreviations, written before the results), the
   keywords and the acknowledgment were still to do, and are the user's to
   word.
+  **The algorithm's name is Sparse Parallel DDP** (user, 2026-10-13), in the
+  title and defined in the introduction; "DDP" stays the shorthand in the
+  body and tables. The user's wishes for the front matter: an abstract in
+  the conventional order (problem, structure, "this paper presents", the
+  strategies in a sentence each, tests, comparison), horizons given as a day
+  at a resolution (288 periods = 5 minutes, 144 = 10 minutes), the method
+  not presented as resting on the network being radial (say tree-like or
+  sparse; the elimination needs only that loops stay in the kept block,
+  which is not implemented), and index terms that are specific
+  (elimination tree, parallel prefix scan, Riccati recursion, Schur
+  complement), in alphabetical order. Two claims the user floated are
+  **not** supported by the runs and must stay out unless measured: that the
+  method uses less memory than the centralized solver (on one PC it used
+  more: 17-20 GB against 13.6 GB at large10k `T=144`), and that it solves
+  cases the centralized solver cannot (Ipopt with MA57 solved every case
+  run).
 
 ## Working branch — the name below is a snapshot, not the truth
 
