@@ -145,6 +145,12 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     set_attribute(model, "max_iter", max_iter)
     set_attribute(model, "tol", tol)
     set_attribute(model, "constr_viol_tol", constr_viol_tol)
+    # Further Ipopt options as "key=value;key=value", the convention of the DDP scripts: e.g.
+    # IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+    for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty = false)
+        k, v = strip.(split(kv, '='; limit = 2))
+        set_attribute(model, String(k), something(tryparse(Int, v), tryparse(Float64, v), String(v)))
+    end
     S = net.S_base_kVA
     buses, lines = net.buses, [l.name for l in net.lines]
     names, bnames = [s.name for s in net.sources], [bt.name for bt in net.batteries]

@@ -559,12 +559,16 @@ end
 #   large10kd: large10kC with every load, PV unit and battery (power and energy) divided by 20,
 #             in memory: 51.6 MW in total, about 0.5 MW per feeder (user, 2026-10-12: the C deck's
 #             assets suit solver tests more than a realistic feeder). Rows carry "large10kD_1ph".
+#             Its line sections also get R/X = 1 (user, 2026-10-13): the C deck has R/X = 7 on
+#             every ordinary section (0.0175 + j0.0025 ohm), a synthetic number no 12.47 kV
+#             trunk has; the review in resources/rx_ratio_report.md finds 0.3-3.4 at medium
+#             voltage and recommends 1.0 as a single value. R is kept, X raised to 0.0175 ohm.
 # Not in the default stage list (heavy): pass the stage name. LARGE_AT=bus[,bus] and LARGE_T=n
 # restrict a run; rows are merged into the CSV by (system, bus, T), so runs can be split.
 const LARGE = Dict(
-    "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, ray = true, feas = nothing, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
-    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
-    "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
+    "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, rx = nothing, ray = true, feas = nothing, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
+    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, rx = nothing, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
+    "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, rx = 1.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 24, at = ["1120"]))
 const LARGE_HEADER = "system,bus,T,case,feasible_at_equal_angles,lo_deg,hi_deg,lo_at_limit,hi_at_limit,failed_checks," *
                      "predicted_lo_deg,predicted_hi_deg,lo_min_import_kW,lo_vmin_pu,lo_vmax_pu,hi_min_import_kW,hi_vmin_pu,hi_vmax_pu," *
                      "z_between_ohm,kW_per_deg,mean_import_new_kW,mean_import_old_kW,load_kW,seconds"
@@ -739,11 +743,24 @@ function large_stage(name)
     rz = cfg.zs / sqrt(1 + X_OVER_R^2)
     imp = cfg.zs == 0 ? "R1=0 X1=1e-8 R0=0 X0=1e-8" : @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
     say("\n", "="^110, "\n", uppercase(name), "  $(cfg.label) with a second substation, T = $T (dt = $(24 / T) h), Zs = $(cfg.zs) ohm",
-        cfg.scale == 1 ? "" : "; loads, PV and batteries of $(cfg.system) divided by $(cfg.scale)")
+        cfg.scale == 1 ? "" : "; loads, PV and batteries of $(cfg.system) divided by $(cfg.scale)",
+        cfg.rx === nothing ? "" : "; line sections at R/X = $(cfg.rx)")
+    # Sections whose R/X exceeds the target get X = R / target; R and every other section stay.
+    reactance = String[]
+    if cfg.rx !== nothing
+        for l in eachline(joinpath(REPO_ROOT, "rawData", cfg.system, "BranchData.dss"))
+            m = match(r"^New Line\.(\S+) .*\br1=(\S+) x1=(\S+)"i, l)
+            m === nothing && continue
+            r1, x1 = parse(Float64, m[2]), parse(Float64, m[3])
+            r1 / x1 > cfg.rx + 1e-9 && push!(reactance, @sprintf("Edit Line.%s x1=%.10g", m[1], r1 / cfg.rx))
+        end
+        say("  ", length(reactance), " line sections edited to R/X = ", cfg.rx)
+    end
     for far in at
         t0 = time()
-        extra = ["New Line.poi2 Phases=1 Bus1=2s Bus2=$far r1=1e-06 x1=1e-06 c1=0 c0=0",
-                 "New Vsource.subs2 Phases=1 Bus1=2s basekv=$(cfg.kV) pu=1.05 angle=0 $imp",
+        extra = [reactance;
+                 "New Line.poi2 Phases=1 Bus1=2s Bus2=$far r1=1e-06 x1=1e-06 c1=0 c0=0";
+                 "New Vsource.subs2 Phases=1 Bus1=2s basekv=$(cfg.kV) pu=1.05 angle=0 $imp";
                  "Edit Vsource.source $imp"]
         net, pvs = load_sources([B, A]; system = cfg.system, extra)
         if cfg.scale != 1                                 # in memory; the OpenDSS replay scales its loads by LoadMult
@@ -754,10 +771,11 @@ function large_stage(name)
         end
         s = setup(net, pvs; T, cfg.feas)
         PL = sum(d.kW for d in net.loads)
-        zsep = abs(separation_sparse(net))
-        zloop = abs(separation_sparse(net) + sum(x.z_series for x in net.sources))
-        say(@sprintf("\n  substation at bus %s: %d buses, load %.0f kW, %d batteries %.0f kW / %.0f kWh, %d PV %.0f kW; |Z| between the two %.3f ohm (loop %.3f)",
-                     far, length(net.buses), PL, length(net.batteries), sum(b.kW_rated for b in net.batteries), sum(b.kWh_rated for b in net.batteries), length(pvs), sum(p.kW for p in pvs), zsep, zloop))
+        zc = separation_sparse(net)
+        zsep = abs(zc)
+        zloop = abs(zc + sum(x.z_series for x in net.sources))
+        say(@sprintf("\n  substation at bus %s: %d buses, load %.0f kW, %d batteries %.0f kW / %.0f kWh, %d PV %.0f kW; |Z| between the two %.3f ohm (R/X %.2f; loop %.3f)",
+                     far, length(net.buses), PL, length(net.batteries), sum(b.kW_rated for b in net.batteries), sum(b.kWh_rated for b in net.batteries), length(pvs), sum(p.kW for p in pvs), zsep, real(zc) / imag(zc), zloop))
 
         e = import_estimate(s, A, B)
         pred = (; nobatt = (NaN, NaN), cyclic = (NaN, NaN))
@@ -855,7 +873,7 @@ if "tables" in STAGES
             cfg = LARGE[name]
             rows = [r for r in big if r[1] == cfg.label && r[3] == string(cfg.T)]
             isempty(rows) && continue
-            title = cfg.scale == 1 ? name : @sprintf("%s (loads, PV and batteries divided by %g)", replace(cfg.label, "_1ph" => ""), cfg.scale)
+            title = cfg.scale == 1 ? name : @sprintf("%s (loads, PV and batteries divided by %g%s)", replace(cfg.label, "_1ph" => ""), cfg.scale, cfg.rx === nothing ? "" : @sprintf("; line \$R/X=%g\$", cfg.rx))
             println(io, "\\begin{table}[!t]\n\\centering\n\\caption{$title with a second substation at the given bus (\$|Z|\$ to the first, \$\\Omega\$): window of the new substation's angle against the first (deg), \$T=$(cfg.T)\$. Estimate: the daily-mean rule.}\n\\label{tab:mp-$name}\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llll}\n\\hline")
             println(io, "Bus (\$|Z|\$) & No batteries & Batt., whole day & Estimate \\\\\n\\hline")
             for bus in unique(String(r[2]) for r in rows)
