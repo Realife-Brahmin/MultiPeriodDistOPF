@@ -303,16 +303,26 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         no_backflow && @constraint(model, [n in names], P_subs[n, t] + (elastic ? s_back[n, t] : 0.0) >= m_imp)
     end
 
+    # Sums are built in place. `sum(container)` adds term by term and copies the growing
+    # expression each time: with half a million slacks (10k buses, T = 24) that copying was
+    # 88% of a solve's wall time (profiled 2026-10-13: 171 s per solve at T = 6, Ipopt 13 s).
     energy = sum(price[t] * dt_h * S * P_subs[n, t] for n in names, t in Ts)
-    cycling = C_B * dt_h * S^2 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr))
+    pb2 = zero(QuadExpr)
+    for k in bnames, t in Ts
+        add_to_expression!(pb2, 1.0, P_B[k, t], P_B[k, t])
+    end
+    cycling = C_B * dt_h * S^2 * pb2
     term = terminal === :soft ? gamma * sum(((B[k, T] - B[k, 0])^2 for k in bnames); init = zero(QuadExpr)) : zero(QuadExpr)
-    viol = sum(s_back; init = zero(AffExpr)) + sum(s_vlo; init = zero(AffExpr)) + sum(s_vhi; init = zero(AffExpr))
+    viol = zero(AffExpr)
+    for c in (s_back, s_vlo, s_vhi), v in c
+        add_to_expression!(viol, 1.0, v)
+    end
     if elastic
-        @objective(model, Min, viol + 1e-6 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
+        @objective(model, Min, viol + 1e-6 * pb2)
     elseif objective === :ray
-        @objective(model, Max, r_ray - 1e-7 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
+        @objective(model, Max, r_ray - 1e-7 * pb2)
     elseif marg
-        @objective(model, Max, m_imp - 100 * viol - 1e-7 * sum((P_B[k, t]^2 for k in bnames, t in Ts); init = zero(QuadExpr)))
+        @objective(model, Max, m_imp - 100 * viol - 1e-7 * pb2)
     else
         @objective(model, Min, energy + cycling + term)
     end
