@@ -234,10 +234,11 @@ establishes something a future session, on any machine, would need.
 - **The paper targets IEEE Transactions on Power Systems** (user,
   2026-10-12; it was drafted as an Industry Applications paper). Its GitHub
   repository was renamed on 2026-10-13 to
-  `Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF`; the local
-  folder is still `documents_general/TPEC-2027-DDP-MPOPF`, which is what
-  `wspx-ddp.code-workspace` and the older notes ("the TPEC repo", "the TPEC
-  paper") refer to. PES rules, from the PES
+  `Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF`, and the local
+  folder to `documents_general/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF`
+  (it was `TPEC-2027-DDP-MPOPF`: "the TPEC repo" and "the TPEC paper" in
+  older notes mean this one). Its two linked worktrees under
+  `.codex/worktrees/` were repaired after the move. PES rules, from the PES
   authors' page: 10 pages at submission (returned without review above
   that), 12 before mandatory overlength charges; abstract of about 150-200
   words in one paragraph with no abbreviations, references or equations;
