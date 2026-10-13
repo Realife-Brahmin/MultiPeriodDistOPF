@@ -49,7 +49,7 @@ Run from the repo root with `julia --project=envs/tadmm <script> [args]`.
 | `root_level/two_source_angle_sweep.jl small2poi \| ieee123 [subsA subsB]` | power flow over the substation angle difference, checked point by point against OpenDSS | `processedData/` (gitignored) |
 | `root_level/battery_angle_sweep.jl small2poi \| ieee123` | the no-backflow window with and without battery dispatch | `processedData/` (gitignored) |
 | `root_level/source_impedance_study.jl` | no-backflow windows versus the source impedance, with and without batteries and the 0.95–1.05 pu band | `results/source_impedance/` (**tracked**: `windows.csv`, and `table_windows.tex` for the paper) |
-| `root_level/multiperiod_study.jl [stage ...]` | the same model over a whole day, with battery state of charge: how far a constant angle difference can go. Stages: `main horizon zs duration pairs three five bound tables`, plus `ieee2522` and `large10k`, which run only when named | `results/multiperiod/` (**tracked**: CSVs, figures, and `tables.tex` for the paper) |
+| `root_level/multiperiod_study.jl [stage ...]` | the same model over a whole day, with battery state of charge: how far a constant angle difference can go. Stages: `main horizon zs duration pairs three five bound tables`, plus `ieee2522`, `large10k` and `large10kd` (large10k with loads, PV and batteries divided by 20), which run only when named | `results/multiperiod/` (**tracked**: CSVs, figures, and `tables.tex` for the paper) |
 | `check_voltage_bases.jl` | checks each deck's `VoltageBases` against its Vsource setpoints | stdout |
 
 ## Multi-period model

@@ -40,6 +40,7 @@
 #   ieee2522  the 2522-bus deck with a second substation added in memory at several buses:
 #             no-battery and whole-day windows, the same limit estimate, an OpenDSS replay;
 #   large10k  the same on the 10k-bus deck, a substation at the end of one feeder.
+#   large10kd the 10k-bus deck with loads, PV and batteries divided by 20 (in memory).
 #
 # Run from the repo root:
 #     julia --project=envs/tadmm envs/multi_poi/root_level/multiperiod_study.jl [stage ...]
@@ -550,11 +551,15 @@ end
 #             the electrically farthest bus, the tip of a thin lateral.
 #   large10k: 102 identical feeders in a star, 1032 MW in total; the head bus is an aggregate,
 #             so the sources stay stiff. Bus 1120 is the end of one feeder.
+#   large10kd: large10kC with every load, PV unit and battery (power and energy) divided by 20,
+#             in memory: 51.6 MW in total, about 0.5 MW per feeder (user, 2026-10-12: the C deck's
+#             assets suit solver tests more than a realistic feeder). Rows carry "large10kD_1ph".
 # Not in the default stage list (heavy): pass the stage name. LARGE_AT=bus[,bus] and LARGE_T=n
 # restrict a run; rows are merged into the CSV by (system, bus, T), so runs can be split.
 const LARGE = Dict(
-    "ieee2522" => (; system = "ieee2522C_1ph", kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
-    "large10k" => (; system = "large10kC_1ph", kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
+    "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, ray = true, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
+    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, ray = false, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
+    "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, ray = false, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]))
 const LARGE_HEADER = "system,bus,T,case,feasible_at_equal_angles,lo_deg,hi_deg,lo_at_limit,hi_at_limit,failed_checks," *
                      "predicted_lo_deg,predicted_hi_deg,lo_min_import_kW,lo_vmin_pu,lo_vmax_pu,hi_min_import_kW,hi_vmin_pu,hi_vmax_pu," *
                      "z_between_ohm,kW_per_deg,mean_import_new_kW,mean_import_old_kW,load_kW,seconds"
@@ -587,6 +592,71 @@ function merge_csv(path, header, nkey, rows)
     end
 end
 
+"""
+    window_bracketed(s, case, a; ray = true)
+
+`window` with each edge tested from outside. A maximize-angle solve can stop early at Ipopt's
+"acceptable" level, run out of iterations or end locally infeasible: on the large10k decks all
+three happened (2026-10-12; one edge came back as +4.9 deg while every angle up to +45 is
+feasible). So the violation test is run 0.02 deg beyond each edge. If that point is feasible
+the edge was not one: step outward (0.5 deg, doubling) to the first infeasible point or the
+search limit, then bisect six times (to 0.5 / 64 deg or better near zero).
+`ray = false` skips the maximize-angle solves and brackets both edges from equal angles: the
+choice for the large10k decks, where those solves cost up to 25 minutes each and then fail.
+Assumes one feasible interval around zero; a doubling step can jump a narrow infeasible gap.
+"""
+function window_bracketed(s, case, a; ray = true)
+    kw, net, nb = problem(s, case), s.net, banded(s.net)
+    function test(sgn, r, prev)
+        x = solve_multiperiod(net, Dict(k.name => (k.name == a ? sgn * r : 0.0) for k in net.sources); kw..., objective = :violation, start = prev)
+        return x.status in RAY_OK && isfinite(x.violation) && x.violation <= VTOL, x
+    end
+    bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
+                  vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
+    nobind = (; minP = NaN, vmin = NaN, vmax = NaN)
+    if ray
+        w = window(s, case, a)
+        w.feasible || return w
+        x0 = nothing
+    else
+        ok0, x0 = test(+1.0, 0.0, nothing)
+        ok0 || return (; feasible = false, lo = NaN, hi = NaN, lo_capped = false, hi_capped = false, bad = 0, lo_bind = nobind, hi_bind = nobind)
+        b0 = bind_of(x0)
+        w = (; hi = 0.0, lo = 0.0, hi_capped = false, lo_capped = false, hi_bind = b0, lo_bind = b0, bad = 0)
+    end
+    function settle(sgn, r0, capped0, bind0)
+        r = isfinite(r0) ? r0 : 0.0
+        (capped0 || r >= LIMIT - 1e-6) && return (; r, capped = true, bind = bind0, moved = false)
+        ok, x = test(sgn, r + 0.02, x0)
+        ok || return (; r, capped = false, bind = bind0, moved = !isfinite(r0))
+        r, last, step = r + 0.02, x, 0.5
+        while r < LIMIT - 1e-6
+            trial = min(r + step, LIMIT)
+            ok, x = test(sgn, trial, last)
+            if !ok
+                rin, rout = r, trial                      # last feasible, first infeasible
+                for _ in 1:6
+                    mid = (rin + rout) / 2
+                    ok, x = test(sgn, mid, last)
+                    ok ? ((rin, last) = (mid, x)) : (rout = mid)
+                end
+                return (; r = rin, capped = false, bind = bind_of(last), moved = true)
+            end
+            r, last, step = trial, x, 2 * step
+        end
+        return (; r = LIMIT, capped = true, bind = bind_of(last), moved = true)
+    end
+    hi = settle(+1.0, w.hi, w.hi_capped, w.hi_bind)
+    lo = settle(-1.0, -w.lo, w.lo_capped, w.lo_bind)
+    for (side, e, old) in (("upper", hi, w.hi), ("lower", lo, -w.lo))
+        ray && e.moved && say(@sprintf("  ** %s: the %s edge from the maximize-angle solve (%s deg) was not an edge; the outside test moved it to %s%.3f deg",
+                                case, side, isfinite(old) ? @sprintf("%.3f", old) : "failed", e.capped ? ">= " : "", e.r))
+    end
+    # A failed ray solve is superseded once its edge has been bracketed.
+    bad = hi.moved && lo.moved ? 0 : (hi.moved || lo.moved ? max(w.bad - 1, 0) : w.bad)
+    return (; feasible = true, lo = -lo.r, hi = hi.r, lo_capped = lo.capped, hi_capped = hi.capped, bad, lo_bind = lo.bind, hi_bind = hi.bind)
+end
+
 function large_stage(name)
     cfg = LARGE[name]
     T = parse(Int, get(ENV, "LARGE_T", string(cfg.T)))
@@ -594,13 +664,20 @@ function large_stage(name)
     A, B = "subs2", "source"                              # the added substation and the deck's own
     rz = cfg.zs / sqrt(1 + X_OVER_R^2)
     imp = cfg.zs == 0 ? "R1=0 X1=1e-8 R0=0 X0=1e-8" : @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
-    say("\n", "="^110, "\n", uppercase(name), "  $(cfg.system) with a second substation, T = $T (dt = $(24 / T) h), Zs = $(cfg.zs) ohm")
+    say("\n", "="^110, "\n", uppercase(name), "  $(cfg.label) with a second substation, T = $T (dt = $(24 / T) h), Zs = $(cfg.zs) ohm",
+        cfg.scale == 1 ? "" : "; loads, PV and batteries of $(cfg.system) divided by $(cfg.scale)")
     for far in at
         t0 = time()
         extra = ["New Line.poi2 Phases=1 Bus1=2s Bus2=$far r1=1e-06 x1=1e-06 c1=0 c0=0",
                  "New Vsource.subs2 Phases=1 Bus1=2s basekv=$(cfg.kV) pu=1.05 angle=0 $imp",
                  "Edit Vsource.source $imp"]
         net, pvs = load_sources([B, A]; system = cfg.system, extra)
+        if cfg.scale != 1                                 # in memory; the OpenDSS replay scales its loads by LoadMult
+            k = cfg.scale
+            net = merge(net, (; loads = [merge(d, (; kW = d.kW / k, kvar = d.kvar / k)) for d in net.loads],
+                                batteries = [merge(b, (; kW_rated = b.kW_rated / k, kVA = b.kVA / k, kWh_rated = b.kWh_rated / k)) for b in net.batteries]))
+            pvs = [merge(p, (; kW = p.kW / k, kVA = p.kVA / k)) for p in pvs]
+        end
         s = setup(net, pvs; T)
         PL = sum(d.kW for d in net.loads)
         zsep = abs(separation_sparse(net))
@@ -622,13 +699,13 @@ function large_stage(name)
         rows = String[]
         for case in (:nobatt, DAY)
             tc = time()
-            w = window(s, case, A)
+            w = window_bracketed(s, case, A; ray = cfg.ray)
             p = case === :nobatt ? pred.nobatt : pred.cyclic
             say(@sprintf("    %-6s window %s deg, predicted [%+.3f, %+.3f]%s   (%.0f s, peak RSS %.1f GB)", case, fmt(w), p[1], p[2], w.bad == 0 ? "" : "   ** failed checks", time() - tc, Sys.maxrss() / 2^30))
             w.feasible && say(@sprintf("           lower edge: smallest import %.2f kW, V %.4f-%.4f pu; upper edge: smallest import %.2f kW, V %.4f-%.4f pu",
                                        w.lo_bind.minP, w.lo_bind.vmin, w.lo_bind.vmax, w.hi_bind.minP, w.hi_bind.vmin, w.hi_bind.vmax))
             push!(rows, @sprintf("%s,%s,%d,%s,%s,%.6f,%.6f,%s,%s,%d,%.6f,%.6f,%.4f,%.6f,%.6f,%.4f,%.6f,%.6f,%.6f,%.3f,%.3f,%.3f,%.3f,%.0f",
-                                 cfg.system, far, T, case, w.feasible, w.lo, w.hi, w.lo_capped, w.hi_capped, w.bad, p[1], p[2],
+                                 cfg.label, far, T, case, w.feasible, w.lo, w.hi, w.lo_capped, w.hi_capped, w.bad, p[1], p[2],
                                  w.lo_bind.minP, w.lo_bind.vmin, w.lo_bind.vmax, w.hi_bind.minP, w.hi_bind.vmin, w.hi_bind.vmax, zsep, K, Pa, Pb, PL, time() - tc))
         end
         merge_csv(joinpath(OUT_DIR, "large_windows.csv"), LARGE_HEADER, 3, rows)
@@ -637,7 +714,7 @@ function large_stage(name)
         d0 = equal_angles(net)
         x = solve_case(s, d0, DAY)
         if x.ok
-            rp = replay_opendss(net, x, d0; load_factor = s.lam, pvs = s.P, pv_factor = s.F)
+            rp = replay_opendss(net, x, d0; load_factor = s.lam ./ cfg.scale, pvs = s.P, pv_factor = s.F)
             say(@sprintf("    cost-optimal day at equal angles: %s, \$%.2f; OpenDSS replay |dP| %.1e kW, |dQ| %.1e kvar, |dV| %.1e pu, converged %s, PQ %s",
                          x.status, x.cost.total, rp.dP, rp.dQ, rp.dV, rp.converged, rp.pq_band))
         else
@@ -647,7 +724,7 @@ function large_stage(name)
     end
     say("  wrote large_windows.csv")
 end
-foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k"]))
+foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k", "large10kd"]))
 
 # ---- stage: tables ------------------------------------------------------------------------------------------
 if "tables" in STAGES
@@ -698,12 +775,13 @@ if "tables" in STAGES
             println(io, "\\hline\n\\end{tabular}\n\\end{table}\n")
         end
         big = readcsv("large_windows.csv")              # columns: see LARGE_HEADER
-        for name in ("ieee2522", "large10k")
+        for name in ("ieee2522", "large10k", "large10kd")
             big === nothing && break
             cfg = LARGE[name]
-            rows = [r for r in big if r[1] == cfg.system && r[3] == string(cfg.T)]
+            rows = [r for r in big if r[1] == cfg.label && r[3] == string(cfg.T)]
             isempty(rows) && continue
-            println(io, "\\begin{table}[!t]\n\\centering\n\\caption{$name with a second substation at the given bus (\$|Z|\$ to the first, \$\\Omega\$): window of the new substation's angle against the first (deg), \$T=$(cfg.T)\$. Estimate: the daily-mean rule.}\n\\label{tab:mp-$name}\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llll}\n\\hline")
+            title = cfg.scale == 1 ? name : @sprintf("%s (loads, PV and batteries divided by %g)", replace(cfg.label, "_1ph" => ""), cfg.scale)
+            println(io, "\\begin{table}[!t]\n\\centering\n\\caption{$title with a second substation at the given bus (\$|Z|\$ to the first, \$\\Omega\$): window of the new substation's angle against the first (deg), \$T=$(cfg.T)\$. Estimate: the daily-mean rule.}\n\\label{tab:mp-$name}\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llll}\n\\hline")
             println(io, "Bus (\$|Z|\$) & No batteries & Batt., whole day & Estimate \\\\\n\\hline")
             for bus in unique(String(r[2]) for r in rows)
                 pick(case) = (m = [r for r in rows if r[2] == bus && r[4] == case]; isempty(m) ? nothing : m[end])
