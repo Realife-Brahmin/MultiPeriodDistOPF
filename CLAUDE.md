@@ -39,11 +39,20 @@ establishes something a future session, on any machine, would need.
 - **Near-optimality primal infeasibility thresholds are per-system** (user,
   2026-09-23). FilterDDP "time to near-optimality" (Table V in the TPEC paper)
   is the first iteration with objective within 0.5% of Ipopt AND primal_inf
-  below the system threshold: ieee123 `1e-6`, ieee2522 `1e-5`, large10k `1e-4`.
+  below the system threshold: ieee123 `1e-6`, ieee2522 `1e-5`, large10k `1e-5`.
   Single source of truth: `NEAR_OPT_PRIMAL_BY_SYSTEM` in
   `ddp/examples/power_system/terminal_soc_penalty.jl`. The race script
   (`run_matched_ipopt_race.sh`) reads matching values. Do not use a uniform
   threshold across systems.
+  **large10k was `1e-4` until 2026-10-11.** The user moved it to `1e-5` after
+  seeing the clean batch re-read at both ("1e-5 is the sweet spot"; `1e-4` a
+  bit too loose, `5e-5` too arbitrary): Ipopt's own infeasibility falls below
+  `1e-5` only near the end of its solve, the diagonal FilterDDP iterate at
+  the 0.5% point is already below it from `T=24` up. Every large10k
+  near-optimality figure dated before that, in the notes and in the TPEC
+  paper (results table, screening-ablation column), is at `1e-4`. Runs that
+  stopped at near-optimality cannot be re-read at `1e-5`; runs to tolerance
+  (the clean batch) can (`clean_hp_table.py`).
 - **Every timed FilterDDP run must enable full per-iteration logging** (user,
   2026-09-23). Set `FILTERDDP_TIMING_DIAGNOSTIC=1` and
   `FILTERDDP_FEASIBILITY_DIAGNOSTIC=1`. This emits per-iteration: objective,
@@ -113,7 +122,147 @@ establishes something a future session, on any machine, would need.
   for another (large10k is, to `1e-7`, 102 independent feeders; that is a
   caveat about the test system, not a method to build). Horizons of interest
   are the practical ones, `T=6` to `T=96` (up to a few hundred at most): med2522
-  `T=1152` and `T=1536` were cancelled and are not to be requeued.
+  `T=1152` and `T=1536` were cancelled and are not to be requeued. A horizon
+  must mean something (user, 2026-10-11): one day at a standard step. Beyond
+  `T=96` (15 minutes, the standing goal-post) the points are `T=144` (10
+  minutes) and `T=288` (5 minutes), not `T=192`. Several days is a possible
+  later step, once a solve is cheap enough.
+  Naming them is not a request to run them: the user stopped queued `T=288`
+  runs the same day ("I only want 144", for med2522, large10k optional). Ask
+  before any `T=288` run.
+
+- **The OpenDSS check is part of every run** (user, 2026-10-11). Stop the
+  timer, keep the dispatch, hand it to OpenDSS, log the discrepancy, then start
+  the next run; there is no timing conflict in that order. `run_parsim.sh` does
+  it by default (`OPENDSS_CHECK=1`); any new launcher must, the centralized
+  ones included ("everything goes into OpenDSS"). Never set
+  `FILTERDDP_SKIP_SOLUTION_WRITE=1` in a run whose result may be reported.
+- **Stopping rules** (user, 2026-10-10). Near-optimality always means the
+  objective criterion AND the primal-infeasibility criterion together.
+  FilterDDP runs go to a tolerance of `1e-5` and centralized runs to `1e-6`,
+  with the objective and the infeasibility of every iteration logged
+  (`IPOPT_TRACE=1` for Ipopt), and the reported criterion is chosen
+  afterwards, the same for both solvers. Two primal infeasibilities exist and
+  differ a great deal: the internal one (an inequality counted through its
+  slack: FilterDDP's `primal_inf`, Ipopt's callback) and the as-posed one
+  (Ipopt's iteration table, `FILTERDDP_ORIGINAL_PRIMAL`). Never compare one
+  solver's internal figure with the other's as-posed one.
+- **Power plan.** The 309 PC under High performance is 14-24% faster per
+  iteration than under Balanced (same runs, 2026-10-05/06 against 10-09;
+  indicative). Every time in the TPEC table up to 2026-10-10 was measured
+  under Balanced, for both solvers; the clean batch of 2026-10-11
+  (`run_clean_hp_batch.sh`, logs tagged `hp`) is under High performance. Never
+  mix the two in one comparison; record the plan with the run.
+- **Exact Hessian and the pairwise sweep** (2026-10-10/11,
+  `ddp/notes/PARALLEL_IN_TIME.md`, Section 10). `FILTERDDP_LEAN_EXACT=1` (with
+  `FILTERDDP_HALF_BLOCK=1`, no `FILTERDDP_DIAG_HESSIAN`) builds the halved
+  battery block before the sweep: same iterates as the plain exact path, and
+  its step B costs about what the diagonal path's does. `pint_scan.jl`
+  (`FILTERDDP_PINT_SCAN=1`) redoes the value recursion by pairwise combination
+  of the periods (Sarkka and Garcia-Fernandez, 2023): exact, slower at `T=6`,
+  1.7-2.0 times faster at `T=24` and 4.6-5.1 times at `T=96` on step B, as a
+  count. Since the night of 2026-10-11 a solve uses it (`paired_pass.jl`,
+  bullet below), and the TPEC paper's counted column is the exact Hessian
+  with the pairwise sweep; the diagonal Hessian stays the faster sequential
+  arrangement on the two larger feeders.
+- **Gurobi** works on the 309 PC (Gurobi 13, licence to 2027-09-22) and is
+  run for reference (user, 2026-10-06 and 2026-10-11). It needs `v` and `ell`
+  nonnegative to recognise the cone, so its reduced model keeps those two and
+  drops the other screened limits; its barrier method takes no starting point
+  for a conic problem (Gurobi documentation, "Warm Start Options"), so the
+  power-flow start has no effect on it.
+- **Night of 2026-10-11** (`ddp/notes/PARALLEL_IN_TIME.md`, Section 11;
+  branch `ddp-oct10-new-tests`). Three things a later session should know:
+  - `FILTERDDP_REUSE_BARRIER=1`: the backward pass that `solve!` repeats
+    after lowering the barrier parameter keeps every stage's factor (no stage
+    matrix depends on that parameter). Identical iterates, checked on all
+    three systems with both Hessians. Use it in timed runs from now on; logs
+    carry the tag `reuse`.
+  - Barrier schedule and hybrid Hessian, 132 untimed runs: Ipopt's schedule
+    (`FILTERDDP_MU_INIT=0.1`, `_THETA_MU=1.5`) cuts the iterations to
+    tolerance (252 to 187 over six cases with the diagonal Hessian) but is
+    mixed at the 0.5% rule and costs iterations on large10k; the hybrid
+    (`FILTERDDP_HYBRID_MU`) gains nothing. The default schedule stays until
+    the user decides otherwise.
+  - `FILTERDDP_THREADED=1` (`threaded_pass.jl`): the backward and forward
+    passes with one task per period, same iterates as the sequential run
+    (bit for bit backward, to rounding forward). Correctness only: the user
+    does not want parallel timings from the 309 PC. It is the code for a
+    machine with a core per period; a Kamiak account was requested on
+    2026-10-11 (ticket KSD-7186, PI Dubey).
+- **The pairwise sweep in the solve, and the collector in the count**
+  (2026-10-11 night; `ddp/notes/PARALLEL_IN_TIME.md`, Section 12).
+  - `paired_pass.jl` does the battery sweep by pairs inside the solve: same
+    iterations and objective as the ordinary exact solve on all twelve cases.
+    Launcher: `bash ddp/results/paired_pass/run_paired.sh <system> <T> count
+    <tag>` (OpenDSS check included; `PAIRED_ROUNDS=0` runs the ordinary sweep
+    in the same pass for a count on the same timing; `PAIRED_WARMUP=full`, 8
+    on large10k `T=96`). The driver has no switch of its own for it yet.
+  - **The count charges garbage collection per worker** (user, 2026-10-11:
+    "our default assumption", and the paper must say so). Julia's collector
+    takes 17-22% of a run; its pauses used to land inside one stage's time
+    and make it the slowest. Counting runs now time each stage without the
+    pauses in it and print the collector's time (`FILTERDDP_PARSIM_GCNET=1`,
+    set by the launcher), and the scripts give each worker `1/T` of it;
+    `clean_hp_table.py --gc=sequential` gives the other reading. Logs before
+    this (the clean batch, tags `count_hp_tol1e5` and `inplace_hp_tol1e5`)
+    are on the old timing: never put their counts beside the new ones as
+    like for like. Always state the three assumptions: one core per period,
+    no time for passing data, a memory per worker; and that Ipopt is one
+    process. A real parallel run should be one process per period, not
+    threads in one program.
+  - Result at the 0.5% rule (same at 0.1%), Ipopt / DDP counted, seconds:
+    med2522 13.3 / 4.2 (`T=24`), 67.8 / 8.4 (`T=96`), 110.2 / 14.4 (`T=144`);
+    large10k 21.9 / 12.4, 44.4 / 15.8 (`T=48`), 101.4 / 22.6 (`T=96`). At
+    `T=6`: level on med2522, half Ipopt's speed on large10k. With every
+    collection in sequence only large10k `T=48` and `T=96` stay ahead. One
+    process runs the pairwise arrangement slower than the ordinary sweep.
+  - Do not retry "run the collector less often": held off for a whole pass
+    and run once it costs the same (its cost follows the volume allocated),
+    and the allocation has no single source.
+  - Longer horizons (user's go, 2026-10-12): med2522 `T=288` counts 26.4 s
+    against 255.2 s for Ipopt (9.7 times). large10k `T=144` counts 80.6 s
+    against 138.9 s, but the PC (31.7 GB) runs short of memory there and the
+    count carries the stalls (about 45 s without them, an estimate): say so
+    wherever that figure appears (an asterisk in the paper's table, explained
+    in the text). A clean rerun needs the other applications closed; the
+    user parked it on 2026-10-12 until there is access to a parallel machine.
+    large10k `T=288` cannot run on this PC. Warm-up 12
+    for med2522 `T=288`, 8 for large10k `T=144`.
+  - ieee123 `T=24` needs tolerance 1e-6 (`PAIRED_TOL`) to meet its 1e-6
+    infeasibility threshold.
+- **The paper targets IEEE Transactions on Power Systems** (user,
+  2026-10-12; it was drafted as an Industry Applications paper). Its GitHub
+  repository was renamed on 2026-10-13 to
+  `Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF`, and the local
+  folder to `documents_general/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF`
+  (it was `TPEC-2027-DDP-MPOPF`: "the TPEC repo" and "the TPEC paper" in
+  older notes mean this one). Its two linked worktrees under
+  `.codex/worktrees/` were repaired after the move. PES rules, from the PES
+  authors' page: 10 pages at submission (returned without review above
+  that), 12 before mandatory overlength charges; abstract of about 150-200
+  words in one paragraph with no abbreviations, references or equations;
+  three or four keywords; **AI-generated content must be disclosed in the
+  Acknowledgments** (system, sections, level of use). As of that date the
+  abstract (111 words, with abbreviations, written before the results), the
+  keywords and the acknowledgment were still to do, and are the user's to
+  word.
+  **The algorithm's name is Sparse Parallel DDP** (user, 2026-10-13), in the
+  title and defined in the introduction; "DDP" stays the shorthand in the
+  body and tables. The user's wishes for the front matter: an abstract in
+  the conventional order (problem, structure, "this paper presents", the
+  strategies in a sentence each, tests, comparison), horizons given as a day
+  at a resolution (288 periods = 5 minutes, 144 = 10 minutes), the method
+  not presented as resting on the network being radial (say tree-like or
+  sparse; the elimination needs only that loops stay in the kept block,
+  which is not implemented), and index terms that are specific
+  (elimination tree, parallel prefix scan, Riccati recursion, Schur
+  complement), in alphabetical order. Two claims the user floated are
+  **not** supported by the runs and must stay out unless measured: that the
+  method uses less memory than the centralized solver (on one PC it used
+  more: 17-20 GB against 13.6 GB at large10k `T=144`), and that it solves
+  cases the centralized solver cannot (Ipopt with MA57 solved every case
+  run).
 
 ## Working branch — the name below is a snapshot, not the truth
 

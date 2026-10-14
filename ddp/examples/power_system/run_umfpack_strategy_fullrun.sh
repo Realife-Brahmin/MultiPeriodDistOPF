@@ -15,7 +15,7 @@ mkdir -p "$OUT" ddp/results/kkt_ordering/captures/solutions
 REF=$(grep -oE "CENTRAL_IPOPT .*" "ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log" | \
       grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
 [ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T"; exit 1; }
-case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL=1e-6;; esac
+case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-5;; *) PRIMAL=1e-6;; esac
 
 export REDUCED_PROFILE=periodic REDUCED_CB=1e-3 TERMINAL_SOC_SOFT=1
 export FILTERDDP_MAX_ITERATIONS=400

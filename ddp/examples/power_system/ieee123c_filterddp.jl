@@ -23,6 +23,10 @@ include(joinpath(@__DIR__, "loadflow_start.jl"))
 get(ENV, "FILTERDDP_BATTERY_SCHUR", "0") != "0" &&
     include(joinpath(@__DIR__, "battery_schur_hook.jl"))
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && include(joinpath(@__DIR__, "tree_kkt.jl"))
+get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && include(joinpath(@__DIR__, "pint_scan.jl"))
+# FILTERDDP_THREADED=1: the backward and forward passes with the periods on
+# Julia threads (threaded_pass.jl); needs the tree solver.
+get(ENV, "FILTERDDP_THREADED", "0") != "0" && include(joinpath(@__DIR__, "threaded_pass.jl"))
 
 include(joinpath(@__DIR__, "control_layout.jl"))
 
@@ -469,6 +473,28 @@ function build_model(data; gamma=0.0)
     return ocp, idx, nx, nu, length(stage_cons[1].c(zeros(nx), zeros(nu)))
 end
 
+# Largest violation of a stage's constraints as posed, for FILTERDDP_ORIGINAL_PRIMAL
+# lines (DDP4OPF.PRIMAL_ORIGINAL_HOOK): the cone row P^2 + Q^2 - v ell + s = 0 counts
+# only by how far P^2 + Q^2 exceeds v ell, and the energy row only by how far the
+# energy after the stage is outside its window; the balances, the voltage drops and
+# the substation voltage count as they are. Rows as in `equations` of build_model.
+function install_original_primal_hook(data, idx)
+    N, L, bats = length(data[:Nset]), length(data[:Lset]), data[:Bset]
+    width = [(data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j] for j in bats]
+    DDP4OPF.PRIMAL_ORIGINAL_HOOK[] = function (t, x, u, c)
+        v = 0.0
+        @inbounds for i in 1:2N+L; v = max(v, abs(c[i])); end
+        @inbounds for e in 1:L; v = max(v, c[2N+L+e] - u[idx.soc_slack[e]]); end
+        v = max(v, abs(c[2N+2L+1]))
+        @inbounds for b in eachindex(bats)
+            w = c[2N+2L+1+b] + u[idx.energy_slack[b]]
+            v = max(v, -w, w - width[b])
+        end
+        return v
+    end
+    return nothing
+end
+
 function main(args=ARGS)
 system = length(args) >= 1 ? args[1] : "ieee123C_1ph"
 T = length(args) >= 2 ? parse(Int, args[2]) : 2
@@ -498,6 +524,9 @@ gammaT = terminal_soc_soft() ? gamma_terminal(system) : 0.0
 ocp, idx, nx, nu, nc_actual = build_model(data; gamma=gammaT)
 @printf("build complete: %.3f s, nc=%d\n", time()-t0, nc_actual)
 get(ENV, "FILTERDDP_TREE_KKT", "0") != "0" && install_tree_kkt_hook(data, idx, nu)
+get(ENV, "FILTERDDP_PINT_SCAN", "0") != "0" && install_pint_scan_hook()
+get(ENV, "FILTERDDP_THREADED", "0") != "0" && install_threaded_pass(data, idx)
+get(ENV, "FILTERDDP_FEASIBILITY_DIAGNOSTIC", "0") == "1" && install_original_primal_hook(data, idx)
 mode == "build" && exit()
 
 println("constructing dynamic Solver storage...")
@@ -505,9 +534,19 @@ flush(stdout)
 t_solver = time()
 max_iterations = parse(Int, get(ENV, "FILTERDDP_MAX_ITERATIONS", "200"))
 optimality_tolerance = parse(Float64, get(ENV, "FILTERDDP_OPTIMALITY_TOLERANCE", "1e-7"))
-solver = Solver(ocp; options=Options{Float64}(verbose=!quiet,
-    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations))
+# Barrier schedule (run_barrier_sweep.sh): mu starts at FILTERDDP_MU_INIT and,
+# once the barrier problem is solved to FILTERDDP_KAPPA_EPS * mu, becomes
+# max(tol / 10, min(FILTERDDP_KAPPA_MU * mu, mu ^ FILTERDDP_THETA_MU)).
+barrier_options = Dict{Symbol, Float64}()
+for (name, key) in (("FILTERDDP_MU_INIT", :μ_init), ("FILTERDDP_KAPPA_MU", :κ_μ),
+                    ("FILTERDDP_THETA_MU", :θ_μ), ("FILTERDDP_KAPPA_EPS", :κ_ϵ))
+    haskey(ENV, name) && (barrier_options[key] = parse(Float64, ENV[name]))
+end
+solver = Solver(ocp; options=Options{Float64}(; verbose=!quiet,
+    optimality_tolerance=optimality_tolerance, max_iterations=max_iterations, barrier_options...))
 @printf("optimality_tolerance=%.3e max_iterations=%d\n", optimality_tolerance, max_iterations)
+@printf("BARRIER_OPTIONS mu_init=%g kappa_mu=%g theta_mu=%g kappa_eps=%g\n", solver.options.μ_init,
+        solver.options.κ_μ, solver.options.θ_μ, solver.options.κ_ϵ)
 @printf("Solver construction complete: %.3f s\n", time()-t_solver)
 mode == "solver" && exit()
 x0 = Float64[data[:B0_pu][j] for j in data[:Bset]]
@@ -561,12 +600,19 @@ if warmup > 0
     warm_stream[] == typeof(stdout) || println("WARMUP_STREAM_MISMATCH warm-up printed to ", warm_stream[],
         ", the timed solve prints to ", typeof(stdout), ": its first pass includes print compilation")
 end
+# The warm-up's garbage is not the timed solve's: collect it now, so that the
+# first collection inside the timed solve does not pay for it (one pass of
+# 0.38 s in a 0.3 s solve, ieee123 T=6 on 2026-10-11). The time the collector
+# takes inside the timed solve is printed, for what it is worth at small sizes.
+warmup > 0 && GC.gc()
+gc_before = Base.gc_time_ns()
 t1 = time()
 println("entering solve! ...")
 flush(stdout)
 status = solve!(solver, x0, ubar)
 @printf("solve complete: %.3f s, iterations=%d, status=%s\n",
         time()-t1, solver.data.k, string(status))
+@printf("FILTERDDP_GC_TIME gc_s=%.3f collected_before_solve=%d\n", (Base.gc_time_ns() - gc_before) / 1e9, warmup > 0)
 # Peak resident memory of the whole process (build + solve), for the memory
 # comparison with centralized Ipopt.
 @printf("FILTERDDP_MEMORY_PEAK maxrss_mib=%.1f\n", Sys.maxrss() / 2^20)

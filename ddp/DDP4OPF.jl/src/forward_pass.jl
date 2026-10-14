@@ -31,7 +31,12 @@ function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
     τ = max(options.τ_min, T(1.0) - μ)
     # Affine dynamics: directions from one unit-step rollout, and the largest
     # step the fraction-to-boundary rule allows (affine_linesearch.jl).
-    aff = _affine_linesearch() ? affine_directions(solver, ocp, data, τ) : nothing
+    aff = nothing
+    if _affine_linesearch()
+        directions_hook = AFFINE_DIRECTIONS_HOOK[]
+        isnothing(directions_hook) || (aff = directions_hook(solver, ocp, data, τ))
+        aff === nothing && (aff = affine_directions(solver, ocp, data, τ))
+    end
     aff === nothing || (data.step_size = aff.γmax)
 
     θ_prev = data.primal_1_curr
@@ -39,7 +44,13 @@ function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
     
     while data.step_size >= eps(T)
         γ = data.step_size
-        aff === nothing ? rollout!(solver, ocp, data, τ, γ) : affine_rollout!(solver, ocp, data, aff, γ)
+        if aff === nothing
+            rollout!(solver, ocp, data, τ, γ)
+        else
+            rollout_hook = AFFINE_ROLLOUT_HOOK[]
+            (isnothing(rollout_hook) || !rollout_hook(solver, ocp, data, aff, γ)) &&
+                affine_rollout!(solver, ocp, data, aff, γ)
+        end
         data.status != 0 && (data.step_size *= 0.5, continue)
         
         # used for sufficient decrease from current iterate step acceptance criterion
@@ -64,9 +75,9 @@ function forward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx},
         break
     end
     _parsim() && @printf(
-        "FILTERDDP_PARSIM_FORWARD iteration=%d dir_sum_s=%.9f dir_max_s=%.9f rec_s=%.9f rec_err=%.3e trials=%d trial_sum_s=%.9f trial_max_s=%.9f\n",
+        "FILTERDDP_PARSIM_FORWARD iteration=%d dir_sum_s=%.9f dir_max_s=%.9f rec_s=%.9f rec_err=%.3e trials=%d trial_sum_s=%.9f trial_max_s=%.9f gc_s=%.9f stages=%d\n",
         data.k, _PARSIM_FWD[1], _PARSIM_FWD[2], _PARSIM_FWD[3], _PARSIM_FWD[4],
-        Int(_PARSIM_FWD[5]), _PARSIM_FWD[6], _PARSIM_FWD[7])
+        Int(_PARSIM_FWD[5]), _PARSIM_FWD[6], _PARSIM_FWD[7], _PARSIM_FWD[8], ocp.N)
     data.step_size < eps(T) && (data.status = 7)
     data.status != 0 && (verbose && (@warn "Line search failed to find a suitable iterate"))
 end

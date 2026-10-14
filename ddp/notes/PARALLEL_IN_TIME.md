@@ -674,3 +674,526 @@ results are read: Ipopt could equally be run one feeder at a time.
 | `tree_kkt_phase_check.jl` | the NaN test |
 | `run_parsim.sh`, `parsim_from_log.py`, `compare_runs.py` | one run, the count, the iterate comparison |
 | `results/parallel_in_time/nine_cells_half/`, `nine_cells_lean/` | logs and summaries of the nine cells |
+
+## 10. The sweep by pairwise combination, and a lean exact step (2026-10-10/11)
+
+Asked by the user after reading Sarkka and Garcia-Fernandez, "Temporal
+Parallelization of Dynamic Programming and Linear Quadratic Control" (IEEE TAC
+68(2), 2023; arXiv 2104.03186): implement it for the three systems at
+`T = 6, 24, 96`, with the exact battery-block Hessian. The assessment in
+Section 9 ("what it would take") is superseded by the measurements here.
+
+### What was built
+
+`pint_scan.jl` (`FILTERDDP_PINT_SCAN=1`, `run_pint_scan.sh`). A diagnostic
+inside an ordinary exact-Hessian solve: on the selected backward passes every
+stage hands over its battery-level data, and the value recursion is redone
+from that data in two ways, the ordinary sweep and the pairwise combination.
+The solve itself is unchanged.
+
+With `a` the state before a stage, `dp` its battery powers and `b = a + f .* dp`
+the state after it (`f = -dt`), the stage leaves
+
+    q(a, dp) = 1/2 dp' S0 dp - (rhat + Rhat a)' dp + 1/2 a' D a + d' a,
+
+where `S0` is the halved battery block without the curvature term and none of
+the five objects depends on the next stage. The sweep is
+`V_new(a) = min_dp q(a, dp) + V(a + f .* dp)`. The pairwise scheme writes each
+stage as a function of both end states, `G(a, b) = q(a, (b - a) ./ f)`, combines
+neighbours by minimising over the state between them (one Cholesky of size
+`n_B`, two triangular solves with `n_B` right-hand sides, three products), and
+does the combinations level by level: in every block of `2^(r+1)` positions
+each entry of the left half is combined with the first entry of the right
+half. `ceil(log2(T+1))` levels: 3, 5, 7 for `T = 6, 24, 96`. A combination whose
+right operand already reaches the end of the horizon costs as much as a sweep
+step.
+
+Because `f` is invertible here (one battery power per battery energy), the
+two-ended function is an ordinary quadratic in `(a, b)`; the dual
+parameterisation of the paper, needed when there are fewer controls than
+states, is not.
+
+### It is exact
+
+57 backward passes over the nine cases (`pint_*_scan2.log`): the value
+functions of the pairwise scheme agree with the solver's to `7e-10` relative
+or better on 56 of them, `2.5e-7` on one late med2522 `T=96` pass (`mu` near
+its floor). The same holds for the sweep redone from the stage data, so the
+difference is conditioning, not the scheme. No Cholesky failure in any
+combination or step.
+
+### Step B only: the count
+
+One worker per period, one BLAS thread each. *sweep*: the value recursion in
+sequence from the stage data. *paired*: slowest combination of each level,
+plus the slowest stage function and the slowest final battery solve.
+Milliseconds per backward pass, medians over the scanned passes; the garbage
+collector is kept out of the timed operations (it had inflated the slowest
+combination by 4 to 20 times in the first batch).
+
+| | `T` | sweep | paired | times faster | one combination / one step |
+|---|---|---|---|---|---|
+| ieee123 (51) | 6 | 0.37 | 0.45 | 0.8 | 0.09 / 0.05 |
+| | 24 | 1.33 | 0.77 | 1.7 | |
+| | 96 | 5.1 | 1.1 | 4.6 | |
+| med2522 (249) | 6 | 11.3 | 13.1 | 0.8 | 3.8 / 1.8 |
+| | 24 | 44.2 | 24.5 | 1.8 | |
+| | 96 | 192 | 38.2 | 5.1 | |
+| large10k (1,020) | 6 | 348 | 413 | 0.8 | 129 / 58 |
+| | 24 | 1,364 | 705 | 2.0 | |
+| | 96 | 5,615 | 1,188 | 4.7 | |
+
+With the typical (median) combination instead of the slowest: 0.9-1.2, 2.0-2.6
+and 5.9-7.1. A combination costs a little over two steps at every size, so
+the ratio is set by the horizon, not by the number of batteries. The paper
+reports losing its advantage at state dimension 256-512; there the sequential
+baseline runs on a GPU that already parallelises each step.
+
+Not measured: a solve that uses the scheme. It is a count on step B from a
+serial run, under the High performance power plan.
+
+### A lean exact step B (in the solver)
+
+The sweep redone from the stage data turned out 2.5 to 4.5 times cheaper than
+the sequential part of the solver under the exact Hessian (14 times on
+ieee123). The solver built the battery block at `2 n_B` with the curvature
+inside, reduced it and factored it, all in the sweep. But
+
+    Shat = Shat0 + Vc,   Shat0 = blockdiag_g(D_PP - D_PN inv(D_NN) D_NP) - U_P inv(M) U_P',
+
+and `Shat0` reads nothing from the next stage. `FILTERDDP_LEAN_EXACT=1` (with
+`FILTERDDP_HALF_BLOCK=1`): `_tree_kkt_finish0` builds `Shat0` before the sweep
+at its final size; the sweep adds `Vc`, factors by Cholesky (LU if that
+fails) and forms the value increment from one triangular solve and one
+symmetric product. The battery rows of the feedback are not needed by the
+sweep; under `FILTERDDP_PARSIM` they are formed and timed with the
+back-substitution of the stage. The battery curvature is formed entry by
+entry (`_lean_curvature`) instead of by a sparse-dense-sparse product.
+
+Same iterates as the plain exact path (`compare_runs.py`): ieee123 `T=6`,
+med2522 `T=24`, large10k `T=6`, residuals within `1.5e-9` relative, objectives
+identical to 16 digits.
+
+| exact Hessian | step B per stage | sequential | one worker per period |
+|---|---|---|---|
+| large10k `T=6`, plain | 165 ms | 34.2 s | 23.7 s |
+| large10k `T=6`, lean | 58 ms | 24.4 s | 12.3 s |
+| med2522 `T=24`, plain (2026-10-06, Balanced plan) | 13.6 ms | 93.2 s | 30.0 s |
+| med2522 `T=24`, lean | 3.7 ms | 64.4 s | 14.3 s |
+
+(Check runs, near-optimality stop, High performance plan; the clean figures
+are those of the batch below.) With it step B of the exact path costs about
+what that of the diagonal path does (57 ms on large10k), so what remains in
+favour of the diagonal Hessian is its iteration count on med2522 at the 0.5%
+stop.
+
+### Power plan
+
+Same configuration, same instance, same iterates, backward pass per iteration:
+med2522 `T=24` 1.68 s (2026-10-05) and 1.62 s (2026-10-06) under Balanced,
+1.28 s under High performance (2026-10-09); large10k `T=6` 1.98 against
+1.70 s. One run each on different days, load not logged for the last, so
+indicative: 14-24%. Every time in the TPEC table was measured under Balanced,
+for both solvers.
+
+### Stopping rules on one footing
+
+- `IPOPT_TRACE=1` (`centralized_ipopt_matched.jl`): one `IPOPT_ITER` line per
+  iteration through the intermediate callback of Ipopt (clock, objective,
+  primal and dual infeasibility, barrier parameter). `ipopt_trace_posthoc.py`
+  reads off when a rule was first met, as `near_opt_posthoc.py` does for
+  FilterDDP. Same iterations and objective with and without it.
+- **Two primal infeasibilities, and they differ a great deal.** The iteration
+  table of Ipopt prints the violation of the constraints as posed: zero for
+  the cone whenever `P^2 + Q^2 <= v ell` holds. Its callback gives the
+  internal one, which counts an inequality through its slack. The
+  `primal_inf` of FilterDDP is of the internal kind (the cone row carries an
+  explicit slack). By the internal measure Ipopt reaches the 0.5% point at
+  83-84% of its solve time on ieee123 `T=24` and med2522 `T=6`; by its printed
+  one, at 64-65%. FilterDDP now logs both (`FILTERDDP_ORIGINAL_PRIMAL`, the
+  as-posed one through `install_original_primal_hook`); `near_opt_posthoc.py
+  --primal=original` uses it. Which one the paper applies is the call of the
+  user; it must be the same for both solvers.
+- User, 2026-10-10: near-optimality always means the objective criterion and
+  the infeasibility criterion together; FilterDDP runs go to a tolerance of
+  `1e-5` and centralized runs to `1e-6`, with the objective and infeasibility
+  of every iteration logged, and the reported criterion is chosen afterwards.
+
+### The OpenDSS check belongs to the run
+
+`run_parsim.sh` now keeps the dispatch of each run and hands it to OpenDSS
+before anything else starts (`OPENDSS_CHECK=1`, default). It had skipped the
+solution write; there is no timing conflict in checking after the timer has
+stopped. User, 2026-10-11: every dispatch goes through OpenDSS, the
+centralized ones included.
+
+### Clean batch (2026-10-11, in progress when this was written)
+
+`run_clean_hp_batch.sh`: Ipopt (MA57, MA97, MUMPS; `tol = 1e-6`; trace) and
+FilterDDP (tolerance `1e-5`; diagonal Hessian, and exact Hessian with the lean
+step B) on ieee123 and med2522 at `T = 6, 24, 96` and large10k at
+`T = 6, 24, 48, 96`, High performance plan, quiet wait and background load
+logged per case, full warm-up. Logs: `results/ipopt_hsl/logs/*_hp_*`,
+`results/parallel_in_time/logs/*_hp_tol1e5.log`, `results/opendss_check/parsim_*`.
+
+### Files
+
+| | |
+|---|---|
+| `pint_scan.jl`, `run_pint_scan.sh`, `pint_scan_summary.py` | the pairwise scheme, its launcher, the summary |
+| `tree_kkt.jl` | `tree_kkt_block0`, `tree_kkt_reduced_rhs` (stage data for the diagnostic); `_tree_kkt_finish0` / `_tree_kkt_finishV` (lean exact step) |
+| `DDP4OPF.jl/src/backward_pass.jl` | `PINT_SCAN_HOOK`, `PRIMAL_ORIGINAL_HOOK`, `_lean_curvature` |
+| `centralized_ipopt_matched.jl`, `ipopt_trace_posthoc.py` | the Ipopt trace |
+| `run_clean_hp_batch.sh`, `run_clean_hp_opendss.sh` | the clean batch; dispatches at a looser stop |
+| `results/pint_scan/logs/` | `*_scan.log` (first batch), `*_scan2.log` (collector kept out of the timings) |
+
+## 11. Clean batch results, reuse after a barrier update, barrier schedules, the passes on threads (2026-10-11)
+
+Branch `ddp-oct10-new-tests`.
+
+### The clean batch
+
+All 20 FilterDDP runs converged and all 20 dispatches passed OpenDSS (no
+voltage outside its limits; voltages within `1e-5` pu of the optimizer's).
+Time to the 0.5% point in seconds, primal infeasibility below `1e-6` (ieee123)
+or `1e-5` (med2522, large10k), each solver's own (internal) infeasibility.
+"Count" is one worker per period: one core each, no communication; Ipopt is
+one process. `clean_hp_table.py` prints this and the other rules.
+
+| case | Ipopt MA57 | DDP diagonal, sequential | DDP diagonal, count | DDP exact, count |
+|---|---|---|---|---|
+| ieee123 `T=6` | 0.10 | 0.33 | 0.19 | 0.16 |
+| ieee123 `T=24` | 0.33 | 1.31 | 0.63 | not met |
+| ieee123 `T=96` | 1.68 | 16.5 | 9.38 | 4.34 |
+| med2522 `T=6` | 2.62 | 10.3 | 4.56 | 5.79 |
+| med2522 `T=24` | 15.2 | 47.9 | 14.3 | 14.8 |
+| med2522 `T=96` | 76.5 | 245 | 55.2 | 49.7 |
+| large10k `T=6` | 5.16 | 16.3 | 7.56 | 13.5 |
+| large10k `T=24` | 22.0 | 57.5 | 19.3 | 39.3 |
+| large10k `T=48` | 47.2 | 125 | 37.0 | 70.9 |
+| large10k `T=96` | 101 | 263 | 67.1 | 150 |
+
+- **large10k's threshold is `1e-5` since this batch** (user, 2026-10-11; it was
+  `1e-4`). At `1e-4` the Ipopt column reads 4.83 / 20.5 / 44.3 / 84.1 and the
+  diagonal count 5.98 at `T=6`, unchanged otherwise: Ipopt's own infeasibility
+  falls below `1e-5` only near the end of its solve, the FilterDDP iterate at
+  the 0.5% point is already below it from `T=24` up.
+- **The table depends on the infeasibility measure.** With the violation of
+  the constraints as posed (`--primal=original`) Ipopt qualifies much earlier
+  (large10k `T=96`: 32.5 s, iteration 3) and FilterDDP's count is ahead only
+  on med2522 with the exact Hessian (`T=24`: 9.0 against 10.3 s; `T=96`: 31.8
+  against 45.2 s). On large10k the power-flow start, batteries idle, is
+  feasible as posed to `1.2e-6` and 3 to 4% from the optimum; a few
+  iterations bring the objective within 0.5%, and by that measure an iterate
+  whose inequalities hold counts as feasible whatever its slack residuals.
+- **Run to tolerance, the exact Hessian is faster than the diagonal one in all
+  ten cases** (large10k `T=96`: 505 s and 16 iterations against 1085 s and
+  58), and sequential FilterDDP is 3 to 5 times slower than MA57 (0.10 / 0.36
+  / 1.90, 2.93 / 17.2 / 83.5, 5.17 / 25.1 / 53.0 / 113 s).
+- **Why the exact Hessian qualifies late by the internal measure.** It leaves
+  each barrier level after three or four iterations, as soon as the level's
+  own tolerance (ten times the barrier parameter) is met, and the first steps
+  at the next level are long again; the residual of the cone rows, which is
+  second order in the step, has no time to settle. The diagonal Hessian stays
+  longer at each level and ends it with a residual of `1e-7` or less. On
+  ieee123 `T=24` the exact run ends at `3.7e-6` against the threshold of
+  `1e-6` ("not met"): a FilterDDP tolerance of `1e-5` is not tight enough for
+  that threshold with the exact Hessian.
+- **FilterDDP at tolerance `1e-5` stops with the barrier parameter at `1e-6`**
+  (a tenth of the tolerance), which leaves its objective above Ipopt's by up
+  to `2.7e-5` (med2522 `T=96`): a `1e-5` objective rule cannot be met there.
+
+### No new factorization after a barrier update (`FILTERDDP_REUSE_BARRIER=1`)
+
+When a barrier problem is solved, `solve!` lowers the barrier parameter and
+repeats the backward pass at the same trajectory: 8 times in a run to `1e-5`
+with the default schedule, 10 to 27% of the passes. No stage matrix depends
+on the barrier parameter (the barrier terms of the Hessian are `z ./ slack`,
+and the value Hessian is built from the stage matrices), only the right-hand
+side of the step does. `reuse_pass.jl` therefore keeps every stage's factor
+for the repeated pass: one solve per stage and vector work, no derivatives,
+no assembly, no factorization. A reused pass takes 6 ms against 43 ms on
+ieee123 `T=24` and about 0.2 s against 1.0 s on large10k `T=6`.
+
+The iterates are those of the full pass exactly: on ieee123 `T=6/24/96`,
+med2522 `T=6/24` and large10k `T=6/24`, both Hessians, the runs follow the
+clean batch step for step with objectives equal to all 16 digits
+(`compare_runs.py`, which now matches residual lines by iteration).
+
+### Barrier schedule and hybrid Hessian (132 untimed runs)
+
+`run_barrier_sweep.sh`, `barrier_sweep_summary.py`. The solver's schedule is
+`mu <- max(tol/10, min(kappa_mu mu, mu^theta_mu))` from `mu_init`, a level
+being left when its error is below `kappa_eps mu`: defaults (1, 0.2, 1.2, 10),
+9 levels down to `1e-6`; Ipopt's defaults (0.1, 0.2, 1.5, 10), 6 levels.
+Iterations to tolerance summed over ieee123 `T=24/96`, med2522 `T=6/24`,
+large10k `T=6/24`:
+
+| schedule | diagonal | exact |
+|---|---|---|
+| base (1, 0.2, 1.2, 10) | 252 | 165 |
+| Ipopt's (0.1, 0.2, 1.5, 10) | 187 | 157 |
+| `mu_init` 0.1 alone | 212 | 148 |
+| `mu_init` 0.01, `theta_mu` 1.5 | 188 | 158 |
+| `theta_mu` 1.5 alone | 271 | 168 |
+| `kappa_eps` 30 | 225 | 163 |
+
+The largest single effect is ieee123 `T=96` with the diagonal Hessian: 56
+iterations at base, 22 with Ipopt's schedule (at base it spends 32 iterations
+at two late levels). To the 0.5% rule with the internal infeasibility the
+picture is mixed for the diagonal Hessian: Ipopt's schedule gives
+20 / 21 / 38 / 39 / 15 / 14 iterations against 19 / 55 / 33 / 39 / 13 / 11 at
+base. It repairs ieee123 `T=96` and costs two or three iterations on
+large10k, where the base schedule is the best one tried. No schedule is best
+everywhere.
+
+The hybrid (diagonal Hessian until the barrier parameter falls to a value,
+exact from then on; `FILTERDDP_HYBRID_MU`) ends with the exact Hessian's
+iteration counts (167 against 165 with the base schedule) and at the 0.5%
+rule is never ahead of the better of the two Hessians. Nothing gained.
+
+### The passes on threads (`threaded_pass.jl`, `FILTERDDP_THREADED=1`)
+
+One worker per period was a count read from a sequential run. The passes
+now exist in that form, on Julia threads, loaded through
+`BACKWARD_PASS_HOOK`, `AFFINE_DIRECTIONS_HOOK` and `AFFINE_ROLLOUT_HOOK`:
+
+- backward, phase 1, all stages at once: derivatives, barrier terms, the
+  stage matrix, the network factorization and its preparation for the battery
+  block, the first network solve;
+- phase 2, in sequence: what carries the value function of `t+1` (battery
+  right-hand side, battery block, battery solution, value update);
+- phase 3, all stages at once: the second network solve, the multiplier
+  updates, the stored policy and the battery rows of the feedback;
+- forward: the states of all periods from a recursion on those rows, then
+  every period's policy solve, directions and ratio test at once, and every
+  period's part of each trial point at once.
+
+Each stage does the solver's own operations in the solver's order, so the
+backward pass reproduces the sequential iterates to the last bit (ieee123
+`T=6/24`, med2522 `T=6`, large10k `T=6`, both Hessians, with and without
+reuse, 4 to 8 threads). With the threaded forward pass the accepted steps and
+backtracks are the same and the objectives agree to `1e-16`; the state
+recursion differs from the rollout in rounding. Outside the supported
+configuration, or on a failed factorization, the solver's own pass runs.
+
+Checked for correctness only. The user does not want parallel timings from
+the 309 PC; this is the code for a machine with a core per period (Kamiak
+account requested 2026-10-11, ticket KSD-7186). Still sequential: phase 2,
+which for the exact Hessian is where the pairwise combination of Section 10
+would go.
+
+### Files
+
+| | |
+|---|---|
+| `DDP4OPF.jl/src/reuse_pass.jl` | the repeated pass after a barrier update |
+| `threaded_pass.jl` | the backward and forward passes with one task per period |
+| `tree_kkt.jl` | `tree_kkt_feedback_rows` (battery rows of the feedback after the exact sweep) |
+| `run_barrier_sweep.sh`, `barrier_sweep_summary.py` | barrier schedules and the hybrid, iteration counts |
+| `clean_hp_table.py` | times at a stopping rule; `--primal=original`, `--threshold=`, `--tag=`, `--arms=` |
+| `results/barrier_sweep/logs/`, `results/threaded_pass/` | the sweep; the first threaded runs |
+
+## 12. The pairwise sweep inside the solve, and the collector in the count (2026-10-11 afternoon to night)
+
+Branch `ddp-oct10-new-tests`. High performance plan throughout. Every run
+below was followed by its OpenDSS check; none violates a voltage limit.
+
+### `T=144`
+
+Ipopt MA57 at the reporting rule, default barrier update / adaptive:
+ieee123 3.62 s / not met (3.44 s to tolerance), med2522 119.5 / 110.2 s,
+large10k 157.0 / 138.9 s. FilterDDP with the ordinary sweep, sequential /
+counted: med2522 483.3 / 106.9 s (diagonal) and 511.1 / 70.1 s (exact);
+ieee123 17.9 / 10.4 s and 10.3 / 5.1 s. The exact Hessian's iterations hardly
+move from `T=96` (66) to `T=144` (69) on med2522; the diagonal's go from 49
+to 65. No FilterDDP run on large10k `T=144`: the user wanted it only "maybe",
+and the PC has 31.7 GB (Ipopt alone takes 13.6 GB there). `T=288` is not to
+be run without asking.
+
+### The sweep by pairs in a real solve (`paired_pass.jl`)
+
+A pass is: step 1, every stage at once (`_tp_pre` of `threaded_pass.jl`, and
+the stage as a function `G_t(a,b)` of the battery energies before and after
+it); step 2, the rounds (`ceil(log2(T+1))` of them, in each of which every
+function is combined with the first one of the block to its right); step 3,
+every stage at once with the value function after it. `FILTERDDP_PAIRED_SWEEP=count`
+does all of it in sequence on one BLAS thread and times every piece;
+`=1` runs the three steps on Julia threads (correctness only). It runs
+through the wrapper `results/paired_pass/paired_main.jl` and the launcher
+`results/paired_pass/run_paired.sh <system> <T> <count|1> [tag]`; the driver
+has no switch of its own yet.
+
+Same iterations as the ordinary exact solve in every case run (twelve),
+objectives equal to 15 digits, value functions within 1.2e-9 of the ordinary
+sweep's where the two were run side by side (`PAIRED_CHECK=1`).
+
+The first counted run (med2522 `T=96`, allocating version) gave 65.0 s
+against 47.1 s for the ordinary exact run, although the rounds counted
+0.037 s a pass against 0.41 s for the sweep. The rest of that section is why.
+
+### Kept storage (`FILTERDDP_PAIRED_INPLACE=1`, the launcher's default)
+
+Each stage's function lives in storage kept from pass to pass, and a
+combination writes its result over its left operand with three `n_B x n_B`
+blocks of scratch per worker. In a round the left operands are distinct and
+none of them is a right operand, so this is safe on threads. Before, a pass
+allocated three blocks per stage and six per combination (1.1 GB on med2522
+`T=96`, 18 GB on large10k). Same solve as the allocating version.
+
+### The collector
+
+Measured, not assumed:
+
+- It takes 17-22% of a run on the two larger feeders (74 of 421 s on med2522
+  `T=96`, pairwise).
+- A pass of med2522 `T=24` allocates 0.71 GiB in step 1 (29 MB a stage),
+  nothing in the rounds (kept storage) and 0.11 GiB in step 3; the collector
+  takes about 0.2 s of a 1.25 s pass, nearly all in step 1.
+- Held off for the whole pass and run once, it takes 0.15 s and the stages
+  get slower by as much (fresh memory instead of reused). Its cost follows
+  the volume allocated, not how often it runs. No switch was kept for this.
+- The allocation has no single source (`alloc_profile.jl` with
+  `FILTERDDP_PAIRED_SWEEP` set): the largest site is 8.6% of the bytes; the
+  tree solver's per-node arrays are about a third of the allocations.
+  `tree_kkt_inplace.jl` (written, not wired, untested) would take the factor's
+  share only.
+- A pause lands in whichever stage is on the clock. In the forward pass of
+  med2522 `T=144` single periods showed 0.16 to 0.80 s against a mean of 5 to
+  7 ms, and the forward pass was 22.6 of 33.5 s counted.
+
+So the timing was changed. Counting runs take each stage's time without the
+collections that fell in it and print the collector's time separately:
+`pre_gc_s`, `post_gc_s`, `pair_gc_s` on `FILTERDDP_PARSIM_BACKWARD` (and the
+volumes on `FILTERDDP_PAIRED_GC`), and, with `FILTERDDP_PARSIM_GCNET=1`,
+`gc_s` and `stages` on `FILTERDDP_PARSIM_FORWARD` (solver source:
+`affine_linesearch.jl`). `parsim_from_log.py` and `clean_hp_table.py` then
+count a worker per period as collecting its own share, `1/stages` of the
+collection in the per-period work; `--gc=sequential` (table script) counts
+all of it in sequence. Collections during sequential work stay sequential.
+
+**The user's decision (2026-10-11): per-worker collection is the default
+assumption of the count, and the paper says so.** It is the same premise as
+the rest of the count: one worker per period, with its own memory. It also
+means a real parallel run should be one process per period, not threads in
+one program, where every pause stops all the threads.
+
+Logs dated before this (the clean batch, the first pairwise batch tagged
+`inplace_hp_tol1e5`) have the pauses inside the stage times: the slowest stage
+of a pass carries its longest pause and the pauses in the other stages are
+dropped. Their counts are upper bounds of the per-worker reading, not the
+same thing.
+
+### The ordinary sweep on the same timing (`FILTERDDP_PAIRED_ROUNDS=0`)
+
+Steps 1 and 3 as in the pairwise pass and the ordinary sweep (`_tp_seq`)
+between them, stage after stage. One BLAS thread like the rest of the pass,
+which costs the sweep on large10k: 103 ms a step against 66 ms in the
+solver's own exact pass, which lets the sweep use all cores. For large10k
+the solver's own counts (clean batch: 9.4, 27.3, 51.6, 110.1 s) are the
+ordinary sweep's best figures.
+
+### Results (0.5% rule, per-system thresholds; the pairwise figures are the same at 0.1%)
+
+Seconds. Ipopt: its faster variant. Ord. and pair.: counted, one worker per
+period, per-worker collection, exact Hessian. In seq.: the pairwise count
+with every collection in sequence. One proc.: the pairwise run as measured.
+
+| | `T` | Ipopt | ord. | pair. | Ipopt/pair. | in seq. | one proc. |
+|---|---|---|---|---|---|---|---|
+| ieee123 | 6 | 0.10 | 0.09 | 0.07 | 1.4 | 0.07 | 0.24 |
+| | 24 | 0.33 | 0.23 | 0.14 | 2.4 | 0.66 | 1.59 |
+| | 96 | 1.68 | 1.30 | 0.27 | 6.2 | 3.09 | 7.43 |
+| | 144 | 3.62 | 1.66 | 0.35 | 10.3 | 4.11 | 10.5 |
+| med2522 | 6 | 2.58 | 3.42 | 2.61 | 0.99 | 4.81 | 13.2 |
+| | 24 | 13.3 | 9.25 | 4.16 | 3.2 | 16.7 | 71.9 |
+| | 96 | 67.8 | 42.2 | 8.43 | 8.0 | 81.0 | 421.4 |
+| | 144 | 110.2 | 72.0 | 14.4 | 7.7 | 153.1 | 750.3 |
+| large10k | 6 | 3.97 | 12.3 | 8.32 | 0.48 | 11.5 | 34.1 |
+| | 24 | 21.9 | 40.8 | 12.4 | 1.8 | 24.0 | 173.2 |
+| | 48 | 44.4 | 78.0 | 15.8 | 2.8 | 37.6 | 390.3 |
+| | 96 | 101.4 | 175.1 | 22.6 | 4.5 | 70.2 | 973.2 |
+
+ieee123 `T=24` was run to a tolerance of 1e-6 (`PAIRED_TOL`): at 1e-5 it ends
+with infeasibility 3.7e-6, above its 1e-6 threshold, and never meets the rule.
+
+Where a counted pass goes, per pass at `T=96`: med2522 0.04 s slowest stage
+of step 1, 0.03 s the seven rounds, 0.01 s step 3, 0.02 s forward; large10k
+0.13, 1.0, 0.12 and 0.1 s. On large10k the rounds are the largest part: a
+combination of 1020 batteries takes 0.14 s on one core.
+
+Run with:
+
+    python ddp/examples/power_system/clean_hp_table.py --tag=pairwise_gc_hp_tol1e5,reuse_gc_hp_tol1e5,reuse_hp_tol1e5 --arms=exact,paired --gaps=5e-3,1e-3
+    python ddp/examples/power_system/clean_hp_table.py --tag=ordinary_gc_hp_tol1e5 --arms=exact,paired --gaps=5e-3
+
+(the `paired` column is the log `fddp_<system>_T<T>_paired_<tag>.log`; the
+`exact` column is the clean batch's own exact run).
+
+### What the count leaves out, and what is open
+
+- It is a count from one machine: one core per period and per combination,
+  each worker with its own memory, no time for passing data. A combination
+  needs three `n_B x n_B` blocks of another period: 1.5 MB on med2522, 25 MB
+  on large10k. Ipopt is one process.
+- One process runs the pairwise arrangement slower than the ordinary sweep
+  (973 against 351 s on large10k `T=96`): it does every combination in a row.
+- The repeated passes after a barrier update are counted in sequence (0.8 s
+  of the 8.4 s on med2522 `T=96`); they could be split like the others.
+- Allocation: reducing what a pass allocates would shrink the collector under
+  either way of charging it. No single source; not started.
+- Not measured: any of this on a machine with a core per period (Kamiak,
+  ticket KSD-7186, one process per period).
+
+### Longer horizons: med2522 `T=288` and large10k `T=144` (2026-10-12, user's go)
+
+At the 0.5% rule (pairwise figures the same at 0.1%), seconds:
+
+| | Ipopt | DDP seq. (diag / exact) | ord., same timing | pair. | Ipopt/pair. | in seq. | one proc. |
+|---|---|---|---|---|---|---|---|
+| med2522 `T=288` | 255.2 | 1072.3 / 1248.8 | 203.4 | 26.4 | 9.7 | 495.7 | 2036 |
+| large10k `T=144` | 138.9 | 401.2 / 632.8 | 351.9 | 80.6 | 1.7 | 192.9 | 2238 |
+
+Ipopt: the adaptive variant in both (default 255.7 and 157.0 s). The solver's
+own passes count 237.7 s (diagonal) and 173.7 s (exact) on med2522 `T=288`,
+99.9 and 194.9 s on large10k `T=144`. Same iterations for the two sweeps (75
+and 18), objectives equal to 15 digits, all ten dispatches pass OpenDSS.
+Warm-up 12 iterations on med2522 `T=288` (its first barrier update is near
+iteration 9), 8 on large10k.
+
+**large10k `T=144` is short of memory on the 309 PC (31.7 GB).** A
+three-iteration test (`chk_memprobe`) showed Julia at 17-20 GB with 1.5-5 GB
+free. In the timed pairwise run the slowest period of step 3 takes 1.3-2.4 s
+in 15 of 19 passes (0.2-0.4 s in the other four, 0.12 s at `T=96`) and the
+last four passes have one combination of about 2 s against 0.14 s. The
+80.6 s carries those stalls; about 45 s without them, which is an estimate.
+The cause of the slow combinations in the last passes was not established
+(memory, or very small numbers late in the solve). A clean figure needs a
+rerun with the other applications closed, or a machine with more memory;
+`T=288` on large10k cannot run here at all.
+
+On med2522 `T=288` the collector takes about a quarter of the one-machine
+run, which is why the in-sequence figure (495.7 s) is so far from the
+per-worker one.
+
+### Corrections to commit messages
+
+- `66d38fb9` gives 137 s and 74 s for the pairwise counts with every
+  collection in sequence at med2522 `T=144` and large10k `T=96`. The measured
+  figures are 153.1 s and 70.2 s (table above).
+- `71b96878` states that collector pauses land in the slowest stage of step 1.
+  At that point it was an inference from the 12-fold gap between the slowest
+  and the mean stage; it was measured afterwards (the forward-pass figures
+  above, and the net-of-collection maxima: 0.04 s against 0.5 s a pass).
+
+### Files
+
+| | |
+|---|---|
+| `paired_pass.jl` | the pairwise pass; kept storage; `FILTERDDP_PAIRED_ROUNDS=0` for the ordinary sweep on the same timing |
+| `results/paired_pass/run_paired.sh`, `paired_main.jl` | launcher (OpenDSS check included) and wrapper; `PAIRED_WARMUP`, `PAIRED_INPLACE`, `PAIRED_ROUNDS`, `PAIRED_TOL`, `PAIRED_CHECK`, `PAIRED_MAIN` |
+| `DDP4OPF.jl/src/affine_linesearch.jl`, `backward_pass.jl`, `forward_pass.jl` | `FILTERDDP_PARSIM_GCNET=1`: forward per-period times without collections |
+| `clean_hp_table.py`, `parsim_from_log.py` | read the collector fields; `--gc=sequential` |
+| `alloc_profile.jl` | allocation profile, of the pairwise pass when `FILTERDDP_PAIRED_SWEEP` is set |
+| `tree_kkt_inplace.jl` | the tree factor in kept storage: written, not wired, untested |
+| logs `*_paired_pairwise_gc_hp_tol1e5.log`, `*_paired_ordinary_gc_hp_tol1e5.log` | the final runs; `*_paired_inplace_hp_tol1e5.log` the first batch (forward pass on the old timing); `*_paired_count_hp_tol1e5.log` the allocating version |

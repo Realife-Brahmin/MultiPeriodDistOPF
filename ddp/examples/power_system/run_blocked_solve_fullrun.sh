@@ -42,7 +42,7 @@ IPLOG="${IPOPT_REF_LOG:-$IPLOG}"
 REF=$(grep -oE "CENTRAL_IPOPT .*" "$IPLOG" | \
       grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
 [ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T in $IPLOG"; exit 1; }
-case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-4;; *) PRIMAL=1e-6;; esac
+case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-5;; *) PRIMAL=1e-6;; esac
 
 export REDUCED_PROFILE=periodic REDUCED_CB="$CB" TERMINAL_SOC_SOFT=1
 export FILTERDDP_MAX_ITERATIONS=400

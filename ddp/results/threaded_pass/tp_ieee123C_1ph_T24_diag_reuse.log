@@ -1,0 +1,142 @@
+THREADED_PASS installed: 8 Julia threads
+C_B OVERRIDE: 0.001
+ieee123C_1ph T=24: nx=51, nu=791, nc=562, dense nu^2=625681, reduced=229
+TERMINAL_SOC soft=1 gamma=1.750000e+04
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 128 upper of 128 buses; ell >= 0 dropped on 127 lines; P_Subs >= 0 dropped: true (lossless lower bound 0.134 p.u.)
+build complete: 4.904 s, nc=562
+constructing dynamic Solver storage...
+optimality_tolerance=1.000e-05 max_iterations=400
+BARRIER_OPTIONS mu_init=1 kappa_mu=0.2 theta_mu=1.2 kappa_eps=10
+Solver construction complete: 0.632 s
+LOADFLOW_START sweeps=6 max_equality_residual=3.137e-04 lowest_voltage=0.9904 pu
+entering solve! ...
+[31;1m   
+ _____ _ _ _            ____  ____  ____  
+|  ___(_) | |_ ___ _ __|  _ \|  _ \|  _ \ 
+| |_  | | | __/ _ \ '__| | | | | | | |_) |
+|  _| | | | ||  __/ |  | |_| | |_| |  __/ 
+|_|   |_|_|\__\___|_|  |____/|____/|_|                 
+    
+[0mFILTERDDP_THREADED_PASS iteration=0 barrier_iteration=0 stages=24 threads=8 serial_phase1=1 phase1_s=8.575349 phase2_s=7.058860 phase3_s=0.648336 total_s=16.317629
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+     0   3.06509223e+03   3.1366e-04   2.0000e+02   1.0000e+00    0.00      -     0.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=0 barrier_iteration=0 backward_s=22.293333100 forward_s=3.095559700 total_s=25.388892800 outcome=accepted step_size=1.885393800e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_THREADED_PASS iteration=1 barrier_iteration=0 stages=24 threads=8 serial_phase1=0 phase1_s=0.165773 phase2_s=0.029791 phase3_s=0.001071 total_s=0.197085
+     1   3.62897242e+03   1.2797e-01   1.6229e+02   9.9993e-01    0.00      -     1.8854e-01   0
+FILTERDDP_ITER_TIMING iteration=1 barrier_iteration=0 backward_s=0.197156100 forward_s=0.007115600 total_s=0.204271700 outcome=accepted step_size=3.621778198e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_THREADED_PASS iteration=2 barrier_iteration=0 stages=24 threads=8 serial_phase1=0 phase1_s=0.005819 phase2_s=0.029528 phase3_s=0.001235 total_s=0.036815
+     2   3.92047755e+03   8.9936e-02   1.0351e+02   9.9969e-01    0.00      -     3.6218e-01   0
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=0 backward_s=0.036858000 forward_s=0.012274000 total_s=0.049132000 outcome=accepted step_size=9.900241050e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_THREADED_PASS iteration=3 barrier_iteration=0 stages=24 threads=8 serial_phase1=0 phase1_s=0.061121 phase2_s=0.017970 phase3_s=0.001146 total_s=0.080530
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=0 backward_s=0.080581600 forward_s=0.000000000 total_s=0.080581600 outcome=barrier_update step_size=9.900241050e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_REUSE_PASS iteration=3 barrier_iteration=1 stages=24 total_s=0.011451000 mu=2.000000000e-01
+     3   4.18900942e+03   7.9700e-02   2.2717e+00   1.9049e+00   -0.70      -     9.9002e-01   0
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=1 backward_s=14.828213300 forward_s=0.010638000 total_s=14.838851300 outcome=accepted step_size=9.807343995e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_THREADED_PASS iteration=4 barrier_iteration=1 stages=24 threads=8 serial_phase1=0 phase1_s=0.005427 phase2_s=0.035509 phase3_s=0.001710 total_s=0.042926
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=1 backward_s=0.042986000 forward_s=0.000000000 total_s=0.042986000 outcome=barrier_update step_size=9.807343995e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_REUSE_PASS iteration=4 barrier_iteration=2 stages=24 total_s=0.008009900 mu=4.000000000e-02
+     4   3.79514744e+03   5.2387e-01   1.6937e+00   5.8908e-01   -1.40      -     9.8073e-01   0
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=2 backward_s=0.008117800 forward_s=0.010351400 total_s=0.018469200 outcome=accepted step_size=9.740370550e-01 backtracks=0 mu=4.000000000e-02
+FILTERDDP_THREADED_PASS iteration=5 barrier_iteration=2 stages=24 threads=8 serial_phase1=0 phase1_s=0.004552 phase2_s=0.032399 phase3_s=0.001200 total_s=0.038478
+     5   3.15625511e+03   1.1090e+01   1.2024e+00   1.1395e-01   -1.40      -     9.7404e-01   0
+FILTERDDP_ITER_TIMING iteration=5 barrier_iteration=2 backward_s=0.038530600 forward_s=0.010209900 total_s=0.048740500 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_THREADED_PASS iteration=6 barrier_iteration=2 stages=24 threads=8 serial_phase1=0 phase1_s=0.004784 phase2_s=0.023929 phase3_s=0.001098 total_s=0.030010
+     6   3.07160390e+03   8.9263e+00   3.6463e-01   5.3881e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=2 backward_s=0.030057100 forward_s=0.008880200 total_s=0.038937300 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_THREADED_PASS iteration=7 barrier_iteration=2 stages=24 threads=8 serial_phase1=0 phase1_s=0.009387 phase2_s=0.019262 phase3_s=0.001118 total_s=0.030076
+     7   3.07149613e+03   5.0081e-01   8.9338e-03   4.0074e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=7 barrier_iteration=2 backward_s=0.030123700 forward_s=0.059227700 total_s=0.089351400 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_THREADED_PASS iteration=8 barrier_iteration=2 stages=24 threads=8 serial_phase1=0 phase1_s=0.085652 phase2_s=0.020111 phase3_s=0.001114 total_s=0.107199
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=2 backward_s=0.107254000 forward_s=0.000000000 total_s=0.107254000 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_REUSE_PASS iteration=8 barrier_iteration=3 stages=24 total_s=0.010255400 mu=8.000000000e-03
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=3 backward_s=0.010339500 forward_s=0.000000000 total_s=0.010339500 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=8.000000000e-03
+FILTERDDP_REUSE_PASS iteration=8 barrier_iteration=4 stages=24 total_s=0.011980000 mu=1.600000000e-03
+     8   3.07195062e+03   1.1158e-02   3.7378e-03   4.0007e-02   -2.80      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=4 backward_s=0.012072700 forward_s=0.011553800 total_s=0.023626500 outcome=accepted step_size=8.725523030e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=9 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.004940 phase2_s=0.019653 phase3_s=0.001084 total_s=0.026031
+     9   2.96272970e+03   9.0759e+00   2.5407e-01   1.3510e-02   -2.80      -     8.7255e-01   0
+FILTERDDP_ITER_TIMING iteration=9 barrier_iteration=4 backward_s=0.026091500 forward_s=0.009636900 total_s=0.035728400 outcome=accepted step_size=9.398524308e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=10 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.013815 phase2_s=0.018573 phase3_s=0.001032 total_s=0.033714
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+    10   2.93497126e+03   7.8160e+00   2.5219e-01   4.6232e-03   -2.80      -     9.3985e-01   0
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=4 backward_s=0.033769100 forward_s=0.008847400 total_s=0.042616500 outcome=accepted step_size=8.584875680e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=11 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.004669 phase2_s=0.025775 phase3_s=0.000966 total_s=0.031700
+    11   2.93207084e+03   3.0830e+00   9.4837e-02   2.3794e-03   -2.80      -     8.5849e-01   0
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=4 backward_s=0.031752500 forward_s=0.010497100 total_s=0.042249600 outcome=accepted step_size=7.750697100e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=12 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.005036 phase2_s=0.028639 phase3_s=0.001102 total_s=0.035033
+    12   2.93154091e+03   8.1130e-01   3.7996e-02   1.8498e-03   -2.80      -     7.7507e-01   0
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=4 backward_s=0.035085500 forward_s=0.010926600 total_s=0.046012100 outcome=accepted step_size=7.862471098e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=13 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.009692 phase2_s=0.019678 phase3_s=0.001079 total_s=0.030799
+    13   2.93147730e+03   1.5380e-01   1.2592e-02   2.0467e-03   -2.80      -     7.8625e-01   0
+FILTERDDP_ITER_TIMING iteration=13 barrier_iteration=4 backward_s=0.030846500 forward_s=0.007051200 total_s=0.037897700 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_THREADED_PASS iteration=14 barrier_iteration=4 stages=24 threads=8 serial_phase1=0 phase1_s=0.055941 phase2_s=0.109419 phase3_s=0.001059 total_s=0.166617
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=4 backward_s=0.166663300 forward_s=0.000000000 total_s=0.166663300 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_REUSE_PASS iteration=14 barrier_iteration=5 stages=24 total_s=0.010366800 mu=3.200000000e-04
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=5 backward_s=0.010414400 forward_s=0.000000000 total_s=0.010414400 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FILTERDDP_REUSE_PASS iteration=14 barrier_iteration=6 stages=24 total_s=0.010084800 mu=6.400000000e-05
+    14   2.93146061e+03   2.3025e-03   2.5884e-03   2.8617e-03   -4.19      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=6 backward_s=0.010172400 forward_s=0.011153700 total_s=0.021326100 outcome=accepted step_size=8.871520019e-01 backtracks=0 mu=6.400000000e-05
+FILTERDDP_THREADED_PASS iteration=15 barrier_iteration=6 stages=24 threads=8 serial_phase1=0 phase1_s=0.005109 phase2_s=0.020222 phase3_s=0.001516 total_s=0.027199
+    15   2.92569123e+03   3.4734e-01   4.9140e-02   7.2797e-04   -4.19      -     8.8715e-01   0
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=6 backward_s=0.027264000 forward_s=0.010153300 total_s=0.037417300 outcome=accepted step_size=8.701084699e-01 backtracks=0 mu=6.400000000e-05
+FILTERDDP_THREADED_PASS iteration=16 barrier_iteration=6 stages=24 threads=8 serial_phase1=0 phase1_s=0.004897 phase2_s=0.022915 phase3_s=0.001406 total_s=0.029668
+    16   2.92491227e+03   8.2549e-02   2.7121e-02   2.0070e-04   -4.19      -     8.7011e-01   0
+FILTERDDP_ITER_TIMING iteration=16 barrier_iteration=6 backward_s=0.029721500 forward_s=0.012471400 total_s=0.042192900 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_THREADED_PASS iteration=17 barrier_iteration=6 stages=24 threads=8 serial_phase1=0 phase1_s=0.015790 phase2_s=0.018797 phase3_s=0.001289 total_s=0.036182
+    17   2.92477485e+03   2.4793e-03   9.5025e-03   1.3362e-04   -4.19      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=17 barrier_iteration=6 backward_s=0.036232400 forward_s=0.009023300 total_s=0.045255700 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_THREADED_PASS iteration=18 barrier_iteration=6 stages=24 threads=8 serial_phase1=0 phase1_s=0.004429 phase2_s=0.027379 phase3_s=0.001038 total_s=0.033104
+    18   2.92477067e+03   2.3026e-05   1.6917e-03   1.0195e-04   -4.19      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=18 barrier_iteration=6 backward_s=0.033156700 forward_s=0.008523900 total_s=0.041680600 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_THREADED_PASS iteration=19 barrier_iteration=6 stages=24 threads=8 serial_phase1=0 phase1_s=0.004316 phase2_s=0.018040 phase3_s=0.000997 total_s=0.023569
+FILTERDDP_ITER_TIMING iteration=19 barrier_iteration=6 backward_s=0.023612500 forward_s=0.000000000 total_s=0.023612500 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_REUSE_PASS iteration=19 barrier_iteration=7 stages=24 total_s=0.014641100 mu=9.277179695e-06
+    19   2.92477066e+03   1.0981e-07   2.0703e-04   6.6046e-05   -5.03      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=19 barrier_iteration=7 backward_s=0.014688500 forward_s=0.010892300 total_s=0.025580800 outcome=accepted step_size=7.371361094e-01 backtracks=0 mu=9.277179695e-06
+FILTERDDP_THREADED_PASS iteration=20 barrier_iteration=7 stages=24 threads=8 serial_phase1=0 phase1_s=0.004561 phase2_s=0.026574 phase3_s=0.001157 total_s=0.032602
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+    20   2.92458591e+03   1.9544e-03   4.7123e-03   3.0021e-05   -5.03      -     7.3714e-01   0
+FILTERDDP_ITER_TIMING iteration=20 barrier_iteration=7 backward_s=0.032657600 forward_s=0.011783300 total_s=0.044440900 outcome=accepted step_size=9.401007116e-01 backtracks=0 mu=9.277179695e-06
+FILTERDDP_THREADED_PASS iteration=21 barrier_iteration=7 stages=24 threads=8 serial_phase1=0 phase1_s=0.056467 phase2_s=0.019344 phase3_s=0.001001 total_s=0.077010
+    21   2.92452132e+03   5.0504e-04   3.0941e-03   1.3685e-05   -5.03      -     9.4010e-01   0
+FILTERDDP_ITER_TIMING iteration=21 barrier_iteration=7 backward_s=0.077057100 forward_s=0.009760000 total_s=0.086817100 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_THREADED_PASS iteration=22 barrier_iteration=7 stages=24 threads=8 serial_phase1=0 phase1_s=0.082843 phase2_s=0.019627 phase3_s=0.001548 total_s=0.104372
+    22   2.92451650e+03   6.3397e-06   7.3491e-04   1.2815e-05   -5.03      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=22 barrier_iteration=7 backward_s=0.104433900 forward_s=0.009559000 total_s=0.113992900 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_THREADED_PASS iteration=23 barrier_iteration=7 stages=24 threads=8 serial_phase1=0 phase1_s=0.004400 phase2_s=0.017712 phase3_s=0.001026 total_s=0.023503
+FILTERDDP_ITER_TIMING iteration=23 barrier_iteration=7 backward_s=0.023553400 forward_s=0.000000000 total_s=0.023553400 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_REUSE_PASS iteration=23 barrier_iteration=8 stages=24 total_s=0.011637000 mu=1.000000000e-06
+    23   2.92451648e+03   1.3225e-08   4.5806e-05   9.3616e-06   -6.00      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=23 barrier_iteration=8 backward_s=0.011707100 forward_s=0.012083500 total_s=0.023790600 outcome=accepted step_size=7.581724044e-01 backtracks=0 mu=1.000000000e-06
+FILTERDDP_THREADED_PASS iteration=24 barrier_iteration=8 stages=24 threads=8 serial_phase1=0 phase1_s=0.012718 phase2_s=0.019975 phase3_s=0.001173 total_s=0.034225
+    24   2.92448670e+03   8.4560e-05   1.5251e-03   4.0637e-06   -6.00      -     7.5817e-01   0
+FILTERDDP_ITER_TIMING iteration=24 barrier_iteration=8 backward_s=0.034282300 forward_s=0.010286300 total_s=0.044568600 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_THREADED_PASS iteration=25 barrier_iteration=8 stages=24 threads=8 serial_phase1=0 phase1_s=0.004215 phase2_s=0.020036 phase3_s=0.001687 total_s=0.026373
+    25   2.92447691e+03   1.4401e-05   8.3334e-04   1.5757e-06   -6.00      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=25 barrier_iteration=8 backward_s=0.026450200 forward_s=0.018413800 total_s=0.044864000 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_THREADED_PASS iteration=26 barrier_iteration=8 stages=24 threads=8 serial_phase1=0 phase1_s=0.015496 phase2_s=0.020537 phase3_s=0.001383 total_s=0.037711
+    26   2.92447686e+03   4.5255e-08   1.2223e-04   1.0875e-06   -6.00      -     1.0000e+00   0
+FILTERDDP_ITER_TIMING iteration=26 barrier_iteration=8 backward_s=0.037787600 forward_s=0.009380400 total_s=0.047168000 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_THREADED_PASS iteration=27 barrier_iteration=8 stages=24 threads=8 serial_phase1=0 phase1_s=0.011932 phase2_s=0.020583 phase3_s=0.001033 total_s=0.033846
+FILTERDDP_ITER_TIMING iteration=27 barrier_iteration=8 backward_s=0.033895700 forward_s=0.000000000 total_s=0.033895700 outcome=converged step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+    27   2.92447686e+03   3.5723e-10   9.1374e-06   1.0006e-06   -6.00      -     1.0000e+00   0
+
+
+EXIT: Optimal solution found.
+
+solve complete: 46.962 s, iterations=27, status=0
+FILTERDDP_MEMORY_PEAK maxrss_mib=1255.3
+final residuals: primal=3.572250550921e-10 dual=9.137382619429e-06 complementarity=1.000642472889e-06
+solution_write_skipped=1
+FilterDDP objective=2924.476860169345 max_equality_residual=3.572e-10
+BOUND_CHECK screen=substation,vupper,ell,psubs voltages below=0 above=0 worst_violation=0.000e+00 min_ell=4.813e-07 min_P_Subs=4.484e-01
+Ipopt objective=2821.361254752544 objective_gap=1.031e+02
+max_abs_diff[P_Subs]=3.315e-01
+max_abs_diff[Q_Subs]=1.258e-02
+max_abs_diff[P]=3.315e-01
+max_abs_diff[Q]=1.258e-02
+max_abs_diff[v]=1.683e-02
+max_abs_diff[ell]=7.425e-01
+max_abs_diff[P_B]=8.025e-03
+max_abs_diff[B]=1.450e-02
+max_abs_diff[q_D]=5.634e-03

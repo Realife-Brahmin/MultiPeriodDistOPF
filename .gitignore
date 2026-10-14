@@ -72,3 +72,15 @@ ddp/results/constraint_activity/*.jls
 ddp/results/diag_vs_exact_horizon/*_T1536_*.log
 # Gurobi 13 on the matched instances: the logs are the result.
 !ddp/results/gurobi_matched/logs/
+# Pairwise combination of the periods (pint_scan.jl): the logs are the result.
+!ddp/results/pint_scan/logs/
+# Barrier schedules and the hybrid Hessian (run_barrier_sweep.sh): likewise.
+!ddp/results/barrier_sweep/logs/
+# FilterDDP runs with the one-worker accounting: of that scratch folder, only
+# the clean batch of 2026-10-11 (hp_tol1e5) and the lean-exact checks (chk),
+# which ddp/notes/PARALLEL_IN_TIME.md Section 10 and clean_hp_table.py read.
+!ddp/results/parallel_in_time/logs/
+ddp/results/parallel_in_time/logs/*
+!ddp/results/parallel_in_time/logs/*_hp_tol1e5.log
+!ddp/results/parallel_in_time/logs/*_hp_tol1e6.log
+!ddp/results/parallel_in_time/logs/*_chk_*.log
