@@ -221,24 +221,33 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
     [<= -20, +2.2] deg), and the estimate is far off (+23.8 against +3.4).
   - The whole run took 75 minutes on the Surface, of which about 10 were CPU:
     the rest was swapping. With free memory expect about 2 minutes per bus.
-- **NOT RUN: large10k (stage `large10k`).** The stage is written but has never
-  been executed, so its first run is a test. The Surface cannot hold it (1-3 GB
-  free). **The user will ask for it on the 309 PC: do not start it unprompted,
-  and when asked, check first that it will not take memory or cores from the DDP
-  simulations running there.** Suggested order:
-  1. `LARGE_T=2 julia ... multiperiod_study.jl large10k` to see whether the
-     instance is feasible at equal angles, how long a solve takes and the peak
-     memory (printed per case). ieee2522 at T = 12 needs about 3 GB, and
-     large10k has four times the buses, so expect roughly 1 GB per period.
-  2. Then the configured T = 6, or T = 12 if memory allows (on ieee123 the
-     window is converged in the horizon from T = 12; T = 6 reads 13% wide).
-  3. `... multiperiod_study.jl tables`, then commit `large_windows.csv` and
-     `tables.tex` with what was measured.
-  Things that are easy to get wrong there: the sources stay stiff (the head bus
-  is an aggregate of 102 feeders, 1032 MW); never call `source_separation` on
-  it (dense, 1.7 GB; the stage uses `separation_sparse`); the second substation
-  sits at bus 1120, the end of one feeder, so it can only ever carry part of
-  that feeder's ~10 MW.
+- **Done, 10k buses (309 PC, 2026-10-12/13): use stage `large10kd`, not
+  `large10k`.** User decisions: the C deck is not a realistic feeder (1032 MW,
+  and R/X = 7 on every section), so MSOPF uses **large10kD** = large10kC with
+  loads, PV and batteries divided by 20 and line sections at R/X = 1 (R kept,
+  X raised to 0.0175 ohm), built in memory by the stage; T = 24 is the standard
+  horizon; feasibility tolerance 1e-5 as in DDP; Ipopt with HSL MA57. Run as
+  `IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<hsl>/libma57.dll;linear_system_scaling=none" MULTIPERIOD_LEAN=1 LARGE_T=24 julia ... multiperiod_study.jl large10kd`.
+  - Second substation at bus 1120, 2.475 ohm from the first; **angle-to-import
+    sensitivity** (the user's name for kW of import per degree) 855 kW/deg.
+    Windows, no batteries / batteries over the day: T = 24 [-0.236, >= +20] /
+    [-0.277, >= +20] deg; T = 48 -0.233 / -0.274; T = 96 -0.231 / -0.273. The
+    lower edge is no-backflow and the import estimate gives it to 0.008 deg;
+    there is no upper edge inside the 20 deg limit (voltage 1.033-1.050 pu), so
+    only line ratings, not modeled, would close it. OpenDSS replays to 3e-4 kW.
+  - Cost: T = 24 1318 s and 5.9 GB; T = 48 3567 s, 12.7 GB; T = 96 6745 s,
+    16.7 GB (with `MULTIPERIOD_LEAN=1`; the PC has about 16 GB free).
+  - How edges are found there: `window_secant`, a secant on the import margin
+    (`objective = :margin`), six solves per window. **Do not use the
+    maximize-angle solve on 10k buses** (it stopped early, hit the iteration
+    limit or went infeasible), nor Gurobi (no feasible point in 15 minutes).
+  - On large10kC itself nothing binds inside +-20 deg, with or without
+    batteries (reactive circulation, and its losses raise the import on both
+    sides); not committed as a result.
+  - Still easy to get wrong: the sources stay stiff; never call
+    `source_separation` on 10k buses (dense; the stage uses `separation_sparse`).
+  - Not written to `rawData/` yet: large10kD exists only in the stage. The R/X
+    review (`rx_ratio_report.md`, `rx_ratio_refs.bib`) was not on the 309 PC.
 - **Paper: edit only when asked.** Since 2026-10-12 the user also has ChatGPT
   editing the PESGM2027 paper; it rewrote the draft as prose with booktabs
   tables (one file per table, `tables/mp_*.tex`) and vector figures rendered by
