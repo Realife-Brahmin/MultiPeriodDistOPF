@@ -197,7 +197,7 @@ function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
     end
 end
 
-function build_model(data; gamma=0.0)
+function build_model(data; gamma=0.0, stages=nothing)
     Nstage = data[:T]
     buses, lines = data[:Nset], data[:Lset]
     batteries, ders = data[:Bset], data[:Dset]
@@ -270,12 +270,16 @@ function build_model(data; gamma=0.0)
     end
     limits = ControlLimits(lower, upper)
 
-    stage_objs = Any[]
-    stage_cons = Any[]
-    for t in 1:Nstage
+    # `stages`: build only these periods, for a process that owns some of them
+    # (procs_pass.jl). The other entries get the first built period's objects, so
+    # the lists keep their length; that process never evaluates them.
+    stage_objs = Vector{Any}(undef, Nstage)
+    stage_cons = Vector{Any}(undef, Nstage)
+    built = isnothing(stages) ? (1:Nstage) : sort(collect(stages))
+    for t in built
         price = data[:LoadShapeCost][t]
-        push!(stage_objs, analytic_objective(nx, nu, idx.ps, idx.pb,
-            price, pbase, dt, data[:C_B]))
+        stage_objs[t] = analytic_objective(nx, nu, idx.ps, idx.pb,
+            price, pbase, dt, data[:C_B])
 
         qmax = Dict(j => sqrt(max(0.0, data[:S_D_R][j]^2 - data[:p_D_pu][j,t]^2)) for j in ders)
         function untyped_equations(x,u)
@@ -459,7 +463,12 @@ function build_model(data; gamma=0.0)
         end
         con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
             equations, cx, cu, cxx, cux, cuu)
-        push!(stage_cons, con)
+        stage_cons[t] = con
+    end
+    for t in 1:Nstage
+        isassigned(stage_objs, t) && continue
+        stage_objs[t] = stage_objs[first(built)]
+        stage_cons[t] = stage_cons[first(built)]
     end
 
     # FilterDDP has a control at its final stage; use that stage's ordinary cost,
