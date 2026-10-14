@@ -64,10 +64,30 @@ mutable struct ProcsWorker
     S::Dict{Int, Any}            # phase-1 record of each owned period
     dir::Dict{Int, Any}          # directions of each owned period
     shared::Vector{Any}          # keeps the shared segments mapped
+    own::Vector{Int}             # the periods of this worker
 end
 const _PW = Ref{Any}(nothing)
 
 _pw_gc() = Base.gc_num().total_time / 1e9
+
+# FILTERDDP_PROCS_GC=pass: a worker collects once a pass, at the start of the
+# pass, and at no other time. At that moment everything the pass before made
+# (its stage record, factors, policy and directions) is of no further use and
+# is dropped first; none of it has been through a collection, so one
+# incremental collection takes all of it back and nothing is promoted to the
+# old generation, which is what the periodic full sweeps are for. All workers
+# do this at the same moment, so the pass waits once for the slowest of them.
+# Default (auto): Julia's collector decides, in every worker for itself; a pass
+# then waits for whichever worker happens to be collecting.
+#
+# Between two starts the collector is off, so a worker holds everything one
+# pass allocates. That is why the mode begins only when the warm-up solve has
+# ended (straight away without a warm-up): the first passes of a process
+# compile, and what compilation allocates is far more than a pass's own
+# (24 workers of ieee123 T=24 went past 60 GB in the warm-up and the job was
+# killed, where the timed solve needs under 1 GB a worker).
+const _PW_PASSGC = Ref(false)         # in force now
+const _PW_PASSGC_WANT = Ref(false)    # asked for
 
 function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Vector)
     BLAS.set_num_threads(1); _BLAS_DEFAULT[] = 1
@@ -105,17 +125,50 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
     _PP_END[] = PintVal(zeros(n, n), zeros(n))
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
-    _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), collect(Any, shared))
+    _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), collect(Any, shared), copy(own))
+    _PW_PASSGC_WANT[] = get(ENV, "FILTERDDP_PROCS_GC", "auto") == "pass"
+    _PW_PASSGC[] = false
+    if _PW_PASSGC_WANT[] && get(ENV, "FILTERDDP_WARMUP", "0") == "0"
+        GC.gc(); GC.enable(false); _PW_PASSGC[] = true
+    end
     return (setup_s=time() - t0, rss_mib=Sys.maxrss() / 2^20)
 end
 
-# Step 1 of period t. elem: the period's trajectory element at the start of a
-# solve; advance: the last trial point was accepted.
-function pw_step1(t::Int, k::Int, μ::Float64, elem, advance::Bool)
+# A full collection, after the warm-up solve; FILTERDDP_PROCS_GC=pass begins here.
+function pw_full_gc()
+    W = _PW[]
+    empty!(W.S); empty!(W.dir)                     # the finished solve's last pass
+    for t in W.own; W.solver.update[t].factor_policy = nothing; end
+    GC.enable(true); GC.gc()
+    if _PW_PASSGC_WANT[]
+        GC.enable(false); _PW_PASSGC[] = true
+    end
+    return nothing
+end
+
+# The start of a pass on this worker. advance: the last trial point was
+# accepted and becomes the nominal one. The two trajectory elements of a period
+# are kept and exchanged, and a trial point is written into the one not in use,
+# so an accepted step leaves no garbage.
+function pw_pass_start(advance::Bool)
+    W = _PW[]; s = W.solver
+    t0 = time_ns(); g0 = _pw_gc()
+    if advance
+        for t in W.own; s.nominal[t], s.current[t] = s.current[t], s.nominal[t]; end
+    end
+    if _PW_PASSGC[]
+        empty!(W.S); empty!(W.dir)
+        for t in W.own; s.update[t].factor_policy = nothing; end
+        GC.enable(true); GC.gc(false); GC.enable(false)
+    end
+    return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+end
+
+# Step 1 of period t. elem: the period's trajectory element at the start of a solve.
+function pw_step1(t::Int, k::Int, μ::Float64, elem)
     W = _PW[]; s = W.solver
     t0 = time_ns(); g0 = _pw_gc()
     isnothing(elem) || (s.nominal[t] = elem)
-    advance && (s.nominal[t] = s.current[t])
     S = _tp_pre(s, W.ocp, s.nominal, t, k, μ, false, W.nx, W.nu, W.nc, W.data, W.idx, true)
     isnothing(S) && return nothing
     isnothing(_pp_elem(S, t, W.nx)) && return nothing
@@ -203,14 +256,14 @@ end
 function pw_rollout(t::Int, γ::Float64, γz::Float64, μ::Float64)
     W = _PW[]; s = W.solver; ocp = W.ocp; cl = ocp.control_limits
     t0 = time_ns(); g0 = _pw_gc()
-    nom = s.nominal[t]; dir = W.dir[t]
-    x = nom.x .+ γ .* dir.dx
-    u = nom.u .+ γ .* dir.du
-    ϕ = nom.ϕ .+ γ .* dir.dϕ
-    zl = nom.zl .+ γz .* dir.dzl
-    zu = nom.zu .+ γz .* dir.dzu
-    s.current[t] = DDP4OPF.TrajectoryElement{Float64, W.nx, W.nu, W.nc}(x, u, ϕ, zl, zu)
-    c = DDP4OPF.stage_con(ocp, t).c(x, u)
+    nom = s.nominal[t]; dir = W.dir[t]; cur = s.current[t]
+    x, u, ϕ, zl, zu = cur.x, cur.u, cur.ϕ, cur.zl, cur.zu
+    @. x = nom.x + γ * dir.dx
+    @. u = nom.u + γ * dir.du
+    @. ϕ = nom.ϕ + γ * dir.dϕ
+    @. zl = nom.zl + γz * dir.dzl
+    @. zu = nom.zu + γz * dir.dzu
+    c =DDP4OPF.stage_con(ocp, t).c(x, u)
     c1 = norm(c, 1); cϕ = dot(c, ϕ)
     ul = u - cl.l
     uu = cl.u - u
@@ -227,7 +280,7 @@ end
 
 function pw_nominal(t::Int, advance::Bool)
     s = _PW[].solver
-    advance && (s.nominal[t] = s.current[t])
+    advance && ((s.nominal[t], s.current[t]) = (s.current[t], s.nominal[t]))
     return s.nominal[t]
 end
 
@@ -268,8 +321,15 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     M.last_k = d.k
     fresh && (M.x1 = Vector{Float64}(traj[1].x))
 
+    # every worker: the accepted point becomes the nominal one, and its collection of the pass
+    r0 = Vector{Any}(undef, length(M.pids))
+    @sync for (i, p) in enumerate(M.pids)
+        @async r0[i] = remotecall_fetch(pw_pass_start, p, advance)
+    end
+    t_0 = time_ns()
+
     # 1. every period: its stage data and its function of the two end states
-    r1 = _pm_all((t, w) -> remotecall_fetch(pw_step1, w, t, d.k, μ, fresh ? traj[t] : nothing, advance), M, N)
+    r1 = _pm_all((t, w) -> remotecall_fetch(pw_step1, w, t, d.k, μ, fresh ? traj[t] : nothing), M, N)
     if any(isnothing, r1)
         d.status = 1
         @printf("FILTERDDP_PROCS_FAIL iteration=%d step=1 periods=%s\n", d.k, string(findall(isnothing, r1)))
@@ -361,12 +421,14 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     # period is the cost of running it as separate processes. The periods'
     # times include their collections: gc_sum_s is the collector's time over
     # all periods of the pass, gc_max_s the longest it held one period.
-    @printf("FILTERDDP_PROCS_PASS iteration=%d barrier_iteration=%d stages=%d workers=%d rounds=%d combinations=%d step1_s=%.6f rounds_s=%.6f step3_s=%.6f total_s=%.6f pre_max_s=%.6f pre_sum_s=%.6f pair_max_s=%.6f pair_sum_s=%.6f post_max_s=%.6f post_sum_s=%.6f gc_sum_s=%.6f gc_max_s=%.6f objective=%.12e primal_inf=%.6e dual_inf=%.6e cs_inf=%.6e mu=%.6e\n",
-            d.k, d.j, N, length(M.pids), rounds, merges, (t_1 - t_start) / 1e9, (t_2 - t_1) / 1e9, (t_3 - t_2) / 1e9,
-            (time_ns() - t_start) / 1e9, maximum(r.el for r in r1), sum(r.el for r in r1), pair_max, pair_sum,
+    # start_s: the start of the pass on every worker (with FILTERDDP_PROCS_GC=pass
+    # its one collection), start_max_s the slowest worker's.
+    @printf("FILTERDDP_PROCS_PASS iteration=%d barrier_iteration=%d stages=%d workers=%d rounds=%d combinations=%d start_s=%.6f step1_s=%.6f rounds_s=%.6f step3_s=%.6f total_s=%.6f start_max_s=%.6f pre_max_s=%.6f pre_sum_s=%.6f pair_max_s=%.6f pair_sum_s=%.6f post_max_s=%.6f post_sum_s=%.6f gc_sum_s=%.6f gc_max_s=%.6f objective=%.12e primal_inf=%.6e dual_inf=%.6e cs_inf=%.6e mu=%.6e\n",
+            d.k, d.j, N, length(M.pids), rounds, merges, (t_0 - t_start) / 1e9, (t_1 - t_0) / 1e9, (t_2 - t_1) / 1e9, (t_3 - t_2) / 1e9,
+            (time_ns() - t_start) / 1e9, maximum(r.el for r in r0), maximum(r.el for r in r1), sum(r.el for r in r1), pair_max, pair_sum,
             maximum(r.el for r in r3), sum(r.el for r in r3),
-            sum(r.gc for r in r1) + pair_gc + sum(r.gc for r in r3),
-            max(maximum(r.gc for r in r1), pair_gc_max, maximum(r.gc for r in r3)),
+            sum(r.gc for r in r0) + sum(r.gc for r in r1) + pair_gc + sum(r.gc for r in r3),
+            max(maximum(r.gc for r in r0), maximum(r.gc for r in r1), pair_gc_max, maximum(r.gc for r in r3)),
             d.objective, d.primal_inf, d.dual_inf, d.cs_inf_0, μ)
     return true
 end
@@ -437,7 +499,7 @@ function procs_solve_exit(solver)
     M.exits += 1
     if M.exits == 1 && get(ENV, "FILTERDDP_WARMUP", "0") != "0"
         @sync for p in M.pids
-            @async remotecall_fetch(GC.gc, p)
+            @async remotecall_fetch(pw_full_gc, p)
         end
     end
     @printf("FILTERDDP_PROCS_MEMORY coordinator_maxrss_mib=%.1f worker_maxrss_mib_max=%.1f worker_maxrss_mib_sum=%.1f\n",
@@ -463,8 +525,8 @@ function procs_install(system::String, T::Int, nx::Int)
     DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
     DDP4OPF.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!
     DDP4OPF.SOLVE_EXIT_HOOK[] = procs_solve_exit
-    @printf("PROCS_SWEEP installed: %d workers for %d periods (at most %d periods a worker), setup %.1f s (slowest worker %.1f s), worker memory %.0f MiB at most, shared %.1f MiB\n",
-            length(pids), T, maximum(count(==(p), owner) for p in pids), time() - t0,
+    @printf("PROCS_SWEEP installed: %d workers for %d periods (at most %d periods a worker), collector=%s, setup %.1f s (slowest worker %.1f s), worker memory %.0f MiB at most, shared %.1f MiB\n",
+            length(pids), T, maximum(count(==(p), owner) for p in pids), get(ENV, "FILTERDDP_PROCS_GC", "auto"), time() - t0,
             maximum(x.setup_s for x in info), maximum(x.rss_mib for x in info), T * len * 8 / 2^20)
     return nothing
 end
