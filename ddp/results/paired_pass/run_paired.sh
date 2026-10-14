@@ -3,17 +3,22 @@
 # Hessian, tolerance 1e-5, factors reused after a barrier update, otherwise the
 # configuration of run_parsim.sh. The dispatch goes to OpenDSS afterwards.
 #
-#   bash ddp/results/paired_pass/run_paired.sh <system> <T> <count|1> [tag]
+#   bash ddp/results/paired_pass/run_paired.sh <system> <T> <count|1|procs> [tag]
 #
 # count: sequential, every piece timed, for the one-worker count (clean_hp_table.py
 #        --arms=exact,paired). Warm-up of PAIRED_WARMUP iterations (default 3).
 # 1:     on Julia threads (JULIA_NUM_THREADS, default 8); correctness, not timing.
+# procs: every period in a process of its own (procs_pass.jl, procs_main.jl), on
+#        this machine: FILTERDDP_PROCS_WORKERS workers (default one per period)
+#        and a coordinator. A full pass after a barrier update, not the
+#        factor-reusing one. Warm-up of PAIRED_WARMUP iterations (default full).
 # PAIRED_CHECK=1 also runs the ordinary sweep in every pass and prints the difference.
 set -u
 cd "$(dirname "$0")/../../.." || exit 1
 unset NO_COLOR FORCE_COLOR
 SYS=$1; T=$2; MODE=$3; TAG=${4:-${MODE}_hp_tol1e5}
 [ "$MODE" = 1 ] && TAG=${4:-threads_hp_tol1e5}
+[ "$MODE" = procs ] && TAG=${4:-procs_hp_tol1e5}
 OUT=ddp/results/parallel_in_time/logs
 case $SYS in
   large10kC_1ph) REF=ddp/results/ipopt_hsl/logs/ipopt_ma57_screen_lf_pv_hp_${SYS}_T$T.log;;
@@ -40,6 +45,10 @@ export FILTERDDP_PAIRED_ROUNDS=${PAIRED_ROUNDS:-1}
 if [ "$MODE" = count ]; then
   export FILTERDDP_PARSIM=1 FILTERDDP_PARSIM_GCNET=1 FILTERDDP_WARMUP=${PAIRED_WARMUP:-3}
   case $SYS in ieee123C_1ph) export JULIA_NUM_THREADS=1;; *) export JULIA_NUM_THREADS=${JULIA_NUM_THREADS:-8};; esac
+elif [ "$MODE" = procs ]; then
+  unset FILTERDDP_PARSIM FILTERDDP_PARSIM_GCNET FILTERDDP_REUSE_BARRIER
+  export FILTERDDP_WARMUP=${PAIRED_WARMUP:-full} JULIA_NUM_THREADS=1
+  PAIRED_MAIN=${PAIRED_MAIN:-ddp/results/paired_pass/procs_main.jl}
 else
   unset FILTERDDP_PARSIM; export FILTERDDP_WARMUP=0 JULIA_NUM_THREADS=${JULIA_NUM_THREADS:-8}
 fi
@@ -56,5 +65,5 @@ else
   echo "OPENDSS_CHECK: no solution written by this run ($RUNTAG)"
 fi
 rm -f "$MARK"
-echo "[$(date '+%H:%M:%S')] $SYS T=$T paired $TAG: $(grep -E 'solve complete' "$LOG" | tail -1) | $(grep -oE 'FilterDDP objective=[-0-9.eE+]+' "$LOG") | paired passes $(grep -c FILTERDDP_PAIRED_PASS "$LOG"), reuse passes $(grep -c FILTERDDP_REUSE_PASS "$LOG"), worst scan error $(grep -oE 'scan_err_Vxx=[0-9.e+-]+' "$LOG" | cut -d= -f2 | sort -g | tail -1)"
+echo "[$(date '+%H:%M:%S')] $SYS T=$T paired $TAG: $(grep -E 'solve complete' "$LOG" | tail -1) | $(grep -oE 'FilterDDP objective=[-0-9.eE+]+' "$LOG") | paired passes $(grep -c FILTERDDP_PAIRED_PASS "$LOG"), procs passes $(grep -c FILTERDDP_PROCS_PASS "$LOG"), reuse passes $(grep -c FILTERDDP_REUSE_PASS "$LOG"), worst scan error $(grep -oE 'scan_err_Vxx=[0-9.e+-]+' "$LOG" | cut -d= -f2 | sort -g | tail -1)"
 grep -E "ERROR|WARMUP_STREAM" "$LOG" | head -3
