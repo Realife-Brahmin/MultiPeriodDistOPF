@@ -567,7 +567,7 @@ end
 # restrict a run; rows are merged into the CSV by (system, bus, T), so runs can be split.
 const LARGE = Dict(
     "ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", scale = 1.0, rx = nothing, ray = true, feas = nothing, kV = 7.2, zs = 0.311, T = 12, at = ["947", "996", "1120", "1216", "546"]),
-    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, rx = nothing, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 6, at = ["1120"]),
+    "large10k" => (; system = "large10kC_1ph", label = "large10kC_1ph", scale = 1.0, rx = nothing, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 24, at = ["1120"]),
     "large10kd" => (; system = "large10kC_1ph", label = "large10kD_1ph", scale = 20.0, rx = 1.0, ray = false, feas = 1e-5, kV = 12.47, zs = 0.0, T = 24, at = ["1120"]))
 const LARGE_HEADER = "system,bus,T,case,feasible_at_equal_angles,lo_deg,hi_deg,lo_at_limit,hi_at_limit,failed_checks," *
                      "predicted_lo_deg,predicted_hi_deg,lo_min_import_kW,lo_vmin_pu,lo_vmax_pu,hi_min_import_kW,hi_vmin_pu,hi_vmax_pu," *

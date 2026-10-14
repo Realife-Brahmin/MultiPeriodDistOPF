@@ -143,7 +143,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
-    model = new_model(solver)
+    # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
+    # and no bridge layer, which is most of the memory of a 10k-bus day.
+    lean = solver === :ipopt && get(ENV, "MULTIPERIOD_LEAN", "0") == "1"
+    model = lean ? direct_model(Ipopt.Optimizer()) : new_model(solver)
+    lean && set_silent(model)
     if solver === :ipopt
         set_attribute(model, "max_iter", max_iter)
         set_attribute(model, "tol", tol)
@@ -364,6 +368,9 @@ function release_solver!(model)
         inner === nothing || finalize(inner)
     catch
     end
+    # A 10k-bus day leaves gigabytes of model garbage; collect it before the next solve builds
+    # its own (the large10kC run reached 11 GB over two dozen solves without this).
+    get(ENV, "MULTIPERIOD_GC", "1") == "1" && GC.gc()
     return
 end
 
