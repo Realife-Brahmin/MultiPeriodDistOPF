@@ -244,6 +244,7 @@ mutable struct ProcsMain
     # `current` over its `nominal` after every accepted step, so the
     # coordinator's trajectory is not to be read between the start and the end.
     x1::Vector{Float64}
+    exits::Int                   # solves finished so far
 end
 const _PM = Ref{Any}(nothing)
 
@@ -278,7 +279,7 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
 
     # 2. the rounds
     isval = falses(N + 1); isval[N+1] = true
-    rounds = 0; merges = 0; pair_sum = 0.0; pair_max = 0.0; pair_gc = 0.0
+    rounds = 0; merges = 0; pair_sum = 0.0; pair_max = 0.0; pair_gc = 0.0; pair_gc_max = 0.0
     n = N + 1; h = 1
     while h < n
         pairs = Tuple{Int, Int}[]
@@ -294,6 +295,7 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
         for (t, mid) in pairs; isval[t] = isval[mid]; end
         rounds += 1; merges += length(pairs)
         pair_sum += sum(r.el for r in res); pair_max += maximum(r.el for r in res); pair_gc += sum(r.gc for r in res)
+        pair_gc_max = max(pair_gc_max, maximum(r.gc for r in res))
         h *= 2
     end
     t_2 = time_ns()
@@ -356,12 +358,15 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     # Wall times of the three steps as the coordinator sees them, and beside
     # them what the periods' own clocks say: the slowest period (max) and all
     # of them (sum). The difference between a step's wall time and its slowest
-    # period is the cost of running it as separate processes.
-    @printf("FILTERDDP_PROCS_PASS iteration=%d barrier_iteration=%d stages=%d workers=%d rounds=%d combinations=%d step1_s=%.6f rounds_s=%.6f step3_s=%.6f total_s=%.6f pre_max_s=%.6f pre_sum_s=%.6f pair_max_s=%.6f pair_sum_s=%.6f post_max_s=%.6f post_sum_s=%.6f gc_sum_s=%.6f objective=%.12e primal_inf=%.6e dual_inf=%.6e cs_inf=%.6e mu=%.6e\n",
+    # period is the cost of running it as separate processes. The periods'
+    # times include their collections: gc_sum_s is the collector's time over
+    # all periods of the pass, gc_max_s the longest it held one period.
+    @printf("FILTERDDP_PROCS_PASS iteration=%d barrier_iteration=%d stages=%d workers=%d rounds=%d combinations=%d step1_s=%.6f rounds_s=%.6f step3_s=%.6f total_s=%.6f pre_max_s=%.6f pre_sum_s=%.6f pair_max_s=%.6f pair_sum_s=%.6f post_max_s=%.6f post_sum_s=%.6f gc_sum_s=%.6f gc_max_s=%.6f objective=%.12e primal_inf=%.6e dual_inf=%.6e cs_inf=%.6e mu=%.6e\n",
             d.k, d.j, N, length(M.pids), rounds, merges, (t_1 - t_start) / 1e9, (t_2 - t_1) / 1e9, (t_3 - t_2) / 1e9,
             (time_ns() - t_start) / 1e9, maximum(r.el for r in r1), sum(r.el for r in r1), pair_max, pair_sum,
             maximum(r.el for r in r3), sum(r.el for r in r3),
             sum(r.gc for r in r1) + pair_gc + sum(r.gc for r in r3),
+            max(maximum(r.gc for r in r1), pair_gc_max, maximum(r.gc for r in r3)),
             d.objective, d.primal_inf, d.dual_inf, d.cs_inf_0, μ)
     return true
 end
@@ -423,6 +428,18 @@ function procs_solve_exit(solver)
     els = _pm_all((t, w) -> remotecall_fetch(pw_nominal, w, t, advance), M, N)
     for t in 1:N; solver.nominal[t] = els[t]; end
     M.last_k = solver.data.k
+    # After the warm-up solve every worker collects in full, as the driver does
+    # for its own process, so that the timed solve starts with nothing but old
+    # objects on each heap. Without it each worker's first collection of the
+    # timed solve sweeps its whole heap (0.36 s on ieee123, 0.75 s on med2522),
+    # and a pass waits for whichever worker is collecting: with 24 workers
+    # nearly every pass of ieee123 T=24 carried one such pause.
+    M.exits += 1
+    if M.exits == 1 && get(ENV, "FILTERDDP_WARMUP", "0") != "0"
+        @sync for p in M.pids
+            @async remotecall_fetch(GC.gc, p)
+        end
+    end
     @printf("FILTERDDP_PROCS_MEMORY coordinator_maxrss_mib=%.1f worker_maxrss_mib_max=%.1f worker_maxrss_mib_sum=%.1f\n",
             Sys.maxrss() / 2^20, maximum(remotecall_fetch(pw_memory, p) for p in M.pids),
             sum(remotecall_fetch(pw_memory, p) for p in M.pids))
@@ -441,7 +458,7 @@ function procs_install(system::String, T::Int, nx::Int)
     @sync for (i, p) in enumerate(pids)
         @async info[i] = remotecall_fetch(procs_worker_setup, p, system, T, findall(==(p), owner), shared)
     end
-    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[])
+    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0)
     DDP4OPF.BACKWARD_PASS_HOOK[] = procs_backward_pass!
     DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
     DDP4OPF.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!
