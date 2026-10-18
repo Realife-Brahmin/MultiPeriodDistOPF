@@ -122,6 +122,8 @@ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx,}) where {T, nx, nu, nc, 
     end
     
     data.k == options.max_iterations && (data.status = 8)
+    exit_hook = SOLVE_EXIT_HOOK[]
+    isnothing(exit_hook) || exit_hook(solver)
     options.verbose && iteration_status(data, options)
     options.verbose && on_exit(data)
     return data.status

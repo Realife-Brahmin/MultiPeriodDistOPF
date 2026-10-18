@@ -83,6 +83,9 @@ const BACKWARD_PASS_HOOK = Ref{Any}(nothing)        # see solve!
 #   AFFINE_ROLLOUT_HOOK[] (solver, ocp, data, directions, γ) -> true if it built the trial point.
 const AFFINE_DIRECTIONS_HOOK = Ref{Any}(nothing)
 const AFFINE_ROLLOUT_HOOK = Ref{Any}(nothing)
+# SOLVE_EXIT_HOOK[] (solver): called once when solve! stops, for a driver that
+# keeps the trajectory elsewhere (one process per period) to bring it back.
+const SOLVE_EXIT_HOOK = Ref{Any}(nothing)
 _hybrid_mu() = haskey(ENV, "FILTERDDP_HYBRID_MU") ? parse(Float64, ENV["FILTERDDP_HYBRID_MU"]) : nothing
 _diag_hessian_enabled() = get(ENV, "FILTERDDP_DIAG_HESSIAN", "0") != "0" && !_HYBRID_EXACT[]
 _diag_hessian_floor() = parse(Float64, get(ENV, "FILTERDDP_DIAG_HESSIAN_FLOOR", "1e-8"))

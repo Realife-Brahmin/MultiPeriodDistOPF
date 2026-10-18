@@ -1,0 +1,305 @@
+2026-10-14T21:30:54-07:00
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      1
+Core(s) per socket:                      32
+Socket(s):                               2
+Stepping:                                8
+CPU(s) scaling MHz:                      90%
+CPU max MHz:                             4000.0000
+CPU min MHz:                             800.0000
+BogoMIPS:                                4000.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                128 MiB (64 instances)
+L3 cache:                                120 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsx async abort:           Not affected
+JobId=31187814 JobName=stageB_two_v3
+   UserId=aryan.jha(9254) GroupId=its_p_sys_ur_kam-dubey(7274) MCS_label=N/A
+   Priority=48 Nice=0 Account=dubey QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=00:10:00 TimeMin=N/A
+   SubmitTime=2026-10-14T21:30:38 EligibleTime=2026-10-14T21:30:38
+   StartTime=2026-10-14T21:30:54 EndTime=2026-10-14T21:40:54 Deadline=N/A
+   PreemptTime=None SuspendTime=None SecsPreSuspend=0
+   LastSchedEval=2026-10-14T21:30:54
+   Partition=kamiak AllocNode:Sid=login-p3n01:3112509
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn[163-164]
+   BatchHost=cn163
+   NumNodes=2 NumCPUs=128 NumTasks=128 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=128,mem=1200G,node=2,billing=128
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=1 MinMemoryNode=600G MinTmpDiskNode=0
+   Features=sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64 DelayBoot=00:00:00
+   Gres=(null) Reservation=(null)
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15_v3/run_replay.sh 1
+   WorkDir=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15_v3
+   StdErr=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15_v3/logs/two_31187814.err
+   StdIn=/dev/null
+   StdOut=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15_v3/logs/two_31187814.out
+   Power=
+
+REPLAY_PLACEMENT Dict(5 => "cn164", 56 => "cn163", 35 => "cn164", 55 => "cn163", 60 => "cn163", 30 => "cn164", 32 => "cn164", 6 => "cn164", 67 => "cn163", 45 => "cn163", 73 => "cn163", 64 => "cn163", 90 => "cn164", 4 => "cn164", 13 => "cn164", 54 => "cn163", 63 => "cn163", 86 => "cn164", 91 => "cn164", 62 => "cn163", 58 => "cn163", 52 => "cn163", 12 => "cn164", 28 => "cn164", 75 => "cn163", 23 => "cn164", 92 => "cn164", 41 => "cn163", 43 => "cn163", 11 => "cn164", 36 => "cn164", 68 => "cn163", 69 => "cn163", 82 => "cn163", 85 => "cn163", 39 => "cn164", 84 => "cn163", 77 => "cn163", 7 => "cn164", 25 => "cn164", 95 => "cn164", 71 => "cn163", 66 => "cn163", 76 => "cn163", 34 => "cn164", 50 => "cn163", 59 => "cn163", 93 => "cn164", 2 => "cn163", 10 => "cn164", 18 => "cn164", 26 => "cn164", 27 => "cn164", 42 => "cn163", 87 => "cn164", 79 => "cn163", 16 => "cn164", 20 => "cn164", 81 => "cn163", 19 => "cn164", 49 => "cn163", 44 => "cn163", 9 => "cn164", 31 => "cn164", 74 => "cn163", 61 => "cn163", 29 => "cn164", 94 => "cn164", 46 => "cn163", 57 => "cn163", 70 => "cn163", 21 => "cn164", 38 => "cn164", 88 => "cn164", 78 => "cn163", 72 => "cn163", 24 => "cn164", 8 => "cn164", 17 => "cn164", 37 => "cn164", 53 => "cn163", 22 => "cn164", 47 => "cn163", 83 => "cn163", 89 => "cn164", 14 => "cn164", 3 => "cn164", 80 => "cn163", 96 => "cn163", 51 => "cn163", 33 => "cn164", 40 => "cn163", 48 => "cn163", 15 => "cn164", 65 => "cn163", 97 => "cn164")
+REPLAY_PROCESS pid=1 info=(host = "cn163", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d209000)
+REPLAY_PROCESS pid=2 info=(host = "cn163", affinity = "25", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c3e4000)
+REPLAY_PROCESS pid=3 info=(host = "cn164", affinity = "34", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002de77000)
+REPLAY_PROCESS pid=4 info=(host = "cn164", affinity = "42", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c73f000)
+REPLAY_PROCESS pid=5 info=(host = "cn164", affinity = "46", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d9f0000)
+REPLAY_PROCESS pid=6 info=(host = "cn164", affinity = "37", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002df80000)
+REPLAY_PROCESS pid=7 info=(host = "cn164", affinity = "39", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e036000)
+REPLAY_PROCESS pid=8 info=(host = "cn164", affinity = "27", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dc09000)
+REPLAY_PROCESS pid=9 info=(host = "cn164", affinity = "29", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dd2a000)
+REPLAY_PROCESS pid=10 info=(host = "cn164", affinity = "33", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dea9000)
+REPLAY_PROCESS pid=11 info=(host = "cn164", affinity = "36", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e6d5000)
+REPLAY_PROCESS pid=12 info=(host = "cn164", affinity = "43", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dc05000)
+REPLAY_PROCESS pid=13 info=(host = "cn164", affinity = "26", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002edf5000)
+REPLAY_PROCESS pid=14 info=(host = "cn164", affinity = "35", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e638000)
+REPLAY_PROCESS pid=15 info=(host = "cn164", affinity = "32", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e8db000)
+REPLAY_PROCESS pid=16 info=(host = "cn164", affinity = "10", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dfb6000)
+REPLAY_PROCESS pid=17 info=(host = "cn164", affinity = "9", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c80b000)
+REPLAY_PROCESS pid=18 info=(host = "cn164", affinity = "18", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c62b000)
+REPLAY_PROCESS pid=19 info=(host = "cn164", affinity = "41", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c2fa000)
+REPLAY_PROCESS pid=20 info=(host = "cn164", affinity = "21", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e6e9000)
+REPLAY_PROCESS pid=21 info=(host = "cn164", affinity = "13", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e076000)
+REPLAY_PROCESS pid=22 info=(host = "cn164", affinity = "12", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dbaf000)
+REPLAY_PROCESS pid=23 info=(host = "cn164", affinity = "19", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e288000)
+REPLAY_PROCESS pid=24 info=(host = "cn164", affinity = "17", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ca6a000)
+REPLAY_PROCESS pid=25 info=(host = "cn164", affinity = "6", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d5dc000)
+REPLAY_PROCESS pid=26 info=(host = "cn164", affinity = "28", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002eefc000)
+REPLAY_PROCESS pid=27 info=(host = "cn164", affinity = "14", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d973000)
+REPLAY_PROCESS pid=28 info=(host = "cn164", affinity = "5", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ded0000)
+REPLAY_PROCESS pid=29 info=(host = "cn164", affinity = "16", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dc0e000)
+REPLAY_PROCESS pid=30 info=(host = "cn164", affinity = "0", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e66e000)
+REPLAY_PROCESS pid=31 info=(host = "cn164", affinity = "47", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e2b9000)
+REPLAY_PROCESS pid=32 info=(host = "cn164", affinity = "1", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002eac8000)
+REPLAY_PROCESS pid=33 info=(host = "cn164", affinity = "38", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d13b000)
+REPLAY_PROCESS pid=34 info=(host = "cn164", affinity = "23", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ca10000)
+REPLAY_PROCESS pid=35 info=(host = "cn164", affinity = "45", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ef4b000)
+REPLAY_PROCESS pid=36 info=(host = "cn164", affinity = "22", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002da65000)
+REPLAY_PROCESS pid=37 info=(host = "cn164", affinity = "31", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e72f000)
+REPLAY_PROCESS pid=38 info=(host = "cn164", affinity = "11", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f0e0000)
+REPLAY_PROCESS pid=39 info=(host = "cn164", affinity = "3", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ee07000)
+REPLAY_PROCESS pid=40 info=(host = "cn163", affinity = "43", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e2ca000)
+REPLAY_PROCESS pid=41 info=(host = "cn163", affinity = "45", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000039d9f000)
+REPLAY_PROCESS pid=42 info=(host = "cn163", affinity = "32", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dbef000)
+REPLAY_PROCESS pid=43 info=(host = "cn163", affinity = "33", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c57b000)
+REPLAY_PROCESS pid=44 info=(host = "cn163", affinity = "34", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c778000)
+REPLAY_PROCESS pid=45 info=(host = "cn163", affinity = "38", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dd5e000)
+REPLAY_PROCESS pid=46 info=(host = "cn163", affinity = "41", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e032000)
+REPLAY_PROCESS pid=47 info=(host = "cn163", affinity = "28", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e1cd000)
+REPLAY_PROCESS pid=48 info=(host = "cn163", affinity = "39", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ee9e000)
+REPLAY_PROCESS pid=49 info=(host = "cn163", affinity = "42", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e6de000)
+REPLAY_PROCESS pid=50 info=(host = "cn163", affinity = "40", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e069000)
+REPLAY_PROCESS pid=51 info=(host = "cn163", affinity = "31", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002edd8000)
+REPLAY_PROCESS pid=52 info=(host = "cn163", affinity = "6", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d695000)
+REPLAY_PROCESS pid=53 info=(host = "cn163", affinity = "15", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e3d0000)
+REPLAY_PROCESS pid=54 info=(host = "cn163", affinity = "19", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dcd0000)
+REPLAY_PROCESS pid=55 info=(host = "cn163", affinity = "10", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cdea000)
+REPLAY_PROCESS pid=56 info=(host = "cn163", affinity = "21", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002be93000)
+REPLAY_PROCESS pid=57 info=(host = "cn163", affinity = "12", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c1fa000)
+REPLAY_PROCESS pid=58 info=(host = "cn163", affinity = "35", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f007000)
+REPLAY_PROCESS pid=59 info=(host = "cn163", affinity = "7", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e0a0000)
+REPLAY_PROCESS pid=60 info=(host = "cn163", affinity = "27", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002da42000)
+REPLAY_PROCESS pid=61 info=(host = "cn163", affinity = "26", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d7ec000)
+REPLAY_PROCESS pid=62 info=(host = "cn163", affinity = "30", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002da8f000)
+REPLAY_PROCESS pid=63 info=(host = "cn163", affinity = "16", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f0b8000)
+REPLAY_PROCESS pid=64 info=(host = "cn163", affinity = "4", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d94b000)
+REPLAY_PROCESS pid=65 info=(host = "cn163", affinity = "24", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cc5f000)
+REPLAY_PROCESS pid=66 info=(host = "cn163", affinity = "23", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c90a000)
+REPLAY_PROCESS pid=67 info=(host = "cn163", affinity = "5", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dfc6000)
+REPLAY_PROCESS pid=68 info=(host = "cn163", affinity = "22", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e591000)
+REPLAY_PROCESS pid=69 info=(host = "cn163", affinity = "46", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ef34000)
+REPLAY_PROCESS pid=70 info=(host = "cn163", affinity = "37", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ee19000)
+REPLAY_PROCESS pid=71 info=(host = "cn163", affinity = "29", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f1ca000)
+REPLAY_PROCESS pid=72 info=(host = "cn163", affinity = "44", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f176000)
+REPLAY_PROCESS pid=73 info=(host = "cn163", affinity = "13", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f2bb000)
+REPLAY_PROCESS pid=74 info=(host = "cn163", affinity = "0", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e4da000)
+REPLAY_PROCESS pid=75 info=(host = "cn163", affinity = "11", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e889000)
+REPLAY_PROCESS pid=76 info=(host = "cn163", affinity = "18", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ef62000)
+REPLAY_PROCESS pid=77 info=(host = "cn163", affinity = "14", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e34e000)
+REPLAY_PROCESS pid=78 info=(host = "cn163", affinity = "36", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002eb8e000)
+REPLAY_PROCESS pid=79 info=(host = "cn163", affinity = "9", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ecaf000)
+REPLAY_PROCESS pid=80 info=(host = "cn163", affinity = "17", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f0e3000)
+REPLAY_PROCESS pid=81 info=(host = "cn163", affinity = "8", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002efd4000)
+REPLAY_PROCESS pid=82 info=(host = "cn163", affinity = "3", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ea2b000)
+REPLAY_PROCESS pid=83 info=(host = "cn163", affinity = "20", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f127000)
+REPLAY_PROCESS pid=84 info=(host = "cn163", affinity = "47", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f2f4000)
+REPLAY_PROCESS pid=85 info=(host = "cn163", affinity = "1", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ebbe000)
+REPLAY_PROCESS pid=86 info=(host = "cn164", affinity = "25", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ef1b000)
+REPLAY_PROCESS pid=87 info=(host = "cn164", affinity = "44", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f04a000)
+REPLAY_PROCESS pid=88 info=(host = "cn164", affinity = "20", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f23d000)
+REPLAY_PROCESS pid=89 info=(host = "cn164", affinity = "30", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ec2a000)
+REPLAY_PROCESS pid=90 info=(host = "cn164", affinity = "40", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e97d000)
+REPLAY_PROCESS pid=91 info=(host = "cn164", affinity = "15", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f186000)
+REPLAY_PROCESS pid=92 info=(host = "cn164", affinity = "7", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f07a000)
+REPLAY_PROCESS pid=93 info=(host = "cn164", affinity = "24", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e4b0000)
+REPLAY_PROCESS pid=94 info=(host = "cn164", affinity = "8", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ed90000)
+REPLAY_PROCESS pid=95 info=(host = "cn164", affinity = "4", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002eb3e000)
+REPLAY_PROCESS pid=96 info=(host = "cn163", affinity = "2", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ed00000)
+REPLAY_PROCESS pid=97 info=(host = "cn164", affinity = "2", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ea65000)
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=1 tasks=48 wall_s=3.790686 compute_sum_s=7.710785 fetch_sum_s=39.133669 gc_sum_s=0.000000 busiest_worker_s=3.218499 scheduling_wait_est_s=0.572187 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=2 tasks=48 wall_s=3.158157 compute_sum_s=7.642859 fetch_sum_s=16.750354 gc_sum_s=0.000000 busiest_worker_s=2.008284 scheduling_wait_est_s=1.149874 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=3 tasks=48 wall_s=3.023727 compute_sum_s=7.595679 fetch_sum_s=14.571962 gc_sum_s=0.000000 busiest_worker_s=1.675741 scheduling_wait_est_s=1.347986 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=4 tasks=48 wall_s=2.931435 compute_sum_s=7.619311 fetch_sum_s=15.286495 gc_sum_s=0.000000 busiest_worker_s=1.763122 scheduling_wait_est_s=1.168313 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=5 tasks=48 wall_s=2.936940 compute_sum_s=7.617924 fetch_sum_s=16.520258 gc_sum_s=0.000000 busiest_worker_s=1.818210 scheduling_wait_est_s=1.118730 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=6 tasks=64 wall_s=2.658556 compute_sum_s=7.533945 fetch_sum_s=14.185363 gc_sum_s=0.000000 busiest_worker_s=0.837487 scheduling_wait_est_s=1.821069 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=7 tasks=64 wall_s=0.541137 compute_sum_s=4.797877 fetch_sum_s=21.361907 gc_sum_s=0.000000 busiest_worker_s=0.965357 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=0 wall_s=20.386744 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=1 tasks=48 wall_s=1.256464 compute_sum_s=7.704453 fetch_sum_s=31.767012 gc_sum_s=0.000000 busiest_worker_s=2.734763 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=2 tasks=48 wall_s=0.836306 compute_sum_s=7.626015 fetch_sum_s=13.622000 gc_sum_s=0.000000 busiest_worker_s=1.775544 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=3 tasks=48 wall_s=0.795264 compute_sum_s=7.649295 fetch_sum_s=13.164246 gc_sum_s=0.000000 busiest_worker_s=1.726231 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=4 tasks=48 wall_s=0.852062 compute_sum_s=7.631986 fetch_sum_s=14.063343 gc_sum_s=0.000000 busiest_worker_s=1.827703 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=5 tasks=48 wall_s=0.791724 compute_sum_s=7.638573 fetch_sum_s=14.123131 gc_sum_s=0.000000 busiest_worker_s=1.721105 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=6 tasks=64 wall_s=0.728792 compute_sum_s=7.544533 fetch_sum_s=12.828079 gc_sum_s=0.000000 busiest_worker_s=0.803820 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=7 tasks=64 wall_s=0.468233 compute_sum_s=4.799515 fetch_sum_s=15.998898 gc_sum_s=0.000000 busiest_worker_s=0.813059 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=1 wall_s=5.731151 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=1 tasks=48 wall_s=1.249467 compute_sum_s=7.691099 fetch_sum_s=31.759114 gc_sum_s=0.000000 busiest_worker_s=2.732898 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=2 tasks=48 wall_s=0.822564 compute_sum_s=7.633240 fetch_sum_s=13.368796 gc_sum_s=0.000000 busiest_worker_s=1.752700 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=3 tasks=48 wall_s=0.796471 compute_sum_s=7.655406 fetch_sum_s=13.134032 gc_sum_s=0.000000 busiest_worker_s=1.724230 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=4 tasks=48 wall_s=0.853301 compute_sum_s=7.636092 fetch_sum_s=14.083483 gc_sum_s=0.000000 busiest_worker_s=1.831698 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=5 tasks=48 wall_s=0.793925 compute_sum_s=7.647386 fetch_sum_s=14.167306 gc_sum_s=0.000000 busiest_worker_s=1.725977 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=6 tasks=64 wall_s=0.730219 compute_sum_s=7.554114 fetch_sum_s=12.850280 gc_sum_s=0.000000 busiest_worker_s=0.803874 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=7 tasks=64 wall_s=0.465694 compute_sum_s=4.795728 fetch_sum_s=15.856911 gc_sum_s=0.000000 busiest_worker_s=0.808113 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=2 wall_s=5.713933 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=1 tasks=48 wall_s=1.249176 compute_sum_s=7.702790 fetch_sum_s=31.748469 gc_sum_s=0.000000 busiest_worker_s=2.738113 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=2 tasks=48 wall_s=0.811294 compute_sum_s=7.656919 fetch_sum_s=13.145401 gc_sum_s=0.000000 busiest_worker_s=1.736624 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=3 tasks=48 wall_s=0.801707 compute_sum_s=7.655871 fetch_sum_s=13.174422 gc_sum_s=0.000000 busiest_worker_s=1.734020 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=4 tasks=48 wall_s=0.833842 compute_sum_s=7.654217 fetch_sum_s=13.765360 gc_sum_s=0.000000 busiest_worker_s=1.810134 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=5 tasks=48 wall_s=0.794582 compute_sum_s=7.632509 fetch_sum_s=14.106894 gc_sum_s=0.000000 busiest_worker_s=1.724875 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=6 tasks=64 wall_s=0.729319 compute_sum_s=7.548232 fetch_sum_s=12.867068 gc_sum_s=0.000000 busiest_worker_s=0.804000 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=7 tasks=64 wall_s=0.460638 compute_sum_s=4.800137 fetch_sum_s=15.767694 gc_sum_s=0.000000 busiest_worker_s=0.808296 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=3 wall_s=5.682828 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=32 median_s=5.713933 min_s=5.682828 max_s=5.731151
+REPLAY_MEMORY workers=32 worker_maxrss_sum_bytes=51464237056 coordinator_maxrss_bytes=5981954048
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=1 tasks=48 wall_s=3.049617 compute_sum_s=7.704896 fetch_sum_s=22.074132 gc_sum_s=0.000000 busiest_worker_s=1.431273 scheduling_wait_est_s=1.618344 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=2 tasks=48 wall_s=2.844005 compute_sum_s=7.656478 fetch_sum_s=9.510405 gc_sum_s=0.000000 busiest_worker_s=0.947832 scheduling_wait_est_s=1.896173 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=3 tasks=48 wall_s=2.788144 compute_sum_s=7.689970 fetch_sum_s=9.646306 gc_sum_s=0.000000 busiest_worker_s=1.017903 scheduling_wait_est_s=1.770241 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=4 tasks=48 wall_s=2.783687 compute_sum_s=7.687695 fetch_sum_s=10.458786 gc_sum_s=0.000000 busiest_worker_s=1.079080 scheduling_wait_est_s=1.704606 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=5 tasks=48 wall_s=2.588093 compute_sum_s=7.791445 fetch_sum_s=11.293024 gc_sum_s=0.000000 busiest_worker_s=0.652492 scheduling_wait_est_s=1.935601 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=6 tasks=64 wall_s=0.583934 compute_sum_s=7.604107 fetch_sum_s=8.035993 gc_sum_s=0.000000 busiest_worker_s=0.657876 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=7 tasks=64 wall_s=0.451819 compute_sum_s=4.822845 fetch_sum_s=14.879899 gc_sum_s=0.000000 busiest_worker_s=0.784063 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=0 wall_s=15.091948 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=1 tasks=48 wall_s=1.184903 compute_sum_s=7.867604 fetch_sum_s=33.262955 gc_sum_s=0.000000 busiest_worker_s=1.972677 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=2 tasks=48 wall_s=0.722543 compute_sum_s=7.694613 fetch_sum_s=11.036885 gc_sum_s=0.000000 busiest_worker_s=1.168767 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=3 tasks=48 wall_s=0.683417 compute_sum_s=7.727441 fetch_sum_s=10.197418 gc_sum_s=0.000000 busiest_worker_s=1.126308 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=4 tasks=48 wall_s=0.692090 compute_sum_s=7.714550 fetch_sum_s=10.595419 gc_sum_s=0.000000 busiest_worker_s=1.159627 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=5 tasks=48 wall_s=0.676971 compute_sum_s=7.805182 fetch_sum_s=11.351813 gc_sum_s=0.000000 busiest_worker_s=0.676099 scheduling_wait_est_s=0.000872 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=6 tasks=64 wall_s=0.580969 compute_sum_s=7.625286 fetch_sum_s=8.002061 gc_sum_s=0.000000 busiest_worker_s=0.655307 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=7 tasks=64 wall_s=0.415850 compute_sum_s=4.828472 fetch_sum_s=12.060767 gc_sum_s=0.000000 busiest_worker_s=0.749885 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=1 wall_s=4.959165 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=1 tasks=48 wall_s=1.184820 compute_sum_s=7.887568 fetch_sum_s=33.218149 gc_sum_s=0.000000 busiest_worker_s=1.970856 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=2 tasks=48 wall_s=0.714258 compute_sum_s=7.698631 fetch_sum_s=10.885579 gc_sum_s=0.000000 busiest_worker_s=1.157353 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=3 tasks=48 wall_s=0.680432 compute_sum_s=7.716301 fetch_sum_s=10.154425 gc_sum_s=0.000000 busiest_worker_s=1.122064 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=4 tasks=48 wall_s=0.692350 compute_sum_s=7.713033 fetch_sum_s=10.566129 gc_sum_s=0.000000 busiest_worker_s=1.158363 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=5 tasks=48 wall_s=0.673868 compute_sum_s=7.817576 fetch_sum_s=11.289332 gc_sum_s=0.000000 busiest_worker_s=0.672900 scheduling_wait_est_s=0.000968 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=6 tasks=64 wall_s=0.581567 compute_sum_s=7.606334 fetch_sum_s=8.067211 gc_sum_s=0.000000 busiest_worker_s=0.655689 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=7 tasks=64 wall_s=0.415960 compute_sum_s=4.824502 fetch_sum_s=11.926977 gc_sum_s=0.000000 busiest_worker_s=0.751526 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=2 wall_s=4.945672 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=1 tasks=48 wall_s=1.184138 compute_sum_s=7.887568 fetch_sum_s=33.180979 gc_sum_s=0.000000 busiest_worker_s=1.965994 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=2 tasks=48 wall_s=0.724195 compute_sum_s=7.713428 fetch_sum_s=11.055449 gc_sum_s=0.000000 busiest_worker_s=1.166880 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=3 tasks=48 wall_s=0.680828 compute_sum_s=7.736637 fetch_sum_s=10.132389 gc_sum_s=0.000000 busiest_worker_s=1.121928 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=4 tasks=48 wall_s=0.692159 compute_sum_s=7.705541 fetch_sum_s=10.585126 gc_sum_s=0.000000 busiest_worker_s=1.160958 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=5 tasks=48 wall_s=0.675549 compute_sum_s=7.809305 fetch_sum_s=11.300993 gc_sum_s=0.000000 busiest_worker_s=0.674581 scheduling_wait_est_s=0.000968 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=6 tasks=64 wall_s=0.581704 compute_sum_s=7.601244 fetch_sum_s=7.983381 gc_sum_s=0.000000 busiest_worker_s=0.654507 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=7 tasks=64 wall_s=0.419491 compute_sum_s=4.838694 fetch_sum_s=11.964658 gc_sum_s=0.000000 busiest_worker_s=0.757556 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=3 wall_s=4.960527 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=48 median_s=4.959165 min_s=4.945672 max_s=4.960527
+REPLAY_MEMORY workers=48 worker_maxrss_sum_bytes=73567682560 coordinator_maxrss_bytes=6009896960
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=1 tasks=48 wall_s=2.810690 compute_sum_s=7.795304 fetch_sum_s=16.774794 gc_sum_s=0.000000 busiest_worker_s=0.681200 scheduling_wait_est_s=2.129490 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=2 tasks=48 wall_s=2.657324 compute_sum_s=7.758865 fetch_sum_s=5.899533 gc_sum_s=0.000000 busiest_worker_s=0.755828 scheduling_wait_est_s=1.901496 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=3 tasks=48 wall_s=2.606003 compute_sum_s=7.766889 fetch_sum_s=5.900739 gc_sum_s=0.000000 busiest_worker_s=0.734864 scheduling_wait_est_s=1.871139 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=4 tasks=48 wall_s=2.606761 compute_sum_s=7.759426 fetch_sum_s=6.404663 gc_sum_s=0.000000 busiest_worker_s=0.717445 scheduling_wait_est_s=1.889317 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=5 tasks=48 wall_s=0.522728 compute_sum_s=7.748993 fetch_sum_s=8.304492 gc_sum_s=0.000000 busiest_worker_s=0.723426 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=6 tasks=64 wall_s=0.577842 compute_sum_s=7.580991 fetch_sum_s=7.982886 gc_sum_s=0.000000 busiest_worker_s=0.653627 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=7 tasks=64 wall_s=0.477898 compute_sum_s=4.857211 fetch_sum_s=15.109263 gc_sum_s=0.000000 busiest_worker_s=0.650091 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=0 wall_s=12.261862 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=1 tasks=48 wall_s=0.823795 compute_sum_s=7.821727 fetch_sum_s=21.102929 gc_sum_s=0.000000 busiest_worker_s=0.822990 scheduling_wait_est_s=0.000805 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=2 tasks=48 wall_s=0.576958 compute_sum_s=7.857505 fetch_sum_s=6.090398 gc_sum_s=0.000000 busiest_worker_s=0.749471 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=3 tasks=48 wall_s=0.548701 compute_sum_s=7.809269 fetch_sum_s=5.869344 gc_sum_s=0.000000 busiest_worker_s=0.750617 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=4 tasks=48 wall_s=0.515103 compute_sum_s=7.758350 fetch_sum_s=6.331708 gc_sum_s=0.000000 busiest_worker_s=0.708646 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=5 tasks=48 wall_s=0.521313 compute_sum_s=7.749161 fetch_sum_s=7.089434 gc_sum_s=0.000000 busiest_worker_s=0.724584 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=6 tasks=64 wall_s=0.583801 compute_sum_s=7.591665 fetch_sum_s=8.046979 gc_sum_s=0.000000 busiest_worker_s=0.658251 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=7 tasks=64 wall_s=0.385287 compute_sum_s=4.890228 fetch_sum_s=12.339846 gc_sum_s=0.000000 busiest_worker_s=0.597304 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=1 wall_s=3.957516 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=1 tasks=48 wall_s=0.823667 compute_sum_s=7.838367 fetch_sum_s=21.111841 gc_sum_s=0.000000 busiest_worker_s=0.822865 scheduling_wait_est_s=0.000802 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=2 tasks=48 wall_s=0.580139 compute_sum_s=7.828879 fetch_sum_s=6.014250 gc_sum_s=0.000000 busiest_worker_s=0.757974 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=3 tasks=48 wall_s=0.546830 compute_sum_s=7.830038 fetch_sum_s=5.843627 gc_sum_s=0.000000 busiest_worker_s=0.736118 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=4 tasks=48 wall_s=0.515087 compute_sum_s=7.790601 fetch_sum_s=6.336108 gc_sum_s=0.000000 busiest_worker_s=0.727304 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=5 tasks=48 wall_s=0.519701 compute_sum_s=7.737637 fetch_sum_s=7.103513 gc_sum_s=0.000000 busiest_worker_s=0.723542 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=6 tasks=64 wall_s=0.583879 compute_sum_s=7.590426 fetch_sum_s=8.056438 gc_sum_s=0.000000 busiest_worker_s=0.658694 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=7 tasks=64 wall_s=0.385596 compute_sum_s=4.894689 fetch_sum_s=12.404016 gc_sum_s=0.000000 busiest_worker_s=0.584767 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=2 wall_s=3.957513 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=1 tasks=48 wall_s=0.823283 compute_sum_s=7.851420 fetch_sum_s=21.084301 gc_sum_s=0.000000 busiest_worker_s=0.822482 scheduling_wait_est_s=0.000801 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=2 tasks=48 wall_s=0.581085 compute_sum_s=7.843757 fetch_sum_s=6.090922 gc_sum_s=0.000000 busiest_worker_s=0.760998 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=3 tasks=48 wall_s=0.547269 compute_sum_s=7.845378 fetch_sum_s=5.841918 gc_sum_s=0.000000 busiest_worker_s=0.737356 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=4 tasks=48 wall_s=0.519014 compute_sum_s=7.811836 fetch_sum_s=6.373485 gc_sum_s=0.000000 busiest_worker_s=0.719946 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=5 tasks=48 wall_s=0.517822 compute_sum_s=7.766039 fetch_sum_s=7.064952 gc_sum_s=0.000000 busiest_worker_s=0.720789 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=6 tasks=64 wall_s=0.583350 compute_sum_s=7.592534 fetch_sum_s=8.058517 gc_sum_s=0.000000 busiest_worker_s=0.657368 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=7 tasks=64 wall_s=0.385178 compute_sum_s=4.900748 fetch_sum_s=12.344169 gc_sum_s=0.000000 busiest_worker_s=0.585877 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=3 wall_s=3.959564 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=63 median_s=3.957516 min_s=3.957513 max_s=3.959564
+REPLAY_MEMORY workers=63 worker_maxrss_sum_bytes=90318086144 coordinator_maxrss_bytes=6385225728
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=1 tasks=48 wall_s=3.026436 compute_sum_s=7.873496 fetch_sum_s=24.083620 gc_sum_s=0.000000 busiest_worker_s=0.842236 scheduling_wait_est_s=2.184201 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=2 tasks=48 wall_s=2.728958 compute_sum_s=7.793584 fetch_sum_s=7.313621 gc_sum_s=0.000000 busiest_worker_s=0.501197 scheduling_wait_est_s=2.227762 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=3 tasks=48 wall_s=2.648547 compute_sum_s=7.834429 fetch_sum_s=8.177104 gc_sum_s=0.000000 busiest_worker_s=0.586714 scheduling_wait_est_s=2.061833 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=4 tasks=48 wall_s=2.607315 compute_sum_s=7.782294 fetch_sum_s=9.511039 gc_sum_s=0.000000 busiest_worker_s=0.631595 scheduling_wait_est_s=1.975720 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=5 tasks=48 wall_s=2.587403 compute_sum_s=7.784149 fetch_sum_s=10.426382 gc_sum_s=0.000000 busiest_worker_s=0.654401 scheduling_wait_est_s=1.933002 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=6 tasks=64 wall_s=2.499535 compute_sum_s=7.654667 fetch_sum_s=5.677837 gc_sum_s=0.000000 busiest_worker_s=0.508117 scheduling_wait_est_s=1.991417 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=7 tasks=64 wall_s=2.489895 compute_sum_s=4.924217 fetch_sum_s=11.369514 gc_sum_s=0.000000 busiest_worker_s=0.364366 scheduling_wait_est_s=2.125529 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=0 wall_s=18.591131 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=1 tasks=48 wall_s=1.180011 compute_sum_s=7.864406 fetch_sum_s=37.729959 gc_sum_s=0.000000 busiest_worker_s=1.178944 scheduling_wait_est_s=0.001067 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=2 tasks=48 wall_s=0.676946 compute_sum_s=7.819370 fetch_sum_s=9.839424 gc_sum_s=0.000000 busiest_worker_s=0.676460 scheduling_wait_est_s=0.000486 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=3 tasks=48 wall_s=0.672374 compute_sum_s=7.874017 fetch_sum_s=9.956344 gc_sum_s=0.000000 busiest_worker_s=0.671700 scheduling_wait_est_s=0.000675 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=4 tasks=48 wall_s=0.674110 compute_sum_s=7.824338 fetch_sum_s=10.324902 gc_sum_s=0.000000 busiest_worker_s=0.673375 scheduling_wait_est_s=0.000736 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=5 tasks=48 wall_s=0.672700 compute_sum_s=7.813122 fetch_sum_s=10.470313 gc_sum_s=0.000000 busiest_worker_s=0.672024 scheduling_wait_est_s=0.000676 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=6 tasks=64 wall_s=0.507048 compute_sum_s=7.665342 fetch_sum_s=5.655326 gc_sum_s=0.000000 busiest_worker_s=0.506182 scheduling_wait_est_s=0.000866 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=7 tasks=64 wall_s=0.308475 compute_sum_s=4.908231 fetch_sum_s=7.657500 gc_sum_s=0.000000 busiest_worker_s=0.307230 scheduling_wait_est_s=0.001244 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=1 wall_s=4.694551 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=1 tasks=48 wall_s=1.179766 compute_sum_s=7.862251 fetch_sum_s=37.731063 gc_sum_s=0.000000 busiest_worker_s=1.179070 scheduling_wait_est_s=0.000696 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=2 tasks=48 wall_s=0.674029 compute_sum_s=7.827897 fetch_sum_s=9.745119 gc_sum_s=0.000000 busiest_worker_s=0.673481 scheduling_wait_est_s=0.000548 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=3 tasks=48 wall_s=0.674115 compute_sum_s=7.881593 fetch_sum_s=9.968394 gc_sum_s=0.000000 busiest_worker_s=0.673422 scheduling_wait_est_s=0.000692 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=4 tasks=48 wall_s=0.673951 compute_sum_s=7.843082 fetch_sum_s=10.354162 gc_sum_s=0.000000 busiest_worker_s=0.673222 scheduling_wait_est_s=0.000729 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=5 tasks=48 wall_s=0.673936 compute_sum_s=7.797608 fetch_sum_s=10.527815 gc_sum_s=0.000000 busiest_worker_s=0.673359 scheduling_wait_est_s=0.000576 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=6 tasks=64 wall_s=0.509843 compute_sum_s=7.635889 fetch_sum_s=5.693244 gc_sum_s=0.000000 busiest_worker_s=0.509030 scheduling_wait_est_s=0.000813 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=7 tasks=64 wall_s=0.307440 compute_sum_s=4.902270 fetch_sum_s=7.565183 gc_sum_s=0.000000 busiest_worker_s=0.306173 scheduling_wait_est_s=0.001267 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=2 wall_s=4.696094 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=1 tasks=48 wall_s=1.179681 compute_sum_s=7.883657 fetch_sum_s=37.686421 gc_sum_s=0.000000 busiest_worker_s=1.178640 scheduling_wait_est_s=0.001041 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=2 tasks=48 wall_s=0.672979 compute_sum_s=7.815866 fetch_sum_s=9.801570 gc_sum_s=0.000000 busiest_worker_s=0.672367 scheduling_wait_est_s=0.000612 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=3 tasks=48 wall_s=0.673609 compute_sum_s=7.963496 fetch_sum_s=9.976270 gc_sum_s=0.000000 busiest_worker_s=0.672659 scheduling_wait_est_s=0.000950 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=4 tasks=48 wall_s=0.674636 compute_sum_s=7.862038 fetch_sum_s=10.341652 gc_sum_s=0.000000 busiest_worker_s=0.673885 scheduling_wait_est_s=0.000751 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=5 tasks=48 wall_s=0.675265 compute_sum_s=7.805256 fetch_sum_s=10.584391 gc_sum_s=0.000000 busiest_worker_s=0.674632 scheduling_wait_est_s=0.000633 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=6 tasks=64 wall_s=0.508594 compute_sum_s=7.659260 fetch_sum_s=5.683975 gc_sum_s=0.000000 busiest_worker_s=0.507824 scheduling_wait_est_s=0.000770 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=7 tasks=64 wall_s=0.307770 compute_sum_s=4.918531 fetch_sum_s=7.751380 gc_sum_s=0.000000 busiest_worker_s=0.306534 scheduling_wait_est_s=0.001237 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=3 wall_s=4.695475 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=96 median_s=4.695475 min_s=4.694551 max_s=4.696094
+REPLAY_MEMORY workers=96 worker_maxrss_sum_bytes=126368329728 coordinator_maxrss_bytes=6611984384
+REPLAY_COMPLETE
