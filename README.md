@@ -46,7 +46,7 @@ For a step-by-step VS Code setup, see
 ## Test systems
 
 Balanced single-phase OpenDSS feeders in [`rawData/`](rawData/). Diagrams of the
-main three are in [`assets/networks/`](assets/networks/).
+main three are in [`figures/networks/`](figures/networks/).
 
 | Directory | Paper name | Size | Used by |
 |---|---|---|---|
@@ -86,7 +86,7 @@ envs/
   multi_poi/        MSOPF code and environment
   spar_ddp/              the original first-order DDP scheme (2025), kept as read-only reference
 rawData/            OpenDSS feeder models
-assets/networks/    feeder diagrams
+figures/networks/    feeder diagrams
 results/            curated tADMM paper results
 plots/              tADMM figure scripts
 scratch/            helpers and run queues; scratch/probes/ holds one-off experiments

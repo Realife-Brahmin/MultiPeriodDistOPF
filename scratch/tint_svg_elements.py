@@ -10,7 +10,7 @@ rather than system identity. Substitutions are scoped to named groups so a
 colour used elsewhere for something else is left alone.
 
 Usage:
-    python scratch/tint_svg_elements.py assets/networks/ieee123C_1ph.svg "#0e243c"
+    python scratch/tint_svg_elements.py figures/networks/ieee123C_1ph.svg "#0e243c"
 """
 
 import re

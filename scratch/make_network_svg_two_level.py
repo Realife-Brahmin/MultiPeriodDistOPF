@@ -657,7 +657,7 @@ def main():
 
     suffix = {"both": "_two_level", "a": "_top_level", "b": "_low_level"}[args.panel]
     out = (Path(args.out) if args.out
-           else REPO / "assets" / "networks" / f"{args.system}{suffix}.svg")
+           else REPO / "figures" / "networks" / f"{args.system}{suffix}.svg")
     render(args.system, out, args.size_mm, args.seed_angle,
            head_r=args.head_r, substation_style=args.substation, panel=args.panel,
            alternate=args.alternate, labels=args.labels, label_every=args.label_every,

@@ -4,7 +4,7 @@ Large synthetic feeders (large10kC, ieee2522C) ship without bus coordinates, so
 the layout is computed from the topology: a radial tree rooted at the substation,
 with angular sector width allocated in proportion to subtree leaf count.
 
-Marker language matches assets/networks/ieee123C_1ph.svg (the hand-drawn ieee123C
+Marker language matches figures/networks/ieee123C_1ph.svg (the hand-drawn ieee123C
 diagram) so the figures read as one family in the paper:
   PV   -> gold square   fill #d6a21a / stroke #6e4b1f
   BESS -> pale circle   fill #e8f0f1 / stroke #1f6f78
@@ -529,10 +529,10 @@ def main():
     ap.add_argument("--legend-visible", action=argparse.BooleanOptionalAction, default=False,
                     help="render the legend; when off it is still written to the SVG "
                          "but display:none, so it stays togglable in Inkscape")
-    ap.add_argument("--out", default=None, help="output path (default assets/networks/<system>.svg)")
+    ap.add_argument("--out", default=None, help="output path (default figures/networks/<system>.svg)")
     args = ap.parse_args()
 
-    out = Path(args.out) if args.out else REPO / "assets" / "networks" / f"{args.system}.svg"
+    out = Path(args.out) if args.out else REPO / "figures" / "networks" / f"{args.system}.svg"
     render(
         args.system, args.arc, args.rotate, args.size_mm,
         args.pv_size, args.bess_r, args.line_w, out,
