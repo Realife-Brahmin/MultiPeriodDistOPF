@@ -8,7 +8,7 @@ environment, branches and README.
 
 | Workstream | What it is | Status | Start here |
 |---|---|---|---|
-| **DDP** | Differential dynamic programming with **DDP4OPF**, our fork of FilterDDP.jl, benchmarked against centralized Ipopt on identical instances | **Active, main focus** | [ddp/README.md](ddp/README.md) |
+| **DDP** | Differential dynamic programming with **DDP4OPF**, our fork of FilterDDP.jl, benchmarked against centralized Ipopt on identical instances | **Active, main focus** | [spar_ddp/README.md](spar_ddp/README.md) |
 | **tADMM** | Temporal ADMM: splits the horizon into per-period OPFs coordinated by an augmented-Lagrangian consensus | Companion code for the IAS-Trans paper; parked | [envs/tadmm/README.md](envs/tadmm/README.md) |
 | **MSOPF** | Multi-source OPF: feeders supplied by several substations | Active | [MSOPF section below](#msopf-multi-source-opf) |
 
@@ -28,7 +28,7 @@ READMEs give the exact commands:
 
 | Environment | Used for |
 |---|---|
-| `envs/ddp2026` | all DDP work: DDP4OPF, JuMP, Ipopt |
+| `envs/spar_ddp` | all DDP work: DDP4OPF, JuMP, Ipopt |
 | `envs/tadmm` | tADMM, exporting feeder instances for DDP, and the MSOPF angle-sweep drivers |
 | `envs/multi_poi` | the other MSOPF scripts |
 
@@ -79,12 +79,12 @@ documents its usage.
 ## Repository layout
 
 ```text
-ddp/                DDP workstream: solver, drivers, results, notes
+spar_ddp/                DDP workstream: solver, drivers, results, notes
 envs/
   ddp2026/          Julia environment for all DDP work
   tadmm/            tADMM code and environment
   multi_poi/        MSOPF code and environment
-  ddp/              the original first-order DDP scheme (2025), kept as read-only reference
+  spar_ddp/              the original first-order DDP scheme (2025), kept as read-only reference
 rawData/            OpenDSS feeder models
 assets/networks/    feeder diagrams
 results/            curated tADMM paper results
@@ -95,7 +95,7 @@ docs/               installation guide
 
 ## Reference papers
 
-Each `resources/` folder (`ddp/resources/`, `archives/first_order_ddp/original/resources/`,
+Each `resources/` folder (`spar_ddp/resources/`, `archives/first_order_ddp/original/resources/`,
 `envs/multi_poi/resources/`) has a `MANIFEST.txt` listing the papers it relies on,
 with source links. Other authors' PDFs are not committed. Fetch the openly
 available ones with:

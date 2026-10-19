@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "SilentlyContinue"
-$resultDir = Join-Path $Worktree "ddp\results\hessian_rewrites\overnight"
+$resultDir = Join-Path $Worktree "spar_ddp\results\hessian_rewrites\overnight"
 $lockFile = Join-Path $resultDir "queue.lock"
 $samples = Join-Path $resultDir "ram_samples.csv"
 $peaks = Join-Path $resultDir "ram_peaks.csv"

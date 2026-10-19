@@ -15,7 +15,7 @@ $repoNative = if ($repo.StartsWith($env:USERPROFILE, [StringComparison]::Ordinal
 $julia = Join-Path $repoNative ".tools\julia-1.12.6\bin\julia.exe"
 $depot = Join-Path $repoNative ".tools\julia_depot"
 $extractor = Join-Path $repo "scripts\extract_filterddp_trace.ps1"
-$resultDir = Join-Path $repo "ddp\results\network_filterddp"
+$resultDir = Join-Path $repo "spar_ddp\results\network_filterddp"
 $logDir = Join-Path $repo "logs"
 $statusLog = Join-Path $logDir "$TagPrefix.status.log"
 $summary = Join-Path $resultDir "$TagPrefix.csv"
@@ -60,7 +60,7 @@ foreach ($case in $cases) {
     $stdout = Join-Path $logDir "$tag.out.log"
     $stderr = Join-Path $logDir "$tag.err.log"
     $trace = Join-Path $resultDir "${tag}_trace.csv"
-    $traceRelative = "ddp/results/network_filterddp/${tag}_trace.csv"
+    $traceRelative = "spar_ddp/results/network_filterddp/${tag}_trace.csv"
 
     $existing = Import-Csv -LiteralPath $summary | Where-Object {
         $_.system -eq $system -and [int]$_.horizon -eq $horizon -and [int]$_.status -eq 0
@@ -73,7 +73,7 @@ foreach ($case in $cases) {
 
     Add-Content -LiteralPath $statusLog -Value `
         "$(Get-Date -Format o) RUN_START system=$system T=$horizon"
-    $arguments = "--startup-file=no --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl $system $horizon solve"
+    $arguments = "--startup-file=no --project=envs/spar_ddp spar_ddp/examples/power_system/ieee123c_filterddp.jl $system $horizon solve"
     $timer = [Diagnostics.Stopwatch]::StartNew()
     $process = Start-Process -FilePath $julia -ArgumentList $arguments `
         -WorkingDirectory $repoNative -WindowStyle Hidden -PassThru `

@@ -17,10 +17,10 @@ $repoNative = if ($repo.StartsWith($env:USERPROFILE, [StringComparison]::Ordinal
 }
 $julia = Join-Path $repoNative ".tools\julia-1.12.6\bin\julia.exe"
 $depot = Join-Path $repoNative ".tools\julia_depot"
-$project = Join-Path $repo "envs\ddp2026"
-$driver = Join-Path $repo "ddp\examples\power_system\ieee123c_filterddp.jl"
+$project = Join-Path $repo "envs\spar_ddp"
+$driver = Join-Path $repo "spar_ddp\examples\power_system\ieee123c_filterddp.jl"
 $extractor = Join-Path $repo "scripts\extract_filterddp_trace.ps1"
-$resultDir = Join-Path $repo "ddp\results\network_filterddp"
+$resultDir = Join-Path $repo "spar_ddp\results\network_filterddp"
 $logDir = Join-Path $repo "logs"
 $statusLog = Join-Path $logDir "$TagPrefix.status.log"
 $summary = Join-Path $resultDir "${TagPrefix}_T${Horizon}_runs.csv"
@@ -67,8 +67,8 @@ for ($rep = 1; $rep -le $Repetitions; $rep++) {
         $timer = [Diagnostics.Stopwatch]::StartNew()
         Push-Location $repoNative
         try {
-            & $julia --startup-file=no --project=envs/ddp2026 `
-                ddp/examples/power_system/ieee123c_filterddp.jl `
+            & $julia --startup-file=no --project=envs/spar_ddp `
+                spar_ddp/examples/power_system/ieee123c_filterddp.jl `
                 ieee2522C_1ph $Horizon solve 1> $stdout 2> $stderr
             $exitCode = $LASTEXITCODE
         } finally {
@@ -79,7 +79,7 @@ for ($rep = 1; $rep -le $Repetitions; $rep++) {
         # Direct invocation avoids Start-Process corrupting paths containing
         # spaces. Peak RAM is established by the dedicated memory probes.
         $peakMiB = [double]::NaN
-        $traceRelative = "ddp/results/network_filterddp/${tag}_trace.csv"
+        $traceRelative = "spar_ddp/results/network_filterddp/${tag}_trace.csv"
         Add-Content -LiteralPath $summary -Value ("{0},{1},{2},{3:F3},{4:F3},{5},{6}" -f `
             $mode, $rep, $Horizon, $timer.Elapsed.TotalSeconds, $peakMiB, $exitCode, $traceRelative)
         Add-Content -LiteralPath $statusLog -Value "$(Get-Date -Format o) RUN_END mode=$mode rep=$rep T=$Horizon exit=$exitCode wall_s=$($timer.Elapsed.TotalSeconds) peak_MiB=$peakMiB"

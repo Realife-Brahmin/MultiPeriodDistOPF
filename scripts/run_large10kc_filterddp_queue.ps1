@@ -5,8 +5,8 @@ param(
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $julia = Join-Path $repo ".tools\julia-1.12.6\bin\julia.exe"
-$project = Join-Path $repo "envs\ddp2026"
-$driver = Join-Path $repo "ddp\examples\power_system\ieee123c_filterddp.jl"
+$project = Join-Path $repo "envs\spar_ddp"
+$driver = Join-Path $repo "spar_ddp\examples\power_system\ieee123c_filterddp.jl"
 $logDir = Join-Path $repo "logs"
 $statusLog = Join-Path $logDir "large10kc_filterddp_queue.status.log"
 

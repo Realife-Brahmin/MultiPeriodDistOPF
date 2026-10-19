@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Full FilterDDP runs: FilterDDP's ldiv!(F, rhs) against the blocked
+# multi-right-hand-side solve over the same UMFPACK factors
+# (FILTERDDP_BLOCKED_SOLVE=<w>). Matched protocol, full per-iteration logging,
+# baseline and blocked alternated, background load logged, solutions kept for
+# comparison.
+#
+#   bash spar_ddp/examples/power_system/run_blocked_solve_fullrun.sh <system> <T> <arm> <w> [repeats]
+#
+# Other FILTERDDP_* switches set by the caller (e.g. the exact assembly rewrites
+# FILTERDDP_DIRECT_DIAG_HESSIAN, FILTERDDP_TRIPLET_SECOND_DERIVATIVES,
+# FILTERDDP_CACHE_KKT_PATTERN) apply to both arms; give such runs a distinct
+# RUN_TAG_SUFFIX so their logs do not collide with plain ones.
+#
+# CB (default 1e-3, the matched race) sets REDUCED_CB for FilterDDP. With any
+# other value, e.g. CB=system (the per-system C_B of terminal_soc_penalty.jl),
+# the near-optimality reference is the Ipopt run of run_ipopt_cb_metrics.sh at
+# the same CB, and the caller must give a distinct RUN_TAG_SUFFIX.
+
+set -u
+cd "$(dirname "$0")/../../.." || exit 1
+# NO_COLOR (or FORCE_COLOR) makes Julia wrap stdout in an IOContext. The warm-up
+# solve prints to a plain IOStream, so every print statement would then be
+# compiled again in the first pass of the timed solve: about 0.7 s, and 1.5-2.3 s
+# with the FILTERDDP_PARSIM lines. Found 2026-10-06 in runs launched from a
+# PowerShell-started queue, whose environment carries NO_COLOR.
+unset NO_COLOR FORCE_COLOR
+SYS=$1; T=$2; ARM=$3; W=$4; REP="${5:-1}"
+SUFFIX="${RUN_TAG_SUFFIX:-}"
+VARIANTS="${VARIANTS:-baseline blocked_w$W}"      # VARIANTS=blocked_w16 runs the blocked arm only
+REWRITES="direct_diag=${FILTERDDP_DIRECT_DIAG_HESSIAN:-0} triplet=${FILTERDDP_TRIPLET_SECOND_DERIVATIVES:-0} kkt_pattern_cache=${FILTERDDP_CACHE_KKT_PATTERN:-0} factor_backed=${FILTERDDP_FACTOR_BACKED_POLICY:-0} typed_equations=${FILTERDDP_TYPED_EQUATIONS:-0} structured_dynamics=${FILTERDDP_STRUCTURED_DYNAMICS:-0} tree_kkt=${FILTERDDP_TREE_KKT:-0} screen=${FILTERDDP_SCREEN:-none} loadflow_start=${FILTERDDP_LOADFLOW_START:-0} affine_linesearch=${FILTERDDP_AFFINE_LINESEARCH:-0} warmup=${FILTERDDP_WARMUP:-0}"
+OUT=spar_ddp/results/kkt_ordering/fullrun_blocked
+SOLDIR=spar_ddp/results/kkt_ordering/captures/solutions
+mkdir -p "$OUT" "$SOLDIR"
+CB="${CB:-1e-3}"
+if [ "$CB" = 1e-3 ]; then IPLOG="spar_ddp/results/matched_ipopt_race/logs/ipopt_${SYS}_T${T}.log"
+elif [ "$CB" = 0 ]; then IPLOG="spar_ddp/results/ipopt_no_cb/logs/ipopt_nocb_${SYS}_T${T}.log"
+else IPLOG="spar_ddp/results/ipopt_cb_${CB}/logs/ipopt_cb${CB}_${SYS}_T${T}.log"; fi
+# IPOPT_REF_LOG overrides the reference log (same instance and C_B), e.g. an HSL
+# run at a horizon outside the Table II set.
+IPLOG="${IPOPT_REF_LOG:-$IPLOG}"
+REF=$(grep -oE "CENTRAL_IPOPT .*" "$IPLOG" | \
+      grep -oE " objective=[-0-9.eE+]+" | cut -d= -f2)
+[ -n "$REF" ] || { echo "no matched Ipopt objective for $SYS T=$T in $IPLOG"; exit 1; }
+case $SYS in ieee2522C_1ph) PRIMAL=1e-5;; large10kC_1ph) PRIMAL=1e-5;; *) PRIMAL=1e-6;; esac
+
+export REDUCED_PROFILE=periodic REDUCED_CB="$CB" TERMINAL_SOC_SOFT=1
+export FILTERDDP_MAX_ITERATIONS=400
+export FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1
+# STRICT=1: run to the solver's own tolerance instead of stopping at
+# near-optimality. The near-optimality point is then read from the log
+# afterwards, at any objective gap (near_opt_posthoc.py). Give such runs a
+# distinct RUN_TAG_SUFFIX.
+if [ "${STRICT:-0}" != 1 ]; then
+  export FILTERDDP_NEAR_OPT_REFERENCE="$REF" FILTERDDP_NEAR_OPT_GAP=0.005 FILTERDDP_NEAR_OPT_PRIMAL="$PRIMAL"
+fi
+if [ "$ARM" = diag ]; then export FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8; fi
+# BLAS/OpenMP pinned to one thread by default. PIN_BLAS_THREADS=0 leaves them
+# unset, which is how the matched race (Table II of the paper) ran; the thread
+# count Julia actually uses is recorded either way.
+if [ "${PIN_BLAS_THREADS:-1}" = 1 ]; then export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+else unset OMP_NUM_THREADS OPENBLAS_NUM_THREADS; fi
+JL="julia --startup-file=no"
+BLAS_THREADS=$($JL -e 'using LinearAlgebra; print(BLAS.get_num_threads())')
+LOADJL=spar_ddp/examples/power_system/sample_background_load.jl
+SOL=spar_ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CB${CB}.jls
+
+for r in $(seq 1 "$REP"); do
+  for VARIANT in $VARIANTS; do
+    TAG="${SYS}_T${T}_${ARM}${SUFFIX}_${VARIANT}_r${r}"
+    LOG="$OUT/fddp_${TAG}.log"
+    [ -s "$LOG" ] && grep -q "solve complete" "$LOG" && { echo "skip $TAG"; continue; }
+    QW=$($JL "$LOADJL" wait 10 1.5 2>/dev/null | grep QUIET_WAIT)
+    STOP="$OUT/.sampling_$$"; touch "$STOP"
+    $JL "$LOADJL" sample "$STOP" "$OUT/load_${TAG}.csv" 15 > /dev/null 2>&1 &
+    SPID=$!
+    (
+      if [ "$VARIANT" = baseline ]; then unset FILTERDDP_BLOCKED_SOLVE
+      else export FILTERDDP_BLOCKED_SOLVE="$W"; fi
+      echo "$QW"
+      echo "PIPELINE_ENV system=$SYS T=$T arm=$ARM variant=$VARIANT repeat=$r cb=$CB blocked_solve=${FILTERDDP_BLOCKED_SOLVE:-off} $REWRITES blas_threads=$BLAS_THREADS julia_threads=${JULIA_NUM_THREADS:-1} near_opt_reference=$REF near_opt_primal=$PRIMAL started=$(date '+%Y-%m-%dT%H:%M:%S')"
+      $JL --project=envs/spar_ddp spar_ddp/examples/power_system/ieee123c_filterddp.jl "$SYS" "$T" solve
+    ) > "$LOG" 2>&1
+    rm -f "$STOP"; wait "$SPID" 2>/dev/null
+    cp "$SOL" "$SOLDIR/sol_${TAG}.jls" 2>/dev/null
+    $JL --project=envs/spar_ddp spar_ddp/examples/power_system/extract_filterddp_feasibility_trace.jl \
+        "$LOG" "$OUT/trace_${TAG}.csv" "$REF" >> "$LOG" 2>&1
+    echo "[$(date '+%H:%M:%S')] $TAG: $(grep -E 'solve complete' "$LOG" | tail -1) | $(grep -oE 'FILTERDDP_NEAR_OPT iteration=[0-9]+ elapsed_s=[0-9.]+' "$LOG" | head -1) | $(grep -oE 'FilterDDP objective=[-0-9.eE+]+' "$LOG")"
+  done
+done

@@ -21,8 +21,8 @@ if (-not $julia) { throw "Repo-local Julia runtime not found" }
 
 $probeDir = Join-Path $repo "tmp\ipopt_thread_probe"
 New-Item -ItemType Directory -Force -Path $probeDir | Out-Null
-$script = Join-Path $repo "ddp\examples\power_system\ieee123c_ipopt_matrix_diagnostic.jl"
-$project = Join-Path $repo "envs\ddp2026"
+$script = Join-Path $repo "spar_ddp\examples\power_system\ieee123c_ipopt_matrix_diagnostic.jl"
+$project = Join-Path $repo "envs\spar_ddp"
 
 foreach ($threads in $ThreadCounts) {
     $tag = "${System}_T${Horizon}_threads${threads}"

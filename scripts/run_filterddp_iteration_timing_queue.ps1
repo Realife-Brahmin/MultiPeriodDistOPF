@@ -22,7 +22,7 @@ Remove-Item Env:FILTERDDP_BLOCKED_VALUE_RHS -ErrorAction SilentlyContinue
 Remove-Item Env:FILTERDDP_MEMORY_DIAGNOSTIC -ErrorAction SilentlyContinue
 
 $logDir = Join-Path $repo "logs"
-$resultDir = Join-Path $repo "ddp\results\network_filterddp"
+$resultDir = Join-Path $repo "spar_ddp\results\network_filterddp"
 $statusLog = Join-Path $logDir "iteration_timing_queue.status.log"
 $summary = Join-Path $resultDir "iteration_timing_runs.csv"
 $cases = @()
@@ -41,7 +41,7 @@ foreach ($case in $cases) {
     $timingCsv = Join-Path $resultDir "$tag.csv"
     $traceCsv = Join-Path $resultDir "${tag}_trace.csv"
     Add-Content -LiteralPath $statusLog -Value "$(Get-Date -Format o) RUN_START system=$system T=$horizon"
-    $arguments = "--startup-file=no --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl $system $horizon solve"
+    $arguments = "--startup-file=no --project=envs/spar_ddp spar_ddp/examples/power_system/ieee123c_filterddp.jl $system $horizon solve"
     $process = Start-Process -FilePath $julia -ArgumentList $arguments -WorkingDirectory $repoNative `
         -WindowStyle Hidden -PassThru -Wait -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     $text = Get-Content -LiteralPath $stdout -Raw
@@ -55,7 +55,7 @@ foreach ($case in $cases) {
     $timedPasses = (Import-Csv -LiteralPath $timingCsv).Count
     Add-Content -LiteralPath $summary -Value ("{0},{1},{2},{3},{4},{5},{6},{7}" -f `
         $system,$horizon,$match.Groups[2].Value,$match.Groups[3].Value,$match.Groups[1].Value,$timedPasses,
-        "ddp/results/network_filterddp/$tag.csv","ddp/results/network_filterddp/${tag}_trace.csv")
+        "spar_ddp/results/network_filterddp/$tag.csv","spar_ddp/results/network_filterddp/${tag}_trace.csv")
     Add-Content -LiteralPath $statusLog -Value "$(Get-Date -Format o) RUN_END system=$system T=$horizon solve_s=$($match.Groups[1].Value) passes=$timedPasses"
 }
 Add-Content -LiteralPath $statusLog -Value "$(Get-Date -Format o) QUEUE_END"

@@ -11,9 +11,9 @@ $julia = Join-Path (Split-Path (Split-Path $repo -Parent) -Parent) ".tools\julia
 if (-not (Test-Path -LiteralPath $julia)) {
     $julia = Join-Path (Split-Path (Split-Path (Split-Path $repo -Parent) -Parent) -Parent) ".tools\julia-1.12.6\bin\julia.exe"
 }
-$project = Join-Path $repo "envs\ddp2026"
-$driver = Join-Path $repo "ddp\examples\power_system\centralized_ipopt_matched.jl"
-$resultDir = Join-Path $repo "ddp\results\centralized_ipopt_matched_knee"
+$project = Join-Path $repo "envs\spar_ddp"
+$driver = Join-Path $repo "spar_ddp\examples\power_system\centralized_ipopt_matched.jl"
+$resultDir = Join-Path $repo "spar_ddp\results\centralized_ipopt_matched_knee"
 $logDir = Join-Path $repo "logs"
 $tag = "${System}_T${Horizon}_periodic"
 $stdout = Join-Path $logDir "matched_ipopt_knee_${tag}.out.log"

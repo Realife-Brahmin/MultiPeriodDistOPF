@@ -5,9 +5,9 @@ param(
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $julia = "C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.tools\julia-1.12.6\bin\julia.exe"
-$outDir = Join-Path $repo "ddp\results\hessian_rewrites\ram_recovery"
-$sourceData = Join-Path $SourceWorktree "ddp\results\network_filterddp"
-$references = Import-Csv (Join-Path $SourceWorktree "ddp\results\matched_ipopt_race\matched_race.csv")
+$outDir = Join-Path $repo "spar_ddp\results\hessian_rewrites\ram_recovery"
+$sourceData = Join-Path $SourceWorktree "spar_ddp\results\network_filterddp"
+$references = Import-Csv (Join-Path $SourceWorktree "spar_ddp\results\matched_ipopt_race\matched_race.csv")
 $summary = Join-Path $outDir "peak_ram.csv"
 $status = Join-Path $outDir "status.log"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
@@ -26,7 +26,7 @@ try {
         $system=$case.System; $T=$case.T
         if ((Import-Csv $summary | Where-Object { $_.system -eq $system -and [int]$_.T -eq $T })) { continue }
         $ref=($references | Where-Object { $_.system -eq $system -and [int]$_.T -eq $T } | Select-Object -First 1).ipopt_objective
-        Copy-Item (Join-Path $sourceData "network_data_${system}_T${T}_periodic.jls") (Join-Path $repo "ddp\results\network_filterddp\network_data_${system}_T${T}_periodic.jls") -Force
+        Copy-Item (Join-Path $sourceData "network_data_${system}_T${T}_periodic.jls") (Join-Path $repo "spar_ddp\results\network_filterddp\network_data_${system}_T${T}_periodic.jls") -Force
         $env:REDUCED_PROFILE="periodic"; $env:REDUCED_CB="1e-3"; $env:TERMINAL_SOC_SOFT="1"
         $env:FILTERDDP_SKIP_SOLUTION_WRITE="1"; $env:FILTERDDP_MAX_ITERATIONS="400"
         $env:FILTERDDP_DIAG_HESSIAN="1"; $env:FILTERDDP_DIAG_HESSIAN_FLOOR="1e-8"
@@ -36,7 +36,7 @@ try {
         $env:FILTERDDP_FEASIBILITY_DIAGNOSTIC="0"; $env:FILTERDDP_TIMING_DIAGNOSTIC="0"
         Add-Content $status "$(Get-Date -Format o) START $system T=$T"
         $stdout=Join-Path $outDir "${system}_T${T}.out.log"; $stderr=Join-Path $outDir "${system}_T${T}.err.log"
-        $args="--project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl $system $T solve"
+        $args="--project=envs/spar_ddp spar_ddp/examples/power_system/ieee123c_filterddp.jl $system $T solve"
         $p=Start-Process $julia -ArgumentList $args -WorkingDirectory $repo -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -WindowStyle Hidden
         $peak=0.0
         while (-not $p.HasExited) {

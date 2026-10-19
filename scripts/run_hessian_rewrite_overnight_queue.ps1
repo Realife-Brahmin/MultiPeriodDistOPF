@@ -5,9 +5,9 @@ param(
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $julia = "C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.tools\julia-1.12.6\bin\julia.exe"
-$resultDir = Join-Path $repo "ddp\results\hessian_rewrites\overnight"
-$sourceData = Join-Path $SourceWorktree "ddp\results\network_filterddp"
-$referenceCsv = Join-Path $SourceWorktree "ddp\results\matched_ipopt_race\matched_race.csv"
+$resultDir = Join-Path $repo "spar_ddp\results\hessian_rewrites\overnight"
+$sourceData = Join-Path $SourceWorktree "spar_ddp\results\network_filterddp"
+$referenceCsv = Join-Path $SourceWorktree "spar_ddp\results\matched_ipopt_race\matched_race.csv"
 $statusLog = Join-Path $resultDir "queue.status.log"
 $summaryCsv = Join-Path $resultDir "queue_summary.csv"
 $lockFile = Join-Path $resultDir "queue.lock"
@@ -58,7 +58,7 @@ try {
 
         $dataName = "network_data_${system}_T${T}_periodic.jls"
         $source = Join-Path $sourceData $dataName
-        $destination = Join-Path $repo "ddp\results\network_filterddp\$dataName"
+        $destination = Join-Path $repo "spar_ddp\results\network_filterddp\$dataName"
         if (-not (Test-Path -LiteralPath $source)) { throw "Missing exported data: $source" }
         Copy-Item -LiteralPath $source -Destination $destination -Force
 
@@ -81,7 +81,7 @@ try {
 
         Write-Status "START $system T=$T reference=$reference primal=$($case.Primal) factor=$($case.Factor)"
         try {
-            & $julia --project=envs/ddp2026 ddp/examples/power_system/ieee123c_filterddp.jl $system $T solve 2>&1 |
+            & $julia --project=envs/spar_ddp spar_ddp/examples/power_system/ieee123c_filterddp.jl $system $T solve 2>&1 |
                 Tee-Object -LiteralPath $log
             if ($LASTEXITCODE -ne 0) { throw "Julia exited with code $LASTEXITCODE" }
         } catch {
@@ -96,7 +96,7 @@ try {
         Get-Content -LiteralPath $log | Set-Content -LiteralPath $utf8Log -Encoding UTF8
         Move-Item -LiteralPath $utf8Log -Destination $log -Force
 
-        & $julia --project=envs/ddp2026 ddp/examples/power_system/extract_filterddp_feasibility_trace.jl $log $trace $reference 2>&1 |
+        & $julia --project=envs/spar_ddp spar_ddp/examples/power_system/extract_filterddp_feasibility_trace.jl $log $trace $reference 2>&1 |
             ForEach-Object { $_ | Add-Content -LiteralPath $err; $_ }
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $trace)) {
             throw "Trace extraction failed for $system T=$T"
