@@ -1,45 +1,25 @@
-# `ddp2026` — the single environment for all DDP work
+# SPAR-DDP Julia environment
 
-Created 2026-08-07. This is the one environment for everything DDP-related:
-the FilterDDP evaluation, the centralized JuMP/Ipopt reference, and any further
-formulation added later.
+Use Julia 1.12 for the active DDP4OPF solver and centralized JuMP/Ipopt
+references. Run from the repository root:
 
-```powershell
+```bash
+julia --project=envs/spar_ddp -e 'using Pkg; Pkg.instantiate()'
 julia --startup-file=no --project=envs/spar_ddp <script>
 ```
 
-## What it holds
+[Project.toml](Project.toml) declares dependencies and points DDP4OPF to the
+local source at `../../spar_ddp/DDP4OPF.jl`. This folder was previously
+`envs/ddp2026`; the rename changes paths, not package identity or algorithms.
+No Manifest is committed here, so this README does not promise fixed resolved
+package versions. For published timing reproduction use the recorded campaign
+metadata and environment at its evidence commit.
 
-| | |
-|---|---|
-| `DDP4OPF` v0.1.0 | our fork of FilterDDP.jl, dev'd from `spar_ddp/DDP4OPF.jl` via `[sources]` (was `FilterDDP` v0.6.0 from a gitignored clone until 2026-09-15) |
-| `JuMP` v1.31.1 + `Ipopt` v1.15.0 | the centralized reference formulation |
-| `StaticArrays` v1.9.18 | required by the FilterDDP stage models |
-| `MUMPS` v1.6.2 | diagnostic comparison against FilterDDP's UMFPACK KKT solve; not its active solver |
+OpenDSS instance export uses `envs/tadmm`, whose tracked Manifest is retained.
+HSL libraries and licenses are external to this environment; see the recorded
+configuration for MA57/MA97 runs. Gurobi is optional and not declared here.
 
-FilterDDP and JuMP coexist without conflict — verified by a clean resolve, which
-settles `OrderedCollections` on 1.8.2.
-
-## What it supersedes, and why
-
-**`archives/first_order_ddp/original/Project.toml`** (2025-11) — the environment for the user's own
-first-order Differential Dynamic Programming scheme. Unused for ~9 months and not trusted to
-resolve as it once did. Its `Plots`, `Crayons`, `LaTeXStrings`, `Parameters` and
-`Revise` dependencies existed because verification then meant a human reading
-formatted output; the checks here are numerical and self-asserting, so none of
-them are carried over. The old directory is left in place as a **read-only
-reference** for what that algorithm did — it is not expected to be run again.
-
-**`spar_ddp/env`** (2026-08-03) — FilterDDP-only. **Removed** 2026-08-07. Stages 5 and
-6 were re-run here first and reproduce its recorded logs exactly, and its
-`Manifest.toml` was never tracked, so it preserved no version information this
-environment lacks. Recoverable from git history.
-
-`Gurobi` is deliberately omitted: it needs a licensed local install and nothing
-in this stack requires it. Add it back only if the user's own DDP code is run
-from here.
-
-## Note on editing `Project.toml`
-
-Pkg rewrites this file on every `add`/`resolve` and **strips all comments**, so
-rationale lives in this README instead.
+The retired 2025 first-order implementation is in
+[archives/first_order_ddp](../../archives/first_order_ddp/README.md); it is
+not a second supported environment. Pkg strips Project.toml comments during
+resolve/add operations, so keep explanatory notes in this README.

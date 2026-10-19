@@ -1,143 +1,113 @@
-# DDP: differential dynamic programming for multi-period OPF
+# SPAR-DDP for multi-period distribution OPF
 
-This workstream asks whether second-order **differential dynamic programming (DDP)**
-can solve full-network multi-period OPF, and how it compares with solving the same
-problem centrally with Ipopt.
+SPAR-DDP combines sparse radial-network elimination with parallel
+battery-value recursion. Each time-step keeps network variables local;
+battery energy is the state linking time-steps.
 
-- **The solver is [DDP4OPF](DDP4OPF.jl/)**, our MIT-licensed fork of
-  [FilterDDP.jl](https://github.com/mingu6/FilterDDP.jl) by Mingda Xu: filter
-  line-search DDP with a sparse KKT solve at each stage.
-  [NOTICE.md](DDP4OPF.jl/NOTICE.md) records what changed. Please cite the original
-  method papers (arXiv 2504.08278 and 2606.01487) when you use it.
-- **The model** is the branch-flow SOCP of the tADMM work. Each period's network
-  variables are DDP controls, and the battery energies are the only states carried
-  from one period to the next.
-- **Every result is checked against a centralized JuMP/Ipopt solve of the identical
-  exported instance** before any timing is compared.
+[DDP4OPF](DDP4OPF.jl/) is our fork of
+[FilterDDP.jl](https://github.com/mingu6/FilterDDP.jl), with the upstream filter
+line-search foundation and MPOPF-specific sparse/network and parallel paths.
+Retain its [NOTICE](DDP4OPF.jl/NOTICE.md), MIT license and original method
+citations (arXiv 2504.08278 and 2606.01487). The separate
+[SPAR-DDP manuscript](https://github.com/Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF)
+is in preparation.
 
-A paper on this work is in preparation.
+## Environments and entry points
 
-## Setup
-
-Two Julia environments are involved. `envs/tadmm` exports feeder instances from
-OpenDSS; `envs/spar_ddp` holds DDP4OPF, JuMP and Ipopt
-([its README](../envs/spar_ddp/README.md)). From the repository root:
+From the repository root, using Julia 1.12 and Bash:
 
 ```bash
-julia --project=envs/tadmm   -e 'using Pkg; Pkg.instantiate()'
+julia --project=envs/tadmm -e 'using Pkg; Pkg.instantiate()'
 julia --project=envs/spar_ddp -e 'using Pkg; Pkg.instantiate()'
 ```
 
-## Run one matched case
-
-ieee123 with a 6-period horizon takes about two minutes, including compilation.
-Run from the repository root:
+The exporter uses OpenDSS through `envs/tadmm`. Solver and centralized
+reference drivers use `envs/spar_ddp`. For a small instance export:
 
 ```bash
-# 1. Export the instance to spar_ddp/results/network_filterddp/ (gitignored)
 PROFILE_PERIODIC=1 julia --project=envs/tadmm \
-    spar_ddp/examples/power_system/export_ieee123c_data.jl ieee123C_1ph 6
-
-# 2. Settings both solvers must share
-export REDUCED_PROFILE=periodic REDUCED_CB=1e-3 TERMINAL_SOC_SOFT=1
-
-# 3. Centralized reference; prints one CENTRAL_IPOPT line
-julia --project=envs/spar_ddp \
-    spar_ddp/examples/power_system/centralized_ipopt_matched.jl ieee123C_1ph 6
-
-# 4. DDP4OPF with the diagonal stage Hessian and full per-iteration logging
-FILTERDDP_DIAG_HESSIAN=1 FILTERDDP_DIAG_HESSIAN_FLOOR=1e-8 \
-FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1 \
-julia --project=envs/spar_ddp \
-    spar_ddp/examples/power_system/ieee123c_filterddp.jl ieee123C_1ph 6 solve
+  spar_ddp/examples/power_system/export_ieee123c_data.jl ieee123C_1ph 6
 ```
 
-**Expected output.** Ipopt reports `objective=3143.1159...` after 37 iterations.
-DDP4OPF prints `FilterDDP objective=3143.1160...` after 75 iterations, a relative
-difference of about `4e-8`.
+Exported `.jls` files are local generated inputs under
+`results/network_filterddp/`; they are not included in a fresh clone.
+For the centralized reference on that same instance:
 
-Compare only against the `CENTRAL_IPOPT` line. If tADMM's `run_bf.jl` has been run
-on your machine, the DDP driver also prints an `Ipopt objective=... objective_gap=...`
-line. That line compares with a tADMM solution of a *different* problem; ignore it.
-
-**Other systems and horizons.** Replace `ieee123C_1ph 6` with `ieee2522C_1ph` or
-`large10kC_1ph` and any horizon `T`. Large cases take hours. For large10k at
-`T >= 12`, also set `FILTERDDP_FACTOR_BACKED_POLICY=1`. It stores a compact
-per-stage policy instead of dense response maps, which gives identical iterates in
-far less memory.
-
-**The full protocol** (paired runs, near-optimality detection, background-load
-sampling, summaries) is automated in
-[`run_matched_ipopt_race.sh`](examples/power_system/run_matched_ipopt_race.sh).
-It **commits and pushes** its results after every case, so run it only on a branch
-meant to receive them.
-
-## Rules for reportable numbers
-
-A comparison is only reported if all of these hold:
-
-- **One problem.** Both solvers read the same exported instance, with `C_B = 1e-3`
-  and the periodic price profile, and their objectives agree before any time is
-  quoted.
-- **Soft terminal state of charge.** The objective carries
-  `gamma * sum_j (B_j^T - B_j^0)^2`, with `gamma` fixed per system and independent
-  of `T`: ieee123 1.75e4, ieee2522 3.29e4, large10k 420. The single source is
-  [`terminal_soc_penalty.jl`](examples/power_system/terminal_soc_penalty.jl).
-- **Time to near-optimality** is the first iteration with objective within 0.5% of
-  Ipopt **and** primal infeasibility below the system's threshold: ieee123 `1e-6`,
-  ieee2522 `1e-5`, large10k `1e-4` (`NEAR_OPT_PRIMAL_BY_SYSTEM` in the same file).
-- **Full logging.** Every timed run sets `FILTERDDP_TIMING_DIAGNOSTIC=1` and
-  `FILTERDDP_FEASIBILITY_DIAGNOSTIC=1`. Without the per-iteration trace, the
-  near-optimality point cannot be reconstructed afterwards.
-
-The centralized sweep in `results/centralized_ipopt/` predates these rules and uses
-a different instance family, so it is not comparable with anything above.
-
-## Layout
-
-```text
-spar_ddp/
-  DDP4OPF.jl/                 the solver
-  examples/power_system/      drivers: instance export, DDP4OPF network model,
-                              centralized Ipopt, sweeps
-  results/                    one folder per study, each with its raw logs
-  notes/                      write-ups of findings and methods
-  resources/                  reference papers (MANIFEST.txt; PDFs not committed)
-  logs/                       terminal output of the original reproducibility stages
-  patches/                    development history of the fork; not a build recipe
-  README_FILTERDDP_EXPERIMENT.md  the original reproducibility study
+```bash
+REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1 \
+  julia --project=envs/spar_ddp \
+  spar_ddp/examples/power_system/centralized_ipopt_matched.jl ieee123C_1ph 6
 ```
 
-The main studies under `results/`:
+The current paired/process drivers now live beside the model:
 
-| Folder | Contents |
-|---|---|
-| [`matched_ipopt_race/`](results/matched_ipopt_race/) | DDP4OPF against Ipopt on identical instances, all three systems |
-| [`centralized_ipopt_matched_knee/`](results/centralized_ipopt_matched_knee/) | Ipopt at growing horizons, up to its memory limit |
-| [`hessian_rewrites/`](results/hessian_rewrites/) | exact rewrites of Hessian and KKT assembly, with timings |
-| [`diag_hessian_horizon/`](results/diag_hessian_horizon/) | diagonal against exact stage Hessian across horizons (before the soft terminal SOC) |
-| [`reduced_space/`](results/reduced_space/) | the network eliminated by an inner OPF |
-| [`copper_plate/`](results/copper_plate/), [`official_example/`](results/official_example/) | the original validation stages |
+- [run_paired.sh](examples/power_system/run_paired.sh): explicit sequential,
+  threaded diagnostic, or process-parallel mode; read its settings first.
+- [procs_main.jl](examples/power_system/procs_main.jl): process workers and
+  the shared-memory value pass.
+- [paired_main.jl](examples/power_system/paired_main.jl): paired-pass wrapper.
+- [ieee123c_filterddp.jl](examples/power_system/ieee123c_filterddp.jl): model
+  and generic solver entry point.
 
-Good entry points in `notes/`:
-[`FILTERDDP_DIAGONAL_HESSIAN.md`](notes/FILTERDDP_DIAGONAL_HESSIAN.md),
-[`FILTERDDP_HESSIAN_EXACT_REWRITES.md`](notes/FILTERDDP_HESSIAN_EXACT_REWRITES.md),
-[`CENTRALIZED_IPOPT_KNEE_SWEEP.md`](notes/CENTRALIZED_IPOPT_KNEE_SWEEP.md),
-[`REDUCED_SPACE_INNER_OPF_FEASIBILITY.md`](notes/REDUCED_SPACE_INNER_OPF_FEASIBILITY.md),
-and, for how the solver maps to the papers,
-[`PAPER_CODE_MAP.md`](notes/PAPER_CODE_MAP.md) and
-[`FILTERDDP_API.md`](notes/FILTERDDP_API.md).
+The launcher usage is:
 
-## History
+```bash
+bash spar_ddp/examples/power_system/run_paired.sh <raw-system-ID> <T> <count|1|procs> [tag]
+```
 
-Work began in August 2026 as a reproducibility study of the FilterDDP authors'
-code on a copper-plate battery problem, validated against three independent
-references. That record, stages 1 to 9, is
-[`README_FILTERDDP_EXPERIMENT.md`](README_FILTERDDP_EXPERIMENT.md). The network
-model, the fork into DDP4OPF, and the matched Ipopt comparisons followed.
+This runs optimization and a final OpenDSS check. It is not an instruction
+to launch a new campaign. Large cases require deliberate worker/memory
+configuration; the one-node shared-memory path is not a multi-node backend.
+The launcher is an entry point, not a promise to reproduce the paper's
+hardware, full campaign settings or timings. Use the frozen campaign
+configuration at its evidence commit for that purpose.
 
-Before any of this, a **first-order** DDP scheme for copper-plate MPOPF was written
-independently in 2025. It passes the dynamics dual backward one stage per sweep,
-with no curvature across stages. It is kept as a read-only reference in
-[`archives/first_order_ddp/original/`](../archives/first_order_ddp/original/); a minimal restatement is
-[`examples/power_system/user_ddp.jl`](examples/power_system/user_ddp.jl).
+## Current benchmark protocol
+
+Main-paper **time to near-optimality** requires both:
+
+- relative objective agreement within **0.1%** of the matched reference;
+- maximum **original-model** constraint violation at most **1e-6** for
+  ieee123, **1e-5** for med2522 and large10k.
+
+This is a reporting target, not the solver convergence test. The completed
+campaign runs continue to declared full convergence; crossing times are
+scored posthoc. The reference is the final objective of the matched MA97
+first repeat. Use two-repeat medians and the faster centralized MA57/MA97
+median per case. Keep internal slack residuals distinct from original-model
+violations, and optimizer time distinct from setup, warm-up and replay.
+
+Both paths must use identical exported inputs, periodic profiles, weights,
+initial point, screened constraints, hardware/thread policy and timing
+boundaries. `REDUCED_CB=system` selects C_B = 1e-3, 1.9e-3 and 2.4e-5
+for ieee123, med2522 and large10k respectively. `TERMINAL_SOC_SOFT=1`
+selects soft terminal-energy penalties with coefficients 1.75e4, 3.29e4
+and 420, fixed per system across horizons. See
+[terminal_soc_penalty.jl](examples/power_system/terminal_soc_penalty.jl).
+
+Require full timing/feasibility logs, validated completion/status and final
+OpenDSS checks. Historical 0.5% targets and strict-convergence clocks remain
+separate. Some old launchers still use those older settings; they do not
+define the current paper criterion. No solver defaults changed in the
+October 18 folder/documentation cleanup.
+
+## Evidence and organization
+
+- [proper_logging_campaign_oct16](results/proper_logging_campaign_oct16/README.md):
+  completed 96-run matched campaign; three systems, T=24/96/144/288, two
+  repeats each of MA57, MA97, owner DDP and balanced DDP.
+- [ma97_thread_sweep](results/ma97_thread_sweep/): separate large10k T96
+  thread diagnostic; one observation per setting, not campaign medians.
+- [balanced_stage_b](results/balanced_stage_b/): value-pass assignment
+  diagnostics, distinct from full optimizer timings.
+- `examples/power_system/`: model, exporter, reference solvers and drivers.
+- `DDP4OPF.jl/`: solver package.
+- `notes/`, `results/`, `logs/`, `patches/`: dated research records.
+- [README_FILTERDDP_EXPERIMENT.md](README_FILTERDDP_EXPERIMENT.md): original
+  reproducibility study; historical settings are not current benchmark rules.
+
+The original first-order DDP and its restatement are retired in
+[archives/first_order_ddp](../archives/first_order_ddp/README.md).
+The [path map](../docs/repository-layout-oct18.md) explains old names preserved
+in notes, raw evidence and frozen harnesses. Those records must not be
+rewritten to make historical commands appear current.

@@ -1,5 +1,10 @@
 # FilterDDP experiment — reproducibility record
 
+> Historical reproducibility record. For the current SPAR-DDP solver,
+> October 16 campaign and reporting criterion, start with [README.md](README.md).
+> Archived launch instructions and older thresholds below are not current defaults.
+
+
 **Question this set out to answer:** *can the authors' actual FilterDDP implementation
 reliably solve a fully understood equality-constrained copper-plate battery problem
 and reproduce a known reference solution?*
