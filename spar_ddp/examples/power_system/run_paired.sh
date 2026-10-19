@@ -55,7 +55,7 @@ fi
 LOG="$OUT/fddp_${SYS}_T${T}_paired_${TAG}.log"
 MARK="$OUT/.mark_$$"; touch "$MARK"
 julia --startup-file=no --project=envs/spar_ddp "${PAIRED_MAIN:-spar_ddp/examples/power_system/paired_main.jl}" "$SYS" "$T" solve > "$LOG" 2>&1
-SOL=spar_ddp/results/network_filterspar_ddp/filterddp_solution_${SYS}_T${T}_periodic_CBsystem.jls
+SOL=spar_ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CBsystem.jls
 SOLDIR=spar_ddp/results/kkt_ordering/captures/solutions; mkdir -p "$SOLDIR"
 RUNTAG="parsim_${SYS}_T${T}_paired_${TAG}"
 if grep -q "solve complete" "$LOG" && [ "$SOL" -nt "$MARK" ]; then

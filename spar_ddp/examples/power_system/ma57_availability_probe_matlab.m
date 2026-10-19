@@ -5,7 +5,7 @@
 % backslash). This probe checks the licence, the library, and -- via spparms'
 % diagnostic output -- that backslash on a small KKT matrix reports MA57.
 %
-%   matlab -batch "run('ddp/examples/power_system/ma57_availability_probe_matlab.m')"
+%   matlab -batch "run('spar_ddp/examples/power_system/ma57_availability_probe_matlab.m')"
 
 out = fullfile('ddp', 'results', 'kkt_ordering', 'ma57_availability_matlab.txt');
 if exist(out, 'file'), delete(out); end
