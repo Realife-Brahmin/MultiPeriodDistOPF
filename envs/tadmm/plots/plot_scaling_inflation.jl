@@ -31,7 +31,7 @@ const PALETTE = Dict(
 
 # ----- ieee123: read live data from rho_sweep_eps1e-4 dirs -----
 const IEEE123_T_VALUES   = [6, 12, 24, 48, 96, 144]
-const IEEE123_DATA_ROOT  = joinpath(@__DIR__, "envs", "tadmm", "processedData")
+const IEEE123_DATA_ROOT  = joinpath(@__DIR__, "..", "processedData")
 const IEEE123_SYSTEM     = "ieee123C_1ph"
 const SWEEP_DIR_NAME     = "rho_sweep_eps1e-4"
 
@@ -146,7 +146,7 @@ fig = plot(p_ieee, p_med, p_large;
            left_margin = 5Plots.mm, bottom_margin = 5Plots.mm,
            top_margin = 3Plots.mm, right_margin = 2Plots.mm)
 
-const PAPER_FIG_DIR = joinpath(@__DIR__, "..",
+const PAPER_FIG_DIR = joinpath(@__DIR__, "..", "..", "..", "..",
     "IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition",
     "figures")
 const OUTPUT_PATH = joinpath(PAPER_FIG_DIR, "scaling_inflation.png")

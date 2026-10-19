@@ -5,7 +5,7 @@
 using FileIO, Images, Plots
 Plots.default(fontfamily = "Computer Modern")
 
-const REVIEW_DIR = joinpath(@__DIR__, "pngs_review", "ieee2522C_1ph")
+const REVIEW_DIR = joinpath(@__DIR__, "..", "..", "..", "pngs_review", "ieee2522C_1ph")
 const RHOS = [4000, 8000, 16000, 24000, 32000]
 
 panels = []

@@ -2,7 +2,7 @@
 ENV["GKSwstype"] = "nul"
 
 import Pkg
-env_path = joinpath(@__DIR__, "envs", "tadmm")
+env_path = joinpath(@__DIR__, "..")
 Pkg.activate(env_path)
 
 # Load necessary packages for deserialization
@@ -16,7 +16,7 @@ using Plots
 ENV["GKSwstype"] = "png"
 gr()
 
-data_dir = joinpath(@__DIR__, "envs", "tadmm", "processedData", "large10kC_1ph_T6")
+data_dir = joinpath(@__DIR__, "..", "processedData", "large10kC_1ph_T6")
 println("Loading solutions from: $data_dir")
 
 sol_tadmm = deserialize(joinpath(data_dir, "sol_socp_tadmm.jls"))

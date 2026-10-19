@@ -8,9 +8,9 @@ using Plots, Printf
 
 const SYSTEM = "ieee123C_1ph"
 const T_VALUES = [6, 12, 24, 48, 96, 144]
-const DATA_ROOT = joinpath(@__DIR__, "envs", "tadmm", "processedData")
+const DATA_ROOT = joinpath(@__DIR__, "..", "processedData")
 const SWEEP_DIR_NAME = "rho_sweep_eps1e-4"
-const PAPER_FIG_DIR = joinpath(@__DIR__, "..",
+const PAPER_FIG_DIR = joinpath(@__DIR__, "..", "..", "..", "..",
     "IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition",
     "figures")
 const OUTPUT_PATH = joinpath(PAPER_FIG_DIR, "ieee123_scaling.png")
