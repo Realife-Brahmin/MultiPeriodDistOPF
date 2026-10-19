@@ -103,7 +103,7 @@ const GAMMA_TERMINAL = parse(Float64,
 
 # These scripts live in envs/tadmm/root_level/ while tADMM is parked; they are
 # meant to sit at the repo root when it is the active project (same convention as
-# envs/ddp/root_level/ and envs/multi_poi/root_level/). Anchoring on the parent of
+# archives/first_order_ddp/original/root_level/ and envs/multi_poi/root_level/). Anchoring on the parent of
 # this directory keeps them working from either location.
 const ENV_PATH = basename(@__DIR__) == "root_level" ?
     dirname(@__DIR__) : joinpath(@__DIR__, "envs", "tadmm")

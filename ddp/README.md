@@ -139,5 +139,5 @@ model, the fork into DDP4OPF, and the matched Ipopt comparisons followed.
 Before any of this, a **first-order** DDP scheme for copper-plate MPOPF was written
 independently in 2025. It passes the dynamics dual backward one stage per sweep,
 with no curvature across stages. It is kept as a read-only reference in
-[`envs/ddp/`](../envs/ddp/); a minimal restatement is
+[`archives/first_order_ddp/original/`](../archives/first_order_ddp/original/); a minimal restatement is
 [`examples/power_system/user_ddp.jl`](examples/power_system/user_ddp.jl).

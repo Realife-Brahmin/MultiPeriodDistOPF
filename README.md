@@ -95,7 +95,7 @@ docs/               installation guide
 
 ## Reference papers
 
-Each `resources/` folder (`ddp/resources/`, `envs/ddp/resources/`,
+Each `resources/` folder (`ddp/resources/`, `archives/first_order_ddp/original/resources/`,
 `envs/multi_poi/resources/`) has a `MANIFEST.txt` listing the papers it relies on,
 with source links. Other authors' PDFs are not committed. Fetch the openly
 available ones with:
