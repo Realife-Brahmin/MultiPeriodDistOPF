@@ -20,7 +20,7 @@
    or just copy the folder.
 2. Fetch any reference papers not tracked in git:
    ```bash
-   bash scripts/fetch_resources.sh
+   bash tools/fetch_resources.sh
    ```
    This reads every `resources/MANIFEST.txt` in the repo and downloads whatever
    listed file is missing locally. Safe to re-run any time — files already

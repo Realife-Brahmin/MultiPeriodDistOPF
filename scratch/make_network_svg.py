@@ -11,8 +11,8 @@ diagram) so the figures read as one family in the paper:
   line -> grey #7b7b7b
 
 Usage:
-    python scripts/make_network_svg.py large10kC_1ph
-    python scripts/make_network_svg.py ieee2522C_1ph --arc 320 --rotate 100
+    python scratch/make_network_svg.py large10kC_1ph
+    python scratch/make_network_svg.py ieee2522C_1ph --arc 320 --rotate 100
 """
 
 import argparse

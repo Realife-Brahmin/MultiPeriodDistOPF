@@ -89,7 +89,7 @@ rawData/            OpenDSS feeder models
 assets/networks/    feeder diagrams
 results/            curated tADMM paper results
 plots/              tADMM figure scripts
-scripts/            helpers and run queues; scripts/probes/ holds one-off experiments
+scratch/            helpers and run queues; scratch/probes/ holds one-off experiments
 docs/               installation guide
 ```
 
@@ -101,7 +101,7 @@ with source links. Other authors' PDFs are not committed. Fetch the openly
 available ones with:
 
 ```bash
-bash scripts/fetch_resources.sh
+bash tools/fetch_resources.sh
 ```
 
 ## Branches and contributor notes

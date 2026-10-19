@@ -13,7 +13,7 @@ Marker language is shared with make_network_svg.py so all the paper's network
 figures read as one family.
 
 Usage:
-    python scripts/make_network_svg_two_level.py large10kC_1ph
+    python scratch/make_network_svg_two_level.py large10kC_1ph
 """
 
 import argparse
