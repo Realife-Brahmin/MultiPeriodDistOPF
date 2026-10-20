@@ -1,0 +1,18 @@
+label=three_large10kd_nobatt_g0 job=31315125 host=sn14 start=2026-10-19T21:39:34-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/multiperiod_study.jl three_large10kd
+LARGE_T=24
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/three_oct19/out_three_large10kd_nobatt_g0_31315125
+commit=4198f792778a731c8fe7a60dad908e2caf8db73e
+CPU(s):                                  56
+Model name:                              Intel(R) Xeon(R) Gold 6238R CPU @ 2.20GHz
+CPU(s) scaling MHz:                      84%
+   RunTime=00:00:03 TimeLimit=06:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n03:553072
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=sn14
+   TRES=cpu=2,mem=20G,node=1,billing=2
+exit=0 end=2026-10-19T22:20:57-07:00
+wall_s=2482
+  7453560K   9135572K 

@@ -1,0 +1,18 @@
+
+==============================================================================================================
+THREE_LARGE10KD  large10kD_1ph, substations at buses 1120 (subs2) and 1060 (subs3) besides the deck's own, T = 24; directions 1,2,3, cases nobatt
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    source mean import  40458.1 kW (worst hour  32598.0); sensitivity to subs2     -0.0, to subs3  -1448.8 kW/deg (daily mean)
+    subs2  mean import    100.7 kW (worst hour     90.6); sensitivity to subs2  +2085.1, to subs3  -2085.1 kW/deg (daily mean)
+    subs3  mean import    236.0 kW (worst hour    187.7); sensitivity to subs2  -2085.1, to subs3  +3534.0 kW/deg (daily mean)
+    sensitivities: 1900 s
+    nobatt ray   22.5 deg: measured 0.3283, predicted 0.3272 (subs3); min import 0.08 kW, V 1.0491-1.0500  (959 s, peak RSS 5.9 GB)
+    nobatt ray   45.0 deg: measured >=20.0000, predicted 31.8161 (source); min import 90.63 kW, V 1.0417-1.0500  (172 s, peak RSS 6.0 GB)
+    nobatt ray   67.5 deg: measured 0.0803, predicted 0.0803 (subs2); min import 0.04 kW, V 1.0491-1.0500  (871 s, peak RSS 6.1 GB)
+  wrote three_large_windows.csv; three_large10kd done in 3904 s

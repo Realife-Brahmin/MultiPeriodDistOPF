@@ -1,0 +1,18 @@
+label=three_ieee2522_cyclic_d5_6_7 job=31316450 host=sn14 start=2026-10-19T22:31:11-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/multiperiod_study.jl three_ieee2522
+LARGE_T=24
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/three_oct19/out_three_ieee2522_cyclic_d5_6_7_31316450
+commit=fb79b63d0218c6da3369a6069e3db609428b48b3
+CPU(s):                                  56
+Model name:                              Intel(R) Xeon(R) Gold 6238R CPU @ 2.20GHz
+CPU(s) scaling MHz:                      84%
+   RunTime=00:00:02 TimeLimit=08:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n01:1487507
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=sn14
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-19T23:25:52-07:00
+wall_s=3280
+  2949764K   4235252K 
