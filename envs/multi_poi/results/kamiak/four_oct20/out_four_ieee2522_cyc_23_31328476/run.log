@@ -1,0 +1,21 @@
+
+==============================================================================================================
+FOUR_IEEE2522  ieee2522C_1ph, sources source,subs2,subs3,subs4 (added at buses 947,996,1120), reference source, T = 24; directions 23,24,25,26, cases cyclic
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    source mean import    724.7 kW (worst hour    555.0); sensitivity subs2 -201.1, subs3 -30.8, subs4 -0.1 kW/deg (daily mean)
+    subs2  mean import    765.1 kW (worst hour    572.4); sensitivity subs2 +666.2, subs3 -441.9, subs4 -20.7 kW/deg (daily mean)
+    subs3  mean import    717.3 kW (worst hour    540.0); sensitivity subs2 -440.8, subs3 +813.9, subs4 -353.0 kW/deg (daily mean)
+    subs4  mean import    404.1 kW (worst hour    305.0); sensitivity subs2 -24.9, subs3 -342.0, subs4 +375.1 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): -0.5, -0.8, +1.4 kW/deg
+    cyclic dir 23 (+0.71,+0.00,+0.71): measured 1.3762, predicted 1.2779 (subs3); min import -0.04 kW, V 0.9513-1.0500; 5 solves (secant, 635 s)
+      secant gave up (margin does not fall with the angle); bracketing
+    cyclic dir 24 (-0.58,+0.58,+0.58): measured 1.1822, predicted 1.1740 (subs2); min import 0.00 kW, V 0.9657-1.0500; 4 solves (bracket, 3106 s)
+    cyclic dir 25 (+0.00,+0.71,+0.71): measured 2.3507, predicted 2.3390 (subs2); min import 0.05 kW, V 0.9658-1.0500; 4 solves (secant, 572 s)
+    cyclic dir 26 (+0.58,+0.58,+0.58): measured 5.4780, predicted 5.4115 (source); min import 0.03 kW, V 0.9501-1.0487; 4 solves (secant, 302 s)
+  wrote multi_windows.csv; four_ieee2522 done in 4826 s

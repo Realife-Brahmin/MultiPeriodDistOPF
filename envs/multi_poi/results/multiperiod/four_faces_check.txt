@@ -1,0 +1,30 @@
+ieee123_5poi_1ph subs1:subs2:subs3:subs4  nobatt
+  face subs1   5 points: planar to 0.3% (RMS / distance), normal 0.4 deg from the predicted, distance 0.096 vs 0.095 predicted (x1.01)
+  face subs2  11 points: planar to 0.6% (RMS / distance), normal 0.1 deg from the predicted, distance 0.051 vs 0.049 predicted (x1.04)
+  face subs3   6 points: planar to 0.0% (RMS / distance), normal 0.0 deg from the predicted, distance 0.060 vs 0.058 predicted (x1.04)
+  face subs4   4 points: planar to 0.0% (RMS / distance), normal 0.0 deg from the predicted, distance 0.086 vs 0.065 predicted (x1.33)
+ieee123_5poi_1ph subs1:subs2:subs3:subs4  cyclic
+  face subs1   4 points: planar to 0.2% (RMS / distance), normal 1.1 deg from the predicted, distance 0.216 vs 0.209 predicted (x1.03)
+  face subs2  11 points: planar to 0.2% (RMS / distance), normal 0.1 deg from the predicted, distance 0.107 vs 0.103 predicted (x1.04)
+  face subs3   7 points: planar to 0.1% (RMS / distance), normal 0.2 deg from the predicted, distance 0.113 vs 0.109 predicted (x1.03)
+  face subs4   4 points: planar to 0.0% (RMS / distance), normal 0.1 deg from the predicted, distance 0.182 vs 0.153 predicted (x1.19)
+ieee123_5poi_1ph subs1:subs3:subs4:subs5  nobatt
+  face subs1   4 points: planar to 0.0% (RMS / distance), normal 0.2 deg from the predicted, distance 0.102 vs 0.101 predicted (x1.02)
+  face subs3   5 points: planar to 0.4% (RMS / distance), normal 0.6 deg from the predicted, distance 0.077 vs 0.073 predicted (x1.05)
+  face subs4   8 points: planar to 9.5% (RMS / distance), normal 3.8 deg from the predicted, distance 0.069 vs 0.047 predicted (x1.47)
+  face subs5   9 points: planar to 0.0% (RMS / distance), normal 0.0 deg from the predicted, distance 0.057 vs 0.053 predicted (x1.06)
+ieee123_5poi_1ph subs1:subs3:subs4:subs5  cyclic
+  face subs1   5 points: planar to 0.1% (RMS / distance), normal 0.5 deg from the predicted, distance 0.221 vs 0.213 predicted (x1.04)
+  face subs3   5 points: planar to 0.0% (RMS / distance), normal 0.1 deg from the predicted, distance 0.142 vs 0.135 predicted (x1.05)
+  face subs4   7 points: planar to 2.2% (RMS / distance), normal 1.6 deg from the predicted, distance 0.141 vs 0.108 predicted (x1.31)
+  face subs5   9 points: planar to 0.8% (RMS / distance), normal 0.5 deg from the predicted, distance 0.130 vs 0.123 predicted (x1.06)
+ieee2522C_1ph source:subs2:subs3:subs4  nobatt
+  face source 1 points: too few to fit
+  face subs2   6 points: planar to 1.7% (RMS / distance), normal 5.1 deg from the predicted, distance 0.747 vs 0.700 predicted (x1.07)
+  face subs3  11 points: planar to 12.2% (RMS / distance), normal 7.6 deg from the predicted, distance 0.527 vs 0.541 predicted (x0.97)
+  face subs4   8 points: planar to 1.6% (RMS / distance), normal 0.4 deg from the predicted, distance 0.660 vs 0.593 predicted (x1.11)
+ieee2522C_1ph source:subs2:subs3:subs4  cyclic
+  face source 1 points: too few to fit
+  face subs2   6 points: planar to 4.6% (RMS / distance), normal 12.6 deg from the predicted, distance 0.994 vs 0.957 predicted (x1.04)
+  face subs3  11 points: planar to 15.3% (RMS / distance), normal 9.0 deg from the predicted, distance 0.668 vs 0.724 predicted (x0.92)
+  face subs4   8 points: planar to 1.4% (RMS / distance), normal 0.8 deg from the predicted, distance 0.860 vs 0.795 predicted (x1.08)
