@@ -971,7 +971,11 @@ foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k", "large10kd"]))
 # THREE_METHOD=ray|bracket split or override a run; LARGE_T sets T.
 const THREE = Dict(
     "three_ieee2522" => (; base = "ieee2522", at = ["947", "1120"], method = :ray),
-    "three_large10kd" => (; base = "large10kd", at = ["1120", "1060"], method = :bracket))
+    "three_large10kd" => (; base = "large10kd", at = ["1120", "1060"], method = :bracket),
+    # ieee9500_1ph has its three substations in the deck; the five normally-open switches that join
+    # different feeders are closed (the four inside a feeder stay open).
+    "three_ieee9500" => (; base = nothing, system = "ieee9500_1ph", at = ["sub2", "sub3"], method = :bracket, feas = 1e-5,
+                           ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
 const THREE_HEADER = "system,bus_a,bus_b,T,case,ray_deg,feasible_at_equal_angles,measured_deg,predicted_deg,limiting_substation,at_limit,failed_checks,min_import_kW,vmin_pu,vmax_pu,seconds"
 
 "Reach along `dir` by feasibility tests: start at the predicted reach, step out (x1.15) or in (x0.85) to a bracket, bisect."
@@ -1019,6 +1023,7 @@ end
 
 function three_stage(name)
     tc = THREE[name]
+    tc.base === nothing && return three_deck_stage(name, tc)
     cfg = LARGE[tc.base]
     T = parse(Int, get(ENV, "LARGE_T", "24"))
     dirs_i = haskey(ENV, "THREE_DIRS") ? parse.(Int, split(ENV["THREE_DIRS"], r"[,: ]"; keepempty = false)) : collect(0:15)
@@ -1051,6 +1056,24 @@ function three_stage(name)
     end
     s = setup(net, pvs; T, cfg.feas)
     say("\n", "="^110, "\n", uppercase(name), "  $(cfg.label), substations at buses $(tc.at[1]) (subs2) and $(tc.at[2]) (subs3) besides the deck's own, T = $T; directions $(join(dirs_i, ',')), cases $(join(cases, ','))")
+    three_measure(name, cfg.label, tc.at, s, T, dirs_i, method, cases, S0, A1, A2)
+end
+
+"A deck that has its three substations already (ieee9500_1ph): close the ties, then measure as above."
+function three_deck_stage(name, tc)
+    T = parse(Int, get(ENV, "LARGE_T", "24"))
+    dirs_i = haskey(ENV, "THREE_DIRS") ? parse.(Int, split(ENV["THREE_DIRS"], r"[,: ]"; keepempty = false)) : collect(0:15)
+    method = Symbol(get(ENV, "THREE_METHOD", string(tc.method)))
+    cases = haskey(ENV, "THREE_CASES") ? Symbol.(split(ENV["THREE_CASES"], ',')) : [:nobatt, DAY]
+    net, pvs = load_sources(["subs1", "subs2", "subs3"]; system = tc.system, extra = ["Line.$t.enabled=true" for t in tc.ties])
+    s = setup(net, pvs; T, tc.feas)
+    sep = Dict((a.name, b.name) => abs(separation_sparse(merge(net, (; sources = [a, b])))) for a in net.sources, b in net.sources if a.name < b.name)
+    say("\n", "="^110, "\n", uppercase(name), "  $(tc.system), its own three substations, ties ", join(tc.ties, ","), " closed, T = $T; directions $(join(dirs_i, ',')), cases $(join(cases, ','))")
+    say("    |Z| between substations: ", join([@sprintf("%s-%s %.3f ohm", k[1], k[2], z) for (k, z) in sort(collect(sep))], ", "))
+    three_measure(name, tc.system, tc.at, s, T, dirs_i, method, cases, "subs1", "subs2", "subs3")
+end
+
+function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
     t0 = time()
     sens = sensitivity(s, [A1, A2])
     sens === nothing && (say("  ** idle solves failed"); return)
@@ -1075,7 +1098,7 @@ function three_stage(name)
         say(@sprintf("    %-6s ray %6.1f deg: measured %s%.4f, predicted %.4f (%s)%s; min import %.2f kW, V %.4f-%.4f  (%.0f s, peak RSS %.1f GB)",
                      case, rad2deg(th), w.capped ? ">=" : "", w.r, pred, lim, w.bad == 0 ? "" : "  ** $(w.bad) failed checks",
                      w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr, Sys.maxrss() / 2^30))
-        push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", cfg.label, tc.at[1], tc.at[2], T, case, rad2deg(th),
+        push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", label, at[1], at[2], T, case, rad2deg(th),
                              w.feasible, w.r, pred, lim, w.capped, w.bad, w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr))
     end
     merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
