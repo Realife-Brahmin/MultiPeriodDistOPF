@@ -154,6 +154,14 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         set_attribute(model, "constr_viol_tol", constr_viol_tol)
         # Further Ipopt options as "key=value;key=value", the convention of the DDP scripts: e.g.
         # IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=<dir>/libma57.dll;linear_system_scaling=none"
+        # A warm start (`start`, a nearby solution) is only worth something if Ipopt does not push
+        # it back to the interior: start the barrier small and keep the point near its bounds.
+        # MULTIPERIOD_WARM=0 restores Ipopt's defaults (mu_init 0.1, bound_push 0.01).
+        if start !== nothing && get(ENV, "MULTIPERIOD_WARM", "1") == "1"
+            set_attribute(model, "mu_init", 1e-4)
+            set_attribute(model, "bound_push", 1e-6)
+            set_attribute(model, "bound_frac", 1e-6)
+        end
         for kv in split(get(ENV, "IPOPT_EXTRA_OPTIONS", ""), ';'; keepempty = false)
             k, v = strip.(split(kv, '='; limit = 2))
             set_attribute(model, String(k), something(tryparse(Int, v), tryparse(Float64, v), String(v)))

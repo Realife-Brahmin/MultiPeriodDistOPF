@@ -974,13 +974,63 @@ const THREE = Dict(
     "three_large10kd" => (; base = "large10kd", at = ["1120", "1060"], method = :bracket),
     # ieee9500_1ph has its three substations in the deck; the five normally-open switches that join
     # different feeders are closed (the four inside a feeder stay open).
-    "three_ieee9500" => (; base = nothing, system = "ieee9500_1ph", at = ["sub2", "sub3"], method = :bracket, feas = 1e-5,
+    "three_ieee9500" => (; base = nothing, system = "ieee9500_1ph", at = ["sub2", "sub3"], method = :secant, feas = 1e-5,
                            ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]),
     # The same deck with its service transformers modeled (loads on their secondary buses, DERs unchanged): does
     # leaving the secondaries out change the window?
-    "three_ieee9500xf" => (; base = nothing, system = "ieee9500xf_1ph", at = ["sub2", "sub3"], method = :bracket, feas = 1e-5,
+    "three_ieee9500xf" => (; base = nothing, system = "ieee9500xf_1ph", at = ["sub2", "sub3"], method = :secant, feas = 1e-5,
                              ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
 const THREE_HEADER = "system,bus_a,bus_b,T,case,ray_deg,feasible_at_equal_angles,measured_deg,predicted_deg,limiting_substation,at_limit,failed_checks,min_import_kW,vmin_pu,vmax_pu,seconds"
+
+"""
+Reach along `dir` by a secant on the import margin (`objective = :margin`, the largest import every
+substation can be guaranteed): it is zero at an edge set by no-backflow and nearly linear in the angle
+(the imports are), so from the margin at equal angles `x0` and one solve at the predicted reach `guess`,
+secant steps reach |margin| <= MTOL_KW in a few solves (MTOL_KW / K ~ 1e-4 deg). Each solve starts from
+the nearest solution: `prev` (the neighbouring direction's edge) for the first, then the last iterate.
+The edge solution is itself feasible; one violation test just outside confirms that the edge is real
+(a voltage limit binding first, or a margin solve failing, hands the direction to `reach_bracket`).
+Returns the edge solution as `x`, to start the next direction from.
+"""
+function reach_secant(s, case, dir, guess, x0; prev = nothing)
+    kw, nb = problem(s, case), banded(s.net)
+    vtol = something(s.feas, 1e-5)
+    at(r) = Dict(k => r * v for (k, v) in dir)
+    n = Ref(0)
+    function margin(r, st)
+        x = solve_multiperiod(s.net, at(r); kw..., objective = :margin, start = st); n[] += 1
+        return x.status in RAY_OK && isfinite(x.margin_kW) && x.max_violation <= vtol, x
+    end
+    function test(r, st)
+        x = solve_multiperiod(s.net, at(r); kw..., objective = :violation, start = st); n[] += 1
+        return x.status in RAY_OK && isfinite(x.violation) && (s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas), x
+    end
+    bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
+                  vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
+    fallback(why, st) = (say("      secant gave up (", why, "); bracketing"); b = reach_bracket(s, case, dir, guess);
+                         (; b..., solves = n[], method = :bracket, x = nothing))
+    x0.margin_kW >= -MTOL_KW || return (; feasible = false, r = NaN, capped = false, bind = bind_of(x0), solves = n[], method = :secant, x = nothing)
+    g = isfinite(guess) ? guess : LIMIT
+    if g >= LIMIT                                           # nothing binds before the search limit, if the prediction is right
+        ok, x = test(LIMIT, something(prev, x0))
+        ok && return (; feasible = true, r = LIMIT, capped = true, bind = bind_of(x), solves = n[], method = :secant, x)
+        g = LIMIT / 2
+    end
+    ra, ma, rb, xb, mb = 0.0, x0.margin_kW, g, something(prev, x0), NaN
+    for _ in 1:8
+        ok, xn = margin(rb, xb)
+        ok || return fallback(@sprintf("margin solve at %.4f deg: %s, max violation %.1e", rb, xn.status, xn.max_violation), xb)
+        xb, mb = xn, xn.margin_kW
+        abs(mb) <= MTOL_KW && break
+        slope = (mb - ma) / (rb - ra)
+        slope < -1e-6 || return fallback("margin does not fall with the angle", xb)
+        ra, ma, rb = rb, mb, clamp(rb - mb / slope, 0.0, LIMIT)
+    end
+    abs(mb) <= MTOL_KW || return fallback("no convergence in 8 margin solves", xb)
+    okout, _ = test(rb * 1.005 + 1e-3, xb)                  # just outside: must be infeasible
+    okout && return fallback(@sprintf("still feasible just outside %.4f deg", rb), xb)
+    return (; feasible = true, r = rb, capped = false, bind = bind_of(xb), solves = n[], method = :secant, x = xb)
+end
 
 "Reach along `dir` by feasibility tests: start at the predicted reach, step out (x1.15) or in (x0.85) to a bracket, bisect."
 function reach_bracket(s, case, dir, guess; bisections = 7)
@@ -1095,6 +1145,7 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
         end
     end
     rows = String[]
+    x0s = Dict{Any,Any}(); prev = Dict{Any,Any}()             # per case: the margin at equal angles; the last edge
     for case in cases, i in dirs_i
         th = 2pi * i / 16
         dir = Dict(S0 => 0.0, A1 => cos(th), A2 => sin(th))
@@ -1103,6 +1154,12 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
         if method === :ray
             y = rays(s, case, [dir]; check = :both)
             w = (; feasible = y.feasible, r = y.r[1], capped = y.capped[1], bad = y.bad, bind = y.bind[1])
+        elseif method === :secant
+            haskey(x0s, case) || (x0s[case] = solve_multiperiod(s.net, Dict(k => 0.0 for k in sens.names); problem(s, case)..., objective = :margin))
+            b = reach_secant(s, case, dir, pred, x0s[case]; prev = get(prev, case, nothing))
+            b.x === nothing || (prev[case] = b.x)
+            say(@sprintf("      %s: %d solves (%s)", case, b.solves, b.method))
+            w = (; b.feasible, b.r, b.capped, bad = 0, b.bind)
         else
             b = reach_bracket(s, case, dir, pred)
             w = (; b.feasible, b.r, b.capped, bad = 0, b.bind)
