@@ -1,0 +1,15 @@
+label=port_mumps job=31310694 host=cn185 start=2026-10-19T18:36:53-07:00
+solver=mumps IPOPT_EXTRA_OPTIONS=
+args=envs/multi_poi/root_level/portability_check.jl
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/portability_oct19/out_port_mumps_31310694
+commit=5f91b4cc77e3d942328208b5a6744ff6bed8cb48
+CPU(s):                                  128
+Model name:                              Intel(R) Xeon(R) 6760P
+   RunTime=00:00:02 TimeLimit=01:00:00 TimeMin=N/A
+   Partition=kamiak AllocNode:Sid=login-p3n01:1405890
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn185
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-19T18:39:29-07:00
+wall_s=156
+  1367816K   2732692K 
