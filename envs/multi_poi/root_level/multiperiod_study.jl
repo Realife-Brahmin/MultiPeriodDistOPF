@@ -967,7 +967,8 @@ foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k", "large10kd"]))
 # large10kD: buses 1120 (end of feeder 1) and 1060 (its middle), on one feeder so the two interact; feeders
 # meet only at the stiff head bus. Edges: the maximize-angle solve with both checks on ieee2522; on
 # large10kD, where that solve is unreliable, feasibility tests bracketing the predicted reach.
-# THREE_DIRS=i,j,... (0-15) and THREE_CASES=nobatt|cyclic split a run across jobs; LARGE_T sets T.
+# THREE_DIRS=i:j:... (0-15; colons, since sbatch --export splits on commas), THREE_CASES=nobatt|cyclic and
+# THREE_METHOD=ray|bracket split or override a run; LARGE_T sets T.
 const THREE = Dict(
     "three_ieee2522" => (; base = "ieee2522", at = ["947", "1120"], method = :ray),
     "three_large10kd" => (; base = "large10kd", at = ["1120", "1060"], method = :bracket))
@@ -1020,7 +1021,8 @@ function three_stage(name)
     tc = THREE[name]
     cfg = LARGE[tc.base]
     T = parse(Int, get(ENV, "LARGE_T", "24"))
-    dirs_i = haskey(ENV, "THREE_DIRS") ? parse.(Int, split(ENV["THREE_DIRS"], ',')) : collect(0:15)
+    dirs_i = haskey(ENV, "THREE_DIRS") ? parse.(Int, split(ENV["THREE_DIRS"], r"[,: ]"; keepempty = false)) : collect(0:15)
+    method = Symbol(get(ENV, "THREE_METHOD", string(tc.method)))     # ray | bracket
     cases = haskey(ENV, "THREE_CASES") ? Symbol.(split(ENV["THREE_CASES"], ',')) : [:nobatt, DAY]
     S0, A1, A2 = "source", "subs2", "subs3"
     rz = cfg.zs / sqrt(1 + X_OVER_R^2)
@@ -1063,7 +1065,7 @@ function three_stage(name)
         dir = Dict(S0 => 0.0, A1 => cos(th), A2 => sin(th))
         pred, lim = predicted_reach(sens, Dict(A1 => cos(th), A2 => sin(th)); day = case === DAY)
         tr = time()
-        if tc.method === :ray
+        if method === :ray
             y = rays(s, case, [dir]; check = :both)
             w = (; feasible = y.feasible, r = y.r[1], capped = y.capped[1], bad = y.bad, bind = y.bind[1])
         else
