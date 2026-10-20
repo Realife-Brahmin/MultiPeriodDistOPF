@@ -7,9 +7,11 @@ substations whose voltage angles are fixed upstream. The paper is the separate
 
 ## Setup on any machine
 
-The current drivers run in **`envs/tadmm`**, not `envs/multi_poi`.
-`envs/tadmm` has a **tracked `Manifest.toml`**, so every machine gets identical
-package versions:
+The drivers run in **`envs/msopf`**, MSOPF's own environment, not `envs/multi_poi`.
+`envs/msopf` has a **tracked `Manifest.toml`**, so every machine gets identical
+package versions. It was created on 2026-10-19 as an exact copy of `envs/tadmm`'s
+pinned files, where the drivers ran until then, so every committed MSOPF result
+before that date used the same versions (see [`envs/msopf/README.md`](../msopf/README.md)):
 
 | Package | Version |
 |---|---|
@@ -21,7 +23,7 @@ package versions:
 - **Julia 1.12.x.** The Manifest was resolved on 1.12.5; any 1.12 patch release works.
 - **Instantiate once per clone.** This installs the exact versions; it never resolves new ones:
   ```bash
-  julia --project=envs/tadmm -e 'using Pkg; Pkg.instantiate()'
+  julia --project=envs/msopf -e 'using Pkg; Pkg.instantiate()'
   ```
   Run Julia from **Git Bash**, not PowerShell. PowerShell mangles the quotes in `-e '...'`.
 - **OpenDSS needs no separate install.** OpenDSSDirect ships the engine as a Julia artifact.
@@ -33,7 +35,7 @@ package versions:
   precompiled cache and works, just a few seconds slower. Ignore it.
 - **Checked from a fresh clone.** On 2026-09-28 the branch was cloned into an empty
   folder, instantiated, and run: solve and OpenDSS agree to 1.6e-5 kW and 5e-10 pu.
-- **Leave the Manifest alone.** Don't `Pkg.update`, `Pkg.resolve` or delete `envs/tadmm/Manifest.toml`
+- **Leave the Manifest alone.** Don't `Pkg.update`, `Pkg.resolve` or delete `envs/msopf/Manifest.toml`
   to fix an error. Pkg also strips comments from `Project.toml`, so put notes in READMEs.
 
 `envs/multi_poi/Project.toml` belongs to the older branch-flow scripts
@@ -42,7 +44,7 @@ package versions:
 
 ## Drivers
 
-Run from the repo root with `julia --project=envs/tadmm <script> [args]`.
+Run from the repo root with `julia --project=envs/msopf <script> [args]`.
 
 | Script | What it does | Output |
 |---|---|---|

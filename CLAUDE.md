@@ -156,8 +156,10 @@ one, and name it for the workstream it serves.
 ## MSOPF quick facts (2026-09-28)
 
 - Setup, drivers and decks: [`envs/multi_poi/README.md`](envs/multi_poi/README.md).
-  The full-angle drivers run in **`envs/tadmm`** (tracked Manifest; checked from a
-  fresh clone), not `envs/multi_poi`.
+  The full-angle drivers run in **`envs/msopf`** (tracked Manifest), MSOPF's own
+  environment since 2026-10-19: an exact copy of `envs/tadmm`'s pinned files, where
+  they ran before, so earlier results used the same versions. Not `envs/multi_poi`
+  (older branch-flow scripts, no Manifest).
 - The paper is the separate **`PESGM2027_Multi-Source-Multi-Period-OPF`** repo. Its
   Section II documents `solve_full_angle` in `envs/multi_poi/full_angle_pf.jl`, so
   keep the two in sync. Do not confuse it with the rejected PESGM2026 repo.
@@ -194,7 +196,7 @@ one, and name it for the workstream it serves.
 Branch `msopf-oct09-further-investigations` (re-resolve from the remote first).
 Everything below is one driver, `envs/multi_poi/root_level/multiperiod_study.jl`,
 run from the repo root as
-`julia --project=envs/tadmm envs/multi_poi/root_level/multiperiod_study.jl <stage ...>`;
+`julia --project=envs/msopf envs/multi_poi/root_level/multiperiod_study.jl <stage ...>`;
 results are tracked in `envs/multi_poi/results/multiperiod/`.
 
 - **Done, ieee123 (five substations):** stages `main horizon zs duration pairs

@@ -4,7 +4,7 @@
 #     cyclic (main_horizon_windows.csv, rows "qfree,nobatt" and "qfree,cyclic");
 #   - the cost-optimal cyclic day at equal angles, hour by hour (main_days.csv, ddelta 0.00).
 # Run from the repo root:
-#   julia --project=envs/tadmm envs/multi_poi/root_level/portability_check.jl
+#   julia --project=envs/msopf envs/multi_poi/root_level/portability_check.jl
 # The solver follows IPOPT_EXTRA_OPTIONS, so the same script checks MUMPS and HSL builds.
 empty!(ARGS); push!(ARGS, "none")
 include(joinpath(@__DIR__, "multiperiod_study.jl"))

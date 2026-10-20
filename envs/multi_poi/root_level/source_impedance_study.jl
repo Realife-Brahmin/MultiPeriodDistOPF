@@ -19,7 +19,7 @@
 # (Table 18). The deck's own Zs is also cross-checked against OpenDSS.
 #
 # Run from the repo root:
-#     julia --project=envs/tadmm envs/multi_poi/root_level/source_impedance_study.jl
+#     julia --project=envs/msopf envs/multi_poi/root_level/source_impedance_study.jl
 #     ... source_impedance_study.jl --table-only    (rebuild the .tex from windows.csv, no solves)
 #
 # Writes (tracked) envs/multi_poi/results/source_impedance/:

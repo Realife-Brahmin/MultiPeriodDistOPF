@@ -43,7 +43,7 @@
 #   large10kd the 10k-bus deck with loads, PV and batteries divided by 20 (in memory).
 #
 # Run from the repo root:
-#     julia --project=envs/tadmm envs/multi_poi/root_level/multiperiod_study.jl [stage ...]
+#     julia --project=envs/msopf envs/multi_poi/root_level/multiperiod_study.jl [stage ...]
 #
 # Writes (tracked) envs/multi_poi/results/multiperiod/.
 
