@@ -207,6 +207,21 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
   measured windows to 0.001 deg when only batteries are dispatched (PV off or
   unity power factor). With PV reactive power free the measured upper edge is
   0.07 deg wider, because reactive power moves 20-40 kW between the substations.
+- **Done, several substations: the window is a simplex (stage `simplex`,
+  2026-10-19, `simplex_check*.csv`).** Each substation's import is close to linear
+  in the angles (the angle-to-import sensitivities, an N x (N-1) matrix), so each
+  no-backflow limit is a half-space and N substations give a simplex in the N-1
+  angle differences (three: a triangle). Predicted from one idle solve plus
+  central differences, against measured windows on ieee123 at T = 24:
+  - PV at unity power factor: without batteries exact in all 26 directions
+    (three-substation rays and five-substation cuts, within 1e-4 deg); with
+    batteries (daily mean) exact in 24 of 26 (within 4e-4 deg). The two
+    exceptions both raise subs4: there the 1.05 pu upper voltage limit binds first,
+    with batteries at full power, a face the backflow-only prediction lacks
+    (probed: beyond the measured edge the violation is overvoltage, not backflow).
+  - PV reactive power free (the committed windows): the prediction is
+    conservative everywhere, exact on the subs1 and subs3 faces and 0.04-0.05 deg
+    short on the subs4 face, which reactive dispatch pushes outward.
 - **Done, ieee2522 (stage `ieee2522`, finished 2026-10-12):** a second
   substation is added in memory at buses 947, 996, 1120, 1216 (along the main
   trunk) and 546 (farthest bus), with Zs = 0.311 ohm, T = 12. Rows are in

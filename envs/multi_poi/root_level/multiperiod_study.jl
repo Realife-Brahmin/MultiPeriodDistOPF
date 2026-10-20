@@ -548,6 +548,144 @@ function estimate_stage()
 end
 "estimate" in STAGES && estimate_stage()
 
+# ---- stage: simplex ----------------------------------------------------------------------------------------
+# The window with several substations, predicted from one operating point. With batteries idle each
+# substation's import is close to linear in the angles, P_k(delta) ~ P_k(0) + sum_j K_kj delta_j (K: the
+# angle-to-import sensitivities). Each no-backflow limit P_k >= 0 is then a half-space, so with N
+# substations the window is a simplex in the N-1 angle differences: an interval, a triangle, a
+# tetrahedron. Along a direction the predicted reach is the first substation to reach zero import: in
+# its worst hour without batteries, in its daily mean with them (the two-substation estimate,
+# generalized). The stage checks this against the measured three- and five-substation windows.
+
+"""
+    sensitivity(s, movers; h = 0.1)
+
+Every substation's import at equal angles with the batteries idle (kW per hour) and its derivative
+with respect to each moving substation's angle (kW/deg per hour), by central differences.
+"""
+function sensitivity(s, movers; h = 0.1)
+    names = [x.name for x in s.net.sources]
+    at(dd) = solve_multiperiod(s.net, merge(Dict(n => 0.0 for n in names), dd); problem(s, :nobatt)..., no_backflow = false)
+    x0 = at(Dict{String,Float64}())
+    x0.ok || return nothing
+    K = Dict{Tuple{String,String},Vector{Float64}}()
+    for m in movers
+        xp, xm = at(Dict(m => +h)), at(Dict(m => -h))
+        (xp.ok && xm.ok) || return nothing
+        for k in names
+            K[(k, m)] = (xp.P_subs_kW[k] .- xm.P_subs_kW[k]) ./ 2h
+        end
+    end
+    return (; names, P = Dict(k => x0.P_subs_kW[k] for k in names), K, T = s.T)
+end
+
+"Predicted reach along `dir` (mover => degrees per unit length) and the substation that limits it."
+function predicted_reach(sens, dir; day::Bool)
+    r, lim = Inf, ""
+    for k in sens.names
+        slope = sum(sens.K[(k, m)] .* v for (m, v) in dir)
+        reach = day ? (sum(slope) < 0 ? sum(sens.P[k]) / -sum(slope) : Inf) :
+                      minimum((slope[t] < 0 ? sens.P[k][t] / -slope[t] : Inf) for t in 1:sens.T)
+        reach < r && ((r, lim) = (reach, k))
+    end
+    return r, lim
+end
+
+# SIMPLEX_PV=qfree (default) compares with the committed three_region.csv and five_windows.csv. Any other
+# PV mode (unity, off) measures those windows afresh in that mode: with PV reactive power fixed only the
+# batteries can be dispatched, which is where the two-substation estimate is exact.
+if "simplex" in STAGES
+    PVM = get(ENV, "SIMPLEX_PV", "qfree")
+    committed = PVM == "qfree"
+    readrows(f) = [split(l, ',') for l in readlines(joinpath(OUT_DIR, f))[2:end]]
+    say("\n", "="^110, "\nSIMPLEX  the multi-substation window predicted from the angle-to-import sensitivities, T = 24, PV $PVM",
+        committed ? " (measured: the committed windows)" : " (measured afresh)")
+    out = ["study,pv,direction,case,measured_deg,predicted_deg,limiting_substation"]
+    function compare(tag, items)
+        for case in ("nobatt", string(DAY))
+            sel = [x for x in items if x.case == case]
+            isempty(sel) && continue
+            err = [abs(x.pred - x.meas) for x in sel]
+            rel = [abs(x.pred - x.meas) / abs(x.meas) for x in sel]
+            say(@sprintf("  %-6s %-7s %2d directions: |predicted - measured| max %.4f deg, mean %.4f deg; relative max %.1f%%, mean %.1f%%",
+                         tag, case, length(sel), maximum(err), sum(err) / length(err), 100maximum(rel), 100sum(rel) / length(rel)))
+            for x in sel
+                push!(out, @sprintf("%s,%s,%s,%s,%.6f,%.6f,%s", tag, PVM, x.dir, case, x.meas, x.pred, x.lim))
+            end
+        end
+    end
+    # three substations, the 16 directions of stage "three"
+    REF, A, B = "subs1", "subs3", "subs4"
+    net, pvs = load_sources([REF, A, B])
+    s3 = setup(net, pvs; T = 24, pv = PVM)
+    sens = sensitivity(s3, [A, B])
+    if sens === nothing
+        say("  ** idle solves failed (three substations)")
+    else
+        for k in sens.names
+            say(@sprintf("    %s: mean import %.1f kW; sensitivity to %s %+.1f, to %s %+.1f kW/deg (daily mean)", k, sum(sens.P[k]) / sens.T,
+                         A, sum(sens.K[(k, A)]) / sens.T, B, sum(sens.K[(k, B)]) / sens.T))
+        end
+        ths = [2pi * k / 16 for k in 0:15]                # the 16 directions of stage "three"
+        measured = Dict{Tuple{String,Float64},Float64}()
+        if committed
+            for r in readrows("three_region.csv")
+                measured[(String(r[2]), parse(Float64, r[1]))] = parse(Float64, r[4])
+            end
+        else
+            for case in (:nobatt, DAY)
+                y = rays(s3, case, [Dict(REF => 0.0, A => cos(th), B => sin(th)) for th in ths])
+                y.bad == 0 || say("  ** ", y.bad, " failed ray solves or edge checks (three, ", case, ")")
+                for (i, th) in enumerate(ths)
+                    measured[(string(case), round(rad2deg(th); digits = 2))] = y.r[i]
+                end
+            end
+        end
+        items = []
+        for case in ("nobatt", string(DAY)), th in ths
+            key = (case, round(rad2deg(th); digits = 2))
+            haskey(measured, key) || continue
+            p, lim = predicted_reach(sens, Dict(A => cos(th), B => sin(th)); day = case == string(DAY))
+            push!(items, (; dir = @sprintf("%.2f", key[2]), case, meas = measured[key], pred = p, lim))
+        end
+        compare("three", items)
+    end
+    # five substations, each moved alone against the other four (stage "five")
+    net5, pvs5 = load_sources(ALL_SUBS)
+    s5 = setup(net5, pvs5; T = 24, pv = PVM)
+    sens5 = sensitivity(s5, ALL_SUBS)
+    if sens5 === nothing
+        say("  ** idle solves failed (five substations)")
+    else
+        measured5 = Dict{Tuple{String,String},Tuple{Float64,Float64}}()
+        if committed
+            for r in readrows("five_windows.csv")
+                measured5[(String(r[1]), String(r[2]))] = (parse(Float64, r[4]), parse(Float64, r[5]))
+            end
+        else
+            for m in ALL_SUBS, case in (:nobatt, DAY)
+                w = window(s5, case, m)
+                w.bad == 0 || say("  ** ", w.bad, " failed ray solves or edge checks (five, ", m, ", ", case, ")")
+                measured5[(m, string(case))] = (w.lo, w.hi)
+            end
+        end
+        items = []
+        for m in ALL_SUBS, case in ("nobatt", string(DAY))
+            haskey(measured5, (m, case)) || continue
+            lo, hi = measured5[(m, case)]
+            day = case == string(DAY)
+            up, limu = predicted_reach(sens5, Dict(m => 1.0); day)
+            dn, limd = predicted_reach(sens5, Dict(m => -1.0); day)
+            push!(items, (; dir = m * " up", case, meas = hi, pred = up, lim = limu))
+            push!(items, (; dir = m * " down", case, meas = -lo, pred = dn, lim = limd))
+        end
+        compare("five", items)
+    end
+    file = committed ? "simplex_check.csv" : "simplex_check_$PVM.csv"
+    open(io -> foreach(l -> println(io, l), out), joinpath(OUT_DIR, file), "w")
+    say("  wrote ", file)
+end
+
 # ---- stages: ieee2522, large10k ---------------------------------------------------------------------------
 # The two big decks have one substation. A second one is added in memory (the decks on disk are
 # untouched): a Vsource at 1.05 pu behind the source impedance, tied to a chosen bus by a
