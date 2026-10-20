@@ -1,23 +1,17 @@
 Clear
 ! smartds_p1u_1ph: single-phase per-phase equivalent of test_systems\smartds_sfo_p1u\Master.dss (unmodified original).
 ! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
-New Circuit.smartds_p1u_1ph basekv=7.1996 Bus1=s1 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
+New Circuit.smartds_p1u_1ph basekv=7.1996 Bus1=sb1_p1uhs2_1247_node_1_3 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
-! Each substation is an EMF behind its transformer into the MV network (parallel units combined), in ohm at
-! 12.47 kV. A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 = Z0 = Zs.
-New Vsource.subs1 Phases=1 Bus1=s1 basekv=7.1996 pu=1.05 angle=0.0 R1=0.0719491 X1=0.654237 R0=0.0719491 X0=0.654237
-New Vsource.subs2 Phases=1 Bus1=s2 basekv=7.1996 pu=1.05 angle=0.0 R1=0.026304 X1=0.261695 R0=0.026304 X0=0.261695
-New Vsource.subs3 Phases=1 Bus1=s3 basekv=7.1996 pu=1.05 angle=0.0 R1=0.0350719 X1=0.348926 R0=0.0350719 X0=0.348926
-New Vsource.subs4 Phases=1 Bus1=s4 basekv=7.1996 pu=1.05 angle=0.0 R1=0.0350719 X1=0.383728 R0=0.0350719 X0=0.383728
-New Vsource.subs5 Phases=1 Bus1=s5 basekv=7.1996 pu=1.05 angle=0.0 R1=0.0350719 X1=0.383728 R0=0.0350719 X0=0.383728
+! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the
+! deck's 12.47 kV base). The transformers are lines in BranchData.dss; nothing upstream is modeled.
+New Vsource.subs1 Phases=1 Bus1=sb1_p1uhs2_1247_node_1_3 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs2 Phases=1 Bus1=sb8_p1uhs1_1247_node_8_9 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs3 Phases=1 Bus1=sb8_p1uhs3_1247_node_8_9 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs4 Phases=1 Bus1=sb9_p1uhs0_1247_node_9_14 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs5 Phases=1 Bus1=sb9_p1uhs0_1247_node_9_16 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
 Redirect BranchData.dss
 Redirect Ties.dss
-! Substation connection lines
-New Line.poi1 Phases=1 Bus1=s1 Bus2=sb1_p1uhs2_1247_node_1_4.1 r1=1e-06 x1=1e-06
-New Line.poi2 Phases=1 Bus1=s2 Bus2=sb8_p1uhs1_1247_node_8_4.1 r1=1e-06 x1=1e-06
-New Line.poi3 Phases=1 Bus1=s3 Bus2=sb8_p1uhs3_1247_node_8_4.1 r1=1e-06 x1=1e-06
-New Line.poi4 Phases=1 Bus1=s4 Bus2=sb9_p1uhs0_1247_node_9_17.1 r1=1e-06 x1=1e-06
-New Line.poi5 Phases=1 Bus1=s5 Bus2=sb9_p1uhs0_1247_node_9_18.1 r1=1e-06 x1=1e-06
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads

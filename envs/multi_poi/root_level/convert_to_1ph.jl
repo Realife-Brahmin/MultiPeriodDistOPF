@@ -22,9 +22,10 @@
 #     A transformer between two MV levels becomes a line with its leakage impedance (%R of both
 #     windings + j%X on its rating), referred to the base. A series reactor becomes a line.
 #   * Open switches become lines with enabled=false (Ties.dss), closed by a study.
-#   * Each transformer from above MV into the MV network is a substation: a 1-phase Vsource at
-#     1.05 pu behind that transformer's impedance (parallel units at one bus combined). The source
-#     impedance upstream of it is not modeled.
+#   * Each transformer from above MV into the MV network is a substation transformer: a line from
+#     its high-voltage bus with its leakage impedance in ohm at the distribution-side voltage
+#     (parallel units combined). Each distinct high-voltage bus carries one stiff 1-phase Vsource
+#     at 1.05 pu (user, 2026-10-20); nothing upstream of it is modeled.
 #   * Loads that stand for other feeders lumped at the substation bus (`drop_loads`) are left
 #     out: they are not part of the modeled network and would set the substation's import.
 #   * Buses no source reaches after all this are dropped, with their loads, and reported.
@@ -158,7 +159,7 @@ function convert(name)
         ODD.Lines.Name(nm); a, b = bus(ODD.Lines.Bus1()), bus(ODD.Lines.Bus2())
         (a in mv || b in mv || !(haskey(kv, a) && haskey(kv, b))) || join!(lv, a, b)
     end
-    lvtop = Dict{String,String}(); subs = Dict{String,ComplexF64}()
+    lvtop = Dict{String,String}(); subx = []
     for nm in real_names(ODD.Transformers.AllNames())
         ODD.Circuit.SetActiveElement("Transformer.$nm"); ODD.CktElement.Enabled() || continue
         bs = bus.(ODD.CktElement.BusNames()); ks = [kv[b] for b in bs]
@@ -171,13 +172,13 @@ function convert(name)
             end
         elseif length(m) == 1 && any(>(MV[2]), ks)          # substation: HV into MV
             length(bs) == 2 || push!(notes, "substation transformer $nm has $(length(bs)) windings; windings 1-2 used")
-            z = transformer_z(nm, vref); r = m[1]
-            subs[r] = haskey(subs, r) ? 1 / (1 / subs[r] + 1 / z) : z
+            hv = bs[findfirst(b -> kv[b] > MV[2], bs)]
+            push!(subx, (; name = clean("xfmr_" * nm), a = hv, b = m[1], z = transformer_z(nm, vref), kind = :substation))
         elseif length(m) == 1                               # service: MV into secondaries
             foreach(x -> x in mv || (lvtop[root(lv, x)] = m[1]), bs)
         end
     end
-    sub_roots = Dict(root(dsu, b) => z for (b, z) in subs)
+    append!(branches, subx)                                 # substation transformers: lines from the source bus
     load = Dict{String,ComplexF64}(); dropped = 0.0; nload = 0
     for nm in real_names(ODD.Loads.AllNames())
         ODD.Circuit.SetActiveElement("Load.$nm"); ODD.CktElement.Enabled() || continue
@@ -210,7 +211,7 @@ function convert(name)
     for x in br
         push!(get!(adj, x.a, String[]), x.b); push!(get!(adj, x.b, String[]), x.a)
     end
-    srcs = sort(collect(keys(sub_roots)))
+    srcs = sort(unique([x.a for x in subx]))                # one source per high-voltage bus
     feeder = Dict{String,Int}()
     for (i, s) in enumerate(srcs)
         q = [s]; feeder[s] = i
@@ -230,14 +231,14 @@ function convert(name)
     ties = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties if haskey(feeder, root(dsu, t.a)) && haskey(feeder, root(dsu, t.b))]
     stats = (; nsw, nreg, nstep, nreac, nload, dropped, lost = length(lost), lostload, levels = sort(unique(round.([kv[b] for b in mv]; digits = 2))))
     return (; name, cfg, buses = Set(keys(feeder)), branches = br, ties, load, caps,
-            subs = [(; bus = s, z = sub_roots[s]) for s in srcs], feeder, stats, notes)
+            subs = [(; bus = s, mv = sort(unique([x.b for x in subx if x.a == s])), z = 1 / sum(1 / x.z for x in subx if x.a == s)) for s in srcs], feeder, stats, notes)
 end
 
 function place_ders(c)
     rng = MersenneTwister(c.cfg.seed)
-    subset = Set(s.bus for s in c.subs)
+    subset = Set([[s.bus for s in c.subs]; reduce(vcat, [s.mv for s in c.subs])])
     cands = sort([b for (b, s) in c.load if real(s) > 0 && !(b in subset)])
-    n = round(Int, DER_FRACTION * length(c.buses)); nboth = round(Int, OVERLAP * n)
+    n = round(Int, DER_FRACTION * (length(c.buses) - length(c.subs))); nboth = round(Int, OVERLAP * n)   # buses below the sources
     n = min(n, (length(cands) + nboth) ÷ 2)
     pick = shuffle(rng, cands)[1:(2n - nboth)]
     pvb, btb = sort([pick[1:nboth]; pick[nboth+1:n]]), sort([pick[1:nboth]; pick[n+1:end]])
@@ -259,7 +260,8 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "rawData", deckname(c)))
     w("BranchData.dss") do io
         println(io, "! Per-phase equivalent, referred to $(c.cfg.base_kV) kV: a k-phase section has (3/k) x its positive-sequence")
         println(io, "! impedance. Series R + jX only (c1=0 c0=0). Grouped by what each line is in the original.")
-        heads = [:line => "! Lines of the original.",
+        heads = [:substation => "! Substation transformers: a line with the leakage impedance (%R of both windings + j%X on its rating) in ohm at the distribution-side voltage, from the source bus (parallel units combined).",
+                 :line => "! Lines of the original.",
                  :transformer => "! Transformers between MV levels in the original: a line with the leakage impedance (%R of both windings + j%X).",
                  :reactor => "! Series reactors of the original.",
                  :switch => "! Closed switches in the original. A switch is not in the model: a short line of 1e-3 + j1e-3 ohm.",
@@ -307,18 +309,14 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "rawData", deckname(c)))
     end
     open(joinpath(out, "Master.dss"), "w") do io
         print(io, "Clear\n", hdr)
-        println(io, "New Circuit.$(deckname(c)) basekv=$kvs Bus1=s1 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001")
+        println(io, "New Circuit.$(deckname(c)) basekv=$kvs Bus1=$(c.subs[1].bus) pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001")
         println(io, "VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.")
-        println(io, "! Each substation is an EMF behind its transformer into the MV network (parallel units combined), in ohm at")
-        println(io, "! $(c.cfg.base_kV) kV. A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 = Z0 = Zs.")
+        println(io, "! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the")
+        println(io, "! deck's $(c.cfg.base_kV) kV base). The transformers are lines in BranchData.dss; nothing upstream is modeled.")
         for (i, s) in enumerate(c.subs)
-            r, x = f3(real(s.z)), f3(imag(s.z))
-            println(io, "New Vsource.subs$i Phases=1 Bus1=s$i basekv=$kvs pu=1.05 angle=0.0 R1=$r X1=$x R0=$r X0=$x")
+            println(io, "New Vsource.subs$i Phases=1 Bus1=$(s.bus) basekv=$kvs pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001")
         end
-        println(io, "Redirect BranchData.dss\nRedirect Ties.dss\n! Substation connection lines")
-        for (i, s) in enumerate(c.subs)
-            println(io, "New Line.poi$i Phases=1 Bus1=s$i Bus2=$(s.bus).1 r1=1e-06 x1=1e-06")
-        end
+        println(io, "Redirect BranchData.dss\nRedirect Ties.dss")
         print(io, """
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
@@ -347,7 +345,7 @@ function report(c, pv, bt, nboth)
             real(tot), imag(tot), length(c.load),
             join([@sprintf("%.0f", sum((real(v) for (b, v) in c.load if c.feeder[b] == i); init = 0.0)) for i in eachindex(c.subs)], " / "), s.dropped)
     for (i, x) in enumerate(c.subs)
-        @printf("  subs%d at %s: Zs = %.4f + j%.4f ohm\n", i, x.bus, real(x.z), imag(x.z))
+        @printf("  subs%d at %s, feeding %s: transformer %.4f + j%.4f ohm\n", i, x.bus, join(x.mv, ", "), real(x.z), imag(x.z))
     end
     s.lost > 0 && @printf("  ** %d buses no source reaches were dropped, with %.1f kW of load (per phase)\n", s.lost, s.lostload)
     zs = sort(abs.(getfield.(c.branches, :z)))

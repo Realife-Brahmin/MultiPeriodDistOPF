@@ -2,6 +2,12 @@
 ! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
 ! Per-phase equivalent, referred to 12.47 kV: a k-phase section has (3/k) x its positive-sequence
 ! impedance. Series R + jX only (c1=0 c0=0). Grouped by what each line is in the original.
+! Substation transformers: a line with the leakage impedance (%R of both windings + j%X on its rating) in ohm at the distribution-side voltage, from the source bus (parallel units combined).
+New Line.xfmr_sb1_p1uhs2_1247_trans_29 Phases=1 Bus1=sb1_p1uhs2_1247_node_1_3.1 Bus2=sb1_p1uhs2_1247_node_1_4.1 r1=0.0719491 x1=0.654237 c1=0 c0=0 length=1 units=none
+New Line.xfmr_sb8_p1uhs1_1247_trans_2 Phases=1 Bus1=sb8_p1uhs1_1247_node_8_4.1 Bus2=sb8_p1uhs1_1247_node_8_9.1 r1=0.026304 x1=0.261695 c1=0 c0=0 length=1 units=none
+New Line.xfmr_sb8_p1uhs3_1247_trans_2 Phases=1 Bus1=sb8_p1uhs3_1247_node_8_4.1 Bus2=sb8_p1uhs3_1247_node_8_9.1 r1=0.0350719 x1=0.348926 c1=0 c0=0 length=1 units=none
+New Line.xfmr_sb9_p1uhs0_1247_trans_263 Phases=1 Bus1=sb9_p1uhs0_1247_node_9_14.1 Bus2=sb9_p1uhs0_1247_node_9_17.1 r1=0.0350719 x1=0.383728 c1=0 c0=0 length=1 units=none
+New Line.xfmr_sb9_p1uhs0_1247_trans_264 Phases=1 Bus1=sb9_p1uhs0_1247_node_9_16.1 Bus2=sb9_p1uhs0_1247_node_9_18.1 r1=0.0350719 x1=0.383728 c1=0 c0=0 length=1 units=none
 ! Lines of the original.
 New Line.l_r_p1udt0-p1udt202_ Phases=1 Bus1=p1udt0-p1udt202xx.1 Bus2=p1udt0-p1udt202xxx.1 r1=0.23362 x1=0.243039 c1=0 c0=0 length=1 units=none
 New Line.l_r_p1udt0-p1udt235_ Phases=1 Bus1=p1udt0-p1udt235x.1 Bus2=p1udt0-p1udt235xx.1 r1=0.0205713 x1=0.0185272 c1=0 c0=0 length=1 units=none

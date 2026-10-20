@@ -1,19 +1,15 @@
 Clear
 ! ieee9500_1ph: single-phase per-phase equivalent of rawData\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
 ! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
-New Circuit.ieee9500_1ph basekv=7.1996 Bus1=s1 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
+New Circuit.ieee9500_1ph basekv=7.1996 Bus1=hvmv69sub1_hsb pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
-! Each substation is an EMF behind its transformer into the MV network (parallel units combined), in ohm at
-! 12.47 kV. A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 = Z0 = Zs.
-New Vsource.subs1 Phases=1 Bus1=s1 basekv=7.1996 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
-New Vsource.subs2 Phases=1 Bus1=s2 basekv=7.1996 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
-New Vsource.subs3 Phases=1 Bus1=s3 basekv=7.1996 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
+! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the
+! deck's 12.47 kV base). The transformers are lines in BranchData.dss; nothing upstream is modeled.
+New Vsource.subs1 Phases=1 Bus1=hvmv69sub1_hsb basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs2 Phases=1 Bus1=hvmv69sub2_hsb basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+New Vsource.subs3 Phases=1 Bus1=hvmv69sub3_hsb basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
 Redirect BranchData.dss
 Redirect Ties.dss
-! Substation connection lines
-New Line.poi1 Phases=1 Bus1=s1 Bus2=regxfmr_hvmv11sub1_lsb.1 r1=1e-06 x1=1e-06
-New Line.poi2 Phases=1 Bus1=s2 Bus2=regxfmr_hvmv11sub2_lsb.1 r1=1e-06 x1=1e-06
-New Line.poi3 Phases=1 Bus1=s3 Bus2=regxfmr_hvmv11sub3_lsb.1 r1=1e-06 x1=1e-06
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads

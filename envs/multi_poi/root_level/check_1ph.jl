@@ -76,8 +76,8 @@ function check(name)
     vb = [dv[b] for b in c.buses if haskey(dv, b)]
     say(@sprintf("%s: deck %s; voltage %.4f-%.4f pu at nominal load, no DERs (original, flat: %.4f-%.4f)", name, conv ? "converged" : "DID NOT CONVERGE", minimum(vb), maximum(vb), minimum(values(ov)), maximum(values(ov))))
     for (i, s) in enumerate(c.subs)
-        o = sum((p for (b, p) in oimp if root_of(c, b) == s.bus); init = 0.0)
-        h = s.bus
+        o = sum((p for (b, p) in oimp if b in s.mv); init = 0.0)
+        h = s.mv[1]                                  # the distribution-side bus of its transformer
         bs = [b for (b, f) in c.feeder if f == i && haskey(ov, b) && haskey(dv, b)]
         d = [(dv[h] - dv[b]) - (ov[h] - ov[b]) for b in bs]
         say(@sprintf("  subs%d: import original %.1f kW, deck %.1f kW (%+.1f%%); largest drop from the head original %.4f, deck %.4f pu; per bus deck - original mean %+.4f, max |.| %.4f pu over %d buses",
@@ -86,7 +86,6 @@ function check(name)
     end
     open(io -> foreach(r -> println(io, r), rows), joinpath(dir, "check.txt"), "w")
 end
-root_of(c, b) = b                                   # buses are no longer merged: a deck bus is the original bus
 
 for name in (isempty(ARGS) ? sort(collect(keys(SYSTEMS))) : ARGS)
     check(name)

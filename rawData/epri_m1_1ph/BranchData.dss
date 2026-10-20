@@ -2,6 +2,8 @@
 ! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
 ! Per-phase equivalent, referred to 12.47 kV: a k-phase section has (3/k) x its positive-sequence
 ! impedance. Series R + jX only (c1=0 c0=0). Grouped by what each line is in the original.
+! Substation transformers: a line with the leakage impedance (%R of both windings + j%X on its rating) in ohm at the distribution-side voltage, from the source bus (parallel units combined).
+New Line.xfmr_m1_xfmr Phases=1 Bus1=sourcebus.1 Bus2=temp.1 r1=0.037024 x1=0.74048 c1=0 c0=0 length=1 units=none
 ! Lines of the original.
 New Line.0x00899528_0x008d6c98 Phases=1 Bus1=0x00899528.1 Bus2=0x008d6c98.1 r1=0.455753 x1=0.136462 c1=0 c0=0 length=1 units=none
 New Line.0x008996e0_0x008d9830 Phases=1 Bus1=0x008996e0.1 Bus2=0x008d9830.1 r1=0.0858718 x1=0.0257118 c1=0 c0=0 length=1 units=none
