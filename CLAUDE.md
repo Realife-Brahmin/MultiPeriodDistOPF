@@ -184,7 +184,9 @@ one, and name it for the workstream it serves.
   of interest** (user, 2026-10-20): no unity-power-factor runs, panels or comparisons in
   new work or the paper. New decks get our own PV and batteries, never the model's
   built-in DERs: about 10% of buses each, partly overlapping, each fleet 30-50% of the
-  load (e.g. `rawData/ieee9500_1ph`). Public OpenDSS systems to convert from are in
+  load (e.g. `rawData/ieee9500_1ph`), all written by `convert_to_1ph.jl` (switches and
+  regulators as 1e-3 + j1e-3 ohm lines, never merged buses; checked by `check_1ph.jl`).
+  Public OpenDSS systems to convert from are in
   `test_systems/` (`bash scripts/fetch_test_systems.sh`). OpenDSS only (no CYME, CIM).
   **Commit and push MSOPF work as it is done**, code and paper alike.
   Headline: over a 24 h day batteries roughly double the feasible angle window

@@ -4,7 +4,7 @@ Downloaded 2026-10-20 by `bash scripts/fetch_test_systems.sh` (re-runnable on an
 solved once by `julia --project=envs/msopf scripts/summarize_test_systems.jl`, which writes
 `summary.csv` here and in each folder. No electrical data is changed. Single-phase conversion and
 our own PV and batteries are a separate step (as done for the 9500-node system:
-`envs/multi_poi/root_level/convert_ieee9500_1ph.jl`, deck `rawData/ieee9500_1ph`).
+`envs/multi_poi/root_level/convert_to_1ph.jl`, decks `rawData/<system>_1ph`, checked by `check_1ph.jl`).
 
 The raw files (30 MB in all, none over 50 MB) are committed as the source of truth (user,
 2026-10-20); the fetch script reproduces them.

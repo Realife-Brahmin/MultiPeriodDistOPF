@@ -14,4 +14,4 @@ joined by normally-open switches; 2,702 primary buses at 12.47 kV, 1,275 custome
 the converter leaves the built-in DERs out anyway (we place our own).
 
 The single-phase deck made from these is `../ieee9500_1ph`, written by
-`envs/multi_poi/root_level/convert_ieee9500_1ph.jl` and checked by `check_ieee9500_1ph.jl`.
+`envs/multi_poi/root_level/convert_to_1ph.jl ieee9500` and checked by `check_1ph.jl ieee9500`.
