@@ -69,6 +69,7 @@ and then three T96 systems x three interleaved repeats x two backends. Arm
 order reverses on repeat 2. Both arms run to full convergence, use full warm-up,
 and require finite solutions, final residuals, solver success, close physical
 trajectories, and independent OpenDSS convergence with zero voltage violations.
+A warm-up/timed output-stream mismatch is rejected.
 All pairs run sequentially in the same allocation; compilation, setup and
 OpenDSS are outside the optimizer timer. Slurm timeout/OOM/failure must not be
 reported as a completed timing row.
@@ -104,3 +105,5 @@ full correction and retained sensitivity rows. Layout construction is shared
 and outside this kernel timer; extraction, factorization, Schur construction,
 battery solves and recovery are inside it. Preserve the capture's SHA256 and
 metadata. Keep local smoke measurements separate from Kamiak timing results.
+
+Local smoke-test evidence and exact limitations: [validation/README.md](validation/README.md).

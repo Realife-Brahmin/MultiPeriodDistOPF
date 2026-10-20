@@ -35,6 +35,9 @@ for ARM in "${ARMS[@]}"; do
     export FILTERDDP_NETWORK_BACKEND=$ARM
     printf 'TREE_ABLATION_RUN system=%s T=%s repeat=%s backend=%s source=%s\n' "$SYS" "$HORIZON" "$REP" "$ARM" "${TREE_ABLATION_SOURCE_SHA:-local}" > "$OUT/$ARM.log"
     julia --startup-file=no --project=envs/spar_ddp spar_ddp/examples/power_system/procs_main.jl "$SYS" "$HORIZON" solve >> "$OUT/$ARM.log" 2>&1
+    if grep -q 'WARMUP_STREAM_MISMATCH' "$OUT/$ARM.log"; then
+        echo 'Warm-up/timed output stream mismatch; do not report this timing' >&2; exit 1
+    fi
     [[ -s "$SOL" ]] || { echo "Missing $ARM solution" >&2; exit 1; }
     cp "$SOL" "$OUT/$ARM.jls"
     # Independent original-model power-flow check, outside optimizer timing.
