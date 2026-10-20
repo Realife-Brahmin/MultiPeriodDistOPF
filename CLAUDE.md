@@ -292,6 +292,20 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
     the bracket, warm-started from the neighbouring direction; `MULTIPERIOD_WARM`).
   - SMART-DS P1U solves (5,064 buses, 70-86 s per day) but has no ties between its five
     substations below 69 kV: no window until the user decides how they connect.
+- **Done 2026-10-20, four substations (stages `four_ieee123a/b`, `four_ieee2522`):** the region
+  is the predicted tetrahedron on ieee123 (planar faces, normals within ~1 deg, the predicted
+  substation binds 298/312 edges at `MULTI_DIRSET=fib78`); substation 4's face is pushed out by PV
+  reactive dispatch; on ieee2522 the 996 face bends where voltage binds (78-direction rerun was
+  still running on Kamiak, jobs 31328984-98). Results `multi_windows*.csv`, `check_four.jl`.
+  Interactive viewer: `results/multiperiod/viewer/four_regions.html` (README there; public link
+  via raw.githack; also a private claude.ai artifact). Rebuild with `four_viewer_data.jl fib78`.
+- **Solver hygiene (2026-10-20):** solves past an edge are 10x slower than feasible ones and a
+  cold margin solve can take over an hour, so searches use warm-started margin solves, a per-solve
+  time cap (8x the reference solve, `MULTIPERIOD_CAP`), and park capped solves in
+  `parked_solves.csv`; every solve logs one `[solve]` line.
+- **Paper (PESGM2027) as of 2026-10-20:** Section II-E on the angle-to-import sensitivity;
+  Fig. 3 two-source windows, Fig. 4 three regions (123 / 9500 / 2522), Table I cross-system;
+  battery case named "dispatched" (the cyclic constraint keeps its name); one-line captions.
 - **Paper: edit only when asked.** Since 2026-10-12 the user also has ChatGPT
   editing the PESGM2027 paper; it rewrote the draft as prose with booktabs
   tables (one file per table, `tables/mp_*.tex`) and vector figures rendered by
