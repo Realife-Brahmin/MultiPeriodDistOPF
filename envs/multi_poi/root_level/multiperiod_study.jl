@@ -975,7 +975,11 @@ const THREE = Dict(
     # ieee9500_1ph has its three substations in the deck; the five normally-open switches that join
     # different feeders are closed (the four inside a feeder stay open).
     "three_ieee9500" => (; base = nothing, system = "ieee9500_1ph", at = ["sub2", "sub3"], method = :bracket, feas = 1e-5,
-                           ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
+                           ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]),
+    # The same deck with its service transformers modeled (loads on their secondary buses, DERs unchanged): does
+    # leaving the secondaries out change the window?
+    "three_ieee9500xf" => (; base = nothing, system = "ieee9500xf_1ph", at = ["sub2", "sub3"], method = :bracket, feas = 1e-5,
+                             ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
 const THREE_HEADER = "system,bus_a,bus_b,T,case,ray_deg,feasible_at_equal_angles,measured_deg,predicted_deg,limiting_substation,at_limit,failed_checks,min_import_kW,vmin_pu,vmax_pu,seconds"
 
 "Reach along `dir` by feasibility tests: start at the predicted reach, step out (x1.15) or in (x0.85) to a bracket, bisect."

@@ -49,6 +49,11 @@ const SKIP = r"(?i)^\s*(solve|plot|show|export|visualize|buscoords|latlongcoords
 const SYSTEMS = Dict(
     "ieee9500" => (; master = joinpath(REPO, "rawData", "ieee9500_source", "base", "Master-bal-initial-config.dss"), base_kV = 12.47, seed = 9500,
                     skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing),
+    # The same with its service transformers (user, 2026-10-20: the sensitivity check on secondaries): each is a line
+    # with its leakage impedance to its secondary bus, where its loads sit. DERs as in ieee9500 (same buses, sizes).
+    "ieee9500xf" => (; master = joinpath(REPO, "rawData", "ieee9500_source", "base", "Master-bal-initial-config.dss"), base_kV = 12.47, seed = 9500,
+                      skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing,
+                      secondary = true),
     "ieee8500" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing),
     "epri_ckt5" => (; master = joinpath(TS, "epri_test_circuits", "ckt5", "Master_ckt5.dss"), base_kV = 12.47, seed = 5, skip = nothing, drop_loads = nothing),
     "epri_ckt7" => (; master = joinpath(TS, "epri_test_circuits", "ckt7", "Master_ckt7.dss"), base_kV = 12.47, seed = 7, skip = nothing,
@@ -160,6 +165,8 @@ function convert(name)
         (a in mv || b in mv || !(haskey(kv, a) && haskey(kv, b))) || join!(lv, a, b)
     end
     lvtop = Dict{String,String}(); subx = []
+    secondary = get(cfg, :secondary, false)
+    lvsec = Dict{String,String}(); svc = Dict{String,Any}()     # secondary variant: LV group -> secondary bus; its transformer
     for nm in real_names(ODD.Transformers.AllNames())
         ODD.Circuit.SetActiveElement("Transformer.$nm"); ODD.CktElement.Enabled() || continue
         bs = bus.(ODD.CktElement.BusNames()); ks = [kv[b] for b in bs]
@@ -175,11 +182,17 @@ function convert(name)
             hv = bs[findfirst(b -> kv[b] > MV[2], bs)]
             push!(subx, (; name = clean("xfmr_" * nm), a = hv, b = m[1], z = transformer_z(nm, vref), kind = :substation))
         elseif length(m) == 1                               # service: MV into secondaries
-            foreach(x -> x in mv || (lvtop[root(lv, x)] = m[1]), bs)
+            sec = first(x for x in bs if !(x in mv))
+            foreach(x -> x in mv || (lvtop[root(lv, x)] = m[1]; lvsec[root(lv, x)] = sec), bs)
+            if secondary                                    # H to the first secondary winding (XHL, %R of windings 1-2)
+                z = transformer_z(nm, vref)
+                svc[sec] = haskey(svc, sec) ? merge(svc[sec], (; z = 1 / (1 / svc[sec].z + 1 / z))) :
+                           (; name = clean("svc_" * nm), a = m[1], b = sec, z, kind = :service)
+            end
         end
     end
     append!(branches, subx)                                 # substation transformers: lines from the source bus
-    load = Dict{String,ComplexF64}(); dropped = 0.0; nload = 0
+    load = Dict{String,ComplexF64}(); load_mv = Dict{String,ComplexF64}(); dropped = 0.0; nload = 0
     for nm in real_names(ODD.Loads.AllNames())
         ODD.Circuit.SetActiveElement("Load.$nm"); ODD.CktElement.Enabled() || continue
         ODD.Loads.Name(nm); s = complex(ODD.Loads.kW(), ODD.Loads.kvar())
@@ -189,8 +202,11 @@ function convert(name)
         b = bus(ODD.CktElement.BusNames()[1])
         pb = b in mv ? b : get(lvtop, root(lv, b), nothing)
         pb === nothing && error("load $nm at $b ($(round(get(kv, b, NaN); digits = 3)) kV): no service transformer found")
-        r = root(dsu, pb); load[r] = get(load, r, 0im) + s / 3; nload += 1
+        r = root(dsu, pb); load_mv[r] = get(load_mv, r, 0im) + s / 3; nload += 1
+        t = secondary && !(b in mv) ? lvsec[root(lv, b)] : r       # where the load sits in the deck
+        load[t] = get(load, t, 0im) + s / 3
     end
+    secondary && append!(branches, [x for (k, x) in svc if haskey(load, k)])
     caps = Dict{String,Float64}()
     for nm in real_names(ODD.Capacitors.AllNames())
         ODD.Circuit.SetActiveElement("Capacitor.$nm"); b = bus(ODD.CktElement.BusNames()[1])
@@ -227,23 +243,24 @@ function convert(name)
     lostload = sum((real(get(load, b, 0im)) for b in lost); init = 0.0)
     br = filter(x -> haskey(feeder, x.a) && haskey(feeder, x.b), br)
     load = Dict(b => s for (b, s) in load if haskey(feeder, b))
+    load_mv = Dict(b => s for (b, s) in load_mv if haskey(feeder, b))      # each load on its MV bus: where DERs go
     caps = Dict(b => q for (b, q) in caps if haskey(feeder, b))
     ties = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties if haskey(feeder, root(dsu, t.a)) && haskey(feeder, root(dsu, t.b))]
     stats = (; nsw, nreg, nstep, nreac, nload, dropped, lost = length(lost), lostload, levels = sort(unique(round.([kv[b] for b in mv]; digits = 2))))
-    return (; name, cfg, buses = Set(keys(feeder)), branches = br, ties, load, caps,
+    return (; name, cfg, buses = Set(keys(feeder)), mvbuses = Set(b for b in keys(feeder) if b in mv), branches = br, ties, load, load_mv, caps,
             subs = [(; bus = s, mv = sort(unique([x.b for x in subx if x.a == s])), z = 1 / sum(1 / x.z for x in subx if x.a == s)) for s in srcs], feeder, stats, notes)
 end
 
 function place_ders(c)
     rng = MersenneTwister(c.cfg.seed)
     subset = Set([[s.bus for s in c.subs]; reduce(vcat, [s.mv for s in c.subs])])
-    cands = sort([b for (b, s) in c.load if real(s) > 0 && !(b in subset)])
-    n = round(Int, DER_FRACTION * (length(c.buses) - length(c.subs))); nboth = round(Int, OVERLAP * n)   # buses below the sources
+    cands = sort([b for (b, s) in c.load_mv if real(s) > 0 && !(b in subset)])
+    n = round(Int, DER_FRACTION * length(c.mvbuses)); nboth = round(Int, OVERLAP * n)   # MV buses below the sources
     n = min(n, (length(cands) + nboth) ÷ 2)
     pick = shuffle(rng, cands)[1:(2n - nboth)]
     pvb, btb = sort([pick[1:nboth]; pick[nboth+1:n]]), sort([pick[1:nboth]; pick[n+1:end]])
-    total = sum(real, values(c.load))
-    size(bs) = (w = sum(real(c.load[b]) for b in bs); Dict(b => DER_SHARE * total * real(c.load[b]) / w for b in bs))
+    total = sum(real, values(c.load_mv))
+    size(bs) = (w = sum(real(c.load_mv[b]) for b in bs); Dict(b => DER_SHARE * total * real(c.load_mv[b]) / w for b in bs))
     return size(pvb), size(btb), nboth
 end
 
@@ -266,7 +283,8 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "rawData", deckname(c)))
                  :reactor => "! Series reactors of the original.",
                  :switch => "! Closed switches in the original. A switch is not in the model: a short line of 1e-3 + j1e-3 ohm.",
                  :regulator => "! Voltage regulators in the original. A regulator is not in the model (tap 1): a short line of 1e-3 + j1e-3 ohm.",
-                 :short => "! Lines of the original below 1e-4 ohm (bus bars, jumpers): 1e-3 + j1e-3 ohm, to keep the admittance matrix well scaled."]
+                 :short => "! Lines of the original below 1e-4 ohm (bus bars, jumpers): 1e-3 + j1e-3 ohm, to keep the admittance matrix well scaled.",
+                 :service => "! Service transformers: a line with the leakage impedance from the primary to the first secondary winding (%R of windings 1-2 + j XHL on its rating; for a centre-tapped unit this overstates the 240 V impedance somewhat). Its loads sit on the secondary bus; the 120/240 V secondary lines are not modeled."]
         for (kind, head) in heads
             sel = filter(x -> x.kind == kind, c.branches); isempty(sel) && continue
             println(io, head)
