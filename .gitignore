@@ -73,7 +73,3 @@ ddp/results/diag_vs_exact_horizon/*_T1536_*.log
 # Gurobi 13 on the matched instances: the logs are the result.
 !ddp/results/gurobi_matched/logs/
 
-# Public test systems: raw files are re-fetched by scripts/fetch_test_systems.sh; only READMEs and summaries are tracked.
-test_systems/*/*
-!test_systems/*/README.md
-!test_systems/*/summary.csv

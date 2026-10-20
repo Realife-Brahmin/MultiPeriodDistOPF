@@ -6,8 +6,8 @@ solved once by `julia --project=envs/msopf scripts/summarize_test_systems.jl`, w
 our own PV and batteries are a separate step (as done for the 9500-node system:
 `envs/multi_poi/root_level/convert_ieee9500_1ph.jl`, deck `rawData/ieee9500_1ph`).
 
-Only the READMEs and summaries are committed; the raw files (30 MB in all, none over 50 MB) are
-ignored by git until the user decides otherwise, and the fetch script restores them.
+The raw files (30 MB in all, none over 50 MB) are committed as the source of truth (user,
+2026-10-20); the fetch script reproduces them.
 
 | Folder | Systems | Source |
 |---|---|---|
