@@ -55,7 +55,9 @@ const SYSTEM = "ieee123_5poi_1ph"
 const MAIN_PAIR = ("subs3", "subs4")
 const ALL_SUBS = ["subs1", "subs2", "subs3", "subs4", "subs5"]
 const X_OVER_R = 25.0
-const OUT_DIR = normpath(joinpath(@__DIR__, "..", "results", "multiperiod"))
+# MULTIPERIOD_OUT_DIR gives a run its own output folder, so concurrent jobs (Kamiak) cannot
+# overwrite each other's CSVs; their rows are merged into the tracked files afterwards.
+const OUT_DIR = normpath(get(ENV, "MULTIPERIOD_OUT_DIR", joinpath(@__DIR__, "..", "results", "multiperiod")))
 const STAGES = isempty(ARGS) ? ["main", "horizon", "zs", "duration", "pairs", "three", "five", "bound", "estimate", "tables"] : lowercase.(ARGS)
 mkpath(OUT_DIR)
 say(args...) = (println(args...); flush(stdout))
