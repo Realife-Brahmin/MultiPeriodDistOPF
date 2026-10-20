@@ -109,7 +109,7 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     (isnothing(L) || L.colptr != K.colptr || L.rowval != K.rowval) && return nothing
     lay, stat = L.lay, L.stat
 
-    fac = tree_kkt_factor(lay, K)
+    fac = network_kkt_factor(lay, K)
     Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
     b0 = nothing
     if !diag
