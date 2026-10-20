@@ -277,6 +277,21 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
     `source_separation` on 10k buses (dense; the stage uses `separation_sparse`).
   - Not written to `rawData/` yet: large10kD exists only in the stage. The R/X
     review (`rx_ratio_report.md`, `rx_ratio_refs.bib`) was not on the 309 PC.
+- **Done 2026-10-20 (Kamiak), three substations on the large decks, T = 24, PV q dispatched**
+  (`three_large_windows.csv`, figures `fig_three_<label>`, `plot_three_large.jl`, hourly
+  sensitivities `three_sens_*.csv`; evidence `results/kamiak/three_oct19`, `three9500_oct20b`,
+  `three9500xf_oct20`):
+  - **ieee9500** (its own three substations, the five ties between feeders closed): nested
+    triangles; all 32 edges no-backflow, 3-11% beyond the sensitivity prediction (conservative).
+  - **ieee2522** (947, 1120): prediction good on backflow faces; 67.5-135 deg cut by 1.05 pu.
+  - **large10kD** (1120, 1060): on the prediction (idle), 1.3-2% inside (cyclic); a thin wedge.
+  - **Secondaries** (`ieee9500xf_1ph`, service transformers modeled): edges move outward
+    1.2-1.8%, still no-backflow, so primary-only decks are conservative by under 2%.
+  - ieee2522 at 1120 at T = 12/24/96: the window narrows 1.3-3% from 24 to 96 (8.7 h job).
+  - Edges now by `reach_secant` (import-margin secant, about 4 solves per point instead of 11 for
+    the bracket, warm-started from the neighbouring direction; `MULTIPERIOD_WARM`).
+  - SMART-DS P1U solves (5,064 buses, 70-86 s per day) but has no ties between its five
+    substations below 69 kV: no window until the user decides how they connect.
 - **Paper: edit only when asked.** Since 2026-10-12 the user also has ChatGPT
   editing the PESGM2027 paper; it rewrote the draft as prose with booktabs
   tables (one file per table, `tables/mp_*.tex`) and vector figures rendered by
