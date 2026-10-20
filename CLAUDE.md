@@ -186,6 +186,10 @@ one, and name it for the workstream it serves.
   built-in DERs: about 10% of buses each, partly overlapping, each fleet 30-50% of the
   load (e.g. `rawData/ieee9500_1ph`), all written by `convert_to_1ph.jl` (switches and
   regulators as 1e-3 + j1e-3 ohm lines, never merged buses; checked by `check_1ph.jl`).
+  Provenance (user, 2026-10-20): `ieee2522C_1ph` is the single-phase, primary-only version
+  of the IEEE 8500 (so `ieee8500_1ph` is a second conversion of the same feeder);
+  `large10kC_1ph` is purely synthetic. All existing decks are primary-only (one voltage
+  level, loads on primary buses, no transformers).
   Public OpenDSS systems to convert from are in
   `test_systems/` (`bash scripts/fetch_test_systems.sh`). OpenDSS only (no CYME, CIM).
   **Commit and push MSOPF work as it is done**, code and paper alike.
