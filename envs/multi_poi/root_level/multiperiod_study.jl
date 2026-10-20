@@ -959,6 +959,128 @@ function large_stage(name)
 end
 foreach(large_stage, filter(in(STAGES), ["ieee2522", "large10k", "large10kd"]))
 
+# ---- stages: three_ieee2522, three_large10kd -----------------------------------------------------------------
+# Three substations on the big decks: the deck's own plus two added in memory (as in the large stages), and
+# the window in the two independent angle differences along 16 directions, against the simplex predicted
+# from the angle-to-import sensitivities (stage "simplex"). User, 2026-10-19: up to three substations on every
+# test system. ieee2522: buses 947 and 1120 on the main trunk (both backflow-limited edges at T = 12).
+# large10kD: buses 1120 (end of feeder 1) and 1060 (its middle), on one feeder so the two interact; feeders
+# meet only at the stiff head bus. Edges: the maximize-angle solve with both checks on ieee2522; on
+# large10kD, where that solve is unreliable, feasibility tests bracketing the predicted reach.
+# THREE_DIRS=i,j,... (0-15) and THREE_CASES=nobatt|cyclic split a run across jobs; LARGE_T sets T.
+const THREE = Dict(
+    "three_ieee2522" => (; base = "ieee2522", at = ["947", "1120"], method = :ray),
+    "three_large10kd" => (; base = "large10kd", at = ["1120", "1060"], method = :bracket))
+const THREE_HEADER = "system,bus_a,bus_b,T,case,ray_deg,feasible_at_equal_angles,measured_deg,predicted_deg,limiting_substation,at_limit,failed_checks,min_import_kW,vmin_pu,vmax_pu,seconds"
+
+"Reach along `dir` by feasibility tests: start at the predicted reach, step out (x1.15) or in (x0.85) to a bracket, bisect."
+function reach_bracket(s, case, dir, guess; bisections = 7)
+    kw, nb = problem(s, case), banded(s.net)
+    last = Ref{Any}(nothing)
+    function test(r)
+        x = solve_multiperiod(s.net, Dict(k => r * v for (k, v) in dir); kw..., objective = :violation, start = last[])
+        ok = x.status in RAY_OK && isfinite(x.violation) && (s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas)
+        ok && (last[] = x)
+        return ok
+    end
+    bind() = last[] === nothing ? (; minP = NaN, vmin = NaN, vmax = NaN) :
+             (; minP = minimum(minimum(v) for v in values(last[].P_subs_kW)),
+                vmin = minimum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T), vmax = maximum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T))
+    test(0.0) || return (; feasible = false, r = NaN, capped = false, bind = bind())
+    g = isfinite(guess) ? min(guess, LIMIT) : LIMIT
+    if g >= LIMIT - 1e-9
+        test(LIMIT) && return (; feasible = true, r = LIMIT, capped = true, bind = bind())
+        g = LIMIT / 2
+    end
+    lo, hi = 0.0, LIMIT
+    if test(g)
+        lo = g
+        while true
+            r = min(lo * 1.15, LIMIT)
+            r <= lo + 1e-9 && return (; feasible = true, r = LIMIT, capped = true, bind = bind())
+            test(r) ? (lo = r) : (hi = r; break)
+        end
+    else
+        hi = g
+        while true
+            r = hi * 0.85
+            r < 1e-3 && (lo = 0.0; break)
+            test(r) ? (lo = r; break) : (hi = r)
+        end
+    end
+    for _ in 1:bisections
+        mid = (lo + hi) / 2
+        test(mid) ? (lo = mid) : (hi = mid)
+    end
+    test(lo)                                              # leave the edge solution as the last one, for bind()
+    return (; feasible = true, r = lo, capped = false, bind = bind())
+end
+
+function three_stage(name)
+    tc = THREE[name]
+    cfg = LARGE[tc.base]
+    T = parse(Int, get(ENV, "LARGE_T", "24"))
+    dirs_i = haskey(ENV, "THREE_DIRS") ? parse.(Int, split(ENV["THREE_DIRS"], ',')) : collect(0:15)
+    cases = haskey(ENV, "THREE_CASES") ? Symbol.(split(ENV["THREE_CASES"], ',')) : [:nobatt, DAY]
+    S0, A1, A2 = "source", "subs2", "subs3"
+    rz = cfg.zs / sqrt(1 + X_OVER_R^2)
+    imp = cfg.zs == 0 ? "R1=0 X1=1e-8 R0=0 X0=1e-8" : @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
+    reactance = String[]
+    if cfg.rx !== nothing
+        for l in eachline(joinpath(REPO_ROOT, "rawData", cfg.system, "BranchData.dss"))
+            m = match(r"^New Line\.(\S+) .*\br1=(\S+) x1=(\S+)"i, l)
+            m === nothing && continue
+            r1, x1 = parse(Float64, m[2]), parse(Float64, m[3])
+            r1 / x1 > cfg.rx + 1e-9 && push!(reactance, @sprintf("Edit Line.%s x1=%.10g", m[1], r1 / cfg.rx))
+        end
+    end
+    extra = [reactance;
+             "New Line.poi2 Phases=1 Bus1=2s Bus2=$(tc.at[1]) r1=1e-06 x1=1e-06 c1=0 c0=0";
+             "New Vsource.subs2 Phases=1 Bus1=2s basekv=$(cfg.kV) pu=1.05 angle=0 $imp";
+             "New Line.poi3 Phases=1 Bus1=3s Bus2=$(tc.at[2]) r1=1e-06 x1=1e-06 c1=0 c0=0";
+             "New Vsource.subs3 Phases=1 Bus1=3s basekv=$(cfg.kV) pu=1.05 angle=0 $imp";
+             "Edit Vsource.source $imp"]
+    net, pvs = load_sources([S0, A1, A2]; system = cfg.system, extra)
+    if cfg.scale != 1
+        k = cfg.scale
+        net = merge(net, (; loads = [merge(d, (; kW = d.kW / k, kvar = d.kvar / k)) for d in net.loads],
+                            batteries = [merge(b, (; kW_rated = b.kW_rated / k, kVA = b.kVA / k, kWh_rated = b.kWh_rated / k)) for b in net.batteries]))
+        pvs = [merge(p, (; kW = p.kW / k, kVA = p.kVA / k)) for p in pvs]
+    end
+    s = setup(net, pvs; T, cfg.feas)
+    say("\n", "="^110, "\n", uppercase(name), "  $(cfg.label), substations at buses $(tc.at[1]) (subs2) and $(tc.at[2]) (subs3) besides the deck's own, T = $T; directions $(join(dirs_i, ',')), cases $(join(cases, ','))")
+    t0 = time()
+    sens = sensitivity(s, [A1, A2])
+    sens === nothing && (say("  ** idle solves failed"); return)
+    for k in sens.names
+        say(@sprintf("    %-6s mean import %8.1f kW (worst hour %8.1f); sensitivity to subs2 %+8.1f, to subs3 %+8.1f kW/deg (daily mean)", k,
+                     sum(sens.P[k]) / sens.T, minimum(sens.P[k]), sum(sens.K[(k, A1)]) / sens.T, sum(sens.K[(k, A2)]) / sens.T))
+    end
+    say(@sprintf("    sensitivities: %.0f s", time() - t0))
+    rows = String[]
+    for case in cases, i in dirs_i
+        th = 2pi * i / 16
+        dir = Dict(S0 => 0.0, A1 => cos(th), A2 => sin(th))
+        pred, lim = predicted_reach(sens, Dict(A1 => cos(th), A2 => sin(th)); day = case === DAY)
+        tr = time()
+        if tc.method === :ray
+            y = rays(s, case, [dir]; check = :both)
+            w = (; feasible = y.feasible, r = y.r[1], capped = y.capped[1], bad = y.bad, bind = y.bind[1])
+        else
+            b = reach_bracket(s, case, dir, pred)
+            w = (; b.feasible, b.r, b.capped, bad = 0, b.bind)
+        end
+        say(@sprintf("    %-6s ray %6.1f deg: measured %s%.4f, predicted %.4f (%s)%s; min import %.2f kW, V %.4f-%.4f  (%.0f s, peak RSS %.1f GB)",
+                     case, rad2deg(th), w.capped ? ">=" : "", w.r, pred, lim, w.bad == 0 ? "" : "  ** $(w.bad) failed checks",
+                     w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr, Sys.maxrss() / 2^30))
+        push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", cfg.label, tc.at[1], tc.at[2], T, case, rad2deg(th),
+                             w.feasible, w.r, pred, lim, w.capped, w.bad, w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr))
+    end
+    merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
+    say("  wrote three_large_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
+end
+foreach(three_stage, filter(in(STAGES), collect(keys(THREE))))
+
 # ---- stage: tables ------------------------------------------------------------------------------------------
 if "tables" in STAGES
     readcsv(f) = (p = joinpath(OUT_DIR, f); isfile(p) && filesize(p) > 0 ? [split(l, ',') for l in readlines(p)[2:end]] : nothing)
