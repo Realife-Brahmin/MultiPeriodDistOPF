@@ -38,6 +38,8 @@ end
 
 plot_style!()
 panels = []
+# Figure data for the paper's own renderer: pv, case, kind (predicted | measured), x, y in degrees.
+figdata = ["pv,case,kind,d3_minus_d1_deg,d4_minus_d1_deg"]
 for (pv, title) in (("unity", "PV at unity power factor"), ("qfree", "PV reactive power dispatched"))
     s = setup(net, pvs; T = 24, pv)
     sens = sensitivity(s, [A, B])
@@ -53,6 +55,12 @@ for (pv, title) in (("unity", "PV at unity power factor"), ("qfree", "PV reactiv
         ths = sort(collect(keys(mm)))
         scatter!(p, [mm[t] * cosd(t) for t in ths], [mm[t] * sind(t) for t in ths]; color = col, ms = 3.5, markerstrokewidth = 0,
                  label = "measured, " * lab)
+        for i in 1:4:length(pr.x)
+            push!(figdata, @sprintf("%s,%s,predicted,%.6f,%.6f", pv, case, pr.x[i], pr.y[i]))
+        end
+        for t in ths
+            push!(figdata, @sprintf("%s,%s,measured,%.6f,%.6f", pv, case, mm[t] * cosd(t), mm[t] * sind(t)))
+        end
         say("  ", rpad(string(case), 7), " corners: ", join([@sprintf("(%+.3f, %+.3f) %s|%s", c[1], c[2], c[3], c[4]) for c in pr.corners], "  "))
     end
     # Face directions: the cyclic faces use the daily-mean sensitivities, the idle ones the binding hour.
@@ -68,4 +76,5 @@ fig = plot(panels...; layout = (1, 2), size = (1100, 640), margin = 6Plots.mm)
 for ext in ("png", "pdf")
     savefig(fig, joinpath(OUT_DIR, "fig_simplex.$ext"))
 end
-say("\nwrote fig_simplex.png and fig_simplex.pdf")
+open(io -> foreach(l -> println(io, l), figdata), joinpath(OUT_DIR, "simplex_figure_data.csv"), "w")
+say("\nwrote fig_simplex.png, fig_simplex.pdf and simplex_figure_data.csv")
