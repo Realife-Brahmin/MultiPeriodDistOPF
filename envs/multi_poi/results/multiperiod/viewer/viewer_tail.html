@@ -77,9 +77,11 @@ function panel(sys) {
       return `<span>${lab}</span><span>${s.n} dots · reach ×${s.med.toFixed(2)} · planar ${s.planar.toFixed(1)}% · tilt ${s.tilt.toFixed(1)}°${bound}</span>`;
     };
     return `<div class="face"><span class="sw" style="background:${fc[i]}"></span><div><div class="fname">${LABEL[sys.id][k]}</div>` +
-      `<div class="nums">${row("nobatt")}${row("cyclic")}</div><button class="edge" data-face="${i}">Edge-on</button></div></div>`;
+      `<div class="nums">${row("nobatt")}${row("cyclic")}</div><div class="btns"><button class="edge" data-face="${i}">Edge-on</button>` +
+      `<button class="edge faceon" data-face="${i}">Face-on</button></div></div></div>`;
   }).join("");
-  document.querySelectorAll(".edge").forEach(b => b.addEventListener("click", () => edgeOn(+b.dataset.face)));
+  document.querySelectorAll(".edge:not(.faceon)").forEach(b => b.addEventListener("click", () => edgeOn(+b.dataset.face)));
+  document.querySelectorAll(".faceon").forEach(b => b.addEventListener("click", () => faceOn(+b.dataset.face)));
   document.getElementById("lin").innerHTML = `Imports are affine in the angles to within <span class="kv">${sys.linearity_max.toFixed(2)}%</span> of the largest import (30 random idle points).`;
 }
 
@@ -111,10 +113,53 @@ function edgeOn(k) {
   draw({ eye: { x: 2.2 * e[0], y: 2.2 * e[1], z: 2.2 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
 }
 
+// In-plane axes of face k: e1, e2 perpendicular to its normal n.
+function faceBasis(k) {
+  const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e1 = unit(cross(n, a));
+  return { n, e1, e2: cross(n, e1) };
+}
+// Vertex of the dispatched-battery tetrahedron where faces i, j, k meet: n_i.x = c_i for the three faces.
+function vertex(i, j, k) {
+  const N = DATA[cur].normals, c = DATA[cur].offsets, M = [N[i], N[j], N[k]], b = [c[i], c[j], c[k]];
+  const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const D = det(M);
+  return [0, 1, 2].map(col => det(M.map((row, r) => row.map((v, cc) => cc === col ? b[r] : v))) / D);
+}
+
+// Look straight at face k from outside (orthographic), and map its dots in the face's own plane.
+function faceOn(k) {
+  stopSpin();
+  const { n, e2 } = faceBasis(k);
+  draw({ eye: { x: 2.2 * n[0], y: 2.2 * n[1], z: 2.2 * n[2] }, up: { x: e2[0], y: e2[1], z: e2[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  faceMap(k);
+}
+
+function faceMap(k) {
+  const sys = DATA[cur], { e1, e2 } = faceBasis(k), out = [];
+  const others = [0, 1, 2, 3].filter(i => i !== k), pairs = [[others[0], others[1]], [others[0], others[2]], [others[1], others[2]]];
+  const tri = pairs.map(([i, j]) => vertex(k, i, j)); tri.push(tri[0]);
+  out.push({ type: "scatter", mode: "lines", x: tri.map(v => dot(v, e1)), y: tri.map(v => dot(v, e2)), line: { color: fcol()[k], width: 2 }, hoverinfo: "skip", name: "predicted face" });
+  for (const [cs, sym, nm] of [["nobatt", "diamond-open", "idle"], ["cyclic", "circle", "dispatched"]]) {
+    const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
+    out.push({ type: "scatter", mode: "markers", name: nm, x: p.map(q => dot(q.slice(0, 3), e1)), y: p.map(q => dot(q.slice(0, 3), e2)),
+      marker: { symbol: sym, size: 9, color: p.map(q => 100 * (q[4] - q[5]) / q[5]), cmin: -30, cmax: 30, cmid: 0,
+        colorscale: [[0, "#2c6fbb"], [0.5, css("--panel") || "#ffffff"], [1, "#b02418"]], line: { color: css("--fg"), width: 0.8 },
+        showscale: cs === "cyclic", colorbar: { title: { text: "%", side: "top" }, thickness: 10, len: 0.9, tickfont: { size: 10 } } },
+      customdata: p.map(q => [100 * (q[4] - q[5]) / q[5], BOUND(sys, q)]),
+      hovertemplate: nm + ": %{customdata[0]:+.1f}% beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
+  }
+  document.getElementById("fmtitle").textContent = "Face map: " + LABEL[sys.id][sys.sources[k]];
+  Plotly.react(document.getElementById("facemap"), out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: css("--sans"), color: css("--fg"), size: 12 }, margin: { l: 44, r: 10, t: 6, b: 34 }, showlegend: false,
+    xaxis: { title: { text: "along the face (deg)" }, color: css("--muted"), gridcolor: css("--line"), zeroline: false, scaleanchor: "y" },
+    yaxis: { title: { text: "across (deg)" }, color: css("--muted"), gridcolor: css("--line"), zeroline: false } },
+    { responsive: true, displaylogo: false, displayModeBar: false });
+}
+
 function tabs() {
   const t = document.getElementById("tabs");
   t.innerHTML = DATA.map((s, i) => `<button class="tab" role="tab" id="tab-${i}" aria-selected="${i === cur}">${s.title}</button>`).join("");
-  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; tabs(); draw(); }));
+  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; tabs(); draw(); faceMap(firstFace()); }));
 }
 
 function spin() {
@@ -133,5 +178,10 @@ document.getElementById("reset").addEventListener("click", () => { stopSpin(); d
 ["t-pi", "t-pc", "t-mi", "t-mc", "dotcol"].forEach(id => document.getElementById(id).addEventListener("change", () => draw(plotEl._fullLayout && plotEl._fullLayout.scene.camera)));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
 new MutationObserver(() => draw()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-tabs(); draw();
+// The face map opens on the face with the most dots, so the page shows one at rest.
+function firstFace() {
+  const p = DATA[cur].cases.cyclic.points, n = [0, 1, 2, 3].map(k => p.filter(q => q[3] === k).length);
+  return n.indexOf(Math.max(...n));
+}
+tabs(); draw(); faceMap(firstFace());
 </script>

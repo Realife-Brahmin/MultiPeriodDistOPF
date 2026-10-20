@@ -48,7 +48,11 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
 .edge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .resid-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
 .rh { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
-#resid { height: 240px; min-width: 0; }
+#resid { height: 260px; min-width: 0; }
+#facemap { height: 260px; min-width: 0; }
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 860px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
 </style>
 
 <div class="wrap">
@@ -77,10 +81,17 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
       <p class="note">Edge-on turns the view to look along that face's predicted plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
     </aside>
   </div>
-  <section class="resid-wrap">
-    <h2 class="rh">Measured reach against predicted, by face</h2>
-    <div id="resid" aria-label="Measured minus predicted reach, in percent, for each direction, grouped by predicted face"></div>
-  </section>
+  <div class="lower">
+    <section class="resid-wrap">
+      <h2 class="rh">Measured reach against predicted, by face</h2>
+      <div id="resid" aria-label="Measured minus predicted reach, in percent, for each direction, grouped by predicted face"></div>
+    </section>
+    <section class="resid-wrap">
+      <h2 class="rh" id="fmtitle">Face map</h2>
+      <div id="facemap" aria-label="The dots of one face seen straight on, colored by measured minus predicted reach"></div>
+      <p class="note" id="fmnote">Press Face-on beside a face: its dots seen straight on, in the face's own plane, colored by how far beyond (red) or inside (blue) the predicted reach they lie. The outline is the predicted face with dispatched batteries.</p>
+    </section>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
