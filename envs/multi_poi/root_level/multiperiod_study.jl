@@ -983,6 +983,25 @@ const THREE = Dict(
 const THREE_HEADER = "system,bus_a,bus_b,T,case,ray_deg,feasible_at_equal_angles,measured_deg,predicted_deg,limiting_substation,at_limit,failed_checks,min_import_kW,vmin_pu,vmax_pu,seconds"
 
 """
+The margin at equal angles for `case`, solved without a cap; every later solve is then capped at 8x
+its time (at least 120 s), and a capped solve is parked in parked_solves.csv with what it takes to
+rerun it, instead of grinding on (a test on the infeasible side took 10x a feasible one on ieee2522).
+MULTIPERIOD_CAP=0 turns the cap off.
+"""
+function reference_solve!(x0s, s, case, names, stage)
+    haskey(x0s, case) && return x0s[case]
+    delete!(ENV, "MULTIPERIOD_MAX_WALL")
+    x = solve_multiperiod(s.net, Dict(k => 0.0 for k in names); problem(s, case)..., objective = :margin)
+    PARK[] = (; file = joinpath(OUT_DIR, "parked_solves.csv"), stage, case = string(case))
+    if get(ENV, "MULTIPERIOD_CAP", "1") == "1"
+        cap = max(120.0, 8 * x.time)
+        ENV["MULTIPERIOD_MAX_WALL"] = string(round(cap))
+        say(@sprintf("    %s: reference solve %.0f s; later solves capped at %.0f s, capped ones parked in parked_solves.csv", case, x.time, cap))
+    end
+    return x0s[case] = x
+end
+
+"""
 Reach along `dir` by a secant on the import margin (`objective = :margin`, the largest import every
 substation can be guaranteed): it is zero at an edge set by no-backflow and nearly linear in the angle
 (the imports are), so from the margin at equal angles `x0` and one solve at the predicted reach `guess`,
@@ -1001,12 +1020,13 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
         x = solve_multiperiod(s.net, at(r); kw..., objective = :margin, start = st); n[] += 1
         return x.status in RAY_OK && isfinite(x.margin_kW) && x.max_violation <= vtol, x
     end
-    function test(r, st)
-        x = solve_multiperiod(s.net, at(r); kw..., objective = :violation, start = st); n[] += 1
-        return x.status in RAY_OK && isfinite(x.violation) && (s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas), x
+    function test(r, st)                                   # feasible iff the margin is >= 0 within the limits
+        x = solve_multiperiod(s.net, at(r); kw..., objective = :margin, start = st); n[] += 1
+        return x.status in RAY_OK && isfinite(x.margin_kW) && x.margin_kW >= -MTOL_KW && x.max_violation <= vtol, x
     end
     bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
-                  vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T))
+                  vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T),
+                  imports = Dict(k => minimum(v) for (k, v) in x.P_subs_kW))
     fallback(why, st) = (say("      secant gave up (", why, "); bracketing"); b = reach_bracket(s, case, dir, guess);
                          (; b..., solves = n[], method = :bracket, x = nothing))
     x0.margin_kW >= -MTOL_KW || return (; feasible = false, r = NaN, capped = false, bind = bind_of(x0), solves = n[], method = :secant, x = nothing)
@@ -1027,7 +1047,10 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
         ra, ma, rb = rb, mb, clamp(rb - mb / slope, 0.0, LIMIT)
     end
     abs(mb) <= MTOL_KW || return fallback("no convergence in 8 margin solves", xb)
-    okout, _ = test(rb * 1.005 + 1e-3, xb)                  # just outside: must be infeasible
+    # Just outside: a margin solve (always feasible as an optimization, fast) must give a negative margin.
+    _, xo = margin(rb * 1.005 + 1e-3, xb)
+    xo.status in RAY_OK || return fallback("confirmation solve: " * string(xo.status) * " (parked)", xb)
+    okout = xo.margin_kW >= -MTOL_KW && xo.max_violation <= vtol
     okout && return fallback(@sprintf("still feasible just outside %.4f deg", rb), xb)
     return (; feasible = true, r = rb, capped = false, bind = bind_of(xb), solves = n[], method = :secant, x = xb)
 end
@@ -1037,14 +1060,16 @@ function reach_bracket(s, case, dir, guess; bisections = 7)
     kw, nb = problem(s, case), banded(s.net)
     last = Ref{Any}(nothing)
     function test(r)
-        x = solve_multiperiod(s.net, Dict(k => r * v for (k, v) in dir); kw..., objective = :violation, start = last[])
-        ok = x.status in RAY_OK && isfinite(x.violation) && (s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas)
+        # a margin solve (always feasible as an optimization): feasible here iff the margin is >= 0 within the limits
+        x = solve_multiperiod(s.net, Dict(k => r * v for (k, v) in dir); kw..., objective = :margin, start = last[])
+        ok = x.status in RAY_OK && isfinite(x.margin_kW) && x.margin_kW >= -MTOL_KW && x.max_violation <= something(s.feas, 1e-5)
         ok && (last[] = x)
         return ok
     end
-    bind() = last[] === nothing ? (; minP = NaN, vmin = NaN, vmax = NaN) :
+    bind() = last[] === nothing ? (; minP = NaN, vmin = NaN, vmax = NaN, imports = Dict{String,Float64}()) :
              (; minP = minimum(minimum(v) for v in values(last[].P_subs_kW)),
-                vmin = minimum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T), vmax = maximum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T))
+                vmin = minimum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T), vmax = maximum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T),
+                imports = Dict(k => minimum(v) for (k, v) in last[].P_subs_kW))
     test(0.0) || return (; feasible = false, r = NaN, capped = false, bind = bind())
     g = isfinite(guess) ? min(guess, LIMIT) : LIMIT
     if g >= LIMIT - 1e-9
@@ -1155,7 +1180,7 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
             y = rays(s, case, [dir]; check = :both)
             w = (; feasible = y.feasible, r = y.r[1], capped = y.capped[1], bad = y.bad, bind = y.bind[1])
         elseif method === :secant
-            haskey(x0s, case) || (x0s[case] = solve_multiperiod(s.net, Dict(k => 0.0 for k in sens.names); problem(s, case)..., objective = :margin))
+            reference_solve!(x0s, s, case, sens.names, name)
             b = reach_secant(s, case, dir, pred, x0s[case]; prev = get(prev, case, nothing))
             b.x === nothing || (prev[case] = b.x)
             say(@sprintf("      %s: %d solves (%s)", case, b.solves, b.method))
@@ -1189,13 +1214,27 @@ const MULTI = Dict(
     # ieee2522 with three added substations (0.311 ohm each, as in stage ieee2522) at buses where no-backflow sets the edges.
     "four_ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", sources = ["source", "subs2", "subs3", "subs4"],
                          add = ["947", "996", "1120"], feas = 1e-5))
-const MULTI_HEADER = "system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds"
+const MULTI_HEADER = "system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW"
 const CUBE_DIRS = [v ./ sqrt(sum(abs2, v)) for v in ([a, b, c] for a in -1:1, b in -1:1, c in -1:1) if any(!=(0), v)]
+# n directions spread evenly over the sphere (Fibonacci lattice): MULTI_DIRSET=fib78 triples the cube's 26.
+fib_dirs(n) = [(z = 1 - 2(i + 0.5) / n; r = sqrt(1 - z^2); ph = i * pi * (3 - sqrt(5)); [r * cos(ph), r * sin(ph), z]) for i in 0:n-1]
+const DIRSETS = Dict("cube26" => CUBE_DIRS, "fib78" => fib_dirs(78))
+
+"What bound at an edge: the substation whose smallest import is ~0 (< 1 kW), else `voltage` at the band edge, else `none`."
+function binding_label(bind, capped)
+    capped && return "open"
+    isempty(bind.imports) && return "unknown"
+    k = argmin(bind.imports)
+    bind.imports[k] < 1.0 && return k
+    (bind.vmin <= 0.9501 || bind.vmax >= 1.0499) && return "voltage"
+    return "none"
+end
 
 function multi_stage(name)
     mc = MULTI[name]
     T = parse(Int, get(ENV, "LARGE_T", "24"))
-    di = haskey(ENV, "MULTI_DIRS") ? parse.(Int, split(ENV["MULTI_DIRS"], r"[,: ]"; keepempty = false)) : collect(1:length(CUBE_DIRS))
+    dset = get(ENV, "MULTI_DIRSET", "cube26"); DIRS = DIRSETS[dset]
+    di = haskey(ENV, "MULTI_DIRS") ? parse.(Int, split(ENV["MULTI_DIRS"], r"[,: ]"; keepempty = false)) : collect(1:length(DIRS))
     cases = haskey(ENV, "MULTI_CASES") ? Symbol.(split(ENV["MULTI_CASES"], ',')) : [:nobatt, DAY]
     nsamp = parse(Int, get(ENV, "MULTI_SAMPLES", "30"))
     extra = String[]
@@ -1250,20 +1289,23 @@ function multi_stage(name)
     end
     rows = String[]; x0s = Dict{Any,Any}(); prev = Dict{Any,Any}()
     for case in cases, i in di
-        u = CUBE_DIRS[i]
+        u = DIRS[i]
         pred, lim = predicted_reach(sens, Dict(zip(movers, u)); day = case === DAY)
         dir = merge(Dict(S0 => 0.0), Dict(zip(movers, u)))
         tr = time()
-        haskey(x0s, case) || (x0s[case] = solve_multiperiod(s.net, Dict(k => 0.0 for k in sens.names); problem(s, case)..., objective = :margin))
+        reference_solve!(x0s, s, case, sens.names, name)
         b = reach_secant(s, case, dir, pred, x0s[case]; prev = get(prev, case, nothing))
         b.x === nothing || (prev[case] = b.x)
-        say(@sprintf("    %-6s dir %2d (%+.2f,%+.2f,%+.2f): measured %s%.4f, predicted %.4f (%s); min import %.2f kW, V %.4f-%.4f; %d solves (%s, %.0f s)",
-                     case, i, u..., b.capped ? ">=" : "", b.r, pred, lim, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
-        push!(rows, @sprintf("%s,%s,%d,%s,%d,%.4f,%.4f,%.4f,%.6f,%.6f,%s,%s,%.4f,%.6f,%.6f,%d,%s,%.0f", mc.label, join(mc.sources, ":"), T, case, i, u...,
-                             b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
+        bl = binding_label(b.bind, b.capped)
+        say(@sprintf("    %-6s dir %2d (%+.2f,%+.2f,%+.2f): measured %s%.4f, predicted %.4f (%s), bound by %s; min import %.2f kW, V %.4f-%.4f; %d solves (%s, %.0f s)",
+                     case, i, u..., b.capped ? ">=" : "", b.r, pred, lim, bl, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
+        push!(rows, @sprintf("%s,%s,%d,%s,%d,%.4f,%.4f,%.4f,%.6f,%.6f,%s,%s,%.4f,%.6f,%.6f,%d,%s,%.0f,%s,%s", mc.label, join(mc.sources, ":"), T, case, i, u...,
+                             b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr, bl,
+                             join([@sprintf("%s=%.3f", k, v) for (k, v) in sort(collect(b.bind.imports))], ";")))
     end
-    isempty(rows) || merge_csv(joinpath(OUT_DIR, "multi_windows.csv"), MULTI_HEADER, 5, rows)
-    say("  wrote multi_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
+    fname = dset == "cube26" ? "multi_windows.csv" : "multi_windows_$dset.csv"
+    isempty(rows) || merge_csv(joinpath(OUT_DIR, fname), MULTI_HEADER, 5, rows)
+    say("  wrote $fname; ", name, " done in ", round(Int, time() - t0), " s")
 end
 foreach(multi_stage, filter(in(STAGES), sort(collect(keys(MULTI)))))
 

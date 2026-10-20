@@ -38,6 +38,9 @@
 
 include(joinpath(@__DIR__, "full_angle_pf.jl"))
 
+# Where a capped solve (TIME_LIMIT / ITERATION_LIMIT) is parked: (; file, stage, case), set by a study.
+const PARK = Ref{Any}(nothing)
+
 profile_phase(T) = [2pi * (k - 1) / T for k in 1:T]
 "Load factor lambda_L[t] in [0.8, 1.0] (tADMM's LoadShapeLoad, periodic sampling)."
 load_profile(T) = T == 1 ? [0.97174] : 0.8 .+ 0.2 .* (sin.(profile_phase(T) .- 0.8) .+ 1) ./ 2
@@ -145,6 +148,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
     # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
     # and no bridge layer, which is most of the memory of a 10k-bus day.
+    t_start = time()
     lean = solver === :ipopt && get(ENV, "MULTIPERIOD_LEAN", "0") == "1"
     model = lean ? direct_model(Ipopt.Optimizer()) : new_model(solver)
     lean && set_silent(model)
@@ -157,6 +161,10 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         # A warm start (`start`, a nearby solution) is only worth something if Ipopt does not push
         # it back to the interior: start the barrier small and keep the point near its bounds.
         # MULTIPERIOD_WARM=0 restores Ipopt's defaults (mu_init 0.1, bound_push 0.01).
+        # A wall-clock cap on this solve (seconds; set by a study from its own reference solve).
+        # A capped solve is recorded in PARK[] (if set) for a later uncapped replay.
+        cap = tryparse(Float64, get(ENV, "MULTIPERIOD_MAX_WALL", ""))
+        cap === nothing || set_attribute(model, "max_wall_time", cap)
         if start !== nothing && get(ENV, "MULTIPERIOD_WARM", "1") == "1"
             set_attribute(model, "mu_init", 1e-4)
             set_attribute(model, "bound_push", 1e-6)
@@ -339,9 +347,28 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         @objective(model, Min, energy + cycling + term)
     end
 
+    t_built = time()
     optimize!(model)
     status = termination_status(model)
     ok = status in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED) && primal_status(model) == MOI.FEASIBLE_POINT
+    # One line per solve (MULTIPERIOD_SOLVE_LOG=0 silences it): where the time of a study goes.
+    if get(ENV, "MULTIPERIOD_SOLVE_LOG", "1") == "1"
+        its = try barrier_iterations(model) catch; -1 end
+        @printf("      [solve] %-9s T=%-3d %-24s %5d it  build %6.1f s  solve %7.1f s  %s  max|angle| %.4f deg\n", objective, T, status, its,
+                t_built - t_start, time() - t_built, start === nothing ? "cold" : "warm", maximum(abs, values(delta_deg)))
+        flush(stdout)
+    end
+    if status in (MOI.TIME_LIMIT, MOI.ITERATION_LIMIT) && PARK[] !== nothing
+        p = PARK[]
+        line = @sprintf("%s,%s,%s,%d,%s,%s,%d,%.1f,%s", p.stage, p.case, objective, T,
+                        join([@sprintf("%s=%.6f", k, v) for (k, v) in sort(collect(delta_deg))], ";"), status,
+                        (try barrier_iterations(model) catch; -1 end), time() - t_built, start === nothing ? "cold" : "warm")
+        new = !isfile(p.file)
+        open(p.file, "a") do io
+            new && println(io, "stage,case,objective,T,angles_deg,status,iterations,seconds,start")
+            println(io, line)
+        end
+    end
     val(x) = has_values(model) ? value(x) : NaN
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
