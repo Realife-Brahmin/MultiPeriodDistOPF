@@ -1,0 +1,20 @@
+
+==============================================================================================================
+THREE_IEEE9500  ieee9500_1ph, its own three substations, ties a8645_48332_sw,tsw803273_sw,v7173_48332_sw,a333_48332_sw,tsw568613_sw closed, T = 24; directions 0,1,2,3, cases cyclic
+    |Z| between substations: subs1-subs2 3.401 ohm, subs1-subs3 4.031 ohm, subs2-subs3 4.259 ohm
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    subs1  mean import   1002.3 kW (worst hour    720.9); sensitivity to subs2   -148.0, to subs3   -114.6 kW/deg (daily mean)
+    subs2  mean import   1280.6 kW (worst hour    990.8); sensitivity to subs2   +248.9, to subs3   -101.0 kW/deg (daily mean)
+    subs3  mean import   1279.7 kW (worst hour    979.0); sensitivity to subs2   -100.6, to subs3   +214.9 kW/deg (daily mean)
+    sensitivities: 195 s
+    cyclic ray    0.0 deg: measured 7.0328, predicted 6.7709 (subs1); min import 0.00 kW, V 0.9685-1.0426  (4826 s, peak RSS 2.8 GB)
+    cyclic ray   22.5 deg: measured 5.7310, predicted 5.5490 (subs1); min import 0.00 kW, V 0.9710-1.0418  (3445 s, peak RSS 2.8 GB)
+    cyclic ray   45.0 deg: measured 5.5864, predicted 5.3966 (subs1); min import 0.00 kW, V 0.9723-1.0416  (2780 s, peak RSS 2.8 GB)
+    cyclic ray   67.5 deg: measured 6.4407, predicted 6.1661 (subs1); min import 0.00 kW, V 0.9737-1.0425  (2948 s, peak RSS 2.8 GB)
+  wrote three_large_windows.csv; three_ieee9500 done in 14196 s
