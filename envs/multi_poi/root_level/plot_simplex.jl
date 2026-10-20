@@ -33,14 +33,15 @@ function predicted(sens; day)
     pts = [predicted_reach(sens, Dict(A => cos(th), B => sin(th)); day) for th in ths]
     r = first.(pts); lim = last.(pts)
     corners = [(r[i] * cos(ths[i]), r[i] * sin(ths[i]), lim[mod1(i - 1, end)], lim[i]) for i in eachindex(ths) if lim[i] != lim[mod1(i - 1, end)]]
-    return (; x = r .* cos.(ths), y = r .* sin.(ths), corners)
+    return (; x = r .* cos.(ths), y = r .* sin.(ths), lim, corners)
 end
 
 plot_style!()
 panels = []
 # Figure data for the paper's own renderer: pv, case, kind (predicted | measured), x, y in degrees.
-figdata = ["pv,case,kind,d3_minus_d1_deg,d4_minus_d1_deg"]
-for (pv, title) in (("unity", "PV at unity power factor"), ("qfree", "PV reactive power dispatched"))
+# face: the substation whose import reaches zero there (for measured points, the one predicted along that direction).
+figdata = ["pv,case,kind,d3_minus_d1_deg,d4_minus_d1_deg,face"]
+for (pv, title) in (("qfree", "PV reactive power dispatched"),)      # the only PV configuration in the paper (user, 2026-10-20)
     s = setup(net, pvs; T = 24, pv)
     sens = sensitivity(s, [A, B])
     meas = measured(pv)
@@ -56,10 +57,11 @@ for (pv, title) in (("unity", "PV at unity power factor"), ("qfree", "PV reactiv
         scatter!(p, [mm[t] * cosd(t) for t in ths], [mm[t] * sind(t) for t in ths]; color = col, ms = 3.5, markerstrokewidth = 0,
                  label = "measured, " * lab)
         for i in 1:4:length(pr.x)
-            push!(figdata, @sprintf("%s,%s,predicted,%.6f,%.6f", pv, case, pr.x[i], pr.y[i]))
+            push!(figdata, @sprintf("%s,%s,predicted,%.6f,%.6f,%s", pv, case, pr.x[i], pr.y[i], pr.lim[i]))
         end
         for t in ths
-            push!(figdata, @sprintf("%s,%s,measured,%.6f,%.6f", pv, case, mm[t] * cosd(t), mm[t] * sind(t)))
+            lt = last(predicted_reach(sens, Dict(A => cosd(t), B => sind(t)); day = case === DAY))
+            push!(figdata, @sprintf("%s,%s,measured,%.6f,%.6f,%s", pv, case, mm[t] * cosd(t), mm[t] * sind(t), lt))
         end
         say("  ", rpad(string(case), 7), " corners: ", join([@sprintf("(%+.3f, %+.3f) %s|%s", c[1], c[2], c[3], c[4]) for c in pr.corners], "  "))
     end
@@ -72,7 +74,7 @@ for (pv, title) in (("unity", "PV at unity power factor"), ("qfree", "PV reactiv
     scatter!(p, [0], [0]; color = :black, ms = 2.5, label = "equal angles")
     push!(panels, p)
 end
-fig = plot(panels...; layout = (1, 2), size = (1100, 640), margin = 6Plots.mm)
+fig = plot(panels...; layout = (1, length(panels)), size = (560 * length(panels), 640), margin = 6Plots.mm)
 for ext in ("png", "pdf")
     savefig(fig, joinpath(OUT_DIR, "fig_simplex.$ext"))
 end

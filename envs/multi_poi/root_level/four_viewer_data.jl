@@ -33,12 +33,14 @@ end
 
 fmt(x) = @sprintf("%.5f", x)
 arr(v) = "[" * join(v, ",") * "]"
-data = rows(joinpath(RES, "multiperiod", "multi_windows.csv"))
+const DSET = isempty(ARGS) ? "cube26" : ARGS[1]           # cube26 (multi_windows.csv) or fib78 (multi_windows_fib78.csv)
+data = rows(joinpath(RES, "multiperiod", DSET == "cube26" ? "multi_windows.csv" : "multi_windows_$(DSET).csv"))
 nth, nph = 49, 97
 out = String[]
 for (stage, srcs, title) in STAGES
     names, P, K = sens(stage)
     meas = [r for r in data if r[2] == srcs]
+    isempty(meas) && (meas = [r for r in rows(joinpath(RES, "multiperiod", "multi_windows.csv")) if r[2] == srcs])   # not run in this set yet: the 26 directions
     rmax = maximum(parse(Float64, r[9]) for r in meas if r[12] == "false")
     cases = String[]
     for case in ("nobatt", "cyclic")
@@ -59,14 +61,20 @@ for (stage, srcs, title) in STAGES
             r[4] == case || continue
             u = parse.(Float64, r[6:8]); v = parse(Float64, r[9]); pv = parse(Float64, r[10])
             lim = findfirst(==(r[11]), names) - 1
-            push!(pts, "[" * join(fmt.(v .* u), ",") * ",$(lim),$(fmt(v)),$(fmt(pv)),$(r[12] == "true")]")
+            # what bound the measured edge: the index of the substation, -1 a voltage limit, -2 unknown or open
+            bl = length(r) >= 19 ? String(r[19]) : "unknown"
+            bi = bl in names ? findfirst(==(bl), names) - 1 : (bl == "voltage" ? -1 : -2)
+            push!(pts, "[" * join(fmt.(v .* u), ",") * ",$(lim),$(fmt(v)),$(fmt(pv)),$(r[12] == "true"),$(bi)]")
         end
         push!(cases, "\"$case\":{\"surface\":{\"x\":$(arr(X)),\"y\":$(arr(Y)),\"z\":$(arr(Z)),\"face\":$(arr(F))},\"points\":$(arr(pts))}")
     end
     lin = [parse(Float64, r[8]) for r in rows(joinpath(RES, "multiperiod", "multi_linearity.csv")) if r[2] == srcs]
-    push!(out, "{\"id\":\"$stage\",\"title\":\"$title\",\"sources\":$(arr(["\"$n\"" for n in names])),\"linearity_max\":$(fmt(100maximum(lin))),\"cases\":{$(join(cases, ","))}}")
+    # daily-mean face normals n_k = -sum_t K_k(t), for the edge-on views
+    normals = [arr(fmt.(-sum(K[k]))) for k in names]; offsets = [fmt(sum(P[k])) for k in names]   # cyclic face: n.x = offset
+    push!(out, "{\"id\":\"$stage\",\"title\":\"$title\",\"sources\":$(arr(["\"$n\"" for n in names])),\"normals\":$(arr(normals)),\"offsets\":$(arr(offsets)),\"linearity_max\":$(fmt(100maximum(lin))),\"cases\":{$(join(cases, ","))}}")
 end
-open(joinpath(RES, "multiperiod", "four_viewer_data.json"), "w") do io
+jf = joinpath(RES, "multiperiod", DSET == "cube26" ? "four_viewer_data.json" : "four_viewer_data_$(DSET).json")
+open(jf, "w") do io
     print(io, "[", join(out, ","), "]")
 end
-println("wrote four_viewer_data.json, ", round(filesize(joinpath(RES, "multiperiod", "four_viewer_data.json")) / 1e6; digits = 2), " MB")
+println("wrote ", basename(jf), ", ", round(filesize(jf) / 1e6; digits = 2), " MB")

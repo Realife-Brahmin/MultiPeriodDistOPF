@@ -36,14 +36,14 @@ end
 function panel(label)
     P, K = sensitivities(label)
     meas = [r for r in rows("three_large_windows.csv") if r[1] == label]
-    data = ["pv,case,kind,d2_minus_d1_deg,d3_minus_d1_deg"]
+    data = ["pv,case,kind,d2_minus_d1_deg,d3_minus_d1_deg,face"]     # face: the substation whose import reaches zero (measured: predicted along that direction)
     rmax = maximum(parse(Float64, r[8]) for r in meas if r[11] != "true")   # zoom to the measured edges
     lims = (-1.25rmax, 1.25rmax)
     p = plot(; aspect_ratio = :equal, xlims = lims, ylims = lims, title = label, legend = :outerbottom, legend_columns = 2,
              xlabel = "δ₂ − δ₁ (deg)", ylabel = "δ₃ − δ₁ (deg)")
     ths = range(0, 2pi; length = 1441)[1:end-1]
     for (case, col, lab) in (("cyclic", colorant"#7a4fd0", "cyclic batteries"), ("nobatt", colorant"#6b6b6b", "batteries idle"))
-        r = [first(reach(P, K, th; day = case == "cyclic")) for th in ths]
+        rl = [reach(P, K, th; day = case == "cyclic") for th in ths]; r = first.(rl); lims = last.(rl)
         r = min.(r, 3rmax)                                    # an open side (no substation limits it) drawn at the frame
         x, y = r .* cos.(ths), r .* sin.(ths)
         plot!(p, [x; x[1]], [y; y[1]]; seriestype = :shape, fillalpha = 0.12, color = col, linecolor = col, lw = 1.4, label = "predicted, " * lab)
@@ -55,10 +55,10 @@ function panel(label)
         any(capped) && scatter!(p, (rc .* cos.(th))[capped], (rc .* sin.(th))[capped]; color = :white, markerstrokecolor = col, ms = 4,
                                 label = case == "cyclic" ? "no edge within $(Int(LIMIT)) deg" : "")
         for i in 1:4:length(ths)
-            push!(data, @sprintf("qfree,%s,predicted,%.6f,%.6f", case, x[i], y[i]))
+            push!(data, @sprintf("qfree,%s,predicted,%.6f,%.6f,%s", case, x[i], y[i], lims[i]))
         end
         for (t, v, c) in zip(th, rm, capped)
-            push!(data, @sprintf("qfree,%s,%s,%.6f,%.6f", case, c ? "measured_capped" : "measured", v * cos(t), v * sin(t)))
+            push!(data, @sprintf("qfree,%s,%s,%.6f,%.6f,%s", case, c ? "measured_capped" : "measured", v * cos(t), v * sin(t), last(reach(P, K, t; day = case == "cyclic"))))
         end
         # how far the measured points lie from the predicted boundary, by direction
         dev = [(v - first(reach(P, K, t; day = case == "cyclic"))) / first(reach(P, K, t; day = case == "cyclic")) for (t, v, c) in zip(th, rm, capped) if !c]
