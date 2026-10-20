@@ -1,0 +1,101 @@
+;
+// Face check (check_four.jl): per system, case, face: [points, planar %, tilt deg, ratio]; null = too few points.
+const CHECK = {
+  four_ieee123a: { nobatt: {subs1: [5, 0.3, 0.4, 1.01], subs2: [11, 0.6, 0.1, 1.04], subs3: [6, 0.0, 0.0, 1.04], subs4: [4, 0.0, 0.0, 1.33]},
+                   cyclic: {subs1: [4, 0.2, 1.1, 1.03], subs2: [11, 0.2, 0.1, 1.04], subs3: [7, 0.1, 0.2, 1.03], subs4: [4, 0.0, 0.1, 1.19]} },
+  four_ieee123b: { nobatt: {subs1: [4, 0.0, 0.2, 1.02], subs3: [5, 0.4, 0.6, 1.05], subs4: [8, 9.5, 3.8, 1.47], subs5: [9, 0.0, 0.0, 1.06]},
+                   cyclic: {subs1: [5, 0.1, 0.5, 1.04], subs3: [5, 0.0, 0.1, 1.05], subs4: [7, 2.2, 1.6, 1.31], subs5: [9, 0.8, 0.5, 1.06]} },
+  four_ieee2522: { nobatt: {source: null, subs2: [6, 1.7, 5.1, 1.07], subs3: [11, 12.2, 7.6, 0.97], subs4: [8, 1.6, 0.4, 1.11]},
+                   cyclic: {source: null, subs2: [6, 4.6, 12.6, 1.04], subs3: [11, 15.3, 9.0, 0.92], subs4: [8, 1.4, 0.8, 1.08]} }
+};
+const LABEL = {
+  four_ieee123a: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4"},
+  four_ieee123b: {subs1: "Substation 1 (reference)", subs3: "Substation 3", subs4: "Substation 4", subs5: "Substation 5"},
+  four_ieee2522: {source: "Deck substation (reference)", subs2: "Substation at bus 947", subs3: "Substation at bus 996", subs4: "Substation at bus 1120"}
+};
+const SHORT = {
+  four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"]
+};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let cur = 0, rotating = false, rafId = null;
+const plotEl = document.getElementById("plot");
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function faceScale() {
+  const c = [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
+  return [[0, c[0]], [0.25, c[0]], [0.25, c[1]], [0.5, c[1]], [0.5, c[2]], [0.75, c[2]], [0.75, c[3]], [1, c[3]]];
+}
+
+function traces(sys) {
+  const fc = [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
+  const show = id => document.getElementById(id).checked;
+  const out = [];
+  for (const [cs, key, op] of [["nobatt", "t-pi", 0.82], ["cyclic", "t-pc", 0.32]]) {
+    if (!show(key)) continue;
+    const s = sys.cases[cs].surface;
+    out.push({ type: "surface", x: s.x, y: s.y, z: s.z, surfacecolor: s.face, cmin: -0.5, cmax: 3.5, colorscale: faceScale(),
+      showscale: false, opacity: op, hoverinfo: "skip", name: cs === "nobatt" ? "predicted, idle" : "predicted, cyclic",
+      lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 }, contours: { x: {highlight: false}, y: {highlight: false}, z: {highlight: false} } });
+  }
+  for (const [cs, key, sym, nm] of [["nobatt", "t-mi", "diamond", "measured, idle"], ["cyclic", "t-mc", "circle", "measured, cyclic"]]) {
+    if (!show(key)) continue;
+    const p = sys.cases[cs].points;
+    out.push({ type: "scatter3d", mode: "markers", name: nm, x: p.map(q => q[0]), y: p.map(q => q[1]), z: p.map(q => q[2]),
+      marker: { size: 4.5, symbol: sym, color: p.map(q => fc[q[3]]), line: { color: css("--fg"), width: 1 } },
+      customdata: p.map(q => [q[4], q[5], 100 * (q[4] - q[5]) / q[5], sys.sources[q[3]]]),
+      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}° (predicted %{customdata[1]:.3f}°, %{customdata[2]:+.1f}%)<br>predicted limit: %{customdata[3]}<extra></extra>" });
+  }
+  return out;
+}
+
+function layout(sys) {
+  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " − " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
+    gridcolor: css("--line"), zerolinecolor: css("--muted"), backgroundcolor: "rgba(0,0,0,0)", showspikes: false });
+  return { paper_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg") }, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
+    scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: plotEl._cam || { eye: { x: 1.5, y: 1.4, z: 0.9 } } },
+    uirevision: sys.id };
+}
+
+function panel(sys) {
+  const fc = [css("--f0"), css("--f1"), css("--f2"), css("--f3")], ck = CHECK[sys.id];
+  const fmt = v => v === null ? "—" : v;
+  document.getElementById("faces").innerHTML = sys.sources.map((k, i) => {
+    const a = ck.nobatt[k], b = ck.cyclic[k];
+    const row = (lab, v) => v ? `<span>${lab}</span><span>ratio ×${v[3].toFixed(2)} · planar ${v[1].toFixed(1)}% · tilt ${v[2].toFixed(1)}°</span>` : `<span>${lab}</span><span>one point: not fitted</span>`;
+    return `<div class="face"><span class="sw" style="background:${fc[i]}"></span><div><div class="fname">${LABEL[sys.id][k]}</div><div class="nums">${row("idle", a)}${row("cyclic", b)}</div></div></div>`;
+  }).join("");
+  document.getElementById("lin").innerHTML = `Imports are affine in the angles to within <span class="kv">${sys.linearity_max.toFixed(2)}%</span> of the largest import (30 random idle points).`;
+}
+
+function draw() {
+  const sys = DATA[cur];
+  Plotly.react(plotEl, traces(sys), layout(sys), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage"] });
+  panel(sys);
+}
+
+function tabs() {
+  const t = document.getElementById("tabs");
+  t.innerHTML = DATA.map((s, i) => `<button class="tab" role="tab" id="tab-${i}" aria-selected="${i === cur}">${s.title}</button>`).join("");
+  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; plotEl._cam = null; tabs(); draw(); }));
+}
+
+function spin() {
+  const sc = plotEl._fullLayout && plotEl._fullLayout.scene;
+  if (!rotating || !sc) return;
+  const e = sc.camera.eye, r = Math.hypot(e.x, e.y), th = Math.atan2(e.y, e.x) + 0.006;
+  plotEl._cam = { eye: { x: r * Math.cos(th), y: r * Math.sin(th), z: e.z }, up: sc.camera.up, center: sc.camera.center };
+  Plotly.relayout(plotEl, { "scene.camera": plotEl._cam });
+  rafId = requestAnimationFrame(spin);
+}
+
+document.getElementById("rot").addEventListener("click", e => {
+  rotating = !rotating; e.currentTarget.setAttribute("aria-pressed", rotating);
+  e.currentTarget.textContent = rotating ? "Stop" : "Rotate";
+  if (rotating) spin(); else cancelAnimationFrame(rafId);
+});
+document.getElementById("reset").addEventListener("click", () => { plotEl._cam = { eye: { x: 1.5, y: 1.4, z: 0.9 } }; Plotly.relayout(plotEl, { "scene.camera": plotEl._cam }); });
+["t-pi", "t-pc", "t-mi", "t-mc"].forEach(id => document.getElementById(id).addEventListener("change", draw));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+tabs(); draw();
+</script>
