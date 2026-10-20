@@ -16,6 +16,7 @@ mkdir -p "$CAMPAIGN/source" "$CAMPAIGN/results" "$CAMPAIGN/logs"
 git -C "$ROOT" rev-parse HEAD > "$CAMPAIGN/source.commit"
 git -C "$ROOT" archive HEAD AGENTS.md spar_ddp/DDP4OPF.jl spar_ddp/examples/power_system \
  spar_ddp/experiments/tree_ablation envs/spar_ddp envs/tadmm \
+ rawData/LoadShapeDefault.dss rawData/LoadShapePVDefault.dss rawData/LoadShapePSubsCostDefault.dss \
  rawData/ieee123C_1ph rawData/ieee2522C_1ph rawData/large10kC_1ph | tar --no-same-owner -x -C "$CAMPAIGN/source"
 touch "$CAMPAIGN/source/.tree-ablation-private"
 mkdir -p "$CAMPAIGN/source/spar_ddp/results/network_filterddp"
