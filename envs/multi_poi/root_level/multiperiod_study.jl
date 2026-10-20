@@ -49,7 +49,7 @@
 
 include(joinpath(@__DIR__, "..", "multiperiod_full_angle.jl"))
 include(joinpath(@__DIR__, "..", "sweep_common.jl"))
-using Logging, SparseArrays
+using Logging, SparseArrays, Random
 
 const SYSTEM = "ieee123_5poi_1ph"
 const MAIN_PAIR = ("subs3", "subs4")
@@ -1174,6 +1174,98 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
     say("  wrote three_large_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
 end
 foreach(three_stage, filter(in(STAGES), collect(keys(THREE))))
+
+# ---------------------------------------------------------------------------------------------
+# N substations (four here): the region in the N-1 angle differences should be a simplex with one
+# planar face per substation (a tetrahedron for four), predicted from the angle-to-import
+# sensitivities at equal angles. Measured along the 26 directions of a cube's faces, edges and
+# corners (normalized) by the secant search, idle and cyclic; plus a direct test of the affine
+# import model at random angle points inside the predicted idle region.
+#   MULTI_DIRS=i:j:... (1-26), MULTI_CASES=nobatt|cyclic, MULTI_SAMPLES=n (idle linearity points, 30;
+#   0 skips), LARGE_T. Rows merge into multi_windows.csv, samples into multi_linearity.csv.
+const MULTI = Dict(
+    "four_ieee123a" => (; system = SYSTEM, label = "ieee123_5poi_1ph", sources = ["subs1", "subs2", "subs3", "subs4"], add = nothing, feas = nothing),
+    "four_ieee123b" => (; system = SYSTEM, label = "ieee123_5poi_1ph", sources = ["subs1", "subs3", "subs4", "subs5"], add = nothing, feas = nothing),
+    # ieee2522 with three added substations (0.311 ohm each, as in stage ieee2522) at buses where no-backflow sets the edges.
+    "four_ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", sources = ["source", "subs2", "subs3", "subs4"],
+                         add = ["947", "996", "1120"], feas = 1e-5))
+const MULTI_HEADER = "system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds"
+const CUBE_DIRS = [v ./ sqrt(sum(abs2, v)) for v in ([a, b, c] for a in -1:1, b in -1:1, c in -1:1) if any(!=(0), v)]
+
+function multi_stage(name)
+    mc = MULTI[name]
+    T = parse(Int, get(ENV, "LARGE_T", "24"))
+    di = haskey(ENV, "MULTI_DIRS") ? parse.(Int, split(ENV["MULTI_DIRS"], r"[,: ]"; keepempty = false)) : collect(1:length(CUBE_DIRS))
+    cases = haskey(ENV, "MULTI_CASES") ? Symbol.(split(ENV["MULTI_CASES"], ',')) : [:nobatt, DAY]
+    nsamp = parse(Int, get(ENV, "MULTI_SAMPLES", "30"))
+    extra = String[]
+    if mc.add !== nothing
+        rz = 0.311 / sqrt(1 + X_OVER_R^2)
+        imp = @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
+        for (i, b) in enumerate(mc.add)
+            push!(extra, "New Line.poi$(i+1) Phases=1 Bus1=$(i+1)s Bus2=$b r1=1e-06 x1=1e-06 c1=0 c0=0",
+                         "New Vsource.subs$(i+1) Phases=1 Bus1=$(i+1)s basekv=7.2 pu=1.05 angle=0 $imp")
+        end
+        push!(extra, "Edit Vsource.source $imp")
+    end
+    net, pvs = load_sources(mc.sources; system = mc.system, extra)
+    s = setup(net, pvs; T, feas = mc.feas)
+    S0, movers = mc.sources[1], mc.sources[2:end]
+    say("\n", "="^110, "\n", uppercase(name), "  $(mc.label), sources ", join(mc.sources, ","), mc.add === nothing ? "" : " (added at buses $(join(mc.add, ",")))",
+        ", reference $S0, T = $T; directions $(join(di, ',')), cases $(join(cases, ','))")
+    t0 = time()
+    sens = sensitivity(s, movers)
+    sens === nothing && (say("  ** idle solves failed"); return)
+    for k in sens.names
+        say(@sprintf("    %-6s mean import %8.1f kW (worst hour %8.1f); sensitivity %s kW/deg (daily mean)", k, sum(sens.P[k]) / T, minimum(sens.P[k]),
+                     join([@sprintf("%s %+.1f", m, sum(sens.K[(k, m)]) / T) for m in movers], ", ")))
+    end
+    colsum = [sum(sum(sens.K[(k, m)]) / T for k in sens.names) for m in movers]
+    say("    sensitivities summed over substations (0 if raising an angle only shifts power): ", join([@sprintf("%+.1f", x) for x in colsum], ", "), " kW/deg")
+    open(joinpath(OUT_DIR, "multi_sens_$(name)_T$(T).csv"), "w") do io
+        println(io, "substation,hour,import_kW," * join(["K_$(m)_kW_per_deg" for m in movers], ","))
+        for k in sens.names, t in 1:T
+            println(io, k, ",", t, ",", @sprintf("%.6f", sens.P[k][t]), ",", join([@sprintf("%.6f", sens.K[(k, m)][t]) for m in movers], ","))
+        end
+    end
+    # the affine import model at random points inside the predicted idle region
+    if nsamp > 0 && :nobatt in cases
+        rng = Random.MersenneTwister(2027); lin = String[]; errs = Float64[]
+        for j in 1:nsamp
+            u = randn(rng, length(movers)); u ./= sqrt(sum(abs2, u))
+            r = first(predicted_reach(sens, Dict(zip(movers, u)); day = false)) * (0.2 + 0.7 * rand(rng))
+            d = Dict(zip(movers, r .* u))
+            x = solve_multiperiod(s.net, merge(Dict(S0 => 0.0), d); problem(s, :nobatt)..., no_backflow = false)
+            x.ok || continue
+            e = maximum(abs(x.P_subs_kW[k][t] - (sens.P[k][t] + sum(sens.K[(k, m)][t] * d[m] for m in movers))) for k in sens.names, t in 1:T)
+            sc = maximum(maximum(sens.P[k]) for k in sens.names)
+            push!(errs, e / sc)
+            push!(lin, @sprintf("%s,%s,%d,%d,%s,%.6f,%.4f,%.6f", mc.label, join(mc.sources, ":"), T, j, join([@sprintf("%.6f", d[m]) for m in movers], ":"), r, e, e / sc))
+        end
+        if !isempty(errs)
+            say(@sprintf("    affine import model at %d random idle points: largest hourly error %.2f%% of the largest import (median %.2f%%)",
+                         length(errs), 100maximum(errs), 100sort(errs)[(end + 1) ÷ 2]))
+            merge_csv(joinpath(OUT_DIR, "multi_linearity.csv"), "system,sources,T,sample,angles_deg,radius_deg,max_abs_error_kW,max_rel_error", 4, lin)
+        end
+    end
+    rows = String[]; x0s = Dict{Any,Any}(); prev = Dict{Any,Any}()
+    for case in cases, i in di
+        u = CUBE_DIRS[i]
+        pred, lim = predicted_reach(sens, Dict(zip(movers, u)); day = case === DAY)
+        dir = merge(Dict(S0 => 0.0), Dict(zip(movers, u)))
+        tr = time()
+        haskey(x0s, case) || (x0s[case] = solve_multiperiod(s.net, Dict(k => 0.0 for k in sens.names); problem(s, case)..., objective = :margin))
+        b = reach_secant(s, case, dir, pred, x0s[case]; prev = get(prev, case, nothing))
+        b.x === nothing || (prev[case] = b.x)
+        say(@sprintf("    %-6s dir %2d (%+.2f,%+.2f,%+.2f): measured %s%.4f, predicted %.4f (%s); min import %.2f kW, V %.4f-%.4f; %d solves (%s, %.0f s)",
+                     case, i, u..., b.capped ? ">=" : "", b.r, pred, lim, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
+        push!(rows, @sprintf("%s,%s,%d,%s,%d,%.4f,%.4f,%.4f,%.6f,%.6f,%s,%s,%.4f,%.6f,%.6f,%d,%s,%.0f", mc.label, join(mc.sources, ":"), T, case, i, u...,
+                             b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
+    end
+    isempty(rows) || merge_csv(joinpath(OUT_DIR, "multi_windows.csv"), MULTI_HEADER, 5, rows)
+    say("  wrote multi_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
+end
+foreach(multi_stage, filter(in(STAGES), sort(collect(keys(MULTI)))))
 
 # ---- stage: tables ------------------------------------------------------------------------------------------
 if "tables" in STAGES
