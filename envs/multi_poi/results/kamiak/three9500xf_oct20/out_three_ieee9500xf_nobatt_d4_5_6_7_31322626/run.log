@@ -1,0 +1,20 @@
+
+==============================================================================================================
+THREE_IEEE9500XF  ieee9500xf_1ph, its own three substations, ties a8645_48332_sw,tsw803273_sw,v7173_48332_sw,a333_48332_sw,tsw568613_sw closed, T = 24; directions 4,5,6,7, cases nobatt
+    |Z| between substations: subs1-subs2 4.620 ohm, subs1-subs3 5.230 ohm, subs2-subs3 5.441 ohm
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    subs1  mean import   1013.7 kW (worst hour    733.1); sensitivity to subs2   -148.6, to subs3   -114.2 kW/deg (daily mean)
+    subs2  mean import   1295.5 kW (worst hour   1006.5); sensitivity to subs2   +248.7, to subs3   -100.1 kW/deg (daily mean)
+    subs3  mean import   1294.4 kW (worst hour    993.5); sensitivity to subs2    -99.7, to subs3   +213.7 kW/deg (daily mean)
+    sensitivities: 327 s
+    nobatt ray   90.0 deg: measured 7.0290, predicted 6.4403 (subs1); min import 0.00 kW, V 0.9602-1.0438  (781 s, peak RSS 3.8 GB)
+    nobatt ray  112.5 deg: measured 5.9289, predicted 5.3861 (subs2); min import 0.00 kW, V 0.9602-1.0430  (700 s, peak RSS 3.8 GB)
+    nobatt ray  135.0 deg: measured 4.4660, predicted 4.0963 (subs2); min import 0.00 kW, V 0.9596-1.0420  (643 s, peak RSS 3.8 GB)
+    nobatt ray  157.5 deg: measured 4.0900, predicted 3.7677 (subs2); min import -0.00 kW, V 0.9590-1.0416  (629 s, peak RSS 3.8 GB)
+  wrote three_large_windows.csv; three_ieee9500xf done in 3081 s
