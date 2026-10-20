@@ -1086,6 +1086,14 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
                      sum(sens.P[k]) / sens.T, minimum(sens.P[k]), sum(sens.K[(k, A1)]) / sens.T, sum(sens.K[(k, A2)]) / sens.T))
     end
     say(@sprintf("    sensitivities: %.0f s", time() - t0))
+    # Hourly imports and sensitivities at equal angles, from which the predicted region is drawn
+    # (THREE_DIRS= with no directions runs only this).
+    open(joinpath(OUT_DIR, "three_sens_$(label)_T$(T).csv"), "w") do io
+        println(io, "substation,hour,import_kW,K_subs2_kW_per_deg,K_subs3_kW_per_deg")
+        for k in sens.names, t in 1:sens.T
+            @printf(io, "%s,%d,%.6f,%.6f,%.6f\n", k == S0 ? "ref" : k, t, sens.P[k][t], sens.K[(k, A1)][t], sens.K[(k, A2)][t])
+        end
+    end
     rows = String[]
     for case in cases, i in dirs_i
         th = 2pi * i / 16
@@ -1105,7 +1113,7 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
         push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", label, at[1], at[2], T, case, rad2deg(th),
                              w.feasible, w.r, pred, lim, w.capped, w.bad, w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr))
     end
-    merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
+    isempty(rows) || merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
     say("  wrote three_large_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
 end
 foreach(three_stage, filter(in(STAGES), collect(keys(THREE))))
