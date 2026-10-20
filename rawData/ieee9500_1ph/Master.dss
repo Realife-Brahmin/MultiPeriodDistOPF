@@ -1,0 +1,30 @@
+Clear
+! ieee9500_1ph: single-phase per-phase equivalent of the IEEE 9500-node test system
+! (PNNL / GridAPPS-D CIMHub; original in ../ieee9500_source, BSD-style license there).
+! Written by envs/multi_poi/root_level/convert_ieee9500_1ph.jl -- do not edit by hand.
+New Circuit.ieee9500_1ph basekv=7.2 Bus1=s1 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
+VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
+! Each substation is an EMF behind its 69/12.47 kV transformer (20 MVA, X = 7.94 %, R = 2 x 0.67 %):
+! Zs = 0.104186 + j0.617339 ohm. A 1-phase Vsource's impedance is (2 Z1 + Z0)/3, so Z1 = Z0 = Zs.
+New Vsource.subs1 Phases=1 Bus1=s1 basekv=7.2 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
+New Vsource.subs2 Phases=1 Bus1=s2 basekv=7.2 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
+New Vsource.subs3 Phases=1 Bus1=s3 basekv=7.2 pu=1.05 angle=0.0 R1=0.104186 X1=0.617339 R0=0.104186 X0=0.617339
+Redirect BranchData.dss
+Redirect Ties.dss
+! Substation connection lines
+New Line.poi1 Phases=1 Bus1=s1 Bus2=regxfmr_hvmv11sub1_lsb.1 r1=1e-06 x1=1e-06
+New Line.poi2 Phases=1 Bus1=s2 Bus2=regxfmr_hvmv11sub2_lsb.1 r1=1e-06 x1=1e-06
+New Line.poi3 Phases=1 Bus1=s3 Bus2=regxfmr_hvmv11sub3_lsb.1 r1=1e-06 x1=1e-06
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss     ! Balanced Loads
+// Redirect  Capacitor.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
+
+Set VoltageBases = [12.47]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases
