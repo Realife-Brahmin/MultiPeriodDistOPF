@@ -59,7 +59,7 @@ establishes something a later session on any machine would need.
 
 ### MSOPF handoff (written 2026-10-12 on the Surface, for a session on any machine)
 
-Branch `msopf-oct09-further-investigations` (re-resolve from the remote first).
+Branch `msopf-oct21-scoping-study` since 2026-10-21 (`msopf-oct09-further-investigations` was merged into master in PR #174 and deleted); re-resolve from the remote first.
 Everything below is one driver, `envs/multi_poi/root_level/multiperiod_study.jl`,
 run from the repo root as
 `julia --project=envs/msopf envs/multi_poi/root_level/multiperiod_study.jl <stage ...>`;
