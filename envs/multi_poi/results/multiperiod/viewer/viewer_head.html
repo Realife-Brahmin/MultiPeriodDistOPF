@@ -71,6 +71,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
     </div>
     <button class="btn" id="rot" aria-pressed="false">Rotate</button>
     <button class="btn" id="reset">Reset view</button>
+    <button class="btn" id="all" hidden>Show all faces</button>
   </div>
   <div class="stage">
     <div id="plot" aria-label="Rotatable 3-D view of the feasible angle region"></div>
@@ -78,7 +79,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
       <div><h2>Faces</h2></div>
       <div class="faces" id="faces"></div>
       <p class="note" id="lin"></p>
-      <p class="note">Edge-on turns the view to look along that face's predicted plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
+      <p class="note">Edge-on and Face-on show that face alone: its dots and the predicted plane (dispatched) around them. Edge-on looks along the face's plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
     </aside>
   </div>
   <div class="lower">

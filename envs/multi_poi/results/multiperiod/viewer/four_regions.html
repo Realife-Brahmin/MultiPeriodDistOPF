@@ -79,6 +79,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
     </div>
     <button class="btn" id="rot" aria-pressed="false">Rotate</button>
     <button class="btn" id="reset">Reset view</button>
+    <button class="btn" id="all" hidden>Show all faces</button>
   </div>
   <div class="stage">
     <div id="plot" aria-label="Rotatable 3-D view of the feasible angle region"></div>
@@ -86,7 +87,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
       <div><h2>Faces</h2></div>
       <div class="faces" id="faces"></div>
       <p class="note" id="lin"></p>
-      <p class="note">Edge-on turns the view to look along that face's predicted plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
+      <p class="note">Edge-on and Face-on show that face alone: its dots and the predicted plane (dispatched) around them. Edge-on looks along the face's plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
     </aside>
   </div>
   <div class="lower">
@@ -115,7 +116,7 @@ const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
 const DEFAULT_CAM = { eye: { x: 1.5, y: 1.4, z: 0.9 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 }, projection: { type: "perspective" } };
-let cur = 0, rotating = false, rafId = null;
+let cur = 0, rotating = false, rafId = null, focus = -1;   // focus: the one face shown (Edge-on / Face-on), -1 for all
 const plotEl = document.getElementById("plot"), residEl = document.getElementById("resid");
 const sub = (a, b) => a.map((v, i) => v - b[i]), dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
 const norm = a => Math.sqrt(dot(a, a)), unit = a => a.map(v => v / norm(a));
@@ -134,15 +135,30 @@ const BOUND = (sys, q) => q[7] === undefined || q[7] === -2 ? "not recorded" : q
 
 function traces(sys) {
   const show = id => document.getElementById(id).checked, out = [];
+  if (focus >= 0) {
+    // one face: a patch of its predicted plane (dispatched) just covering its dots; the whole predicted
+    // triangle can reach far beyond them (one corner of the 2522-bus tetrahedron lies far out)
+    const N = sys.normals[focus], c = sys.offsets[focus], { e1, e2 } = faceBasis(focus), col = fcol()[focus];
+    const x0 = N.map(v => v * c / dot(N, N));
+    const p = ["nobatt", "cyclic"].flatMap(cs => sys.cases[cs].points.filter(q => !q[6] && q[3] === focus));
+    if (p.length) {
+      const u = p.map(q => dot(sub(q.slice(0, 3), x0), e1)), v = p.map(q => dot(sub(q.slice(0, 3), x0), e2));
+      const [u0, u1, v0, v1] = [Math.min(...u), Math.max(...u), Math.min(...v), Math.max(...v)];
+      const pu = 0.15 * (u1 - u0 + 0.05), pv = 0.15 * (v1 - v0 + 0.05);
+      const cor = [[u0 - pu, v0 - pv], [u1 + pu, v0 - pv], [u1 + pu, v1 + pv], [u0 - pu, v1 + pv]].map(([a, b]) => x0.map((w, i) => w + a * e1[i] + b * e2[i]));
+      out.push({ type: "mesh3d", x: cor.map(w => w[0]), y: cor.map(w => w[1]), z: cor.map(w => w[2]), i: [0, 0], j: [1, 2], k: [2, 3],
+        color: col, opacity: 0.25, hoverinfo: "skip", flatshading: true });
+    }
+  }
   for (const [cs, key, op] of [["nobatt", "t-pi", 0.82], ["cyclic", "t-pc", 0.32]]) {
-    if (!show(key)) continue;
+    if (focus >= 0 || !show(key)) continue;
     const s = sys.cases[cs].surface;
     out.push({ type: "surface", x: s.x, y: s.y, z: s.z, surfacecolor: s.face, cmin: -0.5, cmax: 3.5, colorscale: faceScale(), showscale: false,
       opacity: op, hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
   }
   for (const [cs, key, sym, nm] of [["nobatt", "t-mi", "diamond", "measured, idle"], ["cyclic", "t-mc", "circle", "measured, cyclic"]]) {
     if (!show(key)) continue;
-    const p = sys.cases[cs].points.filter(q => !q[6]);
+    const p = sys.cases[cs].points.filter(q => !q[6] && (focus < 0 || q[3] === focus));
     out.push({ type: "scatter3d", mode: "markers", name: nm, x: p.map(q => q[0]), y: p.map(q => q[1]), z: p.map(q => q[2]),
       marker: { size: 4.5, symbol: sym, color: p.map(dotColor), line: { color: css("--fg"), width: 1 } },
       customdata: p.map(q => [q[4], q[5], 100 * (q[4] - q[5]) / q[5], LABEL[sys.id][sys.sources[q[3]]], BOUND(sys, q)]),
@@ -155,7 +171,7 @@ function layout(sys, cam) {
   const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " − " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
     gridcolor: css("--line"), zerolinecolor: css("--muted"), backgroundcolor: "rgba(0,0,0,0)", showspikes: false });
   return { paper_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg") }, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
-    scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: cam || DEFAULT_CAM }, uirevision: sys.id + (cam ? JSON.stringify(cam) : "") };
+    scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: cam || DEFAULT_CAM }, uirevision: sys.id + focus + (cam ? JSON.stringify(cam) : "") };
 }
 
 // Face statistics from the dots: least-squares plane a.x = 1 through a face's dots.
@@ -207,16 +223,18 @@ function resid(sys) {
 }
 
 function draw(cam) {
-  const sys = DATA[cur];
+  const sys = DATA[cur], all = document.getElementById("all");
+  all.hidden = focus < 0;
+  if (focus >= 0) all.textContent = "Show all faces (now: " + LABEL[sys.id][sys.sources[focus]].replace(" (reference)", "") + " only)";
   Plotly.react(plotEl, traces(sys), layout(sys, cam), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage"] });
   panel(sys); resid(sys);
 }
 
 // Look along face k's predicted plane: an orthographic view direction perpendicular to its normal, with the normal up.
 function edgeOn(k) {
-  stopSpin();
+  stopSpin(); focus = k;
   const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e = unit(cross(n, a));
-  draw({ eye: { x: 2.2 * e[0], y: 2.2 * e[1], z: 2.2 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  draw({ eye: { x: 1.6 * e[0], y: 1.6 * e[1], z: 1.6 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
 }
 
 // In-plane axes of face k: e1, e2 perpendicular to its normal n.
@@ -234,16 +252,21 @@ function vertex(i, j, k) {
 
 // Look straight at face k from outside (orthographic), and map its dots in the face's own plane.
 function faceOn(k) {
-  stopSpin();
+  stopSpin(); focus = k;
   const { n, e2 } = faceBasis(k);
-  draw({ eye: { x: 2.2 * n[0], y: 2.2 * n[1], z: 2.2 * n[2] }, up: { x: e2[0], y: e2[1], z: e2[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  draw({ eye: { x: 1.6 * n[0], y: 1.6 * n[1], z: 1.6 * n[2] }, up: { x: e2[0], y: e2[1], z: e2[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
   faceMap(k);
+}
+
+// The three corners of face k on the dispatched-battery tetrahedron.
+function faceTriangle(k) {
+  const o = [0, 1, 2, 3].filter(i => i !== k);
+  return [[o[0], o[1]], [o[0], o[2]], [o[1], o[2]]].map(([i, j]) => vertex(k, i, j));
 }
 
 function faceMap(k) {
   const sys = DATA[cur], { e1, e2 } = faceBasis(k), out = [];
-  const others = [0, 1, 2, 3].filter(i => i !== k), pairs = [[others[0], others[1]], [others[0], others[2]], [others[1], others[2]]];
-  const tri = pairs.map(([i, j]) => vertex(k, i, j)); tri.push(tri[0]);
+  const tri = faceTriangle(k); tri.push(tri[0]);
   out.push({ type: "scatter", mode: "lines", x: tri.map(v => dot(v, e1)), y: tri.map(v => dot(v, e2)), line: { color: fcol()[k], width: 2 }, hoverinfo: "skip", name: "predicted face" });
   for (const [cs, sym, nm] of [["nobatt", "diamond-open", "idle"], ["cyclic", "circle", "dispatched"]]) {
     const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
@@ -265,7 +288,7 @@ function faceMap(k) {
 function tabs() {
   const t = document.getElementById("tabs");
   t.innerHTML = DATA.map((s, i) => `<button class="tab" role="tab" id="tab-${i}" aria-selected="${i === cur}">${s.title}</button>`).join("");
-  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; tabs(); draw(); faceMap(firstFace()); }));
+  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; focus = -1; tabs(); draw(); faceMap(firstFace()); }));
 }
 
 function spin() {
@@ -280,7 +303,8 @@ document.getElementById("rot").addEventListener("click", e => {
   if (rotating) { stopSpin(); return; }
   rotating = true; e.currentTarget.setAttribute("aria-pressed", "true"); e.currentTarget.textContent = "Stop"; spin();
 });
-document.getElementById("reset").addEventListener("click", () => { stopSpin(); draw(DEFAULT_CAM); });
+document.getElementById("reset").addEventListener("click", () => { stopSpin(); focus = -1; draw(DEFAULT_CAM); });
+document.getElementById("all").addEventListener("click", () => { focus = -1; draw(plotEl._fullLayout && plotEl._fullLayout.scene.camera); });
 ["t-pi", "t-pc", "t-mi", "t-mc", "dotcol"].forEach(id => document.getElementById(id).addEventListener("change", () => draw(plotEl._fullLayout && plotEl._fullLayout.scene.camera)));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
 new MutationObserver(() => draw()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
