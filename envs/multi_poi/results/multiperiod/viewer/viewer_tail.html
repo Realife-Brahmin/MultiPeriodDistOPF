@@ -3,9 +3,10 @@
 const LABEL = {
   four_ieee123a: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4"},
   four_ieee123b: {subs1: "Substation 1 (reference)", subs3: "Substation 3", subs4: "Substation 4", subs5: "Substation 5"},
-  four_ieee2522: {source: "Deck substation (reference)", subs2: "Substation at bus 947", subs3: "Substation at bus 996", subs4: "Substation at bus 1120"}
+  four_ieee2522: {source: "Deck substation (reference)", subs2: "Substation at bus 947", subs3: "Substation at bus 996", subs4: "Substation at bus 1120"},
+  four_ieee9500: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"}
 };
-const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"] };
+const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"], four_ieee9500: ["δ1", "δ2", "δ3", "δ4"] };
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
 const DEFAULT_CAM = { eye: { x: 1.5, y: 1.4, z: 0.9 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 }, projection: { type: "perspective" } };

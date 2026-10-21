@@ -7,12 +7,14 @@ using Printf
 const RES = joinpath(@__DIR__, "..", "results")
 rows(f) = [split(l, ',') for l in readlines(f)[2:end]]
 
-const STAGES = [("four_ieee123a", "subs1:subs2:subs3:subs4", "IEEE 123-node, sources 1, 2, 3, 4"),
-                ("four_ieee123b", "subs1:subs3:subs4:subs5", "IEEE 123-node, sources 1, 3, 4, 5"),
-                ("four_ieee2522", "source:subs2:subs3:subs4", "2522-bus feeder, sources at 947, 996, 1120")]
+# (stage, system, sources, tab title)
+const STAGES = [("four_ieee123a", "ieee123_5poi_1ph", "subs1:subs2:subs3:subs4", "IEEE 123-node, sources 1, 2, 3, 4"),
+                ("four_ieee123b", "ieee123_5poi_1ph", "subs1:subs3:subs4:subs5", "IEEE 123-node, sources 1, 3, 4, 5"),
+                ("four_ieee2522", "ieee2522C_1ph", "source:subs2:subs3:subs4", "2522-bus feeder, sources at 947, 996, 1120"),
+                ("four_ieee9500", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder (from IEEE 9500), its 3 + 1 added")]
 
 function sens(stage)
-    f = first(p for (r, _, fs) in walkdir(joinpath(RES, "kamiak", "four_oct20")) for x in fs for p in (joinpath(r, x),) if endswith(p, "multi_sens_$(stage)_T24.csv"))
+    f = first(p for (r, _, fs) in walkdir(joinpath(RES, "kamiak")) for x in fs for p in (joinpath(r, x),) if endswith(p, "multi_sens_$(stage)_T24.csv"))
     names = String[]; P = Dict{String,Vector{Float64}}(); K = Dict{String,Vector{Vector{Float64}}}()
     for r in rows(f)
         k = String(r[1]); k in names || push!(names, k)
@@ -37,10 +39,10 @@ const DSET = isempty(ARGS) ? "cube26" : ARGS[1]           # cube26 (multi_window
 data = rows(joinpath(RES, "multiperiod", DSET == "cube26" ? "multi_windows.csv" : "multi_windows_$(DSET).csv"))
 nth, nph = 49, 97
 out = String[]
-for (stage, srcs, title) in STAGES
+for (stage, sys, srcs, title) in STAGES
     names, P, K = sens(stage)
-    meas = [r for r in data if r[2] == srcs]
-    isempty(meas) && (meas = [r for r in rows(joinpath(RES, "multiperiod", "multi_windows.csv")) if r[2] == srcs])   # not run in this set yet: the 26 directions
+    meas = [r for r in data if r[1] == sys && r[2] == srcs]
+    isempty(meas) && (meas = [r for r in rows(joinpath(RES, "multiperiod", "multi_windows.csv")) if r[1] == sys && r[2] == srcs])   # not run in this set yet: the 26 directions
     rmax = maximum(parse(Float64, r[9]) for r in meas if r[12] == "false")
     cases = String[]
     for case in ("nobatt", "cyclic")
@@ -68,7 +70,7 @@ for (stage, srcs, title) in STAGES
         end
         push!(cases, "\"$case\":{\"surface\":{\"x\":$(arr(X)),\"y\":$(arr(Y)),\"z\":$(arr(Z)),\"face\":$(arr(F))},\"points\":$(arr(pts))}")
     end
-    lin = [parse(Float64, r[8]) for r in rows(joinpath(RES, "multiperiod", "multi_linearity.csv")) if r[2] == srcs]
+    lin = [parse(Float64, r[8]) for r in rows(joinpath(RES, "multiperiod", "multi_linearity.csv")) if r[1] == sys && r[2] == srcs]
     # daily-mean face normals n_k = -sum_t K_k(t), for the edge-on views
     normals = [arr(fmt.(-sum(K[k]))) for k in names]; offsets = [fmt(sum(P[k])) for k in names]   # cyclic face: n.x = offset
     push!(out, "{\"id\":\"$stage\",\"title\":\"$title\",\"sources\":$(arr(["\"$n\"" for n in names])),\"normals\":$(arr(normals)),\"offsets\":$(arr(offsets)),\"linearity_max\":$(fmt(100maximum(lin))),\"cases\":{$(join(cases, ","))}}")
