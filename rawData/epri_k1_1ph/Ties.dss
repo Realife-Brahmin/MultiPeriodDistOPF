@@ -1,0 +1,4 @@
+! epri_k1_1ph: single-phase per-phase equivalent of test_systems\epri_test_circuits\epri_dpv\K1\Master_NoPV.dss (unmodified original).
+! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true; each is given
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines, to keep the admittance matrix well scaled.

@@ -1,0 +1,4 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW
+ieee9500_1ph,subs1:subs2:subs3:subs4,24,cyclic,13,-0.6348,-0.3679,0.6795,3.454899,8.080004,subs2,false,569.0487,0.979313,1.050004,1,bracket,5357,voltage,subs1=857.598;subs2=569.051;subs3=569.049;subs4=1166.339
+ieee9500_1ph,subs1:subs2:subs3:subs4,24,cyclic,14,0.7390,-0.1625,0.6538,6.005329,5.793762,subs3,false,-0.0218,0.977742,1.050000,4,secant,600,subs3,subs1=1.095;subs2=1942.752;subs3=-0.022;subs4=1169.192
+ieee9500_1ph,subs1:subs2:subs3:subs4,24,cyclic,15,-0.4475,0.6365,0.6282,6.738073,6.461167,subs2,false,-0.0385,0.978871,1.049988,4,secant,939,subs2,subs1=530.769;subs2=-0.038;subs3=1658.688;subs4=848.178

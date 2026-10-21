@@ -1,0 +1,13 @@
+! ieee9500xf_1ph: single-phase per-phase equivalent of rawData\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
+! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true; each is given
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines, to keep the admittance matrix well scaled.
+New Line.a8645_48332_sw Phases=1 Bus1=d5958866-1_int.1 Bus2=e183493.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tsw803273_sw Phases=1 Bus1=d5803273-1_int.1 Bus2=m1069457.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.v7173_48332_sw Phases=1 Bus1=d5534969-2_int.1 Bus2=e182729.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.ln0653457_sw Phases=1 Bus1=l3085398.1 Bus2=d5653457-1_int.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.a333_48332_sw Phases=1 Bus1=d5746546-1_int.1 Bus2=e182723.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tsw320328_sw Phases=1 Bus1=d6320328-1_int.1 Bus2=l2879062.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tsw568613_sw Phases=1 Bus1=l2692000.1 Bus2=l2841000.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.wf856_48332_sw Phases=1 Bus1=228-1353934-4_int.1 Bus2=193-103041.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.wg127_48332_sw Phases=1 Bus1=228-961799-3_int.1 Bus2=193-46661.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false

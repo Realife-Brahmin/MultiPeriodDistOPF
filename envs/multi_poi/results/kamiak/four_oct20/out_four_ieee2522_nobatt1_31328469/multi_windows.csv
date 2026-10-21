@@ -1,0 +1,14 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,1,-0.5774,-0.5774,-0.5774,5.117533,4.939182,subs2,false,-0.0012,0.961159,1.050000,4,secant,99
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,2,0.0000,-0.7071,-0.7071,1.767043,1.614544,subs3,false,-0.0191,0.960402,1.049838,4,secant,67
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,3,0.5774,-0.5774,-0.5774,1.116096,1.017625,subs3,false,-0.0022,0.960286,1.050000,6,secant,101
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,4,-0.7071,0.0000,-0.7071,1.310888,1.221054,subs4,false,-0.0005,0.961232,1.049863,5,secant,115
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,5,0.0000,0.0000,-1.0000,0.898423,0.799489,subs4,false,0.0002,0.960948,1.048335,4,secant,62
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,6,0.7071,0.0000,-0.7071,1.161856,1.052708,subs4,false,0.0003,0.960445,1.048923,4,secant,56
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,7,-0.5774,0.5774,-0.5774,0.861937,0.758346,subs4,false,0.0002,0.961224,1.049547,4,secant,64
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,8,0.0000,0.7071,-0.7071,0.667914,0.595059,subs4,false,0.0002,0.961097,1.048930,4,secant,60
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,9,0.5774,0.5774,-0.5774,0.778953,0.701462,subs4,false,0.0002,0.960927,1.048364,4,secant,59
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,10,-0.7071,-0.7071,0.0000,1.404096,2.021563,subs3,false,151.1664,0.961212,1.050004,1,bracket,185
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,11,0.0000,-1.0000,0.0000,0.713727,0.656699,subs3,false,-0.0094,0.960893,1.049797,4,secant,68
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,12,0.7071,-0.7071,0.0000,0.656645,0.602075,subs3,false,-0.0107,0.960706,1.049335,4,secant,63
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,13,-1.0000,0.0000,0.0000,0.879387,0.839941,subs2,false,-0.0034,0.961318,1.049808,4,secant,79

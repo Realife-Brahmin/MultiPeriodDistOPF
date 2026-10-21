@@ -1,0 +1,6 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,1,-0.5774,-0.5774,-0.5774,6.748277,6.507969,subs2,false,-0.0052,0.950400,1.049997,5,secant,689
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,2,0.0000,-0.7071,-0.7071,2.310168,2.200949,subs3,false,0.0016,0.950429,1.050000,5,secant,452
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,3,0.5774,-0.5774,-0.5774,1.443837,1.377814,subs3,false,0.0005,0.950339,1.050000,5,secant,480
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,4,-0.7071,0.0000,-0.7071,1.721122,1.631452,subs4,false,-0.0042,0.964543,1.049999,5,secant,865
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,5,0.0000,0.0000,-1.0000,1.170021,1.077185,subs4,false,0.0009,0.951558,1.048848,4,secant,249

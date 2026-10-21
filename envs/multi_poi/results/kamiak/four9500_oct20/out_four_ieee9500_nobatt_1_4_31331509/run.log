@@ -1,0 +1,92 @@
+
+==============================================================================================================
+FOUR_IEEE9500  ieee9500_1ph, sources subs1,subs2,subs3,subs4 (added at buses l2804256), reference subs1, T = 24; directions 1,2,3,4, cases nobatt
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    6.3 s  solve    16.3 s  cold  max|angle| 0.0000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.8 s  solve    16.7 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.9 s  solve    16.2 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.7 s  solve    16.7 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    15.7 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    15.9 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.8 s  solve    16.2 s  cold  max|angle| 0.1000 deg
+    subs1  mean import    867.7 kW (worst hour    617.2); sensitivity subs2 -142.9, subs3 -93.5, subs4 -32.6 kW/deg (daily mean)
+    subs2  mean import   1170.5 kW (worst hour    905.7); sensitivity subs2 +251.2, subs3 -84.2, subs4 -24.1 kW/deg (daily mean)
+    subs3  mean import    954.8 kW (worst hour    731.9); sensitivity subs2 -82.6, subs3 +267.3, subs4 -92.3 kW/deg (daily mean)
+    subs4  mean import    570.7 kW (worst hour    436.7); sensitivity subs2 -27.2, subs3 -92.2, subs4 +154.5 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): -1.5, -2.6, +5.6 kW/deg
+      [solve] cost      T=24  LOCALLY_SOLVED              29 it  build    2.8 s  solve    13.8 s  cold  max|angle| 2.0009 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.8 s  solve    16.3 s  cold  max|angle| 2.1510 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    15.8 s  cold  max|angle| 1.0607 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.9 s  solve    16.4 s  cold  max|angle| 0.5944 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              27 it  build    2.9 s  solve    12.8 s  cold  max|angle| 1.5267 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.9 s  solve    15.6 s  cold  max|angle| 0.9154 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    3.0 s  solve    15.1 s  cold  max|angle| 0.8514 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    2.6 s  solve    15.4 s  cold  max|angle| 0.6789 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    2.9 s  solve    15.3 s  cold  max|angle| 2.2494 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    3.0 s  solve    15.2 s  cold  max|angle| 1.5081 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    2.7 s  solve    15.8 s  cold  max|angle| 1.7236 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.7 s  solve    18.5 s  cold  max|angle| 3.2359 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    18.4 s  cold  max|angle| 0.9017 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              31 it  build    2.9 s  solve    17.0 s  cold  max|angle| 0.8432 deg
+      [solve] cost      T=24  LOCALLY_INFEASIBLE         213 it  build    2.9 s  solve  1054.3 s  cold  max|angle| 3.6576 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              35 it  build    3.3 s  solve    18.1 s  cold  max|angle| 1.7958 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              27 it  build    2.8 s  solve    14.2 s  cold  max|angle| 0.7463 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              31 it  build    2.8 s  solve    15.5 s  cold  max|angle| 0.7125 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    3.1 s  solve    16.9 s  cold  max|angle| 1.3092 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              35 it  build    2.8 s  solve    18.3 s  cold  max|angle| 1.5827 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              26 it  build    2.8 s  solve    13.5 s  cold  max|angle| 1.9192 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              30 it  build    3.2 s  solve    15.2 s  cold  max|angle| 3.7437 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.8 s  solve    17.3 s  cold  max|angle| 3.8545 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    2.8 s  solve    16.7 s  cold  max|angle| 1.6024 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.9 s  solve    17.9 s  cold  max|angle| 1.0695 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              26 it  build    2.8 s  solve    13.6 s  cold  max|angle| 1.9675 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              28 it  build    2.8 s  solve    14.7 s  cold  max|angle| 0.6733 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    16.7 s  cold  max|angle| 2.0427 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    2.8 s  solve    17.0 s  cold  max|angle| 2.1249 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              32 it  build    3.1 s  solve    16.1 s  cold  max|angle| 0.5634 deg
+    affine import model at 29 random idle points: largest hourly error 5.71% of the largest import (median 0.47%)
+      [solve] margin    T=24  LOCALLY_SOLVED              35 it  build    3.6 s  solve    21.2 s  cold  max|angle| 0.0000 deg
+    nobatt: reference solve 21 s; later solves capped at 170 s, capped ones parked in parked_solves.csv
+      [solve] margin    T=24  TIME_LIMIT                 323 it  build    3.5 s  solve   170.3 s  warm  max|angle| 6.9832 deg
+      capped solve: parked, direction flagged
+    nobatt dir  1 (+0.16,+0.00,+0.99): measured 0.0000, predicted 7.0739 (subs3), bound by none; min import 555.04 kW, V 0.9875-1.0472; 1 solves (unresolved+unresolved1, 1032 s)
+      [solve] margin    T=24  TIME_LIMIT                 330 it  build    3.1 s  solve   170.4 s  warm  max|angle| 9.7081 deg
+      capped solve: parked, direction flagged
+    nobatt dir  2 (-0.20,+0.19,+0.96): measured 0.0000, predicted 10.0965 (subs2), bound by none; min import 555.04 kW, V 0.9875-1.0472; 1 solves (unresolved+unresolved1, 923 s)
+      [solve] margin    T=24  LOCALLY_SOLVED             119 it  build    2.9 s  solve    60.9 s  warm  max|angle| 3.7706 deg
+      secant gave up (margin solve at 4.0288 deg: LOCALLY_SOLVED, max violation 2.7e-03); bracketing
+      [solve] margin    T=24  LOCALLY_SOLVED              35 it  build    2.9 s  solve    20.4 s  cold  max|angle| 0.0000 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             119 it  build    3.1 s  solve    61.3 s  warm  max|angle| 3.7706 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              60 it  build    2.8 s  solve    31.9 s  warm  max|angle| 3.2050 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              33 it  build    3.0 s  solve    19.7 s  warm  max|angle| 2.7242 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              24 it  build    2.9 s  solve    13.7 s  warm  max|angle| 2.9646 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              22 it  build    2.9 s  solve    13.5 s  warm  max|angle| 2.8444 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              23 it  build    2.9 s  solve    14.0 s  warm  max|angle| 2.7843 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              19 it  build    3.0 s  solve    11.5 s  warm  max|angle| 2.8144 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              20 it  build    2.9 s  solve    13.0 s  warm  max|angle| 2.8294 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              17 it  build    2.9 s  solve    11.9 s  warm  max|angle| 2.8219 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              17 it  build    2.9 s  solve    11.2 s  warm  max|angle| 2.8181 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              16 it  build    3.4 s  solve    10.4 s  warm  max|angle| 2.8144 deg
+    nobatt dir  3 (+0.03,-0.35,+0.94): measured 3.0071, predicted 4.0288 (subs3), bound by voltage; min import 174.86 kW, V 0.9816-1.0500; 1 solves (bracket, 348 s)
+      [solve] margin    T=24  LOCALLY_SOLVED             119 it  build    3.2 s  solve    61.4 s  warm  max|angle| 5.8194 deg
+      secant gave up (margin solve at 6.3931 deg: LOCALLY_SOLVED, max violation 2.7e-03); bracketing
+      [solve] margin    T=24  LOCALLY_SOLVED              35 it  build    3.3 s  solve    20.4 s  cold  max|angle| 0.0000 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             119 it  build    2.9 s  solve    61.8 s  warm  max|angle| 5.8194 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              67 it  build    3.4 s  solve    35.1 s  warm  max|angle| 4.9465 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              34 it  build    2.9 s  solve    21.3 s  warm  max|angle| 4.2045 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              28 it  build    3.3 s  solve    14.9 s  warm  max|angle| 4.5755 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              24 it  build    3.4 s  solve    13.8 s  warm  max|angle| 4.3900 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              27 it  build    2.9 s  solve    15.7 s  warm  max|angle| 4.2973 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              18 it  build    2.9 s  solve    11.9 s  warm  max|angle| 4.3436 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              22 it  build    3.2 s  solve    12.6 s  warm  max|angle| 4.3204 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              16 it  build    2.9 s  solve     9.9 s  warm  max|angle| 4.3320 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              15 it  build    3.4 s  solve     9.2 s  warm  max|angle| 4.3262 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              14 it  build    3.2 s  solve     8.7 s  warm  max|angle| 4.3262 deg
+    nobatt dir  4 (+0.25,+0.33,+0.91): measured 4.7528, predicted 6.3931 (subs1), bound by voltage; min import 148.33 kW, V 0.9830-1.0500; 1 solves (bracket, 353 s)
+  wrote multi_windows_fib78.csv; four_ieee9500 done in 4443 s

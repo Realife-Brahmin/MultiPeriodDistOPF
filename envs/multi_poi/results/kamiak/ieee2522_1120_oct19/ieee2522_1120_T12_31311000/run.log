@@ -1,0 +1,20 @@
+
+==============================================================================================================
+IEEE2522  ieee2522C_1ph with a second substation, T = 12 (dt = 2.0 h), Zs = 0.311 ohm
+
+  substation at bus 1120: 2523 buses, load 3325 kW, 249 batteries 1326 kW / 5304 kWh, 249 PV 1326 kW; |Z| between the two 6.058 ohm (R/X 0.66; loop 6.599)
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    idle: imports at equal angles subs2 1373 kW mean (1048 min), source 1276 kW mean (981 min); 132 kW/deg (V^2/|Z_loop| = 151)
+    nobatt window [-9.590, +8.013] deg, predicted [-8.017, +7.689]   (56 s, peak RSS 1.9 GB)
+           lower edge: smallest import -0.00 kW, V 0.9594-1.0489 pu; upper edge: smallest import -0.00 kW, V 0.9574-1.0500 pu
+    cyclic window [-12.736, +10.691] deg, predicted [-10.375, +9.957]   (283 s, peak RSS 2.1 GB)
+           lower edge: smallest import -0.00 kW, V 0.9500-1.0486 pu; upper edge: smallest import -0.00 kW, V 0.9500-1.0500 pu
+    cost-optimal day at equal angles: LOCALLY_SOLVED, $8544.57; OpenDSS replay |dP| 1.1e-05 kW, |dQ| 6.2e-06 kvar, |dV| 3.9e-10 pu, converged true, PQ true
+    bus 1120 done in 391 s
+  wrote large_windows.csv

@@ -1,0 +1,32 @@
+! epri_ckt7_1ph: single-phase per-phase equivalent of test_systems\epri_test_circuits\ckt7\Master_ckt7.dss (unmodified original).
+! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! 29 batteries on load buses, sized in proportion to the bus load; fleet rating = 40 % of total load, 4 h.
+New Storage.BESS_157347 Phases=1 Bus1=157347.1 kV=7.1996 kVA=16.8776 kWrated=14.0647 kWhrated=56.2587 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_165442 Phases=1 Bus1=165442.1 kV=7.1996 kVA=8.44047 kWrated=7.03373 kWhrated=28.1349 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_165452 Phases=1 Bus1=165452.1 kV=7.1996 kVA=33.7552 kWrated=28.1293 kWhrated=112.517 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_165460 Phases=1 Bus1=165460.1 kV=7.1996 kVA=16.8776 kWrated=14.0647 kWhrated=56.2587 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_165477 Phases=1 Bus1=165477.1 kV=7.1996 kVA=84.388 kWrated=70.3233 kWhrated=281.293 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_165491 Phases=1 Bus1=165491.1 kV=7.1996 kVA=10.8197 kWrated=9.01641 kWhrated=36.0657 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181893 Phases=1 Bus1=181893.1 kV=7.1996 kVA=33.7552 kWrated=28.1293 kWhrated=112.517 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181894 Phases=1 Bus1=181894.1 kV=7.1996 kVA=33.7552 kWrated=28.1293 kWhrated=112.517 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181900 Phases=1 Bus1=181900.1 kV=7.1996 kVA=10.8197 kWrated=9.01642 kWhrated=36.0657 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181906 Phases=1 Bus1=181906.1 kV=7.1996 kVA=5.81342 kWrated=4.84451 kWhrated=19.3781 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181937 Phases=1 Bus1=181937.1 kV=7.1996 kVA=5.40985 kWrated=4.50821 kWhrated=18.0328 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181938 Phases=1 Bus1=181938.1 kV=7.1996 kVA=33.7552 kWrated=28.1293 kWhrated=112.517 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181950 Phases=1 Bus1=181950.1 kV=7.1996 kVA=8.11478 kWrated=6.76231 kWhrated=27.0493 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181959 Phases=1 Bus1=181959.1 kV=7.1996 kVA=5.81342 kWrated=4.84451 kWhrated=19.3781 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181960 Phases=1 Bus1=181960.1 kV=7.1996 kVA=11.6268 kWrated=9.68903 kWhrated=38.7561 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181980 Phases=1 Bus1=181980.1 kV=7.1996 kVA=112.516 kWrated=93.7635 kWhrated=375.054 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181986 Phases=1 Bus1=181986.1 kV=7.1996 kVA=5.06428 kWrated=4.22024 kWhrated=16.8809 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181990 Phases=1 Bus1=181990.1 kV=7.1996 kVA=112.516 kWrated=93.7635 kWhrated=375.054 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_181991 Phases=1 Bus1=181991.1 kV=7.1996 kVA=225.036 kWrated=187.53 kWhrated=750.119 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_182021 Phases=1 Bus1=182021.1 kV=7.1996 kVA=11.3154 kWrated=9.42947 kWhrated=37.7179 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_182159 Phases=1 Bus1=182159.1 kV=7.1996 kVA=8.44047 kWrated=7.03373 kWhrated=28.1349 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_182160 Phases=1 Bus1=182160.1 kV=7.1996 kVA=33.7552 kWrated=28.1293 kWhrated=112.517 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_182161 Phases=1 Bus1=182161.1 kV=7.1996 kVA=16.8776 kWrated=14.0647 kWhrated=56.2587 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_194048 Phases=1 Bus1=194048.1 kV=7.1996 kVA=10.8197 kWrated=9.01642 kWhrated=36.0657 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_194049 Phases=1 Bus1=194049.1 kV=7.1996 kVA=10.8197 kWrated=9.01642 kWhrated=36.0657 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_194054 Phases=1 Bus1=194054.1 kV=7.1996 kVA=10.8197 kWrated=9.01642 kWhrated=36.0657 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_194057 Phases=1 Bus1=194057.1 kV=7.1996 kVA=8.11478 kWrated=6.76231 kWhrated=27.0493 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_282275 Phases=1 Bus1=282275.1 kV=7.1996 kVA=1.62296 kWrated=1.35246 kWhrated=5.40985 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
+New Storage.BESS_315933 Phases=1 Bus1=315933.1 kV=7.1996 kVA=8.44047 kWrated=7.03373 kWhrated=28.1349 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External

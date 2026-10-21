@@ -2,7 +2,7 @@
 
 ## Scope and workflow
 
-This repository contains SPAR-DDP, tADMM and multi-source OPF workstreams.
+This repository contains SPAR-DDP, tADMM and multi-source OPF (MSOPF) workstreams; MSOPF notes are in envs/multi_poi/CLAUDE.md.
 Check the remote, branch and working tree before changing files. Code changes
 use a workstream branch and PR; make separate focused commits. Do not launch
 simulations merely to initialize a session or clean up the repository.

@@ -1,0 +1,31 @@
+
+==============================================================================================================
+FOUR_IEEE9500  ieee9500_1ph, sources subs1,subs2,subs3,subs4 (added at buses l2804256), reference subs1, T = 24; directions 13, cases nobatt
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    6.4 s  solve    17.3 s  cold  max|angle| 0.0000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    3.1 s  solve    17.5 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    2.9 s  solve    17.6 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    3.0 s  solve    17.8 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    3.0 s  solve    17.2 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              33 it  build    3.1 s  solve    17.2 s  cold  max|angle| 0.1000 deg
+      [solve] cost      T=24  LOCALLY_SOLVED              34 it  build    3.1 s  solve    17.0 s  cold  max|angle| 0.1000 deg
+    subs1  mean import    867.7 kW (worst hour    617.2); sensitivity subs2 -142.9, subs3 -93.5, subs4 -32.6 kW/deg (daily mean)
+    subs2  mean import   1170.5 kW (worst hour    905.7); sensitivity subs2 +251.2, subs3 -84.2, subs4 -24.1 kW/deg (daily mean)
+    subs3  mean import    954.8 kW (worst hour    731.9); sensitivity subs2 -82.6, subs3 +267.3, subs4 -92.3 kW/deg (daily mean)
+    subs4  mean import    570.7 kW (worst hour    436.7); sensitivity subs2 -27.2, subs3 -92.2, subs4 +154.5 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): -1.5, -2.6, +5.6 kW/deg
+      [solve] margin    T=24  LOCALLY_SOLVED              32 it  build    3.4 s  solve    18.7 s  cold  max|angle| 0.0000 deg
+    nobatt: reference solve 19 s; later solves capped at 150 s, capped ones parked in parked_solves.csv
+      [solve] margin    T=24  LOCALLY_SOLVED              40 it  build    3.3 s  solve    22.6 s  warm  max|angle| 4.2472 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              44 it  build    3.1 s  solve    24.4 s  warm  max|angle| 2.2833 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              29 it  build    3.0 s  solve    16.8 s  warm  max|angle| 2.1860 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              26 it  build    2.9 s  solve    15.6 s  warm  max|angle| 2.1902 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              26 it  build    3.1 s  solve    15.7 s  warm  max|angle| 2.2019 deg
+    nobatt dir 13 (-0.63,-0.37,+0.68): measured 3.2234, predicted 6.2506 (subs2), bound by voltage; min import 362.33 kW, V 0.9825-1.0500; 5 solves (secant, 141 s)
+  wrote multi_windows_fib78.csv; four_ieee9500 done in 301 s

@@ -1,0 +1,6 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,16,-0.1026,-0.7915,0.6026,0.696519,0.661593,subs3,false,0.0005,0.961030,1.050000,5,secant,150,subs3,source=588.516;subs2=729.530;subs3=0.001;subs4=672.231
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,17,0.6246,0.5264,0.5769,4.009624,3.884229,source,false,-0.0029,0.960825,1.048941,4,secant,64,source,source=-0.003;subs2=1254.894;subs3=345.808;subs4=398.126
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,18,-0.8336,0.0345,0.5513,0.993286,0.953586,subs2,false,-0.0034,0.961356,1.049789,4,secant,91,subs2,source=728.172;subs2=-0.003;subs3=701.994;subs4=554.356
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,19,0.6030,-0.6001,0.5256,0.621254,0.570796,subs3,false,-0.0096,0.960854,1.049774,4,secant,84,subs3,source=491.777;subs2=951.448;subs3=-0.010;subs4=546.890
+ieee2522C_1ph,source:subs2:subs3:subs4,24,nobatt,20,-0.0400,0.8651,0.5000,1.404298,1.324589,subs2,false,-0.0084,0.961311,1.049635,4,secant,87,subs2,source=535.618;subs2=-0.008;subs3=1281.856;subs4=167.730

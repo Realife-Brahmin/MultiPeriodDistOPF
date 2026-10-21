@@ -1,0 +1,275 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/error.jl:20 overwritten in module Solution at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+Precompiling packages...
+    OpenDSSDirect Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/OpenDSSDirect/IsWtp_svU5k.ji.pidfile)
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/error.jl:20 overwritten in module Solution at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+  11764.8 ms  ? OpenDSSDirect
+Precompiling packages...
+    MutableArithmetics Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/MutableArithmetics/EoEec_svU5k.ji.pidfile)
+    Parsers Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Parsers/833b9_svU5k.ji.pidfile)
+    SpecialFunctions Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/SpecialFunctions/78gOt_svU5k.ji.pidfile)
+   2002.4 ms  ✓ MutableArithmetics
+   2316.7 ms  ✓ SpecialFunctions
+    ForwardDiff Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/ForwardDiff/k0ETY_svU5k.ji.pidfile)
+   4382.1 ms  ✓ ForwardDiff
+  21296.6 ms  ✓ Parsers
+    JSON Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/JSON/uf6oy_svU5k.ji.pidfile)
+  11815.6 ms  ✓ JSON
+  44321.5 ms  ✓ MathOptInterface
+  29542.4 ms  ✓ JuMP
+  7 dependencies successfully precompiled in 107 seconds. 38 already precompiled.
+  11 dependencies precompiled but different versions are currently loaded (Base64, DocStringExtensions, InteractiveUtils, JuliaSyntaxHighlighting, Markdown, Serialization, SparseArrays, StyledStrings, SuiteSparse_jll, Unicode and Zlib_jll). Restart julia to access the new versions. Otherwise, 22 dependents of these packages may trigger further precompilation to work with the unexpected versions.
+Precompiling packages...
+    Xorg_libpciaccess_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_libpciaccess_jll/Y7Kz1_svU5k.ji.pidfile)
+    METIS_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/METIS_jll/lCzTn_svU5k.ji.pidfile)
+    ASL_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/ASL_jll/8NXjm_svU5k.ji.pidfile)
+    Libiconv_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Libiconv_jll/ujTCF_svU5k.ji.pidfile)
+    722.1 ms  ✓ OpenBLAS32_jll
+   1050.9 ms  ✓ Xorg_libpciaccess_jll
+   1301.6 ms  ✓ ASL_jll
+   1319.2 ms  ✓ METIS_jll
+    MUMPS_seq_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/MUMPS_seq_jll/1pv5V_svU5k.ji.pidfile)
+   1414.1 ms  ✓ Libiconv_jll
+    XML2_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/XML2_jll/xWVg2_svU5k.ji.pidfile)
+    729.7 ms  ✓ XML2_jll
+    Hwloc_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Hwloc_jll/tooZ5_svU5k.ji.pidfile)
+    863.6 ms  ✓ MUMPS_seq_jll
+    700.4 ms  ✓ Hwloc_jll
+    SPRAL_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/SPRAL_jll/qhKPg_svU5k.ji.pidfile)
+    728.9 ms  ✓ SPRAL_jll
+    Ipopt_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Ipopt_jll/FgsDH_svU5k.ji.pidfile)
+    798.6 ms  ✓ Ipopt_jll
+    Ipopt Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Ipopt/yMQMo_svU5k.ji.pidfile)
+    689.8 ms  ✓ Ipopt
+  11 dependencies successfully precompiled in 5 seconds. 9 already precompiled.
+  9 dependencies precompiled but different versions are currently loaded (CompilerSupportLibraries_jll, Dates, JLLWrappers, PrecompileTools, Preferences, Printf, TOML, Unicode and Zlib_jll). Restart julia to access the new versions. Otherwise, 11 dependents of these packages may trigger further precompilation to work with the unexpected versions.
+Precompiling packages...
+    Ipopt → IpoptMathOptInterfaceExt Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/IpoptMathOptInterfaceExt/Mla4e_svU5k.ji.pidfile)
+  21762.2 ms  ✓ Ipopt → IpoptMathOptInterfaceExt
+  1 dependency successfully precompiled in 22 seconds. 55 already precompiled.
+  55 dependencies precompiled but different versions are currently loaded (ASL_jll, Base64, Bzip2_jll, CodecBzip2, CodecZlib, CommonSubexpressions, CompilerSupportLibraries_jll, Dates, DiffResults, DiffRules, DocStringExtensions, ForwardDiff, Hwloc_jll, InteractiveUtils, Ipopt, Ipopt_jll, IrrationalConstants, JLLWrappers, JSON, JuliaSyntaxHighlighting, Libiconv_jll, LogExpFunctions, Logging, METIS_jll, MUMPS_seq_jll, MacroTools, Markdown, MathOptInterface, MutableArithmetics, NaNMath, OpenBLAS32_jll, OpenLibm_jll, OpenSpecFun_jll, OrderedCollections, Parsers, PrecompileTools, Preferences, Printf, SPRAL_jll, Serialization, SparseArrays, SpecialFunctions, StaticArraysCore, StructUtils, StructUtils → StructUtilsStaticArraysCoreExt, StyledStrings, SuiteSparse_jll, TOML, Test, TranscodingStreams, UUIDs, Unicode, XML2_jll, Xorg_libpciaccess_jll and Zlib_jll). Restart julia to access the new versions. Otherwise, 1 dependent of these packages may trigger further precompilation to work with the unexpected versions.
+Precompiling packages...
+    705.0 ms  ✓ Gurobi_jll
+   3035.8 ms  ✓ Gurobi
+  2 dependencies successfully precompiled in 4 seconds. 44 already precompiled.
+  44 dependencies precompiled but different versions are currently loaded (Base64, Bzip2_jll, CodecBzip2, CodecZlib, CommonSubexpressions, CompilerSupportLibraries_jll, Dates, DiffResults, DiffRules, DocStringExtensions, ForwardDiff, InteractiveUtils, IrrationalConstants, JLLWrappers, JSON, JuliaSyntaxHighlighting, LogExpFunctions, Logging, MacroTools, Markdown, MathOptInterface, MutableArithmetics, NaNMath, OpenLibm_jll, OpenSpecFun_jll, OrderedCollections, Parsers, PrecompileTools, Preferences, Printf, Serialization, SparseArrays, SpecialFunctions, StaticArraysCore, StructUtils, StructUtils → StructUtilsStaticArraysCoreExt, StyledStrings, SuiteSparse_jll, TOML, Test, TranscodingStreams, UUIDs, Unicode and Zlib_jll). Restart julia to access the new versions. Otherwise, 2 dependents of these packages may trigger further precompilation to work with the unexpected versions.
+Precompiling packages...
+    LaTeXStrings Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/LaTeXStrings/H4HGh_svU5k.ji.pidfile)
+    SortingAlgorithms Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/SortingAlgorithms/6dCmw_svU5k.ji.pidfile)
+    Xorg_libXau_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_libXau_jll/S8Fsv_svU5k.ji.pidfile)
+    libpng_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libpng_jll/paYot_svU5k.ji.pidfile)
+    libfdk_aac_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libfdk_aac_jll/Ido5Q_svU5k.ji.pidfile)
+    libdrm_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libdrm_jll/jsaR6_svU5k.ji.pidfile)
+    LAME_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/LAME_jll/SFEUf_svU5k.ji.pidfile)
+    LERC_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/LERC_jll/0PXNr_svU5k.ji.pidfile)
+    JpegTurbo_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/JpegTurbo_jll/EC0Oy_svU5k.ji.pidfile)
+    Ogg_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Ogg_jll/gOU2R_svU5k.ji.pidfile)
+    x265_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/x265_jll/5KlGs_svU5k.ji.pidfile)
+    x264_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/x264_jll/XmaTp_svU5k.ji.pidfile)
+    Expat_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Expat_jll/4P57b_svU5k.ji.pidfile)
+    Xorg_xtrans_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_xtrans_jll/xYA3D_svU5k.ji.pidfile)
+    libevdev_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libevdev_jll/ycIBu_svU5k.ji.pidfile)
+    eudev_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/eudev_jll/sB3LA_svU5k.ji.pidfile)
+   2452.7 ms  ✓ Showoff
+    Libuuid_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Libuuid_jll/H4xj5_svU5k.ji.pidfile)
+   4355.1 ms  ✓ EpollShim_jll
+   5164.8 ms  ✓ Graphite2_jll
+   5175.3 ms  ✓ Libmount_jll
+   5518.3 ms  ✓ LaTeXStrings
+   5106.9 ms  ✓ Xorg_libXau_jll
+   5393.5 ms  ✓ SortingAlgorithms
+    StatsBase Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/StatsBase/EZjIG_svU5k.ji.pidfile)
+   5266.4 ms  ✓ LLVMOpenMP_jll
+   5231.5 ms  ✓ fzf_jll
+   5077.7 ms  ✓ Xorg_xtrans_jll
+   5325.0 ms  ✓ Xorg_libICE_jll
+   5319.9 ms  ✓ libpng_jll
+   5324.7 ms  ✓ libfdk_aac_jll
+   5324.5 ms  ✓ LERC_jll
+   5325.2 ms  ✓ libdrm_jll
+   5324.9 ms  ✓ LAME_jll
+   5314.0 ms  ✓ Ogg_jll
+    libvorbis_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libvorbis_jll/X4qYa_svU5k.ji.pidfile)
+   6659.1 ms  ✓ mtdev_jll
+   6643.0 ms  ✓ Xorg_libXdmcp_jll
+   6572.9 ms  ✓ Opus_jll
+   6536.8 ms  ✓ libevdev_jll
+   6692.9 ms  ✓ XZ_jll
+   6627.9 ms  ✓ x265_jll
+   6627.5 ms  ✓ x264_jll
+   6525.6 ms  ✓ eudev_jll
+   4591.9 ms  ✓ Libuuid_jll
+   6741.8 ms  ✓ JpegTurbo_jll
+   6630.7 ms  ✓ Expat_jll
+   6683.4 ms  ✓ libaom_jll
+   6664.4 ms  ✓ Zstd_jll
+   6605.9 ms  ✓ Libffi_jll
+   6560.9 ms  ✓ FriBidi_jll
+    Ghostscript_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Ghostscript_jll/A26Vb_svU5k.ji.pidfile)
+    Dbus_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Dbus_jll/1kwKZ_svU5k.ji.pidfile)
+    libinput_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libinput_jll/6TBe0_svU5k.ji.pidfile)
+     83.2 ms  ✓ Dbus_jll
+    333.8 ms  ✓ libvorbis_jll
+    796.9 ms  ✓ Ghostscript_jll
+    Latexify Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Latexify/AItXo_svU5k.ji.pidfile)
+   2616.6 ms  ✓ JLFzf
+   1160.2 ms  ✓ libinput_jll
+   3885.5 ms  ✓ FreeType2_jll
+   3242.5 ms  ✓ GettextRuntime_jll
+   3497.1 ms  ✓ Pixman_jll
+   3486.9 ms  ✓ Xorg_libSM_jll
+   4439.3 ms  ✓ StatsBase
+   3332.6 ms  ✓ Libtiff_jll
+   7973.6 ms  ✓ RecipesBase
+   3573.0 ms  ✓ Wayland_jll
+   4159.2 ms  ✓ Latexify
+    Latexify → SparseArraysExt Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/SparseArraysExt/h5qXK_svU5k.ji.pidfile)
+   4006.8 ms  ✓ Fontconfig_jll
+  12468.6 ms  ✓ FixedPointNumbers
+   3881.7 ms  ✓ Glib_jll
+   5858.6 ms  ✓ Xorg_libxcb_jll
+    837.5 ms  ✓ Latexify → SparseArraysExt
+   1353.6 ms  ✓ Xorg_xcb_util_jll
+    Xorg_xcb_util_keysyms_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_xcb_util_keysyms_jll/J2ZCX_svU5k.ji.pidfile)
+    Xorg_xcb_util_wm_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_xcb_util_wm_jll/WgWW8_svU5k.ji.pidfile)
+   1423.0 ms  ✓ Xorg_libX11_jll
+    Xorg_libXfixes_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_libXfixes_jll/dilDp_svU5k.ji.pidfile)
+    992.8 ms  ✓ Xorg_xcb_util_wm_jll
+    971.6 ms  ✓ Xorg_libXfixes_jll
+   1058.0 ms  ✓ Xorg_xcb_util_keysyms_jll
+   1335.3 ms  ✓ Xorg_xcb_util_image_jll
+   1380.2 ms  ✓ Xorg_libXext_jll
+    Xorg_libXinerama_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_libXinerama_jll/IG7Gi_svU5k.ji.pidfile)
+    Libglvnd_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Libglvnd_jll/z0JB7_svU5k.ji.pidfile)
+    libva_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/libva_jll/Sdl4J_svU5k.ji.pidfile)
+   3582.4 ms  ✓ ColorTypes
+    ColorTypes → StyledStringsExt Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/StyledStringsExt/nDT4H_svU5k.ji.pidfile)
+    Colors Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Colors/NKjaT_svU5k.ji.pidfile)
+   2014.6 ms  ✓ Xorg_xcb_util_renderutil_jll
+   2172.5 ms  ✓ Xorg_libXrender_jll
+    Xorg_libXrandr_jll Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Xorg_libXrandr_jll/UlKyO_svU5k.ji.pidfile)
+   2180.9 ms  ✓ Xorg_libxkbfile_jll
+   1249.3 ms  ✓ ColorTypes → StyledStringsExt
+   1654.4 ms  ✓ Xorg_libXinerama_jll
+   2144.8 ms  ✓ libva_jll
+   2596.4 ms  ✓ Xorg_libXi_jll
+   2585.7 ms  ✓ Libglvnd_jll
+   1837.1 ms  ✓ Xorg_libXrandr_jll
+   1881.3 ms  ✓ Xorg_libXcursor_jll
+   2079.4 ms  ✓ Xorg_xcb_util_cursor_jll
+   2058.3 ms  ✓ Xorg_xkbcomp_jll
+   2508.2 ms  ✓ Cairo_jll
+   1066.1 ms  ✓ Xorg_xkeyboard_config_jll
+   4533.6 ms  ✓ ColorVectorSpace
+   1743.5 ms  ✓ HarfBuzz_jll
+   1422.8 ms  ✓ xkbcommon_jll
+    899.2 ms  ✓ libass_jll
+   5669.5 ms  ✓ Colors
+    ColorSchemes Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/ColorSchemes/EO5fj_svU5k.ji.pidfile)
+   1007.5 ms  ✓ Vulkan_Loader_jll
+   1462.6 ms  ✓ Pango_jll
+   1662.0 ms  ✓ FFMPEG_jll
+   1268.5 ms  ✓ libdecor_jll
+   1900.8 ms  ✓ Qt6Base_jll
+    844.2 ms  ✓ FFMPEG
+   1260.1 ms  ✓ GLFW_jll
+   1222.7 ms  ✓ Qt6ShaderTools_jll
+   1368.8 ms  ✓ Qt6Svg_jll
+   4095.2 ms  ✓ ColorSchemes
+    PlotUtils Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/PlotUtils/YveHG_svU5k.ji.pidfile)
+   1326.1 ms  ✓ GR_jll
+   2787.0 ms  ✓ Qt6Declarative_jll
+    897.7 ms  ✓ Qt6Wayland_jll
+   4867.7 ms  ✓ GR
+   9864.0 ms  ✓ PlotUtils
+    PlotThemes Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/PlotThemes/QxsMm_svU5k.ji.pidfile)
+    RecipesPipeline Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/RecipesPipeline/QQIne_svU5k.ji.pidfile)
+   2861.0 ms  ✓ PlotThemes
+   4379.8 ms  ✓ RecipesPipeline
+    Plots Being precompiled by another process (pid: 239572, pidfile: /home/aryan.jha/.julia/compiled/v1.12/Plots/ld3vC_svU5k.ji.pidfile)
+  60523.0 ms  ✓ Plots
+  96 dependencies successfully precompiled in 101 seconds. 70 already precompiled.
+  43 dependencies precompiled but different versions are currently loaded (ArgTools, Base64, Bzip2_jll, CompilerSupportLibraries_jll, Dates, DocStringExtensions, Downloads, InteractiveUtils, IrrationalConstants, JLLWrappers, JSON, JuliaSyntaxHighlighting, LibCURL, LibCURL_jll, LibSSH2_jll, Libiconv_jll, LogExpFunctions, Logging, MacroTools, Markdown, MozillaCACerts_jll, NaNMath, NetworkOptions, OpenLibm_jll, OpenSSL_jll, OrderedCollections, Parsers, PrecompileTools, Preferences, Printf, REPL, Serialization, SparseArrays, StructUtils, StyledStrings, SuiteSparse_jll, TOML, Test, UUIDs, Unicode, Xorg_libpciaccess_jll, Zlib_jll and nghttp2_jll). Restart julia to access the new versions. Otherwise, 104 dependents of these packages may trigger further precompilation to work with the unexpected versions.
+Precompiling packages...
+    538.7 ms  ✓ ColorVectorSpace → SpecialFunctionsExt
+  1 dependency successfully precompiled in 1 seconds. 20 already precompiled.
+  20 dependencies precompiled but different versions are currently loaded (ColorTypes, ColorVectorSpace, CompilerSupportLibraries_jll, Dates, DocStringExtensions, FixedPointNumbers, IrrationalConstants, JLLWrappers, LogExpFunctions, OpenLibm_jll, OpenSpecFun_jll, Preferences, Printf, Requires, SpecialFunctions, Statistics, TOML, TensorCore, UUIDs and Unicode). Restart julia to access the new versions. Otherwise, 1 dependent of these packages may trigger further precompilation to work with the unexpected versions.
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ ~/msopf/repo/envs/multi_poi/root_level/multiperiod_study.jl:434
