@@ -142,7 +142,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
-                           objective = :cost, ray_dir = nothing, ray_limit = 20.0,
+                           objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
@@ -265,7 +265,12 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # period (per unit; negative when some backflow is unavoidable). The band keeps slacks,
     # heavily priced, so the problem has a solution at any angle.
     marg = objective === :margin
-    eband = elastic || marg
+    # With `margin_band_kw` (kW of margin per pu of squared voltage) the band is part of the margin
+    # instead of an elastic constraint: |V|^2 within [lo^2 + m/k, hi^2 - m/k]. The margin then reaches
+    # zero at whichever limit binds first, no-backflow or voltage, and the problem has no penalized
+    # slacks (past a voltage edge those made Ipopt take hundreds of iterations).
+    vmarg = marg && margin_band_kw !== nothing
+    eband = elastic || (marg && !vmarg)
     bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b)]
     @variable(model, s_back[elastic && no_backflow ? names : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
@@ -316,8 +321,9 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             @constraint(model, out_P[b] + P_fix == P_in)
             @constraint(model, out_Q[b] + load_factor[t] * imag(base_load[b]) == Q_in)
             if V_band !== nothing && !haskey(src_at, b)
-                @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2)
-                @constraint(model, e[b, t]^2 + f[b, t]^2 - (eband ? s_vhi[b, t] : 0.0) <= V_band[2]^2)
+                vroom = vmarg ? (S / margin_band_kw) * m_imp : 0.0
+                @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2 + vroom)
+                @constraint(model, e[b, t]^2 + f[b, t]^2 - (eband ? s_vhi[b, t] : 0.0) <= V_band[2]^2 - vroom)
             end
         end
         no_backflow && @constraint(model, [n in names], P_subs[n, t] + (elastic ? s_back[n, t] : 0.0) >= m_imp)

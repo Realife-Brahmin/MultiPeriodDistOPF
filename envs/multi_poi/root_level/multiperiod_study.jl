@@ -102,7 +102,10 @@ Keyword arguments of solve_multiperiod for one case of setup `s`: over the whole
 :batt).
 """
 function problem(s, case; hour = nothing)
-    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...)
+    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...,
+              # MULTI_VMARGIN=k: margin solves count voltage room too (k kW per pu of |V|^2), so edges set by
+              # the band are found by the same secant as those set by no-backflow (see solve_multiperiod)
+              margin_band_kw = haskey(ENV, "MULTI_VMARGIN") ? parse(Float64, ENV["MULTI_VMARGIN"]) : nothing)
     hour === nothing && return (; common..., T = s.T, load_factor = s.lam, price = s.c, pv_factor = s.F, gamma = s.GAM,
                                 terminal = case === :cyclic ? :cyclic : :soft)
     return (; common..., T = 1, dt_h = 24 / s.T, load_factor = [s.lam[hour]], price = [s.c[hour]], pv_factor = [s.F[hour]],
