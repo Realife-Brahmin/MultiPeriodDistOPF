@@ -222,6 +222,29 @@ struct TreeKKTFactor
     Mroot::Matrix{Float64}            # the root block with all contributions, unfactored
 end
 
+# Opt-in ablation backend: same battery interface and exact-curvature path,
+# with generic sparse network elimination instead of the radial sweep.
+struct SparseNetworkKKTFactor{F}
+    factor::F
+    network::Vector{Int}
+    Mroot::Matrix{Float64}  # unused rank-one placeholder on the exact path
+end
+
+const _NETWORK_CAPTURE_COUNT = Ref(0)
+
+function network_kkt_factor(lay, K)
+    if haskey(ENV, "TREE_ABLATION_CAPTURE_DIR")
+        _NETWORK_CAPTURE_COUNT[] += 1
+        if _NETWORK_CAPTURE_COUNT[] == parse(Int, get(ENV, "TREE_ABLATION_CAPTURE_CALL", "1"))
+            capture_network_ablation(lay, K)
+        end
+    end
+    backend = get(ENV, "FILTERDDP_NETWORK_BACKEND", "tree")
+    backend == "tree" && return tree_kkt_factor(lay, K)
+    backend == "umfpack" && return sparse_network_kkt_factor(lay, K)
+    error("unknown FILTERDDP_NETWORK_BACKEND=$backend (expected tree or umfpack)")
+end
+
 # Block LU from the leaves to the root. K is symmetric, so A_oi = A_io'.
 function tree_kkt_factor(lay::TreeKKTLayout, K::SparseMatrixCSC)
     N = length(lay.own)
@@ -829,7 +852,7 @@ function _tree_kkt_finish0(lay, stat::TreeKKTStatic, fac::TreeKKTFactor, K::Spar
     return TreeKKTBlock0(Sh0, bat, nPv, Ninv, PN, NP, prow, Up)
 end
 
-function _tree_kkt_finishV(stat::TreeKKTStatic, fac::TreeKKTFactor, b0::TreeKKTBlock0, Vc::AbstractMatrix)
+function _tree_kkt_finishV(stat::TreeKKTStatic, fac::Union{TreeKKTFactor,SparseNetworkKKTFactor}, b0::TreeKKTBlock0, Vc::AbstractMatrix)
     bat = b0.bat; n = length(bat)
     shat() = begin
         Sh = Matrix{Float64}(undef, n, n)
@@ -934,10 +957,10 @@ end
 #     x_E = S \ (b_E - K_EF y - K_E,iso (b_iso ./ d_iso))
 #     x_F = y - N \ (K_FE x_E),   x_iso = (b_iso - K_iso,E x_E) ./ d_iso.
 
-struct TreeKKTSolver
+struct TreeKKTSolver{F}
     lay::TreeKKTLayout
     stat::TreeKKTStatic
-    fac::TreeKKTFactor
+    fac::F
     st::TreeKKTStructured
     nz::Vector{Float64}                    # copy of the K values the couplings are read from
     pre::Vector{Int}                       # nodes, parents before children
@@ -955,7 +978,7 @@ end
 
 function tree_kkt_solver(lay::TreeKKTLayout, stat::TreeKKTStatic, K::SparseMatrixCSC; Vc=nothing)
     t0 = time_ns()
-    fac = tree_kkt_factor(lay, K)
+    fac = network_kkt_factor(lay, K)
     Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
     nzc = copy(nonzeros(K)); pre = reverse(lay.post)
     z = zeros(stat.nN); y1 = zeros(lay.n); y2 = zeros(lay.n); t2 = zeros(lay.n)
@@ -973,6 +996,7 @@ tree_kkt_solver(lay::TreeKKTLayout, K::SparseMatrixCSC) = tree_kkt_solver(lay, t
 # node's own block back to back, and must be zero on entry (it is on exit).
 function tree_kkt_network_solve!(x::AbstractVector, s::TreeKKTSolver, b::AbstractVector)
     lay, fac, z, ooff = s.lay, s.fac, s.z, s.stat.ooff
+    fac isa SparseNetworkKKTFactor && return sparse_network_solve!(x, fac, b)
     @inbounds for j in lay.post
         own = lay.own[j]; m = length(own); o = ooff[j]
         F = fac.F[j]; A = F.A; perm = F.perm
@@ -1331,3 +1355,5 @@ function tree_kkt_block0(s::TreeKKTSolver, K::SparseMatrixCSC, nB::Int)
     end
     return S0, ninv, sparse(I_, J_, V_, nB, nN)
 end
+
+include(joinpath(@__DIR__, "sparse_network_ablation.jl"))

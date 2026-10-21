@@ -350,7 +350,9 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
         end
         res = Vector{Any}(undef, length(pairs))
         @sync for (q, (t, mid)) in enumerate(pairs)
-            @async res[q] = remotecall_fetch(pw_combine, M.owner[t], t, mid, isval[mid], mid == N + 1)
+            @async res[q] = remotecall_fetch(pw_combine,
+                get(ENV, "FILTERDDP_PROCS_BALANCED", "0") == "1" ? M.pids[mod1(q, length(M.pids))] : M.owner[t],
+                t, mid, isval[mid], mid == N + 1)
         end
         for (t, mid) in pairs; isval[t] = isval[mid]; end
         rounds += 1; merges += length(pairs)
