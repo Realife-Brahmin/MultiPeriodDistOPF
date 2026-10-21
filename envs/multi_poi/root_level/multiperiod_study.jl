@@ -1002,18 +1002,21 @@ function reference_solve!(x0s, s, case, names, stage)
 end
 
 """
-A margin solve that, if it hits the time cap, is retried once with 4x the cap from the same start: a
-capped solve means "not resolved yet", not "infeasible". A solve still capped after that counts in
-UNRESOLVED (the search then flags its direction) and stays in parked_solves.csv for an uncapped replay.
+A margin solve that, if it hits the time cap, is retried once with MULTIPERIOD_RETRY (default 4) times
+the cap from the same start: a capped solve means "not resolved yet", not "infeasible". A solve still
+capped after that (or at once, with MULTIPERIOD_RETRY=1: park without retrying) counts in UNRESOLVED (the
+search then flags its direction) and stays in parked_solves.csv for a later uncapped replay.
 """
 const UNRESOLVED = Ref(0)
 const CAPPED = (MOI.TIME_LIMIT, MOI.ITERATION_LIMIT)
 function margin_solve(net, angles, kw; start = nothing)
     x = solve_multiperiod(net, angles; kw..., objective = :margin, start)
     x.status in CAPPED || return x
+    f = parse(Float64, get(ENV, "MULTIPERIOD_RETRY", "4"))
+    f <= 1 && (UNRESOLVED[] += 1; say("      capped solve: parked, direction flagged"); return x)
     cap = get(ENV, "MULTIPERIOD_MAX_WALL", "")
-    isempty(cap) || (ENV["MULTIPERIOD_MAX_WALL"] = string(4 * parse(Float64, cap)))
-    say("      capped solve: retrying once with 4x the time")
+    isempty(cap) || (ENV["MULTIPERIOD_MAX_WALL"] = string(f * parse(Float64, cap)))
+    say("      capped solve: retrying once with $(f)x the time")
     try
         x = solve_multiperiod(net, angles; kw..., objective = :margin, start)
     finally
