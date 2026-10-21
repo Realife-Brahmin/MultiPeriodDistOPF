@@ -102,6 +102,11 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
         build_model(data; gamma=gammaT, stages=own)
     end
     ocp, idx = built[1], built[2]
+    if get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
+        redirect_stdout(devnull) do
+            install_original_primal_hook(data, idx)
+        end
+    end
     solver = Solver(ocp; options=Options{Float64}())
     nx, nu, nc = typeof(solver).parameters[2], typeof(solver).parameters[3], typeof(solver).parameters[4]
     # storage of the periods of other workers: not needed here
@@ -173,7 +178,10 @@ function pw_step1(t::Int, k::Int, μ::Float64, elem)
     isnothing(S) && return nothing
     isnothing(_pp_elem(S, t, W.nx)) && return nothing
     W.S[t] = S
+    original_max = get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1" ?
+        DDP4OPF.PRIMAL_ORIGINAL_HOOK[](t, S.x, S.u, S.c) : NaN
     return (lval=S.lval, c1=S.c1, cinf=S.cinf, logsum=S.logsum, cs0=S.cs0, csμ=S.csμ, cϕ=S.cϕ,
+            original_max=original_max,
             lx=Vector{Float64}(S.lx), cxϕ=Vector{Float64}(S.cxϕ),
             el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
 end
@@ -416,6 +424,11 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     d.cs_inf_μ /= scaling_cs
     d.barrier_lagrangian_curr += d.objective
     d.reg_last = 0.0
+
+    if get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
+        @printf("FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e\n",
+                d.k, d.j, maximum(r.original_max for r in r1), d.primal_inf)
+    end
 
     # Wall times of the three steps as the coordinator sees them, and beside
     # them what the periods' own clocks say: the slowest period (max) and all

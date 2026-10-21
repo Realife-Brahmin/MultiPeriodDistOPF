@@ -40,3 +40,11 @@ iteration gains to current isolated-rule speedups. Summarize each rule via
 matched on/off pairs conditional on the other two, baseline add-one and
 full-screen leave-one-out comparisons. Report interactions and failures.
 Two repeats provide initial repeatability, not a broad statistical conclusion.
+
+Initial job31331921 stopped after the mask7 T3 solve passed convergence and
+final bound checks but failed the required original-primal log gate. The
+process-parallel pass bypassed the sequential diagnostic hook. The v2 source
+installs the existing original-model hook on workers, returns one maximum
+per time-step with phase-A scalars, and prints the global maximum each pass.
+This is opt-in for every arm, changes no solver decisions, and is included
+in every arm's measured overhead. Preserve v1 evidence, not a valid timing row.
