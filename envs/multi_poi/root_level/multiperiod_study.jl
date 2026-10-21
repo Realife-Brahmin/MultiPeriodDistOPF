@@ -1242,7 +1242,12 @@ const MULTI = Dict(
     "four_ieee123b" => (; system = SYSTEM, label = "ieee123_5poi_1ph", sources = ["subs1", "subs3", "subs4", "subs5"], add = nothing, feas = nothing),
     # ieee2522 with three added substations (0.311 ohm each, as in stage ieee2522) at buses where no-backflow sets the edges.
     "four_ieee2522" => (; system = "ieee2522C_1ph", label = "ieee2522C_1ph", sources = ["source", "subs2", "subs3", "subs4"],
-                         add = ["947", "996", "1120"], feas = 1e-5))
+                         add = ["947", "996", "1120"], feas = 1e-5),
+    # ieee9500 with the five ties between feeders closed and a fourth substation at l2804256, a three-phase bus
+    # 6.4 / 6.8 / 5.0 ohm from the three real ones (choose_fourth_9500.jl), behind the same transformer impedance.
+    "four_ieee9500" => (; system = "ieee9500_1ph", label = "ieee9500_1ph", sources = ["subs1", "subs2", "subs3", "subs4"],
+                         add = ["l2804256"], feas = 1e-5, zs = complex(0.104186, 0.617339), kv = 7.1996, edit_source = false,
+                         ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
 const MULTI_HEADER = "system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW"
 const CUBE_DIRS = [v ./ sqrt(sum(abs2, v)) for v in ([a, b, c] for a in -1:1, b in -1:1, c in -1:1) if any(!=(0), v)]
 # n directions spread evenly over the sphere (Fibonacci lattice): MULTI_DIRSET=fib78 triples the cube's 26.
@@ -1268,14 +1273,17 @@ function multi_stage(name)
     nsamp = parse(Int, get(ENV, "MULTI_SAMPLES", "30"))
     extra = String[]
     if mc.add !== nothing
-        rz = 0.311 / sqrt(1 + X_OVER_R^2)
-        imp = @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", rz, X_OVER_R * rz, rz, X_OVER_R * rz)
+        # added substations take the names after the deck's own (subs2.. on ieee2522, subs4 on ieee9500)
+        zs = get(mc, :zs, complex(0.311 / sqrt(1 + X_OVER_R^2), X_OVER_R * 0.311 / sqrt(1 + X_OVER_R^2)))
+        imp = @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", real(zs), imag(zs), real(zs), imag(zs))
+        off = length(mc.sources) - length(mc.add)
         for (i, b) in enumerate(mc.add)
-            push!(extra, "New Line.poi$(i+1) Phases=1 Bus1=$(i+1)s Bus2=$b r1=1e-06 x1=1e-06 c1=0 c0=0",
-                         "New Vsource.subs$(i+1) Phases=1 Bus1=$(i+1)s basekv=7.2 pu=1.05 angle=0 $imp")
+            push!(extra, "New Line.poi$(i+off) Phases=1 Bus1=$(i+off)s Bus2=$b r1=1e-06 x1=1e-06 c1=0 c0=0",
+                         "New Vsource.subs$(i+off) Phases=1 Bus1=$(i+off)s basekv=$(get(mc, :kv, 7.2)) pu=1.05 angle=0 $imp")
         end
-        push!(extra, "Edit Vsource.source $imp")
+        get(mc, :edit_source, true) && push!(extra, "Edit Vsource.source $imp")
     end
+    haskey(mc, :ties) && append!(extra, ["Line.$t.enabled=true" for t in mc.ties])
     net, pvs = load_sources(mc.sources; system = mc.system, extra)
     s = setup(net, pvs; T, feas = mc.feas)
     S0, movers = mc.sources[1], mc.sources[2:end]
