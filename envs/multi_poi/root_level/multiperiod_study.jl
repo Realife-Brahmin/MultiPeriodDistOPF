@@ -1002,6 +1002,28 @@ function reference_solve!(x0s, s, case, names, stage)
 end
 
 """
+A margin solve that, if it hits the time cap, is retried once with 4x the cap from the same start: a
+capped solve means "not resolved yet", not "infeasible". A solve still capped after that counts in
+UNRESOLVED (the search then flags its direction) and stays in parked_solves.csv for an uncapped replay.
+"""
+const UNRESOLVED = Ref(0)
+const CAPPED = (MOI.TIME_LIMIT, MOI.ITERATION_LIMIT)
+function margin_solve(net, angles, kw; start = nothing)
+    x = solve_multiperiod(net, angles; kw..., objective = :margin, start)
+    x.status in CAPPED || return x
+    cap = get(ENV, "MULTIPERIOD_MAX_WALL", "")
+    isempty(cap) || (ENV["MULTIPERIOD_MAX_WALL"] = string(4 * parse(Float64, cap)))
+    say("      capped solve: retrying once with 4x the time")
+    try
+        x = solve_multiperiod(net, angles; kw..., objective = :margin, start)
+    finally
+        isempty(cap) || (ENV["MULTIPERIOD_MAX_WALL"] = cap)
+    end
+    x.status in CAPPED && (UNRESOLVED[] += 1; say("      still capped: unresolved"))
+    return x
+end
+
+"""
 Reach along `dir` by a secant on the import margin (`objective = :margin`, the largest import every
 substation can be guaranteed): it is zero at an edge set by no-backflow and nearly linear in the angle
 (the imports are), so from the margin at equal angles `x0` and one solve at the predicted reach `guess`,
@@ -1017,7 +1039,7 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
     at(r) = Dict(k => r * v for (k, v) in dir)
     n = Ref(0)
     function margin(r, st)
-        x = solve_multiperiod(s.net, at(r); kw..., objective = :margin, start = st); n[] += 1
+        x = margin_solve(s.net, at(r), kw; start = st); n[] += 1
         return x.status in RAY_OK && isfinite(x.margin_kW) && x.max_violation <= vtol, x
     end
     function test(r, st)                                   # feasible iff the margin is >= 0 within the limits
@@ -1037,9 +1059,13 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
         g = LIMIT / 2
     end
     ra, ma, rb, xb, mb = 0.0, x0.margin_kW, g, something(prev, x0), NaN
+    rfeas, xfeas = 0.0, x0                                  # the farthest point known feasible, for an unresolved direction
     for _ in 1:8
         ok, xn = margin(rb, xb)
+        # still capped after the retry: keep the farthest known-feasible reach, flagged, rather than bracketing on
+        xn.status in CAPPED && return (; feasible = true, r = rfeas, capped = false, bind = bind_of(xfeas), solves = n[], method = :unresolved, x = nothing)
         ok || return fallback(@sprintf("margin solve at %.4f deg: %s, max violation %.1e", rb, xn.status, xn.max_violation), xb)
+        xn.margin_kW >= -MTOL_KW && rb > rfeas && ((rfeas, xfeas) = (rb, xn))
         xb, mb = xn, xn.margin_kW
         abs(mb) <= MTOL_KW && break
         slope = (mb - ma) / (rb - ra)
@@ -1061,7 +1087,7 @@ function reach_bracket(s, case, dir, guess; bisections = 7)
     last = Ref{Any}(nothing)
     function test(r)
         # a margin solve (always feasible as an optimization): feasible here iff the margin is >= 0 within the limits
-        x = solve_multiperiod(s.net, Dict(k => r * v for (k, v) in dir); kw..., objective = :margin, start = last[])
+        x = margin_solve(s.net, Dict(k => r * v for (k, v) in dir), kw; start = last[])
         ok = x.status in RAY_OK && isfinite(x.margin_kW) && x.margin_kW >= -MTOL_KW && x.max_violation <= something(s.feas, 1e-5)
         ok && (last[] = x)
         return ok
@@ -1295,8 +1321,12 @@ function multi_stage(name)
         dir = merge(Dict(S0 => 0.0), Dict(zip(movers, u)))
         tr = time()
         reference_solve!(x0s, s, case, sens.names, name)
+        u0 = UNRESOLVED[]
         b = reach_secant(s, case, dir, pred, x0s[case]; prev = get(prev, case, nothing))
         b.x === nothing || (prev[case] = b.x)
+        # a direction with a solve still capped after its retry: its edge is a lower bound, flagged in the method column
+        nu = UNRESOLVED[] - u0
+        nu > 0 && (b = merge(b, (; method = Symbol(string(b.method) * "+unresolved$nu"))))
         bl = binding_label(b.bind, b.capped)
         say(@sprintf("    %-6s dir %2d (%+.2f,%+.2f,%+.2f): measured %s%.4f, predicted %.4f (%s), bound by %s; min import %.2f kW, V %.4f-%.4f; %d solves (%s, %.0f s)",
                      case, i, u..., b.capped ? ">=" : "", b.r, pred, lim, bl, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr))
