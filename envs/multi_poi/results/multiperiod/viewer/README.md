@@ -5,7 +5,9 @@ regions, predicted from the angle-to-import sensitivities, against the measured 
 for ieee123 (two source sets) and the 2522-bus feeder. Rotate, view each face edge-on (is it
 flat?) or face-on (where is the prediction off?), and read each face's residuals.
 
-To open it: download the file and double-click it (it needs an internet connection only for the
+Online: <https://realife-brahmin.github.io/MultiPeriodDistOPF/four_regions.html> (GitHub Pages,
+served from `docs/` of branch `msopf-oct09-further-investigations`; after a rebuild, copy the page to
+`docs/four_regions.html`). Offline: download the file and double-click it (it needs an internet connection only for the
 plotting library), or view it online through
 <https://raw.githack.com/Realife-Brahmin/MultiPeriodDistOPF/msopf-oct09-further-investigations/envs/multi_poi/results/multiperiod/viewer/four_regions.html>.
 
