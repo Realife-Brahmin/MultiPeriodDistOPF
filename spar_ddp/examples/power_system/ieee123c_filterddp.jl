@@ -490,6 +490,8 @@ end
 function install_original_primal_hook(data, idx)
     N, L, bats = length(data[:Nset]), length(data[:Lset]), data[:Bset]
     width = [(data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j] for j in bats]
+    audit_screened = get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
+    audit_screened && println("SCREEN_ABLATION_ORIGINAL_BOUNDS enabled")
     DDP4OPF.PRIMAL_ORIGINAL_HOOK[] = function (t, x, u, c)
         v = 0.0
         @inbounds for i in 1:2N+L; v = max(v, abs(c[i])); end
@@ -498,6 +500,14 @@ function install_original_primal_hook(data, idx)
         @inbounds for b in eachindex(bats)
             w = c[2N+2L+1+b] + u[idx.energy_slack[b]]
             v = max(v, -w, w - width[b])
+        end
+        if audit_screened
+            @inbounds for (k, j) in enumerate(data[:Nset])
+                v = max(v, data[:Vminpu][j]^2 - u[idx.v[k]],
+                        u[idx.v[k]] - data[:Vmaxpu][j]^2)
+            end
+            @inbounds for e in idx.ell; v = max(v, -u[e]); end
+            v = max(v, -u[idx.ps])
         end
         return v
     end
