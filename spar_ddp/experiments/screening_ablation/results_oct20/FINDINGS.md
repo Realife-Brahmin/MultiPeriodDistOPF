@@ -41,8 +41,8 @@ Two repeats in opposite orders. Median full-convergence optimizer seconds:
 - All optional rules versus substation-only saves23.8%,2.9%,32.3%.
   med2522's fastest tested combination screens ell but retains upper-voltage
   limits (mask2), rather than screening everything. No defaults changed.
-- Iterations mask0 -> mask7:33->24,66->66,30->16. Every mask has repeated
-  identical iteration counts except large10k mask6 (16/18); timings have
+- Iterations mask0 -> mask7:33->24,66->66,30->16. Repeat iteration counts
+  agree (including large10k mask6 at17 in both repeats); timings have
   noticeable order/node drift, especially large10k. Keep ranges and
   conditional comparisons; do not rank small differences as significant.
 
