@@ -1,5 +1,11 @@
 # tADMM: temporal ADMM for multi-period OPF
 
+Current status (October 18, 2026): retained companion research code. Earlier
+results remain available for reference; fresh disciplined testing and potentially
+further research are deferred. Historical plotting tools now live in
+[plots/](plots/README.md). No new runs are implied by this documentation update.
+
+
 **Temporal ADMM (tADMM)** splits the multi-period OPF along time into small
 per-period branch-flow OPFs, and coordinates them through an augmented-Lagrangian
 consensus on the battery states. This solves horizons that the monolithic

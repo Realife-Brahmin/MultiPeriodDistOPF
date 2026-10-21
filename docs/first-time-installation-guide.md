@@ -1,103 +1,35 @@
-# First-Time Installation Guide for MultiPeriodDistOPF
+# Installing MultiPeriodDistOPF
 
-## Prerequisites
-1. Install Julia from the official website: https://julialang.org/downloads/
-   - Download the current stable release (e.g., Julia 1.11.x) for your operating system.
-   - Run the installer and finish setup.
-
-2. Install Julia Extension in VS Code
-   - Open VS Code.
-   - Go to the Extensions Marketplace (left sidebar, square icon).
-   - Search for "Julia" and install the official extension by julialang.
-
----
-
-## 1. Open the Project in VS Code
-1. Clone the repository from GitHub (or unzip if shared as a folder).
-   ```bash
-   git clone <repo-url>
-   ```
-   or just copy the folder.
-2. Fetch any reference papers not tracked in git:
-   ```bash
-   bash scripts/fetch_resources.sh
-   ```
-   This reads every `resources/MANIFEST.txt` in the repo and downloads whatever
-   listed file is missing locally. Safe to re-run any time — files already
-   present are left alone. Report any `[MISSING, no url given]` lines to
-   whoever maintains that folder.
-2. In VS Code, click File → Open Folder… and select the MultiPeriodDistOPF folder.
-
----
-
-## 2. Activate and Install Dependencies
-From the terminal in VS Code, start Julia in project mode:
+Install Julia 1.12 from https://julialang.org/downloads/. VS Code and its
+Julia extension are optional; open the repository folder directly. Personal
+`.code-workspace` files are local and ignored.
 
 ```bash
-julia --project=.
+git clone --depth 1 https://github.com/Realife-Brahmin/MultiPeriodDistOPF.git
+cd MultiPeriodDistOPF
 ```
 
-Then in the Julia REPL (prompt looks like `julia>`), run:
+Use the environment for your workstream; there is no root Project.toml
+or universal main.jl. For SPAR-DDP, instantiate both the solver environment
+and the OpenDSS export environment:
 
-```julia
-using Pkg
-Pkg.instantiate()
+```bash
+julia --project=envs/spar_ddp -e 'using Pkg; Pkg.instantiate()'
+julia --project=envs/tadmm -e 'using Pkg; Pkg.instantiate()'
 ```
 
-This downloads and installs all packages listed in Project.toml and Manifest.toml.
-Only needs to be done once (unless dependencies change later).
+Use Bash for these commands on Windows. The tracked `envs/tadmm/Manifest.toml`
+preserves its dependency versions; do not update or remove it during setup.
+The SPAR-DDP environment declares its local DDP4OPF source in Project.toml.
 
----
+See [SPAR-DDP](../spar_ddp/README.md), [tADMM](../envs/tadmm/README.md) or
+[MSOPF](../envs/multi_poi/README.md) for actual drivers and required inputs.
+Gurobi and HSL are optional separately licensed backends; access/configuration
+is not supplied by cloning this repository. A default Ipopt install does not
+by itself recreate the recorded Kamiak MA57/MA97 benchmark.
 
-## 3. Automatic Environment Activation Inside Scripts
-To make running scripts easier, environment activation can be done inside the script itself.  
-For example, at the top of `main.jl` (which lives in the repo root), add:
+Optional reference downloads: `bash tools/fetch_resources.sh`. This reads
+resources/MANIFEST.txt files and leaves existing files untouched.
 
-```julia
-import Pkg
-Pkg.activate(@__DIR__)
-Pkg.instantiate()
-```
-
-- `Pkg.activate(@__DIR__)` ensures the environment in the repo root is used.  
-- `Pkg.instantiate()` ensures dependencies are installed if missing.  
-- This allows running the script directly with:
-  ```bash
-  julia main.jl
-  ```
-  without needing to manually activate the environment each time.
-
-If the script is located in a subfolder (e.g., `src/`), use:
-```julia
-Pkg.activate(joinpath(@__DIR__, ".."))
-```
-
----
-
-## 4. Running the Project
-Run any of the scripts in the repo, for example:
-
-```julia
-include("main.jl")
-```
-or
-```julia
-include("admm_temporal_copper_plate.jl")
-```
-
----
-
-## 5. Restarting Later
-Every time Julia restarts, either:
-- Start Julia with the project environment:
-  ```bash
-  julia --project=.
-  ```
-- Or just run a script that has the activation snippet included at the top.
-
----
-
-## 6. Tips
-- If VS Code asks to choose a Julia environment, select the MultiPeriodDistOPF folder.
-- If issues occur, delete Manifest.toml and run `Pkg.instantiate()` again.
-- To keep all dependencies inside this repo instead of the global Julia folder, set `JULIA_DEPOT_PATH=$PWD/.julia_depot` before running Julia.
+Windows paths can be long. Use a short checkout location if necessary.
+No optimization jobs need to be launched merely to install or inspect code.
