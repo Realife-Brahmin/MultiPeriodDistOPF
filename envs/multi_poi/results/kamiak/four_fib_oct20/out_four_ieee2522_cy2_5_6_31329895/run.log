@@ -33,3 +33,27 @@ This program contains Ipopt, a library for large-scale nonlinear optimization.
       [solve] margin    T=24  TIME_LIMIT                 505 it  build    5.9 s  solve   660.7 s  warm  max|angle| 1.9953 deg
       capped solve: retrying once with 4x the time
       [solve] margin    T=24  LOCALLY_SOLVED             711 it  build    3.6 s  solve   801.2 s  warm  max|angle| 1.9953 deg
+      [solve] margin    T=24  TIME_LIMIT                 563 it  build    3.6 s  solve   659.3 s  warm  max|angle| 1.6960 deg
+      capped solve: retrying once with 4x the time
+      [solve] margin    T=24  LOCALLY_SOLVED             678 it  build    3.7 s  solve   810.1 s  warm  max|angle| 1.6960 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             451 it  build    3.6 s  solve   553.1 s  warm  max|angle| 1.4416 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             292 it  build    3.6 s  solve   384.8 s  warm  max|angle| 1.2254 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              89 it  build    3.6 s  solve    99.9 s  warm  max|angle| 1.0416 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             100 it  build    3.6 s  solve   125.3 s  warm  max|angle| 0.8853 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             157 it  build    3.7 s  solve   207.2 s  warm  max|angle| 0.7525 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              72 it  build    3.8 s  solve    88.1 s  warm  max|angle| 0.8189 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              83 it  build    3.9 s  solve   104.4 s  warm  max|angle| 0.8521 deg
+      [solve] margin    T=24  LOCALLY_SOLVED             142 it  build    4.0 s  solve   203.8 s  warm  max|angle| 0.8355 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              71 it  build    3.6 s  solve    92.3 s  warm  max|angle| 0.8438 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              68 it  build    3.6 s  solve    88.2 s  warm  max|angle| 0.8480 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              67 it  build    3.6 s  solve    79.8 s  warm  max|angle| 0.8459 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              69 it  build    3.6 s  solve    90.9 s  warm  max|angle| 0.8469 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              68 it  build    3.7 s  solve    84.0 s  warm  max|angle| 0.8469 deg
+    cyclic dir  5 (-0.46,-0.08,+0.88): measured 0.9574, predicted 2.6536 (subs2), bound by voltage; min import 485.43 kW, V 0.9503-1.0500; 1 solves (bracket, 13989 s)
+      [solve] margin    T=24  LOCALLY_SOLVED             100 it  build    3.7 s  solve   102.9 s  warm  max|angle| 0.8590 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              59 it  build    3.8 s  solve    68.7 s  warm  max|angle| 0.9111 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              46 it  build    3.8 s  solve    56.4 s  warm  max|angle| 0.8827 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              46 it  build    3.9 s  solve    55.6 s  warm  max|angle| 0.8828 deg
+      [solve] margin    T=24  LOCALLY_SOLVED              51 it  build    3.6 s  solve    58.0 s  warm  max|angle| 0.8881 deg
+    cyclic dir  6 (+0.43,-0.27,+0.86): measured 1.0278, predicted 1.0000 (subs3), bound by subs3; min import 0.00 kW, V 0.9507-1.0500; 5 solves (secant, 367 s)
+  wrote multi_windows_fib78.csv; four_ieee2522 done in 14616 s
