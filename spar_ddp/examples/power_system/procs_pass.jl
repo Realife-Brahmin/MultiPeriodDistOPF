@@ -426,8 +426,8 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     d.reg_last = 0.0
 
     if get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
-        @printf("FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e\n",
-                d.k, d.j, maximum(r.original_max for r in r1), d.primal_inf)
+        @printf("FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e objective=%.12e\n",
+                d.k, d.j, maximum(r.original_max for r in r1), d.primal_inf, d.objective)
     end
 
     # Wall times of the three steps as the coordinator sees them, and beside

@@ -163,6 +163,7 @@ end
 # The exact bound reductions of the FilterDDP driver (FILTERDDP_SCREEN there,
 # same item names; voltage_screening.jl), so that both solvers can be given
 # the identical model. Off by default.
+screening_start_ns = time_ns()
 ipopt_screen = Set(String.(strip.(split(get(ENV, "IPOPT_SCREEN", ""), ','; keepempty=false))))
 "all" in ipopt_screen && (ipopt_screen = Set(["substation", "vupper", "vlower", "ell", "psubs"]))
 if !isempty(ipopt_screen)
@@ -190,12 +191,16 @@ if !isempty(ipopt_screen)
             join(sort!(collect(ipopt_screen)), ","), drop_lo, drop_up, length(Nset), drop_ell ? length(Lset) : 0, drop_ps)
 end
 # IPOPT_LOADFLOW_START=1: the starting point the FilterDDP driver gets from
+screening_s = isempty(ipopt_screen) ? 0.0 : (time_ns() - screening_start_ns) / 1e9
 # FILTERDDP_LOADFLOW_START (loadflow_start.jl): batteries idle, DERs at zero
 # reactive power, and the power flow of each period. Ipopt's own options are
 # left at their defaults (it still pushes the point inside the bounds).
+powerflow_init_s = 0.0
 if get(ENV, "IPOPT_LOADFLOW_START", "0") != "0"
+    powerflow_start_ns = time_ns()
     for t in Tset
-        vv, PP, QQ, LL, _ = loadflow_sweep(data, t)
+        vv, PP, QQ, LL, _ = get(ENV, "IPOPT_MATCH_DDP_START", "0") == "1" ?
+            loadflow_initial_values(data, t) : loadflow_sweep(data, t)
         for (n, j) in enumerate(Nset); set_start_value(v[j,t], vv[n]); end
         ps0 = 0.0; qs0 = 0.0
         for (le, e) in enumerate(Lset)
@@ -209,6 +214,7 @@ if get(ENV, "IPOPT_LOADFLOW_START", "0") != "0"
         for j in Dset; set_start_value(q_D[j,t], 0.0); end
     end
     println("IPOPT_LOADFLOW_START applied")
+    powerflow_init_s = (time_ns() - powerflow_start_ns) / 1e9
 end
 build_s = time() - build_start
 
@@ -239,8 +245,26 @@ if central_solver == "ipopt" && get(ENV, "IPOPT_TRACE", "0") != "0"
     println("IPOPT_TRACE on")
 end
 
+ipopt_warm_trace = copy(ipopt_trace)
+ipopt_warmup_s = 0.0
+if central_solver == "ipopt" && get(ENV, "IPOPT_WARMUP", "0") == "full"
+    set_optimizer_attribute(model, "warm_start_init_point", "no")
+    warm_begin_ns = time_ns()
+    optimize!(model)
+    termination_status(model) == MOI.LOCALLY_SOLVED || error("Ipopt full warm-up failed")
+    global ipopt_warmup_s = (time_ns() - warm_begin_ns) / 1e9
+    global ipopt_warm_trace = copy(ipopt_trace)
+    empty!(ipopt_trace)
+    GC.gc()
+end
 optimize!(model)
 ipopt_end_ns = time_ns()
+if !isempty(ipopt_warm_trace) && !isempty(ipopt_trace)
+    delta_start = abs(ipopt_warm_trace[1][3] - ipopt_trace[1][3])
+    delta_start <= 1e-10 * max(1.0, abs(ipopt_warm_trace[1][3])) || error("Ipopt starting objective mismatch")
+    @printf("IPOPT_WARMUP_CHECK warmup_s=%.9f initial_objective_difference=%.9e warmup_iterations=%d timed_iterations=%d\n",
+            ipopt_warmup_s, delta_start, ipopt_warm_trace[end][1], ipopt_trace[end][1])
+end
 wall_s = time() - wall_start
 
 status = termination_status(model)
@@ -260,6 +284,9 @@ end
 # Peak resident memory of the whole process (model build + solve), for the
 # memory-knee comparison between linear solvers.
 @printf("%s_MEMORY maxrss_mib=%.1f\n", result_tag, Sys.maxrss() / 2^20)
+@printf("%s_PREPROCESS_TIMING screening_s=%.9f powerflow_init_s=%.9f build_excluding_preprocessing_s=%.9f matched_physical_start=%d\n",
+        result_tag, screening_s, powerflow_init_s, build_s-screening_s-powerflow_init_s,
+        get(ENV, "IPOPT_MATCH_DDP_START", "0") == "1")
 
 # IPOPT_SAVE_DISPATCH=<file>: the solution in the FilterDDP control layout
 # (control_layout.jl; slacks left at zero), so that opendss_check.jl checks a
