@@ -6,7 +6,7 @@ for ieee123 (two source sets), the 2522-bus feeder and the 2705-bus feeder (from
 flat?) or face-on (where is the prediction off?), and read each face's residuals.
 
 Online: <https://realife-brahmin.github.io/MultiPeriodDistOPF/four_regions.html> (GitHub Pages,
-served from `docs/` of branch `msopf-oct09-further-investigations`; after a rebuild, copy the page to
+served from `docs/` on master; after a rebuild, copy the page to
 `docs/four_regions.html`). Offline: download the file and double-click it (it needs an internet connection only for the
 plotting library), or view it online through
 <https://raw.githack.com/Realife-Brahmin/MultiPeriodDistOPF/msopf-oct09-further-investigations/envs/multi_poi/results/multiperiod/viewer/four_regions.html>.

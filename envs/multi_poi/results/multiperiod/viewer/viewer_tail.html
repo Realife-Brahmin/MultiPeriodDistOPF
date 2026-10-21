@@ -129,6 +129,7 @@ function edgeOn(k) {
   stopSpin(); focus = k;
   const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e = unit(cross(n, a));
   draw({ eye: { x: 1.6 * e[0], y: 1.6 * e[1], z: 1.6 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  faceMap(k);
 }
 
 // In-plane axes of face k: e1, e2 perpendicular to its normal n.

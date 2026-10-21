@@ -98,7 +98,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
     <section class="resid-wrap">
       <h2 class="rh" id="fmtitle">Face map</h2>
       <div id="facemap" aria-label="The dots of one face seen straight on, colored by measured minus predicted reach"></div>
-      <p class="note" id="fmnote">Press Face-on beside a face: its dots seen straight on, in the face's own plane, colored by how far beyond (red) or inside (blue) the predicted reach they lie. The outline is the predicted face with dispatched batteries.</p>
+      <p class="note" id="fmnote">One face at a time: the last face you pressed Edge-on or Face-on for (at first, the face with the most dots). Its dots are seen straight on, in the face's own plane, so rotating the 3-D view does not change this map; color shows how far beyond (red) or inside (blue) the predicted reach each dot lies. The outline is the predicted face with dispatched batteries: a triangle, since each face of the tetrahedron is one, with corners where it meets two of the other faces.</p>
     </section>
   </div>
 </div>
@@ -236,6 +236,7 @@ function edgeOn(k) {
   stopSpin(); focus = k;
   const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e = unit(cross(n, a));
   draw({ eye: { x: 1.6 * e[0], y: 1.6 * e[1], z: 1.6 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  faceMap(k);
 }
 
 // In-plane axes of face k: e1, e2 perpendicular to its normal n.
