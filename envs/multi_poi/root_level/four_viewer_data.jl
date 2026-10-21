@@ -11,7 +11,9 @@ rows(f) = [split(l, ',') for l in readlines(f)[2:end]]
 const STAGES = [("four_ieee123a", "ieee123_5poi_1ph", "subs1:subs2:subs3:subs4", "IEEE 123-node, sources 1, 2, 3, 4"),
                 ("four_ieee123b", "ieee123_5poi_1ph", "subs1:subs3:subs4:subs5", "IEEE 123-node, sources 1, 3, 4, 5"),
                 ("four_ieee2522", "ieee2522C_1ph", "source:subs2:subs3:subs4", "2522-bus feeder, sources at 947, 996, 1120"),
-                ("four_ieee9500", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder (from IEEE 9500), its 3 + 1 added")]
+                ("four_ieee9500", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder (from IEEE 9500), its 3 + 1 added"),
+                # the same with every source at 1.03 pu: only the directions rerun there (rows in multi_windows_fib78_v1.03.csv)
+                ("four_ieee9500_v1.03", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder, sources at 1.03 pu (rerun directions)")]
 
 function sens(stage)
     f = first(p for (r, _, fs) in walkdir(joinpath(RES, "kamiak")) for x in fs for p in (joinpath(r, x),) if endswith(p, "multi_sens_$(stage)_T24.csv"))
@@ -41,7 +43,9 @@ nth, nph = 49, 97
 out = String[]
 for (stage, sys, srcs, title) in STAGES
     names, P, K = sens(stage)
-    meas = [r for r in data if r[1] == sys && r[2] == srcs]
+    tag = occursin("_v", stage) ? stage[findfirst("_v", stage)[1]:end] : ""   # e.g. _v1.03: its own rows
+    src = isempty(tag) ? data : rows(joinpath(RES, "multiperiod", (DSET == "cube26" ? "multi_windows" : "multi_windows_$(DSET)") * tag * ".csv"))
+    meas = [r for r in src if r[1] == sys && r[2] == srcs]
     isempty(meas) && (meas = [r for r in rows(joinpath(RES, "multiperiod", "multi_windows.csv")) if r[1] == sys && r[2] == srcs])   # not run in this set yet: the 26 directions
     rmax = maximum(parse(Float64, r[9]) for r in meas if r[12] == "false")
     cases = String[]
@@ -70,10 +74,10 @@ for (stage, sys, srcs, title) in STAGES
         end
         push!(cases, "\"$case\":{\"surface\":{\"x\":$(arr(X)),\"y\":$(arr(Y)),\"z\":$(arr(Z)),\"face\":$(arr(F))},\"points\":$(arr(pts))}")
     end
-    lin = [parse(Float64, r[8]) for r in rows(joinpath(RES, "multiperiod", "multi_linearity.csv")) if r[1] == sys && r[2] == srcs]
+    lin = isempty(tag) ? [parse(Float64, r[8]) for r in rows(joinpath(RES, "multiperiod", "multi_linearity.csv")) if r[1] == sys && r[2] == srcs] : [NaN]
     # daily-mean face normals n_k = -sum_t K_k(t), for the edge-on views
     normals = [arr(fmt.(-sum(K[k]))) for k in names]; offsets = [fmt(sum(P[k])) for k in names]   # cyclic face: n.x = offset
-    push!(out, "{\"id\":\"$stage\",\"title\":\"$title\",\"sources\":$(arr(["\"$n\"" for n in names])),\"normals\":$(arr(normals)),\"offsets\":$(arr(offsets)),\"linearity_max\":$(fmt(100maximum(lin))),\"cases\":{$(join(cases, ","))}}")
+    push!(out, "{\"id\":\"$stage\",\"title\":\"$title\",\"sources\":$(arr(["\"$n\"" for n in names])),\"normals\":$(arr(normals)),\"offsets\":$(arr(offsets)),\"linearity_max\":$(isnan(maximum(lin)) ? "null" : fmt(100maximum(lin))),\"cases\":{$(join(cases, ","))}}")
 end
 jf = joinpath(RES, "multiperiod", DSET == "cube26" ? "four_viewer_data.json" : "four_viewer_data_$(DSET).json")
 open(jf, "w") do io
