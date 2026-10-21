@@ -299,6 +299,16 @@ results are tracked in `envs/multi_poi/results/multiperiod/`.
   still running on Kamiak, jobs 31328984-98). Results `multi_windows*.csv`, `check_four.jl`.
   Interactive viewer: `results/multiperiod/viewer/four_regions.html` (README there; public link
   via raw.githack; also a private claude.ai artifact). Rebuild with `four_viewer_data.jl fib78`.
+- **Done 2026-10-21, four substations on the 2705-bus feeder** (`ieee9500_1ph`, stage `four_ieee9500`:
+  its three substations, ties closed, plus one at l2804256 chosen by `choose_fourth_9500.jl`; evidence
+  `results/kamiak/four9500_oct20`). Idle: 66 no-backflow edges all at or beyond the simplex; 12 voltage-bound
+  (1.05 pu upper limit, next to the 1.05 pu sources), up to 65% short. Substation 4's face is planar and
+  33% beyond the prediction. In the paper and to collaborators it is the **2705-bus feeder** (cite Bobo 2021
+  for the per-phase convention, Sadnan2021 for the 2522-bus lineage). Viewer on GitHub Pages:
+  https://realife-brahmin.github.io/MultiPeriodDistOPF/ (served from `docs/` of this branch; copy the
+  rebuilt page there).
+- **`MULTI_VMARGIN=20000`** (2026-10-21): margin solves count voltage room, so voltage-bound edges take the
+  secant in 4-6 solves instead of 40-55 slow ones or a capped hour. Use it for every new edge search.
 - **Solver hygiene (2026-10-20):** solves past an edge are 10x slower than feasible ones and a
   cold margin solve can take over an hour, so searches use warm-started margin solves, a per-solve
   time cap (8x the reference solve, `MULTIPERIOD_CAP`), and park capped solves in
