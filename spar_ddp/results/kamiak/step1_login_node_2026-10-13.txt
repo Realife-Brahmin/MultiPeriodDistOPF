@@ -1,0 +1,81 @@
+### date / host
+Tue Oct 13 05:48:05 PM PDT 2026
+login-p3n03.kamiak.wsu.edu
+5.14.0-570.58.1.el9_6.x86_64
+Rocky Linux release 9.6 (Blue Onyx)
+
+### scontrol show partition vcea
+PartitionName=vcea
+   AllowGroups=ALL AllowAccounts=circ,its_staff,adam,beckman,belzer,holder,catalysis,doppa,sivakumar,ssl,yates,vcea_staff,demissie,epsl,cook,mstf,shira,heping_liu,crandall,gozen,boll,dubey,pande,liu,shi,appl,bhat,schulz,walden,arnaoudova,song,lee,hundhausen,heo,wang,kandaswamy,cejli,yan,dang,hoang,lin,banerjee,meng,wei,kostyukova,gupta,zare,kuang,dong,zhang_yuxin,hwu,mojumder,schroeder,hosseinzadeh,elmahallawy,sail,xzhao,bahmani,hasan,mitra,field,moitra,mliu,lu,boddeti,bandyopadhyay,bliu,ghosh AllowQos=ALL
+   AllocNodes=ALL Default=NO QoS=vcea
+   DefaultTime=NONE DisableRootJobs=NO ExclusiveUser=NO GraceTime=0 Hidden=NO
+   MaxNodes=UNLIMITED MaxTime=7-00:00:00 MinNodes=1 LLN=NO MaxCPUsPerNode=UNLIMITED
+   Nodes=cn[171-173],sn[14]
+   PriorityJobFactor=1 PriorityTier=10000 RootOnly=NO ReqResv=NO OverSubscribe=NO
+   OverTimeLimit=NONE PreemptMode=REQUEUE
+   State=UP TotalCPUs=248 TotalNodes=4 SelectTypeParameters=NONE
+   DefMemPerCPU=6700 MaxMemPerNode=UNLIMITED
+
+
+### sinfo -p vcea -N
+NODELIST CPUS MEMORY GRES STATE
+cn171 64 514966 (null) mixed
+cn172 64 514966 (null) allocated
+cn173 64 514966 (null) allocated
+sn14 56 385034 gpu:tesla:2 mixed
+
+### module avail (julia|openmpi|gcc|intel|git)
+   StdEnv       gcc/10.2.1                   intel/16.2        nvhpc/21.2
+   gcc/4.9.3    gcc/11.5                     intel/16.3        nvhpc/23.9 (D)
+   gcc/5.2.0    gcc/14.2              (D)    intel/20.0
+   gcc/6.1.0    intel/xe_2016_update2        intel/20.2
+   gcc/7.3.0    intel/xe_2016_update3        intel/25.0 (D)
+
+### df -H ~ /data/lab/dubey
+Filesystem                                                                                      Size  Used Avail Use% Mounted on
+weka-p1n01a.ib.kamiak.wsu.edu,weka-p1n02a.ib.kamiak.wsu.edu,weka-p1n03a.ib.kamiak.wsu.edu/home  101G  246k  100G   1% /home
+weka-p1n01a.ib.kamiak.wsu.edu,weka-p1n02a.ib.kamiak.wsu.edu,weka-p1n03a.ib.kamiak.wsu.edu/data  501G  8.2k  500G   1% /weka/data
+
+### sacctmgr associations
+dubey||normal
+
+### which julia git
+/usr/bin/which: no julia in (/opt/system/scripts/scratch:/opt/system/scripts/slurm:/opt/system/scripts/scratch:/opt/system/scripts/slurm:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/aryan.jha/.local/bin:/home/aryan.jha/bin)
+/usr/bin/git
+git version 2.47.3
+
+### module spider julia / openmpi
+
+----------------------------------------------------------------------------
+  julia:
+----------------------------------------------------------------------------
+    Description:
+      Julia is a multi-paradigm dynamic programming language with
+      high-performance.
+
+     Versions:
+        julia/1.5.1
+        julia/1.11.4
+
+
+----------------------------------------------------------------------------
+  openmpi:
+----------------------------------------------------------------------------
+    Description:
+      Open MPI is a Message Passing Interface (MPI) library project
+      combining technologies and resources from several other projects.
+
+     Versions:
+        openmpi/1.10.1
+        openmpi/3.0.0_cuda
+        openmpi/3.0.0
+
+### squeue -p vcea (counts)
+      1 PENDING
+      4 RUNNING
+
+### compute node internet: srun -p vcea -t 5 (waits up to 120 s for a slot)
+cn171
+HTTP/2 200 
+HTTP/2 200 
+HTTP/2 301 

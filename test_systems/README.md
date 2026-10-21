@@ -1,7 +1,7 @@
 # Public distribution test systems (OpenDSS), as published
 
-Downloaded 2026-10-20 by `bash scripts/fetch_test_systems.sh` (re-runnable on any machine) and
-solved once by `julia --project=envs/msopf scripts/summarize_test_systems.jl`, which writes
+Downloaded 2026-10-20 by `bash tools/fetch_test_systems.sh` (re-runnable on any machine) and
+solved once by `julia --project=envs/msopf tools/summarize_test_systems.jl`, which writes
 `summary.csv` here and in each folder. No electrical data is changed. Single-phase conversion and
 our own PV and batteries are a separate step (as done for the 9500-node system:
 `envs/multi_poi/root_level/convert_to_1ph.jl`, decks `rawData/<system>_1ph`, checked by `check_1ph.jl`).

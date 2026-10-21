@@ -1,0 +1,142 @@
+QUIET_WAIT waited_s=17 other_cores=0.31 timed_out=0
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+This is Ipopt version 3.14.19, running with linear solver ma57.
+
+Number of nonzeros in equality constraint Jacobian...: 11386980
+Number of nonzeros in inequality constraint Jacobian.:  3962880
+Number of nonzeros in Lagrangian Hessian.............:  3071100
+
+Reallocating memory for MA57: lfact (139350005)
+Total number of variables............................:  4257120
+                     variables with only lower bounds:   983328
+                variables with lower and upper bounds:   301344
+                     variables with only upper bounds:        0
+Total number of equality constraints.................:  3070368
+Total number of inequality constraints...............:   990720
+        inequality constraints with only lower bounds:        0
+   inequality constraints with lower and upper bounds:        0
+        inequality constraints with only upper bounds:   990720
+
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+   0  2.8046040e+06 2.82e-13 5.00e+01   0.0 0.00e+00    -  0.00e+00 0.00e+00   0
+   1  2.7361170e+06 7.42e+00 2.13e+01  -0.5 4.22e+02    -  4.66e-01 5.74e-01f  1
+   2  2.7207561e+06 4.37e+00 1.11e+01  -0.9 2.02e+02    -  9.34e-01 4.78e-01f  1
+   3  2.7101020e+06 1.17e+00 2.64e+00  -1.7 1.41e+02    -  9.90e-01 8.16e-01f  1
+   4  2.9023349e+06 2.50e-10 2.24e+01   0.1 4.89e+03    -  1.88e-01 1.42e-01f  1
+   5  2.9107871e+06 1.16e-12 1.54e-02  -0.7 7.86e+02    -  1.00e+00 1.00e+00f  1
+   6  2.7489778e+06 1.22e-12 3.69e-02  -1.4 7.32e+03    -  1.00e+00 1.00e+00f  1
+   7  2.7467518e+06 8.92e-13 2.44e-04  -1.4 3.54e+03    -  1.00e+00 1.00e+00f  1
+   8  2.7182817e+06 7.60e-13 3.82e+00  -2.4 9.55e+03    -  1.00e+00 7.57e-01f  1
+   9  2.7106110e+06 8.76e-13 2.86e+00  -2.6 3.91e+03    -  1.00e+00 7.22e-01f  1
+iter    objective    inf_pr   inf_du lg(mu)  ||d||  lg(rg) alpha_du alpha_pr  ls
+  10  2.7057387e+06 9.27e-13 3.39e-01  -3.2 1.82e+03    -  1.00e+00 9.43e-01f  1
+  11  2.7049300e+06 8.30e-13 1.19e-02  -3.9 2.90e+02    -  1.00e+00 9.92e-01f  1
+  12  2.7048154e+06 8.88e-13 2.70e-03  -5.0 3.85e+01    -  9.87e-01 1.00e+00f  1
+  13  2.7048063e+06 1.37e-04 7.55e-09  -6.7 3.02e+00    -  1.00e+00 1.00e+00f  1
+  14  2.7048060e+06 1.51e-06 1.51e-06  -8.2 1.28e-01    -  1.00e+00 1.00e+00h  1
+  15  2.7048060e+06 4.19e-07 6.86e-05  -9.0 4.26e-02    -  1.00e+00 9.97e-01h  1
+  16  2.7048060e+06 1.26e-07 7.12e-05  -9.9 1.21e-02    -  1.00e+00 9.94e-01h  1
+  17  2.7048060e+06 2.92e-08 6.52e-05 -11.0 3.07e-03    -  1.00e+00 9.89e-01h  1
+  18  2.7048060e+06 1.14e-09 3.74e-05 -11.0 1.07e-03    -  1.00e+00 9.88e-01h  1
+  19  2.7048060e+06 1.63e-12 3.41e-13 -11.0 4.01e-04    -  1.00e+00 1.00e+00h  1
+
+Number of Iterations....: 19
+
+                                   (scaled)                 (unscaled)
+Objective...............:   2.7048060297181839e+06    2.7048060297181839e+06
+Dual infeasibility......:   3.4083846855992306e-13    3.4083846855992306e-13
+Constraint violation....:   1.6289192217300297e-12    1.6289192217300297e-12
+Variable bound violation:   1.8997235784468103e-08    1.8997235784468103e-08
+Complementarity.........:   9.1513148263987279e-09    9.1513148263987279e-09
+Overall NLP error.......:   9.1513148263987279e-09    9.1513148263987279e-09
+
+
+Number of objective function evaluations             = 20
+Number of objective gradient evaluations             = 20
+Number of equality constraint evaluations            = 20
+Number of inequality constraint evaluations          = 20
+Number of equality constraint Jacobian evaluations   = 20
+Number of inequality constraint Jacobian evaluations = 20
+Number of Lagrangian Hessian evaluations             = 19
+Total seconds in IPOPT (w/o function evaluations)    =    136.170
+Total seconds in NLP function evaluations            =     11.112
+
+
+Timing Statistics:
+
+OverallAlgorithm....................:    147.282 (sys:      0.000 wall:    147.282)
+ PrintProblemStatistics.............:      0.056 (sys:      0.000 wall:      0.056)
+ InitializeIterates.................:     12.928 (sys:      0.000 wall:     12.927)
+ UpdateHessian......................:      1.992 (sys:      0.000 wall:      1.983)
+ OutputIteration....................:      0.002 (sys:      0.000 wall:      0.002)
+ UpdateBarrierParameter.............:     79.911 (sys:      0.000 wall:     79.929)
+ ComputeSearchDirection.............:     36.805 (sys:      0.000 wall:     36.797)
+ ComputeAcceptableTrialPoint........:      8.191 (sys:      0.000 wall:      8.186)
+ AcceptTrialPoint...................:      0.404 (sys:      0.000 wall:      0.420)
+ CheckConvergence...................:      6.993 (sys:      0.000 wall:      6.981)
+PDSystemSolverTotal.................:    108.912 (sys:      0.000 wall:    108.909)
+ PDSystemSolverSolveOnce............:    100.377 (sys:      0.000 wall:    100.372)
+ ComputeResiduals...................:      6.524 (sys:      0.000 wall:      6.520)
+ StdAugSystemSolverMultiSolve.......:    109.291 (sys:      0.000 wall:    109.320)
+ LinearSystemScaling................:      0.000 (sys:      0.000 wall:      0.000)
+ LinearSystemSymbolicFactorization..:      3.864 (sys:      0.000 wall:      3.863)
+ LinearSystemFactorization..........:     66.295 (sys:      0.000 wall:     66.272)
+ LinearSystemBackSolve..............:     35.556 (sys:      0.000 wall:     35.588)
+ LinearSystemStructureConverter.....:      0.000 (sys:      0.000 wall:      0.000)
+  LinearSystemStructureConverterInit:      0.000 (sys:      0.000 wall:      0.000)
+QualityFunctionSearch...............:      5.750 (sys:      0.000 wall:      5.761)
+TryCorrector........................:      0.000 (sys:      0.000 wall:      0.000)
+Task1...............................:      3.434 (sys:      0.000 wall:      3.452)
+Task2...............................:      1.113 (sys:      0.000 wall:      1.099)
+Task3...............................:      0.530 (sys:      0.000 wall:      0.576)
+Task4...............................:      0.000 (sys:      0.000 wall:      0.000)
+Task5...............................:      0.411 (sys:      0.000 wall:      0.374)
+Task6...............................:      0.000 (sys:      0.000 wall:      0.000)
+Function Evaluations................:     11.091 (sys:      0.000 wall:     11.112)
+ Objective function.................:      0.013 (sys:      0.000 wall:      0.015)
+ Objective function gradient........:      0.116 (sys:      0.000 wall:      0.136)
+ Equality constraints...............:      4.412 (sys:      0.000 wall:      4.401)
+ Inequality constraints.............:      0.282 (sys:      0.000 wall:      0.272)
+ Equality constraint Jacobian.......:      0.699 (sys:      0.000 wall:      0.715)
+ Inequality constraint Jacobian.....:      3.680 (sys:      0.000 wall:      3.686)
+ Lagrangian Hessian.................:      1.889 (sys:      0.000 wall:      1.887)
+
+EXIT: Optimal Solution Found.
+IPOPT_OPTION linear_solver=ma57
+IPOPT_OPTION hsllib=C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build/libma57.dll
+IPOPT_OPTION linear_system_scaling=none
+IPOPT_OPTION tol=1.0e-6
+IPOPT_OPTION mu_strategy=adaptive
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 10244 upper of 10321 buses; ell >= 0 dropped on 10320 lines; P_Subs >= 0 dropped: true
+IPOPT_LOADFLOW_START applied
+IPOPT_TRACE on
+IPOPT_ITER iteration=0 elapsed_s=14.622831 objective=2.804603977502e+06 inf_pr=9.999993e-03 inf_du=5.000000e+01 mu=1.000000e+00
+IPOPT_ITER iteration=1 elapsed_s=21.939556 objective=2.736117004615e+06 inf_pr=7.611555e+00 inf_du=2.128281e+01 mu=3.170718e-01
+IPOPT_ITER iteration=2 elapsed_s=28.954628 objective=2.720756131228e+06 inf_pr=4.661896e+00 inf_du=1.110704e+01 mu=1.130726e-01
+IPOPT_ITER iteration=3 elapsed_s=35.858725 objective=2.710101959855e+06 inf_pr=1.814869e+00 inf_du=2.638889e+00 mu=1.788039e-02
+IPOPT_ITER iteration=4 elapsed_s=42.845720 objective=2.902334866222e+06 inf_pr=5.815592e+00 inf_du=2.244736e+01 mu=1.407707e+00
+IPOPT_ITER iteration=5 elapsed_s=48.559237 objective=2.910787067368e+06 inf_pr=7.500069e-01 inf_du=1.541954e-02 mu=2.008284e-01
+IPOPT_ITER iteration=6 elapsed_s=54.294719 objective=2.748977817988e+06 inf_pr=1.441524e+00 inf_du=3.691043e-02 mu=4.016568e-02
+IPOPT_ITER iteration=7 elapsed_s=60.025440 objective=2.746751780815e+06 inf_pr=1.900701e-01 inf_du=2.439664e-04 mu=4.016568e-02
+IPOPT_ITER iteration=8 elapsed_s=66.901854 objective=2.718281655240e+06 inf_pr=1.803641e-01 inf_du=3.820673e+00 mu=4.118066e-03
+IPOPT_ITER iteration=9 elapsed_s=73.660179 objective=2.710611011130e+06 inf_pr=1.190032e-01 inf_du=2.864716e+00 mu=2.774853e-03
+IPOPT_ITER iteration=10 elapsed_s=80.467863 objective=2.705738663112e+06 inf_pr=4.727507e-02 inf_du=3.393610e-01 mu=6.208300e-04
+IPOPT_ITER iteration=11 elapsed_s=87.291482 objective=2.704929960993e+06 inf_pr=1.022362e-02 inf_du=1.190791e-02 mu=1.134499e-04
+IPOPT_ITER iteration=12 elapsed_s=94.208578 objective=2.704815411690e+06 inf_pr=8.394677e-04 inf_du=2.695694e-03 mu=8.983075e-06
+IPOPT_ITER iteration=13 elapsed_s=101.095422 objective=2.704806271390e+06 inf_pr=1.958909e-04 inf_du=7.547196e-09 mu=2.116068e-07
+IPOPT_ITER iteration=14 elapsed_s=108.031171 objective=2.704806039448e+06 inf_pr=3.832088e-06 inf_du=1.508967e-06 mu=6.187824e-09
+IPOPT_ITER iteration=15 elapsed_s=115.019978 objective=2.704806031289e+06 inf_pr=7.296610e-07 inf_du=6.858765e-05 mu=1.115455e-09
+IPOPT_ITER iteration=16 elapsed_s=122.840921 objective=2.704806029907e+06 inf_pr=1.658256e-07 inf_du=7.115355e-05 mu=1.373055e-10
+IPOPT_ITER iteration=17 elapsed_s=130.911356 objective=2.704806029726e+06 inf_pr=3.386528e-08 inf_du=6.522203e-05 mu=1.000000e-11
+IPOPT_ITER iteration=18 elapsed_s=139.901571 objective=2.704806029719e+06 inf_pr=4.873792e-09 inf_du=3.737436e-05 mu=1.000000e-11
+IPOPT_ITER iteration=19 elapsed_s=148.805910 objective=2.704806029718e+06 inf_pr=7.200215e-10 inf_du=3.408385e-13 mu=1.000000e-11
+CENTRAL_IPOPT system=large10kC_1ph T=96 profile=periodic C_B=2.400000e-05 gamma=4.200000e+02 status=LOCALLY_SOLVED iterations=19 objective=2704806.029718183912 solve_time_s=148.923 build_s=111.864 wall_s=274.222 variables=4257120 solver=3.14.19
+CENTRAL_IPOPT_MEMORY maxrss_mib=9353.6
+saved_dispatch=ddp/results/kkt_ordering/captures/solutions/sol_ipopt_ma57_screen_lf_pv_hp_adaptive_large10kC_1ph_T96.jls
+CENTRAL_IPOPT_BATTERY at_power_limit=0.063 mean_utilization=0.338 energy_window_used=1.000 throughput_pu_h=3.442630e+03 energy_term=2.674951e+06 cb_term=2.314173e+04 terminal_term=6.713483e+03

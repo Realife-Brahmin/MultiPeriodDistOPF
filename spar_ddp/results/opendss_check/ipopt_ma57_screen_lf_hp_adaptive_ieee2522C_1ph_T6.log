@@ -1,0 +1,11 @@
+OPENDSS_CHECK ipopt_ma57_screen_lf_hp_adaptive_ieee2522C_1ph_T6 | ieee2522C_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 9.9e-32 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1    3433.01    3433.01   0.0001   247.984   247.980     0.003  2.54e-07   0.9561   1.0499      0      0
+    2    2566.26    2566.25   0.0001   134.940   134.938     0.002  1.82e-07   0.9792   1.0500      0      0
+    3    1840.88    1840.88   0.0001    73.323    73.320     0.002  1.82e-07   0.9904   1.0500      0      0
+    4    3487.26    3487.26   0.0001   256.081   256.078     0.003  2.55e-07   0.9536   1.0499      0      0
+    5    3268.76    3268.75   0.0002   223.838   223.832     0.005  4.05e-07   0.9604   1.0499      0      0
+    6    3069.68    3069.68   0.0002   198.287   198.281     0.005  4.05e-07   0.9660   1.0500      0      0
+OPENDSS_SUMMARY ipopt_ma57_screen_lf_hp_adaptive_ieee2522C_1ph_T6 | import: optimizer 70663.42 kWh, OpenDSS 70663.32 kWh (+0.0001%) | losses: optimizer 4537.81, OpenDSS 4537.72 kWh, of which not physical 0.08 kWh
+OPENDSS_SUMMARY ipopt_ma57_screen_lf_hp_adaptive_ieee2522C_1ph_T6 | voltage: largest difference 4.05e-07 pu | OpenDSS range 0.9536-1.0500 pu (optimizer lowest 0.9536) | below limit: 0 of 15126 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY ipopt_ma57_screen_lf_hp_adaptive_ieee2522C_1ph_T6 | objective: optimizer 9534.311026, with OpenDSS import 9534.299295 (-0.0001%) | solver-reported 9534.311026

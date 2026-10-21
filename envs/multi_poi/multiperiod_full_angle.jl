@@ -20,7 +20,7 @@
 # tADMM models. `pv_q = :unity` pins q_D = 0 instead. Batteries are one real-power variable
 # each (discharging positive), lossless -- the user's convention.
 #
-# Objective, in dollars, with the conventions of ddp/examples/power_system:
+# Objective, in dollars, with the conventions of spar_ddp/examples/power_system:
 #     sum_t c[t] * dt * sum_s P_Subs[s,t]                     energy bought (equal prices)
 #   + C_B * dt * sum_{k,t} P_B[k,t]^2                         battery cycling cost, P_B in kW
 #   + gamma * sum_k (B[k,T] - B[k,0])^2                       only with terminal = :soft
