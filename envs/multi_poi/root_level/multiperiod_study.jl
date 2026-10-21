@@ -1288,6 +1288,7 @@ function multi_stage(name)
         end
     end
     rows = String[]; x0s = Dict{Any,Any}(); prev = Dict{Any,Any}()
+    fname = dset == "cube26" ? "multi_windows.csv" : "multi_windows_$dset.csv"
     for case in cases, i in di
         u = DIRS[i]
         pred, lim = predicted_reach(sens, Dict(zip(movers, u)); day = case === DAY)
@@ -1302,9 +1303,9 @@ function multi_stage(name)
         push!(rows, @sprintf("%s,%s,%d,%s,%d,%.4f,%.4f,%.4f,%.6f,%.6f,%s,%s,%.4f,%.6f,%.6f,%d,%s,%.0f,%s,%s", mc.label, join(mc.sources, ":"), T, case, i, u...,
                              b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr, bl,
                              join([@sprintf("%s=%.3f", k, v) for (k, v) in sort(collect(b.bind.imports))], ";")))
+        merge_csv(joinpath(OUT_DIR, fname), MULTI_HEADER, 5, rows[end:end])     # each row as soon as it is measured
     end
-    fname = dset == "cube26" ? "multi_windows.csv" : "multi_windows_$dset.csv"
-    isempty(rows) || merge_csv(joinpath(OUT_DIR, fname), MULTI_HEADER, 5, rows)
+    # (rows were written one by one above)
     say("  wrote $fname; ", name, " done in ", round(Int, time() - t0), " s")
 end
 foreach(multi_stage, filter(in(STAGES), sort(collect(keys(MULTI)))))
