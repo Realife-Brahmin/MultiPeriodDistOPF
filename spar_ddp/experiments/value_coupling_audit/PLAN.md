@@ -116,10 +116,10 @@ or new benchmark claims from these diagnostics.
 
 ## Implementation status / continuation pointers
 
-Dense capture job31357503 is running in
+Dense capture job31357503 completed in
 /home/aryan.jha/kamiak_jobs/value_coupling_audit_oct22, pinnede6b8b37b.
 The small T3 coverage gate has already verified all5tags including late j9.
-Do not alter that active snapshot. Cold capture timing is diagnostic only.
+Do not alter that immutable snapshot. Cold capture timing is diagnostic only.
 
 hierarchy.jl now provides a graph/battery-weighted centroid hierarchy below
 the root, retaining separator batteries, and an INITIAL approximate cross-block
