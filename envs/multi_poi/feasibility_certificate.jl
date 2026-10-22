@@ -48,14 +48,18 @@ function validate_dispatch(net, delta_deg, kw, x; k)
     src_at = Dict(s.bus => s for s in net.sources)
     load = Dict(b => 0.0im for b in net.buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
     pvP = Dict(b => 0.0 for b in net.buses); for p in pvs; pvP[p.bus] += p.kW / S; end
-    viol = Dict("balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
+    viol = Dict("kvl" => 0.0, "balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
     up!(kind, v) = (viol[kind] = max(viol[kind], v))
     minP, minroom = Inf, Inf
     for t in 1:T
         V(b) = x.V_pu[b][t]
         out = Dict(b => 0.0im for b in net.buses)
         for l in net.lines
-            Y = l.Y ./ Yb; ys = -Y[1, 2]; I = ys * (V(l.from) - V(l.to))
+            Y = l.Y ./ Yb; z = -1 / Y[1, 2]
+            # KCL with the state's own series current when it has one (I = dV/z would multiply rounding
+            # by 1/|z|, 1e8 on the coupling lines), and KVL checked separately as a voltage residual
+            I = hasproperty(x, :raw) ? complex(x.raw.lr[l.name][t], x.raw.li[l.name][t]) : (V(l.from) - V(l.to)) / z
+            up!("kvl", abs(V(l.from) - V(l.to) - z * I))
             out[l.from] += V(l.from) * conj(I) + conj(Y[1, 1] + Y[1, 2]) * abs2(V(l.from))
             out[l.to] += V(l.to) * conj(-I) + conj(Y[2, 2] + Y[2, 1]) * abs2(V(l.to))
         end
@@ -99,7 +103,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
         end
         terminal === :cyclic && battery === :optimize && up!("soc", abs(Bk[T+1] - Bk[1]))
     end
-    eq = maximum(viol[c] for c in ("balance", "source", "pv_q", "battery", "soc"))
+    eq = maximum(viol[c] for c in ("kvl", "balance", "source", "pv_q", "battery", "soc"))
     return (; viol, max_violation = maximum(values(viol)), equations = eq, min_import_kW = minP, min_band_room_kW = minroom,
             margin_kW = min(minP, minroom))
 end
@@ -410,7 +414,9 @@ Solve the relaxation and return U (kW, from the dual bound), the solver's primal
 objectives, the residuals, the PSD eigenvalue checks, the rank of the moment blocks, and, when
 every block is numerically rank one, the recovered state for `validate_dispatch`.
 """
-function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = ())
+# Clarabel settings that solve the 24-period relaxation (the defaults stop on a numerical error there)
+const CLARABEL_DEFAULTS = [("max_iter", 400), ("static_regularization_constant", 1e-7), ("tol_gap_abs", 1e-6), ("tol_gap_rel", 1e-6), ("tol_feas", 1e-6)]
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS)
     t0 = time()
     R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes)
     tb = time() - t0
@@ -431,11 +437,27 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = ())
             ev = eigvals(Symmetric(Mx)); minev = min(minev, ev[1]); rank_ratio = max(rank_ratio, ev[end-1] / max(ev[end], eps()))
         end
     end
+    # where consistency is lost: line losses the relaxation books beyond what its own currents imply,
+    # sum_l R_l (lrlr + lili - lr^2 - li^2), and |V|^2 beyond the squared first moments (kW and pu)
+    fict, vgap = NaN, NaN
+    if has_values(R.model)
+        fict = 0.0; vgap = 0.0
+        for l in net.lines, t in 1:kw.T
+            Rl = real(-net.Y_base / l.Y[1, 2]); g(sy) = value(variable_by_name(R.model, string(sy) * "[" * l.name * "," * string(t) * "]"))
+            fict += Rl * (g(:lrlr) + g(:lili) - g(:lr)^2 - g(:li)^2)
+        end
+        for b in net.buses, t in 1:kw.T
+            vgap = max(vgap, value(R.Wee[b, t]) + value(R.Wff[b, t]) - value(R.e[b, t])^2 - value(R.f[b, t])^2)
+        end
+        fict *= S / kw.T
+    end
     rec = nothing
     if has_values(R.model)
         T = kw.T; Ts = 1:T
         V = Dict(b => [complex(value(R.e[b, t]), value(R.f[b, t])) for t in Ts] for b in net.buses)
-        rec = (; V_pu = V, P_B_kW = Dict(kk => [value(R.P_B[kk, t]) * S for t in Ts] for kk in axes(R.P_B, 1)),
+        lv(sy, n, t) = value(variable_by_name(R.model, string(sy) * "[" * n * "," * string(t) * "]"))
+        raw = (; lr = Dict(l.name => [lv(:lr, l.name, t) for t in Ts] for l in net.lines), li = Dict(l.name => [lv(:li, l.name, t) for t in Ts] for l in net.lines))
+        rec = (; raw, V_pu = V, P_B_kW = Dict(kk => [value(R.P_B[kk, t]) * S for t in Ts] for kk in axes(R.P_B, 1)),
                Q_PV_kvar = Dict(kk => [value(R.Q_PV[kk, t]) * S for t in Ts] for kk in axes(R.Q_PV, 1)),
                B_kWh = Dict(kk => [value(R.B[kk, t]) * S for t in 0:T] for kk in axes(R.B, 1)),
                P_subs_kW = Dict(s.name => fill(NaN, T) for s in net.sources), Q_subs_kvar = Dict(s.name => fill(NaN, T) for s in net.sources))
@@ -443,5 +465,5 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = ())
     return (; status = st, U, primal, dualobj, gap = primal - dualobj, primal_residual = pres, psd_primal_min_eig = minev,
             psd_dual_violation = db.psd_viol, dual_sign_violation = db.sign_viol, box_term_kW = db.box_term * S,
             rounding_kW = db.rounding * S, rank_ratio, recovered = rec, build_s = tb, solve_s = ts,
-            nblocks = length(R.psd), nvars = num_variables(R.model), R)
+            nblocks = length(R.psd), nvars = num_variables(R.model), R, fictitious_loss_kW = fict, vsq_gap = vgap)
 end

@@ -103,6 +103,18 @@ net, pvs = load_sources(["subs1", "subs3", "subs4"])
 if mode == "debug"                                    # T = 2: code check, kept apart from the experiment
     s = setup(net, pvs; T = 2, pv = "qfree")
     run_queries("debug_T2", s, (:nobatt, :cyclic), case -> [(name = "equal", r = 0.0, th = 0.0), (name = "far", r = 2.0, th = 292.5)]; cuts, replay = false)
+elseif mode == "probe"                                # one point, verbose: the validator's breakdown and Clarabel's log
+    T = parse(Int, get(ENV, "PROBE_T", "24")); case = Symbol(get(ENV, "PROBE_CASE", "nobatt"))
+    s = setup(net, pvs; T, pv = "qfree"); kw = problem(s, case)
+    ang = Dict("subs1" => 0.0, "subs3" => 0.0, "subs4" => 0.0)
+    x = solve_multiperiod(s.net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0)
+    v = validate_dispatch(s.net, ang, kw, x; k = KV)
+    say("nlp: ", x.status, " margin ", round(x.margin_kW, digits = 4), " kW; validated margin ", round(v.margin_kW, digits = 4), " kW; violations ", v.viol)
+    opts = [(String(a), something(tryparse(Int, b), tryparse(Float64, b), b == "true" ? true : b == "false" ? false : String(b)))
+            for (a, b) in (split(kv, '=') for kv in split(get(ENV, "CLARABEL_OPTS", ""), ';'; keepempty = false))]
+    c = certify(s.net, ang, kw; k = KV, cuts, solver_attributes = [CLARABEL_DEFAULTS; opts])
+    say(@sprintf("relaxation: %s primal %.3f dual %.3f kW, U %.3f kW, box term %.3e kW, rank %.2e, fictitious losses %.1f kW per period, max |V|^2 gap %.3e, build %.1f s, solve %.1f s",
+                 c.status, c.primal, c.dualobj, c.U, c.box_term_kW, c.rank_ratio, c.fictitious_loss_kW, c.vsq_gap, c.build_s, c.solve_s))
 elseif mode == "exotic"                               # other branches of the AC equations: scrambled starts
     T = parse(Int, get(ENV, "EXOTIC_T", "2")); nstart = parse(Int, get(ENV, "EXOTIC_STARTS", "12"))
     r, th = parse(Float64, get(ENV, "EXOTIC_R", "2.0")), parse(Float64, get(ENV, "EXOTIC_TH", "292.5"))
