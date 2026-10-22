@@ -1,0 +1,19 @@
+label=four_ieee9500_v103_nobatt_73_74_75_76 job=31346207 host=sn14 start=2026-10-21T15:36:36-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/multiperiod_study.jl four_ieee9500
+LARGE_T=24
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/vsrc103_oct21/out_four_ieee9500_v103_nobatt_73_74_75_76_31346207
+MULTIPERIOD_RETRY=1
+commit=a3d2e8da26df174d0f3c9ed2ce14d608411c878b
+CPU(s):                                  56
+Model name:                              Intel(R) Xeon(R) Gold 6238R CPU @ 2.20GHz
+CPU(s) scaling MHz:                      82%
+   RunTime=00:00:03 TimeLimit=12:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n01:2449733
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=sn14
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-21T15:53:07-07:00
+wall_s=990
+  3266708K   4635788K 
