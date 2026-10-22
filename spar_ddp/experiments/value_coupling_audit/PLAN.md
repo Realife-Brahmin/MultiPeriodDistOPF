@@ -131,8 +131,17 @@ composition kernel. It returns BOTH compact payload and dense materialization;
 numeric_payload_bytes counts coefficients of the compact payload only, not
 resident memory of the prototype. Index/tree/object overhead is additional.
 
-Replay runner still needs implementation after capture gates pass: ordinary
-reference, matching full scan-depth records, inertia/conditioning, frozen
-direction recovery from saved S, rank/cost/spectrum CSVs and candidate decision.
-Use this committed library, regression-test on smoke, then bounded medium and
-large-window replays. Never infer performance from materialize+combine alone.
+Capture completed and all four coverage/numerical/physical/OpenDSS gates passed;
+see results_oct22/CAPTURE.md and the raw evidence archive (pushed96154b8a).
+Replay implementation is now in replay.jl/replay_job.sh; read REPLAY.md for
+scope, output schemas and exactness/performance limits. Immutable source96154b8a
+was submitted as job31357649 in
+/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22 (45minute batch cap).
+All-five-point T3 dense full-direction gates precede mediumT24 full suffixes
+and original1020 first-four-period windows with the true dense future boundary.
+No approximate optimizer/full-solve test is active. Inspect both stderr and
+each per-point log; failure must preserve this snapshot, never weaken gates.
+Synthetic hierarchy unit and parsing passed locally; the full replay module
+requires cluster private DDP dependencies unavailable in the local environment.
+Never infer performance from materialize+combine alone. Real-data replay,
+exact-structure assessment and candidate decision remain to be completed.
