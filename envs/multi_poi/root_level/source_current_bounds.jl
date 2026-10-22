@@ -250,4 +250,4 @@ function scb_main()
         end
     end
 end
-scb_main()
+get(ENV, "SCB_LIB", "0") == "1" || scb_main()

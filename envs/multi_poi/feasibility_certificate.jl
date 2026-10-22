@@ -74,7 +74,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
                 Ssrc = V(s.bus) * conj((E - V(s.bus)) / z)
             end
             inj[s.bus] += Ssrc
-            sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
+            sa = src_amp(kw, s.name, t)
             sa === nothing || abs(z) < 1e-12 || up!("ampacity", max(0.0, abs((E - V(s.bus)) / z) - sa))
             up!("backflow", max(0.0, -real(Ssrc))); minP = min(minP, real(Ssrc) * S)
         end
@@ -111,6 +111,18 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             margin_kW = min(minP, minroom))
 end
 
+"""
+Source-current bound for source `n` at period `t` from `source_amp_pu`: a number for every source, a Dict by source
+of numbers, or a Dict by source of per-period vectors (derived bounds, one per hour); nothing if absent.
+"""
+function src_amp(kw, n, t)
+    a = get(kw, :source_ampacity_pu, nothing)
+    a === nothing && return nothing
+    v = a isa AbstractDict ? get(a, n, nothing) : a
+    return v isa AbstractVector ? v[t] : v
+end
+src_amp_max(kw, n) = (v = [src_amp(kw, n, t) for t in 1:kw.T]; any(isnothing, v) ? nothing : maximum(v))
+
 "Line ampacity in per unit from the problem keywords (`ampacity_pu`: a number for every line or a Dict), or nothing."
 ampacity_of(kw, n) = (a = get(kw, :ampacity_pu, nothing); a isa AbstractDict ? get(a, n, nothing) : a)
 
@@ -140,7 +152,7 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
     for bt in net.batteries; battery === :optimize && (Ib[bt.bus] += bt.kW_rated / S / vmin[bt.bus]); end
     for s in net.sources
         Emax = s.pu
-        sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
+        sa = src_amp_max(kw, s.name)
         Ib[s.bus] += min((Emax + vmax[s.bus]) / abs(s.z_series * Yb), sa === nothing ? Inf : sa)
     end
     for l in net.lines
@@ -173,7 +185,7 @@ and the line's two KVL equations hold for every row of it (valid: for a real poi
 is x x', so a' x = 0 gives M a = 0). Eliminating the currents instead puts 1/z of the
 near-zero-impedance coupling lines (1e8 pu) into the constraints, which stalls the solver.
 """
-function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true)
+function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true, src_scale = false)
     T = kw.T; dt = get(kw, :dt_h, 24 / T); S = net.S_base_kVA; Yb = net.Y_base; Ts = 1:T
     lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
     pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); ideal = get(kw, :ideal_sources, false)
@@ -282,9 +294,13 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                 Ps, Qs = cmul(1 / conj(z), Pc, Qc)
                 add_to_expression!(Pin, Ps); add_to_expression!(Qin, Qs)
                 @constraint(model, Ps >= m)                                         # no-backflow, with the margin
-                sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
-                # |I_s|^2 = |E - V_s|^2 / |z_s|^2 = (|E|^2 - 2 Re(conj(E) V_s) + |V_s|^2) / |z_s|^2, lifted: linear in the moments
-                sa === nothing || @constraint(model, (abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b)) / abs2(z) <= sa^2)
+                sa = src_amp(kw, s.name, t)
+                # |I_s|^2 = |E - V_s|^2 / |z_s|^2 = (|E|^2 - 2 Re(conj(E) V_s) + |V_s|^2) / |z_s|^2, lifted: linear in the moments.
+                # src_scale = true writes the same constraint times |z_s|^2 (unit-size coefficients instead of 1/|z_s|^2 = 2.8e4).
+                if sa !== nothing
+                    src_scale ? @constraint(model, abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b) <= sa^2 * abs2(z)) :
+                                @constraint(model, (abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b)) / abs2(z) <= sa^2)
+                end
             else
                 if band_in_margin                                                   # the clean margin problem
                     @constraint(model, VV(b) >= lo^2 + (S / k) * m); @constraint(model, VV(b) <= hi^2 - (S / k) * m)
@@ -537,31 +553,30 @@ Returns the radii by bus. Only `R.box` changes; the solved model does not.
 """
 function tighten_boxes!(R, net, kw, delta_deg)
     Yb = net.Y_base; box = R.box; vb = R.bounds
-    samp = get(kw, :source_ampacity_pu, nothing)
-    Is(n) = samp isa AbstractDict ? get(samp, n, nothing) : samp
+    Is(n, t) = src_amp(kw, n, t)
     Il(l) = vb.C[l.name]                                         # already min(tree bound, line limit)
     adj = Dict(b => Tuple{String,Float64}[] for b in net.buses)
     for l in net.lines
         w = abs(-Yb / l.Y[1, 2]) * Il(l)
         push!(adj[l.from], (l.to, w)); push!(adj[l.to], (l.from, w))
     end
-    radius = Dict(b => Inf for b in net.buses); center = Dict{String,String}()
-    for s in net.sources
-        a = Is(s.name); a === nothing && continue
-        d = Dict(s.bus => abs(s.z_series * Yb) * a); st = [s.bus]          # a tree: one path to each bus
-        while !isempty(st)
-            u = pop!(st)
-            for (v, w) in adj[u]
-                haskey(d, v) && continue
-                d[v] = d[u] + w; push!(st, v)
+    T = kw.T; radius = nothing
+    for t in 1:T
+        radius = Dict(b => Inf for b in net.buses); center = Dict{String,String}()
+        for s in net.sources
+            a = Is(s.name, t); a === nothing && continue
+            d = Dict(s.bus => abs(s.z_series * Yb) * a); st = [s.bus]          # a tree: one path to each bus
+            while !isempty(st)
+                u = pop!(st)
+                for (v, w) in adj[u]
+                    haskey(d, v) && continue
+                    d[v] = d[u] + w; push!(st, v)
+                end
+            end
+            for (b, r) in d
+                r < radius[b] && (radius[b] = r; center[b] = s.name)
             end
         end
-        for (b, r) in d
-            r < radius[b] && (radius[b] = r; center[b] = s.name)
-        end
-    end
-    T = kw.T
-    for t in 1:T
         ex = Dict{String,Tuple{Float64,Float64}}(); fx = Dict{String,Tuple{Float64,Float64}}()
         for b in net.buses
             e0, f0 = box[R.e[b, t]], box[R.f[b, t]]
@@ -602,9 +617,9 @@ every block is numerically rank one, the recovered state for `validate_dispatch`
 """
 # Clarabel settings that solve the 24-period relaxation (the defaults stop on a numerical error there)
 const CLARABEL_DEFAULTS = [("max_iter", 400), ("static_regularization_constant", 1e-7), ("tol_gap_abs", 1e-6), ("tol_gap_rel", 1e-6), ("tol_feas", 1e-6)]
-function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0)
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0, src_scale = false)
     t0 = time()
-    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin)
+    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin, src_scale)
     tb = time() - t0
     optimize!(R.model)
     ts = time() - t0 - tb
@@ -614,6 +629,7 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
     dualobj = try -dual_objective_value(R.model) * S catch; NaN end
     box_loose = copy(R.box)
     radius = tighten ? tighten_boxes!(R, net, kw, delta_deg) : nothing
+    tv0 = time()
     db = has_duals(R.model) ? dual_bound(R.model; box = R.box, detail) : (; bound = -Inf, psd_viol = NaN, sign_viol = NaN, box_term = NaN, rounding = NaN, unbounded_variable = nothing)
     U = -db.bound * S
     # Infeasible relaxation: validate the Farkas ray independently. With c = 0, dual_bound returns a
@@ -625,6 +641,7 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
         farkas = (; bound = fb.bound, box_term = fb.box_term, psd_viol = fb.psd_viol, constant = fb.constant, top = fb.top, csrc = fb.csrc,
                   bound_loose = fl.bound, box_term_loose = fl.box_term)
     end
+    verify_s = time() - tv0
     pres = has_values(R.model) ? maximum(values(primal_feasibility_report(R.model; atol = 0.0)); init = 0.0) : NaN
     minev, rank_ratio = Inf, 0.0
     if has_values(R.model)
@@ -662,5 +679,52 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
     return (; status = st, U, primal, dualobj, gap = primal - dualobj, primal_residual = pres, psd_primal_min_eig = minev,
             psd_dual_violation = db.psd_viol, dual_sign_violation = db.sign_viol, box_term_kW = db.box_term * S,
             rounding_kW = db.rounding * S, rank_ratio, recovered = rec, build_s = tb, solve_s = ts,
-            nblocks = length(R.psd), nvars = num_variables(R.model), R, farkas, dual_status = dual_status(R.model), db, radius, box_loose, fictitious_loss_kW = fict, vsq_gap = vgap)
+            nblocks = length(R.psd), nvars = num_variables(R.model), R, farkas, verify_s, dual_status = dual_status(R.model), db, radius, box_loose, fictitious_loss_kW = fict, vsq_gap = vgap)
+end
+
+"""
+    export_certificate(model, box, path; c = objective_function(model), note = "")
+
+Write everything an independent check of a solved relaxation needs, so that the bound can be recomputed
+without another solve (root_level/verify_certificate.jl): the objective c, every variable's box (the solver
+bounds intersected with the certificate box), every scalar constraint (sense, right-hand side, constant,
+terms, and the solver's dual value) and every PSD block (side, the dual triangle, and each triangle entry's
+constant and terms). Numbers are written in Julia's shortest round-trip form, so they parse back exactly.
+With c = 0 (zero(AffExpr)) the file is a Farkas check.
+"""
+function export_certificate(model, box, path; c = objective_function(model), note = "")
+    c = convert(AffExpr, c)
+    vars = all_variables(model); vid = Dict(v => i for (i, v) in enumerate(vars))
+    open(path, "w") do io
+        println(io, "# relaxation certificate data; ", note)
+        print(io, "OBJ ", c.constant, " ", length(c.terms)); for (v, a) in c.terms; print(io, " ", vid[v], " ", a); end; println(io)
+        for (i, v) in enumerate(vars)
+            l, u = is_fixed(v) ? (fix_value(v), fix_value(v)) : (has_lower_bound(v) ? lower_bound(v) : -Inf, has_upper_bound(v) ? upper_bound(v) : Inf)
+            haskey(box, v) && (l = max(l, box[v][1]); u = min(u, box[v][2]))
+            println(io, "VAR ", i, " ", l, " ", u, " ", replace(name(v), ' ' => '_'))
+        end
+        bk = backend(model)
+        for (F, Sset) in list_of_constraint_types(model)
+            F == VariableRef && continue
+            for cref in all_constraints(model, F, Sset)
+                obj = constraint_object(cref)
+                if obj.set isa MOI.PositiveSemidefiniteConeTriangle
+                    lamv = MOI.get(bk, MOI.ConstraintDual(), index(cref)); fv = moi_function(obj); n = obj.set.side_dimension
+                    print(io, "PSD ", n); for x in lamv; print(io, " ", x); end; println(io)
+                    terms = [Tuple{Int,Float64}[] for _ in 1:length(fv.constants)]
+                    for term in fv.terms
+                        push!(terms[term.output_index], (vid[VariableRef(model, term.scalar_term.variable)], term.scalar_term.coefficient))
+                    end
+                    for (q, cst) in enumerate(fv.constants)
+                        print(io, "E ", q, " ", cst, " ", length(terms[q])); for (v, a) in terms[q]; print(io, " ", v, " ", a); end; println(io)
+                    end
+                else
+                    fn = obj.func; sense = obj.set isa MOI.GreaterThan ? "GE" : obj.set isa MOI.LessThan ? "LE" : obj.set isa MOI.EqualTo ? "EQ" : error("unsupported set $(typeof(obj.set))")
+                    print(io, "LIN ", sense, " ", MOI.constant(obj.set), " ", dual(cref), " ", fn.constant, " ", length(fn.terms))
+                    for (v, a) in fn.terms; print(io, " ", vid[v], " ", a); end; println(io)
+                end
+            end
+        end
+    end
+    return path
 end
