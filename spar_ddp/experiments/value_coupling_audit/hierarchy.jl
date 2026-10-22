@@ -62,7 +62,7 @@ coupling_internals(t)=isnothing(t.left) ? 0 : 1+coupling_internals(t.left)+coupl
 coupling_groups(t)=isnothing(t.left) ? [t.ids] : vcat(coupling_groups(t.left),coupling_groups(t.right))
 joint_value(e)=[e.Maa e.Mab;e.Mab' e.Mbb]
 function retain_coupling(e,tree;tol=1e-8)
-    @assert 0<tol<1
+    @assert 0<=tol<1
     start=time_ns();n=length(e.ma);original=joint_value(e)
     # Diagonal quadratic blocks are symmetric mathematically; include any
     # symmetrization discrepancy in the final reconstruction error, not Mab.

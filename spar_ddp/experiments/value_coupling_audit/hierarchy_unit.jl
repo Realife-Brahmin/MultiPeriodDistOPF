@@ -17,4 +17,6 @@ x=retain_coupling(e,tree;tol=1e-8)
 @assert x.elem.ma==e.ma && x.elem.mb==e.mb
 @assert any(!r.dense_fallback && r.rank>0 for r in x.reports)
 @assert norm(x.elem.Mab)>0
+exact=retain_coupling(e,tree;tol=0.0)
+@assert norm(joint_value(exact.elem)-joint_value(e))/norm(joint_value(e))<1e-12
 println("COUPLING_HIERARCHY_UNIT_PASS states_retained=true within_groups_full=true nonzero_cross_coupling_retained=true frobenius_budget=true")
