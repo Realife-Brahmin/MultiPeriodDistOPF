@@ -21,7 +21,7 @@ Preparation runs T3 on X and Y with all3 methods, original-model residual
 audit, same objective and independent OpenDSS before releasing8 case jobs.
 Each case allocation runs both repeats, reverses method order on repeat2.
 Dependencies afterok serialize all allocations and enforce smoke gates.
-Matching Gold6438Y+64CPU600GiB/full-node occupancy check, Julia1.12.4,
+Matching Gold6438Y+64CPU/full-node occupancy check, Julia1.12.4,
 OMP/BLAS/Julia1; DDP W=min(T,63), full warmup every optimizer.
 Four-hour allocation cap per job,50min cap per individual solve (including
 build and warmup). Failures/preemptions preserved, no automatic scope expansion.
@@ -52,3 +52,16 @@ collected evidence. The central callback does not report complementarity;
 retain full internal logs/table/final complementarity without inventing a
 callback field. Analyze full/quality clocks separately. All raw dispatches saved.
 If afterok blocks, inspect parentfailure; never bypass numerical/smoke gates.
+
+## Completed campaign and allocation correction
+
+All48 measured solves plus6 correctness smokes completed and validated.
+See results_oct21/FINDINGS.md and the per-run, median, shared-quality,
+phase-timing and memory CSVs. Reproduce scoring by extracting evidence.tgz
+to an empty directory and running `python collect.py EXTRACTED OUTPUT`.
+
+All nine jobs were initially submitted with600GiB, then lowered while pending
+to300GiB on Aryan's instruction, without changing CPU selection, dependencies
+or numerical source. Actual hardware/cgroup logs confirm300GiB for every
+case. The immutable submitted source48099dbf and its submit.sh retain600G
+as historical provenance; do not infer the actual allocation from that script.
