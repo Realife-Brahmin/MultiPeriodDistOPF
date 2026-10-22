@@ -48,7 +48,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
     src_at = Dict(s.bus => s for s in net.sources)
     load = Dict(b => 0.0im for b in net.buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
     pvP = Dict(b => 0.0 for b in net.buses); for p in pvs; pvP[p.bus] += p.kW / S; end
-    viol = Dict("kvl" => 0.0, "balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
+    viol = Dict("ampacity" => 0.0, "kvl" => 0.0, "balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
     up!(kind, v) = (viol[kind] = max(viol[kind], v))
     minP, minroom = Inf, Inf
     for t in 1:T
@@ -60,6 +60,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             # by 1/|z|, 1e8 on the coupling lines), and KVL checked separately as a voltage residual
             I = hasproperty(x, :raw) ? complex(x.raw.lr[l.name][t], x.raw.li[l.name][t]) : (V(l.from) - V(l.to)) / z
             up!("kvl", abs(V(l.from) - V(l.to) - z * I))
+            amax = ampacity_of(kw, l.name); amax === nothing || up!("ampacity", max(0.0, abs(I) - amax))
             out[l.from] += V(l.from) * conj(I) + conj(Y[1, 1] + Y[1, 2]) * abs2(V(l.from))
             out[l.to] += V(l.to) * conj(-I) + conj(Y[2, 2] + Y[2, 1]) * abs2(V(l.to))
         end
@@ -103,10 +104,13 @@ function validate_dispatch(net, delta_deg, kw, x; k)
         end
         terminal === :cyclic && battery === :optimize && up!("soc", abs(Bk[T+1] - Bk[1]))
     end
-    eq = maximum(viol[c] for c in ("kvl", "balance", "source", "pv_q", "battery", "soc"))
+    eq = maximum(viol[c] for c in ("ampacity", "kvl", "balance", "source", "pv_q", "battery", "soc"))
     return (; viol, max_violation = maximum(values(viol)), equations = eq, min_import_kW = minP, min_band_room_kW = minroom,
             margin_kW = min(minP, minroom))
 end
+
+"Line ampacity in per unit from the problem keywords (`ampacity_pu`: a number for every line or a Dict), or nothing."
+ampacity_of(kw, n) = (a = get(kw, :ampacity_pu, nothing); a isa AbstractDict ? get(a, n, nothing) : a)
 
 """
     variable_bounds(net, kw; k, m_lo_kW, vbox)
@@ -149,6 +153,7 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox)
             for (v, n) in adj[u]; (n == l.name || v in side) && continue; push!(side, v); push!(st, v); end
         end
         sto = sum(Ib[b] for b in side); C[l.name] = min(sto, total - sto)
+        a = ampacity_of(kw, l.name); a === nothing || (C[l.name] = min(C[l.name], a))
     end
     return (; vmin, vmax, C)
 end
@@ -239,6 +244,8 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                  g(:lr)   g(:eilr)    g(:filr)    g(:ejlr)    g(:fjlr)    g(:lrlr) g(:lrli);
                  g(:li)   g(:eili)    g(:fili)    g(:ejli)    g(:fjli)    g(:lrli) g(:lili)]
             push!(psd, (; t, line = n, c = @constraint(model, Symmetric(M) in PSDCone())))
+            amax = ampacity_of(kw, n)                                       # ampacity, lifted: |I|^2 moment <= I_max^2
+            amax === nothing || @constraint(model, g(:lrlr) + g(:lili) <= amax^2)
             # KVL  e_i - e_j - R lr + X li = 0,  f_i - f_j - X lr - R li = 0, on every row of M
             ar = [0, 1, 0, -1, 0, -R, X]; ai_ = [0, 0, 1, 0, -1, -X, -R]
             for row in 1:7

@@ -32,8 +32,9 @@ function setup(net, pvs; T, pv = "qfree", ideal = false, feas = nothing)
     ipopt = feas === nothing ? (; tol = IPOPT_TOL, constr_viol_tol = IPOPT_TOL) : (; tol = feas / 10, constr_viol_tol = feas)
     return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal, feas, ipopt)
 end
+const AMP = haskey(ENV, "FEAS_AMP") ? parse(Float64, ENV["FEAS_AMP"]) : nothing   # FEAS_AMP=5: every line at 5 pu
 function problem(s, case)
-    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...)
+    common = (; ampacity_pu = AMP, pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...)
     return (; common..., T = s.T, load_factor = s.lam, price = s.c, pv_factor = s.F, gamma = s.GAM, terminal = case === :cyclic ? :cyclic : :soft)
 end
 
@@ -153,7 +154,7 @@ elseif mode == "poc123"
         end
         return qs
     end
-    run_queries("ieee123_T24" * (isempty(cuts) ? "" : "_" * join(cuts, "+")), s, (:nobatt, :cyclic), queries; cuts)
+    run_queries("ieee123_T24" * (AMP === nothing ? "" : "_amp" * string(round(Int, AMP))) * (isempty(cuts) ? "" : "_" * join(cuts, "+")), s, (:nobatt, :cyclic), queries; cuts)
 else
     error("unknown mode $mode")
 end

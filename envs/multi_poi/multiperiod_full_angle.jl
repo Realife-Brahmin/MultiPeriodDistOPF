@@ -142,7 +142,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
-                           objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7,
+                           objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
@@ -191,6 +191,15 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     @variable(model, -1e5 <= ii[names, Ts] <= 1e5)
     @variable(model, -1e5 <= lr[lines, Ts] <= 1e5)
     @variable(model, -1e5 <= li[lines, Ts] <= 1e5)
+    # Line ampacity (per unit of the deck's current base, one number for every line or a Dict by line
+    # name): |I_l|^2 = lr^2 + li^2 <= I_max^2 in every period. Off by default (`nothing`), which keeps
+    # every result computed before 2026-10-21 reproducible.
+    amp(n) = ampacity_pu isa AbstractDict ? get(ampacity_pu, n, nothing) : ampacity_pu
+    for n in lines, t in Ts
+        a = amp(n); a === nothing && continue
+        set_lower_bound(lr[n, t], -a); set_upper_bound(lr[n, t], a); set_lower_bound(li[n, t], -a); set_upper_bound(li[n, t], a)
+        @constraint(model, lr[n, t]^2 + li[n, t]^2 <= a^2)
+    end
     @variable(model, P_subs[names, Ts])
     @variable(model, Q_subs[names, Ts])
     @variable(model, P_B[bnames, Ts])                 # per unit, discharging > 0
