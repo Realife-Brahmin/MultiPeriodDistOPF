@@ -329,4 +329,4 @@ function extra4()
         end
     end
 end
-get(ENV, "CV_EXTRA", "0") == "4" ? extra4() : get(ENV, "CV_EXTRA", "0") == "3" ? extra3() : get(ENV, "CV_EXTRA", "0") == "2" ? extra2() : get(ENV, "CV_EXTRA", "0") == "1" ? extra() : main()
+get(ENV, "CV_EXTRA", "0") == "lib" ? nothing : get(ENV, "CV_EXTRA", "0") == "4" ? extra4() : get(ENV, "CV_EXTRA", "0") == "3" ? extra3() : get(ENV, "CV_EXTRA", "0") == "2" ? extra2() : get(ENV, "CV_EXTRA", "0") == "1" ? extra() : main()
