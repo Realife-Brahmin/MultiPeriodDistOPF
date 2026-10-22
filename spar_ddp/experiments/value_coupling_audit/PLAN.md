@@ -1,5 +1,12 @@
 # Coupling-retaining value representation: staged investigation
 
+Final October 22 status: all 15 frozen points strictly validated using 13
+preserved primary points plus 2 completed continuation points. See
+results_oct22/FINDINGS.md and final_analysis/ for the assessment and provenance.
+Retaining coupling improves accuracy, but late direction amplification and
+unproven compact-kernel cost prevent advancement to a full-solve campaign.
+No further solve is queued; historical submission notes below are retained.
+
 User-authorized October22, continuing bb69011f. Production defaults, benchmark
 results and paper stay unchanged. No candidate full-solve campaign before a
 frozen replay passes. Do not confuse dense trajectory acquisition below with

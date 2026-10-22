@@ -211,7 +211,7 @@ def analyze(root, out, partial=False, continuation=None):
             lines = [s for s in stderr[0].read_text().splitlines() if s.strip()]
             assert len(lines) == 1 and re.search(r"Killed\s+timeout .*12m julia .*replay_series\.jl", lines[0]), lines
             interrupted = (root / "logs" / "large10kC_1ph_T24_series.log").read_text()
-            assert "signal (15)" in interrupted and "ERROR:" not in interrupted
+            assert re.search(r"signal (?:\(15\)|15): Terminated", interrupted) and "ERROR:" not in interrupted
             assert sum("FROZEN_SERIES_COMPLETE" in (root / "logs" / (c + "_series.log")).read_text()
                        for c in CASES[:2]) == 2
             assert len(list((continuation / "results").rglob("metadata.toml"))) == 2

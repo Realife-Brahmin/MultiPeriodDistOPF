@@ -1,5 +1,12 @@
 # V3 process-cap interruption: preserve13points, continue ONLY missing2
 
+Final update: continuation31358119 COMPLETED0:0 in10m36. Both missing large
+points completed with unchanged code, clean stderr and source/input checks.
+Strict final collection validates all15 as13+2 and preserves the original
+FAILED attempt, partial files and timeout. See final_analysis/validation.json,
+point_sources.csv and FINDINGS.md. This is replay coverage, not validation of
+an approximate optimizer or a timing result.
+
 Job31358012 did NOT complete: SlurmFAILED9:0 at20m22s, batchMaxRSS3792744KiB.
 The large-case Julia process reached the harness12minute CASE-SERIES limit
 and was killed after its grace period. This was not the45minute Slurm batch
