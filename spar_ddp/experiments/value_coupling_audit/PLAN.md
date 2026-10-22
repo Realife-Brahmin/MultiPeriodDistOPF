@@ -134,9 +134,21 @@ resident memory of the prototype. Index/tree/object overhead is additional.
 Capture completed and all four coverage/numerical/physical/OpenDSS gates passed;
 see results_oct22/CAPTURE.md and the raw evidence archive (pushed96154b8a).
 Replay implementation is now in replay.jl/replay_job.sh; read REPLAY.md for
-scope, output schemas and exactness/performance limits. Immutable source96154b8a
-was submitted as job31357649 in
-/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22 (45minute batch cap).
+scope, output schemas and exactness/performance limits. Original31357649,
+source96154b8a in value_coupling_replay_oct22, FAILED at the medium late dense
+policy gate; only9of15 points completed. Full failure evidence is preserved.
+Independent diagnosis31357837 exactly reproduced all12 saved late probes using
+the production IN-PLACE arithmetic; ordinary recurrence missed one by2.17e-6.
+See results_oct22/REFERENCE_FAILURE.md; original1e-7 gate is unchanged.
+
+New immutable replacement31357859 is submitted in
+/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22_v2, numerical base96154b8a
+plus committed replay overlay4f85b789 (45minute cap). The source.sha256 manifest
+pins actual files; inherited numerical source is unchanged. Reference and
+matched combinations now use production in-place arithmetic, with ordinary
+recursion still checked independently. Original capture binaries are reused;
+no new trajectory acquisition or optimizer solve. Home has5.4GiB free: no
+more full source copies/captures without checking quota; delete no old work.
 All-five-point T3 dense full-direction gates precede mediumT24 full suffixes
 and original1020 first-four-period windows with the true dense future boundary.
 No approximate optimizer/full-solve test is active. Inspect both stderr and
