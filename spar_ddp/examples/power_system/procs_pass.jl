@@ -51,6 +51,7 @@ using SharedArrays
 
 isdefined(@__MODULE__, :paired_backward_pass!) || include(joinpath(@__DIR__, "paired_pass.jl"))
 isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) || include(joinpath(@__DIR__,"value_group_diagnostic.jl"))
+isempty(get(ENV,"FILTERDDP_FROZEN_CAPTURE_DIR","")) || include(joinpath(@__DIR__,"frozen_value_capture.jl"))
 
 # ------------------------------------------------------------------ worker --
 
@@ -180,6 +181,7 @@ function pw_step1(t::Int, k::Int, μ::Float64, elem)
     isnothing(S) && return nothing
     isnothing(_pp_elem(S, t, W.nx)) && return nothing
     W.S[t] = S
+    isempty(get(ENV,"FILTERDDP_FROZEN_CAPTURE_DIR","")) || fc_cache_stage(t,S,W)
     original_max = get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1" ?
         DDP4OPF.PRIMAL_ORIGINAL_HOOK[](t, S.x, S.u, S.c) : NaN
     return (lval=S.lval, c1=S.c1, cinf=S.cinf, logsum=S.logsum, cs0=S.cs0, csμ=S.csμ, cϕ=S.cϕ,
@@ -352,6 +354,8 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     end
     t_1 = time_ns()
 
+    frozen_payload=isempty(get(ENV,"FILTERDDP_FROZEN_CAPTURE_DIR","")) ? nothing : fc_before(M,nx,d.k,d.j,μ)
+
     value_ref=isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) ? nothing : vg_reference_before(M.shared,nx,d.k,d.j,M.exits)
 
     # 2. the rounds
@@ -434,6 +438,7 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     d.cs_inf_μ /= scaling_cs
     d.barrier_lagrangian_curr += d.objective
     d.reg_last = 0.0
+    isempty(get(ENV,"FILTERDDP_FROZEN_CAPTURE_DIR","")) || fc_after(frozen_payload,M,d,options,ocp)
 
     if get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
         @printf("FILTERDDP_ORIGINAL_PRIMAL iteration=%d barrier_iteration=%d original_max=%.12e primal_inf=%.12e objective=%.12e\n",
