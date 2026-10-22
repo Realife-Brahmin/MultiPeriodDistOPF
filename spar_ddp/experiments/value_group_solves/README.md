@@ -41,3 +41,10 @@ or paper edits. Snapshot is immutable after submission. Setup-only repairs
 need a new snapshot. Full-convergence failures can be interesting outcomes;
 campaign.finished does not mean all arms validated. Do not relaunch arms into
 existing output paths after preemption: preserve and recover in a new version.
+
+Completed job31356155: all9full cases and3smokes validated. See
+results_oct22/FINDINGS.md. Root partition is trivial (onegroup) on small/medium;
+stress partition converged but increased iterations41--50%. Diagnostic clocks
+are not benchmark timings. The j==0 sampling condition prevented intended late
+barrier audits: actual coverage is k0 small/large and k0/5 medium. Later-state
+structure remains unverified and requires a separate corrected diagnostic.
