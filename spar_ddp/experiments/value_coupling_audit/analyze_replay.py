@@ -61,6 +61,9 @@ def analyze(root, out, partial=False):
             assert window == (4 if case.startswith("large") else N)
             assert scalar(meta, "compact_kernel") is False
             assert scalar(meta, "timing_is_benchmark") is False
+            if not partial:
+                assert scalar(meta, "reference_path") == "production_inplace"
+                assert scalar(meta, "ordinary_value_max_error") < 1e-7
             for key in ("leaves_sha256", "input_sha256"):
                 assert re.fullmatch("[0-9a-f]{64}", scalar(meta, key))
             err = rows(directory / "errors.csv")

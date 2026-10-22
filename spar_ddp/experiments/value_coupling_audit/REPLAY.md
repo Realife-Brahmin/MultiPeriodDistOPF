@@ -7,7 +7,11 @@ IEEE123T3 snapshots before mediumT24 and original1020 four-period windows.
 Every process is capped at8minutes; batch capped at45minutes. No new capture,
 optimizer solve, production hook or benchmark rerun is involved.
 
-The reference is ordinary dense suffix recursion over all24 original leaves.
+The initial v1 reference used ordinary dense suffix recursion over all24
+leaves. V2 matches the actual production IN-PLACE scan arithmetic and round
+association, retaining ordinary recursion as a separate all-stage value check.
+The same mathematical recurrence is not necessarily a sufficiently accurate
+saved-policy reference at sensitive late iterates; see REFERENCE_FAILURE.md.
 Window closure uses that reference at period4's exit, NOT zero. The first
 gate reconstructs saved full control/equality policies from deep-copied local
 factors at identical zero/sine perturbations (<1e-7 unit-floor Frobenius error).

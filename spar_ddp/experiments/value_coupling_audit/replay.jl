@@ -7,6 +7,7 @@ const ROOT=normpath(joinpath(@__DIR__,"../../.."))
 include(joinpath(ROOT,"spar_ddp/examples/power_system/ieee123c_filterddp.jl"))
 include(joinpath(ROOT,"spar_ddp/examples/power_system/procs_pass.jl"))
 include(joinpath(@__DIR__,"hierarchy.jl"))
+include(joinpath(@__DIR__,"production_reference.jl"))
 
 scaled_error(a,b)=norm(a-b)/max(1.0,norm(b))
 function emit(io,x...)
@@ -77,7 +78,11 @@ function run_replay(capturedir,input,outdir;window=0)
     tree=topology_hierarchy(data;maxleaf=8);groups=coupling_groups(tree)
     @assert sort(vcat(groups...))==collect(1:n)
     # True dense future at the window exit; never an artificial zero boundary.
-    ts=time_ns();full=ordinary(allleaves,PintVal(zeros(n,n),zeros(n)))
+    ts=time_ns();terminal_zero=PintVal(zeros(n,n),zeros(n))
+    full=production_values(allleaves,terminal_zero)
+    ordinary_values=ordinary(allleaves,terminal_zero)
+    ordinary_error=maximum(max(scaled_error(full[t].V,ordinary_values[t].V),scaled_error(full[t].v,ordinary_values[t].v)) for t in 1:N)
+    @assert ordinary_error<1e-7 "ordinary versus production value gate"
     reference_s=(time_ns()-ts)/1e9
     last=window==0 ? N : min(window,N);elems=allleaves[1:last];terminal=full[last+1]
     packets=Dict{Int,Any}()
@@ -112,6 +117,7 @@ function run_replay(capturedir,input,outdir;window=0)
     end
     errors=open(joinpath(outdir,"errors.csv"),"w")
     emit(errors,"mode,depth,lo,hi,block,absolute_fro,reference_fro,relative_fro,unit_floor_scaled,max_abs")
+    for t in 1:N;compare!(errors,"dense",-1,t-1,N,full[t],ordinary_values[t]);end
     inert=open(joinpath(outdir,"inertia.csv"),"w")
     emit(inert,"mode,depth,lo,hi,min_eig,max_eig,zero_threshold,negative,near_zero,abs_condition,symmetry_error,eigen_s")
     costs=open(joinpath(outdir,"costs.csv"),"w")
@@ -146,8 +152,11 @@ function run_replay(capturedir,input,outdir;window=0)
     end
     values_by_mode=Dict{String,Any}()
     for mode in ("dense","exact","drop","1e-8","1e-5")
-        xs=Any[transform(e,mode,0,i-1,i) for (i,e) in enumerate(elems)];push!(xs,terminal)
-        refs=Any[elems... ,terminal];ends=vcat(collect(1:last),N);h=1;depth=0
+        xs=Any[transform(deepcopy(e),mode,0,i-1,i) for (i,e) in enumerate(elems)];push!(xs,deepcopy(terminal))
+        for t in 1:last;compare!(errors,mode,0,t-1,t,xs[t],elems[t]);end
+        refs=Any[deepcopy(e) for e in elems];push!(refs,deepcopy(terminal))
+        ends=vcat(collect(1:last),N);h=1;depth=0
+        work=PairWork(n);reference_work=PairWork(n)
         while h<length(xs)
             depth+=1
             for i in 1:2h:length(xs)
@@ -157,8 +166,8 @@ function run_replay(capturedir,input,outdir;window=0)
                     hi=ends[mid];a=xs[t];b=xs[mid]
                     K=a.Mbb+(b isa PintElem ? b.Maa : b.V)
                     inertia!(inert,mode,depth,t-1,hi,K)
-                    timed=@timed pint_combine(a,b)
-                    exact=pint_combine(refs[t],refs[mid])
+                    timed=@timed _pp_combine!(a,b,work)
+                    exact=_pp_combine!(refs[t],refs[mid],reference_work)
                     xs[t]=transform(timed.value,mode,depth,t-1,hi,timed)
                     refs[t]=exact;ends[t]=hi
                     compare!(errors,mode,depth,t-1,hi,xs[t],exact)
@@ -207,7 +216,8 @@ function run_replay(capturedir,input,outdir;window=0)
             "nB"=>n,"N"=>N,"window"=>last,"groups"=>groups,"reference_s"=>reference_s,
             "leaves_sha256"=>meta["leaves_sha256"],"input_sha256"=>bytes2hex(sha256(read(input))),
             "julia"=>string(VERSION),"maxrss_bytes"=>Sys.maxrss(),"compact_kernel"=>false,
-            "timing_is_benchmark"=>false,"full_direction_probe_gate"=>true))
+            "timing_is_benchmark"=>false,"full_direction_probe_gate"=>true,
+            "reference_path"=>"production_inplace","ordinary_value_max_error"=>ordinary_error))
     end
     println("FROZEN_REPLAY_COMPLETE out=$outdir");flush(stdout)
 end
