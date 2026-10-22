@@ -93,3 +93,25 @@ differ by about 0.5 kW with the start, as large as a secant step's change near t
   components, i.e. better L. Certifying that no dispatch exists needs an outer bound, which is
   where the homotopy-plus-relaxation route stops scaling (a 133-bus, 24-period system is far
   beyond all-solutions homotopy) and where the plain SDP relaxation is weak for no-backflow.
+
+## Follow-up (2026-10-22): two valid strengthenings, one hour
+
+Hour 12 (the limiting hour of the 292.5-deg idle edge), batteries idle, no ampacity, relaxation on
+m >= 0. Points 2% inside (validated feasible, L = +2.727 kW) and 2% outside (local margin -2.727 kW)
+the single-hour boundary r* = 0.118008 deg. `feasibility_hour1_ieee123.csv` (default Clarabel
+settings) and `_reg1e-6.csv` (static regularization 1e-6, 600 iterations); driver mode `hour1`.
+
+* `:kcl0`, current balance at zero-injection banded buses (J = 0, and its lifted form M a = 0 on a
+  bus moment block over the voltage and the incident line currents): no measurable change.
+* `:jbound`, |J| <= Smax / 0.95 at banded device buses, on the lifted |J|^2: fictitious losses -8%.
+* Both: -10% (about 4.9 MW per period left), relaxed margin about 1.75-1.79 MW instead of 1.94 MW.
+* The validated inside solution lifts into every variant (<= 4.3e-9). The outside point stays
+  relaxation-feasible in every variant (no infeasibility status, so no Farkas ray to validate):
+  unresolved. `:jbound` and both did not solve cleanly (slow progress / numerical error); their
+  returned points violate the constraints by <= 2e-4 pu with about 1.8 MW of margin.
+* Where the slack sits: the largest |V|^2 gaps are at source terminal 3s and its POI bus 120; 60-78%
+  of the fictitious losses are on five lines, mostly L115 and L116 into bus 116 (substation 4's POI).
+  A source current is (E - V_s)/z_s with |z_s| = 0.006 pu, so a voltage-moment gap of about 0.07 at a
+  source terminal permits a current second moment of about 2,000 pu^2, circulating between sources.
+  Neither addition touches the source currents; bounding <|E - V_s|^2> at the source terminals from
+  the fixed source phasors and the linear network response is the natural next step.
