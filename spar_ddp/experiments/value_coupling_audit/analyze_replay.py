@@ -40,16 +40,21 @@ def write_csv(path, data):
         writer.writerows(data)
 
 
-def analyze(root, out, partial=False):
+def analyze(root, out, partial=False, continuation=None):
     out.mkdir(parents=True, exist_ok=True)
     summaries, blocks, depths, spectral, triangles, missing, validation = [], [], [], [], [], [], []
     for case in CASES:
         for tag in TAGS:
+            point_root = root
             directory = root / "results" / case / tag
-            log = root / "results" / case / (tag + ".log")
+            if continuation and (continuation / "results" / case / tag / "metadata.toml").exists():
+                assert not (directory / "metadata.toml").exists(), (case, tag, "duplicate completed point")
+                point_root = continuation
+                directory = point_root / "results" / case / tag
+            log = point_root / "results" / case / (tag + ".log")
             series_log = False
             if not log.exists():
-                log = root / "logs" / (case + "_series.log")
+                log = point_root / "logs" / (case + "_series.log")
                 series_log = log.exists()
             text = log.read_text(errors="replace") if log.exists() else ""
             if series_log:
@@ -91,7 +96,9 @@ def analyze(root, out, partial=False):
                         assert math.isfinite(float(row[key])), (case, tag, row)
             references = {(r["depth"], r["lo"], r["hi"]): r
                           for r in inertia if r["mode"] == "dense"}
-            identity = {"case": case, "tag": tag, "iteration": scalar(meta, "iteration"),
+            identity = {"case": case, "tag": tag,
+                        "source_attempt": "continuation" if point_root == continuation else "primary",
+                        "iteration": scalar(meta, "iteration"),
                         "barrier_iteration": scalar(meta, "barrier_iteration"),
                         "mu": scalar(meta, "mu"), "nB": n, "window": window}
             # Numerical rank at two relative singular-value cutoffs is only
@@ -183,33 +190,67 @@ def analyze(root, out, partial=False):
                         rank_median=statistics.median(int(r["rank"]) for r in rs),
                         nonzero_cross_blocks=sum(float(r["cross_fro"]) > 0 for r in rs),
                         blocks=len(rs), dense_fallbacks=sum(r["dense_fallback"] == "true" for r in rs)))
-            validation.append(dict(identity, full_policy_probe_gate=True,
+            validation.append(dict(identity, leaves_sha256=scalar(meta, "leaves_sha256"),
+                input_sha256=scalar(meta, "input_sha256"), full_policy_probe_gate=True,
                 ordinary_scan_gate=True, all_modes_complete=True,
                 max_parent_interface=max(int(r["parent_interface_width"]) for r in sep)))
     if not partial:
         assert not missing, missing
-        assert (root / "replay.finished").exists()
-        hardware = (root / "hardware.txt").read_text()
-        assert "Gold 6438Y+" in hardware
-        for name in ("source-check.log", "input-check.log"):
-            content = (root / "logs" / name).read_text()
-            assert "FAILED" not in content and ": OK" in content
-        for path in (root / "logs").glob("slurm-*.err"):
-            assert not path.read_text().strip(), str(path)
+        if continuation:
+            original = [r for r in validation if r["source_attempt"] == "primary"]
+            remaining = [r for r in validation if r["source_attempt"] == "continuation"]
+            assert len(original) == 13 and len(remaining) == 2
+            assert {(r["case"], r["tag"]) for r in remaining} == {
+                ("large10kC_1ph_T24", "middle"), ("large10kC_1ph_T24", "late")}
+            assert (root / "smoke.complete").exists() and not (root / "replay.finished").exists()
+            assert (continuation / "remaining.finished").exists()
+            # Explicitly retain the KNOWN harness timeout; never silently
+            # require clean stderr from a batch which actually failed.
+            stderr = list((root / "logs").glob("slurm-*.err"))
+            assert len(stderr) == 1
+            lines = [s for s in stderr[0].read_text().splitlines() if s.strip()]
+            assert len(lines) == 1 and re.search(r"Killed\s+timeout .*12m julia .*replay_series\.jl", lines[0]), lines
+            interrupted = (root / "logs" / "large10kC_1ph_T24_series.log").read_text()
+            assert "signal (15)" in interrupted and "ERROR:" not in interrupted
+            assert sum("FROZEN_SERIES_COMPLETE" in (root / "logs" / (c + "_series.log")).read_text()
+                       for c in CASES[:2]) == 2
+            assert len(list((continuation / "results").rglob("metadata.toml"))) == 2
+        else:
+            assert (root / "replay.finished").exists()
+        for attempt in ([root, continuation] if continuation else [root]):
+            hardware = (attempt / "hardware.txt").read_text()
+            assert "Gold 6438Y+" in hardware
+            checks = ["source-check.log", "input-check.log"]
+            if attempt == continuation:
+                checks.append("inherited-source-check.log")
+            for name in checks:
+                content = (attempt / "logs" / name).read_text()
+                assert "FAILED" not in content and ": OK" in content
+            if not continuation or attempt == continuation:
+                for path in (attempt / "logs").glob("slurm-*.err"):
+                    assert not path.read_text().strip(), str(path)
     write_csv(out / "summary.csv", summaries)
     write_csv(out / "block_errors.csv", blocks)
     write_csv(out / "rank_by_depth.csv", depths)
     write_csv(out / "spectral_ranks.csv", spectral)
     write_csv(out / "triangle_certificates.csv", triangles)
+    write_csv(out / "point_sources.csv", validation)
     report = {"complete_points": len(validation), "expected_points": 15,
               "complete": not missing and not partial, "strict_campaign_checks": not partial,
+              "completion_kind": "13_plus_2_continuation" if continuation else "single_attempt",
+              "primary_attempt_timeout_preserved": bool(continuation),
+              "primary_timeout_classification_validated": bool(continuation) and not partial,
               "missing_or_incomplete": missing, "validated": validation,
               "timings_are_benchmarks": False, "compact_kernel": False}
     (out / "validation.json").write_text(json.dumps(report, indent=2) + "\n")
     manifest = []
-    for path in sorted((root / "results").rglob("*")):
-        if path.is_file():
-            manifest.append(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + str(path.relative_to(root)).replace("\\", "/"))
+    for attempt in ([root, continuation] if continuation else [root]):
+        prefix = "continuation/" if attempt == continuation else "primary/"
+        paths = list((attempt / "results").rglob("*")) + list((attempt / "logs").rglob("*"))
+        paths += [attempt / "hardware.txt", attempt / "source.sha256"]
+        for path in sorted(paths):
+            if path.is_file():
+                manifest.append(hashlib.sha256(path.read_bytes()).hexdigest() + "  " + prefix + str(path.relative_to(attempt)).replace("\\", "/"))
     (out / "replay_files.sha256").write_text("\n".join(manifest) + "\n")
     print(json.dumps({"complete_points": len(validation), "missing": len(missing), "complete": report["complete"]}))
 
@@ -219,5 +260,6 @@ if __name__ == "__main__":
     parser.add_argument("root", type=Path)
     parser.add_argument("output", type=Path)
     parser.add_argument("--partial", action="store_true")
+    parser.add_argument("--continuation", type=Path)
     args = parser.parse_args()
-    analyze(args.root, args.output, args.partial)
+    analyze(args.root, args.output, args.partial, args.continuation)

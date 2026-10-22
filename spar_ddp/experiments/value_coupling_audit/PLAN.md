@@ -173,5 +173,20 @@ after the full five-point small gate. Twelve minutes per system process,
 45minute batch. Every point reloads its own state; no optimizer progression.
 replay_series.jl/replay_overlay_job.sh and collector support case-series logs.
 Keep v1/v2/v3 evidence separate; defaults/results/paper unchanged.
+V3 reached its12minute LARGE-series process cap: job31358012 FAILED9:0 at
+20m22,13of15points completed and independently posthoc-validated. All small/
+medium and original1020early/barrier-before/barrier-after passed. The partial
+large middle and untouched large late are NOT complete. Raw interruption,
+including stderr, partial outputs and source overlay, is pushed atd1305334.
+
+ONLY missing middle/late now run as31358119 in
+/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22_remaining, harnessd1305334
+calling UNCHANGED v3 overlay7b75cd80/read-only numerical source. Eight minutes
+per independent point,18minute batch. No repeats of completed13, no optimizer,
+new captures or tolerance changes. Use collector --continuation REMAINING_ROOT
+for final13+2 coverage; it must preserve the old failed status/timeout and
+require new clean completion/source/input gates and unique point provenance.
+Never create a fake replay.finished for the interrupted batch. See
+results_oct22/REPLAY_INTERRUPTION.md. Final strict validation awaits both points.
 Never infer performance from materialize+combine alone. Real-data replay,
 exact-structure assessment and candidate decision remain to be completed.

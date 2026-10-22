@@ -70,3 +70,15 @@ and are not Phase-B parallel wall times or reportable solve speedups. Closed
 suffix values are currently dense; no storage saving is claimed for them.
 No approximate full-solve campaign until real replay accuracy/inertia/storage/
 cost evidence justifies one. Near-optimal and full convergence remain separate.
+
+## Interrupted-series continuation
+
+The12minute large-series cap interrupted v3 after13completed points. ONLY
+missing large middle/late run separately with identical numerical code.
+For final collection: analyze_replay.py V3_ROOT OUTPUT --continuation REMAINING_ROOT.
+This explicitly requires13unique old and2unique new completions, preserves and
+classifies the exact old timeout/stderr, requires inherited/new source checks
+and clean continuation logs, and emits point_sources.csv plus attempt-prefixed
+hashes. The old batch remains FAILED; complete=true means verified15point
+coverage, NOT that every approximation is accurate, an optimizer converged, or
+a performance benchmark passed. --partial never signifies final validation.
