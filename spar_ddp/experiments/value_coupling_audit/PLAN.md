@@ -113,3 +113,26 @@ those checks can proceed to a bounded dense-versus-candidate convergence test.
 Then, and separately, clean repeated full and feasible near-optimal timing,
 including extra iterations/setup/representation construction. No paper edits
 or new benchmark claims from these diagnostics.
+
+## Implementation status / continuation pointers
+
+Dense capture job31357503 is running in
+/home/aryan.jha/kamiak_jobs/value_coupling_audit_oct22, pinnede6b8b37b.
+The small T3 coverage gate has already verified all5tags including late j9.
+Do not alter that active snapshot. Cold capture timing is diagnostic only.
+
+hierarchy.jl now provides a graph/battery-weighted centroid hierarchy below
+the root, retaining separator batteries, and an INITIAL approximate cross-block
+representation of the joint Hessian. hierarchy_unit.jl passed a synthetic
+strongly coupled rank3 example: all states retained, local blocks full,
+nonzero cross-group coupling preserved, global Frobenius budget satisfied.
+This is NOT yet real-data validation, exact compactness evidence, or a compact
+composition kernel. It returns BOTH compact payload and dense materialization;
+numeric_payload_bytes counts coefficients of the compact payload only, not
+resident memory of the prototype. Index/tree/object overhead is additional.
+
+Replay runner still needs implementation after capture gates pass: ordinary
+reference, matching full scan-depth records, inertia/conditioning, frozen
+direction recovery from saved S, rank/cost/spectrum CSVs and candidate decision.
+Use this committed library, regression-test on smoke, then bounded medium and
+large-window replays. Never infer performance from materialize+combine alone.
