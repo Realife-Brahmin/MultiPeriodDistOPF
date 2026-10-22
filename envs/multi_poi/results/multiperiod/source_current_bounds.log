@@ -1,0 +1,208 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+network response: Re(Y) Cholesky min pivot 1.691e+01 (positive definite => Y nonsingular); |YZ - I| = 1.7e-71 (BigFloat 256); 5.4 s
+
+== theta 292.5 deg: r* = 0.118008 deg (locally measured); source-only 1.5x certified point 1.040 r*
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  -- 0.980 r* (r = 0.115648 deg): exact margin L +2.7267 kW (LOCALLY_SOLVED, equations 8.6e-11); exact restoration rho 0.0000 kW (LOCALLY_SOLVED, validated true); rho_max 1.0000 kW
+     analytic bounds (1.9 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 67.88 A | sectors, devices separately 61.87 A | sectors, combined 35.66 A (no-load term 2.95 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 35.01 / 35.01 A
+       subs3: naive 45771.7 A | termwise 67.16 A | sectors, devices separately 61.83 A | sectors, combined 37.05 A (no-load term 9.58 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 34.70 / 34.70 A
+       subs4: naive 45771.7 A | termwise 63.45 A | sectors, devices separately 58.65 A | sectors, combined 33.13 A (no-load term 11.59 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 28.43 / 28.43 A
+     restoration [analytic bounds 35.66/37.05/33.13 A]: OPTIMAL, rho relax -0.0001 kW, checked lower bound -0.0133 kW (box term 2.81e-02 kW, rounding 5.0e-09 kW, residual 1.6e-07, dual psd/sign 0.0e+00/0.0e+00), 5.0 + 6.6 s -> unresolved (rho lower bound <= 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 37.025 A, checked upper bound 40.420 A (box term 7.22e-02, rounding 1.9e-09), 0.5 s
+     OBBT round 1 subs3: OPTIMAL, solver max 38.700 A, checked upper bound 42.780 A (box term 9.02e-02, rounding 2.0e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 34.577 A, checked upper bound 38.261 A (box term 7.36e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 35.66/37.05/33.13 A]: OPTIMAL, rho relax -0.0001 kW, checked lower bound -0.0133 kW (box term 2.81e-02 kW, rounding 5.0e-09 kW, residual 1.6e-07, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.5 s -> unresolved (rho lower bound <= 0)
+  -- 1.020 r* (r = 0.120368 deg): exact margin L -2.7275 kW (LOCALLY_SOLVED, equations 8.6e-11); exact restoration rho 2.7275 kW (LOCALLY_SOLVED, validated true); rho_max 3.7275 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 67.98 A | sectors, devices separately 61.97 A | sectors, combined 35.63 A (no-load term 3.05 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 34.99 / 34.99 A
+       subs3: naive 45771.7 A | termwise 67.54 A | sectors, devices separately 62.21 A | sectors, combined 37.37 A (no-load term 9.97 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 34.83 / 34.83 A
+       subs4: naive 45771.7 A | termwise 63.93 A | sectors, devices separately 59.13 A | sectors, combined 33.61 A (no-load term 12.07 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 28.58 / 28.58 A
+     restoration [analytic bounds 35.63/37.37/33.61 A]: ALMOST_OPTIMAL, rho relax 1.4079 kW, checked lower bound 1.0904 kW (box term 1.40e+01 kW, rounding 1.5e-07 kW, residual 3.6e-04, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.6 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 36.051 A, checked upper bound 37.145 A (box term 2.69e-02, rounding 1.9e-09), 0.5 s
+     OBBT round 1 subs3: OPTIMAL, solver max 38.068 A, checked upper bound 39.847 A (box term 4.31e-02, rounding 2.0e-09), 0.5 s
+     OBBT round 1 subs4: OPTIMAL, solver max 34.174 A, checked upper bound 35.674 A (box term 3.44e-02, rounding 1.9e-09), 0.6 s
+     restoration [obbt bounds 35.63/37.37/33.61 A]: ALMOST_OPTIMAL, rho relax 1.4079 kW, checked lower bound 1.0904 kW (box term 1.40e+01 kW, rounding 1.5e-07 kW, residual 3.6e-04, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.6 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.040 r* (r = 0.122728 deg): exact margin L -5.4545 kW (LOCALLY_SOLVED, equations 8.6e-11); exact restoration rho 5.4545 kW (LOCALLY_SOLVED, validated true); rho_max 6.4545 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 68.03 A | sectors, devices separately 62.02 A | sectors, combined 35.62 A (no-load term 3.10 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 34.98 / 34.98 A
+       subs3: naive 45771.7 A | termwise 67.73 A | sectors, devices separately 62.40 A | sectors, combined 37.52 A (no-load term 10.16 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 34.90 / 34.90 A
+       subs4: naive 45771.7 A | termwise 64.17 A | sectors, devices separately 59.37 A | sectors, combined 33.85 A (no-load term 12.31 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 28.66 / 28.66 A
+     restoration [analytic bounds 35.62/37.52/33.85 A]: ALMOST_OPTIMAL, rho relax 4.4984 kW, checked lower bound 4.3582 kW (box term 1.71e+01 kW, rounding 1.8e-07 kW, residual 2.2e-04, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.6 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 35.958 A, checked upper bound 36.848 A (box term 2.40e-02, rounding 1.9e-09), 0.5 s
+     OBBT round 1 subs3: OPTIMAL, solver max 38.051 A, checked upper bound 39.408 A (box term 3.57e-02, rounding 2.0e-09), 0.5 s
+     OBBT round 1 subs4: OPTIMAL, solver max 34.312 A, checked upper bound 35.543 A (box term 3.02e-02, rounding 1.9e-09), 0.5 s
+     restoration [obbt bounds 35.62/37.52/33.85 A]: ALMOST_OPTIMAL, rho relax 4.4984 kW, checked lower bound 4.3582 kW (box term 1.71e+01 kW, rounding 1.8e-07 kW, residual 2.2e-04, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.6 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.100 r* (r = 0.129809 deg): exact margin L -13.6354 kW (LOCALLY_SOLVED, equations 8.6e-11); exact restoration rho 13.6354 kW (LOCALLY_SOLVED, validated true); rho_max 14.6354 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 68.17 A | sectors, devices separately 62.16 A | sectors, combined 35.59 A (no-load term 3.24 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 34.94 / 34.94 A
+       subs3: naive 45771.7 A | termwise 68.30 A | sectors, devices separately 62.97 A | sectors, combined 38.00 A (no-load term 10.73 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 35.11 / 35.11 A
+       subs4: naive 45771.7 A | termwise 64.88 A | sectors, devices separately 60.09 A | sectors, combined 34.56 A (no-load term 13.03 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 28.92 / 28.92 A
+     restoration [analytic bounds 35.59/38.00/34.56 A]: ALMOST_OPTIMAL, rho relax 13.1207 kW, checked lower bound 13.1094 kW (box term 1.74e+01 kW, rounding 2.5e-07 kW, residual 2.4e-05, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 37.306 A, checked upper bound 41.497 A (box term 1.06e-01, rounding 2.0e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 38.582 A, checked upper bound 40.086 A (box term 4.53e-02, rounding 2.0e-09), 0.5 s
+     OBBT round 1 subs4: OPTIMAL, solver max 35.034 A, checked upper bound 36.286 A (box term 3.68e-02, rounding 1.9e-09), 0.5 s
+     restoration [obbt bounds 35.59/38.00/34.56 A]: ALMOST_OPTIMAL, rho relax 13.1207 kW, checked lower bound 13.1094 kW (box term 1.74e+01 kW, rounding 2.5e-07 kW, residual 2.4e-05, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.250 r* (r = 0.147510 deg): exact margin L -34.0859 kW (LOCALLY_SOLVED, equations 8.5e-11); exact restoration rho 34.0859 kW (LOCALLY_SOLVED, validated true); rho_max 35.0859 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 68.53 A | sectors, devices separately 62.52 A | sectors, combined 35.50 A (no-load term 3.60 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 34.86 / 34.86 A
+       subs3: naive 45771.7 A | termwise 69.74 A | sectors, devices separately 64.40 A | sectors, combined 39.19 A (no-load term 12.16 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 35.66 / 35.66 A
+       subs4: naive 45771.7 A | termwise 66.68 A | sectors, devices separately 61.88 A | sectors, combined 36.36 A (no-load term 14.82 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 29.62 / 29.62 A
+     restoration [analytic bounds 35.50/39.19/36.36 A]: OPTIMAL, rho relax 33.5558 kW, checked lower bound 33.5484 kW (box term 1.75e+01 kW, rounding 2.6e-07 kW, residual 1.5e-05, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 35.862 A, checked upper bound 36.822 A (box term 4.32e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 39.741 A, checked upper bound 41.167 A (box term 5.90e-02, rounding 2.0e-09), 0.5 s
+     OBBT round 1 subs4: OPTIMAL, solver max 36.801 A, checked upper bound 38.002 A (box term 5.03e-02, rounding 1.9e-09), 0.5 s
+     restoration [obbt bounds 35.50/39.19/36.36 A]: OPTIMAL, rho relax 33.5558 kW, checked lower bound 33.5484 kW (box term 1.75e+01 kW, rounding 2.6e-07 kW, residual 1.5e-05, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+
+== theta 157.5 deg: r* = 0.100075 deg (locally measured); source-only 1.5x certified point 1.045 r*
+  -- 0.980 r* (r = 0.098073 deg): exact margin L +2.8659 kW (LOCALLY_SOLVED, equations 3.5e-14); exact restoration rho 0.0000 kW (LOCALLY_SOLVED, validated true); rho_max 1.0000 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 69.95 A | sectors, devices separately 63.95 A | sectors, combined 37.75 A (no-load term 5.02 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 28.89 / 28.89 A
+       subs3: naive 45771.7 A | termwise 69.33 A | sectors, devices separately 64.00 A | sectors, combined 33.82 A (no-load term 11.75 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 23.50 / 23.50 A
+       subs4: naive 45771.7 A | termwise 59.18 A | sectors, devices separately 54.39 A | sectors, combined 30.91 A (no-load term 7.32 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 24.74 / 24.74 A
+     restoration [analytic bounds 37.75/33.82/30.91 A]: OPTIMAL, rho relax -0.0001 kW, checked lower bound -0.0045 kW (box term 9.20e-03 kW, rounding 1.0e-09 kW, residual 6.3e-08, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.5 s -> unresolved (rho lower bound <= 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 39.271 A, checked upper bound 43.003 A (box term 8.07e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 35.595 A, checked upper bound 39.879 A (box term 8.52e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 32.588 A, checked upper bound 36.756 A (box term 7.58e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 37.75/33.82/30.91 A]: OPTIMAL, rho relax -0.0001 kW, checked lower bound -0.0045 kW (box term 9.20e-03 kW, rounding 1.0e-09 kW, residual 6.3e-08, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.5 s -> unresolved (rho lower bound <= 0)
+  -- 1.020 r* (r = 0.102077 deg): exact margin L -2.8646 kW (LOCALLY_SOLVED, equations 4.6e-14); exact restoration rho 2.8646 kW (LOCALLY_SOLVED, validated true); rho_max 3.8646 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 70.15 A | sectors, devices separately 64.15 A | sectors, combined 37.82 A (no-load term 5.22 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 28.99 / 28.99 A
+       subs3: naive 45771.7 A | termwise 69.81 A | sectors, devices separately 64.49 A | sectors, combined 34.09 A (no-load term 12.24 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 23.61 / 23.61 A
+       subs4: naive 45771.7 A | termwise 59.47 A | sectors, devices separately 54.68 A | sectors, combined 31.16 A (no-load term 7.61 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 24.85 / 24.85 A
+     restoration [analytic bounds 37.82/34.09/31.16 A]: OPTIMAL, rho relax 1.8674 kW, checked lower bound 1.8624 kW (box term 4.37e+00 kW, rounding 2.3e-07 kW, residual 8.6e-06, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.9 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 38.554 A, checked upper bound 40.410 A (box term 3.91e-02, rounding 1.8e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 35.869 A, checked upper bound 40.196 A (box term 8.71e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 32.844 A, checked upper bound 37.060 A (box term 7.78e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 37.82/34.09/31.16 A]: OPTIMAL, rho relax 1.8674 kW, checked lower bound 1.8624 kW (box term 4.37e+00 kW, rounding 2.3e-07 kW, residual 8.6e-06, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.045 r* (r = 0.104578 deg): exact margin L -6.4461 kW (LOCALLY_SOLVED, equations 3.4e-14); exact restoration rho 6.4461 kW (LOCALLY_SOLVED, validated true); rho_max 7.4461 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 70.27 A | sectors, devices separately 64.27 A | sectors, combined 37.86 A (no-load term 5.34 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 29.05 / 29.05 A
+       subs3: naive 45771.7 A | termwise 70.11 A | sectors, devices separately 64.79 A | sectors, combined 34.39 A (no-load term 12.54 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 23.68 / 23.68 A
+       subs4: naive 45771.7 A | termwise 59.65 A | sectors, devices separately 54.86 A | sectors, combined 31.31 A (no-load term 7.80 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 24.92 / 24.92 A
+     restoration [analytic bounds 37.86/34.39/31.31 A]: ALMOST_OPTIMAL, rho relax 5.3952 kW, checked lower bound 5.3803 kW (box term 4.38e+00 kW, rounding 2.2e-07 kW, residual 2.7e-05, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 39.389 A, checked upper bound 43.138 A (box term 8.27e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 36.150 A, checked upper bound 40.426 A (box term 8.72e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 32.981 A, checked upper bound 37.150 A (box term 7.77e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 37.86/34.39/31.31 A]: ALMOST_OPTIMAL, rho relax 5.3952 kW, checked lower bound 5.3803 kW (box term 4.38e+00 kW, rounding 2.2e-07 kW, residual 2.7e-05, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.7 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.100 r* (r = 0.110082 deg): exact margin L -14.3253 kW (LOCALLY_SOLVED, equations 3.0e-14); exact restoration rho 14.3253 kW (LOCALLY_SOLVED, validated true); rho_max 15.3253 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 70.55 A | sectors, devices separately 64.54 A | sectors, combined 37.96 A (no-load term 5.61 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 29.18 / 29.18 A
+       subs3: naive 45771.7 A | termwise 70.78 A | sectors, devices separately 65.46 A | sectors, combined 35.06 A (no-load term 13.21 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 23.85 / 23.85 A
+       subs4: naive 45771.7 A | termwise 60.05 A | sectors, devices separately 55.26 A | sectors, combined 31.66 A (no-load term 8.20 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 25.08 / 25.08 A
+     restoration [analytic bounds 37.96/35.06/31.66 A]: OPTIMAL, rho relax 13.2618 kW, checked lower bound 13.3228 kW (box term 4.42e+00 kW, rounding 2.4e-07 kW, residual 5.1e-06, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 39.467 A, checked upper bound 43.187 A (box term 8.35e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 35.794 A, checked upper bound 37.671 A (box term 3.87e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 33.302 A, checked upper bound 37.437 A (box term 7.89e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 37.96/35.06/31.66 A]: OPTIMAL, rho relax 13.2618 kW, checked lower bound 13.3228 kW (box term 4.42e+00 kW, rounding 2.4e-07 kW, residual 5.1e-06, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+  -- 1.250 r* (r = 0.125094 deg): exact margin L -35.8131 kW (LOCALLY_SOLVED, equations 2.9e-14); exact restoration rho 35.8131 kW (LOCALLY_SOLVED, validated true); rho_max 36.8131 kW
+     analytic bounds (0.5 s; disc radius around the no-load voltages 0.0067 -> 0.0038 -> 0.0038 -> 0.0038 pu):
+       subs1: naive 45771.7 A | termwise 71.29 A | sectors, devices separately 65.28 A | sectors, combined 38.25 A (no-load term 6.36 A) | envelope 56.23 A, 1.5x cap 84.34 A | witnesses 29.57 / 29.57 A
+       subs3: naive 45771.7 A | termwise 72.60 A | sectors, devices separately 67.27 A | sectors, combined 36.88 A (no-load term 15.02 A) | envelope 51.88 A, 1.5x cap 77.83 A | witnesses 24.39 / 24.39 A
+       subs4: naive 45771.7 A | termwise 61.15 A | sectors, devices separately 56.35 A | sectors, combined 32.60 A (no-load term 9.29 A) | envelope 45.92 A, 1.5x cap 68.89 A | witnesses 25.54 / 25.54 A
+     restoration [analytic bounds 38.25/36.88/32.60 A]: OPTIMAL, rho relax 34.7488 kW, checked lower bound 34.7393 kW (box term 4.37e+00 kW, rounding 2.5e-07 kW, residual 1.9e-05, dual psd/sign 0.0e+00/0.0e+00), 0.0 + 0.9 s -> no-backflow impossible (checked lower bound on rho > 0)
+     OBBT round 1 subs1: OPTIMAL, solver max 39.706 A, checked upper bound 43.348 A (box term 8.51e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs3: OPTIMAL, solver max 38.521 A, checked upper bound 42.593 A (box term 9.23e-02, rounding 1.9e-09), 0.4 s
+     OBBT round 1 subs4: OPTIMAL, solver max 34.181 A, checked upper bound 38.192 A (box term 8.15e-02, rounding 1.9e-09), 0.4 s
+     restoration [obbt bounds 38.25/36.88/32.60 A]: OPTIMAL, rho relax 34.7488 kW, checked lower bound 34.7393 kW (box term 4.37e+00 kW, rounding 2.5e-07 kW, residual 1.9e-05, dual psd/sign 0.0e+00/0.0e+00), 0.1 + 0.8 s -> no-backflow impossible (checked lower bound on rho > 0)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4195.2 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199
