@@ -3,7 +3,7 @@ using Serialization, LinearAlgebra, SparseArrays, SHA, TOML
 BLAS.set_num_threads(1)
 ENV["FILTERDDP_TREE_KKT"]="1"
 ENV["FILTERDDP_FACTOR_BACKED_POLICY"]="1"
-const ROOT=normpath(joinpath(@__DIR__,"../../.."))
+const ROOT=normpath(get(ENV,"VALUE_REPLAY_NUMERICAL_ROOT",joinpath(@__DIR__,"../../..")))
 include(joinpath(ROOT,"spar_ddp/examples/power_system/ieee123c_filterddp.jl"))
 include(joinpath(ROOT,"spar_ddp/examples/power_system/procs_pass.jl"))
 include(joinpath(@__DIR__,"hierarchy.jl"))
@@ -121,7 +121,7 @@ function run_replay(capturedir,input,outdir;window=0)
     inert=open(joinpath(outdir,"inertia.csv"),"w")
     emit(inert,"mode,depth,lo,hi,min_eig,max_eig,zero_threshold,negative,near_zero,abs_condition,symmetry_error,eigen_s")
     costs=open(joinpath(outdir,"costs.csv"),"w")
-    emit(costs,"mode,depth,lo,hi,combine_s,combine_alloc_bytes,combine_gc_s,construction_s,materialization_s,payload_bytes,dense_three_blocks_bytes,reconstruction_relative_fro")
+    emit(costs,"mode,depth,lo,hi,combine_s,combine_alloc_bytes,combine_gc_s,construction_s,materialization_s,payload_bytes,dense_three_blocks_bytes,reconstruction_relative_fro,dense_raw_fallback,symmetry_defect_relative,fallback_reason")
     ranks=open(joinpath(outdir,"ranks.csv"),"w")
     emit(ranks,"mode,scan_depth,lo,hi,hierarchy_depth,rows,cols,rank,dense_fallback,cross_fro,tail_fro,svd_s,separator_bus")
     spectra=open(joinpath(outdir,"spectra.csv"),"w")
@@ -129,17 +129,17 @@ function run_replay(capturedir,input,outdir;window=0)
     function transform(e,mode,depth,lo,hi,tm=(time=0.0,bytes=0,gctime=0.0))
         if e isa PintVal || mode=="dense"
             bytes=e isa PintVal ? 8*(n*n+n) : 8*(3n*n+2n)
-            emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,0.0,0.0,bytes,bytes,0.0)
+            emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,0.0,0.0,bytes,bytes,0.0,false,0.0,"not_transformed")
             return e
         end
         if mode=="drop"
             z=@timed project(e,groups)
-            emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,z.time,0.0,8*(3sum(length(g)^2 for g in groups)+2n),8*(3n*n+2n),norm(joint_value(z.value)-joint_value(e))/max(norm(joint_value(e)),floatmin(Float64)))
+            emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,z.time,0.0,8*(3sum(length(g)^2 for g in groups)+2n),8*(3n*n+2n),norm(joint_value(z.value)-joint_value(e))/max(norm(joint_value(e)),floatmin(Float64)),false,0.0,"not_symmetrized")
             return z.value
         end
         tol=mode=="exact" ? 0.0 : parse(Float64,mode)
         z=retain_coupling(e,tree;tol=tol)
-        emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,z.construction_s,z.materialization_s,z.numeric_payload_bytes,8*(3n*n+2n),z.relative_frobenius_error)
+        emit(costs,mode,depth,lo,hi,tm.time,tm.bytes,tm.gctime,z.construction_s,z.materialization_s,z.numeric_payload_bytes,8*(3n*n+2n),z.relative_frobenius_error,z.dense_raw_fallback,z.symmetry_defect_relative,z.fallback_reason)
         for (j,r) in enumerate(z.reports)
             emit(ranks,mode,depth,lo,hi,r.depth,r.rows,r.cols,r.rank,r.dense_fallback,r.cross_frobenius,r.tail_frobenius,r.svd_s,join(r.separator_buses,';'))
             # Full spectra recorded once in zero-truncation mode, not duplicated

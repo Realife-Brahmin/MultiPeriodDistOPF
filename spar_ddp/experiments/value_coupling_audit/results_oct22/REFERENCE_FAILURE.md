@@ -30,3 +30,33 @@ for saved-policy checks and matched dense/candidate combinations, keep ordinary
 recursion as an independently reported all-stage value comparison, and retain
 the original1e-7 policy gate. Re-run the small gate before remaining cases.
 No benchmark or paper row is changed; cold diagnostic clocks are not speedups.
+
+## V2: raw-asymmetry assumption, not a dense-policy failure
+
+Replacement31357859 FAILED13m20s after the same9complete points. At medium
+late, all12 saved dense probes now reproduced exactly0, and dense scan passed.
+Zero-truncation hierarchy then failed its reconstruction bound BEFORE the
+approximate modes. Original1020 remained blocked. Preserve v2 independently.
+
+Read-only local inspection of the actual saved249-battery leaves (Julia1.12.7,
+no model/optimization) found first-period Maa/Mbb norm about6.194e7 and skew
+norm0.0171282, relative skew2.76522e-10. Joint symmetric-projection discrepancy
+is9.77652e-11 relative: larger than the unchanged zero-truncation rounding
+allowance1e-12. Mab's skew is diagnostic only; Mab is NOT required symmetric.
+Input leaf file SHA256b615639a82ead126bfb50878ef91edf936db251253cb209d451573c41a538475.
+All72 raw block dimension/sparsity/symmetry rows are in medium_late_symmetry.csv.
+
+Repair: if symmetric hierarchy cannot meet the SAME original budget, retain
+the full RAW PintElem unchanged. Log dense_raw_fallback, defect and reason,
+charge the full dense payload, and claim no compression there. Otherwise
+reserve the symmetry discrepancy's share of the global Frobenius budget before
+cross-block truncation. Never silently symmetrize Mab or increase a tolerance.
+
+Synthetic asymmetric tests and the actual failing leaves passed locally:
+first leaf tol0 returns bit-identical raw arrays/error0; budgets1e-8/1e-5 give
+measured joint errors1.96031e-9/1.01192e-6. Last leaf also passes all three
+budgets. This validates fallback/budget handling, NOT optimizer convergence.
+New replay uses one process per system to amortize diagnostic compilation,
+checks medium late first after the full small gate, and reuses read-only
+numerical source without another full source copy. No additional cases or
+optimizer solves; cold/warmed clocks remain diagnostic, never benchmark rows.

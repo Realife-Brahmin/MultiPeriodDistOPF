@@ -63,11 +63,28 @@ coupling_groups(t)=isnothing(t.left) ? [t.ids] : vcat(coupling_groups(t.left),co
 joint_value(e)=[e.Maa e.Mab;e.Mab' e.Mbb]
 function retain_coupling(e,tree;tol=1e-8)
     @assert 0<=tol<1
-    start=time_ns();n=length(e.ma);original=joint_value(e)
+    start=time_ns();overall_start=start;n=length(e.ma);original=joint_value(e)
     # Diagonal quadratic blocks are symmetric mathematically; include any
     # symmetrization discrepancy in the final reconstruction error, not Mab.
     H=(original+original')/2
-    budget=tol*norm(H)/sqrt(max(1,2coupling_internals(tree)))
+    original_scale=max(norm(original),floatmin(Float64))
+    symmetry_error=norm(H-original)
+    function raw_fallback(reason;materialization_s=0.0)
+        # The RAW arrays, including their floating-point asymmetry, are the
+        # production representation. Preserve them byte-for-byte if a symmetric
+        # hierarchy cannot meet the SAME budget. This is no compression benefit.
+        elem=deepcopy(e)
+        (elem=elem,representation=(kind=:dense_raw,elem=elem),reports=Any[],
+         relative_frobenius_error=0.0,numeric_payload_bytes=8*(3n*n+2n),
+         construction_s=max(0.0,(time_ns()-overall_start)/1e9-materialization_s),
+         materialization_s=materialization_s,dense_raw_fallback=true,
+         symmetry_defect_relative=symmetry_error/original_scale,fallback_reason=reason)
+    end
+    symmetry_error/original_scale>tol+1e-12 && return raw_fallback("symmetry_exceeds_budget")
+    # Symmetric truncation error and the antisymmetric input part are orthogonal
+    # in Frobenius norm. Reserve its share of the original, unchanged budget.
+    allowance=sqrt(max(0.0,(tol*original_scale)^2-symmetry_error^2))
+    budget=allowance/sqrt(max(1,2coupling_internals(tree)))
     reports=Any[]
     idx(t)=vcat(t.ids,n.+t.ids)
     function compress(t,depth)
@@ -95,9 +112,12 @@ function retain_coupling(e,tree;tol=1e-8)
         out[L,R]=A;out[R,L]=A'
     end
     expand(representation);materialization_s=(time_ns()-start)/1e9
-    err=norm(out-original)/max(norm(original),floatmin(Float64))
-    @assert isfinite(err) && err<=tol+1e-12 "global quadratic error budget"
+    err=norm(out-original)/original_scale
+    @assert isfinite(err) "nonfinite reconstruction"
+    err>tol+1e-12 && return raw_fallback("reconstruction_exceeds_budget";materialization_s=materialization_s)
+    @assert err<=tol+1e-12 "global quadratic error budget"
     elem=PintElem(out[1:n,1:n],out[1:n,n+1:end],out[n+1:end,n+1:end],copy(e.ma),copy(e.mb))
     (elem=elem,representation=representation,reports=reports,relative_frobenius_error=err,
-     numeric_payload_bytes=8*(representation.entries+2n),construction_s=construction_s,materialization_s=materialization_s)
+     numeric_payload_bytes=8*(representation.entries+2n),construction_s=construction_s,materialization_s=materialization_s,
+     dense_raw_fallback=false,symmetry_defect_relative=symmetry_error/original_scale,fallback_reason="none")
 end

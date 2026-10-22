@@ -47,7 +47,15 @@ def analyze(root, out, partial=False):
         for tag in TAGS:
             directory = root / "results" / case / tag
             log = root / "results" / case / (tag + ".log")
+            series_log = False
+            if not log.exists():
+                log = root / "logs" / (case + "_series.log")
+                series_log = log.exists()
             text = log.read_text(errors="replace") if log.exists() else ""
+            if series_log:
+                segment = re.search(r"SERIES_POINT_BEGIN [^\n]*tag=" + re.escape(tag) +
+                                    r" snapshot=[^\n]*\n(.*?)(?=SERIES_POINT_BEGIN|\Z)", text, re.S)
+                text = segment.group(1) if segment else ""
             if not (directory / "metadata.toml").exists():
                 missing.append({"case": case, "tag": tag, "log_exists": log.exists(),
                                 "runtime_error": "ERROR:" in text})
@@ -134,6 +142,8 @@ def analyze(root, out, partial=False):
                     payload_ratio_max=max(ratios),
                     rank_max=max((int(r["rank"]) for r in rnk), default=0),
                     dense_fallback_fraction=(sum(r["dense_fallback"] == "true" for r in rnk) / len(rnk)) if rnk else 0,
+                    raw_dense_fallbacks=sum(r.get("dense_raw_fallback") == "true" for r in c),
+                    symmetry_defect_max=peak(c, "symmetry_defect_relative") if "symmetry_defect_relative" in c[0] else 0.0,
                     serial_combine_s=sum(float(r["combine_s"]) for r in c),
                     construction_s=sum(float(r["construction_s"]) for r in c),
                     materialization_s=sum(float(r["materialization_s"]) for r in c),
