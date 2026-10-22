@@ -501,6 +501,21 @@ function dual_bound(model; c = objective_function(model), box = Dict{VariableRef
                 for (q, cst) in enumerate(fv.constants)
                     c0 -= lp[q] * cst; absacc += abs(lp[q] * cst); csrc["PSD constant entries"] = get(csrc, "PSD constant entries", 0.0) - lp[q] * cst
                 end
+            elseif obj.set isa MOI.SecondOrderCone
+                # f(x) in SOC with multiplier y in SOC (self-dual): y'f(x) >= 0 on the feasible set, so subtracting it keeps
+                # the bound valid; y projected onto the cone: (t, u) -> kept if |u| <= t, 0 if |u| <= -t, else ((t+|u|)/2)(1, u/|u|)
+                yv = MOI.get(bk, MOI.ConstraintDual(), index(cref)); fv = moi_function(obj)
+                tt, uu = yv[1], yv[2:end]; nu = norm(uu)
+                yp = nu <= tt ? copy(yv) : nu <= -tt ? zero(yv) : vcat((tt + nu) / 2, (tt + nu) / 2 .* uu ./ nu)
+                sign_viol = max(sign_viol, norm(yv - yp))
+                for term in fv.terms
+                    v = VariableRef(model, term.scalar_term.variable)
+                    r[v] = get(r, v, 0.0) - yp[term.output_index] * term.scalar_term.coefficient
+                    absacc += abs(yp[term.output_index] * term.scalar_term.coefficient)
+                end
+                for (q, cst) in enumerate(fv.constants)
+                    c0 -= yp[q] * cst; absacc += abs(yp[q] * cst); csrc["SOC constant entries"] = get(csrc, "SOC constant entries", 0.0) - yp[q] * cst
+                end
             else
                 lam = dual(cref); fn = obj.func; b = MOI.constant(obj.set)
                 lp = obj.set isa MOI.GreaterThan ? max(lam, 0.0) : obj.set isa MOI.LessThan ? min(lam, 0.0) : lam
@@ -711,6 +726,16 @@ function export_certificate(model, box, path; c = objective_function(model), not
                 if obj.set isa MOI.PositiveSemidefiniteConeTriangle
                     lamv = MOI.get(bk, MOI.ConstraintDual(), index(cref)); fv = moi_function(obj); n = obj.set.side_dimension
                     print(io, "PSD ", n); for x in lamv; print(io, " ", x); end; println(io)
+                    terms = [Tuple{Int,Float64}[] for _ in 1:length(fv.constants)]
+                    for term in fv.terms
+                        push!(terms[term.output_index], (vid[VariableRef(model, term.scalar_term.variable)], term.scalar_term.coefficient))
+                    end
+                    for (q, cst) in enumerate(fv.constants)
+                        print(io, "E ", q, " ", cst, " ", length(terms[q])); for (v, a) in terms[q]; print(io, " ", v, " ", a); end; println(io)
+                    end
+                elseif obj.set isa MOI.SecondOrderCone
+                    yv = MOI.get(bk, MOI.ConstraintDual(), index(cref)); fv = moi_function(obj)
+                    print(io, "SOC ", length(yv)); for x in yv; print(io, " ", x); end; println(io)
                     terms = [Tuple{Int,Float64}[] for _ in 1:length(fv.constants)]
                     for term in fv.terms
                         push!(terms[term.output_index], (vid[VariableRef(model, term.scalar_term.variable)], term.scalar_term.coefficient))

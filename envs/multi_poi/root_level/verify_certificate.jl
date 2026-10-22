@@ -8,6 +8,8 @@
 #   * PSD multipliers: the raw dual triangle Z is used if an exact LDL' factorization shows Z PSD; otherwise the
 #     Float64 eigenvalue clip of Z (as dual_bound does) is shifted by tau*I, tau increased until the exact LDL'
 #     of the shifted matrix succeeds (all pivots > 0) -- an exact proof that the multiplier used is PSD;
+#   * second-order-cone multipliers projected onto the cone as dual_bound does, then their head raised (if needed)
+#     until exact arithmetic confirms the multiplier lies in the cone;
 #   * the Frobenius pairing (off-diagonal entries count twice), the residual coefficients and the box minimum
 #     are all exact; nothing is rounded until the final result is printed.
 # The result is an exact lower bound on min c'x over {constraints, box} GIVEN the data in the file: the model
@@ -46,7 +48,7 @@ function verify_file(path; widen = 1e-12)
     t0 = time()
     r = Dict{Int,Rat}(); c0 = Rat(0)
     lo = Dict{Int,Any}(); hi = Dict{Int,Any}()
-    nlin, npsd, nshift, nraw, maxtau = 0, 0, 0, 0, 0.0
+    nlin, npsd, nshift, nraw, maxtau = 0, 0, 0, 0, 0.0; nsoc, nsocfix = 0, 0
     sign_viol = 0.0; psd_min_eig = Inf
     lines = readlines(path)
     i = 1
@@ -68,6 +70,27 @@ function verify_file(path; widen = 1e-12)
             lq == 0 && continue
             for k in 1:nt; v = parse(Int, f[5+2k]); r[v] = get(r, v, Rat(0)) - lq * ratof(f[6+2k]); end
             c0 -= lq * (a0 - b)
+        elseif f[1] == "SOC"
+            nsoc += 1
+            y = parse.(Float64, f[3:end]); n = length(y)
+            # project as dual_bound does, then make the head exactly large enough: y1^2 >= sum yi^2, y1 >= 0, in exact arithmetic
+            tt, uu = y[1], y[2:end]; nu = norm(uu)
+            yp = nu <= tt ? copy(y) : nu <= -tt ? zero(y) : vcat((tt + nu) / 2, (tt + nu) / 2 .* uu ./ nu)
+            yq = Rat.(yp); tail = sum(yq[2:end] .^ 2)
+            if !(yq[1] >= 0 && yq[1]^2 >= tail)
+                h = yp[1]; k = 0
+                while !(Rat(h) >= 0 && Rat(h)^2 >= tail)
+                    h = nextfloat(max(h, sqrt(Float64(tail))) * (1 + 1e-15)); k += 1
+                end
+                yq[1] = Rat(h); nsocfix += 1
+            end
+            for _ in 1:n
+                g = split(lines[i]); i += 1
+                q = parse(Int, g[2]); w = yq[q]
+                w == 0 && continue
+                c0 -= w * ratof(g[3]); nt = parse(Int, g[4])
+                for k in 1:nt; v = parse(Int, g[3+2k]); r[v] = get(r, v, Rat(0)) - w * ratof(g[4+2k]); end
+            end
         elseif f[1] == "PSD"
             npsd += 1
             n = parse(Int, f[2]); tri = parse.(Float64, f[3:end]); ntri = length(tri)
@@ -107,7 +130,7 @@ function verify_file(path; widen = 1e-12)
         xw = x + (a > 0 ? -1 : 1) * (abs(x) * Rat(widen) + Rat(1e-300))
         lbw += a * xw
     end
-    return (; bound = lb, bound_widened = lbw, boxterm, nlin, npsd, nraw, nshift, maxtau, sign_viol, psd_min_eig, unbounded = unb, seconds = time() - t0)
+    return (; bound = lb, bound_widened = lbw, boxterm, nlin, npsd, nraw, nshift, maxtau, sign_viol, psd_min_eig, unbounded = unb, nsoc, nsocfix, seconds = time() - t0)
 end
 
 function report(path)

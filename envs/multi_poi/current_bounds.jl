@@ -172,8 +172,9 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
             end
         end
         sect = max(maximum(acc2), zero(T)) / cw * safe
-        out[s.name] = (; sect, term, a0 = abs(a))
+        out[s.name] = (; sect, term, a0 = abs(a), a, cs)
     end
     full = count(q -> wJ[q] >= T(pi) && !dbl[q], 1:nd)
-    return (; out, rho_hist = hist, nd, full_sectors = full, double_sectors = count(dbl), wJ, RJ, D)
+    # rho: final valid radii |V_b - V0_b| <= rho_b; vmn: valid lower bounds on |V_b|; V0D: no-load voltages; Smax: max |S_b|
+    return (; out, rho_hist = hist, nd, full_sectors = full, double_sectors = count(dbl), wJ, RJ, D, rho, vmn, V0D = V0[k_], Smax)
 end
