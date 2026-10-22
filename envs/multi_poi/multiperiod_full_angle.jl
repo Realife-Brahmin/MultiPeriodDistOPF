@@ -142,7 +142,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
-                           objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing,
+                           objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
@@ -348,7 +348,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     elseif objective === :ray
         @objective(model, Max, r_ray - 1e-7 * pb2)
     elseif marg
-        @objective(model, Max, m_imp - 100 * viol - 1e-7 * pb2)
+        @objective(model, Max, m_imp - 100 * viol - margin_reg * pb2)   # margin_reg = 0: the margin alone
     else
         @objective(model, Min, energy + cycling + term)
     end

@@ -1,0 +1,447 @@
+# feasibility_certificate.jl -- does a prescribed angle vector admit a daily AC dispatch?
+#
+# The clean maximum-margin problem (the model of multiperiod_full_angle.jl, all its constraints
+# kept, objective = the margin m alone):
+#     max m   s.t.   P_Subs[s,t] >= m                          every source and period
+#                    lo^2 + m/k <= |V_b,t|^2 <= hi^2 - m/k     every banded bus and period
+#                    the network equations, PV reactive limits, battery power, SOC dynamics,
+#                    SOC bounds, B[0], and the hard cyclic terminal B[T] == B[0]
+# with k (kW of margin per pu of |V|^2) as in MULTI_VMARGIN. m >= 0 exactly when the original
+# no-backflow and band constraints hold, so the sign of the optimum decides feasibility.
+#
+#   L, a lower bound: a local solve (Ipopt) whose dispatch is re-validated here against the
+#      original constraints (`validate_dispatch`); L is the margin of that validated state.
+#   U, an upper bound: a sparse SDP relaxation of the same problem (`relax_margin`), with the
+#      bound itself computed from the relaxation's dual multipliers (`dual_bound`): any dual
+#      point, projected onto the dual cones, gives a valid bound once the box bounds of the
+#      variables are used, so U does not rest on the solver's status or primal objective.
+#   feasible   if L >= 0        infeasible   if U < -tol        unresolved   otherwise
+#
+# The relaxation. With the angles fixed, every source EMF E_s,t is a constant, the source and
+# line currents are linear in the bus voltages (I = (E - V_s)/z_s, I_l = (V_i - V_j)/z_l), and
+# each period is a QCQP in x_t = (e_t, f_t). Every product e_i e_j, e_i f_j, ... that the
+# constraints use is replaced by a variable, and for every line (i, j) and period t the 5 x 5
+# moment matrix of (1, e_i, f_i, e_j, f_j) must be PSD. For a radial network (a tree of lines,
+# the sources being fixed EMFs, not lines) this pattern is chordal, so the line blocks are
+# exactly the dense per-period relaxation; with loops they are a weaker but still valid outer
+# relaxation. The periods couple only through the linear battery and SOC constraints, kept as
+# they are: no matrix spans two periods. Valid bounds used: |e|, |f| <= 1.5 (the box of the
+# nonlinear model), hence |W| <= 2.25 for every product variable.
+using LinearAlgebra, Printf
+import Clarabel
+
+"""
+    validate_dispatch(net, delta_deg, kw, x; k)
+
+Re-check a dispatch (`x`: a result of solve_multiperiod, or one recovered from the relaxation)
+against the original constraints, recomputing every flow from the bus voltages. Returns the
+largest violation by kind (per unit: power balance, source equations, bounds, SOC; band in pu
+of |V|) and the margin of this state in kW (min over sources and periods of P_Subs, and of the
+band room times k).
+"""
+function validate_dispatch(net, delta_deg, kw, x; k)
+    T = kw.T; dt = get(kw, :dt_h, 24 / T); S = net.S_base_kVA; Yb = net.Y_base
+    lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
+    pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); ideal = get(kw, :ideal_sources, false)
+    soc = get(kw, :soc, (0.30, 0.95)); soc0 = get(kw, :soc0, 0.625); terminal = get(kw, :terminal, :cyclic)
+    battery = get(kw, :battery, :optimize); pv_q = get(kw, :pv_q, :optimize)
+    src_at = Dict(s.bus => s for s in net.sources)
+    load = Dict(b => 0.0im for b in net.buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
+    pvP = Dict(b => 0.0 for b in net.buses); for p in pvs; pvP[p.bus] += p.kW / S; end
+    viol = Dict("balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
+    up!(kind, v) = (viol[kind] = max(viol[kind], v))
+    minP, minroom = Inf, Inf
+    for t in 1:T
+        V(b) = x.V_pu[b][t]
+        out = Dict(b => 0.0im for b in net.buses)
+        for l in net.lines
+            Y = l.Y ./ Yb; ys = -Y[1, 2]; I = ys * (V(l.from) - V(l.to))
+            out[l.from] += V(l.from) * conj(I) + conj(Y[1, 1] + Y[1, 2]) * abs2(V(l.from))
+            out[l.to] += V(l.to) * conj(-I) + conj(Y[2, 2] + Y[2, 1]) * abs2(V(l.to))
+        end
+        inj = Dict(b => 0.0im for b in net.buses)
+        for s in net.sources
+            E = s.pu * cis(deg2rad(angle_at(delta_deg, s.name, t)))
+            z = ideal ? 0.0im : s.z_series * Yb
+            if abs(z) < 1e-12
+                up!("source", abs(V(s.bus) - E)); Ssrc = complex(x.P_subs_kW[s.name][t], x.Q_subs_kvar[s.name][t]) / S
+            else
+                Ssrc = V(s.bus) * conj((E - V(s.bus)) / z)
+            end
+            inj[s.bus] += Ssrc
+            up!("backflow", max(0.0, -real(Ssrc))); minP = min(minP, real(Ssrc) * S)
+        end
+        for bt in net.batteries
+            pb = x.P_B_kW[bt.name][t] / S
+            inj[bt.bus] += pb
+            up!("battery", max(0.0, abs(pb) - (battery === :optimize ? bt.kW_rated / S : 0.0)))
+        end
+        for p in pvs
+            q = x.Q_PV_kvar[p.name][t] / S
+            inj[p.bus] += im * q
+            qmax = pv_q === :optimize ? sqrt(max(p.kVA^2 - (pvf[t] * p.kW)^2, 0.0)) / S : 0.0
+            up!("pv_q", max(0.0, abs(q) - qmax))
+        end
+        for b in net.buses
+            mis = out[b] + lam[t] * load[b] - pvf[t] * pvP[b] - inj[b]
+            up!("balance", max(abs(real(mis)), abs(imag(mis))))
+            haskey(src_at, b) && continue
+            vm = abs(V(b)); up!("band", max(0.0, lo - vm, vm - hi))
+            minroom = min(minroom, (abs2(V(b)) - lo^2) * k, (hi^2 - abs2(V(b))) * k)
+        end
+    end
+    for bt in net.batteries
+        Bk = x.B_kWh[bt.name] ./ S; BR = bt.kWh_rated / S
+        up!("soc", abs(Bk[1] - soc0 * BR))
+        for t in 1:T
+            up!("soc", abs(Bk[t+1] - (Bk[t] - x.P_B_kW[bt.name][t] / S * dt)))
+            up!("soc", max(0.0, soc[1] * BR - Bk[t+1], Bk[t+1] - soc[2] * BR))
+        end
+        terminal === :cyclic && battery === :optimize && up!("soc", abs(Bk[T+1] - Bk[1]))
+    end
+    eq = maximum(viol[c] for c in ("balance", "source", "pv_q", "battery", "soc"))
+    return (; viol, max_violation = maximum(values(viol)), equations = eq, min_import_kW = minP, min_band_room_kW = minroom,
+            margin_kW = min(minP, minroom))
+end
+
+"""
+    variable_bounds(net, kw; k, m_lo_kW, vbox)
+
+Bounds valid for every point of the original model with margin m >= m_lo: bus voltage
+magnitudes (the band, widened by m_lo/k, on banded buses; the model's box |e|, |f| <= vbox at
+source terminals) and, because the lines form a tree, each series current: it carries the
+current of every injection on either side of it, so |I_l| is at most the smaller of the two
+sides' sums of injection-current bounds (load, PV, battery and PV reactive ratings over the
+lowest voltage, line half-shunts, and at a source terminal |E| + |V| over |z_s|).
+"""
+function variable_bounds(net, kw; k, m_lo_kW, vbox)
+    T = kw.T; S = net.S_base_kVA; Yb = net.Y_base
+    lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
+    pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); battery = get(kw, :battery, :optimize)
+    src_at = Dict(s.bus => s for s in net.sources)
+    c = S / k
+    lo^2 + c * m_lo_kW / S > 0 || error("m_lo too low for a positive voltage bound")
+    vmin = Dict(b => haskey(src_at, b) ? 0.0 : sqrt(lo^2 + c * m_lo_kW / S) for b in net.buses)
+    vmax = Dict(b => haskey(src_at, b) ? sqrt(2) * vbox : sqrt(hi^2 - c * m_lo_kW / S) for b in net.buses)
+    Ib = Dict(b => 0.0 for b in net.buses)
+    for d in net.loads; Ib[d.bus] += maximum(lam) * abs(complex(d.kW, d.kvar)) / S / vmin[d.bus]; end
+    for p in pvs; Ib[p.bus] += max(p.kW * maximum(pvf), p.kVA) / S / vmin[p.bus]; end
+    for bt in net.batteries; battery === :optimize && (Ib[bt.bus] += bt.kW_rated / S / vmin[bt.bus]); end
+    for s in net.sources
+        Emax = s.pu
+        Ib[s.bus] += (Emax + vmax[s.bus]) / abs(s.z_series * Yb)
+    end
+    for l in net.lines
+        Y = l.Y ./ Yb
+        Ib[l.from] += abs(Y[1, 1] + Y[1, 2]) * vmax[l.from]; Ib[l.to] += abs(Y[2, 2] + Y[2, 1]) * vmax[l.to]
+    end
+    adj = Dict(b => Tuple{String,String}[] for b in net.buses)
+    for l in net.lines; push!(adj[l.from], (l.to, l.name)); push!(adj[l.to], (l.from, l.name)); end
+    total = sum(values(Ib)); C = Dict{String,Float64}()
+    for l in net.lines                                       # the to-side of l: buses reached from l.to without l
+        side = Set([l.to]); st = [l.to]
+        while !isempty(st)
+            u = pop!(st)
+            for (v, n) in adj[u]; (n == l.name || v in side) && continue; push!(side, v); push!(st, v); end
+        end
+        sto = sum(Ib[b] for b in side); C[l.name] = min(sto, total - sto)
+    end
+    return (; vmin, vmax, C)
+end
+
+"""
+    relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000, m_hi_kW = 1e4, cuts = Symbol[])
+
+The sparse SDP relaxation of the clean maximum-margin problem at fixed angles (see the top of
+this file), built in JuMP for Clarabel as `min -m`, over the points with m >= m_lo (enough to
+decide the sign of the optimum). Line currents are variables, as in the nonlinear model: for
+each line and period the 7 x 7 moment matrix of (1, e_i, f_i, e_j, f_j, I_re, I_im) is PSD,
+and the line's two KVL equations hold for every row of it (valid: for a real point the matrix
+is x x', so a' x = 0 gives M a = 0). Eliminating the currents instead puts 1/z of the
+near-zero-impedance coupling lines (1e8 pu) into the constraints, which stalls the solver.
+"""
+function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = ())
+    T = kw.T; dt = get(kw, :dt_h, 24 / T); S = net.S_base_kVA; Yb = net.Y_base; Ts = 1:T
+    lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
+    pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); ideal = get(kw, :ideal_sources, false)
+    soc = get(kw, :soc, (0.30, 0.95)); soc0 = get(kw, :soc0, 0.625); terminal = get(kw, :terminal, :cyclic)
+    battery = get(kw, :battery, :optimize); pv_q = get(kw, :pv_q, :optimize)
+    buses = net.buses; lines = [l.name for l in net.lines]
+    bnames = [bt.name for bt in net.batteries]; pnames = [p.name for p in pvs]
+    src_at = Dict(s.bus => s for s in net.sources)
+    vb = variable_bounds(net, kw; k, m_lo_kW, vbox)
+    model = Model(Clarabel.Optimizer); set_silent(model)
+    for (a, v) in solver_attributes; set_attribute(model, a, v); end
+    # Bounds that only the certificate needs (voltage box, derived current bounds, product bounds) go
+    # to `box`, not to the solver: in the solver they put 1e5-scale rows beside unit-scale ones.
+    box = Dict{VariableRef,Tuple{Float64,Float64}}()
+    vx(b) = min(vb.vmax[b], vbox)                             # bound on |e|, |f|
+    @variable(model, e[buses, Ts]); @variable(model, f[buses, Ts])
+    @variable(model, Wee[buses, Ts]); @variable(model, Wff[buses, Ts]); @variable(model, Wef[buses, Ts])
+    for b in buses, t in Ts
+        a = vx(b); w = vb.vmax[b]^2
+        box[e[b, t]] = (-a, a); box[f[b, t]] = (-a, a); box[Wee[b, t]] = (0.0, a^2); box[Wff[b, t]] = (0.0, a^2); box[Wef[b, t]] = (-a^2, a^2)
+    end
+    # per line: V_i x V_j products, the current, and current x voltage / current x current products
+    nm = (:Lee, :Lff, :Lef, :Lfe, :lr, :li, :eilr, :eili, :filr, :fili, :ejlr, :ejli, :fjlr, :fjli, :lrlr, :lili, :lrli)
+    Lv = Dict(s => @variable(model, [lines, Ts], base_name = string(s)) for s in nm)
+    for l in net.lines, t in Ts
+        n = l.name; ai, aj, C = vx(l.from), vx(l.to), vb.C[l.name]
+        bd = Dict(:Lee => ai * aj, :Lff => ai * aj, :Lef => ai * aj, :Lfe => ai * aj, :lr => C, :li => C,
+                  :eilr => ai * C, :eili => ai * C, :filr => ai * C, :fili => ai * C, :ejlr => aj * C, :ejli => aj * C,
+                  :fjlr => aj * C, :fjli => aj * C, :lrlr => C^2, :lili => C^2, :lrli => C^2)
+        for s in nm
+            v = Lv[s][n, t]
+            box[v] = (s in (:lrlr, :lili) ? 0.0 : -bd[s], bd[s])
+            # :ibounds -- the one strengthening tried: the derived (valid) current and product bounds
+            # also go to the solver, capping the fictitious losses the relaxation can create
+            :ibounds in cuts && (set_lower_bound(v, box[v][1]); set_upper_bound(v, box[v][2]))
+        end
+    end
+    @variable(model, P_B[bnames, Ts]); @variable(model, B[bnames, 0:T]); @variable(model, Q_PV[pnames, Ts])
+    @variable(model, m_lo_kW / S <= m <= m_hi_kW / S)
+    for p in pvs, t in Ts
+        qmax = pv_q === :optimize ? sqrt(max(p.kVA^2 - (pvf[t] * p.kW)^2, 0.0)) / S : 0.0
+        qmax > 0 ? (set_lower_bound(Q_PV[p.name, t], -qmax); set_upper_bound(Q_PV[p.name, t], qmax)) : fix(Q_PV[p.name, t], 0.0; force = true)
+    end
+    for bt in net.batteries
+        kk, BR = bt.name, bt.kWh_rated / S
+        fix(B[kk, 0], soc0 * BR; force = true)
+        for t in Ts
+            set_lower_bound(B[kk, t], soc[1] * BR); set_upper_bound(B[kk, t], soc[2] * BR)
+            battery === :optimize ? (set_lower_bound(P_B[kk, t], -bt.kW_rated / S); set_upper_bound(P_B[kk, t], bt.kW_rated / S)) : fix(P_B[kk, t], 0.0; force = true)
+            @constraint(model, B[kk, t] == B[kk, t-1] - P_B[kk, t] * dt)
+        end
+        terminal === :cyclic && battery === :optimize && @constraint(model, B[kk, T] == B[kk, 0])
+    end
+    load = Dict(b => 0.0im for b in buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
+    pvP = Dict(b => 0.0 for b in buses); for p in pvs; pvP[p.bus] += p.kW / S; end
+    battat = Dict(b => [bt.name for bt in net.batteries if bt.bus == b] for b in buses)
+    pvat = Dict(b => [p.name for p in pvs if p.bus == b] for b in buses)
+    cmul(a::Complex, re, imx) = (real(a) * re - imag(a) * imx, real(a) * imx + imag(a) * re)    # a * (re + j imx)
+    psd = []
+    for t in Ts
+        VV(b) = Wee[b, t] + Wff[b, t]
+        outP = Dict(b => zero(AffExpr) for b in buses); outQ = Dict(b => zero(AffExpr) for b in buses)
+        for l in net.lines
+            i, j, n = l.from, l.to, l.name
+            g(s) = Lv[s][n, t]
+            R, X = reim(-Yb / l.Y[1, 2])
+            M = [1        e[i, t]     f[i, t]     e[j, t]     f[j, t]     g(:lr)   g(:li);
+                 e[i, t]  Wee[i, t]   Wef[i, t]   g(:Lee)     g(:Lef)     g(:eilr) g(:eili);
+                 f[i, t]  Wef[i, t]   Wff[i, t]   g(:Lfe)     g(:Lff)     g(:filr) g(:fili);
+                 e[j, t]  g(:Lee)     g(:Lfe)     Wee[j, t]   Wef[j, t]   g(:ejlr) g(:ejli);
+                 f[j, t]  g(:Lef)     g(:Lff)     Wef[j, t]   Wff[j, t]   g(:fjlr) g(:fjli);
+                 g(:lr)   g(:eilr)    g(:filr)    g(:ejlr)    g(:fjlr)    g(:lrlr) g(:lrli);
+                 g(:li)   g(:eili)    g(:fili)    g(:ejli)    g(:fjli)    g(:lrli) g(:lili)]
+            push!(psd, (; t, line = n, c = @constraint(model, Symmetric(M) in PSDCone())))
+            # KVL  e_i - e_j - R lr + X li = 0,  f_i - f_j - X lr - R li = 0, on every row of M
+            ar = [0, 1, 0, -1, 0, -R, X]; ai_ = [0, 0, 1, 0, -1, -X, -R]
+            for row in 1:7
+                @constraint(model, sum(M[row, c] * ar[c] for c in 1:7 if ar[c] != 0) == 0)
+                @constraint(model, sum(M[row, c] * ai_[c] for c in 1:7 if ai_[c] != 0) == 0)
+            end
+            add_to_expression!(outP[i], g(:eilr) + g(:fili)); add_to_expression!(outQ[i], g(:filr) - g(:eili))
+            add_to_expression!(outP[j], -(g(:ejlr) + g(:fjli))); add_to_expression!(outQ[j], -(g(:fjlr) - g(:ejli)))
+            Y = l.Y ./ Yb
+            for (b, ysh) in ((i, Y[1, 1] + Y[1, 2]), (j, Y[2, 2] + Y[2, 1]))
+                add_to_expression!(outP[b], real(ysh) * VV(b)); add_to_expression!(outQ[b], -imag(ysh) * VV(b))
+            end
+            if :rlt in cuts                                                  # McCormick on the voltage products
+                for (p, a, bb) in ((g(:Lee), e[i, t], e[j, t]), (g(:Lff), f[i, t], f[j, t]), (g(:Lef), e[i, t], f[j, t]), (g(:Lfe), f[i, t], e[j, t]))
+                    ua, ub = vx(i), vx(j)
+                    @constraint(model, p >= -ub * a - ua * bb - ua * ub); @constraint(model, p >= ub * a + ua * bb - ua * ub)
+                    @constraint(model, p <= ub * a - ua * bb + ua * ub);  @constraint(model, p <= -ub * a + ua * bb + ua * ub)
+                end
+            end
+        end
+        for b in buses
+            Pin, Qin = zero(AffExpr), zero(AffExpr)
+            for kk in battat[b]; add_to_expression!(Pin, P_B[kk, t]); end
+            for kk in pvat[b]; add_to_expression!(Qin, Q_PV[kk, t]); end
+            if haskey(src_at, b)
+                s = src_at[b]; E = s.pu * cis(deg2rad(angle_at(delta_deg, s.name, t)))
+                z = ideal ? 0.0im : s.z_series * Yb
+                abs(z) < 1e-12 && error("ideal source $(s.name): fix its terminal voltage (not needed for the decks used here)")
+                Pc = e[b, t] * real(E) + f[b, t] * imag(E) - VV(b); Qc = f[b, t] * real(E) - e[b, t] * imag(E)   # V conj(E) - |V|^2
+                Ps, Qs = cmul(1 / conj(z), Pc, Qc)
+                add_to_expression!(Pin, Ps); add_to_expression!(Qin, Qs)
+                @constraint(model, Ps >= m)                                         # no-backflow, with the margin
+            else
+                @constraint(model, VV(b) >= lo^2 + (S / k) * m); @constraint(model, VV(b) <= hi^2 - (S / k) * m)
+            end
+            @constraint(model, outP[b] + lam[t] * real(load[b]) - pvf[t] * pvP[b] == Pin)
+            @constraint(model, outQ[b] + lam[t] * imag(load[b]) == Qin)
+        end
+    end
+    @objective(model, Min, -m)
+    return (; model, e, f, Wee, Wff, Wef, P_B, B, Q_PV, m, psd, S, bounds = vb, n = 7, box)
+end
+
+"""
+    lifted_violation(R, net, x, kw)
+
+The relaxation's validity check: lift a solution `x` of the nonlinear model (with its line
+currents, `x.raw`) to the relaxation's variables (every product from the actual values, the
+margin from the state) and return the largest constraint violation and the constraint behind it.
+Every point of the original model must pass (up to the solver's tolerance).
+"""
+function lifted_violation(R, net, x, kw; margin_kW)
+    T = kw.T; S = R.S; m = R.model; pt = Dict{VariableRef,Float64}()
+    for b in net.buses, t in 1:T
+        V = x.V_pu[b][t]; ev, fv = real(V), imag(V)
+        pt[R.e[b, t]] = ev; pt[R.f[b, t]] = fv; pt[R.Wee[b, t]] = ev^2; pt[R.Wff[b, t]] = fv^2; pt[R.Wef[b, t]] = ev * fv
+    end
+    for l in net.lines, t in 1:T
+        Vi, Vj = x.V_pu[l.from][t], x.V_pu[l.to][t]; ei, fi, ej, fj = real(Vi), imag(Vi), real(Vj), imag(Vj)
+        lr, li = x.raw.lr[l.name][t], x.raw.li[l.name][t]
+        val = Dict(:Lee => ei * ej, :Lff => fi * fj, :Lef => ei * fj, :Lfe => fi * ej, :lr => lr, :li => li,
+                   :eilr => ei * lr, :eili => ei * li, :filr => fi * lr, :fili => fi * li, :ejlr => ej * lr, :ejli => ej * li,
+                   :fjlr => fj * lr, :fjli => fj * li, :lrlr => lr^2, :lili => li^2, :lrli => lr * li)
+        for (s, v) in val; pt[variable_by_name(m, string(s) * "[" * l.name * "," * string(t) * "]")] = v; end
+    end
+    for kk in axes(R.P_B, 1), t in 1:T; pt[R.P_B[kk, t]] = x.P_B_kW[kk][t] / S; end
+    for kk in axes(R.B, 1), t in 0:T; pt[R.B[kk, t]] = x.B_kWh[kk][t+1] / S; end
+    for kk in axes(R.Q_PV, 1), t in 1:T; pt[R.Q_PV[kk, t]] = x.Q_PV_kvar[kk][t] / S; end
+    pt[R.m] = margin_kW / S
+    rep = primal_feasibility_report(m, pt; atol = 0.0)
+    isempty(rep) && return (; worst = 0.0, at = "")
+    (c, v) = argmax(last, collect(rep))
+    return (; worst = v, at = string(c))
+end
+
+"""
+    start_from_voltages(net, delta_deg, kw, V)
+
+A `start` for solve_multiperiod built from bus voltages alone (`V[b][t]`): currents, source
+powers and an idle battery from the network equations. Used to start the local solver on other
+branches of the AC equations (for example scrambled bus angles).
+"""
+function start_from_voltages(net, delta_deg, kw, V)
+    T = kw.T; S = net.S_base_kVA; Yb = net.Y_base; Ts = 1:T
+    lr = Dict{String,Vector{Float64}}(); li = Dict{String,Vector{Float64}}()
+    for l in net.lines
+        z = -Yb / l.Y[1, 2]; I = [(V[l.from][t] - V[l.to][t]) / z for t in Ts]
+        lr[l.name] = real.(I); li[l.name] = imag.(I)
+    end
+    ir = Dict{String,Vector{Float64}}(); ii = Dict{String,Vector{Float64}}(); P = Dict{String,Vector{Float64}}(); Q = Dict{String,Vector{Float64}}()
+    for s in net.sources
+        z = s.z_series * Yb
+        I = [(s.pu * cis(deg2rad(angle_at(delta_deg, s.name, t))) - V[s.bus][t]) / z for t in Ts]
+        Ssrc = [V[s.bus][t] * conj(I[t]) for t in Ts]
+        ir[s.name] = real.(I); ii[s.name] = imag.(I); P[s.name] = real.(Ssrc) .* S; Q[s.name] = imag.(Ssrc) .* S
+    end
+    BR = Dict(bt.name => bt.kWh_rated for bt in net.batteries)
+    return (; V_pu = V, raw = (; lr, li, ir, ii), P_subs_kW = P, Q_subs_kvar = Q,
+            P_B_kW = Dict(k => zeros(T) for k in keys(BR)), B_kWh = Dict(k => fill(get(kw, :soc0, 0.625) * BR[k], T + 1) for k in keys(BR)),
+            Q_PV_kvar = Dict(p.name => zeros(T) for p in get(kw, :pvs, [])))
+end
+
+"Vector index of entry (i, j), i <= j, in MOI's upper-triangle column-wise order."
+tri(i, j) = (j * (j - 1)) ÷ 2 + i
+
+"""
+    dual_bound(model; c = objective_function(model))
+
+A lower bound on  min c'x  over every point that satisfies the model's constraints and its
+variable bounds, built from the solver's dual values: each multiplier is projected onto its
+dual cone (>= 0, <= 0, free, or -- for a PSD triangle -- the matrix with halved off-diagonals
+clipped to PSD), the Lagrangian c'x - sum lambda' g(x) is then a valid under-estimator, and its
+minimum over the variable box is attained at a vertex. Valid for any multipliers (up to
+floating-point rounding, which is bounded and reported as `rounding`); its tightness depends on
+how good the multipliers are. Also reports how far the raw multipliers were from their cones.
+"""
+function dual_bound(model; c = objective_function(model), box = Dict{VariableRef,Tuple{Float64,Float64}}())
+    r = Dict{VariableRef,Float64}(); c0 = c.constant
+    for (v, a) in c.terms; r[v] = get(r, v, 0.0) + a; end
+    absacc = abs(c0); psd_viol, sign_viol = 0.0, 0.0
+    bk = backend(model)
+    for (F, Sset) in list_of_constraint_types(model)
+        F == VariableRef && continue                           # bounds: the box, used below
+        for cref in all_constraints(model, F, Sset)
+            obj = constraint_object(cref)
+            if obj.set isa MOI.PositiveSemidefiniteConeTriangle
+                lamv = MOI.get(bk, MOI.ConstraintDual(), index(cref))
+                fv = moi_function(obj)
+                n = obj.set.side_dimension
+                L = zeros(n, n)
+                for j in 1:n, i in 1:j
+                    L[i, j] = L[j, i] = i == j ? lamv[tri(i, j)] : lamv[tri(i, j)] / 2
+                end
+                ev = eigen(Symmetric(L)); psd_viol = max(psd_viol, -minimum(ev.values))
+                Lp = ev.vectors * Diagonal(max.(ev.values, 0.0)) * ev.vectors'
+                lp = [i == j ? Lp[i, j] : 2Lp[i, j] for j in 1:n for i in 1:j]
+                for term in fv.terms
+                    v = VariableRef(model, term.scalar_term.variable)
+                    r[v] = get(r, v, 0.0) - lp[term.output_index] * term.scalar_term.coefficient
+                    absacc += abs(lp[term.output_index] * term.scalar_term.coefficient)
+                end
+                for (q, cst) in enumerate(fv.constants)
+                    c0 -= lp[q] * cst; absacc += abs(lp[q] * cst)
+                end
+            else
+                lam = dual(cref); fn = obj.func; b = MOI.constant(obj.set)
+                lp = obj.set isa MOI.GreaterThan ? max(lam, 0.0) : obj.set isa MOI.LessThan ? min(lam, 0.0) : lam
+                sign_viol = max(sign_viol, abs(lam - lp))
+                for (v, a) in fn.terms
+                    r[v] = get(r, v, 0.0) - lp * a; absacc += abs(lp * a)
+                end
+                c0 -= lp * (fn.constant - b); absacc += abs(lp * (fn.constant - b))
+            end
+        end
+    end
+    lb, box_term = c0, 0.0
+    for (v, a) in r
+        a == 0 && continue
+        l, u = is_fixed(v) ? (fix_value(v), fix_value(v)) : (has_lower_bound(v) ? lower_bound(v) : -Inf, has_upper_bound(v) ? upper_bound(v) : Inf)
+        haskey(box, v) && (l = max(l, box[v][1]); u = min(u, box[v][2]))
+        val = a > 0 ? a * l : a * u
+        isfinite(val) || return (; bound = -Inf, unbounded_variable = name(v), psd_viol, sign_viol, box_term, rounding = 0.0)
+        lb += val; box_term += abs(val); absacc += abs(val)
+    end
+    rounding = 4 * eps() * absacc * 10                         # a generous bound on the summation error
+    return (; bound = lb - rounding, psd_viol, sign_viol, box_term, rounding, unbounded_variable = nothing)
+end
+
+"""
+    certify(net, delta_deg, kw; k, cuts = Symbol[])
+
+Solve the relaxation and return U (kW, from the dual bound), the solver's primal and dual
+objectives, the residuals, the PSD eigenvalue checks, the rank of the moment blocks, and, when
+every block is numerically rank one, the recovered state for `validate_dispatch`.
+"""
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = ())
+    t0 = time()
+    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes)
+    tb = time() - t0
+    optimize!(R.model)
+    ts = time() - t0 - tb
+    st = termination_status(R.model)
+    S = R.S
+    primal = has_values(R.model) ? -objective_value(R.model) * S : NaN
+    dualobj = try -dual_objective_value(R.model) * S catch; NaN end
+    db = has_duals(R.model) ? dual_bound(R.model; box = R.box) : (; bound = -Inf, psd_viol = NaN, sign_viol = NaN, box_term = NaN, rounding = NaN, unbounded_variable = nothing)
+    U = -db.bound * S
+    pres = has_values(R.model) ? maximum(values(primal_feasibility_report(R.model; atol = 0.0)); init = 0.0) : NaN
+    minev, rank_ratio = Inf, 0.0
+    if has_values(R.model)
+        for p in R.psd
+            X = value.(constraint_object(p.c).func); n = R.n
+            Mx = zeros(n, n); for j in 1:n, i in 1:j; Mx[i, j] = Mx[j, i] = X[tri(i, j)]; end
+            ev = eigvals(Symmetric(Mx)); minev = min(minev, ev[1]); rank_ratio = max(rank_ratio, ev[end-1] / max(ev[end], eps()))
+        end
+    end
+    rec = nothing
+    if has_values(R.model)
+        T = kw.T; Ts = 1:T
+        V = Dict(b => [complex(value(R.e[b, t]), value(R.f[b, t])) for t in Ts] for b in net.buses)
+        rec = (; V_pu = V, P_B_kW = Dict(kk => [value(R.P_B[kk, t]) * S for t in Ts] for kk in axes(R.P_B, 1)),
+               Q_PV_kvar = Dict(kk => [value(R.Q_PV[kk, t]) * S for t in Ts] for kk in axes(R.Q_PV, 1)),
+               B_kWh = Dict(kk => [value(R.B[kk, t]) * S for t in 0:T] for kk in axes(R.B, 1)),
+               P_subs_kW = Dict(s.name => fill(NaN, T) for s in net.sources), Q_subs_kvar = Dict(s.name => fill(NaN, T) for s in net.sources))
+    end
+    return (; status = st, U, primal, dualobj, gap = primal - dualobj, primal_residual = pres, psd_primal_min_eig = minev,
+            psd_dual_violation = db.psd_viol, dual_sign_violation = db.sign_viol, box_term_kW = db.box_term * S,
+            rounding_kW = db.rounding * S, rank_ratio, recovered = rec, build_s = tb, solve_s = ts,
+            nblocks = length(R.psd), nvars = num_variables(R.model), R)
+end
