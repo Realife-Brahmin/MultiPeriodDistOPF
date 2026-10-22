@@ -42,7 +42,7 @@ def write_csv(path, data):
 
 def analyze(root, out, partial=False):
     out.mkdir(parents=True, exist_ok=True)
-    summaries, blocks, depths, spectral, missing, validation = [], [], [], [], [], []
+    summaries, blocks, depths, spectral, triangles, missing, validation = [], [], [], [], [], [], []
     for case in CASES:
         for tag in TAGS:
             directory = root / "results" / case / tag
@@ -122,9 +122,25 @@ def analyze(root, out, partial=False):
                 if mode in ("1e-8", "1e-5"):
                     assert peak(c, "reconstruction_relative_fro") <= float(mode) + 1e-12
                 changed = 0
+                triangle_uncertified = 0
                 for r in ii:
                     ref = references[r["depth"], r["lo"], r["hi"]]
                     changed += (r["negative"], r["near_zero"]) != (ref["negative"], ref["near_zero"])
+                    # Recorded eigenvalues use (K+K')/2; production uses the
+                    # symmetric UPPER triangle. Bound their difference instead
+                    # of silently equating these two floating-point matrices.
+                    alpha = float(r["symmetry_error"])
+                    amax = max(abs(float(r["min_eig"])), abs(float(r["max_eig"])))
+                    condition = float(r["abs_condition"])
+                    gap = amax / condition if math.isfinite(condition) and condition > 0 else 0.0
+                    denom = 1.0 - alpha * alpha / 4.0
+                    perturbation = (0.5 * alpha * max(1.0, math.sqrt(n) * amax / math.sqrt(denom))) if denom > 0 else math.inf
+                    certified = gap > perturbation + float(r["zero_threshold"])
+                    triangle_uncertified += not certified
+                    triangles.append(dict(identity, mode=mode, depth=int(r["depth"]),
+                        lo=int(r["lo"]), hi=int(r["hi"]), eigen_gap=gap,
+                        upper_vs_average_norm_bound=perturbation,
+                        inertia_signs_certified=certified))
                 # Exclude already-closed dense PintVal records from the matrix
                 # representation storage summary; their storage is unchanged.
                 cc = [r for r in c if int(r["dense_three_blocks_bytes"]) == 8 * (3*n*n + 2*n)]
@@ -137,6 +153,7 @@ def analyze(root, out, partial=False):
                     full_direction_max_scaled=peak(full_dirs, "unit_floor_scaled"),
                     direction_max_relative=peak(d, "relative_fro"),
                     inertia_changes=changed, negative_K=max(int(r["negative"]) for r in ii),
+                    upper_triangle_inertia_uncertified=triangle_uncertified,
                     K_condition_max=peak(ii, "abs_condition"),
                     leaf_and_interval_payload_ratio_median=statistics.median(ratios),
                     payload_ratio_max=max(ratios),
@@ -183,6 +200,7 @@ def analyze(root, out, partial=False):
     write_csv(out / "block_errors.csv", blocks)
     write_csv(out / "rank_by_depth.csv", depths)
     write_csv(out / "spectral_ranks.csv", spectral)
+    write_csv(out / "triangle_certificates.csv", triangles)
     report = {"complete_points": len(validation), "expected_points": 15,
               "complete": not missing and not partial, "strict_campaign_checks": not partial,
               "missing_or_incomplete": missing, "validated": validation,
