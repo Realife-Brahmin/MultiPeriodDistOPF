@@ -143,7 +143,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
-                           source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing,
+                           source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing, margin_band_hard = false,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
@@ -286,7 +286,9 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # zero at whichever limit binds first, no-backflow or voltage, and the problem has no penalized
     # slacks (past a voltage edge those made Ipopt take hundreds of iterations).
     vmarg = marg && margin_band_kw !== nothing
-    eband = elastic || (marg && !vmarg)
+    # margin_band_hard = true: the band stays a hard constraint and the margin is on no-backflow alone
+    # (the restoration problem: max m = -rho with P_Subs >= m); no slacks, no band room in the margin.
+    eband = elastic || (marg && !vmarg && !margin_band_hard)
     bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b)]
     @variable(model, s_back[elastic && no_backflow ? names : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
