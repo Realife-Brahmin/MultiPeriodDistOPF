@@ -116,6 +116,66 @@ elseif mode == "probe"                                # one point, verbose: the 
     c = certify(s.net, ang, kw; k = KV, cuts, solver_attributes = [CLARABEL_DEFAULTS; opts])
     say(@sprintf("relaxation: %s primal %.3f dual %.3f kW, U %.3f kW, box term %.3e kW, rank %.2e, fictitious losses %.1f kW per period, max |V|^2 gap %.3e, build %.1f s, solve %.1f s",
                  c.status, c.primal, c.dualobj, c.U, c.box_term_kW, c.rank_ratio, c.fictitious_loss_kW, c.vsq_gap, c.build_s, c.solve_s))
+elseif mode == "hour1"                                # 2026-10-22: one limiting hour, two points, four relaxation variants
+    # The limiting hour: the hour of least import margin on the daily edge of direction 292.5 deg (idle
+    # batteries: the daily edge is that hour's edge). Then that hour alone: its local boundary by a secant
+    # on the margin, a validated feasible point just inside and a point just beyond. The relaxation is
+    # posed on the original feasibility domain, m >= 0 (band and no-backflow as in the model), with no
+    # ampacity, and tried as is (:base), with zero-injection current balance (:kcl0), with device-current
+    # bounds (:jbound), and with both.
+    th = 292.5
+    s24 = setup(net, pvs; T = 24, pv = "qfree"); kw24 = problem(s24, :nobatt)
+    meas, _ = measured_reach()[("nobatt", th)]
+    at(r) = Dict("subs1" => 0.0, "subs3" => r * cosd(th), "subs4" => r * sind(th))
+    xd = solve_multiperiod(s24.net, at(0.98meas); kw24..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0)
+    tstar = argmin([minimum(xd.P_subs_kW[n][t] for n in keys(xd.P_subs_kW)) for t in 1:24])
+    say(@sprintf("daily margin at 98%% of the %.1f-deg reach: %+.3f kW; limiting hour t* = %d (min import %.2f kW)", th, xd.margin_kW, tstar,
+                 minimum(xd.P_subs_kW[n][tstar] for n in keys(xd.P_subs_kW))))
+    kw1 = (; pvs = s24.P, pv_q = :optimize, C_B = s24.CB, ideal_sources = false, battery = :idle, tol = IPOPT_TOL, constr_viol_tol = IPOPT_TOL,
+           T = 1, dt_h = 1.0, load_factor = [s24.lam[tstar]], price = [s24.c[tstar]], pv_factor = [s24.F[tstar]], gamma = 0.0, terminal = :free)
+    marg(r) = (x = solve_multiperiod(net, at(r); kw1..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0); (x, validate_dispatch(net, at(r), kw1, x; k = KV)))
+    function secant(r0, r1)                            # secant on the validated margin
+        m0, m1 = marg(r0)[2].margin_kW, marg(r1)[2].margin_kW
+        for _ in 1:8
+            r2 = r1 - m1 * (r1 - r0) / (m1 - m0); r0, m0 = r1, m1; r1 = r2; m1 = marg(r1)[2].margin_kW
+            abs(m1) < 1e-4 && break
+        end
+        return r1, m1
+    end
+    rstar, m1 = secant(0.95meas, 1.05meas)
+    say(@sprintf("hour %d alone: local boundary at r* = %.6f deg (margin %+.2e kW); daily measured reach %.6f", tstar, rstar, m1, meas))
+    out = joinpath(OUT_DIR, "feasibility_hour1_ieee123.csv")
+    open(io -> println(io, "point,r_deg,d3_deg,d4_deg,L_kW,nlp_status,orig_equations,variant,relax_status,dual_status,U_kW,primal_kW,dual_kW,gap_kW,primal_residual,psd_primal_min_eig,psd_dual_violation,rank_ratio,fictitious_loss_kW,vsq_gap,farkas_bound,farkas_box_term,lifted_violation,lifted_at,nblocks,nvars,build_s,solve_s,class"), out, "w")
+    for (pname, r) in (("inside", 0.98rstar), ("outside", 1.02rstar))
+        x, v = marg(r)
+        L = x.status in RAY_OK && v.equations <= 1e-6 ? v.margin_kW : NaN
+        say(@sprintf("\n%s r = %.6f: L = %+.4f kW (%s), equations %.1e, violations %s", pname, r, L, x.status, v.equations, v.viol))
+        for (vname, cv) in (("base", Symbol[]), ("kcl0", [:kcl0]), ("jbound", [:jbound]), ("both", [:kcl0, :jbound]))
+            copts = [(String(a), something(tryparse(Int, b), tryparse(Float64, b), String(b)))
+                     for (a, b) in (split(kv, '=') for kv in split(get(ENV, "CLARABEL_OPTS", ""), ';'; keepempty = false))]
+            c = certify(net, at(r), kw1; k = KV, cuts = cv, m_lo_kW = 0.0, solver_attributes = [CLARABEL_DEFAULTS; copts])
+            if has_values(c.R.model)                   # where the relaxation's slack sits: |V|^2 gaps by bus, fictitious losses by line
+                mdl = c.R.model; gv(sy, n) = value(variable_by_name(mdl, string(sy) * "[" * n * ",1]"))
+                vg = sort([(value(c.R.Wee[b, 1]) + value(c.R.Wff[b, 1]) - value(c.R.e[b, 1])^2 - value(c.R.f[b, 1])^2, b) for b in net.buses]; rev = true)
+                fl = sort([(real(-net.Y_base / l.Y[1, 2]) * (gv(:lrlr, l.name) + gv(:lili, l.name) - gv(:lr, l.name)^2 - gv(:li, l.name)^2) * net.S_base_kVA, l.name) for l in net.lines]; rev = true)
+                say("      largest |V|^2 gaps: ", join([@sprintf("%s %.3f", b, v) for (v, b) in vg[1:5]], ", "),
+                    " | largest fictitious losses (kW): ", join([@sprintf("%s %.0f", n, v) for (v, n) in fl[1:5]], ", "),
+                    @sprintf(" | share of top 5 lines %.0f%%", 100 * sum(first.(fl[1:5])) / max(sum(first.(fl)), eps())))
+            end
+            lv = isfinite(L) && L >= 0 ? lifted_violation(c.R, net, x, kw1; margin_kW = L) : (; worst = NaN, at = "")
+            infeas = c.status in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE)
+            cls = isfinite(L) && L >= 0 ? "feasible (validated L)" : (infeas && c.farkas.bound > 0 ? "infeasible (validated Farkas)" : (infeas ? "solver says infeasible; certificate not validated" : "unresolved (relaxation feasible)"))
+            row = [pname, @sprintf("%.6f", r), @sprintf("%.6f", at(r)["subs3"]), @sprintf("%.6f", at(r)["subs4"]), @sprintf("%.4f", L), string(x.status), @sprintf("%.1e", v.equations),
+                   vname, string(c.status), string(c.dual_status), @sprintf("%.4f", c.U), @sprintf("%.4f", c.primal), @sprintf("%.4f", c.dualobj), @sprintf("%.2e", c.gap),
+                   @sprintf("%.2e", c.primal_residual), @sprintf("%.2e", c.psd_primal_min_eig), @sprintf("%.2e", c.psd_dual_violation), @sprintf("%.2e", c.rank_ratio),
+                   @sprintf("%.2f", c.fictitious_loss_kW), @sprintf("%.3e", c.vsq_gap), @sprintf("%.3e", c.farkas.bound), @sprintf("%.3e", c.farkas.box_term),
+                   @sprintf("%.2e", lv.worst), replace(first(lv.at, 80), ',' => ';'), string(c.nblocks), string(c.nvars), @sprintf("%.2f", c.build_s), @sprintf("%.2f", c.solve_s), cls]
+            open(io -> println(io, join(row, ',')), out, "a")
+            say(@sprintf("  %-7s %-24s primal %9.3f kW, fictitious %8.2f kW, |V|^2 gap %.2e, rank %.2f, farkas %.2e, lifted %.1e, %d blocks, build %.1f s solve %.1f s -> %s",
+                         vname, string(c.status), c.primal, c.fictitious_loss_kW, c.vsq_gap, c.rank_ratio, c.farkas.bound, lv.worst, c.nblocks, c.build_s, c.solve_s, cls))
+        end
+    end
+    say("wrote ", out)
 elseif mode == "exotic"                               # other branches of the AC equations: scrambled starts
     T = parse(Int, get(ENV, "EXOTIC_T", "2")); nstart = parse(Int, get(ENV, "EXOTIC_STARTS", "12"))
     r, th = parse(Float64, get(ENV, "EXOTIC_R", "2.0")), parse(Float64, get(ENV, "EXOTIC_TH", "292.5"))

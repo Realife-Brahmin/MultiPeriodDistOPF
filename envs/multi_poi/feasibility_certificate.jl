@@ -285,8 +285,76 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
             @constraint(model, outQ[b] + lam[t] * imag(load[b]) == Qin)
         end
     end
+    # ---- Bus moment blocks (cuts :kcl0 and :jbound), 2026-10-22 ----------------------------------------
+    # For a bus b, x_b = (1, e_b, f_b, I_1r, I_1i, ..., I_dr, I_di) over its incident lines; the block
+    # reuses the line blocks' variables (V x I, |I|^2 moments) and adds the products of currents of
+    # different lines. J_b = sum_l sigma_l I_l + y_sh,b V_b is the current the bus's devices inject
+    # (sigma = +1 if b is the line's from-end); y_sh,b sums the half-shunts at b. a_r, a_i: its real
+    # and imaginary parts as coefficient vectors on x_b.
+    #  :kcl0   at a zero-injection bus (no load, PV or battery, not a source terminal) with a positive
+    #          voltage bound: S = V conj(J) = 0 and V != 0 give J = 0, linear; lifted: M a_r = M a_i = 0.
+    #  :jbound at a banded bus with devices: |J| = |S| / |V| <= Smax / Vmin, Smax from the fixed net real
+    #          power and the worst end of the allowed PV reactive range; lifted: a_r'M a_r + a_i'M a_i <= Jmax^2.
+    # Both hold for every original point with m >= m_lo (for a real point M = x x', so they are the
+    # original equations and bounds multiplied out). Source terminals are excluded (no band there).
+    xcur = Dict{Tuple{String,String,String,Symbol},VariableRef}()      # (bus, line k, line m, :rr/:ri/:ir/:ii)
+    busblocks = []
+    if :kcl0 in cuts || :jbound in cuts
+        inc = Dict(b => [(l, l.from == b ? 1 : -1) for l in net.lines if l.from == b || l.to == b] for b in buses)
+        hasdev(b) = load[b] != 0 || pvP[b] != 0 || !isempty(battat[b]) || !isempty(pvat[b])
+        for t in Ts
+            g(sy, n) = Lv[sy][n, t]
+            for b in buses
+                haskey(src_at, b) && continue
+                zero_inj = !hasdev(b)
+                use = (zero_inj && :kcl0 in cuts) || (!zero_inj && :jbound in cuts)
+                (use && vb.vmin[b] > 0) || continue
+                ls = inc[b]; d = length(ls); n = 3 + 2d
+                X = Matrix{AffExpr}(undef, n, n)
+                X[1, 1] = AffExpr(1.0); X[1, 2] = X[2, 1] = 1.0 * e[b, t]; X[1, 3] = X[3, 1] = 1.0 * f[b, t]
+                X[2, 2] = 1.0 * Wee[b, t]; X[2, 3] = X[3, 2] = 1.0 * Wef[b, t]; X[3, 3] = 1.0 * Wff[b, t]
+                for (q, (l, sg)) in enumerate(ls)
+                    r, ii = 2 + 2q, 3 + 2q; nm = l.name; fr = sg == 1
+                    X[1, r] = X[r, 1] = 1.0 * g(:lr, nm); X[1, ii] = X[ii, 1] = 1.0 * g(:li, nm)
+                    X[2, r] = X[r, 2] = 1.0 * g(fr ? :eilr : :ejlr, nm); X[2, ii] = X[ii, 2] = 1.0 * g(fr ? :eili : :ejli, nm)
+                    X[3, r] = X[r, 3] = 1.0 * g(fr ? :filr : :fjlr, nm); X[3, ii] = X[ii, 3] = 1.0 * g(fr ? :fili : :fjli, nm)
+                    X[r, r] = 1.0 * g(:lrlr, nm); X[ii, ii] = 1.0 * g(:lili, nm); X[r, ii] = X[ii, r] = 1.0 * g(:lrli, nm)
+                end
+                for (q1, (l1, _)) in enumerate(ls), (q2, (l2, _)) in enumerate(ls)
+                    q2 > q1 || continue
+                    c1, c2 = vb.C[l1.name], vb.C[l2.name]
+                    for (s, (a1, a2)) in ((:rr, (2 + 2q1, 2 + 2q2)), (:ri, (2 + 2q1, 3 + 2q2)), (:ir, (3 + 2q1, 2 + 2q2)), (:ii, (3 + 2q1, 3 + 2q2)))
+                        v = @variable(model, base_name = "xc_$(s)[$(b),$(l1.name),$(l2.name),$(t)]")
+                        xcur[(string(b, ",", t), l1.name, l2.name, s)] = v; box[v] = (-c1 * c2, c1 * c2)
+                        X[a1, a2] = X[a2, a1] = 1.0 * v
+                    end
+                end
+                push!(psd, (; t, line = "bus:" * b, c = @constraint(model, Symmetric(X) in PSDCone())))
+                gsh = sum((sg == 1 ? (l.Y[1, 1] + l.Y[1, 2]) : (l.Y[2, 2] + l.Y[2, 1])) / Yb for (l, sg) in ls)
+                ar = zeros(n); ai = zeros(n)
+                ar[2], ar[3] = real(gsh), -imag(gsh); ai[2], ai[3] = imag(gsh), real(gsh)   # y_sh V = (g e - b f) + j (g f + b e)
+                for (q, (l, sg)) in enumerate(ls); ar[2+2q] = sg; ai[3+2q] = sg; end
+                if zero_inj
+                    for row in 1:n
+                        @constraint(model, sum(ar[c] * X[row, c] for c in 1:n if ar[c] != 0) == 0)
+                        @constraint(model, sum(ai[c] * X[row, c] for c in 1:n if ai[c] != 0) == 0)
+                    end
+                    push!(busblocks, (; t, bus = b, kind = :kcl0, n))
+                else
+                    Pnet = -lam[t] * real(load[b]) + pvf[t] * pvP[b]
+                    Pb = sum((bt.kW_rated / S for bt in net.batteries if bt.bus == b && battery === :optimize); init = 0.0)
+                    qd = sum((pv_q === :optimize ? sqrt(max(p.kVA^2 - (pvf[t] * p.kW)^2, 0.0)) / S : 0.0 for p in pvs if p.bus == b); init = 0.0)
+                    Qnet = -lam[t] * imag(load[b])
+                    Smax = sqrt((abs(Pnet) + Pb)^2 + max(abs(Qnet + qd), abs(Qnet - qd))^2)
+                    Jmax = Smax / vb.vmin[b]
+                    @constraint(model, sum(ar[c1] * ar[c2] * X[c1, c2] + ai[c1] * ai[c2] * X[c1, c2] for c1 in 1:n, c2 in 1:n if ar[c1] * ar[c2] != 0 || ai[c1] * ai[c2] != 0) <= Jmax^2)
+                    push!(busblocks, (; t, bus = b, kind = :jbound, n, Jmax))
+                end
+            end
+        end
+    end
     @objective(model, Min, -m)
-    return (; model, e, f, Wee, Wff, Wef, P_B, B, Q_PV, m, psd, S, bounds = vb, n = 7, box)
+    return (; model, e, f, Wee, Wff, Wef, P_B, B, Q_PV, m, psd, S, bounds = vb, n = 7, box, xcur, busblocks)
 end
 
 """
@@ -314,6 +382,11 @@ function lifted_violation(R, net, x, kw; margin_kW)
     for kk in axes(R.P_B, 1), t in 1:T; pt[R.P_B[kk, t]] = x.P_B_kW[kk][t] / S; end
     for kk in axes(R.B, 1), t in 0:T; pt[R.B[kk, t]] = x.B_kWh[kk][t+1] / S; end
     for kk in axes(R.Q_PV, 1), t in 1:T; pt[R.Q_PV[kk, t]] = x.Q_PV_kvar[kk][t] / S; end
+    for ((bt, k1, k2, sy), v) in R.xcur                                        # bus blocks: products of two lines' currents
+        bb, tt = split(bt, ','); t = parse(Int, tt)
+        I1 = complex(x.raw.lr[k1][t], x.raw.li[k1][t]); I2 = complex(x.raw.lr[k2][t], x.raw.li[k2][t])
+        pt[v] = sy === :rr ? real(I1) * real(I2) : sy === :ri ? real(I1) * imag(I2) : sy === :ir ? imag(I1) * real(I2) : imag(I1) * imag(I2)
+    end
     pt[R.m] = margin_kW / S
     rep = primal_feasibility_report(m, pt; atol = 0.0)
     isempty(rep) && return (; worst = 0.0, at = "")
@@ -423,9 +496,9 @@ every block is numerically rank one, the recovered state for `validate_dispatch`
 """
 # Clarabel settings that solve the 24-period relaxation (the defaults stop on a numerical error there)
 const CLARABEL_DEFAULTS = [("max_iter", 400), ("static_regularization_constant", 1e-7), ("tol_gap_abs", 1e-6), ("tol_gap_rel", 1e-6), ("tol_feas", 1e-6)]
-function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS)
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0)
     t0 = time()
-    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes)
+    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW)
     tb = time() - t0
     optimize!(R.model)
     ts = time() - t0 - tb
@@ -435,13 +508,20 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
     dualobj = try -dual_objective_value(R.model) * S catch; NaN end
     db = has_duals(R.model) ? dual_bound(R.model; box = R.box) : (; bound = -Inf, psd_viol = NaN, sign_viol = NaN, box_term = NaN, rounding = NaN, unbounded_variable = nothing)
     U = -db.bound * S
+    # Infeasible relaxation: validate the Farkas ray independently. With c = 0, dual_bound returns a
+    # lower bound on 0 over every point satisfying the constraints and the box; > 0 proves there is none.
+    farkas = (; bound = NaN, box_term = NaN, psd_viol = NaN)
+    if st in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && dual_status(R.model) in (MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE)
+        fb = dual_bound(R.model; c = zero(AffExpr), box = R.box)
+        farkas = (; bound = fb.bound, box_term = fb.box_term, psd_viol = fb.psd_viol)
+    end
     pres = has_values(R.model) ? maximum(values(primal_feasibility_report(R.model; atol = 0.0)); init = 0.0) : NaN
     minev, rank_ratio = Inf, 0.0
     if has_values(R.model)
         for p in R.psd
-            X = value.(constraint_object(p.c).func); n = R.n
+            X = value.(constraint_object(p.c).func); n = constraint_object(p.c).set.side_dimension
             Mx = zeros(n, n); for j in 1:n, i in 1:j; Mx[i, j] = Mx[j, i] = X[tri(i, j)]; end
-            ev = eigvals(Symmetric(Mx)); minev = min(minev, ev[1]); rank_ratio = max(rank_ratio, ev[end-1] / max(ev[end], eps()))
+            ev = eigvals(Symmetric(Mx)); minev = min(minev, ev[1]); startswith(p.line, "bus:") || (rank_ratio = max(rank_ratio, ev[end-1] / max(ev[end], eps())))
         end
     end
     # where consistency is lost: line losses the relaxation books beyond what its own currents imply,
@@ -472,5 +552,5 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
     return (; status = st, U, primal, dualobj, gap = primal - dualobj, primal_residual = pres, psd_primal_min_eig = minev,
             psd_dual_violation = db.psd_viol, dual_sign_violation = db.sign_viol, box_term_kW = db.box_term * S,
             rounding_kW = db.rounding * S, rank_ratio, recovered = rec, build_s = tb, solve_s = ts,
-            nblocks = length(R.psd), nvars = num_variables(R.model), R, fictitious_loss_kW = fict, vsq_gap = vgap)
+            nblocks = length(R.psd), nvars = num_variables(R.model), R, farkas, dual_status = dual_status(R.model), fictitious_loss_kW = fict, vsq_gap = vgap)
 end
