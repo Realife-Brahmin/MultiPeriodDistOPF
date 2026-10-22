@@ -50,6 +50,7 @@ using Distributed
 using SharedArrays
 
 isdefined(@__MODULE__, :paired_backward_pass!) || include(joinpath(@__DIR__, "paired_pass.jl"))
+isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) || include(joinpath(@__DIR__,"value_group_diagnostic.jl"))
 
 # ------------------------------------------------------------------ worker --
 
@@ -131,6 +132,7 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
     _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), collect(Any, shared), copy(own))
+    isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) || vg_install(data)
     _PW_PASSGC_WANT[] = get(ENV, "FILTERDDP_PROCS_GC", "auto") == "pass"
     _PW_PASSGC[] = false
     if _PW_PASSGC_WANT[] && get(ENV, "FILTERDDP_WARMUP", "0") == "0"
@@ -192,6 +194,11 @@ end
 function pw_combine(t::Int, mid::Int, yval::Bool, last::Bool)
     t0 = time_ns(); g0 = _pw_gc()
     x = _PP_SLOTS[t]
+    if get(ENV,"FILTERDDP_VALUE_GROUPING","") in ("root","chunks16")
+        y=last ? _PP_END[] : yval ? PintVal(_PP_SLOTS[mid].Maa,_PP_SLOTS[mid].ma) : _PP_SLOTS[mid]
+        vg_combine!(x,y)
+        return (el=(time_ns()-t0)/1e9,gc=_pw_gc()-g0)
+    end
     if last
         _pp_combine!(x, _PP_END[], _PP_WORK[1])
     elseif yval
@@ -345,6 +352,8 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
     end
     t_1 = time_ns()
 
+    value_ref=isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) ? nothing : vg_reference_before(M.shared,nx,d.k,d.j,M.exits)
+
     # 2. the rounds
     isval = falses(N + 1); isval[N+1] = true
     rounds = 0; merges = 0; pair_sum = 0.0; pair_max = 0.0; pair_gc = 0.0; pair_gc_max = 0.0
@@ -369,6 +378,7 @@ function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, 
         h *= 2
     end
     t_2 = time_ns()
+    isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) || vg_reference_after(M.shared,nx,value_ref,d.k,d.j)
 
     # the multiplier recursion of the dual residual (vectors only; f_x is the identity)
     λs = Vector{Vector{Float64}}(undef, N)
