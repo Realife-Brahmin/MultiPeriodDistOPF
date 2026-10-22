@@ -17,6 +17,7 @@
 # high-precision recomputation of the same bound).
 
 wrapang(x) = x - 2 * oftype(x, pi) * round(x / (2 * oftype(x, pi)))
+asin_or_pi(r, v) = r < v ? asin(r / v) : oftype(r, pi)
 
 "Add the support function of the hull of the sector {r e^{j phi}: 0 <= r <= R, |phi - phic| <= w} over the grid."
 function sector_support!(acc, psis, phic, w, R)
@@ -25,6 +26,38 @@ function sector_support!(acc, psis, phic, w, R)
     @inbounds for k in eachindex(psis)
         d = abs(wrapang(psis[k] - phic))
         acc[k] += d <= w ? R : (d - w < pT / 2 ? R * cos(d - w) : zero(T))
+    end
+    return acc
+end
+
+"Value of the support function of one sector hull at angular distance d from its centre."
+sector_value(d, w, R) = (pT = oftype(d, pi); w >= pT ? R : d <= w ? R : (d - w < pT / 2 ? R * cos(d - w) : zero(d)))
+
+"Add the support function of the union of two opposite sectors (centres phic and phic + pi, half-width w): the max of the two."
+function double_support!(acc, psis, phic, w, R)
+    pT = eltype(acc)(pi)
+    @inbounds for k in eachindex(psis)
+        d1 = abs(wrapang(psis[k] - phic)); d2 = abs(wrapang(psis[k] - phic - pT))
+        acc[k] += max(sector_value(d1, w, R), sector_value(d2, w, R))
+    end
+    return acc
+end
+
+"""
+Corner enclosure. For a fixed V, J = conj(S) V / |V|^2 maps the power rectangle to a rotated, scaled rectangle whose
+support function in direction psi is max_i |c_i| cos(psi - arg V + arg c_i) / |V| over its corners c_i. Over
+arg V within w of phi0 and |V| >= Vmin, each corner term is at most sector_value(|psi - phi0 + arg c_i|, w, |c_i| / Vmin)
+(the floor at zero only over-estimates). Adds the max over corners, times `scale` (|coefficient| / Vmin).
+`cs` holds (|c_i|, arg c_i).
+"""
+function corner_support!(acc, psis, phi0, w, scale, cs)
+    T = eltype(acc)
+    @inbounds for k in eachindex(psis)
+        m = zero(T)
+        for (R, a) in cs
+            m = max(m, sector_value(abs(wrapang(psis[k] - phi0 + a)), w, scale * R))
+        end
+        acc[k] += m
     end
     return acc
 end
@@ -69,7 +102,10 @@ Bounds on |I_s| (pu, type T) for every source at angle vector `ang`, period t, d
 the network response `RM` (Z in BigFloat). Returns the sector bound, the termwise bound, the no-load term and
 the disc radii history; also the sectors (for diagnostics).
 """
-function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = ndir, lo = 0.95, safe = T == Float64 ? 1 + 1e-9 : one(T), iters = 8)
+# segments = true: a device set that is a segment through zero power along one axis (a battery bus without PV or
+# reactive load: S = P_B real, |P_B| <= rating) has arg S in {0, pi} (or {-pi/2, pi/2}), so J = conj(S) V / |V|^2
+# lies in two opposite thin sectors around arg V, not in a full disc. segments = false: the full disc (as before).
+function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = ndir, lo = 0.95, safe = T == Float64 ? 1 + 1e-9 : one(T), iters = 8, segments = false, corners = false)
     id = RM.id; Yb = big(net.Y_base); n = length(net.buses)
     b0 = zeros(Complex{BigFloat}, n); Ed = Dict{String,Complex{BigFloat}}(); ysd = Dict{String,Complex{BigFloat}}()
     for s in net.sources
@@ -82,6 +118,12 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
     D = [r[1] for r in rects]; k_ = [id[b] for b in D]; nd = length(D)
     Smax = [maximum(abs(complex(T(p), T(q))) for p in (r[2], r[3]), q in (r[4], r[5])) for r in rects]
     sarc = [rect_arc(T, r[2], r[3], r[4], r[5]) for r in rects]
+    # double sectors: real segment through zero (centre arg V) or imaginary segment through zero (centre arg V - pi/2)
+    dbl = [segments && sarc[q][2] >= T(pi) && ((r[4] == 0 && r[5] == 0) || (r[2] == 0 && r[3] == 0)) for (q, r) in enumerate(rects)]
+    dshift = [rects[q][4] == 0 && rects[q][5] == 0 ? zero(T) : T(pi) / 2 for q in eachindex(rects)]
+    # corners = true: every device uses the corner enclosure (corner_support!), which needs no arc of arg S
+    cor = [[(abs(complex(T(p), T(qq))), angle(complex(T(p), T(qq)))) for p in (r[2], r[3]) for qq in (r[4], r[5])] for r in rects]
+    vmn = fill(T(lo), length(rects))
     psis(N) = [2 * T(pi) * (k - 1) / N for k in 1:N]
     ps, pr = psis(ndir), psis(ndir_rho)
     cw, cwr = cos(T(pi) / ndir), cos(T(pi) / ndir_rho)
@@ -93,14 +135,23 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
     for it in 1:iters
         for q in 1:nd
             v0 = abs(V0[k_[q]]); al = rho[q] < v0 ? asin(rho[q] / v0) : T(pi)
-            RJ[q] = Smax[q] / max(T(lo), v0 - rho[q])
-            phiJ[q] = angle(V0[k_[q]]) - sarc[q][1]; wJ[q] = min(al + sarc[q][2], T(pi))
+            vmn[q] = max(T(lo), v0 - rho[q]); RJ[q] = Smax[q] / vmn[q]
+            if dbl[q]
+                phiJ[q] = angle(V0[k_[q]]) - dshift[q]; wJ[q] = min(al, T(pi))
+            else
+                phiJ[q] = angle(V0[k_[q]]) - sarc[q][1]; wJ[q] = min(al + sarc[q][2], T(pi))
+            end
         end
         new = similar(rho)
         for (p, b) in enumerate(D)
             fill!(acc, zero(T))
             for q in 1:nd
-                zz = Zt[id[b], k_[q]]; sector_support!(acc, pr, phiJ[q] + angle(zz), wJ[q], abs(zz) * RJ[q])
+                zz = Zt[id[b], k_[q]]
+                if corners
+                    corner_support!(acc, pr, angle(V0[k_[q]]) + angle(zz), min(asin_or_pi(rho[q], abs(V0[k_[q]])), T(pi)), abs(zz) / vmn[q], cor[q])
+                else
+                    (dbl[q] ? double_support! : sector_support!)(acc, pr, phiJ[q] + angle(zz), wJ[q], abs(zz) * RJ[q])
+                end
             end
             new[p] = maximum(acc) / cwr * safe
         end
@@ -113,10 +164,16 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
         a = CT(y * (Ed[s.name] - V0b[tt])); cs = CT.(-y .* RM.Z[tt, k_])
         term = (abs(a) + sum(abs.(cs) .* Jmax0)) * safe
         acc2 = abs(a) .* cos.(ps .- angle(a))
-        for q in 1:nd; sector_support!(acc2, ps, phiJ[q] + angle(cs[q]), wJ[q], abs(cs[q]) * RJ[q]); end
+        for q in 1:nd
+            if corners
+                corner_support!(acc2, ps, angle(V0[k_[q]]) + angle(cs[q]), min(asin_or_pi(rho[q], abs(V0[k_[q]])), T(pi)), abs(cs[q]) / vmn[q], cor[q])
+            else
+                (dbl[q] ? double_support! : sector_support!)(acc2, ps, phiJ[q] + angle(cs[q]), wJ[q], abs(cs[q]) * RJ[q])
+            end
+        end
         sect = max(maximum(acc2), zero(T)) / cw * safe
         out[s.name] = (; sect, term, a0 = abs(a))
     end
-    full = count(>=(T(pi)) , wJ)
-    return (; out, rho_hist = hist, nd, full_sectors = full, wJ, RJ, D)
+    full = count(q -> wJ[q] >= T(pi) && !dbl[q], 1:nd)
+    return (; out, rho_hist = hist, nd, full_sectors = full, double_sectors = count(dbl), wJ, RJ, D)
 end
