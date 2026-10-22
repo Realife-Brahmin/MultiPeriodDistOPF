@@ -7,6 +7,12 @@ IEEE123T3 snapshots before mediumT24 and original1020 four-period windows.
 Every process is capped at8minutes; batch capped at45minutes. No new capture,
 optimizer solve, production hook or benchmark rerun is involved.
 
+V3 overlay uses replay_series.jl/replay_overlay_job.sh: same15frozen points,
+one process per system (12minute process cap,45minute batch), late-first medium
+after the full five-point small gate. This amortizes diagnostic compilation,
+not an optimizer. Numerical source is read-only via VALUE_REPLAY_NUMERICAL_ROOT;
+overlay and numerical files are independently hashed. Current job: PLAN.md.
+
 The initial v1 reference used ordinary dense suffix recursion over all24
 leaves. V2 matches the actual production IN-PLACE scan arithmetic and round
 association, retaining ordinary recursion as a separate all-stage value check.
@@ -32,6 +38,13 @@ not a new exact compact composition algorithm. Full cross-block spectra in
 zero-truncation mode support that assessment; numerical rank alone is not proof
 of algebraic exactness. General battery-weighted graph separators descend below
 the root; no feeder-number-specific grouping is used.
+
+V3 retains the FULL RAW element if floating-point asymmetry alone exceeds a
+symmetric representation's unchanged error budget. Raw arrays remain bit-
+identical, not averaged. Cost rows log dense_raw_fallback, symmetry defect and
+reason and charge dense coefficients. Otherwise reserve symmetry's share of
+the global budget before truncation. This is not compression success; no
+tolerance is loosened. Mab is never symmetrized.
 
 Adaptive candidates truncate only hierarchy off-diagonal blocks of the joint
 two-boundary Hessian at global relative Frobenius budgets1e-8/1e-5 per element.

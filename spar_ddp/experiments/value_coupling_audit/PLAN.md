@@ -155,5 +155,23 @@ No approximate optimizer/full-solve test is active. Inspect both stderr and
 each per-point log; failure must preserve this snapshot, never weaken gates.
 Synthetic hierarchy unit and parsing passed locally; the full replay module
 requires cluster private DDP dependencies unavailable in the local environment.
+V2 also FAILED after9complete points: medium-late dense probes were EXACT0,
+but zero-truncation symmetric hierarchy exceeded its reconstruction bound on
+raw slightly asymmetric input. See the appended REFERENCE_FAILURE.md and
+medium_late_symmetry.csv. No approximate late mode or optimizer had failed.
+
+Current replacement31358012 is in
+/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22_v3, overlay7b75cd80 with
+read-only numerical root value_coupling_replay_oct22_v2/source. No full source
+copy/capture added. If symmetric hierarchy cannot meet the SAME budget, preserve
+the raw element bit-for-bit and charge/log FULL dense payload and the reason.
+Reserve symmetry's share of the budget before truncation. Synthetic and real
+failing-leaf tests passed; no tolerance increased. Raw fallback is not compression.
+
+Same15points, one Julia process per system to amortize JIT; medium late first
+after the full five-point small gate. Twelve minutes per system process,
+45minute batch. Every point reloads its own state; no optimizer progression.
+replay_series.jl/replay_overlay_job.sh and collector support case-series logs.
+Keep v1/v2/v3 evidence separate; defaults/results/paper unchanged.
 Never infer performance from materialize+combine alone. Real-data replay,
 exact-structure assessment and candidate decision remain to be completed.
