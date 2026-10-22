@@ -167,3 +167,50 @@ Outside point, 292.5 deg, envelope v1.
    - Otherwise, keep the 1.5x configuration with the nodal blocks, which has more cushion over the
      envelope.
    - Do not move to the cyclic-battery day until the envelope stops moving.
+
+## Certified window versus cushion (eight directions)
+
+Driver `root_level/certified_window.jl`; results `certified_window.csv`, `certified_window.log`.
+
+Setup:
+* Envelope v2; directions 22.5 + 45k deg.
+* For each limit configuration, two measurements:
+  - the exact window edge with the limits on;
+  - the smallest r at which the relaxation proves no-backflow impossible under the limits
+    (restoration lower bound on rho > 0, validated; grid 1.02-3 r*, then bisection to <= 0.1% of r*).
+
+The table gives that certified edge as a multiple of the exact edge r*.
+
+| theta (deg) | 22.5 | 67.5 | 112.5 | 157.5 | 202.5 | 247.5 | 292.5 | 337.5 |
+|---|---|---|---|---|---|---|---|---|
+| exact r* (deg) | 0.129 | 0.152 | 0.152 | 0.100 | 0.132 | 0.169 | 0.118 | 0.165 |
+| sources+lines 1.2x | 1.015 | 1.015 | 1.010 | 1.011 | 1.011 | 1.014 | 1.014 | 1.013 |
+| 1.2x, nodal additions | 1.012 | 1.012 | 1.007 | 1.007 | 1.007 | 1.011 | 1.011 | 1.011 |
+| sources+lines 1.5x | 1.023 | 1.024 | 1.018 | 1.018 | 1.018 | 1.024 | 1.024 | 1.024 |
+| 1.5x, nodal | 1.018 | 1.018 | 1.011 | 1.012 | 1.012 | 1.018 | 1.018 | 1.018 |
+| sources+lines 2x | 1.041 | 1.042 | 1.034 | 1.035 | 1.035 | 1.047 | 1.047 | 1.047 |
+| 2x, nodal | 1.029 | 1.030 | 1.020 | 1.021 | 1.021 | 1.031 | 1.032 | 1.031 |
+| sources+lines 3x | 1.093 | 1.094 | 1.080 | 1.081 | 1.081 | 1.112 | 1.112 | 1.107 |
+| 3x, nodal | 1.063 | 1.063 | 1.046 | 1.047 | 1.047 | 1.070 | 1.070 | 1.070 |
+| sources only 1.5x | none | none | none | none | none | 3.000 | none | 2.953 |
+| sources only 1.5x, nodal | 1.055 | 1.055 | 1.044 | 1.045 | 1.045 | 1.038 | 1.040 | 1.038 |
+| no limits (either) | none | none | none | none | none | none | none | none |
+
+("none": not certified up to 3 r*.)
+
+* **The limits never move the exact window.** The edge with limits equals r* in all 80 limited
+  cases (shift 0.000%). At the edge dispatch the largest current is at most 0.855 of its limit
+  (1.2x), 0.68 (1.5x), 0.51 (2x) and 0.34 (3x). No limit binds at any real edge found. The limits
+  only remove the relaxation's fictitious currents.
+* **Proven infeasibility starts close to the true edge:**
+  - 1-1.5% beyond it at 1.2x;
+  - 2% at 1.5x (1-2% with the nodal additions);
+  - 3-5% at 2x;
+  - 8-11% at 3x (5-7% with nodal).
+
+  The unproven band grows smoothly as the limits loosen. Without any current limit nothing is
+  certified within 3 r*.
+* Line limits do most of the work. Source limits alone certify only with the nodal additions
+  (4-6%), or at about 3 r* without them.
+* Caveat: the certified edge assumes certification is monotone along each ray. The grid points
+  checked above it were all certified, but the points between them were not all tested.
