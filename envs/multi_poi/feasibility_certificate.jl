@@ -74,6 +74,8 @@ function validate_dispatch(net, delta_deg, kw, x; k)
                 Ssrc = V(s.bus) * conj((E - V(s.bus)) / z)
             end
             inj[s.bus] += Ssrc
+            sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
+            sa === nothing || abs(z) < 1e-12 || up!("ampacity", max(0.0, abs((E - V(s.bus)) / z) - sa))
             up!("backflow", max(0.0, -real(Ssrc))); minP = min(minP, real(Ssrc) * S)
         end
         for bt in net.batteries
@@ -137,7 +139,8 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox)
     for bt in net.batteries; battery === :optimize && (Ib[bt.bus] += bt.kW_rated / S / vmin[bt.bus]); end
     for s in net.sources
         Emax = s.pu
-        Ib[s.bus] += (Emax + vmax[s.bus]) / abs(s.z_series * Yb)
+        sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
+        Ib[s.bus] += min((Emax + vmax[s.bus]) / abs(s.z_series * Yb), sa === nothing ? Inf : sa)
     end
     for l in net.lines
         Y = l.Y ./ Yb
@@ -278,6 +281,9 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                 Ps, Qs = cmul(1 / conj(z), Pc, Qc)
                 add_to_expression!(Pin, Ps); add_to_expression!(Qin, Qs)
                 @constraint(model, Ps >= m)                                         # no-backflow, with the margin
+                sa = (a = get(kw, :source_ampacity_pu, nothing); a isa AbstractDict ? get(a, s.name, nothing) : a)
+                # |I_s|^2 = |E - V_s|^2 / |z_s|^2 = (|E|^2 - 2 Re(conj(E) V_s) + |V_s|^2) / |z_s|^2, lifted: linear in the moments
+                sa === nothing || @constraint(model, (abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b)) / abs2(z) <= sa^2)
             else
                 @constraint(model, VV(b) >= lo^2 + (S / k) * m); @constraint(model, VV(b) <= hi^2 - (S / k) * m)
             end
@@ -474,7 +480,7 @@ function dual_bound(model; c = objective_function(model), box = Dict{VariableRef
             end
         end
     end
-    lb, box_term = c0, 0.0
+    lb, box_term = c0, 0.0; c0_before_box = c0
     for (v, a) in r
         a == 0 && continue
         l, u = is_fixed(v) ? (fix_value(v), fix_value(v)) : (has_lower_bound(v) ? lower_bound(v) : -Inf, has_upper_bound(v) ? upper_bound(v) : Inf)
@@ -484,7 +490,7 @@ function dual_bound(model; c = objective_function(model), box = Dict{VariableRef
         lb += val; box_term += abs(val); absacc += abs(val)
     end
     rounding = 4 * eps() * absacc * 10                         # a generous bound on the summation error
-    return (; bound = lb - rounding, psd_viol, sign_viol, box_term, rounding, unbounded_variable = nothing)
+    return (; bound = lb - rounding, psd_viol, sign_viol, box_term, rounding, unbounded_variable = nothing, constant = c0_before_box)
 end
 
 """
@@ -510,10 +516,10 @@ function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLA
     U = -db.bound * S
     # Infeasible relaxation: validate the Farkas ray independently. With c = 0, dual_bound returns a
     # lower bound on 0 over every point satisfying the constraints and the box; > 0 proves there is none.
-    farkas = (; bound = NaN, box_term = NaN, psd_viol = NaN)
+    farkas = (; bound = NaN, box_term = NaN, psd_viol = NaN, constant = NaN)
     if st in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && dual_status(R.model) in (MOI.INFEASIBILITY_CERTIFICATE, MOI.NEARLY_INFEASIBILITY_CERTIFICATE)
         fb = dual_bound(R.model; c = zero(AffExpr), box = R.box)
-        farkas = (; bound = fb.bound, box_term = fb.box_term, psd_viol = fb.psd_viol)
+        farkas = (; bound = fb.bound, box_term = fb.box_term, psd_viol = fb.psd_viol, constant = fb.constant)
     end
     pres = has_values(R.model) ? maximum(values(primal_feasibility_report(R.model; atol = 0.0)); init = 0.0) : NaN
     minev, rank_ratio = Inf, 0.0

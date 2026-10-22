@@ -101,7 +101,8 @@ end
 mode = isempty(POC_ARGS) ? "debug" : POC_ARGS[1]
 cuts = Symbol.(split(get(ENV, "FEAS_CUTS", ""), ','; keepempty = false))
 net, pvs = load_sources(["subs1", "subs3", "subs4"])
-if mode == "debug"                                    # T = 2: code check, kept apart from the experiment
+if mode == "none"                                     # loaded by another driver for its helpers
+elseif mode == "debug"                                    # T = 2: code check, kept apart from the experiment
     s = setup(net, pvs; T = 2, pv = "qfree")
     run_queries("debug_T2", s, (:nobatt, :cyclic), case -> [(name = "equal", r = 0.0, th = 0.0), (name = "far", r = 2.0, th = 292.5)]; cuts, replay = false)
 elseif mode == "probe"                                # one point, verbose: the validator's breakdown and Clarabel's log

@@ -143,6 +143,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
+                           source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing,
                            tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
@@ -199,6 +200,12 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         a = amp(n); a === nothing && continue
         set_lower_bound(lr[n, t], -a); set_upper_bound(lr[n, t], a); set_lower_bound(li[n, t], -a); set_upper_bound(li[n, t], a)
         @constraint(model, lr[n, t]^2 + li[n, t]^2 <= a^2)
+    end
+    # Source current limit (per unit; a number for every source or a Dict by name): |I_s|^2 <= I_max^2.
+    samp(n) = source_ampacity_pu isa AbstractDict ? get(source_ampacity_pu, n, nothing) : source_ampacity_pu
+    for n in names, t in Ts
+        a = samp(n); a === nothing && continue
+        @constraint(model, ir[n, t]^2 + ii[n, t]^2 <= a^2)
     end
     @variable(model, P_subs[names, Ts])
     @variable(model, Q_subs[names, Ts])
@@ -291,12 +298,23 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     moving(s) = objective === :ray && get(ray_dir, s.name, 0.0) != 0
     @variable(model, 0 <= r_ray <= ray_limit, start = 0.0)
     objective === :ray || fix(r_ray, 0.0; force = true)
+    # `free_angles = Dict(name => (lo, hi))` (degrees): those sources' angles become decision variables in
+    # [lo, hi], constant over the horizon, started from delta_deg (used by objective = :maxcurrent).
+    freeang = free_angles === nothing ? Dict{String,Tuple{Float64,Float64}}() : free_angles
+    @variable(model, theta[collect(keys(freeang))])
+    for (n, (lo, hi)) in freeang
+        set_lower_bound(theta[n], lo); set_upper_bound(theta[n], hi); set_start_value(theta[n], clamp(angle_at(delta_deg, n, 1), lo, hi))
+    end
 
     for t in Ts
         for s in net.sources
             R, X = ideal_sources ? (0.0, 0.0) : reim(s.z_series * net.Y_base)
             Et = E[(s.name, t)]
-            if moving(s)                              # EMF angle depends on r: E = pu * cis(theta)
+            if haskey(freeang, s.name)                # a free angle: E = pu * cis(theta), theta a variable
+                th = deg2rad(1.0) * theta[s.name]
+                @constraint(model, e[s.bus, t] == s.pu * cos(th) - (R * ir[s.name, t] - X * ii[s.name, t]))
+                @constraint(model, f[s.bus, t] == s.pu * sin(th) - (R * ii[s.name, t] + X * ir[s.name, t]))
+            elseif moving(s)                          # EMF angle depends on r: E = pu * cis(theta)
                 th = deg2rad(1.0) * (angle_at(delta_deg, s.name, t) + ray_dir[s.name] * r_ray)
                 @constraint(model, e[s.bus, t] == s.pu * cos(th) - (R * ir[s.name, t] - X * ii[s.name, t]))
                 @constraint(model, f[s.bus, t] == s.pu * sin(th) - (R * ii[s.name, t] + X * ir[s.name, t]))
@@ -354,6 +372,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     end
     if elastic
         @objective(model, Min, viol + 1e-6 * pb2)
+    elseif objective === :maxcurrent
+        # current_target = (:source, name) or (:line, name): maximize |I|^2 summed over the periods (T = 1:
+        # that hour's current). All the model's constraints stay hard.
+        kind, nm = current_target
+        @objective(model, Max, kind === :source ? sum(ir[nm, t]^2 + ii[nm, t]^2 for t in Ts) : sum(lr[nm, t]^2 + li[nm, t]^2 for t in Ts))
     elseif objective === :ray
         @objective(model, Max, r_ray - 1e-7 * pb2)
     elseif marg
@@ -388,6 +411,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
             violation = eband ? val(viol) : 0.0, r = objective === :ray ? val(r_ray) : 0.0,
+            angles_deg = Dict(s.name => (haskey(freeang, s.name) ? val(theta[s.name]) : angle_at(delta_deg, s.name, 1)) for s in net.sources),
             backflow_kW = elastic ? val(sum(s_back; init = zero(AffExpr))) * S : 0.0,
             margin_kW = marg ? val(m_imp) * S : NaN,
             # largest single limit violation: backflow in per unit, band in per unit squared
