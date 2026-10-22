@@ -12,8 +12,8 @@ const STAGES = [("four_ieee123a", "ieee123_5poi_1ph", "subs1:subs2:subs3:subs4",
                 ("four_ieee123b", "ieee123_5poi_1ph", "subs1:subs3:subs4:subs5", "IEEE 123-node, sources 1, 3, 4, 5"),
                 ("four_ieee2522", "ieee2522C_1ph", "source:subs2:subs3:subs4", "2522-bus feeder, sources at 947, 996, 1120"),
                 ("four_ieee9500", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder (from IEEE 9500), its 3 + 1 added"),
-                # the same with every source at 1.03 pu: only the directions rerun there (rows in multi_windows_fib78_v1.03.csv)
-                ("four_ieee9500_v1.03", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder, sources at 1.03 pu (rerun directions)")]
+                # the same with every source at 1.03 pu (rows in multi_windows_fib78_v1.03.csv)
+                ("four_ieee9500_v1.03", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "2705-bus feeder, sources at 1.03 pu")]
 
 function sens(stage)
     f = first(p for (r, _, fs) in walkdir(joinpath(RES, "kamiak")) for x in fs for p in (joinpath(r, x),) if endswith(p, "multi_sens_$(stage)_T24.csv"))
