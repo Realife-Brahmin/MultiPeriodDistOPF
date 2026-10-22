@@ -1275,6 +1275,9 @@ function multi_stage(name)
     cases = haskey(ENV, "MULTI_CASES") ? Symbol.(split(ENV["MULTI_CASES"], ',')) : [:nobatt, DAY]
     nsamp = parse(Int, get(ENV, "MULTI_SAMPLES", "30"))
     extra = String[]
+    # MULTI_VSRC=v: every source (the deck's own and the added ones) at v pu instead of 1.05; outputs
+    # carry the tag _v<v>, so they never mix with the 1.05 pu rows
+    vs = get(ENV, "MULTI_VSRC", "1.05"); vtag = haskey(ENV, "MULTI_VSRC") ? "_v$vs" : ""
     if mc.add !== nothing
         # added substations take the names after the deck's own (subs2.. on ieee2522, subs4 on ieee9500)
         zs = get(mc, :zs, complex(0.311 / sqrt(1 + X_OVER_R^2), X_OVER_R * 0.311 / sqrt(1 + X_OVER_R^2)))
@@ -1282,12 +1285,15 @@ function multi_stage(name)
         off = length(mc.sources) - length(mc.add)
         for (i, b) in enumerate(mc.add)
             push!(extra, "New Line.poi$(i+off) Phases=1 Bus1=$(i+off)s Bus2=$b r1=1e-06 x1=1e-06 c1=0 c0=0",
-                         "New Vsource.subs$(i+off) Phases=1 Bus1=$(i+off)s basekv=$(get(mc, :kv, 7.2)) pu=1.05 angle=0 $imp")
+                         "New Vsource.subs$(i+off) Phases=1 Bus1=$(i+off)s basekv=$(get(mc, :kv, 7.2)) pu=$vs angle=0 $imp")
         end
         get(mc, :edit_source, true) && push!(extra, "Edit Vsource.source $imp")
     end
     haskey(mc, :ties) && append!(extra, ["Line.$t.enabled=true" for t in mc.ties])
+    own = mc.add === nothing ? mc.sources : mc.sources[1:end-length(mc.add)]
+    isempty(vtag) || append!(extra, ["Edit Vsource.$k pu=$vs" for k in own])
     net, pvs = load_sources(mc.sources; system = mc.system, extra)
+    isempty(vtag) || say("    sources at ", join(sort(unique([@sprintf("%.3f", x.pu) for x in net.sources])), ", "), " pu (MULTI_VSRC)")
     s = setup(net, pvs; T, feas = mc.feas)
     S0, movers = mc.sources[1], mc.sources[2:end]
     say("\n", "="^110, "\n", uppercase(name), "  $(mc.label), sources ", join(mc.sources, ","), mc.add === nothing ? "" : " (added at buses $(join(mc.add, ",")))",
@@ -1301,7 +1307,7 @@ function multi_stage(name)
     end
     colsum = [sum(sum(sens.K[(k, m)]) / T for k in sens.names) for m in movers]
     say("    sensitivities summed over substations (0 if raising an angle only shifts power): ", join([@sprintf("%+.1f", x) for x in colsum], ", "), " kW/deg")
-    open(joinpath(OUT_DIR, "multi_sens_$(name)_T$(T).csv"), "w") do io
+    open(joinpath(OUT_DIR, "multi_sens_$(name)$(vtag)_T$(T).csv"), "w") do io
         println(io, "substation,hour,import_kW," * join(["K_$(m)_kW_per_deg" for m in movers], ","))
         for k in sens.names, t in 1:T
             println(io, k, ",", t, ",", @sprintf("%.6f", sens.P[k][t]), ",", join([@sprintf("%.6f", sens.K[(k, m)][t]) for m in movers], ","))
@@ -1324,11 +1330,11 @@ function multi_stage(name)
         if !isempty(errs)
             say(@sprintf("    affine import model at %d random idle points: largest hourly error %.2f%% of the largest import (median %.2f%%)",
                          length(errs), 100maximum(errs), 100sort(errs)[(end + 1) ÷ 2]))
-            merge_csv(joinpath(OUT_DIR, "multi_linearity.csv"), "system,sources,T,sample,angles_deg,radius_deg,max_abs_error_kW,max_rel_error", 4, lin)
+            merge_csv(joinpath(OUT_DIR, "multi_linearity$(vtag).csv"), "system,sources,T,sample,angles_deg,radius_deg,max_abs_error_kW,max_rel_error", 4, lin)
         end
     end
     rows = String[]; x0s = Dict{Any,Any}(); prev = Dict{Any,Any}()
-    fname = dset == "cube26" ? "multi_windows.csv" : "multi_windows_$dset.csv"
+    fname = (dset == "cube26" ? "multi_windows" : "multi_windows_$dset") * vtag * ".csv"
     for case in cases, i in di
         u = DIRS[i]
         pred, lim = predicted_reach(sens, Dict(zip(movers, u)); day = case === DAY)
