@@ -1,0 +1,87 @@
+{
+  "complete": true,
+  "points": 1,
+  "repetitions": 3,
+  "metadata": {
+    "interior_dimensions": [
+      1020,
+      2040,
+      3060
+    ],
+    "dense_stage_base_bytes": 8323200,
+    "closed_future_dense_base_bytes": 8323200,
+    "factor_discovery_cold_s_not_benchmark": 2.123099439,
+    "nB": 1020,
+    "negative_control_rejected": true,
+    "maxrss_all_paths_bytes": 3045867520,
+    "reuse": "only identical frozen inputs within this iterate; exclude fresh_input_discovery only for this explicitly conditional reuse case",
+    "accurate": true,
+    "direction_scaled": 8.685298880397089e-13,
+    "inertia_ok": true,
+    "N": 24,
+    "max_value_scaled": 1.5507196204141198e-12,
+    "negative_scaled": 17576075.581833214,
+    "saved_probe_error": 0.0,
+    "object_graph_bytes_not_rss": 15920263,
+    "medium_extended": false,
+    "consumer_reference_scaled": 2.750027545246049e-14,
+    "direction_relative": 5.332072257520043e-12,
+    "ordinary_error": 5.345279010512718e-11,
+    "algorithm_dense_exports": 0,
+    "leaves_sha256": "cd7922cf75df0743cf5e3fd38e2e87e4e65a861346e89bc66512cf1ffb90f416",
+    "input_coefficient_bytes": 3033280,
+    "symmetry_defect": 2.1849652504078495e-41,
+    "input_sha256": "b750a212459d7972a4a72b18ef29d7ee8337c22db970a2e2c0eab5ce40dfce9c",
+    "topology_cold_s_not_benchmark": 0.882567827,
+    "augmented_coefficient_bytes": [
+      284944,
+      1358720,
+      6072000
+    ],
+    "window": 4,
+    "local_dense_cap": 192,
+    "optimizer_run": false,
+    "closure": "retained interior dimension grows n to 2n to 3n; no fixed-rank or bounded-size boundary closure claim",
+    "initial_factors_from_network_elimination": false,
+    "stats": {
+      "max_retained_rank": 18,
+      "local_dense_factors": 22,
+      "core_svd_calls": 4190,
+      "max_local_dense_dim": 60,
+      "interleaved_upper_nodes": 1050,
+      "max_woodbury_core_dim": 36,
+      "max_core_svd_dim": 44,
+      "max_relative_recompression_tail_times_1e15": 989,
+      "dense_cross_fallbacks": 2942
+    },
+    "consumer_stats": {
+      "battery_cg_iterations": 12,
+      "stage_cg_maxiter": 13
+    }
+  },
+  "medians": {
+    "dense": {
+      "fresh_charged_s": 1.298738341,
+      "same_iterate_factors_available_s": 1.298738341,
+      "fresh_without_cleanup_s": 0.900580737,
+      "cached_without_cleanup_s": 0.900580737,
+      "alloc_bytes": 471934800,
+      "gc_s": 0.397987651
+    },
+    "compact": {
+      "fresh_charged_s": 2.46197677,
+      "same_iterate_factors_available_s": 1.023963033,
+      "fresh_without_cleanup_s": 2.058972455,
+      "cached_without_cleanup_s": 0.628314464,
+      "alloc_bytes": 1300983528,
+      "gc_s": 0.43206650900000004
+    }
+  },
+  "input_coefficient_bytes_including_terminal_v": 3041440,
+  "coefficient_accounting_note": "raw metadata omitted terminal.v only; collector adds its 8*nB bytes, without changing raw evidence",
+  "fresh_compact_over_dense": 1.8956680435755304,
+  "conditional_cached_compact_over_dense": 0.7884290473873059,
+  "production_defaults_changed": false,
+  "full_optimizer_tested": false,
+  "actual_resident_memory_savings_demonstrated": false
+}
