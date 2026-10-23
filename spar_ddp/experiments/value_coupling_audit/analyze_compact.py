@@ -79,6 +79,17 @@ def analyze(root, out):
             assert not timings and not checks
         else:
             assert len(checks) == 3 and all(r["pass"] == "true" for r in checks)
+            assert len(timings) == 36
+            for check in checks:
+                rep = int(check["repetition"])
+                assert rep in (1, 2, 3)
+                assert float(check["values_scaled"]) < 1e-7
+                assert float(check["directions_scaled"]) < 1e-7
+                assert float(check["directions_relative"]) < 1e-5
+                rr = [r for r in directions if r["mode"] == f"repeat{rep}"]
+                assert rr and {"dx", "dp", "du", "dphi", "dzl", "dzu"} <= {r["field"] for r in rr}
+                assert max(float(r["scaled"]) for r in rr) < 1e-7
+                assert max(float(r["relative_floor_1e_10"]) for r in rr) < 1e-5
             for rep in (1, 2, 3):
                 order = ("dense", "compact") if rep % 2 else ("compact", "dense")
                 for pos, mode in enumerate(order, 1):

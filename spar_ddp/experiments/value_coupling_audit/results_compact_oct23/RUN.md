@@ -26,3 +26,9 @@ sourcecede3fc6, job31368876, was submitted only after31368859 completed. Same
 Gold6438Y+64CPU300GiB,occupancy guard,Julia/OMP/BLAS1,35minute batch/25minute
 process caps,no requeue,private first depot/read-only numerical source/caches.
 All frozen source/input hashes checked. No medium/optimizer jobs submitted.
+
+Final31368876 COMPLETED0:0 in1m18. Corrected value/action/direction and negative
+control gates passed; three paired warmed repeats strictly validated. Total
+fresh-input/legacy-consumer cost exceeds dense, so no medium/optimizer gate
+opens. See FINDINGS.md and analysis/. Initial pilot remains preserved/excluded
+from primary warmed evidence. No ongoing job or benchmark/paper change.

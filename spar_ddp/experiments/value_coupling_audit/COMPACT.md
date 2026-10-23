@@ -1,5 +1,10 @@
 # Bounded genuinely compact component test (October23)
 
+Final: corrected large-late component and sensitive direction audit validated.
+Cached-input compact operator work is faster, but fresh discovery/export costs
+prevent a total pipeline benefit. No medium/optimizer extension; see
+results_compact_oct23/FINDINGS.md for evidence and the compact-closure obstacle.
+
 Continues68b2b613. No production defaults, benchmark rows, paper, batteries,
 constraints or dispatch model changes. Start ONLY original1020 large late,
 immutable capture leaves/state/factors. No automatic medium/optimizer campaign.

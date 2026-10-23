@@ -1,5 +1,11 @@
 # Coupling-retaining value representation: staged investigation
 
+October23 compact component follow-on completed: COMPACT.md and
+results_compact_oct23/FINDINGS.md. A recursive factor/operator merge passes
+large-late value and direction checks with fast recurring component cost, but
+fresh factor discovery and dense legacy export prevent a total-cost benefit.
+No medium/optimizer extension or production/paper/benchmark changes.
+
 October23 bounded follow-up also completed: see FOLLOWUP.md and
 results_oct23/FINDINGS.md. Block-scaled/conditioned compression passes large-late
 and medium-early frozen direction gates; medium late remains unresolved.
