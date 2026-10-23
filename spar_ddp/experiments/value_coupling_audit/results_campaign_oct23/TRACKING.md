@@ -71,3 +71,26 @@ Exact wrapper warmup plus compile/recompile columns must both be ZERO in3
 alternating pairs. No numerical factor reuse across Newton iterates. Core
 synthetic units passed. Read advancement/complete accounting rule in CAMPAIGN.md.
 Do not stop merely because input coverage is complete.
+
+## Decision-ready completion
+
+Complete four-stage replay31369517/3f1e2e06 COMPLETED0:0 in3m10. Strict
+analyze_campaign.py validates all source/input/runtime/capture checks, units,
+raw four-stage values/directions/inertia, negative controls, three alternating
+fresh-input pairs and ZERO compilation/recompilation in EVERY measured phase.
+All scientific gates pass, but fresh-cost advancement gate FAILS: window
+2.66357s dense/2.70074s compact; whole with incoming dense-tail construction
+8.91349/8.91469s, not consistently faster in all three pairs. Allocation rises
+1.756->2.565GB. Complete findings/limitations/stopping rationale in FINDINGS.md;
+strict summaries in analysis/, full replay_evidence.tgz preserved.
+
+Decision REVISE full-stage consumption before optimizer integration; end this
+bounded implementation campaign without medium/longer/optimizer escalation.
+Direct generation and compact construction work, but all-stage consumption,
+actions, generation/discovery and allocation absorb the component saving.
+Independent dense-future consumer direction error already8.29e-8 is close to
+unchanged1e-7 threshold: no robustness guarantee. No production/paper/result
+changes, no compressed optimizer tested. No expensive jobs active at collection.
+After evidence/assessment commit is pushed and remote verified, delete dedicated
+heartbeat and deliver one concise final report. Preserve all capture/replay
+snapshots and earlier failed attempts; no cleanup of unrelated work.
