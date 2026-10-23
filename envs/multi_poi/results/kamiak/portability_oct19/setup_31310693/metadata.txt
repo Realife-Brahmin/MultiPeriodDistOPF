@@ -1,0 +1,15 @@
+label=setup job=31310693 host=cn175 start=2026-10-19T18:32:04-07:00
+solver=mumps IPOPT_EXTRA_OPTIONS=
+args=-e using Pkg; Pkg.instantiate(); using OpenDSSDirect, JuMP, Ipopt; println("setup ok")
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/portability_oct19/out_setup_31310693
+commit=5f91b4cc77e3d942328208b5a6744ff6bed8cb48
+CPU(s):                                  128
+Model name:                              Intel(R) Xeon(R) 6760P
+   RunTime=00:00:00 TimeLimit=00:40:00 TimeMin=N/A
+   Partition=kamiak AllocNode:Sid=login-p3n01:1405890
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn175
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-19T18:36:50-07:00
+wall_s=286
+  5843548K  13208884K 

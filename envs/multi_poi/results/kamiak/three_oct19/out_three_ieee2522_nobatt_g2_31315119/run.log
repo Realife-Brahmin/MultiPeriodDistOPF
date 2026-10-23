@@ -1,0 +1,16 @@
+
+==============================================================================================================
+THREE_IEEE2522  ieee2522C_1ph, substations at buses 947 (subs2) and 1120 (subs3) besides the deck's own, T = 24; directions 8, cases nobatt
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    source mean import    754.6 kW (worst hour    577.9); sensitivity to subs2   -221.4, to subs3    -10.8 kW/deg (daily mean)
+    subs2  mean import   1144.1 kW (worst hour    855.7); sensitivity to subs2   +440.5, to subs3   -221.3 kW/deg (daily mean)
+    subs3  mean import    717.7 kW (worst hour    541.6); sensitivity to subs2   -220.7, to subs3   +233.6 kW/deg (daily mean)
+    sensitivities: 185 s
+    nobatt ray  180.0 deg: measured 1.9522, predicted 1.9319 (subs2); min import -0.00 kW, V 0.9615-1.0500  (132 s, peak RSS 2.5 GB)
+  wrote three_large_windows.csv; three_ieee2522 done in 319 s

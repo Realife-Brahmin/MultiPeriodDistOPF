@@ -1,0 +1,105 @@
+<title>Four-Substation Regions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an instrument panel; the 3-D view takes the stage, the face readout sits beside it (stacks on phones). */
+:root {
+  --bg: #f4f6f3; --panel: #ffffff; --fg: #18211d; --muted: #5a6761; --line: #d6dcd7; --accent: #2c6b5f;
+  --f0: #2a7d92; --f1: #c37526; --f2: #7a5ab8; --f3: #b9415c;
+  --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
+  --f0: #4fb0c7; --f1: #e09a4f; --f2: #a488dc; --f3: #e0708a; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
+  --f0: #4fb0c7; --f1: #e09a4f; --f2: #a488dc; --f3: #e0708a; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+header { display: grid; gap: 4px; }
+h1 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 72ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; cursor: pointer; }
+.tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.tab:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; color: var(--muted); }
+.toggles label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.btn { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+#plot { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; height: min(74vh, 700px); min-height: 380px; min-width: 0; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 12px; min-width: 0; }
+aside h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
+.faces { display: grid; gap: 8px; }
+.face { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 8px; align-items: start; }
+.sw { width: 12px; height: 12px; border-radius: 3px; margin-top: 4px; }
+.fname { font: inherit; font-weight: 600; color: var(--fg); background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.fname:hover { color: var(--accent); text-decoration: underline; }
+.fname:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fmbar { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.nums { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; display: grid; grid-template-columns: auto auto; gap: 0 10px; justify-content: start; }
+.note { font-size: 0.84rem; color: var(--muted); margin: 0; }
+.kv { font-family: var(--mono); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; }
+.edge { font: inherit; font-size: 0.78rem; padding: 2px 8px; margin-top: 4px; border: 1px solid var(--line); background: transparent; color: var(--accent); border-radius: 5px; cursor: pointer; }
+.edge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.resid-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+.rh { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
+#resid { height: 260px; min-width: 0; }
+#facemap { height: 260px; min-width: 0; }
+.lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 860px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Four-Substation Regions</h1>
+    <p class="sub">Feasible angle regions with four substations (T = 24, PV reactive power dispatched), in the three angle differences to the reference substation. Surfaces: the region predicted from the angle-to-import sensitivities at equal angles, colored by the substation whose import reaches zero there. Dots: boundary points measured along 78 directions. Drag to rotate, scroll to zoom.</p>
+  </header>
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="toggles">
+      <label><input type="checkbox" id="t-pi"> Predicted, idle</label>
+      <label><input type="checkbox" id="t-pc" checked> Predicted, cyclic</label>
+      <label><input type="checkbox" id="t-mi" checked> Measured, idle</label>
+      <label><input type="checkbox" id="t-mc" checked> Measured, cyclic</label>
+      <label>Dot color <select id="dotcol"><option value="bound">what bound the edge</option><option value="pred">predicted face</option></select></label>
+    </div>
+    <button class="btn" id="rot" aria-pressed="false">Rotate</button>
+    <button class="btn" id="reset">Reset view</button>
+    <button class="btn" id="all" hidden>Show all faces</button>
+  </div>
+  <div class="stage">
+    <div id="plot" aria-label="Rotatable 3-D view of the feasible angle region"></div>
+    <aside>
+      <div><h2>Faces</h2></div>
+      <div class="faces" id="faces"></div>
+      <p class="note" id="lin"></p>
+      <p class="note">A substation's name, Edge-on and Face-on show that face alone (the name gives Face-on): its dots and the predicted plane (dispatched) around them. Edge-on looks along the face's plane (orthographic), so its dots should fall on one straight line. Ratio: distance of the plane fitted to a face's measured points from equal angles, over the predicted face's (above 1: the region reaches beyond the prediction). Planar: RMS distance of the points from that plane, relative to its distance. Tilt: angle between the fitted and predicted normals. Diamonds: batteries idle; circles: cyclic. Grey dots: a voltage limit bound before any import reached zero.</p>
+    </aside>
+  </div>
+  <div class="lower">
+    <section class="resid-wrap">
+      <h2 class="rh">Measured reach against predicted, by face</h2>
+      <div id="resid" aria-label="Measured minus predicted reach, in percent, for each direction, grouped by predicted face"></div>
+    </section>
+    <section class="resid-wrap">
+      <div class="fmbar"><h2 class="rh" id="fmtitle">Face map</h2>
+        <select id="fmface" aria-label="Face shown in the face map"></select>
+        <select id="fmview" aria-label="Face map view"><option value="face">face-on</option><option value="edge">edge-on</option></select></div>
+      <div id="facemap" aria-label="The dots of one face seen straight on, colored by measured minus predicted reach"></div>
+      <p class="note" id="fmnote">One face at a time: pick it here, or click a substation's name, Edge-on or Face-on on the right. The map stays in the face's own plane, so rotating the 3-D view does not change it. Face-on: the dots seen straight on, colored by how far beyond (red) or inside (blue) the predicted reach each lies; the outline is the predicted face with dispatched batteries, a triangle with corners where it meets two of the other faces. Edge-on: position along the face against how far beyond the prediction each dot lies, in degrees; the line at 0 is the predicted face, and dots take the colors of the 3-D view.</p>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const DATA =

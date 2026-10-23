@@ -1,0 +1,18 @@
+label=four_ieee2522_cyc_7 job=31328987 host=cn172 start=2026-10-20T15:30:13-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/multiperiod_study.jl four_ieee2522
+LARGE_T=24
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/four_fib_oct20/out_four_ieee2522_cyc_7_31328987
+commit=2674fa7d726be962e346212dfa0539c413e37d2c
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU(s) scaling MHz:                      69%
+   RunTime=00:00:03 TimeLimit=12:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n01:1998227
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn172
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-20T16:39:20-07:00
+wall_s=4146
+  3318984K   4758860K 

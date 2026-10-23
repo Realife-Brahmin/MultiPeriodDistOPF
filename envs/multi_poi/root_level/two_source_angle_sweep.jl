@@ -6,10 +6,10 @@
 # memory -- never on disk.
 #
 # Run from the repo root:
-#     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl small2poi
-#     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123
-#     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123 subs1 subs4
-#     julia --project=envs/tadmm envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123_wide
+#     julia --project=envs/msopf envs/multi_poi/root_level/two_source_angle_sweep.jl small2poi
+#     julia --project=envs/msopf envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123
+#     julia --project=envs/msopf envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123 subs1 subs4
+#     julia --project=envs/msopf envs/multi_poi/root_level/two_source_angle_sweep.jl ieee123_wide
 # (small2poi_wide / ieee123_wide sweep the power-angle curve out to -150..150 deg.)
 #
 # Writes (gitignored) envs/multi_poi/processedData/<system>/angle_sweep_<a>_<b>/:

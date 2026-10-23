@@ -1,0 +1,15 @@
+label=port_ma57 job=31310695 host=cn185 start=2026-10-19T18:36:53-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/portability_check.jl
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/portability_oct19/out_port_ma57_31310695
+commit=5f91b4cc77e3d942328208b5a6744ff6bed8cb48
+CPU(s):                                  128
+Model name:                              Intel(R) Xeon(R) 6760P
+   RunTime=00:00:02 TimeLimit=01:00:00 TimeMin=N/A
+   Partition=kamiak AllocNode:Sid=login-p3n01:1405890
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn185
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-19T18:38:39-07:00
+wall_s=106
+  1354800K   2612172K 

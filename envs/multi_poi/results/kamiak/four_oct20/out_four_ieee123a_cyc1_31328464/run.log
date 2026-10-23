@@ -1,0 +1,29 @@
+
+==============================================================================================================
+FOUR_IEEE123A  ieee123_5poi_1ph, sources subs1,subs2,subs3,subs4, reference subs1, T = 24; directions 1,2,3,4,5,6,7,8,9,10,11,12,13, cases cyclic
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    subs1  mean import    220.1 kW (worst hour    100.0); sensitivity subs2 -698.4, subs3 -630.9, subs4 -472.1 kW/deg (daily mean)
+    subs2  mean import    196.4 kW (worst hour     93.8); sensitivity subs2 +1741.4, subs3 -688.5, subs4 -351.3 kW/deg (daily mean)
+    subs3  mean import    197.6 kW (worst hour    105.3); sensitivity subs2 -688.5, subs3 +1638.4, subs4 -315.2 kW/deg (daily mean)
+    subs4  mean import    189.3 kW (worst hour     79.5); sensitivity subs2 -354.5, subs3 -319.2, subs4 +1139.3 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): +0.0, -0.2, +0.6 kW/deg
+    cyclic dir  1 (-0.58,-0.58,-0.58): measured 0.5056, predicted 0.4849 (subs2); min import 0.00 kW, V 1.0455-1.0488; 4 solves (secant, 57 s)
+    cyclic dir  2 (+0.00,-0.71,-0.71): measured 0.2178, predicted 0.2112 (subs3); min import 0.00 kW, V 1.0451-1.0488; 4 solves (secant, 51 s)
+    cyclic dir  3 (+0.58,-0.58,-0.58): measured 0.1752, predicted 0.1701 (subs3); min import 0.00 kW, V 1.0450-1.0489; 4 solves (secant, 47 s)
+    cyclic dir  4 (-0.71,+0.00,-0.71): measured 0.2075, predicted 0.1998 (subs2); min import 0.00 kW, V 1.0453-1.0488; 4 solves (secant, 59 s)
+    cyclic dir  5 (+0.00,+0.00,-1.00): measured 0.1976, predicted 0.1662 (subs4); min import -0.00 kW, V 1.0455-1.0485; 4 solves (secant, 63 s)
+    cyclic dir  6 (+0.71,+0.00,-0.71): measured 0.2133, predicted 0.1792 (subs4); min import -0.00 kW, V 1.0455-1.0487; 4 solves (secant, 63 s)
+    cyclic dir  7 (-0.58,+0.58,-0.58): measured 0.1698, predicted 0.1637 (subs2); min import -0.00 kW, V 1.0453-1.0489; 4 solves (secant, 55 s)
+    cyclic dir  8 (+0.00,+0.71,-0.71): measured 0.2184, predicted 0.1836 (subs4); min import -0.00 kW, V 1.0454-1.0486; 4 solves (secant, 58 s)
+    cyclic dir  9 (+0.58,+0.58,-0.58): measured 0.2153, predicted 0.1809 (subs4); min import 0.01 kW, V 1.0454-1.0486; 4 solves (secant, 67 s)
+    cyclic dir 10 (-0.71,-0.71,+0.00): measured 0.2747, predicted 0.2638 (subs2); min import -0.00 kW, V 1.0453-1.0489; 4 solves (secant, 65 s)
+    cyclic dir 11 (+0.00,-1.00,+0.00): measured 0.1242, predicted 0.1206 (subs3); min import -0.00 kW, V 1.0450-1.0487; 4 solves (secant, 45 s)
+    cyclic dir 12 (+0.71,-0.71,+0.00): measured 0.1236, predicted 0.1201 (subs3); min import -0.00 kW, V 1.0450-1.0488; 4 solves (secant, 46 s)
+    cyclic dir 13 (-1.00,+0.00,+0.00): measured 0.1172, predicted 0.1128 (subs2); min import -0.00 kW, V 1.0453-1.0488; 4 solves (secant, 43 s)
+  wrote multi_windows.csv; four_ieee123a done in 736 s

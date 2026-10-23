@@ -10,8 +10,8 @@
 # The edges of the window in which both substations import are refined by bisection.
 #
 # Run from the repo root:
-#     julia --project=envs/tadmm envs/multi_poi/root_level/battery_angle_sweep.jl small2poi
-#     julia --project=envs/tadmm envs/multi_poi/root_level/battery_angle_sweep.jl ieee123
+#     julia --project=envs/msopf envs/multi_poi/root_level/battery_angle_sweep.jl small2poi
+#     julia --project=envs/msopf envs/multi_poi/root_level/battery_angle_sweep.jl ieee123
 #
 # Writes (gitignored) envs/multi_poi/processedData/<system>/battery_sweep_<a>_<b>/:
 #     sweep.csv, sweep.png

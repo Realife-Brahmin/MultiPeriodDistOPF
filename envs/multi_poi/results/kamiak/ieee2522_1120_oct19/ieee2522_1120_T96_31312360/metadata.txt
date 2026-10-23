@@ -1,0 +1,19 @@
+label=ieee2522_1120_T96 job=31312360 host=cn172 start=2026-10-19T19:43:21-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/multiperiod_study.jl ieee2522
+LARGE_AT=1120
+LARGE_T=96
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/ieee2522_1120_oct19/out_ieee2522_1120_T96_31312360
+commit=70ee61607132d8f1bf29c393ebf1a469cd32825d
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU(s) scaling MHz:                      69%
+   RunTime=00:00:02 TimeLimit=2-00:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n01:1425609
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn172
+   TRES=cpu=2,mem=48G,node=1,billing=2
+exit=0 end=2026-10-20T04:25:29-07:00
+wall_s=31328
+  6905056K   8296544K 

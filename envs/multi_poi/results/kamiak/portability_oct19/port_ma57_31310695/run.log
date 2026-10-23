@@ -1,0 +1,12 @@
+PORTABILITY  ieee123 subs3 + subs4, T = 24, PV q free; IPOPT_EXTRA_OPTIONS = "linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2"
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  nobatt window [-0.267224, +0.244486] deg, committed [-0.267224, +0.244486], max difference 3.95e-07 deg, failed checks 0, 28 s
+  cyclic window [-0.544724, +0.501965] deg, committed [-0.544724, +0.501962], max difference 2.52e-06 deg, failed checks 0, 47 s
+  cost-optimal day at equal angles: LOCALLY_SOLVED, $2433.8267; substation imports against main_days.csv: max |dP| 4.98e-05 kW, 2 s
+PORTABILITY RESULT: windows within 2.52e-06 deg, imports within 4.98e-05 kW

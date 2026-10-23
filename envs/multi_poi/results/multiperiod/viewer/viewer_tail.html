@@ -1,0 +1,237 @@
+;
+// Point: [x, y, z, predicted face, measured reach, predicted reach, open, what bound (face index, -1 voltage, -2 unknown)].
+const LABEL = {
+  four_ieee123a: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4"},
+  four_ieee123b: {subs1: "Substation 1 (reference)", subs3: "Substation 3", subs4: "Substation 4", subs5: "Substation 5"},
+  four_ieee2522: {source: "Deck substation (reference)", subs2: "Substation at bus 947", subs3: "Substation at bus 996", subs4: "Substation at bus 1120"},
+  four_ieee9500: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"},
+  "four_ieee9500_v1.03": {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"}
+};
+const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"], four_ieee9500: ["δ1", "δ2", "δ3", "δ4"], "four_ieee9500_v1.03": ["δ1", "δ2", "δ3", "δ4"] };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
+const DEFAULT_CAM = { eye: { x: 1.5, y: 1.4, z: 0.9 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 }, projection: { type: "perspective" } };
+// focus: the one face shown in 3-D (Edge-on / Face-on), -1 for all; fmFace, fmView: the face map's face and view
+let cur = 0, rotating = false, rafId = null, focus = -1, fmFace = 0, fmView = "face";
+const plotEl = document.getElementById("plot"), residEl = document.getElementById("resid");
+const sub = (a, b) => a.map((v, i) => v - b[i]), dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
+const norm = a => Math.sqrt(dot(a, a)), unit = a => a.map(v => v / norm(a));
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+function dotColor(q) {
+  const fc = fcol(), mode = document.getElementById("dotcol").value;
+  if (mode === "bound" && q[7] !== undefined && q[7] !== -2) return q[7] === -1 ? css("--muted") : fc[q[7]];
+  return fc[q[3]];
+}
+function faceScale() {
+  const c = fcol();
+  return [[0, c[0]], [0.25, c[0]], [0.25, c[1]], [0.5, c[1]], [0.5, c[2]], [0.75, c[2]], [0.75, c[3]], [1, c[3]]];
+}
+const BOUND = (sys, q) => q[7] === undefined || q[7] === -2 ? "not recorded" : q[7] === -1 ? "voltage limit" : LABEL[sys.id][sys.sources[q[7]]];
+
+function traces(sys) {
+  const show = id => document.getElementById(id).checked, out = [];
+  if (focus >= 0) {
+    // one face: a patch of its predicted plane (dispatched) just covering its dots; the whole predicted
+    // triangle can reach far beyond them (one corner of the 2522-bus tetrahedron lies far out)
+    const N = sys.normals[focus], c = sys.offsets[focus], { e1, e2 } = faceBasis(focus), col = fcol()[focus];
+    const x0 = N.map(v => v * c / dot(N, N));
+    const p = ["nobatt", "cyclic"].flatMap(cs => sys.cases[cs].points.filter(q => !q[6] && q[3] === focus));
+    if (p.length) {
+      const u = p.map(q => dot(sub(q.slice(0, 3), x0), e1)), v = p.map(q => dot(sub(q.slice(0, 3), x0), e2));
+      const [u0, u1, v0, v1] = [Math.min(...u), Math.max(...u), Math.min(...v), Math.max(...v)];
+      const pu = 0.15 * (u1 - u0 + 0.05), pv = 0.15 * (v1 - v0 + 0.05);
+      const cor = [[u0 - pu, v0 - pv], [u1 + pu, v0 - pv], [u1 + pu, v1 + pv], [u0 - pu, v1 + pv]].map(([a, b]) => x0.map((w, i) => w + a * e1[i] + b * e2[i]));
+      out.push({ type: "mesh3d", x: cor.map(w => w[0]), y: cor.map(w => w[1]), z: cor.map(w => w[2]), i: [0, 0], j: [1, 2], k: [2, 3],
+        color: col, opacity: 0.25, hoverinfo: "skip", flatshading: true });
+    }
+  }
+  for (const [cs, key, op] of [["nobatt", "t-pi", 0.82], ["cyclic", "t-pc", 0.32]]) {
+    if (focus >= 0 || !show(key)) continue;
+    const s = sys.cases[cs].surface;
+    out.push({ type: "surface", x: s.x, y: s.y, z: s.z, surfacecolor: s.face, cmin: -0.5, cmax: 3.5, colorscale: faceScale(), showscale: false,
+      opacity: op, hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
+  }
+  for (const [cs, key, sym, nm] of [["nobatt", "t-mi", "diamond", "measured, idle"], ["cyclic", "t-mc", "circle", "measured, cyclic"]]) {
+    if (!show(key)) continue;
+    const p = sys.cases[cs].points.filter(q => !q[6] && (focus < 0 || q[3] === focus));
+    out.push({ type: "scatter3d", mode: "markers", name: nm, x: p.map(q => q[0]), y: p.map(q => q[1]), z: p.map(q => q[2]),
+      marker: { size: 4.5, symbol: sym, color: p.map(dotColor), line: { color: css("--fg"), width: 1 } },
+      customdata: p.map(q => [q[4], q[5], 100 * (q[4] - q[5]) / q[5], LABEL[sys.id][sys.sources[q[3]]], BOUND(sys, q)]),
+      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}° (predicted %{customdata[1]:.3f}°, %{customdata[2]:+.1f}%)<br>predicted face: %{customdata[3]}<br>bound by: %{customdata[4]}<extra></extra>" });
+  }
+  return out;
+}
+
+function layout(sys, cam) {
+  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " − " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
+    gridcolor: css("--line"), zerolinecolor: css("--muted"), backgroundcolor: "rgba(0,0,0,0)", showspikes: false });
+  return { paper_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg") }, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
+    scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: cam || DEFAULT_CAM }, uirevision: sys.id + focus + (cam ? JSON.stringify(cam) : "") };
+}
+
+// Face statistics from the dots: least-squares plane a.x = 1 through a face's dots.
+function faceStats(sys, cs, k) {
+  const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
+  if (p.length < 4) return { n: p.length };
+  const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
+  for (const q of p) for (let i = 0; i < 3; i++) { b[i] += q[i]; for (let j = 0; j < 3; j++) A[i][j] += q[i] * q[j]; }
+  const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const D = det(A), a = [0, 1, 2].map(c => det(A.map((row, i) => row.map((v, j) => j === c ? b[i] : v))) / D);
+  const d = 1 / norm(a), rms = Math.sqrt(p.reduce((s, q) => s + (dot(a, q.slice(0, 3)) - 1) ** 2, 0) / p.length) / norm(a);
+  const tilt = Math.acos(Math.min(1, Math.abs(dot(unit(a), unit(sys.normals[k]))))) * 180 / Math.PI;
+  const ratios = p.map(q => q[4] / q[5]).sort((x, y) => x - y), med = ratios[Math.floor(ratios.length / 2)];
+  const agree = p.filter(q => q[7] === k).length, rec = p.filter(q => q[7] !== undefined && q[7] !== -2).length;
+  return { n: p.length, planar: 100 * rms / d, tilt, med, agree, rec };
+}
+
+function panel(sys) {
+  const fc = fcol();
+  document.getElementById("faces").innerHTML = sys.sources.map((k, i) => {
+    const row = cs => {
+      const s = faceStats(sys, cs, i), lab = cs === "nobatt" ? "idle" : "cyclic";
+      if (s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
+      const bound = s.rec ? ` · bound here ${s.agree}/${s.rec}` : "";
+      return `<span>${lab}</span><span>${s.n} dots · reach ×${s.med.toFixed(2)} · planar ${s.planar.toFixed(1)}% · tilt ${s.tilt.toFixed(1)}°${bound}</span>`;
+    };
+    return `<div class="face"><span class="sw" style="background:${fc[i]}"></span><div><button class="fname" data-face="${i}" title="Show this face alone, seen straight on">${LABEL[sys.id][k]}</button>` +
+      `<div class="nums">${row("nobatt")}${row("cyclic")}</div><div class="btns"><button class="edge" data-face="${i}">Edge-on</button>` +
+      `<button class="edge faceon" data-face="${i}">Face-on</button></div></div></div>`;
+  }).join("");
+  document.querySelectorAll(".edge:not(.faceon)").forEach(b => b.addEventListener("click", () => edgeOn(+b.dataset.face)));
+  document.querySelectorAll(".faceon, .fname").forEach(b => b.addEventListener("click", () => faceOn(+b.dataset.face)));
+  document.getElementById("fmface").innerHTML = sys.sources.map((k, i) => `<option value="${i}">${LABEL[sys.id][k].replace(" (reference)", "")}</option>`).join("");
+  document.getElementById("fmface").value = String(fmFace);
+  document.getElementById("lin").innerHTML = sys.linearity_max == null
+    ? `Sources at 1.03 pu, the sensitivities recomputed there (no random linearity samples at this setpoint). Every edge is set by no-backflow.`
+    : `Imports are affine in the angles to within <span class="kv">${sys.linearity_max.toFixed(2)}%</span> of the largest import (30 random idle points).`;
+}
+
+function resid(sys) {
+  const fc = fcol(), out = [];
+  for (const [cs, sym, nm, dx] of [["nobatt", "diamond", "idle", -0.15], ["cyclic", "circle", "cyclic", 0.15]]) {
+    const p = sys.cases[cs].points.filter(q => !q[6]);
+    out.push({ type: "scatter", mode: "markers", name: nm, x: p.map((q, j) => q[3] + dx + 0.08 * Math.sin(j * 12.9898)),
+      y: p.map(q => 100 * (q[4] - q[5]) / q[5]), marker: { symbol: sym, size: 7, color: p.map(dotColor), line: { color: css("--fg"), width: 0.6 } },
+      customdata: p.map(q => BOUND(sys, q)), hovertemplate: nm + ": %{y:+.1f}%<br>bound by %{customdata}<extra></extra>" });
+  }
+  Plotly.react(residEl, out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg"), size: 12 },
+    margin: { l: 56, r: 10, t: 6, b: 34 }, showlegend: false,
+    xaxis: { fixedrange: true, tickvals: sys.sources.map((_, i) => i), ticktext: sys.sources.map(k => LABEL[sys.id][k].replace(" (reference)", "")), color: css("--muted"), gridcolor: css("--line"), zeroline: false },
+    yaxis: { fixedrange: true, title: { text: "measured − predicted (%)" }, color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--muted"), zerolinewidth: 1.5 } },
+    { responsive: true, displaylogo: false, displayModeBar: false });
+}
+
+function draw(cam) {
+  const sys = DATA[cur], all = document.getElementById("all");
+  all.hidden = focus < 0;
+  if (focus >= 0) all.textContent = "Show all faces (now: " + LABEL[sys.id][sys.sources[focus]].replace(" (reference)", "") + " only)";
+  Plotly.react(plotEl, traces(sys), layout(sys, cam), { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["toImage"] });
+  panel(sys); resid(sys);
+}
+
+// Look along face k's predicted plane: an orthographic view direction perpendicular to its normal, with the normal up.
+function edgeOn(k) {
+  stopSpin(); focus = k;
+  const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e = unit(cross(n, a));
+  draw({ eye: { x: 1.6 * e[0], y: 1.6 * e[1], z: 1.6 * e[2] }, up: { x: n[0], y: n[1], z: n[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  faceMap(k, "edge");
+}
+
+// In-plane axes of face k: e1, e2 perpendicular to its normal n.
+function faceBasis(k) {
+  const n = unit(DATA[cur].normals[k]), a = Math.abs(n[2]) < 0.9 ? [0, 0, 1] : [1, 0, 0], e1 = unit(cross(n, a));
+  return { n, e1, e2: cross(n, e1) };
+}
+// Vertex of the dispatched-battery tetrahedron where faces i, j, k meet: n_i.x = c_i for the three faces.
+function vertex(i, j, k) {
+  const N = DATA[cur].normals, c = DATA[cur].offsets, M = [N[i], N[j], N[k]], b = [c[i], c[j], c[k]];
+  const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const D = det(M);
+  return [0, 1, 2].map(col => det(M.map((row, r) => row.map((v, cc) => cc === col ? b[r] : v))) / D);
+}
+
+// Look straight at face k from outside (orthographic), and map its dots in the face's own plane.
+function faceOn(k) {
+  stopSpin(); focus = k;
+  const { n, e2 } = faceBasis(k);
+  draw({ eye: { x: 1.6 * n[0], y: 1.6 * n[1], z: 1.6 * n[2] }, up: { x: e2[0], y: e2[1], z: e2[2] }, center: { x: 0, y: 0, z: 0 }, projection: { type: "orthographic" } });
+  faceMap(k, "face");
+}
+
+// The three corners of face k on the dispatched-battery tetrahedron.
+function faceTriangle(k) {
+  const o = [0, 1, 2, 3].filter(i => i !== k);
+  return [[o[0], o[1]], [o[0], o[2]], [o[1], o[2]]].map(([i, j]) => vertex(k, i, j));
+}
+
+// The face map: face k's dots in the face's own plane. Face-on: seen straight on, colored by how far beyond (red)
+// or inside (blue) the predicted reach each lies, inside the predicted triangle. Edge-on: along the face against
+// measured minus predicted reach (deg), the predicted face being the line at 0, colored like the 3-D dots.
+function faceMap(k, view) {
+  if (k !== undefined) fmFace = +k;
+  if (view !== undefined) fmView = view;
+  k = fmFace;
+  document.getElementById("fmface").value = String(k); document.getElementById("fmview").value = fmView;
+  const sys = DATA[cur], { e1, e2 } = faceBasis(k), out = [], col = fcol()[k], edge = fmView === "edge";
+  const tri = faceTriangle(k); tri.push(tri[0]);
+  if (edge) {
+    const u = tri.map(v => dot(v, e1));
+    out.push({ type: "scatter", mode: "lines", x: [Math.min(...u), Math.max(...u)], y: [0, 0], line: { color: col, width: 2 }, hoverinfo: "skip", name: "predicted face" });
+  } else {
+    out.push({ type: "scatter", mode: "lines", x: tri.map(v => dot(v, e1)), y: tri.map(v => dot(v, e2)), line: { color: col, width: 2 }, hoverinfo: "skip", name: "predicted face" });
+  }
+  for (const [cs, sym, nm] of [["nobatt", "diamond-open", "idle"], ["cyclic", "circle", "dispatched"]]) {
+    const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
+    const pct = p.map(q => 100 * (q[4] - q[5]) / q[5]);
+    const marker = edge
+      ? { symbol: sym, size: 9, color: p.map(dotColor), line: { color: css("--fg"), width: 0.8 } }
+      : { symbol: sym, size: 9, color: pct, cmin: -30, cmax: 30, cmid: 0,
+          colorscale: [[0, "#2c6fbb"], [0.5, css("--panel") || "#ffffff"], [1, "#b02418"]], line: { color: css("--fg"), width: 0.8 },
+          showscale: cs === "cyclic", colorbar: { title: { text: "%", side: "top" }, thickness: 10, len: 0.9, tickfont: { size: 10 } } };
+    out.push({ type: "scatter", mode: "markers", name: nm, x: p.map(q => dot(q.slice(0, 3), e1)),
+      y: edge ? p.map(q => q[4] - q[5]) : p.map(q => dot(q.slice(0, 3), e2)), marker,
+      customdata: p.map((q, j) => [pct[j], BOUND(sys, q), q[4] - q[5]]),
+      hovertemplate: nm + ": %{customdata[0]:+.1f}% (%{customdata[2]:+.2f}°) beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
+  }
+  document.getElementById("fmtitle").textContent = "Face map";
+  Plotly.react(document.getElementById("facemap"), out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: css("--sans"), color: css("--fg"), size: 12 }, margin: { l: 50, r: 10, t: 6, b: 34 }, showlegend: false,
+    xaxis: { fixedrange: true, title: { text: "along the face (deg)" }, color: css("--muted"), gridcolor: css("--line"), zeroline: false, ...(edge ? {} : { scaleanchor: "y" }) },
+    yaxis: { fixedrange: true, title: { text: edge ? "beyond the prediction (deg)" : "across (deg)" }, color: css("--muted"), gridcolor: css("--line"),
+      zeroline: edge, zerolinecolor: css("--muted") } },
+    { responsive: true, displaylogo: false, displayModeBar: false });
+}
+document.getElementById("fmface").addEventListener("change", e => faceMap(+e.target.value));
+document.getElementById("fmview").addEventListener("change", e => faceMap(undefined, e.target.value));
+
+function tabs() {
+  const t = document.getElementById("tabs");
+  t.innerHTML = DATA.map((s, i) => `<button class="tab" role="tab" id="tab-${i}" aria-selected="${i === cur}">${s.title}</button>`).join("");
+  DATA.forEach((s, i) => document.getElementById("tab-" + i).addEventListener("click", () => { cur = i; focus = -1; tabs(); draw(); faceMap(firstFace()); }));
+}
+
+function spin() {
+  const sc = plotEl._fullLayout && plotEl._fullLayout.scene;
+  if (!rotating || !sc) return;
+  const c = sc.camera, e = c.eye, r = Math.hypot(e.x, e.y), th = Math.atan2(e.y, e.x) + 0.006;
+  Plotly.relayout(plotEl, { "scene.camera": { eye: { x: r * Math.cos(th), y: r * Math.sin(th), z: e.z }, up: c.up, center: c.center, projection: c.projection } });
+  rafId = requestAnimationFrame(spin);
+}
+function stopSpin() { rotating = false; cancelAnimationFrame(rafId); const b = document.getElementById("rot"); b.setAttribute("aria-pressed", "false"); b.textContent = "Rotate"; }
+document.getElementById("rot").addEventListener("click", e => {
+  if (rotating) { stopSpin(); return; }
+  rotating = true; e.currentTarget.setAttribute("aria-pressed", "true"); e.currentTarget.textContent = "Stop"; spin();
+});
+document.getElementById("reset").addEventListener("click", () => { stopSpin(); focus = -1; draw(DEFAULT_CAM); });
+document.getElementById("all").addEventListener("click", () => { focus = -1; draw(plotEl._fullLayout && plotEl._fullLayout.scene.camera); });
+["t-pi", "t-pc", "t-mi", "t-mc", "dotcol"].forEach(id => document.getElementById(id).addEventListener("change", () => draw(plotEl._fullLayout && plotEl._fullLayout.scene.camera)));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
+new MutationObserver(() => draw()).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+// The face map opens on the face with the most dots, so the page shows one at rest.
+function firstFace() {
+  const p = DATA[cur].cases.cyclic.points, n = [0, 1, 2, 3].map(k => p.filter(q => q[3] === k).length);
+  return n.indexOf(Math.max(...n));
+}
+tabs(); draw(); faceMap(firstFace());
+</script>

@@ -1,0 +1,19 @@
+
+==============================================================================================================
+THREE_IEEE2522  ieee2522C_1ph, substations at buses 947 (subs2) and 1120 (subs3) besides the deck's own, T = 24; directions 1,2,3, cases cyclic
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    source mean import    754.6 kW (worst hour    577.9); sensitivity to subs2   -221.4, to subs3    -10.8 kW/deg (daily mean)
+    subs2  mean import   1144.1 kW (worst hour    855.7); sensitivity to subs2   +440.5, to subs3   -221.3 kW/deg (daily mean)
+    subs3  mean import    717.7 kW (worst hour    541.6); sensitivity to subs2   -220.7, to subs3   +233.6 kW/deg (daily mean)
+    sensitivities: 189 s
+    cyclic ray   22.5 deg: measured 3.7360, predicted 3.6149 (source); min import -0.00 kW, V 0.9500-1.0480  (3143 s, peak RSS 2.9 GB)
+    cyclic ray   45.0 deg: measured 4.7310, predicted 4.5940 (source); min import -0.00 kW, V 0.9500-1.0477  (2690 s, peak RSS 2.9 GB)
+  ** edge check failed (cyclic): r = 5.1142 deg
+    cyclic ray   67.5 deg: measured 5.1142, predicted 7.9634 (source)  ** 1 failed checks; min import -0.00 kW, V 0.9634-1.0500  (172 s, peak RSS 2.9 GB)
+  wrote three_large_windows.csv; three_ieee2522 done in 6196 s

@@ -1,0 +1,3 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,5,-0.4592,-0.0812,0.8846,0.957409,2.653598,subs2,false,485.4297,0.950309,1.050003,1,bracket,13989,voltage,source=698.671;subs2=485.430;subs3=485.430;subs4=621.281
+ieee2522C_1ph,source:subs2:subs3:subs4,24,cyclic,6,0.4320,-0.2748,0.8590,1.027785,0.999973,subs3,false,0.0019,0.950695,1.050000,5,secant,367,subs3,source=457.085;subs2=940.363;subs3=0.002;subs4=741.193

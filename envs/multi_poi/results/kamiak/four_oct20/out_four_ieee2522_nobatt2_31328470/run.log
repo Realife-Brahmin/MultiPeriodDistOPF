@@ -1,0 +1,32 @@
+
+==============================================================================================================
+FOUR_IEEE2522  ieee2522C_1ph, sources source,subs2,subs3,subs4 (added at buses 947,996,1120), reference source, T = 24; directions 14,15,16,17,18,19,20,21,22,23,24,25,26, cases nobatt
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    source mean import    724.7 kW (worst hour    555.0); sensitivity subs2 -201.1, subs3 -30.8, subs4 -0.1 kW/deg (daily mean)
+    subs2  mean import    765.1 kW (worst hour    572.4); sensitivity subs2 +666.2, subs3 -441.9, subs4 -20.7 kW/deg (daily mean)
+    subs3  mean import    717.3 kW (worst hour    540.0); sensitivity subs2 -440.8, subs3 +813.9, subs4 -353.0 kW/deg (daily mean)
+    subs4  mean import    404.1 kW (worst hour    305.0); sensitivity subs2 -24.9, subs3 -342.0, subs4 +375.1 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): -0.5, -0.8, +1.4 kW/deg
+    nobatt dir 14 (+1.00,+0.00,+0.00): measured 1.3199, predicted 1.2105 (subs3); min import -0.01 kW, V 0.9602-1.0500; 5 solves (secant, 180 s)
+    nobatt dir 15 (-0.71,+0.71,+0.00): measured 0.7552, predicted 0.7151 (subs2); min import -0.01 kW, V 0.9613-1.0497; 4 solves (secant, 123 s)
+    nobatt dir 16 (+0.00,+1.00,+0.00): measured 0.9966, predicted 0.8883 (subs4); min import 0.00 kW, V 0.9612-1.0496; 4 solves (secant, 104 s)
+    nobatt dir 17 (+0.71,+0.71,+0.00): measured 1.2736, predicted 1.1572 (subs4); min import 0.00 kW, V 0.9609-1.0484; 4 solves (secant, 92 s)
+      secant gave up (margin solve at 1.2849 deg: LOCALLY_SOLVED, max violation 1.6e-03); bracketing
+    nobatt dir 18 (-0.58,-0.58,+0.58): measured 0.8489, predicted 1.2849 (subs3); min import 169.99 kW, V 0.9612-1.0500; 1 solves (bracket, 294 s)
+    nobatt dir 19 (+0.00,-0.71,+0.71): measured 0.6860, predicted 0.6513 (subs3); min import 0.00 kW, V 0.9610-1.0500; 5 solves (secant, 123 s)
+    nobatt dir 20 (+0.58,-0.58,+0.58): measured 0.6292, predicted 0.5782 (subs3); min import -0.01 kW, V 0.9609-1.0498; 4 solves (secant, 92 s)
+      secant gave up (margin solve at 1.1375 deg: LOCALLY_SOLVED, max violation 2.2e-04); bracketing
+    nobatt dir 21 (-0.71,+0.00,+0.71): measured 1.0748, predicted 1.1375 (subs2); min import 22.37 kW, V 0.9614-1.0500; 1 solves (bracket, 196 s)
+      secant gave up (margin solve at 1.5421 deg: LOCALLY_SOLVED, max violation 1.8e-03); bracketing
+    nobatt dir 22 (+0.00,+0.00,+1.00): measured 0.9666, predicted 1.5421 (subs3); min import 189.01 kW, V 0.9612-1.0500; 1 solves (bracket, 302 s)
+    nobatt dir 23 (+0.71,+0.00,+0.71): measured 1.0462, predicted 0.9601 (subs3); min import -0.01 kW, V 0.9608-1.0499; 4 solves (secant, 93 s)
+    nobatt dir 24 (-0.58,+0.58,+0.58): measured 0.8956, predicted 0.8530 (subs2); min import -0.00 kW, V 0.9613-1.0496; 4 solves (secant, 111 s)
+    nobatt dir 25 (+0.00,+0.71,+0.71): measured 1.7761, predicted 1.6830 (subs2); min import -0.01 kW, V 0.9614-1.0494; 4 solves (secant, 105 s)
+    nobatt dir 26 (+0.58,+0.58,+0.58): measured 4.2546, predicted 4.1179 (source); min import -0.00 kW, V 0.9610-1.0488; 4 solves (secant, 84 s)
+  wrote multi_windows.csv; four_ieee2522 done in 2105 s
