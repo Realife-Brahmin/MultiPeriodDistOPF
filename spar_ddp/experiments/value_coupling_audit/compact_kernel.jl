@@ -18,6 +18,7 @@ function ck_off(U,V,tol,stats)
     stats["max_core_svd_dim"]=max(get(stats,"max_core_svd_dim",0),maximum(size(core)))
     f=svd(core;full=false);k=length(f.S);tail=0.0;budget=tol*norm(f.S)
     while k>0 && tail+f.S[k]^2<=budget^2;tail+=f.S[k]^2;k-=1;end
+    stats["max_relative_recompression_tail_times_1e15"]=max(get(stats,"max_relative_recompression_tail_times_1e15",0),round(Int,1e15sqrt(tail)/max(norm(f.S),floatmin(Float64))))
     cu=Matrix(a.Q)*(f.U[:,1:k].*f.S[1:k]');cv=Matrix(b.Q)*Matrix(f.Vt[1:k,:]')
     stats["max_retained_rank"]=max(get(stats,"max_retained_rank",0),k)
     if k*(m+n)>=m*n
