@@ -29,3 +29,18 @@ Next: replacement smallT3 gate then matching largeT24 capture; inspect full
 logs and numerical/physical/OpenDSS/capture-equivalence checks. Once verified,
 apply direct generator to ALL1:4 and implement/measure all four-stage suffix
 and policy consumers with honest boundary cost. Do not stop at capture.
+
+Replacement31369418/a2e16a52 completed the T3 dense solve, numerical validation,
+independent physical original_max2.10e-16 and OpenDSS(max voltage1.59e-9pu),
+then FAILED in posthoc checker because its top-level probe accumulator used
+Julia soft scope. LargeT24 never started. All data/logs remain in
+/home/aryan.jha/kamiak_jobs/compact_campaign_capture_oct23_v2.
+capture_checker_failed.tgz SHA256
+aa4a4d69a232a0062af35ff1194456b9458f5f75c039cc0b31e57a3faf8edb54
+preserves full failed attempt excluding reused runtime/depot. Checker is now
+wrapped in a function; NO numerical change. Next snapshot REUSES this already
+completed smoke data read-only, revalidates with corrected checker into NEW
+report location, and ONLY then runs largeT24. Old failed job stays failed;
+no fake COMPLETE or repeated smoke simulation. Source/runtime/log hashes pin
+the reused evidence. All four-stage compact value/operator core and synthetic
+unit have also been implemented/passed; full fresh-cost harness remains next.

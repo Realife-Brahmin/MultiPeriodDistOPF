@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-C=$(realpath "$1");cd "$C/source"
+C=$(realpath "$1");SMOKE_FROM=${2:-};cd "$C/source"
 OLD=/home/aryan.jha/kamiak_jobs/value_coupling_audit_oct22
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
 export JULIA_DEPOT_PATH="$C/julia-depot:$OLD/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
@@ -29,6 +29,21 @@ for spec in 'ieee123C_1ph 3' 'large10kC_1ph 24';do
     export FILTERDDP_MAX_ITERATIONS=150 FILTERDDP_TIMING_DIAGNOSTIC=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1 FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS=1
     export FILTERDDP_OPTIMALITY_TOLERANCE=1e-5;[[ $SYS != ieee123C_1ph ]] || export FILTERDDP_OPTIMALITY_TOLERANCE=1e-6
     export FILTERDDP_FROZEN_CAPTURE_DIR="$OUT/captures" FILTERDDP_CAMPAIGN_CAPTURE_STAGES=4 FILTERDDP_CAMPAIGN_CAPTURE_TAGS=late
+    if [[ $T == 3 && -n $SMOKE_FROM ]];then
+        # Revalidate completed smoke data using repaired checker; DO NOT rerun
+        # or edit the preserved failed-job snapshot, nor fake its COMPLETE.
+        PARENT=$(dirname "$(dirname "$SMOKE_FROM")")
+        sha256sum -c "$PARENT/source.sha256" > "$OUT/reused-source-check.log"
+        sha256sum -c "$PARENT/runtime.sha256" > "$OUT/reused-runtime-check.log"
+        sha256sum "$SMOKE_FROM"/*.log "$SMOKE_FROM/solution.jls" "$SMOKE_FROM"/captures/*/metadata.toml > "$OUT/reused-evidence.sha256"
+        python3 spar_ddp/experiments/screening_ablation/validate.py "$SMOKE_FROM/solve.log" "$SYS" > "$OUT/numerical-check.log"
+        python3 spar_ddp/experiments/tree_ablation/validate_opendss.py "$SMOKE_FROM/opendss.log" > "$OUT/opendss-check.log"
+        grep -q 'VALUE_GROUP_PHYSICAL original_max=' "$SMOKE_FROM/physical.log"
+        cp "$SMOKE_FROM/physical.log" "$OUT/physical.log"
+        julia --startup-file=no --project=envs/spar_ddp "$C/campaign_check_capture.jl" "$SMOKE_FROM" "$OLD/results/${SYS}_T${T}_dense_capture" "$OUT" > "$OUT/capture-check.log" 2>&1
+        date -u +%FT%TZ > "$OUT/COMPLETE"
+        continue
+    fi
     SOL="spar_ddp/results/network_filterddp/filterddp_solution_${SYS}_T${T}_periodic_CBsystem.jls";test ! -e "$SOL"
     timeout --signal=TERM --kill-after=30s 25m julia --startup-file=no --project=envs/spar_ddp spar_ddp/examples/power_system/procs_main.jl "$SYS" "$T" solve > "$OUT/solve.log" 2>&1
     test -s "$SOL";mv "$SOL" "$OUT/solution.jls"

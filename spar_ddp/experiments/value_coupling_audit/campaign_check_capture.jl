@@ -1,12 +1,12 @@
 # Posthoc capture validation and old-state equivalence. Never optimizer timing.
 ENV["VALUE_REPLAY_NUMERICAL_ROOT"]=joinpath(@__DIR__,"source")
 include("/home/aryan.jha/kamiak_jobs/value_coupling_replay_oct22_v3/replay.jl")
-out,old=ARGS
 function find_tag(root,tag)
     rows=split.(readlines(joinpath(root,"captures","coverage.csv")),',')
     hits=[r[2] for r in rows[2:end] if r[1]==tag];@assert length(hits)==1
     joinpath(root,"captures",only(hits))
 end
+function campaign_check_main(out,old,report_dir=out)
 cap=find_tag(out,"late");meta=TOML.parsefile(joinpath(cap,"metadata.toml"))
 @assert meta["campaign_capture"]&&meta["tags"]==["late"]&&meta["barrier_iteration"]>0
 leaf=joinpath(cap,"leaves.jls");@assert bytes2hex(sha256(read(leaf)))==meta["leaves_sha256"]
@@ -52,5 +52,8 @@ report=Dict("validated"=>true,"classification"=>classification,"capture"=>cap,"o
  "leaf_bit_exact"=>exact,"nominal_bit_exact"=>nominalexact,"scalar_state_matches"=>scalars,
  "old_leaf_max_scaled"=>leaferror,"old_nominal_max_scaled"=>nominalerror,
  "ordinary_error"=>oe,"saved_probe_error"=>probe,"leaves_sha256"=>meta["leaves_sha256"])
-open(joinpath(out,"capture_validation.toml"),"w") do io;TOML.print(io,report);end
+mkpath(report_dir)
+open(joinpath(report_dir,"capture_validation.toml"),"w") do io;TOML.print(io,report);end
 println("CAMPAIGN_CAPTURE_PASS classification=$classification stages=$expected leaf_error=$leaferror nominal_error=$nominalerror probe=$probe ordinary=$oe")
+end
+campaign_check_main(ARGS...)
