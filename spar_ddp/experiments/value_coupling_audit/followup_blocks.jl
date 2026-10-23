@@ -1,10 +1,29 @@
 # Opt-in frozen-data experiment only. Raw local blocks and vectors are exact.
 # Unlike the joint symmetric prototype, no raw skew is projected away.
+struct FollowupOffBlock
+    kind::Symbol
+    A::Union{Nothing,Matrix{Float64}}
+    U::Union{Nothing,Matrix{Float64}}
+    V::Union{Nothing,Matrix{Float64}}
+    entries::Int
+end
+mutable struct FollowupBlockNode
+    tree::CouplingTree
+    localblock::Union{Nothing,Matrix{Float64}}
+    left::Union{Nothing,FollowupBlockNode}
+    right::Union{Nothing,FollowupBlockNode}
+    lr::Union{Nothing,FollowupOffBlock}
+    rl::Union{Nothing,FollowupOffBlock}
+    entries::Int
+end
+# A fixed recursive node type avoids specializing expansion on the entire
+# nested NamedTuple tree shape and dense/low-rank choices. Arithmetic/order,
+# SVD budgets, matrices and coefficient counts are unchanged.
 function block_payload(A,tree,tol,reports,field,depth=0)
     I=tree.ids
     if isnothing(tree.left)
         B=copy(A[I,I])
-        return (tree=tree,localblock=B,left=nothing,right=nothing,lr=nothing,rl=nothing,entries=length(B))
+        return FollowupBlockNode(tree,B,nothing,nothing,nothing,nothing,length(B))
     end
     a=block_payload(A,tree.left,tol,reports,field,depth+1)
     b=block_payload(A,tree.right,tol,reports,field,depth+1)
@@ -12,7 +31,7 @@ function block_payload(A,tree,tol,reports,field,depth=0)
         B=copy(A[L,R]);scale=norm(B)
         if tol==0 || scale==0
             push!(reports,(field=field,depth=depth,side=side,rows=size(B,1),cols=size(B,2),rank=min(size(B)...),dense=true,tail=0.0,scale=scale))
-            return (kind=:dense,A=B,U=nothing,V=nothing,entries=length(B))
+            return FollowupOffBlock(:dense,B,nothing,nothing,length(B))
         end
         F=svd(B;full=false);r=length(F.S);tail=0.0
         while r>0 && tail+F.S[r]^2<=(tol*scale)^2
@@ -20,11 +39,11 @@ function block_payload(A,tree,tol,reports,field,depth=0)
         end
         dense=r*sum(size(B))>=length(B)
         push!(reports,(field=field,depth=depth,side=side,rows=size(B,1),cols=size(B,2),rank=r,dense=dense,tail=dense ? 0.0 : sqrt(tail),scale=scale))
-        dense && return (kind=:dense,A=B,U=nothing,V=nothing,entries=length(B))
-        (kind=:lowrank,A=nothing,U=F.U[:,1:r].*F.S[1:r]',V=Matrix(F.Vt[1:r,:]'),entries=r*sum(size(B)))
+        dense && return FollowupOffBlock(:dense,B,nothing,nothing,length(B))
+        FollowupOffBlock(:lowrank,nothing,F.U[:,1:r].*F.S[1:r]',Matrix(F.Vt[1:r,:]'),r*sum(size(B)))
     end
     lr=cross(tree.left.ids,tree.right.ids,"LR");rl=cross(tree.right.ids,tree.left.ids,"RL")
-    (tree=tree,localblock=nothing,left=a,right=b,lr=lr,rl=rl,entries=a.entries+b.entries+lr.entries+rl.entries)
+    FollowupBlockNode(tree,nothing,a,b,lr,rl,a.entries+b.entries+lr.entries+rl.entries)
 end
 function expand_block(p,n)
     A=zeros(n,n)

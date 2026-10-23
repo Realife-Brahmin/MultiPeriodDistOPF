@@ -17,7 +17,11 @@ OTHER=$(squeue -h -w "$SLURMD_NODENAME" -t RUNNING,COMPLETING,SUSPENDED -o '%A' 
 sha256sum -c "$C/source.sha256" > "$C/logs/source-check.log"
 sha256sum -c "$BASE/source.sha256" > "$C/logs/inherited-source-check.log"
 (cd "$CAP/source";sha256sum -c "$CAP/input.sha256") > "$C/logs/input-check.log"
-julia --startup-file=no "$C/followup_unit.jl" > "$C/logs/unit.log" 2>&1
+export VALUE_FOLLOWUP_LEGACY=/home/aryan.jha/kamiak_jobs/value_block_followup_oct23_v3
+EQUIV_DATA="$CAP/results/ieee2522C_1ph_T24_dense_capture"
+EQUIV_SNAP=$(awk -F, '$1=="late" {print $2}' "$EQUIV_DATA/captures/coverage.csv")
+[[ $EQUIV_SNAP =~ ^pass[0-9]+_k[0-9]+_j[0-9]+$ ]]
+julia --startup-file=no "$C/followup_equivalence.jl" "$EQUIV_DATA/captures/$EQUIV_SNAP/leaves.jls" "$CAP/source/spar_ddp/results/network_filterddp/network_data_ieee2522C_1ph_T24_periodic.jls" > "$C/logs/unit.log" 2>&1
 for SPEC in 'ieee2522C_1ph late 0' 'large10kC_1ph late 4' 'ieee2522C_1ph early 0'; do
   read -r SYS TAG W <<< "$SPEC"
   DATA="$CAP/results/${SYS}_T24_dense_capture"

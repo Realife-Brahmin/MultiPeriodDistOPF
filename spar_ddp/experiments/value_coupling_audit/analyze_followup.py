@@ -40,6 +40,10 @@ def analyze(root, out, partial=False):
             archived = root / source.rsplit("/", 1)[-1]
             assert hashlib.sha256(archived.read_bytes()).hexdigest() == expected
         assert "DIRECTION_MEASUREMENT_REGRESSION_PASS" in (root / "logs/unit.log").read_text()
+        if (root / "followup_equivalence.jl").is_file():
+            unit = (root / "logs/unit.log").read_text()
+            assert "FIXED_NODE_EQUIVALENCE_PASS" in unit
+            assert "FIXED_NODE_REAL_LEAF_EQUIVALENCE_PASS" in unit
         hardware = (root / "hardware.txt").read_text()
         assert "Gold 6438Y+" in hardware and "NumCPUs=64" in hardware
         assert "mem=300G" in hardware

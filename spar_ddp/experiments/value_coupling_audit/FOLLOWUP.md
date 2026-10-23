@@ -51,3 +51,12 @@ One sequential job: Gold6438Y+,64CPU300GiB,occupancy guard, Julia/BLAS/OMP1,
 75minute batch cap /22minute independent point caps. Private first depot, old
 numerical snapshot/caches read-only. Check quota first; no full source copies
 or deletion of old evidence. New immutable overlays only for setup repairs.
+
+The initial implementation used recursively nested NamedTuple payload types,
+which specialize on tree shape and dense/rank choices. A fixed recursive node
+implementation preserves operation order, arrays, budgets/ranks and coefficient
+counts while bounding compiler specialization. followup_equivalence.jl compares
+both implementations (synthetic all four budgets, real medium-late leaf at zero
+and1e-6), requiring byte-identical arrays, ranks, errors and coefficient counts.
+The old code is read from the immutable f8f60d39 snapshot on Kamiak. This is an
+implementation repair, not a scientific tolerance or algorithm change.
