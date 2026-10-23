@@ -1,5 +1,8 @@
 include(joinpath(@__DIR__,"compact_chain_probe.jl"))
 include(joinpath(@__DIR__,"direct_initial.jl"))
+di_missing_inputs(elems,tree)=[construct_blocks(elems[j],tree,1e-9) for j in 2:4]
+di_incoming_future(terminal,tree)=(rep=block_payload(terminal.V,tree,1e-9,Any[],:terminal),v=copy(terminal.v))
+di_updates(ps,future)=cc_build((p=ps,terminal=future))
 function di_run(cap,input,out)
     @assert !ispath(out);mkpath(out)
     meta=TOML.parsefile(joinpath(cap,"metadata.toml"));leaf=joinpath(cap,"leaves.jls")
@@ -57,13 +60,15 @@ function di_run(cap,input,out)
     gate=cc_compare_dirs(dirs,"direct_leaf1_pipeline",z,packet,rule,refpath);@assert gate.pass
     negative=cc_compare_dirs(dirs,"negative_composed_gradient",di_consume(c,p1,packet,saved.mu;corrupt=true),packet,rule,refpath);@assert !negative.pass
     println("DIRECT_ACCURACY pass=true values=$maxerr scaled=$(gate.scaled) relative=$(gate.relative) generator=$stats chain=$buildstats");flush(stdout)
-    timings=open(joinpath(out,"timings.csv"),"w");emit(timings,"repetition,order,mode,phase,seconds,alloc_bytes,gc_s")
+    timings=open(joinpath(out,"timings.csv"),"w");emit(timings,"repetition,order,mode,phase,seconds,alloc_bytes,gc_s,compile_s,recompile_s")
     checks=open(joinpath(out,"repeat_checks.csv"),"w");emit(checks,"repetition,mode,direction_scaled,direction_relative,prefix_scaled,pass")
     function record(rep,pos,mode,phase,a)
-        emit(timings,rep,pos,mode,phase,a.time,a.bytes,a.gctime);a.value
+        emit(timings,rep,pos,mode,phase,a.time,a.bytes,a.gctime,a.compile_time,a.recompile_time);a.value
     end
     # Warm every EXACT path; structural hierarchy is same fixed network.
     _pp_elem(packet.S,1,n);di_generate(packet.S,tree)
+    warm_ps=di_missing_inputs(elems,tree);warm_future=di_incoming_future(terminal,tree)
+    warm_chain=di_updates(warm_ps,warm_future);cc_condition(warm_chain.value)
     di_dense_prefix(raw[1],d,P);di_prefix(p1,c,P)
     cc_dense_consume(d,packet,saved.mu,elems,terminal);di_consume(c,p1,packet,saved.mu)
     for rep in 1:3,(pos,mode) in enumerate(isodd(rep) ? ("dense","partial_direct") : ("partial_direct","dense"))
@@ -75,9 +80,9 @@ function di_run(cap,input,out)
             observed=record(rep,pos,mode,"directions",@timed cc_dense_consume(v,packet,saved.mu,elems,terminal))
         else
             e1=record(rep,pos,mode,"direct_leaf1_generation",@timed di_generate(packet.S,tree))
-            ps=record(rep,pos,mode,"unavailable_leaf2to4_discovery",@timed [construct_blocks(elems[j],tree,1e-9) for j in 2:4])
-            future=record(rep,pos,mode,"true_future_discovery",@timed (rep=block_payload(terminal.V,tree,1e-9,Any[],:terminal),v=copy(terminal.v)))
-            v=record(rep,pos,mode,"compact_updates",@timed cc_build((p=ps,terminal=future)))
+            ps=record(rep,pos,mode,"unavailable_leaf2to4_discovery",@timed di_missing_inputs(elems,tree))
+            future=record(rep,pos,mode,"true_future_discovery",@timed di_incoming_future(terminal,tree))
+            v=record(rep,pos,mode,"compact_updates",@timed di_updates(ps,future))
             record(rep,pos,mode,"condition_probe",@timed cc_condition(v.value))
             pre=record(rep,pos,mode,"closed1_actions",@timed di_prefix(e1,v,P))
             observed=record(rep,pos,mode,"directions",@timed di_consume(v,e1,packet,saved.mu))
@@ -102,6 +107,7 @@ function di_run(cap,input,out)
           "initial_dense_SVD_for_direct_stage"=>false,"algorithm_dense_exports"=>0,
           "stage_network_factorization_is_given_input"=>true,"optimizer_run"=>false,"medium_extended"=>false,
           "new_capture"=>false,"reuse_across_iterates"=>false,"full_direct_pipeline_tested"=>false,
+          "exact_timed_helpers_warmed"=>true,"condition_probe_warmed"=>true,"compilation_recorded_every_phase"=>true,
           "leaves_sha256"=>meta["leaves_sha256"],"input_sha256"=>bytes2hex(sha256(read(input)))))
     end
     println("DIRECT_INITIAL_COMPLETE accurate=true full_direct_pipeline=false optimizer=false");flush(stdout)

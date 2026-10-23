@@ -26,6 +26,7 @@ def main(root, out):
     assert m["unavailable_stage_records"] == [2, 3, 4] and not m["true_future_direct"]
     assert not any(m[k] for k in ("full_direct_pipeline_tested", "optimizer_run", "medium_extended", "new_capture", "reuse_across_iterates", "initial_dense_SVD_for_direct_stage"))
     assert m["initial_full_boundary_matrices_constructed_by_direct_path"] == 0 and m["algorithm_dense_exports"] == 0
+    assert all(m[k] for k in ("exact_timed_helpers_warmed", "condition_probe_warmed", "compilation_recorded_every_phase"))
     for key in ("ordinary_error", "saved_probe_error", "consumer_reference_scaled", "value_max_scaled", "direction_scaled"):
         assert m[key] < 1e-7
     assert m["direction_relative"] < 1e-5 and m["negative_scaled"] > 1e-7
@@ -69,6 +70,7 @@ def main(root, out):
             pos = 1 if (mode == "dense") == bool(rep % 2) else 2
             assert all(int(x["order"]) == pos for x in xs)
             assert all(math.isfinite(float(x[k])) and float(x[k]) >= 0 for x in xs for k in ("seconds", "alloc_bytes", "gc_s"))
+            assert all(float(x["compile_s"]) == 0 and float(x["recompile_s"]) == 0 for x in xs), "mixed compilation/execution is not a warmed benchmark"
             by = {x["phase"]: float(x["seconds"]) for x in xs}
             total = sum(by.values());discovery = by.get("unavailable_leaf2to4_discovery", 0)+by.get("true_future_discovery", 0)
             setup = discovery+by.get("direct_leaf1_generation", by.get("dense_leaf1_generation", 0))
