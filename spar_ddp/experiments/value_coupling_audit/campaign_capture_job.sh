@@ -14,6 +14,7 @@ sha256sum -c "$C/source.sha256" > "$C/logs/source-check.log"
 sha256sum -c "$C/runtime.sha256" > "$C/logs/runtime-check.log"
 sha256sum -c "$C/input.sha256" > "$C/logs/input-check.log"
 sha256sum -c "$OLD/preparation-source.sha256" > "$C/logs/inherited-source-check.log"
+julia --startup-file=no "$C/campaign_capture_unit.jl" > "$C/logs/unit.log" 2>&1
 for spec in 'ieee123C_1ph 3' 'large10kC_1ph 24';do
     read -r SYS T <<< "$spec"
     OUT="$C/results/${SYS}_T${T}_campaign_capture";test ! -e "$OUT";mkdir -p "$OUT"
