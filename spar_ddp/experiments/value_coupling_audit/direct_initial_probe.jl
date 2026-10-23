@@ -29,8 +29,8 @@ function di_run(cap,input,out)
     errio=open(joinpath(out,"values.csv"),"w");emit(errio,"phase,field,absolute,reference,scaled")
     maxerr=0.0
     function check(phase,f,A,B)
-        d=norm(A-B);r=norm(B);s=d/max(1.0,r);emit(errio,phase,f,d,r,s);@assert isfinite(s)
-        phase!="raw_skew"&&(maxerr=max(maxerr,s));s
+        local error_value=di_record_value(errio,phase,f,A,B)
+        phase!="raw_skew"&&(maxerr=max(maxerr,error_value));error_value
     end
     for (j,f) in enumerate((:Maa,:Mab,:Mbb))
         A=expand_block(p1.reps[j],n);B=getproperty(raw[1],f)

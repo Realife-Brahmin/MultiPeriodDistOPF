@@ -1,5 +1,11 @@
 # Diagnostic only. Direct sparse-local + separator-factor generation. Never
 # reads S.b0.Sh0 or an already assembled boundary quadratic for generation.
+function di_record_value(io,phase,field,A,B)
+    absolute_error=norm(A-B);reference_norm=norm(B)
+    scaled=absolute_error/max(1.0,reference_norm);@assert isfinite(scaled)
+    println(io,join((phase,field,absolute_error,reference_norm,scaled),','));flush(io)
+    scaled
+end
 function di_payload(P,U,V,tree,stats;tol=1e-12)
     ids=tree.ids
     if isnothing(tree.left)
