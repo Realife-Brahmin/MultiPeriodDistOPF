@@ -1,5 +1,10 @@
 # October 23: bounded block-scaled / conditioning-aware follow-up
 
+Final: all3frozen points validated;2accurate candidates have3alternating warmed
+pairs each. No optimizer comparison justified by current total costs and the
+remaining medium-late direction error. See results_oct23/FINDINGS.md and
+analysis/ for complete positive/adverse evidence, not a rejection of compression.
+
 Authorized follow-up to 25dc3e46, not a production or paper change. No dispatch
 aggregation. Reuse immutable medium late, original1020 large late, medium early
 control. Medium replays all24 suffixes; large uses first4 periods with the true

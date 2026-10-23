@@ -50,6 +50,7 @@ def analyze(root, out, partial=False):
         assert "Gold 6438Y+" in hardware and "NumCPUs=64" in hardware
         assert "mem=300G" in hardware
     summary, warmed, components, missing = [], [], [], []
+    field_errors, rank_stats = [], []
     for case in CASES:
         path = root / "results" / case
         if not (path / "metadata.toml").is_file():
@@ -85,6 +86,17 @@ def analyze(root, out, partial=False):
                                 direction_pass=trial["pass"], inertia_pass=trial["inertia_ok"],
                                 payload_ratio=trial["payload_ratio"], rank_max=trial["rank_max"],
                                 raw_fallbacks=trial["raw_fallbacks"], chosen=label == meta["chosen"]))
+            for field in sorted({r["field"] for r in rows}):
+                fr = [r for r in rows if r["field"] == field]
+                field_errors.append(dict(case=case, mode=label, field=field,
+                    max_absolute=max(float(r["absolute"]) for r in fr),
+                    max_scaled=max(float(r["scaled"]) for r in fr),
+                    max_relative_floor_1e_10=max(float(r["relative_floor_1e_10"]) for r in fr)))
+            for depth in sorted({int(r["scan_depth"]) for r in ranks if r["mode"] == label}):
+                rr = [r for r in ranks if r["mode"] == label and int(r["scan_depth"]) == depth]
+                rank_stats.append(dict(case=case, mode=label, scan_depth=depth,
+                    cross_blocks=len(rr), dense_blocks=sum(r["dense"] == "true" for r in rr),
+                    rank_max=max(int(r["rank"]) for r in rr)))
         if meta["chosen"] == "none_raw_fallback":
             assert not reps
             continue
@@ -125,6 +137,8 @@ def analyze(root, out, partial=False):
     write_csv(out / "warmed.csv", warmed)
     write_csv(out / "components.csv", components)
     write_csv(out / "medians.csv", medians)
+    write_csv(out / "field_errors.csv", field_errors)
+    write_csv(out / "rank_stats.csv", rank_stats)
     validation = dict(complete=not partial and not missing, missing=missing, points=len(CASES)-len(missing),
         warmed_points=len(medians), optimizer_tested=False, compact_kernel=False,
         resident_memory_saving_demonstrated=False, phase_b_timing=False,

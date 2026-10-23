@@ -62,3 +62,10 @@ was submitted ONLY after31368668 stopped. It keeps the same three points,
 hardware/memory/thread policy and time caps. A separate legacy-source hash
 check and synthetic/real-leaf bit-identical equivalence gate precede replay.
 Only payload container implementation changes; no new optimizer is queued.
+
+Final:31368755 COMPLETED0:0 in3m32, all three frozen points strictly validated.
+Large late and medium early pass conditioned1e-6 and each complete3alternating
+warmed pairs; medium late rejects every tested candidate and has no warmed
+comparison. No optimizer was run because total-cost and general accuracy
+criteria do not justify it. Full evidence, hashes and assessment: FINDINGS.md
+and analysis/. All earlier failed attempts remain preserved as separate files.

@@ -1,5 +1,11 @@
 # Coupling-retaining value representation: staged investigation
 
+October23 bounded follow-up also completed: see FOLLOWUP.md and
+results_oct23/FINDINGS.md. Block-scaled/conditioned compression passes large-late
+and medium-early frozen direction gates; medium late remains unresolved.
+Three warmed alternating pairs at each passing point show higher prototype
+total cost than dense. No approximate optimizer or larger campaign was run.
+
 Final October 22 status: all 15 frozen points strictly validated using 13
 preserved primary points plus 2 completed continuation points. See
 results_oct22/FINDINGS.md and final_analysis/ for the assessment and provenance.
