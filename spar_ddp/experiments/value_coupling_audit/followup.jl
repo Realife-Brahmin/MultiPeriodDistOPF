@@ -7,11 +7,12 @@ const DIR_RELATIVE=1e-5
 function measure_dirs(io,label,elems,values,reference,packets,mu,ref_rules)
     worst=0.0;relative=0.0
     function record(t,probe,f,A,B)
-        d=norm(A-B);b=norm(B);s=d/max(1.0,b)
-        r=d/max(b,1e-10) # Explicit absolute floor for vanishing directions.
-        @assert isfinite(s) && isfinite(r)
-        emit(io,label,t,probe,f,d,b,s,r)
-        worst=max(worst,s);relative=max(relative,r)
+        absolute_error=norm(A-B);reference_norm=norm(B)
+        scaled_value=absolute_error/max(1.0,reference_norm)
+        relative_value=absolute_error/max(reference_norm,1e-10)
+        @assert isfinite(scaled_value) && isfinite(relative_value)
+        emit(io,label,t,probe,f,absolute_error,reference_norm,scaled_value,relative_value)
+        worst=max(worst,scaled_value);relative=max(relative,relative_value)
     end
     a=battery_path(elems,values,packets[1].f);b=battery_path(elems,reference,packets[1].f)
     for t in eachindex(elems),f in (:dx,:dp);record(t,"path",f,getproperty(a[t],f),getproperty(b[t],f));end

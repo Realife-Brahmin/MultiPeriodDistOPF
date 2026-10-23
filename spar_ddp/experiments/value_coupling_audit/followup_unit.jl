@@ -23,3 +23,22 @@ end
 @assert controlled_tol(1e-6,Inf)==0.0
 @assert elimination_condition([1.0 0;1e-8 2])>=1
 println("BLOCK_CONTROL_UNIT_PASS raw_skew=true local_blocks_exact=true vectors_exact=true zero_tol_bit_exact=true")
+
+# Exercise the actual measurement function with tiny mocks, without loading an
+# optimizer/model. Regression: nested norm accumulator must not overwrite path
+# or policy variables captured from the enclosing Julia function.
+const DIR_SCALED=1e-7
+const DIR_RELATIVE=1e-5
+emit(io,x...)=println(io,join(x,','))
+battery_path(elems::Vector{Int},values,f)=[(dx=[0.0,1.0],dp=[2.0,3.0]),(dx=[4.0,5.0],dp=[6.0,7.0])]
+policy(packet,future,mu)=packet.rule
+directions(rule,dx)=rule
+source_text=read(joinpath(@__DIR__,"followup.jl"),String)
+lo=first(findfirst("function measure_dirs(",source_text))
+hi=first(findfirst("\nfunction followup_scan(",source_text))-1
+include_string(Main,source_text[lo:hi],"measure_dirs_regression")
+rule=(du=[1.0,2.0],dphi=[3.0,4.0],dzl=[5.0,6.0],dzu=[7.0,8.0])
+packet=(f=[1.0,1.0],probes=[(dx=[0.0,0.0],),(dx=[0.01,0.02],)],rule=rule)
+measured=measure_dirs(IOBuffer(),"unit",[1,2],[0,0,0],[0,0,0],Dict(1=>packet),1.0,Dict(1=>rule))
+@assert measured.pass && measured.scaled==0 && measured.relative==0
+println("DIRECTION_MEASUREMENT_REGRESSION_PASS path_and_full_fields=true")
