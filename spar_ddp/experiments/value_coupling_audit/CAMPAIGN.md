@@ -70,6 +70,24 @@ explicit capture/robustness/integration authorization and gated scope.
 
 ## Safety, resources and completion
 
+### Complete four-stage workload accounting / advancement rule
+
+Evaluate ALL four value functions (full basis outside timers, three action
+probes timed), gradients, battery path and full zero/sine policies at ALL four
+stages, not only period1. Dense and candidate build their respective initial
+quadratics/factors fresh from the same four S records. Charge incoming V5
+CONSTRUCTION from frozen tail leaves to BOTH modes each repetition using the
+original GLOBAL round association (skip unneeded prefix operands, not a
+reindexed tail); candidate additionally pays its factor discovery. This common
+dense suffix work is not a fully compact horizon and is separately visible.
+Selected-window fresh costs and whole charged totals must both be reported.
+Advancement target: >=10% median selected-window fresh saving AND lower whole
+charged total with all three alternating paired whole totals lower, zero JIT,
+and every scientific gate passed. A narrow/noisy miss can use one justified
+bounded discriminator from gate3, never free incoming work or numerical reuse.
+Full-stage consumer still starts from saved phaseA factors/dense Sh0; no full
+phaseA or resident-memory saving is claimed from generator independence.
+
 All expensive jobs sequential; check ALL current user jobs before submission
 and occupancy guard onnode. Gold6438Y+64CPU300GiB,Julia1.12.4/BLAS/OMP1,
 no-exclusive,no-requeue. Diagnostic batch<=1h/process<=25min initially; any

@@ -44,3 +44,30 @@ report location, and ONLY then runs largeT24. Old failed job stays failed;
 no fake COMPLETE or repeated smoke simulation. Source/runtime/log hashes pin
 the reused evidence. All four-stage compact value/operator core and synthetic
 unit have also been implemented/passed; full fresh-cost harness remains next.
+
+## Coverage gate PASSED
+
+Replacement31369462/4e2943ec COMPLETED; immutable root
+/home/aryan.jha/kamiak_jobs/compact_campaign_capture_oct23_v3.
+Revalidated reused smoke is BIT-EXACT original Newton state, saved full probes0,
+ordinary error8.19e-17. LargeT24 also BIT-EXACT original late state: ALL24 raw
+leaves exactly equal, original selected nominal x/u/phi/zl/zu exactly equal,
+samek14/j8/mu and all newly captured periods1:4 full saved probe discrepancy0.
+Numerical/physical/OpenDSS validated: original physical max6.82e-13,
+objective2682722.226822585333, OpenDSS maxvoltage discrepancy8.18e-9pu/no
+violations. All overlay/runtime/inherited/input SHA checks passed. Large full
+records1:4 and24leaves remain immutable oncluster; home now4.4GiB free.
+capture_verified_evidence.tgz archives all textual/meta/settings/logs/accounting
+and minimal runtime driver source, excludes jls binaries/depot. Binary hashes
+and sizes are in per-point metadata; no new copy of old captures.
+
+NEXT gate3: campaign_probe.jl/campaign_compact.jl implement ALL FOUR direct
+initials, all closed values (full coordinate basis outside timers), all four
+stage zero/sine control/equality/bound consumers and battery path. Includes
+raw-skew/poisoned-Sh0/independent-consumer/negative/inertia gates. Incoming
+TRUE V5 construction from20tail leaves charged to BOTH modes with ORIGINAL
+global round association; candidate additionally pays boundary discovery.
+Exact wrapper warmup plus compile/recompile columns must both be ZERO in3
+alternating pairs. No numerical factor reuse across Newton iterates. Core
+synthetic units passed. Read advancement/complete accounting rule in CAMPAIGN.md.
+Do not stop merely because input coverage is complete.
