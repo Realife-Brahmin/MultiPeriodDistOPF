@@ -36,3 +36,23 @@ job31368668. Both synthetic representation and actual measurement-function
 regressions passed on the compute node. It reuses identical frozen points;
 earlier attempts never reached an approximate scan. Read-only inherited source
 checks and overlay SHA manifests are recorded independently.
+
+Job31368668 then hit its22minute medium-point PROCESS cap: FAILED9:0 at22m30,
+not the75minute Slurm cap, preemption, OOM or an accuracy assertion. The stack
+was in LLVM instruction scheduling. No point metadata or warmed measurements
+completed. Medium-late block1e-6 and conditioned1e-6 controls finished with
+scaled errors2.38152e-7 /2.23660e-7 and payload ratios0.19216 /0.20918; both
+missed the unchanged1e-7 gate. Conditioned1e-9 was incomplete; neither large
+nor early control started. No accuracy or runtime conclusion for tighter
+settings is supported by this interruption. ALL partial outputs/source/logs
+are in compiler_interrupted_evidence.tgz, SHA256
+0a559f039eb1b51178e56060f5c33d8ac852b7f47e8881006f8c4d716f17f96b.
+
+Numerically equivalent fixed recursive node payload code was prepared without
+touching the running snapshot. It bounds compiler specialization on entire
+NamedTuple tree/dense-choice types. Local synthetic comparison to pinnedf8f60d39
+passes bit-identical matrices, ranks, error/fallback and coefficient counts for
+all four budgets. New snapshot must also pass actual medium-late first-leaf
+equivalence at0/1e-6 before the same three-point replay. No arithmetic order,
+SVD budget, direction gate, physical input or case scope is changed. These
+compiler-heavy exploratory observations remain outside warmed benchmark data.

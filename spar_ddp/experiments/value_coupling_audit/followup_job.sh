@@ -18,6 +18,7 @@ sha256sum -c "$C/source.sha256" > "$C/logs/source-check.log"
 sha256sum -c "$BASE/source.sha256" > "$C/logs/inherited-source-check.log"
 (cd "$CAP/source";sha256sum -c "$CAP/input.sha256") > "$C/logs/input-check.log"
 export VALUE_FOLLOWUP_LEGACY=/home/aryan.jha/kamiak_jobs/value_block_followup_oct23_v3
+sha256sum -c "$VALUE_FOLLOWUP_LEGACY/source.sha256" > "$C/logs/legacy-source-check.log"
 EQUIV_DATA="$CAP/results/ieee2522C_1ph_T24_dense_capture"
 EQUIV_SNAP=$(awk -F, '$1=="late" {print $2}' "$EQUIV_DATA/captures/coverage.csv")
 [[ $EQUIV_SNAP =~ ^pass[0-9]+_k[0-9]+_j[0-9]+$ ]]

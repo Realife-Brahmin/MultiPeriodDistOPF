@@ -44,6 +44,8 @@ def analyze(root, out, partial=False):
             unit = (root / "logs/unit.log").read_text()
             assert "FIXED_NODE_EQUIVALENCE_PASS" in unit
             assert "FIXED_NODE_REAL_LEAF_EQUIVALENCE_PASS" in unit
+            legacy = (root / "logs/legacy-source-check.log").read_text().splitlines()
+            assert legacy and all(x.endswith(": OK") for x in legacy)
         hardware = (root / "hardware.txt").read_text()
         assert "Gold 6438Y+" in hardware and "NumCPUs=64" in hardware
         assert "mem=300G" in hardware
