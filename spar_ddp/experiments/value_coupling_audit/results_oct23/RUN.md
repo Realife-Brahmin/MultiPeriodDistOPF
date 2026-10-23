@@ -30,3 +30,9 @@ states and old numerical source are reused. No other jobs at submission and
 home5.3GiB free; no copies of full sources or captures, no deleted old work.
 Final collection must verify all three points and exactly three alternating
 same-input warm pairs for each qualifying candidate; partial is not complete.
+
+Current corrected snapshot value_block_followup_oct23_v3 uses sourcef8f60d39,
+job31368668. Both synthetic representation and actual measurement-function
+regressions passed on the compute node. It reuses identical frozen points;
+earlier attempts never reached an approximate scan. Read-only inherited source
+checks and overlay SHA manifests are recorded independently.

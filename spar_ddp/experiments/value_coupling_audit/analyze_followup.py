@@ -35,6 +35,11 @@ def analyze(root, out, partial=False):
         for name in ("source-check.log", "inherited-source-check.log", "input-check.log"):
             lines = (root / "logs" / name).read_text().splitlines()
             assert lines and all(x.endswith(": OK") for x in lines)
+        for line in (root / "source.sha256").read_text().splitlines():
+            expected, source = line.split(maxsplit=1)
+            archived = root / source.rsplit("/", 1)[-1]
+            assert hashlib.sha256(archived.read_bytes()).hexdigest() == expected
+        assert "DIRECTION_MEASUREMENT_REGRESSION_PASS" in (root / "logs/unit.log").read_text()
         hardware = (root / "hardware.txt").read_text()
         assert "Gold 6438Y+" in hardware and "NumCPUs=64" in hardware
         assert "mem=300G" in hardware
