@@ -9,11 +9,12 @@ batteries and solar PV. The repository contains three workstreams:
   [envs/tadmm/README.md](envs/tadmm/README.md). Earlier results remain available
   for reference; fresh testing and potentially further research are deferred.
 - **MSOPF** — multi-source OPF:
-  [envs/multi_poi/README.md](envs/multi_poi/README.md).
+  [envs/multi_poi/README.md](envs/multi_poi/README.md), using
+  [envs/msopf](envs/msopf/README.md).
 
 ## Start here
 
-Use Julia 1.12 for the current DDP workflow. Clone the repository, then
+Use Julia 1.12.4 or later in the 1.12 series for the current DDP workflow. Clone the repository, then
 instantiate the environment belonging to the workstream you need:
 
 ```bash
@@ -24,8 +25,9 @@ julia --project=envs/spar_ddp -e 'using Pkg; Pkg.instantiate()'
 
 SPAR-DDP uses `envs/spar_ddp` for the solver and centralized JuMP/Ipopt
 reference. Exporting instances from OpenDSS uses `envs/tadmm`. Current MSOPF
-drivers also use `envs/tadmm`; `envs/multi_poi` holds an older environment
-for its branch-flow scripts. See the workstream READMEs before running.
+drivers live in `envs/multi_poi` but run with `--project=envs/msopf`;
+the environment inside `envs/multi_poi` is historical. See the workstream
+READMEs before running; model choices differ between projects.
 
 There is no root Julia project or universal main.jl entry point. Gurobi is
 optional and requires a license. HSL MA57/MA97 require separately granted
@@ -41,17 +43,23 @@ envs/spar_ddp/            Julia environment for SPAR-DDP and centralized referen
 envs/tadmm/               tADMM code, OpenDSS exporter and shared dependencies
 envs/tadmm/plots/         historical tADMM plotting tools
 envs/multi_poi/           multi-source OPF code and older environment
+envs/msopf/               current Julia environment for MSOPF drivers
 rawData/                  OpenDSS feeder models and input data
+test_systems/             public source decks, provenance and conversion inputs
 figures/networks/         editable network SVG diagrams and vector PDF exports
 results/                  retained tADMM result collection
 archives/first_order_ddp/ retired original first-order DDP and later diagnostics
-scratch/                  exploratory helpers, old run queues and one-off probes
+scratch/                  unpromoted helpers; archived queues are clearly separated
 tools/                    maintained repository utilities
 docs/                     installation and repository-maintenance guidance
 ```
 
 The active workstream and its environment deliberately have separate homes:
-`spar_ddp/` contains code/evidence; `envs/spar_ddp/` declares dependencies.
+`spar_ddp/` contains the solver, maintained drivers, documented experiments
+and evidence; `envs/spar_ddp/` declares dependencies. Start with the
+[SPAR-DDP directory guide](spar_ddp/README.md#what-belongs-here) and
+[study index](spar_ddp/experiments/README.md). An experiment in `master` is
+preserved research, not automatically a production feature.
 The old first-order DDP is archived, not a second supported environment.
 Personal editor workspaces are local and ignored.
 
@@ -84,6 +92,13 @@ repeats of each of four configurations. The current main-paper criterion is
 convergence; crossing times were scored afterward. Standalone diagnostics
 and older instance families are documented separately.
 
+The [October 21–23 follow-up studies](spar_ddp/experiments/README.md) cover
+network elimination, optional constraints, battery-count sensitivity and
+value-function representations. The compact-computation study reached an
+accurate prototype but not a worthwhile fresh-input total-cost benefit;
+it is **not a production compressed optimizer**. These findings do not replace
+the matched October 16 benchmark or its reporting criteria.
+
 The manuscript is maintained in the separate
 [SPAR-DDP paper repository](https://github.com/Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF).
 It is in preparation; no new paper DOI or software release is implied.
@@ -108,3 +123,10 @@ atomic commits, and open a PR. See [AGENTS.md](AGENTS.md) for current shared
 guidance. `scratch/` is reviewed at research milestones; it is not a queue
 of automatically authorized jobs. No fresh tADMM or DDP runs are required
 merely to reorganize the repository.
+
+Keep `master` a usable research baseline: maintained code in its owning
+workstream, self-contained experiments with status/findings, and frozen
+evidence with provenance. Local captures, depots, checkout bundles, machine
+paths and unattended queues are not shared entry points. See the
+[maintenance policy](docs/repository-maintenance.md). No benchmark runs are
+launched by the lightweight repository checks.

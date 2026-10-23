@@ -12,6 +12,30 @@ citations (arXiv 2504.08278 and 2606.01487). The separate
 [SPAR-DDP manuscript](https://github.com/Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF)
 is in preparation.
 
+## What belongs here
+
+This is the SPAR-DDP **workstream**, not a scratch directory or a Julia
+environment. Keep reusable code and the evidence needed to understand and
+reproduce this project, including unsuccessful but informative experiments.
+
+- `DDP4OPF.jl/`: maintained solver package and upstream notices.
+- [examples/power_system](examples/power_system/README.md): model, drivers,
+  validation and shared numerical helpers; older diagnostics are indexed there.
+- [experiments](experiments/README.md): bounded opt-in studies, each with
+  scope, source/harness, checks, results and a conclusion. Not solver defaults.
+- [results](results/README.md): matched benchmark evidence and dated diagnostic
+  collections. Logs and manifests are scientific provenance, not loose scratch.
+- [notes](notes/README.md): derivations and implementation rationale, including
+  dated notes whose settings are no longer current.
+- `logs/`, [patches](patches/README.md) and `README_FILTERDDP_EXPERIMENT.md`:
+  preserved upstream-evaluation/development history, not a second build recipe.
+- `resources/`: reference-source manifest; fetched papers remain local.
+
+Dependencies belong in `../envs/spar_ddp`, common feeder decks in `../rawData`,
+and unpromoted one-offs in `../scratch`. Keep binary Newton captures, private
+libraries, depots and checkout bundles out of the tracked tree. Do not remove
+evidence merely because an approach did not advance; label its status instead.
+
 ## Environments and entry points
 
 From the repository root, using Julia 1.12 and Bash:
@@ -102,6 +126,12 @@ October 18 folder/documentation cleanup.
   diagnostics, distinct from full optimizer timings.
 - `examples/power_system/`: model, exporter, reference solvers and drivers.
 - `DDP4OPF.jl/`: solver package.
+- [Experiments index](experiments/README.md): tree/screening ablations, nested
+  battery-count study and value-function investigations, with final findings.
+- [Compact campaign conclusion](experiments/value_coupling_audit/results_campaign_oct23/FINDINGS.md):
+  direct generation and four-stage compact consumption passed accuracy, but
+  fresh-input cost did not justify optimizer integration. No compressed
+  optimizer or general compact-horizon speedup has been demonstrated.
 - `notes/`, `results/`, `logs/`, `patches/`: dated research records.
 - [README_FILTERDDP_EXPERIMENT.md](README_FILTERDDP_EXPERIMENT.md): original
   reproducibility study; historical settings are not current benchmark rules.
