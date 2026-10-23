@@ -56,3 +56,9 @@ all four budgets. New snapshot must also pass actual medium-late first-leaf
 equivalence at0/1e-6 before the same three-point replay. No arithmetic order,
 SVD budget, direction gate, physical input or case scope is changed. These
 compiler-heavy exploratory observations remain outside warmed benchmark data.
+
+Replacement value_block_followup_oct23_v4, overlaye2a86a50, job31368755,
+was submitted ONLY after31368668 stopped. It keeps the same three points,
+hardware/memory/thread policy and time caps. A separate legacy-source hash
+check and synthetic/real-leaf bit-identical equivalence gate precede replay.
+Only payload container implementation changes; no new optimizer is queued.
