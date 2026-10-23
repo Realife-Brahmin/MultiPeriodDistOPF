@@ -1,6 +1,6 @@
 using LinearAlgebra,Random,Serialization
 include(joinpath(ENV["VALUE_REPLAY_NUMERICAL_ROOT"],"spar_ddp/examples/power_system/pint_scan.jl"))
-include(joinpath(@__DIR__,"hierarchy.jl"))
+include(joinpath(get(ENV,"VALUE_FOLLOWUP_BASE",@__DIR__),"hierarchy.jl"))
 include(joinpath(@__DIR__,"followup_blocks.jl"))
 Random.seed!(1223);n=24
 tree=topology_hierarchy(Dict(:Nset=>collect(1:n),:Lset=>[(i,i+1) for i in 1:n-1],:Bset=>collect(1:n));maxleaf=4)
