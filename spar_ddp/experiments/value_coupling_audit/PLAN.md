@@ -1,5 +1,13 @@
 # Coupling-retaining value representation: staged investigation
 
+Latest October23: direct initial-factor generator validated for available
+period1; matching elimination records for chain periods2:4 were not captured.
+Their discovery and the true incoming boundary stay charged. See DIRECT_INITIAL.md
+and results_direct_initial_oct23/FINDINGS.md: zero-JIT three-pair partial-pipeline
+comparison is slower fresh, no full direct pipeline/optimizer test or recapture.
+Prior chained compact composition is results_chain_oct23/FINDINGS.md. No further
+automatic extension; production defaults, benchmark rows and paper unchanged.
+
 October23 compact component follow-on completed: COMPACT.md and
 results_compact_oct23/FINDINGS.md. A recursive factor/operator merge passes
 large-late value and direction checks with fast recurring component cost, but

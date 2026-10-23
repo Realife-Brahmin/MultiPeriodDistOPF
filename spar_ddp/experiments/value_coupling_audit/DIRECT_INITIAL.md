@@ -1,5 +1,11 @@
 # Bounded direct initial-factor investigation
 
+Final: results_direct_initial_oct23/FINDINGS.md. Direct generation passes for
+the available period1 record; required chain2:4 elimination records are missing.
+Their discovery and true-future discovery remain charged. Validated zero-JIT
+three-pair partial-pipeline total is2.59433s vs1.33727s dense, not a full direct
+pipeline test or optimizer result. No further capture/campaign was launched.
+
 Base cfff0291. Same immutable original1020 large-late four-period window;
 no optimizer/new trajectory/capture/medium/longer-horizon extension.
 
@@ -55,6 +61,10 @@ directions with unchanged1e-7 scaled AND1e-5 relative/floor1e-10 gates. Corrupti
 the composed gradient must fail full direction checks.
 
 Three alternating warmed SAME-input dense/partial-direct pairs in one process.
+Exact helper/type paths and condition probes are warmed explicitly; every
+phase records @timed compile_time/recompile_time, both required ZERO by strict
+collection. Failed logging attempt and mixed-compilation pilot are preserved
+and excluded, not repaired in place or promoted as warmed timings.
 Charge leaf1generation, unavailable leaf2:4 discovery, incoming future discovery,
 QR/recompression, chained updates, condition probes, period1value actions,
 consumers and cleanup/in-phase GC; record allocations. Dense leaf1generation

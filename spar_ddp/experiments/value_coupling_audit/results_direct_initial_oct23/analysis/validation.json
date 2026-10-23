@@ -1,0 +1,126 @@
+{
+  "complete": true,
+  "points": 1,
+  "repetitions": 3,
+  "direct_stage_coverage": "period1 only; chain2:4 and true future still discovered",
+  "zero_measured_compilation_verified": true,
+  "metadata": {
+    "true_future_direct": false,
+    "retained_interior_dimensions": [
+      1020,
+      2040,
+      3060
+    ],
+    "initial_dense_SVD_for_direct_stage": false,
+    "nB": 1020,
+    "initial_full_boundary_matrices_constructed_by_direct_path": 0,
+    "direct_leaf1_coefficient_bytes": 580704,
+    "negative_control_rejected": true,
+    "value_max_scaled": 6.911026920151081e-09,
+    "maxrss_all_paths_bytes": 2979225600,
+    "accurate": true,
+    "direction_scaled": 8.685298880397089e-13,
+    "direct_cold_s_not_benchmark": 2.671073719,
+    "N": 24,
+    "negative_scaled": 17576075.581833214,
+    "direct_generated_stages": [
+      1
+    ],
+    "saved_probe_error": 0.0,
+    "direct_leaf1_object_graph_bytes_not_rss": 1131264,
+    "stage_network_factorization_is_given_input": true,
+    "medium_extended": false,
+    "consumer_reference_scaled": 2.750027545246049e-14,
+    "direction_relative": 5.332072257520043e-12,
+    "new_capture": false,
+    "ordinary_error": 5.345279010512718e-11,
+    "algorithm_dense_exports": 0,
+    "reuse_across_iterates": false,
+    "available_stage_records": [
+      1,
+      12,
+      24
+    ],
+    "compilation_recorded_every_phase": true,
+    "full_direct_pipeline_tested": false,
+    "leaves_sha256": "cd7922cf75df0743cf5e3fd38e2e87e4e65a861346e89bc66512cf1ffb90f416",
+    "unavailable_stage_records": [
+      2,
+      3,
+      4
+    ],
+    "input_sha256": "b750a212459d7972a4a72b18ef29d7ee8337c22db970a2e2c0eab5ce40dfce9c",
+    "exact_timed_helpers_warmed": true,
+    "window": 4,
+    "optimizer_run": false,
+    "condition_probe_warmed": true,
+    "poisoned_Sh0_independence_pass": true,
+    "chain_coefficient_bytes": [
+      284944,
+      1358720,
+      6072000
+    ],
+    "prefix_stats": {
+      "max_retained_rank": 3,
+      "prefix_cg_maxiter": 12,
+      "core_svd_calls": 300,
+      "interleaved_upper_nodes": 300,
+      "max_core_svd_dim": 6,
+      "max_relative_recompression_tail_times_1e15": 1,
+      "dense_cross_fallbacks": 212
+    },
+    "generator_stats": {
+      "separator_width": 6,
+      "max_sparse_cross_interface": 5,
+      "max_retained_rank": 3,
+      "core_svd_calls": 1884,
+      "max_local_elimination_dim": 20,
+      "max_core_svd_dim": 8,
+      "max_relative_recompression_tail_times_1e15": 817,
+      "dense_cross_fallbacks": 972
+    },
+    "consumer_stats": {
+      "max_retained_rank": 3,
+      "battery_cg_iterations": 12,
+      "core_svd_calls": 150,
+      "stage_cg_maxiter": 13,
+      "interleaved_upper_nodes": 150,
+      "max_core_svd_dim": 6,
+      "max_relative_recompression_tail_times_1e15": 1,
+      "dense_cross_fallbacks": 106
+    },
+    "chain_stats": {
+      "max_retained_rank": 18,
+      "local_dense_factors": 22,
+      "core_svd_calls": 4190,
+      "max_local_dense_dim": 60,
+      "interleaved_upper_nodes": 1050,
+      "max_woodbury_core_dim": 36,
+      "max_core_svd_dim": 44,
+      "max_relative_recompression_tail_times_1e15": 989,
+      "dense_cross_fallbacks": 2942
+    }
+  },
+  "medians": {
+    "dense": {
+      "fresh_charged_s": 1.337272118,
+      "setup_s": 0.016233546,
+      "recurring_s": 1.3215490380000001,
+      "without_cleanup_s": 0.937621267,
+      "alloc_bytes": 539215088,
+      "gc_s": 0.399603017
+    },
+    "partial_direct": {
+      "fresh_charged_s": 2.5943322840000005,
+      "setup_s": 1.436351524,
+      "recurring_s": 1.1619377440000003,
+      "without_cleanup_s": 2.1927179170000004,
+      "alloc_bytes": 1526288088,
+      "gc_s": 0.46155641700000005
+    }
+  },
+  "partial_direct_over_dense": 1.9400182274644573,
+  "full_direct_pipeline_tested": false,
+  "optimizer_tested": false,
+  "actual_resident_memory_saving_demonstrated": false
+}

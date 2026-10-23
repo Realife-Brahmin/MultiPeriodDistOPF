@@ -12,5 +12,19 @@ Gold6438Y+64CPU300GiB,Julia1.12.4/BLAS1/OMP1,occupancyguard,no-requeue,
 read-only prior numerical/capture/cache roots, no full source/capture copies.
 Synthetic unit gates passed locally and compute-node before actual data.
 Original job failed in diagnostic logging before timings; preserved evidence
-and exact diagnosis in HARNESS_FAILURE.md. Replacement uses a new immutable
-snapshot; no accuracy/performance outcome until strict collection succeeds.
+and exact diagnosis in HARNESS_FAILURE.md. Replacement31369069 numerically
+passed but mixed first-use compilation into its first timings; retained as an
+excluded pilot, not the warmed result.
+
+FINAL job31369093/overlay41b98bcb, immutable snapshot
+/home/aryan.jha/kamiak_jobs/value_direct_initial_oct23_v3,
+COMPLETED0:0 in1m34 oncn164. Three alternating warmed pairs pass strict checks,
+including ZERO compile_time/recompile_time in EVERY measured phase. Same source
+arithmetic/gates/case/hardware; exact wrappers and condition path warmed first.
+See FINDINGS.md and analysis/validation.json for the bounded partial result.
+
+Final evidence.tgz SHA256:
+db1755d7cdfcab036215f9100cb84c6b48e6c710429347534e0e4ddd7c2a720e.
+All raw source/manifests, source/input/inherited checks, CPU/affinity/allocation,
+stdout/stderr, units, stage inventory, values/directions/timing CSV and Slurm
+accounting are preserved. No depot or full capture/source-tree copies archived.

@@ -47,6 +47,7 @@ def main(root, out):
     assert len(acct) == 3 and all(x["State"] == "COMPLETED" and x["ExitCode"] == "0:0" for x in acct)
     assert all(x["AllocCPUS"] == "64" and x["ReqMem"] == "300Gn" for x in acct)
     hardware = (root / "hardware.txt").read_text();assert "Gold 6438Y+" in hardware and "NumCPUs=64" in hardware
+    assert (root / "overlay.commit").read_text().strip() == "41b98bcb"
     values = readcsv(r / "values.csv");assert len(values) == 22
     assert all(math.isfinite(float(x["scaled"])) and float(x["scaled"]) < 1e-7 for x in values if x["phase"] != "raw_skew")
     ds = readcsv(r / "directions.csv")
@@ -89,6 +90,7 @@ def main(root, out):
     with (out / "phases.csv").open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(ps[0]));w.writeheader();w.writerows(ps)
     summary = dict(complete=True, points=1, repetitions=3, direct_stage_coverage="period1 only; chain2:4 and true future still discovered",
+                   zero_measured_compilation_verified=True,
                    metadata=m, medians=medians, partial_direct_over_dense=medians["partial_direct"]["fresh_charged_s"]/medians["dense"]["fresh_charged_s"],
                    full_direct_pipeline_tested=False, optimizer_tested=False, actual_resident_memory_saving_demonstrated=False)
     (out / "validation.json").write_text(json.dumps(summary, indent=2)+"\n")
