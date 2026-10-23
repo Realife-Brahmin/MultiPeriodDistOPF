@@ -9,7 +9,7 @@ function ck_continue(elems,terminal,firstmerge)
         for i in 1:2h:length(xs)
             mid=i+h;mid>length(xs) && continue
             for t in i:mid-1
-                xs[t]=(h==1 && t==1 && mid==2) ? deepcopy(firstmerge) : _pp_combine!(xs[t],xs[mid],work)
+                xs[t]=(h==1 && t==3 && mid==4) ? deepcopy(firstmerge) : _pp_combine!(xs[t],xs[mid],work)
             end
         end
         h*=2
@@ -19,6 +19,7 @@ end
 function ck_probe_actions(c,P)
     [ck_action(c,f,P) for f in (:Maa,:Mab,:Mbb)]
 end
+ck_dense_actions(d,P)=[getproperty(d,f)*P for f in (:Maa,:Mab,:Mbb)]
 function ck_run(capturedir,input,out)
     @assert !ispath(out);mkpath(out)
     meta=TOML.parsefile(joinpath(capturedir,"metadata.toml"))
@@ -35,7 +36,7 @@ function ck_run(capturedir,input,out)
     full=production_values(raw,PintVal(zeros(n,n),zeros(n)))
     ord=ordinary(raw,PintVal(zeros(n,n),zeros(n)))
     @assert maximum(max(scaled_error(full[t].V,ord[t].V),scaled_error(full[t].v,ord[t].v)) for t in eachindex(raw))<1e-7
-    elems=raw[1:4];terminal=full[5];x=elems[1];y=elems[2]
+    elems=raw[1:4];terminal=full[5];x=elems[3];y=elems[4]
     packets=Dict{Int,Any}();rules=Dict{Int,Any}();probe_error=0.0
     for r in meta["stage_files"]
         packet=deserialize(joinpath(capturedir,r["file"]))
@@ -86,6 +87,23 @@ function ck_run(capturedir,input,out)
         emit(errors,"suffix$t",f,norm(A-B),norm(B),err);value_error=max(value_error,err)
     end
     gate=measure_dirs(dirs,"compact_hybrid",elems,hybrid,full,packets,payload.mu,rules)
+    # Prove that the saved stage1 future/policy actually depends on this merge.
+    # The old first merge changes only suffix1, unused by these direction
+    # probes. Merge3/4 feeds suffix2 and thus the selected stage1 policy.
+    perturbed=deepcopy(exported)
+    perturbed.ma .+= 1e6 .* sin.(collect(1:n))
+    perturbed.mb .+= 1e6 .* cos.(collect(1:n))
+    negative_values=ck_continue(elems,terminal,perturbed)
+    negative_gate=measure_dirs(dirs,"sensitivity_negative_control",elems,negative_values,full,packets,payload.mu,rules)
+    negative_full=0.0
+    for (t,packet) in packets
+        nrule=policy(packet,negative_values[t+1],payload.mu)
+        for pr in packet.probes,f in (:du,:dphi,:dzl,:dzu)
+            delta=scaled_error(getproperty(directions(nrule,pr.dx),f),getproperty(directions(rules[t],pr.dx),f))
+            negative_full=max(negative_full,delta)
+        end
+    end
+    @assert !negative_gate.pass && negative_full>1e-7 "direction audit must detect a corrupted tested merge"
     P=hcat(ones(n),sin.(collect(1:n)),cos.(collect(1:n)))
     actions=ck_probe_actions(c,P);action_error=maximum(scaled_error(actions[i],getproperty(reference,f)*P) for (i,f) in enumerate((:Maa,:Mab,:Mbb)))
     solve_error=scaled_error(ck_apply(c.K,ck_solve(c.factor,P)),P)
@@ -102,14 +120,14 @@ function ck_run(capturedir,input,out)
     if accurate
         # All exact paths warmed; no promise of zero OS/noise, retain all pairs.
         ck_condition_estimate(c);ck_probe_actions(c,P);ck_export(c);ck_continue(elems,terminal,exported)
-        _pp_combine!(deepcopy(x),y,PairWork(n));GC.gc()
+        warm_dense=_pp_combine!(deepcopy(x),y,PairWork(n));ck_dense_actions(warm_dense,P);GC.gc()
         for rep in 1:3
             for (pos,mode) in enumerate(isodd(rep) ? ("dense","compact") : ("compact","dense"))
                 GC.gc()
                 if mode=="dense"
                     w=timed_row(rep,pos,mode,"workspace",@timed PairWork(n))
                     d=timed_row(rep,pos,mode,"merge",@timed _pp_combine!(deepcopy(x),y,w))
-                    timed_row(rep,pos,mode,"actions",@timed [getproperty(d,f)*P for f in (:Maa,:Mab,:Mbb)])
+                    timed_row(rep,pos,mode,"actions",@timed ck_dense_actions(d,P))
                     timed_row(rep,pos,mode,"legacy_downstream",@timed ck_continue(elems,terminal,d))
                 else
                     pq=timed_row(rep,pos,mode,"fresh_input_factor_discovery",@timed (construct_blocks(x,tree,input_tol),construct_blocks(y,tree,input_tol)))
@@ -132,6 +150,8 @@ function ck_run(capturedir,input,out)
     open(joinpath(out,"metadata.toml"),"w") do io
         TOML.print(io,Dict("outcome"=>accurate ? "compact_accuracy_pass" : "compact_accuracy_rejected",
           "nB"=>n,"window"=>4,"N"=>24,"compact_component"=>true,"compact_full_scan"=>false,
+          "tested_merge_left_period"=>3,"direction_audit_negative_control_rejected"=>!negative_gate.pass,
+          "negative_control_full_direction_scaled"=>negative_full,"dense_actions_exact_path_warmed"=>true,
           "legacy_export_required"=>true,"full_optimizer_run"=>false,"medium_extended"=>false,
           "input_tol"=>input_tol,"update_tol"=>update_tol,"stats"=>stats,
           "value_max_scaled"=>value_error,"action_max_scaled"=>action_error,"solve_residual_scaled"=>solve_error,

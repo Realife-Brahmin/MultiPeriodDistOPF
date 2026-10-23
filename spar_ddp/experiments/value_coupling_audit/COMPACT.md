@@ -6,7 +6,7 @@ immutable capture leaves/state/factors. No automatic medium/optimizer campaign.
 
 ## Exact tested scope
 
-One leaf1/leaf2 Schur merge, corresponding to the first scan combination in
+One leaf3/leaf4 Schur merge, corresponding to a first-round scan combination in
 the existing four-period frozen window with true dense future. It returns
 three factored Schur operators and two explicit vectors, not dense matrices.
 HODLR matrix products and recursive Woodbury solves operate on stored factors.
@@ -45,7 +45,7 @@ Schur output actions remain factored operator chains. Today's next scan merge
 and stage policy code need dense blocks. Therefore a separate EXPLICIT legacy
 export applies these operators to batches of16 columns to build dense matrices;
 its entire cost and allocation are charged. A hybrid four-period replay then
-uses this replacement for only the first merge; all remaining operations are
+uses this replacement for only the periods3/4 merge; all remaining operations are
 unchanged dense production operations. This is a component test, not a fully
 compact scan. Cheap operator-object creation cannot justify medium/optimizer
 extension without the input discovery, deferred-consumer and total cost checks.
@@ -66,6 +66,14 @@ actions and compact solve residual<1e-7 scaled. Recover battery paths and select
 saved full control/equality/bound directions using the unchanged1e-7 scaled AND
 1e-5 relative-with1e-10-floor gates. Full matrix reconstruction is permissible
 ONLY as explicit validation/legacy-export work outside the compact kernel.
+
+The periods3/4 merge affects suffix2 and the saved stage1 policy, unlike the
+initial periods1/2 pilot whose output affects only suffix1 (not those direction
+probes). A deliberately corrupted merged gradient must FAIL both aggregate and
+selected full-direction checks; this negative control proves probe sensitivity.
+The first pilot is preserved, not promoted as direction-validated evidence.
+An exact dense-action helper is warmed before repeats; the pilot's first dense
+action call included compilation and is not used as a warmed comparator.
 
 If accuracy passes, fully warm paths, then three alternating dense/compact
 pairs in the SAME process on identical data. Record fresh input factor discovery,
