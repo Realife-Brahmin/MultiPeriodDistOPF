@@ -97,7 +97,8 @@ def analyze(root, out):
                     cached_pipeline = sum(float(r["seconds"]) for r in rs if r["phase"] not in
                                           {"fresh_input_factor_discovery", "workspace"})
                     totals.append(dict(repetition=rep, mode=mode, all_phases_s=total,
-                        full_first_use_plus_topology_s=total+(m["topology_setup_s"] if mode == "compact" else 0),
+                        observed_cold_topology_plus_warm_phases_s_not_benchmark=total+(m["topology_setup_s"] if mode == "compact" else 0),
+                        execution_without_explicit_cleanup_s=sum(float(r["seconds"]) for r in rs if r["phase"] != "cleanup_gc"),
                         recurring_component_s=recurring,
                         cached_inputs_legacy_pipeline_s=cached_pipeline,
                         alloc_bytes=sum(int(r["alloc_bytes"]) for r in rs),

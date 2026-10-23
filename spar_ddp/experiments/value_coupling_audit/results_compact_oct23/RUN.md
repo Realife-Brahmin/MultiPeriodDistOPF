@@ -20,3 +20,9 @@ direction rejection before any accepted comparison. Exact dense-action helper
 is now warmed before timing. Compact kernel arithmetic/tolerances, frozen
 state, reference gates and all physical variables remain unchanged. This is
 a new immutable audit/harness snapshot, not an edit to the completed pilot.
+
+Corrected snapshot /home/aryan.jha/kamiak_jobs/value_compact_component_oct23_v2,
+sourcecede3fc6, job31368876, was submitted only after31368859 completed. Same
+Gold6438Y+64CPU300GiB,occupancy guard,Julia/OMP/BLAS1,35minute batch/25minute
+process caps,no requeue,private first depot/read-only numerical source/caches.
+All frozen source/input hashes checked. No medium/optimizer jobs submitted.
