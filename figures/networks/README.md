@@ -1,6 +1,6 @@
 # Network diagrams: editable SVGs and PDF exports
 
-These illustrations accompany the feeder models in ../../rawData/. SVGs are
+These illustrations accompany the feeder models in ../../test_networks/. SVGs are
 editable sources (Inkscape); PDFs are vector exports for manuscripts.
 
 - `ieee123C_1ph`: ieee123, 128 modeled buses.

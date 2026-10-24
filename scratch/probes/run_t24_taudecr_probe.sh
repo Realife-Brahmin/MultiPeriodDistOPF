@@ -25,7 +25,7 @@ run_sweep() {
   TAU_INCR_OVERRIDE=2 \
   TAU_DECR_OVERRIDE="${TAUDECR}" \
   MU_BALANCE_OVERRIDE=5 \
-    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_rho_sweep.jl
+    julia --project=problems/mpopf/tadmm --threads=16 problems/mpopf/tadmm/root_level/run_rho_sweep.jl
   echo "[$(date +%H:%M:%S)] Done T=${T} rho=${RHO} tau_decr=${TAUDECR}"
 }
 
@@ -36,7 +36,7 @@ echo "[$(date +%H:%M:%S)] tau_decr probe complete."
 echo "=================================================================="
 echo
 echo "Comparison vs original rho_sweep/rho_16000 (tau_decr=4, NO=283.87s, k=20):"
-DIR=envs/tadmm/processedData/ieee2522C_1ph_T24
+DIR=problems/mpopf/tadmm/processedData/ieee2522C_1ph_T24
 CSV="${DIR}/rho_sweep_taudecr3/rho_16000/near_optimal_summary.csv"
 if [ -f "${CSV}" ]; then
   printf "  tau_decr=3  "

@@ -11,4 +11,4 @@ historical behavior use the recorded pre-cleanup commit/path, with explicit
 review of side effects and inputs. Do not fix their paths and run them blindly.
 Reusable extractors, individual case/regression helpers and drawing tools
 remain in `scratch/`; supported SPAR-DDP drivers are documented in
-[the workstream guide](../../../spar_ddp/README.md).
+[the workstream guide](../../../problems/mpopf/spar_ddp/README.md).

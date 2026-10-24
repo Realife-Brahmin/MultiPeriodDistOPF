@@ -273,7 +273,7 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
         labels = panel == "a"
     if alternate is None:
         alternate = True
-    raw = REPO / "rawData" / system
+    raw = REPO / "test_networks" / system
     edges = parse_edges(raw / "BranchData.dss")
     pv = parse_buses(raw / "PVSystem.dss", "PVsystem")
     bess = parse_buses(raw / "Storage.dss", "Storage")
@@ -615,7 +615,7 @@ def render(system, out_path, size_mm, seed_angle, head_r=3.2, substation_style="
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("system", help="rawData subfolder, e.g. large10kC_1ph")
+    ap.add_argument("system", help="test_networks subfolder, e.g. large10kC_1ph")
     ap.add_argument("--size-mm", type=float, default=88.9, help="IEEE column width")
     ap.add_argument("--seed-angle", type=float, default=-90.0,
                     help="bearing of the first feeder stub in panel (a)")

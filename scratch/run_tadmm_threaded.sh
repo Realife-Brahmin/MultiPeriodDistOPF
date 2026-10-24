@@ -4,4 +4,4 @@
 
 export JULIA_NUM_THREADS=16
 echo "Starting Julia with $JULIA_NUM_THREADS threads..."
-julia envs/tadmm/root_level/tadmm_socp.jl 2>&1 | tee socp_watchdog_threaded.log
+julia problems/mpopf/tadmm/root_level/tadmm_socp.jl 2>&1 | tee socp_watchdog_threaded.log

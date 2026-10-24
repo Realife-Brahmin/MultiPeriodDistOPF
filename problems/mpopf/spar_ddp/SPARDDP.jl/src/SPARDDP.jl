@@ -1,0 +1,40 @@
+module SPARDDP
+
+using LinearAlgebra 
+using SparseArrays
+using Symbolics 
+using Printf
+using Crayons
+using FastLapackInterface
+using StaticArrays
+using RuntimeGeneratedFunctions
+using Serialization
+RuntimeGeneratedFunctions.init(@__MODULE__)
+
+include(joinpath("ocp", "objective.jl"))
+include(joinpath("ocp", "dynamics.jl"))
+include(joinpath("ocp", "constraints.jl"))
+include(joinpath("ocp", "control_limits.jl"))
+include(joinpath("ocp", "ocp.jl"))
+include("options.jl")
+include("solver_data.jl")
+include("solver.jl")
+include("blocked_solve.jl")
+include("backward_pass.jl")
+include("reuse_pass.jl")
+include("forward_pass.jl")
+include("affine_linesearch.jl")
+include("print.jl")
+include("solve.jl")
+
+export Objective
+export EqualityConstraints
+export Dynamics
+export ControlLimits
+export build_ocp
+export Solver,
+    Options,
+    solve!,
+    get_trajectory,
+    get_feedback
+end # module

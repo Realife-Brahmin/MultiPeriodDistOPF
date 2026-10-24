@@ -11,7 +11,7 @@ function main()
             inspect(arg, path)
         end
     end
-    for folder in ("spar_ddp/DDP4OPF.jl/src", "spar_ddp/examples", "spar_ddp/experiments", "tools")
+    for folder in ("problems", "test_networks", "tools")
         for (dir, _, files) in walkdir(joinpath(root, folder))
             for file in files
                 endswith(file, ".jl") || continue

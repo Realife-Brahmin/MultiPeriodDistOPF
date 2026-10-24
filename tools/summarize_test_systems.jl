@@ -1,11 +1,11 @@
 # Compile and solve each downloaded test system once (snapshot, its own master file) and write
-# test_systems/<folder>/summary.csv plus a combined test_systems/summary.csv. Nothing on disk is
+# test_networks/sources/<folder>/summary.csv plus a combined test_networks/sources/summary.csv. Nothing on disk is
 # changed; what is changed in memory is listed per system below and in each folder's README.
-#   julia --project=envs/msopf tools/summarize_test_systems.jl
+#   julia --project=problems/msopf tools/summarize_test_systems.jl
 # Uses OpenDSSDirect.jl (DSS C-API, the same engine OpenDSSDirect.py wraps).
 using OpenDSSDirect, Printf
 const ODD = OpenDSSDirect
-const ROOT = joinpath(normpath(joinpath(@__DIR__, "..")), "test_systems")
+const ROOT = joinpath(normpath(joinpath(@__DIR__, "..")), "test_networks", "sources")
 
 # Commands of a master that run a study or open a window rather than build the circuit.
 const SKIP = r"(?i)^\s*(solve|plot|show|export|visualize|buscoords|latlongcoords|calcv\w*\s*$|set\s+mode)\b"

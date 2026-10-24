@@ -10,7 +10,7 @@ PROFILES = ("LoadShapeDefault.dss", "LoadShapePVDefault.dss", "LoadShapePSubsCos
 
 def package_network(system, output, root=ROOT):
     root = Path(root).resolve()
-    data = root / "rawData"
+    data = root / "test_networks"
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", system):
         raise ValueError("Use a network folder name, not a path")
     deck = data / system
@@ -18,7 +18,7 @@ def package_network(system, output, root=ROOT):
         raise ValueError(f"No adapted network Master.dss for {system}")
     output = Path(output).resolve()
     if output.is_relative_to(data.resolve()):
-        raise ValueError("Write the ZIP outside rawData to keep the input tree unchanged")
+        raise ValueError("Write the ZIP outside test_networks to keep the input tree unchanged")
     entries = {}
     for path in sorted(deck.rglob("*")):
         if path.is_symlink():

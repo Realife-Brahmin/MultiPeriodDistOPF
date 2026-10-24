@@ -317,7 +317,7 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
            depth_scale="linear", legend="top-left", edge_style="dendrogram",
            layout="radial", force_iters=300, legend_visible=False, der_scale=1.0,
            tint=None):
-    raw = REPO / "rawData" / system
+    raw = REPO / "test_networks" / system
     edges = parse_edges(raw / "BranchData.dss")
     if not edges:
         sys.exit(f"no Line records found in {raw / 'BranchData.dss'}")
@@ -502,7 +502,7 @@ def render(system, arc_deg, rotate_deg, size_mm, pv_size, bess_r, line_w, out_pa
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("system", help="rawData subfolder, e.g. large10kC_1ph")
+    ap.add_argument("system", help="test_networks subfolder, e.g. large10kC_1ph")
     ap.add_argument("--arc", type=float, default=360.0, help="angular span in degrees")
     ap.add_argument("--rotate", type=float, default=-90.0, help="rotation in degrees")
     ap.add_argument("--size-mm", type=float, default=88.9, help="IEEE column width")

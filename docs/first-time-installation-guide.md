@@ -10,23 +10,24 @@ cd MultiPeriodDistOPF
 ```
 
 Use the environment for your workstream; there is no root Project.toml
-or universal main.jl. For SPAR-DDP, instantiate both the solver environment
-and the OpenDSS export environment:
+or universal main.jl. For SPAR-DDP, instantiate its colocated environment,
+which includes OpenDSS export and validation:
 
 ```bash
-julia --project=envs/spar_ddp -e 'using Pkg; Pkg.instantiate()'
-julia --project=envs/tadmm -e 'using Pkg; Pkg.instantiate()'
+julia --project=problems/mpopf/spar_ddp -e 'using Pkg; Pkg.instantiate()'
 ```
 
-Use Bash for these commands on Windows. The tracked `envs/tadmm/Manifest.toml`
+Use Bash for these commands on Windows. The tracked `problems/mpopf/tadmm/Manifest.toml`
 preserves its dependency versions; do not update or remove it during setup.
-The SPAR-DDP environment declares its local DDP4OPF source in Project.toml.
+The SPAR-DDP environment declares its local SPARDDP source in Project.toml.
 
-See [SPAR-DDP](../spar_ddp/README.md), [tADMM](../envs/tadmm/README.md) or
-[MSOPF](../envs/multi_poi/README.md) for actual drivers and required inputs.
-Gurobi and HSL are optional separately licensed backends; access/configuration
-is not supplied by cloning this repository. A default Ipopt install does not
-by itself recreate the recorded Kamiak MA57/MA97 benchmark.
+See [SPAR-DDP](../problems/mpopf/spar_ddp/README.md), [tADMM](../problems/mpopf/tadmm/README.md) or
+[MSOPF](../problems/msopf/README.md) for actual drivers and required inputs.
+SPAR-DDP requires no proprietary solver license. The standard Ipopt.jl reference
+works with bundled MUMPS. Optional HSL MA57/MA97 and Gurobi were used for more
+competitive centralized comparisons; they require extra setup/access but are
+not prerequisites. A default Ipopt/MUMPS install is not the recorded Kamiak
+MA57/MA97 timing configuration.
 
 Optional reference downloads: `bash tools/fetch_resources.sh`. This reads
 resources/MANIFEST.txt files and leaves existing files untouched.

@@ -2,7 +2,7 @@
 
 Exploratory helpers, old experiment queues, diagnostic probes and ad hoc SVG
 editing tools live here. These are not the supported starting point for users.
-For SPAR-DDP use ../spar_ddp/README.md; for tADMM use ../envs/tadmm/README.md.
+For SPAR-DDP use ../problems/mpopf/spar_ddp/README.md; for tADMM use ../problems/mpopf/tadmm/README.md.
 
 - `probes/`: one-off diagnostics and research experiments.
 - `archive/workstation-queues/`: superseded machine-specific unattended queues

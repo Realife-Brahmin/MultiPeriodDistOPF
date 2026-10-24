@@ -25,7 +25,7 @@ while ($runtimeRoot) {
 $envPath = Join-Path $repo "envs\tadmm"
 $runDir = Join-Path $envPath "root_level"
 $generatedDir = Join-Path $envPath "processedData\${System}_T${Horizon}"
-$resultsDir = Join-Path $repo "spar_ddp\results\centralized_ipopt"
+$resultsDir = Join-Path $repo "problems/mpopf/spar_ddp\results\centralized_ipopt"
 $rawDir = Join-Path $resultsDir "raw"
 $localLogDir = Join-Path $repo "logs"
 $tag = "${System}_T${Horizon}"
@@ -125,7 +125,7 @@ $row = [ordered]@{
     lagrangian_hessian_nnz = [int](Match-Value $ipopt '^Number of nonzeros in Lagrangian Hessian\.*:\s*(\d+)' 'Hessian nnz')
     linear_solver = Match-Value $ipopt '^This is Ipopt.*linear solver\s+([^\r\n]+)' 'linear solver'
     started_utc = $startedUtc.ToString("o")
-    raw_log = "spar_ddp/results/centralized_ipopt/raw/${tag}_ipopt.log"
+    raw_log = "problems/mpopf/spar_ddp/results/centralized_ipopt/raw/${tag}_ipopt.log"
     timing_overall_wall_s = $overallWall
     timing_search_direction_wall_s = $searchWall
     timing_pd_system_wall_s = $pdWall

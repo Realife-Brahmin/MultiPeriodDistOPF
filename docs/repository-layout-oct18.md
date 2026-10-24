@@ -5,12 +5,12 @@ benchmark numbers, raw feeder data or published evidence.
 
 ## Path map
 
-- `ddp/` → `spar_ddp/`: active solver, drivers, notes and evidence.
-- `envs/ddp2026/` → `envs/spar_ddp/`: active solver environment.
+- `ddp/` → `problems/mpopf/spar_ddp/`: active solver, drivers, notes and evidence.
+- `envs/ddp2026/` → `problems/mpopf/spar_ddp/`: active solver environment.
 - `envs/ddp/` → `archives/first_order_ddp/original/`: retired first-order code.
 - First-order `user_ddp.jl`, `user_ddp_t3.jl` and
   `first_order_dual_average_experiment.jl` → archive `examples/`.
-- Root `plots/` → `envs/tadmm/plots/`: historical tADMM tools.
+- Root `plots/` → `problems/mpopf/tadmm/plots/`: historical tADMM tools.
 - `scripts/` → `scratch/`, except the maintained resource fetcher,
   now `tools/fetch_resources.sh`.
 - `assets/networks/` → `figures/networks/`: editable SVGs and PDF exports.
@@ -26,7 +26,7 @@ do not run an old frozen launcher against renamed folders without adapting
 a separate working copy. Historical requests do not authorize new runs.
 
 The current paired and process wrapper copies live under
-`spar_ddp/examples/power_system/`; the original copies remain in results
+`problems/mpopf/spar_ddp/examples/power_system/`; the original copies remain in results
 for provenance. Active driver paths and the local package source path were
 updated. Module/package names, environment variable names and solver modes
 called `ddp` are unchanged.
