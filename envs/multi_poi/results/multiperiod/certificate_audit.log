@@ -1,0 +1,144 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+network response (BigFloat 256): 5.3 s; Re(Y) min pivot 1.691e+01; |YZ - I| 1.7e-71
+
+== theta 292.5, 1.02 r* (r = 0.120368 deg; delta3 +0.046063, delta4 -0.111206 deg)
+  subs1: committed 35.633255371 A | rectangle code, Float64 35.633255371 A | BigFloat 35.633255336 A | committed - BigFloat = +1.01e-09 relative (committed value covers the high-precision bound)
+  subs3: committed 37.366822864 A | rectangle code, Float64 37.366822864 A | BigFloat 37.366822827 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  subs4: committed 33.609435002 A | rectangle code, Float64 33.609435002 A | BigFloat 33.609434968 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  bound construction: Float64 1.5 s, BigFloat 464.5 s; disc radius history (BigFloat) 0.006727 -> 0.003794 -> 0.003773 -> 0.003773 pu
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  witnesses: margin L -2.7275 kW (equations 8.6e-11, band 0.0e+00); restoration rho 2.7275 kW (equations 8.6e-11, band 0.0e+00); rho <= 3.7275 kW in the relaxation
+  [committed] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 1.4079 kW | float check 1.090440 kW (allowance 1.5e-07 kW) | EXACT 1.090440037 kW (exact - float +1.45e-07 kW; boxes widened 1e-12: 1.090440037 kW) | box term 1.404e+01 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 3.6e-04 | build 5.4, solve 6.3, float verify 1.76, exact verify 0.3 s
+  [rows scaled] OPTIMAL / FEASIBLE_POINT, rho relax 2.3318 kW | float check 2.330506 kW (allowance 3.2e-07 kW) | EXACT 2.330505835 kW (exact - float +3.18e-07 kW; boxes widened 1e-12: 2.330505835 kW) | box term 1.756e+01 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 1.5e-07 | build 0.0, solve 0.7, float verify 0.06, exact verify 0.3 s
+  [tight tolerances] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 1.7289 kW | float check 1.367856 kW (allowance 1.8e-07 kW) | EXACT 1.367856419 kW (exact - float +1.82e-07 kW; boxes widened 1e-12: 1.367856419 kW) | box term 1.689e+01 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 5.7e-04 | build 0.0, solve 0.5, float verify 0.05, exact verify 0.3 s
+  [scaled + tight] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 2.3129 kW | float check 2.286625 kW (allowance 3.2e-07 kW) | EXACT 2.286624828 kW (exact - float +3.15e-07 kW; boxes widened 1e-12: 2.286624828 kW) | box term 1.763e+01 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 1.9e-06 | build 0.0, solve 0.6, float verify 0.05, exact verify 0.4 s
+
+== theta 292.5, 0.98 r* (r = 0.115648 deg; delta3 +0.044257, delta4 -0.106845 deg)
+  subs1: committed 35.656823115 A | rectangle code, Float64 35.656823115 A | BigFloat 35.656823079 A | committed - BigFloat = +1.01e-09 relative (committed value covers the high-precision bound)
+  subs3: committed 37.053726557 A | rectangle code, Float64 37.053726557 A | BigFloat 37.053726520 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  subs4: committed 33.131933395 A | rectangle code, Float64 33.131933395 A | BigFloat 33.131933361 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  bound construction: Float64 0.5 s, BigFloat 477.9 s; disc radius history (BigFloat) 0.006727 -> 0.003794 -> 0.003773 -> 0.003773 pu
+  witnesses: margin L +2.7267 kW (equations 8.6e-11, band 0.0e+00); restoration rho 0.0000 kW (equations 8.6e-11, band 0.0e+00); rho <= 1.0000 kW in the relaxation
+  [committed] OPTIMAL / FEASIBLE_POINT, rho relax -0.0001 kW | float check -0.013329 kW (allowance 5.0e-09 kW) | EXACT -0.013328788 kW (exact - float +4.97e-09 kW; boxes widened 1e-12: -0.013328788 kW) | box term 2.809e-02 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 1.6e-07 | build 0.0, solve 0.5, float verify 0.05, exact verify 0.2 s
+  lifted 0.98 r* dispatch (rho = 0): largest constraint violation 4.26e-09 (0.0001708975330798421 Wee[1,1] + eili[l1,1] - ejli[poi1,1] == 0); largest box violation 0.00e+00 (); source currents at most 0.9820 of their derived bounds
+
+== theta 157.5, 1.02 r* (r = 0.102077 deg; delta3 -0.094306, delta4 +0.039063 deg)
+  subs1: committed 37.820057454 A | rectangle code, Float64 37.820057454 A | BigFloat 37.820057416 A | committed - BigFloat = +1.01e-09 relative (committed value covers the high-precision bound)
+  subs3: committed 34.088491844 A | rectangle code, Float64 34.088491844 A | BigFloat 34.088491810 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  subs4: committed 31.159076969 A | rectangle code, Float64 31.159076969 A | BigFloat 31.159076938 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  bound construction: Float64 0.5 s, BigFloat 514.8 s; disc radius history (BigFloat) 0.006727 -> 0.003794 -> 0.003774 -> 0.003774 pu
+  witnesses: margin L -2.8646 kW (equations 4.6e-14, band 0.0e+00); restoration rho 2.8646 kW (equations 3.3e-14, band 0.0e+00); rho <= 3.8646 kW in the relaxation
+  [committed] OPTIMAL / FEASIBLE_POINT, rho relax 1.8674 kW | float check 1.862403 kW (allowance 2.3e-07 kW) | EXACT 1.862403089 kW (exact - float +2.32e-07 kW; boxes widened 1e-12: 1.862403089 kW) | box term 4.365e+00 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 8.6e-06 | build 0.0, solve 0.8, float verify 0.05, exact verify 0.2 s
+  [rows scaled] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 1.9164 kW | float check 1.912365 kW (allowance 2.6e-07 kW) | EXACT 1.912365267 kW (exact - float +2.56e-07 kW; boxes widened 1e-12: 1.912365267 kW) | box term 4.366e+00 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 3.8e-07 | build 0.1, solve 0.8, float verify 0.06, exact verify 0.2 s
+  [tight tolerances] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 1.3735 kW | float check 1.130138 kW (allowance 1.8e-07 kW) | EXACT 1.130138211 kW (exact - float +1.80e-07 kW; boxes widened 1e-12: 1.130138211 kW) | box term 4.640e+00 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 3.2e-04 | build 0.1, solve 0.9, float verify 0.05, exact verify 0.2 s
+  [scaled + tight] ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 1.9631 kW | float check 1.957611 kW (allowance 2.4e-07 kW) | EXACT 1.957611328 kW (exact - float +2.37e-07 kW; boxes widened 1e-12: 1.957611328 kW) | box term 4.379e+00 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 4.0e-07 | build 0.0, solve 0.8, float verify 0.06, exact verify 0.2 s
+
+== theta 157.5, 0.98 r* (r = 0.098073 deg; delta3 -0.090608, delta4 +0.037531 deg)
+  subs1: committed 37.749240808 A | rectangle code, Float64 37.749240808 A | BigFloat 37.749240770 A | committed - BigFloat = +1.01e-09 relative (committed value covers the high-precision bound)
+  subs3: committed 33.821806999 A | rectangle code, Float64 33.821806999 A | BigFloat 33.821806965 A | committed - BigFloat = +1.01e-09 relative (committed value covers the high-precision bound)
+  subs4: committed 30.910663250 A | rectangle code, Float64 30.910663250 A | BigFloat 30.910663219 A | committed - BigFloat = +1.00e-09 relative (committed value covers the high-precision bound)
+  bound construction: Float64 0.5 s, BigFloat 472.3 s; disc radius history (BigFloat) 0.006727 -> 0.003794 -> 0.003774 -> 0.003774 pu
+  witnesses: margin L +2.8659 kW (equations 3.5e-14, band 0.0e+00); restoration rho 0.0000 kW (equations 3.5e-14, band 0.0e+00); rho <= 1.0000 kW in the relaxation
+  [committed] OPTIMAL / FEASIBLE_POINT, rho relax -0.0001 kW | float check -0.004501 kW (allowance 1.0e-09 kW) | EXACT -0.004500640 kW (exact - float +1.04e-09 kW; boxes widened 1e-12: -0.004500640 kW) | box term 9.198e-03 kW | raw PSD duals: min eig Inf, 0 of 262 blocks shifted (largest 0.0e+00) | sign viol 0.0e+00 | residual 6.3e-08 | build 0.0, solve 0.5, float verify 0.05, exact verify 0.2 s
+  lifted 0.98 r* dispatch (rho = 0): largest constraint violation 4.27e-09 (0.0001708975330798421 Wee[1,1] + eili[l1,1] - ejli[poi1,1] == 0); largest box violation 0.00e+00 (); source currents at most 0.8004 of their derived bounds
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4070.0 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

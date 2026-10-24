@@ -1,0 +1,190 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+bases: S_base 1000 kVA per phase, V_base 11.5470 kV line-to-neutral (20.00 kV line-to-line), I_base 86.603 A, Z_base 133.33 ohm
+hour 12: load factor 0.9873, PV factor 1.0000; feeder apparent demand 1310.8 kVA per phase (3932.4 kVA three-phase): a demand base would give I_rep = 113.52 A = 1.3108 pu
+schedule hour inside 292.5    margin +2.727 kW, equations 8.6e-11
+schedule hour outside 292.5   margin -2.728 kW, equations 8.6e-11
+schedule daily equal          margin +77.644 kW, equations 4.3e-10 (24 h)
+schedule daily 98% 292.5      margin +2.727 kW, equations 8.8e-11 (24 h)
+schedule daily 98% 157.5      margin +2.866 kW, equations 1.0e-12 (24 h)
+schedule daily beyond pred 292.5 margin +18.434 kW, equations 8.8e-11 (24 h)
+  max source subs1  from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4410 pu =    38.2 A (0.336 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 5.7 s
+  max source subs1  from hour inside 292.5      LOCALLY_SOLVED         |I| 0.5079 pu =    44.0 A (0.387 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 1.6 s
+  max source subs1  from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.4410 pu =    38.2 A (0.336 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs1  from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4410 pu =    38.2 A (0.336 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs1  from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.5079 pu =    44.0 A (0.387 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max source subs3  from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4042 pu =    35.0 A (0.308 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs3  from hour inside 292.5      LOCALLY_SOLVED         |I| 0.4762 pu =    41.2 A (0.363 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.1e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max source subs3  from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.4762 pu =    41.2 A (0.363 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.1e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max source subs3  from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4042 pu =    35.0 A (0.308 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs3  from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.4042 pu =    35.0 A (0.308 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs4  from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4254 pu =    36.8 A (0.325 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 6.6e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs4  from hour inside 292.5      LOCALLY_SOLVED         |I| 0.3504 pu =    30.3 A (0.267 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.8e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max source subs4  from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.3504 pu =    30.3 A (0.267 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.8e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max source subs4  from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4254 pu =    36.8 A (0.325 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 6.6e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max source subs4  from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.3504 pu =    30.3 A (0.267 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.8e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+line targets: l115, l116, l46, l110, l111, l2, l1, l119
+  max line   l115   from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4217 pu =    36.5 A (0.322 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.5e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l115   from hour inside 292.5      LOCALLY_SOLVED         |I| 0.3376 pu =    29.2 A (0.258 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l115   from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.3376 pu =    29.2 A (0.258 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l115   from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4217 pu =    36.5 A (0.322 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.5e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l115   from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.3376 pu =    29.2 A (0.258 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l116   from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4357 pu =    37.7 A (0.332 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.7e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l116   from hour inside 292.5      LOCALLY_SOLVED         |I| 0.3440 pu =    29.8 A (0.262 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l116   from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.3440 pu =    29.8 A (0.262 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l116   from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4357 pu =    37.7 A (0.332 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.7e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l116   from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.3440 pu =    29.8 A (0.262 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.6e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l46    from equal angles (cold)    LOCALLY_SOLVED         |I| 0.0140 pu =     1.2 A (0.011 demand-base pu) at d3 -0.0270 d4 +0.2196, eq 6.6e-13, min import 0.25 kW, losses 1.1 kW, 0.6 s
+  max line   l46    from hour inside 292.5      LOCALLY_SOLVED         |I| 0.0140 pu =     1.2 A (0.011 demand-base pu) at d3 -0.0270 d4 +0.2196, eq 3.3e-14, min import 0.25 kW, losses 1.1 kW, 0.6 s
+  max line   l46    from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.0140 pu =     1.2 A (0.011 demand-base pu) at d3 -0.0270 d4 +0.2196, eq 2.9e-14, min import 0.25 kW, losses 1.1 kW, 0.6 s
+  max line   l46    from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.0140 pu =     1.2 A (0.011 demand-base pu) at d3 -0.0270 d4 +0.2196, eq 1.8e-14, min import 0.25 kW, losses 1.1 kW, 0.5 s
+  max line   l46    from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.0140 pu =     1.2 A (0.011 demand-base pu) at d3 -0.0270 d4 +0.2196, eq 3.4e-14, min import 0.25 kW, losses 1.1 kW, 0.5 s
+  max line   l110   from equal angles (cold)    LOCALLY_SOLVED         |I| 0.3941 pu =    34.1 A (0.301 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.2e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l110   from hour inside 292.5      LOCALLY_SOLVED         |I| 0.3264 pu =    28.3 A (0.249 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.4e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l110   from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.3264 pu =    28.3 A (0.249 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.4e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l110   from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.3941 pu =    34.1 A (0.301 demand-base pu) at d3 -0.0269 d4 +0.2172, eq 4.2e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l110   from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.3264 pu =    28.3 A (0.249 demand-base pu) at d3 +0.1591 d4 -0.0601, eq 6.4e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l111   from equal angles (cold)    LOCALLY_SOLVED         |I| 0.0001 pu =     0.0 A (0.000 demand-base pu) at d3 -0.0187 d4 +0.1572, eq 3.2e-12, min import 33.29 kW, losses 0.8 kW, 0.5 s
+  max line   l111   from hour inside 292.5      LOCALLY_SOLVED         |I| 0.0001 pu =     0.0 A (0.000 demand-base pu) at d3 -0.0187 d4 +0.1574, eq 1.3e-15, min import 33.22 kW, losses 0.8 kW, 0.5 s
+  max line   l111   from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.0001 pu =     0.0 A (0.000 demand-base pu) at d3 -0.0187 d4 +0.1574, eq 2.7e-14, min import 33.22 kW, losses 0.8 kW, 0.5 s
+  max line   l111   from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.0001 pu =     0.0 A (0.000 demand-base pu) at d3 -0.0187 d4 +0.1575, eq 7.8e-12, min import 33.06 kW, losses 0.8 kW, 0.5 s
+  max line   l111   from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.0001 pu =     0.0 A (0.000 demand-base pu) at d3 -0.0183 d4 +0.1594, eq 1.1e-09, min import 31.68 kW, losses 0.8 kW, 0.5 s
+  max line   l2     from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4414 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l2     from hour inside 292.5      LOCALLY_SOLVED         |I| 0.5082 pu =    44.0 A (0.388 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 0.6 s
+  max line   l2     from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.4414 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l2     from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4414 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l2     from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.5082 pu =    44.0 A (0.388 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l1     from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4413 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l1     from hour inside 292.5      LOCALLY_SOLVED         |I| 0.5081 pu =    44.0 A (0.388 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l1     from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.4413 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l1     from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4413 pu =    38.2 A (0.337 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l1     from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.5081 pu =    44.0 A (0.388 demand-base pu) at d3 -0.1668 d4 -0.1971, eq 7.2e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l119   from equal angles (cold)    LOCALLY_SOLVED         |I| 0.4045 pu =    35.0 A (0.309 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l119   from hour inside 292.5      LOCALLY_SOLVED         |I| 0.4763 pu =    41.3 A (0.363 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.1e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l119   from hour 95% 0.0           LOCALLY_SOLVED         |I| 0.4763 pu =    41.3 A (0.363 demand-base pu) at d3 +0.1589 d4 -0.0573, eq 7.1e-10, min import -0.00 kW, losses 0.8 kW, 0.5 s
+  max line   l119   from hour 95% 90.0          LOCALLY_SOLVED         |I| 0.4045 pu =    35.0 A (0.309 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+  max line   l119   from hour 95% 225.0         LOCALLY_SOLVED         |I| 0.4045 pu =    35.0 A (0.309 demand-base pu) at d3 -0.0271 d4 +0.2201, eq 7.8e-10, min import -0.00 kW, losses 1.1 kW, 0.5 s
+amperes check (line:l2 dispatch, OpenDSS replay dP 1.8e-05 kW): line l115 OpenDSS 27.66 A, model 0.3193 pu x 86.603 A = 27.65 A
+amperes check (line:l2 dispatch, OpenDSS replay dP 1.8e-05 kW): line l116 OpenDSS 28.22 A, model 0.3258 pu x 86.603 A = 28.21 A
+
+scenario src x1.5: source limits subs1 84.3, subs3 77.8, subs4 68.9 A; no line limits
+  inside  base L +2.727 kW | relaxation OPTIMAL                primal   195.27 kW, fictitious   728.35 kW, |V|^2 gap 8.59e-04, farkas NaN, lifted 8.6e-11, 4.7+6.2 s -> feasible (validated L)
+  inside  both L +2.727 kW | relaxation OPTIMAL                primal     7.77 kW, fictitious    12.87 kW, |V|^2 gap 2.81e-05, farkas NaN, lifted 4.3e-09, 0.4+0.9 s -> feasible (validated L)
+  outside base L -2.728 kW | relaxation OPTIMAL                primal   195.60 kW, fictitious   727.52 kW, |V|^2 gap 8.23e-04, farkas NaN, lifted NaN, 0.0+0.4 s -> unresolved
+  outside both L -2.728 kW | relaxation OPTIMAL                primal     2.31 kW, fictitious    12.85 kW, |V|^2 gap 2.81e-05, farkas NaN, lifted NaN, 0.0+0.8 s -> unresolved
+
+scenario src+lines x1.5: source limits subs1 84.3, subs3 77.8, subs4 68.9 A; line limits 4.3-84.4 A (floor 4.3 A)
+  inside  base L +2.727 kW | relaxation OPTIMAL                primal     5.91 kW, fictitious     3.24 kW, |V|^2 gap 3.34e-05, farkas NaN, lifted 8.6e-11, 0.0+0.3 s -> feasible (validated L)
+  inside  both L +2.727 kW | relaxation OPTIMAL                primal     4.83 kW, fictitious     1.98 kW, |V|^2 gap 2.84e-05, farkas NaN, lifted 4.3e-09, 0.0+0.7 s -> feasible (validated L)
+  outside base L -2.728 kW | relaxation OPTIMAL                primal     0.45 kW, fictitious     3.23 kW, |V|^2 gap 3.32e-05, farkas NaN, lifted NaN, 0.0+0.3 s -> unresolved
+  outside both L -2.728 kW | relaxation INFEASIBLE             primal  1266.42 kW, fictitious     0.00 kW, |V|^2 gap 7.33e-10, farkas -1.61e+09, lifted NaN, 0.0+0.9 s -> solver infeasible, certificate not validated
+
+scenario src+lines x1.2: source limits subs1 67.5, subs3 62.3, subs4 55.1 A; line limits 4.3-67.5 A (floor 4.3 A)
+  inside  base L +2.727 kW | relaxation OPTIMAL                primal     4.51 kW, fictitious     1.83 kW, |V|^2 gap 1.88e-05, farkas NaN, lifted 8.6e-11, 0.0+0.3 s -> feasible (validated L)
+  inside  both L +2.727 kW | relaxation OPTIMAL                primal     4.04 kW, fictitious     1.29 kW, |V|^2 gap 1.64e-05, farkas NaN, lifted 4.3e-09, 0.0+0.6 s -> feasible (validated L)
+  outside base L -2.728 kW | relaxation INFEASIBLE             primal  1297.83 kW, fictitious     0.00 kW, |V|^2 gap 6.45e-10, farkas -5.93e+08, lifted NaN, 0.0+0.4 s -> solver infeasible, certificate not validated
+  outside both L -2.728 kW | relaxation INFEASIBLE             primal  2021.18 kW, fictitious     0.00 kW, |V|^2 gap 2.92e-10, farkas -6.42e+08, lifted NaN, 0.0+0.8 s -> solver infeasible, certificate not validated
+farkas check (default): INFEASIBLE / INFEASIBILITY_CERTIFICATE; ray certificate value 5.045e+06, box term 1.943e+10, bound -1.942e+10 (> 0 certifies), dual PSD violation 0.0e+00
+farkas check (tol_infeas 1e-10): ALMOST_INFEASIBLE / NEARLY_INFEASIBILITY_CERTIFICATE; ray certificate value 1.777e+07, box term 6.843e+10, bound -6.841e+10 (> 0 certifies), dual PSD violation 0.0e+00
+farkas check (tol_infeas 1e-12, max_iter 1000): ALMOST_INFEASIBLE / NEARLY_INFEASIBILITY_CERTIFICATE; ray certificate value 1.777e+07, box term 6.843e+10, bound -6.841e+10 (> 0 certifies), dual PSD violation 0.0e+00
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4153.6 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

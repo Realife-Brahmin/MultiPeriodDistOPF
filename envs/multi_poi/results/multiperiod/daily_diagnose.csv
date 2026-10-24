@@ -1,0 +1,9 @@
+theta_deg,point,case,valid,relax_status,rho_relax_kW,rho_lb_kW,box_term_kW,fictitious_losses_kWh,solve_s,rho_exact_kW
+292.5,1.02,"V: dispatched bounds, batteries free",yes,NUMERICAL_ERROR,0.0105,-0.3899,2.626e+00,268.818,38.0,5.5747
+292.5,1.02,"D1: idle-battery bounds, batteries free",NO (diagnostic),NUMERICAL_ERROR,6.4979,6.1937,1.088e+02,50.359,37.7,5.5747
+292.5,1.02,"D2: dispatched bounds, batteries fixed to the witness schedule",fixed-schedule model,NUMERICAL_ERROR,0.0145,-0.4622,6.900e+01,280.022,25.2,5.5747
+292.5,1.02,"D3: fixed-schedule bounds, batteries fixed",fixed-schedule model,NUMERICAL_ERROR,4.0068,3.6819,1.495e+02,75.256,23.3,5.5747
+157.5,1.02,"V: dispatched bounds, batteries free",yes,ALMOST_OPTIMAL,0.0002,-0.0863,1.090e-01,257.658,21.7,5.5675
+157.5,1.02,"D1: idle-battery bounds, batteries free",NO (diagnostic),NUMERICAL_ERROR,2.7352,2.3036,7.372e+00,167.149,22.4,5.5675
+157.5,1.02,"D2: dispatched bounds, batteries fixed to the witness schedule",fixed-schedule model,ALMOST_OPTIMAL,0.0047,-0.1439,8.411e+00,251.576,22.6,5.5675
+157.5,1.02,"D3: fixed-schedule bounds, batteries fixed",fixed-schedule model,NUMERICAL_ERROR,2.9160,2.2026,1.915e+02,146.862,23.1,5.5675

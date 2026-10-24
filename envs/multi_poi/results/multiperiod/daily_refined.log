@@ -1,0 +1,175 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+  hour 12, theta 292.5, 0.980 r*, subs1: corner bound 35.657 A (sector bound 35.657 A); largest validated current found 35.522 A
+  hour 12, theta 292.5, 0.980 r*, subs3: corner bound 37.054 A (sector bound 37.054 A); largest validated current found 35.080 A
+  hour 12, theta 292.5, 0.980 r*, subs4: corner bound 31.412 A (sector bound 33.132 A); largest validated current found 30.124 A
+  hour 12, theta 292.5, 1.020 r*, subs1: corner bound 35.633 A (sector bound 35.633 A); largest validated current found 35.498 A
+  hour 12, theta 292.5, 1.020 r*, subs3: corner bound 37.367 A (sector bound 37.367 A); largest validated current found 35.210 A
+  hour 12, theta 292.5, 1.020 r*, subs4: corner bound 31.856 A (sector bound 33.609 A); largest validated current found 30.284 A
+  hour 12, theta 292.5, 1.040 r*, subs1: corner bound 35.622 A (sector bound 35.622 A); largest validated current found 35.487 A
+  hour 12, theta 292.5, 1.040 r*, subs3: corner bound 37.524 A (sector bound 37.524 A); largest validated current found 35.276 A
+  hour 12, theta 292.5, 1.040 r*, subs4: corner bound 32.078 A (sector bound 33.848 A); largest validated current found 30.367 A
+  hour 12, theta 292.5, 1.100 r*, subs1: corner bound 35.587 A (sector bound 35.587 A); largest validated current found 35.452 A
+  hour 12, theta 292.5, 1.100 r*, subs3: corner bound 37.997 A (sector bound 37.997 A); largest validated current found 35.480 A
+  hour 12, theta 292.5, 1.100 r*, subs4: corner bound 32.746 A (sector bound 34.565 A); largest validated current found 30.626 A
+  hour 12, theta 292.5, 1.250 r*, subs1: corner bound 35.503 A (sector bound 35.503 A); largest validated current found 35.369 A
+  hour 12, theta 292.5, 1.250 r*, subs3: corner bound 39.191 A (sector bound 39.191 A); largest validated current found 36.026 A
+  hour 12, theta 292.5, 1.250 r*, subs4: corner bound 34.426 A (sector bound 36.356 A); largest validated current found 31.334 A
+  hour 12, theta 157.5, 0.980 r*, subs1: corner bound 37.749 A (sector bound 37.749 A); largest validated current found 37.616 A
+  hour 12, theta 157.5, 0.980 r*, subs3: corner bound 33.822 A (sector bound 33.822 A); largest validated current found 33.705 A
+  hour 12, theta 157.5, 0.980 r*, subs4: corner bound 30.911 A (sector bound 30.911 A); largest validated current found 29.700 A
+  hour 12, theta 157.5, 1.020 r*, subs1: corner bound 37.820 A (sector bound 37.820 A); largest validated current found 37.687 A
+  hour 12, theta 157.5, 1.020 r*, subs3: corner bound 33.933 A (sector bound 34.088 A); largest validated current found 33.816 A
+  hour 12, theta 157.5, 1.020 r*, subs4: corner bound 31.159 A (sector bound 31.159 A); largest validated current found 29.784 A
+  hour 12, theta 157.5, 1.045 r*, subs1: corner bound 37.865 A (sector bound 37.865 A); largest validated current found 37.732 A
+  hour 12, theta 157.5, 1.045 r*, subs3: corner bound 34.006 A (sector bound 34.391 A); largest validated current found 33.889 A
+  hour 12, theta 157.5, 1.045 r*, subs4: corner bound 31.315 A (sector bound 31.315 A); largest validated current found 29.838 A
+  hour 12, theta 157.5, 1.100 r*, subs1: corner bound 37.965 A (sector bound 37.965 A); largest validated current found 37.832 A
+  hour 12, theta 157.5, 1.100 r*, subs3: corner bound 34.175 A (sector bound 35.058 A); largest validated current found 34.059 A
+  hour 12, theta 157.5, 1.100 r*, subs4: corner bound 31.658 A (sector bound 31.658 A); largest validated current found 29.961 A
+  hour 12, theta 157.5, 1.250 r*, subs1: corner bound 38.245 A (sector bound 38.245 A); largest validated current found 38.114 A
+  hour 12, theta 157.5, 1.250 r*, subs3: corner bound 34.902 A (sector bound 36.876 A); largest validated current found 34.583 A
+  hour 12, theta 157.5, 1.250 r*, subs4: corner bound 32.602 A (sector bound 32.602 A); largest validated current found 30.321 A
+hour-12 cross-check: largest found current / corner bound = 0.9966 (no corner bound violated)
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+== theta 292.5, 0.98 r* (r = 0.236682 deg): exact margin L +5.5725 kW, exact restoration rho 0.0000 kW; refined bounds 56.3-94.4 A (pilot up to 103.7 A), 0 double-sector and 9 full-disc device buses; 13.4 s; witness currents at most 0.7960 of the refined bounds
+     subs1 refined bounds by hour (A): 85 86 87 88 89 90 85 80 74 70 68 67 67 69 72 76 81 86 85 85 84 84 84 85
+     subs3 refined bounds by hour (A): 90 91 92 93 94 94 90 86 81 79 77 77 77 77 79 82 87 91 90 89 89 89 89 89
+     subs4 refined bounds by hour (A): 57 57 57 57 56 56 60 63 65 67 68 68 68 67 66 63 60 57 57 57 57 57 57 57
+     lifted 0.98 r* daily dispatch: largest constraint violation 9.92e-07 (-8.545124001102522e-5 Wee[50,6] - 8.545124001102522e-5 Wff[50,6] + ejli[l51,6] - fjlr[l51,6] == -0.04743650792731104); largest box violation 0.00e+00 ()
+     relaxation: NUMERICAL_ERROR / OTHER_RESULT_STATUS, rho relax -0.0000 kW, checked lower bound -0.3329 kW (box term 3.25e-01 kW, rounding 3.5e-08 kW, residual 6.4e-08, dual psd 0.0e+00); build 6.4, solve 31.2, verify 3.8 s -> unresolved (rho lower bound <= 0)
+
+== theta 292.5, 1.02 r* (r = 0.246343 deg): exact margin L -5.5743 kW, exact restoration rho 5.5734 kW; refined bounds 57.2-95.0 A (pilot up to 104.5 A), 0 double-sector and 9 full-disc device buses; 13.0 s; witness currents at most 0.7966 of the refined bounds
+     subs1 refined bounds by hour (A): 85 86 87 88 89 90 85 80 75 71 68 67 67 69 72 77 81 86 85 85 84 84 84 85
+     subs3 refined bounds by hour (A): 91 91 92 93 94 95 91 86 82 80 78 77 77 78 80 83 87 91 91 90 90 89 90 90
+     subs4 refined bounds by hour (A): 58 58 58 57 57 57 61 64 66 68 69 69 69 68 67 64 61 58 58 58 58 58 58 58
+     exact re-check: 0.332714 kW (widened boxes 0.332714 kW), 0 of 6288 PSD duals shifted, 7.8 s
+     relaxation: NUMERICAL_ERROR / OTHER_RESULT_STATUS, rho relax 0.6573 kW, checked lower bound 0.3327 kW (box term 4.56e+01 kW, rounding 3.4e-07 kW, residual 4.4e-07, dual psd 0.0e+00); build 1.0, solve 26.4, verify 1.4 s -> no-backflow day impossible (checked lower bound on rho > 0)
+
+== theta 292.5, 1.10 r* (r = 0.265664 deg): exact margin L -27.8645 kW, exact restoration rho 27.8641 kW; refined bounds 59.0-96.3 A (pilot up to 105.9 A), 0 double-sector and 9 full-disc device buses; 13.0 s; witness currents at most 0.7980 of the refined bounds
+     subs1 refined bounds by hour (A): 86 86 87 88 90 91 86 80 75 71 69 68 68 69 72 77 82 86 86 85 85 84 84 85
+     subs3 refined bounds by hour (A): 92 93 93 94 95 96 92 87 83 81 79 79 79 79 81 84 88 93 92 91 91 91 91 91
+     subs4 refined bounds by hour (A): 60 60 59 59 59 59 63 66 68 70 70 71 71 70 68 66 63 60 60 60 60 60 60 60
+     exact re-check: 22.585695 kW (widened boxes 22.585695 kW), 0 of 6288 PSD duals shifted, 7.5 s
+     relaxation: ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 22.8335 kW, checked lower bound 22.5857 kW (box term 4.75e+01 kW, rounding 3.4e-07 kW, residual 3.3e-07, dual psd 0.0e+00); build 1.1, solve 26.5, verify 1.4 s -> no-backflow day impossible (checked lower bound on rho > 0)
+
+== theta 157.5, 0.98 r* (r = 0.190706 deg): exact margin L +5.5683 kW, exact restoration rho 0.0000 kW; refined bounds 60.7-96.1 A (pilot up to 105.2 A), 0 double-sector and 9 full-disc device buses; 13.3 s; witness currents at most 0.7596 of the refined bounds
+     subs1 refined bounds by hour (A): 91 92 93 94 95 96 91 86 80 76 74 73 73 74 77 82 87 92 91 90 90 90 90 90
+     subs3 refined bounds by hour (A): 62 62 63 64 65 66 64 67 69 71 72 72 72 71 70 67 64 63 62 61 61 61 61 61
+     subs4 refined bounds by hour (A): 76 76 77 78 79 80 75 71 66 63 62 61 61 62 64 68 72 76 76 75 75 75 75 75
+     lifted 0.98 r* daily dispatch: largest constraint violation 4.27e-09 (0.0001708975330798421 Wee[1,12] + eili[l1,12] - ejli[poi1,12] == 0); largest box violation 0.00e+00 ()
+     relaxation: ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax -0.0000 kW, checked lower bound -0.0634 kW (box term 5.59e-02 kW, rounding 3.4e-08 kW, residual 7.9e-09, dual psd 0.0e+00); build 1.2, solve 16.8, verify 1.3 s -> unresolved (rho lower bound <= 0)
+
+== theta 157.5, 1.02 r* (r = 0.198490 deg): exact margin L -5.5675 kW, exact restoration rho 5.5679 kW; refined bounds 61.3-96.4 A (pilot up to 105.5 A), 0 double-sector and 9 full-disc device buses; 13.1 s; witness currents at most 0.7674 of the refined bounds
+     subs1 refined bounds by hour (A): 91 92 93 94 95 96 91 86 81 77 74 73 74 75 78 83 88 92 91 91 90 90 90 91
+     subs3 refined bounds by hour (A): 61 62 63 64 65 66 64 68 70 72 73 73 73 72 71 68 65 62 61 61 62 62 62 61
+     subs4 refined bounds by hour (A): 76 77 77 78 79 80 76 71 67 64 62 61 62 63 65 68 73 77 76 76 75 75 75 76
+     relaxation: NUMERICAL_ERROR / OTHER_RESULT_STATUS, rho relax 0.0182 kW, checked lower bound -0.4614 kW (box term 1.99e+00 kW, rounding 9.4e-08 kW, residual 2.6e-07, dual psd 0.0e+00); build 1.2, solve 25.9, verify 1.6 s -> unresolved (rho lower bound <= 0)
+
+== theta 157.5, 1.10 r* (r = 0.214058 deg): exact margin L -27.8386 kW, exact restoration rho 27.8379 kW; refined bounds 62.4-97.0 A (pilot up to 106.3 A), 0 double-sector and 9 full-disc device buses; 13.0 s; witness currents at most 0.7685 of the refined bounds
+     subs1 refined bounds by hour (A): 92 93 94 95 96 97 92 87 81 77 75 74 74 75 78 83 88 93 92 91 91 91 91 91
+     subs3 refined bounds by hour (A): 63 63 63 63 64 65 66 69 72 73 74 75 75 74 72 70 67 63 63 63 63 63 63 63
+     subs4 refined bounds by hour (A): 77 78 78 79 80 81 77 72 68 65 63 62 62 63 65 69 74 78 77 76 76 76 76 76
+     exact re-check: 21.229019 kW (widened boxes 21.229019 kW), 0 of 6288 PSD duals shifted, 7.3 s
+     relaxation: NUMERICAL_ERROR / OTHER_RESULT_STATUS, rho relax 21.5480 kW, checked lower bound 21.2290 kW (box term 7.19e+00 kW, rounding 2.9e-07 kW, residual 4.4e-07, dual psd 0.0e+00); build 1.3, solve 22.2, verify 1.4 s -> no-backflow day impossible (checked lower bound on rho > 0)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4263.1 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

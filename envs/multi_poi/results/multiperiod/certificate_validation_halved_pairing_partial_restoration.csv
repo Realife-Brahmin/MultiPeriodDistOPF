@@ -1,0 +1,5 @@
+case,point,additions,exact_status,rho_exact_kW,relax_status,rho_relax_kW,rho_lb_tight_kW,rho_lb_loose_kW,boxterm_kW,rounding_kW,class
+A: src+lines 1.2x,inside,,LOCALLY_SOLVED,0.0000,OPTIMAL,-0.0000,-5208.4416,-11357.2408,5.220e+03,6.1e-10,not certified (rho lower bound <= 0)
+A: src+lines 1.2x,outside,,LOCALLY_SOLVED,2.7275,OPTIMAL,0.9432,-54740.1789,-107292.7919,6.667e+04,6.9e-08,not certified (rho lower bound <= 0)
+B: src+lines 1.5x,inside,kcl0+jbound,LOCALLY_SOLVED,0.0000,OPTIMAL,-0.0000,-4216.4003,-8977.2281,4.216e+03,9.0e-10,not certified (rho lower bound <= 0)
+B: src+lines 1.5x,outside,kcl0+jbound,LOCALLY_SOLVED,2.7275,OPTIMAL,0.6237,-49621.4635,-99960.0020,5.610e+04,6.7e-08,not certified (rho lower bound <= 0)

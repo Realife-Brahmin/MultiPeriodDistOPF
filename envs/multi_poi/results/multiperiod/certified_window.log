@@ -1,0 +1,215 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+== theta 22.5 deg: exact edge without limits r* = 0.129024 deg
+  sources+lines 1.2x                exact edge 0.129024 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1309 deg = 1.015 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1305 deg = 1.012 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.129024 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1320 deg = 1.023 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1313 deg = 1.018 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.129024 (+0.000%; max |I|/Imax 0.49 at l51) | certified from 0.1343 deg = 1.041 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax 0.49 at l51) | certified from 0.1328 deg = 1.029 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.129024 (+0.000%; max |I|/Imax 0.33 at l51) | certified from 0.1410 deg = 1.093 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax 0.33 at l51) | certified from 0.1372 deg = 1.063 r* (rho bound)
+  sources only 1.5x                 exact edge 0.129024 (+0.000%; max |I|/Imax 0.30 at source:subs3) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax 0.30 at source:subs3) | certified from 0.1362 deg = 1.055 r* (rho bound)
+  no limits                         exact edge 0.129024 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.129024 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 67.5 deg: exact edge without limits r* = 0.151824 deg
+  sources+lines 1.2x                exact edge 0.151824 (-0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1541 deg = 1.015 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.151824 (-0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1536 deg = 1.012 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.151824 (-0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1554 deg = 1.024 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.151824 (-0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1545 deg = 1.018 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.151824 (-0.000%; max |I|/Imax 0.49 at l51) | certified from 0.1581 deg = 1.042 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.151824 (-0.000%; max |I|/Imax 0.49 at l51) | certified from 0.1564 deg = 1.030 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.151824 (-0.000%; max |I|/Imax 0.33 at l51) | certified from 0.1661 deg = 1.094 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.151824 (-0.000%; max |I|/Imax 0.33 at l51) | certified from 0.1614 deg = 1.063 r* (rho bound)
+  sources only 1.5x                 exact edge 0.151824 (-0.000%; max |I|/Imax 0.27 at source:subs4) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.151824 (-0.000%; max |I|/Imax 0.27 at source:subs4) | certified from 0.1602 deg = 1.055 r* (rho bound)
+  no limits                         exact edge 0.151824 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.151824 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 112.5 deg: exact edge without limits r* = 0.152114 deg
+  sources+lines 1.2x                exact edge 0.152114 (-0.000%; max |I|/Imax 0.85 at l16) | certified from 0.1537 deg = 1.010 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.152114 (-0.000%; max |I|/Imax 0.85 at l16) | certified from 0.1531 deg = 1.007 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.152114 (-0.000%; max |I|/Imax 0.68 at l16) | certified from 0.1548 deg = 1.018 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.152114 (-0.000%; max |I|/Imax 0.68 at l16) | certified from 0.1538 deg = 1.011 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.152114 (-0.000%; max |I|/Imax 0.51 at l16) | certified from 0.1573 deg = 1.034 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.152114 (-0.000%; max |I|/Imax 0.51 at l16) | certified from 0.1552 deg = 1.020 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.152114 (-0.000%; max |I|/Imax 0.34 at l16) | certified from 0.1644 deg = 1.080 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.152114 (-0.000%; max |I|/Imax 0.34 at l16) | certified from 0.1591 deg = 1.046 r* (rho bound)
+  sources only 1.5x                 exact edge 0.152114 (-0.000%; max |I|/Imax 0.42 at source:subs4) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.152114 (-0.000%; max |I|/Imax 0.42 at source:subs4) | certified from 0.1589 deg = 1.044 r* (rho bound)
+  no limits                         exact edge 0.152114 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.152114 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 157.5 deg: exact edge without limits r* = 0.100075 deg
+  sources+lines 1.2x                exact edge 0.100075 (+0.000%; max |I|/Imax 0.84 at l16) | certified from 0.1011 deg = 1.011 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.100075 (+0.000%; max |I|/Imax 0.84 at l16) | certified from 0.1008 deg = 1.007 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.100075 (+0.000%; max |I|/Imax 0.67 at l16) | certified from 0.1019 deg = 1.018 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.100075 (+0.000%; max |I|/Imax 0.67 at l16) | certified from 0.1013 deg = 1.012 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.100075 (+0.000%; max |I|/Imax 0.50 at l16) | certified from 0.1035 deg = 1.035 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.100075 (+0.000%; max |I|/Imax 0.50 at l16) | certified from 0.1022 deg = 1.021 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.100075 (+0.000%; max |I|/Imax 0.33 at l16) | certified from 0.1082 deg = 1.081 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.100075 (+0.000%; max |I|/Imax 0.33 at l16) | certified from 0.1048 deg = 1.047 r* (rho bound)
+  sources only 1.5x                 exact edge 0.100075 (-0.000%; max |I|/Imax 0.36 at source:subs4) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.100075 (-0.000%; max |I|/Imax 0.36 at source:subs4) | certified from 0.1046 deg = 1.045 r* (rho bound)
+  no limits                         exact edge 0.100075 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.100075 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 202.5 deg: exact edge without limits r* = 0.132332 deg
+  sources+lines 1.2x                exact edge 0.132332 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1338 deg = 1.011 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1333 deg = 1.007 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.132332 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1348 deg = 1.018 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1339 deg = 1.012 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.132332 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1369 deg = 1.035 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1352 deg = 1.021 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.132332 (+0.000%; max |I|/Imax 0.33 at l7) | certified from 0.1431 deg = 1.081 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax 0.33 at l7) | certified from 0.1386 deg = 1.047 r* (rho bound)
+  sources only 1.5x                 exact edge 0.132332 (+0.000%; max |I|/Imax 0.38 at source:subs1) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax 0.38 at source:subs1) | certified from 0.1383 deg = 1.045 r* (rho bound)
+  no limits                         exact edge 0.132332 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.132332 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 247.5 deg: exact edge without limits r* = 0.169032 deg
+  sources+lines 1.2x                exact edge 0.169032 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1714 deg = 1.014 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1708 deg = 1.011 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.169032 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1731 deg = 1.024 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1720 deg = 1.018 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.169032 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1770 deg = 1.047 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1743 deg = 1.031 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.169032 (+0.000%; max |I|/Imax 0.33 at l21) | certified from 0.1879 deg = 1.112 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax 0.33 at l21) | certified from 0.1809 deg = 1.070 r* (rho bound)
+  sources only 1.5x                 exact edge 0.169032 (+0.000%; max |I|/Imax 0.45 at source:subs1) | certified from 0.5071 deg = 3.000 r* (rho bound)
+  sources only 1.5x    kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax 0.45 at source:subs1) | certified from 0.1755 deg = 1.038 r* (rho bound)
+  no limits                         exact edge 0.169032 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.169032 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 292.5 deg: exact edge without limits r* = 0.118008 deg
+  sources+lines 1.2x                exact edge 0.118008 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1197 deg = 1.014 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.118008 (+0.000%; max |I|/Imax 0.82 at l51) | certified from 0.1193 deg = 1.011 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.118008 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1209 deg = 1.024 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.118008 (+0.000%; max |I|/Imax 0.66 at l51) | certified from 0.1201 deg = 1.018 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.118008 (-0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1236 deg = 1.047 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.118008 (-0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1218 deg = 1.032 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.118008 (-0.000%; max |I|/Imax 0.33 at l21) | certified from 0.1312 deg = 1.112 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.118008 (-0.000%; max |I|/Imax 0.33 at l21) | certified from 0.1262 deg = 1.070 r* (rho bound)
+  sources only 1.5x                 exact edge 0.118008 (-0.000%; max |I|/Imax 0.45 at source:subs3) | certified from -- (none up to 3 r*)
+  sources only 1.5x    kcl0+jbound  exact edge 0.118008 (-0.000%; max |I|/Imax 0.45 at source:subs3) | certified from 0.1227 deg = 1.040 r* (rho bound)
+  no limits                         exact edge 0.118008 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.118008 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+
+== theta 337.5 deg: exact edge without limits r* = 0.164820 deg
+  sources+lines 1.2x                exact edge 0.164820 (+0.000%; max |I|/Imax 0.82 at l75) | certified from 0.1670 deg = 1.013 r* (rho bound)
+  sources+lines 1.2x   kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax 0.82 at l75) | certified from 0.1666 deg = 1.011 r* (rho bound)
+  sources+lines 1.5x                exact edge 0.164820 (+0.000%; max |I|/Imax 0.66 at l75) | certified from 0.1687 deg = 1.024 r* (rho bound)
+  sources+lines 1.5x   kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax 0.66 at l75) | certified from 0.1677 deg = 1.018 r* (rho bound)
+  sources+lines 2.0x                exact edge 0.164820 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1725 deg = 1.047 r* (rho bound)
+  sources+lines 2.0x   kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax 0.49 at l21) | certified from 0.1700 deg = 1.031 r* (rho bound)
+  sources+lines 3.0x                exact edge 0.164820 (+0.000%; max |I|/Imax 0.33 at l7) | certified from 0.1825 deg = 1.107 r* (rho bound)
+  sources+lines 3.0x   kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax 0.33 at l7) | certified from 0.1763 deg = 1.070 r* (rho bound)
+  sources only 1.5x                 exact edge 0.164820 (+0.000%; max |I|/Imax 0.52 at source:subs3) | certified from 0.4867 deg = 2.953 r* (rho bound)
+  sources only 1.5x    kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax 0.52 at source:subs3) | certified from 0.1711 deg = 1.038 r* (rho bound)
+  no limits                         exact edge 0.164820 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+  no limits            kcl0+jbound  exact edge 0.164820 (+0.000%; max |I|/Imax NaN at ) | certified from -- (none up to 3 r*)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4079.4 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199
