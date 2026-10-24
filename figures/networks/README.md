@@ -8,8 +8,7 @@ editable sources (Inkscape); PDFs are vector exports for manuscripts.
 - `large10kC_1ph_top_level`: large10k overview.
 - `large10kC_1ph_low_level`: detail of a constituent feeder.
 
-The diagrams were also used in the IAS tADMM manuscript and copied into the
-SPAR-DDP paper. They illustrate topology and study device placement; they
+The diagrams illustrate topology and study device placement; they
 are not optimized dispatches. In particular, the medium diagram retains
 root devices that are excluded from the current exported optimization.
 Illustrations and original feeder datasets have distinct provenance.
@@ -24,10 +23,6 @@ exported figures:
 
 Retain applicable notices; see [LICENSE](../../LICENSE). The medium and large
 network source publications are listed below.
-
-The SPAR-DDP manuscript is in preparation; do not invent a DOI or release.
-Its source repository is:
-https://github.com/Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF.
 
 Exploratory illustration utilities are under ../../scratch/. Editing a
 committed SVG and exporting its drawing area is separate from regenerating
@@ -48,5 +43,4 @@ a layout with those utilities.
 The ieee123 diagram depicts this repository's balanced single-phase adaptation
 of the IEEE 123-node feeder. The filename is not a claim that its modeled
 bus count or added DER placements equal the original feeder specification.
-The bibliographic records above follow the current SPAR-DDP manuscript;
-figure credit and test-system citation serve different purposes.
+Figure credit and test-system citation serve different purposes.
