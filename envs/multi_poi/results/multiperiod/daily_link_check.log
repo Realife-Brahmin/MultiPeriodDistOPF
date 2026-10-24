@@ -1,0 +1,115 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+theta 292.5, 0.98 r*: margin witness (equations 9.9e-07) uses at most 0.4671 of eps (subs3 hour 1); restoration witness (rho 0.0000 kW, equations 1.2e-10, band 0.0e+00) uses at most 0.4668 of eps (subs3 hour 16)
+theta 292.5, 1.02 r*: margin witness (equations 2.8e-10) uses at most 0.4668 of eps (subs3 hour 16); restoration witness (rho 5.5747 kW, equations 1.2e-10, band 0.0e+00) uses at most 0.4682 of eps (subs3 hour 20)
+theta 292.5, 1.10 r*: margin witness (equations 1.8e-10) uses at most 0.4682 of eps (subs3 hour 20); restoration witness (rho 27.8635 kW, equations 7.8e-11, band 0.0e+00) uses at most 0.4682 of eps (subs3 hour 20)
+theta 157.5, 0.98 r*: margin witness (equations 2.0e-11) uses at most 0.4357 of eps (subs4 hour 22); restoration witness (rho 0.0000 kW, equations 1.3e-11, band 0.0e+00) uses at most 0.4357 of eps (subs4 hour 22)
+theta 157.5, 1.02 r*: margin witness (equations 4.5e-13) uses at most 0.4357 of eps (subs4 hour 22); restoration witness (rho 5.5675 kW, equations 6.6e-12, band 0.0e+00) uses at most 0.4357 of eps (subs4 hour 22)
+theta 157.5, 1.10 r*: margin witness (equations 3.4e-08) uses at most 0.4350 of eps (subs4 hour 22); restoration witness (rho 27.8378 kW, equations 3.8e-11, band 0.0e+00) uses at most 0.4357 of eps (subs4 hour 22)
+  157.5, 1.02 r*, eps x 1.10, default: NUMERICAL_ERROR, rho relax 2.1232 kW, checked lower bound 1.8516 kW, fictitious losses 147.5 kWh, source moment gap 0.712 pu^2, solve 33.4 s
+  157.5, 1.02 r*, eps x 1.25, default: NUMERICAL_ERROR, rho relax 1.5804 kW, checked lower bound 1.2777 kW, fictitious losses 168.5 kWh, source moment gap 0.846 pu^2, solve 26.3 s
+  157.5, 1.02 r*, eps x 1.50, default: ALMOST_OPTIMAL, rho relax 0.7056 kW, checked lower bound 0.5228 kW, fictitious losses 205.7 kWh, source moment gap 0.962 pu^2, solve 26.9 s
+  157.5, 1.02 r*, eps x 1.00, reg 1e-6: ALMOST_OPTIMAL, rho relax 2.5192 kW, checked lower bound 2.2098 kW, fictitious losses 130.8 kWh, source moment gap 0.620 pu^2, solve 26.8 s
+  157.5, 1.02 r*, eps x 1.00, reg 1e-8: NUMERICAL_ERROR, rho relax 2.5018 kW, checked lower bound 2.1561 kW, fictitious losses 132.3 kWh, source moment gap 0.626 pu^2, solve 24.8 s
+  157.5, 1.02 r*, eps x 2.00, reg 1e-6: ALMOST_OPTIMAL, rho relax 0.0109 kW, checked lower bound -0.4836 kW, fictitious losses 288.7 kWh, source moment gap 0.997 pu^2, solve 24.6 s
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4146.3 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

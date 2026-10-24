@@ -1,0 +1,149 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+reusable preprocessing: network response (BigFloat 256) 5.1 s
+SOC coupling: every battery can run at full rating for at least 1.30 h in either direction from B[0] (dt = 1.0 h), and the SOC window is 0.30-0.95; no hour's power range is tightened by SOC, so the per-hour ranges [-P_rated, P_rated] are used
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+
+== theta 292.5 deg: daily reach r* = 0.241513 deg (validated margin -9.3e-05 kW; hour-12 reach 0.118008 deg)
+  -- 0.98 r* (r = 0.236682 deg; delta3 +0.090574, delta4 -0.218666): exact margin L +5.5731 kW (equations 6.3e-11, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 0.0000 kW (validated true; SOC 4.7e-15, cyclic 0.0e+00 kWh); rho <= 1.0000 kW
+     subs1 bounds by hour (A): 95 95 96 97 98 99 97 90 89 88 88 88 88 87 87 87 87 96 95 94 94 94 94 94 | idle-battery bounds 35.1-66.9 A | dispatched/idle up to 2.51x (hour 12)
+     subs3 bounds by hour (A): 100 100 101 102 103 104 102 93 93 94 94 94 93 93 91 90 90 100 100 99 99 99 99 99 | idle-battery bounds 44.4-72.1 A | dispatched/idle up to 2.08x (hour 14)
+     subs4 bounds by hour (A): 72 73 73 73 73 73 73 79 80 80 80 80 80 80 80 79 78 73 72 72 72 72 72 72 | idle-battery bounds 40.8-49.8 A | dispatched/idle up to 1.77x (hour 22)
+     bound construction 4.6 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     lifted 0.98 r* daily dispatch (rho = 0): largest constraint violation 4.26e-09 (0.0001708975330798421 Wee[1,12] + eili[l1,12] - ejli[poi1,12] == 0); largest box violation 0.00e+00 ()
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax -0.0000 kW, checked lower bound -0.0905 kW (box term 8.80e-02 kW, rounding 3.4e-08 kW, residual 1.1e-08, dual psd/sign 0.0e+00/0.0e+00); build 6.3, solve 29.2, verify 4.1 s -> unresolved (rho lower bound <= 0)
+  -- 1.02 r* (r = 0.246343 deg; delta3 +0.094271, delta4 -0.227591): exact margin L -5.5719 kW (equations 4.7e-10, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 5.5734 kW (validated true; SOC 1.1e-16, cyclic 0.0e+00 kWh); rho <= 6.5734 kW
+     subs1 bounds by hour (A): 95 96 97 98 99 99 97 90 89 88 88 88 88 87 87 87 87 96 95 94 94 94 94 94 | idle-battery bounds 35.1-67.0 A | dispatched/idle up to 2.51x (hour 12)
+     subs3 bounds by hour (A): 100 101 102 103 104 104 102 94 94 95 95 95 94 93 92 91 91 101 100 100 100 99 100 100 | idle-battery bounds 45.1-72.8 A | dispatched/idle up to 2.07x (hour 14)
+     subs4 bounds by hour (A): 73 74 74 74 74 74 74 80 81 81 81 81 81 81 81 80 79 74 73 73 73 73 73 73 | idle-battery bounds 41.0-50.8 A | dispatched/idle up to 1.78x (hour 22)
+     bound construction 2.9 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 0.0054 kW, checked lower bound -0.2165 kW (box term 1.39e+00 kW, rounding 4.5e-08 kW, residual 4.0e-08, dual psd/sign 0.0e+00/0.0e+00); build 1.1, solve 24.2, verify 1.5 s -> unresolved (rho lower bound <= 0)
+  -- 1.1 r* (r = 0.265664 deg; delta3 +0.101665, delta4 -0.245441): exact margin L -27.8630 kW (equations 2.6e-10, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 27.8641 kW (validated true; SOC 1.1e-16, cyclic 0.0e+00 kWh); rho <= 28.8641 kW
+     subs1 bounds by hour (A): 95 96 97 98 99 100 97 90 89 88 89 88 88 87 87 87 87 96 95 95 94 94 94 94 | idle-battery bounds 35.2-67.2 A | dispatched/idle up to 2.52x (hour 12)
+     subs3 bounds by hour (A): 102 103 103 104 105 106 104 95 95 96 96 96 96 95 93 92 92 103 102 101 101 101 101 101 | idle-battery bounds 46.5-74.2 A | dispatched/idle up to 2.04x (hour 14)
+     subs4 bounds by hour (A): 75 75 76 76 76 76 76 82 83 83 83 83 83 83 83 82 81 75 75 75 75 75 75 75 | idle-battery bounds 41.6-52.7 A | dispatched/idle up to 1.80x (hour 22)
+     bound construction 2.8 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     exact re-check of the exported certificate: 20.553979 kW (widened boxes 20.553979 kW), 0 of 6288 PSD duals shifted, 7.6 s
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 20.7842 kW, checked lower bound 20.5540 kW (box term 3.37e+01 kW, rounding 3.5e-07 kW, residual 2.3e-07, dual psd/sign 0.0e+00/0.0e+00); build 1.2, solve 24.9, verify 1.6 s -> no-backflow day impossible (checked lower bound on rho > 0)
+
+== theta 157.5 deg: daily reach r* = 0.194598 deg (validated margin -5.9e-09 kW; hour-12 reach 0.100075 deg)
+  -- 0.98 r* (r = 0.190706 deg; delta3 -0.176190, delta4 +0.072980): exact margin L +5.5681 kW (equations 5.1e-10, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 0.0000 kW (validated true; SOC 1.7e-16, cyclic 0.0e+00 kWh); rho <= 1.0000 kW
+     subs1 bounds by hour (A): 101 101 102 103 104 105 103 95 94 94 94 94 93 92 92 92 92 101 101 100 100 99 100 100 | idle-battery bounds 40.5-72.7 A | dispatched/idle up to 2.31x (hour 12)
+     subs3 bounds by hour (A): 80 80 80 81 81 82 81 88 88 88 88 88 88 88 88 87 86 80 80 80 80 80 80 80 | idle-battery bounds 43.8-49.3 A | dispatched/idle up to 1.97x (hour 12)
+     subs4 bounds by hour (A): 84 85 86 87 87 88 86 79 79 79 80 79 79 78 77 77 77 85 85 84 84 84 84 84 | idle-battery bounds 35.9-63.2 A | dispatched/idle up to 2.18x (hour 14)
+     bound construction 2.9 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     lifted 0.98 r* daily dispatch (rho = 0): largest constraint violation 4.27e-09 (0.0001708975330798421 Wee[1,13] + eili[l1,13] - ejli[poi1,13] == 0); largest box violation 0.00e+00 ()
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax -0.0000 kW, checked lower bound -0.0568 kW (box term 5.06e-02 kW, rounding 3.3e-08 kW, residual 6.7e-09, dual psd/sign 0.0e+00/0.0e+00); build 1.1, solve 16.5, verify 1.4 s -> unresolved (rho lower bound <= 0)
+  -- 1.02 r* (r = 0.198490 deg; delta3 -0.183381, delta4 +0.075959): exact margin L -5.5678 kW (equations 2.6e-11, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 5.5679 kW (validated true; SOC 1.1e-16, cyclic 0.0e+00 kWh); rho <= 6.5679 kW
+     subs1 bounds by hour (A): 101 102 103 104 105 106 103 96 95 94 94 94 94 93 92 93 93 102 101 100 100 100 100 100 | idle-battery bounds 40.7-73.1 A | dispatched/idle up to 2.30x (hour 13)
+     subs3 bounds by hour (A): 81 81 81 82 82 82 82 89 89 89 89 89 89 89 89 88 87 81 81 81 81 81 81 81 | idle-battery bounds 44.0-50.2 A | dispatched/idle up to 1.95x (hour 12)
+     subs4 bounds by hour (A): 85 86 86 87 88 89 86 79 79 80 80 80 80 79 78 77 77 86 85 85 84 84 84 85 | idle-battery bounds 36.5-63.7 A | dispatched/idle up to 2.16x (hour 14)
+     bound construction 2.8 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 0.0002 kW, checked lower bound -0.0852 kW (box term 1.08e-01 kW, rounding 4.1e-08 kW, residual 4.0e-09, dual psd/sign 0.0e+00/0.0e+00); build 1.2, solve 21.3, verify 1.4 s -> unresolved (rho lower bound <= 0)
+  -- 1.1 r* (r = 0.214058 deg; delta3 -0.197764, delta4 +0.081916): exact margin L -27.8379 kW (equations 4.5e-11, SOC 1.1e-16, cyclic 0.0e+00 kWh); exact restoration rho 27.8379 kW (validated true; SOC 1.1e-16, cyclic 0.0e+00 kWh); rho <= 28.8379 kW
+     subs1 bounds by hour (A): 102 102 103 104 105 106 104 96 95 95 95 95 94 93 93 93 93 102 102 101 101 101 101 101 | idle-battery bounds 41.2-73.8 A | dispatched/idle up to 2.29x (hour 13)
+     subs3 bounds by hour (A): 83 83 83 83 84 84 83 91 91 91 91 91 91 91 91 90 89 83 83 82 82 82 82 82 | idle-battery bounds 44.3-52.1 A | dispatched/idle up to 1.91x (hour 12)
+     subs4 bounds by hour (A): 86 87 87 88 89 90 87 80 80 81 81 81 81 80 79 78 78 87 86 86 85 85 85 86 | idle-battery bounds 37.5-64.8 A | dispatched/idle up to 2.13x (hour 14)
+     bound construction 2.9 s (24 hours); sectors unrestricted in phase (device set contains zero power): 9 of 85 device buses by hour
+     exact re-check of the exported certificate: 18.662317 kW (widened boxes 18.662317 kW), 0 of 6288 PSD duals shifted, 7.2 s
+     relaxation (6288 PSD blocks, 88587 variables): ALMOST_OPTIMAL / NEARLY_FEASIBLE_POINT, rho relax 18.9322 kW, checked lower bound 18.6623 kW (box term 7.11e+00 kW, rounding 2.9e-07 kW, residual 3.2e-07, dual psd/sign 0.0e+00/0.0e+00); build 1.3, solve 22.2, verify 1.4 s -> no-backflow day impossible (checked lower bound on rho > 0)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4040.5 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

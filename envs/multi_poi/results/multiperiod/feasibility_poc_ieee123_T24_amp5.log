@@ -1,0 +1,122 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    validity: the nonlinear solution lifted into the relaxation violates it by 4.27e-10 (Q_PV[pv116,12] >= -0.015476878755097876)
+  nobatt equal     r 0.0000 th   0.0 | L   +77.644 kW (LOCALLY_SOLVED, viol 4.3e-10) | U +4804003.301 kW (ALMOST_OPTIMAL, gap -6.5e-03, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 9.6 s, relax 5.3+15.5 s dP 6.3e-05 kW; dQ 8.4e-05 kvar; dV 5.3e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 8.63e-11 (Q_PV[pv116,12] <= 0.015476878755097876)
+  nobatt 98%       r 0.1156 th 292.5 | L    +2.727 kW (LOCALLY_SOLVED, viol 8.6e-11) | U +4990319.200 kW (ALMOST_OPTIMAL, gap -2.5e-03, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 3.3 s, relax 0.7+10.7 s dP 5.7e-05 kW; dQ 7.0e-05 kvar; dV 6.6e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 8.61e-11 (Q_PV[pv116,12] <= 0.015476878755097876)
+  nobatt 102%      r 0.1204 th 292.5 | L    -2.728 kW (LOCALLY_SOLVED, viol 2.7e-03) | U +5076614.614 kW (ALMOST_OPTIMAL, gap -2.1e-02, psd 0.0e+00, rank 1.0e+00) | unresolved | nlp 2.7 s, relax 0.9+10.3 s 
+    validity: the nonlinear solution lifted into the relaxation violates it by 8.68e-11 (Q_PV[pv116,12] <= 0.015476878755097876)
+  nobatt beyond_pred r 0.1021 th 292.5 | L   +18.434 kW (LOCALLY_SOLVED, viol 8.7e-11) | U +4916793.774 kW (ALMOST_OPTIMAL, gap -2.8e-02, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 2.3 s, relax 0.9+10.1 s 
+    validity: the nonlinear solution lifted into the relaxation violates it by 6.82e-14 (-174.85100348085314 e[1s,13] - 6.999289606438953 f[1s,13] + 166.52467976915125 Wee[1s,13] + 166.52467976915125 Wff[1s,13)
+  nobatt 98%       r 0.0981 th 157.5 | L    +2.866 kW (LOCALLY_SOLVED, viol 4.7e-14) | U +5083720.106 kW (ALMOST_OPTIMAL, gap -8.4e-03, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 2.7 s, relax 0.9+10.8 s dP 3.7e-05 kW; dQ 7.0e-05 kvar; dV 5.7e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 8.14e-14 (-174.86228715446185 e[3s,24] - 6.711483022897648 f[3s,24] + 166.52467976915125 Wee[3s,24] + 166.52467976915125 Wff[3s,24)
+  nobatt 102%      r 0.1021 th 157.5 | L    -2.865 kW (LOCALLY_SOLVED, viol 2.9e-03) | U +5164303.659 kW (ALMOST_OPTIMAL, gap -2.4e-03, psd 0.0e+00, rank 1.0e+00) | unresolved | nlp 3.0 s, relax 0.9+10.9 s 
+    validity: the nonlinear solution lifted into the relaxation violates it by 4.22e-10 (Q_PV[pv116,12] >= -0.015476878755097876)
+  cyclic equal     r 0.0000 th   0.0 | L   +82.127 kW (LOCALLY_SOLVED, viol 4.2e-10) | U +4968106.744 kW (ALMOST_OPTIMAL, gap -6.0e-03, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 3.5 s, relax 0.9+10.6 s dP 5.4e-05 kW; dQ 6.0e-05 kvar; dV 5.6e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 1.36e-10 (-8.545124057945941e-5 Wee[34,8] - 8.545124057945941e-5 Wff[34,8] + ejli[l37,8] - fjlr[l37,8] == -0.0032858821863700517)
+  cyclic 98%       r 0.2367 th 292.5 | L    +5.575 kW (LOCALLY_SOLVED, viol 1.4e-10) | U +5266391.225 kW (ALMOST_OPTIMAL, gap -4.3e-02, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 38.5 s, relax 0.9+11.4 s dP 6.0e-05 kW; dQ 6.3e-05 kvar; dV 5.5e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 1.69e-10 (-8.545124057945941e-5 Wee[34,7] - 8.545124057945941e-5 Wff[34,7] + ejli[l37,7] - fjlr[l37,7] == -0.0032319123462254103)
+  cyclic 102%      r 0.2463 th 292.5 | L    -5.571 kW (LOCALLY_SOLVED, viol 5.6e-03) | U +5315295.854 kW (ALMOST_OPTIMAL, gap -6.1e-03, psd 0.0e+00, rank 1.0e+00) | unresolved | nlp 39.3 s, relax 0.8+12.0 s 
+    validity: the nonlinear solution lifted into the relaxation violates it by 4.50e-10 (-8.545124092051992e-5 Wee[58,21] - 8.545124092051992e-5 Wff[58,21] + ejli[l59,21] - fjlr[l59,21] == -0.00267905081654800)
+  cyclic beyond_pred r 0.2195 th 292.5 | L   +25.448 kW (LOCALLY_SOLVED, viol 4.5e-10) | U +5340984.079 kW (ALMOST_OPTIMAL, gap -6.0e-03, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 38.5 s, relax 0.9+11.9 s 
+    validity: the nonlinear solution lifted into the relaxation violates it by 4.69e-10 (-8.545124092051992e-5 Wee[58,20] - 8.545124092051992e-5 Wff[58,20] + ejli[l59,20] - fjlr[l59,20] == -0.00271351781362994)
+  cyclic 98%       r 0.1907 th 157.5 | L    +5.568 kW (LOCALLY_SOLVED, viol 4.7e-10) | U +5345610.207 kW (ALMOST_OPTIMAL, gap -3.1e-02, psd 0.0e+00, rank 1.0e+00) | feasible | nlp 28.5 s, relax 0.8+11.2 s dP 4.7e-05 kW; dQ 7.3e-05 kvar; dV 5.4e-10 pu; converged true
+    validity: the nonlinear solution lifted into the relaxation violates it by 5.43e-12 (-0.00034180496231783764 Wee[3,15] - 0.00034180496231783764 Wff[3,15] - eili[l3,15] - eili[l4,15] - eili[l5,15] + filr[l3)
+  cyclic 102%      r 0.1985 th 157.5 | L    -5.568 kW (LOCALLY_SOLVED, viol 5.6e-03) | U +5413467.052 kW (ALMOST_OPTIMAL, gap -6.9e-03, psd 0.0e+00, rank 1.0e+00) | unresolved | nlp 26.7 s, relax 0.9+11.6 s 
+wrote C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\results\multiperiod\feasibility_poc_ieee123_T24_amp5.csv
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4034.4 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:126
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:127
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:135
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:138

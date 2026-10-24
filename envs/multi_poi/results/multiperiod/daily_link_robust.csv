@@ -1,0 +1,7 @@
+theta_deg,point,eps_scale,solver,relax_status,rho_relax_kW,rho_lb_kW,fictitious_losses_kWh,max_source_moment_gap_pu2,solve_s
+157.5,1.02,1.1,default,NUMERICAL_ERROR,2.1232,1.8516,147.51,7.119e-01,33.4
+157.5,1.02,1.25,default,NUMERICAL_ERROR,1.5804,1.2777,168.53,8.463e-01,26.3
+157.5,1.02,1.5,default,ALMOST_OPTIMAL,0.7056,0.5228,205.72,9.624e-01,26.9
+157.5,1.02,1.0,reg 1e-6,ALMOST_OPTIMAL,2.5192,2.2098,130.80,6.201e-01,26.8
+157.5,1.02,1.0,reg 1e-8,NUMERICAL_ERROR,2.5018,2.1561,132.33,6.256e-01,24.8
+157.5,1.02,2.0,reg 1e-6,ALMOST_OPTIMAL,0.0109,-0.4836,288.66,9.970e-01,24.6

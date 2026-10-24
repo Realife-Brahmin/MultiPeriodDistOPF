@@ -1,0 +1,17 @@
+label=bracketcheck job=31350008 host=cn171 start=2026-10-21T20:35:11-07:00
+solver=ma57 IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+args=envs/multi_poi/root_level/check_bracket_rows.jl
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/bracketcheck_oct21/out_bracketcheck_31350008
+commit=a4c255ba10e3a508ab6d151d6ca789a242387416
+CPU(s):                                  64
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU(s) scaling MHz:                      70%
+   RunTime=00:00:02 TimeLimit=06:00:00 TimeMin=N/A
+   Partition=vcea AllocNode:Sid=login-p3n01:2644540
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn171
+   TRES=cpu=2,mem=16G,node=1,billing=2
+exit=0 end=2026-10-21T21:05:00-07:00
+wall_s=1789
+  2878892K   4171952K 

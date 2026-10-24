@@ -1,0 +1,112 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+== (0) conventions on toy problems (Clarabel, the same dual_bound)
+  min x s.t. [1 x; x 0.25] PSD: optimum -0.500000, dual_bound -5.500000 (must be <= -0.5 and close); raw triangle dual [0.25, 0.5, 1.0001], JuMP dual matrix [0.25 0.5; 0.5 1.0001]
+  infeasible (y >= 1): INFEASIBLE / INFEASIBILITY_CERTIFICATE, Farkas bound -2.8906e+01 (> 0 certifies); infeasible (z <= -1): INFEASIBLE / INFEASIBILITY_CERTIFICATE, Farkas bound -2.8906e+01
+conventions consistent: false
+
+== (1-3) frozen cases A and B, hour 12, 292.5 deg
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  A: src+lines 1.2x          inside               L   +2.727 | OPTIMAL            primal 4.514 kW, dual bound (tight) 44126.660 kW, (loose) 8.325e+04 kW, fictitious 1.83 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  restoration A: src+lines 1.2x          inside               exact rho 0.0000 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -5208.4416 kW, loose -1.136e+04 kW (box term 5.220e+03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: Lee[poi3,1]                        coefficient -8.597e-01, box [1.0935, 1.107], contributes 9.518e+02 kW
+      box term #2: Lee[poi1,1]                        coefficient -4.191e-01, box [1.0927, 1.1074], contributes 4.641e+02 kW
+      box term #3: Lee[poi4,1]                        coefficient -4.158e-01, box [1.0945, 1.1065], contributes 4.600e+02 kW
+      box term #4: Lee[l57,1]                         coefficient -2.341e-02, box [1.09, 1.1025], contributes 2.581e+01 kW
+  A: src+lines 1.2x          outside              L   -2.728 | INFEASIBLE         Farkas: value 1.898e+05, box term loose 7.484e+08 -> bound -7.482e+08; tightened 4.798e+08 -> bound -3.960e+08
+      -> solver-only infeasibility (ray not validated)
+      box term #1: e[4s,1]                            coefficient -3.143e+07, box [1.0462, 1.0538], contributes 3.312e+07
+      box term #2: e[115,1]                           coefficient -2.857e+07, box [1.0456, 1.05], contributes 2.999e+07
+      box term #3: e[116,1]                           coefficient -2.590e+07, box [1.0462, 1.05], contributes 2.719e+07
+      box term #4: e[114,1]                           coefficient -2.042e+07, box [1.0448, 1.05], contributes 2.145e+07
+      box term #5: e[111,1]                           coefficient -2.039e+07, box [1.0441, 1.05], contributes 2.141e+07
+      box term #6: e[120,1]                           coefficient -1.665e+07, box [1.0457, 1.05], contributes 1.748e+07
+      certificate value by constraint kind: LessThan +3.710e+08, PSD constant entries -3.696e+08, EqualTo -1.217e+06, GreaterThan +5.192e+03
+  restoration A: src+lines 1.2x          outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.9432 kW; validated lower bound: tightened -54740.1789 kW, loose -1.073e+05 kW (box term 6.667e+04 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[115,1]                           coefficient -5.388e+00, box [1.0456, 1.05], contributes 5.657e+03 kW
+      box term #2: e[114,1]                           coefficient -3.564e+00, box [1.0448, 1.05], contributes 3.742e+03 kW
+      box term #3: e[111,1]                           coefficient -3.542e+00, box [1.0441, 1.05], contributes 3.719e+03 kW
+      box term #4: Lee[poi1,1]                        coefficient -2.524e+00, box [1.0927, 1.1074], contributes 2.795e+03 kW
+  B: src+lines 1.5x          inside  kcl0+jbound  L   +2.727 | OPTIMAL            primal 4.831 kW, dual bound (tight) 43169.473 kW, (loose) 7.706e+04 kW, fictitious 1.98 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  restoration B: src+lines 1.5x          inside  kcl0+jbound  exact rho 0.0000 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -4216.4003 kW, loose -8.977e+03 kW (box term 4.216e+03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: Lee[poi3,1]                        coefficient -3.445e-01, box [1.0912, 1.1082], contributes 3.818e+02 kW
+      box term #2: Lee[poi4,1]                        coefficient -3.382e-01, box [1.0925, 1.1075], contributes 3.746e+02 kW
+      box term #3: Lee[poi1,1]                        coefficient -3.368e-01, box [1.0903, 1.1086], contributes 3.734e+02 kW
+      box term #4: Lee[l7,1]                          coefficient -1.888e-02, box [1.0894, 1.1025], contributes 2.082e+01 kW
+  B: src+lines 1.5x          outside kcl0+jbound  L   -2.728 | INFEASIBLE         Farkas: value 5.250e+06, box term loose 2.433e+10 -> bound -2.433e+10; tightened 1.543e+10 -> bound -1.266e+10
+      -> solver-only infeasibility (ray not validated)
+      box term #1: e[4s,1]                            coefficient -3.304e+09, box [1.0452, 1.0548], contributes 3.485e+09
+      box term #2: e[116,1]                           coefficient -2.936e+09, box [1.0452, 1.05], contributes 3.083e+09
+      box term #3: Lee[poi4,1]                        coefficient +1.227e+09, box [1.0925, 1.1075], contributes 1.341e+09
+      box term #4: e[15,1]                            coefficient -2.702e+08, box [1.0431, 1.05], contributes 2.837e+08
+      box term #5: e[120,1]                           coefficient -1.949e+08, box [1.0446, 1.05], contributes 2.046e+08
+      box term #6: e[62,1]                            coefficient -1.780e+08, box [1.0417, 1.05], contributes 1.869e+08
+      certificate value by constraint kind: LessThan +1.136e+10, PSD constant entries -1.132e+10, EqualTo -3.385e+07, GreaterThan +7.757e+04
+  restoration B: src+lines 1.5x          outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.6237 kW; validated lower bound: tightened -49621.4635 kW, loose -9.996e+04 kW (box term 5.610e+04 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[4s,1]                            coefficient -9.472e+00, box [1.0452, 1.0548], contributes 9.990e+03 kW
+      box term #2: e[116,1]                           coefficient -8.853e+00, box [1.0452, 1.05], contributes 9.295e+03 kW
+      box term #3: e[15,1]                            coefficient -4.603e+00, box [1.0431, 1.05], contributes 4.833e+03 kW
+      box term #4: Lee[poi4,1]                        coefficient +2.869e+00, box [1.0925, 1.1075], contributes 3.134e+03 kW
+
+== (4) challenge the envelope: no current limit, cross-seeded maximizations
+  starts: 6 (equal, the inside dispatch, 4 random feasible angle vectors)

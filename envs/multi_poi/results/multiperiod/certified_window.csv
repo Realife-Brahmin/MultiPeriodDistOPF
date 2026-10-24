@@ -1,0 +1,97 @@
+theta_deg,limits,cushion,additions,r_star_nolim_deg,r_star_lim_deg,edge_shift_pct,max_util_at_edge,util_element,r_cert_deg,r_cert_over_r_star,how,rho_lb_kW_at_r_cert,note
+22.5,sources+lines 1.2x,1.2,,0.129024,0.129024,0.000,0.821,l51,0.130919,1.015,rho bound,0.0469,first certified grid point 1.02x; bisection to 0.0%
+22.5,sources+lines 1.2x,1.2,kcl0+jbound,0.129024,0.129024,0.000,0.821,l51,0.130516,1.012,rho bound,0.0045,first certified grid point 1.02x; bisection to 0.0%
+22.5,sources+lines 1.5x,1.5,,0.129024,0.129024,0.000,0.657,l51,0.132028,1.023,rho bound,0.0600,first certified grid point 1.05x; bisection to 0.0%
+22.5,sources+lines 1.5x,1.5,kcl0+jbound,0.129024,0.129024,0.000,0.657,l51,0.131282,1.018,rho bound,0.0363,first certified grid point 1.02x; bisection to 0.0%
+22.5,sources+lines 2.0x,2.0,,0.129024,0.129024,0.000,0.493,l51,0.134326,1.041,rho bound,0.0502,first certified grid point 1.05x; bisection to 0.0%
+22.5,sources+lines 2.0x,2.0,kcl0+jbound,0.129024,0.129024,0.000,0.493,l51,0.132814,1.029,rho bound,0.0118,first certified grid point 1.05x; bisection to 0.0%
+22.5,sources+lines 3.0x,3.0,,0.129024,0.129024,0.000,0.328,l51,0.141020,1.093,rho bound,0.0782,first certified grid point 1.10x; bisection to 0.1%
+22.5,sources+lines 3.0x,3.0,kcl0+jbound,0.129024,0.129024,0.000,0.328,l51,0.137189,1.063,rho bound,0.1073,first certified grid point 1.10x; bisection to 0.1%
+22.5,sources only 1.5x,1.5,,0.129024,0.129024,0.000,0.302,source:subs3,NaN,NaN,,NaN,not certified up to 3 x r*
+22.5,sources only 1.5x,1.5,kcl0+jbound,0.129024,0.129024,0.000,0.302,source:subs3,0.136181,1.055,rho bound,0.0796,first certified grid point 1.10x; bisection to 0.1%
+22.5,no limits,none,,0.129024,0.129024,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+22.5,no limits,none,kcl0+jbound,0.129024,0.129024,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+67.5,sources+lines 1.2x,1.2,,0.151824,0.151824,-0.000,0.821,l51,0.154101,1.015,rho bound,0.0334,first certified grid point 1.02x; bisection to 0.0%
+67.5,sources+lines 1.2x,1.2,kcl0+jbound,0.151824,0.151824,-0.000,0.821,l51,0.153627,1.012,rho bound,0.0111,first certified grid point 1.02x; bisection to 0.0%
+67.5,sources+lines 1.5x,1.5,,0.151824,0.151824,-0.000,0.657,l51,0.155430,1.024,rho bound,0.0598,first certified grid point 1.05x; bisection to 0.0%
+67.5,sources+lines 1.5x,1.5,kcl0+jbound,0.151824,0.151824,-0.000,0.657,l51,0.154528,1.018,rho bound,0.0252,first certified grid point 1.02x; bisection to 0.0%
+67.5,sources+lines 2.0x,2.0,,0.151824,0.151824,-0.000,0.493,l51,0.158134,1.042,rho bound,0.0048,first certified grid point 1.05x; bisection to 0.0%
+67.5,sources+lines 2.0x,2.0,kcl0+jbound,0.151824,0.151824,-0.000,0.493,l51,0.156355,1.030,rho bound,0.0072,first certified grid point 1.05x; bisection to 0.0%
+67.5,sources+lines 3.0x,3.0,,0.151824,0.151824,-0.000,0.328,l51,0.166057,1.094,rho bound,0.1878,first certified grid point 1.10x; bisection to 0.1%
+67.5,sources+lines 3.0x,3.0,kcl0+jbound,0.151824,0.151824,-0.000,0.328,l51,0.161431,1.063,rho bound,0.0264,first certified grid point 1.10x; bisection to 0.1%
+67.5,sources only 1.5x,1.5,,0.151824,0.151824,-0.000,0.269,source:subs4,NaN,NaN,,NaN,not certified up to 3 x r*
+67.5,sources only 1.5x,1.5,kcl0+jbound,0.151824,0.151824,-0.000,0.269,source:subs4,0.160245,1.055,rho bound,0.0953,first certified grid point 1.10x; bisection to 0.1%
+67.5,no limits,none,,0.151824,0.151824,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+67.5,no limits,none,kcl0+jbound,0.151824,0.151824,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+112.5,sources+lines 1.2x,1.2,,0.152114,0.152114,-0.000,0.855,l16,0.153682,1.010,rho bound,0.0408,first certified grid point 1.02x; bisection to 0.0%
+112.5,sources+lines 1.2x,1.2,kcl0+jbound,0.152114,0.152114,-0.000,0.855,l16,0.153112,1.007,rho bound,0.0445,first certified grid point 1.02x; bisection to 0.0%
+112.5,sources+lines 1.5x,1.5,,0.152114,0.152114,-0.000,0.684,l16,0.154823,1.018,rho bound,0.0434,first certified grid point 1.02x; bisection to 0.0%
+112.5,sources+lines 1.5x,1.5,kcl0+jbound,0.152114,0.152114,-0.000,0.684,l16,0.153777,1.011,rho bound,0.0127,first certified grid point 1.02x; bisection to 0.0%
+112.5,sources+lines 2.0x,2.0,,0.152114,0.152114,-0.000,0.513,l16,0.157295,1.034,rho bound,0.0514,first certified grid point 1.05x; bisection to 0.0%
+112.5,sources+lines 2.0x,2.0,kcl0+jbound,0.152114,0.152114,-0.000,0.513,l16,0.155227,1.020,rho bound,0.0077,first certified grid point 1.05x; bisection to 0.0%
+112.5,sources+lines 3.0x,3.0,,0.152114,0.152114,-0.000,0.342,l16,0.164354,1.080,rho bound,0.0726,first certified grid point 1.10x; bisection to 0.1%
+112.5,sources+lines 3.0x,3.0,kcl0+jbound,0.152114,0.152114,-0.000,0.342,l16,0.159149,1.046,rho bound,0.0464,first certified grid point 1.05x; bisection to 0.0%
+112.5,sources only 1.5x,1.5,,0.152114,0.152114,-0.000,0.422,source:subs4,NaN,NaN,,NaN,not certified up to 3 x r*
+112.5,sources only 1.5x,1.5,kcl0+jbound,0.152114,0.152114,-0.000,0.422,source:subs4,0.158864,1.044,rho bound,0.0800,first certified grid point 1.05x; bisection to 0.0%
+112.5,no limits,none,,0.152114,0.152114,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+112.5,no limits,none,kcl0+jbound,0.152114,0.152114,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+157.5,sources+lines 1.2x,1.2,,0.100075,0.100075,0.000,0.836,l16,0.101139,1.011,rho bound,0.0024,first certified grid point 1.02x; bisection to 0.0%
+157.5,sources+lines 1.2x,1.2,kcl0+jbound,0.100075,0.100075,0.000,0.836,l16,0.100795,1.007,rho bound,0.0542,first certified grid point 1.02x; bisection to 0.0%
+157.5,sources+lines 1.5x,1.5,,0.100075,0.100075,0.000,0.669,l16,0.101921,1.018,rho bound,0.0452,first certified grid point 1.02x; bisection to 0.0%
+157.5,sources+lines 1.5x,1.5,kcl0+jbound,0.100075,0.100075,0.000,0.669,l16,0.101264,1.012,rho bound,0.0591,first certified grid point 1.02x; bisection to 0.0%
+157.5,sources+lines 2.0x,2.0,,0.100075,0.100075,0.000,0.501,l16,0.103531,1.035,rho bound,0.0404,first certified grid point 1.05x; bisection to 0.0%
+157.5,sources+lines 2.0x,2.0,kcl0+jbound,0.100075,0.100075,0.000,0.501,l16,0.102171,1.021,rho bound,0.0078,first certified grid point 1.05x; bisection to 0.0%
+157.5,sources+lines 3.0x,3.0,,0.100075,0.100075,0.000,0.334,l16,0.108207,1.081,rho bound,0.1593,first certified grid point 1.10x; bisection to 0.1%
+157.5,sources+lines 3.0x,3.0,kcl0+jbound,0.100075,0.100075,0.000,0.334,l16,0.104751,1.047,rho bound,0.0439,first certified grid point 1.05x; bisection to 0.0%
+157.5,sources only 1.5x,1.5,,0.100075,0.100075,-0.000,0.360,source:subs4,NaN,NaN,,NaN,not certified up to 3 x r*
+157.5,sources only 1.5x,1.5,kcl0+jbound,0.100075,0.100075,-0.000,0.360,source:subs4,0.104610,1.045,rho bound,0.1760,first certified grid point 1.05x; bisection to 0.0%
+157.5,no limits,none,,0.100075,0.100075,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+157.5,no limits,none,kcl0+jbound,0.100075,0.100075,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+202.5,sources+lines 1.2x,1.2,,0.132332,0.132332,0.000,0.822,l51,0.133780,1.011,rho bound,0.0295,first certified grid point 1.02x; bisection to 0.0%
+202.5,sources+lines 1.2x,1.2,kcl0+jbound,0.132332,0.132332,0.000,0.822,l51,0.133325,1.007,rho bound,0.0662,first certified grid point 1.02x; bisection to 0.0%
+202.5,sources+lines 1.5x,1.5,,0.132332,0.132332,0.000,0.658,l51,0.134772,1.018,rho bound,0.0293,first certified grid point 1.02x; bisection to 0.0%
+202.5,sources+lines 1.5x,1.5,kcl0+jbound,0.132332,0.132332,0.000,0.658,l51,0.133904,1.012,rho bound,0.0126,first certified grid point 1.02x; bisection to 0.0%
+202.5,sources+lines 2.0x,2.0,,0.132332,0.132332,0.000,0.493,l21,0.136902,1.035,rho bound,0.0012,first certified grid point 1.05x; bisection to 0.0%
+202.5,sources+lines 2.0x,2.0,kcl0+jbound,0.132332,0.132332,0.000,0.493,l21,0.135165,1.021,rho bound,0.0598,first certified grid point 1.05x; bisection to 0.0%
+202.5,sources+lines 3.0x,3.0,,0.132332,0.132332,0.000,0.329,l7,0.143084,1.081,rho bound,0.0720,first certified grid point 1.10x; bisection to 0.1%
+202.5,sources+lines 3.0x,3.0,kcl0+jbound,0.132332,0.132332,0.000,0.329,l7,0.138577,1.047,rho bound,0.0579,first certified grid point 1.05x; bisection to 0.0%
+202.5,sources only 1.5x,1.5,,0.132332,0.132332,0.000,0.375,source:subs1,NaN,NaN,,NaN,not certified up to 3 x r*
+202.5,sources only 1.5x,1.5,kcl0+jbound,0.132332,0.132332,0.000,0.375,source:subs1,0.138329,1.045,rho bound,0.1859,first certified grid point 1.05x; bisection to 0.0%
+202.5,no limits,none,,0.132332,0.132332,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+202.5,no limits,none,kcl0+jbound,0.132332,0.132332,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+247.5,sources+lines 1.2x,1.2,,0.169032,0.169032,0.000,0.822,l51,0.171357,1.014,rho bound,0.0202,first certified grid point 1.02x; bisection to 0.0%
+247.5,sources+lines 1.2x,1.2,kcl0+jbound,0.169032,0.169032,0.000,0.822,l51,0.170828,1.011,rho bound,0.0055,first certified grid point 1.02x; bisection to 0.0%
+247.5,sources+lines 1.5x,1.5,,0.169032,0.169032,0.000,0.658,l51,0.173126,1.024,rho bound,0.0012,first certified grid point 1.05x; bisection to 0.0%
+247.5,sources+lines 1.5x,1.5,kcl0+jbound,0.169032,0.169032,0.000,0.658,l51,0.171991,1.018,rho bound,0.0267,first certified grid point 1.02x; bisection to 0.0%
+247.5,sources+lines 2.0x,2.0,,0.169032,0.169032,0.000,0.494,l21,0.177009,1.047,rho bound,0.0059,first certified grid point 1.05x; bisection to 0.0%
+247.5,sources+lines 2.0x,2.0,kcl0+jbound,0.169032,0.169032,0.000,0.494,l21,0.174315,1.031,rho bound,0.0058,first certified grid point 1.05x; bisection to 0.0%
+247.5,sources+lines 3.0x,3.0,,0.169032,0.169032,0.000,0.329,l21,0.187917,1.112,rho bound,0.0688,first certified grid point 1.25x; bisection to 0.2%
+247.5,sources+lines 3.0x,3.0,kcl0+jbound,0.169032,0.169032,0.000,0.329,l21,0.180918,1.070,rho bound,0.1991,first certified grid point 1.10x; bisection to 0.1%
+247.5,sources only 1.5x,1.5,,0.169032,0.169032,0.000,0.455,source:subs1,0.507097,3.000,rho bound,0.0000,first certified grid point 3.00x; bisection to 1.6%
+247.5,sources only 1.5x,1.5,kcl0+jbound,0.169032,0.169032,0.000,0.455,source:subs1,0.175503,1.038,rho bound,0.1391,first certified grid point 1.05x; bisection to 0.0%
+247.5,no limits,none,,0.169032,0.169032,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+247.5,no limits,none,kcl0+jbound,0.169032,0.169032,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+292.5,sources+lines 1.2x,1.2,,0.118008,0.118008,0.000,0.822,l51,0.119667,1.014,rho bound,0.0818,first certified grid point 1.02x; bisection to 0.0%
+292.5,sources+lines 1.2x,1.2,kcl0+jbound,0.118008,0.118008,0.000,0.822,l51,0.119298,1.011,rho bound,0.0420,first certified grid point 1.02x; bisection to 0.0%
+292.5,sources+lines 1.5x,1.5,,0.118008,0.118008,0.000,0.658,l51,0.120866,1.024,rho bound,0.0011,first certified grid point 1.05x; bisection to 0.0%
+292.5,sources+lines 1.5x,1.5,kcl0+jbound,0.118008,0.118008,0.000,0.658,l51,0.120073,1.018,rho bound,0.0108,first certified grid point 1.02x; bisection to 0.0%
+292.5,sources+lines 2.0x,2.0,,0.118008,0.118008,-0.000,0.494,l21,0.123576,1.047,rho bound,0.0525,first certified grid point 1.05x; bisection to 0.0%
+292.5,sources+lines 2.0x,2.0,kcl0+jbound,0.118008,0.118008,-0.000,0.494,l21,0.121751,1.032,rho bound,0.0427,first certified grid point 1.05x; bisection to 0.0%
+292.5,sources+lines 3.0x,3.0,,0.118008,0.118008,-0.000,0.329,l21,0.131191,1.112,rho bound,0.0034,first certified grid point 1.25x; bisection to 0.2%
+292.5,sources+lines 3.0x,3.0,kcl0+jbound,0.118008,0.118008,-0.000,0.329,l21,0.126213,1.070,rho bound,0.0487,first certified grid point 1.10x; bisection to 0.1%
+292.5,sources only 1.5x,1.5,,0.118008,0.118008,-0.000,0.447,source:subs3,NaN,NaN,,NaN,not certified up to 3 x r*
+292.5,sources only 1.5x,1.5,kcl0+jbound,0.118008,0.118008,-0.000,0.447,source:subs3,0.122746,1.040,rho bound,0.1249,first certified grid point 1.05x; bisection to 0.0%
+292.5,no limits,none,,0.118008,0.118008,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+292.5,no limits,none,kcl0+jbound,0.118008,0.118008,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+337.5,sources+lines 1.2x,1.2,,0.164820,0.164820,0.000,0.822,l75,0.167035,1.013,rho bound,0.0353,first certified grid point 1.02x; bisection to 0.0%
+337.5,sources+lines 1.2x,1.2,kcl0+jbound,0.164820,0.164820,0.000,0.822,l75,0.166571,1.011,rho bound,0.0310,first certified grid point 1.02x; bisection to 0.0%
+337.5,sources+lines 1.5x,1.5,,0.164820,0.164820,0.000,0.658,l75,0.168735,1.024,rho bound,0.0017,first certified grid point 1.05x; bisection to 0.0%
+337.5,sources+lines 1.5x,1.5,kcl0+jbound,0.164820,0.164820,0.000,0.658,l75,0.167704,1.018,rho bound,0.0390,first certified grid point 1.02x; bisection to 0.0%
+337.5,sources+lines 2.0x,2.0,,0.164820,0.164820,0.000,0.494,l21,0.172520,1.047,rho bound,0.1136,first certified grid point 1.05x; bisection to 0.0%
+337.5,sources+lines 2.0x,2.0,kcl0+jbound,0.164820,0.164820,0.000,0.494,l21,0.169971,1.031,rho bound,0.0240,first certified grid point 1.05x; bisection to 0.0%
+337.5,sources+lines 3.0x,3.0,,0.164820,0.164820,0.000,0.329,l7,0.182461,1.107,rho bound,0.2123,first certified grid point 1.25x; bisection to 0.2%
+337.5,sources+lines 3.0x,3.0,kcl0+jbound,0.164820,0.164820,0.000,0.329,l7,0.176280,1.070,rho bound,0.0212,first certified grid point 1.10x; bisection to 0.1%
+337.5,sources only 1.5x,1.5,,0.164820,0.164820,0.000,0.521,source:subs3,0.486734,2.953,rho bound,0.3715,first certified grid point 3.00x; bisection to 1.6%
+337.5,sources only 1.5x,1.5,kcl0+jbound,0.164820,0.164820,0.000,0.521,source:subs3,0.171130,1.038,rho bound,0.1267,first certified grid point 1.05x; bisection to 0.0%
+337.5,no limits,none,,0.164820,0.164820,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*
+337.5,no limits,none,kcl0+jbound,0.164820,0.164820,0.000,NaN,,NaN,NaN,,NaN,not certified up to 3 x r*

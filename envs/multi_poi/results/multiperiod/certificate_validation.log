@@ -1,0 +1,296 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+== (0) conventions on toy problems (Clarabel, the same dual_bound)
+  min x s.t. [1 x; x 0.25] PSD: optimum -0.500000, dual_bound -0.500000 (must be <= -0.5 and close); raw triangle dual [0.25, 0.5, 1.0001], JuMP dual matrix [0.25 0.5; 0.5 1.0001]
+  infeasible (y >= 1): INFEASIBLE / INFEASIBILITY_CERTIFICATE, Farkas bound 1.0000e+00 (> 0 certifies); infeasible (z <= -1): INFEASIBLE / INFEASIBILITY_CERTIFICATE, Farkas bound 1.0000e+00
+conventions consistent: true
+
+== (1-3) frozen cases A and B, hour 12, 292.5 deg
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  A: src+lines 1.2x          inside               L   +2.727 | OPTIMAL            primal 4.514 kW, dual bound (tight) 4.515 kW, (loose) 4.517e+00 kW, fictitious 1.83 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  restoration A: src+lines 1.2x          inside               exact rho 0.0000 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0002 kW, loose -6.062e-04 kW (box term 5.496e-04 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[4s,1]                            coefficient -9.753e-08, box [1.0462, 1.0538], contributes 1.028e-04 kW
+      box term #2: e[1s,1]                            coefficient -9.242e-08, box [1.0453, 1.0547], contributes 9.747e-05 kW
+      box term #3: e[3s,1]                            coefficient -8.991e-08, box [1.0457, 1.0543], contributes 9.480e-05 kW
+      box term #4: Wee[3s,1]                          coefficient +3.446e-08, box [1.0935, 1.1116], contributes 3.768e-05 kW
+  A: src+lines 1.2x          outside              L   -2.728 | INFEASIBLE         Farkas: value 1.898e+05, box term loose 1.892e+05 -> bound 6.015e+02; tightened 1.892e+05 -> bound 6.015e+02
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+      box term #1: Q_PV[pv67,1]                       coefficient +3.007e+05, box [-0.10835, 0.10835], contributes 3.258e+04
+      box term #2: Q_PV[pv116,1]                      coefficient -1.022e+06, box [-0.015477, 0.015477], contributes 1.581e+04
+      box term #3: Q_PV[pv3,1]                        coefficient +4.879e+05, box [-0.030947, 0.030947], contributes 1.510e+04
+      box term #4: Q_PV[pv26,1]                       coefficient +4.598e+05, box [-0.030947, 0.030947], contributes 1.423e+04
+      box term #5: Q_PV[pv35,1]                       coefficient +4.577e+05, box [-0.030947, 0.030947], contributes 1.416e+04
+      box term #6: Q_PV[pv18,1]                       coefficient +4.413e+05, box [-0.030947, 0.030947], contributes 1.366e+04
+      certificate value by constraint kind: LessThan +3.710e+08, PSD constant entries -3.696e+08, EqualTo -1.217e+06, GreaterThan +5.192e+03
+  restoration A: src+lines 1.2x          outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.9432 kW; validated lower bound: tightened 0.9428 kW, loose 9.420e-01 kW (box term 1.848e+01 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+  B: src+lines 1.5x          inside  kcl0+jbound  L   +2.727 | OPTIMAL            primal 4.831 kW, dual bound (tight) 4.846 kW, (loose) 4.866e+00 kW, fictitious 1.98 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  restoration B: src+lines 1.5x          inside  kcl0+jbound  exact rho 0.0000 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0033 kW, loose -7.333e-03 kW (box term 6.078e-03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -8.575e-07, box [1.0442, 1.0558], contributes 9.053e-04 kW
+      box term #2: e[3s,1]                            coefficient -8.573e-07, box [1.0446, 1.0554], contributes 9.048e-04 kW
+      box term #3: e[4s,1]                            coefficient -8.559e-07, box [1.0452, 1.0548], contributes 9.028e-04 kW
+      box term #4: Wee[4s,1]                          coefficient +3.540e-07, box [1.0925, 1.1125], contributes 3.867e-04 kW
+  B: src+lines 1.5x          outside kcl0+jbound  L   -2.728 | INFEASIBLE         Farkas: value 5.250e+06, box term loose 5.241e+06 -> bound 8.913e+03; tightened 5.241e+06 -> bound 8.913e+03
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+      box term #1: Q_PV[pv67,1]                       coefficient +8.193e+06, box [-0.10835, 0.10835], contributes 8.877e+05
+      box term #2: Q_PV[pv116,1]                      coefficient -2.890e+07, box [-0.015477, 0.015477], contributes 4.472e+05
+      box term #3: Q_PV[pv3,1]                        coefficient +1.384e+07, box [-0.030947, 0.030947], contributes 4.284e+05
+      box term #4: Q_PV[pv26,1]                       coefficient +1.300e+07, box [-0.030947, 0.030947], contributes 4.022e+05
+      box term #5: Q_PV[pv35,1]                       coefficient +1.285e+07, box [-0.030947, 0.030947], contributes 3.977e+05
+      box term #6: Q_PV[pv18,1]                       coefficient +1.240e+07, box [-0.030947, 0.030947], contributes 3.836e+05
+      certificate value by constraint kind: LessThan +1.136e+10, PSD constant entries -1.132e+10, EqualTo -3.385e+07, GreaterThan +7.757e+04
+  restoration B: src+lines 1.5x          outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.6237 kW; validated lower bound: tightened 0.6145 kW, loose 6.023e-01 kW (box term 1.815e+01 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+
+== (4) challenge the envelope: no current limit, cross-seeded maximizations
+  starts: 6 (equal, the inside dispatch, 4 random feasible angle vectors)
+  validated maximizations: 102 from the first starts, 1734 cross-seeded
+  elements above the frozen envelope: 7; above 1.2x of it: 3
+    l125           29.97 A (frozen 24.83 A, x1.207) at max line l118 from max l111 from random 3
+    l120           29.98 A (frozen 24.84 A, x1.207) at max line l118 from max l111 from random 3
+    l121           30.00 A (frozen 24.86 A, x1.207) at max line l118 from max l111 from random 3
+    l61            44.12 A (frozen 41.79 A, x1.056) at max line l118 from max l111 from random 3
+    l58            46.09 A (frozen 43.99 A, x1.048) at max line l118 from max l111 from random 3
+    l56            46.04 A (frozen 45.05 A, x1.022) at max line l118 from max l111 from random 3
+    l16            22.76 A (frozen 22.62 A, x1.006) at max line l118 from max l46 from equal (cold)
+  envelope updated transparently; rerunning A and B with it
+  A: src+lines 1.2x (updated envelope) inside               L   +2.727 | OPTIMAL            primal 4.544 kW, dual bound (tight) 4.547 kW, (loose) 4.552e+00 kW, fictitious 1.85 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  A: src+lines 1.2x (updated envelope) outside              L   -2.728 | INFEASIBLE         Farkas: value 1.921e+05, box term loose 1.914e+05 -> bound 6.015e+02; tightened 1.914e+05 -> bound 6.015e+02
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+      box term #1: Q_PV[pv67,1]                       coefficient +3.042e+05, box [-0.10835, 0.10835], contributes 3.296e+04
+      box term #2: Q_PV[pv116,1]                      coefficient -1.033e+06, box [-0.015477, 0.015477], contributes 1.599e+04
+      box term #3: Q_PV[pv3,1]                        coefficient +4.934e+05, box [-0.030947, 0.030947], contributes 1.527e+04
+      box term #4: Q_PV[pv26,1]                       coefficient +4.651e+05, box [-0.030947, 0.030947], contributes 1.439e+04
+      box term #5: Q_PV[pv35,1]                       coefficient +4.630e+05, box [-0.030947, 0.030947], contributes 1.433e+04
+      box term #6: Q_PV[pv18,1]                       coefficient +4.464e+05, box [-0.030947, 0.030947], contributes 1.382e+04
+      certificate value by constraint kind: LessThan +3.686e+08, PSD constant entries -3.672e+08, EqualTo -1.231e+06, GreaterThan +5.194e+03
+  restoration A: src+lines 1.2x (updated envelope) outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.9102 kW; validated lower bound: tightened 0.9082 kW, loose 9.036e-01 kW (box term 1.848e+01 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+  B: src+lines 1.5x (updated envelope) inside  kcl0+jbound  L   +2.727 | ALMOST_OPTIMAL     primal 4.939 kW, dual bound (tight) 4.966 kW, (loose) 5.001e+00 kW, fictitious 2.16 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  B: src+lines 1.5x (updated envelope) outside kcl0+jbound  L   -2.728 | INFEASIBLE         Farkas: value 6.582e+06, box term loose 6.573e+06 -> bound 9.306e+03; tightened 6.573e+06 -> bound 9.306e+03
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+      box term #1: Q_PV[pv67,1]                       coefficient +1.028e+07, box [-0.10835, 0.10835], contributes 1.114e+06
+      box term #2: Q_PV[pv116,1]                      coefficient -3.620e+07, box [-0.015477, 0.015477], contributes 5.602e+05
+      box term #3: Q_PV[pv3,1]                        coefficient +1.733e+07, box [-0.030947, 0.030947], contributes 5.364e+05
+      box term #4: Q_PV[pv26,1]                       coefficient +1.628e+07, box [-0.030947, 0.030947], contributes 5.040e+05
+      box term #5: Q_PV[pv35,1]                       coefficient +1.612e+07, box [-0.030947, 0.030947], contributes 4.989e+05
+      box term #6: Q_PV[pv18,1]                       coefficient +1.557e+07, box [-0.030947, 0.030947], contributes 4.818e+05
+      certificate value by constraint kind: LessThan +1.493e+10, PSD constant entries -1.488e+10, EqualTo -4.244e+07, GreaterThan +8.092e+04
+  restoration B: src+lines 1.5x (updated envelope) outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.5305 kW; validated lower bound: tightened 0.5223 kW, loose 5.139e-01 kW (box term 1.811e+01 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+
+== (5) cushion sensitivity (envelope as used by the rest of the run)
+  sources 1.2x               inside               L   +2.727 | OPTIMAL            primal 158.218 kW, dual bound (tight) 158.222 kW, (loose) 1.582e+02 kW, fictitious 470.03 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 1.2x               outside              L   -2.728 | OPTIMAL            primal 158.394 kW, dual bound (tight) 158.396 kW, (loose) 1.584e+02 kW, fictitious 472.25 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 1.2x               outside              exact rho 2.7275 kW (validated) | relaxation ALMOST_OPTIMAL rho -0.0001 kW; validated lower bound: tightened -0.0039 kW, loose -1.012e-02 kW (box term 9.544e-03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -1.484e-06, box [1.0453, 1.0547], contributes 1.565e-03 kW
+      box term #2: e[3s,1]                            coefficient -1.484e-06, box [1.0457, 1.0543], contributes 1.565e-03 kW
+      box term #3: e[4s,1]                            coefficient -1.483e-06, box [1.0462, 1.0538], contributes 1.563e-03 kW
+      box term #4: Wee[4s,1]                          coefficient +6.185e-07, box [1.0945, 1.1105], contributes 6.770e-04 kW
+  sources 1.2x               inside  kcl0+jbound  L   +2.727 | OPTIMAL            primal 5.737 kW, dual bound (tight) 5.746 kW, (loose) 5.757e+00 kW, fictitious 7.47 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 1.2x               outside kcl0+jbound  L   -2.728 | OPTIMAL            primal 0.270 kW, dual bound (tight) 0.278 kW, (loose) 2.865e-01 kW, fictitious 7.43 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 1.2x               outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0001 kW; validated lower bound: tightened -0.0150 kW, loose -2.970e-02 kW (box term 6.878e-01 kW) -> not certified (rho lower bound <= 0)
+      box term #1: Q_PV[pv67,1]                       coefficient +1.036e-03, box [-0.10835, 0.10835], contributes 1.122e-01 kW
+      box term #2: Q_PV[pv116,1]                      coefficient -3.787e-03, box [-0.015477, 0.015477], contributes 5.861e-02 kW
+      box term #3: Q_PV[pv3,1]                        coefficient +1.730e-03, box [-0.030947, 0.030947], contributes 5.353e-02 kW
+      box term #4: Q_PV[pv26,1]                       coefficient +1.628e-03, box [-0.030947, 0.030947], contributes 5.039e-02 kW
+  sources+lines 1.2x         inside               L   +2.727 | OPTIMAL            primal 4.544 kW, dual bound (tight) 4.547 kW, (loose) 4.552e+00 kW, fictitious 1.85 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources+lines 1.2x         outside              L   -2.728 | INFEASIBLE         Farkas: value 1.921e+05, box term loose 1.914e+05 -> bound 6.015e+02; tightened 1.914e+05 -> bound 6.015e+02
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+  restoration sources+lines 1.2x         outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho 0.9102 kW; validated lower bound: tightened 0.9082 kW, loose 9.036e-01 kW (box term 1.848e+01 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+  sources 1.5x               inside               L   +2.727 | OPTIMAL            primal 195.345 kW, dual bound (tight) 195.379 kW, (loose) 1.954e+02 kW, fictitious 730.47 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 1.5x               outside              L   -2.728 | OPTIMAL            primal 195.306 kW, dual bound (tight) 195.464 kW, (loose) 1.955e+02 kW, fictitious 727.01 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 1.5x               outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0016 kW, loose -3.888e-03 kW (box term 3.645e-03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -5.559e-07, box [1.0442, 1.0558], contributes 5.869e-04 kW
+      box term #2: e[3s,1]                            coefficient -5.540e-07, box [1.0446, 1.0554], contributes 5.847e-04 kW
+      box term #3: e[4s,1]                            coefficient -5.539e-07, box [1.0452, 1.0548], contributes 5.843e-04 kW
+      box term #4: Wee[4s,1]                          coefficient +2.227e-07, box [1.0925, 1.1125], contributes 2.433e-04 kW
+  sources 1.5x               inside  kcl0+jbound  L   +2.727 | OPTIMAL            primal 7.766 kW, dual bound (tight) 7.772 kW, (loose) 7.778e+00 kW, fictitious 12.87 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 1.5x               outside kcl0+jbound  L   -2.728 | OPTIMAL            primal 2.327 kW, dual bound (tight) 2.339 kW, (loose) 2.352e+00 kW, fictitious 12.90 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 1.5x               outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0001 kW; validated lower bound: tightened -0.0099 kW, loose -1.915e-02 kW (box term 3.313e-02 kW) -> not certified (rho lower bound <= 0)
+      box term #1: Q_PV[pv67,1]                       coefficient +2.738e-05, box [-0.10835, 0.10835], contributes 2.967e-03 kW
+      box term #2: e[1s,1]                            coefficient -1.966e-06, box [1.0442, 1.0558], contributes 2.076e-03 kW
+      box term #3: e[3s,1]                            coefficient -1.966e-06, box [1.0446, 1.0554], contributes 2.075e-03 kW
+      box term #4: e[4s,1]                            coefficient -1.965e-06, box [1.0452, 1.0548], contributes 2.073e-03 kW
+  sources+lines 1.5x         inside               L   +2.727 | OPTIMAL            primal 5.953 kW, dual bound (tight) 5.955 kW, (loose) 5.959e+00 kW, fictitious 3.28 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources+lines 1.5x         outside              L   -2.728 | OPTIMAL            primal 0.492 kW, dual bound (tight) 0.494 kW, (loose) 4.970e-01 kW, fictitious 3.27 kW
+      -> unresolved (relaxation feasible)
+  restoration sources+lines 1.5x         outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0005 kW, loose -1.215e-03 kW (box term 3.539e-03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: Q_PV[pv67,1]                       coefficient +3.903e-06, box [-0.10835, 0.10835], contributes 4.229e-04 kW
+      box term #2: Q_PV[pv116,1]                      coefficient -1.324e-05, box [-0.015477, 0.015477], contributes 2.049e-04 kW
+      box term #3: Q_PV[pv3,1]                        coefficient +6.302e-06, box [-0.030947, 0.030947], contributes 1.950e-04 kW
+      box term #4: e[1s,1]                            coefficient -1.809e-07, box [1.0442, 1.0558], contributes 1.910e-04 kW
+  sources 2.0x               inside               L   +2.727 | OPTIMAL            primal 256.916 kW, dual bound (tight) 256.965 kW, (loose) 2.570e+02 kW, fictitious 1165.40 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 2.0x               outside              L   -2.728 | OPTIMAL            primal 257.476 kW, dual bound (tight) 257.538 kW, (loose) 2.575e+02 kW, fictitious 1161.77 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 2.0x               outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0004 kW, loose -9.391e-04 kW (box term 8.973e-04 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -1.256e-07, box [1.0422, 1.0578], contributes 1.329e-04 kW
+      box term #2: e[4s,1]                            coefficient -1.257e-07, box [1.0436, 1.0564], contributes 1.328e-04 kW
+      box term #3: e[3s,1]                            coefficient -1.255e-07, box [1.0428, 1.0572], contributes 1.327e-04 kW
+      box term #4: Wee[3s,1]                          coefficient +5.186e-08, box [1.0875, 1.1176], contributes 5.640e-05 kW
+  sources 2.0x               inside  kcl0+jbound  L   +2.727 | OPTIMAL            primal 12.137 kW, dual bound (tight) 12.145 kW, (loose) 1.215e+01 kW, fictitious 24.62 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources 2.0x               outside kcl0+jbound  L   -2.728 | OPTIMAL            primal 6.695 kW, dual bound (tight) 6.706 kW, (loose) 6.716e+00 kW, fictitious 24.64 kW
+      -> unresolved (relaxation feasible)
+  restoration sources 2.0x               outside kcl0+jbound  exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0001 kW; validated lower bound: tightened -0.0144 kW, loose -2.597e-02 kW (box term 2.684e-02 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -2.457e-06, box [1.0422, 1.0578], contributes 2.599e-03 kW
+      box term #2: e[3s,1]                            coefficient -2.457e-06, box [1.0428, 1.0572], contributes 2.598e-03 kW
+      box term #3: e[4s,1]                            coefficient -2.457e-06, box [1.0436, 1.0564], contributes 2.596e-03 kW
+      box term #4: Wee[4s,1]                          coefficient +1.016e-06, box [1.0892, 1.1159], contributes 1.107e-03 kW
+  sources+lines 2.0x         inside               L   +2.727 | OPTIMAL            primal 8.997 kW, dual bound (tight) 8.998 kW, (loose) 8.999e+00 kW, fictitious 6.36 kW
+      lifted inside dispatch: constraints 8.6e-11, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  sources+lines 2.0x         outside              L   -2.728 | OPTIMAL            primal 3.539 kW, dual bound (tight) 3.541 kW, (loose) 3.544e+00 kW, fictitious 6.35 kW
+      -> unresolved (relaxation feasible)
+  restoration sources+lines 2.0x         outside              exact rho 2.7275 kW (validated) | relaxation OPTIMAL rho -0.0000 kW; validated lower bound: tightened -0.0007 kW, loose -1.628e-03 kW (box term 1.670e-03 kW) -> not certified (rho lower bound <= 0)
+      box term #1: e[1s,1]                            coefficient -2.323e-07, box [1.0422, 1.0578], contributes 2.458e-04 kW
+      box term #2: e[3s,1]                            coefficient -2.322e-07, box [1.0428, 1.0572], contributes 2.455e-04 kW
+      box term #3: e[4s,1]                            coefficient -2.322e-07, box [1.0436, 1.0564], contributes 2.453e-04 kW
+      box term #4: Wee[4s,1]                          coefficient +9.581e-08, box [1.0892, 1.1159], contributes 1.044e-04 kW
+
+any validated certificate: true
+
+== (6) 157.5 deg, same envelope and cushions
+  hour 12 boundary along 157.5 deg: r* = 0.100075 deg (margin +5.7e-09 kW)
+  A: src+lines 1.2x 157.5    inside               L   +2.865 | OPTIMAL            primal 4.337 kW, dual bound (tight) 4.337 kW, (loose) 4.339e+00 kW, fictitious 1.98 kW
+      lifted inside dispatch: constraints 5.6e-14, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  A: src+lines 1.2x 157.5    outside              L   -2.865 | NUMERICAL_ERROR    primal 1239.688 kW, dual bound (tight) -65345006842585184.000 kW, (loose) -6.535e+16 kW, fictitious 1.87 kW
+      -> INFEASIBLE under the limits (validated dual bound)
+  restoration A: src+lines 1.2x 157.5    outside              exact rho 2.8652 kW (validated) | relaxation OPTIMAL rho 1.3944 kW; validated lower bound: tightened 1.3919 kW, loose 1.387e+00 kW (box term 4.552e+00 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+  B: src+lines 1.5x 157.5    inside  kcl0+jbound  L   +2.865 | OPTIMAL            primal 4.396 kW, dual bound (tight) 4.408 kW, (loose) 4.423e+00 kW, fictitious 2.12 kW
+      lifted inside dispatch: constraints 4.3e-09, outside a tightened box by 0.0e+00 ()
+      -> feasible (validated exact dispatch)
+  B: src+lines 1.5x 157.5    outside kcl0+jbound  L   -2.865 | INFEASIBLE         Farkas: value 7.868e+03, box term loose 7.730e+03 -> bound 1.383e+02; tightened 7.730e+03 -> bound 1.383e+02
+      -> INFEASIBLE under the limits (validated Farkas, tightened boxes)
+      box term #1: Q_PV[pv53,1]                       coefficient -1.042e+05, box [-0.015477, 0.015477], contributes 1.613e+03
+      box term #2: Q_PV[pv116,1]                      coefficient +9.217e+04, box [-0.015477, 0.015477], contributes 1.426e+03
+      box term #3: Q_PV[pv48,1]                       coefficient -6.837e+04, box [-0.015477, 0.015477], contributes 1.058e+03
+      box term #4: Q_PV[pv26,1]                       coefficient -3.259e+04, box [-0.030947, 0.030947], contributes 1.009e+03
+      box term #5: Q_PV[pv35,1]                       coefficient -3.210e+04, box [-0.030947, 0.030947], contributes 9.934e+02
+      box term #6: Q_PV[pv41,1]                       coefficient -4.346e+04, box [-0.015477, 0.015477], contributes 6.727e+02
+      certificate value by constraint kind: LessThan +5.327e+07, PSD constant entries -5.301e+07, EqualTo -2.542e+05, GreaterThan +1.159e+03
+  restoration B: src+lines 1.5x 157.5    outside kcl0+jbound  exact rho 2.8652 kW (validated) | relaxation OPTIMAL rho 1.3404 kW; validated lower bound: tightened 1.3304 kW, loose 1.317e+00 kW (box term 4.340e+00 kW) -> no-backflow IMPOSSIBLE under the limits (validated lower bound on rho > 0)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4059.2 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199

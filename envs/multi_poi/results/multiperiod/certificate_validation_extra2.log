@@ -1,0 +1,194 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+  A outside, INFEASIBLE: line caps carrying the ray (share of the caps' total weight): l115 15%, l110 11%, l116 9%, l112 8%, l61 5%, l114 3%, l118 3%, l2 3%
+  B outside, INFEASIBLE: line caps carrying the ray (share of the caps' total weight): l71 23%, l67 8%, l100 5%, l107 5%, l125 3%, l76 2%, l120 2%, l12 2%
+  influential caps not challenged before: l107, l100, l71, l61, l120, l76, l125, l67, l12, l114, l112
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+    max l107   from equal (cold)                 4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from hour inside 292.5            4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs1 from equal (cold)  4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs1 from hour inside 292.5 4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs3 from equal (cold)  4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs3 from hour inside 292.5 4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs4 from equal (cold)  4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l107   from max subs4 from hour inside 292.5 4.00 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from equal (cold)                 3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from hour inside 292.5            3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs1 from equal (cold)  3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs1 from hour inside 292.5 3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs3 from equal (cold)  3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs3 from hour inside 292.5 3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs4 from equal (cold)  3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l100   from max subs4 from hour inside 292.5 3.98 A (envelope 5.55 A, 1.2x 6.66 A)
+    max l71    from equal (cold)                 32.40 A (envelope 30.18 A, 1.2x 36.21 A)  above the envelope
+    max l71    from hour inside 292.5            25.55 A (envelope 30.18 A, 1.2x 36.21 A)
+    max l71    from max subs1 from equal (cold)  32.40 A (envelope 30.18 A, 1.2x 36.21 A)  above the envelope
+    max l71    from max subs1 from hour inside 292.5 25.55 A (envelope 30.18 A, 1.2x 36.21 A)
+    max l71    from max subs3 from equal (cold)  32.40 A (envelope 30.18 A, 1.2x 36.21 A)  above the envelope
+    max l71    from max subs3 from hour inside 292.5 25.55 A (envelope 30.18 A, 1.2x 36.21 A)
+    max l71    from max subs4 from equal (cold)  32.40 A (envelope 30.18 A, 1.2x 36.21 A)  above the envelope
+    max l71    from max subs4 from hour inside 292.5 25.55 A (envelope 30.18 A, 1.2x 36.21 A)
+    max l61    from equal (cold)                 44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from hour inside 292.5            44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from max subs1 from equal (cold)  44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from max subs1 from hour inside 292.5 31.36 A (envelope 44.12 A, 1.2x 52.95 A)
+    max l61    from max subs3 from equal (cold)  44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from max subs3 from hour inside 292.5 44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from max subs4 from equal (cold)  44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l61    from max subs4 from hour inside 292.5 44.81 A (envelope 44.12 A, 1.2x 52.95 A)  above the envelope
+    max l120   from equal (cold)                 35.82 A (envelope 29.98 A, 1.2x 35.98 A)  above the envelope
+    max l120   from hour inside 292.5            24.90 A (envelope 29.98 A, 1.2x 35.98 A)
+    max l120   from max subs1 from equal (cold)  35.82 A (envelope 29.98 A, 1.2x 35.98 A)  above the envelope
+    max l120   from max subs1 from hour inside 292.5 24.90 A (envelope 29.98 A, 1.2x 35.98 A)
+    max l120   from max subs3 from equal (cold)  35.82 A (envelope 29.98 A, 1.2x 35.98 A)  above the envelope
+    max l120   from max subs3 from hour inside 292.5 24.90 A (envelope 29.98 A, 1.2x 35.98 A)
+    max l120   from max subs4 from equal (cold)  35.82 A (envelope 29.98 A, 1.2x 35.98 A)  above the envelope
+    max l120   from max subs4 from hour inside 292.5 24.90 A (envelope 29.98 A, 1.2x 35.98 A)
+    max l76    from equal (cold)                 20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from hour inside 292.5            20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs1 from equal (cold)  20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs1 from hour inside 292.5 20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs3 from equal (cold)  20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs3 from hour inside 292.5 20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs4 from equal (cold)  20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l76    from max subs4 from hour inside 292.5 20.96 A (envelope 30.48 A, 1.2x 36.57 A)
+    max l125   from equal (cold)                 35.81 A (envelope 29.97 A, 1.2x 35.97 A)  above the envelope
+    max l125   from hour inside 292.5            24.89 A (envelope 29.97 A, 1.2x 35.97 A)
+    max l125   from max subs1 from equal (cold)  35.81 A (envelope 29.97 A, 1.2x 35.97 A)  above the envelope
+    max l125   from max subs1 from hour inside 292.5 24.89 A (envelope 29.97 A, 1.2x 35.97 A)
+    max l125   from max subs3 from equal (cold)  35.81 A (envelope 29.97 A, 1.2x 35.97 A)  above the envelope
+    max l125   from max subs3 from hour inside 292.5 24.89 A (envelope 29.97 A, 1.2x 35.97 A)
+    max l125   from max subs4 from equal (cold)  35.81 A (envelope 29.97 A, 1.2x 35.97 A)  above the envelope
+    max l125   from max subs4 from hour inside 292.5 24.89 A (envelope 29.97 A, 1.2x 35.97 A)
+    max l67    from equal (cold)                 14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from hour inside 292.5            14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs1 from equal (cold)  14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs1 from hour inside 292.5 14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs3 from equal (cold)  14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs3 from hour inside 292.5 14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs4 from equal (cold)  14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l67    from max subs4 from hour inside 292.5 14.76 A (envelope 20.05 A, 1.2x 24.06 A)
+    max l12    from equal (cold)                 34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from hour inside 292.5            39.75 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs1 from equal (cold)  34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs1 from hour inside 292.5 39.75 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs3 from equal (cold)  34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs3 from hour inside 292.5 34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs4 from equal (cold)  34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l12    from max subs4 from hour inside 292.5 34.64 A (envelope 44.46 A, 1.2x 53.35 A)
+    max l114   from equal (cold)                 35.92 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from hour inside 292.5            28.98 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs1 from equal (cold)  35.92 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs1 from hour inside 292.5 28.98 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs3 from equal (cold)  35.92 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs3 from hour inside 292.5 28.98 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs4 from equal (cold)  35.92 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l114   from max subs4 from hour inside 292.5 28.98 A (envelope 42.92 A, 1.2x 51.50 A)
+    max l112   from equal (cold)                 35.33 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from hour inside 292.5            28.75 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs1 from equal (cold)  35.33 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs1 from hour inside 292.5 28.75 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs3 from equal (cold)  35.33 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs3 from hour inside 292.5 28.75 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs4 from equal (cold)  35.33 A (envelope 42.36 A, 1.2x 50.83 A)
+    max l112   from max subs4 from hour inside 292.5 28.75 A (envelope 42.36 A, 1.2x 50.83 A)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   4111.9 ms  ? OpenDSSDirect
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:151
+┌ Warning: Assignment to `c` in soft scope is ambiguous because a global variable by the same name exists: `c` will be treated as a new local. Disambiguate by using `local c` to suppress this warning or `global c` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:157
+┌ Warning: Assignment to `kw` in soft scope is ambiguous because a global variable by the same name exists: `kw` will be treated as a new local. Disambiguate by using `local kw` to suppress this warning or `global kw` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:187
+┌ Warning: Assignment to `ang` in soft scope is ambiguous because a global variable by the same name exists: `ang` will be treated as a new local. Disambiguate by using `local ang` to suppress this warning or `global ang` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:188
+┌ Warning: Assignment to `x` in soft scope is ambiguous because a global variable by the same name exists: `x` will be treated as a new local. Disambiguate by using `local x` to suppress this warning or `global x` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:196
+┌ Warning: Assignment to `v` in soft scope is ambiguous because a global variable by the same name exists: `v` will be treated as a new local. Disambiguate by using `local v` to suppress this warning or `global v` to assign to the existing global variable.
+└ @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\envs\multi_poi\root_level\feasibility_poc.jl:199
