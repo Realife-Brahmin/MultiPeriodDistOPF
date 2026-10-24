@@ -12,10 +12,5 @@ studies and results. Choose a problem first, then an algorithm.
   multi-period scheduling; instantiate `--project=problems/msopf`.
   Its optional SDP environment is under `environments/sdp/`.
 
-The shared [OpenDSS networks and parser](../test_networks/README.md) are outside
-the algorithms. SPAR-DDP includes its own OpenDSS dependency: no tADMM environment
-is needed for its export or validation workflow. Models retain their separate
-assumptions, including different terminal-SOC formulations.
-
-See the [layout migration guide](../docs/problem-layout-migration.md) for old
-paths and the distinction between runnable sources and frozen evidence.
+[Browse the test networks](../test_networks/README.md) or follow the
+[setup guide](../docs/first-time-installation-guide.md) to get started.

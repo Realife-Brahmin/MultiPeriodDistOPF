@@ -1,11 +1,18 @@
 # Maintained repository utilities
 
+`setup.jl` installs one project's declared dependencies without running a solve.
+`setup.sh` and `setup.ps1` wrap it for Bash and PowerShell. Julia must already
+be installed; these helpers do not grant or activate vendor licenses, configure
+optional solvers, or change your global Julia version. A project's Julia
+dependencies may themselves supply solver binaries. See the
+[setup guide](../docs/first-time-installation-guide.md).
+
 `check_layout.py` verifies relocated evidence/data/solver identities and key
 entry-point paths; it needs the baseline Git history (see the
 [migration guide](../docs/problem-layout-migration.md)).
 `smoke_project_layout.jl` is an optional small runtime import/parser/export
-check in the SPAR-DDP environment; it does not run an optimizer and is not a
-benchmark. It writes its export into a temporary directory.
+check in the SPAR-DDP environment, plus a scalar Ipopt/MUMPS solve; it is not
+an MPOPF benchmark. It writes its export into a temporary directory.
 
 `package_test_network.py` creates a standalone OpenDSS ZIP containing one
 adapted deck, its shared profiles, license and citation metadata. It does not
