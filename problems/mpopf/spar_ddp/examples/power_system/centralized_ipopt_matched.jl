@@ -57,7 +57,7 @@ dt, pbase = data[:delta_t_h], data[:kVA_B]
 build_start = time()
 # CENTRAL_SOLVER=gurobi solves the same JuMP model with Gurobi instead (the
 # model is a convex QCQP: quadratic cost, rotated second-order cones). Run it
-# from an environment that has Gurobi (problems/mpopf/tadmm). Its result lines are tagged
+# from an optional environment that has Gurobi installed. Its result lines are tagged
 # CENTRAL_GUROBI, so nothing can mistake them for an Ipopt reference, and its
 # log (presolve statistics included) goes to the same log path.
 #   GUROBI_EXTRA_OPTIONS="Method=2;Crossover=0;Threads=1"

@@ -14,7 +14,7 @@ Deliver compiled paper PDFs as main.pdf unless the user requests a new name.
 
 ## Current SPAR-DDP evidence
 
-DDP means Differential Dynamic Programming. The current solver is DDP4OPF,
+DDP means Differential Dynamic Programming. The current solver is SPARDDP,
 our fork of FilterDDP.jl; retain its upstream license, NOTICE and citations.
 The medium display name is med2522; the raw model ID remains ieee2522C_1ph.
 

@@ -3,7 +3,7 @@
 # One untimed FilterDDP run per system at T=6, in the paper's formulation
 # (periodic profile, per-system C_B, soft terminal SOC, diagonal Hessian and the
 # exact assembly rewrites), capturing every stage's KKT system each
-# STRIDE-th iteration through DDP4OPF's periodic capture hook. The factor-backed
+# STRIDE-th iteration through SPARDDP's periodic capture hook. The factor-backed
 # policy and the blocked solve are left off: they change how the KKT system is
 # solved, not the matrix, and the capture hook needs the explicit policy.
 # No near-optimality stop, so each run follows FilterDDP to its own tolerance

@@ -29,7 +29,7 @@ end
 function alloc_site(st)
     for f in st
         file = String(f.file)
-        (occursin("DDP4OPF", file) || occursin("power_system", file)) || continue
+        (occursin("SPARDDP", file) || occursin("power_system", file)) || continue
         occursin("alloc_profile", file) && continue
         return string(f.func, "  ", basename(file), ":", f.line)
     end

@@ -1,8 +1,12 @@
 # Provenance and attribution
 
-`DDP4OPF` is derived from **FilterDDP.jl** by **Mingda Xu**, released under the
+`SPARDDP` is derived from **FilterDDP.jl** by **Mingda Xu**, released under the
 MIT License. The original copyright notice and permission text are retained
 verbatim in [LICENSE](LICENSE), as that licence requires.
+
+This repository previously called the fork `DDP4OPF`. Its current package and
+module name is `SPARDDP`; the fork UUID is unchanged. Historical records retain
+the old name, and no claim of authorship of the upstream method is implied.
 
 | | |
 |---|---|
@@ -61,7 +65,7 @@ applies independently:
   quantities (`periodic_capture_instrumentation`).
 
 Beyond those, the only change is the rename: `module FilterDDP` became
-`module DDP4OPF`. Upstream's `experiments/` (robotics benchmarks), `media/` and
+`module SPARDDP`. Upstream's `experiments/` (robotics benchmarks), `media/` and
 README images were not carried over.
 
 ## Deliberately unchanged

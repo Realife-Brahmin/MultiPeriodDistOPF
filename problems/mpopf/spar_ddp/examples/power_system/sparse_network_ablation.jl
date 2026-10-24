@@ -82,7 +82,7 @@ function capture_network_ablation(lay, K)
     directory = ENV["TREE_ABLATION_CAPTURE_DIR"]
     mkpath(directory)
     file = joinpath(directory, "network_$(getpid()).jls")
-    DDP4OPF.Serialization.serialize(file, (K=copy(K), lay=lay,
+    SPARDDP.Serialization.serialize(file, (K=copy(K), lay=lay,
         julia_version=string(VERSION), backend=get(ENV,"FILTERDDP_NETWORK_BACKEND","tree")))
     println("TREE_ABLATION_CAPTURE file=", file)
 end

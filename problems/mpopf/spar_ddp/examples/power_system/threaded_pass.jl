@@ -15,18 +15,18 @@
 #            updates and the stored policy. This stage's battery solution only.
 #
 # The operations and their order within a stage are those of
-# DDP4OPF.backward_pass! for the configuration of run_parsim.sh (tree solver,
+# SPARDDP.backward_pass! for the configuration of run_parsim.sh (tree solver,
 # lean value path, halved block, factor-backed policy, cached KKT pattern;
 # diagonal Hessian, or the exact one with FILTERDDP_LEAN_EXACT=1), so the
 # iterates are the same (check with compare_runs.py). Anything outside that
 # configuration, a failed factorization or a non-finite number: the function
 # returns false and the solver's own pass runs instead.
 #
-# install_threaded_pass(data, idx, nu) sets DDP4OPF.BACKWARD_PASS_HOOK. One
+# install_threaded_pass(data, idx, nu) sets SPARDDP.BACKWARD_PASS_HOOK. One
 # FILTERDDP_THREADED_PASS line per pass gives the wall time of each phase.
 # No FILTERDDP_FEASIBILITY / FILTERDDP_PARSIM lines are printed by these passes.
 
-using DDP4OPF
+using SPARDDP
 using LinearAlgebra
 using SparseArrays
 using Printf
@@ -47,11 +47,11 @@ end
 # Phase 1 of stage t. Returns a NamedTuple, or nothing if the stage is outside
 # the supported configuration.
 function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu::Int, nc::Int, data, idx, build_layout::Bool)
-    DM = DDP4OPF._derivative_matrix
+    DM = SPARDDP._derivative_matrix
     x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
     cl = ocp.control_limits
-    con = DDP4OPF.stage_con(ocp, t)
-    obj = t == ocp.N ? ocp.term_objective : DDP4OPF.stage_obj(ocp, t)
+    con = SPARDDP.stage_con(ocp, t)
+    obj = t == ocp.N ? ocp.term_objective : SPARDDP.stage_obj(ocp, t)
     dyn = ocp.dynamics
 
     lx = Vector(obj.lx(x, u)); lu_ = Vector(obj.lu(x, u)); lval = obj.l(x, u)[1]
@@ -65,7 +65,7 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     one_x = ones(nx)
     fxx = DM(dyn.fxx(x, u, one_x), nx, nx); fux = DM(dyn.fux(x, u, one_x), nu, nx); fuu = DM(dyn.fuu(x, u, one_x), nu, nu)
     (iszero(fxx) && iszero(fux) && iszero(fuu)) || return nothing
-    (DDP4OPF._is_identity(fx) && issparse(fu) && issparse(luu) && issparse(fuu) && iszero(cux)) || return nothing
+    (SPARDDP._is_identity(fx) && issparse(fu) && issparse(luu) && issparse(fuu) && iszero(cux)) || return nothing
     fu_sparse = sparse(fu)
     active = sort!(unique(findnz(fu)[2]))
     lux_in_B = false
@@ -94,17 +94,17 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     luu_d = fuu_d = cuu_d = nothing
     if diag
         # the battery-power entries get their curvature in phase 2
-        luu_d = DDP4OPF._dense_diag(luu); fuu_d = DDP4OPF._dense_diag(fuu); cuu_d = DDP4OPF._dense_diag(cuu)
+        luu_d = SPARDDP._dense_diag(luu); fuu_d = SPARDDP._dense_diag(fuu); cuu_d = SPARDDP._dense_diag(cuu)
         hd = luu_d .+ (Σ_L + Σ_U + zeros(nu))
         hd .+= fuu_d
         hd .+= cuu_d
-        Ĥ = DDP4OPF._floored_diagonal(hd)
+        Ĥ = SPARDDP._floored_diagonal(hd)
     else
-        Ĥ = DDP4OPF._fixed_pattern_hessian(nu, Σ_L + Σ_U, luu, fuu, cuu)
+        Ĥ = SPARDDP._fixed_pattern_hessian(nu, Σ_L + Σ_U, luu, fuu, cuu)
     end
-    cu_sparse = DDP4OPF._stale_jacobian(t, k, sparse(cu))
+    cu_sparse = SPARDDP._stale_jacobian(t, k, sparse(cu))
     key = (objectid(solver), t)
-    K = DDP4OPF._cached_kkt!(key, Ĥ, cu_sparse, nu, nc)
+    K = SPARDDP._cached_kkt!(key, Ĥ, cu_sparse, nu, nc)
     L = build_layout ? _tp_layout!(data, idx, nu, K) : _TP_LAYOUT[]
     (isnothing(L) || L.colptr != K.colptr || L.rowval != K.rowval) && return nothing
     lay, stat = L.lay, L.stat
@@ -133,7 +133,7 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     energy_rows = sort!(unique(cx_s.rowval))
     cxE = cx_s[energy_rows, :]
     vcat(active, nu .+ energy_rows) == lay.E || return nothing
-    hmap = diag ? DDP4OPF._KKT_PATTERN_CACHE[key].hmap : nothing
+    hmap = diag ? SPARDDP._KKT_PATTERN_CACHE[key].hmap : nothing
 
     return (; x, u, ϕ, zl, zu, lx, lu_, lval, lxx, lux, c, cx, cu, cxx, fx, fu, fxx, fu_sparse, active, fu_active,
             lux_in_B, logsum, cs0, csμ, inv_ul, inv_uu, mubar, Σ_L, Σ_U, cuϕ, cxϕ, cϕ, luu_d, fuu_d, cuu_d,
@@ -189,15 +189,15 @@ end
 function _tp_seq(S, V̂x, V̂xx, diag::Bool, nu::Int, nc::Int)
     lay, stat, fac = S.lay, S.stat, S.fac
     Qû = S.lu_ + S.fu' * V̂x + S.mubar
-    C = DDP4OPF._lean_C(S.lxx, V̂xx, S.fxx)
-    B_active = DDP4OPF._lean_B(S.fu_active, V̂xx)
+    C = SPARDDP._lean_C(S.lxx, V̂xx, S.fxx)
+    B_active = SPARDDP._lean_B(S.fu_active, V̂xx)
     S.lux_in_B && (B_active .+= S.lux[S.active, :])
     Qû = Qû + S.cuϕ
     C = C + S.cxx
     nB = length(S.active)
     if diag
-        curv = DDP4OPF._diagonal_quadratic_form(S.fu_sparse, V̂xx, nu)
-        floor_val = DDP4OPF._diag_hessian_floor()
+        curv = SPARDDP._diagonal_quadratic_form(S.fu_sparse, V̂xx, nu)
+        floor_val = SPARDDP._diag_hessian_floor()
         nzK = nonzeros(S.K)
         @inbounds for j in S.active
             h = S.luu_d[j] + (S.Σ_L[j] + S.Σ_U[j] + curv[j])
@@ -209,7 +209,7 @@ function _tp_seq(S, V̂x, V̂xx, diag::Bool, nu::Int, nc::Int)
         end
         st = _blas1(() -> _tree_kkt_finish(lay, stat, fac, S.K, S.Bd, S.Up, false, nothing))
     else
-        Vc = DDP4OPF._lean_curvature(S.fu_active, V̂xx)
+        Vc = SPARDDP._lean_curvature(S.fu_active, V̂xx)
         st = _blas1(() -> _tree_kkt_finishV(stat, fac, S.b0, Vc))
     end
     s = TreeKKTSolver(lay, stat, fac, st, S.nzc, S.pre, S.z, S.y1, S.y2, S.t2, zeros(5))
@@ -269,7 +269,7 @@ function _tp_post(solver, S, R, t::Int, μ, λnext, nx::Int, nu::Int, nc::Int, k
     # Battery rows of the feedback, for the forward pass's state recursion. The
     # exact Hessian's sweep does not form them (it needs only the value update).
     βB = (keep_rows && isempty(R.XB)) ? tree_kkt_feedback_rows(R.s, R.B_active, S.cxE) : R.XB
-    rule.factor_policy = DDP4OPF.FactorBackedPolicy{Float64}(
+    rule.factor_policy = SPARDDP.FactorBackedPolicy{Float64}(
         R.s, copy(S.active), copy(R.B_active), sparse(S.cx),
         zeros(Float64, nu + nc), zeros(Float64, nx), keep_rows ? βB : zeros(Float64, 0, 0))
     inv_ul, inv_uu, Σ_L, Σ_U, zl, zu = S.inv_ul, S.inv_uu, S.Σ_L, S.Σ_U, S.zl, S.zu
@@ -280,18 +280,18 @@ function _tp_post(solver, S, R, t::Int, μ, λnext, nx::Int, nu::Int, nc::Int, k
 
     Lu = S.lu_ - zl + zu + S.fu' * λnext
     Lu = Lu + S.cuϕ
-    reuse = keep_reuse ? DDP4OPF._reuse_stage(S.c, S.lu_, S.cu, S.ϕ, S.lx, S.cx, S.fu, S.u, cl) : nothing
+    reuse = keep_reuse ? SPARDDP._reuse_stage(S.c, S.lu_, S.cu, S.ϕ, S.lx, S.cx, S.fu, S.u, cl) : nothing
     return (; dual=norm(Lu, Inf), zl_sum=sum(zl), zu_sum=sum(zu), ϕ1=norm(S.ϕ, 1),
             e1=dot(R.Qû, α), e2=dot(S.c, ψ), reuse)
 end
 
-function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, d, options, data, idx) where {T, nx, nu, nc}
+function threaded_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj, d, options, data, idx) where {T, nx, nu, nc}
     T === Float64 || return false
     # the pass after a barrier update keeps its factors: the solver's own code does that
-    isnothing(DDP4OPF._reuse_candidate(solver, d)) || return false
-    diag = DDP4OPF._diag_hessian_enabled()
-    (diag ? DDP4OPF._direct_diag_hessian_enabled() : DDP4OPF._lean_exact_enabled()) || return false
-    (DDP4OPF._lean_value() && _half_block() && DDP4OPF._kkt_pattern_cache_enabled()) || return false
+    isnothing(SPARDDP._reuse_candidate(solver, d)) || return false
+    diag = SPARDDP._diag_hessian_enabled()
+    (diag ? SPARDDP._direct_diag_hessian_enabled() : SPARDDP._lean_exact_enabled()) || return false
+    (SPARDDP._lean_value() && _half_block() && SPARDDP._kkt_pattern_cache_enabled()) || return false
     N = ocp.N
     μ = d.μ
     cl = ocp.control_limits
@@ -300,7 +300,7 @@ function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, tra
     # Phase 1. The KKT pattern cache and the tree layout are shared tables:
     # the pass that fills or rebuilds them runs its stages one after another.
     serial = _TP_LAST_DIAG[] !== diag || isnothing(_TP_LAYOUT[]) ||
-        any(t -> !haskey(DDP4OPF._KKT_PATTERN_CACHE, (objectid(solver), t)), 1:N)
+        any(t -> !haskey(SPARDDP._KKT_PATTERN_CACHE, (objectid(solver), t)), 1:N)
     _TP_LAST_DIAG[] = diag
     S = Vector{Any}(undef, N)
     blas_threads = BLAS.get_num_threads()
@@ -336,8 +336,8 @@ function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, tra
     t_2 = time_ns()
 
     # Phase 3.
-    keep_reuse = DDP4OPF._reuse_barrier()
-    keep_rows = isdefined(DDP4OPF, :AFFINE_DIRECTIONS_HOOK) && !isnothing(DDP4OPF.AFFINE_DIRECTIONS_HOOK[])
+    keep_reuse = SPARDDP._reuse_barrier()
+    keep_rows = isdefined(SPARDDP, :AFFINE_DIRECTIONS_HOOK) && !isnothing(SPARDDP.AFFINE_DIRECTIONS_HOOK[])
     P = Vector{Any}(undef, N)
     BLAS.set_num_threads(1)
     try
@@ -387,9 +387,9 @@ function threaded_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, tra
     d.barrier_lagrangian_curr += d.objective
     d.reg_last = 0.0
     if keep_reuse
-        stages = Vector{DDP4OPF.ReuseStage{Float64}}(undef, N)
+        stages = Vector{SPARDDP.ReuseStage{Float64}}(undef, N)
         for t in 1:N; stages[t] = P[t].reuse; end
-        DDP4OPF._REUSE_CACHE[] = DDP4OPF.ReusePass{Float64}(objectid(solver), d.k, diag, stages, d.primal_1_curr,
+        SPARDDP._REUSE_CACHE[] = SPARDDP.ReusePass{Float64}(objectid(solver), d.k, diag, stages, d.primal_1_curr,
             d.primal_inf, d.objective, d.dual_inf, d.cs_inf_0, scaling_cs)
     end
     get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1" && @printf(
@@ -425,14 +425,14 @@ function threaded_affine_directions(solver, ocp, d, τ::T) where T
     dx = Vector{Vector{T}}(undef, N); du = Vector{Vector{T}}(undef, N)
     dϕ = Vector{Vector{T}}(undef, N); dzl = Vector{Vector{T}}(undef, N); dzu = Vector{Vector{T}}(undef, N)
     γs = ones(T, N); γds = ones(T, N)
-    split = DDP4OPF._split_step()
+    split = SPARDDP._split_step()
     blas_threads = BLAS.get_num_threads()
     BLAS.set_num_threads(1)
     try
         Threads.@threads for t in 1:N
             nom = solver.nominal[t]; rule = solver.update[t]
             δx = xs[t] - nom.x
-            βδx, ωδx = DDP4OPF.policy_actions!(rule, δx)
+            βδx, ωδx = SPARDDP.policy_actions!(rule, δx)
             dx[t] = δx
             du[t] = rule.α .+ βδx
             dϕ[t] = rule.ψ .+ ωδx
@@ -462,10 +462,10 @@ function threaded_affine_directions(solver, ocp, d, τ::T) where T
         BLAS.set_num_threads(blas_threads)
     end
     γmax = minimum(γs)
-    return DDP4OPF.AffineDirections{T}(dx, du, dϕ, dzl, dzu, γmax, split ? minimum(γds) : T(NaN))
+    return SPARDDP.AffineDirections{T}(dx, du, dϕ, dzl, dzu, γmax, split ? minimum(γds) : T(NaN))
 end
 
-function threaded_affine_rollout!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, d, dir, γ::T) where {T, nx, nu, nc}
+function threaded_affine_rollout!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, d, dir, γ::T) where {T, nx, nu, nc}
     μ = d.μ
     cl = ocp.control_limits
     N = ocp.N
@@ -479,9 +479,9 @@ function threaded_affine_rollout!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, d,
         ϕ = nom.ϕ .+ γ .* dir.dϕ[t]
         zl = nom.zl .+ γz .* dir.dzl[t]
         zu = nom.zu .+ γz .* dir.dzu[t]
-        solver.current[t] = DDP4OPF.TrajectoryElement{T, nx, nu, nc}(x, u, ϕ, zl, zu)
+        solver.current[t] = SPARDDP.TrajectoryElement{T, nx, nu, nc}(x, u, ϕ, zl, zu)
         if nc > 0
-            c = DDP4OPF.stage_con(ocp, t).c(x, u)
+            c = SPARDDP.stage_con(ocp, t).c(x, u)
             c1[t] = norm(c, 1)
             cϕ[t] = dot(c, ϕ)
         end
@@ -493,7 +493,7 @@ function threaded_affine_rollout!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, d,
         else
             logl[t] = dot(log.(ul), cl.maskl)
             logu[t] = dot(log.(uu), cl.masku)
-            lv[t] = t == N ? ocp.term_objective.l(x, u)[1] : DDP4OPF.stage_obj(ocp, t).l(x, u)[1]
+            lv[t] = t == N ? ocp.term_objective.l(x, u)[1] : SPARDDP.stage_obj(ocp, t).l(x, u)[1]
         end
     end
     d.status = 0
@@ -518,11 +518,11 @@ end
 function install_threaded_pass(data, idx)
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
-    DDP4OPF.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
+    SPARDDP.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
         threaded_backward_pass!(solver, ocp, traj, d, options, data, idx)
-    if isdefined(DDP4OPF, :AFFINE_DIRECTIONS_HOOK) && get(ENV, "FILTERDDP_THREADED_FORWARD", "1") != "0"
-        DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = threaded_affine_directions
-        DDP4OPF.AFFINE_ROLLOUT_HOOK[] = threaded_affine_rollout!
+    if isdefined(SPARDDP, :AFFINE_DIRECTIONS_HOOK) && get(ENV, "FILTERDDP_THREADED_FORWARD", "1") != "0"
+        SPARDDP.AFFINE_DIRECTIONS_HOOK[] = threaded_affine_directions
+        SPARDDP.AFFINE_ROLLOUT_HOOK[] = threaded_affine_rollout!
     end
     println("THREADED_PASS installed: ", Threads.nthreads(), " Julia threads")
     return nothing

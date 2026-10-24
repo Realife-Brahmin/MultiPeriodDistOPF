@@ -78,7 +78,7 @@ problems/mpopf/spar_ddp/
 │   ├── verify_against_centralized.jl   Stage 8: FilterDDP vs that reference
 │   └── convergence_trace.jl         Stage 9: per-iteration trace + figure data
 ├── papers/                          the two arXiv papers + text extractions
-├── DDP4OPF.jl/                      THE SOLVER: our fork of FilterDDP.jl (see its NOTICE.md)
+├── SPARDDP.jl/                      THE SOLVER: our fork of FilterDDP.jl (see its NOTICE.md)
 ├── patches/                         development history of that fork -- NOT a build recipe
 └── external/FilterDDP.jl/           optional unmodified upstream clone, only for Stage 3
 
@@ -87,7 +87,7 @@ problems/mpopf/spar_ddp/
 
 ## Reproducing
 
-**The solver is committed.** Since 2026-09-15 it lives at `problems/mpopf/spar_ddp/DDP4OPF.jl`, our
+**The solver is committed.** Since 2026-09-15 it lives at `problems/mpopf/spar_ddp/SPARDDP.jl`, our
 MIT fork of FilterDDP.jl (provenance and attribution in its `NOTICE.md`). There
 is nothing to clone and nothing to patch.
 
@@ -114,7 +114,7 @@ julia --startup-file=no --project=problems/mpopf/spar_ddp -e 'using Pkg; Pkg.ins
 
 # Stage 3 — the authors' example, against THEIR unmodified code. This is the one
 # stage that needs the upstream clone, because it reproduces the authors' own
-# shipped numbers; DDP4OPF deliberately does not carry their experiments/.
+# shipped numbers; SPARDDP deliberately does not carry their experiments/.
 # (writes into their results/ dir; back it up first)
 git clone https://github.com/mingu6/FilterDDP.jl problems/mpopf/spar_ddp/external/FilterDDP.jl
 git -C problems/mpopf/spar_ddp/external/FilterDDP.jl checkout 513a104

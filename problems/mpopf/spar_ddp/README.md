@@ -4,11 +4,38 @@ SPAR-DDP combines sparse radial-network elimination with parallel
 battery-value recursion. Each time-step keeps network variables local;
 battery energy is the state linking time-steps.
 
-[DDP4OPF](DDP4OPF.jl) is our fork of
+[SPARDDP](SPARDDP.jl) is our fork of
 [FilterDDP.jl](https://github.com/mingu6/FilterDDP.jl), with the upstream filter
 line-search foundation and MPOPF-specific sparse/network and parallel paths.
-Retain its [NOTICE](DDP4OPF.jl/NOTICE.md), MIT license and original method
+Retain its [NOTICE](SPARDDP.jl/NOTICE.md), MIT license and original method
 citations (arXiv 2504.08278 and 2606.01487).
+
+The Julia package is `SPARDDP` (`using SPARDDP`), formerly named `DDP4OPF`.
+The rename keeps the fork UUID and upstream attribution; it does not change
+the numerical method. Frozen studies using the old name require their recorded
+commits, especially when loading serialized solver-state captures.
+
+## Solvers, licenses and practical scope
+
+SPAR-DDP's normal path uses open-source numerical libraries and requires no
+proprietary optimizer license. Ipopt is a separate centralized reference;
+the standard Ipopt.jl installation includes MUMPS as its open-source default.
+Optional MA57/MA97 are HSL linear-solver backends inside Ipopt, while Gurobi is
+an alternative centralized optimizer. They were used to strengthen centralized
+comparisons, not because DDP or the basic centralized reference needs them.
+Those optional comparisons require their own library/access/license setup.
+See [Ipopt.jl's solver documentation](https://jump.dev/JuMP.jl/stable/packages/Ipopt/).
+
+For a workstation, begin with an IEEE123 network export or
+`julia --project=problems/mpopf/spar_ddp tools/smoke_project_layout.jl`
+(the regression smoke requires repository history). These check imports and
+OpenDSS parsing/export; they are not a whole-optimization performance guarantee.
+Small optimization instances are the next step using the drivers below.
+Recent large-network/long-horizon timings came from Kamiak with controlled
+hardware, memory, workers, threads and warm-up. Reproducing those timings needs
+comparable infrastructure and the pinned campaign setup; cluster launch scripts
+must be adapted to the local account, paths and scheduler. Platform coverage is
+limited, not a claim that every archived script runs unchanged everywhere.
 
 ## What belongs here
 
@@ -16,7 +43,7 @@ This is the self-contained SPAR-DDP project: its Julia environment, reusable
 code and the evidence needed to understand and
 reproduce this project, including unsuccessful but informative experiments.
 
-- `DDP4OPF.jl/`: maintained solver package and upstream notices.
+- `SPARDDP.jl/`: maintained solver package and upstream notices.
 - [examples/power_system](examples/power_system/README.md): model, drivers,
   validation and shared numerical helpers; older diagnostics are indexed there.
 - [experiments](experiments/README.md): bounded opt-in studies, each with
@@ -123,7 +150,7 @@ October 18 folder/documentation cleanup.
 - [balanced_stage_b](results/balanced_stage_b): value-pass assignment
   diagnostics, distinct from full optimizer timings.
 - `examples/power_system/`: model, exporter, reference solvers and drivers.
-- `DDP4OPF.jl/`: solver package.
+- `SPARDDP.jl/`: solver package.
 - [Experiments index](experiments/README.md): tree/screening ablations, nested
   battery-count study and value-function investigations, with final findings.
 - [Compact campaign conclusion](experiments/value_coupling_audit/results_campaign_oct23/FINDINGS.md):

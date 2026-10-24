@@ -1112,7 +1112,7 @@ end
 # pattern changes.
 function install_tree_kkt_hook(data, idx, nu::Int)
     state = Ref{Any}(nothing)
-    DDP4OPF.TREE_KKT_HOOK[] = function (K, Vc=nothing)
+    SPARDDP.TREE_KKT_HOOK[] = function (K, Vc=nothing)
         st = state[]
         if isnothing(st) || st.colptr != K.colptr || st.rowval != K.rowval
             lay = tree_kkt_layout(data, idx, nu, K)
@@ -1128,7 +1128,7 @@ function install_tree_kkt_hook(data, idx, nu::Int)
     return nothing
 end
 
-function DDP4OPF.battery_block_rows(F::TreeKKTSolver, K, E, R)
+function SPARDDP.battery_block_rows(F::TreeKKTSolver, K, E, R)
     E == F.lay.E || error("battery rows differ from the tree layout's")
     return tree_kkt_battery_rows(F, R)
 end
@@ -1198,7 +1198,7 @@ function tree_kkt_value_halved(s::TreeKKTSolver, B::AbstractMatrix, cxE::SparseM
                 BLAS.syrk!('U', 'T', -1.0, Xc, 0.0, Vinc)
             end)
             LinearAlgebra.copytri!(Vinc, 'U')
-            if DDP4OPF._parsim()
+            if SPARDDP._parsim()
                 t0 = time_ns()
                 _blas1(() -> _blas_full(() -> ldiv!(F.U, Xc), nB))
                 XB = Matrix{Float64}(undef, nB, nx)
@@ -1283,13 +1283,13 @@ function tree_kkt_feedback_rows(s::TreeKKTSolver, B::AbstractMatrix, cxE::Sparse
     @inbounds for j in 1:nx, k in 1:nB; XB[bat[k], j] = X[k, j]; end
     return XB
 end
-DDP4OPF.battery_value_halved(F::TreeKKTSolver, E, B, cxE) =
+SPARDDP.battery_value_halved(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_value_halved(F, B, cxE) : nothing
 
-DDP4OPF.stage_phase_times(F::TreeKKTSolver) = F.times
-DDP4OPF.reset_phase_times!(F::TreeKKTSolver) = (fill!(F.times, 0.0); nothing)
+SPARDDP.stage_phase_times(F::TreeKKTSolver) = F.times
+SPARDDP.reset_phase_times!(F::TreeKKTSolver) = (fill!(F.times, 0.0); nothing)
 # Feeder group of each battery (its power row's block of the Schur complement)
-function DDP4OPF.battery_groups(F::TreeKKTSolver, nB)
+function SPARDDP.battery_groups(F::TreeKKTSolver, nB)
     st = F.st; g = zeros(Int, nB)
     for (gi, rg) in enumerate(st.granges), r in rg
         k = st.perm[r]
@@ -1297,7 +1297,7 @@ function DDP4OPF.battery_groups(F::TreeKKTSolver, nB)
     end
     return g
 end
-DDP4OPF.battery_block_rows_grouped(F::TreeKKTSolver, E, B, cxE) =
+SPARDDP.battery_block_rows_grouped(F::TreeKKTSolver, E, B, cxE) =
     E == F.lay.E ? tree_kkt_battery_rows_grouped(F, B, cxE) : nothing
 
 # ------------------------------------------------------------- pint_scan.jl --

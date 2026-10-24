@@ -27,7 +27,7 @@ function fc_write_stage(t,dir)
     W=_PW[];rec=_FC_STAGE[t];rule=W.solver.update[t]
     probes=Vector{Any}()
     for dx in (zeros(W.nx),[1e-3*sin(i) for i in 1:W.nx])
-        du,dp=DDP4OPF.policy_actions!(rule,dx)
+        du,dp=SPARDDP.policy_actions!(rule,dx)
         push!(probes,(dx=copy(dx),du=rule.α+du,dphi=rule.ψ+dp))
     end
     # S was copied BEFORE phase C mutates scratch right-hand sides.

@@ -8,7 +8,7 @@ benchmark rows or OpenDSS electrical inputs are changed.
 ## New homes
 
 - `spar_ddp/` and `envs/spar_ddp/` → `problems/mpopf/spar_ddp/`.
-  The environment's Project.toml is beside DDP4OPF, drivers and evidence.
+  The environment's Project.toml is beside SPARDDP, drivers and evidence.
 - `envs/tadmm/` and root `results/` → `problems/mpopf/tadmm/`.
 - `envs/multi_poi/` and the current `envs/msopf/` environment →
   `problems/msopf/`. The superseded multi_poi Project.toml is retained in
@@ -63,9 +63,23 @@ Python tests and Julia parsing provide additional structural coverage. These
 checks are not scientific revalidation of the stored benchmark/certificate rows.
 No cluster jobs or benchmark campaigns are required by this migration.
 
+## Package name
+
+The local solver package/module is now `SPARDDP` in `SPARDDP.jl/`, formerly
+`DDP4OPF`. Its UUID, authors, API functions, upstream MIT notice and numerical
+method are retained. Current drivers import `SPARDDP`; frozen study scripts
+and serialized solver captures still use their recorded package name/commit.
+The `FILTERDDP_*` environment variables and historical log formats are not
+renamed. If upgrading a local checkout with an old generated Manifest, preserve
+it and regenerate that local environment; fresh clones have the new source map.
+
+The strict audit accounts for the entry-file rename by allowing exactly
+`module DDP4OPF` → `module SPARDDP`, not arbitrary source differences.
+
 ## Validation checkpoint
 
-The relocation audit checks4,925 unchanged evidence/data/figure/solver blobs,
+The relocation/namespace audit checks4,924 unchanged evidence/data/figure/solver
+blobs plus the single exact module-declaration change,
 19 literal repository roots and86 literal includes. Maintained navigation and
 all16 adapted-network packaging cases pass. The Julia parse check covers215
 files across the projects, shared networks and tools.
@@ -76,7 +90,8 @@ Its isolated exports do not overwrite campaign inputs. This is import/export
 coverage, not a re-run of either algorithm's optimization benchmarks.
 Fresh SPAR-DDP resolution is explicitly distinct from recorded campaign pins.
 The runtime smoke passed with Julia1.12.7, OpenDSSDirect0.9.9 and Parameters0.12.3,
-including DDP4OPF, JuMP and Ipopt imports. It performs no optimizer run.
+including SPARDDP, JuMP and Ipopt imports. The extended smoke also checks a
+one-variable Ipopt/MUMPS solve without HSL/Gurobi; no MPOPF benchmark is run.
 
 The old Inkscape and evidence bytes are unchanged. tADMM plotting defaults now
 write to its own results/figures directory; explicitly set TADMM_FIGURE_DIR to

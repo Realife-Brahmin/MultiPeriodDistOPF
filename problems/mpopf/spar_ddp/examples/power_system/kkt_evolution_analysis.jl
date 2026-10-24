@@ -2,7 +2,7 @@
 # which blocks? (Question from the meeting with A. of 2026-09-26: reusing a stale
 # factorization diverged except on the easiest problems.)
 #
-# Reads the per-iteration, per-stage captures written by DDP4OPF's periodic
+# Reads the per-iteration, per-stage captures written by SPARDDP's periodic
 # capture hook (FILTERDDP_PERIODIC_CAPTURE_DIR, iterNNNN_stageSSS.jls) and, for
 # each stage, compares every capture with the previous one of the same stage.
 #

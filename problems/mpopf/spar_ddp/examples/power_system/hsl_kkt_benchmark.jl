@@ -19,7 +19,7 @@
 # families: comma list of umfpack,blocked,ma57,ma97 (default all)
 
 using LinearAlgebra, SparseArrays, Serialization, Printf, Statistics, Dates
-using DDP4OPF
+using SPARDDP
 
 const HSL_DIR = get(ENV, "HSL_LIB_DIR", raw"C:\Users\Aryan Ritwajeet Jha\Documents\hsl\build")
 const LIB57 = joinpath(HSL_DIR, "libma57.dll")
@@ -78,7 +78,7 @@ if "umfpack" in families || "blocked" in families
         f = @elapsed U.umfpack_numeric!(F)
         X1 = copy(b1); s1 = @elapsed ldiv!(F, X1)
         XW = copy(B);  sw = @elapsed ldiv!(F, XW)
-        XB = copy(B);  sb = @elapsed DDP4OPF._blocked_umfpack_solve!(F, XB, 16)
+        XB = copy(B);  sb = @elapsed SPARDDP._blocked_umfpack_solve!(F, XB, 16)
         r == 0 && continue
         push!(to, a); push!(tf, f); push!(t1, s1); push!(tw, sw); push!(tb, sb)
     end

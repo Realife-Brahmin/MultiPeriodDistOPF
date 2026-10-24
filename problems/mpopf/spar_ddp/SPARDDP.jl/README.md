@@ -1,4 +1,4 @@
-# DDP4OPF.jl
+# SPARDDP.jl
 
 Filter line-search **differential dynamic programming** for multi-period optimal
 power flow on distribution networks.
@@ -17,7 +17,7 @@ julia --startup-file=no --project=problems/mpopf/spar_ddp <script>
 ```
 
 ```julia
-using DDP4OPF
+using SPARDDP
 ```
 
 The public API is upstream's: `Objective`, `Dynamics`, `EqualityConstraints`,

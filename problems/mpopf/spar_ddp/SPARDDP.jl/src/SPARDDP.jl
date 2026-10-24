@@ -1,4 +1,4 @@
-module DDP4OPF
+module SPARDDP
 
 using LinearAlgebra 
 using SparseArrays

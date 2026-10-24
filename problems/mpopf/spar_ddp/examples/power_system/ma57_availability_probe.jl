@@ -44,7 +44,7 @@ say("\n== packages (problems/mpopf/spar_ddp) ==")
 for (_, d) in sort(collect(Pkg.dependencies()); by = p -> p[2].name)
     d.name in ("Ipopt", "Ipopt_jll", "MUMPS", "MUMPS_seq_jll", "MUMPS_jll", "METIS_jll",
                "PARMETIS_jll", "SCOTCH_jll", "SPRAL_jll", "SuiteSparse_jll", "OpenBLAS32_jll",
-               "JuMP", "DDP4OPF", "HSL", "HSL_jll") || continue
+               "JuMP", "SPARDDP", "HSL", "HSL_jll") || continue
     say(rpad(d.name, 16), d.version)
 end
 for name in ("HSL", "HSL_jll")

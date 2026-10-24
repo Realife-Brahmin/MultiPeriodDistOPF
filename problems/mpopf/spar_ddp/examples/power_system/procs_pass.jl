@@ -112,7 +112,7 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
     solver = Solver(ocp; options=Options{Float64}())
     nx, nu, nc = typeof(solver).parameters[2], typeof(solver).parameters[3], typeof(solver).parameters[4]
     # storage of the periods of other workers: not needed here
-    none = DDP4OPF.TrajectoryElement{Float64, nx, nu, nc}(Float64[], Float64[], Float64[], Float64[], Float64[])
+    none = SPARDDP.TrajectoryElement{Float64, nx, nu, nc}(Float64[], Float64[], Float64[], Float64[], Float64[])
     for t in 1:T
         t in own && continue
         solver.nominal[t] = none; solver.current[t] = none
@@ -183,7 +183,7 @@ function pw_step1(t::Int, k::Int, μ::Float64, elem)
     W.S[t] = S
     isempty(get(ENV,"FILTERDDP_FROZEN_CAPTURE_DIR","")) || fc_cache_stage(t,S,W)
     original_max = get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1" ?
-        DDP4OPF.PRIMAL_ORIGINAL_HOOK[](t, S.x, S.u, S.c) : NaN
+        SPARDDP.PRIMAL_ORIGINAL_HOOK[](t, S.x, S.u, S.c) : NaN
     return (lval=S.lval, c1=S.c1, cinf=S.cinf, logsum=S.logsum, cs0=S.cs0, csμ=S.csμ, cϕ=S.cϕ,
             original_max=original_max,
             lx=Vector{Float64}(S.lx), cxϕ=Vector{Float64}(S.cxϕ),
@@ -243,7 +243,7 @@ function pw_directions(t::Int, x::Vector{Float64}, τ::Float64, split::Bool)
     t0 = time_ns(); g0 = _pw_gc()
     nom = s.nominal[t]; rule = s.update[t]
     δx = x - nom.x
-    βδx, ωδx = DDP4OPF.policy_actions!(rule, δx)
+    βδx, ωδx = SPARDDP.policy_actions!(rule, δx)
     du = rule.α .+ βδx
     dϕ = rule.ψ .+ ωδx
     dzl = rule.χl .- rule.Σ_L .* βδx
@@ -280,7 +280,7 @@ function pw_rollout(t::Int, γ::Float64, γz::Float64, μ::Float64)
     @. ϕ = nom.ϕ + γ * dir.dϕ
     @. zl = nom.zl + γz * dir.dzl
     @. zu = nom.zu + γz * dir.dzu
-    c =DDP4OPF.stage_con(ocp, t).c(x, u)
+    c =SPARDDP.stage_con(ocp, t).c(x, u)
     c1 = norm(c, 1); cϕ = dot(c, ϕ)
     ul = u - cl.l
     uu = cl.u - u
@@ -290,7 +290,7 @@ function pw_rollout(t::Int, γ::Float64, γz::Float64, μ::Float64)
     if !bad
         logl = dot(log.(ul), cl.maskl)
         logu = dot(log.(uu), cl.masku)
-        lv = t == ocp.N ? ocp.term_objective.l(x, u)[1] : DDP4OPF.stage_obj(ocp, t).l(x, u)[1]
+        lv = t == ocp.N ? ocp.term_objective.l(x, u)[1] : SPARDDP.stage_obj(ocp, t).l(x, u)[1]
     end
     return (c1=c1, cϕ=cϕ, logl=logl, logu=logu, lv=lv, bad=bad, el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
 end
@@ -327,7 +327,7 @@ function _pm_all(f, M::ProcsMain, N::Int)
     return out
 end
 
-function procs_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, d, options) where {T, nx, nu, nc}
+function procs_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj, d, options) where {T, nx, nu, nc}
     M = _PM[]::ProcsMain
     N = ocp.N
     μ = Float64(d.μ)
@@ -473,7 +473,7 @@ function procs_affine_directions(solver, ocp, d, τ::T) where T
         xs[t+1] = remotecall_fetch(pw_state_step, M.owner[t], t, xs[t])
     end
     t1 = time_ns()
-    split = DDP4OPF._split_step()
+    split = SPARDDP._split_step()
     r = _pm_all((t, w) -> remotecall_fetch(pw_directions, w, t, xs[t], Float64(τ), split), M, N)
     γmax = T(minimum(x.γ for x in r))
     γdual = split ? T(minimum(x.γd for x in r)) : T(NaN)
@@ -481,7 +481,7 @@ function procs_affine_directions(solver, ocp, d, τ::T) where T
             d.k, (t1 - t0) / 1e9, (time_ns() - t1) / 1e9, maximum(x.el for x in r), sum(x.el for x in r),
             sum(x.gc for x in r), γmax)
     E = Vector{Vector{T}}()
-    return DDP4OPF.AffineDirections{T}(E, E, E, E, E, γmax, γdual)
+    return SPARDDP.AffineDirections{T}(E, E, E, E, E, γmax, γdual)
 end
 
 function procs_affine_rollout!(solver, ocp, d, dir, γ::T) where T
@@ -551,10 +551,10 @@ function procs_install(system::String, T::Int, nx::Int)
         @async info[i] = remotecall_fetch(procs_worker_setup, p, system, T, findall(==(p), owner), shared)
     end
     _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0)
-    DDP4OPF.BACKWARD_PASS_HOOK[] = procs_backward_pass!
-    DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
-    DDP4OPF.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!
-    DDP4OPF.SOLVE_EXIT_HOOK[] = procs_solve_exit
+    SPARDDP.BACKWARD_PASS_HOOK[] = procs_backward_pass!
+    SPARDDP.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
+    SPARDDP.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!
+    SPARDDP.SOLVE_EXIT_HOOK[] = procs_solve_exit
     @printf("PROCS_SWEEP installed: %d workers for %d periods (at most %d periods a worker), collector=%s, setup %.1f s (slowest worker %.1f s), worker memory %.0f MiB at most, shared %.1f MiB\n",
             length(pids), T, maximum(count(==(p), owner) for p in pids), get(ENV, "FILTERDDP_PROCS_GC", "auto"), time() - t0,
             maximum(x.setup_s for x in info), maximum(x.rss_mib for x in info), T * len * 8 / 2^20)

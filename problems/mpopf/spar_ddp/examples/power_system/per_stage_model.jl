@@ -21,7 +21,7 @@
 #   julia --startup-file=no --project=problems/mpopf/spar_ddp \
 #         problems/mpopf/spar_ddp/examples/power_system/per_stage_model.jl
 
-using DDP4OPF
+using SPARDDP
 using LinearAlgebra
 using Printf
 using StaticArrays

@@ -18,6 +18,8 @@ MOVES = (
     ("envs/multi_poi/", "problems/msopf/"),
     ("envs/tadmm/parse_opendss.jl", "test_networks/parse_opendss.jl"),
     ("envs/tadmm/", "problems/mpopf/tadmm/"),
+    ("spar_ddp/DDP4OPF.jl/src/DDP4OPF.jl", "problems/mpopf/spar_ddp/SPARDDP.jl/src/SPARDDP.jl"),
+    ("spar_ddp/DDP4OPF.jl/", "problems/mpopf/spar_ddp/SPARDDP.jl/"),
     ("spar_ddp/", "problems/mpopf/spar_ddp/"),
     ("rawData/", "test_networks/"),
     ("test_systems/", "test_networks/sources/"),
@@ -42,6 +44,7 @@ def main(strict_migration=False):
     except subprocess.CalledProcessError:
         raise SystemExit("Evidence audit needs migration baseline history; fetch full Git history first.")
     expected = []
+    namespace_changes = 0
     for line in tree.splitlines():
         header, name = line.split("\t", 1)
         if not (name.startswith(("rawData/", "test_systems/", "results/", "figures/"))
@@ -54,7 +57,13 @@ def main(strict_migration=False):
             continue  # normal development may change maintained solver source
         target = destination(name)
         assert (ROOT / target).is_file(), f"Missing preserved artifact: {target}"
-        expected.append((target, header.split()[2]))
+        blob = header.split()[2]
+        if name == "spar_ddp/DDP4OPF.jl/src/DDP4OPF.jl":
+            original = git("show", f"{BASE}:{name}")
+            renamed = original.replace(b"module DDP4OPF", b"module SPARDDP", 1)
+            blob = git("hash-object", "--stdin", input=renamed).decode().strip()
+            namespace_changes += 1
+        expected.append((target, blob))
     # Batch hashing uses the checkout's Git text filters, not platform-specific
     # CRLF bytes; binary payloads and evidence Git blobs must remain identical.
     payload = "".join(json.dumps(name, ensure_ascii=False)+"\n" for name, _ in expected)
@@ -64,7 +73,11 @@ def main(strict_migration=False):
     assert not errors, f"Changed preserved evidence/data/solver blobs: {errors[:20]}"
     ddp = ROOT / "problems/mpopf/spar_ddp"
     project = tomllib.loads((ddp / "Project.toml").read_text())
-    assert (ddp / project["sources"]["DDP4OPF"]["path"] / "Project.toml").is_file()
+    package_dir = ddp / project["sources"]["SPARDDP"]["path"]
+    assert (package_dir / "src/SPARDDP.jl").is_file()
+    package = tomllib.loads((package_dir / "Project.toml").read_text())
+    assert package["name"] == "SPARDDP"
+    assert project["deps"]["SPARDDP"] == package["uuid"] == "005a218a-47b4-46c4-a1f7-47229a6d1cc8"
     assert {"OpenDSSDirect", "Parameters"} <= project["deps"].keys()
     assert (ROOT / "problems/msopf/environments/sdp/Project.toml").is_file()
     # Check literal repository roots and includes without evaluating any driver.
@@ -102,7 +115,8 @@ def main(strict_migration=False):
                           '        rawDataFolderPath = @__DIR__')
         new = (ROOT / "test_networks/parse_opendss.jl").read_text().partition("using OpenDSSDirect")[2]
         assert old == new, "Shared parser numerical body changed"
-    print(f"PASS: {len(expected)} preserved evidence/data/solver Git blobs; "
+    print(f"PASS: {len(expected)-namespace_changes} unchanged evidence/data/solver Git blobs; "
+          f"{namespace_changes} exact namespace-only change; "
           f"{roots} repository roots; {includes} literal includes; colocated environments.")
 
 

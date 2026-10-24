@@ -33,7 +33,7 @@ const _FACTOR_SLOTS = Dict{Tuple{UInt, Int}, FactorSlot}()
 const _FACTOR_SLOTS_LOCK = ReentrantLock()
 
 function _factor_key(K::SparseMatrixCSC)
-    for (key, entry) in DDP4OPF._KKT_PATTERN_CACHE
+    for (key, entry) in SPARDDP._KKT_PATTERN_CACHE
         entry.K === K && return key
     end
     return nothing

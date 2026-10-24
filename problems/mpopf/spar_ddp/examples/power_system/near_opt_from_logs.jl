@@ -3,7 +3,7 @@
 # the time until its iterate is FEASIBLE (primal infeasibility <= P, default
 # 1e-6) AND within 0.5% of the centralized Ipopt objective. The strict-tolerance
 # tail does not count. Future runs stop there on their own
-# (FILTERDDP_NEAR_OPT_REFERENCE in DDP4OPF's solve.jl); this recovers the same
+# (FILTERDDP_NEAR_OPT_REFERENCE in SPARDDP's solve.jl); this recovers the same
 # number for runs made before that existed.
 #
 # Timing is exact: FILTERDDP_ITER_TIMING gives every backward/forward pass, and

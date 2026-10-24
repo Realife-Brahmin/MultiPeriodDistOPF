@@ -9,7 +9,7 @@
 #         problems/mpopf/spar_ddp/examples/power_system/ieee123c_filterddp.jl \
 #         [system] [T] [dimensions|build|solver|solve]
 
-using DDP4OPF
+using SPARDDP
 using JuMP
 using LinearAlgebra
 using Printf
@@ -47,7 +47,7 @@ function analytic_dynamics(nx, nu, pbidx, dt)
     zxx = (x,u,λ) -> zeros(nx, nx)
     zux = (x,u,λ) -> spzeros(nu, nx)
     zuu = (x,u,λ) -> spzeros(nu, nu)
-    DDP4OPF.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
+    SPARDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
         f, fx, fu, zxx, zux, zuu)
 end
 
@@ -69,7 +69,7 @@ function analytic_objective(nx, nu, psidx, pbidx, price, pbase, dt, C_B)
         end
         H
     end
-    DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
+    SPARDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu)
 end
 
@@ -101,7 +101,7 @@ function soft_terminal_objective(base, nx, nu, pbidx, dt, B0, gamma)
         end
         H
     end
-    DDP4OPF.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
+    SPARDDP.Objective{nx,nu,typeof(l),typeof(lx),typeof(lu),typeof(lxx),typeof(lux),typeof(luu)}(
         l, lx, lu, lxx, lux, luu)
 end
 
@@ -461,7 +461,7 @@ function build_model(data; gamma=0.0, stages=nothing)
                 H
             end
         end
-        con = DDP4OPF.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
+        con = SPARDDP.EqualityConstraints{nx,nu,nc,typeof(equations),typeof(cx),typeof(cu),typeof(cxx),typeof(cux),typeof(cuu)}(
             equations, cx, cu, cxx, cux, cuu)
         stage_cons[t] = con
     end
@@ -483,7 +483,7 @@ function build_model(data; gamma=0.0, stages=nothing)
 end
 
 # Largest violation of a stage's constraints as posed, for FILTERDDP_ORIGINAL_PRIMAL
-# lines (DDP4OPF.PRIMAL_ORIGINAL_HOOK): the cone row P^2 + Q^2 - v ell + s = 0 counts
+# lines (SPARDDP.PRIMAL_ORIGINAL_HOOK): the cone row P^2 + Q^2 - v ell + s = 0 counts
 # only by how far P^2 + Q^2 exceeds v ell, and the energy row only by how far the
 # energy after the stage is outside its window; the balances, the voltage drops and
 # the substation voltage count as they are. Rows as in `equations` of build_model.
@@ -492,7 +492,7 @@ function install_original_primal_hook(data, idx)
     width = [(data[:soc_max][j] - data[:soc_min][j]) * data[:B_R_pu][j] for j in bats]
     audit_screened = get(ENV, "FILTERDDP_SCREEN_ABLATION_ORIGINAL_BOUNDS", "0") == "1"
     audit_screened && println("SCREEN_ABLATION_ORIGINAL_BOUNDS enabled")
-    DDP4OPF.PRIMAL_ORIGINAL_HOOK[] = function (t, x, u, c)
+    SPARDDP.PRIMAL_ORIGINAL_HOOK[] = function (t, x, u, c)
         v = 0.0
         @inbounds for i in 1:2N+L; v = max(v, abs(c[i])); end
         @inbounds for e in 1:L; v = max(v, c[2N+L+e] - u[idx.soc_slack[e]]); end

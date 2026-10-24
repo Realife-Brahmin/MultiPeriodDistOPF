@@ -284,7 +284,7 @@ end
 
 function install_pint_scan_hook()
     _pint_warm()
-    DDP4OPF.PINT_SCAN_HOOK[] = function (kind::Symbol, p)
+    SPARDDP.PINT_SCAN_HOOK[] = function (kind::Symbol, p)
         if kind === :reset
             empty!(_PINT_LEAVES)
         elseif kind === :stage

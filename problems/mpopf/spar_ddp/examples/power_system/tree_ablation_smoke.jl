@@ -1,5 +1,5 @@
 # Synthetic radial KKT correctness test; no exported cases or external solvers.
-using DDP4OPF, LinearAlgebra, SparseArrays, Random, Test, Printf
+using SPARDDP, LinearAlgebra, SparseArrays, Random, Test, Printf
 include(joinpath(@__DIR__, "control_layout.jl"))
 include(joinpath(@__DIR__, "tree_kkt.jl"))
 ENV["FILTERDDP_HALF_BLOCK"] = "1"
@@ -72,7 +72,7 @@ end
         end
         file=joinpath(directory,"network_$(getpid()).jls")
         @test isfile(file)
-        @test DDP4OPF.Serialization.deserialize(file).K==K
+        @test SPARDDP.Serialization.deserialize(file).K==K
         if !isempty(ARGS)
             cp(file,ARGS[1];force=false)
         end

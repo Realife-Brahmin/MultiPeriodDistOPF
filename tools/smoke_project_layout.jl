@@ -1,7 +1,7 @@
-# Small import/export regression for the problem-first layout; no optimization.
+# Small import/export regression plus a scalar Ipopt/MUMPS check; no MPOPF run.
 import Pkg
 Pkg.instantiate(; allow_autoprecomp=false)
-using Test, Serialization, OpenDSSDirect, Parameters, DDP4OPF, JuMP, Ipopt
+using Test, Serialization, OpenDSSDirect, Parameters, SPARDDP, JuMP, Ipopt
 const ROOT = normpath(joinpath(@__DIR__, ".."))
 const DDP = joinpath(ROOT, "problems", "mpopf", "spar_ddp")
 module SharedParser
@@ -36,4 +36,14 @@ end
         @test !isempty(data[:Bset])
     end
 end
-println("PROJECT_LAYOUT_SMOKE_PASS (imports, parser parity and export; no optimizer run)")
+@testset "Centralized reference needs no proprietary solver" begin
+    model = Model(Ipopt.Optimizer)
+    set_silent(model)
+    set_optimizer_attribute(model, "linear_solver", "mumps")
+    @variable(model, x >= 0, start=0.5)
+    @objective(model, Min, (x-1)^2)
+    optimize!(model)
+    @test termination_status(model) == JuMP.MOI.LOCALLY_SOLVED
+    @test isapprox(value(x),1.0;atol=1e-5)
+end
+println("PROJECT_LAYOUT_SMOKE_PASS (imports, parser parity, export and scalar MUMPS check; no MPOPF benchmark)")

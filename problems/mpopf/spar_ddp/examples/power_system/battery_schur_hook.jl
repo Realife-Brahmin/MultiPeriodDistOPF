@@ -1,5 +1,5 @@
 # Schur complement of the stage KKT onto the battery rows, for
-# FILTERDDP_BATTERY_SCHUR=1 (DDP4OPF.BATTERY_SCHUR_HOOK). MUMPS returns it
+# FILTERDDP_BATTERY_SCHUR=1 (SPARDDP.BATTERY_SCHUR_HOOK). MUMPS returns it
 # directly (ICNTL(19)); UMFPACK has no such interface. Symmetric mode, so
 # MUMPS reads the upper triangle of K. Checked against full solves on captured
 # stages by battery_block_check.jl.
@@ -12,7 +12,7 @@
 # workspace estimate (INFOG(1) = -8 or -9) is retried with a larger relaxation
 # ICNTL(14); MUMPS otherwise returns garbage silently.
 
-import MUMPS   # not `using`: MUMPS exports solve!, which would shadow DDP4OPF.solve!
+import MUMPS   # not `using`: MUMPS exports solve!, which would shadow SPARDDP.solve!
 MUMPS.MPI.Initialized() || MUMPS.MPI.Init()
 
 const _SCHUR_RELAX = Ref(400)
@@ -55,5 +55,5 @@ function mumps_battery_schur(K, E)
     end
 end
 
-DDP4OPF.BATTERY_SCHUR_HOOK[] = mumps_battery_schur
+SPARDDP.BATTERY_SCHUR_HOOK[] = mumps_battery_schur
 println("BATTERY_SCHUR hook: MUMPS, analysis reused")

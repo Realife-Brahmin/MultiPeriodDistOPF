@@ -211,10 +211,10 @@ end
 function _pp_solve(S, V̂x, V̂xx)
     lay, stat, fac = S.lay, S.stat, S.fac
     Qû = S.lu_ + S.fu' * V̂x + S.mubar
-    B_active = DDP4OPF._lean_B(S.fu_active, V̂xx)
+    B_active = SPARDDP._lean_B(S.fu_active, V̂xx)
     S.lux_in_B && (B_active .+= S.lux[S.active, :])
     Qû = Qû + S.cuϕ
-    Vc = DDP4OPF._lean_curvature(S.fu_active, V̂xx)
+    Vc = SPARDDP._lean_curvature(S.fu_active, V̂xx)
     st = _tree_kkt_finishV(stat, fac, S.b0, Vc)
     s = TreeKKTSolver(lay, stat, fac, st, S.nzc, S.pre, S.z, S.y1, S.y2, S.t2, zeros(5))
     b = S.b; nz = S.nzc; y = S.y1
@@ -288,19 +288,19 @@ end
 
 _pp_rel(A, B) = norm(A - B) / max(norm(B), floatmin())
 
-function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj, d, options, data, idx) where {T, nx, nu, nc}
+function paired_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj, d, options, data, idx) where {T, nx, nu, nc}
     T === Float64 || return false
-    isnothing(DDP4OPF._reuse_candidate(solver, d)) || return false      # the solver's reuse pass
+    isnothing(SPARDDP._reuse_candidate(solver, d)) || return false      # the solver's reuse pass
     mode = _paired_mode()
-    (mode != "0" && !DDP4OPF._diag_hessian_enabled() && DDP4OPF._lean_exact_enabled()) || return false
-    (DDP4OPF._lean_value() && _half_block() && DDP4OPF._kkt_pattern_cache_enabled()) || return false
+    (mode != "0" && !SPARDDP._diag_hessian_enabled() && SPARDDP._lean_exact_enabled()) || return false
+    (SPARDDP._lean_value() && _half_block() && SPARDDP._kkt_pattern_cache_enabled()) || return false
     timed = mode == "count"
     N = ocp.N
     μ = d.μ
     cl = ocp.control_limits
     t_start = time_ns()
     serial = timed || _TP_LAST_DIAG[] !== false || isnothing(_TP_LAYOUT[]) ||
-        any(t -> !haskey(DDP4OPF._KKT_PATTERN_CACHE, (objectid(solver), t)), 1:N)
+        any(t -> !haskey(SPARDDP._KKT_PATTERN_CACHE, (objectid(solver), t)), 1:N)
     _TP_LAST_DIAG[] = false
     blas_threads = BLAS.get_num_threads()
     blas_default = _BLAS_DEFAULT[]
@@ -309,8 +309,8 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
     pre_t = zeros(N); post_t = zeros(N)
     S = Vector{Any}(undef, N); E = Vector{Any}(undef, N); R = Vector{Any}(undef, N); P = Vector{Any}(undef, N)
     info = nothing; t_1 = t_2 = t_3 = t_start; err_V = NaN; err_v = NaN
-    keep_reuse = DDP4OPF._reuse_barrier()
-    keep_rows = DDP4OPF._parsim() || !isnothing(DDP4OPF.AFFINE_DIRECTIONS_HOOK[])
+    keep_reuse = SPARDDP._reuse_barrier()
+    keep_rows = SPARDDP._parsim() || !isnothing(SPARDDP.AFFINE_DIRECTIONS_HOOK[])
     ordinary = !_paired_rounds()
     inplace = _paired_inplace() && !ordinary
     inplace && _pp_storage!(N, nx, timed ? 1 : Threads.nthreads())
@@ -433,9 +433,9 @@ function paired_backward_pass!(solver::DDP4OPF.Solver{T, nx, nu, nc}, ocp, traj,
     d.barrier_lagrangian_curr += d.objective
     d.reg_last = 0.0
     if keep_reuse
-        stages = Vector{DDP4OPF.ReuseStage{Float64}}(undef, N)
+        stages = Vector{SPARDDP.ReuseStage{Float64}}(undef, N)
         for t in 1:N; stages[t] = P[t].reuse; end
-        DDP4OPF._REUSE_CACHE[] = DDP4OPF.ReusePass{Float64}(objectid(solver), d.k, false, stages, d.primal_1_curr,
+        SPARDDP._REUSE_CACHE[] = SPARDDP.ReusePass{Float64}(objectid(solver), d.k, false, stages, d.primal_1_curr,
             d.primal_inf, d.objective, d.dual_inf, d.cs_inf_0, scaling_cs)
     end
     if get(ENV, "FILTERDDP_TIMING_DIAGNOSTIC", "0") == "1"
@@ -463,11 +463,11 @@ end
 function install_paired_pass(data, idx)
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
-    DDP4OPF.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
+    SPARDDP.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
         paired_backward_pass!(solver, ocp, traj, d, options, data, idx)
     if _paired_mode() != "count" && get(ENV, "FILTERDDP_THREADED_FORWARD", "1") != "0"
-        DDP4OPF.AFFINE_DIRECTIONS_HOOK[] = threaded_affine_directions
-        DDP4OPF.AFFINE_ROLLOUT_HOOK[] = threaded_affine_rollout!
+        SPARDDP.AFFINE_DIRECTIONS_HOOK[] = threaded_affine_directions
+        SPARDDP.AFFINE_ROLLOUT_HOOK[] = threaded_affine_rollout!
     end
     println("PAIRED_SWEEP installed: mode=", _paired_mode(), ", ", Threads.nthreads(), " Julia threads")
     return nothing

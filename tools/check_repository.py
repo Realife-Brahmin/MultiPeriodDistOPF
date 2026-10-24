@@ -44,7 +44,7 @@ def check(root=ROOT):
                 count += 1
             except (SyntaxError, UnicodeError) as exc:
                 errors.append(f"{path.relative_to(root)}: {exc}")
-    for name in ("problems/mpopf/spar_ddp/DDP4OPF.jl/Project.toml", "problems/mpopf/spar_ddp/Project.toml",
+    for name in ("problems/mpopf/spar_ddp/SPARDDP.jl/Project.toml", "problems/mpopf/spar_ddp/Project.toml",
                  "problems/msopf/Project.toml", "problems/mpopf/tadmm/Project.toml"):
         if not (root / name).is_file():
             errors.append(f"missing workstream environment/package: {name}")
