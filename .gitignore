@@ -52,7 +52,8 @@ __pycache__/
 *.pyc
 
 # Assistant session notes -- local working material, not part of the repo
-.claude/
+.claude/*
+!.claude/CLAUDE.md
 
 # Per-stage KKT captures from run_agenda_pipeline.sh: large10k alone is 1.6 GB.
 spar_ddp/results/agenda_pipeline/captures/
