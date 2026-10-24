@@ -64,12 +64,10 @@ nor the packager changes the electrical data.
 
 ## Cite the networks you use
 
-Please cite **this repository for its adaptations, DER placements, corrections
-and supporting code**, even if you only use the OpenDSS files. Record the network
-folder, Git commit (or downloaded version), and any changes you make:
+Please cite this repository:
 
-> Aryan Ritwajeet Jha and contributors, *MultiPeriodDistOPF*, network
-> `ieee123C_1ph`, commit `<commit>`, https://github.com/Realife-Brahmin/MultiPeriodDistOPF.
+> Aryan Ritwajeet Jha and contributors, *MultiPeriodDistOPF*,
+> https://github.com/Realife-Brahmin/MultiPeriodDistOPF.
 
 Also cite the underlying feeder source where applicable:
 
@@ -85,6 +83,6 @@ Also cite the underlying feeder source where applicable:
   [source provenance and citations](../test_systems/README.md).
 
 [CITATION.cff](../CITATION.cff) supplies GitHub's repository citation metadata.
-Please retain applicable upstream notices and identify modifications. The
+Please retain applicable upstream notices. The
 citation request does not replace or add restrictions to the repository's
 [MIT license](../LICENSE) or to third-party source terms.

@@ -38,7 +38,6 @@ def package_network(system, output, root=ROOT):
         "This is a power-flow deck, not an optimized battery schedule.\n\n"
         "Please cite Aryan Ritwajeet Jha and contributors, MultiPeriodDistOPF,\n"
         "https://github.com/Realife-Brahmin/MultiPeriodDistOPF.\n"
-        "Record the source checkout commit/network and any modifications.\n"
         "See CITATION.cff and the upstream notices retained in the deck.\n"
         "Network provenance: https://github.com/Realife-Brahmin/MultiPeriodDistOPF/blob/master/test_networks/README.md\n"
         "The citation request does not add restrictions to the MIT license.\n"

@@ -56,11 +56,11 @@ See the [installation guide](docs/first-time-installation-guide.md) for setup.
 
 ## Citation
 
-If you use the **code, OpenDSS network adaptations or figures** in research,
-please cite this repository and identify the network and commit you used:
+Please cite this repository when using its **code, test networks or
+editable Inkscape figures**:
 
 > Aryan Ritwajeet Jha and contributors, *MultiPeriodDistOPF*,
-> https://github.com/Realife-Brahmin/MultiPeriodDistOPF, commit `<commit>`.
+> https://github.com/Realife-Brahmin/MultiPeriodDistOPF.
 
 Use GitHub's **“Cite this repository”** option or [CITATION.cff](CITATION.cff).
 Also cite the [original network sources](test_networks/README.md#cite-the-networks-you-use)

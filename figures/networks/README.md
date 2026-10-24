@@ -16,17 +16,14 @@ Illustrations and original feeder datasets have distinct provenance.
 
 ## Reuse and citation
 
-Retain the applicable copyright/license notice when reusing these repository
-figures; see ../../LICENSE. Please credit Aryan Ritwajeet Jha and contributors,
-link to this repository, identify the SVG filename and commit used, and state
-whether you modified it. This citation request does not add restrictions to
-the MIT license. Cite the underlying network publication separately when
-using its test system. The medium and large network source publications are listed below.
+Please cite this repository when using the editable Inkscape SVGs or their
+exported figures:
 
-Suggested figure credit:
+> Aryan Ritwajeet Jha and contributors, *MultiPeriodDistOPF*,
+> https://github.com/Realife-Brahmin/MultiPeriodDistOPF.
 
-> Network illustration adapted from MultiPeriodDistOPF, Aryan Ritwajeet Jha
-> and contributors, figures/networks/<filename>.svg, commit <commit>.
+Retain applicable notices; see [LICENSE](../../LICENSE). The medium and large
+network source publications are listed below.
 
 The SPAR-DDP manuscript is in preparation; do not invent a DOI or release.
 Its source repository is:
