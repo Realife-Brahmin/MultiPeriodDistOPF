@@ -1,37 +1,27 @@
-name: CI
+name: Repository checks
 on:
   push:
     branches:
       - master
-    tags: ['*']
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 concurrency:
-  # Skip intermediate builds: always.
-  # Cancel intermediate builds: only if it is a pull request build.
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+  group: repository-checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - '1.0'
-          - '1.9'
-          - 'nightly'
-        os:
-          - ubuntu-latest
-        arch:
-          - x64
+  structure-and-syntax:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+          python-version: '3.12'
+      - name: Check maintained navigation and Python syntax
+        run: python tools/check_repository.py
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12.4'
+      - name: Parse active SPAR-DDP Julia sources (no solves or package installation)
+        run: julia --startup-file=no tools/check_julia_syntax.jl

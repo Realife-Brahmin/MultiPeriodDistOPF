@@ -5,7 +5,10 @@ editing tools live here. These are not the supported starting point for users.
 For SPAR-DDP use ../spar_ddp/README.md; for tADMM use ../envs/tadmm/README.md.
 
 - `probes/`: one-off diagnostics and research experiments.
-- `run_*.ps1`, `run_*.sh`, `monitor_*.ps1`: historical launchers/queues.
+- `archive/workstation-queues/`: superseded machine-specific unattended queues
+  and their monitor, preserved as history and not runnable entry points.
+- Remaining `run_*.ps1`, `run_*.sh`: individual experimental/regression helpers;
+  these still require explicit review before use.
 - `extract_*.ps1`, `analyze_*.py`, `_export_traj_csv.py`: analysis/conversion.
 - `make_network_svg*.py`, `strip_svg_captions.py`, `tint_svg_elements.py`:
   exploratory network illustration tools; committed Inkscape SVGs are the

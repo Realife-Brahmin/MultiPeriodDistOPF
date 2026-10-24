@@ -580,10 +580,12 @@ for (b,j) in enumerate(data[:Bset])
 end
 ubar = [copy(u0) for _ in 1:T]
 if get(ENV, "FILTERDDP_LOADFLOW_START", "0") != "0"
+    init_start_ns = time_ns()
     sweeps = maximum(loadflow_start!(ubar[t], data, idx, t) for t in 1:T)
     res0 = maximum(norm(ocp.stage_constraints[t].c(x0, ubar[t]), Inf) for t in 1:T)
     @printf("LOADFLOW_START sweeps=%d max_equality_residual=%.3e lowest_voltage=%.4f pu\n",
             sweeps, res0, sqrt(minimum(minimum(@view ubar[t][idx.v]) for t in 1:T)))
+    @printf("FILTERDDP_START_TIMING powerflow_init_s=%.9f initialization_first_call=1\n", (time_ns()-init_start_ns)/1e9)
 end
 # FILTERDDP_WARMUP=<n> or `full`: run the same solve first, silently, for n
 # iterations or to its normal stop, and discard it. Julia compiles each method

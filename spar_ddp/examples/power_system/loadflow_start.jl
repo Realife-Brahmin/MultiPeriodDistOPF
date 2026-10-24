@@ -62,6 +62,16 @@ function loadflow_sweep(data, t::Int; sweeps::Int=50)
 end
 
 # Fill the FilterDDP control vector of period t. `soc_slack` is the solver's
+function loadflow_initial_values(data, t::Int; soc_slack::Float64=0.01, sweeps::Int=50)
+    v, P, Q, ell, n = loadflow_sweep(data, t; sweeps=sweeps)
+    buspos = Dict(j => k for (k, j) in enumerate(data[:Nset]))
+    for (le, e) in enumerate(data[:Lset])
+        ell[le] = (P[le]^2 + Q[le]^2 + soc_slack) / v[buspos[e[1]]]
+    end
+    return v, P, Q, ell, n
+end
+
+# Fill the FilterDDP control vector of period t. `soc_slack` is the solver's
 # own interior push for a variable bounded below by zero (kappa_1 = 0.01), and
 # ell is raised to keep the SOC row satisfied with that slack.
 function loadflow_start!(u::AbstractVector, data, idx, t::Int; soc_slack::Float64=0.01, sweeps::Int=50)
