@@ -3,13 +3,17 @@
 This repository holds separate projects that share little beyond the test decks and the
 OpenDSS validation. Each keeps its own Claude notes, loaded when you work in its folder:
 
-- **MSOPF** (multi-source multi-period OPF, `envs/multi_poi/`): [envs/multi_poi/CLAUDE.md](envs/multi_poi/CLAUDE.md).
-- **SPAR-DDP** (`spar_ddp/`, `envs/spar_ddp/`): [spar_ddp/CLAUDE.md](spar_ddp/CLAUDE.md), which points to
-  the current DDP instructions in [AGENTS.md](AGENTS.md).
-- **tADMM** (`envs/tadmm/`): kept for reference; see [envs/tadmm/README.md](envs/tadmm/README.md).
+- **MSOPF** (multi-source multi-period OPF, `envs/multi_poi/`): [envs/multi_poi/CLAUDE.md](../envs/multi_poi/CLAUDE.md).
+- **SPAR-DDP** (`spar_ddp/`, `envs/spar_ddp/`): [spar_ddp/CLAUDE.md](../spar_ddp/CLAUDE.md), which points to
+  the current DDP instructions in [.agents/AGENTS.md](../.agents/AGENTS.md).
+- **tADMM** (`envs/tadmm/`): kept for reference; see [envs/tadmm/README.md](../envs/tadmm/README.md).
 
-Read [AGENTS.md](AGENTS.md) for the shared instructions. Historical Claude context is preserved
-in [docs/history/CLAUDE-pre-cleanup-oct18.md](docs/history/CLAUDE-pre-cleanup-oct18.md); old
+Shared instructions are imported here so this hidden entry point loads them:
+
+@../.agents/AGENTS.md
+
+Historical Claude context is preserved
+in [docs/history/CLAUDE-pre-cleanup-oct18.md](../docs/history/CLAUDE-pre-cleanup-oct18.md); old
 launch requests there are not current authorization.
 
 ## Shared by all projects

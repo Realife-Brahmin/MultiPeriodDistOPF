@@ -1,9 +1,8 @@
 # MSOPF (multi-source OPF)
 
 Code for the multi-source OPF workstream: distribution feeders fed by several
-substations whose voltage angles are fixed upstream. The paper is the separate
-`PESGM2027_Multi-Source-Multi-Period-OPF` repository; its Section II documents
-`solve_full_angle` in [`full_angle_pf.jl`](full_angle_pf.jl).
+substations whose voltage angles are fixed upstream. The implementation starts
+with `solve_full_angle` in [`full_angle_pf.jl`](full_angle_pf.jl).
 
 ## Setup on any machine
 

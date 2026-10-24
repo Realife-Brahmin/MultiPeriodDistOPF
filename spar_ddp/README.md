@@ -8,9 +8,7 @@ battery energy is the state linking time-steps.
 [FilterDDP.jl](https://github.com/mingu6/FilterDDP.jl), with the upstream filter
 line-search foundation and MPOPF-specific sparse/network and parallel paths.
 Retain its [NOTICE](DDP4OPF.jl/NOTICE.md), MIT license and original method
-citations (arXiv 2504.08278 and 2606.01487). The separate
-[SPAR-DDP manuscript](https://github.com/Realife-Brahmin/TPWRS-2027-Sparse-Parallel-DDP-for-MPOPF)
-is in preparation.
+citations (arXiv 2504.08278 and 2606.01487).
 
 ## What belongs here
 

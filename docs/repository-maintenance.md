@@ -1,5 +1,27 @@
 # Keeping master a usable research baseline
 
+## Public documentation and coding-agent guidance
+
+The root README is for visitors: what the repository offers, how to get an
+OpenDSS network or try a method, and how to cite it. Campaign status belongs
+with the study; workflow safeguards belong here or in developer instructions,
+not in the main introduction.
+
+Full shared agent instructions live in `.agents/AGENTS.md`. The root
+`AGENTS.md` is only a short pointer because Codex discovers guidance along the
+root-to-working-directory path, not by recursively loading arbitrary hidden
+folders. Claude's project entry lives in `.claude/CLAUDE.md` and imports the
+shared instructions; local sessions/worktrees remain ignored. Workstream
+Claude notes remain scoped to their own folders. No user-global settings changed.
+See [Codex discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
+and [Claude instruction locations](https://code.claude.com/docs/en/memory).
+
+The visitor-facing network catalogue is `test_networks/README.md`; physical
+decks remain in `rawData/` for parser and recorded-harness compatibility.
+Standalone network ZIPs use `test_networks/<system>/` and include shared
+profiles, license and citation. This is not an on-disk rename of the dataset.
+The repository citation is a request for scholarly credit, not a license change.
+
 The repository hosts SPAR-DDP, tADMM and MSOPF. A project may retain useful
 experimental work without making it a supported feature. The directory layout
 must distinguish implementation, evidence and unfinished local exploration.

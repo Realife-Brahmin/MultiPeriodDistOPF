@@ -2,7 +2,7 @@
 
 Claude Code loads this file for work under `envs/multi_poi/`. It holds only MSOPF; the
 repository-wide rules (test decks, OpenDSS validation, commits, Kamiak) are in the root
-`CLAUDE.md`, and SPAR-DDP has its own notes (`spar_ddp/CLAUDE.md`, `AGENTS.md`). MSOPF and
+`.claude/CLAUDE.md`, and SPAR-DDP has its own notes (`spar_ddp/CLAUDE.md`, `.agents/AGENTS.md`). MSOPF and
 SPAR-DDP share only the test decks in `rawData/` and the OpenDSS checks; their rules differ
 (e.g. terminal SOC is hard here, soft in DDP and tADMM). Keep this file updated when a session
 establishes something a later session on any machine would need.
