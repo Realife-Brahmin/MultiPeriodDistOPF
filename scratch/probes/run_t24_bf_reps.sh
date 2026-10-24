@@ -5,7 +5,7 @@ set -euo pipefail
 
 cd /c/repos_addendum/MultiPeriodDistOPF
 
-DIR=envs/tadmm/processedData/ieee2522C_1ph_T24
+DIR=problems/mpopf/tadmm/processedData/ieee2522C_1ph_T24
 
 for REP in 3 4 5 6; do
   echo "=================================================================="
@@ -13,7 +13,7 @@ for REP in 3 4 5 6; do
   echo "=================================================================="
   SYSTEM_OVERRIDE=ieee2522C_1ph \
   T_OVERRIDE=24 \
-    julia --project=envs/tadmm --threads=16 envs/tadmm/root_level/run_bf.jl
+    julia --project=problems/mpopf/tadmm --threads=16 problems/mpopf/tadmm/root_level/run_bf.jl
   cp "$DIR/results_socp_bf.txt" "$DIR/results_socp_bf_run${REP}.txt"
   cp "$DIR/ipopt_bf.log"        "$DIR/ipopt_bf_run${REP}.log"
   WT=$(grep 'Wall-clock' "$DIR/results_socp_bf.txt" | awk '{print $3}')

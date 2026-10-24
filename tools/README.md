@@ -1,5 +1,12 @@
 # Maintained repository utilities
 
+`check_layout.py` verifies relocated evidence/data/solver identities and key
+entry-point paths; it needs the baseline Git history (see the
+[migration guide](../docs/problem-layout-migration.md)).
+`smoke_project_layout.jl` is an optional small runtime import/parser/export
+check in the SPAR-DDP environment; it does not run an optimizer and is not a
+benchmark. It writes its export into a temporary directory.
+
 `package_test_network.py` creates a standalone OpenDSS ZIP containing one
 adapted deck, its shared profiles, license and citation metadata. It does not
 change inputs or overwrite existing archives. See the
@@ -11,7 +18,7 @@ files. Existing files are left untouched. Run `bash tools/fetch_resources.sh`
 from the repository root. Historical experiment launchers live in scratch/.
 
 `fetch_test_systems.sh` retrieves public source decks; `summarize_test_systems.jl`
-checks those decks with OpenDSS. Read [their provenance](../test_systems/README.md)
+checks those decks with OpenDSS. Read [their provenance](../test_networks/sources/README.md)
 before running either; the latter performs solves and is not a cleanup check.
 
 Lightweight checks, run from any checkout:

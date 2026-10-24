@@ -1,24 +1,24 @@
 # Julia resolved manifests are ignored by default, with one deliberate exception:
-# envs/tadmm/Manifest.toml is tracked so that the published results reproduce
+# problems/mpopf/tadmm/Manifest.toml is tracked so that the published results reproduce
 # against the exact package versions they were produced with. Do not untrack it.
 **/Manifest.toml
-!envs/tadmm/Manifest.toml
+!problems/mpopf/tadmm/Manifest.toml
 
 # Generated experiment outputs.
-# Regenerated locally by envs/tadmm/root_level/{run_bf,run_tadmm,run_rho_sweep}.jl.
+# Regenerated locally by problems/mpopf/tadmm/root_level/{run_bf,run_tadmm,run_rho_sweep}.jl.
 # The curated final-winner subset is tracked under results/ instead.
-envs/*/processedData/
+problems/**/processedData/
 
 # Optional unmodified upstream clone of the authors' FilterDDP.jl, needed only to
 # reproduce their own shipped example (Stage 3). The solver this repo actually
-# uses is the committed fork at spar_ddp/DDP4OPF.jl. The clone carries its own .git,
+# uses is the committed fork at problems/mpopf/spar_ddp/DDP4OPF.jl. The clone carries its own .git,
 # so tracking it here would create an embedded repository.
-spar_ddp/external/
+problems/mpopf/spar_ddp/external/
 
 # Third-party papers fetched from arXiv for the FilterDDP evaluation, and their
 # text extractions. Not ours to redistribute from a public repo; re-fetch with
-# the commands in spar_ddp/README_FILTERDDP_EXPERIMENT.md.
-spar_ddp/papers/
+# the commands in problems/mpopf/spar_ddp/README_FILTERDDP_EXPERIMENT.md.
+problems/mpopf/spar_ddp/papers/
 
 # Locally downloaded reference papers. Keep their lightweight MANIFEST.txt
 # attendance records in git; already-tracked PDFs remain tracked.
@@ -28,12 +28,12 @@ spar_ddp/papers/
 logs/
 tmp/
 .tools/
-spar_ddp/results/network_filterddp/network_data_*.jls
-spar_ddp/results/network_filterddp/filterddp_solution_*.jls
-spar_ddp/results/sparsity/filterddp_*/*.jls
+problems/mpopf/spar_ddp/results/network_filterddp/network_data_*.jls
+problems/mpopf/spar_ddp/results/network_filterddp/filterddp_solution_*.jls
+problems/mpopf/spar_ddp/results/sparsity/filterddp_*/*.jls
 # ...except the FilterDDP evaluation's logs, which are its evidence: the status
-# table in spar_ddp/README_FILTERDDP_EXPERIMENT.md links to them.
-!spar_ddp/logs/
+# table in problems/mpopf/spar_ddp/README_FILTERDDP_EXPERIMENT.md links to them.
+!problems/mpopf/spar_ddp/logs/
 pngs_review/
 gks*.png
 
@@ -44,8 +44,8 @@ gks*.png
 **/tex/*.log
 **/tex/*.synctex.gz
 
-# Intermediate data-conversion outputs (only final systems kept in rawData/)
-rawData/flexparams_10k_1ph/
+# Intermediate data-conversion outputs (only final systems kept in test_networks/)
+test_networks/flexparams_10k_1ph/
 
 # Python bytecode
 __pycache__/
@@ -56,35 +56,35 @@ __pycache__/
 !.claude/CLAUDE.md
 
 # Per-stage KKT captures from run_agenda_pipeline.sh: large10k alone is 1.6 GB.
-spar_ddp/results/agenda_pipeline/captures/
+problems/mpopf/spar_ddp/results/agenda_pipeline/captures/
 
 # Captured stage KKT systems for the ordering/MA57 benchmark (~1.6 GB each at large10k)
-spar_ddp/results/kkt_ordering/captures/
+problems/mpopf/spar_ddp/results/kkt_ordering/captures/
 # ...but that study's logs are its evidence (capture provenance, background load
-# during every timed case, raw benchmark output), as spar_ddp/logs/ is above.
-!spar_ddp/results/kkt_ordering/logs/
+# during every timed case, raw benchmark output), as problems/mpopf/spar_ddp/logs/ is above.
+!problems/mpopf/spar_ddp/results/kkt_ordering/logs/
 # Centralized Ipopt with and without the C_B battery term: the logs are the result.
-!spar_ddp/results/ipopt_no_cb/logs/
-!spar_ddp/results/ipopt_cb_*/logs/
-!spar_ddp/results/ipopt_hsl/logs/
+!problems/mpopf/spar_ddp/results/ipopt_no_cb/logs/
+!problems/mpopf/spar_ddp/results/ipopt_cb_*/logs/
+!problems/mpopf/spar_ddp/results/ipopt_hsl/logs/
 # voltage-limit masks written by constraint_activity.jl (regenerable)
-spar_ddp/results/constraint_activity/*.jls
+problems/mpopf/spar_ddp/results/constraint_activity/*.jls
 # T = 1536 per-iteration logs are 75-140 MB raw: committed gzipped (GitHub rejects files over 100 MB)
-spar_ddp/results/diag_vs_exact_horizon/*_T1536_*.log
+problems/mpopf/spar_ddp/results/diag_vs_exact_horizon/*_T1536_*.log
 # Gurobi 13 on the matched instances: the logs are the result.
-!spar_ddp/results/gurobi_matched/logs/
+!problems/mpopf/spar_ddp/results/gurobi_matched/logs/
 # Pairwise combination of the periods (pint_scan.jl): the logs are the result.
-!spar_ddp/results/pint_scan/logs/
+!problems/mpopf/spar_ddp/results/pint_scan/logs/
 # Barrier schedules and the hybrid Hessian (run_barrier_sweep.sh): likewise.
-!spar_ddp/results/barrier_sweep/logs/
+!problems/mpopf/spar_ddp/results/barrier_sweep/logs/
 # FilterDDP runs with the one-worker accounting: of that scratch folder, only
 # the clean batch of 2026-10-11 (hp_tol1e5) and the lean-exact checks (chk),
-# which spar_ddp/notes/PARALLEL_IN_TIME.md Section 10 and clean_hp_table.py read.
-!spar_ddp/results/parallel_in_time/logs/
-spar_ddp/results/parallel_in_time/logs/*
-!spar_ddp/results/parallel_in_time/logs/*_hp_tol1e5.log
-!spar_ddp/results/parallel_in_time/logs/*_hp_tol1e6.log
-!spar_ddp/results/parallel_in_time/logs/*_chk_*.log
+# which problems/mpopf/spar_ddp/notes/PARALLEL_IN_TIME.md Section 10 and clean_hp_table.py read.
+!problems/mpopf/spar_ddp/results/parallel_in_time/logs/
+problems/mpopf/spar_ddp/results/parallel_in_time/logs/*
+!problems/mpopf/spar_ddp/results/parallel_in_time/logs/*_hp_tol1e5.log
+!problems/mpopf/spar_ddp/results/parallel_in_time/logs/*_hp_tol1e6.log
+!problems/mpopf/spar_ddp/results/parallel_in_time/logs/*_chk_*.log
 
 # Personal editor workspaces belong to each checkout.
 *.code-workspace

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Download the public distribution test systems into test_systems/, each in its own folder,
+# Download the public distribution test systems into test_networks/sources/, each in its own folder,
 # exactly as published (no edits). Safe to re-run: a folder that exists is left alone.
 #   bash tools/fetch_test_systems.sh
 # Needs curl and the GitHub CLI (gh) for listing repository trees; no SVN or AWS CLI.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="$ROOT/test_systems"
+DEST="$ROOT/test_networks/sources"
 mkdir -p "$DEST"
 
 # Every file under <prefix> of a GitHub repo at <ref>, into <dir>, keeping the relative paths.

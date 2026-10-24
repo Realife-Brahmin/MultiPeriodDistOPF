@@ -10,10 +10,10 @@ $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $julia = Join-Path $repo ".tools\julia-1.12.6\bin\julia.exe"
 $depot = Join-Path $repo ".tools\julia_depot"
-$project = Join-Path $repo "envs\spar_ddp"
-$driver = Join-Path $repo "spar_ddp\examples\power_system\ieee123c_filterddp.jl"
+$project = Join-Path $repo "envs\problems/mpopf/spar_ddp"
+$driver = Join-Path $repo "problems/mpopf/spar_ddp\examples\power_system\ieee123c_filterddp.jl"
 $extractor = Join-Path $repo "scripts\extract_filterddp_trace.ps1"
-$resultDir = Join-Path $repo "spar_ddp\results\network_filterddp"
+$resultDir = Join-Path $repo "problems/mpopf/spar_ddp\results\network_filterddp"
 $logDir = Join-Path $repo "logs"
 $statusLog = Join-Path $logDir "factored_bound_sensitivity_regression.status.log"
 

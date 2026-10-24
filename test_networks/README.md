@@ -6,21 +6,21 @@ they are **not unmodified copies** of the original IEEE/EPRI feeders.
 
 ## Pick a network
 
-- **Small starting case:** [ieee123 — 128 modeled buses](../rawData/ieee123C_1ph/).
+- **Small starting case:** [ieee123 — 128 modeled buses](ieee123C_1ph).
   Balanced single-phase adaptation of the IEEE 123-node feeder, with added DERs.
-- **Medium case:** [med2522 — 2,522 buses](../rawData/ieee2522C_1ph/).
+- **Medium case:** [med2522 — 2,522 buses](ieee2522C_1ph).
   The stable filename is `ieee2522C_1ph`; this is not an official IEEE 2,522-node
   test feeder. Its provenance is a single-phase IEEE 8500 primary-network
   adaptation used in the D-OPF study cited below.
-- **Large case:** [large10k — 10,321 buses](../rawData/large10kC_1ph/).
+- **Large case:** [large10k — 10,321 buses](large10kC_1ph).
   Synthetic aggregate single-phase system. Read its
-  [electrical corrections](../rawData/large10kC_1ph/CORRECTION.md) before comparing
+  [electrical corrections](large10kC_1ph/CORRECTION.md) before comparing
   it with another version of the source system.
-- **Multiple sources:** [small two-source example](../rawData/small2poi_1ph/)
-  or [five-source IEEE123 adaptation](../rawData/ieee123_5poi_1ph/).
-- **More networks:** [all adapted decks](../rawData/), including converted
+- **Multiple sources:** [small two-source example](small2poi_1ph)
+  or [five-source IEEE123 adaptation](ieee123_5poi_1ph).
+- **More networks:** [all adapted decks](.), including converted
   EPRI, IEEE 8500/9500 and SMART-DS cases. Their
-  [published source decks and provenance](../test_systems/README.md) are separate.
+  [published source decks and provenance](sources/README.md) are separate.
 
 The bus counts above describe these repository models, not the official feeder
 names. Device placement, voltage bases, source settings and one-phase equivalents
@@ -35,7 +35,7 @@ Python and optimization-solver licenses are not needed to run the deck.
 In OpenDSS, replace the path below with your extracted directory:
 
 ```text
-Compile [C:/path/to/MultiPeriodDistOPF/rawData/ieee123C_1ph/Master.dss]
+Compile [C:/path/to/MultiPeriodDistOPF/test_networks/ieee123C_1ph/Master.dss]
 Solve
 ```
 
@@ -54,13 +54,10 @@ Extract the ZIP, then compile `test_networks/ieee123C_1ph/Master.dss` inside it.
 The packaged DSS/profile files are byte-identical to the repository files.
 Existing output files are never overwritten.
 
-### Why are the files still in rawData?
-
-`test_networks/` is the human-facing catalogue; `rawData/` remains the physical
-storage path used by existing parsers and recorded studies. This avoids breaking
-working code or historical reproduction merely to improve discoverability.
-The standalone ZIP uses the clearer `test_networks/` layout. Neither this guide
-nor the packager changes the electrical data.
+The adapted decks live here, alongside their shared profiles. Published source
+decks are in `sources/`; the shared Julia parser is `parse_opendss.jl`.
+Older studies used the folder name `rawData`: use their recorded commits for
+exact reproduction. The layout migration does not alter electrical file contents.
 
 ## Cite the networks you use
 
@@ -80,7 +77,7 @@ Also cite the underlying feeder source where applicable:
   Energy Resources,” HICSS-56, 2023.
   [Source publication](https://aisel.aisnet.org/hicss-56/es/monitoring/8/).
 - Converted EPRI/IEEE/SMART-DS decks: see the
-  [source provenance and citations](../test_systems/README.md).
+  [source provenance and citations](sources/README.md).
 
 [CITATION.cff](../CITATION.cff) supplies GitHub's repository citation metadata.
 Please retain applicable upstream notices. The

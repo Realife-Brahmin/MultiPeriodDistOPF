@@ -11,7 +11,7 @@ from package_test_network import PROFILES, ROOT, package_network
 
 class NetworkPackageTests(unittest.TestCase):
     def test_real_deck_and_profiles_are_byte_identical(self):
-        systems = sorted(p.name for p in (ROOT / "rawData").iterdir()
+        systems = sorted(p.name for p in (ROOT / "test_networks").iterdir()
                          if p.is_dir() and (p / "Master.dss").is_file())
         self.assertIn("ieee123C_1ph", systems)
         self.assertIn("large10kC_1ph", systems)
@@ -20,13 +20,13 @@ class NetworkPackageTests(unittest.TestCase):
                 output = Path(tmp) / "case.zip"
                 package_network(system, output)
                 with zipfile.ZipFile(output) as archive:
-                    for path in (ROOT / "rawData" / system).rglob("*"):
+                    for path in (ROOT / "test_networks" / system).rglob("*"):
                         if path.is_file():
-                            name = f"test_networks/{system}/{path.relative_to(ROOT / 'rawData' / system).as_posix()}"
+                            name = f"test_networks/{system}/{path.relative_to(ROOT / 'test_networks' / system).as_posix()}"
                             self.assertEqual(archive.read(name), path.read_bytes())
                     for profile in PROFILES:
                         self.assertEqual(archive.read(f"test_networks/{profile}"),
-                                         (ROOT / "rawData" / profile).read_bytes())
+                                         (ROOT / "test_networks" / profile).read_bytes())
                     self.assertIn("CITATION.cff", archive.namelist())
                     self.assertIn("LICENSE", archive.namelist())
                     # Preserve redirect closure, including shared parent profiles.
@@ -57,7 +57,7 @@ class NetworkPackageTests(unittest.TestCase):
                 with self.subTest(system=system), self.assertRaises(ValueError):
                     package_network(system, output)
             with self.assertRaises(ValueError):
-                package_network("ieee123C_1ph", ROOT / "rawData" / "case.zip")
+                package_network("ieee123C_1ph", ROOT / "test_networks" / "case.zip")
             self.assertFalse(output.exists())
 
 

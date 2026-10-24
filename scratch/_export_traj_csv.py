@@ -10,7 +10,7 @@ import re, os, statistics
 
 FEAS_TOL = 1e-4
 GAP_TOL  = 0.005
-PROC = "envs/tadmm/processedData"
+PROC = "problems/mpopf/tadmm/processedData"
 OUT  = "../IAS-Trans-2025-Scaling-MPOPF-Computation-via-Temporal-Decomposition/figures"
 
 CASES = [
