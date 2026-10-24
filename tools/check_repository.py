@@ -17,6 +17,7 @@ NAVIGATION = (
     "docs/problem-layout-migration.md",
     "problems/msopf/README.md", "problems/msopf/ENVIRONMENT.md",
     "problems/mpopf/tadmm/README.md", "problems/mpopf/spar_ddp/ENVIRONMENT.md",
+    "docs/first-time-installation-guide.md",
 )
 
 

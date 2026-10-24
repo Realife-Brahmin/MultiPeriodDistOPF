@@ -56,7 +56,8 @@ The centralized Ipopt reference can use its bundled open-source MUMPS backend.
 MA57/MA97 (HSL backends for Ipopt) and Gurobi (an alternative centralized
 optimizer) are optional ways to make the centralized comparison more competitive,
 not requirements for running DDP or the basic Ipopt reference.
-See the [installation guide](docs/first-time-installation-guide.md) for setup.
+See the [setup guide](docs/first-time-installation-guide.md) for Windows/Bash
+helpers, optional solver download links, and an AI-assisted setup option.
 
 ### Where to start
 
