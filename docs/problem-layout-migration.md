@@ -53,8 +53,12 @@ Current public drivers, environment references and maintained navigation are
 updated separately. Retired first-order code and archived workstation queues
 remain historical, not supported entry points.
 
-`python tools/check_layout.py` checks preserved Git blob identities against the
-baseline and validates key environment/include/root paths. Navigation checks,
+`python tools/check_layout.py --strict-migration` checks preserved Git blob
+identities and unchanged maintained solver/parser source against the merged
+master commit5742a5d1, and validates environment/include/root paths. The normal
+CI invocation omits the strict flag so future deliberate solver development
+is not prohibited; immutable evidence/data remain checked. Both require Git
+history (not only a shallow snapshot). Navigation checks,
 Python tests and Julia parsing provide additional structural coverage. These
 checks are not scientific revalidation of the stored benchmark/certificate rows.
 No cluster jobs or benchmark campaigns are required by this migration.
@@ -71,6 +75,8 @@ against the baseline on IEEE123 T3 and exports a periodic instance with OpenDSS.
 Its isolated exports do not overwrite campaign inputs. This is import/export
 coverage, not a re-run of either algorithm's optimization benchmarks.
 Fresh SPAR-DDP resolution is explicitly distinct from recorded campaign pins.
+The runtime smoke passed with Julia1.12.7, OpenDSSDirect0.9.9 and Parameters0.12.3,
+including DDP4OPF, JuMP and Ipopt imports. It performs no optimizer run.
 
 The old Inkscape and evidence bytes are unchanged. tADMM plotting defaults now
 write to its own results/figures directory; explicitly set TADMM_FIGURE_DIR to

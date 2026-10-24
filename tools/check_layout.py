@@ -1,12 +1,13 @@
 """Verify problem-first layout and preserved evidence; no simulation or file writes."""
 import json
+import argparse
 from pathlib import Path
 import re
 import subprocess
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = "0efa8015b8e7d4a59dee23c7173fd1494a2a0963"
+BASE = "5742a5d10bf26149bf8f4800251da451efe39b82"
 MOVES = (
     ("envs/spar_ddp/Project.toml", "problems/mpopf/spar_ddp/Project.toml"),
     ("envs/spar_ddp/README.md", "problems/mpopf/spar_ddp/ENVIRONMENT.md"),
@@ -35,7 +36,7 @@ def git(*args, **kwargs):
     return subprocess.check_output(["git", *args], cwd=ROOT, **kwargs)
 
 
-def main():
+def main(strict_migration=False):
     try:
         tree = git("ls-tree", "-r", BASE, text=True)
     except subprocess.CalledProcessError:
@@ -49,6 +50,8 @@ def main():
             continue
         if name in ("rawData/README.md", "figures/networks/README.md"):
             continue  # visitor navigation, not electrical or scientific evidence
+        if name.startswith("spar_ddp/DDP4OPF.jl/src/") and not strict_migration:
+            continue  # normal development may change maintained solver source
         target = destination(name)
         assert (ROOT / target).is_file(), f"Missing preserved artifact: {target}"
         expected.append((target, header.split()[2]))
@@ -93,14 +96,18 @@ def main():
         "problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl",
     } <= root_files
     assert includes >= 20
-    old = git("show", f"{BASE}:envs/tadmm/parse_opendss.jl", text=True).partition("using OpenDSSDirect")[2]
-    old = old.replace('        wd = @__DIR__\n        rawDataFolderPath = joinpath(wd, "..", "..", "rawData")',
-                      '        rawDataFolderPath = @__DIR__')
-    new = (ROOT / "test_networks/parse_opendss.jl").read_text().partition("using OpenDSSDirect")[2]
-    assert old == new, "Shared parser numerical body changed"
+    if strict_migration:
+        old = git("show", f"{BASE}:envs/tadmm/parse_opendss.jl", text=True).partition("using OpenDSSDirect")[2]
+        old = old.replace('        wd = @__DIR__\n        rawDataFolderPath = joinpath(wd, "..", "..", "rawData")',
+                          '        rawDataFolderPath = @__DIR__')
+        new = (ROOT / "test_networks/parse_opendss.jl").read_text().partition("using OpenDSSDirect")[2]
+        assert old == new, "Shared parser numerical body changed"
     print(f"PASS: {len(expected)} preserved evidence/data/solver Git blobs; "
           f"{roots} repository roots; {includes} literal includes; colocated environments.")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--strict-migration", action="store_true",
+                        help="also prove unchanged active solver/parser source for the layout PR")
+    main(parser.parse_args().strict_migration)

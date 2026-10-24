@@ -10,7 +10,7 @@ end
 module LegacyParser
     # The unchanged pre-migration numerical parser, evaluated only for parity.
     const ROOT = normpath(joinpath(@__DIR__, ".."))
-    const old = read(`git -C $ROOT show 0efa8015:envs/tadmm/parse_opendss.jl`, String)
+    const old = read(`git -C $ROOT show 5742a5d1:envs/tadmm/parse_opendss.jl`, String)
     include_string(@__MODULE__, old, "legacy_parse_opendss.jl")
 end
 @testset "Network parser parity" begin
