@@ -1,5 +1,11 @@
 # Maintained repository utilities
 
+`package_test_network.py` creates a standalone OpenDSS ZIP containing one
+adapted deck, its shared profiles, license and citation metadata. It does not
+change inputs or overwrite existing archives. See the
+[network catalogue](../test_networks/README.md) for a command and OpenDSS usage.
+Run `python -m unittest discover -s tools -p 'test_*.py' -v` for packaging checks.
+
 `fetch_resources.sh` downloads missing papers listed in resources/MANIFEST.txt
 files. Existing files are left untouched. Run `bash tools/fetch_resources.sh`
 from the repository root. Historical experiment launchers live in scratch/.

@@ -12,7 +12,8 @@ NAVIGATION = (
     "spar_ddp/examples/power_system/README.md", "spar_ddp/results/README.md",
     "spar_ddp/notes/README.md", "scratch/README.md",
     "scratch/archive/workstation-queues/README.md", "tools/README.md",
-    "docs/repository-maintenance.md",
+    "docs/repository-maintenance.md", "test_networks/README.md", "rawData/README.md",
+    "AGENTS.md", ".claude/CLAUDE.md", "spar_ddp/CLAUDE.md",
 )
 
 
