@@ -12,9 +12,10 @@ u=matchdirs(length(names))[SEARCH_ID]
 at(r)=Dict(names[j] => (j==1 ? 0.0 : r*u[j-1]) for j in eachindex(names))
 const TRIALS=joinpath(ROOT8500,"oracle_trials.csv")
 const HEADER="configuration,case,direction,trial,radius_deg,status,iterations,seconds,replay_ok,physical_feasible,local_outside,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,energy_balance_kWh,battery_power_violation_kW,pv_q_violation_kvar,violation"
+usable(x)=!isempty(x.V_pu) && all(all(isfinite,v) for v in values(x.V_pu))
 function oracle(r,start,trial)
     x=solve_multiperiod(s.net,at(r);problem(s,SEARCH_CASE)...,objective=:violation,start,no_backflow=true,max_iter=300)
-    if isempty(x.V_pu)
+    if !usable(x)
         appendrow(TRIALS,HEADER,[SEARCH_LABEL,SEARCH_CASE,SEARCH_ID,trial,r,x.status,x.iterations,x.time,false,false,false,fill(NaN,13)...])
         return (;x,feasible=false,outside=false)
     end
@@ -31,39 +32,48 @@ end
 # The idle trajectory is physically admissible for cyclic dispatch (zero battery
 # power and constant SOC); this avoids importing a cost-induced cycling pattern.
 function run_search()
-xlo=packet.x0s[:nobatt];lo=0.0;hi=NaN;xhi=xlo;method="feasible_lower_bound";trial=0
+xlo=packet.x0s[:nobatt];lo=0.0;hi=NaN;xhi=xlo;method="feasible_lower_bound";trial=0;uncertain=Inf
+maxtrials=parse(Int,get(ENV,"MATCHED_ORACLE_MAXTRIALS","24"))
 pred,_=predicted_reach(packet.sens,Dict(zip(names[2:end],u));day=SEARCH_CASE===:cyclic)
-r=clamp(isfinite(pred) && pred>0 ? .85pred : 1.0,.05,RMAX8500)
+seed=parse(Float64,get(ENV,"MATCHED_ORACLE_SEED","0.85"))
+@assert 0<seed<=1
+r=clamp(isfinite(pred) && pred>0 ? seed*pred : 1.0,.05,RMAX8500)
 for _ in 1:6
+    trial>=maxtrials && break
     trial+=1;q=oracle(r,xlo,trial)
     if q.feasible
         lo=r;xlo=q.x
         r>=RMAX8500 && (method="at_limit";break)
-        r=min(RMAX8500,1.3r)
+        r=min(RMAX8500,1.3r,(lo+uncertain)/2)
     elseif q.outside
         hi=r;xhi=q.x;break
     else
         # One continuation retry can complete a nearly converged outside solve.
-        trial+=1;qq=oracle(r,isempty(q.x.V_pu) ? xlo : q.x,trial)
+        trial>=maxtrials && break
+        trial+=1;qq=oracle(r,usable(q.x) ? q.x : xlo,trial)
         if qq.feasible
-            lo=r;xlo=qq.x;r=min(RMAX8500,1.3r)
+            lo=r;xlo=qq.x;r=min(RMAX8500,1.3r,(lo+uncertain)/2)
         elseif qq.outside
             hi=r;xhi=qq.x;break
         else
-            break
+            # An unresolved trial can guide where to look next, but cannot be
+            # published as an infeasible upper endpoint.
+            uncertain=min(uncertain,r);r=(lo+uncertain)/2
+            r-lo<=.025 && break
         end
     end
 end
 if isfinite(hi)
     for _ in 1:10
-        hi-lo<=.05 && break
+        (hi-lo<=.05 || trial>=maxtrials) && break
         r=(lo+hi)/2;trial+=1;q=oracle(r,xlo,trial)
         if q.feasible
             lo=r;xlo=q.x
         elseif q.outside
             hi=r;xhi=q.x
         else
-            trial+=1;qq=oracle(r,isempty(q.x.V_pu) ? xlo : q.x,trial)
+            trial>=maxtrials && break
+            trial+=1;qq=oracle(r,usable(q.x) ? q.x : xlo,trial)
             if qq.feasible;lo=r;xlo=qq.x
             elseif qq.outside;hi=r;xhi=qq.x
             else;break
