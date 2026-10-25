@@ -7,10 +7,10 @@ const LABEL = {
   four_ieee9500: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"},
   "four_ieee9500_v1.03": {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"}
 };
-const SHORT = { four_ieee123a: ["Î´1", "Î´2", "Î´3", "Î´4"], four_ieee123b: ["Î´1", "Î´3", "Î´4", "Î´5"], four_ieee2522: ["Î´0", "Î´947", "Î´996", "Î´1120"], four_ieee9500: ["Î´1", "Î´2", "Î´3", "Î´4"], "four_ieee9500_v1.03": ["Î´1", "Î´2", "Î´3", "Î´4"] };
+const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"], four_ieee9500: ["δ1", "δ2", "δ3", "δ4"], "four_ieee9500_v1.03": ["δ1", "δ2", "δ3", "δ4"] };
 for (const sys of DATA) {
-  LABEL[sys.id] ||= Object.fromEntries(sys.sources.map((k,i)=>[k, `Substation ${i+1}${i===0 ? " (reference)" : ""}`]));
-  SHORT[sys.id] ||= ["δ1","δ2","δ3","δ4"];
+ LABEL[sys.id] ||= Object.fromEntries(sys.sources.map((k,i)=>[k, `Substation ${i+1}${i===0 ? " (reference)" : ""}`]));
+ SHORT[sys.id] ||= ["δ1","δ2","δ3","δ4"];
 }
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
@@ -62,13 +62,13 @@ function traces(sys) {
     out.push({ type: "scatter3d", mode: "markers", name: nm, x: p.map(q => q[0]), y: p.map(q => q[1]), z: p.map(q => q[2]),
       marker: { size: 4.5, symbol: sym, color: p.map(dotColor), line: { color: css("--fg"), width: 1 } },
       customdata: p.map(q => [q[4], q[5], 100 * (q[4] - q[5]) / q[5], LABEL[sys.id][sys.sources[q[3]]], BOUND(sys, q)]),
-      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}Â° (predicted %{customdata[1]:.3f}Â°, %{customdata[2]:+.1f}%)<br>predicted face: %{customdata[3]}<br>bound by: %{customdata[4]}<extra></extra>" });
+      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}° (predicted %{customdata[1]:.3f}°, %{customdata[2]:+.1f}%)<br>predicted face: %{customdata[3]}<br>bound by: %{customdata[4]}<extra></extra>" });
   }
   return out;
 }
 
 function layout(sys, cam) {
-  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " âˆ’ " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
+  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " − " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
     gridcolor: css("--line"), zerolinecolor: css("--muted"), backgroundcolor: "rgba(0,0,0,0)", showspikes: false });
   return { paper_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg") }, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
     scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: cam || DEFAULT_CAM }, uirevision: sys.id + focus + (cam ? JSON.stringify(cam) : "") };
@@ -95,8 +95,8 @@ function panel(sys) {
     const row = cs => {
       const s = faceStats(sys, cs, i), lab = cs === "nobatt" ? "idle" : "cyclic";
       if (s.sparse || s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
-      const bound = s.rec ? ` Â· bound here ${s.agree}/${s.rec}` : "";
-      return `<span>${lab}</span><span>${s.n} dots Â· reach Ã—${s.med.toFixed(2)} Â· planar ${s.planar.toFixed(1)}% Â· tilt ${s.tilt.toFixed(1)}Â°${bound}</span>`;
+      const bound = s.rec ? ` · bound here ${s.agree}/${s.rec}` : "";
+      return `<span>${lab}</span><span>${s.n} dots · reach ×${s.med.toFixed(2)} · planar ${s.planar.toFixed(1)}% · tilt ${s.tilt.toFixed(1)}°${bound}</span>`;
     };
     return `<div class="face"><span class="sw" style="background:${fc[i]}"></span><div><button class="fname" data-face="${i}" title="Show this face alone, seen straight on">${LABEL[sys.id][k]}</button>` +
       `<div class="nums">${row("nobatt")}${row("cyclic")}</div><div class="btns"><button class="edge" data-face="${i}">Edge-on</button>` +
@@ -122,7 +122,7 @@ function resid(sys) {
   Plotly.react(residEl, out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg"), size: 12 },
     margin: { l: 56, r: 10, t: 6, b: 34 }, showlegend: false,
     xaxis: { fixedrange: true, tickvals: sys.sources.map((_, i) => i), ticktext: sys.sources.map(k => LABEL[sys.id][k].replace(" (reference)", "")), color: css("--muted"), gridcolor: css("--line"), zeroline: false },
-    yaxis: { fixedrange: true, title: { text: "measured âˆ’ predicted (%)" }, color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--muted"), zerolinewidth: 1.5 } },
+    yaxis: { fixedrange: true, title: { text: "measured − predicted (%)" }, color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--muted"), zerolinewidth: 1.5 } },
     { responsive: true, displaylogo: false, displayModeBar: false });
 }
 
@@ -196,7 +196,7 @@ function faceMap(k, view) {
     out.push({ type: "scatter", mode: "markers", name: nm, x: p.map(q => dot(q.slice(0, 3), e1)),
       y: edge ? p.map(q => q[4] - q[5]) : p.map(q => dot(q.slice(0, 3), e2)), marker,
       customdata: p.map((q, j) => [pct[j], BOUND(sys, q), q[4] - q[5]]),
-      hovertemplate: nm + ": %{customdata[0]:+.1f}% (%{customdata[2]:+.2f}Â°) beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
+      hovertemplate: nm + ": %{customdata[0]:+.1f}% (%{customdata[2]:+.2f}°) beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
   }
   document.getElementById("fmtitle").textContent = "Face map";
   Plotly.react(document.getElementById("facemap"), out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",

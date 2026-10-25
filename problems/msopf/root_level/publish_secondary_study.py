@@ -10,7 +10,7 @@ OUT=ROOT/'results/secondary_8500_oct25'
 def rows(p):
     with p.open(newline='',encoding='utf-8-sig') as f:return list(csv.DictReader(f))
 def validate(folder,complete=True):
-    meta=(folder/'metadata.txt').read_text()
+    meta=(folder/'metadata.txt').read_text(encoding='utf-8')
     if complete:assert 'exit_code=0' in meta,folder
     r=rows(folder/'solves.csv');ok=[];failed=[]
     for x in r:
@@ -72,7 +72,7 @@ def main():
     (OUT/'sf_deck_hashes_postrun.json').write_text(json.dumps(decks,indent=2)+'\n')
     for parent in ('baseline_T24','full_T24','quick_T6'):
         for f in sorted((OUT/parent).glob('*')):
-            if f.is_dir() and (f/'metadata.txt').exists() and 'exit_code=0' in (f/'metadata.txt').read_text():reports.append(validate(f))
+            if f.is_dir() and (f/'metadata.txt').exists() and 'exit_code=0' in (f/'metadata.txt').read_text(encoding='utf-8'):reports.append(validate(f))
     (OUT/'validated_publication.json').write_text(json.dumps(reports,indent=2)+'\n')
     plt.rcParams.update({'font.family':'DejaVu Sans','font.size':7,'pdf.fonttype':42})
     fig,ax=plt.subplots(figsize=(3.45,2.75))
@@ -110,15 +110,15 @@ def main():
     ax.grid(axis='x',alpha=.2);ax.legend(frameon=False,ncol=2,loc='lower right');fig.tight_layout()
     for ext in ('png','pdf','svg'):fig.savefig(OUT/f'sf_axis_T6.{ext}',dpi=180)
     plt.close(fig)
-    data=json.loads((ROOT/'results/multiperiod/four_viewer_data_fib78.json').read_text())
-    data.append(append_viewer(sf,'screen_sf4','San Francisco P1U ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· T6 screen'))
+    data=json.loads((ROOT/'results/multiperiod/four_viewer_data_fib78.json').read_text(encoding='utf-8'))
+    data.append(append_viewer(sf,'screen_sf4','San Francisco P1U - T6 screen'))
     f=OUT/'quick_T6/secondary4'
-    if (f/'metadata.txt').exists() and 'exit_code=0' in (f/'metadata.txt').read_text():
-        validate(f);data.append(append_viewer(f,'screen_8500xf4','IEEE8500 + secondaries ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· T6 screen'))
+    if (f/'metadata.txt').exists() and 'exit_code=0' in (f/'metadata.txt').read_text(encoding='utf-8'):
+        validate(f);data.append(append_viewer(f,'screen_8500xf4','IEEE8500 + secondaries - T6 screen'))
     encoded=json.dumps(data,separators=(',',':'),allow_nan=False)
-    (OUT/'four_viewer_data.json').write_text(encoded)
+    (OUT/'four_viewer_data.json').write_text(encoded,encoding='utf-8')
     v=ROOT/'results/multiperiod/viewer'
-    html=(v/'viewer_head.html').read_text()+encoded+(v/'viewer_tail.html').read_text()
+    html=(v/'viewer_head.html').read_text(encoding='utf-8')+encoded+(v/'viewer_tail.html').read_text(encoding='utf-8')
     (v/'four_regions.html').write_text(html,encoding='utf-8')
     (ROOT.parents[1]/'docs/four_regions.html').write_text(html,encoding='utf-8')
     print(json.dumps({'validated_cases':len(reports),'verified_solves':sum(r['verified_solves'] for r in reports),'viewer_systems':len(data)},indent=2))

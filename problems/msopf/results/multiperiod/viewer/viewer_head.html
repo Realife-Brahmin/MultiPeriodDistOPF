@@ -1,3 +1,5 @@
+<!doctype html>
+<meta charset="utf-8">
 <title>Four-Substation Regions</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6,15 +8,15 @@
 /* Layout: an instrument panel; the 3-D view takes the stage, the face readout sits beside it (stacks on phones). */
 :root {
   --bg: #f4f6f3; --panel: #ffffff; --fg: #18211d; --muted: #5a6761; --line: #d6dcd7; --accent: #2c6b5f;
-  --f0: #2a7d92; --f1: #c37526; --f2: #7a5ab8; --f3: #b9415c;
+  --f0: #2C6FBB; --f1: #C05621; --f2: #00796B; --f3: #800080;
   --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
-  --f0: #4fb0c7; --f1: #e09a4f; --f2: #a488dc; --f3: #e0708a; color-scheme: dark } }
+  --f0: #2C6FBB; --f1: #C05621; --f2: #00796B; --f3: #800080; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
-  --f0: #4fb0c7; --f1: #e09a4f; --f2: #a488dc; --f3: #e0708a; color-scheme: dark }
+  --f0: #2C6FBB; --f1: #C05621; --f2: #00796B; --f3: #800080; color-scheme: dark }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; }
