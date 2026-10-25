@@ -44,13 +44,38 @@ function checkdirect(s,case,x,angles,stage)
     good || error("Direct ray failed independent replay/original constraints")
     return dg.vmin>=.95-1e-6 && dg.vmax<=1.05+1e-6 && dg.minp>=-.01
 end
+function feasible_origin(s,case,start)
+    x=solve_multiperiod(s.net,equal_angles(s.net);problem(s,case)...,objective=:cost,no_backflow=true,start,max_iter=500)
+    good=checkdirect(s,case,x,equal_angles(s.net),"hard_origin")
+    if good
+        d=diagnostics8500(s,x)
+        room=min(d.minp,20000*(d.vmin^2-.95^2),20000*(1.05^2-d.vmax^2))
+        return merge(x,(;margin_kW=room))
+    end
+    return merge(x,(;margin_kW=NaN))
+end
 s,names,deck=matched_network(LABEL)
 cache=joinpath(MATCH_ROOT,LABEL,"state.jls")
-if PHASE=="prep"
+if PHASE=="repair"
+    packet=deserialize(cache);x0s=packet.x0s
+    for case in (:nobatt,:cyclic)
+        feasible8500(x0s[case]) && continue
+        x=feasible_origin(s,case,packet.sens.x0);x0s[case]=x
+        dg=x.status in RAY_OK ? diagnostics8500(s,x) : nothing
+        appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[LABEL,case,24,x.status,x.margin_kW,dg===nothing ? NaN : dg.vmin,dg===nothing ? NaN : dg.vmax,dg===nothing ? NaN : dg.minp,feasible8500(x)])
+    end
+    backup=joinpath(MATCH_ROOT,LABEL,"state_initial.jls")
+    isfile(backup) || cp(cache,backup)
+    serialize(cache,merge(packet,(;x0s)))
+elseif PHASE=="prep"
     sens=sensitivity8500(s,LABEL,names);sens===nothing && error("Sensitivity failure")
     x0s=Dict{Symbol,Any}()
     for case in (:nobatt,:cyclic)
-        x=checked8500(s,LABEL,case,equal_angles(s.net);start=sens.x0);x0s[case]=x
+        x=checked8500(s,LABEL,case,equal_angles(s.net);start=sens.x0)
+        # A timed-out margin maximization does not imply infeasibility. Find a hard-feasible
+        # origin with the same physical constraints; save actual headroom, not an optimum claim.
+        x.status in RAY_OK || (x=feasible_origin(s,case,sens.x0))
+        x0s[case]=x
         dg=x.status in RAY_OK ? diagnostics8500(s,x) : nothing
         appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[LABEL,case,24,x.status,x.margin_kW,dg===nothing ? NaN : dg.vmin,dg===nothing ? NaN : dg.vmax,dg===nothing ? NaN : dg.minp,feasible8500(x)])
     end
@@ -92,6 +117,7 @@ else
                     end
                 end
             elseif !(x.status in RAY_OK)
+                checkdirect(s,case,x,at(0.0),"ray_$i")
                 b=edge8500(s,LABEL,case,names,u,pred,x0);r=b.r;upper=b.upper;best=b.x;method=b.method
             end
             best === x0 && (r=0.0)
