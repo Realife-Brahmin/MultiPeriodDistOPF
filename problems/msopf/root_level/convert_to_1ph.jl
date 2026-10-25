@@ -69,6 +69,9 @@ const SYSTEMS = Dict(
                    drop_loads = r"^aggregate_load$"),
     "epri_k1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
                    drop_loads = r"^k_22_aggregate$"),
+    # With its service transformers (user, 2026-10-24), DERs as in epri_k1.
+    "epri_k1xf" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
+                     drop_loads = r"^k_22_aggregate$", secondary = true),
     "epri_m1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "M1", "Master_NoPV.dss"), base_kV = 12.47, seed = 131, skip = nothing,
                    drop_loads = r"^aggregated$"),
     "smartds_p1u" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
