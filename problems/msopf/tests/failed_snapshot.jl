@@ -1,4 +1,8 @@
-include(joinpath(@__DIR__,"customer_band.jl"))
+# The fixture intentionally tests the legacy elastic-band margin mode. Isolate it
+# from a caller campaign's optional combined voltage/import margin setting.
+withenv("MULTI_VMARGIN" => nothing) do
+    include(joinpath(@__DIR__,"customer_band.jl"))
+end
 ENV["MULTIPERIOD_FAILED_SNAPSHOT"]="0"
 x=solve_case(s,ang,:cyclic;max_iter=0)
 @test x.status==MOI.ITERATION_LIMIT
