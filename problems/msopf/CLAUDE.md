@@ -233,3 +233,9 @@ results are tracked in `problems/msopf/results/multiperiod/`.
 - #180 remains the broad test-system/modeling PR. #181 is deliberately a separate
   docs-only interactive-viewer publication PR; do not merge all of #180 just to
   publish figures. Inherited untracked `envs/` outputs are unrelated and untouched.
+- Final publication: #181 merged to master as adb28724 (docs only). Both new
+  four-source T6 screens are present, with 12 SF and 6 IEEE8500 cyclic axis points.
+  Final validation: 15 complete cases, 320 successful OPFs replayed; the viewer's
+  seven tabs and face views passed 192 finite-coordinate rendering checks.
+  Research archive commit 696c4512; paper evidence follow-up a709042. The broader
+  modeling PR #180 remains open, separate from published documentation.
