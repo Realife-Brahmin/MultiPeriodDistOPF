@@ -428,7 +428,10 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         release_solver!(model)
         return failed
     end
-    val(x) = has_values(model) ? value(x) : NaN
+    # Ipopt may scan every constraint to determine primal status after a cap.
+    # Query it once: repeating has_values for every exported entry is quadratic.
+    has_solution = has_values(model)
+    val(x) = has_solution ? value(x) : NaN
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
             violation = eband ? val(viol) : 0.0, r = objective === :ray ? val(r_ray) : 0.0,
@@ -436,7 +439,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             backflow_kW = elastic ? val(sum(s_back; init = zero(AffExpr))) * S : 0.0,
             margin_kW = marg ? val(m_imp) * S : NaN,
             # largest single limit violation: backflow in per unit, band in per unit squared
-            max_violation = eband && has_values(model) ? maximum(maximum(value.(c); init = 0.0) for c in (s_back, s_vlo, s_vhi)) : (eband ? NaN : 0.0),
+            max_violation = eband && has_solution ? maximum(maximum(value.(c); init = 0.0) for c in (s_back, s_vlo, s_vhi)) : (eband ? NaN : 0.0),
             cost = (; energy = val(energy), cycling = val(cycling), terminal = val(term), total = val(energy) + val(cycling) + val(term)),
             P_subs_kW = series(P_subs, names, S), Q_subs_kvar = series(Q_subs, names, S),
             P_B_kW = series(P_B, bnames, S), Q_PV_kvar = series(Q_PV, pnames, S),
