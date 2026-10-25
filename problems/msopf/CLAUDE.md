@@ -182,4 +182,21 @@ results are tracked in `problems/msopf/results/multiperiod/`.
   has nothing on large10k.
 - **Still open:** per-line ampacity ratings (not modeled; the user is collecting
   them), and the substation voltage setpoint (1.05 pu sits on the band edge).
+- **Test systems, 2026-10-24 (branch `msopf-oct24-test-system-edition`; user decisions):**
+  - **Secondaries in, triplex out.** New studies use the `*xf_1ph` decks: each service transformer is a line
+    to its secondary bus, where its loads sit; the 120/240 V triplex lines are not modeled. DERs stay on
+    primary buses (the utility's network), as in the primary-only deck of the same system.
+  - **The voltage band applies only at the secondary (customer) buses** (ANSI C84.1 is a service-point limit);
+    the primary has no band. The lower limit may be set below 0.95 for these decks, chosen from first runs
+    (at nominal load with no DERs they reach 0.85-0.96 pu). Not yet implemented in `multiperiod_full_angle.jl`.
+  - **Up to four substations** (two, three, four); no five-source cases.
+  - SMART-DS P1U (`smartds_p1u_xf_1ph`, 6,937 buses): its normally-open ties are published as disabled
+    switches, now read by `convert_to_1ph.jl` (39 ties; 6 between substations, chain hs0-hs2-hs1-hs3). Use
+    `Master_4sub_typeIII.dss` (hs0 on one transformer; the usual problem) or `Master_4sub_typeII.dss` (hs0's two
+    transformers, Type II, hs3 out). The four substations also exist alone (`smartds_p1u_hs0..3_1ph`).
+  - Other decks with secondaries: `ieee9500xf_1ph` (about 3,980 buses, 3 substations), `ieee8500xf_1ph` (3,698;
+    one substation, -5 to -6% import mismatch inherited from the primary conversion), `epri_ckt24xf_1ph`
+    (2,111; 34.5/13.2 kV), `epri_k1xf_1ph` (962). Single-substation decks need added sources for MSOPF.
+  - The restructure (PR #178) untracked `problems/msopf/Manifest.toml`; it is identical to
+    `problems/mpopf/tadmm/Manifest.toml` (same Project.toml): copy it locally until it is tracked again.
 
