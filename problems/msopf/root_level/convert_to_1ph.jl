@@ -67,7 +67,15 @@ const SYSTEMS = Dict(
     "epri_m1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "M1", "Master_NoPV.dss"), base_kV = 12.47, seed = 131, skip = nothing,
                    drop_loads = r"^aggregated$"),
     "smartds_p1u" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss")))
+                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss")),
+    # The same region with its service transformers (user, 2026-10-24: secondaries are a small correction, so a
+    # larger deck with them is welcome), as ieee9500xf: DERs as in smartds_p1u (same seed, same MV buses).
+    "smartds_p1u_xf" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
+                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true),
+    # Each of P1U's four substations on its own (each is a separately published deck with its own 69 kV source;
+    # hs0 has two substation transformers, so its deck has two sources). Our own DERs by the usual rule.
+    [("smartds_p1u_hs$k" => (; master = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "Master.dss"), base_kV = 12.47, seed = 20180 + k,
+                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"))) for k in 0:3]...)
 
 "Compile the original. SMART-DS load shapes read annual profiles not downloaded: flat 1.0 in memory."
 function compile_original(cfg)
