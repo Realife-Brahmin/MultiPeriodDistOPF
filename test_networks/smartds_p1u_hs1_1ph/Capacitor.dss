@@ -1,0 +1,6 @@
+! smartds_p1u_hs1_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\p1uhs1_1247\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's capacitor banks (kvar / 3), not redirected by Master.dss.
+New generator.p1udt558C Phases=1 Bus1=p1udt558.1 kV=7.1996 Model=1 kW=1e-06 kVAr=100
+New generator.p1udt998C Phases=1 Bus1=p1udt998.1 kV=7.1996 Model=1 kW=1e-06 kVAr=150
+New generator.p1umv13C Phases=1 Bus1=p1umv13.1 kV=7.1996 Model=1 kW=1e-06 kVAr=100

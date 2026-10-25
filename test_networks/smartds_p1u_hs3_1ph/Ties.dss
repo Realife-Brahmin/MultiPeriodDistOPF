@@ -1,0 +1,4 @@
+! smartds_p1u_hs3_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\p1uhs3_1247\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true; each is given
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines, to keep the admittance matrix well scaled.
