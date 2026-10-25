@@ -1,0 +1,5 @@
+! epri_ckt24xf_1ph: single-phase per-phase equivalent of test_networks\sources\epri_test_circuits\ckt24\master_ckt24.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true. A switch is
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines; a tie cable with an open switch at each end
+! (tie_<switch>) is one line with both switches and the cable in series, its middle buses left out.

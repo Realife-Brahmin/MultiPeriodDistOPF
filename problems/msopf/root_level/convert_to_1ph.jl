@@ -62,6 +62,9 @@ const SYSTEMS = Dict(
                      drop_loads = r"^256\d\d_[abc]$"),                       # 13 feeders lumped on bus ckt7 (Substation_ckt7.dss)
     "epri_ckt24" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
                       drop_loads = r"^other_feeders$"),
+    # With its service transformers (user, 2026-10-24), DERs as in epri_ckt24.
+    "epri_ckt24xf" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
+                        drop_loads = r"^other_feeders$", secondary = true),
     "epri_j1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "J1", "Master_noPV.dss"), base_kV = 12.47, seed = 101, skip = nothing,
                    drop_loads = r"^aggregate_load$"),
     "epri_k1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
