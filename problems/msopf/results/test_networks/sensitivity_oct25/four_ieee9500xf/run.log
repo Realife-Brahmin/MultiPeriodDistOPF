@@ -1,0 +1,31 @@
+
+==============================================================================================================
+FOUR_IEEE9500XF  ieee9500xf_1ph, sources subs1,subs2,subs3,subs4 (added at buses l2804256), reference subs1, T = 24; directions 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78, cases nobatt,cyclic
+    voltage band on 1275 buses (customers only)
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              24 it  build    7.7 s  solve    33.8 s  cold  max|angle| 0.0000 deg
+    sensitivity replay: PASS, dP 6.06e-06 kW, dQ 7.62e-06 kvar, dV 4.35e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    5.3 s  solve    24.6 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 1.30e-05 kW, dQ 9.56e-06 kvar, dV 5.12e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    4.5 s  solve    25.1 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 1.08e-05 kW, dQ 9.79e-06 kvar, dV 5.24e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    4.7 s  solve    25.4 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 8.15e-06 kW, dQ 9.80e-06 kvar, dV 5.16e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    4.5 s  solve    24.5 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 9.08e-06 kW, dQ 9.53e-06 kvar, dV 5.21e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    4.4 s  solve    23.8 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 1.27e-05 kW, dQ 9.90e-06 kvar, dV 5.31e-10 pu
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    5.3 s  solve    24.2 s  warm  max|angle| 0.1000 deg
+    sensitivity replay: PASS, dP 1.01e-05 kW, dQ 1.09e-05 kvar, dV 5.03e-10 pu
+    subs1  mean import    875.4 kW (worst hour    626.5); sensitivity subs2 -142.7, subs3 -93.1, subs4 -33.8 kW/deg (daily mean)
+    subs2  mean import   1180.6 kW (worst hour    917.5); sensitivity subs2 +252.1, subs3 -83.3, subs4 -26.2 kW/deg (daily mean)
+    subs3  mean import    965.3 kW (worst hour    741.2); sensitivity subs2 -83.4, subs3 +266.5, subs4 -90.0 kW/deg (daily mean)
+    subs4  mean import    575.1 kW (worst hour    444.0); sensitivity subs2 -27.5, subs3 -92.6, subs4 +155.4 kW/deg (daily mean)
+    sensitivities summed over substations (0 if raising an angle only shifts power): -1.5, -2.5, +5.4 kW/deg
+  sensitivity and predicted reaches complete; edge search skipped (MULTI_SENS_ONLY)

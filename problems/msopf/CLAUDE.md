@@ -200,3 +200,5 @@ results are tracked in `problems/msopf/results/multiperiod/`.
   - The restructure (PR #178) untracked `problems/msopf/Manifest.toml`; it is identical to
     `problems/mpopf/tadmm/Manifest.toml` (same Project.toml): copy it locally until it is tracked again.
 
+
+- **Continuation, 2026-10-25:** the study driver now propagates customer-only `band_buses` through every problem and voltage diagnostic. New stages: `four_ieee9500xf`, `four_smartds_p1u_typeiii`, `four_smartds_p1u_typeii`. Both requested T=24 sensitivity runs (9500xf and P1U Type III) completed, seven solves each, all 336 hourly OpenDSS comparisons passing (worst 5.2e-5 kW, 1.35e-9 pu). Independent export validator and PNG/SVG predicted-region figures are included. Evidence and pinned environment: `results/test_networks/sensitivity_oct25/README.md`. **Predictions only**; the 78-direction measured edge campaign still awaits Kamiak login/queue check. Type II wiring is tested but its sensitivity campaign is not run. The regression is `tests/customer_band.jl`; the serial launcher is `root_level/run_test_edition_sensitivities.sh` (fresh output root required for reruns).
