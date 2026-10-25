@@ -3,6 +3,7 @@ set -euo pipefail
 unset NO_COLOR FORCE_COLOR
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MULTIPERIOD_LEAN=1
 export MULTI_VMARGIN=20000 MULTIPERIOD_MAX_WALL=180 MULTIPERIOD_SOLVE_LOG=1
+export SECONDARY_LIMIT="${SECONDARY_LIMIT:-40}"
 export SECONDARY_T="${SECONDARY_T:-24}"
 hsl="/c/Users/Aryan Ritwajeet Jha/Documents/hsl/build"
 if [[ -f "$hsl/libma57.dll" ]]; then

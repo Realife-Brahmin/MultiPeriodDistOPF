@@ -7,7 +7,11 @@ const LABEL = {
   four_ieee9500: {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"},
   "four_ieee9500_v1.03": {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"}
 };
-const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"], four_ieee9500: ["δ1", "δ2", "δ3", "δ4"], "four_ieee9500_v1.03": ["δ1", "δ2", "δ3", "δ4"] };
+const SHORT = { four_ieee123a: ["Î´1", "Î´2", "Î´3", "Î´4"], four_ieee123b: ["Î´1", "Î´3", "Î´4", "Î´5"], four_ieee2522: ["Î´0", "Î´947", "Î´996", "Î´1120"], four_ieee9500: ["Î´1", "Î´2", "Î´3", "Î´4"], "four_ieee9500_v1.03": ["Î´1", "Î´2", "Î´3", "Î´4"] };
+for (const sys of DATA) {
+  LABEL[sys.id] ||= Object.fromEntries(sys.sources.map((k,i)=>[k, `Substation ${i+1}${i===0 ? " (reference)" : ""}`]));
+  SHORT[sys.id] ||= ["δ1","δ2","δ3","δ4"];
+}
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
 const DEFAULT_CAM = { eye: { x: 1.5, y: 1.4, z: 0.9 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 }, projection: { type: "perspective" } };
@@ -27,7 +31,7 @@ function faceScale() {
   const c = fcol();
   return [[0, c[0]], [0.25, c[0]], [0.25, c[1]], [0.5, c[1]], [0.5, c[2]], [0.75, c[2]], [0.75, c[3]], [1, c[3]]];
 }
-const BOUND = (sys, q) => q[7] === undefined || q[7] === -2 ? "not recorded" : q[7] === -1 ? "voltage limit" : LABEL[sys.id][sys.sources[q[7]]];
+const BOUND = (sys, q) => q[8] || (q[7] === undefined || q[7] === -2 ? "not recorded" : q[7] === -1 ? "voltage limit" : LABEL[sys.id][sys.sources[q[7]]]);
 
 function traces(sys) {
   const show = id => document.getElementById(id).checked, out = [];
@@ -58,13 +62,13 @@ function traces(sys) {
     out.push({ type: "scatter3d", mode: "markers", name: nm, x: p.map(q => q[0]), y: p.map(q => q[1]), z: p.map(q => q[2]),
       marker: { size: 4.5, symbol: sym, color: p.map(dotColor), line: { color: css("--fg"), width: 1 } },
       customdata: p.map(q => [q[4], q[5], 100 * (q[4] - q[5]) / q[5], LABEL[sys.id][sys.sources[q[3]]], BOUND(sys, q)]),
-      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}° (predicted %{customdata[1]:.3f}°, %{customdata[2]:+.1f}%)<br>predicted face: %{customdata[3]}<br>bound by: %{customdata[4]}<extra></extra>" });
+      hovertemplate: nm + "<br>reach %{customdata[0]:.3f}Â° (predicted %{customdata[1]:.3f}Â°, %{customdata[2]:+.1f}%)<br>predicted face: %{customdata[3]}<br>bound by: %{customdata[4]}<extra></extra>" });
   }
   return out;
 }
 
 function layout(sys, cam) {
-  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " − " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
+  const sh = SHORT[sys.id], ax = i => ({ title: { text: sh[i] + " âˆ’ " + sh[0] + " (deg)", font: { size: 12 } }, color: css("--muted"),
     gridcolor: css("--line"), zerolinecolor: css("--muted"), backgroundcolor: "rgba(0,0,0,0)", showspikes: false });
   return { paper_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg") }, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
     scene: { xaxis: ax(1), yaxis: ax(2), zaxis: ax(3), aspectmode: "data", camera: cam || DEFAULT_CAM }, uirevision: sys.id + focus + (cam ? JSON.stringify(cam) : "") };
@@ -73,7 +77,7 @@ function layout(sys, cam) {
 // Face statistics from the dots: least-squares plane a.x = 1 through a face's dots.
 function faceStats(sys, cs, k) {
   const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
-  if (p.length < 4) return { n: p.length };
+  if (sys.study_note || p.length < 4) return { n: p.length, sparse: !!sys.study_note };
   const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
   for (const q of p) for (let i = 0; i < 3; i++) { b[i] += q[i]; for (let j = 0; j < 3; j++) A[i][j] += q[i] * q[j]; }
   const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
@@ -90,9 +94,9 @@ function panel(sys) {
   document.getElementById("faces").innerHTML = sys.sources.map((k, i) => {
     const row = cs => {
       const s = faceStats(sys, cs, i), lab = cs === "nobatt" ? "idle" : "cyclic";
-      if (s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
-      const bound = s.rec ? ` · bound here ${s.agree}/${s.rec}` : "";
-      return `<span>${lab}</span><span>${s.n} dots · reach ×${s.med.toFixed(2)} · planar ${s.planar.toFixed(1)}% · tilt ${s.tilt.toFixed(1)}°${bound}</span>`;
+      if (s.sparse || s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
+      const bound = s.rec ? ` Â· bound here ${s.agree}/${s.rec}` : "";
+      return `<span>${lab}</span><span>${s.n} dots Â· reach Ã—${s.med.toFixed(2)} Â· planar ${s.planar.toFixed(1)}% Â· tilt ${s.tilt.toFixed(1)}Â°${bound}</span>`;
     };
     return `<div class="face"><span class="sw" style="background:${fc[i]}"></span><div><button class="fname" data-face="${i}" title="Show this face alone, seen straight on">${LABEL[sys.id][k]}</button>` +
       `<div class="nums">${row("nobatt")}${row("cyclic")}</div><div class="btns"><button class="edge" data-face="${i}">Edge-on</button>` +
@@ -102,7 +106,7 @@ function panel(sys) {
   document.querySelectorAll(".faceon, .fname").forEach(b => b.addEventListener("click", () => faceOn(+b.dataset.face)));
   document.getElementById("fmface").innerHTML = sys.sources.map((k, i) => `<option value="${i}">${LABEL[sys.id][k].replace(" (reference)", "")}</option>`).join("");
   document.getElementById("fmface").value = String(fmFace);
-  document.getElementById("lin").innerHTML = sys.linearity_max == null
+  document.getElementById("lin").innerHTML = sys.study_note ? sys.study_note : sys.linearity_max == null
     ? `Sources at 1.03 pu, the sensitivities recomputed there (no random linearity samples at this setpoint). Every edge is set by no-backflow.`
     : `Imports are affine in the angles to within <span class="kv">${sys.linearity_max.toFixed(2)}%</span> of the largest import (30 random idle points).`;
 }
@@ -118,7 +122,7 @@ function resid(sys) {
   Plotly.react(residEl, out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { family: css("--sans"), color: css("--fg"), size: 12 },
     margin: { l: 56, r: 10, t: 6, b: 34 }, showlegend: false,
     xaxis: { fixedrange: true, tickvals: sys.sources.map((_, i) => i), ticktext: sys.sources.map(k => LABEL[sys.id][k].replace(" (reference)", "")), color: css("--muted"), gridcolor: css("--line"), zeroline: false },
-    yaxis: { fixedrange: true, title: { text: "measured − predicted (%)" }, color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--muted"), zerolinewidth: 1.5 } },
+    yaxis: { fixedrange: true, title: { text: "measured âˆ’ predicted (%)" }, color: css("--muted"), gridcolor: css("--line"), zerolinecolor: css("--muted"), zerolinewidth: 1.5 } },
     { responsive: true, displaylogo: false, displayModeBar: false });
 }
 
@@ -192,7 +196,7 @@ function faceMap(k, view) {
     out.push({ type: "scatter", mode: "markers", name: nm, x: p.map(q => dot(q.slice(0, 3), e1)),
       y: edge ? p.map(q => q[4] - q[5]) : p.map(q => dot(q.slice(0, 3), e2)), marker,
       customdata: p.map((q, j) => [pct[j], BOUND(sys, q), q[4] - q[5]]),
-      hovertemplate: nm + ": %{customdata[0]:+.1f}% (%{customdata[2]:+.2f}°) beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
+      hovertemplate: nm + ": %{customdata[0]:+.1f}% (%{customdata[2]:+.2f}Â°) beyond the prediction<br>bound by %{customdata[1]}<extra></extra>" });
   }
   document.getElementById("fmtitle").textContent = "Face map";
   Plotly.react(document.getElementById("facemap"), out, { paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
