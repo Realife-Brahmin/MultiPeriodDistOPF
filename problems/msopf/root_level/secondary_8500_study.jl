@@ -1,0 +1,156 @@
+# Fast measured simplex screen on the matched IEEE8500 primary/secondary conversions.
+# julia --startup-file=no --project=problems/msopf .../secondary_8500_study.jl [secondary2 primary2 ...]
+# Existing DER fleets, PV q dispatched, hard cyclic SOC. Every converged solve is replayed in OpenDSS.
+const REQUESTED = copy(ARGS)
+empty!(ARGS); push!(ARGS, "none")
+include(joinpath(@__DIR__, "multiperiod_study.jl"))
+using SHA, Dates
+const ROOT8500 = normpath(get(ENV, "SECONDARY_OUT", joinpath(@__DIR__, "..", "results", "secondary_8500_oct25")))
+mkpath(ROOT8500)
+const T8500 = parse(Int, get(ENV, "SECONDARY_T", "24"))
+const SITES8500 = ["m1047401", "m1108258", "m1142880"]
+const REPLAYS8500 = joinpath(ROOT8500, "solves.csv")
+const EDGES8500 = joinpath(ROOT8500, "edges.csv")
+const BASE8500 = joinpath(ROOT8500, "baseline.csv")
+function appendrow(file, header, values)
+    fresh = !isfile(file)
+    open(file, "a") do io
+        fresh && println(io, header)
+        println(io, join(values, ','))
+    end
+end
+function read_services8500()
+    d = Dict{String,String}()
+    for line in eachline(joinpath(REPO_ROOT, "test_networks", "ieee8500xf_1ph", "BranchData.dss"))
+        m = match(r"(?i)^New Line\.svc_\S+ .*Bus1=(\S+) Bus2=(\S+)", line)
+        m === nothing || (d[busname(m[2])] = busname(m[1]))
+    end
+    return d
+end
+function network8500(secondary, n)
+    deck = secondary ? "ieee8500xf_1ph" : "ieee8500_1ph"
+    names = ["subs$i" for i in 1:n]
+    extra = String[]
+    # Same transformer equivalent as the original substation, behind each added scenario source.
+    for i in 2:n
+        push!(extra, "New Line.study_poi$i phases=1 bus1=study_$(i)s bus2=$(SITES8500[i-1]) R1=0.0759998 X1=0.877025 C1=0 C0=0",
+                     "New Vsource.subs$i phases=1 bus1=study_$(i)s basekv=7.1996 pu=1.05 angle=0 R1=0 X1=1e-8 R0=0 X0=1e-8")
+    end
+    net, pvs = load_sources(names; system=deck, extra)
+    services = read_services8500()
+    # Uniform delivery-point contract: explicit LV customers, or their primary attachment proxies.
+    bs = secondary ? Set(keys(services)) : Set(values(services))
+    @assert all(b -> b in net.buses, bs)
+    @assert all(b -> b in net.buses, SITES8500[1:n-1])
+    s = setup(net, pvs; T=T8500, feas=1e-5, band_buses=bs)
+    return s, names, deck
+end
+function diagnostics8500(s, x)
+    v = extrema(abs(x.V_pu[b][t]) for b in study_banded(s), t in 1:s.T)
+    minp = minimum(minimum(a) for a in values(x.P_subs_kW))
+    terminal = maximum((abs(b[end]-b[1]) for b in values(x.B_kWh)); init=0.0)
+    socviol = maximum((max(0.30*bt.kWh_rated-minimum(x.B_kWh[bt.name]), maximum(x.B_kWh[bt.name])-0.95*bt.kWh_rated,0.0) for bt in s.net.batteries); init=0.0)
+    return (; vmin=v[1], vmax=v[2], minp, terminal, socviol)
+end
+function checked8500(s, label, case, angles; start=nothing, objective=:margin, V_band=(0.95,1.05))
+    kw = problem(s, case)
+    x = solve_multiperiod(s.net, angles; kw..., objective, start, V_band, no_backflow=objective !== :cost,
+                         max_iter=250)
+    good = x.status in RAY_OK
+    if !good
+        appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW",
+            [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,false,fill(NaN,10)...])
+        return x
+    end
+    rp = replay_opendss(s.net, x, angles; load_factor=s.lam, pvs=s.P, pv_factor=s.F)
+    dg=diagnostics8500(s,x)
+    good = rp.converged && rp.pq_band && rp.dP<1e-3 && rp.dQ<1e-3 && rp.dV<1e-7 && rp.dB<1e-3
+    appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW",
+        [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,good,rp.dP,rp.dQ,rp.dV,rp.dB,dg.vmin,dg.vmax,dg.minp,dg.terminal,dg.socviol,x.margin_kW])
+    say(@sprintf("    replay %s | dP %.2e kW dV %.2e pu | V %.4f-%.4f minP %.2f margin %.2f kW",good ? "PASS" : "FAIL",rp.dP,rp.dV,dg.vmin,dg.vmax,dg.minp,x.margin_kW))
+    good || error("OpenDSS replay failed for $label; stopping")
+    return x
+end
+function sensitivity8500(s,label,names)
+    angles=Dict(k=>0.0 for k in names)
+    x0=checked8500(s,label,:nobatt,angles;objective=:cost,V_band=nothing)
+    x0.status in RAY_OK || return nothing
+    K=Dict{Tuple{String,String},Vector{Float64}}()
+    for m in names[2:end]
+        xp=checked8500(s,label,:nobatt,merge(angles,Dict(m=>0.05));objective=:cost,V_band=nothing,start=x0)
+        xm=checked8500(s,label,:nobatt,merge(angles,Dict(m=>-0.05));objective=:cost,V_band=nothing,start=x0)
+        (xp.status in RAY_OK && xm.status in RAY_OK) || return nothing
+        for k in names
+            K[(k,m)]=(xp.P_subs_kW[k].-xm.P_subs_kW[k])./0.1
+        end
+    end
+    open(joinpath(ROOT8500,"sensitivity_$label.csv"),"w") do io
+        println(io,"source,hour,import_kW,"*join(["K_$m" for m in names[2:end]],','))
+        for k in names,t in 1:s.T
+            println(io,join([k,t,x0.P_subs_kW[k][t],[K[(k,m)][t] for m in names[2:end]]...],','))
+        end
+    end
+    return (; names,P=x0.P_subs_kW,K,T=s.T)
+end
+function directions8500(dim)
+    dim==1 && return [[-1.0],[1.0]]
+    dim==2 && return [[cos(t),sin(t)] for t in range(0,2pi;length=9)[1:8]]
+    # Six axis directions and the eight cube corners: coarse measured 3D screen, not fib78.
+    return [[i==j ? sign : 0.0 for i in 1:3] for j in 1:3 for sign in (-1.0,1.0)]
+end
+feasible8500(x)=x.status in RAY_OK && isfinite(x.margin_kW) && x.margin_kW>=-0.01
+function edge8500(s,label,case,names,u,guess,x0)
+    at(r)=Dict(names[i] => (i==1 ? 0.0 : r*u[i-1]) for i in eachindex(names))
+    lo,hi,ml,mh=0.0,clamp(isfinite(guess) && guess>0 ? guess : 0.5,0.02,20.0),x0.margin_kW,NaN
+    xlo=x0; last=x0; solves=0
+    for _ in 1:7
+        x=checked8500(s,label,case,at(hi);start=last);solves+=1
+        x.status in RAY_OK || return (;r=lo,x=xlo,method="unresolved",solves)
+        last=x;mh=x.margin_kW
+        mh<0 && break
+        lo,ml,xlo=hi,mh,x
+        hi>=20 && return (;r=lo,x=xlo,method="at_limit",solves)
+        hi=min(20.0,1.6hi)
+    end
+    mh<0 || return (;r=lo,x=xlo,method="unresolved",solves)
+    for _ in 1:9
+        r=clamp(lo + ml/(ml-mh)*(hi-lo),lo+0.05*(hi-lo),hi-0.05*(hi-lo))
+        x=checked8500(s,label,case,at(r);start=last);solves+=1
+        x.status in RAY_OK || return (;r=lo,x=xlo,method="unresolved",solves)
+        last=x;m=x.margin_kW
+        m>=0 ? ((lo,ml,xlo)=(r,m,x)) : ((hi,mh)=(r,m))
+        (hi-lo<0.005 || (m>=0 && m<0.02)) && return (;r=lo,x=xlo,method="bracketed",solves)
+    end
+    return (;r=lo,x=xlo,method=(hi-lo<0.02 ? "bracketed" : "coarse_bracket"),solves)
+end
+function run8500(label)
+    secondary=startswith(label,"secondary")
+    n=parse(Int,string(last(label)))
+    say("\n=== $label, T=$T8500 ===")
+    s,names,deck=network8500(secondary,n)
+    say("  $deck: $(length(s.net.buses)) buses; $(length(study_banded(s))) delivery points; sources $(join(names,',')); sites $(join(SITES8500[1:n-1],','))")
+    sens=sensitivity8500(s,label,names)
+    sens===nothing && error("Sensitivity solve failed")
+    dirs=directions8500(n-1)
+    for case in (:nobatt,:cyclic)
+        x0=checked8500(s,label,case,equal_angles(s.net))
+        if !(x0.status in RAY_OK)
+            appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[label,case,s.T,x0.status,NaN,NaN,NaN,NaN,false]);continue
+        end
+        dg=diagnostics8500(s,x0)
+        appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[label,case,s.T,x0.status,x0.margin_kW,dg.vmin,dg.vmax,dg.minp,feasible8500(x0)])
+        if !feasible8500(x0)
+            say("  $case: equal angles infeasible; no origin-centred region claimed");continue
+        end
+        for (i,u) in enumerate(dirs)
+            guess,lim=predicted_reach(sens,Dict(zip(names[2:end],u));day=case===:cyclic)
+            b=edge8500(s,label,case,names,u,guess,x0)
+            dg=diagnostics8500(s,b.x)
+            bind=dg.minp<=1 ? "backflow" : (dg.vmin<0.9501 ? "undervoltage" : dg.vmax>1.0499 ? "overvoltage" : "other")
+            appendrow(EDGES8500,"configuration,case,T,direction,u1,u2,u3,predicted_deg,measured_deg,method,binding,min_import_kW,vmin,vmax,solves",[label,case,s.T,i,[j<=length(u) ? u[j] : 0.0 for j in 1:3]...,guess,b.r,b.method,bind,dg.minp,dg.vmin,dg.vmax,b.solves])
+            say(@sprintf("  EDGE %s %s dir%d: %.4f deg, predicted %.4f, %s, %s",label,case,i,b.r,guess,b.method,bind))
+        end
+    end
+end
+foreach(run8500, isempty(REQUESTED) ? ["secondary2","primary2","secondary3","primary3","secondary4","primary4"] : REQUESTED)
+println("COMPLETED secondary 8500 screen")
