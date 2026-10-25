@@ -1,0 +1,17 @@
+
+=== secondary4, T=24 ===
+  ieee8500xf_1ph: 3701 buses; 1177 delivery points; sources subs1,subs2,subs3,subs4; sites m1047401,m1108258,m1142880
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              25 it  build    7.8 s  solve    16.4 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 1.79e-05 kW dV 2.47e-09 pu | V 0.9359-1.0466 minP 92.85 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              88 it  build    5.3 s  solve    72.1 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 1.21e-07 kW dV 3.57e-10 pu | V 0.9517-1.0471 minP 98.10 margin 64.50 kW
+      [solve] margin    T=24  LOCALLY_SOLVED             125 it  build    5.0 s  solve   171.6 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 3.80e-07 kW dV 3.57e-10 pu | V 0.9535-1.0468 minP 132.49 margin 132.49 kW
+COMPLETED secondary 8500 screen

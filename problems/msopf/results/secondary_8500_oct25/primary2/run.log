@@ -1,0 +1,23 @@
+
+=== primary2, T=24 ===
+  ieee8500_1ph: 2522 buses; 1138 delivery points; sources subs1,subs2; sites m1047401
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              23 it  build    6.1 s  solve    10.9 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 8.55e-05 kW dV 1.39e-08 pu | V 0.9417-1.0538 minP 306.62 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              14 it  build    3.3 s  solve     6.3 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.22e-04 kW dV 1.96e-08 pu | V 0.9416-1.0538 minP 308.02 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              14 it  build    3.0 s  solve     7.1 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.19e-04 kW dV 1.90e-08 pu | V 0.9417-1.0538 minP 305.22 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              57 it  build    3.6 s  solve    31.9 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 2.09e-04 kW dV 5.34e-08 pu | V 0.9470-1.0527 minP 330.25 margin -111.97 kW
+  nobatt: equal angles infeasible; no origin-centred region claimed
+      [solve] margin    T=24  LOCALLY_SOLVED              76 it  build    3.5 s  solve    71.2 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 5.09e-05 kW dV 8.78e-09 pu | V 0.9484-1.0515 minP 391.08 margin -62.28 kW
+  cyclic: equal angles infeasible; no origin-centred region claimed
+COMPLETED secondary 8500 screen

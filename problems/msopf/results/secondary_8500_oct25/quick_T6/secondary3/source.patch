@@ -1,0 +1,157 @@
+diff --git a/problems/msopf/root_level/run_secondary_8500_screen.sh b/problems/msopf/root_level/run_secondary_8500_screen.sh
+index 5f763cc2..afe00011 100644
+--- a/problems/msopf/root_level/run_secondary_8500_screen.sh
++++ b/problems/msopf/root_level/run_secondary_8500_screen.sh
+@@ -3,6 +3,7 @@ set -euo pipefail
+ unset NO_COLOR FORCE_COLOR
+ export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MULTIPERIOD_LEAN=1
+ export MULTI_VMARGIN=20000 MULTIPERIOD_MAX_WALL=180 MULTIPERIOD_SOLVE_LOG=1
++export SECONDARY_LIMIT="${SECONDARY_LIMIT:-40}"
+ export SECONDARY_T="${SECONDARY_T:-24}"
+ hsl="/c/Users/Aryan Ritwajeet Jha/Documents/hsl/build"
+ if [[ -f "$hsl/libma57.dll" ]]; then
+diff --git a/problems/msopf/root_level/secondary_8500_study.jl b/problems/msopf/root_level/secondary_8500_study.jl
+index 03f71fd9..f19329de 100644
+--- a/problems/msopf/root_level/secondary_8500_study.jl
++++ b/problems/msopf/root_level/secondary_8500_study.jl
+@@ -8,6 +8,7 @@ using SHA, Dates
+ const ROOT8500 = normpath(get(ENV, "SECONDARY_OUT", joinpath(@__DIR__, "..", "results", "secondary_8500_oct25")))
+ mkpath(ROOT8500)
+ const T8500 = parse(Int, get(ENV, "SECONDARY_T", "24"))
++const RMAX8500 = parse(Float64, get(ENV, "SECONDARY_LIMIT", "40"))
+ const SITES8500 = ["m1047401", "m1108258", "m1142880"]
+ const REPLAYS8500 = joinpath(ROOT8500, "solves.csv")
+ const EDGES8500 = joinpath(ROOT8500, "edges.csv")
+@@ -42,7 +43,7 @@ function network8500(secondary, n)
+     bs = secondary ? Set(keys(services)) : Set(values(services))
+     @assert all(b -> b in net.buses, bs)
+     @assert all(b -> b in net.buses, SITES8500[1:n-1])
+-    s = setup(net, pvs; T=T8500, feas=1e-5, band_buses=bs)
++    s = setup(net, pvs; T=T8500, feas=1e-6, band_buses=bs)
+     return s, names, deck
+ end
+ function diagnostics8500(s, x)
+@@ -50,7 +51,10 @@ function diagnostics8500(s, x)
+     minp = minimum(minimum(a) for a in values(x.P_subs_kW))
+     terminal = maximum((abs(b[end]-b[1]) for b in values(x.B_kWh)); init=0.0)
+     socviol = maximum((max(0.30*bt.kWh_rated-minimum(x.B_kWh[bt.name]), maximum(x.B_kWh[bt.name])-0.95*bt.kWh_rated,0.0) for bt in s.net.batteries); init=0.0)
+-    return (; vmin=v[1], vmax=v[2], minp, terminal, socviol)
++    dyn=maximum((maximum(abs(btB[t+1]-btB[t]+x.P_B_kW[k][t]*x.dt_h) for t in 1:s.T) for (k,btB) in x.B_kWh); init=0.0)
++    bpow=maximum((maximum(abs,x.P_B_kW[bt.name])-bt.kW_rated for bt in s.net.batteries); init=0.0)
++    qviol=maximum((maximum(abs(x.Q_PV_kvar[p.name][t])-sqrt(max(0.0,p.kVA^2-(s.F[t]*p.kW)^2)) for t in 1:s.T) for p in s.P); init=0.0)
++    return (; vmin=v[1], vmax=v[2], minp, terminal, socviol, dyn, bpow=max(0.0,bpow), qviol=max(0.0,qviol))
+ end
+ function checked8500(s, label, case, angles; start=nothing, objective=:margin, V_band=(0.95,1.05))
+     kw = problem(s, case)
+@@ -58,15 +62,15 @@ function checked8500(s, label, case, angles; start=nothing, objective=:margin, V
+                          max_iter=250)
+     good = x.status in RAY_OK
+     if !good
+-        appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW",
+-            [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,false,fill(NaN,10)...])
++        appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW,energy_balance_kWh,battery_power_violation_kW,pv_q_violation_kvar",
++            [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,false,fill(NaN,13)...])
+         return x
+     end
+     rp = replay_opendss(s.net, x, angles; load_factor=s.lam, pvs=s.P, pv_factor=s.F)
+     dg=diagnostics8500(s,x)
+-    good = rp.converged && rp.pq_band && rp.dP<1e-3 && rp.dQ<1e-3 && rp.dV<1e-7 && rp.dB<1e-3
+-    appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW",
+-        [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,good,rp.dP,rp.dQ,rp.dV,rp.dB,dg.vmin,dg.vmax,dg.minp,dg.terminal,dg.socviol,x.margin_kW])
++    good = rp.converged && rp.pq_band && rp.dP<1e-3 && rp.dQ<1e-3 && rp.dV<1e-7 && rp.dB<1e-3 && max(dg.terminal,dg.socviol,dg.dyn,dg.bpow,dg.qviol)<0.01
++    appendrow(REPLAYS8500,"configuration,case,objective,angles,status,iterations,seconds,replay_ok,dP_kW,dQ_kvar,dV_pu,dB_kW,vmin,vmax,min_import_kW,terminal_kWh,soc_violation_kWh,margin_kW,energy_balance_kWh,battery_power_violation_kW,pv_q_violation_kvar",
++        [label,case,objective,join(["$k=$v" for (k,v) in sort(collect(angles))],';'),x.status,x.iterations,x.time,good,rp.dP,rp.dQ,rp.dV,rp.dB,dg.vmin,dg.vmax,dg.minp,dg.terminal,dg.socviol,x.margin_kW,dg.dyn,dg.bpow,dg.qviol])
+     say(@sprintf("    replay %s | dP %.2e kW dV %.2e pu | V %.4f-%.4f minP %.2f margin %.2f kW",good ? "PASS" : "FAIL",rp.dP,rp.dV,dg.vmin,dg.vmax,dg.minp,x.margin_kW))
+     good || error("OpenDSS replay failed for $label; stopping")
+     return x
+@@ -90,38 +94,46 @@ function sensitivity8500(s,label,names)
+             println(io,join([k,t,x0.P_subs_kW[k][t],[K[(k,m)][t] for m in names[2:end]]...],','))
+         end
+     end
+-    return (; names,P=x0.P_subs_kW,K,T=s.T)
++    return (; names,P=x0.P_subs_kW,K,T=s.T,x0)
+ end
+ function directions8500(dim)
+     dim==1 && return [[-1.0],[1.0]]
+     dim==2 && return [[cos(t),sin(t)] for t in range(0,2pi;length=9)[1:8]]
+-    # Six axis directions and the eight cube corners: coarse measured 3D screen, not fib78.
++    # Six axis directions: a coarse measured 3D screen, not a surface reconstruction or fib78.
+     return [[i==j ? sign : 0.0 for i in 1:3] for j in 1:3 for sign in (-1.0,1.0)]
+ end
+ feasible8500(x)=x.status in RAY_OK && isfinite(x.margin_kW) && x.margin_kW>=-0.01
+ function edge8500(s,label,case,names,u,guess,x0)
+     at(r)=Dict(names[i] => (i==1 ? 0.0 : r*u[i-1]) for i in eachindex(names))
+-    lo,hi,ml,mh=0.0,clamp(isfinite(guess) && guess>0 ? guess : 0.5,0.02,20.0),x0.margin_kW,NaN
+-    xlo=x0; last=x0; solves=0
++    lo,hi,ml,mh=0.0,clamp(isfinite(guess) && guess>0 ? guess : 0.5,0.02,RMAX8500),x0.margin_kW,NaN
++    xlo=x0; xhi=x0; last=x0; solves=0; previous_side=0
+     for _ in 1:7
+         x=checked8500(s,label,case,at(hi);start=last);solves+=1
+-        x.status in RAY_OK || return (;r=lo,x=xlo,method="unresolved",solves)
+-        last=x;mh=x.margin_kW
++        x.status in RAY_OK || return (;r=lo,upper=NaN,x=xlo,method="unresolved",solves)
++        last=x;mh=x.margin_kW; xhi=x
+         mh<0 && break
+         lo,ml,xlo=hi,mh,x
+-        hi>=20 && return (;r=lo,x=xlo,method="at_limit",solves)
+-        hi=min(20.0,1.6hi)
++        hi>=RMAX8500 && return (;r=lo,upper=Inf,x=xlo,method="at_limit",solves)
++        hi=min(RMAX8500,1.6hi)
+     end
+-    mh<0 || return (;r=lo,x=xlo,method="unresolved",solves)
++    mh<0 || return (;r=lo,upper=NaN,x=xlo,method="unresolved",solves)
+     for _ in 1:9
+         r=clamp(lo + ml/(ml-mh)*(hi-lo),lo+0.05*(hi-lo),hi-0.05*(hi-lo))
+-        x=checked8500(s,label,case,at(r);start=last);solves+=1
+-        x.status in RAY_OK || return (;r=lo,x=xlo,method="unresolved",solves)
++        x=checked8500(s,label,case,at(r);start=(r-lo <= hi-r ? xlo : xhi));solves+=1
++        x.status in RAY_OK || return (;r=lo,upper=NaN,x=xlo,method="unresolved",solves)
+         last=x;m=x.margin_kW
+-        m>=0 ? ((lo,ml,xlo)=(r,m,x)) : ((hi,mh)=(r,m))
+-        (hi-lo<0.005 || (m>=0 && m<0.02)) && return (;r=lo,x=xlo,method="bracketed",solves)
++        if m>=0
++            lo,ml,xlo=r,m,x
++            previous_side==1 && (mh*=0.5)  # Illinois interpolation; the actual sign bracket stays intact.
++            previous_side=1
++        else
++            hi,mh,xhi=r,m,x
++            previous_side == -1 && (ml*=0.5)
++            previous_side=-1
++        end
++        (hi-lo<0.005 || (m>=0 && m<0.02)) && return (;r=lo,upper=hi,x=xlo,method="bracketed",solves)
+     end
+-    return (;r=lo,x=xlo,method=(hi-lo<0.02 ? "bracketed" : "coarse_bracket"),solves)
++    return (;r=lo,upper=hi,x=xlo,method=(hi-lo<0.02 ? "bracketed" : "coarse_bracket"),solves)
+ end
+ function run8500(label)
+     secondary=startswith(label,"secondary")
+@@ -129,11 +141,12 @@ function run8500(label)
+     say("\n=== $label, T=$T8500 ===")
+     s,names,deck=network8500(secondary,n)
+     say("  $deck: $(length(s.net.buses)) buses; $(length(study_banded(s))) delivery points; sources $(join(names,',')); sites $(join(SITES8500[1:n-1],','))")
+-    sens=sensitivity8500(s,label,names)
++    base_only=get(ENV,"SECONDARY_BASE_ONLY","0")=="1"
++    sens=base_only ? (; x0=checked8500(s,label,:nobatt,equal_angles(s.net);objective=:cost,V_band=nothing)) : sensitivity8500(s,label,names)
+     sens===nothing && error("Sensitivity solve failed")
+     dirs=directions8500(n-1)
+     for case in (:nobatt,:cyclic)
+-        x0=checked8500(s,label,case,equal_angles(s.net))
++        x0=checked8500(s,label,case,equal_angles(s.net);start=sens.x0)
+         if !(x0.status in RAY_OK)
+             appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[label,case,s.T,x0.status,NaN,NaN,NaN,NaN,false]);continue
+         end
+@@ -142,12 +155,13 @@ function run8500(label)
+         if !feasible8500(x0)
+             say("  $case: equal angles infeasible; no origin-centred region claimed");continue
+         end
++        base_only && continue
+         for (i,u) in enumerate(dirs)
+             guess,lim=predicted_reach(sens,Dict(zip(names[2:end],u));day=case===:cyclic)
+             b=edge8500(s,label,case,names,u,guess,x0)
+             dg=diagnostics8500(s,b.x)
+             bind=dg.minp<=1 ? "backflow" : (dg.vmin<0.9501 ? "undervoltage" : dg.vmax>1.0499 ? "overvoltage" : "other")
+-            appendrow(EDGES8500,"configuration,case,T,direction,u1,u2,u3,predicted_deg,measured_deg,method,binding,min_import_kW,vmin,vmax,solves",[label,case,s.T,i,[j<=length(u) ? u[j] : 0.0 for j in 1:3]...,guess,b.r,b.method,bind,dg.minp,dg.vmin,dg.vmax,b.solves])
++            appendrow(EDGES8500,"configuration,case,T,direction,u1,u2,u3,predicted_deg,measured_deg,upper_deg,method,binding,min_import_kW,vmin,vmax,solves",[label,case,s.T,i,[j<=length(u) ? u[j] : 0.0 for j in 1:3]...,guess,b.r,b.upper,b.method,bind,dg.minp,dg.vmin,dg.vmax,b.solves])
+             say(@sprintf("  EDGE %s %s dir%d: %.4f deg, predicted %.4f, %s, %s",label,case,i,b.r,guess,b.method,bind))
+         end
+     end

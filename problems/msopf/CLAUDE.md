@@ -202,3 +202,34 @@ results are tracked in `problems/msopf/results/multiperiod/`.
 
 
 - **Continuation, 2026-10-25:** the study driver now propagates customer-only `band_buses` through every problem and voltage diagnostic. New stages: `four_ieee9500xf`, `four_smartds_p1u_typeiii`, `four_smartds_p1u_typeii`. Both requested T=24 sensitivity runs (9500xf and P1U Type III) completed, seven solves each, all 336 hourly OpenDSS comparisons passing (worst 5.2e-5 kW, 1.35e-9 pu). Independent export validator and PNG/SVG predicted-region figures are included. Evidence and pinned environment: `results/test_networks/sensitivity_oct25/README.md`. **Predictions only**; the 78-direction measured edge campaign still awaits Kamiak login/queue check. Type II wiring is tested but its sensitivity campaign is not run. The regression is `tests/customer_band.jl`; the serial launcher is `root_level/run_test_edition_sensitivities.sh` (fresh output root required for reruns).
+
+### 2026-10-25: secondary-feeder OPF evidence and paper update
+
+- New measured study: `root_level/secondary_8500_study.jl`, launcher
+  `run_secondary_8500_screen.sh`, input checker `check_secondary_8500_inputs.py`,
+  validator/figure/viewer builder `publish_secondary_study.py`. Evidence and exact
+  scientific qualifications: `results/secondary_8500_oct25/README.md`.
+- Matched new IEEE8500 primary/secondary conversions share primary impedances,
+  DERs and aggregate loads. Customer 0.95–1.05 pu limits vs primary attachment
+  proxies; no primary transit band. Added source sites m1047401/m1108258/m1142880,
+  with original substation delivery equivalent. This is not the old 2522 conversion.
+- Full T24 2-source search has one verified positive cyclic bracket and one
+  unresolved negative direction. T24 3-source has eight idle and five cyclic
+  sign brackets, three cyclic timeouts. Never convert unresolved zero saved radii
+  into boundaries. Some positive-margin stopping brackets are wide; retain them.
+- Full T24 equal-angle checks exist for both battery cases, primary/secondary
+  2/3/4 sources and SF4. SF uses native source sites and our constructed Type III
+  ties, not a published operating configuration. All successful reportable OPFs
+  pass strict OpenDSS replay and original SOC/device checks.
+- T6 is explicitly exploratory: legacy profile resampling changes daily PV energy,
+  so T6 vs T24 is not a resolution comparison. SF4 completed twelve T6 axis
+  searches; six axes cannot establish tetrahedron faces or volume. New sparse
+  viewer tabs suppress face fits and disclose their coverage and prediction caps.
+- Paper updated and pushed in PESGM2027_Multi-Source-Multi-Period-OPF main:
+  initial 9e0a123, full-day SF baseline and legibility follow-up 3f7ec8b. New text
+  is in Section IV-F, vector figures `three_source_T24.pdf` and `sf_axis_T6.pdf`,
+  exact copied inputs in `figure-data/secondary_oct25/`. main.pdf compiled and
+  pages inspected. Direct Overleaf sync was not verified (no browser access).
+- #180 remains the broad test-system/modeling PR. #181 is deliberately a separate
+  docs-only interactive-viewer publication PR; do not merge all of #180 just to
+  publish figures. Inherited untracked `envs/` outputs are unrelated and untouched.

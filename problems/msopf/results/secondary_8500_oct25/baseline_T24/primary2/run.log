@@ -1,0 +1,19 @@
+
+=== primary2, T=24 ===
+  ieee8500_1ph: 2522 buses; 1138 delivery points; sources subs1,subs2; sites m1047401
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              26 it  build    7.1 s  solve    12.8 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 2.81e-06 kW dV 5.44e-10 pu | V 0.9417-1.0538 minP 306.35 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              76 it  build    4.1 s  solve    46.1 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 7.89e-05 kW dV 1.60e-08 pu | V 0.9470-1.0527 minP 330.25 margin -111.95 kW
+  nobatt: equal angles infeasible; no origin-centred region claimed
+      [solve] margin    T=24  LOCALLY_SOLVED             109 it  build    3.8 s  solve   121.1 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 4.66e-07 kW dV 3.56e-10 pu | V 0.9484-1.0515 minP 391.00 margin -62.10 kW
+  cyclic: equal angles infeasible; no origin-centred region claimed
+COMPLETED secondary 8500 screen

@@ -1,0 +1,30 @@
+{
+  "validated": true,
+  "primary_lines": 2520,
+  "primary_buses": 2521,
+  "secondary_delivery_points": 1177,
+  "primary_delivery_proxies": 1138,
+  "max_load_aggregation_discrepancy_kVA": 6.0000000004833964e-05,
+  "identical_DER_definitions": true,
+  "distance_rule": "greedy max-min sum(abs(series_Z)) along the radial path, among primary junctions of degree >=3",
+  "sites": [
+    {
+      "bus": "m1047401",
+      "min_path_distance_proxy_ohm": 24.160722993191253
+    },
+    {
+      "bus": "m1108258",
+      "min_path_distance_proxy_ohm": 23.708587198718323
+    },
+    {
+      "bus": "m1142880",
+      "min_path_distance_proxy_ohm": 23.473911088994935
+    }
+  ],
+  "new_source_series_equivalent_ohm": {
+    "R": 0.0759998,
+    "X": 0.877025
+  },
+  "voltage_policy": "0.95-1.05 pu at secondary delivery points or their primary attachment proxies; no transit-bus band",
+  "controls": "PV q dispatched, fixed PV p, existing batteries, hard cyclic SOC; constant source EMF angles for 24 hours"
+}
