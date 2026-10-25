@@ -173,5 +173,5 @@ function run8500(label)
         end
     end
 end
-foreach(run8500, isempty(REQUESTED) ? ["secondary2","primary2","secondary3","primary3","secondary4","primary4"] : REQUESTED)
-println("COMPLETED secondary 8500 screen")
+get(ENV,"SECONDARY_LIBRARY_ONLY","0") == "1" || foreach(run8500, isempty(REQUESTED) ? ["secondary2","primary2","secondary3","primary3","secondary4","primary4"] : REQUESTED)
+get(ENV,"SECONDARY_LIBRARY_ONLY","0") == "1" || println("COMPLETED secondary 8500 screen")

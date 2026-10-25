@@ -115,6 +115,8 @@ def main():
     f=OUT/'quick_T6/secondary4'
     if (f/'metadata.txt').exists() and 'exit_code=0' in (f/'metadata.txt').read_text(encoding='utf-8'):
         validate(f);data.append(append_viewer(f,'screen_8500xf4','IEEE8500 + secondaries - T6 screen'))
+    from prediction_polytope import attach_prediction_meshes
+    data=attach_prediction_meshes(data,ROOT)
     encoded=json.dumps(data,separators=(',',':'),allow_nan=False)
     (OUT/'four_viewer_data.json').write_text(encoded,encoding='utf-8')
     v=ROOT/'results/multiperiod/viewer'

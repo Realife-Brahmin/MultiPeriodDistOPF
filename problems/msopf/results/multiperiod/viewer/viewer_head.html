@@ -63,7 +63,7 @@ select { font: inherit; font-size: 0.88rem; color: var(--fg); background: var(--
 <div class="wrap">
   <header>
     <h1>Four-Substation Regions</h1>
-    <p class="sub">Angle-region predictions and measured points with four substations (PV reactive power dispatched), in the three angle differences to the reference substation. Surfaces: the region predicted from the angle-to-import sensitivities at equal angles, colored by the substation whose import reaches zero there. Dots: locally measured boundary points. Historical cases use T = 24 and 78 directions; new exploratory tabs explicitly identify their horizon and sparse axis sampling. Drag to rotate, scroll to zoom.</p>
+    <p class="sub">Import-only predictions and local OPF endpoints with four substations (PV reactive power dispatched), in the three angle differences to the reference substation. Flat faces show the exact affine import-only prediction from equal-angle sensitivities, colored by the predicted limiting source. There is no radial display cap. The faces are not measured OPF surfaces. Dots: locally measured boundary points. Historical cases use T = 24 and 78 directions; new exploratory tabs explicitly identify their horizon and sparse axis sampling. Drag to rotate, scroll to zoom.</p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>

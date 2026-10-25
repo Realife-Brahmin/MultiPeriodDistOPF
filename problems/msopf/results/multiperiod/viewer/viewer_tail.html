@@ -52,9 +52,11 @@ function traces(sys) {
   }
   for (const [cs, key, op] of [["nobatt", "t-pi", 0.82], ["cyclic", "t-pc", 0.32]]) {
     if (focus >= 0 || !show(key)) continue;
-    const s = sys.cases[cs].surface;
-    out.push({ type: "surface", x: s.x, y: s.y, z: s.z, surfacecolor: s.face, cmin: -0.5, cmax: 3.5, colorscale: faceScale(), showscale: false,
-      opacity: op, hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
+    const m = sys.cases[cs].mesh;
+    if (!m) throw new Error("Missing exact prediction mesh for " + sys.id);
+    out.push({ type: "mesh3d", x: m.x, y: m.y, z: m.z, i: m.i, j: m.j, k: m.k,
+      facecolor: m.face.map(f => fcol()[f]), opacity: op, flatshading: true,
+      hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
   }
   for (const [cs, key, sym, nm] of [["nobatt", "t-mi", "diamond", "measured, idle"], ["cyclic", "t-mc", "circle", "measured, cyclic"]]) {
     if (!show(key)) continue;
@@ -77,7 +79,7 @@ function layout(sys, cam) {
 // Face statistics from the dots: least-squares plane a.x = 1 through a face's dots.
 function faceStats(sys, cs, k) {
   const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
-  if (sys.study_note || p.length < 4) return { n: p.length, sparse: !!sys.study_note };
+  if (sys.sparse || p.length < 4) return { n: p.length, sparse: !!sys.sparse };
   const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
   for (const q of p) for (let i = 0; i < 3; i++) { b[i] += q[i]; for (let j = 0; j < 3; j++) A[i][j] += q[i] * q[j]; }
   const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
