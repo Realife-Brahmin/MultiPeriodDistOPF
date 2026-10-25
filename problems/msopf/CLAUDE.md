@@ -239,3 +239,19 @@ results are tracked in `problems/msopf/results/multiperiod/`.
   seven tabs and face views passed 192 finite-coordinate rendering checks.
   Research archive commit 696c4512; paper evidence follow-up a709042. The broader
   modeling PR #180 remains open, separate from published documentation.
+
+### 2026-10-25: comparison and encoding correction
+
+User correctly identified inconsistent new figure styling and corrupted viewer labels.
+Repeated default-codepage read/write cycles caused mojibake; the generator now reads
+UTF-8 explicitly, HTML declares UTF-8, original readable template labels are restored,
+and source colors match the paper palette. Two rebuilds are byte-stable; live viewer
+checked for corrected labels/palette after docs-only PR #182, merge 008e980d.
+Paper commit 9cc09cc replaces the new diagnostic plots with two-source comparisons,
+full-prediction plus zoom three-source panels, and four-source in-plane face views.
+It imports the existing paper vector-renderer helpers and palette. The original
+connected eight-ray polygon was misleading and is superseded, not a measured contour.
+Legacy 2522 and new secondary conversion differ in source sites and other assumptions;
+these are presentation comparisons, not controlled service-transformer ablations.
+Four-source new cases remain sparse T6 screens, not matched to legacy T24/78 rays.
+No numerical CSVs changed and no new OPFs were launched for this correction.
