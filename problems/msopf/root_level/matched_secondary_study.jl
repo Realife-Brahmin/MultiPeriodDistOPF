@@ -56,7 +56,14 @@ function feasible_origin(s,case,start)
 end
 s,names,deck=matched_network(LABEL)
 cache=joinpath(MATCH_ROOT,LABEL,"state.jls")
-if PHASE=="repair"
+if PHASE=="origin_test"
+    packet=deserialize(cache)
+    for case in Symbol.(split(get(ENV,"MATCHED_CASES","cyclic"),','))
+        x=feasible_origin(s,case,packet.sens.x0)
+        say("hard origin $case: status=$(x.status) feasible=$(feasible8500(x)) headroom=$(x.margin_kW)")
+        feasible8500(x) || error("Origin pilot failed")
+    end
+elseif PHASE=="repair"
     packet=deserialize(cache);x0s=packet.x0s
     for case in (:nobatt,:cyclic)
         feasible8500(x0s[case]) && continue
@@ -69,12 +76,12 @@ if PHASE=="repair"
     serialize(cache,merge(packet,(;x0s)))
 elseif PHASE=="prep"
     sens=sensitivity8500(s,LABEL,names);sens===nothing && error("Sensitivity failure")
+    serialize(joinpath(MATCH_ROOT,LABEL,"sensitivity_state.jls"),sens)
     x0s=Dict{Symbol,Any}()
     for case in (:nobatt,:cyclic)
-        x=checked8500(s,LABEL,case,equal_angles(s.net);start=sens.x0)
-        # A timed-out margin maximization does not imply infeasibility. Find a hard-feasible
-        # origin with the same physical constraints; save actual headroom, not an optimum claim.
-        x.status in RAY_OK || (x=feasible_origin(s,case,sens.x0))
+        # The campaign needs an admissible origin, not a maximizer of spare headroom.
+        # This uses hard network, no-backflow, voltage and cyclic-SOC constraints.
+        x=feasible_origin(s,case,sens.x0)
         x0s[case]=x
         dg=x.status in RAY_OK ? diagnostics8500(s,x) : nothing
         appendrow(BASE8500,"configuration,case,T,status,margin_kW,vmin,vmax,min_import_kW,origin_feasible",[LABEL,case,24,x.status,x.margin_kW,dg===nothing ? NaN : dg.vmin,dg===nothing ? NaN : dg.vmax,dg===nothing ? NaN : dg.minp,feasible8500(x)])
