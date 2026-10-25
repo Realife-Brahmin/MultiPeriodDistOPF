@@ -55,6 +55,8 @@ const SYSTEMS = Dict(
                       skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing,
                       secondary = true),
     "ieee8500" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing),
+    # With its service transformers (user, 2026-10-24: secondaries in, no triplex lines), DERs as in ieee8500.
+    "ieee8500xf" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing, secondary = true),
     "epri_ckt5" => (; master = joinpath(TS, "epri_test_circuits", "ckt5", "Master_ckt5.dss"), base_kV = 12.47, seed = 5, skip = nothing, drop_loads = nothing),
     "epri_ckt7" => (; master = joinpath(TS, "epri_test_circuits", "ckt7", "Master_ckt7.dss"), base_kV = 12.47, seed = 7, skip = nothing,
                      drop_loads = r"^256\d\d_[abc]$"),                       # 13 feeders lumped on bus ckt7 (Substation_ckt7.dss)
