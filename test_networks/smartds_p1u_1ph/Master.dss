@@ -1,6 +1,6 @@
 Clear
-! smartds_p1u_1ph: single-phase per-phase equivalent of test_systems\smartds_sfo_p1u\Master.dss (unmodified original).
-! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! smartds_p1u_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
 New Circuit.smartds_p1u_1ph basekv=7.1996 Bus1=sb1_p1uhs2_1247_node_1_3 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
 VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
 ! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the

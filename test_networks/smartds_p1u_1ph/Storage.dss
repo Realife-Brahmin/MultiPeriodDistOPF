@@ -1,5 +1,5 @@
-! smartds_p1u_1ph: single-phase per-phase equivalent of test_systems\smartds_sfo_p1u\Master.dss (unmodified original).
-! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! smartds_p1u_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
 ! 506 batteries on load buses, sized in proportion to the bus load; fleet rating = 40 % of total load, 4 h.
 New Storage.BESS_p1udt0 Phases=1 Bus1=p1udt0.1 kV=7.1996 kVA=54.8823 kWrated=45.7353 kWhrated=182.941 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
 New Storage.BESS_p1udt1000 Phases=1 Bus1=p1udt1000.1 kV=7.1996 kVA=28.7816 kWrated=23.9846 kWhrated=95.9386 %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External
