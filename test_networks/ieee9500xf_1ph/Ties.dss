@@ -1,7 +1,8 @@
-! ieee9500xf_1ph: single-phase per-phase equivalent of rawData\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
-! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
-! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true; each is given
-! 1e-3 + j1e-3 ohm, as the other decks' shortest lines, to keep the admittance matrix well scaled.
+! ieee9500xf_1ph: single-phase per-phase equivalent of test_networks\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true. A switch is
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines; a tie cable with an open switch at each end
+! (tie_<switch>) is one line with both switches and the cable in series, its middle buses left out.
 New Line.a8645_48332_sw Phases=1 Bus1=d5958866-1_int.1 Bus2=e183493.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
 New Line.tsw803273_sw Phases=1 Bus1=d5803273-1_int.1 Bus2=m1069457.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
 New Line.v7173_48332_sw Phases=1 Bus1=d5534969-2_int.1 Bus2=e182729.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
