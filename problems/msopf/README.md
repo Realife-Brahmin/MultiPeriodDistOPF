@@ -154,3 +154,17 @@ The single-substation K1, Ckt24 and 8500xf decks remain covered by
 The full 78-direction edge campaign is a separate, much larger run. Use
 `MULTI_DIRSET=fib78 MULTI_VMARGIN=20000 MULTI_SAMPLES=0` with the desired new stage,
 without `MULTI_SENS_ONLY`, after checking cluster access and the shared queue.
+
+Validate a finished preparation directory and regenerate its scientific figures without
+running any optimization:
+
+```bash
+python problems/msopf/root_level/check_test_edition_sensitivities.py <run-directory>
+python problems/msopf/root_level/plot_test_edition_sensitivities.py <run-directory>
+```
+
+The validator requires a successful process exit, all seven converged OpenDSS replays,
+complete hourly sensitivities, and 156 consistent directional predictions. The plotter
+uses NumPy and Matplotlib, verifies the four intersections of the daily-mean import
+planes, and exports PNG plus editable SVG. These figures show predictions only;
+measured voltage cuts and nonlinear corrections await the edge campaign.

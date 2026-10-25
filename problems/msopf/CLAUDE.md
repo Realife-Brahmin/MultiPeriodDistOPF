@@ -188,7 +188,7 @@ results are tracked in `problems/msopf/results/multiperiod/`.
     primary buses (the utility's network), as in the primary-only deck of the same system.
   - **The voltage band applies only at the secondary (customer) buses** (ANSI C84.1 is a service-point limit);
     the primary has no band. The lower limit may be set below 0.95 for these decks, chosen from first runs
-    (at nominal load with no DERs they reach 0.85-0.96 pu). Not yet implemented in `multiperiod_full_angle.jl`.
+    (at nominal load with no DERs they reach 0.85-0.96 pu). Implemented through `band_buses` in the solver; the study driver now selects the customer buses automatically (2026-10-25).
   - **Up to four substations** (two, three, four); no five-source cases.
   - SMART-DS P1U (`smartds_p1u_xf_1ph`, 6,937 buses): its normally-open ties are published as disabled
     switches, now read by `convert_to_1ph.jl` (39 ties; 6 between substations, chain hs0-hs2-hs1-hs3). Use
