@@ -33,7 +33,7 @@ def sensitivity(folder,n=4):
 def append_viewer(folder,label,title):
     P,K=sensitivity(folder);base=rows(folder/'baseline.csv');edges=rows(folder/'edges.csv')
     sys={'id':label,'title':title,'sources':[f'subs{i}' for i in range(1,5)],'normals':(-K.sum(axis=1)).tolist(),'offsets':P.sum(axis=1).tolist(),'linearity_max':None,'study_note':f'Exploratory T = {P.shape[1]} over 24 hours; six axis directions per feasible battery case, not a reconstructed surface. Dashed-model predictions omit voltage constraints. PV reactive dispatch; hard cyclic SOC. No random linearity test.','cases':{}}
-    sys['study_note'] += ' Equal-angle local feasibility: ' + '; '.join(b['case'] + ' ' + ('admissible' if b['origin_feasible']=='true' else 'negative local margin; no rays attempted') for b in base) + '. Endpoint categories use import/voltage proximity heuristics, not active-set certificates. Backflow source identities were not archived. Predicted surfaces are radially clipped for display at 2.5 times each case maximum measured reach; this cap is not a feasibility constraint.'
+    sys['study_note'] += ' Equal-angle local feasibility: ' + '; '.join(b['case'] + ' ' + ('admissible' if b['origin_feasible']=='true' else 'negative local margin; no rays attempted') for b in base) + '. Endpoint categories use import/voltage proximity heuristics, not active-set certificates. Backflow source identities were not archived. Predictions are exact affine half-space meshes; no radial clipping is used. Sparse samples do not establish a measured surface.'
     for case in ('nobatt','cyclic'):
         points=[]
         for e in edges:
@@ -48,18 +48,7 @@ def append_viewer(folder,label,title):
                 bound=-2
             else:bound=-1 if e['binding'] in ('undervoltage','overvoltage') else -2
             points.append([*(u*r).tolist(),face,r,float(e['predicted_deg']),False,bound,e['binding']+' (source identity not archived)' if bound==-2 else e['binding'],float(e['upper_deg'])])
-        x=[];y=[];z=[];facegrid=[]
-        cap=max([q[4] for q in points] or [20])*2.5
-        for th in np.linspace(0,np.pi,33):
-            xr=[];yr=[];zr=[];fr=[]
-            for ph in np.linspace(0,2*np.pi,65):
-                u=np.array([np.sin(th)*np.cos(ph),np.sin(th)*np.sin(ph),np.cos(th)])
-                A=K@u
-                candidates=np.where(A.sum(axis=1)<0,P.sum(axis=1)/np.maximum(-A.sum(axis=1),1e-300),np.inf) if case=='cyclic' else np.min(np.where(A<0,P/np.maximum(-A,1e-300),np.inf),axis=1)
-                f=int(np.argmin(candidates));r=min(float(candidates[f]),cap)
-                q=u*r;xr.append(q[0]);yr.append(q[1]);zr.append(q[2]);fr.append(f)
-            x.append(xr);y.append(yr);z.append(zr);facegrid.append(fr)
-        sys['cases'][case]={'surface':{'x':x,'y':y,'z':z,'face':facegrid},'points':points}
+        sys['cases'][case]={'points':points}
     return sys
 
 def main():

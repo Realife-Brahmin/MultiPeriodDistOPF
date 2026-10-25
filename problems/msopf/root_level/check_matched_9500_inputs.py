@@ -6,6 +6,7 @@ A='ieee9500_1ph';B='ieee9500xf_1ph'
 a=definitions(A,'BranchData.dss');b=definitions(B,'BranchData.dss')
 assert a==[x for x in b if not x.lower().startswith('new line.svc_')]
 for f in ('PVSystem.dss','Storage.dss','Ties.dss'):assert definitions(A,f)==definitions(B,f),f
+assert [x for x in definitions(A,'Master.dss') if x.lower().startswith('new vsource.')] == [x for x in definitions(B,'Master.dss') if x.lower().startswith('new vsource.')]
 services={}
 for l in b:
  if l.lower().startswith('new line.svc_'):

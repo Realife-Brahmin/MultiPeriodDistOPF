@@ -2,10 +2,10 @@
 set -euo pipefail
 unset NO_COLOR FORCE_COLOR
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MULTIPERIOD_LEAN=1
-export MULTI_VMARGIN=20000 MULTIPERIOD_MAX_WALL=360 MULTIPERIOD_SOLVE_LOG=1 MULTIPERIOD_FAILED_SNAPSHOT=0 SECONDARY_T=24 SECONDARY_LIMIT=60
+export MULTI_VMARGIN=20000 MULTIPERIOD_MAX_WALL="${MATCHED_WALL:-360}" MULTIPERIOD_SOLVE_LOG=1 MULTIPERIOD_FAILED_SNAPSHOT="${MATCHED_FAILED_SNAPSHOT:-0}" SECONDARY_T=24 SECONDARY_LIMIT=60
 hsl='/c/Users/Aryan Ritwajeet Jha/Documents/hsl/build'
 export PATH="$hsl:$PATH"
-export IPOPT_EXTRA_OPTIONS='linear_solver=ma57;hsllib=C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build/libma57.dll;linear_system_scaling=none'
+export IPOPT_EXTRA_OPTIONS="linear_solver=ma57;hsllib=C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build/libma57.dll;linear_system_scaling=none;${MATCHED_IPOPT_OPTIONS:-}"
 export MATCHED_ROOT="${MATCHED_ROOT:-problems/msopf/results/matched_secondary_oct25}"
 label="$1"; phase="$2"
 folder="${phase//,/x}"
