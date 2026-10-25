@@ -30,6 +30,7 @@ function oracle(r,start,trial)
 end
 # The idle trajectory is physically admissible for cyclic dispatch (zero battery
 # power and constant SOC); this avoids importing a cost-induced cycling pattern.
+function run_search()
 xlo=packet.x0s[:nobatt];lo=0.0;hi=NaN;xhi=xlo;method="feasible_lower_bound";trial=0
 pred,_=predicted_reach(packet.sens,Dict(zip(names[2:end],u));day=SEARCH_CASE===:cyclic)
 r=clamp(isfinite(pred) && pred>0 ? .85pred : 1.0,.05,RMAX8500)
@@ -75,3 +76,5 @@ dg=diagnostics8500(s,xlo);imports=Dict(k=>minimum(xlo.P_subs_kW[k]) for k in nam
 bind=dg.minp<=1 ? argmin(imports) : (dg.vmin<.9501 || dg.vmax>1.0499 ? "voltage" : "unknown")
 appendrow(EDGES8500,"configuration,case,T,direction,u1,u2,u3,predicted_deg,measured_deg,upper_deg,method,binding,min_import_kW,vmin,vmax,imports",[SEARCH_LABEL,SEARCH_CASE,24,SEARCH_ID,[j<=length(u) ? u[j] : 0.0 for j in 1:3]...,pred,lo,hi,method,bind,dg.minp,dg.vmin,dg.vmax,join(["$k=$(imports[k])" for k in names],';')])
 say("COMPLETED oracle $SEARCH_LABEL $SEARCH_CASE $SEARCH_ID: $lo to $hi ($method)")
+end
+run_search()
