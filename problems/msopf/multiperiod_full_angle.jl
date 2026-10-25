@@ -413,6 +413,21 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             println(io, line)
         end
     end
+    # Optional failed-solve summaries for checkpointed campaigns. Never extract or reuse
+    # an unaccepted primal snapshot; successful solves and the default API are unchanged.
+    if get(ENV, "MULTIPERIOD_FAILED_SNAPSHOT", "1") == "0" &&
+       !(status in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED))
+        failed = (; status, ok=false, T, dt_h, time=solve_time(model),
+            iterations=(try barrier_iterations(model) catch; missing end), violation=NaN,
+            r=NaN, angles_deg=Dict{String,Float64}(), backflow_kW=NaN, margin_kW=NaN,
+            max_violation=NaN, cost=(;energy=NaN,cycling=NaN,terminal=NaN,total=NaN),
+            P_subs_kW=Dict{String,Vector{Float64}}(),Q_subs_kvar=Dict{String,Vector{Float64}}(),
+            P_B_kW=Dict{String,Vector{Float64}}(),Q_PV_kvar=Dict{String,Vector{Float64}}(),
+            B_kWh=Dict{String,Vector{Float64}}(),V_pu=Dict{String,Vector{ComplexF64}}(),
+            raw=(;lr=Dict(),li=Dict(),ir=Dict(),ii=Dict()))
+        release_solver!(model)
+        return failed
+    end
     val(x) = has_values(model) ? value(x) : NaN
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
