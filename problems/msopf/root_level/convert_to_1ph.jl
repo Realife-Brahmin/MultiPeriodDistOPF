@@ -29,9 +29,10 @@
 #   * Loads that stand for other feeders lumped at the substation bus (`drop_loads`) are left
 #     out: they are not part of the modeled network and would set the substation's import.
 #   * Buses no source reaches after all this are dropped, with their loads, and reported.
-#   * DERs (user's rule, 2026-10-20): about 10% of the buses get a battery and about 10% a PV unit,
+#   * DERs (user's rule, 2026-10-20): about 10% of the primary buses get a battery and about 10% a PV unit,
 #     one third of each set shared, on buses with load, sized in proportion to the bus load so
-#     each fleet is 40% of the total load. PV kVA = 1.2 Pmpp; batteries 4 h, kVA = 1.2 kWrated,
+#     each fleet is 40% of the total load
+#     (50% on the test decks of 2026-10-24, `der_share`). PV kVA = 1.2 Pmpp; batteries 4 h, kVA = 1.2 kWrated,
 #     62.5% stored, 30% reserve (as ieee2522C_1ph). Fixed seed per system.
 using OpenDSSDirect, Printf, Random, LinearAlgebra
 const ODD = OpenDSSDirect
@@ -50,40 +51,40 @@ const SYSTEMS = Dict(
     "ieee9500" => (; master = joinpath(REPO, "test_networks", "ieee9500_source", "base", "Master-bal-initial-config.dss"), base_kV = 12.47, seed = 9500,
                     skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing),
     # The same with its service transformers (user, 2026-10-20: the sensitivity check on secondaries): each is a line
-    # with its leakage impedance to its secondary bus, where its loads sit. DERs as in ieee9500 (same buses, sizes).
+    # with its leakage impedance to its secondary bus, where its loads sit. DERs on the same buses as ieee9500; each fleet 50% of the load since 2026-10-24 (40% before).
     "ieee9500xf" => (; master = joinpath(REPO, "test_networks", "ieee9500_source", "base", "Master-bal-initial-config.dss"), base_kV = 12.47, seed = 9500,
                       skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing,
-                      secondary = true),
+                      secondary = true, der_share = 0.5),
     "ieee8500" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing),
-    # With its service transformers (user, 2026-10-24: secondaries in, no triplex lines), DERs as in ieee8500.
-    "ieee8500xf" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing, secondary = true),
+    # With its service transformers (user, 2026-10-24: secondaries in, no triplex lines), DERs on ieee8500's buses.
+    "ieee8500xf" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing, secondary = true, der_share = 0.5),
     "epri_ckt5" => (; master = joinpath(TS, "epri_test_circuits", "ckt5", "Master_ckt5.dss"), base_kV = 12.47, seed = 5, skip = nothing, drop_loads = nothing),
     "epri_ckt7" => (; master = joinpath(TS, "epri_test_circuits", "ckt7", "Master_ckt7.dss"), base_kV = 12.47, seed = 7, skip = nothing,
                      drop_loads = r"^256\d\d_[abc]$"),                       # 13 feeders lumped on bus ckt7 (Substation_ckt7.dss)
     "epri_ckt24" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
                       drop_loads = r"^other_feeders$"),
-    # With its service transformers (user, 2026-10-24), DERs as in epri_ckt24.
+    # With its service transformers (user, 2026-10-24), DERs on epri_ckt24's buses.
     "epri_ckt24xf" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
-                        drop_loads = r"^other_feeders$", secondary = true),
+                        drop_loads = r"^other_feeders$", secondary = true, der_share = 0.5),
     "epri_j1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "J1", "Master_noPV.dss"), base_kV = 12.47, seed = 101, skip = nothing,
                    drop_loads = r"^aggregate_load$"),
     "epri_k1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
                    drop_loads = r"^k_22_aggregate$"),
-    # With its service transformers (user, 2026-10-24), DERs as in epri_k1.
+    # With its service transformers (user, 2026-10-24), DERs on epri_k1's buses.
     "epri_k1xf" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
-                     drop_loads = r"^k_22_aggregate$", secondary = true),
+                     drop_loads = r"^k_22_aggregate$", secondary = true, der_share = 0.5),
     "epri_m1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "M1", "Master_NoPV.dss"), base_kV = 12.47, seed = 131, skip = nothing,
                    drop_loads = r"^aggregated$"),
     "smartds_p1u" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), p1u_variants = true),
+                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), p1u_variants = true, der_share = 0.5),
     # The same region with its service transformers (user, 2026-10-24: secondaries are a small correction, so a
     # larger deck with them is welcome), as ieee9500xf: DERs as in smartds_p1u (same seed, same MV buses).
     "smartds_p1u_xf" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true, p1u_variants = true),
+                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true, p1u_variants = true, der_share = 0.5),
     # Each of P1U's four substations on its own (each is a separately published deck with its own 69 kV source;
     # hs0 has two substation transformers, so its deck has two sources). Our own DERs by the usual rule.
     [("smartds_p1u_hs$k" => (; master = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "Master.dss"), base_kV = 12.47, seed = 20180 + k,
-                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"))) for k in 0:3]...)
+                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"), der_share = 0.5)) for k in 0:3]...)
 
 "Compile the original. SMART-DS load shapes read annual profiles not downloaded: flat 1.0 in memory."
 function compile_original(cfg)
@@ -312,6 +313,9 @@ function convert(name)
             subs = [(; bus = s, mv = sort(unique([x.b for x in subx if x.a == s])), z = 1 / sum(1 / x.z for x in subx if x.a == s)) for s in srcs], feeder, stats, notes)
 end
 
+"Each fleet's share of the total load: DER_SHARE, or the system's `der_share` (the test decks of 2026-10-24: 0.5)."
+der_share(c) = get(c.cfg, :der_share, DER_SHARE)
+
 function place_ders(c)
     rng = MersenneTwister(c.cfg.seed)
     subset = Set([[s.bus for s in c.subs]; reduce(vcat, [s.mv for s in c.subs])])
@@ -321,7 +325,8 @@ function place_ders(c)
     pick = shuffle(rng, cands)[1:(2n - nboth)]
     pvb, btb = sort([pick[1:nboth]; pick[nboth+1:n]]), sort([pick[1:nboth]; pick[n+1:end]])
     total = sum(real, values(c.load_mv))
-    size(bs) = (w = sum(real(c.load_mv[b]) for b in bs); Dict(b => DER_SHARE * total * real(c.load_mv[b]) / w for b in bs))
+    share = der_share(c)
+    size(bs) = (w = sum(real(c.load_mv[b]) for b in bs); Dict(b => share * total * real(c.load_mv[b]) / w for b in bs))
     return size(pvb), size(btb), nboth
 end
 
@@ -376,13 +381,13 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "test_networks", deckname(c)
         end
     end
     w("PVSystem.dss") do io
-        @printf(io, "! %d PV units on load buses, sized in proportion to the bus load; fleet Pmpp = %.0f %% of total load.\n", length(pv), 100DER_SHARE)
+        @printf(io, "! %d PV units on load buses, sized in proportion to the bus load; fleet Pmpp = %.0f %% of total load.\n", length(pv), 100der_share(c))
         for b in sort(collect(keys(pv)))
             println(io, "New PVsystem.PV_$b irrad=1.0 Phases=1 Bus1=$b.1 kV=$kvs kVA=$(f3(1.2pv[b])) Pmpp=$(f3(pv[b])) %cutin=0.001 %cutout=0.001")
         end
     end
     w("Storage.dss") do io
-        @printf(io, "! %d batteries on load buses, sized in proportion to the bus load; fleet rating = %.0f %% of total load, 4 h.\n", length(bt), 100DER_SHARE)
+        @printf(io, "! %d batteries on load buses, sized in proportion to the bus load; fleet rating = %.0f %% of total load, 4 h.\n", length(bt), 100der_share(c))
         for b in sort(collect(keys(bt)))
             println(io, "New Storage.BESS_$b Phases=1 Bus1=$b.1 kV=$kvs kVA=$(f3(1.2bt[b])) kWrated=$(f3(bt[b])) kWhrated=$(f3(4bt[b])) %stored=62.5 %reserve=30 %EffCharge=95 %EffDischarge=95 %idlingkW=0 Vminpu=0.95 Vmaxpu=1.05 DispMode=External")
         end
