@@ -144,7 +144,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
                            source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing, margin_band_hard = false,
-                           tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
+                           band_buses = nothing, tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
     # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
@@ -289,7 +289,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # margin_band_hard = true: the band stays a hard constraint and the margin is on no-backflow alone
     # (the restoration problem: max m = -rho with P_Subs >= m); no slacks, no band room in the margin.
     eband = elastic || (marg && !vmarg && !margin_band_hard)
-    bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b)]
+    # band_buses: where the voltage band applies. nothing = every bus not set by a source (as before); a collection =
+    # only those buses (user, 2026-10-24: on decks with secondaries, only the customer buses, the secondary side of each
+    # service transformer; the primary then has no band).
+    bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b) && (band_buses === nothing || b in band_buses)]
+    bandset = Set(bandbuses)
     @variable(model, s_back[elastic && no_backflow ? names : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vhi[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
@@ -349,7 +353,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             P_fix = load_factor[t] * real(base_load[b]) - pv_factor[t] * pv_at[b]
             @constraint(model, out_P[b] + P_fix == P_in)
             @constraint(model, out_Q[b] + load_factor[t] * imag(base_load[b]) == Q_in)
-            if V_band !== nothing && !haskey(src_at, b)
+            if b in bandset
                 vroom = vmarg ? (S / margin_band_kw) * m_imp : 0.0
                 @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2 + vroom)
                 @constraint(model, e[b, t]^2 + f[b, t]^2 - (eband ? s_vhi[b, t] : 0.0) <= V_band[2]^2 - vroom)
