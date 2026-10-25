@@ -23,7 +23,7 @@ function matched_network(label)
     net,pvs=load_sources(names;system=deck,extra)
     # Same delivery-point voltage contract in both representations, including direct-MV loads.
     bs=union(customer_buses(net),Set(l.bus for l in net.loads))
-    s=setup(net,pvs;T=24,feas=1e-7,band_buses=bs)
+    s=setup(net,pvs;T=24,feas=parse(Float64,get(ENV,"MATCHED_FEAS","1e-7")),band_buses=bs)
     @assert Set(x.name for x in net.sources)==Set(names)
     say("$label: $(length(net.buses)) buses, $(length(bs)) delivery buses, $(length(net.batteries)) batteries; T=24")
     return s,names,deck
@@ -54,6 +54,7 @@ function feasible_origin(s,case,start)
     end
     return merge(x,(;margin_kW=NaN))
 end
+if get(ENV,"MATCHED_LIBRARY_ONLY","0")!="1"
 s,names,deck=matched_network(LABEL)
 cache=joinpath(MATCH_ROOT,LABEL,"state.jls")
 if PHASE=="origin_test"
@@ -97,11 +98,19 @@ else
     cases=Symbol.(split(get(ENV,"MATCHED_CASES","nobatt,cyclic"),','))
     for case in cases
         x0=x0s[case]
+        if case===:cyclic && get(ENV,"MATCHED_INITIAL","cost")=="idle"
+            x0=x0s[:nobatt]
+            @assert maximum((maximum(abs,v) for v in values(x0.P_B_kW));init=0.0)<1e-6
+            say("  cyclic retry starts from the independently admissible idle trajectory")
+        end
         feasible8500(x0) || (say("$case origin unresolved/negative local margin; no rays");continue)
         for i in ids
             u=dirs[i];dir=Dict(names[j] => (j==1 ? 0.0 : u[j-1]) for j in eachindex(names));at(r)=Dict(k=>r*v for (k,v) in dir)
             pred,lim=predicted_reach(sens,Dict(zip(names[2:end],u));day=case===:cyclic)
             x=solve_multiperiod(s.net,equal_angles(s.net);problem(s,case)...,objective=:ray,ray_dir=dir,ray_limit=RMAX8500,start=x0,max_iter=500)
+            if get(ENV,"MATCHED_SAVE_ATTEMPTS","0")=="1"
+                serialize(joinpath(ROOT8500,"$(case)_$(i)_direct.jls"),x)
+            end
             r=x.r;method="unresolved";upper=NaN;best=x0
             if x.status in RAY_OK && isfinite(r) && checkdirect(s,case,x,at(r),"ray_$i")
                 best=x
@@ -135,3 +144,4 @@ else
     end
 end
 say("COMPLETED $LABEL $PHASE")
+end # executable driver; shared model and direction definitions remain reusable
