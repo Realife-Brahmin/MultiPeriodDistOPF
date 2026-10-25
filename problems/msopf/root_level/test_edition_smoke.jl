@@ -17,7 +17,7 @@ const OKST = (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED)
 
 "The variant master's switching: (sources kept, extra commands)."
 function variant(deck, file)
-    cmds = [strip(l) for l in readlines(joinpath(REPO_ROOT, "test_networks", deck, file)) if occursin(r"(?i)^(Line|Vsource)\.\S+\.enabled=", strip(l))]
+    cmds = [String(strip(l)) for l in readlines(joinpath(REPO_ROOT, "test_networks", deck, file)) if occursin(r"(?i)^(Line|Vsource)\.\S+\.enabled=", strip(l))]
     off = [lowercase(match(r"(?i)^Vsource\.(\S+)\.enabled=false", c)[1]) for c in cmds if occursin(r"(?i)^Vsource\..*enabled=false", c)]
     master = read(joinpath(REPO_ROOT, "test_networks", deck, "Master.dss"), String)
     srcs = [lowercase(m[1]) for m in eachmatch(r"(?i)New\s+Vsource\.(\S+)", master)]
@@ -63,7 +63,7 @@ function run_case(c)
                      tag, x.status, string(x.iterations), x.time, vc..., vp..., minimp,
                      hasproperty(x, :violation) && isfinite(something(x.violation, NaN)) ? @sprintf(" | violation %.3e", x.violation) : "",
                      rp === nothing ? "" : @sprintf(" | OpenDSS replay: converged %s, dP %.1e kW, dV %.1e pu", rp.converged, rp.dP, rp.dV)))
-        push!(rows, [c.label, c.deck, tag, string(x.status), string(x.iterations), @sprintf("%.1f", x.time), @sprintf("%.4f", vc[1]), @sprintf("%.4f", vc[2]),
+        push!(rows, ["\"" * c.label * "\"", c.deck, tag, string(x.status), string(x.iterations), @sprintf("%.1f", x.time), @sprintf("%.4f", vc[1]), @sprintf("%.4f", vc[2]),
                      @sprintf("%.4f", vp[1]), @sprintf("%.4f", vp[2]), @sprintf("%.2f", minimp), rp === nothing ? "" : string(rp.converged),
                      rp === nothing ? "" : @sprintf("%.2e", rp.dP), rp === nothing ? "" : @sprintf("%.2e", rp.dV), length(net.buses), length(cust)])
         return okk
