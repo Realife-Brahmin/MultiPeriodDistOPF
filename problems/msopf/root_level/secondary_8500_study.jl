@@ -82,17 +82,17 @@ function checked8500(s, label, case, angles; start=nothing, objective=:margin, V
     good || error("OpenDSS replay failed for $label; stopping")
     return x
 end
-function sensitivity8500(s,label,names)
+function sensitivity8500(s,label,names;V_band=nothing,h=0.05)
     angles=Dict(k=>0.0 for k in names)
-    x0=checked8500(s,label,:nobatt,angles;objective=:cost,V_band=nothing)
+    x0=checked8500(s,label,:nobatt,angles;objective=:cost,V_band=V_band)
     x0.status in RAY_OK || return nothing
     K=Dict{Tuple{String,String},Vector{Float64}}()
     for m in names[2:end]
-        xp=checked8500(s,label,:nobatt,merge(angles,Dict(m=>0.05));objective=:cost,V_band=nothing,start=x0)
-        xm=checked8500(s,label,:nobatt,merge(angles,Dict(m=>-0.05));objective=:cost,V_band=nothing,start=x0)
+        xp=checked8500(s,label,:nobatt,merge(angles,Dict(m=>h));objective=:cost,V_band=V_band,start=x0)
+        xm=checked8500(s,label,:nobatt,merge(angles,Dict(m=>-h));objective=:cost,V_band=V_band,start=x0)
         (xp.status in RAY_OK && xm.status in RAY_OK) || return nothing
         for k in names
-            K[(k,m)]=(xp.P_subs_kW[k].-xm.P_subs_kW[k])./0.1
+            K[(k,m)]=(xp.P_subs_kW[k].-xm.P_subs_kW[k])./(2h)
         end
     end
     open(joinpath(ROOT8500,"sensitivity_$label.csv"),"w") do io
