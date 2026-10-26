@@ -30,6 +30,15 @@
 using LinearAlgebra, Printf
 import Clarabel
 
+# Banded buses: every bus but the source terminals, or only `kw.band_buses` when given (decks with service
+# transformers band their customer buses only, 2026-10-24). An unbanded bus has no voltage limit in the
+# model, but the relaxation needs a positive lower bound on |V| to bound injection currents: it gets
+# |V| >= V_FLOOR, added to the model being certified (and checked by validate_dispatch). V_FLOOR is far
+# below any voltage the feasible dispatches reach (primary buses sit near 0.95-1.05 pu).
+const V_FLOOR = 0.5
+const Z_IDEAL = 1e-6           # pu: a source impedance below this is treated as ideal in the relaxation
+banded_bus(kw, src_at, b) = !haskey(src_at, b) && (get(kw, :band_buses, nothing) === nothing || b in kw.band_buses)
+
 """
     validate_dispatch(net, delta_deg, kw, x; k)
 
@@ -93,7 +102,9 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             mis = out[b] + lam[t] * load[b] - pvf[t] * pvP[b] - inj[b]
             up!("balance", max(abs(real(mis)), abs(imag(mis))))
             haskey(src_at, b) && continue
-            vm = abs(V(b)); up!("band", max(0.0, lo - vm, vm - hi))
+            vm = abs(V(b))
+            banded_bus(kw, src_at, b) || (up!("band", max(0.0, V_FLOOR - vm)); continue)
+            up!("band", max(0.0, lo - vm, vm - hi))
             minroom = min(minroom, (abs2(V(b)) - lo^2) * k, (hi^2 - abs2(V(b))) * k)
         end
     end
@@ -144,8 +155,8 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
     c = S / k
     lo^2 + c * m_lo_kW / S > 0 || error("m_lo too low for a positive voltage bound")
     # band in the margin: |V|^2 in [lo^2 + c m, hi^2 - c m] with m >= m_lo; band hard (restoration): [lo^2, hi^2]
-    vmin = Dict(b => haskey(src_at, b) ? 0.0 : (band_in_margin ? sqrt(lo^2 + c * m_lo_kW / S) : lo) for b in net.buses)
-    vmax = Dict(b => haskey(src_at, b) ? sqrt(2) * vbox : (band_in_margin ? sqrt(hi^2 - c * m_lo_kW / S) : hi) for b in net.buses)
+    vmin = Dict(b => haskey(src_at, b) ? 0.0 : !banded_bus(kw, src_at, b) ? V_FLOOR : (band_in_margin ? sqrt(lo^2 + c * m_lo_kW / S) : lo) for b in net.buses)
+    vmax = Dict(b => (haskey(src_at, b) || !banded_bus(kw, src_at, b)) ? sqrt(2) * vbox : (band_in_margin ? sqrt(hi^2 - c * m_lo_kW / S) : hi) for b in net.buses)
     Ib = Dict(b => 0.0 for b in net.buses)
     for d in net.loads; Ib[d.bus] += maximum(lam) * abs(complex(d.kW, d.kvar)) / S / vmin[d.bus]; end
     for p in pvs; Ib[p.bus] += max(p.kW * maximum(pvf), p.kVA) / S / vmin[p.bus]; end
@@ -168,7 +179,8 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
             u = pop!(st)
             for (v, n) in adj[u]; (n == l.name || v in side) && continue; push!(side, v); push!(st, v); end
         end
-        sto = sum(Ib[b] for b in side); C[l.name] = min(sto, total - sto)
+        # a line on a loop (closed ties) does not split the network: only the total bound holds for it
+        sto = sum(Ib[b] for b in side); C[l.name] = l.from in side ? total : min(sto, total - sto)
         a = ampacity_of(kw, l.name); a === nothing || (C[l.name] = min(C[l.name], a))
     end
     return (; vmin, vmax, C)
@@ -286,10 +298,27 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
             Pin, Qin = zero(AffExpr), zero(AffExpr)
             for kk in battat[b]; add_to_expression!(Pin, P_B[kk, t]); end
             for kk in pvat[b]; add_to_expression!(Qin, Q_PV[kk, t]); end
-            if haskey(src_at, b)
+            if haskey(src_at, b) && (ideal || abs(src_at[b].z_series * Yb) < Z_IDEAL)
+                # A (near-)ideal source: |z_s| = 1.9e-10 pu on the decks with service transformers, whose
+                # 1/z_s = 5e9 coefficients stall the solver. Its terminal voltage is E (to within |z_s| |I_s|,
+                # below 1e-9 pu here), so V_s and its products are fixed, and its power is whatever the bus balance
+                # needs: free variables Ps, Qs with the no-backflow margin, and its current limit as the exact cone
+                # |S_s| <= |E| I_max (|V_s| = |E|). The box keeps them within that limit for dual_bound.
+                s = src_at[b]; E = s.pu * cis(deg2rad(angle_at(delta_deg, s.name, t)))
+                sa = src_amp(kw, s.name, t)
+                sa === nothing && error("near-ideal source $(s.name) needs a source current limit (source_ampacity_pu) to bound its power")
+                for (v, val) in ((e[b, t], real(E)), (f[b, t], imag(E)), (Wee[b, t], real(E)^2), (Wff[b, t], imag(E)^2), (Wef[b, t], real(E) * imag(E)))
+                    fix(v, val; force = true); box[v] = (val, val)
+                end
+                Smax = abs(E) * sa
+                Ps = @variable(model, base_name = "Ps_ideal[$(s.name),$(t)]"); Qs = @variable(model, base_name = "Qs_ideal[$(s.name),$(t)]")
+                box[Ps] = (-Smax, Smax); box[Qs] = (-Smax, Smax)
+                add_to_expression!(Pin, Ps); add_to_expression!(Qin, Qs)
+                @constraint(model, Ps >= m)                                         # no-backflow, with the margin
+                @constraint(model, [Smax, Ps, Qs] in SecondOrderCone())
+            elseif haskey(src_at, b)
                 s = src_at[b]; E = s.pu * cis(deg2rad(angle_at(delta_deg, s.name, t)))
                 z = ideal ? 0.0im : s.z_series * Yb
-                abs(z) < 1e-12 && error("ideal source $(s.name): fix its terminal voltage (not needed for the decks used here)")
                 Pc = e[b, t] * real(E) + f[b, t] * imag(E) - VV(b); Qc = f[b, t] * real(E) - e[b, t] * imag(E)   # V conj(E) - |V|^2
                 Ps, Qs = cmul(1 / conj(z), Pc, Qc)
                 add_to_expression!(Pin, Ps); add_to_expression!(Qin, Qs)
@@ -301,6 +330,8 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                     src_scale ? @constraint(model, abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b) <= sa^2 * abs2(z)) :
                                 @constraint(model, (abs2(E) - 2 * (real(E) * e[b, t] + imag(E) * f[b, t]) + VV(b)) / abs2(z) <= sa^2)
                 end
+            elseif !banded_bus(kw, src_at, b)
+                @constraint(model, VV(b) >= V_FLOOR^2)                              # unbanded: the floor only
             else
                 if band_in_margin                                                   # the clean margin problem
                     @constraint(model, VV(b) >= lo^2 + (S / k) * m); @constraint(model, VV(b) <= hi^2 - (S / k) * m)
