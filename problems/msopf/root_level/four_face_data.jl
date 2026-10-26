@@ -12,7 +12,10 @@ rows(f) = [split(l, ',') for l in readlines(f)[2:end]]
 # (stage, system, sources, output label)
 const CASES = [("four_ieee123a", "ieee123_5poi_1ph", "subs1:subs2:subs3:subs4", "ieee123"),
                ("four_ieee9500", "ieee9500_1ph", "subs1:subs2:subs3:subs4", "ieee2705"),
-               ("four_ieee2522", "ieee2522C_1ph", "source:subs2:subs3:subs4", "ieee2522")]
+               ("four_ieee2522", "ieee2522C_1ph", "source:subs2:subs3:subs4", "ieee2522"),
+               # decks with service transformers, band at customer buses only (2026-10-25 campaign, regions_oct25)
+               ("four_ieee9500xf", "ieee9500xf_1ph", "subs1:subs2:subs3:subs4", "ieee2705xf"),
+               ("four_smartds_p1u_typeiii", "smartds_p1u_xf_typeIII", "subs1:subs2:subs3:subs4", "sfp1u")]
 
 function sens(stage)
     f = first(p for (r, _, fs) in walkdir(joinpath(RES, "kamiak")) for x in fs for p in (joinpath(r, x),) if endswith(p, "multi_sens_$(stage)_T24.csv"))
