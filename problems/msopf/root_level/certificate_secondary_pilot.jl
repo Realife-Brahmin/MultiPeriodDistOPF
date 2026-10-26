@@ -155,6 +155,37 @@ amp =Dict(n => max(v, FLOOR) for (n, v) in env)
 kwL = merge(kw1, (; ampacity_pu = amp, source_ampacity_pu = senv))
 say(@sprintf("envelope: %d lines (%d at the %.3f pu floor), %d sources; base %.2f A per pu", length(amp), count(<(FLOOR), values(env)), FLOOR, length(senv), Ib))
 
+# ---- CERT_WINDOW=1: the certified edge along each direction in CERT_THETA ----------------------------------
+# The smallest r found at which the relaxation proves the point infeasible under the limits (U < -UTOL or a
+# validated Farkas bound > 0): a grid of GRID x r*_t until one certifies, then bisection between the last
+# unresolved and the first certified point. Beyond r_cert the model with these limits is proven infeasible;
+# [r*_t, r_cert) is the band the relaxation cannot classify. Writes certificate_secondary_window<TAG>.csv.
+if get(ENV, "CERT_WINDOW", "0") == "1"
+    GRID = [1.02, 1.05, 1.1, 1.25, 1.5, 2.0]
+    certified(r, th) = (c = certify(net, at(r, th), kwL; k = KV, cuts = CUTS, solver_attributes = SOLVER_ATTRS);
+                        (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
+    fw = PFX * "_window" * TAG * ".csv"
+    isfile(fw) || open(io -> println(io, "theta_deg,hour_boundary_deg,r_cert_deg,r_unresolved_deg,ratio_cert,U_at_cert_kW,relaxations,seconds"), fw, "w")
+    for th in PILOT
+        t0 = time(); rs = rstar[th]; lo = rs; hi = NaN; Uhi = NaN; n = 0
+        for g in GRID
+            ok, c = certified(g * rs, th); n += 1
+            say(@sprintf("  %5.1f deg: %.3f x r* = %.5f deg -> U %+9.3f kW (%s)%s", th, g, g * rs, c.U, c.status, ok ? "  certified" : ""))
+            ok ? (hi = g * rs; Uhi = c.U; break) : (lo = g * rs)
+        end
+        if isfinite(hi)
+            for _ in 1:5
+                mid = (lo + hi) / 2; ok, c = certified(mid, th); n += 1
+                ok ? (hi = mid; Uhi = c.U) : (lo = mid)
+            end
+        end
+        open(io -> @printf(io, "%.1f,%.6f,%.6f,%.6f,%.4f,%.4f,%d,%.0f\n", th, rs, hi, lo, hi / rs, Uhi, n, time() - t0), fw, "a")
+        say(@sprintf("  %5.1f deg: r* %.4f, certified from %.4f (x%.3f), unresolved up to %.4f; %d relaxations, %.0f s",
+                     th, rs, hi, hi / rs, lo, n, time() - t0))
+    end
+    exit(0)
+end
+
 # ---- 4. inside and outside points under the envelope ---------------------------------------------------
 open(PFX * "_cases" * TAG * ".csv", "w") do io
     println(io, "theta_deg,point,r_deg,L_kW,nlp_status,max_violation,U_kW,relax_status,farkas,box_term_kW,class,nlp_s,relax_build_s,relax_solve_s,opendss")
