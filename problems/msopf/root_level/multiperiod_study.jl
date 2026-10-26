@@ -1051,6 +1051,33 @@ function margin_solve(net, angles, kw; start = nothing)
 end
 
 """
+The largest current over the day (A, in the deck's base: S_base / kV_base) in each class of branch, with the
+element carrying it: `source` (substations, and the poi lines joining added ones), `tie` (the switches closed
+for the study, `s.tie_names`, and the converter's `tie_*` lines), `service` (service transformers, `svc_*`)
+and `primary` (every other line). No limit is imposed; this only keeps tabs, since the classes will need
+different ratings (2026-10-26).
+"""
+function current_tabs(s, x)
+    Ib = s.net.S_base_kVA / s.net.kV_base
+    ties = get(s, :tie_names, Set{String}())
+    cls(n) = startswith(n, "svc_") ? "service" : (n in ties || startswith(n, "tie_")) ? "tie" : startswith(n, "poi") ? "source" : "primary"
+    best = Dict(c => (0.0, "") for c in CURRENT_CLASSES)
+    for (n, r) in x.raw.lr
+        m = Ib * maximum(hypot.(r, x.raw.li[n]); init = 0.0)
+        c = cls(lowercase(n)); m > best[c][1] && (best[c] = (m, n))
+    end
+    for (n, r) in x.raw.ir
+        m = Ib * maximum(hypot.(r, x.raw.ii[n]); init = 0.0)
+        m > best["source"][1] && (best["source"] = (m, n))
+    end
+    return best
+end
+const CURRENT_CLASSES = ("source", "tie", "primary", "service")
+const CURRENT_COLUMNS = join(["max_A_$c,at_$c" for c in CURRENT_CLASSES], ",")
+current_cells(bind) = haskey(bind, :amps) ? join([@sprintf("%.2f,%s", bind.amps[c]...) for c in CURRENT_CLASSES], ",") :
+                      join(fill("NaN,", length(CURRENT_CLASSES)), ",")
+
+"""
 Reach along `dir` by a secant on the import margin (`objective = :margin`, the largest import every
 substation can be guaranteed): it is zero at an edge set by no-backflow and nearly linear in the angle
 (the imports are), so from the margin at equal angles `x0` and one solve at the predicted reach `guess`,
@@ -1075,7 +1102,7 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
     end
     bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
                   vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T),
-                  imports = Dict(k => minimum(v) for (k, v) in x.P_subs_kW))
+                  imports = Dict(k => minimum(v) for (k, v) in x.P_subs_kW), amps = current_tabs(s, x))
     fallback(why, st) = (say("      secant gave up (", why, "); bracketing"); b = reach_bracket(s, case, dir, guess);
                          (; b..., solves = n[], method = :bracket, x = nothing))
     x0.margin_kW >= -MTOL_KW || return (; feasible = false, r = NaN, capped = false, bind = bind_of(x0), solves = n[], method = :secant, x = nothing)
@@ -1122,7 +1149,7 @@ function reach_bracket(s, case, dir, guess; bisections = 7)
     bind() = last[] === nothing ? (; minP = NaN, vmin = NaN, vmax = NaN, imports = Dict{String,Float64}()) :
              (; minP = minimum(minimum(v) for v in values(last[].P_subs_kW)),
                 vmin = minimum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T), vmax = maximum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T),
-                imports = Dict(k => minimum(v) for (k, v) in last[].P_subs_kW))
+                imports = Dict(k => minimum(v) for (k, v) in last[].P_subs_kW), amps = current_tabs(s, last[]))
     test(0.0) || return (; feasible = false, r = NaN, capped = false, bind = bind())
     g = isfinite(guess) ? min(guess, LIMIT) : LIMIT
     if g >= LIMIT - 1e-9
@@ -1198,8 +1225,8 @@ function three_deck_stage(name, tc)
     method = Symbol(get(ENV, "THREE_METHOD", string(tc.method)))
     cases = haskey(ENV, "THREE_CASES") ? Symbol.(split(ENV["THREE_CASES"], ',')) : [:nobatt, DAY]
     net, pvs = load_sources(["subs1", "subs2", "subs3"]; system = tc.system, extra = ["Line.$t.enabled=true" for t in tc.ties])
-    s = setup(net, pvs; T, tc.feas)
-    sep = Dict((a.name, b.name) => abs(separation_sparse(merge(net, (; sources = [a, b])))) for a in net.sources, b in net.sources if a.name < b.name)
+    s = merge(setup(net, pvs; T, tc.feas), (; tie_names = Set(lowercase.(tc.ties))))
+    sep =Dict((a.name, b.name) => abs(separation_sparse(merge(net, (; sources = [a, b])))) for a in net.sources, b in net.sources if a.name < b.name)
     say("\n", "="^110, "\n", uppercase(name), "  $(tc.system), its own three substations, ties ", join(tc.ties, ","), " closed, T = $T; directions $(join(dirs_i, ',')), cases $(join(cases, ','))")
     say("    |Z| between substations: ", join([@sprintf("%s-%s %.3f ohm", k[1], k[2], z) for (k, z) in sort(collect(sep))], ", "))
     three_measure(name, tc.system, tc.at, s, T, dirs_i, method, cases, "subs1", "subs2", "subs3")
@@ -1247,6 +1274,8 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
                      w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr, Sys.maxrss() / 2^30))
         push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", label, at[1], at[2], T, case, rad2deg(th),
                              w.feasible, w.r, pred, lim, w.capped, w.bad, w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr))
+        merge_csv(joinpath(OUT_DIR, "three_large_currents.csv"), "system,bus_a,bus_b,T,case,ray_deg,measured_deg,at_limit,$CURRENT_COLUMNS", 6,
+                  [@sprintf("%s,%s,%s,%d,%s,%.2f,%.6f,%s,%s", label, at[1], at[2], T, case, rad2deg(th), w.r, w.capped, current_cells(w.bind))])
     end
     isempty(rows) || merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
     say("  wrote three_large_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
@@ -1336,7 +1365,9 @@ function multi_stage(name)
     net, pvs = load_sources(mc.sources; system = mc.system, extra)
     isempty(vtag) || say("    sources at ", join(sort(unique([@sprintf("%.3f", x.pu) for x in net.sources])), ", "), " pu (MULTI_VSRC)")
     s = setup(net, pvs; T, feas = mc.feas)
-    S0, movers = mc.sources[1], mc.sources[2:end]
+    # the switches closed for the study (ties, and a variant master's bus tie), for the current tabs
+    s = merge(s, (; tie_names = Set(lowercase(m[1]) for c in extra for m in (match(r"(?i)^Line\.(\S+)\.enabled=true$", c),) if m !== nothing)))
+    S0, movers =mc.sources[1], mc.sources[2:end]
     say("\n", "="^110, "\n", uppercase(name), "  $(mc.label), sources ", join(mc.sources, ","), mc.add === nothing ? "" : " (added at buses $(join(mc.add, ",")))",
         ", reference $S0, T = $T; directions $(join(di, ',')), cases $(join(cases, ','))")
     t0 = time()
@@ -1407,6 +1438,9 @@ function multi_stage(name)
                              b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr, bl,
                              join([@sprintf("%s=%.3f", k, v) for (k, v) in sort(collect(b.bind.imports))], ";")))
         merge_csv(joinpath(OUT_DIR, fname), MULTI_HEADER, 5, rows[end:end])     # each row as soon as it is measured
+        # largest currents at the edge solution, by branch class (kept apart so multi_windows keeps its columns)
+        merge_csv(joinpath(OUT_DIR, replace(fname, "multi_windows" => "multi_currents")), "system,sources,T,case,direction,measured_deg,at_limit,$CURRENT_COLUMNS", 5,
+                  [@sprintf("%s,%s,%d,%s,%d,%.6f,%s,%s", mc.label, join(mc.sources, ":"), T, case, i, b.r, b.capped, current_cells(b.bind))])
     end
     # (rows were written one by one above)
     say("  wrote $fname; ", name, " done in ", round(Int, time() - t0), " s")
