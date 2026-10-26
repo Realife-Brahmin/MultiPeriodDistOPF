@@ -1,0 +1,125 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/error.jl:20 overwritten in module Solution at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/error.jl:20 overwritten in module Solution at /home/aryan.jha/.julia/packages/OpenDSSDirect/vXmoP/src/solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   3972.2 ms  ? OpenDSSDirect
+ERROR: LoadError: HSL.Ma57Exception("Ma57: Error during numerical factorization", -5)
+Stacktrace:
+  [1] ma57_factorize!(ma57::HSL.Ma57{Float64})
+    @ HSL ~/.julia/packages/HSL/tG8xv/src/hsl_ma57.jl:363
+  [2] refactor!(ldlsolver::HSLExt.HSLMA57DirectLDLSolver{Float64}, K::SparseArrays.SparseMatrixCSC{Float64, Int64})
+    @ HSLExt ~/.julia/packages/Clarabel/ChSpM/ext/directldl_hsl.jl:90
+  [3] _kktsolver_regularize_and_refactor!(kktsolver::Clarabel.DirectLDLKKTSolver{Float64}, ldlsolver::HSLExt.HSLMA57DirectLDLSolver{Float64})
+    @ Clarabel ~/.julia/packages/Clarabel/ChSpM/src/kktsolvers/kktsolver_directldl.jl:281
+  [4] _kktsolver_update_inner!(kktsolver::Clarabel.DirectLDLKKTSolver{Float64}, ldlsolver::HSLExt.HSLMA57DirectLDLSolver{Float64}, cones::Clarabel.CompositeCone{Float64})
+    @ Clarabel ~/.julia/packages/Clarabel/ChSpM/src/kktsolvers/kktsolver_directldl.jl:243
+  [5] kktsolver_update!(kktsolver::Clarabel.DirectLDLKKTSolver{Float64}, cones::Clarabel.CompositeCone{Float64})
+    @ Clarabel ~/.julia/packages/Clarabel/ChSpM/src/kktsolvers/kktsolver_directldl.jl:207
+  [6] kkt_update!(kktsystem::Clarabel.DefaultKKTSystem{Float64}, data::Clarabel.DefaultProblemData{Float64}, cones::Clarabel.CompositeCone{Float64})
+    @ Clarabel ~/.julia/packages/Clarabel/ChSpM/src/kktsystem.jl:69
+  [7] solve!(s::Clarabel.Solver{Float64})
+    @ Clarabel ~/.julia/packages/Clarabel/ChSpM/src/solver.jl:279
+  [8] optimize!(optimizer::Clarabel.MOIwrapper.Optimizer{Float64})
+    @ Clarabel.MOIwrapper ~/.julia/packages/Clarabel/ChSpM/src/MOI_wrapper/MOI_wrapper.jl:150
+  [9] optimize!
+    @ ~/.julia/packages/MathOptInterface/2THZO/src/MathOptInterface.jl:122 [inlined]
+ [10] optimize!(m::MathOptInterface.Utilities.CachingOptimizer{Clarabel.MOIwrapper.Optimizer{Float64}, MathOptInterface.Utilities.UniversalFallback{MathOptInterface.Utilities.Model{Float64}}})
+    @ MathOptInterface.Utilities ~/.julia/packages/MathOptInterface/2THZO/src/Utilities/cachingoptimizer.jl:370
+ [11] optimize!
+    @ ~/.julia/packages/MathOptInterface/2THZO/src/Bridges/bridge_optimizer.jl:367 [inlined]
+ [12] optimize!
+    @ ~/.julia/packages/MathOptInterface/2THZO/src/MathOptInterface.jl:122 [inlined]
+ [13] optimize!(m::MathOptInterface.Utilities.CachingOptimizer{MathOptInterface.Bridges.LazyBridgeOptimizer{MathOptInterface.Utilities.CachingOptimizer{Clarabel.MOIwrapper.Optimizer{Float64}, MathOptInterface.Utilities.UniversalFallback{MathOptInterface.Utilities.Model{Float64}}}}, MathOptInterface.Utilities.UniversalFallback{MathOptInterface.Utilities.Model{Float64}}})
+    @ MathOptInterface.Utilities ~/.julia/packages/MathOptInterface/2THZO/src/Utilities/cachingoptimizer.jl:370
+ [14] optimize!(model::Model; ignore_optimize_hook::Bool, _differentiation_backend::MathOptInterface.Nonlinear.SparseReverseMode, kwargs::@Kwargs{})
+    @ JuMP ~/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:610
+ [15] optimize!
+    @ ~/.julia/packages/JuMP/0tD10/src/optimizer_interface.jl:560 [inlined]
+ [16] certify(net::@NamedTuple{buses::Vector{String}, lines::Vector{Any}, sources::Vector{Any}, loads::Vector{Any}, batteries::Vector{Any}, kV_base::Float64, S_base_kVA::Float64, Y_base::Float64}, delta_deg::Dict{String, Float64}, kw::@NamedTuple{pvs::Vector{Any}, pv_q::Symbol, C_B::Float64, ideal_sources::Bool, battery::Symbol, band_buses::Set{String}, tol::Float64, constr_viol_tol::Float64, T::Int64, load_factor::Vector{Float64}, price::Vector{Float64}, pv_factor::Vector{Float64}, gamma::Float64, terminal::Symbol, dt_h::Float64, ampacity_pu::Dict{String, Float64}, source_ampacity_pu::Dict{String, Float64}}; k::Float64, cuts::Vector{Symbol}, solver_attributes::Vector{Tuple{String, Any}}, m_lo_kW::Float64, m_hi_kW::Float64, band_in_margin::Bool, tighten::Bool, detail::Int64, src_scale::Bool)
+    @ Main ~/msopf/repo/problems/msopf/feasibility_certificate.jl:670
+ [17] top-level scope
+    @ ~/msopf/repo/problems/msopf/root_level/certificate_secondary_pilot.jl:168
+ [18] include(mod::Module, _path::String)
+    @ Base ./Base.jl:306
+ [19] exec_options(opts::Base.JLOptions)
+    @ Base ./client.jl:317
+ [20] _start()
+    @ Base ./client.jl:550
+in expression starting at /home/aryan.jha/msopf/repo/problems/msopf/root_level/certificate_secondary_pilot.jl:162

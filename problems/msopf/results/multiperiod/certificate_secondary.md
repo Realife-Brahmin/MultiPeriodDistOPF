@@ -50,7 +50,30 @@ dispatched, the limiting hour alone. Driver `root_level/certificate_secondary_pi
   Coefficients now span 1e-6 to 12 (`certificate_scaling_check.log`). The certified model has ideal sources;
   the difference is below |z_s| |I_s|, about 1e-9 pu.
 
+## QDLDL versus MA57 on Kamiak (2026-10-26)
+
+Same runs (floor 1e-4, nodal cuts), jobs 31427971 and 31427972; outputs in `../kamiak/cert_oct26/`.
+
+* **Setup.** Clarabel's HSL extension reaches MA57 through HSL.jl. On Kamiak, `~/opt/hsl-private/julia_libhsl`
+  holds a `libhsl` wrapper around the private MA57 and MA97 builds with METIS; the environment is
+  `~/msopf/envs/sdp_hsl`.
+
+| Point | QDLDL: U, status, solve time | MA57: U, status, solve time |
+|---|---|---|
+| 135 deg inside | +23.97 kW, ALMOST_OPTIMAL, 60 s | +23.95 kW, ALMOST_OPTIMAL, 221 s |
+| 135 deg outside | -16.61 kW, NUMERICAL_ERROR, 56 s | -16.76 kW, ALMOST_OPTIMAL, 239 s |
+| 315 deg inside | +26.58 kW, NUMERICAL_ERROR, 59 s | stopped: MA57 factorization error -5 |
+| 315 deg outside | -13.33 kW, NUMERICAL_ERROR, 63 s | not reached |
+
+* **Clarabel's MA57 settings.** Its MA57 setup switches off numerical pivoting (ICNTL(7) = 3). That makes it
+  about 4x slower than QDLDL here, and it fails outright on a zero pivot.
+* **Bounds.** Where both finished, the bounds agree within 0.2 kW, and both classify the same.
+* **Decision for now.** Keep QDLDL. MA57 would be worth trying again only with pivoting enabled, which needs a
+  fork of Clarabel's HSL extension.
+
 ## Next
 
-* MA57 or MA97 as Clarabel's linear solver (its HSL extension), to clear the numerical-error statuses.
+* Eliminate the pass-through buses inside the relaxation (chains of lines through zero-injection buses
+  become one equivalent line), before the full day or San Francisco: 1,258 of 3,980 buses here, about
+  3,400 of 6,937 on San Francisco.
 * More directions, then the San Francisco deck, then the cyclic-battery day.
