@@ -1,0 +1,3 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,cyclic,47,-0.8868,-0.4203,-0.1923,20.000000,16.708713,subs2,true,3.1977,0.950084,1.033648,3,bracket,1843,open,subs1=12086.122;subs2=3.198;subs3=8258.473;subs4=6908.633
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,cyclic,48,0.9326,-0.2875,-0.2179,10.308582,8.589066,subs3,false,-0.0072,0.950000,1.036844,8,secant,2383,subs3,subs1=2172.322;subs2=18024.996;subs3=-0.007;subs4=1381.211

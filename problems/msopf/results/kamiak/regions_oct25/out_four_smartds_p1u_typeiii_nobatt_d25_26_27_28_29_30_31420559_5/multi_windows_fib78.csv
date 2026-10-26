@@ -1,0 +1,7 @@
+system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,25,0.4615,0.8054,0.3718,10.398250,9.102939,subs1,false,0.0035,0.950000,1.036316,6,secant,876,subs1,subs1=0.004;subs2=7209.408;subs3=8809.388;subs4=8865.235
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,26,-0.8938,-0.2851,0.3462,12.416552,10.187724,subs2,false,0.0081,0.950000,1.036206,8,secant,992,subs2,subs1=6117.133;subs2=0.008;subs3=7371.657;subs4=12063.403
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,27,0.8599,-0.3973,0.3205,7.280680,5.973987,subs3,false,3.1891,0.950084,1.034446,1,bracket,1263,voltage,subs1=1954.841;subs2=14270.348;subs3=3.189;subs4=8880.726
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,28,-0.3689,0.8815,0.2949,10.760889,8.998751,subs2,false,1.5987,0.950042,1.046988,8,bracket,2142,voltage,subs1=2031.578;subs2=1.599;subs3=14212.810;subs4=9444.576
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,29,-0.3260,-0.9062,0.2692,9.780739,7.972455,subs3,false,1.8604,0.950049,1.028401,1,bracket,1168,voltage,subs1=5524.888;subs2=8844.080;subs3=1.860;subs4=10633.945
+smartds_p1u_xf_typeIII,subs1:subs2:subs3:subs4,24,nobatt,30,0.8585,0.4512,0.2436,10.598343,9.193255,subs1,false,0.0005,0.950000,1.033893,6,secant,714,subs1,subs1=0.001;subs2=12959.017;subs3=4043.654;subs4=8034.395
