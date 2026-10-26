@@ -62,6 +62,11 @@ margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective 
 const REUSE = get(ENV, "CERT_REUSE", "0") == "1"
 const CUTS = Symbol.(split(get(ENV, "CERT_CUTS", ""), ','; keepempty = false))
 const TAG = get(ENV, "CERT_TAG", "")
+# CERT_LINSOLVE=ma57: Clarabel's HSL backend (needs HSL.jl in the environment and JULIA_HSL_LIBRARY_PATH pointing
+# at a libhsl, as set up on Kamiak in ~/opt/hsl-private/julia_libhsl); default: Clarabel's own QDLDL.
+const LINSOLVE = Symbol(get(ENV, "CERT_LINSOLVE", "qdldl"))
+LINSOLVE === :qdldl || @eval import HSL
+const SOLVER_ATTRS = [CLARABEL_DEFAULTS; ("direct_solve_method", LINSOLVE)]
 if !REUSE
 th0 = PILOT[1]
 x24 = margin(at(0.98reach[th0], th0), kw24)
@@ -160,7 +165,7 @@ for th in PILOT, (name, f) in (("inside 98%", 0.98), ("outside 102%", 1.02))
     ok = x.status in RAY_OK
     v = ok ? validate_dispatch(net, ang, kwL, x; k = KV) : nothing
     L = ok && v.equations <= 1e-6 ? v.margin_kW : NaN
-    c = certify(net, ang, kwL; k = KV, cuts = CUTS)
+    c = certify(net, ang, kwL; k = KV, cuts = CUTS, solver_attributes = SOLVER_ATTRS)
     cls = classify(L, c.U, c.farkas.bound)
     rp = ""
     if ok && isfinite(L) && L >= 0
