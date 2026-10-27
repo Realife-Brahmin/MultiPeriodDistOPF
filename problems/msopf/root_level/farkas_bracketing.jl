@@ -91,14 +91,15 @@ angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumera
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
 "Validated margin of an exact solve (retried cold and from `alt`; NaN if no start validates), and the solution."
 function vmargin(ang, kw; start = nothing, alt = nothing)
-    x = nothing
+    x = nothing; v = nothing
     for st in unique([start, nothing, alt])
         x = margin(ang, kw; start = st)
         x.status in RAY_OK || continue
         v = validate_dispatch(net, ang, kw, x; k = KV)
         v.equations <= 1e-6 && return v.margin_kW, x
     end
-    say("      solve failed from every start (", x.status, ")")
+    say("      solve failed from every start (", x.status, ")", v === nothing ? "" :
+        "; residuals " * join((@sprintf("%s %.1e", c, r) for (c, r) in sort(collect(v.viol))), ", "))
     return NaN, x
 end
 say("== Farkas bracketing ", SYS, " phase ", PHASE, ": ", length(net.buses), " buses, sources ", join(cfg.sources, ","),
