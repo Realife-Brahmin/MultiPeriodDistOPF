@@ -92,7 +92,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 const DATA = __DATA__;
 const LIMIT = __LIMIT__;
 const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
-const fmt = (x, d = 3) => x == null || !isFinite(x) ? "–" : x.toFixed(d);
+const fmt = (x, d) => x == null || !isFinite(x) ? "–" : x.toFixed(d ?? (Math.abs(x) < 1 ? 4 : 3));
 let cur = 0, camera = null;
 
 function tabs() {

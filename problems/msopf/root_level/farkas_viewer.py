@@ -16,6 +16,8 @@ FB = ROOT / "kamiak" / "farkas_oct26"
 OUT = ROOT / "multiperiod" / "viewer" / "farkas_maps.html"
 LIMIT = 20.0                                         # deg, the search limit of the region campaign
 SYSTEMS = [  # (tab id, title, bracketing folder, multi_windows system, sensitivity stage, note)
+    ("ieee123x4", "ieee123, four substations", "ieee123_four", "ieee123_5poi_1ph", "four_ieee123a",
+     "IEEE 123-node feeder, substations 1-4 (the paper's four-source case); band at every non-source bus."),
     ("sf6937", "sf6937, four substations", "sfp1u_four", "smartds_p1u_xf_typeIII", "four_smartds_p1u_typeiii",
      "Synthetic San Francisco feeder (NREL SMART-DS, urban sub-region P1U), service transformers, band at customer buses."),
     ("med3980", "med3980, four substations", "med3980_four", "ieee9500xf_1ph", "four_ieee9500xf",
@@ -41,7 +43,7 @@ def polytope(hs):
     M = A[tri]; det = np.linalg.det(M); ok = np.abs(det) > 1e-9 * np.abs(A).max() ** 3
     V = np.linalg.solve(M[ok], b[tri[ok]][..., None])[..., 0]
     V = V[(V @ A.T <= b + 1e-6 * np.abs(b).max()).all(axis=1)]
-    V = np.unique(np.round(V, 7), axis=0)
+    V = V[np.unique(np.round(V, 7), axis=0, return_index=True)[1]]   # dedupe, but keep the unrounded vertices for the on-face test
     faces = {}
     for i, h in enumerate(hs):
         on = V[np.abs(V @ A[i] - b[i]) <= 1e-6 * max(1.0, abs(b[i]))]
@@ -81,7 +83,7 @@ def three_source():
                 axes=["δ₃ − δ₁ (°)", "δ₄ − δ₁ (°)"], sources=["subs1", "subs3", "subs4"],
                 note="IEEE 123-node feeder, substations 1, 3 and 4; band at every non-source bus. Hour 12 limits every direction.")
 
-SHOW = os.environ.get("FV_SYSTEMS", "ieee123,sf6937").split(",")   # med3980 joins once its rerun is in
+SHOW = os.environ.get("FV_SYSTEMS", "ieee123,ieee123x4,sf6937,med3980").split(",")
 data = [three_source()] if "ieee123" in SHOW else []
 print(f"ieee123: {len(data[0]['dirs']) if data else 0} certified")
 for tab, title, folder, system, stage, note in SYSTEMS:
@@ -90,7 +92,7 @@ for tab, title, folder, system, stage, note in SYSTEMS:
         continue
     A = {int(r["id"]): r for f in d.glob("fb_A_*.csv") for r in rows(f)}
     C = {int(r["id"]): r for f in d.glob("fb_C_*.csv") for r in rows(f)}
-    W = {int(r["direction"]): r for r in rows(ROOT / "multiperiod" / "multi_windows_fib78.csv") if r["system"] == system and r["case"] == "nobatt"}
+    W = {int(r["direction"]): r for r in rows(ROOT / "multiperiod" / "multi_windows_fib78.csv") if r["system"] == system and r["sources"] == "subs1:subs2:subs3:subs4" and r["case"] == "nobatt"}
     dirs = []
     for i in sorted(W):
         w = W[i]; u = [float(w["u1"]), float(w["u2"]), float(w["u3"])]
