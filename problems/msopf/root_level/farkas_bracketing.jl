@@ -1,5 +1,5 @@
 # Farkas bracketing (2026-10-26): the certified feasibility map of a system, batteries idle, T = 24 day.
-#   FB_SYSTEM=<ieee123_three|med3980_four|sfp1u_four> FB_PHASE=<A|B|C> FB_DIR=<i> \
+#   FB_SYSTEM=<ieee123_three|ieee123_four|med3980_four|sfp1u_four> FB_PHASE=<A|B|C> FB_DIR=<i> \
 #     julia --project=problems/msopf/environments/sdp problems/msopf/root_level/farkas_bracketing.jl
 # Along each measured direction of the region campaigns (16 for three sources, the fib78 set for four), the
 # boundary is bracketed from both sides: inside by a validated AC dispatch, outside by the relaxation proving the
@@ -46,6 +46,8 @@ const TIES_9500 = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_483
 function config(name)
     if name == "ieee123_three"          # the paper's three-source 123-node case, substations 1, 3, 4
         return (; deck = "ieee123_5poi_1ph", sources = ["subs1", "subs3", "subs4"], extra = String[], customers = false)
+    elseif name == "ieee123_four"       # the paper's four-source 123-node case (stage four_ieee123a), substations 1-4
+        return (; deck = "ieee123_5poi_1ph", sources = ["subs1", "subs2", "subs3", "subs4"], extra = String[], customers = false)
     elseif name == "med3980_four"       # stage four_ieee9500xf: three substations, a fourth at l2804256, five ties closed
         zs = complex(0.104186, 0.617339)
         imp = @sprintf("R1=%.8g X1=%.8g R0=%.8g X0=%.8g", real(zs), imag(zs), real(zs), imag(zs))
@@ -68,10 +70,10 @@ function directions(name, movers)
         return [(; id = i, u = [cosd(th), sind(th)], reach = seen[th], at_limit = false, label = @sprintf("%.1f deg", th))
                 for (i, th) in enumerate(sort(collect(keys(seen))))]
     end
-    label = name == "med3980_four" ? "ieee9500xf_1ph" : "smartds_p1u_xf_typeIII"
+    label = Dict("ieee123_four" => "ieee123_5poi_1ph", "med3980_four" => "ieee9500xf_1ph", "sfp1u_four" => "smartds_p1u_xf_typeIII")[name]
     ds = NamedTuple[]
     for l in readlines(joinpath(RES, "multi_windows_fib78.csv"))[2:end]
-        r = split(l, ','); (r[1] == label && r[4] == "nobatt") || continue
+        r = split(l, ','); (r[1] == label && r[2] == "subs1:subs2:subs3:subs4" && r[4] == "nobatt") || continue
         push!(ds, (; id = parse(Int, r[5]), u = parse.(Float64, r[6:8]), reach = parse(Float64, r[9]), at_limit = r[12] == "true",
                     label = "direction " * r[5]))
     end
