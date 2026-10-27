@@ -65,8 +65,25 @@ def sphere_triangles(U):
             out.append(list(t))
     return out
 
-SHOW = os.environ.get("FV_SYSTEMS", "sf6937").split(",")        # med3980 joins once its rerun is in
-data = []
+def three_source():
+    "ieee123 with substations 1, 3, 4 (2-D): the 16 bracketed directions and the predicted simplex."
+    C = sorted((r for f in (FB / "ieee123_three").glob("fb_C_*.csv") for r in rows(f)), key=lambda r: int(r["id"]))
+    P = [r for r in rows(ROOT / "multiperiod" / "simplex_check.csv") if (r["study"], r["pv"], r["case"]) == ("three", "qfree", "nobatt")]
+    dirs = []
+    for c, p in zip(C, P):
+        th = math.radians(float(p["direction"])); r = float(c["hour_boundary_deg"]); rc = float(c["r_cert_deg"])
+        dirs.append(dict(id=int(c["id"]), u=[math.cos(th), math.sin(th)], theta=float(p["direction"]), status="certified",
+                         inner=0.98 * r, edge=r, cert=rc, pred=float(p["predicted_deg"]), hour=int(c["tstar"]), day=float(p["measured_deg"]),
+                         band=100 * (rc / r - 1), farkas=c["farkas_at_cert"] not in ("", "NaN"), relax=int(c["relaxations"]), secs=float(c["seconds"])))
+    S = [r for r in rows(ROOT / "multiperiod" / "simplex_figure_data.csv") if (r["pv"], r["case"], r["kind"]) == ("qfree", "nobatt", "predicted")]
+    simplex = {"x": [float(r["d3_minus_d1_deg"]) for r in S], "y": [float(r["d4_minus_d1_deg"]) for r in S]}
+    return dict(id="ieee123", title="ieee123, three substations", dim=2, dirs=dirs, simplex=simplex,
+                axes=["δ₃ − δ₁ (°)", "δ₄ − δ₁ (°)"], sources=["subs1", "subs3", "subs4"],
+                note="IEEE 123-node feeder, substations 1, 3 and 4; band at every non-source bus. Hour 12 limits every direction.")
+
+SHOW = os.environ.get("FV_SYSTEMS", "ieee123,sf6937").split(",")   # med3980 joins once its rerun is in
+data = [three_source()] if "ieee123" in SHOW else []
+print(f"ieee123: {len(data[0]['dirs']) if data else 0} certified")
 for tab, title, folder, system, stage, note in SYSTEMS:
     d = FB / folder
     if tab not in SHOW or not d.exists():
@@ -88,7 +105,7 @@ for tab, title, folder, system, stage, note in SYSTEMS:
         else:
             dirs.append(dict(id=i, u=u, status="pending", inner=0.98 * day, edge=day, cert=day, pred=pred, hour=None, day=day))
     U = np.array([x["u"] for x in dirs])
-    data.append(dict(id=tab, title=title, note=note, dirs=dirs, tri=sphere_triangles(U),
+    data.append(dict(id=tab, title=title, note=note, dim=3, dirs=dirs, tri=sphere_triangles(U),
                      faces=polytope(sens(stage)), sources=["subs1", "subs2", "subs3", "subs4"]))
     print(f"{tab}: {sum(x['status'] == 'certified' for x in dirs)} certified, {sum(x['status'] == 'limit' for x in dirs)} at the limit, "
           f"{sum(x['status'] == 'pending' for x in dirs)} pending; predicted faces {sorted(data[-1]['faces'])}")
