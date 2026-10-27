@@ -31,6 +31,9 @@ const KV = 20000.0                                   # kW of margin per pu of |V
 const UTOL = 0.01                                    # kW: U must be below -UTOL to call a point infeasible
 const FLOOR = parse(Float64, get(ENV, "FB_FLOOR", "1e-4"))
 const CUTS = Symbol.(split(get(ENV, "FB_CUTS", "kcl0,jbound"), ','; keepempty = false))
+# Largest accepted equation residual (pu). 1e-6 rejected med3980 hour-13 solves at a balance residual of 1.1e-6
+# (all other residuals zero); 1e-5 is the repository's feasibility rule for the medium and large systems.
+const EQTOL = parse(Float64, get(ENV, "FB_EQTOL", "1e-5"))
 const GRID = [1.02, 1.05, 1.1, 1.25, 1.5, 2.0]
 classify(L, U, fk) = isfinite(L) && L >= 0 ? "feasible" : ((isfinite(U) && U < -UTOL) || (isfinite(fk) && fk > 0) ? "infeasible" : "unresolved")
 
@@ -96,7 +99,7 @@ function vmargin(ang, kw; start = nothing, alt = nothing)
         x = margin(ang, kw; start = st)
         x.status in RAY_OK || continue
         v = validate_dispatch(net, ang, kw, x; k = KV)
-        v.equations <= 1e-6 && return v.margin_kW, x
+        v.equations <= EQTOL && return v.margin_kW, x
     end
     say("      solve failed from every start (", x.status, ")", v === nothing ? "" :
         "; residuals " * join((@sprintf("%s %.1e", c, r) for (c, r) in sort(collect(v.viol))), ", "))
