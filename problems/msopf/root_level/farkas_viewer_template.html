@@ -1,0 +1,224 @@
+<meta charset="utf-8">
+<title>Certified Four-Source Regions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the four_regions.html instrument panel; the 3-D view takes the stage, the bracket readout sits beside it,
+   the per-direction band runs underneath (everything stacks on phones). */
+:root {
+  --bg: #f4f6f3; --panel: #ffffff; --fg: #18211d; --muted: #5a6761; --line: #d6dcd7; --accent: #2c6b5f;
+  --f0: #2C6FBB; --f1: #C05621; --f2: #00796B; --f3: #800080;
+  --ok: #1F8A3C; --cert: #B02418; --band: #E9B949; --grid: #e3e8e4;
+  --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
+  --f0: #5B93D6; --f1: #DE7A45; --f2: #2FA898; --f3: #B04DB0;
+  --ok: #4CB868; --cert: #E05A4A; --band: #D9A93A; --grid: #26302c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
+  --f0: #5B93D6; --f1: #DE7A45; --f2: #2FA898; --f3: #B04DB0;
+  --ok: #4CB868; --cert: #E05A4A; --band: #D9A93A; --grid: #26302c; color-scheme: dark }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 14px; }
+header { display: grid; gap: 4px; }
+h1 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; max-width: 78ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; cursor: pointer; }
+.tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.tab:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; color: var(--muted); }
+.toggles label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.btn { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px; cursor: pointer; }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+#plot { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; height: min(74vh, 680px); min-height: 380px; min-width: 0; }
+aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 14px; min-width: 0; }
+h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; font-weight: 600; }
+.counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.count { display: grid; gap: 2px; }
+.count b { font-family: var(--mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.count span { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+.kv { font-family: var(--mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 12px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; }
+.legend { display: grid; gap: 6px; font-size: 0.86rem; }
+.legend div { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 8px; align-items: center; }
+.sw { width: 14px; height: 10px; border-radius: 2px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; justify-self: center; }
+.note { font-size: 0.84rem; color: var(--muted); margin: 0; }
+.strip { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; min-width: 0; }
+#strip { height: 250px; min-width: 0; }
+.pill { display: inline-block; font-size: 0.74rem; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Certified Four-Source Regions</h1>
+    <p class="sub">Farkas bracketing in the three angle differences to substation 1, batteries idle, at each direction's limiting hour. Along every one of 78 directions a validated AC dispatch sits at 98% of the measured edge, and a sparse semidefinite relaxation proves every angle beyond the certified edge infeasible. The thin gap between the green and red shells is all that remains unresolved. Certificates hold for the model with empirical current limits (the largest currents of the validated dispatches). Drag to rotate, scroll to zoom, click a point for its numbers.</p>
+  </header>
+  <div class="bar">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="toggles">
+      <label><input type="checkbox" id="t-pred" checked> Predicted polytope</label>
+      <label><input type="checkbox" id="t-in" checked> Feasible shell</label>
+      <label><input type="checkbox" id="t-out" checked> Certified shell</label>
+      <label><input type="checkbox" id="t-pts" checked> Points</label>
+    </div>
+    <button class="btn" id="reset">Reset view</button>
+  </div>
+  <div class="stage">
+    <div id="plot" role="img" aria-label="Three-dimensional view of the certified region"></div>
+    <aside>
+      <div><h2 id="sys-title"></h2><p class="note" id="sys-note"></p></div>
+      <div class="counts" id="counts"></div>
+      <div class="legend" id="legend"></div>
+      <div><h2>Selected direction</h2><dl class="kv" id="sel"></dl><p class="note" id="sel-hint">Click a point in the view or a bar below.</p></div>
+    </aside>
+  </div>
+  <div class="strip">
+    <h2>Unresolved band, per direction (% of the measured edge)</h2>
+    <div id="strip"></div>
+    <p class="note">Green at −2%: the validated dispatch. Red: the certified edge. The yellow bar between them is unresolved. Grey triangles: still feasible at the __LIMIT__° search limit, nothing to bracket.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const DATA = __DATA__;
+const LIMIT = __LIMIT__;
+const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const fmt = (x, d = 3) => x == null || !isFinite(x) ? "–" : x.toFixed(d);
+let cur = 0, camera = null;
+
+function tabs() {
+  const el = document.getElementById("tabs"); el.innerHTML = "";
+  DATA.forEach((s, i) => {
+    const b = document.createElement("button"); b.className = "tab"; b.role = "tab"; b.textContent = s.title;
+    b.setAttribute("aria-selected", i === cur); b.onclick = () => { cur = i; camera = null; tabs(); draw(); };
+    el.appendChild(b);
+  });
+}
+
+function shell(s, key, color, opacity, name) {
+  const x = [], y = [], z = [];
+  for (const d of s.dirs) { x.push(d.u[0] * d[key]); y.push(d.u[1] * d[key]); z.push(d.u[2] * d[key]); }
+  return { type: "mesh3d", x, y, z, i: s.tri.map(t => t[0]), j: s.tri.map(t => t[1]), k: s.tri.map(t => t[2]),
+           color, opacity, name, hoverinfo: "skip", flatshading: true, lighting: { ambient: 0.85, diffuse: 0.3 } };
+}
+
+function hover(d) {
+  if (d.status === "limit") return `direction ${d.id}<br>feasible at the ${LIMIT}° limit`;
+  if (d.status === "pending") return `direction ${d.id}<br>rerun pending<br>day edge ${fmt(d.day)}°`;
+  return `direction ${d.id}, hour ${d.hour}<br>feasible ${fmt(d.inner)}° · edge ${fmt(d.edge)}°<br>certified beyond ${fmt(d.cert)}° (+${fmt(d.band, 2)}%)<br>predicted ${fmt(d.pred)}°`;
+}
+
+function points(s, key, filter, sym, color, name, size = 4, open = false) {
+  const ds = s.dirs.filter(filter);
+  return { type: "scatter3d", mode: "markers", name, customdata: ds.map(d => d.id),
+           x: ds.map(d => d.u[0] * d[key]), y: ds.map(d => d.u[1] * d[key]), z: ds.map(d => d.u[2] * d[key]),
+           text: ds.map(hover), hovertemplate: "%{text}<extra></extra>",
+           marker: { size, symbol: sym, color: open ? "rgba(0,0,0,0)" : color, line: { color, width: open ? 1.5 : 0 } } };
+}
+
+function draw() {
+  const s = DATA[cur], fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
+  document.getElementById("sys-title").textContent = s.title;
+  document.getElementById("sys-note").textContent = s.note;
+  const cert = s.dirs.filter(d => d.status === "certified"), bands = cert.map(d => d.band).sort((a, b) => a - b);
+  const med = bands.length ? bands[Math.floor(bands.length / 2)] : NaN;
+  const n = st => s.dirs.filter(d => d.status === st).length;
+  document.getElementById("counts").innerHTML =
+    `<div class="count"><b>${n("certified")}</b><span>certified</span></div>` +
+    `<div class="count"><b>${n("limit")}</b><span>feasible at ${LIMIT}°</span></div>` +
+    `<div class="count"><b>${n("pending")}</b><span>rerun pending</span></div>` +
+    (bands.length ? `<div class="count" style="grid-column: span 3"><span>certified ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "");
+  const fcol = s.sources.map((_, i) => css(`--f${i}`));
+  document.getElementById("legend").innerHTML =
+    `<div><span class="sw" style="background:${css("--ok")};opacity:.6"></span>proven feasible (validated dispatch, 98%)</div>` +
+    `<div><span class="sw" style="background:${css("--cert")};opacity:.35"></span>certified infeasible beyond</div>` +
+    s.sources.map((src, i) => `<div><span class="sw" style="background:${fcol[i]};opacity:.4"></span>predicted face, ${src} at zero import</div>`).join("");
+  const T = [];
+  const show = id => document.getElementById(id).checked;
+  if (show("t-pred")) s.sources.forEach((src, si) => {
+    const tris = s.faces[src] || []; if (!tris.length) return;
+    const x = [], y = [], z = [];
+    tris.forEach(t => t.forEach(p => { x.push(p[0]); y.push(p[1]); z.push(p[2]); }));
+    T.push({ type: "mesh3d", x, y, z, i: tris.map((_, q) => 3 * q), j: tris.map((_, q) => 3 * q + 1), k: tris.map((_, q) => 3 * q + 2),
+             color: fcol[si], opacity: 0.16, name: `predicted, ${src}`, hoverinfo: "name", flatshading: true });
+  });
+  if (show("t-in")) T.push(shell(s, "inner", css("--ok"), 0.55, "proven feasible"));
+  if (show("t-out")) T.push(shell(s, "cert", css("--cert"), 0.16, "certified infeasible beyond"));
+  if (show("t-pts")) {
+    T.push(points(s, "inner", d => d.status === "certified", "circle", css("--ok"), "validated dispatch (98%)", 3));
+    T.push(points(s, "cert", d => d.status === "certified", "square", css("--cert"), "certified edge", 3));
+    T.push(points(s, "inner", d => d.status === "limit", "diamond", muted, `feasible at ${LIMIT}°`, 4, true));
+    T.push(points(s, "inner", d => d.status === "pending", "x", fg, "rerun pending", 4));
+  }
+  const R = Math.min(LIMIT * 1.1, 1.08 * Math.max(...s.dirs.map(d => d.cert)));
+  const ax = t => ({ title: { text: t, font: { size: 12, color: fg } }, range: [-R, R], color: muted, gridcolor: grid,
+                     zerolinecolor: muted, backgroundcolor: panel, showbackground: true, tickfont: { size: 10, color: muted } });
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
+              font: { family: css("--sans"), color: fg },
+              scene: { xaxis: ax("δ₂ − δ₁ (°)"), yaxis: ax("δ₃ − δ₁ (°)"), zaxis: ax("δ₄ − δ₁ (°)"), aspectmode: "cube",
+                       camera: camera || { eye: { x: 1.45, y: 1.35, z: 0.9 } } } };
+  const plot = document.getElementById("plot");
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  plot.removeAllListeners && plot.removeAllListeners("plotly_relayout");
+  plot.on("plotly_relayout", e => { if (e["scene.camera"]) camera = e["scene.camera"]; });
+  plot.removeAllListeners && plot.removeAllListeners("plotly_click");
+  plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
+  strip(s);
+}
+
+function strip(s) {
+  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
+  const c = s.dirs.filter(d => d.status === "certified"), lim = s.dirs.filter(d => d.status === "limit"), pen = s.dirs.filter(d => d.status === "pending");
+  const top = Math.max(3, ...c.map(d => d.band)) + 1;
+  const T = [
+    { type: "bar", x: c.map(d => d.id), y: c.map(d => d.band + 2), base: -2, marker: { color: css("--band"), opacity: 0.45 },
+      customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>", width: 0.7 },
+    { type: "scatter", mode: "markers", x: c.map(d => d.id), y: c.map(() => -2), marker: { color: css("--ok"), size: 5 }, hoverinfo: "skip" },
+    { type: "scatter", mode: "markers", x: c.map(d => d.id), y: c.map(d => d.band), marker: { color: css("--cert"), size: 6, symbol: "square" },
+      customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>" },
+    { type: "scatter", mode: "markers", x: lim.map(d => d.id), y: lim.map(() => top - 0.5), marker: { color: muted, size: 7, symbol: "triangle-up" },
+      customdata: lim.map(d => d.id), text: lim.map(hover), hovertemplate: "%{text}<extra></extra>" },
+    { type: "scatter", mode: "markers", x: pen.map(d => d.id), y: pen.map(() => top - 0.5), marker: { color: fg, size: 7, symbol: "x" },
+      customdata: pen.map(d => d.id), text: pen.map(hover), hovertemplate: "%{text}<extra></extra>" },
+  ];
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, bargap: 0.3,
+              font: { family: css("--sans"), color: fg, size: 11 },
+              xaxis: { title: { text: "direction", font: { size: 11 } }, range: [0, s.dirs.length + 1], color: muted, gridcolor: grid, zeroline: false, dtick: 10 },
+              yaxis: { range: [-2.6, top], color: muted, gridcolor: grid, zerolinecolor: fg, zerolinewidth: 1, ticksuffix: "%" } };
+  const el = document.getElementById("strip");
+  Plotly.react(el, T, L, { displaylogo: false, responsive: true, displayModeBar: false });
+  el.removeAllListeners && el.removeAllListeners("plotly_click");
+  el.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
+}
+
+function select(id) {
+  const d = DATA[cur].dirs.find(x => x.id === id); if (!d) return;
+  const rows = [["direction", `${d.id}  (${d.u.map(v => v.toFixed(3)).join(", ")})`],
+                ["status", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "rerun pending"]];
+  if (d.status === "certified") rows.push(["limiting hour", d.hour], ["feasible at", fmt(d.inner, 4) + "°"], ["measured edge", fmt(d.edge, 4) + "°"],
+    ["certified from", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"], ["predicted", fmt(d.pred, 4) + "°"],
+    ["by", d.farkas ? "Farkas ray" : "negative margin bound"], ["relaxations", `${d.relax}, ${Math.round(d.secs / 60)} min`]);
+  else rows.push(["day edge", fmt(d.day, 4) + "°"], ["predicted", fmt(d.pred, 4) + "°"]);
+  document.getElementById("sel").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+  document.getElementById("sel-hint").hidden = true;
+}
+
+["t-pred", "t-in", "t-out", "t-pts"].forEach(id => document.getElementById(id).addEventListener("change", draw));
+document.getElementById("reset").onclick = () => { camera = null; draw(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+tabs(); draw();
+// Plotly sizes itself on the first draw, which can run before the grid has its width.
+const fit = () => ["plot", "strip"].forEach(id => Plotly.Plots.resize(document.getElementById(id)));
+requestAnimationFrame(fit); addEventListener("load", fit);
+new ResizeObserver(fit).observe(document.getElementById("plot"));
+</script>
