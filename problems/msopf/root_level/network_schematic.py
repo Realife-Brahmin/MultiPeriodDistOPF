@@ -26,9 +26,9 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=1500, lw=1.3, pv=7, bat=4.6, sub=30, dot=0, labels=False, lens=430, print=2.6),
+                    added={"subs4": "l2804256"}, width=1500, lw=2.2, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=330, print=2.0),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=1500, lw=1.3, pv=7, bat=4.6, sub=30, dot=0, labels=False, lens=500, print=3.0,
+                   added={}, width=1500, lw=1.8, pv=8, bat=5.0, sub=30, dot=0, labels=False, lens=400, print=2.3,
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -102,7 +102,7 @@ def body(lines, pos, pvs, bats, T, lw, pv, bat, near=None, fade=1.0):
     inside = (lambda q: math.dist(q, near[0]) <= near[1]) if near else (lambda q: True)
     # faded: lighter solid colours (per-element opacity would make every element a PDF transparency group)
     sl, sl2, bf, bl, pf, pl = ((SLATE, SLATE2, BAT_FILL, BAT_LINE, PV_FILL, PV_LINE) if fade >= 1 else
-                               ("#A49BAE", "#A49BAE", "#F4F0F9", "#B7A5CF", "#DCC08F", "#BFA27A"))
+                               ("#857A92", "#857A92", "#F1ECF7", "#A892C4", "#D2AF72", "#A98A5C"))
     o = []
     for name, a, b, tie in lines:
         if not (inside(pos[a]) or inside(pos[b])): continue
@@ -150,7 +150,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
             need = 2 * RL + 0.9 * gap + 60 * F                       # room for the next title too
             if b_[4][ax] - a_[4][ax] < need: b_[4][ax] = a_[4][ax] + need
     o = ['<g inkscape:groupmode="layer" inkscape:label="network" id="layer-network">']
-    o += body(lines, pos, pvs, bats, T, cfg["lw"], cfg["pv"], cfg["bat"], fade=0.55)
+    o += body(lines, pos, pvs, bats, T, cfg["lw"], cfg["pv"], cfg["bat"], fade=0.55)   # light, but solid
     o.append("</g>")
     o.append('<g inkscape:groupmode="layer" inkscape:label="lenses" id="layer-lenses"><defs>')
     for i, s, b, side, (cx, cy) in placed:
@@ -165,9 +165,9 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
         rn = 1.15 * d[min(13, len(d) - 1)]; z = 0.9 * RL / (rn * k)
         Tl = lambda q, z=z, px=px, py=py, cx=cx, cy=cy: (cx + (T(q)[0] - px) * z, cy + (T(q)[1] - py) * z)
         dx, dy = cx - px, cy - py; L = math.hypot(dx, dy)
-        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx - dx / L * RL:.1f}" y2="{cy - dy / L * RL:.1f}" stroke="{colr}" stroke-width="{3 * F:.1f}"/>')
+        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx - dx / L * RL:.1f}" y2="{cy - dy / L * RL:.1f}" stroke="{colr}" stroke-width="{1.8 * F:.1f}"/>')
         o.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{11 * F:.1f}" fill="white" stroke="{colr}" stroke-width="{4 * F:.1f}"/>')
-        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="white" stroke="{colr}" stroke-width="{5 * F:.1f}"/>')
+        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="white" stroke="{colr}" stroke-width="{2.4 * F:.1f}"/>')
         o.append(f'<g clip-path="url(#lens{i + 1})">')
         o += body(lines, pos, pvs, bats, Tl, 2.6 * F, 15 * F, 9 * F, near=(p, 1.6 * rn))
         for q in xy:
