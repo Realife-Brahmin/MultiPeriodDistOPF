@@ -1,5 +1,5 @@
 # Farkas bracketing (2026-10-26): the certified feasibility map of a system, batteries idle, T = 24 day.
-#   FB_SYSTEM=<ieee123_three|ieee123_four|med3980_four|sfp1u_four> FB_PHASE=<A|B|C> FB_DIR=<i> \
+#   FB_SYSTEM=<ieee123|med3980|sfp1u>_<two|three|four> FB_PHASE=<A|B|C> FB_DIR=<i> \
 #     julia --project=problems/msopf/environments/sdp problems/msopf/root_level/farkas_bracketing.jl
 # Along each measured direction of the region campaigns (16 for three sources, the fib78 set for four), the
 # boundary is bracketed from both sides: inside by a validated AC dispatch, outside by the relaxation proving the
@@ -35,6 +35,7 @@ const CUTS = Symbol.(split(get(ENV, "FB_CUTS", "kcl0,jbound"), ','; keepempty = 
 # (all other residuals zero); 1e-5 is the repository's feasibility rule for the medium and large systems.
 const EQTOL = parse(Float64, get(ENV, "FB_EQTOL", "1e-5"))
 const GRID = [1.02, 1.05, 1.1, 1.25, 1.5, 2.0]
+const LIMIT = 20.0                                   # deg: the search limit of the region campaigns
 classify(L, U, fk) = isfinite(L) && L >= 0 ? "feasible" : ((isfinite(U) && U < -UTOL) || (isfinite(fk) && fk > 0) ? "infeasible" : "unresolved")
 
 # ---- the systems ---------------------------------------------------------------------------------------
@@ -57,6 +58,18 @@ function config(name)
     elseif name == "sfp1u_four"         # stage four_smartds_p1u_typeiii
         return (; deck = "smartds_p1u_xf_1ph", sources = ["subs1", "subs2", "subs3", "subs4"],
                 extra = variant_switches("smartds_p1u_xf_1ph", "Master_4sub_typeIII.dss"), customers = true)
+    # Two and three sources (2026-10-29), each a subset of a four-source case; the dropped substations' sections
+    # are fed through the same closed ties. ieee123: the paper's two-source pair. med3980: its own substations.
+    # sf6937: neighbours in the tie chain hs0-hs2-hs1-hs3, i.e. subs4-subs1-subs2-subs3 (subs1 = hs2 the reference).
+    elseif name == "ieee123_two"
+        return (; deck = "ieee123_5poi_1ph", sources = ["subs3", "subs4"], extra = String[], customers = false)
+    elseif name in ("med3980_two", "med3980_three")
+        src = name == "med3980_two" ? ["subs1", "subs2"] : ["subs1", "subs2", "subs3"]
+        return (; deck = "ieee9500xf_1ph", sources = src, extra = ["Line.$t.enabled=true" for t in TIES_9500], customers = true)
+    elseif name in ("sfp1u_two", "sfp1u_three")
+        src = name == "sfp1u_two" ? ["subs1", "subs4"] : ["subs1", "subs2", "subs4"]
+        return (; deck = "smartds_p1u_xf_1ph", sources = src,
+                extra = variant_switches("smartds_p1u_xf_1ph", "Master_4sub_typeIII.dss"), customers = true)
     end
     error("unknown FB_SYSTEM $name")
 end
@@ -69,6 +82,14 @@ function directions(name, movers)
         end
         return [(; id = i, u = [cosd(th), sind(th)], reach = seen[th], at_limit = false, label = @sprintf("%.1f deg", th))
                 for (i, th) in enumerate(sort(collect(keys(seen))))]
+    end
+    # Cases without a measured campaign under these settings: phase A finds the day's reach itself (reach NaN).
+    if endswith(name, "_two")
+        return [(; id = i, u = [s], reach = NaN, at_limit = false, label = s > 0 ? "+$(movers[1])" : "-$(movers[1])")
+                for (i, s) in enumerate((1.0, -1.0))]
+    elseif endswith(name, "_three")
+        return [(; id = i, u = [cosd(th), sind(th)], reach = NaN, at_limit = false, label = @sprintf("%.1f deg", th))
+                for (i, th) in enumerate(0:22.5:337.5)]
     end
     label = Dict("ieee123_four" => "ieee123_5poi_1ph", "med3980_four" => "ieee9500xf_1ph", "sfp1u_four" => "smartds_p1u_xf_typeIII")[name]
     ds = NamedTuple[]
@@ -117,6 +138,26 @@ function main()
         fa = joinpath(OUT, "fb_A_$(d.id).csv")
         open(io -> println(io, "id,label,day_reach_deg,at_limit,tstar,hour_boundary_deg,margin98_kW,u1,u2,u3,seconds"), fa, "w")
         t0 = time()
+        if isnan(d.reach)
+            # The day's reach by bisection on the validated T = 24 margin (batteries idle, so it is the worst hour's).
+            lo, hi, xs = 0.0, 1.0, nothing
+            while true
+                m, x = vmargin(angles(d, hi), kw24; start = xs, alt = xs)
+                (isfinite(m) && m < 0) && break
+                isfinite(m) || error("T = 24 margin solve failed at $hi deg")
+                lo = hi; xs = x
+                hi >= LIMIT && (d = merge(d, (; reach = LIMIT, at_limit = true)); break)
+                hi = min(2hi, LIMIT)
+            end
+            if !d.at_limit
+                for _ in 1:14
+                    mid = (lo + hi) / 2; m, x = vmargin(angles(d, mid), kw24; start = xs, alt = xs)
+                    isfinite(m) && m >= 0 ? (lo = mid; xs = x) : (hi = mid)
+                end
+                d = merge(d, (; reach = lo))
+            end
+            say(@sprintf("  %s: day's reach %.5f deg%s (%.0f s)", d.label, d.reach, d.at_limit ? " (search limit)" : "", time() - t0))
+        end
         if d.at_limit
             open(io -> @printf(io, "%d,%s,%.6f,true,0,NaN,NaN,%s,0\n", d.id, d.label, d.reach, join(vcat(d.u, fill(0.0, 3 - length(d.u))), ',')), fa, "a")
             say("  ", d.label, ": feasible to the 20 deg search limit; nothing to bracket"); exit(0)
