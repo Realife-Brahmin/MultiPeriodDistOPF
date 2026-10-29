@@ -1,0 +1,27 @@
+
+=== primary3, T=6 ===
+  ieee8500_1ph: 2523 buses; 1138 delivery points; sources subs1,subs2,subs3; sites m1047401,m1108258
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=6   LOCALLY_SOLVED              23 it  build    4.4 s  solve     3.2 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 2.00e-05 kW dV 2.31e-09 pu | V 0.9419-1.0535 minP 197.69 margin NaN kW
+      [solve] cost      T=6   LOCALLY_SOLVED              15 it  build    1.1 s  solve     1.7 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.78e-05 kW dV 2.08e-09 pu | V 0.9418-1.0535 minP 197.71 margin NaN kW
+      [solve] cost      T=6   LOCALLY_SOLVED              15 it  build    1.0 s  solve     1.7 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.82e-05 kW dV 2.12e-09 pu | V 0.9420-1.0534 minP 197.68 margin NaN kW
+      [solve] cost      T=6   LOCALLY_SOLVED              15 it  build    1.0 s  solve     1.9 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.80e-05 kW dV 2.09e-09 pu | V 0.9419-1.0535 minP 198.96 margin NaN kW
+      [solve] cost      T=6   LOCALLY_SOLVED              15 it  build    0.8 s  solve     1.8 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.80e-05 kW dV 2.10e-09 pu | V 0.9420-1.0535 minP 196.43 margin NaN kW
+      [solve] margin    T=6   LOCALLY_SOLVED              65 it  build    1.4 s  solve     9.3 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 7.19e-06 kW dV 2.83e-09 pu | V 0.9471-1.0526 minP 212.84 margin -109.29 kW
+  nobatt: equal angles infeasible; no origin-centred region claimed
+      [solve] margin    T=6   LOCALLY_SOLVED              75 it  build    0.8 s  solve    16.9 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 2.06e-06 kW dV 3.77e-10 pu | V 0.9484-1.0515 minP 272.35 margin -62.49 kW
+  cyclic: equal angles infeasible; no origin-centred region claimed
+COMPLETED secondary 8500 screen

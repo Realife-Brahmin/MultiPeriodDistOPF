@@ -1,0 +1,23 @@
+Clear
+! smartds_p1u_hs2_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\p1uhs2_1247\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+New Circuit.smartds_p1u_hs2_1ph basekv=7.1996 Bus1=sb1_p1uhs2_1247_node_1_3 pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
+VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
+! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the
+! deck's 12.47 kV base). The transformers are lines in BranchData.dss; nothing upstream is modeled.
+New Vsource.subs1 Phases=1 Bus1=sb1_p1uhs2_1247_node_1_3 basekv=7.1996 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+Redirect BranchData.dss
+Redirect Ties.dss
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss     ! Balanced Loads
+// Redirect  Capacitor.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
+
+Set VoltageBases = [12.47]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases

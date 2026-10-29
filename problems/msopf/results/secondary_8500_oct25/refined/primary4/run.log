@@ -1,0 +1,27 @@
+
+=== primary4, T=24 ===
+  ieee8500_1ph: 2524 buses; 1138 delivery points; sources subs1,subs2,subs3,subs4; sites m1047401,m1108258,m1142880
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              25 it  build    6.3 s  solve    12.1 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 3.65e-06 kW dV 5.98e-10 pu | V 0.9438-1.0533 minP 91.70 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    3.2 s  solve     8.1 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 2.03e-06 kW dV 3.95e-10 pu | V 0.9437-1.0533 minP 91.71 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    3.4 s  solve     7.8 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.84e-06 kW dV 3.83e-10 pu | V 0.9439-1.0533 minP 91.69 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    2.9 s  solve     7.9 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.91e-06 kW dV 3.90e-10 pu | V 0.9438-1.0533 minP 91.72 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    3.1 s  solve     7.9 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.91e-06 kW dV 3.86e-10 pu | V 0.9439-1.0533 minP 91.69 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    3.2 s  solve     7.9 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 2.01e-06 kW dV 3.89e-10 pu | V 0.9438-1.0533 minP 92.94 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              17 it  build    3.0 s  solve     7.7 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 1.91e-06 kW dV 3.83e-10 pu | V 0.9438-1.0533 minP 90.46 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              73 it  build    3.8 s  solve    40.5 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 1.36e-07 kW dV 3.56e-10 pu | V 0.9474-1.0523 minP 99.90 margin -97.64 kW
+  nobatt: equal angles infeasible; no origin-centred region claimed

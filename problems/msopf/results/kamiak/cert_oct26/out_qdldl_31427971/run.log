@@ -1,0 +1,15 @@
+measured idle reaches (T = 24): 0.0: 5.285, 22.5: 4.319, 45.0: 4.210, 67.5: 4.845, 90.0: 7.032, 112.5: 5.933, 135.0: 4.469, 157.5: 4.090, 180.0: 4.393, 202.5: 5.691, 225.0: 10.420, 247.5: 6.823, 270.0: 5.084, 292.5: 4.622, 315.0: 4.932, 337.5: 6.336
+reusing t* = 13, the hour boundaries and the envelope of the earlier run
+envelope: 3982 lines (68 at the 0.000 pu floor), 3 sources; base 138.90 A per pu
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  135.0 deg inside 98%   r 4.37926 | L   +20.369 kW (LOCALLY_SOLVED) | U   +23.971 kW (ALMOST_OPTIMAL) | feasible | nlp 18 s, relax 11+60 s dP 7.3e-08 kW; dV 3.6e-10 pu; converged true
+  135.0 deg outside 102% r 4.55800 | L   -20.341 kW (LOCALLY_SOLVED) | U   -16.606 kW (NUMERICAL_ERROR) | infeasible | nlp 7 s, relax 5+56 s 
+  315.0 deg inside 98%   r 4.83336 | L   +19.982 kW (LOCALLY_SOLVED) | U   +26.581 kW (NUMERICAL_ERROR) | feasible | nlp 4 s, relax 5+59 s dP 1.1e-07 kW; dV 3.6e-10 pu; converged true
+  315.0 deg outside 102% r 5.03064 | L   -19.953 kW (LOCALLY_SOLVED) | U   -13.330 kW (NUMERICAL_ERROR) | infeasible | nlp 4 s, relax 5+63 s 
+failed solves (every start): 0; wrote /home/aryan.jha/msopf/jobs/cert_oct26/out_qdldl_31427971/certificate_secondary_{hours,envelope,cases}.csv

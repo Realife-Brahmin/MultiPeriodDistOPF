@@ -1,0 +1,23 @@
+Clear
+! epri_ckt24xf_1ph: single-phase per-phase equivalent of test_networks\sources\epri_test_circuits\ckt24\master_ckt24.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+New Circuit.epri_ckt24xf_1ph basekv=19.9186 Bus1=sourcebus pu=1.05 phases=1 R1=0 X1=0.0001 R0=0 X0=0.0001
+VSource.source.enabled=false  //Disable the default VSource created when declaring the circuit.
+! One stiff source per substation, on the high-voltage bus of its transformer(s) (original bus name, carried at the
+! deck's 34.5 kV base). The transformers are lines in BranchData.dss; nothing upstream is modeled.
+New Vsource.subs1 Phases=1 Bus1=sourcebus basekv=19.9186 pu=1.05 angle=0.0 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+Redirect BranchData.dss
+Redirect Ties.dss
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss     ! Balanced Loads
+// Redirect  Capacitor.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
+
+Set VoltageBases = [34.5]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases

@@ -1,0 +1,15 @@
+stage=four_smartds_p1u_typeiii case=cyclic dirs=19:20 job=31420560_10 host=cn173 start=2026-10-25T19:18:53-07:00
+IPOPT_EXTRA_OPTIONS=linear_solver=ma57;hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+LARGE_T=24
+MULTI_CASES=cyclic
+MULTI_DIRS=19:20
+MULTI_DIRSET=fib78
+MULTIPERIOD_LEAN=1
+MULTIPERIOD_OUT_DIR=/home/aryan.jha/msopf/jobs/regions_oct25/out_four_smartds_p1u_typeiii_cyclic_d19_20_31420560_10
+MULTI_SAMPLES=0
+MULTI_VMARGIN=20000
+THREE_CASES=cyclic
+THREE_DIRS=19:20
+commit=4a5856e67f4b94862e84ff1b04c04b65a0f8c8b4
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+exit=0 end=2026-10-25T20:31:24-07:00 wall_s=4350

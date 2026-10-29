@@ -8,6 +8,10 @@ const LABEL = {
   "four_ieee9500_v1.03": {subs1: "Substation 1 (reference)", subs2: "Substation 2", subs3: "Substation 3", subs4: "Substation 4 (added, bus l2804256)"}
 };
 const SHORT = { four_ieee123a: ["δ1", "δ2", "δ3", "δ4"], four_ieee123b: ["δ1", "δ3", "δ4", "δ5"], four_ieee2522: ["δ0", "δ947", "δ996", "δ1120"], four_ieee9500: ["δ1", "δ2", "δ3", "δ4"], "four_ieee9500_v1.03": ["δ1", "δ2", "δ3", "δ4"] };
+for (const sys of DATA) {
+ LABEL[sys.id] ||= Object.fromEntries(sys.sources.map((k,i)=>[k, `Substation ${i+1}${i===0 ? " (reference)" : ""}`]));
+ SHORT[sys.id] ||= ["δ1","δ2","δ3","δ4"];
+}
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fcol = () => [css("--f0"), css("--f1"), css("--f2"), css("--f3")];
 const DEFAULT_CAM = { eye: { x: 1.5, y: 1.4, z: 0.9 }, up: { x: 0, y: 0, z: 1 }, center: { x: 0, y: 0, z: 0 }, projection: { type: "perspective" } };
@@ -27,7 +31,7 @@ function faceScale() {
   const c = fcol();
   return [[0, c[0]], [0.25, c[0]], [0.25, c[1]], [0.5, c[1]], [0.5, c[2]], [0.75, c[2]], [0.75, c[3]], [1, c[3]]];
 }
-const BOUND = (sys, q) => q[7] === undefined || q[7] === -2 ? "not recorded" : q[7] === -1 ? "voltage limit" : LABEL[sys.id][sys.sources[q[7]]];
+const BOUND = (sys, q) => q[8] || (q[7] === undefined || q[7] === -2 ? "not recorded" : q[7] === -1 ? "voltage limit" : LABEL[sys.id][sys.sources[q[7]]]);
 
 function traces(sys) {
   const show = id => document.getElementById(id).checked, out = [];
@@ -48,9 +52,11 @@ function traces(sys) {
   }
   for (const [cs, key, op] of [["nobatt", "t-pi", 0.82], ["cyclic", "t-pc", 0.32]]) {
     if (focus >= 0 || !show(key)) continue;
-    const s = sys.cases[cs].surface;
-    out.push({ type: "surface", x: s.x, y: s.y, z: s.z, surfacecolor: s.face, cmin: -0.5, cmax: 3.5, colorscale: faceScale(), showscale: false,
-      opacity: op, hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
+    const m = sys.cases[cs].mesh;
+    if (!m) throw new Error("Missing exact prediction mesh for " + sys.id);
+    out.push({ type: "mesh3d", x: m.x, y: m.y, z: m.z, i: m.i, j: m.j, k: m.k,
+      facecolor: m.face.map(f => fcol()[f]), opacity: op, flatshading: true,
+      hoverinfo: "skip", lighting: { ambient: 0.75, diffuse: 0.5, specular: 0.05, roughness: 0.9 } });
   }
   for (const [cs, key, sym, nm] of [["nobatt", "t-mi", "diamond", "measured, idle"], ["cyclic", "t-mc", "circle", "measured, cyclic"]]) {
     if (!show(key)) continue;
@@ -73,7 +79,7 @@ function layout(sys, cam) {
 // Face statistics from the dots: least-squares plane a.x = 1 through a face's dots.
 function faceStats(sys, cs, k) {
   const p = sys.cases[cs].points.filter(q => q[3] === k && !q[6]);
-  if (p.length < 4) return { n: p.length };
+  if (sys.sparse || p.length < 4) return { n: p.length, sparse: !!sys.sparse };
   const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], b = [0, 0, 0];
   for (const q of p) for (let i = 0; i < 3; i++) { b[i] += q[i]; for (let j = 0; j < 3; j++) A[i][j] += q[i] * q[j]; }
   const det = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
@@ -90,7 +96,7 @@ function panel(sys) {
   document.getElementById("faces").innerHTML = sys.sources.map((k, i) => {
     const row = cs => {
       const s = faceStats(sys, cs, i), lab = cs === "nobatt" ? "idle" : "cyclic";
-      if (s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
+      if (s.sparse || s.n < 4) return `<span>${lab}</span><span>${s.n} dot${s.n === 1 ? "" : "s"}: not fitted</span>`;
       const bound = s.rec ? ` · bound here ${s.agree}/${s.rec}` : "";
       return `<span>${lab}</span><span>${s.n} dots · reach ×${s.med.toFixed(2)} · planar ${s.planar.toFixed(1)}% · tilt ${s.tilt.toFixed(1)}°${bound}</span>`;
     };
@@ -102,7 +108,7 @@ function panel(sys) {
   document.querySelectorAll(".faceon, .fname").forEach(b => b.addEventListener("click", () => faceOn(+b.dataset.face)));
   document.getElementById("fmface").innerHTML = sys.sources.map((k, i) => `<option value="${i}">${LABEL[sys.id][k].replace(" (reference)", "")}</option>`).join("");
   document.getElementById("fmface").value = String(fmFace);
-  document.getElementById("lin").innerHTML = sys.linearity_max == null
+  document.getElementById("lin").innerHTML = sys.study_note ? sys.study_note : sys.linearity_max == null
     ? `Sources at 1.03 pu, the sensitivities recomputed there (no random linearity samples at this setpoint). Every edge is set by no-backflow.`
     : `Imports are affine in the angles to within <span class="kv">${sys.linearity_max.toFixed(2)}%</span> of the largest import (30 random idle points).`;
 }

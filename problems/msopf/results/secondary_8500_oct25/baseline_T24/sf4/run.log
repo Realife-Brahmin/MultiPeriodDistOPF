@@ -1,0 +1,17 @@
+
+=== sf4, T=24 ===
+  smartds_p1u_xf_1ph: 6937 buses; 1873 delivery points; sources subs1,subs2,subs3,subs4; sites published Type III sources
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              30 it  build   13.5 s  solve    41.9 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 3.08e-05 kW dV 6.07e-10 pu | V 0.9702-1.0496 minP 3794.66 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              47 it  build   11.0 s  solve    87.9 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 2.11e-05 kW dV 5.36e-10 pu | V 0.9689-1.0326 minP 3745.94 margin 725.26 kW
+      [solve] margin    T=24  LOCALLY_SOLVED              67 it  build   10.7 s  solve   172.3 s  warm  max|angle| 0.0000 deg
+    replay PASS | dP 1.11e-05 kW dV 1.03e-09 pu | V 0.9729-1.0289 minP 3651.98 margin 879.15 kW
+COMPLETED secondary 8500 screen

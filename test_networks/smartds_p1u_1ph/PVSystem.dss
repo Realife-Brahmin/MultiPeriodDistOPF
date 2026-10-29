@@ -1,5 +1,5 @@
-! smartds_p1u_1ph: single-phase per-phase equivalent of test_systems\smartds_sfo_p1u\Master.dss (unmodified original).
-! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! smartds_p1u_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
 ! 506 PV units on load buses, sized in proportion to the bus load; fleet Pmpp = 40 % of total load.
 New PVsystem.PV_p1udt1000 irrad=1.0 Phases=1 Bus1=p1udt1000.1 kV=7.1996 kVA=23.5335 Pmpp=19.6113 %cutin=0.001 %cutout=0.001
 New PVsystem.PV_p1udt1002 irrad=1.0 Phases=1 Bus1=p1udt1002.1 kV=7.1996 kVA=58.4361 Pmpp=48.6967 %cutin=0.001 %cutout=0.001

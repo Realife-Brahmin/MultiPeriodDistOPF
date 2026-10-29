@@ -1,0 +1,25 @@
+
+=== secondary2, T=24 ===
+  ieee8500xf_1ph: 3699 buses; 1177 delivery points; sources subs1,subs2; sites m1047401
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      [solve] cost      T=24  LOCALLY_SOLVED              25 it  build    6.8 s  solve    14.1 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 5.51e-05 kW dV 6.34e-09 pu | V 0.9329-1.0471 minP 310.25 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              16 it  build    4.1 s  solve     9.5 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 6.03e-05 kW dV 7.11e-09 pu | V 0.9328-1.0471 minP 311.66 margin NaN kW
+      [solve] cost      T=24  LOCALLY_SOLVED              16 it  build    4.5 s  solve     9.5 s  warm  max|angle| 0.0500 deg
+    replay PASS | dP 5.78e-05 kW dV 6.77e-09 pu | V 0.9329-1.0470 minP 308.85 margin NaN kW
+      [solve] margin    T=24  LOCALLY_SOLVED              44 it  build    4.5 s  solve    29.3 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 6.62e-06 kW dV 1.14e-09 pu | V 0.9462-1.0474 minP 328.41 margin -144.85 kW
+  nobatt: equal angles infeasible; no origin-centred region claimed
+      [solve] margin    T=24  LOCALLY_SOLVED              93 it  build    4.1 s  solve    92.5 s  cold  max|angle| 0.0000 deg
+    replay PASS | dP 2.04e-05 kW dV 2.88e-09 pu | V 0.9553-1.0452 minP 367.27 margin 202.06 kW
+      [solve] margin    T=24  LOCALLY_SOLVED              62 it  build    4.8 s  solve    88.5 s  warm  max|angle| 14.3951 deg
+    replay PASS | dP 7.78e-04 kW dV 8.50e-08 pu | V 0.9532-1.0394 minP 120.64 margin 120.64 kW
+      [solve] margin    T=24  LOCALLY_SOLVED              65 it  build    5.0 s  solve    94.4 s  warm  max|angle| 20.0000 deg
+    replay FAIL | dP 7.54e-04 kW dV 1.78e-07 pu | V 0.9511-1.0383 minP 39.90 margin 39.90 kW

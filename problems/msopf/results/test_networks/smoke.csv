@@ -1,0 +1,11 @@
+case,deck,solve,status,iterations,seconds,cust_vmin,cust_vmax,prim_vmin,prim_vmax,min_import_kW,replay_converged,replay_dP_kW,replay_dV_pu,buses,customer_buses
+"K1",epri_k1xf_1ph,a: no band,LOCALLY_SOLVED,31,7.3,1.0206,1.0494,1.0312,1.0502,847.25,true,3.36e-05,1.68e-09,962,320
+"K1",epri_k1xf_1ph,b: band at customer buses,LOCALLY_SOLVED,18,5.1,1.0206,1.0494,1.0312,1.0502,847.25,true,3.36e-05,1.68e-09,962,320
+"Ckt24",epri_ckt24xf_1ph,a: no band,LOCALLY_SOLVED,31,18.4,1.0158,1.0539,0.9953,1.0547,5471.18,true,7.53e-05,1.91e-09,2111,686
+"Ckt24",epri_ckt24xf_1ph,b: band at customer buses,LOCALLY_SOLVED,51,34.3,1.0102,1.0500,0.9949,1.0511,5471.18,true,7.47e-05,1.91e-09,2111,686
+"8500",ieee8500xf_1ph,a: no band,LOCALLY_SOLVED,37,39.3,0.9191,1.0419,0.9272,1.0496,1976.22,true,1.13e-04,9.60e-09,3698,1177
+"8500",ieee8500xf_1ph,b: band at customer buses,LOCALLY_SOLVED,105,113.8,0.9500,1.0419,0.9576,1.0496,1987.63,true,1.03e-04,7.66e-09,3698,1177
+"9500 (3 substations, 5 ties closed)",ieee9500xf_1ph,a: no band,LOCALLY_SOLVED,32,52.7,0.9816,1.0421,0.9999,1.0491,664.16,true,4.90e-05,2.77e-09,3980,1275
+"9500 (3 substations, 5 ties closed)",ieee9500xf_1ph,b: band at customer buses,LOCALLY_SOLVED,16,58.3,0.9816,1.0421,0.9999,1.0491,664.16,true,4.90e-05,2.77e-09,3980,1275
+"P1U Type III (4 substations)",smartds_p1u_xf_1ph,a: no band,LOCALLY_SOLVED,33,83.7,0.9559,1.0510,0.9686,1.0539,3542.83,true,8.59e-05,1.33e-09,6937,1873
+"P1U Type III (4 substations)",smartds_p1u_xf_1ph,b: band at customer buses,LOCALLY_SOLVED,22,120.2,0.9552,1.0500,0.9679,1.0529,3542.85,true,8.58e-05,1.33e-09,6937,1873

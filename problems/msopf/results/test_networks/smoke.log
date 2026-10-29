@@ -1,0 +1,148 @@
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+ERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+WARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+WARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+WARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+WARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+WARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+
+== Ckt24 (epri_ckt24xf_1ph)
+  2111 buses (686 customer, 1424 primary, 1 source), 2112 lines, 135 PV, 135 batteries; loaded in 0.3 s
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+  (a: no band) LOCALLY_SOLVED, 31 iterations, 18.4 s | customer V 1.0158-1.0539, primary V 0.9953-1.0547 pu | smallest import 5471.2 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 7.5e-05 kW, dV 1.9e-09 pu
+  (b: band at customer buses) LOCALLY_SOLVED, 51 iterations, 34.3 s | customer V 1.0102-1.0500, primary V 0.9949-1.0511 pu | smallest import 5471.2 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 7.5e-05 kW, dV 1.9e-09 pu
+
+== 8500 (ieee8500xf_1ph)
+  3698 buses (1177 customer, 2520 primary, 1 source), 3697 lines, 252 PV, 252 batteries; loaded in 0.2 s
+  (a: no band) LOCALLY_SOLVED, 37 iterations, 39.3 s | customer V 0.9191-1.0419, primary V 0.9272-1.0496 pu | smallest import 1976.2 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 1.1e-04 kW, dV 9.6e-09 pu
+  (b: band at customer buses) LOCALLY_SOLVED, 105 iterations, 113.8 s | customer V 0.9500-1.0419, primary V 0.9576-1.0496 pu | smallest import 1987.6 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 1.0e-04 kW, dV 7.7e-09 pu
+
+== 9500 (3 substations, 5 ties closed) (ieee9500xf_1ph)
+  3980 buses (1275 customer, 2702 primary, 3 source), 3982 lines, 270 PV, 270 batteries; loaded in 0.3 s
+  (a: no band) LOCALLY_SOLVED, 32 iterations, 52.7 s | customer V 0.9816-1.0421, primary V 0.9999-1.0491 pu | smallest import 664.2 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 4.9e-05 kW, dV 2.8e-09 pu
+  (b: band at customer buses) LOCALLY_SOLVED, 16 iterations, 58.3 s | customer V 0.9816-1.0421, primary V 0.9999-1.0491 pu | smallest import 664.2 kW | violation 0.000e+00 | OpenDSS replay: converged true, dP 4.9e-05 kW, dV 2.8e-09 pu
+
+== P1U Type III (4 substations) (smartds_p1u_xf_1ph)
+Precompiling packages...
+Info Given OpenDSSDirect was explicitly requested, output will be shown live [0K
+[0KWARNING: Constructor for type "Number" was extended in `Error` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Constructor for type "Channel" was extended in `Monitors` without explicit qualification or import.
+[0K  NOTE: Assumed "Channel" refers to `Base.Channel`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Channel end`.
+[0K  Hint: To silence the warning, qualify `Channel` as `Base.Channel` in the method signature or explicitly `import Base: Channel`.
+[0KWARNING: Constructor for type "Matrix" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Matrix" refers to `Base.Matrix`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Matrix end`.
+[0K  Hint: To silence the warning, qualify `Matrix` as `Base.Matrix` in the method signature or explicitly `import Base: Matrix`.
+[0KWARNING: Constructor for type "Vector" was extended in `Parser` without explicit qualification or import.
+[0K  NOTE: Assumed "Vector" refers to `Base.Vector`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Vector end`.
+[0K  Hint: To silence the warning, qualify `Vector` as `Base.Vector` in the method signature or explicitly `import Base: Vector`.
+[0KWARNING: Constructor for type "Number" was extended in `Solution` without explicit qualification or import.
+[0K  NOTE: Assumed "Number" refers to `Base.Number`. This behavior is deprecated and may differ in future versions.`
+[0K  NOTE: This behavior may have differed in Julia versions prior to 1.12.
+[0K  Hint: If you intended to create a new generic function of the same name, use `function Number end`.
+[0K  Hint: To silence the warning, qualify `Number` as `Base.Number` in the method signature or explicitly `import Base: Number`.
+[0KWARNING: Method definition (::Type{Number})(OpenDSSDirect.DSSContext) in module Error at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\error.jl:20 overwritten in module Solution at C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\solution.jl:403.
+[0KERROR: Method overwriting is not permitted during Module precompilation. Use `__precompile__(false)` to opt-out of precompilation.
+   3964.6 ms  ? OpenDSSDirect
+ERROR: LoadError: MethodError: no method matching Command(::SubString{String})
+The function `Command` exists, but no method is defined for this combination of argument types.
+
+Closest candidates are:
+  Command(!Matched::Vector{String})
+   @ OpenDSSDirect C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:51
+  Command(!Matched::DSSContext, !Matched::Vector{String})
+   @ OpenDSSDirect C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:47
+  Command(!Matched::String)
+   @ OpenDSSDirect C:\Users\Aryan Ritwajeet Jha\.julia\packages\OpenDSSDirect\vXmoP\src\text.jl:35
+  ...
+
+Stacktrace:
+  [1] foreach(f::typeof(OpenDSSDirect.Text.Command), itr::Vector{SubString{String}})
+    @ Base .\abstractarray.jl:3191
+  [2] compile_deck(system::String; extra::Vector{SubString{String}}, sources::Vector{String}, disable::Vector{String}, snapshot::Bool, stiff_sources::Bool, load_band::Tuple{Float64, Float64}, tolerance::Float64, max_iterations::Int64)
+    @ Main C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\full_angle_pf.jl:88
+  [3] compile_deck
+    @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\full_angle_pf.jl:81 [inlined]
+  [4] read_pv(system::String; kwargs::@Kwargs{sources::Vector{String}, snapshot::Bool, load_band::Tuple{Float64, Float64}, extra::Vector{SubString{String}}})
+    @ Main C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\multiperiod_full_angle.jl:75
+  [5] read_pv
+    @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\multiperiod_full_angle.jl:74 [inlined]
+  [6] #run_case##0
+    @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\root_level\test_edition_smoke.jl:41 [inlined]
+  [7] with_logstate(f::var"#run_case##0#run_case##1"{@NamedTuple{label::String, deck::String, sources::Vector{String}, extra::Vector{SubString{String}}}, @NamedTuple{sources::Vector{String}, snapshot::Bool, load_band::Tuple{Float64, Float64}, extra::Vector{SubString{String}}}}, logstate::Base.CoreLogging.LogState)
+    @ Base.CoreLogging .\logging\logging.jl:542
+  [8] with_logger
+    @ .\logging\logging.jl:653 [inlined]
+  [9] run_case(c::@NamedTuple{label::String, deck::String, sources::Vector{String}, extra::Vector{SubString{String}}})
+    @ Main C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\root_level\test_edition_smoke.jl:41
+ [10] main(sel::Vector{String})
+    @ Main C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\root_level\test_edition_smoke.jl:88
+ [11] top-level scope
+    @ C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\root_level\test_edition_smoke.jl:91
+ [12] include(mod::Module, _path::String)
+    @ Base .\Base.jl:306
+ [13] exec_options(opts::Base.JLOptions)
+    @ Base .\client.jl:317
+ [14] _start()
+    @ Base .\client.jl:550
+in expression starting at C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\opendss-voltage-bases-check-162c57\problems\msopf\root_level\test_edition_smoke.jl:91

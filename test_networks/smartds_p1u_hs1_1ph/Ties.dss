@@ -1,0 +1,18 @@
+! smartds_p1u_hs1_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\p1uhs1_1247\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true. A switch is
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines; a tie cable with an open switch at each end
+! (tie_<switch>) is one line with both switches and the cable in series, its middle buses left out.
+New Line.sb8_p1uhs1_1247_36 Phases=1 Bus1=sb8_p1uhs1_1247_bus_8_1.1 Bus2=sb8_p1uhs1_1247_bus_8_2.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.sb8_p1uhs1_1247_45 Phases=1 Bus1=sb8_p1uhs1_1247_bus_8_1.1 Bus2=sb8_p1uhs1_1247_bus_8_3.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt624-p1udt663_p1u_11931 Phases=1 Bus1=p1udt624.1 Bus2=p1udt624-p1udt663x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt1559-p1udt628_p1u_11932 Phases=1 Bus1=p1udt1559.1 Bus2=p1udt1559-p1udt628x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt1358-p1udt630_p1u_11933 Phases=1 Bus1=p1udt630.1 Bus2=p1udt1358-p1udt630x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt1829-p1udt558_p1u_11908 Phases=1 Bus1=p1udt1829.1 Bus2=p1udt1829-p1udt558x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt622-p1udt662_p1u_11916 Phases=1 Bus1=p1udt662.1 Bus2=p1udt622-p1udt662x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt1784-p1udt1786_p1u_11910 Phases=1 Bus1=p1udt1786.1 Bus2=p1udt1784.1 r1=0.00575105 x1=0.025113 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt676-p1udt730_p1u_11921 Phases=1 Bus1=p1udt730.1 Bus2=p1udt676.1 r1=0.00636368 x1=0.0288879 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt1113-p1udt1775_p1u_11939 Phases=1 Bus1=p1udt1775.1 Bus2=p1udt1113.1 r1=0.00466559 x1=0.0184247 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt1254-p1udt1779_p1u_11941 Phases=1 Bus1=p1udt1779.1 Bus2=p1udt1254.1 r1=0.0086819 x1=0.0431721 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt716-p1udt718_p1u_11901 Phases=1 Bus1=p1udt716.1 Bus2=p1udt718.1 r1=0.00522242 x1=0.0218557 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt688-p1udt690_p1u_11923 Phases=1 Bus1=p1udt690.1 Bus2=p1udt688.1 r1=0.00814341 x1=0.0398541 c1=0 c0=0 length=1 units=none enabled=false

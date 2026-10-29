@@ -182,4 +182,76 @@ results are tracked in `problems/msopf/results/multiperiod/`.
   has nothing on large10k.
 - **Still open:** per-line ampacity ratings (not modeled; the user is collecting
   them), and the substation voltage setpoint (1.05 pu sits on the band edge).
+- **Test systems, 2026-10-24 (branch `msopf-oct24-test-system-edition`; user decisions):**
+  - **Secondaries in, triplex out.** New studies use the `*xf_1ph` decks: each service transformer is a line
+    to its secondary bus, where its loads sit; the 120/240 V triplex lines are not modeled. DERs stay on
+    primary buses (the utility's network), as in the primary-only deck of the same system.
+  - **The voltage band applies only at the secondary (customer) buses** (ANSI C84.1 is a service-point limit);
+    the primary has no band. The lower limit may be set below 0.95 for these decks, chosen from first runs
+    (at nominal load with no DERs they reach 0.85-0.96 pu). Implemented through `band_buses` in the solver; the study driver now selects the customer buses automatically (2026-10-25).
+  - **Up to four substations** (two, three, four); no five-source cases.
+  - SMART-DS P1U (`smartds_p1u_xf_1ph`, 6,937 buses): its normally-open ties are published as disabled
+    switches, now read by `convert_to_1ph.jl` (39 ties; 6 between substations, chain hs0-hs2-hs1-hs3). Use
+    `Master_4sub_typeIII.dss` (hs0 on one transformer; the usual problem) or `Master_4sub_typeII.dss` (hs0's two
+    transformers, Type II, hs3 out). The four substations also exist alone (`smartds_p1u_hs0..3_1ph`).
+  - Other decks with secondaries: `ieee9500xf_1ph` (about 3,980 buses, 3 substations), `ieee8500xf_1ph` (3,698;
+    one substation, -5 to -6% import mismatch inherited from the primary conversion), `epri_ckt24xf_1ph`
+    (2,111; 34.5/13.2 kV), `epri_k1xf_1ph` (962). Single-substation decks need added sources for MSOPF.
+  - The restructure (PR #178) untracked `problems/msopf/Manifest.toml`; it is identical to
+    `problems/mpopf/tadmm/Manifest.toml` (same Project.toml): copy it locally until it is tracked again.
 
+
+- **Continuation, 2026-10-25:** the study driver now propagates customer-only `band_buses` through every problem and voltage diagnostic. New stages: `four_ieee9500xf`, `four_smartds_p1u_typeiii`, `four_smartds_p1u_typeii`. Both requested T=24 sensitivity runs (9500xf and P1U Type III) completed, seven solves each, all 336 hourly OpenDSS comparisons passing (worst 5.2e-5 kW, 1.35e-9 pu). Independent export validator and PNG/SVG predicted-region figures are included. Evidence and pinned environment: `results/test_networks/sensitivity_oct25/README.md`. **Predictions only**; the 78-direction measured edge campaign still awaits Kamiak login/queue check. Type II wiring is tested but its sensitivity campaign is not run. The regression is `tests/customer_band.jl`; the serial launcher is `root_level/run_test_edition_sensitivities.sh` (fresh output root required for reruns).
+
+### 2026-10-25: secondary-feeder OPF evidence and paper update
+
+- New measured study: `root_level/secondary_8500_study.jl`, launcher
+  `run_secondary_8500_screen.sh`, input checker `check_secondary_8500_inputs.py`,
+  validator/figure/viewer builder `publish_secondary_study.py`. Evidence and exact
+  scientific qualifications: `results/secondary_8500_oct25/README.md`.
+- Matched new IEEE8500 primary/secondary conversions share primary impedances,
+  DERs and aggregate loads. Customer 0.95–1.05 pu limits vs primary attachment
+  proxies; no primary transit band. Added source sites m1047401/m1108258/m1142880,
+  with original substation delivery equivalent. This is not the old 2522 conversion.
+- Full T24 2-source search has one verified positive cyclic bracket and one
+  unresolved negative direction. T24 3-source has eight idle and five cyclic
+  sign brackets, three cyclic timeouts. Never convert unresolved zero saved radii
+  into boundaries. Some positive-margin stopping brackets are wide; retain them.
+- Full T24 equal-angle checks exist for both battery cases, primary/secondary
+  2/3/4 sources and SF4. SF uses native source sites and our constructed Type III
+  ties, not a published operating configuration. All successful reportable OPFs
+  pass strict OpenDSS replay and original SOC/device checks.
+- T6 is explicitly exploratory: legacy profile resampling changes daily PV energy,
+  so T6 vs T24 is not a resolution comparison. SF4 completed twelve T6 axis
+  searches; six axes cannot establish tetrahedron faces or volume. New sparse
+  viewer tabs suppress face fits and disclose their coverage and prediction caps.
+- Paper updated and pushed in PESGM2027_Multi-Source-Multi-Period-OPF main:
+  initial 9e0a123, full-day SF baseline and legibility follow-up 3f7ec8b. New text
+  is in Section IV-F, vector figures `three_source_T24.pdf` and `sf_axis_T6.pdf`,
+  exact copied inputs in `figure-data/secondary_oct25/`. main.pdf compiled and
+  pages inspected. Direct Overleaf sync was not verified (no browser access).
+- #180 remains the broad test-system/modeling PR. #181 is deliberately a separate
+  docs-only interactive-viewer publication PR; do not merge all of #180 just to
+  publish figures. Inherited untracked `envs/` outputs are unrelated and untouched.
+- Final publication: #181 merged to master as adb28724 (docs only). Both new
+  four-source T6 screens are present, with 12 SF and 6 IEEE8500 cyclic axis points.
+  Final validation: 15 complete cases, 320 successful OPFs replayed; the viewer's
+  seven tabs and face views passed 192 finite-coordinate rendering checks.
+  Research archive commit 696c4512; paper evidence follow-up a709042. The broader
+  modeling PR #180 remains open, separate from published documentation.
+
+### 2026-10-25: comparison and encoding correction
+
+User correctly identified inconsistent new figure styling and corrupted viewer labels.
+Repeated default-codepage read/write cycles caused mojibake; the generator now reads
+UTF-8 explicitly, HTML declares UTF-8, original readable template labels are restored,
+and source colors match the paper palette. Two rebuilds are byte-stable; live viewer
+checked for corrected labels/palette after docs-only PR #182, merge 008e980d.
+Paper commit 9cc09cc replaces the new diagnostic plots with two-source comparisons,
+full-prediction plus zoom three-source panels, and four-source in-plane face views.
+It imports the existing paper vector-renderer helpers and palette. The original
+connected eight-ray polygon was misleading and is superseded, not a measured contour.
+Legacy 2522 and new secondary conversion differ in source sites and other assumptions;
+these are presentation comparisons, not controlled service-transformer ablations.
+Four-source new cases remain sparse T6 screens, not matched to legacy T24/78 rays.
+No numerical CSVs changed and no new OPFs were launched for this correction.

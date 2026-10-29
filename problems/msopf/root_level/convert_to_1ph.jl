@@ -55,19 +55,35 @@ const SYSTEMS = Dict(
                       skip = r"(?i)^\s*(redirect\s+(generators|energystorage|pv_)|setkvbase|generator\.|new energymeter)", drop_loads = nothing,
                       secondary = true),
     "ieee8500" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing),
+    # With its service transformers (user, 2026-10-24: secondaries in, no triplex lines), DERs as in ieee8500.
+    "ieee8500xf" => (; master = joinpath(TS, "ieee8500", "Master.dss"), base_kV = 12.47, seed = 8500, skip = nothing, drop_loads = nothing, secondary = true),
     "epri_ckt5" => (; master = joinpath(TS, "epri_test_circuits", "ckt5", "Master_ckt5.dss"), base_kV = 12.47, seed = 5, skip = nothing, drop_loads = nothing),
     "epri_ckt7" => (; master = joinpath(TS, "epri_test_circuits", "ckt7", "Master_ckt7.dss"), base_kV = 12.47, seed = 7, skip = nothing,
                      drop_loads = r"^256\d\d_[abc]$"),                       # 13 feeders lumped on bus ckt7 (Substation_ckt7.dss)
     "epri_ckt24" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
                       drop_loads = r"^other_feeders$"),
+    # With its service transformers (user, 2026-10-24), DERs as in epri_ckt24.
+    "epri_ckt24xf" => (; master = joinpath(TS, "epri_test_circuits", "ckt24", "master_ckt24.dss"), base_kV = 34.5, seed = 24, skip = nothing,
+                        drop_loads = r"^other_feeders$", secondary = true),
     "epri_j1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "J1", "Master_noPV.dss"), base_kV = 12.47, seed = 101, skip = nothing,
                    drop_loads = r"^aggregate_load$"),
     "epri_k1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
                    drop_loads = r"^k_22_aggregate$"),
+    # With its service transformers (user, 2026-10-24), DERs as in epri_k1.
+    "epri_k1xf" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "K1", "Master_NoPV.dss"), base_kV = 13.2, seed = 111, skip = nothing,
+                     drop_loads = r"^k_22_aggregate$", secondary = true),
     "epri_m1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "M1", "Master_NoPV.dss"), base_kV = 12.47, seed = 131, skip = nothing,
                    drop_loads = r"^aggregated$"),
     "smartds_p1u" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss")))
+                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), p1u_variants = true),
+    # The same region with its service transformers (user, 2026-10-24: secondaries are a small correction, so a
+    # larger deck with them is welcome), as ieee9500xf: DERs as in smartds_p1u (same seed, same MV buses).
+    "smartds_p1u_xf" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
+                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true, p1u_variants = true),
+    # Each of P1U's four substations on its own (each is a separately published deck with its own 69 kV source;
+    # hs0 has two substation transformers, so its deck has two sources). Our own DERs by the usual rule.
+    [("smartds_p1u_hs$k" => (; master = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "Master.dss"), base_kV = 12.47, seed = 20180 + k,
+                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"))) for k in 0:3]...)
 
 "Compile the original. SMART-DS load shapes read annual profiles not downloaded: flat 1.0 in memory."
 function compile_original(cfg)
@@ -137,17 +153,27 @@ function convert(name)
     vref = cfg.base_kV
     kv = Dict(lowercase(b) => kvll(b) for b in ODD.Circuit.AllBusNames())
     mv = Set(b for (b, k) in kv if ismv(k))
-    refer(z, b) = z * (vref / kv[b])^2                     # ohm at bus b's level -> ohm at the base
+    # Isolated buses (zero voltage after the solve): a part no source reaches, such as a tie cable between two open
+    # switches. OpenDSS gives them the lowest voltage base on its list, not their own, so they count as MV here, at the
+    # base voltage, only so that such cables can become ties; a source never reaches them, so nothing else of them stays.
+    deenergized(b) = (ODD.Circuit.SetActiveBus(String(b)); maximum(abs, ODD.Bus.Voltages(); init = 0.0) < 1e-9)
+    iso = Set(b for b in keys(kv) if deenergized(b))
+    mvx(b) = b in mv || b in iso || !haskey(kv, b)
+    refer(z, b) = b in iso ? z : z * (vref / kv[b])^2         # ohm at bus b's level -> ohm at the base
     dsu = DSU(); foreach(b -> root(dsu, b), mv)
     branches, ties, notes = [], [], String[]
     nsw = 0; nreg = 0; nstep = 0; nreac = 0
     for nm in real_names(ODD.Lines.AllNames())
         ODD.Lines.Name(nm); el = "Line.$nm"; ODD.Circuit.SetActiveElement(el)
-        ODD.CktElement.Enabled() || continue
         a, b = bus(ODD.Lines.Bus1()), bus(ODD.Lines.Bus2())
-        (a in mv && b in mv) || continue
+        if !ODD.CktElement.Enabled()
+            # A disabled switch is a normally-open tie (SMART-DS publishes its tie points this way, 2026-10-24).
+            ODD.Lines.IsSwitch() && mvx(a) && mvx(b) && push!(ties, (; name = clean(nm), a, b, z = ZSHORT))
+            continue
+        end
+        (mvx(a) && mvx(b) && (a in mv || b in mv || (a in iso && b in iso))) || continue
         if ODD.CktElement.IsOpen(1, 0) || ODD.CktElement.IsOpen(2, 0)
-            push!(ties, (; name = clean(nm), a, b))
+            push!(ties, (; name = clean(nm), a, b, z = ZSHORT))
         elseif ODD.Lines.IsSwitch()
             push!(branches, (; name = clean(nm), a, b, z = ZSHORT, kind = :switch)); nsw += 1
         else
@@ -238,6 +264,42 @@ function convert(name)
             end
         end
     end
+    # Normally-open ties. One whose two ends are both reached is a tie as it stands. A tie cable with an open switch at
+    # each end has no source between them, so its middle buses are not reached: each group of unreached buses joined
+    # by lines, with exactly two ties into reached buses and no load, becomes one tie between those two buses, with the
+    # switches' and the cable's impedances in series. Any other unreached group stays out, with a note.
+    reached(x) = haskey(feeder, x)
+    T = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties]
+    tieout = [t for t in T if reached(t.a) && reached(t.b) && t.a != t.b]
+    un = Dict{String,Vector{Tuple{String,ComplexF64}}}()
+    for x in br
+        (reached(x.a) || reached(x.b)) && continue
+        push!(get!(un, x.a, Tuple{String,ComplexF64}[]), (x.b, x.z)); push!(get!(un, x.b, Tuple{String,ComplexF64}[]), (x.a, x.z))
+    end
+    half = [t for t in T if reached(t.a) != reached(t.b)]
+    inner(t) = reached(t.a) ? t.b : t.a
+    outer(t) = reached(t.a) ? t.a : t.b
+    seen = Set{String}()
+    for t in half
+        s = inner(t); s in seen && continue
+        zto = Dict(s => 0.0im); q = [s]                    # the group of s, with the series impedance from s
+        while !isempty(q)
+            u = popfirst!(q)
+            for (v, z) in get(un, u, Tuple{String,ComplexF64}[])
+                haskey(zto, v) || (zto[v] = zto[u] + z; push!(q, v))
+            end
+        end
+        union!(seen, keys(zto))
+        att = [h for h in half if haskey(zto, inner(h))]
+        haslo = any(haskey(load, b) for b in keys(zto))
+        if length(att) == 2 && !haslo && outer(att[1]) != outer(att[2])
+            h1, h2 = inner(att[1]) == s ? (att[1], att[2]) : (att[2], att[1])
+            push!(tieout, (; name = "tie_" * h1.name, a = outer(h1), b = outer(h2), z = h1.z + zto[inner(h2)] + h2.z))
+        else
+            push!(notes, @sprintf("normally-open group at %s (%d buses, %d ties into it%s): left out", s, length(zto), length(att), haslo ? ", with load" : ""))
+        end
+    end
+    ties = tieout
     allroots = Set(root(dsu, b) for b in mv)
     lost = setdiff(allroots, keys(feeder))
     lostload = sum((real(get(load, b, 0im)) for b in lost); init = 0.0)
@@ -245,7 +307,6 @@ function convert(name)
     load = Dict(b => s for (b, s) in load if haskey(feeder, b))
     load_mv = Dict(b => s for (b, s) in load_mv if haskey(feeder, b))      # each load on its MV bus: where DERs go
     caps = Dict(b => q for (b, q) in caps if haskey(feeder, b))
-    ties = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties if haskey(feeder, root(dsu, t.a)) && haskey(feeder, root(dsu, t.b))]
     stats = (; nsw, nreg, nstep, nreac, nload, dropped, lost = length(lost), lostload, levels = sort(unique(round.([kv[b] for b in mv]; digits = 2))))
     return (; name, cfg, buses = Set(keys(feeder)), mvbuses = Set(b for b in keys(feeder) if b in mv), branches = br, ties, load, load_mv, caps,
             subs = [(; bus = s, mv = sort(unique([x.b for x in subx if x.a == s])), z = 1 / sum(1 / x.z for x in subx if x.a == s)) for s in srcs], feeder, stats, notes)
@@ -294,10 +355,11 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "test_networks", deckname(c)
         end
     end
     w("Ties.dss") do io
-        println(io, "! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true; each is given")
-        println(io, "! 1e-3 + j1e-3 ohm, as the other decks' shortest lines, to keep the admittance matrix well scaled.")
+        println(io, "! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true. A switch is")
+        println(io, "! 1e-3 + j1e-3 ohm, as the other decks' shortest lines; a tie cable with an open switch at each end")
+        println(io, "! (tie_<switch>) is one line with both switches and the cable in series, its middle buses left out.")
         for t in c.ties
-            println(io, "New Line.$(t.name) Phases=1 Bus1=$(t.a).1 Bus2=$(t.b).1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false")
+            println(io, "New Line.$(t.name) Phases=1 Bus1=$(t.a).1 Bus2=$(t.b).1 r1=$(f3(real(t.z))) x1=$(f3(imag(t.z))) c1=0 c0=0 length=1 units=none enabled=false")
         end
     end
     w("Loads.dss") do io
@@ -351,7 +413,41 @@ Set number = 1
 CalcVoltageBases
 """)
     end
+    get(c.cfg, :p1u_variants, false) && write_p1u_variants(c, w)
     return out
+end
+
+"""
+Four-substation variants of a SMART-DS P1U deck (user, 2026-10-24), as masters that redirect Master.dss and then
+switch elements, so the deck itself keeps every source and every tie open. Ties are picked by rule from where each
+end is fed: `inter` joins feeders of two substations (Type III), `sect` joins the two transformer sections of hs0
+(Type II; its substation bus tie `sb*` apart). hs0's second source carries the less load.
+"""
+function write_p1u_variants(c, w)
+    hs(i) = match(r"p1uhs(\d)", c.subs[i].bus).captures[1]
+    fe(b) = c.feeder[b]
+    inter = sort([t.name for t in c.ties if hs(fe(t.a)) != hs(fe(t.b))])
+    sect = [t for t in c.ties if hs(fe(t.a)) == hs(fe(t.b)) && fe(t.a) != fe(t.b)]
+    bustie = sort([t.name for t in sect if startswith(t.name, "sb")]); feedtie = sort([t.name for t in sect if !startswith(t.name, "sb")])
+    two = [i for i in eachindex(c.subs) if count(j -> hs(j) == hs(i), eachindex(c.subs)) == 2]
+    ld(i) = sum((real(s) for (b, s) in c.load if fe(b) == i); init = 0.0)
+    second = argmin(i -> ld(i), two)
+    small = argmin(i -> ld(i), [i for i in eachindex(c.subs) if !(i in two)])
+    lines(io, names) = foreach(n -> println(io, "Line.$n.enabled=true"), names)
+    w("Master_4sub_typeIII.dss") do io
+        println(io, "! Four substations, one transformer each, tied by the original's normally-open ties between substations")
+        println(io, "! (Type III, Chen et al. 2004): hs$(hs(second))'s second transformer (subs$second) out, its section fed through the substation bus tie.")
+        println(io, "Redirect Master.dss\nVsource.subs$second.enabled=false"); lines(io, bustie); lines(io, inter)
+        println(io, "CalcVoltageBases")
+    end
+    w("Master_4sub_typeII.dss") do io
+        println(io, "! Four sources: hs$(hs(second))'s two transformers (subs$(two[1]), subs$(two[2])), tied through their feeder ties (Type II), and two")
+        println(io, "! other substations tied by the ties between substations (Type III); hs$(hs(small)) (subs$small, the smallest) out, fed through its ties.")
+        println(io, "Redirect Master.dss\nVsource.subs$small.enabled=false"); lines(io, feedtie); lines(io, inter)
+        println(io, "CalcVoltageBases")
+    end
+    @printf("  variants: %d ties between substations, %d bus tie(s) and %d feeder ties between hs%s's transformer sections; Type III drops subs%d, Type II drops subs%d\n",
+            length(inter), length(bustie), length(feedtie), hs(second), second, small)
 end
 
 function report(c, pv, bt, nboth)

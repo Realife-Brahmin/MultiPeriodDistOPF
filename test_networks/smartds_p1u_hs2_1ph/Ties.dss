@@ -1,0 +1,9 @@
+! smartds_p1u_hs2_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\p1uhs2_1247\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's normally-open switches, disabled. Close one with Line.<name>.enabled=true. A switch is
+! 1e-3 + j1e-3 ohm, as the other decks' shortest lines; a tie cable with an open switch at each end
+! (tie_<switch>) is one line with both switches and the cable in series, its middle buses left out.
+New Line.sb1_p1uhs2_1247_31 Phases=1 Bus1=sb1_p1uhs2_1247_bus_1_1.1 Bus2=sb1_p1uhs2_1247_bus_1_2.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.elbswitch_r_p1udt578-p1udt583_p1u_11925 Phases=1 Bus1=p1udt578.1 Bus2=p1udt578-p1udt583x.1 r1=0.001 x1=0.001 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt1046-p1udt1130_p1u_11917 Phases=1 Bus1=p1udt1046.1 Bus2=p1udt1130.1 r1=0.00604189 x1=0.0269051 c1=0 c0=0 length=1 units=none enabled=false
+New Line.tie_padswitch_r_p1udt1124-p1udt1125_p1u_11929 Phases=1 Bus1=p1udt1124.1 Bus2=p1udt1125.1 r1=0.00725957 x1=0.0344081 c1=0 c0=0 length=1 units=none enabled=false

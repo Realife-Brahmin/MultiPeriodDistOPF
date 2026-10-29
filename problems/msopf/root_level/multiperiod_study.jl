@@ -76,17 +76,21 @@ with_zs(net, zmag) = (r = zmag / sqrt(1 + X_OVER_R^2);
     merge(net, (; sources = [merge(s, (; z_series = complex(r, X_OVER_R * r))) for s in net.sources])))
 with_duration(net, hours) = merge(net, (; batteries = [merge(bt, (; kWh_rated = hours * bt.kW_rated)) for bt in net.batteries]))
 banded(net) = [b for b in net.buses if !(b in Set(s.bus for s in net.sources))]
+customer_buses(net) = Set(l.to for l in net.lines if startswith(lowercase(l.name), "svc_"))
+# Primary-only decks retain their historical band; service-transformer decks constrain customers only.
+study_band(net) = (bs = customer_buses(net); isempty(bs) ? nothing : bs)
+study_banded(s) = s.band_buses === nothing ? banded(s.net) : collect(s.band_buses)
 
 "Everything one configuration needs: profiles, the PV mode's inputs, and the cost weights."
 # `feas` (per unit) is the feasibility tolerance the user's DDP work uses, 1e-5 (2026-10-12): no
 # limit violated by more than `feas`, with Ipopt's constraint tolerance at `feas` and its
 # convergence tolerance a decade tighter so that a slack at zero ends well below it. `nothing`
 # keeps the tight default, 1e-9, and the summed-slack test (VTOL).
-function setup(net, pvs; T, pv = "qfree", ideal = false, feas = nothing)
+function setup(net, pvs; T, pv = "qfree", ideal = false, feas = nothing, band_buses = study_band(net))
     lam, c, pvf = load_profile(T), price_profile(T), pv_profile(T)
     P, F = pv == "off" ? ([], zeros(T)) : (pvs, pvf)
     ipopt = feas === nothing ? (; tol = IPOPT_TOL, constr_viol_tol = IPOPT_TOL) : (; tol = feas / 10, constr_viol_tol = feas)
-    return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal, feas, ipopt)
+    return (; net, T, lam, c, P, F, q = pv == "unity" ? :unity : :optimize, CB = cb_by_rule(net), GAM = gamma_by_rule(net), ideal, feas, ipopt, band_buses)
 end
 
 const DAY = :cyclic            # the whole-day case that is reported: hard terminal SOC
@@ -102,7 +106,7 @@ Keyword arguments of solve_multiperiod for one case of setup `s`: over the whole
 :batt).
 """
 function problem(s, case; hour = nothing)
-    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, battery = case === :nobatt ? :idle : :optimize, s.ipopt...,
+    common = (; pvs = s.P, pv_q = s.q, C_B = s.CB, ideal_sources = s.ideal, band_buses = s.band_buses, battery = case === :nobatt ? :idle : :optimize, s.ipopt...,
               # MULTI_VMARGIN=k: margin solves count voltage room too (k kW per pu of |V|^2), so edges set by
               # the band are found by the same secant as those set by no-backflow (see solve_multiperiod)
               margin_band_kw = haskey(ENV, "MULTI_VMARGIN") ? parse(Float64, ENV["MULTI_VMARGIN"]) : nothing)
@@ -136,7 +140,7 @@ function rays(s, case, dirs; hour = nothing, check = :inside)
     bind = fill((; minP = NaN, vmin = NaN, vmax = NaN), length(dirs))
     feasible || return (; feasible, r, capped, bad, bind)
     tag = hour === nothing ? string(case) : "$case, hour $hour"
-    nb = banded(net)
+    nb = study_banded(s)
     for (i, dir) in enumerate(dirs)
         x = solve_multiperiod(net, equal_angles(net); kw..., objective = :ray, ray_dir = dir, ray_limit = LIMIT, start = at0)
         if !(x.status in RAY_OK) || !isfinite(x.r)
@@ -259,7 +263,7 @@ if "main" in STAGES
         push!(days, (; dd, x, rp))
     end
     PL, PVk = sum(d.kW for d in net.loads), sum(p.kW for p in pvs)
-    nb = banded(net)
+    nb = study_banded(s)
     open(joinpath(OUT_DIR, "main_days.csv"), "w") do io
         println(io, "ddelta_deg,hour,load_kW,pv_kW,price,P_subs_a_kW,P_subs_b_kW,fleet_P_B_kW,fleet_energy_kWh,fleet_PV_Q_kvar,min_V_pu,max_V_pu")
         for y in days, t in 1:T
@@ -566,14 +570,31 @@ end
 Every substation's import at equal angles with the batteries idle (kW per hour) and its derivative
 with respect to each moving substation's angle (kW/deg per hour), by central differences.
 """
-function sensitivity(s, movers; h = 0.1)
+function sensitivity(s, movers; h = 0.1, replay_file = nothing)
     names = [x.name for x in s.net.sources]
-    at(dd) = solve_multiperiod(s.net, merge(Dict(n => 0.0 for n in names), dd); problem(s, :nobatt)..., no_backflow = false)
+    function at(dd; start = nothing)
+        angles = merge(Dict(n => 0.0 for n in names), dd)
+        x = solve_multiperiod(s.net, angles; problem(s, :nobatt)..., no_backflow = false, start)
+        x.ok || return x
+        rp = replay_opendss(s.net, x, angles; load_factor = s.lam, pvs = s.P, pv_factor = s.F)
+        good = rp.converged && rp.pq_band && rp.dP <= 1e-3 && rp.dQ <= 1e-3 && rp.dV <= 1e-7 && rp.dB <= 1e-3
+        say(@sprintf("    sensitivity replay: %s, dP %.2e kW, dQ %.2e kvar, dV %.2e pu", good ? "PASS" : "FAIL", rp.dP, rp.dQ, rp.dV))
+        if replay_file !== nothing
+            fresh = !isfile(replay_file)
+            open(replay_file, "a") do io
+                fresh && println(io, "angles_deg,status,iterations,solve_seconds,converged,pq_band,dP_kW,dQ_kvar,dV_pu,dB_kW,passed")
+                println(io, join([join([@sprintf("%s=%.6f", k, v) for (k, v) in sort(collect(angles))], ";"),
+                    x.status, x.iterations, x.time, rp.converged, rp.pq_band, rp.dP, rp.dQ, rp.dV, rp.dB, good], ','))
+            end
+        end
+        good || error("OpenDSS rejected sensitivity dispatch; no prediction will be written")
+        return x
+    end
     x0 = at(Dict{String,Float64}())
     x0.ok || return nothing
     K = Dict{Tuple{String,String},Vector{Float64}}()
     for m in movers
-        xp, xm = at(Dict(m => +h)), at(Dict(m => -h))
+        xp, xm = at(Dict(m => +h); start = x0), at(Dict(m => -h); start = x0)
         (xp.ok && xm.ok) || return nothing
         for k in names
             K[(k, m)] = (xp.P_subs_kW[k] .- xm.P_subs_kW[k]) ./ 2h
@@ -758,7 +779,7 @@ choice for the large10k decks, where those solves cost up to 25 minutes each and
 Assumes one feasible interval around zero; a doubling step can jump a narrow infeasible gap.
 """
 function window_bracketed(s, case, a; ray = true)
-    kw, net, nb = problem(s, case), s.net, banded(s.net)
+    kw, net, nb = problem(s, case), s.net, study_banded(s)
     function test(sgn, r, prev)
         x = solve_multiperiod(net, Dict(k.name => (k.name == a ? sgn * r : 0.0) for k in net.sources); kw..., objective = :violation, start = prev)
         within = s.feas === nothing ? x.violation <= VTOL : x.max_violation <= s.feas
@@ -827,7 +848,7 @@ A margin solve that fails, a margin that does not fall, or a failed confirmation
 by the voltage band, say) hands the whole window to `window_bracketed`.
 """
 function window_secant(s, case, a, K, pred_hi)
-    kw, net, nb = problem(s, case), s.net, banded(s.net)
+    kw, net, nb = problem(s, case), s.net, study_banded(s)
     at(sgn, r) = Dict(k.name => (k.name == a ? sgn * r : 0.0) for k in net.sources)
     vtol = something(s.feas, 1e-5)
     nm, nt = Ref(0), Ref(0)
@@ -1030,6 +1051,33 @@ function margin_solve(net, angles, kw; start = nothing)
 end
 
 """
+The largest current over the day (A, in the deck's base: S_base / kV_base) in each class of branch, with the
+element carrying it: `source` (substations, and the poi lines joining added ones), `tie` (the switches closed
+for the study, `s.tie_names`, and the converter's `tie_*` lines), `service` (service transformers, `svc_*`)
+and `primary` (every other line). No limit is imposed; this only keeps tabs, since the classes will need
+different ratings (2026-10-26).
+"""
+function current_tabs(s, x)
+    Ib = s.net.S_base_kVA / s.net.kV_base
+    ties = get(s, :tie_names, Set{String}())
+    cls(n) = startswith(n, "svc_") ? "service" : (n in ties || startswith(n, "tie_")) ? "tie" : startswith(n, "poi") ? "source" : "primary"
+    best = Dict(c => (0.0, "") for c in CURRENT_CLASSES)
+    for (n, r) in x.raw.lr
+        m = Ib * maximum(hypot.(r, x.raw.li[n]); init = 0.0)
+        c = cls(lowercase(n)); m > best[c][1] && (best[c] = (m, n))
+    end
+    for (n, r) in x.raw.ir
+        m = Ib * maximum(hypot.(r, x.raw.ii[n]); init = 0.0)
+        m > best["source"][1] && (best["source"] = (m, n))
+    end
+    return best
+end
+const CURRENT_CLASSES = ("source", "tie", "primary", "service")
+const CURRENT_COLUMNS = join(["max_A_$c,at_$c" for c in CURRENT_CLASSES], ",")
+current_cells(bind) = haskey(bind, :amps) ? join([@sprintf("%.2f,%s", bind.amps[c]...) for c in CURRENT_CLASSES], ",") :
+                      join(fill("NaN,", length(CURRENT_CLASSES)), ",")
+
+"""
 Reach along `dir` by a secant on the import margin (`objective = :margin`, the largest import every
 substation can be guaranteed): it is zero at an edge set by no-backflow and nearly linear in the angle
 (the imports are), so from the margin at equal angles `x0` and one solve at the predicted reach `guess`,
@@ -1040,7 +1088,7 @@ The edge solution is itself feasible; one violation test just outside confirms t
 Returns the edge solution as `x`, to start the next direction from.
 """
 function reach_secant(s, case, dir, guess, x0; prev = nothing)
-    kw, nb = problem(s, case), banded(s.net)
+    kw, nb = problem(s, case), study_banded(s)
     vtol = something(s.feas, 1e-5)
     at(r) = Dict(k => r * v for (k, v) in dir)
     n = Ref(0)
@@ -1054,7 +1102,7 @@ function reach_secant(s, case, dir, guess, x0; prev = nothing)
     end
     bind_of(x) = (; minP = minimum(minimum(v) for v in values(x.P_subs_kW)),
                   vmin = minimum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T), vmax = maximum(abs(x.V_pu[b][t]) for b in nb, t in 1:x.T),
-                  imports = Dict(k => minimum(v) for (k, v) in x.P_subs_kW))
+                  imports = Dict(k => minimum(v) for (k, v) in x.P_subs_kW), amps = current_tabs(s, x))
     fallback(why, st) = (say("      secant gave up (", why, "); bracketing"); b = reach_bracket(s, case, dir, guess);
                          (; b..., solves = n[], method = :bracket, x = nothing))
     x0.margin_kW >= -MTOL_KW || return (; feasible = false, r = NaN, capped = false, bind = bind_of(x0), solves = n[], method = :secant, x = nothing)
@@ -1089,7 +1137,7 @@ end
 
 "Reach along `dir` by feasibility tests: start at the predicted reach, step out (x1.15) or in (x0.85) to a bracket, bisect."
 function reach_bracket(s, case, dir, guess; bisections = 7)
-    kw, nb = problem(s, case), banded(s.net)
+    kw, nb = problem(s, case), study_banded(s)
     last = Ref{Any}(nothing)
     function test(r)
         # a margin solve (always feasible as an optimization): feasible here iff the margin is >= 0 within the limits
@@ -1101,7 +1149,7 @@ function reach_bracket(s, case, dir, guess; bisections = 7)
     bind() = last[] === nothing ? (; minP = NaN, vmin = NaN, vmax = NaN, imports = Dict{String,Float64}()) :
              (; minP = minimum(minimum(v) for v in values(last[].P_subs_kW)),
                 vmin = minimum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T), vmax = maximum(abs(last[].V_pu[b][t]) for b in nb, t in 1:last[].T),
-                imports = Dict(k => minimum(v) for (k, v) in last[].P_subs_kW))
+                imports = Dict(k => minimum(v) for (k, v) in last[].P_subs_kW), amps = current_tabs(s, last[]))
     test(0.0) || return (; feasible = false, r = NaN, capped = false, bind = bind())
     g = isfinite(guess) ? min(guess, LIMIT) : LIMIT
     if g >= LIMIT - 1e-9
@@ -1177,8 +1225,8 @@ function three_deck_stage(name, tc)
     method = Symbol(get(ENV, "THREE_METHOD", string(tc.method)))
     cases = haskey(ENV, "THREE_CASES") ? Symbol.(split(ENV["THREE_CASES"], ',')) : [:nobatt, DAY]
     net, pvs = load_sources(["subs1", "subs2", "subs3"]; system = tc.system, extra = ["Line.$t.enabled=true" for t in tc.ties])
-    s = setup(net, pvs; T, tc.feas)
-    sep = Dict((a.name, b.name) => abs(separation_sparse(merge(net, (; sources = [a, b])))) for a in net.sources, b in net.sources if a.name < b.name)
+    s = merge(setup(net, pvs; T, tc.feas), (; tie_names = Set(lowercase.(tc.ties))))
+    sep =Dict((a.name, b.name) => abs(separation_sparse(merge(net, (; sources = [a, b])))) for a in net.sources, b in net.sources if a.name < b.name)
     say("\n", "="^110, "\n", uppercase(name), "  $(tc.system), its own three substations, ties ", join(tc.ties, ","), " closed, T = $T; directions $(join(dirs_i, ',')), cases $(join(cases, ','))")
     say("    |Z| between substations: ", join([@sprintf("%s-%s %.3f ohm", k[1], k[2], z) for (k, z) in sort(collect(sep))], ", "))
     three_measure(name, tc.system, tc.at, s, T, dirs_i, method, cases, "subs1", "subs2", "subs3")
@@ -1226,6 +1274,8 @@ function three_measure(name, label, at, s, T, dirs_i, method, cases, S0, A1, A2)
                      w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr, Sys.maxrss() / 2^30))
         push!(rows, @sprintf("%s,%s,%s,%d,%s,%.2f,%s,%.6f,%.6f,%s,%s,%d,%.4f,%.6f,%.6f,%.0f", label, at[1], at[2], T, case, rad2deg(th),
                              w.feasible, w.r, pred, lim, w.capped, w.bad, w.bind.minP, w.bind.vmin, w.bind.vmax, time() - tr))
+        merge_csv(joinpath(OUT_DIR, "three_large_currents.csv"), "system,bus_a,bus_b,T,case,ray_deg,measured_deg,at_limit,$CURRENT_COLUMNS", 6,
+                  [@sprintf("%s,%s,%s,%d,%s,%.2f,%.6f,%s,%s", label, at[1], at[2], T, case, rad2deg(th), w.r, w.capped, current_cells(w.bind))])
     end
     isempty(rows) || merge_csv(joinpath(OUT_DIR, "three_large_windows.csv"), THREE_HEADER, 6, rows)
     say("  wrote three_large_windows.csv; ", name, " done in ", round(Int, time() - t0), " s")
@@ -1240,6 +1290,18 @@ foreach(three_stage, filter(in(STAGES), collect(keys(THREE))))
 # import model at random angle points inside the predicted idle region.
 #   MULTI_DIRS=i:j:... (1-26), MULTI_CASES=nobatt|cyclic, MULTI_SAMPLES=n (idle linearity points, 30;
 #   0 skips), LARGE_T. Rows merge into multi_windows.csv, samples into multi_linearity.csv.
+# A variant master contains only switching commands after Redirect Master.dss.
+# Keep the converter's topology authoritative; do not duplicate its tie list in the study.
+function variant_switches(system, master)
+    commands = String[]
+    for line in eachline(joinpath(REPO_ROOT, "test_networks", system, master))
+        text = strip(line)
+        occursin(r"(?i)^(Line|Vsource)\.\S+\.enabled=(true|false)$", text) && push!(commands, String(text))
+    end
+    isempty(commands) && error("No switching commands in $master")
+    return commands
+end
+const TIES_9500 = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]
 const MULTI = Dict(
     "four_ieee123a" => (; system = SYSTEM, label = "ieee123_5poi_1ph", sources = ["subs1", "subs2", "subs3", "subs4"], add = nothing, feas = nothing),
     "four_ieee123b" => (; system = SYSTEM, label = "ieee123_5poi_1ph", sources = ["subs1", "subs3", "subs4", "subs5"], add = nothing, feas = nothing),
@@ -1250,7 +1312,15 @@ const MULTI = Dict(
     # 6.4 / 6.8 / 5.0 ohm from the three real ones (choose_fourth_9500.jl), behind the same transformer impedance.
     "four_ieee9500" => (; system = "ieee9500_1ph", label = "ieee9500_1ph", sources = ["subs1", "subs2", "subs3", "subs4"],
                          add = ["l2804256"], feas = 1e-5, zs = complex(0.104186, 0.617339), kv = 7.1996, edit_source = false,
-                         ties = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]))
+                         ties = TIES_9500),
+    # The service-transformer edition retains the primary graph, including l2804256;
+    # adding pendant secondary branches does not change its series effective distance.
+    "four_ieee9500xf" => (; system = "ieee9500xf_1ph", label = "ieee9500xf_1ph", sources = ["subs1", "subs2", "subs3", "subs4"],
+                         add = ["l2804256"], feas = 1e-5, zs = complex(0.104186, 0.617339), kv = 7.1996, edit_source = false, ties = TIES_9500),
+    "four_smartds_p1u_typeiii" => (; system = "smartds_p1u_xf_1ph", label = "smartds_p1u_xf_typeIII", sources = ["subs1", "subs2", "subs3", "subs4"],
+                         add = nothing, feas = 1e-5, variant = "Master_4sub_typeIII.dss"),
+    "four_smartds_p1u_typeii" => (; system = "smartds_p1u_xf_1ph", label = "smartds_p1u_xf_typeII", sources = ["subs1", "subs2", "subs4", "subs5"],
+                         add = nothing, feas = 1e-5, variant = "Master_4sub_typeII.dss"))
 const MULTI_HEADER = "system,sources,T,case,direction,u1,u2,u3,measured_deg,predicted_deg,limiting_substation,at_limit,min_import_kW,vmin_pu,vmax_pu,solves,method,seconds,binding,min_imports_kW"
 const CUBE_DIRS = [v ./ sqrt(sum(abs2, v)) for v in ([a, b, c] for a in -1:1, b in -1:1, c in -1:1) if any(!=(0), v)]
 # n directions spread evenly over the sphere (Fibonacci lattice): MULTI_DIRSET=fib78 triples the cube's 26.
@@ -1274,7 +1344,7 @@ function multi_stage(name)
     di = haskey(ENV, "MULTI_DIRS") ? parse.(Int, split(ENV["MULTI_DIRS"], r"[,: ]"; keepempty = false)) : collect(1:length(DIRS))
     cases = haskey(ENV, "MULTI_CASES") ? Symbol.(split(ENV["MULTI_CASES"], ',')) : [:nobatt, DAY]
     nsamp = parse(Int, get(ENV, "MULTI_SAMPLES", "30"))
-    extra = String[]
+    extra = haskey(mc, :variant) ? variant_switches(mc.system, mc.variant) : String[]
     # MULTI_VSRC=v: every source (the deck's own and the added ones) at v pu instead of 1.05; outputs
     # carry the tag _v<v>, so they never mix with the 1.05 pu rows
     vs = get(ENV, "MULTI_VSRC", "1.05"); vtag = haskey(ENV, "MULTI_VSRC") ? "_v$vs" : ""
@@ -1295,12 +1365,16 @@ function multi_stage(name)
     net, pvs = load_sources(mc.sources; system = mc.system, extra)
     isempty(vtag) || say("    sources at ", join(sort(unique([@sprintf("%.3f", x.pu) for x in net.sources])), ", "), " pu (MULTI_VSRC)")
     s = setup(net, pvs; T, feas = mc.feas)
-    S0, movers = mc.sources[1], mc.sources[2:end]
+    # the switches closed for the study (ties, and a variant master's bus tie), for the current tabs
+    s = merge(s, (; tie_names = Set(lowercase(m[1]) for c in extra for m in (match(r"(?i)^Line\.(\S+)\.enabled=true$", c),) if m !== nothing)))
+    S0, movers =mc.sources[1], mc.sources[2:end]
     say("\n", "="^110, "\n", uppercase(name), "  $(mc.label), sources ", join(mc.sources, ","), mc.add === nothing ? "" : " (added at buses $(join(mc.add, ",")))",
         ", reference $S0, T = $T; directions $(join(di, ',')), cases $(join(cases, ','))")
     t0 = time()
-    sens = sensitivity(s, movers)
-    sens === nothing && (say("  ** idle solves failed"); return)
+    say("    voltage band on ", length(study_banded(s)), " buses", s.band_buses === nothing ? " (primary-only legacy deck)" : " (customers only)")
+    sens = sensitivity(s, movers; h = parse(Float64, get(ENV, "MULTI_SENS_H", "0.1")),
+                       replay_file = joinpath(OUT_DIR, "multi_replay_$(name)$(vtag)_T$(T).csv"))
+    sens === nothing && error("Idle sensitivity solves failed for $name; no prediction available")
     for k in sens.names
         say(@sprintf("    %-6s mean import %8.1f kW (worst hour %8.1f); sensitivity %s kW/deg (daily mean)", k, sum(sens.P[k]) / T, minimum(sens.P[k]),
                      join([@sprintf("%s %+.1f", m, sum(sens.K[(k, m)]) / T) for m in movers], ", ")))
@@ -1313,6 +1387,16 @@ function multi_stage(name)
             println(io, k, ",", t, ",", @sprintf("%.6f", sens.P[k][t]), ",", join([@sprintf("%.6f", sens.K[(k, m)][t]) for m in movers], ","))
         end
     end
+    # Predict all directions even when running only the sensitivity stage. These are
+    # backflow-based estimates; voltage limits and redispatch can move the actual edge.
+    open(joinpath(OUT_DIR, "multi_predicted_$(name)$(vtag)_$(dset)_T$(T).csv"), "w") do io
+        println(io, "case,direction,u1,u2,u3,predicted_deg,limiting_substation")
+        for case in cases, (i, u) in enumerate(DIRS)
+            r, lim = predicted_reach(sens, Dict(zip(movers, u)); day = case === DAY)
+            println(io, join([case, i, u..., r, lim], ','))
+        end
+    end
+    get(ENV, "MULTI_SENS_ONLY", "0") == "1" && (say("  sensitivity and predicted reaches complete; edge search skipped (MULTI_SENS_ONLY)"); return)
     # the affine import model at random points inside the predicted idle region
     if nsamp > 0 && :nobatt in cases
         rng = Random.MersenneTwister(2027); lin = String[]; errs = Float64[]
@@ -1354,6 +1438,9 @@ function multi_stage(name)
                              b.r, pred, lim, b.capped, b.bind.minP, b.bind.vmin, b.bind.vmax, b.solves, b.method, time() - tr, bl,
                              join([@sprintf("%s=%.3f", k, v) for (k, v) in sort(collect(b.bind.imports))], ";")))
         merge_csv(joinpath(OUT_DIR, fname), MULTI_HEADER, 5, rows[end:end])     # each row as soon as it is measured
+        # largest currents at the edge solution, by branch class (kept apart so multi_windows keeps its columns)
+        merge_csv(joinpath(OUT_DIR, replace(fname, "multi_windows" => "multi_currents")), "system,sources,T,case,direction,measured_deg,at_limit,$CURRENT_COLUMNS", 5,
+                  [@sprintf("%s,%s,%d,%s,%d,%.6f,%s,%s", mc.label, join(mc.sources, ":"), T, case, i, b.r, b.capped, current_cells(b.bind))])
     end
     # (rows were written one by one above)
     say("  wrote $fname; ", name, " done in ", round(Int, time() - t0), " s")

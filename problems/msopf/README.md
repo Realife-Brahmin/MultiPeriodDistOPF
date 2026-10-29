@@ -99,3 +99,72 @@ On the 10k-bus decks (2026-10-13):
     (Traupmann & Kienberger 2020, Table 19).
   - X/R = 25, inside the 15–40 range of IEEE C37.010-2016, Table 24.
 - `solve_full_angle(...; ideal_sources = true)` recovers the old stiff sources.
+
+## Customer-bus test-system studies (2026-10-25)
+
+`root_level/multiperiod_study.jl` now recognizes these four-source stages:
+
+- `four_ieee9500xf`: the service-transformer IEEE9500 deck, five feeder ties closed, and the fourth source at `l2804256` selected in `choose_fourth_9500.jl`. Its 2,702 primary line definitions are identical to the primary-only conversion; the added secondary branches do not change the primary series effective impedances or the site choice.
+- `four_smartds_p1u_typeiii`: `subs1`–`subs4`, switching read from `Master_4sub_typeIII.dss`.
+- `four_smartds_p1u_typeii`: `subs1`, `subs2`, `subs4`, `subs5`, switching read from `Master_4sub_typeII.dss`.
+
+For decks containing `svc_*` lines, `setup` selects their receiving buses as customers.
+The selection is passed through `problem` to every day/hour/edge solve, and the same
+selection is used to report voltage extrema and classify voltage-limited edges.
+Primary-only decks retain their existing band on non-source buses.
+
+Run the local preparation, serially, from Git Bash at the repository root:
+
+```bash
+bash problems/msopf/root_level/run_test_edition_sensitivities.sh
+```
+
+This runs IEEE9500xf and P1U Type III at T=24 with PV reactive dispatch and the
+existing DER fleets. `MULTI_SENS_ONLY=1` computes the baseline plus six central-difference
+solves (three moving angles, +/-0.1 degree). Every successful solve is replayed for
+all 24 hours in OpenDSS. Replay tolerances: 1e-3 kW/kvar/battery-kW and 1e-7 pu;
+OpenDSS must converge and keep the loads constant-PQ. A failed solve/replay stops the
+stage before a sensitivity prediction is published.
+
+The sensitivity CSV contains hourly imports and derivatives. The predicted-reach CSV
+contains 78 directions for both idle batteries (worst hour) and cyclic batteries
+(daily mean). **These are estimates based on idle-dispatch sensitivities, not measured
+feasibility boundaries or global certificates.** Voltage limits and PV redispatch can
+change the boundaries. A region should only be called a simplex after its geometry
+and the independent edge searches support that statement.
+
+Each case writes a new directory under `results/test_networks/sensitivity_oct25/`, with
+raw stdout/stderr, replay CSV, environment/solver/thread settings, source and deck hashes,
+Git revision and source patch, wall time, and exit code. Existing run directories are
+never overwritten; set `MSOPF_SENS_OUT` to a new root for a rerun. Each solve has a
+600-second wall cap. The local run uses one Julia/BLAS/OpenMP thread and lean JuMP mode;
+these preparation timings are not matched benchmark timings.
+
+The regression `tests/customer_band.jl` solves a primary bus above 1.05 pu with a
+customer inside the band, compares customer-only versus legacy margin diagnostics,
+and replays both dispatches in OpenDSS. It also checks the legacy primary-only rule,
+variant source selections, and the identical IEEE9500 primary impedances:
+
+```bash
+julia --startup-file=no --project=problems/msopf problems/msopf/tests/customer_band.jl
+```
+
+The single-substation K1, Ckt24 and 8500xf decks remain covered by
+`test_edition_smoke.jl`; four-source stages do not invent sites for those systems.
+The full 78-direction edge campaign is a separate, much larger run. Use
+`MULTI_DIRSET=fib78 MULTI_VMARGIN=20000 MULTI_SAMPLES=0` with the desired new stage,
+without `MULTI_SENS_ONLY`, after checking cluster access and the shared queue.
+
+Validate a finished preparation directory and regenerate its scientific figures without
+running any optimization:
+
+```bash
+python problems/msopf/root_level/check_test_edition_sensitivities.py <run-directory>
+python problems/msopf/root_level/plot_test_edition_sensitivities.py <run-directory>
+```
+
+The validator requires a successful process exit, all seven converged OpenDSS replays,
+complete hourly sensitivities, and 156 consistent directional predictions. The plotter
+uses NumPy and Matplotlib, verifies the four intersections of the daily-mean import
+planes, and exports PNG plus editable SVG. These figures show predictions only;
+measured voltage cuts and nonlinear corrections await the edge campaign.

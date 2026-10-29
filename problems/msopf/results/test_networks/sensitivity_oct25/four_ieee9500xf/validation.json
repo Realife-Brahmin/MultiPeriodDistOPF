@@ -1,0 +1,42 @@
+{
+  "validated": true,
+  "kind": "sensitivity-based estimates, not measured feasibility boundaries",
+  "solves": 7,
+  "hours_per_solve": 24,
+  "sensitivity_rows": 96,
+  "predicted_rows": 156,
+  "worst_replay": {
+    "dP_kW": 1.3015727404308564e-05,
+    "dQ_kvar": 1.0886594594694543e-05,
+    "dV_pu": 5.312499873911507e-10,
+    "dB_kW": 0.0
+  },
+  "mean_import_kW": {
+    "subs1": 875.4180797083333,
+    "subs2": 1180.5574104166665,
+    "subs3": 965.3113110416667,
+    "subs4": 575.1336678333333
+  },
+  "mean_sensitivity_kW_per_deg": {
+    "subs1": {
+      "K_subs2_kW_per_deg": -142.69603475,
+      "K_subs3_kW_per_deg": -93.09160795833333,
+      "K_subs4_kW_per_deg": -33.79197558333333
+    },
+    "subs2": {
+      "K_subs2_kW_per_deg": 252.0954500833333,
+      "K_subs3_kW_per_deg": -83.28462029166668,
+      "K_subs4_kW_per_deg": -26.22579016666667
+    },
+    "subs3": {
+      "K_subs2_kW_per_deg": -83.35527058333336,
+      "K_subs3_kW_per_deg": 266.49086687499994,
+      "K_subs4_kW_per_deg": -89.95962345833333
+    },
+    "subs4": {
+      "K_subs2_kW_per_deg": -27.50451425,
+      "K_subs3_kW_per_deg": -92.63113350000002,
+      "K_subs4_kW_per_deg": 155.37771220833335
+    }
+  }
+}

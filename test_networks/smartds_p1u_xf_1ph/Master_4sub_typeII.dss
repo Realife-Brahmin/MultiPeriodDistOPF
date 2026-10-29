@@ -1,0 +1,18 @@
+! smartds_p1u_xf_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! Four sources: hs0's two transformers (subs4, subs5), tied through their feeder ties (Type II), and two
+! other substations tied by the ties between substations (Type III); hs3 (subs3, the smallest) out, fed through its ties.
+Redirect Master.dss
+Vsource.subs3.enabled=false
+Line.tie_padswitch_r_p1udt101-p1udt94_p1u_11914.enabled=true
+Line.tie_padswitch_r_p1udt111-p1udt219_p1u_11904.enabled=true
+Line.tie_padswitch_r_p1udt158-p1udt450_p1u_11894.enabled=true
+Line.tie_padswitch_r_p1udt258-p1udt447_p1u_11934.enabled=true
+Line.tie_padswitch_r_p1udt458-p1udt78_p1u_11905.enabled=true
+Line.elbswitch_r_p1udt1165-p1udt1475_p1u_11936.enabled=true
+Line.elbswitch_r_p1udt1810-p1udt1812_p1u_11900.enabled=true
+Line.tie_padswitch_r_p1udt1185-p1udt1711_p1u_11896.enabled=true
+Line.tie_padswitch_r_p1udt1317-p1udt1618_p1u_11891.enabled=true
+Line.tie_padswitch_r_p1udt1721-p1udt1730_p1u_11928.enabled=true
+Line.tie_padswitch_r_p1udt918-p1udt919_p1u_11898.enabled=true
+CalcVoltageBases

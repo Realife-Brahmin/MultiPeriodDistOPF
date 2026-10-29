@@ -144,7 +144,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
                            source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing, margin_band_hard = false,
-                           tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
+                           band_buses = nothing, tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
     # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
@@ -289,7 +289,11 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # margin_band_hard = true: the band stays a hard constraint and the margin is on no-backflow alone
     # (the restoration problem: max m = -rho with P_Subs >= m); no slacks, no band room in the margin.
     eband = elastic || (marg && !vmarg && !margin_band_hard)
-    bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b)]
+    # band_buses: where the voltage band applies. nothing = every bus not set by a source (as before); a collection =
+    # only those buses (user, 2026-10-24: on decks with secondaries, only the customer buses, the secondary side of each
+    # service transformer; the primary then has no band).
+    bandbuses = V_band === nothing ? String[] : [b for b in buses if !haskey(src_at, b) && (band_buses === nothing || b in band_buses)]
+    bandset = Set(bandbuses)
     @variable(model, s_back[elastic && no_backflow ? names : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vhi[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
@@ -349,7 +353,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             P_fix = load_factor[t] * real(base_load[b]) - pv_factor[t] * pv_at[b]
             @constraint(model, out_P[b] + P_fix == P_in)
             @constraint(model, out_Q[b] + load_factor[t] * imag(base_load[b]) == Q_in)
-            if V_band !== nothing && !haskey(src_at, b)
+            if b in bandset
                 vroom = vmarg ? (S / margin_band_kw) * m_imp : 0.0
                 @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2 + vroom)
                 @constraint(model, e[b, t]^2 + f[b, t]^2 - (eband ? s_vhi[b, t] : 0.0) <= V_band[2]^2 - vroom)
@@ -409,7 +413,25 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             println(io, line)
         end
     end
-    val(x) = has_values(model) ? value(x) : NaN
+    # Optional failed-solve summaries for checkpointed campaigns. Never extract or reuse
+    # an unaccepted primal snapshot; successful solves and the default API are unchanged.
+    if get(ENV, "MULTIPERIOD_FAILED_SNAPSHOT", "1") == "0" &&
+       !(status in (MOI.OPTIMAL, MOI.LOCALLY_SOLVED, MOI.ALMOST_LOCALLY_SOLVED))
+        failed = (; status, ok=false, T, dt_h, time=solve_time(model),
+            iterations=(try barrier_iterations(model) catch; missing end), violation=NaN,
+            r=NaN, angles_deg=Dict{String,Float64}(), backflow_kW=NaN, margin_kW=NaN,
+            max_violation=NaN, cost=(;energy=NaN,cycling=NaN,terminal=NaN,total=NaN),
+            P_subs_kW=Dict{String,Vector{Float64}}(),Q_subs_kvar=Dict{String,Vector{Float64}}(),
+            P_B_kW=Dict{String,Vector{Float64}}(),Q_PV_kvar=Dict{String,Vector{Float64}}(),
+            B_kWh=Dict{String,Vector{Float64}}(),V_pu=Dict{String,Vector{ComplexF64}}(),
+            raw=(;lr=Dict(),li=Dict(),ir=Dict(),ii=Dict()))
+        release_solver!(model)
+        return failed
+    end
+    # Ipopt may scan every constraint to determine primal status after a cap.
+    # Query it once: repeating has_values for every exported entry is quadratic.
+    has_solution = has_values(model)
+    val(x) = has_solution ? value(x) : NaN
     series(x, keys, scale) = Dict(k => [val(x[k, t]) * scale for t in Ts] for k in keys)
     result = (; status, ok, T, dt_h, time = solve_time(model), iterations = (try barrier_iterations(model) catch; missing end),
             violation = eband ? val(viol) : 0.0, r = objective === :ray ? val(r_ray) : 0.0,
@@ -417,7 +439,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
             backflow_kW = elastic ? val(sum(s_back; init = zero(AffExpr))) * S : 0.0,
             margin_kW = marg ? val(m_imp) * S : NaN,
             # largest single limit violation: backflow in per unit, band in per unit squared
-            max_violation = eband && has_values(model) ? maximum(maximum(value.(c); init = 0.0) for c in (s_back, s_vlo, s_vhi)) : (eband ? NaN : 0.0),
+            max_violation = eband && has_solution ? maximum(maximum(value.(c); init = 0.0) for c in (s_back, s_vlo, s_vhi)) : (eband ? NaN : 0.0),
             cost = (; energy = val(energy), cycling = val(cycling), terminal = val(term), total = val(energy) + val(cycling) + val(term)),
             P_subs_kW = series(P_subs, names, S), Q_subs_kvar = series(Q_subs, names, S),
             P_B_kW = series(P_B, bnames, S), Q_PV_kvar = series(Q_PV, pnames, S),
