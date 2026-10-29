@@ -21,9 +21,9 @@ NET = REPO / "test_networks"
 SLATE, SLATE2 = "#51435F", "#61566E"
 INK, INK2 = "#333333", "#555555"                      # neutral lines for the large feeders (no DDP-paper slate)
 PV_FILL, PV_LINE, BAT_FILL, BAT_LINE = "#C99746", "#8C612F", "#EEE7F6", "#7956A6"
-# The ieee123 figure's markers as printed (its PV at 80% opacity, its strokes at 49%), as solid colours, and a
-# light grey for the large feeders' lines.
-PV_SOFT, PV_LINE_SOFT, BAT_SOFT, GREY = "#D4AC6B", "#C3AE96", "#BCAAD2", "#9A9A9A"
+# The large feeders' markers: the ieee123 figure's colours at full strength (paler ones vanish at this scale), a
+# slightly deeper lavender fill, and a light grey for the lines.
+PV_SOFT, PV_LINE_SOFT, BAT_SOFT, BAT_FILL_BIG, GREY = PV_FILL, PV_LINE, BAT_LINE, "#DDD0EE", "#9A9A9A"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]          # cS1-cS4 of the PESGM2027 figures/colors.tex
 # Buses inside a substation (transformer and regulator nodes), not named as its neighbours.
 INTERNAL = re.compile(r"hvmv|regxfmr|_lsb|_hsb|_int$|^sb\d+_p1u")
@@ -33,9 +33,9 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=1.5, label=3.1, table=2.5)),
+                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=2.0, label=3.6, table=2.5)),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=1.5, label=3.1, table=2.5),
+                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=2.0, label=3.6, table=2.5),
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -121,8 +121,10 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
         f'{" font-weight=" + chr(34) + "bold" + chr(34) if bold else ""} fill="{colr}" text-anchor="{anchor}"'
         + (f' stroke="white" stroke-opacity="0.6" stroke-width="{0.12 * size:.1f}" paint-order="stroke"' if halo else "") + f'>{t}</text>')
     icon = lambda x, y, r, colr, fop=1.0: (
-        [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="white" fill-opacity="{fop}" stroke="{colr}" stroke-width="{0.18 * r:.1f}"/>',
-         f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.6 * r:.1f}" fill="none" stroke="{colr}" stroke-width="{0.14 * r:.1f}"/>',
+        # a wider white stroke under the ring first, so it stays apart from markers of a similar colour
+        [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="none" stroke="white" stroke-width="{0.48 * r:.1f}"/>',
+         f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="white" fill-opacity="{fop}" stroke="{colr}" stroke-width="{0.2 * r:.1f}"/>',
+         f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.6 * r:.1f}" fill="none" stroke="{colr}" stroke-width="{0.16 * r:.1f}"/>',
          f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.2 * r:.1f}" fill="{colr}"/>'])
 
     o = ['<g inkscape:groupmode="layer" inkscape:label="network" id="layer-network">']
@@ -139,7 +141,7 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
     rb, sp = cfg["bat"] * 1.35, cfg["pv"]
     for b in bats:
         x, y = T(pos[b])
-        o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rb:.1f}" fill="{BAT_FILL}" stroke="{BAT_SOFT}" stroke-width="{0.2 * rb:.2f}"/>')
+        o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rb:.1f}" fill="{BAT_FILL_BIG}" stroke="{BAT_SOFT}" stroke-width="{0.2 * rb:.2f}"/>')
     for b in pvs:
         x, y = T(pos[b])
         o.append(f'<rect x="{x - sp / 2:.1f}" y="{y - sp / 2:.1f}" width="{sp:.1f}" height="{sp:.1f}" fill="{PV_SOFT}" '
@@ -164,7 +166,7 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
     # Times New Roman advance widths (em) of the characters used, for the column widths
     adv = lambda t, bold=False: sum(0.25 if c == " " else 0.78 if c in "mM" else 0.56 if c.isupper() else
                                     0.5 if c.isdigit() or c == "_" else 0.45 for c in t) * (1.05 if bold else 1.0)
-    c1 = 0.25 * tf + 1.6 * R + 0.35 * tf + adv("S4", True) * tf + 0.8 * tf    # icon, name, gap
+    c1 = 0.25 * tf + 1.2 * R + 0.35 * tf + adv("S4", True) * tf + 0.8 * tf    # icon, name, gap
     tw = c1 + max(adv(r[1]) for r in rows) * tf + 0.3 * tf
     rh = 1.3 * tf; th = rh * (len(rows) + 1) + 0.55 * tf
     pts = []
@@ -192,8 +194,8 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
     y += 0.35 * tf; o.append(rule(y, 0.1))
     for i, (lab, bb) in enumerate(rows):
         y += rh; colr = SUBC[i]
-        o += icon(TX + 0.25 * tf + 0.8 * R, y - 0.33 * tf, 0.8 * R, colr)
-        o.append(txt(TX + 0.25 * tf + 1.6 * R + 0.35 * tf, y, tf, colr, lab, True, "start", False))
+        o += icon(TX + 0.25 * tf + 0.6 * R, y - 0.33 * tf, 0.6 * R, colr)
+        o.append(txt(TX + 0.25 * tf + 1.2 * R + 0.35 * tf, y, tf, colr, lab, True, "start", False))
         o.append(txt(TX + c1, y, tf, INK, bb, False, "start", False))
     o.append(rule(y + 0.45 * tf, 0.18))
     o.append("</g></g>")

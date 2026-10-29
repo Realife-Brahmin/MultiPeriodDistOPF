@@ -17,8 +17,9 @@ SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]
 SUBBUS = ["1", "33", "120", "116"]
 # Substation icons as in network_schematic.py: radius and name size in printed mm, at the figure's print scale.
 SCALE = 88.9 / 400.75                               # one IEEE column over the drawing's width (mm per mm)
-R_PRINT, NAME_PRINT = 1.5, 3.1
-NAMEAT = [(-1.4, 2.4, "end"), (-1.2, -1.6, "end"), (1.4, -1.1, "start"), (0.0, 2.9, "middle")]   # name offsets, in radii
+R_PRINT, NAME_PRINT = 2.0, 3.6
+VEIL = 0.35                                         # opacity of the white veil over the network, under the substations
+NAMEAT = [(-1.4, 2.4, "end"), (-2.15, -2.55, "end"), (0.0, -2.15, "middle"), (1.2, -2.15, "end")]   # name offsets, in radii, clear of the bus labels
 PX = 96 / 25.4                                      # px per mm (the template's user unit)
 
 def block(s, gid):
@@ -79,19 +80,27 @@ def main(template, qfile, out):
     a, b = block(s, "g32466"); g = s[a:b]
     s = s[:a] + g.replace('style="display:inline"', 'style="display:none"', 1) + s[b:]
     R, fs = R_PRINT / SCALE, NAME_PRINT / SCALE
-    icons = ['<g inkscape:groupmode="layer" inkscape:label="substations" id="layer-msopf-substations">']
+    # A white veil over the drawing fades the network a little, so the substations above it stand out. It covers the
+    # drawing's own box (the query's first row, the document root, in px), so the exported area does not change.
+    root = next(iter(query.values())); vb = [v / PX for v in root]
+    icons = [f'<g inkscape:groupmode="layer" inkscape:label="veil" id="layer-msopf-veil"><rect x="{vb[0]:.3f}" y="{vb[1]:.3f}" '
+             f'width="{vb[2]:.3f}" height="{vb[3]:.3f}" style="fill:#ffffff;fill-opacity:{VEIL};stroke:none"/></g>',
+             '<g inkscape:groupmode="layer" inkscape:label="substations" id="layer-msopf-substations">']
     for k, bus in enumerate(SUBBUS):
         x, y = dots[bus][0] / PX, dots[bus][1] / PX; c = SUBC[k]
-        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.16 * R:.3f}"/>')
-        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{0.62 * R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.12 * R:.3f}"/>')
+        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{R:.3f}" style="fill:none;stroke:#ffffff;stroke-width:{0.48 * R:.3f}"/>')
+        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.2 * R:.3f}"/>')
+        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{0.6 * R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.16 * R:.3f}"/>')
         ox, oy, anchor = NAMEAT[k]
         icons.append(f'<text x="{x + ox * R:.3f}" y="{y + oy * R + 0.35 * fs:.3f}" style="font-family:\'Times New Roman\';font-weight:bold;'
-                     f'font-size:{fs:.3f}px;text-anchor:{anchor};fill:{c};stroke:#ffffff;stroke-width:{0.14 * fs:.3f};paint-order:stroke">S{k + 1}</text>')
+                     f'font-size:{fs:.3f}px;text-anchor:{anchor};fill:{c};stroke:#ffffff;stroke-width:{0.14 * fs:.3f};paint-order:stroke">S{k + 1} ({bus})</text>')
     icons.append("</g>")
     s = s[:s.rindex("</svg>")] + "\n".join(icons) + "\n</svg>\n"
 
     # Labels 33 and 35: swap their texts.
     s = re.sub(r"(<tspan\b[^>]*>)(33|35)(</tspan>)", lambda m: m.group(1) + ("35" if m.group(2) == "33" else "33") + m.group(3), s)
+    # The rings cover the substation buses' labels: blank them, the bus number is in each substation's name instead.
+    s = re.sub(r"(<tspan\b[^>]*>)(" + "|".join(SUBBUS) + r")(</tspan>)", r"\1\3", s)
     s = s.replace('sodipodi:docname="ieee123C_1ph.svg"', 'sodipodi:docname="ieee123.svg"')
     Path(out).write_text(s, encoding="utf-8")
     print(f"PV {pv}\nbatteries {bat}\nsubstations at {SUBBUS} -> {out}")
