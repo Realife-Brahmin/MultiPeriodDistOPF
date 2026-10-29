@@ -21,15 +21,17 @@ SLATE, SLATE2 = "#51435F", "#61566E"
 INK, INK2 = "#333333", "#555555"                      # neutral lines for the large feeders (no DDP-paper slate)
 PV_FILL, PV_LINE, BAT_FILL, BAT_LINE = "#C99746", "#8C612F", "#EEE7F6", "#7956A6"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]          # cS1-cS4 of the PESGM2027 figures/colors.tex
+# Buses inside a substation (transformer and regulator nodes), not named as its neighbours.
+INTERNAL = re.compile(r"hvmv|regxfmr|_lsb|_hsb|^sb\d+_p1u")
 TIES_9500 = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]
 
 CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=2100, lw=2.6, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=330, print=2.0),
+                    added={"subs4": "l2804256"}, width=3000, lw=3.0, pv=11, bat=6.5, sub=24, dot=0, labels=False, lens=230, tf=110, nf=88, mk=3.0),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=2100, lw=2.2, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=400, print=2.3,
+                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, lens=230, tf=110, nf=88, mk=3.0,
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -137,19 +139,23 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys); k = cfg["width"] / (x1 - x0)
     T = lambda p: ((p[0] - x0) * k, (y1 - p[1]) * k)
     W, H = (x1 - x0) * k, (y1 - y0) * k
+    # Small lenses that only magnify the geometry; the names go in a short caption under each lens, so the
+    # lenses need not be large enough to hold text and the feeder keeps most of the panel.
     RL, gap = cfg["lens"], cfg["lens"] * 0.3
-    F = cfg.get("print", 1.0)                                        # lens text and marks, scaled for print
+    tf, nf, F = cfg["tf"], cfg["nf"], cfg["mk"]                       # title and name font sizes, mark scale
+    above, below = 1.25 * tf, 2.5 * nf                                # text heights over and under a lens
     placed = []
     for i, (s, b) in enumerate(subs.items()):
         px, py = T(pos[b])
         side = min((px, "left"), (W - px, "right"), (py, "top"), (H - py, "bottom"))[1] if cfg.get("sides") is None else cfg["sides"][i]
-        c = {"left": (-gap - RL, py), "right": (W + gap + RL, py), "top": (px, -gap - RL), "bottom": (px, H + gap + RL)}[side]
+        c = {"left": (-gap - RL, py), "right": (W + gap + RL, py), "top": (px, -gap - RL - below),
+             "bottom": (px, H + gap + RL + above)}[side]
         placed.append([i, s, b, side, list(c)])
     for side in ("left", "right", "top", "bottom"):                 # lenses on one side must not overlap
         L = sorted((p for p in placed if p[3] == side), key=lambda p: p[4][1] if side in ("left", "right") else p[4][0])
         ax = 1 if side in ("left", "right") else 0
+        need = 2 * RL + above + below + 0.5 * gap if ax == 1 else max(2 * RL, 12 * nf) + gap
         for a_, b_ in zip(L, L[1:]):
-            need = 2 * RL + 0.9 * gap + 60 * F                       # room for the next title too
             if b_[4][ax] - a_[4][ax] < need: b_[4][ax] = a_[4][ax] + need
     o = ['<g inkscape:groupmode="layer" inkscape:label="network" id="layer-network">']
     o += body(lines, pos, pvs, bats, T, cfg["lw"], cfg["pv"], cfg["bat"], fade=0.55)   # light, but solid
@@ -159,47 +165,40 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
         o.append(f'<clipPath id="lens{i + 1}"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL * 0.97:.1f}"/></clipPath>')
     o.append("</defs>")
     allx, ally = [0, W], [0, H]
+    txt = lambda x, y, size, colr, t, bold=False: (f'<text x="{x:.1f}" y="{y:.1f}" font-family="Times New Roman" font-size="{size:.0f}" '
+                                                    f'{"font-weight=" + chr(34) + "bold" + chr(34) if bold else ""} fill="{colr}" text-anchor="middle">{t}</text>')
     for i, s, b, side, (cx, cy) in placed:
         colr, added = SUBC[i], s in cfg["added"]
         p = pos[b]; px, py = T(p)
-        # the neighbourhood: radius set by the 14th nearest distinct placed bus
+        # the neighbourhood: radius set by the 10th nearest distinct placed bus
         d = sorted({round(math.dist(p, xy[q]), 9) for q in xy if q in pos and math.dist(p, xy[q]) > 0})
-        rn = 1.15 * d[min(13, len(d) - 1)]; z = 0.9 * RL / (rn * k)
+        rn = 1.15 * d[min(9, len(d) - 1)]; z = 0.9 * RL / (rn * k)
         Tl = lambda q, z=z, px=px, py=py, cx=cx, cy=cy: (cx + (T(q)[0] - px) * z, cy + (T(q)[1] - py) * z)
         dx, dy = cx - px, cy - py; L = math.hypot(dx, dy)
-        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx - dx / L * RL:.1f}" y2="{cy - dy / L * RL:.1f}" stroke="{colr}" stroke-width="{1.8 * F:.1f}"/>')
-        o.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{11 * F:.1f}" fill="white" stroke="{colr}" stroke-width="{4 * F:.1f}"/>')
-        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="white" stroke="{colr}" stroke-width="{2.4 * F:.1f}"/>')
+        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx - dx / L * RL:.1f}" y2="{cy - dy / L * RL:.1f}" stroke="{colr}" stroke-width="{1.6 * F:.1f}"/>')
+        o.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="{9 * F:.1f}" fill="white" stroke="{colr}" stroke-width="{3 * F:.1f}"/>')
+        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="white" stroke="{colr}" stroke-width="{2 * F:.1f}"/>')
         o.append(f'<g clip-path="url(#lens{i + 1})">')
-        o += body(lines, pos, pvs, bats, Tl, 2.6 * F, 15 * F, 9 * F, near=(p, 1.6 * rn))
+        o += body(lines, pos, pvs, bats, Tl, 2.2 * F, 12 * F, 7 * F, near=(p, 1.6 * rn))
         for q in xy:
             if q in pos and math.dist(pos[q], p) <= 1.6 * rn:
-                x, y = Tl(pos[q]); o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4.5 * F:.1f}" fill="{INK}"/>')
+                x, y = Tl(pos[q]); o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4 * F:.1f}" fill="{INK}"/>')
         o += ring(cx, cy, cfg["sub"] * F, colr, added)
-        # names: the substation's bus, then nearby buses in breadth-first order, kept apart in the lens
-        seen, order, q = {b}, [b], deque([b])
-        while q:
+        o.append("</g>")
+        # the substation's bus and its two nearest named buses (breadth first), under the lens
+        seen, order, q = {b}, [], deque([b])
+        while q and len(order) < 2:
             u = q.popleft()
             for v in adj[u]:
-                if v not in seen and math.dist(pos[v], p) <= rn: seen.add(v); order.append(v); q.append(v)
-        o.append("</g>")
-        named = []
-        for v in order:                                              # outside the clip, on the side facing the centre
-            if v != b and v not in xy: continue
-            x, y = Tl(pos[v])
-            if v != b and math.dist((x, y), (cx, cy)) > 0.8 * RL: continue
-            if any(abs(y - wy) < 0.24 * RL and abs(x - wx) < 0.8 * RL for wx, wy in named): continue   # text boxes would touch
-            named.append((x, y))
-            big = v == b; right = x > cx + 0.15 * RL
-            o.append(f'<text x="{x + (-12 if right else 12) * F:.1f}" y="{y - 10 * F:.1f}" text-anchor="{"end" if right else "start"}" '
-                     f'font-family="Times New Roman" font-size="{(30 if big else 24) * F:.0f}" '
-                     f'{"font-weight=" + chr(34) + "bold" + chr(34) if big else ""} fill="{colr if big else INK}" '
-                     f'stroke="white" stroke-width="{5 * F:.0f}" paint-order="stroke">{short(system, v)}</text>')
-            if len(named) == 3: break
+                if v in seen: continue
+                seen.add(v); q.append(v)
+                if v in xy and not INTERNAL.search(v) and short(system, v) not in [short(system, w) for w in order]:
+                    order.append(v)                                   # the first feeder buses, not station nodes
         title = f"S{i + 1}" + (f" ({cfg['names'][s]})" if cfg.get("names") else "") + (" (added)" if added else "")
-        o.append(f'<text x="{cx:.1f}" y="{cy - RL - 16 * F:.1f}" font-family="Times New Roman" font-weight="bold" font-size="{44 * F:.0f}" '
-                 f'fill="{colr}" text-anchor="middle">{title}</text>')
-        allx += [cx - RL, cx + RL]; ally += [cy - RL - 60 * F, cy + RL]
+        o.append(txt(cx, cy - RL - 0.35 * tf, tf, colr, title, True))
+        o.append(txt(cx, cy + RL + 1.05 * nf, nf, colr, short(system, b), True))
+        o.append(txt(cx, cy + RL + 2.15 * nf, 0.85 * nf, INK, "near " + ", ".join(short(system, v) for v in order[:2])))
+        allx += [cx - max(RL, 4.5 * nf), cx + max(RL, 4.5 * nf)]; ally += [cy - RL - above, cy + RL + below]
     o.append("</g>")
     m = 20; vx, vy = min(allx) - m, min(ally) - m; vw, vh = max(allx) - vx + m, max(ally) - vy + m
     head = [f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" '
