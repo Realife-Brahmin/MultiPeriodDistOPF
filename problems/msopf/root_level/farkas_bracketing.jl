@@ -147,11 +147,13 @@ function main()
         t0 = time()
         if isnan(d.reach)
             # The day's reach by bisection on the validated T = 24 margin (batteries idle, so it is the worst hour's).
+            # A point that does not validate counts as beyond the edge, as in the bisection: only validated points
+            # move the lower end, and phase C certifies the other side.
             lo, hi, xs = 0.0, 1.0, nothing
             while true
                 m, x = vmargin(angles(d, hi), kw24; start = xs, alt = xs)
-                (isfinite(m) && m < 0) && break
-                isfinite(m) || error("T = 24 margin solve failed at $hi deg")
+                isfinite(m) || say(@sprintf("  %s: no validated solve at %.2f deg; bisecting below it", d.label, hi))
+                (isfinite(m) && m >= 0) || break
                 lo = hi; xs = x
                 hi >= LIMIT && (d = merge(d, (; reach = LIMIT, at_limit = true)); break)
                 hi = min(2hi, LIMIT)
