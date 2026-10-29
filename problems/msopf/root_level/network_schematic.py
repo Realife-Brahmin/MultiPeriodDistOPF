@@ -29,9 +29,9 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.3, title=3.1, name=2.6, near=2.2)),
+                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.5, title=3.1, name=2.6, near=2.2)),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.3, title=3.1, name=2.6, near=2.2),
+                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.5, title=3.1, name=2.6, near=2.2),
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -164,7 +164,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
     tint = lambda h, a: "#" + "".join(f"{round(int(h[k:k + 2], 16) * a + 255 * (1 - a)):02X}" for k in (1, 3, 5))
     bottom = top
     for i, s, b, (cx, cy) in placed:
-        colr, added = SUBC[i], s in cfg["added"]
+        colr, added = SUBC[i], False            # one icon for every substation, own or added
         px, py = T(pos[b])
         o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx:.1f}" y2="{cy - RL:.1f}" stroke="{colr}" stroke-width="{0.25 * u:.1f}" '
                  f'stroke-dasharray="{1.0 * u:.0f},{0.7 * u:.0f}"/>')
@@ -179,7 +179,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
                 seen.add(v); q.append(v)
                 if v in xy and not INTERNAL.search(v) and short(system, v) not in [short(system, w) for w in order]:
                     order.append(v)                                   # the first feeder buses, not station nodes
-        title = f"S{i + 1}" + (f" ({cfg['names'][s]})" if cfg.get("names") else "") + (" (added)" if added else "")
+        title = f"S{i + 1}" + (f" ({cfg['names'][s]})" if cfg.get("names") else "")
         y = cy + RL + 1.05 * tf
         o.append(txt(cx, y, tf, colr, title, True)); y += 1.0 * nf
         o.append(txt(cx, y, nf, colr, short(system, b), True)); y += 1.0 * sf
@@ -188,7 +188,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
         bottom = max(bottom, y)
     # the marks on the feeder last, so they sit on top of the leaders
     for i, s, b, (cx, cy) in placed:
-        colr, added = SUBC[i], s in cfg["added"]
+        colr, added = SUBC[i], False            # one icon for every substation, own or added
         px, py = T(pos[b])
         o += ring(px, py, mR, colr, added)
         o.append(txt(px + 1.3 * mR, py - 0.9 * mR, tf, colr, f"S{i + 1}", True, "start"))

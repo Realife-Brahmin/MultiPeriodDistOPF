@@ -5,8 +5,8 @@
 # query:    inkscape --query-all <template.svg> (object bounding boxes in px), used to map bus positions
 #           (network_layout_ieee123.csv) into each marker group's own coordinates.
 # Edits: the children of "pv-indicator-squares" and "battery-bus-circles" are redrawn at this deck's buses in the
-# template's own marker styles; "Substation1_if_alone" is hidden and copied to buses 1, 33, 120 and 116 in the
-# S1-S4 colours of the PESGM2027 figures, each with its name; and the template's labels 33 and 35 are swapped,
+# template's own marker styles; "Substation1_if_alone" is hidden and the four substations (buses 1, 33, 120, 116) get the
+# icon of the large feeders' figures at the same printed size; and the template's labels 33 and 35 are swapped,
 # since the deck's branches are 28-33, 33-34 and 29-35.
 import csv, re, sys
 from pathlib import Path
@@ -15,7 +15,10 @@ HERE = Path(__file__).resolve().parent
 DECK = HERE.parents[2] / "test_networks" / "ieee123_5poi_1ph"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]
 SUBBUS = ["1", "33", "120", "116"]
-NAMEAT = [(-10, 15), (-14, -14), (12, -10), (11, -12)]   # where each name sits, from its ring's centre (local units)
+# Substation icons as in network_schematic.py: radius and name size in printed mm, at the figure's print scale.
+SCALE = 88.9 / 400.75                               # one IEEE column over the drawing's width (mm per mm)
+R_PRINT, NAME_PRINT = 1.5, 3.1
+NAMEAT = [(-1.4, 2.4, "end"), (-1.2, -1.6, "end"), (1.4, -1.1, "start"), (0.0, 2.9, "middle")]   # name offsets, in radii
 PX = 96 / 25.4                                      # px per mm (the template's user unit)
 
 def block(s, gid):
@@ -70,26 +73,22 @@ def main(template, qfile, out):
         s = s[:a] + head + "".join(new) + "</g>" + s[b:]
         print(f"{gid}: {len(elems)} template markers replaced by {len(new)} ({tag}, scale {ax:.3f} px per unit)")
 
-    # Substations: hide the template's ring at bus 1, copy it to the four substation buses.
+    # Substations: hide the template's ring at bus 1; draw the same icon as the large feeders' figures (concentric
+    # rings in the substation's colour, bold name), at the same printed size: the 400 mm drawing prints one column
+    # (88.9 mm) wide, so R_PRINT mm on paper is R_PRINT / SCALE mm here. A top-level layer in document mm.
     a, b = block(s, "g32466"); g = s[a:b]
-    x, y, w, h = query["g32466"]; cx, cy = x + w / 2, y + h / 2
-    m = re.search(r'transform="matrix\(([^)]+)\)"', g).group(1)
-    copies = []
+    s = s[:a] + g.replace('style="display:inline"', 'style="display:none"', 1) + s[b:]
+    R, fs = R_PRINT / SCALE, NAME_PRINT / SCALE
+    icons = ['<g inkscape:groupmode="layer" inkscape:label="substations" id="layer-msopf-substations">']
     for k, bus in enumerate(SUBBUS):
-        dx, dy = (dots[bus][0] - cx) / PX, (dots[bus][1] - cy) / PX
-        c = g.replace('transform="matrix(', f'transform="translate({dx:.4f},{dy:.4f}) matrix(', 1)
-        c = c.replace('id="g32466"', f'id="subs{k + 1}-msopf"').replace('inkscape:label="Substation1_if_alone"', f'inkscape:label="S{k + 1}"')
-        c = re.sub(r'id="(path\d+)"', rf'id="\1-s{k + 1}"', c)
-        c = c.replace("stroke:#2b2b2b", f"stroke:{SUBC[k]}").replace("stroke:#8f8f8f", f"stroke:{SUBC[k]}")
-        c = c.replace("stroke-opacity:0.494118", "stroke-opacity:0.95").replace("opacity:0.83", "opacity:1")
-        # its name, in the template's label font, in a free spot beside the ring (local units of the copy; ring centre
-        # at (-48.07, 206.06), outer radius 9.5)
-        ox, oy = NAMEAT[k]
-        c = c.replace("</g>", f'<text x="{-48.07 + ox:.2f}" y="{206.06 + oy + 2.3:.2f}" style="font-family:\'Times New Roman\';'
-                              f'font-weight:bold;font-size:6.5px;text-anchor:middle;fill:{SUBC[k]}" id="subs{k + 1}-name">S{k + 1}</text></g>', 1)
-        copies.append(c)
-    hidden = g.replace('style="display:inline"', 'style="display:none"', 1)
-    s = s[:a] + hidden + "".join(copies) + s[b:]
+        x, y = dots[bus][0] / PX, dots[bus][1] / PX; c = SUBC[k]
+        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.16 * R:.3f}"/>')
+        icons.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="{0.62 * R:.3f}" style="fill:none;stroke:{c};stroke-width:{0.12 * R:.3f}"/>')
+        ox, oy, anchor = NAMEAT[k]
+        icons.append(f'<text x="{x + ox * R:.3f}" y="{y + oy * R + 0.35 * fs:.3f}" style="font-family:\'Times New Roman\';font-weight:bold;'
+                     f'font-size:{fs:.3f}px;text-anchor:{anchor};fill:{c};stroke:#ffffff;stroke-width:{0.14 * fs:.3f};paint-order:stroke">S{k + 1}</text>')
+    icons.append("</g>")
+    s = s[:s.rindex("</svg>")] + "\n".join(icons) + "\n</svg>\n"
 
     # Labels 33 and 35: swap their texts.
     s = re.sub(r"(<tspan\b[^>]*>)(33|35)(</tspan>)", lambda m: m.group(1) + ("35" if m.group(2) == "33" else "33") + m.group(3), s)
