@@ -147,21 +147,33 @@ function main()
         t0 = time()
         if isnan(d.reach)
             # The day's reach by bisection on the validated T = 24 margin (batteries idle, so it is the worst hour's).
-            # A point that does not validate counts as beyond the edge, as in the bisection: only validated points
-            # move the lower end, and phase C certifies the other side.
+            # A point that does not validate (after the retries of probe) counts as beyond the edge: only validated
+            # points move the lower end, and phase C certifies the other side.
+            # A solve that does not validate at one angle often does a fraction of a percent away (at 1.0 and 0.5 deg on
+            # med3980 the residuals stayed at 1e-3 while every nearby angle validated), so a failed point is retried at
+            # r(1 -+ 0.3%) before it counts as beyond.
+            function probe(r, xs)
+                m, x = vmargin(angles(d, r), kw24; start = xs, alt = xs)
+                for f in (0.997, 1.003)
+                    isfinite(m) && return m, x, r
+                    say(@sprintf("  %s: no validated solve at %.4f deg; trying %.4f", d.label, r, f * r))
+                    r2 = f * r; m, x = vmargin(angles(d, r2), kw24; start = xs, alt = xs)
+                    isfinite(m) && return m, x, r2
+                end
+                return m, x, r
+            end
             lo, hi, xs = 0.0, 1.0, nothing
             while true
-                m, x = vmargin(angles(d, hi), kw24; start = xs, alt = xs)
-                isfinite(m) || say(@sprintf("  %s: no validated solve at %.2f deg; bisecting below it", d.label, hi))
-                (isfinite(m) && m >= 0) || break
-                lo = hi; xs = x
+                m, x, r = probe(hi, xs)
+                (isfinite(m) && m >= 0) || (hi = r; break)
+                lo = r; xs = x
                 hi >= LIMIT && (d = merge(d, (; reach = LIMIT, at_limit = true)); break)
                 hi = min(2hi, LIMIT)
             end
             if !d.at_limit
                 for _ in 1:14
-                    mid = (lo + hi) / 2; m, x = vmargin(angles(d, mid), kw24; start = xs, alt = xs)
-                    isfinite(m) && m >= 0 ? (lo = mid; xs = x) : (hi = mid)
+                    mid = (lo + hi) / 2; m, x, r = probe(mid, xs)
+                    isfinite(m) && m >= 0 ? (lo = r; xs = x) : (hi = r)
                 end
                 d = merge(d, (; reach = lo))
             end
