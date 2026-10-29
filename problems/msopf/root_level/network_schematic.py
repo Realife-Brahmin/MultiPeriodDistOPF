@@ -33,7 +33,7 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=2.0, label=3.6, table=2.5)),
+                    added={"subs4": "l2804256"}, width=3000, lw=4.6, pv=18, bat=10.8, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=2.0, label=3.6, table=2.5)),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
                    added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=60, mm=dict(mark=2.0, label=3.6, table=2.5),
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
