@@ -29,9 +29,9 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, lens=0.84, drop=0.1, tf=150, nf=128, mk=4.2, mark=58, mf=175),
+                    added={"subs4": "l2804256"}, width=3000, lw=3.6, pv=14, bat=8.5, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.3, title=3.1, name=2.6, near=2.2)),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, lens=0.82, drop=0.12, tf=105, nf=88, mk=3.0, mark=40, mf=120,
+                   added={}, width=3000, lw=2.6, pv=10, bat=6.0, sub=24, dot=0, labels=False, height_mm=88, mm=dict(drop=4.5, badge=3.6, mark=1.3, title=3.1, name=2.6, near=2.2),
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -106,7 +106,7 @@ def body(lines, pos, pvs, bats, T, lw, pv, bat, near=None, fade=1.0):
     inside = (lambda q: math.dist(q, near[0]) <= near[1]) if near else (lambda q: True)
     # faded: lighter solid colours (per-element opacity would make every element a PDF transparency group)
     sl, sl2, bf, bl, pf, pl = ((INK, INK2, BAT_FILL, BAT_LINE, PV_FILL, PV_LINE) if fade >= 1 else
-                               ("#9C9C9C", "#9C9C9C", "#F1ECF7", "#A892C4", "#D2AF72", "#A98A5C"))
+                               ("#8F8F8F", "#8F8F8F", "#B9A3D9", "#8D74B8", "#D2A85E", "#A7803F"))
     o = []
     for name, a, b, tie in lines:
         if not (inside(pos[a]) or inside(pos[b])): continue
@@ -139,51 +139,42 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys); k = cfg["width"] / (x1 - x0)
     T = lambda p: ((p[0] - x0) * k, (y1 - p[1]) * k)
     W, H = (x1 - x0) * k, (y1 - y0) * k
-    # The feeder at full width with each substation marked on it; under it, a row of lenses (ordered left to right
-    # as the substations are) magnifying each neighbourhood, joined to the marks by leaders, names beneath.
+    # The feeder at full width with each substation marked on it; under it, a row of badges (ordered left to right as
+    # the substations are), joined to the marks by leaders, names beneath. Badge, mark and text sizes are given in
+    # printed millimetres (the figure is printed cfg["height_mm"] tall), so both panels match on paper.
     n = len(subs); slot = W / n
-    RL = cfg["lens"] * slot / 2                                       # lens radius, as a share of its slot
-    tf, nf, F = cfg["tf"], cfg["nf"], cfg["mk"]                       # title and name font sizes, mark scale
-    top = H + cfg["drop"] * slot                                      # top of the lens row
+    S = cfg["mm"]                                                     # sizes in mm
+    extra = S["drop"] + 2 * S["badge"] + S["title"] + S["name"] + 2.3 * S["near"] + 2.5
+    u = H / (cfg["height_mm"] - extra)                                # drawing units per printed mm
+    RL, mR = S["badge"] * u, S["mark"] * u
+    tf, nf, sf = S["title"] * u, S["name"] * u, S["near"] * u
+    top = H + S["drop"] * u
     order_x = sorted(subs.items(), key=lambda sb: T(pos[sb[1]])[0])
     placed = []
     for j, (s, b) in enumerate(order_x):
-        i = list(subs).index(s)
-        placed.append([i, s, b, (slot * (j + 0.5), top + RL)])
+        placed.append([list(subs).index(s), s, b, (slot * (j + 0.5), top + RL)])
     o = ['<g inkscape:groupmode="layer" inkscape:label="network" id="layer-network">']
     o += body(lines, pos, pvs, bats, T, cfg["lw"], cfg["pv"], cfg["bat"], fade=0.55)   # light, but solid
     o.append("</g>")
-    o.append('<g inkscape:groupmode="layer" inkscape:label="substations and lenses" id="layer-lenses"><defs>')
-    for i, s, b, (cx, cy) in placed:
-        o.append(f'<clipPath id="lens{i + 1}"><circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL * 0.97:.1f}"/></clipPath>')
-    o.append("</defs>")
+    o.append('<g inkscape:groupmode="layer" inkscape:label="substations" id="layer-substations">')
     txt = lambda x, y, size, colr, t, bold=False, anchor="middle": (
         f'<text x="{x:.1f}" y="{y:.1f}" font-family="Times New Roman" font-size="{size:.0f}" '
         f'{"font-weight=" + chr(34) + "bold" + chr(34) if bold else ""} fill="{colr}" text-anchor="{anchor}" '
-        f'stroke="white" stroke-width="{0.12 * size:.0f}" paint-order="stroke">{t}</text>')
+        f'stroke="white" stroke-width="{0.14 * size:.0f}" paint-order="stroke">{t}</text>')
+    tint = lambda h, a: "#" + "".join(f"{round(int(h[k:k + 2], 16) * a + 255 * (1 - a)):02X}" for k in (1, 3, 5))
     bottom = top
     for i, s, b, (cx, cy) in placed:
         colr, added = SUBC[i], s in cfg["added"]
-        p = pos[b]; px, py = T(p)
-        d = sorted({round(math.dist(p, xy[q]), 9) for q in xy if q in pos and math.dist(p, xy[q]) > 0})
-        rn = 1.15 * d[min(11, len(d) - 1)]; z = 0.9 * RL / (rn * k)
-        Tl = lambda q, z=z, px=px, py=py, cx=cx, cy=cy: (cx + (T(q)[0] - px) * z, cy + (T(q)[1] - py) * z)
-        # leader from the mark down to the top of its lens
-        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx:.1f}" y2="{cy - RL:.1f}" stroke="{colr}" stroke-width="{1.4 * F:.1f}" '
-                 f'stroke-dasharray="{6 * F:.0f},{4 * F:.0f}"/>')
-        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="white" stroke="{colr}" stroke-width="{2 * F:.1f}"/>')
-        o.append(f'<g clip-path="url(#lens{i + 1})">')
-        o += body(lines, pos, pvs, bats, Tl, 2.2 * F, 12 * F, 7 * F, near=(p, 1.6 * rn))
-        for q in xy:
-            if q in pos and math.dist(pos[q], p) <= 1.6 * rn:
-                x, y = Tl(pos[q]); o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4 * F:.1f}" fill="{INK}"/>')
-        o += ring(cx, cy, cfg["sub"] * F, colr, added)
-        o.append("</g>")
-        # the substation's bus and its first feeder buses (breadth first), under the lens
+        px, py = T(pos[b])
+        o.append(f'<line x1="{px:.1f}" y1="{py:.1f}" x2="{cx:.1f}" y2="{cy - RL:.1f}" stroke="{colr}" stroke-width="{0.25 * u:.1f}" '
+                 f'stroke-dasharray="{1.0 * u:.0f},{0.7 * u:.0f}"/>')
+        o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{RL:.1f}" fill="{tint(colr, 0.12)}" stroke="{colr}" stroke-width="{0.3 * u:.1f}"/>')
+        o += ring(cx, cy, 0.55 * RL, colr, added)
+        # the substation's bus and its first feeder buses (breadth first), under the badge
         seen, order, q = {b}, [], deque([b])
         while q and len(order) < 2:
-            u = q.popleft()
-            for v in adj[u]:
+            w_ = q.popleft()
+            for v in adj[w_]:
                 if v in seen: continue
                 seen.add(v); q.append(v)
                 if v in xy and not INTERNAL.search(v) and short(system, v) not in [short(system, w) for w in order]:
@@ -191,17 +182,18 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
         title = f"S{i + 1}" + (f" ({cfg['names'][s]})" if cfg.get("names") else "") + (" (added)" if added else "")
         y = cy + RL + 1.05 * tf
         o.append(txt(cx, y, tf, colr, title, True)); y += 1.0 * nf
-        o.append(txt(cx, y, nf, colr, short(system, b), True)); y += 0.95 * nf
+        o.append(txt(cx, y, nf, colr, short(system, b), True)); y += 1.0 * sf
         for v in order[:2]:                                           # one feeder bus per line
-            o.append(txt(cx, y, 0.8 * nf, INK, short(system, v))); y += 0.85 * nf
+            o.append(txt(cx, y, sf, INK, short(system, v))); y += 1.05 * sf
         bottom = max(bottom, y)
     # the marks on the feeder last, so they sit on top of the leaders
     for i, s, b, (cx, cy) in placed:
         colr, added = SUBC[i], s in cfg["added"]
-        px, py = T(pos[b]); R = cfg["mark"]
-        o += ring(px, py, R, colr, added)
-        o.append(txt(px + 1.3 * R, py - 1.0 * R, cfg["mf"], colr, f"S{i + 1}", True, "start"))
+        px, py = T(pos[b])
+        o += ring(px, py, mR, colr, added)
+        o.append(txt(px + 1.3 * mR, py - 0.9 * mR, tf, colr, f"S{i + 1}", True, "start"))
     allx, ally = [0, W], [0, bottom]
+    print(f"  {u:.1f} drawing units per printed mm; panel {W / u:.0f} x {bottom / u:.0f} mm")
     o.append("</g>")
     m = 20; vx, vy = min(allx) - m, min(ally) - m; vw, vh = max(allx) - vx + m, max(ally) - vy + m
     head = [f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" '
@@ -212,7 +204,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
 
 def main(system, out):
     cfg = CONFIG[system]
-    if cfg.get("lens"):
+    if cfg.get("mm"):                                                 # the large feeders: marks and badges
         lines, pvs, bats, subs = deck(cfg)
         xy, _, _ = coords(system)
         pos, _ = place(lines, xy)
