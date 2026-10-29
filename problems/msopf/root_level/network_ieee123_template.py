@@ -15,6 +15,7 @@ HERE = Path(__file__).resolve().parent
 DECK = HERE.parents[2] / "test_networks" / "ieee123_5poi_1ph"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]
 SUBBUS = ["1", "33", "120", "116"]
+UNDRAWN = [("9", "10"), ("15", "20"), ("103", "107")]   # deck lines the template has no path for
 # Substation icons as in network_schematic.py: radius and name size in printed mm, at the figure's print scale.
 SCALE = 88.9 / 400.75                               # one IEEE column over the drawing's width (mm per mm)
 R_PRINT, NAME_PRINT = 2.0, 3.6
@@ -73,6 +74,18 @@ def main(template, qfile, out):
         head = g[:g.index(">") + 1]
         s = s[:a] + head + "".join(new) + "</g>" + s[b:]
         print(f"{gid}: {len(elems)} template markers replaced by {len(new)} ({tag}, scale {ax:.3f} px per unit)")
+
+    # Lines of the deck that the template does not draw (found by sampling the rendered template between every
+    # pair of connected buses, 2026-10-29): without them the drawing falls into four islands, though the deck is one
+    # tree. Drawn in the template's line style just before its bus dots, in the Network group (whose only transform
+    # is layer1's translation, undone here so the points are in document mm).
+    tr = re.search(r'id="layer1"[^>]*transform="translate\(([-\d.]+),([-\d.]+)\)"', s) or \
+         re.search(r'transform="translate\(([-\d.]+),([-\d.]+)\)"[^>]*id="layer1"', s)
+    tx_, ty_ = float(tr.group(1)), float(tr.group(2))
+    paths = "".join(f'<path style="opacity:0.83;fill:none;stroke:#51435f;stroke-width:1.5;stroke-linecap:round" '
+                    f'd="M {dots[a][0] / PX:.4f},{dots[a][1] / PX:.4f} L {dots[b][0] / PX:.4f},{dots[b][1] / PX:.4f}"/>' for a, b in UNDRAWN)
+    i = s.rfind("<g", 0, s.index('id="g7143"'))
+    s = s[:i] + f'<g id="msopf-undrawn-lines" inkscape:label="lines missing from the template" transform="translate({-tx_},{-ty_})">{paths}</g>' + s[i:]
 
     # Substations: hide the template's ring at bus 1; draw the same icon as the large feeders' figures (concentric
     # rings in the substation's colour, bold name), at the same printed size: the 400 mm drawing prints one column
