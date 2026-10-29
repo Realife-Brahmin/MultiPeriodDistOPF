@@ -106,8 +106,8 @@ def short(system, b):
     return b.replace("_hsb", "")
 
 def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
-    """Large networks: the whole feeder, its substations marked (a white disk clears the feeder under each ring, so
-    they stand out), and a small table of the substation buses in the emptiest corner of the drawing. Marks, table
+    """Large networks: the whole feeder, its substations marked (half-transparent white inside each ring, so the
+    buses and lines beneath stay visible), and a small table of the substation buses in the emptiest corner of the drawing. Marks, table
     and text are sized in printed millimetres: the feeder is printed cfg["height_mm"] tall."""
     xs = [p[0] for p in pos.values()]; ys = [p[1] for p in pos.values()]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys); k = cfg["width"] / (x1 - x0)
@@ -119,10 +119,9 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
     txt = lambda x, y, size, colr, t, bold=False, anchor="start", halo=True: (
         f'<text x="{x:.1f}" y="{y:.1f}" font-family="Times New Roman" font-size="{size:.1f}"'
         f'{" font-weight=" + chr(34) + "bold" + chr(34) if bold else ""} fill="{colr}" text-anchor="{anchor}"'
-        + (f' stroke="white" stroke-width="{0.16 * size:.1f}" paint-order="stroke"' if halo else "") + f'>{t}</text>')
-    icon = lambda x, y, r, colr, knock=0.0: (
-        ([f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{knock * r:.1f}" fill="white"/>'] if knock else []) +
-        [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="white" stroke="{colr}" stroke-width="{0.18 * r:.1f}"/>',
+        + (f' stroke="white" stroke-opacity="0.6" stroke-width="{0.12 * size:.1f}" paint-order="stroke"' if halo else "") + f'>{t}</text>')
+    icon = lambda x, y, r, colr, fop=1.0: (
+        [f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="white" fill-opacity="{fop}" stroke="{colr}" stroke-width="{0.18 * r:.1f}"/>',
          f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.6 * r:.1f}" fill="none" stroke="{colr}" stroke-width="{0.14 * r:.1f}"/>',
          f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.2 * r:.1f}" fill="{colr}"/>'])
 
@@ -150,12 +149,12 @@ def map_main(system, out, cfg, lines, pvs, bats, subs, pos):
         o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{0.3 * min(rb, sp / 2):.1f}" fill="{INK}"/>')
     o.append("</g>")
 
-    # The substations: a white disk clears the feeder around each ring; the name beside it, outward from the centre.
+    # The substations: the feeder shows through each ring; the name beside it, outward from the centre.
     o.append('<g inkscape:groupmode="layer" inkscape:label="substations" id="layer-substations">')
     cx_, cy_ = W / 2, H / 2
     for i, (s, b) in enumerate(subs.items()):
         x, y = T(pos[b]); colr = SUBC[i]
-        o += icon(x, y, R, colr, knock=1.6)
+        o += icon(x, y, R, colr, fop=0.45)
         right = x >= cx_ or x < 0.15 * W
         o.append(txt(x + (1.5 if right else -1.5) * R, y - 0.9 * R, fs, colr, f"S{i + 1}", True, "start" if right else "end"))
 
