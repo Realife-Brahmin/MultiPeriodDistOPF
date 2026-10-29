@@ -79,13 +79,62 @@ def three_source():
                          band=100 * (rc / r - 1), farkas=c["farkas_at_cert"] not in ("", "NaN"), relax=int(c["relaxations"]), secs=float(c["seconds"])))
     S = [r for r in rows(ROOT / "multiperiod" / "simplex_figure_data.csv") if (r["pv"], r["case"], r["kind"]) == ("qfree", "nobatt", "predicted")]
     simplex = {"x": [float(r["d3_minus_d1_deg"]) for r in S], "y": [float(r["d4_minus_d1_deg"]) for r in S]}
-    return dict(id="ieee123", title="ieee123, three substations", dim=2, dirs=dirs, simplex=simplex,
+    return dict(id="ieee123", sys="ieee123", n=3, combo="1+3+4", title="ieee123, substations 1+3+4", dim=2, dirs=dirs, simplex=simplex,
                 axes=["δ₃ − δ₁ (°)", "δ₄ − δ₁ (°)"], sources=["subs1", "subs3", "subs4"],
                 note="IEEE 123-node feeder, substations 1, 3 and 4; band at every non-source bus. Hour 12 limits every direction.")
 
-SHOW = os.environ.get("FV_SYSTEMS", "ieee123,ieee123x4,sf6937,med3980").split(",")
+# Two and three sources (2026-10-29, results/kamiak/farkas_oct29): no measured campaign, so the day's reach comes from
+# phase A itself, and there is no predicted simplex.
+# Every pair and triple of each four-source case (user, 2026-10-29): folder <prefix>_s<digits>, or the first batch's names.
+DESC = {"ieee123": ("ieee123", "IEEE 123-node feeder; the other substations out; band at every non-source bus."),
+        "med3980": ("med3980", "IEEE 9500-node network with its service transformers (3980 buses), ties closed; substation 4 is the added one at l2804256; dropped substations' sections fed through the ties; band at customer buses."),
+        "sf6937": ("sfp1u", "Synthetic San Francisco feeder (NREL SMART-DS P1U), Type III ties; substations 1-4 are hs2, hs1, hs3, hs0; dropped substations' sections fed through the ties; band at customer buses.")}
+ALIAS = {"ieee123_s34": "ieee123_two", "med3980_s12": "med3980_two", "med3980_s123": "med3980_three",
+         "sfp1u_s14": "sfp1u_two", "sfp1u_s124": "sfp1u_three"}
+SUBSETS = [(f"{sysname}_s{''.join(c)}", sysname, len(c), ALIAS.get(f"{prefix}_s{''.join(c)}", f"{prefix}_s{''.join(c)}"),
+            [f"subs{k}" for k in c], note)
+           for sysname, (prefix, note) in DESC.items() for n in (2, 3) for c in combinations("1234", n)
+           if not (sysname == "ieee123" and c == ("1", "3", "4"))]          # that one is three_source(), from farkas_oct26
+NAMES = {2: "two", 3: "three", 4: "four"}
+
+def subset(tab, sysname, n, folder, sources, note):
+    d = ROOT / "kamiak" / "farkas_oct29" / folder
+    A = {int(r["id"]): r for f in d.glob("fb_A_*.csv") for r in rows(f)}
+    if not A:
+        return None
+    C = {int(r["id"]): r for f in d.glob("fb_C_*.csv") for r in rows(f)}
+    dirs = []
+    for i in sorted(A):
+        a = A[i]; u = [float(a[f"u{k}"]) for k in range(1, n)]; day = float(a["day_reach_deg"])
+        x = dict(id=i, u=u, pred=None, day=day)
+        if n == 2:
+            x["label"] = ("+" if u[0] > 0 else "−") + f"({sources[1]} − {sources[0]})"
+        else:
+            x["theta"] = round(math.degrees(math.atan2(u[1], u[0])) % 360, 1)
+        c = C.get(i)
+        if a["at_limit"] == "true":
+            x.update(status="limit", inner=LIMIT, edge=LIMIT, cert=LIMIT, hour=None)
+        elif c is not None and c["r_cert_deg"] not in ("", "NaN"):
+            r = float(c["hour_boundary_deg"]); rc = float(c["r_cert_deg"])
+            x.update(status="certified", inner=0.98 * r, edge=r, cert=rc, hour=int(c["tstar"]), band=100 * (rc / r - 1),
+                     farkas=c["farkas_at_cert"] not in ("", "NaN"), relax=int(c["relaxations"]), secs=float(c["seconds"]))
+        else:
+            x.update(status="pending", inner=0.98 * day, edge=day, cert=day, hour=None)
+        dirs.append(x)
+    ax = [f"δ{s.replace('subs', '')} − δ{sources[0].replace('subs', '')} (°)" for s in sources[1:]]
+    combo = "+".join(s.replace("subs", "") for s in sources)
+    return dict(id=tab, sys=sysname, n=n, combo=combo, title=f"{sysname}, substations {combo}", dim=n - 1, dirs=dirs, simplex=None,
+                axes=ax, sources=sources, note=note)
+
+SHOW = os.environ.get("FV_SYSTEMS", "ieee123,ieee123x4,sf6937,med3980,subsets").split(",")
 data = [three_source()] if "ieee123" in SHOW else []
 print(f"ieee123: {len(data[0]['dirs']) if data else 0} certified")
+for case in SUBSETS:
+    s = subset(*case) if "subsets" in SHOW else None
+    if s is not None:
+        data.append(s)
+        print(f"{case[0]}: {sum(x['status'] == 'certified' for x in s['dirs'])} certified, {sum(x['status'] == 'limit' for x in s['dirs'])} at the limit, "
+              f"{sum(x['status'] == 'pending' for x in s['dirs'])} pending")
 for tab, title, folder, system, stage, note in SYSTEMS:
     d = FB / folder
     if tab not in SHOW or not d.exists():
@@ -107,11 +156,12 @@ for tab, title, folder, system, stage, note in SYSTEMS:
         else:
             dirs.append(dict(id=i, u=u, status="pending", inner=0.98 * day, edge=day, cert=day, pred=pred, hour=None, day=day))
     U = np.array([x["u"] for x in dirs])
-    data.append(dict(id=tab, title=title, note=note, dim=3, dirs=dirs, tri=sphere_triangles(U),
+    data.append(dict(id=tab, sys=tab.replace("x4", ""), n=4, combo="1+2+3+4", title=title, note=note, dim=3, dirs=dirs, tri=sphere_triangles(U),
                      faces=polytope(sens(stage)), sources=["subs1", "subs2", "subs3", "subs4"]))
     print(f"{tab}: {sum(x['status'] == 'certified' for x in dirs)} certified, {sum(x['status'] == 'limit' for x in dirs)} at the limit, "
           f"{sum(x['status'] == 'pending' for x in dirs)} pending; predicted faces {sorted(data[-1]['faces'])}")
 
+data.sort(key=lambda s: (["ieee123", "med3980", "sf6937"].index(s["sys"]), s["n"], s["combo"]))
 html = (Path(__file__).with_name("farkas_viewer_template.html").read_text(encoding="utf-8")
         .replace("__DATA__", json.dumps(data, separators=(",", ":"))).replace("__LIMIT__", str(LIMIT)))
 OUT.write_text(html, encoding="utf-8")
