@@ -58,6 +58,13 @@ function config(name)
     elseif name == "sfp1u_four"         # stage four_smartds_p1u_typeiii
         return (; deck = "smartds_p1u_xf_1ph", sources = ["subs1", "subs2", "subs3", "subs4"],
                 extra = variant_switches("smartds_p1u_xf_1ph", "Master_4sub_typeIII.dss"), customers = true)
+    elseif (m = match(r"^(ieee123|med3980|sfp1u)_s([1-4]{2,3})$", name)) !== nothing
+        # Every subset of a four-source case (user, 2026-10-29): e.g. med3980_s124 keeps substations 1, 2 and 4 of
+        # med3980_four, the lowest-numbered one the reference; the dropped ones' sections are fed through the closed ties.
+        full = config(Dict("ieee123" => "ieee123_four", "med3980" => "med3980_four", "sfp1u" => "sfp1u_four")[m[1]])
+        keep = ["subs$c" for c in m[2]]
+        extra = '4' in m[2] ? full.extra : filter(e -> !occursin("subs4", e) && !occursin("poi4", e), full.extra)
+        return (; deck = full.deck, sources = keep, extra, customers = full.customers)
     # Two and three sources (2026-10-29), each a subset of a four-source case; the dropped substations' sections
     # are fed through the same closed ties. ieee123: the paper's two-source pair. med3980: its own substations.
     # sf6937: neighbours in the tie chain hs0-hs2-hs1-hs3, i.e. subs4-subs1-subs2-subs3 (subs1 = hs2 the reference).
@@ -84,10 +91,10 @@ function directions(name, movers)
                 for (i, th) in enumerate(sort(collect(keys(seen))))]
     end
     # Cases without a measured campaign under these settings: phase A finds the day's reach itself (reach NaN).
-    if endswith(name, "_two")
+    if length(movers) == 1
         return [(; id = i, u = [s], reach = NaN, at_limit = false, label = s > 0 ? "+$(movers[1])" : "-$(movers[1])")
                 for (i, s) in enumerate((1.0, -1.0))]
-    elseif endswith(name, "_three")
+    elseif endswith(name, "_three") || length(movers) == 2
         return [(; id = i, u = [cosd(th), sind(th)], reach = NaN, at_limit = false, label = @sprintf("%.1f deg", th))
                 for (i, th) in enumerate(0:22.5:337.5)]
     end
