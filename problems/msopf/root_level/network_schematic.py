@@ -18,6 +18,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 NET = REPO / "test_networks"
 SLATE, SLATE2 = "#51435F", "#61566E"
+INK, INK2 = "#333333", "#555555"                      # neutral lines for the large feeders (no DDP-paper slate)
 PV_FILL, PV_LINE, BAT_FILL, BAT_LINE = "#C99746", "#8C612F", "#EEE7F6", "#7956A6"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]          # cS1-cS4 of the PESGM2027 figures/colors.tex
 TIES_9500 = ["a8645_48332_sw", "tsw803273_sw", "v7173_48332_sw", "a333_48332_sw", "tsw568613_sw"]
@@ -26,9 +27,9 @@ CONFIG = {
     "ieee123": dict(deck="ieee123_5poi_1ph", variant=None, closed=[], subs=["subs1", "subs2", "subs3", "subs4"], added={},
                     width=1500, lw=3.2, pv=19, bat=13, sub=34, dot=6.5, labels=True),
     "med3980": dict(deck="ieee9500xf_1ph", variant=None, closed=TIES_9500, subs=["subs1", "subs2", "subs3", "subs4"],
-                    added={"subs4": "l2804256"}, width=1500, lw=2.2, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=330, print=2.0),
+                    added={"subs4": "l2804256"}, width=2100, lw=2.6, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=330, print=2.0),
     "sf6937": dict(deck="smartds_p1u_xf_1ph", variant="Master_4sub_typeIII.dss", closed=[], subs=["subs1", "subs2", "subs3", "subs4"],
-                   added={}, width=1500, lw=1.8, pv=8, bat=5.0, sub=30, dot=0, labels=False, lens=400, print=2.3,
+                   added={}, width=2100, lw=2.2, pv=9, bat=5.5, sub=30, dot=0, labels=False, lens=400, print=2.3,
                    names={"subs1": "hs2", "subs2": "hs1", "subs3": "hs3", "subs4": "hs0"}),
 }
 
@@ -74,7 +75,8 @@ def coords(system):
             p = l.split()
             if len(p) == 3: xy[p[0].lower()] = (float(p[1]), float(p[2]))
     lat0 = sum(v[1] for v in xy.values()) / len(xy)
-    return {k: (v[0] * math.cos(math.radians(lat0)), v[1]) for k, v in xy.items()}, {}, True
+    # rotated 90 degrees clockwise (north to the right), so the tall sub-region lies across the page
+    return {k: (v[1], -v[0] * math.cos(math.radians(lat0))) for k, v in xy.items()}, {}, True
 
 def place(lines, xy):
     "Give every bus without coordinates its nearest placed neighbour's position (breadth first)."
@@ -101,8 +103,8 @@ def body(lines, pos, pvs, bats, T, lw, pv, bat, near=None, fade=1.0):
     "Lines, ties, batteries and PV under the map T; with near, only what lies within near = (centre, radius)."
     inside = (lambda q: math.dist(q, near[0]) <= near[1]) if near else (lambda q: True)
     # faded: lighter solid colours (per-element opacity would make every element a PDF transparency group)
-    sl, sl2, bf, bl, pf, pl = ((SLATE, SLATE2, BAT_FILL, BAT_LINE, PV_FILL, PV_LINE) if fade >= 1 else
-                               ("#857A92", "#857A92", "#F1ECF7", "#A892C4", "#D2AF72", "#A98A5C"))
+    sl, sl2, bf, bl, pf, pl = ((INK, INK2, BAT_FILL, BAT_LINE, PV_FILL, PV_LINE) if fade >= 1 else
+                               ("#9C9C9C", "#9C9C9C", "#F1ECF7", "#A892C4", "#D2AF72", "#A98A5C"))
     o = []
     for name, a, b, tie in lines:
         if not (inside(pos[a]) or inside(pos[b])): continue
@@ -172,7 +174,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
         o += body(lines, pos, pvs, bats, Tl, 2.6 * F, 15 * F, 9 * F, near=(p, 1.6 * rn))
         for q in xy:
             if q in pos and math.dist(pos[q], p) <= 1.6 * rn:
-                x, y = Tl(pos[q]); o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4.5 * F:.1f}" fill="{SLATE}"/>')
+                x, y = Tl(pos[q]); o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{4.5 * F:.1f}" fill="{INK}"/>')
         o += ring(cx, cy, cfg["sub"] * F, colr, added)
         # names: the substation's bus, then nearby buses in breadth-first order, kept apart in the lens
         seen, order, q = {b}, [b], deque([b])
@@ -191,7 +193,7 @@ def lens_main(system, out, cfg, lines, pvs, bats, subs, xy, pos):
             big = v == b; right = x > cx + 0.15 * RL
             o.append(f'<text x="{x + (-12 if right else 12) * F:.1f}" y="{y - 10 * F:.1f}" text-anchor="{"end" if right else "start"}" '
                      f'font-family="Times New Roman" font-size="{(30 if big else 24) * F:.0f}" '
-                     f'{"font-weight=" + chr(34) + "bold" + chr(34) if big else ""} fill="{colr if big else "#3B3346"}" '
+                     f'{"font-weight=" + chr(34) + "bold" + chr(34) if big else ""} fill="{colr if big else INK}" '
                      f'stroke="white" stroke-width="{5 * F:.0f}" paint-order="stroke">{short(system, v)}</text>')
             if len(named) == 3: break
         title = f"S{i + 1}" + (f" ({cfg['names'][s]})" if cfg.get("names") else "") + (" (added)" if added else "")
