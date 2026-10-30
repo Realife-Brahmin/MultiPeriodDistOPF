@@ -29,6 +29,13 @@
 #   * Loads that stand for other feeders lumped at the substation bus (`drop_loads`) are left
 #     out: they are not part of the modeled network and would set the substation's import.
 #   * Buses no source reaches after all this are dropped, with their loads, and reported.
+#   * SMART-DS loads at the dataset's own annual peak (user, 2026-10-30): each load's nominal kW is its
+#     non-coincident peak, and the nominal loads of P1U sum to 121.9 MW, 1.6x the 75.6 MW of customer load
+#     the dataset reports at its peak hour (analysis/Summary_data.csv, day 148, 14:00). Each substation's
+#     loads are scaled by its own customer power at that hour over its nominal sum (0.49-0.87).
+#   * Capacitor banks (user, 2026-10-30) are fixed shunts, always in service at their rated kvar: per-phase
+#     equivalent susceptance (kvar / 3, referred to the base voltage), written as 1-phase Capacitors. The
+#     originals switch them by CapControl; the deck does not.
 #   * DERs (user's rule, 2026-10-20): about 10% of the buses get a battery and about 10% a PV unit,
 #     one third of each set shared, on buses with load, sized in proportion to the bus load so
 #     each fleet is 40% of the total load. PV kVA = 1.2 Pmpp; batteries 4 h, kVA = 1.2 kWrated,
@@ -75,15 +82,15 @@ const SYSTEMS = Dict(
     "epri_m1" => (; master = joinpath(TS, "epri_test_circuits", "epri_dpv", "M1", "Master_NoPV.dss"), base_kV = 12.47, seed = 131, skip = nothing,
                    drop_loads = r"^aggregated$"),
     "smartds_p1u" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), p1u_variants = true),
+                       flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), p1u_variants = true, smartds_peak = true),
     # The same region with its service transformers (user, 2026-10-24: secondaries are a small correction, so a
     # larger deck with them is welcome), as ieee9500xf: DERs as in smartds_p1u (same seed, same MV buses).
     "smartds_p1u_xf" => (; master = joinpath(TS, "smartds_sfo_p1u", "Master.dss"), base_kV = 12.47, seed = 2018, skip = nothing, drop_loads = nothing,
-                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true, p1u_variants = true),
+                          flat_shapes = joinpath(TS, "smartds_sfo_p1u", "LoadShapes.dss"), secondary = true, p1u_variants = true, smartds_peak = true),
     # Each of P1U's four substations on its own (each is a separately published deck with its own 69 kV source;
     # hs0 has two substation transformers, so its deck has two sources). Our own DERs by the usual rule.
     [("smartds_p1u_hs$k" => (; master = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "Master.dss"), base_kV = 12.47, seed = 20180 + k,
-                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"))) for k in 0:3]...)
+                                skip = nothing, drop_loads = nothing, flat_shapes = joinpath(TS, "smartds_sfo_p1u", "p1uhs$(k)_1247", "LoadShapes.dss"), smartds_peak = true)) for k in 0:3]...)
 
 "Compile the original. SMART-DS load shapes read annual profiles not downloaded: flat 1.0 in memory."
 function compile_original(cfg)
@@ -110,6 +117,37 @@ function compile_original(cfg)
     ODD.Text.Command("Calcvoltagebases"); ODD.Text.Command("Set mode=snapshot")
     ODD.Text.Command("Set maxiterations=100"); ODD.Text.Command("Set maxcontroliter=200")
     ODD.Solution.Solve()
+end
+
+"""
+SMART-DS load scale: each load's factor (by lowercase name), its substation's customer power at the dataset's
+peak hour over that substation's nominal kW. `nothing` for other systems. A region master scales by the
+substation folders (p1uhs*_1247) under it; a substation's own master by its own analysis.
+"""
+function peak_scale(cfg)
+    get(cfg, :smartds_peak, false) || return nothing
+    top = dirname(cfg.master)
+    subs = filter(d -> occursin(r"^p1uhs\d_1247$", d) && isdir(joinpath(top, d)), readdir(top))
+    dirs = isempty(subs) ? [top] : joinpath.(top, subs)
+    scale = Dict{String,Float64}(); hour = Set{Tuple{String,String}}()
+    for d in dirs
+        names, nominal = String[], 0.0
+        for (r, _, fs) in walkdir(d), f in fs
+            f == "Loads.dss" || continue
+            for l in eachline(joinpath(r, f))
+                m = match(r"(?i)^\s*new\s+load\.(\S+).*?\bkw\s*=\s*([-\d.e]+)", l); m === nothing && continue
+                push!(names, lowercase(m[1])); nominal += parse(Float64, m[2])
+            end
+        end
+        rows = readlines(joinpath(d, "analysis", "Summary_data.csv"))
+        h = Dict(zip(split(rows[1], ','), split(rows[2], ',')))
+        push!(hour, (h["Peak load day of year"], h["Peak load hour of day"]))
+        k = parse(Float64, h["Total peak time real customer power (kW)"]) / nominal
+        @printf("  %s: customer load at the peak hour %.0f kW of %.0f kW nominal, scale %.4f\n", basename(d), k * nominal, nominal, k)
+        foreach(n -> scale[n] = k, names)
+    end
+    length(hour) == 1 || error("SMART-DS substations peak at different hours: $hour")
+    return scale
 end
 
 bus(ref) = lowercase(String(split(ref, '.')[1]))
@@ -219,12 +257,14 @@ function convert(name)
     end
     append!(branches, subx)                                 # substation transformers: lines from the source bus
     load = Dict{String,ComplexF64}(); load_mv = Dict{String,ComplexF64}(); dropped = 0.0; nload = 0
+    scale = peak_scale(cfg)
     for nm in real_names(ODD.Loads.AllNames())
         ODD.Circuit.SetActiveElement("Load.$nm"); ODD.CktElement.Enabled() || continue
         ODD.Loads.Name(nm); s = complex(ODD.Loads.kW(), ODD.Loads.kvar())
         if cfg.drop_loads !== nothing && occursin(cfg.drop_loads, lowercase(nm))
             dropped += real(s); continue
         end
+        scale === nothing || (s *= scale[lowercase(nm)])
         b = bus(ODD.CktElement.BusNames()[1])
         pb = b in mv ? b : get(lvtop, root(lv, b), nothing)
         pb === nothing && error("load $nm at $b ($(round(get(kv, b, NaN); digits = 3)) kV): no service transformer found")
@@ -235,9 +275,13 @@ function convert(name)
     secondary && append!(branches, [x for (k, x) in svc if haskey(load, k)])
     caps = Dict{String,Float64}()
     for nm in real_names(ODD.Capacitors.AllNames())
-        ODD.Circuit.SetActiveElement("Capacitor.$nm"); b = bus(ODD.CktElement.BusNames()[1])
-        b in mv || continue
-        ODD.Capacitors.Name(nm); r = root(dsu, b); caps[r] = get(caps, r, 0.0) + ODD.Capacitors.kvar() / 3
+        ODD.Circuit.SetActiveElement("Capacitor.$nm"); ODD.CktElement.Enabled() || continue
+        b = bus(ODD.CktElement.BusNames()[1]); b in mv || continue
+        ODD.Capacitors.Name(nm); ODD.Capacitors.IsDelta() && error("capacitor $nm is delta-connected; only wye banks are supported")
+        # Rated kvar at its rated kV (line-to-line for a multi-phase bank, line-to-neutral for a 1-phase one), as
+        # a susceptance referred to the base: kvar x (base / rated)^2, then / 3 for the per-phase equivalent.
+        kvr = ODD.CktElement.NumPhases() == 1 ? ODD.Capacitors.kV() * sqrt(3) : ODD.Capacitors.kV()
+        r = root(dsu, b); caps[r] = get(caps, r, 0.0) + ODD.Capacitors.kvar() * (vref / kvr)^2 / 3
     end
     # merged branches: drop self-loops, combine parallels
     par = Dict{Tuple{String,String},Vector{Any}}()
@@ -370,9 +414,10 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "test_networks", deckname(c)
         end
     end
     w("Capacitor.dss") do io
-        println(io, "! The original's capacitor banks (kvar / 3), not redirected by Master.dss.")
+        println(io, "! The original's capacitor banks as fixed shunts, always in service (the original switches them by CapControl):")
+        println(io, "! per-phase equivalent of the rated susceptance (kvar / 3, referred to the base voltage), banks on one bus combined.")
         for b in sort(collect(keys(c.caps)))
-            println(io, "New generator.$(b)C Phases=1 Bus1=$b.1 kV=$kvs Model=1 kW=1e-06 kVAr=$(f3(c.caps[b]))")
+            println(io, "New Capacitor.C_$b Phases=1 Bus1=$b.1 kV=$kvs kvar=$(f3(c.caps[b])) conn=wye")
         end
     end
     w("PVSystem.dss") do io
@@ -401,7 +446,7 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "test_networks", deckname(c)
 Redirect ../LoadShapeDefault.dss
 Redirect ../LoadShapePVDefault.dss
 Redirect Loads.dss     ! Balanced Loads
-// Redirect  Capacitor.dss
+Redirect Capacitor.dss
 Redirect PVSystem.dss
 Redirect Storage.dss
 
