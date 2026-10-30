@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Submit Farkas bracketing cases on Kamiak as chains A (one task per direction) -> B -> C (one task per direction).
 # Usage (from ~/msopf/jobs/<study>, beside farkas_job.sh): bash farkas_submit.sh [-d <jobid>] <case[:dirs]> ...
-#   case   a farkas_bracketing.jl system (ieee123_s12, med3980_s134, ...); pairs have 2 directions, triples 16
+#   case   a farkas_bracketing.jl system (ieee123_s12, med3980_s134, ...); pairs have 2 directions, triples 16, *_four 78
 #   :dirs  an array spec for phases A and C instead (e.g. med3980_two:1 reruns direction 1)
 #   -d     start every chain after this job ends (afterany), e.g. to queue behind running work
 # Memory: 24 GB (ieee123, med3980), 32 GB (sf6937). Prints one line per case with its three job ids.
@@ -12,7 +12,7 @@ for arg in "$@"; do
   sys=${arg%%:*}; dirs=${arg#*:}
   if [ "$dirs" = "$arg" ]; then
     digits=${sys##*_s}
-    case $sys in *_two) n=2;; *_three) n=16;; *) [ ${#digits} -eq 2 ] && n=2 || n=16;; esac
+    case $sys in *_two) n=2;; *_three) n=16;; *_four) n=78;; *) [ ${#digits} -eq 2 ] && n=2 || n=16;; esac
     dirs=1-$n
   fi
   case $sys in sfp1u*) mem=32G;; *) mem=24G;; esac
