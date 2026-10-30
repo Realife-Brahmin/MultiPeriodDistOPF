@@ -3,6 +3,7 @@
 # Usage (from ~/msopf/jobs/<study>): sbatch [--array=1-N] [slurm options] farkas_job.sh <system> <A|B|C>
 # All phases of a system share the folder <system>/ (phase B reads phase A's files, phase C reads B's envelope);
 # chain them with --dependency. The array index is the direction (FB_DIR). Logs: <system>/logs/<phase>_<dir>.log.
+# FB_SCRIPT=farkas_dispatched.jl runs the dispatched-battery phases (AD, BD, CD) instead; set FB_IDLE to the idle campaign folder.
 set -uo pipefail
 system=$1; phase=$2; dir=${SLURM_ARRAY_TASK_ID:-0}
 REPO=$HOME/msopf/repo
@@ -25,7 +26,7 @@ log=$OUT/logs/${phase}_${dir}
   echo "ipopt_extra=${IPOPT_EXTRA_OPTIONS:-}"
   (cd "$REPO" && echo "commit=$(git rev-parse HEAD)"); } > "$log.meta"
 cd "$REPO"
-$HOME/opt/julia-1.12.7/bin/julia --startup-file=no --project=$HOME/msopf/envs/sdp_hsl problems/msopf/root_level/farkas_bracketing.jl > "$log.log" 2> "$log.err"
+$HOME/opt/julia-1.12.7/bin/julia --startup-file=no --project=$HOME/msopf/envs/sdp_hsl problems/msopf/root_level/${FB_SCRIPT:-farkas_bracketing.jl} > "$log.log" 2> "$log.err"
 code=$?
 echo "exit=$code end=$(date -Is)" >> "$log.meta"
 exit $code
