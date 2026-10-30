@@ -4,10 +4,11 @@
 # Along each measured direction of the region campaigns (16 for three sources, the fib78 set for four), the
 # boundary is bracketed from both sides: inside by a validated AC dispatch, outside by the relaxation proving the
 # point infeasible (a margin bound U < -UTOL or a validated Farkas bound > 0; feasibility_certificate.jl).
-#  A (per direction): the limiting hour t* (the hour with the smallest import of a T = 24 solve at 98% of the
-#    measured reach), that hour's own boundary r*_t by bisection on the sign of the exact, re-validated margin
-#    (starting from the day's reach, a lower bound with idle batteries), and the currents of the validated
-#    dispatches at 98% of r*_t and at equal angles. Writes fb_A_<i>.csv (summary) and fb_Acur_<i>.csv (currents).
+#  A (per direction): the day's reach, by bisection on the day's margin solved hour by hour (exact with idle
+#    batteries; a direction whose day is infeasible at equal angles stops there, tstar = 0); the limiting hour t* (the
+#    smallest hourly margin at 98% of the reach), that hour's own boundary r*_t by bisection on the sign of the exact,
+#    re-validated margin (starting from the day's reach, a lower bound with idle batteries), and the currents of the
+#    validated dispatches at 98% of r*_t and at equal angles. Writes fb_A_<i>.csv (summary) and fb_Acur_<i>.csv (currents).
 #  B (once): the current envelope, each line's and source's largest current over all phase-A dispatches. The
 #    limits are this envelope itself (1.0x), with a floor of FB_FLOOR pu (1e-4) for lines that carry almost nothing.
 #    Writes fb_envelope.csv. These are empirical limits, not ratings: a certificate proves the model WITH them
@@ -97,6 +98,11 @@ function directions(name, movers)
     elseif endswith(name, "_three") || length(movers) == 2
         return [(; id = i, u = [cosd(th), sind(th)], reach = NaN, at_limit = false, label = @sprintf("%.1f deg", th))
                 for (i, th) in enumerate(0:22.5:337.5)]
+    elseif name in ("med3980_four", "sfp1u_four")
+        # The decks changed on 2026-10-30 (capacitor banks; sf6937 loads at SMART-DS's peak), so the measured reaches
+        # no longer apply: phase A finds each one itself, along the same 78 directions (the Fibonacci lattice, ids 1-78).
+        fib(i) = (z = 1 - (2i + 1) / 78; rho = sqrt(1 - z^2); phi = i * pi * (3 - sqrt(5)); [rho * cos(phi), rho * sin(phi), z])
+        return [(; id = i + 1, u = fib(i), reach = NaN, at_limit = false, label = "direction $(i + 1)") for i in 0:77]
     end
     label = Dict("ieee123_four" => "ieee123_5poi_1ph", "med3980_four" => "ieee9500xf_1ph", "sfp1u_four" => "smartds_p1u_xf_typeIII")[name]
     ds = NamedTuple[]
@@ -122,18 +128,45 @@ hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [
 DIRS = directions(SYS, movers)
 angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumerate(movers)))
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
-"Validated margin of an exact solve (retried cold and from `alt`; NaN if no start validates), and the solution."
+"""
+Validated margin of an exact solve (retried cold and from `alt`; NaN if no start validates), and the solution. A
+negative margin is retried from the other starts too and the best kept (2026-10-30): a margin solve can end in a
+low-voltage local solution (sf6937, hour 11 cold: -18 MW at 0.1 pu, against -1.8 MW from the previous hour's
+solution), and every validated solution is a valid lower bound on the best margin.
+"""
 function vmargin(ang, kw; start = nothing, alt = nothing)
-    x = nothing; v = nothing
+    x = nothing; v = nothing; best = (-Inf, nothing)
     for st in unique([start, nothing, alt])
         x = margin(ang, kw; start = st)
         x.status in RAY_OK || continue
         v = validate_dispatch(net, ang, kw, x; k = KV)
-        v.equations <= EQTOL && return v.margin_kW, x
+        v.equations <= EQTOL || continue
+        v.margin_kW >= 0 && return v.margin_kW, x
+        v.margin_kW > best[1] && (best = (v.margin_kW, x))
     end
+    best[2] === nothing || return best
     say("      solve failed from every start (", x.status, ")", v === nothing ? "" :
         "; residuals " * join((@sprintf("%s %.1e", c, r) for (c, r) in sort(collect(v.viol))), ", "))
     return NaN, x
+end
+"""
+The day's validated margin with batteries idle, hour by hour (2026-10-30). With the batteries idle the hours are
+independent, so the day's margin is exactly the smallest hourly one. One T = 24 solve is slower and, on sf6937, fell
+into low-voltage local solutions (customer voltages 0.06-0.16 pu) where every hour alone solved. Hours run in `order`
+(worst first) and stop at the first that fails, unless `all`. An hour without a start of its own starts from the last
+hour solved (vmargin also tries that one as its alternative). Returns the margin (NaN if an hour does not validate),
+the hour that set it, each hour's margin (Inf if not run) and each hour's last validated solution.
+"""
+function daymargin(ang; starts = Any[nothing for _ in 1:24], order = 1:24, all = false)
+    ms = fill(Inf, 24); xs = Any[s for s in starts]; prev = nothing
+    for t in order
+        st = starts[t] === nothing ? prev : starts[t]
+        m, x = vmargin(ang, hour_kw(t); start = st, alt = prev)
+        ms[t] = m; isfinite(m) && (xs[t] = x; prev = x)
+        !all && !(isfinite(m) && m >= 0) && return m, t, ms, xs
+    end
+    any(isnan, ms) && (t = findfirst(isnan, ms); return NaN, t, ms, xs)
+    t = argmin(ms); return ms[t], t, ms, xs
 end
 say("== Farkas bracketing ", SYS, " phase ", PHASE, ": ", length(net.buses), " buses, sources ", join(cfg.sources, ","),
     ", band on ", band === nothing ? "every non-source bus" : "$(length(band)) customer buses", "; ", length(DIRS), " directions")
@@ -145,24 +178,35 @@ function main()
         fa = joinpath(OUT, "fb_A_$(d.id).csv")
         open(io -> println(io, "id,label,day_reach_deg,at_limit,tstar,hour_boundary_deg,margin98_kW,u1,u2,u3,seconds"), fa, "w")
         t0 = time()
+        ucols = join(vcat(d.u, fill(0.0, 3 - length(d.u))), ',')
+        xsday = Any[nothing for _ in 1:24]
         if isnan(d.reach)
-            # The day's reach by bisection on the validated T = 24 margin (batteries idle, so it is the worst hour's).
-            # A point that does not validate (after the retries of probe) counts as beyond the edge: only validated
-            # points move the lower end, and phase C certifies the other side.
+            # Equal angles first: the search runs outward from them, so if the day is infeasible there (the voltage band
+            # at dawn on some sf6937 pairs) the direction has nothing to bracket. Recorded with tstar = 0, day reach NaN
+            # and the equal-angle margin; phases B and C skip it.
+            m0d, t0d, ms0, xs0 = daymargin(angles(d, 0.0); all = true)
+            if !(isfinite(m0d) && m0d >= 0)
+                open(io -> @printf(io, "%d,%s,NaN,false,0,NaN,%.4f,%s,%.0f\n", d.id, d.label, m0d, ucols, time() - t0), fa, "a")
+                say(@sprintf("  %s: equal angles infeasible for the day (margin %.1f kW at hour %d); nothing to bracket", d.label, m0d, t0d)); exit(0)
+            end
+            # The day's reach by bisection on the validated day margin, hour by hour (daymargin). A point that does not
+            # validate (after the retries of probe) counts as beyond the edge: only validated points move the lower end,
+            # and phase C certifies the other side.
             # A solve that does not validate at one angle often does a fraction of a percent away (at 1.0 and 0.5 deg on
             # med3980 the residuals stayed at 1e-3 while every nearby angle validated), so a failed point is retried at
-            # r(1 -+ 0.3%) before it counts as beyond.
-            function probe(r, xs)
-                m, x = vmargin(angles(d, r), kw24; start = xs, alt = xs)
+            # r(1 -+ 0.3%) before it counts as beyond. Hours run worst first; the hour that fails moves to the front.
+            order = sortperm(ms0)
+            function probe(r0, xs)
+                r = r0; m, t, _, x = daymargin(angles(d, r); starts = xs, order)
                 for f in (0.997, 1.003)
-                    isfinite(m) && return m, x, r
-                    say(@sprintf("  %s: no validated solve at %.4f deg; trying %.4f", d.label, r, f * r))
-                    r2 = f * r; m, x = vmargin(angles(d, r2), kw24; start = xs, alt = xs)
-                    isfinite(m) && return m, x, r2
+                    isfinite(m) && break
+                    say(@sprintf("  %s: no validated solve at %.4f deg (hour %d); trying %.4f", d.label, r0, t, f * r0))
+                    r = f * r0; m, t, _, x = daymargin(angles(d, r); starts = xs, order)
                 end
+                (isfinite(m) && m >= 0) || (order = [t; filter(!=(t), order)])
                 return m, x, r
             end
-            lo, hi, xs = 0.0, 1.0, nothing
+            lo, hi, xs = 0.0, 1.0, xs0
             while true
                 m, x, r = probe(hi, xs)
                 (isfinite(m) && m >= 0) || (hi = r; break)
@@ -177,17 +221,18 @@ function main()
                 end
                 d = merge(d, (; reach = lo))
             end
+            xsday = xs
             say(@sprintf("  %s: day's reach %.5f deg%s (%.0f s)", d.label, d.reach, d.at_limit ? " (search limit)" : "", time() - t0))
         end
         if d.at_limit
-            open(io -> @printf(io, "%d,%s,%.6f,true,0,NaN,NaN,%s,0\n", d.id, d.label, d.reach, join(vcat(d.u, fill(0.0, 3 - length(d.u))), ',')), fa, "a")
+            open(io -> @printf(io, "%d,%s,%.6f,true,0,NaN,NaN,%s,0\n", d.id, d.label, d.reach, ucols), fa, "a")
             say("  ", d.label, ": feasible to the 20 deg search limit; nothing to bracket"); exit(0)
         end
-        x24 = margin(angles(d, 0.98d.reach), kw24)
-        x24.status in RAY_OK || error("T = 24 solve at 98% of the measured reach failed: $(x24.status)")
-        hourmin = [minimum(x24.P_subs_kW[n][t] for n in keys(x24.P_subs_kW)) for t in 1:24]
-        tstar = argmin(hourmin); kw1 = hour_kw(tstar)
-        say(@sprintf("  %s: limiting hour %d (smallest import %.1f kW at 98%% of the day's reach %.5f deg)", d.label, tstar, hourmin[tstar], d.reach))
+        # The limiting hour: the smallest hourly margin (import or voltage room) at 98% of the day's reach.
+        m98d, tstar, ms98, _ = daymargin(angles(d, 0.98d.reach); starts = xsday, all = true)
+        isfinite(m98d) || error("the hour-by-hour day at 98% of the reach does not validate (hour $tstar)")
+        kw1 = hour_kw(tstar)
+        say(@sprintf("  %s: limiting hour %d (smallest margin %.1f kW at 98%% of the day's reach %.5f deg)", d.label, tstar, m98d, d.reach))
         lo, hi = 0.0, 1.2d.reach; xs = nothing
         m, x = vmargin(angles(d, 0.999d.reach), kw1)
         isfinite(m) && m >= 0 ? (lo = 0.999d.reach; xs = x) : say("  the day's edge does not validate at this hour; bracketing from zero")
@@ -204,7 +249,7 @@ function main()
         (isfinite(m98) && m98 >= 0 && isfinite(m0) && m0 >= 0) || error("the 98% point or equal angles does not validate at hour $tstar")
         rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]])
         open(io -> @printf(io, "%d,%s,%.6f,false,%d,%.6f,%.4f,%s,%.0f\n", d.id, d.label, d.reach, tstar, lo, m98,
-                           join(vcat(d.u, fill(0.0, 3 - length(d.u))), ','), time() - t0), fa, "a")
+                           ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_Acur_$(d.id).csv"), "w") do io
             println(io, "element,kind,I_pu")
             for x in (x98, x0)
@@ -235,6 +280,7 @@ function main()
         fc = joinpath(OUT, "fb_C_$(d.id).csv")
         open(io -> println(io, "id,label,tstar,hour_boundary_deg,r_cert_deg,r_unresolved_deg,ratio_cert,U_at_cert_kW,farkas_at_cert,relaxations,seconds"), fc, "w")
         a[4] == "true" && (say("  ", d.label, ": at the search limit; skipped"); exit(0))
+        a[5] == "0" && (say("  ", d.label, ": equal angles infeasible for the day; skipped"); exit(0))
         tstar = parse(Int, a[5]); rs = parse(Float64, a[6])
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
         for l in readlines(joinpath(OUT, "fb_envelope.csv"))[2:end]
