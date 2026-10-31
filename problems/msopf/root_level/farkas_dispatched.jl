@@ -4,7 +4,7 @@
 # With the batteries dispatched the hours no longer decouple, so every solve and every relaxation spans the day.
 #   AD  (FB_DIR = i) the day's reach along direction i: starts at the idle reach (feasible, fb_A_<i>.csv of the idle
 #       campaign in FB_IDLE, from the stitched idle hours), steps out by 1.25 until a validated margin is negative or
-#       nothing validates, then regula falsi (Illinois) on the validated day margin to 0.1% of the reach. Writes
+#       nothing validates, then regula falsi (Illinois) on the validated day margin to 0.5% of the reach. Writes
 #       fb_AD_<i>.csv, the currents of the dispatch at 98% of the reach (fb_ADcur_<i>.csv, largest over the day) and
 #       the OpenDSS replay of that day.
 #   BD  the current envelope over every fb_ADcur and the idle campaign's fb_Acur files (as phase B).
@@ -15,7 +15,9 @@ const DPHASE = get(ENV, "FB_PHASE", "AD")
 ENV["FB_PHASE"] = "X"                                # farkas_bracketing.jl: load its setup, run none of its phases
 include(joinpath(@__DIR__, "farkas_bracketing.jl"))
 const IDLE = get(ENV, "FB_IDLE", OUT)
-kwb = merge(kw24, (; battery = :optimize, terminal = :cyclic, gamma = 0.0))
+# Ipopt to 1e-6 (tol and the primal infeasibility constr_viol_tol; the idle campaign used 1e-8): every point is
+# validated against the original constraints at EQTOL = 1e-5 anyway, and the edge is sought to 0.5% (user, 2026-10-30).
+kwb = merge(kw24, (; battery = :optimize, terminal = :cyclic, gamma = 0.0, tol = 1e-6, constr_viol_tol = 1e-6))
 
 "A T = 24 start stitched from the hourly solutions `xs` (batteries at their initial charge, no power)."
 function stitch(xs)
@@ -26,23 +28,22 @@ function stitch(xs)
             raw = (; lr = cat24(x -> x.raw.lr), li = cat24(x -> x.raw.li), ir = cat24(x -> x.raw.ir), ii = cat24(x -> x.raw.ii)))
 end
 
-"Validated dispatched day margin at angle r along d, from `start` and then cold; NaN if neither validates."
+"Validated dispatched day margin at angle r along d, from `start`, cold only if that does not validate (cold retries of
+negative margins agreed to 2 kW and doubled the cost, 2026-10-30); NaN if neither validates."
 function dmargin(d, r, start)
-    best = (-Inf, nothing)
     for st in unique([start, nothing])
         t1 = time(); x = margin(angles(d, r), kwb; start = st)
         if x.status in RAY_OK
             v = validate_dispatch(net, angles(d, r), kwb, x; k = KV)
             say(@sprintf("    %.5f deg (%s): margin %.1f kW, residual %.1e (%.0f s)", r, st === nothing ? "cold" : "warm", v.margin_kW, v.equations, time() - t1))
             if v.equations <= EQTOL
-                v.margin_kW >= 0 && return v.margin_kW, x
-                v.margin_kW > best[1] && (best = (v.margin_kW, x))
+                return v.margin_kW, x
             end
         else
             say(@sprintf("    %.5f deg (%s): %s (%.0f s)", r, st === nothing ? "cold" : "warm", x.status, time() - t1))
         end
     end
-    best[2] === nothing ? (NaN, nothing) : best
+    return NaN, nothing
 end
 
 function dmain()
@@ -75,7 +76,7 @@ function dmain()
         end
         if isfinite(hi)
             side = 0
-            while (hi - lo) > 1e-3 * lo
+            while (hi - lo) > 5e-3 * lo
                 # Illinois regula falsi when the far side has a validated margin; bisection when it does not
                 r = isfinite(mhi) ? lo + (hi - lo) * mlo / (mlo - mhi) : (lo + hi) / 2
                 r = clamp(r, lo + 0.05(hi - lo), hi - 0.05(hi - lo))
