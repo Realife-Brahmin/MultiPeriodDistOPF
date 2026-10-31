@@ -137,14 +137,17 @@ function dmain()
                          d.label, r / rs, r, c.U, c.farkas.bound, c.status, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
             return ok, c
         end
+        # FB_CD_GRID (comma list) replaces the grid, FB_CD_BISECT (default 5) the number of bisections.
+        grid = haskey(ENV, "FB_CD_GRID") ? parse.(Float64, split(ENV["FB_CD_GRID"], ',')) : GRID
+        nbis = parse(Int, get(ENV, "FB_CD_BISECT", "5"))
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
-        for g in GRID
+        for g in grid
             ok, c = certified(g * rs); n += 1
             ok ? (hi = g * rs; Uhi = c.U; Fhi = c.farkas.bound; break) : (lo = g * rs)
             get(ENV, "FB_CD_ONCE", "0") == "1" && break
         end
         if isfinite(hi) && get(ENV, "FB_CD_ONCE", "0") != "1"
-            for _ in 1:5
+            for _ in 1:nbis
                 mid = (lo + hi) / 2; ok, c = certified(mid); n += 1
                 ok ? (hi = mid; Uhi = c.U; Fhi = c.farkas.bound) : (lo = mid)
             end
