@@ -6,6 +6,7 @@
 #   loop mismatch    sum of product angles around each fundamental cycle (tie loops), which is 0 for a real flow;
 #   source paths     product angles summed along the tree path between source terminals, against the first moments.
 # Lines on a cycle (closed ties) are told apart from radial lines, to see whether the gap sits on the loops.
+# FB_CUTS picks the cuts (farkas_bracketing.jl; kcl0,jbound by default, lsec the line power secants).
 #   FB_SYSTEM=sfp1u_four FB_DIR=24 FB_RATIO=1.1 FB_IDLE=... MULTIPERIOD_OUT_DIR=<campaign folder> julia ... relaxation_gap_diagnose.jl
 ENV["FB_PHASE"] = "none"                             # farkas_dispatched.jl: load its setup, run none of its phases
 include(joinpath(@__DIR__, "farkas_dispatched.jl"))
@@ -18,11 +19,23 @@ for l in readlines(joinpath(OUT, "fb_envelope_disp.csv"))[2:end]
     c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
 end
 kwL = merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))
-say(@sprintf("%s: %.4f x reach %.5f = %.5f deg", d.label, ratio, rs, r))
+say(@sprintf("%s: %.4f x reach %.5f = %.5f deg; cuts %s", d.label, ratio, rs, r, join(CUTS, ",")))
+# FB_LIFTCHECK=1: a validated dispatched day at 98% of the reach (cold solve), lifted into the relaxation with these
+# cuts: every constraint must hold for it (a cut that a real point violates is not valid).
+if get(ENV, "FB_LIFTCHECK", "0") == "1"
+    tl = time(); m98, x98 = dmargin(d, 0.98rs, nothing)
+    x98 === nothing && error("the 98% point does not validate")
+    R98 = relax_margin(net, angles(d, 0.98rs), kwL; k = KV, cuts = CUTS)
+    lv = lifted_violation(R98, net, x98, kwL; margin_kW = m98)
+    say(@sprintf("  lifted check at 98%% (margin %.1f kW): worst violation %.2e at %s, box %.2e, lsec cuts %.2e over %d; %.0f s",
+                 m98, lv.worst, lv.at, lv.box_worst, lv.lsec_worst, length(R98.lseccons), time() - tl))
+    R98 = nothing; x98 = nothing; GC.gc()
+end
 t0 = time(); c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
-say(@sprintf("  relaxation: %s, U %+.1f kW, fictitious loss %.1f kW (mean over hours), rank ratio %.2e, %.0f s, max RSS %.1f GB",
-             c.status, c.U, c.fictitious_loss_kW, c.rank_ratio, time() - t0, Sys.maxrss() / 2^30))
-has_values(c.R.model) || error("no primal values to diagnose")
+say(@sprintf("  relaxation: %s, U %+.1f kW, fictitious loss %.1f kW (mean over hours), rank ratio %.2e, %d lsec cuts, %.0f s, max RSS %.1f GB",
+             c.status, c.U, c.fictitious_loss_kW, c.rank_ratio, length(c.R.lseccons), time() - t0, Sys.maxrss() / 2^30))
+if isfinite(c.farkas.bound); say(@sprintf("  Farkas bound %.4e (> 0 proves infeasibility)", c.farkas.bound)); end
+has_values(c.R.model) || (say("  no primal point to diagnose (the relaxation is infeasible or failed)"); exit(0))
 R = c.R; S = net.S_base_kVA; T = kwL.T; v(x) = value(x)
 
 # spanning tree (BFS from the first source terminal); every non-tree line closes one fundamental cycle
@@ -92,5 +105,8 @@ open(joinpath(GD, "gap_lines_$(d.id).csv"), "w") do io
 end
 tot = sum(sum(x) for x in values(F)) * 24 / T; lp = sum(sum(F[n]) for n in onloop; init = 0.0) * 24 / T
 say(@sprintf("  fictitious loss over the day %.1f kWh: %.1f%% on loop lines (%d of %d lines)", tot, 100lp / max(tot, eps()), length(onloop), length(net.lines)))
+LAT = lateral_boxes(net, kwL, R.bounds, Dict(s.bus => s for s in net.sources); ideal = get(kwL, :ideal_sources, false)).lat
+la = sum((sum(F[n]) for n in keys(LAT)); init = 0.0) * 24 / T
+say(@sprintf("  %.1f%% on lines with a source-free side (%d lines, where :lsec applies); %.1f kWh elsewhere", 100la / max(tot, eps()), length(LAT), tot - la))
 say("  top lines: ", join((@sprintf("%s%s %.1f", n, n in onloop ? "*" : "", fd) for (fd, n) in top[1:min(10, end)]), ", "))
 say(@sprintf("  done in %.0f s; files in %s", time() - t0, GD))
