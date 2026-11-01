@@ -1,0 +1,7 @@
+== Farkas bracketing sfp1u_four phase X: 6937 buses, sources subs1,subs2,subs3,subs4, band on 1873 customer buses; 78 directions
+direction 24: 1.1000 x reach 5.48538 = 6.03392 deg; cuts kcl0,jbound; T = 2
+  KKT: 1574061 x 1574061 (n = 384167 variables, model has 384167), 16088575 nonzeros in its upper triangle; QDLDL L 36045643 nonzeros; setup 54 s, max RSS 4.5 GB
+  amd:   L 36045643 nonzeros (QDLDL's own count 36045643), work 1.322e+09, critical path 1.232e+07, parallel bound 107.3x
+  hours: 2531 coupling columns (B, P_B, m) removed -> 6076 blocks, 2 of them over 1000 columns (sizes 782728, 782728)
+  hours: L 37738826 nonzeros, work 2.996e+09, critical path 1.292e+09, parallel bound 2.3x; coupling block 2531 columns, 49.1% of the work; largest hour block 25.4% of the work
+  done in 64 s, max RSS 5.5 GB
