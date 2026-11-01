@@ -10,10 +10,19 @@
 #   BD  the current envelope over every fb_ADcur and the idle campaign's fb_Acur files (as phase B).
 #   CD  (FB_DIR = i) certifies infeasibility of the T = 24 relaxation outward from the dispatched reach (grid, then
 #       five bisections, as phase C), with the envelope as current limits. Writes fb_CD_<i>.csv.
+#       FB_LDL (comma list) names the solvers tried in turn on each relaxation, the first certificate counting (each
+#       gives a valid bound): qdldl (Clarabel's default), mkl (Clarabel with MKL Pardiso; threads from MKL_NUM_THREADS;
+#       needs Pardiso in the environment), mosek (MOSEK; threads from FB_MOSEK_THREADS; needs MosekTools and a licence).
+#       At dir 24, 1.1x the reach, Pardiso's multipliers gave U +55 kW against QDLDL's +287 (solver_compare, 2026-11-01).
 #   FB_SYSTEM=sfp1u_four FB_PHASE=AD FB_DIR=1 FB_IDLE=<idle campaign folder> julia --project=... farkas_dispatched.jl
 const DPHASE = get(ENV, "FB_PHASE", "AD")
 ENV["FB_PHASE"] = "X"                                # farkas_bracketing.jl: load its setup, run none of its phases
 include(joinpath(@__DIR__, "farkas_bracketing.jl"))
+const SOLVERS = Symbol.(split(get(ENV, "FB_LDL", "qdldl"), ','; keepempty = false))
+:mkl in SOLVERS && @eval using Pardiso               # loads Clarabel's Pardiso extension
+:mosek in SOLVERS && @eval using MosekTools
+solver_of(sv) = sv === :mosek ? (Mosek.Optimizer, [("MSK_IPAR_NUM_THREADS", parse(Int, get(ENV, "FB_MOSEK_THREADS", "1")))]) :
+                                (Clarabel.Optimizer, [CLARABEL_DEFAULTS; ("direct_solve_method", sv)])
 const IDLE = get(ENV, "FB_IDLE", OUT)
 # Ipopt to 1e-6 (tol and the primal infeasibility constr_viol_tol; the idle campaign used 1e-8): every point is
 # validated against the original constraints at EQTOL = 1e-5 anyway, and the edge is sought to 0.5% (user, 2026-10-30).
@@ -131,13 +140,18 @@ function dmain()
         end
         kwL = merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))
         function certified(r)
-            t1 = time(); c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
-            ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
-            say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
-                         d.label, r / rs, r, c.U, c.farkas.bound, c.status, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
-            # only the numbers leave: holding the last result kept its model (about 45 GB) alive while the next one was
-            # built, and a fourth relaxation ran out of 64 GB (direction 2, 2026-10-31)
-            s = (; U = c.U, farkas = (; bound = c.farkas.bound)); c = nothing; GC.gc(true)
+            ok = false; s = nothing
+            for sv in SOLVERS
+                opt, at = solver_of(sv)
+                c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
+                ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
+                say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s, %s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
+                             d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
+                # only the numbers leave: holding the last result kept its model (about 45 GB) alive while the next one was
+                # built, and a fourth relaxation ran out of 64 GB (direction 2, 2026-10-31)
+                s = (; U = c.U, farkas = (; bound = c.farkas.bound)); c = nothing; GC.gc(true)
+                ok && break
+            end
             return ok, s
         end
         # FB_CD_GRID (comma list) replaces the grid, FB_CD_BISECT (default 5) the number of bisections; FB_CD_TOLDEG
