@@ -135,7 +135,10 @@ function dmain()
             ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
             say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
                          d.label, r / rs, r, c.U, c.farkas.bound, c.status, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
-            return ok, c
+            # only the numbers leave: holding the last result kept its model (about 45 GB) alive while the next one was
+            # built, and a fourth relaxation ran out of 64 GB (direction 2, 2026-10-31)
+            s = (; U = c.U, farkas = (; bound = c.farkas.bound)); c = nothing; GC.gc(true)
+            return ok, s
         end
         # FB_CD_GRID (comma list) replaces the grid, FB_CD_BISECT (default 5) the number of bisections; FB_CD_TOLDEG
         # stops them once the bracket [last unresolved, first certified] is that many degrees wide or less.
