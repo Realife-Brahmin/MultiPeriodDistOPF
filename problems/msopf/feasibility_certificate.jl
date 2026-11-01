@@ -316,7 +316,7 @@ and the line's two KVL equations hold for every row of it (valid: for a real poi
 is x x', so a' x = 0 gives M a = 0). Eliminating the currents instead puts 1/z of the
 near-zero-impedance coupling lines (1e8 pu) into the constraints, which stalls the solver.
 """
-function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true, src_scale = false)
+function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true, src_scale = false, optimizer = Clarabel.Optimizer)
     T = kw.T; dt = get(kw, :dt_h, 24 / T); S = net.S_base_kVA; Yb = net.Y_base; Ts = 1:T
     lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
     pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); ideal = get(kw, :ideal_sources, false)
@@ -326,7 +326,7 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
     bnames = [bt.name for bt in net.batteries]; pnames = [p.name for p in pvs]
     src_at = Dict(s.bus => s for s in net.sources)
     vb = variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin)
-    model = Model(Clarabel.Optimizer); set_silent(model)
+    model = Model(optimizer); set_silent(model)                    # Clarabel by default; any conic solver with PSD cones
     for (a, v) in solver_attributes; set_attribute(model, a, v); end
     # Bounds that only the certificate needs (voltage box, derived current bounds, product bounds) go
     # to `box`, not to the solver: in the solver they put 1e5-scale rows beside unit-scale ones.
@@ -822,9 +822,9 @@ every block is numerically rank one, the recovered state for `validate_dispatch`
 """
 # Clarabel settings that solve the 24-period relaxation (the defaults stop on a numerical error there)
 const CLARABEL_DEFAULTS = [("max_iter", 400), ("static_regularization_constant", 1e-7), ("tol_gap_abs", 1e-6), ("tol_gap_rel", 1e-6), ("tol_feas", 1e-6)]
-function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0, src_scale = false)
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0, src_scale = false, optimizer = Clarabel.Optimizer)
     t0 = time()
-    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin, src_scale)
+    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin, src_scale, optimizer)
     tb = time() - t0
     optimize!(R.model)
     ts = time() - t0 - tb

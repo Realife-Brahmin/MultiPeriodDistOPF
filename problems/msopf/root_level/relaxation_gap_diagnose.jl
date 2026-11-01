@@ -8,12 +8,17 @@
 # Lines on a cycle (closed ties) are told apart from radial lines, to see whether the gap sits on the loops.
 # FB_CUTS picks the cuts (farkas_bracketing.jl; kcl0,jbound by default, lsec the line power secants).
 # FB_LDL picks Clarabel's linear solver (qdldl by default; mkl = MKL Pardiso, needs Pardiso in the environment, threads
-# from MKL_NUM_THREADS); FB_GAPDIR names the output folder (relaxation_gap by default).
+# from MKL_NUM_THREADS; mosek = the MOSEK solver instead of Clarabel, needs MosekTools in the environment and a licence
+# in ~/mosek, threads from FB_MOSEK_THREADS); FB_GAPDIR names the output folder (relaxation_gap by default).
 #   FB_SYSTEM=sfp1u_four FB_DIR=24 FB_RATIO=1.1 FB_IDLE=... MULTIPERIOD_OUT_DIR=<campaign folder> julia ... relaxation_gap_diagnose.jl
 ENV["FB_PHASE"] = "none"                             # farkas_dispatched.jl: load its setup, run none of its phases
 include(joinpath(@__DIR__, "farkas_dispatched.jl"))
 const LDL = Symbol(get(ENV, "FB_LDL", "qdldl"))
 LDL === :mkl && @eval using Pardiso                  # loads Clarabel's Pardiso extension
+LDL === :mosek && @eval using MosekTools
+const SOLVER = LDL === :mosek ?
+    (; optimizer = Mosek.Optimizer, attrs = [("MSK_IPAR_NUM_THREADS", parse(Int, get(ENV, "FB_MOSEK_THREADS", "1")))]) :
+    (; optimizer = Clarabel.Optimizer, attrs = [CLARABEL_DEFAULTS; ("direct_solve_method", LDL)])
 
 const GD = joinpath(OUT, get(ENV, "FB_GAPDIR", "relaxation_gap")); mkpath(GD)
 i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]; ratio = parse(Float64, get(ENV, "FB_RATIO", "1.1"))
@@ -23,7 +28,8 @@ for l in readlines(joinpath(OUT, "fb_envelope_disp.csv"))[2:end]
     c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
 end
 kwL = merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))
-say(@sprintf("%s: %.4f x reach %.5f = %.5f deg; cuts %s; linear solver %s, %s threads", d.label, ratio, rs, r, join(CUTS, ","), LDL, get(ENV, "MKL_NUM_THREADS", "1")))
+say(@sprintf("%s: %.4f x reach %.5f = %.5f deg; cuts %s; linear solver %s, %s threads", d.label, ratio, rs, r, join(CUTS, ","), LDL,
+             LDL === :mosek ? get(ENV, "FB_MOSEK_THREADS", "1") : get(ENV, "MKL_NUM_THREADS", "1")))
 # FB_LIFTCHECK=1: a validated dispatched day at 98% of the reach (cold solve), lifted into the relaxation with these
 # cuts: every constraint must hold for it (a cut that a real point violates is not valid).
 if get(ENV, "FB_LIFTCHECK", "0") == "1"
@@ -35,9 +41,9 @@ if get(ENV, "FB_LIFTCHECK", "0") == "1"
                  m98, lv.worst, lv.at, lv.box_worst, lv.lsec_worst, length(R98.lseccons), time() - tl))
     R98 = nothing; x98 = nothing; GC.gc()
 end
-t0 = time(); c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = [CLARABEL_DEFAULTS; ("direct_solve_method", LDL)])
+t0 = time(); c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = SOLVER.attrs, optimizer = SOLVER.optimizer)
 its = try barrier_iterations(c.R.model) catch; -1 end; tcl = try solve_time(c.R.model) catch; NaN end
-say(@sprintf("  relaxation: %s, U %+.1f kW, fictitious loss %.1f kW (mean over hours), rank ratio %.2e, %d lsec cuts, %.0f s (Clarabel %.0f s, %d iterations), max RSS %.1f GB",
+say(@sprintf("  relaxation: %s, U %+.1f kW, fictitious loss %.1f kW (mean over hours), rank ratio %.2e, %d lsec cuts, %.0f s (solver %.0f s, %d iterations), max RSS %.1f GB",
              c.status, c.U, c.fictitious_loss_kW, c.rank_ratio, length(c.R.lseccons), time() - t0, tcl, its, Sys.maxrss() / 2^30))
 if isfinite(c.farkas.bound); say(@sprintf("  Farkas bound %.4e (> 0 proves infeasibility)", c.farkas.bound)); end
 has_values(c.R.model) || (say("  no primal point to diagnose (the relaxation is infeasible or failed)"); exit(0))
