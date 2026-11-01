@@ -61,19 +61,23 @@ say(@sprintf("  amd:   L %d nonzeros (QDLDL's own count %d), work %.3e, critical
              A.nnzL, nnzL_qdldl, A.work, A.crit, A.work / A.crit))
 
 # hours: connected components of the pattern once the coupling columns are removed
-sep = falses(N); sep[sepidx] .= true
-comp = zeros(Int, N); nc = 0; q = Int[]
-for s0 in 1:N
-    (sep[s0] || comp[s0] > 0) && continue
-    nc += 1; comp[s0] = nc; push!(q, s0)
-    while !isempty(q)
-        u = pop!(q)
-        for k in Ksym.colptr[u]:(Ksym.colptr[u+1]-1)
-            v = Ksym.rowval[k]; (sep[v] || comp[v] > 0) && continue
-            comp[v] = nc; push!(q, v)
+function components(Ksym, sep)
+    n = size(Ksym, 1); comp = zeros(Int, n); nc = 0; q = Int[]
+    for s0 in 1:n
+        (sep[s0] || comp[s0] > 0) && continue
+        nc += 1; comp[s0] = nc; push!(q, s0)
+        while !isempty(q)
+            u = pop!(q)
+            for k in Ksym.colptr[u]:(Ksym.colptr[u+1]-1)
+                v = Ksym.rowval[k]; (sep[v] || comp[v] > 0) && continue
+                comp[v] = nc; push!(q, v)
+            end
         end
     end
+    return comp, nc
 end
+sep = falses(N); sep[sepidx] .= true
+comp, nc = components(Ksym, sep)
 sizes = zeros(Int, nc); for c in comp; c > 0 && (sizes[c] += 1); end
 big = sort(findall(>(1000), sizes); by = c -> -sizes[c])
 say(@sprintf("  hours: %d coupling columns (B, P_B, m) removed -> %d blocks, %d of them over 1000 columns (sizes %s)",
@@ -81,7 +85,7 @@ say(@sprintf("  hours: %d coupling columns (B, P_B, m) removed -> %d blocks, %d 
 members = [Int[] for _ in 1:nc]; for j in 1:N; comp[j] > 0 && push!(members[comp[j]], j); end
 ph = Int[]
 for c in sortperm(sizes)
-    m = members[c]; length(m) == 1 ? push!(ph, m[1]) : append!(ph, m[amdp(Ksym[m, m])])
+    mc = members[c]; length(mc) == 1 ? push!(ph, mc[1]) : append!(ph, mc[amdp(Ksym[mc, mc])])
 end
 sv = findall(sep); append!(ph, sv[amdp(Ksym[sv, sv])])
 H = analyse(Ksym, ph)
