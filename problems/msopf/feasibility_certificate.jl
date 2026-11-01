@@ -598,6 +598,11 @@ function lifted_violation(R, net, x, kw; margin_kW)
         I1 = complex(x.raw.lr[k1][t], x.raw.li[k1][t]); I2 = complex(x.raw.lr[k2][t], x.raw.li[k2][t])
         pt[v] = sy === :rr ? real(I1) * real(I2) : sy === :ri ? real(I1) * imag(I2) : sy === :ir ? imag(I1) * real(I2) : imag(I1) * imag(I2)
     end
+    for s in net.sources, t in 1:T                                             # (near-)ideal sources: their power variables
+        for (nm, val) in (("Ps_ideal", x.P_subs_kW[s.name][t]), ("Qs_ideal", x.Q_subs_kvar[s.name][t]))
+            v = variable_by_name(m, "$(nm)[$(s.name),$(t)]"); v === nothing || (pt[v] = val / S)
+        end
+    end
     pt[R.m] = margin_kW / S
     rep = primal_feasibility_report(m, pt; atol = 0.0)
     # the box the certificate uses must contain the lifted point too (a tightened box excluding a real point is invalid)
