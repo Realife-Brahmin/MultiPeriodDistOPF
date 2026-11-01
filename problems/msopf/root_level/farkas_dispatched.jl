@@ -137,10 +137,12 @@ function dmain()
                          d.label, r / rs, r, c.U, c.farkas.bound, c.status, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
             return ok, c
         end
-        # FB_CD_GRID (comma list) replaces the grid, FB_CD_BISECT (default 5) the number of bisections.
+        # FB_CD_GRID (comma list) replaces the grid, FB_CD_BISECT (default 5) the number of bisections; FB_CD_TOLDEG
+        # stops them once the bracket [last unresolved, first certified] is that many degrees wide or less.
         grid = haskey(ENV, "FB_CD_GRID") ? parse.(Float64, split(ENV["FB_CD_GRID"], ',')) : GRID
-        nbis = parse(Int, get(ENV, "FB_CD_BISECT", "5"))
-        t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
+        nbis = parse(Int, get(ENV, "FB_CD_BISECT", "5")); toldeg = parse(Float64, get(ENV, "FB_CD_TOLDEG", "0"))
+        # FB_CD_LO (deg) resumes from a known unresolved angle beyond the reach (a test run's).
+        t0 = time(); lo = parse(Float64, get(ENV, "FB_CD_LO", string(rs))); hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
         for g in grid
             ok, c = certified(g * rs); n += 1
             ok ? (hi = g * rs; Uhi = c.U; Fhi = c.farkas.bound; break) : (lo = g * rs)
@@ -148,6 +150,7 @@ function dmain()
         end
         if isfinite(hi) && get(ENV, "FB_CD_ONCE", "0") != "1"
             for _ in 1:nbis
+                hi - lo <= toldeg && break
                 mid = (lo + hi) / 2; ok, c = certified(mid); n += 1
                 ok ? (hi = mid; Uhi = c.U; Fhi = c.farkas.bound) : (lo = mid)
             end
