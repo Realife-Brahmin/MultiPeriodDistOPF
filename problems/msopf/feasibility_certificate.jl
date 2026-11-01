@@ -17,16 +17,15 @@
 #      variables are used, so U does not rest on the solver's status or primal objective.
 #   feasible   if L >= 0        infeasible   if U < -tol        unresolved   otherwise
 #
-# The relaxation. With the angles fixed, every source EMF E_s,t is a constant, the source and
-# line currents are linear in the bus voltages (I = (E - V_s)/z_s, I_l = (V_i - V_j)/z_l), and
-# each period is a QCQP in x_t = (e_t, f_t). Every product e_i e_j, e_i f_j, ... that the
-# constraints use is replaced by a variable, and for every line (i, j) and period t the 5 x 5
-# moment matrix of (1, e_i, f_i, e_j, f_j) must be PSD. For a radial network (a tree of lines,
-# the sources being fixed EMFs, not lines) this pattern is chordal, so the line blocks are
-# exactly the dense per-period relaxation; with loops they are a weaker but still valid outer
-# relaxation. The periods couple only through the linear battery and SOC constraints, kept as
-# they are: no matrix spans two periods. Valid bounds used: |e|, |f| <= 1.5 (the box of the
-# nonlinear model), hence |W| <= 2.25 for every product variable.
+# The relaxation. With the angles fixed, every source EMF E_s,t is a constant. Source currents are
+# eliminated (I_s = (E - V_s)/z_s), so a source's power is linear in (e, f) of its terminal and in
+# |V_s|^2, with E in the coefficients; a near-ideal source (|z_s| < Z_IDEAL) has V_s fixed at E and
+# a free power pair under |S_s| <= |E| I_max. Line currents are variables: for every line (i, j)
+# and period t the 7 x 7 moment matrix of (1, e_i, f_i, e_j, f_j, I_re, I_im) must be PSD, and
+# the line's KVL holds on every row of it (relax_margin). The cuts add bus blocks (kcl0, jbound)
+# and line power secants (lsec). The periods couple only through the linear battery and SOC
+# constraints, kept as they are: no matrix spans two periods. Valid bounds used: |e|, |f| <= 1.5
+# (the box of the nonlinear model), hence |W| <= 2.25 for every voltage product.
 using LinearAlgebra, Printf
 import Clarabel
 
