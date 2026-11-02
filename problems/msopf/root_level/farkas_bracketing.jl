@@ -36,6 +36,10 @@ const CUTS = Symbol.(split(get(ENV, "FB_CUTS", "kcl0,jbound"), ','; keepempty = 
 # (all other residuals zero); 1e-5 is the repository's feasibility rule for the medium and large systems.
 const EQTOL = parse(Float64, get(ENV, "FB_EQTOL", "1e-5"))
 const GRID = [1.02, 1.05, 1.1, 1.25, 1.5, 2.0]
+# Phase C's current limits are FB_ENV_SCALE x the envelope (lines' floor included), written to fb_C<FB_CTAG>_<i>.csv,
+# to test how much the certified edge owes to the envelope (2026-11-02); the OPF solves of phase A have no limits
+const ENV_SCALE = parse(Float64, get(ENV, "FB_ENV_SCALE", "1.0"))
+const CTAG = get(ENV, "FB_CTAG", "")
 const LIMIT = 20.0                                   # deg: the search limit of the region campaigns
 classify(L, U, fk) = isfinite(L) && L >= 0 ? "feasible" : ((isfinite(U) && U < -UTOL) || (isfinite(fk) && fk > 0) ? "infeasible" : "unresolved")
 
@@ -277,15 +281,16 @@ function main()
     elseif PHASE == "C"
         i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
         fa = joinpath(OUT, "fb_A_$(d.id).csv"); a = split(readlines(fa)[2], ',')
-        fc = joinpath(OUT, "fb_C_$(d.id).csv")
+        fc = joinpath(OUT, "fb_C$(CTAG)_$(d.id).csv")
         open(io -> println(io, "id,label,tstar,hour_boundary_deg,r_cert_deg,r_unresolved_deg,ratio_cert,U_at_cert_kW,farkas_at_cert,relaxations,seconds"), fc, "w")
         a[4] == "true" && (say("  ", d.label, ": at the search limit; skipped"); exit(0))
         a[5] == "0" && (say("  ", d.label, ": equal angles infeasible for the day; skipped"); exit(0))
         tstar = parse(Int, a[5]); rs = parse(Float64, a[6])
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
         for l in readlines(joinpath(OUT, "fb_envelope.csv"))[2:end]
-            c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
+            c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = ENV_SCALE * parse(Float64, c[4])) : (senv[String(c[1])] = ENV_SCALE * parse(Float64, c[4]))
         end
+        ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
         kwL = merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
         certified(r) = (c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS); (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
