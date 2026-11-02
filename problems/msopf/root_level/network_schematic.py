@@ -18,12 +18,12 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 NET = REPO / "test_networks"
-SLATE, SLATE2 = "#51435F", "#61566E"
+SLATE, SLATE2 = "#3F5546", "#556B5B"     # green-grey (user, 2026-11-02: green, not the purple-slate)
 INK, INK2 = "#333333", "#555555"                      # neutral lines for the large feeders (no DDP-paper slate)
-PV_FILL, PV_LINE, BAT_FILL, BAT_LINE = "#C99746", "#8C612F", "#EEE7F6", "#7956A6"
+PV_FILL, PV_LINE, BAT_FILL, BAT_LINE = "#C99746", "#8C612F", "#E5F1E0", "#4F8A3C"   # batteries green (2026-11-02)
 # The large feeders' markers: the ieee123 figure's colours at full strength (paler ones vanish at this scale), a
-# slightly deeper lavender fill, and a light grey for the lines.
-PV_SOFT, PV_LINE_SOFT, BAT_SOFT, BAT_FILL_BIG, GREY = PV_FILL, PV_LINE, BAT_LINE, "#DDD0EE", "#9A9A9A"
+# slightly deeper green fill, and a light grey for the lines.
+PV_SOFT, PV_LINE_SOFT, BAT_SOFT, BAT_FILL_BIG, GREY = PV_FILL, PV_LINE, BAT_LINE, "#D3E9CB", "#9A9A9A"
 SUBC = ["#1F3B73", "#E3A21A", "#169C78", "#874FAF"]          # cS1-cS4 of the PESGM2027 figures/colors.tex
 # Buses inside a substation (transformer and regulator nodes), not named as its neighbours.
 INTERNAL = re.compile(r"hvmv|regxfmr|_lsb|_hsb|_int$|^sb\d+_p1u")
