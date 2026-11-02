@@ -179,7 +179,10 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
             for (v, n) in adj[u]; (n == l.name || v in side) && continue; push!(side, v); push!(st, v); end
         end
         # a line on a loop (closed ties) does not split the network: only the total bound holds for it
-        sto = sum(Ib[b] for b in side); C[l.name] = l.from in side ? total : min(sto, total - sto)
+        # total - sto is a difference of large sums: for a line to an empty dead end it is a rounding residue that can be
+        # negative (-2.8e-14 at med3980's ln6379450-3, 2026-11-02, which emptied lsec's power box), so clamp it at zero
+        # and allow 1e-12 of the total for rounding, which keeps C an upper bound
+        sto = sum(Ib[b] for b in side); C[l.name] = l.from in side ? total : max(min(sto, total - sto), 0.0) + 1e-12 * total
         a = ampacity_of(kw, l.name); a === nothing || (C[l.name] = min(C[l.name], a))
     end
     return (; vmin, vmax, C)
