@@ -10,7 +10,9 @@
 #                whatever k and the voltage level
 #   parallel units combined into one line: sum of their limits; a tie made of switches and a cable: the smallest
 #   no rating in the original (switches and jumpers given by impedance alone, reactors, a cable whose conductor data
-#   carry no normamps): the smallest limit of the rated lines it touches, repeated until every line has one.
+#   carry no normamps): the conductor it continues, i.e. at each end the largest rated line, then the smaller end.
+# Service transformers are rated here, but the campaign leaves them unlimited: they carry only their own customers'
+# load, which no dispatch or angle changes, and at the datasets' peak some exceed nameplate (up to 1.5x on sf6937).
 # The check solves the original (3-phase, its own controls, our load scale) and the converted deck (snapshot, no PV or
 # batteries) and compares each rated line's loading, current / rating: a factor-of-k slip in the units shows as a ratio
 # of 3 or 1/3 on single-phase sections.
@@ -61,7 +63,11 @@ function ratings(name)
             rated = lowercase(n) in idx.ln || (!isempty(lcode) && lcode in idx.lc) ||
                     (!isempty(g) && haskey(idx.geo, g) && !isempty(idx.geo[g]) && all(w -> w in idx.cond, idx.geo[g]))
             rated || return (nothing, "line without normamps", NaN, k)
-            ODD.Lines.Name(n); a = ODD.Lines.NormAmps(); kvb = kvll(bus(ODD.Lines.Bus1()))
+            # the section's own voltage level, from an energized end: a normally-open tie's buses are dead and OpenDSS gives
+            # them the lowest base on its list (0.12 kV on SMART-DS, which made tie limits 1/104 of their rating, 2026-11-02)
+            ODD.Lines.Name(n); a = ODD.Lines.NormAmps()
+            ends = filter(b -> (ODD.Circuit.SetActiveBus(b); maximum(abs, ODD.Bus.Voltages(); init = 0.0) > 1e-9), bus.([ODD.Lines.Bus1(), ODD.Lines.Bus2()]))
+            kvb = isempty(ends) ? vref : kvll(ends[1])
             return (a * k / 3 * kvb / vref, "normamps", a, k)
         elseif haskey(xf, m)
             n = xf[m]; ODD.Transformers.Name(n); ODD.Transformers.Wdg(1.0); s = ODD.Transformers.kVA()
@@ -80,14 +86,18 @@ function ratings(name)
                              :phases => join(unique(r[4] for r in ms), "|"), :A => lim, :source => lim === nothing ? "" : "original"))
         end
     end
-    # unrated: the smallest limit of the rated lines it touches, repeated (closed switches between unrated lines)
+    # unrated (a switch or jumper in series with a conductor): at each end the largest rated line there (the conductor
+    # it continues; laterals and service transformers at the same bus are smaller), then the smaller of its two ends,
+    # an end with no rated line left out; repeated for chains of unrated elements. (The smallest neighbour of all,
+    # used first, gave trunk switches a lateral's or a service transformer's 1-3 A, 2026-11-02.)
     at = Dict{String,Vector{Int}}()
     for (i, r) in enumerate(rows); push!(get!(at, r[:a], Int[]), i); push!(get!(at, r[:b], Int[]), i); end
     for _ in 1:100
         changed = false
         for (i, r) in enumerate(rows)
             r[:A] === nothing || continue
-            nb = [rows[j][:A] for b in (r[:a], r[:b]) for j in at[b] if j != i && rows[j][:A] !== nothing]
+            side(b) = (v = [rows[j][:A] for j in at[b] if j != i && rows[j][:A] !== nothing && rows[j][:kind] ∉ ("service", "tie")]; isempty(v) ? nothing : maximum(v))
+            nb = filter(!isnothing, [side(r[:a]), side(r[:b])])
             isempty(nb) && continue
             r[:A] = minimum(nb); r[:source] = "inherited"; changed = true
         end

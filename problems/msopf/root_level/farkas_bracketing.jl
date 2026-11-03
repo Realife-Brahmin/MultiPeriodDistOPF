@@ -131,13 +131,15 @@ kw24 = (; pvs, pv_q = :optimize, C_B = cb_by_rule(net), ideal_sources = false, b
 # FB_RATINGS=1 (user, 2026-11-02): every line limited to its rating, from test_networks/<deck>/BranchRatings.csv
 # (branch_ratings.jl: normamps x k/3, transformers kVA / (sqrt(3) x base kV), in the deck's per-phase-equivalent units).
 # The OPF solves carry the limits in their margin (margin_amp), the certificates as hard limits; phase C then uses the
-# ratings instead of the envelope, and phase B is not needed.
+# ratings instead of the envelope, and phase B is not needed. Service transformers (svc_*) stay unlimited: they carry
+# only their customers' load, which no dispatch changes, and some exceed nameplate at the datasets' peak.
 const RATED = get(ENV, "FB_RATINGS", "0") == "1"
 if RATED
-    rt = Dict(String(r[1]) => parse(Float64, r[8]) for r in (split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "BranchRatings.csv"))[2:end]) if !isempty(r[8]))
-    nolim = [l.name for l in net.lines if !haskey(rt, l.name)]
+    rt = Dict(String(r[1]) => parse(Float64, r[8]) for r in (split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "BranchRatings.csv"))[2:end])
+              if !isempty(r[8]) && r[2] != "service")
+    nolim = [l.name for l in net.lines if !haskey(rt, l.name) && !startswith(l.name, "svc_")]
     isempty(nolim) || error("lines without a rating: ", join(nolim[1:min(10, end)], ", "))
-    kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines), margin_amp = true))
+    kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines if haskey(rt, l.name)), margin_amp = true))
 end
 hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free))
 DIRS = directions(SYS, movers)
