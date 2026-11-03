@@ -148,7 +148,7 @@ function dmain()
         for l in (RATED ? String[] : readlines(envf)[2:end])
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
         end
-        kwL = RATED ? kwb : merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))      # FB_RATINGS: the ratings, in kwb
+        kwL = RATED ? merge(kwb, (; source_ampacity_pu = SRCAMP)) : merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))      # FB_RATINGS: the ratings, in kwb
         function certified(r)
             ok = false; s = nothing
             for sv in SOLVERS

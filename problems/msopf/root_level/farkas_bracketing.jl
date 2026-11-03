@@ -140,6 +140,15 @@ if RATED
     nolim = [l.name for l in net.lines if !haskey(rt, l.name) && !startswith(l.name, "svc_")]
     isempty(nolim) || error("lines without a rating: ", join(nolim[1:min(10, end)], ", "))
     kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines if haskey(rt, l.name)), margin_amp = true))
+    # The certificates need a bound on each (near-ideal) source's current. By KCL it is the sum of the ratings of the
+    # lines at its bus, which must carry no load, capacitor or DER; 10% more covers the lines' charging current.
+    devb = Set([d.bus for d in net.loads]; [c.bus for c in net.capacitors]; [b.bus for b in net.batteries]; [p.bus for p in kw24.pvs])
+    SRCAMP = Dict{String,Float64}()
+    for s in net.sources
+        s.bus in devb && error("source $(s.name): devices at its bus, so the line ratings do not bound its current")
+        SRCAMP[s.name] = 1.1 * sum(rt[l.name] for l in net.lines if s.bus in (l.from, l.to))
+    end
+    say("source current bounds (pu, 1.1 x the ratings at the bus): ", join(["$k $(round(v; digits = 3))" for (k, v) in sort(collect(SRCAMP))], ", "))
 end
 hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free))
 DIRS = directions(SYS, movers)
@@ -306,7 +315,7 @@ function main()
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = ENV_SCALE * parse(Float64, c[4])) : (senv[String(c[1])] = ENV_SCALE * parse(Float64, c[4]))
         end
         ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
-        kwL = RATED ? hour_kw(tstar) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
+        kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
         certified(r) = (c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS); (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
         for g in GRID
