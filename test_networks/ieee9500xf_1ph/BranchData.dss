@@ -1,5 +1,5 @@
-! ieee9500xf_1ph: single-phase per-phase equivalent of rawData\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
-! Written by envs/multi_poi/root_level/convert_to_1ph.jl -- do not edit by hand.
+! ieee9500xf_1ph: single-phase per-phase equivalent of test_networks\ieee9500_source\base\Master-bal-initial-config.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
 ! Per-phase equivalent, referred to 12.47 kV: a k-phase section has (3/k) x its positive-sequence
 ! impedance. Series R + jX only (c1=0 c0=0). Grouped by what each line is in the original.
 ! Substation transformers: a line with the leakage impedance (%R of both windings + j%X on its rating) in ohm at the distribution-side voltage, from the source bus (parallel units combined).

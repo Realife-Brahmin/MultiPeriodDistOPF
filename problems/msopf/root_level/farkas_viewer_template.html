@@ -31,6 +31,10 @@ h1 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.01em; margin: 0; t
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .tab { font: inherit; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; cursor: pointer; }
 .tab[aria-selected="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.tab:disabled { opacity: 0.4; cursor: default; }
+.tabgroup { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tabgroup > span { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-right: 2px; }
+.tabs { column-gap: 18px; }
 .tab:focus-visible, .btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.9rem; color: var(--muted); }
 .toggles label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
@@ -59,7 +63,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 <div class="wrap">
   <header>
     <h1>Certified Feasibility Maps</h1>
-    <p class="sub">Farkas bracketing in the angle differences to substation 1, batteries idle, at each direction's limiting hour. Along every direction a validated AC dispatch sits at 98% of the measured edge, and a sparse semidefinite relaxation proves every angle beyond the certified edge infeasible. The thin gap between green and red is all that remains unresolved: 16 directions in the plane for three substations, 78 on the sphere for four. Certificates hold for the model with empirical current limits (the largest currents of the validated dispatches). Four sources: drag to rotate, scroll to zoom. Click a point for its numbers.</p>
+    <p class="sub">Which upstream angle differences can the feeder live with? At equal angles (the centre) it works. A <b>direction</b> is one fixed recipe for tilting the angles apart, for example "raise substation 2 only" or "raise 2 and lower 3 equally"; along it we push the tilt further until no valid dispatch exists. Two substations have one angle difference, so just 2 directions (+ and −); three have a plane, sampled every 22.5° (16 directions); four have a 3-D space, sampled by 78 directions spread evenly over a sphere like golf-ball dimples. Each system has four substations, and every pair (6) and triple (4) of them is studied as well. Each direction is bracketed from both sides (Farkas bracketing): green, a validated AC dispatch at 98% of the edge; red, a sparse semidefinite relaxation proving every angle beyond infeasible. The thin gap between them is all that remains unresolved. Batteries idle, at each direction's limiting hour; certificates hold for the model with empirical current limits (the largest currents of the validated dispatches). Four sources: drag to rotate, scroll to zoom. Click a point for its numbers.</p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
@@ -95,13 +99,28 @@ const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).
 const fmt = (x, d) => x == null || !isFinite(x) ? "–" : x.toFixed(d ?? (Math.abs(x) < 1 ? 4 : 3));
 let cur = 0, camera = null;
 
+// Three selectors: the system, the number of substations (a count with no results yet is greyed out), and which
+// substations (every pair and triple of the four).
+const SYSTEMS = [...new Set(DATA.map(s => s.sys))];
+const find = (sys, n) => DATA.findIndex(s => s.sys === sys && s.n === n);
 function tabs() {
   const el = document.getElementById("tabs"); el.innerHTML = "";
-  DATA.forEach((s, i) => {
-    const b = document.createElement("button"); b.className = "tab"; b.role = "tab"; b.textContent = s.title;
-    b.setAttribute("aria-selected", i === cur); b.onclick = () => { cur = i; camera = null; tabs(); draw(); };
-    el.appendChild(b);
-  });
+  const group = (label, items) => {
+    const g = document.createElement("div"); g.className = "tabgroup";
+    g.innerHTML = `<span>${label}</span>`;
+    items.forEach(([text, on, ok, go]) => {
+      const b = document.createElement("button"); b.className = "tab"; b.role = "tab"; b.textContent = text;
+      b.setAttribute("aria-selected", on); b.disabled = !ok; b.onclick = () => { go(); camera = null; tabs(); draw(); };
+      g.appendChild(b);
+    });
+    el.appendChild(g);
+  };
+  const s = DATA[cur];
+  group("System", SYSTEMS.map(sys => [sys, sys === s.sys, true,
+    () => { cur = find(sys, s.n) >= 0 ? find(sys, s.n) : DATA.reduce((b, x, i) => x.sys === sys && (b < 0 || x.n > DATA[b].n) ? i : b, -1); }]));
+  group("Substations", [2, 3, 4].map(n => [String(n), n === s.n, find(s.sys, n) >= 0, () => { cur = find(s.sys, n); }]));
+  const combos = DATA.map((x, i) => [x, i]).filter(([x]) => x.sys === s.sys && x.n === s.n);
+  if (combos.length > 1) group("Which", combos.map(([x, i]) => [x.combo, i === cur, true, () => { cur = i; }]));
 }
 
 function shell(s, key, color, opacity, name) {
@@ -111,7 +130,7 @@ function shell(s, key, color, opacity, name) {
            color, opacity, name, hoverinfo: "skip", flatshading: true, lighting: { ambient: 0.85, diffuse: 0.3 } };
 }
 
-const lab = d => d.theta != null ? `θ = ${d.theta}°` : `direction ${d.id}`;
+const lab = d => d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `direction ${d.id}`);
 function hover(d) {
   if (d.status === "limit") return `${lab(d)}<br>feasible at the ${LIMIT}° limit`;
   if (d.status === "pending") return `${lab(d)}<br>rerun pending<br>day edge ${fmt(d.day)}°`;
@@ -142,9 +161,10 @@ function draw() {
   document.getElementById("legend").innerHTML =
     `<div><span class="sw" style="background:${css("--ok")};opacity:.6"></span>proven feasible (validated dispatch, 98%)</div>` +
     `<div><span class="sw" style="background:${css("--cert")};opacity:.35"></span>certified infeasible beyond</div>` +
-    (s.dim === 2 ? `<div><span class="sw" style="border-top:2px dashed ${muted};height:0"></span>predicted simplex (sensitivities)</div>` +
+    (s.dim < 3 ? (s.simplex ? `<div><span class="sw" style="border-top:2px dashed ${muted};height:0"></span>predicted simplex (sensitivities)</div>` : "") +
                    `<div><span class="dot" style="border:1.5px solid ${fg}"></span>measured edge (local solves)</div>` :
     s.sources.map((src, i) => `<div><span class="sw" style="background:${fcol[i]};opacity:.4"></span>predicted face, ${src} at zero import</div>`).join(""));
+  if (s.dim === 1) { draw1d(s); strip(s); return; }
   if (s.dim === 2) { draw2d(s); strip(s); return; }
   const T = [];
   const show = id => document.getElementById(id).checked;
@@ -188,7 +208,7 @@ function draw2d(s) {
   const T = [];
   if (show("t-out")) T.push({ type: "scatter", mode: "lines", ...ring("cert"), fill: "toself", fillcolor: css("--band") + "66", line: { color: css("--cert"), width: 1.6 }, hoverinfo: "skip" });
   if (show("t-in")) T.push({ type: "scatter", mode: "lines", ...ring("inner"), fill: "toself", fillcolor: css("--ok") + "40", line: { color: css("--ok"), width: 1.2 }, hoverinfo: "skip" });
-  if (show("t-pred")) T.push({ type: "scatter", mode: "lines", x: s.simplex.x, y: s.simplex.y, line: { color: muted, width: 1.4, dash: "dash" }, hoverinfo: "skip" });
+  if (show("t-pred") && s.simplex) T.push({ type: "scatter", mode: "lines", x: s.simplex.x, y: s.simplex.y, line: { color: muted, width: 1.4, dash: "dash" }, hoverinfo: "skip" });
   if (show("t-pts")) T.push(pts("inner", "circle", css("--ok"), 6), pts("edge", "circle", fg, 7, true), pts("cert", "square", css("--cert"), 6));
   const R = 1.25 * Math.max(...s.dirs.map(d => d.cert));
   const ax = (t, o) => ({ title: { text: t, font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: muted, ...o });
@@ -200,13 +220,45 @@ function draw2d(s) {
   plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
 }
 
+// Two sources: one angle difference, an interval with a bracket at each end.
+function draw1d(s) {
+  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel"), show = id => document.getElementById(id).checked;
+  const ends = s.dirs.map(d => ({ d, sg: Math.sign(d.u[0]) }));
+  const R = 1.3 * Math.max(...s.dirs.map(d => d.cert));
+  const box = (x0, x1, color, op) => ({ type: "rect", xref: "x", yref: "y", x0, x1, y0: -0.3, y1: 0.3, fillcolor: color, opacity: op, line: { width: 0 }, layer: "below" });
+  const shapes = [];
+  if (show("t-in")) shapes.push(box(...[-1, 1].map(sg => sg * (ends.find(e => e.sg === sg)?.d.inner ?? 0)), css("--ok"), 0.35));
+  for (const { d, sg } of ends) {
+    if (d.status !== "certified") continue;
+    shapes.push(box(sg * d.inner, sg * d.cert, css("--band"), 0.6));
+    if (show("t-out")) shapes.push(box(sg * d.cert, sg * R, css("--cert"), 0.18));
+  }
+  const pts = (key, sym, color, size, open = false, filter = () => true) => {
+    const ds = s.dirs.filter(filter);
+    return { type: "scatter", mode: "markers", x: ds.map(d => Math.sign(d.u[0]) * d[key]), y: ds.map(() => 0), customdata: ds.map(d => d.id),
+             text: ds.map(hover), hovertemplate: "%{text}<extra></extra>",
+             marker: { symbol: sym, size, color: open ? "rgba(0,0,0,0)" : color, line: { color, width: open ? 1.5 : 0 } } };
+  };
+  const T = show("t-pts") ? [pts("inner", "circle", css("--ok"), 9), pts("edge", "circle", fg, 11, true, d => d.status === "certified"),
+                             pts("cert", "square", css("--cert"), 9, false, d => d.status === "certified"),
+                             pts("inner", "diamond", muted, 10, true, d => d.status === "limit")] : [];
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 24, r: 24, t: 16, b: 56 }, showlegend: false, shapes,
+              font: { family: css("--sans"), color: fg },
+              xaxis: { title: { text: s.axes[0], font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: fg },
+              yaxis: { range: [-1.2, 1.2], visible: false, fixedrange: true } };
+  const plot = document.getElementById("plot");
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  plot.removeAllListeners && plot.removeAllListeners("plotly_click");
+  plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
+}
+
 function strip(s) {
   const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
   const c = s.dirs.filter(d => d.status === "certified"), lim = s.dirs.filter(d => d.status === "limit"), pen = s.dirs.filter(d => d.status === "pending");
-  const top = Math.max(3, ...c.map(d => d.band)) + 1, X = d => d.theta ?? d.id;
+  const top = Math.max(3, ...c.map(d => d.band)) + 1, X = d => s.dim === 1 ? d.label : d.theta ?? d.id;
   const T = [
     { type: "bar", x: c.map(X), y: c.map(d => d.band + 2), base: -2, marker: { color: css("--band"), opacity: 0.45 },
-      customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>", width: s.dim === 2 ? 9 : 0.7 },
+      customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>", width: s.dim === 2 ? 9 : s.dim === 1 ? 0.3 : 0.7 },
     { type: "scatter", mode: "markers", x: c.map(X), y: c.map(() => -2), marker: { color: css("--ok"), size: 5 }, hoverinfo: "skip" },
     { type: "scatter", mode: "markers", x: c.map(X), y: c.map(d => d.band), marker: { color: css("--cert"), size: 6, symbol: "square" },
       customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>" },
@@ -217,7 +269,8 @@ function strip(s) {
   ];
   const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, bargap: 0.3,
               font: { family: css("--sans"), color: fg, size: 11 },
-              xaxis: s.dim === 2 ? { title: { text: "direction θ (°)", font: { size: 11 } }, range: [-12, 350], color: muted, gridcolor: grid, zeroline: false, dtick: 45 }
+              xaxis: s.dim === 1 ? { type: "category", categoryorder: "array", categoryarray: s.dirs.map(d => d.label), color: muted, gridcolor: grid }
+                   : s.dim === 2 ? { title: { text: "direction θ (°)", font: { size: 11 } }, range: [-12, 350], color: muted, gridcolor: grid, zeroline: false, dtick: 45 }
                    : { title: { text: "direction", font: { size: 11 } }, range: [0, s.dirs.length + 1], color: muted, gridcolor: grid, zeroline: false, dtick: 10 },
               yaxis: { range: [-2.6, top], color: muted, gridcolor: grid, zerolinecolor: fg, zerolinewidth: 1, ticksuffix: "%" } };
   const el = document.getElementById("strip");
@@ -228,7 +281,7 @@ function strip(s) {
 
 function select(id) {
   const d = DATA[cur].dirs.find(x => x.id === id); if (!d) return;
-  const rows = [["direction", d.theta != null ? `θ = ${d.theta}°` : `${d.id}  (${d.u.map(v => v.toFixed(3)).join(", ")})`],
+  const rows = [["direction", d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `${d.id}  (${d.u.map(v => v.toFixed(3)).join(", ")})`)],
                 ["status", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "rerun pending"]];
   if (d.status === "certified") rows.push(["limiting hour", d.hour], ["feasible at", fmt(d.inner, 4) + "°"], ["measured edge", fmt(d.edge, 4) + "°"],
     ["certified from", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"], ["predicted", fmt(d.pred, 4) + "°"],

@@ -5,7 +5,8 @@
 #   * the voltage drop from each substation bus to every bus it feeds, per unit (the original's
 #     mean phase magnitude), deck against the original.
 # The original is solved as the deck represents it: regulator taps 1 and their controls off,
-# capacitors out, the loads the converter drops (other feeders) out, no DERs. The upstream
+# capacitors out (in the deck too), the loads the converter drops (other feeders) out, SMART-DS loads at
+# the converter's peak scale, no DERs. The upstream
 # source impedance is in the original only, so absolute voltages differ; drops from the head
 # do not depend on it.
 #   julia --project=problems/msopf problems/msopf/root_level/check_1ph.jl [system ...]
@@ -17,6 +18,13 @@ function original_flat(c)
     if cfg.drop_loads !== nothing
         for nm in real_names(ODD.Loads.AllNames())
             occursin(cfg.drop_loads, lowercase(nm)) && ODD.Text.Command("Load.$nm.enabled=false")
+        end
+    end
+    scale = peak_scale(cfg)
+    if scale !== nothing
+        for nm in real_names(ODD.Loads.AllNames())
+            ODD.Loads.Name(nm); kw, kvar = ODD.Loads.kW(), ODD.Loads.kvar(); k = scale[lowercase(nm)]
+            ODD.Loads.kW(k * kw); ODD.Loads.kvar(k * kvar)
         end
     end
     for nm in real_names(ODD.Transformers.AllNames())
@@ -52,6 +60,7 @@ end
 function deck_flat(c, dir)
     ODD.Text.Command("Clear"); ODD.Text.Command("Redirect \"$(joinpath(dir, "Master.dss"))\"")
     ODD.Text.Command("BatchEdit PVSystem..* enabled=false"); ODD.Text.Command("BatchEdit Storage..* enabled=false")
+    any(startswith(lowercase(e), "capacitor.") for e in ODD.Circuit.AllElementNames()) && ODD.Text.Command("BatchEdit Capacitor..* enabled=false")
     ODD.Text.Command("Set mode=Snapshot"); ODD.Text.Command("Set maxiterations=100"); ODD.Solution.Solve()
     conv = ODD.Solution.Converged()
     imp = Float64[]

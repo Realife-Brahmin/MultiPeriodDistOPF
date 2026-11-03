@@ -1,0 +1,8 @@
+== Farkas bracketing sfp1u_four phase X: 6937 buses, sources subs1,subs2,subs3,subs4, band on 1873 customer buses; 78 directions
+direction 24: 1.1000 x reach 5.48538 = 6.03392 deg; cuts kcl0,jbound,lsec; linear solver mosek, 8 threads
+  relaxation: SLOW_PROGRESS, U +486.9 kW, fictitious loss 214.7 kW (mean over hours), rank ratio 4.05e-01, 308448 lsec cuts, 2857 s (solver 2536 s, 54 iterations), max RSS 79.2 GB
+  6939 lines, 3 fundamental cycles, 453 lines on a cycle
+  fictitious loss over the day 5153.7 kWh: 26.8% on loop lines (453 of 6939 lines)
+  45.2% on lines with a source-free side (6426 lines, where :lsec applies); 2822.2 kWh elsewhere
+  top lines: xfmr_sb9_p1uhs0_1247_trans_263 602.6, xfmr_sb1_p1uhs2_1247_trans_29 196.6, xfmr_sb8_p1uhs1_1247_trans_2 183.4, l_r_p1udt1470-p1uhs0_1247_ 161.8, xfmr_sb8_p1uhs3_1247_trans_2 137.5, l_r_p1udt716-p1uhs1_1247_ 117.6, l_r_p1udt483-p1udt534_ 79.0, l_r_p1udt104-p1uhs0_1247__cont 75.7, l_r_p1udt1469-p1udt940_ 73.9, l_r_p1udt1470-p1udt409_ 61.5
+  done in 2864 s; files in /home/aryan.jha/msopf/jobs/farkas_disp_oct30b/sfp1u_four/relaxation_gap_ldl_mosek_8

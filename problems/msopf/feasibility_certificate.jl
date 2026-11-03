@@ -17,16 +17,15 @@
 #      variables are used, so U does not rest on the solver's status or primal objective.
 #   feasible   if L >= 0        infeasible   if U < -tol        unresolved   otherwise
 #
-# The relaxation. With the angles fixed, every source EMF E_s,t is a constant, the source and
-# line currents are linear in the bus voltages (I = (E - V_s)/z_s, I_l = (V_i - V_j)/z_l), and
-# each period is a QCQP in x_t = (e_t, f_t). Every product e_i e_j, e_i f_j, ... that the
-# constraints use is replaced by a variable, and for every line (i, j) and period t the 5 x 5
-# moment matrix of (1, e_i, f_i, e_j, f_j) must be PSD. For a radial network (a tree of lines,
-# the sources being fixed EMFs, not lines) this pattern is chordal, so the line blocks are
-# exactly the dense per-period relaxation; with loops they are a weaker but still valid outer
-# relaxation. The periods couple only through the linear battery and SOC constraints, kept as
-# they are: no matrix spans two periods. Valid bounds used: |e|, |f| <= 1.5 (the box of the
-# nonlinear model), hence |W| <= 2.25 for every product variable.
+# The relaxation. With the angles fixed, every source EMF E_s,t is a constant. Source currents are
+# eliminated (I_s = (E - V_s)/z_s), so a source's power is linear in (e, f) of its terminal and in
+# |V_s|^2, with E in the coefficients; a near-ideal source (|z_s| < Z_IDEAL) has V_s fixed at E and
+# a free power pair under |S_s| <= |E| I_max. Line currents are variables: for every line (i, j)
+# and period t the 7 x 7 moment matrix of (1, e_i, f_i, e_j, f_j, I_re, I_im) must be PSD, and
+# the line's KVL holds on every row of it (relax_margin). The cuts add bus blocks (kcl0, jbound)
+# and line power secants (lsec). The periods couple only through the linear battery and SOC
+# constraints, kept as they are: no matrix spans two periods. Valid bounds used: |e|, |f| <= 1.5
+# (the box of the nonlinear model), hence |W| <= 2.25 for every voltage product.
 using LinearAlgebra, Printf
 import Clarabel
 
@@ -180,10 +179,132 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
             for (v, n) in adj[u]; (n == l.name || v in side) && continue; push!(side, v); push!(st, v); end
         end
         # a line on a loop (closed ties) does not split the network: only the total bound holds for it
-        sto = sum(Ib[b] for b in side); C[l.name] = l.from in side ? total : min(sto, total - sto)
+        # total - sto is a difference of large sums: for a line to an empty dead end it is a rounding residue that can be
+        # negative (-2.8e-14 at med3980's ln6379450-3, 2026-11-02, which emptied lsec's power box), so clamp it at zero
+        # and allow 1e-12 of the total for rounding, which keeps C an upper bound
+        sto = sum(Ib[b] for b in side); C[l.name] = l.from in side ? total : max(min(sto, total - sto), 0.0) + 1e-12 * total
         a = ampacity_of(kw, l.name); a === nothing || (C[l.name] = min(C[l.name], a))
     end
     return (; vmin, vmax, C)
+end
+
+"""
+    lateral_boxes(net, kw, vb, src_at; ideal = false)
+
+For the cut :lsec (2026-10-31). Voltage bounds by the triangle inequality, |V_b| >= vmin_c - d(b, c) and
+|V_b| <= vmax_c + d(b, c) for every bus c with a known bound (banded buses, ideal source terminals at |E|),
+d the smallest sum of |z_k| I_k,max (vb.C) along a path. And, for every line whose removal leaves one side D
+without a source, per period the box of X = D's net complex demand + the series losses and shunt powers inside
+D, which is the power the line delivers into D: the line takes -X from its bus on D's side and X + z_l |I_l|^2
+from the other. Demand ranges from the device ratings (battery power, PV reactive power), losses from
+0 <= |I_k|^2 <= I_k,max^2, shunts from the voltage bounds. Valid for every point with m >= m_lo (as vb).
+Returns (; vlo, vhi, lat), lat[line] = (; Dend (the bus on D's side), P, Q (period vectors of (lo, hi) for X)).
+"""
+function lateral_boxes(net, kw, vb, src_at; ideal = false)
+    T = kw.T; S = net.S_base_kVA; Yb = net.Y_base; lam = kw.load_factor
+    pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); battery = get(kw, :battery, :optimize); pv_q = get(kw, :pv_q, :optimize)
+    buses = net.buses; ix = Dict(b => k for (k, b) in enumerate(buses)); nb = length(buses)
+    zl(l) = -Yb / l.Y[1, 2]
+    w(l) = abs(zl(l)) * vb.C[l.name]
+    adj = [Tuple{Int,Int}[] for _ in 1:nb]                                  # (neighbour, line index)
+    for (q, l) in enumerate(net.lines); push!(adj[ix[l.from]], (ix[l.to], q)); push!(adj[ix[l.to]], (ix[l.from], q)); end
+    known(b) = haskey(src_at, b) ? (ideal || abs(src_at[b].z_series * Yb) < Z_IDEAL) : banded_bus(kw, src_at, b)
+    vk(b, hi) = haskey(src_at, b) ? src_at[b].pu : (hi ? vb.vmax[b] : vb.vmin[b])
+    # label-correcting propagation from every bus with a known bound (nonnegative weights)
+    vlo = [vb.vmin[b] for b in buses]; vhi = [vb.vmax[b] for b in buses]
+    for (vals, up) in ((vlo, false), (vhi, true))
+        q = Int[]
+        for (k, b) in enumerate(buses); known(b) && (vals[k] = vk(b, up); push!(q, k)); end
+        inq = falses(nb); inq[q] .= true
+        while !isempty(q)
+            u = popfirst!(q); inq[u] = false
+            for (v, li) in adj[u]
+                c = up ? vals[u] + w(net.lines[li]) : vals[u] - w(net.lines[li])
+                if up ? c < vals[v] - 1e-12 : c > vals[v] + 1e-12
+                    vals[v] = c; inq[v] || (push!(q, v); inq[v] = true)
+                end
+            end
+        end
+    end
+    vlo = max.(vlo, [vb.vmin[b] for b in buses]); vhi = min.(vhi, [vb.vmax[b] for b in buses])
+    # BFS spanning tree; lines on the fundamental cycles of the other lines are not bridges
+    root = 1; par = zeros(Int, nb); pline = zeros(Int, nb); depth = fill(-1, nb); depth[root] = 0; order = [root]; intree = falses(length(net.lines))
+    h = 1
+    while h <= length(order)
+        u = order[h]; h += 1
+        for (v, li) in adj[u]
+            depth[v] >= 0 && continue
+            depth[v] = depth[u] + 1; par[v] = u; pline[v] = li; intree[li] = true; push!(order, v)
+        end
+    end
+    length(order) == nb || error("lateral_boxes: the network is not connected")
+    onloop = falses(length(net.lines)); lca = Dict{Int,Int}()
+    for (q, l) in enumerate(net.lines)
+        intree[q] && continue
+        onloop[q] = true; a, b = ix[l.from], ix[l.to]
+        while a != b
+            depth[a] >= depth[b] ? (onloop[pline[a]] = true; a = par[a]) : (onloop[pline[b]] = true; b = par[b])
+        end
+        lca[q] = a
+    end
+    # per bus and period: demand, shunt and loss ranges (pu); a tree line's losses go to its child end, a cycle-closing
+    # line's to the lowest common ancestor of its ends, so a subtree's sum holds exactly the lines inside it
+    Plo = zeros(nb, T); Phi = zeros(nb, T); Qlo = zeros(nb, T); Qhi = zeros(nb, T); nsrc = zeros(Int, nb)
+    for s in net.sources; nsrc[ix[s.bus]] += 1; end
+    for d in net.loads, t in 1:T
+        k = ix[d.bus]; Plo[k, t] += lam[t] * d.kW / S; Phi[k, t] += lam[t] * d.kW / S; Qlo[k, t] += lam[t] * d.kvar / S; Qhi[k, t] += lam[t] * d.kvar / S
+    end
+    for p in pvs, t in 1:T
+        k = ix[p.bus]; Plo[k, t] -= pvf[t] * p.kW / S; Phi[k, t] -= pvf[t] * p.kW / S
+        qm = pv_q === :optimize ? sqrt(max(p.kVA^2 - (pvf[t] * p.kW)^2, 0.0)) / S : 0.0
+        Qlo[k, t] -= qm; Qhi[k, t] += qm
+    end
+    if battery === :optimize
+        for bt in net.batteries, t in 1:T; k = ix[bt.bus]; Plo[k, t] -= bt.kW_rated / S; Phi[k, t] += bt.kW_rated / S; end
+    end
+    rng(a, x, y) = (min(a * x, a * y), max(a * x, a * y))
+    for l in net.lines                                                      # end shunts: y_sh |V|^2 into outP, outQ
+        Y = l.Y ./ Yb
+        for (b, ysh) in ((l.from, Y[1, 1] + Y[1, 2]), (l.to, Y[2, 2] + Y[2, 1]))
+            ysh == 0 && continue
+            k = ix[b]; (p1, p2) = rng(real(ysh), vlo[k]^2, vhi[k]^2); (q1, q2) = rng(-imag(ysh), vlo[k]^2, vhi[k]^2)
+            Plo[k, :] .+= p1; Phi[k, :] .+= p2; Qlo[k, :] .+= q1; Qhi[k, :] .+= q2
+        end
+    end
+    lossbox(l) = (C2 = vb.C[l.name]^2; (R, X) = reim(zl(l)); (rng(R, 0.0, C2), rng(X, 0.0, C2)))
+    own = [(0.0, 0.0, 0.0, 0.0) for _ in 1:nb]                              # the loss box of the tree line into each bus
+    acc = [(0.0, 0.0, 0.0, 0.0) for _ in 1:nb]
+    add4(a, b) = (a[1] + b[1], a[2] + b[2], a[3] + b[3], a[4] + b[4])
+    for v in 1:nb
+        v == root && continue
+        ((p1, p2), (q1, q2)) = lossbox(net.lines[pline[v]]); own[v] = (p1, p2, q1, q2); acc[v] = own[v]
+    end
+    for (q, a) in lca; ((p1, p2), (q1, q2)) = lossbox(net.lines[q]); acc[a] = add4(acc[a], (p1, p2, q1, q2)); end
+    sPlo, sPhi, sQlo, sQhi, sL, ss = copy(Plo), copy(Phi), copy(Qlo), copy(Qhi), copy(acc), copy(nsrc)
+    for v in reverse(order)
+        v == root && continue
+        u = par[v]
+        sPlo[u, :] .+= sPlo[v, :]; sPhi[u, :] .+= sPhi[v, :]; sQlo[u, :] .+= sQlo[v, :]; sQhi[u, :] .+= sQhi[v, :]
+        sL[u] = add4(sL[u], sL[v]); ss[u] += ss[v]
+    end
+    lat = Dict{String,Any}()
+    for v in 1:nb
+        (v == root || onloop[pline[v]]) && continue
+        l = net.lines[pline[v]]
+        inside = add4(sL[v], (-own[v][1], -own[v][2], -own[v][3], -own[v][4]))   # lines within subtree(v), not l
+        if ss[v] == 0                                                       # D = subtree(v)
+            Dend = buses[v]; L = inside
+            P = [(sPlo[v, t] + L[1], sPhi[v, t] + L[2]) for t in 1:T]; Q = [(sQlo[v, t] + L[3], sQhi[v, t] + L[4]) for t in 1:T]
+        elseif ss[root] - ss[v] == 0                                        # D = everything else
+            Dend = buses[par[v]]; L = add4(sL[root], (-sL[v][1], -sL[v][2], -sL[v][3], -sL[v][4]))   # all lines but subtree(v)'s and l
+            P = [(sPlo[root, t] - sPlo[v, t] + L[1], sPhi[root, t] - sPhi[v, t] + L[2]) for t in 1:T]
+            Q = [(sQlo[root, t] - sQlo[v, t] + L[3], sQhi[root, t] - sQhi[v, t] + L[4]) for t in 1:T]
+        else
+            continue
+        end
+        lat[l.name] = (; Dend, P, Q)
+    end
+    return (; vlo = Dict(b => vlo[k] for (k, b) in enumerate(buses)), vhi = Dict(b => vhi[k] for (k, b) in enumerate(buses)), lat)
 end
 
 """
@@ -197,7 +318,7 @@ and the line's two KVL equations hold for every row of it (valid: for a real poi
 is x x', so a' x = 0 gives M a = 0). Eliminating the currents instead puts 1/z of the
 near-zero-impedance coupling lines (1e8 pu) into the constraints, which stalls the solver.
 """
-function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true, src_scale = false)
+function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, cuts = Symbol[], vbox = 1.5, solver_attributes = (), band_in_margin = true, src_scale = false, optimizer = Clarabel.Optimizer)
     T = kw.T; dt = get(kw, :dt_h, 24 / T); S = net.S_base_kVA; Yb = net.Y_base; Ts = 1:T
     lo, hi = get(kw, :V_band, (0.95, 1.05)); lam = kw.load_factor
     pvs = get(kw, :pvs, []); pvf = get(kw, :pv_factor, zeros(T)); ideal = get(kw, :ideal_sources, false)
@@ -207,7 +328,7 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
     bnames = [bt.name for bt in net.batteries]; pnames = [p.name for p in pvs]
     src_at = Dict(s.bus => s for s in net.sources)
     vb = variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin)
-    model = Model(Clarabel.Optimizer); set_silent(model)
+    model = Model(optimizer); set_silent(model)                    # Clarabel by default; any conic solver with PSD cones
     for (a, v) in solver_attributes; set_attribute(model, a, v); end
     # Bounds that only the certificate needs (voltage box, derived current bounds, product bounds) go
     # to `box`, not to the solver: in the solver they put 1e5-scale rows beside unit-scale ones.
@@ -411,8 +532,42 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
             end
         end
     end
+    # ---- Line power secants (cut :lsec), 2026-10-31 -----------------------------------------------------
+    # The relaxation books losses beyond what its own currents imply (line blocks of rank > 1): about 450 kW
+    # per hour at sf6937 four-source, 10% past the dispatched reach (relaxation_gap_diagnose.jl), enough to keep
+    # the substations importing. For a real point, |S|^2 = |V_b|^2 |I_l|^2 at either end b of a line (S the power
+    # the line takes from b). On a line with a source-free side, S lies in the box [Plo, Phi] x [Qlo, Qhi] of
+    # lateral_boxes (intersected with |P|, |Q| <= vhi_b I_max) and |V_b| >= vlo_b, so
+    #     vlo_b^2 |I|^2 <= P^2 + Q^2 <= (Plo + Phi) P - Plo Phi + (Qlo + Qhi) Q - Qlo Qhi,
+    # linear in the moments: |I|^2 = lrlr + lili; at the from-end S = V_i conj(I) (P = eilr + fili, Q = filr - eili),
+    # at the to-end S = -V_j conj(I). A narrow box leaves little room for |I|^2 above the square of the current.
+    lseccons = ConstraintRef[]
+    if :lsec in cuts
+        LB = lateral_boxes(net, kw, vb, src_at; ideal)
+        lbyname = Dict(l.name => l for l in net.lines)
+        for (n, lb) in LB.lat
+            l = lbyname[n]; C = vb.C[n]; (R, X) = reim(-Yb / l.Y[1, 2]); C2 = C^2
+            dR = (min(0.0, R * C2), max(0.0, R * C2)); dX = (min(0.0, X * C2), max(0.0, X * C2))
+            for t in Ts
+                g(s) = Lv[s][n, t]
+                (xp1, xp2), (xq1, xq2) = lb.P[t], lb.Q[t]
+                for atfrom in (true, false)
+                    b = atfrom ? l.from : l.to
+                    onD = b == lb.Dend
+                    p1, p2 = onD ? (-xp2, -xp1) : (xp1 + dR[1], xp2 + dR[2])
+                    q1, q2 = onD ? (-xq2, -xq1) : (xq1 + dX[1], xq2 + dX[2])
+                    sm = LB.vhi[b] * C
+                    p1, p2, q1, q2 = max(p1, -sm), min(p2, sm), max(q1, -sm), min(q2, sm)
+                    (p1 <= p2 && q1 <= q2) || error("lsec: empty power box on $n at $b, period $t")
+                    P = atfrom ? g(:eilr) + g(:fili) : -(g(:ejlr) + g(:fjli))
+                    Q = atfrom ? g(:filr) - g(:eili) : -(g(:fjlr) - g(:ejli))
+                    push!(lseccons, @constraint(model, LB.vlo[b]^2 * (g(:lrlr) + g(:lili)) <= (p1 + p2) * P - p1 * p2 + (q1 + q2) * Q - q1 * q2))
+                end
+            end
+        end
+    end
     @objective(model, Min, -m)
-    return (; model, e, f, Wee, Wff, Wef, P_B, B, Q_PV, m, psd, S, bounds = vb, n = 7, box, xcur, busblocks, Lv)
+    return (; model, e, f, Wee, Wff, Wef, P_B, B, Q_PV, m, psd, S, bounds = vb, n = 7, box, xcur, busblocks, Lv, lseccons)
 end
 
 """
@@ -445,6 +600,11 @@ function lifted_violation(R, net, x, kw; margin_kW)
         I1 = complex(x.raw.lr[k1][t], x.raw.li[k1][t]); I2 = complex(x.raw.lr[k2][t], x.raw.li[k2][t])
         pt[v] = sy === :rr ? real(I1) * real(I2) : sy === :ri ? real(I1) * imag(I2) : sy === :ir ? imag(I1) * real(I2) : imag(I1) * imag(I2)
     end
+    for s in net.sources, t in 1:T                                             # (near-)ideal sources: their power variables
+        for (nm, val) in (("Ps_ideal", x.P_subs_kW[s.name][t]), ("Qs_ideal", x.Q_subs_kvar[s.name][t]))
+            v = variable_by_name(m, "$(nm)[$(s.name),$(t)]"); v === nothing || (pt[v] = val / S)
+        end
+    end
     pt[R.m] = margin_kW / S
     rep = primal_feasibility_report(m, pt; atol = 0.0)
     # the box the certificate uses must contain the lifted point too (a tightened box excluding a real point is invalid)
@@ -453,9 +613,10 @@ function lifted_violation(R, net, x, kw; margin_kW)
         haskey(pt, v) || continue
         d = max(l - pt[v], pt[v] - u, 0.0); d > bw && (bw = d; bat = name(v))
     end
-    isempty(rep) && return (; worst = 0.0, at = "", box_worst = bw, box_at = bat)
+    lw = maximum((get(rep, c, 0.0) for c in get(R, :lseccons, ConstraintRef[])); init = 0.0)   # the :lsec cuts alone
+    isempty(rep) && return (; worst = 0.0, at = "", box_worst = bw, box_at = bat, lsec_worst = lw)
     (c, v) = argmax(last, collect(rep))
-    return (; worst = v, at = string(c), box_worst = bw, box_at = bat)
+    return (; worst = v, at = string(c), box_worst = bw, box_at = bat, lsec_worst = lw)
 end
 
 """
@@ -663,9 +824,9 @@ every block is numerically rank one, the recovered state for `validate_dispatch`
 """
 # Clarabel settings that solve the 24-period relaxation (the defaults stop on a numerical error there)
 const CLARABEL_DEFAULTS = [("max_iter", 400), ("static_regularization_constant", 1e-7), ("tol_gap_abs", 1e-6), ("tol_gap_rel", 1e-6), ("tol_feas", 1e-6)]
-function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0, src_scale = false)
+function certify(net, delta_deg, kw; k, cuts = Symbol[], solver_attributes = CLARABEL_DEFAULTS, m_lo_kW = -1000.0, m_hi_kW = 1e4, band_in_margin = true, tighten = false, detail = 0, src_scale = false, optimizer = Clarabel.Optimizer)
     t0 = time()
-    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin, src_scale)
+    R = relax_margin(net, delta_deg, kw; k, cuts, solver_attributes, m_lo_kW, m_hi_kW, band_in_margin, src_scale, optimizer)
     tb = time() - t0
     optimize!(R.model)
     ts = time() - t0 - tb

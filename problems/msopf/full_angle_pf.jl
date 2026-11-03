@@ -33,8 +33,9 @@
 # the deck would get wrong:
 #   * a 1-phase Vsource's series impedance is Zs = (2 Z1 + Z0)/3, not Z1;
 #   * every Line carries OpenDSS's default shunt charging (C1 = 3.4 nF per unit length).
-# Supported: single-conductor Lines, 1-phase Vsources, constant-PQ Loads (model=1). Any
-# other enabled element is an error, never silently dropped.
+# Supported: single-conductor Lines, 1-phase Vsources, constant-PQ Loads (model=1), Storage,
+# 1-phase shunt Capacitors (fixed, constant impedance; carried as a line's end shunt, see
+# read_network). Any other enabled element is an error, never silently dropped.
 #
 # PER UNIT
 # --------
@@ -134,7 +135,7 @@ Read the compiled circuit into the data `solve_full_angle` needs. Impedances and
 admittances stay in ohms and siemens here; `Y_base` converts them to per unit.
 """
 function read_network(; S_base_kVA = 1000.0)
-    lines, sources, loads, batteries = [], [], [], []
+    lines, sources, loads, batteries, capacitors = [], [], [], [], []
     for el in ODD.Circuit.AllElementNames()
         ODD.Circuit.SetActiveElement(el)
         ODD.CktElement.Enabled() || continue
@@ -164,6 +165,11 @@ function read_network(; S_base_kVA = 1000.0)
             prop(p) = parse(Float64, ODD.Properties.Value(p))
             push!(batteries, (; name, bus = busname(refs[1]), kW_rated = prop("kWrated"),
                               kVA = prop("kVA"), kWh_rated = prop("kWhrated")))
+        elseif class == "capacitor"
+            # A fixed shunt bank, bus to ground: admittance YPrim[1, 1] (constant impedance, as in OpenDSS).
+            (ODD.CktElement.NumPhases() == 1 && length(refs) == 2 && busname(refs[2]) == busname(refs[1]) &&
+             all(==(0), nodes_of(refs[2]))) || error("$el: only 1-phase shunt capacitors to ground are supported")
+            push!(capacitors, (; name, bus = busname(refs[1]), Y = ODD.CktElement.YPrim()[1, 1]))
         else
             error("$el: element class '$class' is not supported by the full-angle model")
         end
@@ -171,11 +177,25 @@ function read_network(; S_base_kVA = 1000.0)
 
     isempty(sources) && error("no enabled Vsource")
     allunique(s.bus for s in sources) || error("two Vsources share a bus; not supported")
+
+    # Each capacitor joins the end shunt of one line at its bus (that line's YPrim[k, k], k its end there): a shunt
+    # is a shunt whichever line carries it, so every model built on the lines' pi shunts -- the AC power flow, the
+    # multi-period problem and the convex relaxation -- includes the capacitors exactly, with no change of its own.
+    # The series admittance Y[1, 2] is untouched. Not at a source bus, where the substation power is measured.
+    src_buses = Set(s.bus for s in sources)
+    for c in capacitors
+        c.bus in src_buses && error("capacitor $(c.name) is at source bus $(c.bus); not supported")
+        k = findfirst(l -> c.bus in (l.from, l.to), lines)
+        k === nothing && error("capacitor $(c.name): no line at bus $(c.bus)")
+        l = lines[k]; Y = copy(l.Y); e = l.from == c.bus ? 1 : 2
+        Y[e, e] += c.Y
+        lines[k] = merge(l, (; Y))
+    end
     kV_bases = unique(s.kV for s in sources)
     length(kV_bases) == 1 || error("Vsources disagree on basekv: $kV_bases")
     kV_base = only(kV_bases)
 
-    return (; buses = lowercase.(ODD.Circuit.AllBusNames()), lines, sources, loads, batteries,
+    return (; buses = lowercase.(ODD.Circuit.AllBusNames()), lines, sources, loads, batteries, capacitors,
             kV_base, S_base_kVA, Y_base = S_base_kVA * 1e3 / (kV_base * 1e3)^2)
 end
 
