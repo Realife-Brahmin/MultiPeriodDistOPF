@@ -361,6 +361,35 @@ function main()
         end
         open(io -> @printf(io, "%d,%s,%d,%.6f,%.6f,%.6f,%.5f,%.6g,%.6g,%d,%.0f\n", d.id, d.label, tstar, rs, hi, lo, hi / rs, Uhi, Fhi, n, time() - t0), fc, "a")
         say(@sprintf("  %s: r* %.5f, certified from %.5f (x%.4f), unresolved up to %.5f; %d relaxations, %.0f s", d.label, rs, hi, hi / rs, lo, n, time() - t0))
+
+    elseif PHASE == "V"
+        # Exact audit of phase C's certified point (2026-11-03): some bisection steps certify from a solve that stopped
+        # with NUMERICAL_ERROR, whose multipliers are huge (U down to -1e157 kW); dual_bound's Float64 rounding allowance
+        # is not a worst case at that scale. Re-solve the relaxation there, export it, and recompute the bound in exact
+        # rational arithmetic (verify_certificate.jl). Writes fb_V<FB_CTAG>_<i>.csv.
+        include(joinpath(@__DIR__, "verify_certificate.jl"))
+        i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
+        c = split(readlines(joinpath(OUT, "fb_C$(CTAG)_$(d.id).csv"))[2], ',')
+        tstar = parse(Int, c[3]); r = parse(Float64, c[5])
+        isfinite(r) || (say("  ", d.label, ": no certified point; skipped"); exit(0))
+        kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : error("phase V: rated campaigns only")
+        t0 = time(); x = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
+        infeas = !isnan(x.farkas.bound)
+        dir = mkpath(joinpath(OUT, "certs")); fname = joinpath(dir, "C$(CTAG)_$(d.id).txt")
+        Base.invokelatest(export_certificate, x.R.model, x.R.box, fname; c = infeas ? zero(AffExpr) : objective_function(x.R.model),
+                          note = @sprintf("%s %s, hour %d, r = %.6f deg, %s", SYS, d.label, tstar, r, infeas ? "Farkas (c = 0)" : "objective"))
+        ve = Base.invokelatest(verify_file, fname)
+        S = net.S_base_kVA; eb = isfinite(ve.bound) ? Float64(BigFloat(ve.bound)) : -Inf; ew = isfinite(ve.bound) ? Float64(BigFloat(ve.bound_widened)) : -Inf
+        # exact verdict: a Farkas file proves infeasibility if its bound is > 0; an objective file if U = -bound S < -UTOL
+        ok = infeas ? ew > 0 : -ew * S < -UTOL
+        fv = joinpath(OUT, "fb_V$(CTAG)_$(d.id).csv")
+        open(fv, "w") do io
+            println(io, "id,label,tstar,r_cert_deg,status,dual_status,U_float_kW,farkas_float,kind,exact_bound,exact_bound_widened,exact_U_kW,certified_exact,seconds")
+            @printf(io, "%d,%s,%d,%.6f,%s,%s,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%s,%.0f\n", d.id, d.label, tstar, r, x.status, x.dual_status, x.U, x.farkas.bound,
+                    infeas ? "farkas" : "objective", eb, ew, infeas ? NaN : -ew * S, ok, time() - t0)
+        end
+        say(@sprintf("  %s: r %.5f deg, %s / %s, float U %.4g kW, Farkas %.4g | exact %s bound %.6g (widened %.6g) -> %s; %.0f s",
+                     d.label, r, x.status, x.dual_status, x.U, x.farkas.bound, infeas ? "Farkas" : "objective", eb, ew, ok ? "CERTIFIED" : "NOT certified", time() - t0))
     end
 end
 main()
