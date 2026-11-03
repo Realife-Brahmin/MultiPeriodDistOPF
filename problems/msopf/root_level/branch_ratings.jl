@@ -107,9 +107,20 @@ function ratings(name)
     # should not decide a whole result; acknowledged in the paper). SMART-DS rates pad switch p1udt913-p1udt916_p1u_9842
     # at 115 A inside a 295 A section, next to a 295 A pad switch on the same section, and that one switch set a whole
     # side of sf6937's region (0.4 deg against 1-4 deg elsewhere). Fuses keep their ratings: they protect what they feed.
+    # The conductor is the one in series with the switch: the only other element at an end where nothing else attaches
+    # (service transformers aside), the larger if both ends are such; otherwise the end rule above. (The end rule alone
+    # missed p1udt816-p1udt837_p1u_11170, 151 A between a 295 A cable and a bus whose largest branch is smaller.)
+    function series(i)
+        v = Float64[]
+        for b in (rows[i][:a], rows[i][:b])
+            o = [j for j in at[b] if j != i && rows[j][:kind] ∉ ("service", "tie")]
+            length(o) == 1 && rows[o[1]][:A] !== nothing && push!(v, rows[o[1]][:A])
+        end
+        return isempty(v) ? conductor(i) : maximum(v)
+    end
     for (i, r) in enumerate(rows)
         r[:kind] == "switch" && r[:source] == "original" || continue
-        a = conductor(i)
+        a = series(i)
         a !== nothing && a > r[:A] && (r[:A] = a; r[:source] = "raised to conductor")
     end
     out = joinpath(REPO, "test_networks", deckname(c), "BranchRatings.csv")
