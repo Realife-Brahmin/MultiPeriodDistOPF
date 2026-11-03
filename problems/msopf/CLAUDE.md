@@ -17,9 +17,12 @@ establishes something a later session on any machine would need.
 - The paper is the separate **`PESGM2027_Multi-Source-Multi-Period-OPF`** repo. Its
   Section II documents `solve_full_angle` in `problems/msopf/full_angle_pf.jl`, so
   keep the two in sync. Do not confuse it with the rejected PESGM2026 repo.
-- Decks `ieee123_5poi_1ph` and `small2poi_1ph` carry a realistic source impedance,
-  Zs = 0.032 + j0.799 ohm (cited in the deck comments). `ideal_sources = true` gives
-  the old stiff sources.
+- Decks `ieee123_5poi_1ph` and `small2poi_1ph` carry a realistic source impedance (cited in
+  the deck comments). `ideal_sources = true` gives the old stiff sources.
+  **ieee123_5poi_1ph is 4.16 kV since 2026-11-03** (user: IEEE 123 runs at its own voltage),
+  Zs = 0.0346 + j0.2769 ohm, the feeder's own 5 MVA substation transformer; from 2025-11-14
+  to 2026-11-03 it ran at 20 kV (Zs = 0.032 + j0.799), so every older ieee123 result is at
+  20 kV. small2poi_1ph is still 20 kV.
 - Battery model: one variable `P_B` per battery, lossless, with an optional
   `C_B * P_B^2` cycling cost (the user's standard). Feasibility means the network
   equations, no-backflow (`P_Subs >= 0`, the key constraint) and the 0.95-1.05 pu
