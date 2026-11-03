@@ -249,11 +249,11 @@ function draw1d(s) {
   const edge = (x, y0, y1, color) => ({ type: "line", xref: "x", yref: "y", x0: x, x1: x, y0, y1, line: { color, width: 2.5 } });
   const at = (sg, key) => sg * (R_OF[key](ends.find(e => e.sg === sg)?.d ?? {}) ?? 0);
   const shapes = [];
-  if (s.disp && show("t-din")) shapes.push(box(at(-1, "dreach"), at(1, "dreach"), -0.42, 0.42, day, 0.18));
+  if (s.disp && show("t-din")) shapes.push(box(at(-1, "dreach"), at(1, "dreach"), -0.3, 0.3, day, 0.18));
   if (show("t-in")) shapes.push(box(at(-1, "inner"), at(1, "inner"), -0.3, 0.3, ok, 0.45));
   for (const { d, sg } of ends) {
     if (show("t-out") && d.status === "certified") shapes.push(edge(sg * d.cert, -0.3, 0.3, cr));
-    if (s.disp && show("t-dout") && d.dcert != null) shapes.push(edge(sg * d.dcert, -0.42, 0.42, day));
+    if (s.disp && show("t-dout") && d.dcert != null) shapes.push(edge(sg * d.dcert, -0.3, 0.3, day));
   }
   const pts = (key, sym, color, size, open = false, filter = () => true) => {
     const ds = s.dirs.filter(filter);
