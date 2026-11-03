@@ -191,9 +191,15 @@ an objective file if U = -bound S < -UTOL. Phase C accepts a point only if this 
 first rated run certified bisection points from NUMERICAL_ERROR solves (U to -1e157 kW) that did not reproduce
 (direction 64: exact U +313 kW on a re-solve). The exported file is deleted unless `keep`.
 """
-function exact_check(x, fname; note = "", keep = false)
+exact_check(x, fname; note = "", keep = false) = exact_verdict(fname, export_relaxation(x, fname; note); keep)
+"Export a solved relaxation for exact_verdict (as a Farkas file if it was found infeasible); returns whether it was."
+function export_relaxation(x, fname; note = "")
     infeas = !isnan(x.farkas.bound)
     export_certificate(x.R.model, x.R.box, fname; c = infeas ? zero(AffExpr) : objective_function(x.R.model), note)
+    return infeas
+end
+"Exact verdict on an exported relaxation; needs no model, so a large one can be freed first (farkas_dispatched.jl)."
+function exact_verdict(fname, infeas; keep = false)
     ve = verify_file(fname); keep || rm(fname)
     S = net.S_base_kVA; eb = isfinite(ve.bound) ? Float64(BigFloat(ve.bound)) : -Inf; ew = isfinite(ve.bound) ? Float64(BigFloat(ve.bound_widened)) : -Inf
     return (; ok = infeas ? ew > 0 : -ew * S < -UTOL, kind = infeas ? "farkas" : "objective", bound = eb, widened = ew, U = infeas ? NaN : -ew * S, seconds = ve.seconds)

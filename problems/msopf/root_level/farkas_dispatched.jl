@@ -157,10 +157,18 @@ function dmain()
                 c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
                 ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
                 say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s, %s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
-                             d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
+                             d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  float bound certifies" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
+                # the float verdict stands only if the bound recomputed in exact arithmetic agrees (as phase C, 2026-11-03;
+                # 19 of 32 rated CD certificates had come from SLOW_PROGRESS solves); exported first, verified once the model is freed
+                fname = joinpath(mkpath(joinpath(OUT, "certs")), "CD_$(d.id)_tmp.txt")
+                infeas = ok && EXACT ? export_relaxation(c, fname) : false
                 # only the numbers leave: holding the last result kept its model (about 45 GB) alive while the next one was
                 # built, and a fourth relaxation ran out of 64 GB (direction 2, 2026-10-31)
                 s = (; U = c.U, farkas = (; bound = c.farkas.bound)); c = nothing; GC.gc(true)
+                if ok && EXACT
+                    e = exact_verdict(fname, infeas); ok = e.ok
+                    say(@sprintf("  %s: exact %s %.6g -> %s (%.0f s)", d.label, e.kind, e.kind == "farkas" ? e.widened : e.U, ok ? "certified" : "NOT certified", e.seconds))
+                end
                 ok && break
             end
             return ok, s
