@@ -66,14 +66,23 @@ function dmain()
             open(io -> @printf(io, "%d,%s,%.6f,%.6f,NaN,true,0,%s,0\n", d.id, d.label, ridle, LIMIT, ucols), fa, "a")
             say("  ", d.label, ": idle feasible to the search limit; so is the dispatched day"); exit(0)
         end
-        isfinite(ridle) || error("direction $(d.id) has no idle reach (equal angles infeasible when idle): not handled yet")
-        _, _, _, xs = daymargin(angles(d, ridle); all = true)
-        any(x -> x === nothing, xs) && error("the idle hours at the idle reach do not validate")
-        n = 0; lo, mlo, xlo = ridle, NaN, stitch(xs)
-        m, x = dmargin(d, lo, xlo); n += 1
-        (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day does not validate as feasible at the idle reach (margin %.1f kW)", m))
+        n = 0
+        if isfinite(ridle)
+            _, _, _, xs = daymargin(angles(d, ridle); all = true)
+            any(x -> x === nothing, xs) && error("the idle hours at the idle reach do not validate")
+            lo, mlo, xlo = ridle, NaN, stitch(xs)
+            m, x = dmargin(d, lo, xlo); n += 1
+            (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day does not validate as feasible at the idle reach (margin %.1f kW)", m))
+            r = lo
+        else
+            # No idle region (rated sf6937, 2026-11-02: at 6 am switches 11% over their ratings at equal angles with the
+            # batteries idle; feasible with them, margin +830 kW): start at equal angles, cold, first step to 1 deg.
+            lo = 0.0; m, x = dmargin(d, 0.0, nothing); n += 1
+            (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day is not feasible at equal angles either (margin %.1f kW)", m))
+            r = 0.8
+        end
         mlo, xlo = m, x
-        hi, mhi = NaN, NaN; r = lo
+        hi, mhi = NaN, NaN
         while true                                   # step out until the margin is negative or nothing validates
             r = min(1.25r, LIMIT); m, x = dmargin(d, r, xlo); n += 1
             if isfinite(m) && m >= 0
@@ -85,7 +94,7 @@ function dmain()
         end
         if isfinite(hi)
             side = 0
-            while (hi - lo) > 5e-3 * lo
+            while (hi - lo) > max(5e-3 * lo, 1e-3)              # 1e-3 deg floor: lo can be 0 (no idle region)
                 # Illinois regula falsi when the far side has a validated margin; bisection when it does not
                 r = isfinite(mhi) ? lo + (hi - lo) * mlo / (mlo - mhi) : (lo + hi) / 2
                 r = clamp(r, lo + 0.05(hi - lo), hi - 0.05(hi - lo))
