@@ -93,8 +93,12 @@ On the 10k-bus decks (2026-10-13):
 
 ## Decks
 
-- `test_networks/ieee123_5poi_1ph` has five substations; `test_networks/small2poi_1ph` has two. Both are 20 kV line-to-line.
-- Since 2026-09-28, every substation has a realistic source impedance, Zs = 0.032 + j0.799 Ω.
+- `test_networks/ieee123_5poi_1ph` has five substations; `test_networks/small2poi_1ph` has two.
+- **ieee123_5poi_1ph is 4.16 kV line-to-line since 2026-11-03** (the IEEE 123-node feeder's own voltage; user).
+  Its source impedance is the feeder's own substation transformer, 5000 kVA, 115/4.16 kV, Z = 1 + j8 %:
+  Zs = 0.0346 + j0.2769 Ω on every substation. From 2025-11-14 it ran at 20 kV with the same 4.16 kV line
+  impedances, so every ieee123 result before 2026-11-03 (windows about 18x narrower) is at 20 kV.
+- small2poi_1ph is still 20 kV line-to-line, with Zs = 0.032 + j0.799 Ω (since 2026-09-28):
   - |Zs| = U²/S_k, using the typical 20 kV short-circuit level of 0.50 GVA
     (Traupmann & Kienberger 2020, Table 19).
   - X/R = 25, inside the 15–40 range of IEEE C37.010-2016, Table 24.
