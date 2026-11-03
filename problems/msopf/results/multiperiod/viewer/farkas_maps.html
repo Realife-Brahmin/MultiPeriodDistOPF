@@ -60,7 +60,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 <div class="wrap">
   <header>
     <h1>Certified Feasibility Maps</h1>
-    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Certificates use empirical current limits. Drag to rotate, click a point for its numbers.</p>
+    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Certificates use empirical current limits. Drag to rotate or pan, scroll to zoom, click a point for its numbers.</p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
@@ -231,10 +231,10 @@ function draw2d(s) {
   else T.push({ ...pts(s.disp ? "dcert" : "cert", "circle", fg, 8), opacity: 0.01 });
   const R = 1.15 * Math.max(...s.dirs.map(d => Math.max(d.cert, d.dcert ?? 0, d.dreach ?? 0)));
   const ax = (t, o) => ({ title: { text: t, font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: muted, ...o });
-  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 56, r: 16, t: 16, b: 48 }, showlegend: false,
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 56, r: 16, t: 16, b: 48 }, showlegend: false, dragmode: "pan",
               font: { family: css("--sans"), color: fg }, xaxis: ax(s.axes[0], { constrain: "domain" }), yaxis: ax(s.axes[1], { scaleanchor: "x", constrain: "domain" }) };
   const plot = document.getElementById("plot");
-  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["toImage", "zoom2d", "select2d", "lasso2d", "autoScale2d"] });
   plot.removeAllListeners && plot.removeAllListeners("plotly_click");
   plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
 }
@@ -265,12 +265,12 @@ function draw1d(s) {
                              pts("inner", "diamond", muted, 10, true, d => d.status === "limit"),
                              ...(s.disp ? [pts("dcert", "circle", day, 9, false, d => d.dreach != null)] : [])]
                           : [{ ...pts(s.disp ? "dcert" : "cert", "circle", fg, 14), opacity: 0.01 }];
-  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 24, r: 24, t: 16, b: 56 }, showlegend: false, shapes,
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 24, r: 24, t: 16, b: 56 }, showlegend: false, dragmode: "pan", shapes,
               font: { family: css("--sans"), color: fg },
               xaxis: { title: { text: s.axes[0], font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: fg },
               yaxis: { range: [-1.2, 1.2], visible: false, fixedrange: true } };
   const plot = document.getElementById("plot");
-  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["toImage", "zoom2d", "select2d", "lasso2d", "autoScale2d"] });
   plot.removeAllListeners && plot.removeAllListeners("plotly_click");
   plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
 }
@@ -290,7 +290,7 @@ function strip(s) {
     { type: "scatter", mode: "markers", x: pen.map(X), y: pen.map(() => top - 0.5), marker: { color: fg, size: 7, symbol: "x" },
       customdata: pen.map(d => d.id), text: pen.map(hover), hovertemplate: "%{text}<extra></extra>" },
   ];
-  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, bargap: 0.3,
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, dragmode: false, bargap: 0.3,
               font: { family: css("--sans"), color: fg, size: 11 },
               xaxis: s.dim === 1 ? { type: "category", categoryorder: "array", categoryarray: s.dirs.map(d => d.label), color: muted, gridcolor: grid }
                    : s.dim === 2 ? { title: { text: "direction θ (°)", font: { size: 11 } }, range: [-12, 350], color: muted, gridcolor: grid, zeroline: false, dtick: 45 }
