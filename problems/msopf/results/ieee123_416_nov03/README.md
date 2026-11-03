@@ -22,3 +22,13 @@ not move its OPF edges, only tighten its certificates.
 
 `old_fleet_blanket686A/`: the earlier pass on the 5poi fleet (PV 770 kW, batteries 1318 kW) with every line at
 686 A (1.2 x the largest current): S1-S4 edges 4.52 / 3.68 (10.03 / 7.33 with batteries), certified at 1.27-1.38x.
+
+## Tighter certificates (2026-11-03, user: 15% too loose)
+
+The relaxation beyond the edge booked its fictitious losses (51.6 kW at 1.10x on +subs3, `relaxation_slack.jl`) on the
+lines between S1 and S3, with |I|^2 moments up to the 530 A rating against ~0.5 pu first moments. `FB_DERIVED=1`
+bounds every line's and source's current by the model's own response at the point's angles (current_bounds.jl,
+lines = true): limit = min(rating, derived). `lsec_only/`: the lsec cut alone (12.8% / 14.2%).
+`derived_bounds/` (cuts kcl0, jbound, lsec + derived bounds): idle certified at 1.019x / 1.014x the edge, with
+batteries over the day 1.091x / 1.078x (batteries at +-rating in every hour leave the trunk and source bounds near
+their ratings). All certificates exact-checked.
