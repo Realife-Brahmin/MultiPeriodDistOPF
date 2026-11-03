@@ -92,16 +92,25 @@ function ratings(name)
     # used first, gave trunk switches a lateral's or a service transformer's 1-3 A, 2026-11-02.)
     at = Dict{String,Vector{Int}}()
     for (i, r) in enumerate(rows); push!(get!(at, r[:a], Int[]), i); push!(get!(at, r[:b], Int[]), i); end
+    side(i, b) = (v = [rows[j][:A] for j in at[b] if j != i && rows[j][:A] !== nothing && rows[j][:kind] ∉ ("service", "tie")]; isempty(v) ? nothing : maximum(v))
+    conductor(i) = (nb = filter(!isnothing, [side(i, rows[i][:a]), side(i, rows[i][:b])]); isempty(nb) ? nothing : minimum(nb))
     for _ in 1:100
         changed = false
         for (i, r) in enumerate(rows)
             r[:A] === nothing || continue
-            side(b) = (v = [rows[j][:A] for j in at[b] if j != i && rows[j][:A] !== nothing && rows[j][:kind] ∉ ("service", "tie")]; isempty(v) ? nothing : maximum(v))
-            nb = filter(!isnothing, [side(r[:a]), side(r[:b])])
-            isempty(nb) && continue
-            r[:A] = minimum(nb); r[:source] = "inherited"; changed = true
+            a = conductor(i); a === nothing && continue
+            r[:A] = a; r[:source] = "inherited"; changed = true
         end
         changed || break
+    end
+    # a switch rated below the conductor it continues takes the conductor's rating (user, 2026-11-03: a single bottleneck
+    # should not decide a whole result; acknowledged in the paper). SMART-DS rates pad switch p1udt913-p1udt916_p1u_9842
+    # at 115 A inside a 295 A section, next to a 295 A pad switch on the same section, and that one switch set a whole
+    # side of sf6937's region (0.4 deg against 1-4 deg elsewhere). Fuses keep their ratings: they protect what they feed.
+    for (i, r) in enumerate(rows)
+        r[:kind] == "switch" && r[:source] == "original" || continue
+        a = conductor(i)
+        a !== nothing && a > r[:A] && (r[:A] = a; r[:source] = "raised to conductor")
     end
     out = joinpath(REPO, "test_networks", deckname(c), "BranchRatings.csv")
     open(out, "w") do io
@@ -112,8 +121,9 @@ function ratings(name)
         end
     end
     cnt(f) = count(f, rows)
-    @printf("%s: %d lines and ties; rated in the original %d, inherited %d, none %d; base %.2f A per pu\n", deckname(c), length(rows),
-            cnt(r -> r[:source] == "original"), cnt(r -> r[:source] == "inherited"), cnt(r -> r[:A] === nothing), Ib)
+    @printf("%s: %d lines and ties; rated in the original %d, inherited %d, switches raised to their conductor %d, none %d; base %.2f A per pu\n",
+            deckname(c), length(rows), cnt(r -> r[:source] == "original"), cnt(r -> r[:source] == "inherited"),
+            cnt(r -> r[:source] == "raised to conductor"), cnt(r -> r[:A] === nothing), Ib)
     for h in sort(unique(r[:how] for r in rows if r[:source] != "original"))
         @printf("  not rated in the original, %s: %d\n", h, cnt(r -> r[:how] == h && r[:source] != "original"))
     end
