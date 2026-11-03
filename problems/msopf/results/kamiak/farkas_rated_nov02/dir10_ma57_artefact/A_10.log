@@ -1,0 +1,29 @@
+== Farkas bracketing med3980_s123 phase A: 3980 buses, sources subs1,subs2,subs3, band on 1275 customer buses; 16 directions
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 5.1e-03, band 0.0e+00, battery 0.0e+00, kvl 3.8e-12, pv_q 7.9e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 1.0000 deg (hour 3); trying 0.9970
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 6.3e-02, band 0.0e+00, battery 0.0e+00, kvl 3.9e-11, pv_q 7.9e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 1.0000 deg (hour 3); trying 1.0030
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 3.5e-04, band 0.0e+00, battery 0.0e+00, kvl 7.5e-13, pv_q 7.9e-09, soc 0.0e+00, source 0.0e+00
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 3.3e-05, band 0.0e+00, battery 0.0e+00, kvl 7.6e-14, pv_q 6.2e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 0.9873 deg (hour 3); trying 0.9844
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 6.6e-05, band 0.0e+00, battery 0.0e+00, kvl 6.8e-14, pv_q 6.2e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 0.9937 deg (hour 3); trying 0.9907
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 8.1e-04, band 0.0e+00, battery 0.0e+00, kvl 4.1e-12, pv_q 4.8e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 0.9969 deg (hour 3); trying 0.9939
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 3.5e-04, band 0.0e+00, battery 0.0e+00, kvl 1.8e-13, pv_q 6.2e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 0.9969 deg (hour 3); trying 0.9998
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 1.9e-05, band 0.0e+00, battery 0.0e+00, kvl 2.8e-14, pv_q 8.1e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 1.0028 deg (hour 3); trying 0.9998
+      solve failed from every start (LOCALLY_SOLVED); residuals ampacity 0.0e+00, backflow 0.0e+00, balance 2.5e-05, band 0.0e+00, battery 0.0e+00, kvl 9.6e-13, pv_q 8.1e-09, soc 0.0e+00, source 0.0e+00
+  202.5 deg: no validated solve at 1.0028 deg (hour 3); trying 1.0058
+  202.5 deg: day's reach 1.00370 deg (577 s)
+  202.5 deg: limiting hour 12 (smallest margin 554.5 kW at 98% of the day's reach 1.00370 deg)
+  OpenDSS replay at 98%: largest line loading 0.5352 (ln5898408-1 hour 1)
+  hour boundary 5.57427 deg (day 1.00370); 98% point margin 20.487 kW, OpenDSS replay dP 1.8e-07 kW dV 3.5e-10 pu (converged); 649 s
