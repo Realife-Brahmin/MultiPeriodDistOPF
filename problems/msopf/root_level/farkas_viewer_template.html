@@ -60,15 +60,15 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 <div class="wrap">
   <header>
     <h1>Certified Feasibility Maps</h1>
-    <p class="sub">Which upstream angle differences can the feeder live with? At equal angles (the centre) it works. A <b>direction</b> is one fixed recipe for tilting the angles apart, for example "raise substation 2 only" or "raise 2 and lower 3 equally"; along it we push the tilt further until no valid dispatch exists. Two substations have one angle difference, so just 2 directions (+ and −); three have a plane, sampled every 22.5° (16 directions); four have a 3-D space, sampled by 78 directions spread evenly over a sphere like golf-ball dimples. Each system has four substations, and every pair (6) and triple (4) of them is studied as well. Each direction is bracketed from both sides (Farkas bracketing), in the paper's colours. <b>Batteries idle</b>: green, a validated AC dispatch at 98% of the limiting hour's edge; crimson, the proven edge, beyond which a sparse semidefinite relaxation proves no dispatch exists. <b>Batteries used over the day</b> (cyclic state of charge), where that campaign has run: light blue, the validated reach; blue, its proven edge from one relaxation of the whole day. The OPF solves model no current limits; the certificates hold for the model with empirical current limits (the largest currents of the validated dispatches). Four sources: drag to rotate, scroll to zoom. Click a point for its numbers.</p>
+    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Certificates use empirical current limits. Drag to rotate, click a point for its numbers.</p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="toggles">
-      <label><input type="checkbox" id="t-in" checked> Idle: dispatch exists</label>
-      <label><input type="checkbox" id="t-out" checked> Idle: proven edge</label>
-      <label><input type="checkbox" id="t-din" checked> Batteries used: dispatch exists</label>
-      <label><input type="checkbox" id="t-dout" checked> Batteries used: proven edge</label>
+      <label><input type="checkbox" id="t-in" checked> Feasible dispatch, no batteries</label>
+      <label><input type="checkbox" id="t-out" checked> Proven infeasible, no batteries</label>
+      <label><input type="checkbox" id="t-din" checked> Feasible dispatch, with batteries</label>
+      <label><input type="checkbox" id="t-dout" checked> Proven infeasible, with batteries</label>
       <label><input type="checkbox" id="t-pts"> Points</label>
     </div>
     <button class="btn" id="reset">Reset view</button>
@@ -83,9 +83,9 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
     </aside>
   </div>
   <div class="strip">
-    <h2>Unresolved band, per direction (% of the measured edge)</h2>
+    <h2>Unresolved band, no batteries, per direction (% of the measured edge)</h2>
     <div id="strip"></div>
-    <p class="note">Batteries idle. Green at −2%: the validated dispatch. Crimson: the certified edge. The grey bar between them is unresolved. Grey triangles: still feasible at the __LIMIT__° search limit, nothing to bracket.</p>
+    <p class="note">No batteries. Green at −2%: the validated dispatch. Crimson: the certified edge. The grey bar between them is unresolved. Grey triangles: still feasible at the __LIMIT__° search limit, nothing to bracket.</p>
   </div>
 </div>
 
@@ -113,12 +113,7 @@ function tabs() {
     });
     el.appendChild(g);
   };
-  const s = DATA[cur];
-  group("System", SYSTEMS.map(sys => [sys, sys === s.sys, true,
-    () => { cur = find(sys, s.n) >= 0 ? find(sys, s.n) : DATA.reduce((b, x, i) => x.sys === sys && (b < 0 || x.n > DATA[b].n) ? i : b, -1); }]));
-  group("Substations", [2, 3, 4].map(n => [String(n), n === s.n, find(s.sys, n) >= 0, () => { cur = find(s.sys, n); }]));
-  const combos = DATA.map((x, i) => [x, i]).filter(([x]) => x.sys === s.sys && x.n === s.n);
-  if (combos.length > 1) group("Which", combos.map(([x, i]) => [x.combo, i === cur, true, () => { cur = i; }]));
+  group("Case", DATA.map((x, i) => [x.title, i === cur, true, () => { cur = i; }]));
 }
 
 // radius of a direction for a layer; batteries-used layers fall back to the reach while a direction is uncertified
@@ -147,11 +142,11 @@ function meshLines(s, key, color, name) {
 
 const lab = d => d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `direction ${d.id}`);
 function hover(d) {
-  let t = d.status === "limit" ? `${lab(d)}<br>idle: feasible at the ${LIMIT}° limit`
-        : d.status === "pending" ? `${lab(d)}<br>idle: not certified; day edge ${fmt(d.day)}°`
-        : `${lab(d)}, hour ${d.hour}<br>idle: feasible ${fmt(d.inner)}° · edge ${fmt(d.edge)}°<br>idle: proven edge ${fmt(d.cert)}° (+${fmt(d.band, 2)}%)`;
-  if (d.dreach != null) t += d.dlimit ? `<br>batteries used: feasible at the ${LIMIT}° limit`
-        : `<br>batteries used: reach ${fmt(d.dreach)}°` + (d.dcert != null ? ` · proven edge ${fmt(d.dcert)}° (${fmt(d.dcert / d.dreach, 3)}×)` : " · not proven");
+  let t = d.status === "limit" ? `${lab(d)}<br>no batteries: feasible at the ${LIMIT}° limit`
+        : d.status === "pending" ? `${lab(d)}<br>no batteries: not certified; day edge ${fmt(d.day)}°`
+        : `${lab(d)}, hour ${d.hour}<br>no batteries: feasible ${fmt(d.inner)}° · edge ${fmt(d.edge)}°<br>no batteries: proven infeasible from ${fmt(d.cert)}° (+${fmt(d.band, 2)}%)`;
+  if (d.dreach != null) t += d.dlimit ? `<br>with batteries: feasible at the ${LIMIT}° limit`
+        : `<br>with batteries: reach ${fmt(d.dreach)}°` + (d.dcert != null ? ` · proven infeasible from ${fmt(d.dcert)}° (${fmt(d.dcert / d.dreach, 3)}×)` : " · not proven");
   return t;
 }
 
@@ -173,20 +168,21 @@ function draw() {
   const n = st => s.dirs.filter(d => d.status === st).length;
   const dc = s.dirs.filter(d => d.dcert != null), dr = dc.map(d => d.dcert / d.dreach).sort((a, b) => a - b);
   document.getElementById("counts").innerHTML =
-    `<div class="count"><b>${n("certified")}</b><span>idle: certified</span></div>` +
-    `<div class="count"><b>${n("limit")}</b><span>idle: feasible at ${LIMIT}°</span></div>` +
-    `<div class="count"><b>${n("pending")}</b><span>idle: not certified</span></div>` +
-    (bands.length ? `<div class="count" style="grid-column: span 3"><span>idle: proven edge ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "") +
-    (s.disp ? `<div class="count"><b>${dc.length}</b><span>batteries used: certified</span></div>` +
-              `<div class="count"><b>${s.dirs.filter(d => d.dlimit).length}</b><span>batteries used: feasible at ${LIMIT}°</span></div>` +
-              `<div class="count"><b>${s.dirs.length - dc.length - s.dirs.filter(d => d.dlimit).length}</b><span>batteries used: not certified</span></div>` +
-              (dr.length ? `<div class="count" style="grid-column: span 3"><span>batteries used: proven edge ${fmt(dr[0], 3)}–${fmt(dr[dr.length - 1], 3)}× the reach, median ${fmt(dr[Math.floor(dr.length / 2)], 3)}×</span></div>` : "")
-            : `<div class="count" style="grid-column: span 3"><span>batteries used over the day: not run for this case</span></div>`);
+    `<div class="count"><b>${n("certified")}</b><span>no batteries: certified</span></div>` +
+    `<div class="count"><b>${n("limit")}</b><span>no batteries: feasible at ${LIMIT}°</span></div>` +
+    `<div class="count"><b>${n("pending")}</b><span>no batteries: not certified</span></div>` +
+    (bands.length ? `<div class="count" style="grid-column: span 3"><span>no batteries: proven infeasible from ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "") +
+    (s.disp ? `<div class="count"><b>${dc.length}</b><span>with batteries: certified</span></div>` +
+              `<div class="count"><b>${s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: feasible at ${LIMIT}°</span></div>` +
+              `<div class="count"><b>${s.dirs.length - dc.length - s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: not certified</span></div>` +
+              (dr.length ? `<div class="count" style="grid-column: span 3"><span>with batteries: proven infeasible from ${fmt(dr[0], 3)}–${fmt(dr[dr.length - 1], 3)}× the reach, median ${fmt(dr[Math.floor(dr.length / 2)], 3)}×</span></div>` : "")
+            : `<div class="count" style="grid-column: span 3"><span>with batteries: not run for this case</span></div>`);
   document.getElementById("legend").innerHTML =
-    `<div><span class="sw" style="background:${ok};opacity:.5"></span>batteries idle: a dispatch exists (validated, 98%)</div>` +
-    `<div><span class="sw" style="border-top:2px solid ${cr};height:0"></span>batteries idle: proven edge, none exists beyond</div>` +
-    (s.disp ? `<div><span class="sw" style="background:${day};opacity:.2"></span>batteries used over the day: a dispatch exists</div>` +
-              `<div><span class="sw" style="border-top:2px solid ${day};height:0"></span>batteries used: proven edge (faint where not yet proven)</div>` : "");
+    `<div><span class="sw" style="background:${ok};opacity:.5"></span>Feasible dispatch, no batteries</div>` +
+    `<div><span class="sw" style="border-top:2px solid ${cr};height:0"></span>Proven infeasible, no batteries (beyond the line)</div>` +
+    (s.disp ? `<div><span class="sw" style="background:${day};opacity:.2"></span>Feasible dispatch, with batteries</div>` +
+              `<div><span class="sw" style="border-top:2px solid ${day};height:0"></span>Proven infeasible, with batteries (beyond the line)</div>` : "") +
+    `<div><span class="sw" style="background:transparent"></span>Substations ${s.sources.map(x => x.replace("subs", "S")).join(", ")}; the others out of service</div>`;
   if (s.dim === 1) { draw1d(s); strip(s); return; }
   if (s.dim === 2) { draw2d(s); strip(s); return; }
   const T = [];
@@ -309,16 +305,16 @@ function strip(s) {
 function select(id) {
   const d = DATA[cur].dirs.find(x => x.id === id); if (!d) return;
   const rows = [["direction", d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `${d.id}  (${d.u.map(v => v.toFixed(3)).join(", ")})`)],
-                ["idle", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "not certified"]];
+                ["no batteries", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "not certified"]];
   if (d.status === "certified") rows.push(["limiting hour", d.hour], ["feasible at", fmt(d.inner, 4) + "°"], ["measured edge", fmt(d.edge, 4) + "°"],
-    ["proven edge", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"],
+    ["proven infeasible from", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"],
     ["by", d.farkas ? "Farkas ray" : "negative margin bound"], ["relaxations", `${d.relax}, ${d.secs < 120 ? Math.round(d.secs) + " s" : Math.round(d.secs / 60) + " min"}`]);
   else rows.push(["day edge", fmt(d.day, 4) + "°"]);
   if (d.dreach != null) {
-    rows.push(["batteries used", d.dlimit ? `feasible at ${LIMIT}°` : `reach ${fmt(d.dreach, 4)}°`]);
-    if (d.dcert != null) rows.push(["proven edge", `${fmt(d.dcert, 4)}° (${fmt(d.dcert / d.dreach, 3)}×), unresolved to ${fmt(d.dunres, 4)}°`],
+    rows.push(["with batteries", d.dlimit ? `feasible at ${LIMIT}°` : `reach ${fmt(d.dreach, 4)}°`]);
+    if (d.dcert != null) rows.push(["proven infeasible from", `${fmt(d.dcert, 4)}° (${fmt(d.dcert / d.dreach, 3)}×), unresolved to ${fmt(d.dunres, 4)}°`],
                                    ["by", (d.dfarkas ? "Farkas ray" : "negative margin bound") + `, ${Math.round(d.dsecs / 60)} min`]);
-    else if (!d.dlimit) rows.push(["proven edge", "not yet"]);
+    else if (!d.dlimit) rows.push(["proven infeasible from", "not yet"]);
   }
   document.getElementById("sel").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   document.getElementById("sel-hint").hidden = true;

@@ -13,7 +13,7 @@
 #   batteries used: farkas_disp_nov02/{ieee123_s14, ieee123_two, med3980_s123}, farkas_disp_oct30b/sfp1u_four (fb_AD_*, fb_CD_*)
 from pathlib import Path
 from itertools import combinations
-import csv, json, math
+import csv, json, math, os
 
 ROOT = Path(__file__).resolve().parents[1] / "results"
 K = ROOT / "kamiak"
@@ -48,6 +48,10 @@ PREFIX = {"med3980": "med3980", "sf6937": "sfp1u"}
 DISP = {("ieee123", "14"): K / "farkas_disp_nov02" / "ieee123_s14", ("ieee123", "34"): K / "farkas_disp_nov02" / "ieee123_two",
         ("med3980", "123"): K / "farkas_disp_nov02" / "med3980_s123", ("sf6937", "1234"): K / "farkas_disp_oct30b" / "sfp1u_four"}
 
+# Only the paper's three cases (user, 2026-11-02): ieee123 S1+S4, med3980 S1-S3, sf6937 all four. Set FV_ALL=1 for every
+# pair and triple of the earlier page as well.
+PAPER = {("ieee123", "14"), ("med3980", "123"), ("sf6937", "1234")}
+
 def cases():
     yield "ieee123", "14", K / "farkas_oct30b" / "ieee123_s14"
     yield "ieee123", "34", K / "farkas_oct29" / "ieee123_two"
@@ -58,6 +62,8 @@ def cases():
             for c in combinations("1234", n):
                 yield sysname, "".join(c), K / "farkas_oct30b" / f"{prefix}_s{''.join(c)}"
         yield sysname, "1234", K / "farkas_oct30b" / f"{prefix}_four"
+
+ALL = os.environ.get("FV_ALL") == "1"
 
 def case(sysname, digits, d):
     A = {int(r["id"]): r for f in d.glob("fb_A_*.csv") for r in rows(f)}
@@ -98,7 +104,7 @@ def case(sysname, digits, d):
                          dfarkas=num(cd["farkas_at_cert"]) is not None, dsecs=float(cd["seconds"]))
         dirs.append(x)
     combo = "+".join(digits)
-    s = dict(id=f"{sysname}_s{digits}", sys=sysname, n=n, combo=combo, title=f"{sysname}, substations {combo}", dim=n - 1,
+    s = dict(id=f"{sysname}_s{digits}", sys=sysname, n=n, combo=combo, title=f"{sysname}, substations {', '.join(digits)}", dim=n - 1,
              dirs=dirs, sources=sources, note=NOTES[sysname], disp=bool(AD),
              axes=[f"δ{k} − δ{digits[0]} (°)" for k in digits[1:]])
     if n == 4:
@@ -107,7 +113,7 @@ def case(sysname, digits, d):
 
 data = []
 for sysname, digits, d in cases():
-    s = case(sysname, digits, d)
+    s = case(sysname, digits, d) if ALL or (sysname, digits) in PAPER else None
     if s is None:
         continue
     data.append(s); ds = s["dirs"]
