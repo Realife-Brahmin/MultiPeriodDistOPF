@@ -193,6 +193,27 @@ function dmain()
         end
         open(io -> @printf(io, "%d,%s,%.6f,%.6f,%.6f,%.5f,%.6g,%.6g,%d,%.0f,%.1f\n", d.id, d.label, rs, hi, lo, hi / rs, Uhi, Fhi, n, time() - t0, Sys.maxrss() / 2^30), fc, "a")
         say(@sprintf("  %s: reach %.5f, certified from %.5f (x%.4f), unresolved up to %.5f; %d relaxations, %.0f s", d.label, rs, hi, hi / rs, lo, n, time() - t0))
+
+    elseif DPHASE == "VD"
+        # Exact audit of a CD certificate taken before the exact check (2026-11-03), as farkas_bracketing.jl's phase V:
+        # re-solve at the certified point, export, free the model, verify in rational arithmetic. Writes fb_VD_<i>.csv.
+        i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
+        c = split(readlines(joinpath(OUT, "fb_CD_$(d.id).csv"))[2], ',')
+        r = parse(Float64, c[4]); isfinite(r) || (say("  ", d.label, ": no certified point; skipped"); exit(0))
+        RATED || error("phase VD: rated campaigns only")
+        kwL = merge(kwb, (; source_ampacity_pu = SRCAMP))
+        opt, at = solver_of(SOLVERS[1]); t0 = time()
+        x = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
+        fname = joinpath(mkpath(joinpath(OUT, "certs")), "CD_$(d.id).txt")
+        infeas = export_relaxation(x, fname; note = @sprintf("%s %s, dispatched day, r = %.6f deg", SYS, d.label, r))
+        st, ds, U, F = x.status, x.dual_status, x.U, x.farkas.bound; x = nothing; GC.gc(true)
+        e = exact_verdict(fname, infeas)
+        open(joinpath(OUT, "fb_VD_$(d.id).csv"), "w") do io
+            println(io, "id,label,r_cert_deg,status,dual_status,U_float_kW,farkas_float,kind,exact_bound,exact_bound_widened,exact_U_kW,certified_exact,seconds")
+            @printf(io, "%d,%s,%.6f,%s,%s,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%s,%.0f\n", d.id, d.label, r, st, ds, U, F, e.kind, e.bound, e.widened, e.U, e.ok, time() - t0)
+        end
+        say(@sprintf("  %s: r %.5f deg, %s / %s, float U %.4g kW, Farkas %.4g | exact %s %.6g -> %s; %.0f s",
+                     d.label, r, st, ds, U, F, e.kind, e.kind == "farkas" ? e.widened : e.U, e.ok ? "CERTIFIED" : "NOT certified", time() - t0))
     end
 end
 dmain()
