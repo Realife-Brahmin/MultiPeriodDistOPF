@@ -19,6 +19,7 @@
 # Output folder: MULTIPERIOD_OUT_DIR (all phases of one system share it).
 include(joinpath(@__DIR__, "..", "multiperiod_full_angle.jl"))
 include(joinpath(@__DIR__, "..", "feasibility_certificate.jl"))
+include(joinpath(@__DIR__, "verify_certificate.jl"))
 using Logging
 
 const SYS = get(ENV, "FB_SYSTEM", "med3980_four")
@@ -183,6 +184,22 @@ hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [
                            load_kw = haskey(kw24, :load_kw) ? Dict(n => [v[t]] for (n, v) in kw24.load_kw) : nothing))
 DIRS = directions(SYS, movers)
 angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumerate(movers)))
+"""
+Exact check of a solved relaxation `x` (from certify): export it and recompute its bound in rational arithmetic
+(verify_certificate.jl). A Farkas file (infeasible status) proves infeasibility if its bound, boxes widened, is > 0;
+an objective file if U = -bound S < -UTOL. Phase C accepts a point only if this passes (2026-11-03): sf6937's
+first rated run certified bisection points from NUMERICAL_ERROR solves (U to -1e157 kW) that did not reproduce
+(direction 64: exact U +313 kW on a re-solve). The exported file is deleted unless `keep`.
+"""
+function exact_check(x, fname; note = "", keep = false)
+    infeas = !isnan(x.farkas.bound)
+    export_certificate(x.R.model, x.R.box, fname; c = infeas ? zero(AffExpr) : objective_function(x.R.model), note)
+    ve = verify_file(fname); keep || rm(fname)
+    S = net.S_base_kVA; eb = isfinite(ve.bound) ? Float64(BigFloat(ve.bound)) : -Inf; ew = isfinite(ve.bound) ? Float64(BigFloat(ve.bound_widened)) : -Inf
+    return (; ok = infeas ? ew > 0 : -ew * S < -UTOL, kind = infeas ? "farkas" : "objective", bound = eb, widened = ew, U = infeas ? NaN : -ew * S, seconds = ve.seconds)
+end
+const EXACT = get(ENV, "FB_EXACT", "1") == "1"
+
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
 """
 Validated margin of an exact solve (retried cold and from `alt`; NaN if no start validates), and the solution. A
@@ -346,11 +363,20 @@ function main()
         end
         ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
         kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
-        certified(r) = (c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS); (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
+        cdir = mkpath(joinpath(OUT, "certs"))
+        function certified(r)
+            c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
+            ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"; ex = ""
+            if ok && EXACT      # the float verdict stands only if the exact recomputation agrees
+                e = exact_check(c, joinpath(cdir, "C$(CTAG)_$(d.id)_tmp.txt"))
+                ok = e.ok; ex = @sprintf("; exact %s %.6g -> %s (%.0f s)", e.kind, e.kind == "farkas" ? e.widened : e.U, e.ok ? "yes" : "NO", e.seconds)
+            end
+            say(@sprintf("  %s: %.4f x r* = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s%s", d.label, r / rs, r, c.U, c.farkas.bound, c.status, ex, ok ? "  certified" : ""))
+            return ok, c
+        end
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
         for g in GRID
             ok, c = certified(g * rs); n += 1
-            say(@sprintf("  %s: %.3f x r* = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s", d.label, g, g * rs, c.U, c.farkas.bound, c.status, ok ? "  certified" : ""))
             ok ? (hi = g * rs; Uhi = c.U; Fhi = c.farkas.bound; break) : (lo = g * rs)
         end
         if isfinite(hi)
@@ -367,29 +393,22 @@ function main()
         # with NUMERICAL_ERROR, whose multipliers are huge (U down to -1e157 kW); dual_bound's Float64 rounding allowance
         # is not a worst case at that scale. Re-solve the relaxation there, export it, and recompute the bound in exact
         # rational arithmetic (verify_certificate.jl). Writes fb_V<FB_CTAG>_<i>.csv.
-        include(joinpath(@__DIR__, "verify_certificate.jl"))
         i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
         c = split(readlines(joinpath(OUT, "fb_C$(CTAG)_$(d.id).csv"))[2], ',')
         tstar = parse(Int, c[3]); r = parse(Float64, c[5])
         isfinite(r) || (say("  ", d.label, ": no certified point; skipped"); exit(0))
         kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : error("phase V: rated campaigns only")
         t0 = time(); x = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
-        infeas = !isnan(x.farkas.bound)
-        dir = mkpath(joinpath(OUT, "certs")); fname = joinpath(dir, "C$(CTAG)_$(d.id).txt")
-        Base.invokelatest(export_certificate, x.R.model, x.R.box, fname; c = infeas ? zero(AffExpr) : objective_function(x.R.model),
-                          note = @sprintf("%s %s, hour %d, r = %.6f deg, %s", SYS, d.label, tstar, r, infeas ? "Farkas (c = 0)" : "objective"))
-        ve = Base.invokelatest(verify_file, fname)
-        S = net.S_base_kVA; eb = isfinite(ve.bound) ? Float64(BigFloat(ve.bound)) : -Inf; ew = isfinite(ve.bound) ? Float64(BigFloat(ve.bound_widened)) : -Inf
-        # exact verdict: a Farkas file proves infeasibility if its bound is > 0; an objective file if U = -bound S < -UTOL
-        ok = infeas ? ew > 0 : -ew * S < -UTOL
+        e = exact_check(x, joinpath(mkpath(joinpath(OUT, "certs")), "C$(CTAG)_$(d.id).txt");
+                        note = @sprintf("%s %s, hour %d, r = %.6f deg", SYS, d.label, tstar, r), keep = get(ENV, "FB_KEEP_CERT", "0") == "1")
         fv = joinpath(OUT, "fb_V$(CTAG)_$(d.id).csv")
         open(fv, "w") do io
             println(io, "id,label,tstar,r_cert_deg,status,dual_status,U_float_kW,farkas_float,kind,exact_bound,exact_bound_widened,exact_U_kW,certified_exact,seconds")
             @printf(io, "%d,%s,%d,%.6f,%s,%s,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%s,%.0f\n", d.id, d.label, tstar, r, x.status, x.dual_status, x.U, x.farkas.bound,
-                    infeas ? "farkas" : "objective", eb, ew, infeas ? NaN : -ew * S, ok, time() - t0)
+                    e.kind, e.bound, e.widened, e.U, e.ok, time() - t0)
         end
         say(@sprintf("  %s: r %.5f deg, %s / %s, float U %.4g kW, Farkas %.4g | exact %s bound %.6g (widened %.6g) -> %s; %.0f s",
-                     d.label, r, x.status, x.dual_status, x.U, x.farkas.bound, infeas ? "Farkas" : "objective", eb, ew, ok ? "CERTIFIED" : "NOT certified", time() - t0))
+                     d.label, r, x.status, x.dual_status, x.U, x.farkas.bound, e.kind, e.bound, e.widened, e.ok ? "CERTIFIED" : "NOT certified", time() - t0))
     end
 end
 main()
