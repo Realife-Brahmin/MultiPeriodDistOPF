@@ -142,7 +142,7 @@ if RATED
     kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines if haskey(rt, l.name)), margin_amp = true))
     # The certificates need a bound on each (near-ideal) source's current. By KCL it is the sum of the ratings of the
     # lines at its bus, which must carry no load, capacitor or DER; 10% more covers the lines' charging current.
-    devb = Set([d.bus for d in net.loads]; [c.bus for c in net.capacitors]; [b.bus for b in net.batteries]; [p.bus for p in kw24.pvs])
+    devb = Set(vcat([d.bus for d in net.loads], [c.bus for c in net.capacitors], [b.bus for b in net.batteries], [p.bus for p in kw24.pvs]))
     SRCAMP = Dict{String,Float64}()
     for s in net.sources
         s.bus in devb && error("source $(s.name): devices at its bus, so the line ratings do not bound its current")
