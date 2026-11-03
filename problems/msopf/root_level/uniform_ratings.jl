@@ -16,7 +16,8 @@ names = String[]
 for f in ("BranchData.dss", "Master.dss"), l in eachline(joinpath(root, "test_networks", deck, f))
     m = match(r"(?i)^\s*New\s+Line\.(\S+)", l); m === nothing || push!(names, lowercase(m[1]))
 end
-ibase = 1000.0 / 11.547                       # A per pu: 1000 kVA base over 11.547 kV line-to-neutral
+kvb = parse(Float64, match(r"(?i)New\s+Vsource\.\S+.*?basekv=([0-9.]+)", read(joinpath(root, "test_networks", deck, "Master.dss"), String))[1])
+ibase = 1000.0 / kvb                          # A per pu: 1000 kVA base over the sources' line-to-neutral kV (the solver's base)
 lim = factor * peak
 open(joinpath(root, "test_networks", deck, "BranchRatings.csv"), "w") do io
     println(io, "name,kind,members,phases,rated_by,original,limit_A,limit_pu,source")
