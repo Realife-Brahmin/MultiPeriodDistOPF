@@ -289,7 +289,9 @@ function convert(name)
         a, b = root(dsu, l.a), root(dsu, l.b); a == b && continue
         push!(get!(par, a < b ? (a, b) : (b, a), Any[]), l)
     end
-    br = sort([(; name = ls[1].name, a = k[1], b = k[2], z = 1 / sum(1 / l.z for l in ls), n = length(ls), kind = ls[1].kind) for (k, ls) in par]; by = x -> x.name)
+    # members: the original elements each line stands for (parallels combined), read by branch_ratings.jl
+    br = sort([(; name = ls[1].name, a = k[1], b = k[2], z = 1 / sum(1 / l.z for l in ls), n = length(ls), kind = ls[1].kind,
+                members = [l.name for l in ls]) for (k, ls) in par]; by = x -> x.name)
     # Lines of almost no impedance (bus bars, jumpers; 1e-8 ohm on some decks) get the short-line value.
     br = [abs(x.z) < ZFLOOR && x.kind in (:line, :reactor) ? merge(x, (; z = ZSHORT, kind = :short)) : x for x in br]
     # reach from the sources; what is not reached is dropped
@@ -314,7 +316,7 @@ function convert(name)
     # switches' and the cable's impedances in series. Any other unreached group stays out, with a note.
     reached(x) = haskey(feeder, x)
     T = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties]
-    tieout = [t for t in T if reached(t.a) && reached(t.b) && t.a != t.b]
+    tieout = [(; t..., members = [t.name]) for t in T if reached(t.a) && reached(t.b) && t.a != t.b]
     un = Dict{String,Vector{Tuple{String,ComplexF64}}}()
     for x in br
         (reached(x.a) || reached(x.b)) && continue
@@ -338,7 +340,8 @@ function convert(name)
         haslo = any(haskey(load, b) for b in keys(zto))
         if length(att) == 2 && !haslo && outer(att[1]) != outer(att[2])
             h1, h2 = inner(att[1]) == s ? (att[1], att[2]) : (att[2], att[1])
-            push!(tieout, (; name = "tie_" * h1.name, a = outer(h1), b = outer(h2), z = h1.z + zto[inner(h2)] + h2.z))
+            cab = reduce(vcat, [x.members for x in br if haskey(zto, x.a) && haskey(zto, x.b)]; init = String[])
+            push!(tieout, (; name = "tie_" * h1.name, a = outer(h1), b = outer(h2), z = h1.z + zto[inner(h2)] + h2.z, members = [h1.name; h2.name; cab]))
         else
             push!(notes, @sprintf("normally-open group at %s (%d buses, %d ties into it%s): left out", s, length(zto), length(att), haslo ? ", with load" : ""))
         end
