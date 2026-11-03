@@ -20,7 +20,8 @@
 include(joinpath(@__DIR__, "..", "multiperiod_full_angle.jl"))
 include(joinpath(@__DIR__, "..", "feasibility_certificate.jl"))
 include(joinpath(@__DIR__, "verify_certificate.jl"))
-using Logging
+include(joinpath(@__DIR__, "..", "current_bounds.jl"))
+using Logging, Statistics
 
 const SYS = get(ENV, "FB_SYSTEM", "med3980_four")
 const PHASE = get(ENV, "FB_PHASE", "A")
@@ -205,6 +206,32 @@ function exact_verdict(fname, infeas; keep = false)
     return (; ok = infeas ? ew > 0 : -ew * S < -UTOL, kind = infeas ? "farkas" : "objective", bound = eb, widened = ew, U = infeas ? NaN : -ew * S, seconds = ve.seconds)
 end
 const EXACT = get(ENV, "FB_EXACT", "1") == "1"
+const DERIVED = get(ENV, "FB_DERIVED", "0") == "1"
+# Lowest |V| at a device bus in the certificate model (variable_bounds with certify's m_lo_kW = -1000): banded buses
+# sqrt(0.95^2 - 1000 / KV) = 0.923 pu, unbanded (customer-band decks' primary) the floor V_FLOOR.
+VLO_DEV = cfg.customers ? V_FLOOR : sqrt(0.95^2 - 1000.0 / KV)
+"""
+FB_DERIVED=1 (2026-11-03): every line's and source's current at angles `ang` also bounded by current_bounds.jl (the
+model's own response, V = V0 + Z J, with the devices in their power rectangles and |V| >= VLO_DEV at device buses),
+the largest over periods Ts; the limit is min(rating, derived). The derived bound holds for every state of the model
+at these angles, so a certificate under it proves the rated model infeasible. On ieee123 S1-S3 the relaxation had
+booked its fictitious losses on the lines between the two sources, up to their 530 A rating (15% gap; 1.4-1.9% with these bounds).
+"""
+function derived_limits(RM, kw, ang, Ts, r)
+    get(kw, :load_kw, nothing) === nothing || error("FB_DERIVED: per-load profiles (load_kw) not in device_rectangles yet")
+    isempty(net.capacitors) || error("FB_DERIVED: capacitors are not in network_response / device_rectangles yet")
+    la = Dict(n => 0.0 for n in keys(kw.ampacity_pu)); sa = Dict(s => 0.0 for s in keys(kw.source_ampacity_pu))
+    for t in Ts
+        CB = current_bounds(RM, ang, device_rectangles(net, kw, t), t; lo = VLO_DEV, lines = true)
+        for n in keys(la); la[n] = max(la[n], CB.lines[n]); end
+        for s in keys(sa); sa[s] = max(sa[s], CB.out[s].sect); end
+    end
+    amp = Dict(n => min(a, la[n]) for (n, a) in kw.ampacity_pu); samp = Dict(s => min(a, sa[s]) for (s, a) in kw.source_ampacity_pu)
+    say(@sprintf("    derived bounds at %.5f deg: %d of %d lines below their rating (median %.2f of it); sources %s", r,
+                 count(n -> amp[n] < kw.ampacity_pu[n], keys(amp)), length(amp), median([amp[n] / kw.ampacity_pu[n] for n in keys(amp)]),
+                 join(["$s $(round(samp[s]; digits = 3))/$(round(kw.source_ampacity_pu[s]; digits = 3))" for s in keys(samp)], ", ")))
+    return merge(kw, (; ampacity_pu = amp, source_ampacity_pu = samp))
+end
 
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
 """
@@ -370,8 +397,13 @@ function main()
         ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
         kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
         cdir = mkpath(joinpath(OUT, "certs"))
+        # FB_DERIVED=1 (2026-11-03): at each point, every line's and source's current also bounded by current_bounds.jl
+        # (the model's own response at these angles: V = V0 + Z J, devices in their power rectangles, |V| >= the
+        # certificate model's floor at device buses), limit = min(rating, derived). Implied by the model, so a
+        # certificate under these limits proves the rated model infeasible.
+        RM = DERIVED ? network_response(net) : nothing
         function certified(r)
-            c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
+            c = certify(net, angles(d, r), DERIVED ? derived_limits(RM, kwL, angles(d, r), 1:1, r) : kwL; k = KV, cuts = CUTS)
             ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"; ex = ""
             if ok && EXACT      # the float verdict stands only if the exact recomputation agrees
                 e = exact_check(c, joinpath(cdir, "C$(CTAG)_$(d.id)_tmp.txt"))

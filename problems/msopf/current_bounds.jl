@@ -105,7 +105,7 @@ the disc radii history; also the sectors (for diagnostics).
 # segments = true: a device set that is a segment through zero power along one axis (a battery bus without PV or
 # reactive load: S = P_B real, |P_B| <= rating) has arg S in {0, pi} (or {-pi/2, pi/2}), so J = conj(S) V / |V|^2
 # lies in two opposite thin sectors around arg V, not in a full disc. segments = false: the full disc (as before).
-function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = ndir, lo = 0.95, safe = T == Float64 ? 1 + 1e-9 : one(T), iters = 8, segments = false, corners = false)
+function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = ndir, lo = 0.95, safe = T == Float64 ? 1 + 1e-9 : one(T), iters = 8, segments = false, corners = false, lines = false)
     id = RM.id; Yb = big(net.Y_base); n = length(net.buses)
     b0 = zeros(Complex{BigFloat}, n); Ed = Dict{String,Complex{BigFloat}}(); ysd = Dict{String,Complex{BigFloat}}()
     for s in net.sources
@@ -174,7 +174,43 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
         sect = max(maximum(acc2), zero(T)) / cw * safe
         out[s.name] = (; sect, term, a0 = abs(a), a, cs)
     end
+    # lines = true (2026-11-03): every line's series current I_l = y_l (V_from - V_to) is affine in J as well,
+    # a = y_l (V0_from - V0_to), c_b = y_l (Z_from,b - Z_to,b), and is bounded by the same support function. On the
+    # lines between two sources (where the side-sum bound of variable_bounds is no tighter than the rating) this is
+    # what keeps the relaxation from booking fictitious losses up to the rating (ieee123 S1-S3, 2026-11-03).
+    lout = Dict{String,T}()
+    if lines
+        for l in net.lines
+            f, g_ = id[l.from], id[l.to]; y = -Complex{BigFloat}(l.Y[1, 2]) / Yb
+            a = CT(y * (V0b[f] - V0b[g_])); cs = CT.(y .* (RM.Z[f, k_] .- RM.Z[g_, k_]))
+            acc2 = abs(a) .* cos.(ps .- angle(a))
+            for q in 1:nd
+                (dbl[q] ? double_support! : sector_support!)(acc2, ps, phiJ[q] + angle(cs[q]), wJ[q], abs(cs[q]) * RJ[q])
+            end
+            lout[l.name] = max(maximum(acc2), zero(T)) / cw * safe
+        end
+    end
     full = count(q -> wJ[q] >= T(pi) && !dbl[q], 1:nd)
     # rho: final valid radii |V_b - V0_b| <= rho_b; vmn: valid lower bounds on |V_b|; V0D: no-load voltages; Smax: max |S_b|
-    return (; out, rho_hist = hist, nd, full_sectors = full, double_sectors = count(dbl), wJ, RJ, D, rho, vmn, V0D = V0[k_], Smax)
+    return (; out, lines = lout, rho_hist = hist, nd, full_sectors = full, double_sectors = count(dbl), wJ, RJ, D, rho, vmn, V0D = V0[k_], Smax)
+end
+
+"""
+    network_response(net)
+
+The model's bus admittance matrix (lines with their shunts, sources' series admittances) and Z = Y^-1 in BigFloat,
+for current_bounds; as source_current_bounds.jl's response_matrix, with the network passed in. Re(Y) positive
+definite (checked by Cholesky) makes Y nonsingular. Dense: fine for ieee123, slow in BigFloat for thousands of buses.
+"""
+function network_response(net)
+    buses = net.buses; n = length(buses); id = Dict(b => i for (i, b) in enumerate(buses)); Yb = big(net.Y_base)
+    Y = zeros(Complex{BigFloat}, n, n)
+    for l in net.lines
+        Yl = Complex{BigFloat}.(l.Y) ./ Yb; ys = -Yl[1, 2]; i, j = id[l.from], id[l.to]
+        Y[i, i] += ys + Yl[1, 1] + Yl[1, 2]; Y[j, j] += ys + Yl[2, 2] + Yl[2, 1]; Y[i, j] -= ys; Y[j, i] -= ys
+    end
+    for s in net.sources; Y[id[s.bus], id[s.bus]] += 1 / (big(s.z_series) * Yb); end
+    ch = cholesky(Symmetric(real.(Y)))
+    Z = inv(Y)
+    return (; Y, Z, id, minpiv = minimum(diag(ch.U))^2, resid = maximum(abs.(Y * Z - LinearAlgebra.I)))
 end

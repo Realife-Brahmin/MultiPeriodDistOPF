@@ -150,11 +150,13 @@ function dmain()
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
         end
         kwL = RATED ? merge(kwb, (; source_ampacity_pu = SRCAMP)) : merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))      # FB_RATINGS: the ratings, in kwb
+        RM = DERIVED ? network_response(net) : nothing                  # FB_DERIVED: farkas_bracketing.jl's derived_limits
         function certified(r)
             ok = false; s = nothing
+            kwr = DERIVED ? derived_limits(RM, kwL, angles(d, r), 1:kwL.T, r) : kwL     # the largest bound over the day's periods
             for sv in SOLVERS
                 opt, at = solver_of(sv)
-                c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
+                c = certify(net, angles(d, r), kwr; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
                 ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
                 say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s, %s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
                              d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  float bound certifies" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
