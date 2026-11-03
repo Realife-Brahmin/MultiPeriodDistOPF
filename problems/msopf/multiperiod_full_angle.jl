@@ -97,6 +97,18 @@ median_of(v) = (s = sort(v); n = length(s); isodd(n) ? s[(n+1)÷2] : (s[n÷2] + 
 angle_at(delta_deg, name, t) = (d = delta_deg[name]; d isa AbstractVector ? d[t] : d)
 
 """
+Load `d` in period `t`, kW + j kvar: its nominal times `load_factor[t]`, or with `load_kw` (a Dict by load name of
+per-period kW + j kvar; sf6937 with SMART-DS's own customer profiles, 2026-11-03) its own value.
+"""
+dload(d, t, load_factor, load_kw = nothing) = load_kw === nothing ? load_factor[t] * complex(d.kW, d.kvar) : load_kw[d.name][t]
+"Load of each bus in each period, per unit: a Dict by bus of T-vectors, from the problem keywords `kw`."
+function bus_load(net, kw)
+    L = Dict(b => zeros(ComplexF64, kw.T) for b in net.buses); lk = get(kw, :load_kw, nothing)
+    for d in net.loads, t in 1:kw.T; L[d.bus][t] += dload(d, t, kw.load_factor, lk) / net.S_base_kVA; end
+    return L
+end
+
+"""
     solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24/T, pvs = [], pv_factor = zeros(T),
                       pv_q = :optimize, battery = :optimize, soc = (0.30, 0.95), soc0 = 0.625,
                       terminal = :cyclic, C_B = 0.0, gamma = 0.0, no_backflow = true,
@@ -145,7 +157,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
                            source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing, margin_band_hard = false,
                            band_buses = nothing, tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = (),
-                           margin_amp = false)
+                           margin_amp = false, load_kw = nothing)
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
     # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
@@ -273,6 +285,7 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     for d in net.loads
         base_load[d.bus] += complex(d.kW, d.kvar) / S
     end
+    BL = bus_load(net, (; T, load_factor, load_kw))
     pv_at = Dict(b => 0.0 for b in buses)
     for p in pvs
         pv_at[p.bus] += p.kW / S
@@ -362,9 +375,9 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
         for b in buses
             P_in = (haskey(src_at, b) ? P_subs[src_at[b], t] : 0.0) + sum(P_B[k, t] for k in batt_at[b]; init = 0.0)
             Q_in = (haskey(src_at, b) ? Q_subs[src_at[b], t] : 0.0) + sum(Q_PV[k, t] for k in pvs_at[b]; init = 0.0)
-            P_fix = load_factor[t] * real(base_load[b]) - pv_factor[t] * pv_at[b]
+            P_fix = real(BL[b][t]) - pv_factor[t] * pv_at[b]
             @constraint(model, out_P[b] + P_fix == P_in)
-            @constraint(model, out_Q[b] + load_factor[t] * imag(base_load[b]) == Q_in)
+            @constraint(model, out_Q[b] + imag(BL[b][t]) == Q_in)
             if b in bandset
                 vroom = vmarg ? (S / margin_band_kw) * m_imp : 0.0
                 @constraint(model, e[b, t]^2 + f[b, t]^2 + (eband ? s_vlo[b, t] : 0.0) >= V_band[1]^2 + vroom)
@@ -504,8 +517,9 @@ largest disagreement with the JuMP solution over the horizon, plus whether OpenD
 and kept every load constant-PQ throughout. The circuit must be the compiled one `net` came
 from, in snapshot mode.
 """
-function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = zeros(sol.T), ampacity_pu = nothing)
+function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = zeros(sol.T), ampacity_pu = nothing, load_kw = nothing)
     # ampacity_pu (a Dict by line, per unit): also the largest loading |I| / limit OpenDSS finds on a rated line
+    # load_kw (a Dict by load of per-period kW + j kvar): each load set to its own value (LoadMult 1), restored after
     Ib = net.S_base_kVA / net.kV_base; load_max = 0.0; load_at = ""
     existing = Set(lowercase.(ODD.Circuit.AllElementNames()))
     for p in pvs                                          # created once per compiled circuit
@@ -515,7 +529,12 @@ function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = 
     dP = dQ = dV = dB = 0.0
     converged = pq = true
     for t in 1:sol.T
-        ODD.Text.Command(@sprintf("Set LoadMult=%.12g", load_factor[t]))
+        ODD.Text.Command(@sprintf("Set LoadMult=%.12g", load_kw === nothing ? load_factor[t] : 1.0))
+        if load_kw !== nothing
+            for dd in net.loads
+                s = load_kw[dd.name][t]; ODD.Text.Command(@sprintf("Edit Load.%s kW=%.12g kvar=%.12g", dd.name, real(s), imag(s)))
+            end
+        end
         for p in pvs
             kW, kvar = pv_factor[t] * p.kW, sol.Q_PV_kvar[p.name][t]
             on = kW > 0 || abs(kvar) > 1e-9
@@ -538,6 +557,7 @@ function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = 
         end
     end
     ODD.Text.Command("Set LoadMult=1")
+    load_kw === nothing || foreach(dd -> ODD.Text.Command(@sprintf("Edit Load.%s kW=%.12g kvar=%.12g", dd.name, dd.kW, dd.kvar)), net.loads)
     for p in pvs
         ODD.Text.Command("Edit Generator.pvinj_$(p.name) enabled=false")
     end

@@ -128,6 +128,19 @@ band = cfg.customers ? Set(l.to for l in net.lines if startswith(lowercase(l.nam
 lam, price, pvf = load_profile(24), price_profile(24), pv_profile(24)
 kw24 = (; pvs, pv_q = :optimize, C_B = cb_by_rule(net), ideal_sources = false, battery = :idle, band_buses = band, tol = 1e-8, constr_viol_tol = 1e-8,
         T = 24, load_factor = lam, price, pv_factor = pvf, gamma = gamma_by_rule(net), terminal = :soft)
+# FB_LOADDAY=148 (user, 2026-11-03; sf6937): each load its own 24 hourly values, the hourly means of SMART-DS's customer
+# profiles on that day (LoadDay<day>.csv, smartds_load_day.py), instead of one load factor for every load. lam is then
+# the total over the deck's nominal, for the logs only. PV keeps our own day.
+const LOADDAY = get(ENV, "FB_LOADDAY", "")
+if !isempty(LOADDAY)
+    rows = [split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "LoadDay$(LOADDAY).csv"))[2:end]]
+    lkw = Dict(String(r[1]) => complex.(parse.(Float64, r[2:25]), parse.(Float64, r[26:49])) for r in rows)
+    miss = [d.name for d in net.loads if !haskey(lkw, d.name)]
+    isempty(miss) || error("loads without a day profile: ", join(miss[1:min(10, end)], ", "))
+    lam = [sum(real(lkw[d.name][t]) for d in net.loads) / sum(d.kW for d in net.loads) for t in 1:24]
+    kw24 = merge(kw24, (; load_factor = lam, load_kw = lkw))
+    say("loads of day $LOADDAY, total over nominal by hour: ", join([@sprintf("%.3f", x) for x in lam], " "))
+end
 # FB_RATINGS=1 (user, 2026-11-02): every line limited to its rating, from test_networks/<deck>/BranchRatings.csv
 # (branch_ratings.jl: normamps x k/3, transformers kVA / (sqrt(3) x base kV), in the deck's per-phase-equivalent units).
 # The OPF solves carry the limits in their margin (margin_amp), the certificates as hard limits; phase C then uses the
@@ -150,7 +163,8 @@ if RATED
     end
     say("source current bounds (pu, 1.1 x the ratings at the bus): ", join(["$k $(round(v; digits = 3))" for (k, v) in sort(collect(SRCAMP))], ", "))
 end
-hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free))
+hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free,
+                           load_kw = haskey(kw24, :load_kw) ? Dict(n => [v[t]] for (n, v) in kw24.load_kw) : nothing))
 DIRS = directions(SYS, movers)
 angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumerate(movers)))
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
@@ -273,7 +287,7 @@ function main()
         m98, x98 = vmargin(angles(d, 0.98lo), kw1; start = xs, alt = xs)
         m0, x0 = vmargin(angles(d, 0.0), kw1)
         (isfinite(m98) && m98 >= 0 && isfinite(m0) && m0 >= 0) || error("the 98% point or equal angles does not validate at hour $tstar")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]],
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]], load_kw = kw1.load_kw,
                             ampacity_pu = get(kw24, :ampacity_pu, nothing))
         RATED && say(@sprintf("  OpenDSS replay at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,false,%d,%.6f,%.4f,%s,%.0f\n", d.id, d.label, d.reach, tstar, lo, m98,

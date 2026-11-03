@@ -111,7 +111,8 @@ function dmain()
                      atlim ? " (search limit)" : "", n, time() - t0))
         m98, x98 = dmargin(d, 0.98lo, xlo)
         (isfinite(m98) && m98 >= 0) || error("the 98% point does not validate")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf, ampacity_pu = get(kwb, :ampacity_pu, nothing))
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf, ampacity_pu = get(kwb, :ampacity_pu, nothing),
+                            load_kw = get(kwb, :load_kw, nothing))
         RATED && say(@sprintf("  OpenDSS replay of the day at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,%.6f,%.6f,%s,%d,%s,%.0f\n", d.id, d.label, ridle, lo, hi, atlim, n, ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_ADcur_$(d.id).csv"), "w") do io
