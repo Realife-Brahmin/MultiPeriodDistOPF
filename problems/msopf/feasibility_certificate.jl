@@ -59,6 +59,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
     viol = Dict("ampacity" => 0.0, "kvl" => 0.0, "balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
     up!(kind, v) = (viol[kind] = max(viol[kind], v))
     minP, minroom = Inf, Inf
+    ampm = get(kw, :margin_amp, false)
     for t in 1:T
         V(b) = x.V_pu[b][t]
         out = Dict(b => 0.0im for b in net.buses)
@@ -69,6 +70,8 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             I = hasproperty(x, :raw) ? complex(x.raw.lr[l.name][t], x.raw.li[l.name][t]) : (V(l.from) - V(l.to)) / z
             up!("kvl", abs(V(l.from) - V(l.to) - z * I))
             amax = ampacity_of(kw, l.name); amax === nothing || up!("ampacity", max(0.0, abs(I) - amax))
+            # with margin_amp the limit is part of the margin, as the band: room (1 - |I|^2 / I_max^2) x k
+            ampm && amax !== nothing && (minroom = min(minroom, (1 - abs2(I) / amax^2) * k))
             out[l.from] += V(l.from) * conj(I) + conj(Y[1, 1] + Y[1, 2]) * abs2(V(l.from))
             out[l.to] += V(l.to) * conj(-I) + conj(Y[2, 2] + Y[2, 1]) * abs2(V(l.to))
         end
@@ -116,7 +119,8 @@ function validate_dispatch(net, delta_deg, kw, x; k)
         end
         terminal === :cyclic && battery === :optimize && up!("soc", abs(Bk[T+1] - Bk[1]))
     end
-    eq = maximum(viol[c] for c in ("ampacity", "kvl", "balance", "source", "pv_q", "battery", "soc"))
+    eqc = ("kvl", "balance", "source", "pv_q", "battery", "soc")
+    eq = maximum(viol[c] for c in (ampm ? eqc : ("ampacity", eqc...)))     # with margin_amp a current above its limit is a negative margin
     return (; viol, max_violation = maximum(values(viol)), equations = eq, min_import_kW = minP, min_band_room_kW = minroom,
             margin_kW = min(minP, minroom))
 end

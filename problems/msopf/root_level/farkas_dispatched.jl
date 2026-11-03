@@ -102,7 +102,8 @@ function dmain()
                      atlim ? " (search limit)" : "", n, time() - t0))
         m98, x98 = dmargin(d, 0.98lo, xlo)
         (isfinite(m98) && m98 >= 0) || error("the 98% point does not validate")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf)
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf, ampacity_pu = get(kwb, :ampacity_pu, nothing))
+        RATED && say(@sprintf("  OpenDSS replay of the day at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,%.6f,%.6f,%s,%d,%s,%.0f\n", d.id, d.label, ridle, lo, hi, atlim, n, ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_ADcur_$(d.id).csv"), "w") do io
             println(io, "element,kind,I_pu")
@@ -135,10 +136,10 @@ function dmain()
         rs = parse(Float64, a[4])
         envf = get(ENV, "FB_ENVELOPE", joinpath(OUT, "fb_envelope_disp.csv"))
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
-        for l in readlines(envf)[2:end]
+        for l in (RATED ? String[] : readlines(envf)[2:end])
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
         end
-        kwL = merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))
+        kwL = RATED ? kwb : merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))      # FB_RATINGS: the ratings, in kwb
         function certified(r)
             ok = false; s = nothing
             for sv in SOLVERS

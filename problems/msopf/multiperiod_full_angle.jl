@@ -144,7 +144,8 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
                            V_band = (0.95, 1.05), ideal_sources = false, start = nothing, max_iter = 3000,
                            objective = :cost, ray_dir = nothing, ray_limit = 20.0, margin_band_kw = nothing, margin_reg = 1e-7, ampacity_pu = nothing,
                            source_ampacity_pu = nothing, free_angles = nothing, current_target = nothing, margin_band_hard = false,
-                           band_buses = nothing, tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = ())
+                           band_buses = nothing, tol = IPOPT_TOL, constr_viol_tol = tol, solver = :ipopt, solver_attributes = (),
+                           margin_amp = false)
     # `solver = :gurobi` solves the same model to global optimality by spatial branch and bound
     # (objectives :cost, :violation and :margin; :ray has cos and sin of a variable).
     # MULTIPERIOD_LEAN=1 hands the model straight to Ipopt (JuMP's direct mode): no cached copy
@@ -196,7 +197,12 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     # name): |I_l|^2 = lr^2 + li^2 <= I_max^2 in every period. Off by default (`nothing`), which keeps
     # every result computed before 2026-10-21 reproducible.
     amp(n) = ampacity_pu isa AbstractDict ? get(ampacity_pu, n, nothing) : ampacity_pu
+    # margin_amp = true (with objective :margin and margin_band_kw, user 2026-11-02: line ratings in the campaign): the
+    # limit is part of the margin instead, |I_l|^2 <= I_max^2 (1 - m / k) with k = margin_band_kw, as the voltage band,
+    # so the margin reaches zero at whichever limit binds first and the problem stays feasible beyond the edge.
+    ampmarg = margin_amp && objective === :margin && margin_band_kw !== nothing
     for n in lines, t in Ts
+        ampmarg && break
         a = amp(n); a === nothing && continue
         set_lower_bound(lr[n, t], -a); set_upper_bound(lr[n, t], a); set_lower_bound(li[n, t], -a); set_upper_bound(li[n, t], a)
         @constraint(model, lr[n, t]^2 + li[n, t]^2 <= a^2)
@@ -298,6 +304,12 @@ function solve_multiperiod(net, delta_deg; T, load_factor, price, dt_h = 24 / T,
     @variable(model, s_vlo[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
     @variable(model, s_vhi[eband ? bandbuses : String[], Ts] >= 0, start = 0.0)
     m_imp = marg ? @variable(model, base_name = "m_imp", start = 0.0) : 0.0
+    if ampmarg
+        for n in lines, t in Ts
+            a = amp(n); a === nothing && continue
+            @constraint(model, lr[n, t]^2 + li[n, t]^2 <= a^2 * (1 - (S / margin_band_kw) * m_imp))
+        end
+    end
 
     # The ray: one scalar r moves the angles along ray_dir, constant over the horizon.
     objective === :ray && ray_dir === nothing && error("objective = :ray needs ray_dir")
@@ -492,7 +504,9 @@ largest disagreement with the JuMP solution over the horizon, plus whether OpenD
 and kept every load constant-PQ throughout. The circuit must be the compiled one `net` came
 from, in snapshot mode.
 """
-function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = zeros(sol.T))
+function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = zeros(sol.T), ampacity_pu = nothing)
+    # ampacity_pu (a Dict by line, per unit): also the largest loading |I| / limit OpenDSS finds on a rated line
+    Ib = net.S_base_kVA / net.kV_base; load_max = 0.0; load_at = ""
     existing = Set(lowercase.(ODD.Circuit.AllElementNames()))
     for p in pvs                                          # created once per compiled circuit
         "generator.pvinj_" * p.name in existing && continue
@@ -515,12 +529,19 @@ function replay_opendss(net, sol, delta_deg; load_factor, pvs = [], pv_factor = 
         dQ = max(dQ, maximum(abs(sol.Q_subs_kvar[k][t] - ds.Q_subs_kvar[k]) for k in keys(ds.Q_subs_kvar)))
         dV = max(dV, maximum(abs(sol.V_pu[b][t] - ds.V_pu[b]) for b in net.buses))
         isempty(ds.P_B_kW) || (dB = max(dB, maximum(abs(sol.P_B_kW[k][t] - ds.P_B_kW[k]) for k in keys(ds.P_B_kW))))
+        if ampacity_pu !== nothing
+            for l in net.lines
+                a = get(ampacity_pu, l.name, nothing); a === nothing && continue
+                ODD.Circuit.SetActiveElement("Line.$(l.name)"); I = ODD.CktElement.CurrentsMagAng()[1]
+                I / (a * Ib) > load_max && (load_max = I / (a * Ib); load_at = "$(l.name) hour $t")
+            end
+        end
     end
     ODD.Text.Command("Set LoadMult=1")
     for p in pvs
         ODD.Text.Command("Edit Generator.pvinj_$(p.name) enabled=false")
     end
-    return (; converged, pq_band = pq, dP, dQ, dV, dB)
+    return (; converged, pq_band = pq, dP, dQ, dV, dB, load_max = ampacity_pu === nothing ? NaN : load_max, load_at)
 end
 
 # ---- feasible windows of a constant angle difference -------------------------------------------------

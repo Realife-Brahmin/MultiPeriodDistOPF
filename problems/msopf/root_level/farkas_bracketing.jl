@@ -128,6 +128,17 @@ band = cfg.customers ? Set(l.to for l in net.lines if startswith(lowercase(l.nam
 lam, price, pvf = load_profile(24), price_profile(24), pv_profile(24)
 kw24 = (; pvs, pv_q = :optimize, C_B = cb_by_rule(net), ideal_sources = false, battery = :idle, band_buses = band, tol = 1e-8, constr_viol_tol = 1e-8,
         T = 24, load_factor = lam, price, pv_factor = pvf, gamma = gamma_by_rule(net), terminal = :soft)
+# FB_RATINGS=1 (user, 2026-11-02): every line limited to its rating, from test_networks/<deck>/BranchRatings.csv
+# (branch_ratings.jl: normamps x k/3, transformers kVA / (sqrt(3) x base kV), in the deck's per-phase-equivalent units).
+# The OPF solves carry the limits in their margin (margin_amp), the certificates as hard limits; phase C then uses the
+# ratings instead of the envelope, and phase B is not needed.
+const RATED = get(ENV, "FB_RATINGS", "0") == "1"
+if RATED
+    rt = Dict(String(r[1]) => parse(Float64, r[8]) for r in (split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "BranchRatings.csv"))[2:end]) if !isempty(r[8]))
+    nolim = [l.name for l in net.lines if !haskey(rt, l.name)]
+    isempty(nolim) || error("lines without a rating: ", join(nolim[1:min(10, end)], ", "))
+    kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines), margin_amp = true))
+end
 hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free))
 DIRS = directions(SYS, movers)
 angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumerate(movers)))
@@ -251,7 +262,9 @@ function main()
         m98, x98 = vmargin(angles(d, 0.98lo), kw1; start = xs, alt = xs)
         m0, x0 = vmargin(angles(d, 0.0), kw1)
         (isfinite(m98) && m98 >= 0 && isfinite(m0) && m0 >= 0) || error("the 98% point or equal angles does not validate at hour $tstar")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]])
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]],
+                            ampacity_pu = get(kw24, :ampacity_pu, nothing))
+        RATED && say(@sprintf("  OpenDSS replay at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,false,%d,%.6f,%.4f,%s,%.0f\n", d.id, d.label, d.reach, tstar, lo, m98,
                            ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_Acur_$(d.id).csv"), "w") do io
@@ -287,11 +300,11 @@ function main()
         a[5] == "0" && (say("  ", d.label, ": equal angles infeasible for the day; skipped"); exit(0))
         tstar = parse(Int, a[5]); rs = parse(Float64, a[6])
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
-        for l in readlines(joinpath(OUT, "fb_envelope.csv"))[2:end]
+        for l in (RATED ? String[] : readlines(joinpath(OUT, "fb_envelope.csv"))[2:end])
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = ENV_SCALE * parse(Float64, c[4])) : (senv[String(c[1])] = ENV_SCALE * parse(Float64, c[4]))
         end
         ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
-        kwL = merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
+        kwL = RATED ? hour_kw(tstar) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
         certified(r) = (c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS); (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
         for g in GRID
