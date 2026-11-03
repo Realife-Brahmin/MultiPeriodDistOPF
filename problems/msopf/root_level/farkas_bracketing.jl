@@ -138,8 +138,24 @@ if !isempty(LOADDAY)
     miss = [d.name for d in net.loads if !haskey(lkw, d.name)]
     isempty(miss) || error("loads without a day profile: ", join(miss[1:min(10, end)], ", "))
     lam = [sum(real(lkw[d.name][t]) for d in net.loads) / sum(d.kW for d in net.loads) for t in 1:24]
-    kw24 = merge(kw24, (; load_factor = lam, load_kw = lkw))
+    # PV (user, 2026-11-03): the same half-sine, but from that day's sunrise to sunset in San Francisco (37.77 N,
+    # 122.42 W; NOAA's approximations, with refraction), on the profiles' clock (local standard time: residential load
+    # is lowest at 3-4 am and highest at 4-5 pm, commercial rises 6-10 am), as hourly means over each hour ending h,
+    # like the loads, scaled to a largest hour of 1. Day 148: sunrise 4:55, sunset 19:18 PST.
+    startswith(cfg.deck, "smartds") || error("FB_LOADDAY is for the SMART-DS San Francisco deck")
+    pvf, rise, set = let N = parse(Int, LOADDAY), lat = 37.77, lon = -122.42
+        B = deg2rad(360 * (N - 81) / 364); eot = 9.87sin(2B) - 7.53cos(B) - 1.5sin(B)         # minutes
+        dec = deg2rad(23.44) * sind(360 * (284 + N) / 365)
+        noon = 12 + (-120 - lon) / 15 - eot / 60                                                # hours, PST
+        H = acosd((sind(-0.833) - sind(lat) * sin(dec)) / (cosd(lat) * cos(dec))) / 15
+        r, s = noon - H, noon + H
+        sun(x) = r < x < s ? sin(pi * (x - r) / (s - r)) : 0.0
+        p = [sum(sun(h - 1 + (k - 0.5) / 60) for k in 1:60) / 60 for h in 1:24]
+        (p ./ maximum(p), r, s)
+    end
+    kw24 = merge(kw24, (; load_factor = lam, load_kw = lkw, pv_factor = pvf))
     say("loads of day $LOADDAY, total over nominal by hour: ", join([@sprintf("%.3f", x) for x in lam], " "))
+    say(@sprintf("PV: sunrise %.2f h, sunset %.2f h (PST); by hour: ", rise, set), join([@sprintf("%.3f", x) for x in pvf], " "))
 end
 # FB_RATINGS=1 (user, 2026-11-02): every line limited to its rating, from test_networks/<deck>/BranchRatings.csv
 # (branch_ratings.jl: normamps x k/3, transformers kVA / (sqrt(3) x base kV), in the deck's per-phase-equivalent units).
