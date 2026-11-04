@@ -74,7 +74,9 @@ function device_rectangles(net, kw, t)
     S = net.S_base_kVA; lam = kw.load_factor[t]; pvf = get(kw, :pv_factor, zeros(kw.T))[t]
     battery = get(kw, :battery, :optimize); pv_q = get(kw, :pv_q, :optimize)
     P = Dict(b => 0.0 for b in net.buses); Q0 = Dict(b => 0.0 for b in net.buses); qd = Dict(b => 0.0 for b in net.buses); pb = Dict(b => 0.0 for b in net.buses)
-    for d in net.loads; P[d.bus] -= lam * d.kW / S; Q0[d.bus] -= lam * d.kvar / S; end
+    # each load at the period's value: the load factor, or its own profile when kw carries one (load_kw, sf6937 day 148)
+    lk = get(kw, :load_kw, nothing)
+    for d in net.loads; s = dload(d, t, kw.load_factor, lk); P[d.bus] -= real(s) / S; Q0[d.bus] -= imag(s) / S; end
     for p in get(kw, :pvs, [])
         P[p.bus] += pvf * p.kW / S
         pv_q === :optimize && (qd[p.bus] += sqrt(max(p.kVA^2 - (pvf * p.kW)^2, 0.0)) / S)
@@ -123,11 +125,13 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
     dshift = [rects[q][4] == 0 && rects[q][5] == 0 ? zero(T) : T(pi) / 2 for q in eachindex(rects)]
     # corners = true: every device uses the corner enclosure (corner_support!), which needs no arc of arg S
     cor = [[(abs(complex(T(p), T(qq))), angle(complex(T(p), T(qq)))) for p in (r[2], r[3]) for qq in (r[4], r[5])] for r in rects]
-    vmn = fill(T(lo), length(rects))
+    # lo: one floor for every device bus, or a Dict bus => floor (2026-11-03: customer buses banded, primary buses at the model's floor)
+    lov = lo isa AbstractDict ? [T(lo[b]) for b in D] : fill(T(lo), nd)
+    vmn = copy(lov)
     psis(N) = [2 * T(pi) * (k - 1) / N for k in 1:N]
     ps, pr = psis(ndir), psis(ndir_rho)
     cw, cwr = cos(T(pi) / ndir), cos(T(pi) / ndir_rho)
-    Jmax0 = Smax ./ T(lo)
+    Jmax0 = Smax ./ lov
     rho = [sum(abs(Zt[id[b], k_[q]]) * Jmax0[q] for q in 1:nd) for b in D]
     hist = T[maximum(rho)]
     phiJ = zeros(T, nd); wJ = fill(T(pi), nd); RJ = copy(Jmax0)
@@ -135,7 +139,7 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
     for it in 1:iters
         for q in 1:nd
             v0 = abs(V0[k_[q]]); al = rho[q] < v0 ? asin(rho[q] / v0) : T(pi)
-            vmn[q] = max(T(lo), v0 - rho[q]); RJ[q] = Smax[q] / vmn[q]
+            vmn[q] = max(lov[q], v0 - rho[q]); RJ[q] = Smax[q] / vmn[q]
             if dbl[q]
                 phiJ[q] = angle(V0[k_[q]]) - dshift[q]; wJ[q] = min(al, T(pi))
             else
@@ -196,21 +200,25 @@ function current_bounds(RM, ang, rects, t; T = Float64, ndir = 3600, ndir_rho = 
 end
 
 """
-    network_response(net)
+    network_response(net; T = length(net.buses) <= 500 ? BigFloat : Float64)
 
-The model's bus admittance matrix (lines with their shunts, sources' series admittances) and Z = Y^-1 in BigFloat,
-for current_bounds; as source_current_bounds.jl's response_matrix, with the network passed in. Re(Y) positive
-definite (checked by Cholesky) makes Y nonsingular. Dense: fine for ieee123, slow in BigFloat for thousands of buses.
+The model's bus admittance matrix (lines with their shunts, capacitors included as line-end shunts, sources' series
+admittances) and Z = Y^-1, for current_bounds; as source_current_bounds.jl's response_matrix, with the network passed
+in. Re(Y) positive definite (checked by Cholesky) makes Y nonsingular. BigFloat for small networks; Float64 for
+thousands of buses (a dense BigFloat inverse is out of reach), with the residual |YZ - I| reported and `safe`, the
+outward allowance current_bounds should use: 1 + 1e-9 + 10 n |YZ - I| (2026-11-03).
 """
-function network_response(net)
-    buses = net.buses; n = length(buses); id = Dict(b => i for (i, b) in enumerate(buses)); Yb = big(net.Y_base)
-    Y = zeros(Complex{BigFloat}, n, n)
+function network_response(net; T = length(net.buses) <= 500 ? BigFloat : Float64)
+    buses = net.buses; n = length(buses); id = Dict(b => i for (i, b) in enumerate(buses)); Yb = T(net.Y_base)
+    Y = zeros(Complex{T}, n, n)
     for l in net.lines
-        Yl = Complex{BigFloat}.(l.Y) ./ Yb; ys = -Yl[1, 2]; i, j = id[l.from], id[l.to]
+        Yl = Complex{T}.(l.Y) ./ Yb; ys = -Yl[1, 2]; i, j = id[l.from], id[l.to]
         Y[i, i] += ys + Yl[1, 1] + Yl[1, 2]; Y[j, j] += ys + Yl[2, 2] + Yl[2, 1]; Y[i, j] -= ys; Y[j, i] -= ys
     end
-    for s in net.sources; Y[id[s.bus], id[s.bus]] += 1 / (big(s.z_series) * Yb); end
+    for s in net.sources; Y[id[s.bus], id[s.bus]] += 1 / (Complex{T}(s.z_series) * Yb); end
     ch = cholesky(Symmetric(real.(Y)))
     Z = inv(Y)
-    return (; Y, Z, id, minpiv = minimum(diag(ch.U))^2, resid = maximum(abs.(Y * Z - LinearAlgebra.I)))
+    resid = Float64(maximum(abs.(Y * Z - LinearAlgebra.I)))
+    safe = T == BigFloat ? 1 + 1e-9 : 1 + 1e-9 + 10 * n * resid
+    return (; Y, Z, id, minpiv = minimum(diag(ch.U))^2, resid, safe)
 end

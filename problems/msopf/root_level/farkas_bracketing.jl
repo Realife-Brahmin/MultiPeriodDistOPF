@@ -207,26 +207,34 @@ function exact_verdict(fname, infeas; keep = false)
 end
 const EXACT = get(ENV, "FB_EXACT", "1") == "1"
 const DERIVED = get(ENV, "FB_DERIVED", "0") == "1"
-# Lowest |V| at a device bus in the certificate model (variable_bounds with certify's m_lo_kW = -1000): banded buses
-# sqrt(0.95^2 - 1000 / KV) = 0.923 pu, unbanded (customer-band decks' primary) the floor V_FLOOR.
-VLO_DEV = cfg.customers ? V_FLOOR : sqrt(0.95^2 - 1000.0 / KV)
+# Lowest |V| at each device bus in the certificate model (variable_bounds with certify's m_lo_kW = -1000): banded buses
+# sqrt(0.95^2 - 1000 / KV) = 0.923 pu, unbanded ones (the primary of customer-band decks) the floor V_FLOOR.
+const VLO_BAND = sqrt(0.95^2 - 1000.0 / KV)
 """
 FB_DERIVED=1 (2026-11-03): every line's and source's current at angles `ang` also bounded by current_bounds.jl (the
-model's own response, V = V0 + Z J, with the devices in their power rectangles and |V| >= VLO_DEV at device buses),
-the largest over periods Ts; the limit is min(rating, derived). The derived bound holds for every state of the model
-at these angles, so a certificate under it proves the rated model infeasible. On ieee123 S1-S3 the relaxation had
-booked its fictitious losses on the lines between the two sources, up to their 530 A rating (15% gap; 1.4-1.9% with these bounds).
+model's own response, V = V0 + Z J, with |V| at each device bus above its floor in the certificate model), the limit
+being min(rating, derived). The device powers are the union over the periods Ts of each bus's rectangle: the angles
+are the same in every period, so V0 is too, and one bound covers the whole day. Capacitors are line-end shunts, so they
+are in Z. The derived bound holds for every state of the model at these angles, so a certificate under it proves the
+rated model infeasible. On ieee123 S1-S3 the relaxation had booked its fictitious losses on the lines between the two
+sources, up to their 530 A rating (15% gap; 1.4-1.9% with these bounds). Large networks use a coarser direction grid
+(its cos(pi / ndir) correction keeps the bound valid) and a Float64 response with network_response's allowance.
 """
 function derived_limits(RM, kw, ang, Ts, r)
-    get(kw, :load_kw, nothing) === nothing || error("FB_DERIVED: per-load profiles (load_kw) not in device_rectangles yet")
-    isempty(net.capacitors) || error("FB_DERIVED: capacitors are not in network_response / device_rectangles yet")
-    la = Dict(n => 0.0 for n in keys(kw.ampacity_pu)); sa = Dict(s => 0.0 for s in keys(kw.source_ampacity_pu))
-    for t in Ts
-        CB = current_bounds(RM, ang, device_rectangles(net, kw, t), t; lo = VLO_DEV, lines = true)
-        for n in keys(la); la[n] = max(la[n], CB.lines[n]); end
-        for s in keys(sa); sa[s] = max(sa[s], CB.out[s].sect); end
+    box = Dict{String,NTuple{4,Float64}}()
+    for t in Ts, (b, p1, p2, q1, q2) in device_rectangles(net, kw, t)
+        o = get(box, b, (p1, p2, q1, q2)); box[b] = (min(o[1], p1), max(o[2], p2), min(o[3], q1), max(o[4], q2))
     end
-    amp = Dict(n => min(a, la[n]) for (n, a) in kw.ampacity_pu); samp = Dict(s => min(a, sa[s]) for (s, a) in kw.source_ampacity_pu)
+    for t in Ts                                    # a bus without device power in some period: the rectangle takes in zero
+        at_t = Set(x[1] for x in device_rectangles(net, kw, t))
+        for (b, o) in box; b in at_t || (box[b] = (min(o[1], 0.0), max(o[2], 0.0), min(o[3], 0.0), max(o[4], 0.0))); end
+    end
+    rects = [(b, o...) for (b, o) in box]
+    src_at = Dict(s.bus => s for s in net.sources)
+    lo = Dict(b => banded_bus(kw, src_at, b) ? VLO_BAND : V_FLOOR for b in keys(box))
+    big_ = length(net.buses) > 500
+    CB = current_bounds(RM, ang, rects, first(Ts); lo, lines = true, safe = RM.safe, ndir = big_ ? 720 : 3600, ndir_rho = big_ ? 360 : 3600)
+    amp = Dict(n => min(a, CB.lines[n]) for (n, a) in kw.ampacity_pu); samp = Dict(s => min(a, CB.out[s].sect) for (s, a) in kw.source_ampacity_pu)
     say(@sprintf("    derived bounds at %.5f deg: %d of %d lines below their rating (median %.2f of it); sources %s", r,
                  count(n -> amp[n] < kw.ampacity_pu[n], keys(amp)), length(amp), median([amp[n] / kw.ampacity_pu[n] for n in keys(amp)]),
                  join(["$s $(round(samp[s]; digits = 3))/$(round(kw.source_ampacity_pu[s]; digits = 3))" for s in keys(samp)], ", ")))
