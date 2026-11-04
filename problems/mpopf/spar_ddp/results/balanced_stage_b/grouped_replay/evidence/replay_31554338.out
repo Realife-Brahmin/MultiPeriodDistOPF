@@ -1,0 +1,361 @@
+2026-11-04T03:12:17-08:00
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      1
+Core(s) per socket:                      32
+Socket(s):                               2
+Stepping:                                8
+CPU(s) scaling MHz:                      90%
+CPU max MHz:                             4000.0000
+CPU min MHz:                             800.0000
+BogoMIPS:                                4000.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                128 MiB (64 instances)
+L3 cache:                                120 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsx async abort:           Not affected
+JobId=31554338 JobName=grouped_phase_b
+   UserId=aryan.jha(9254) GroupId=its_p_sys_ur_kam-dubey(7274) MCS_label=N/A
+   Priority=1 Nice=0 Account=dubey QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:01 TimeLimit=00:15:00 TimeMin=N/A
+   SubmitTime=2026-11-04T03:12:00 EligibleTime=2026-11-04T03:12:00
+   StartTime=2026-11-04T03:12:16 EndTime=2026-11-04T03:27:16 Deadline=N/A
+   PreemptTime=None SuspendTime=None SecsPreSuspend=0
+   LastSchedEval=2026-11-04T03:12:16
+   Partition=kamiak AllocNode:Sid=login-p3n02:1582277
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn155
+   BatchHost=cn155
+   NumNodes=1 NumCPUs=64 NumTasks=64 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=64,mem=300G,node=1,billing=64
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=1 MinMemoryNode=300G MinTmpDiskNode=0
+   Features=sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64 DelayBoot=00:00:00
+   Gres=(null) Reservation=(null)
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/grouped_phase_b_nov04.q7hdoX/run.sh
+   WorkDir=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/grouped_phase_b_nov04.q7hdoX
+   StdErr=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/grouped_phase_b_nov04.q7hdoX/replay_31554338.err
+   StdIn=/dev/null
+   StdOut=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/grouped_phase_b_nov04.q7hdoX/replay_31554338.out
+   Power=
+
+replay.jl: OK
+schedule.jl: OK
+check_schedule.jl: OK
+run.sh: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_10.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_11.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_12.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_13.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_14.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_15.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_16.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_17.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_18.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_19.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_1.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_20.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_21.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_22.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_23.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_24.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_25.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_26.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_27.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_28.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_29.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_2.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_30.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_31.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_32.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_33.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_34.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_35.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_36.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_37.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_38.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_39.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_3.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_40.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_41.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_42.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_43.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_44.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_45.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_46.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_47.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_48.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_49.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_4.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_50.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_51.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_52.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_53.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_54.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_55.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_56.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_57.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_58.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_59.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_5.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_60.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_61.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_62.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_63.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_64.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_65.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_66.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_67.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_68.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_69.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_6.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_70.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_71.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_72.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_73.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_74.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_75.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_76.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_77.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_78.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_79.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_7.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_80.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_81.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_82.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_83.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_84.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_85.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_86.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_87.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_88.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_89.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_8.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_90.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_91.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_92.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_93.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_94.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_95.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_96.jls: OK
+/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/capture/stage_9.jls: OK
+611c160ad000cebc46e5a75f38be5d44e42d9fa24a2ea57a407a113e88c5dc46  /home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/repo/ddp/examples/power_system/ieee123c_filterddp.jl
+6a970f6afb1d5d3aa427b7df6248d1a05879e45ede9940957661878154bbc187  /home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/repo/ddp/examples/power_system/procs_pass.jl
+julia version 1.12.7
+SCHEDULE_CHECK T=96 b=1 merges=368 rounds=7
+SCHEDULE_CHECK T=96 b=2 merges=256 rounds=8
+SCHEDULE_CHECK T=288 b=1 merges=1392 rounds=9
+SCHEDULE_CHECK T=288 b=4 merges=708 rounds=11
+REPLAY_PLACEMENT Dict(5 => "cn155", 56 => "cn155", 35 => "cn155", 55 => "cn155", 60 => "cn155", 30 => "cn155", 32 => "cn155", 6 => "cn155", 45 => "cn155", 64 => "cn155", 4 => "cn155", 13 => "cn155", 54 => "cn155", 63 => "cn155", 62 => "cn155", 58 => "cn155", 52 => "cn155", 12 => "cn155", 28 => "cn155", 23 => "cn155", 41 => "cn155", 43 => "cn155", 11 => "cn155", 36 => "cn155", 39 => "cn155", 7 => "cn155", 25 => "cn155", 34 => "cn155", 50 => "cn155", 59 => "cn155", 2 => "cn155", 10 => "cn155", 18 => "cn155", 26 => "cn155", 27 => "cn155", 42 => "cn155", 16 => "cn155", 20 => "cn155", 19 => "cn155", 49 => "cn155", 44 => "cn155", 9 => "cn155", 31 => "cn155", 61 => "cn155", 29 => "cn155", 46 => "cn155", 57 => "cn155", 21 => "cn155", 38 => "cn155", 24 => "cn155", 8 => "cn155", 17 => "cn155", 37 => "cn155", 53 => "cn155", 22 => "cn155", 47 => "cn155", 14 => "cn155", 3 => "cn155", 51 => "cn155", 33 => "cn155", 40 => "cn155", 48 => "cn155", 15 => "cn155")
+REPLAY_PROCESS pid=1 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002f725000)
+REPLAY_PROCESS pid=2 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002a0a2000)
+REPLAY_PROCESS pid=3 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e394000)
+REPLAY_PROCESS pid=4 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d465000)
+REPLAY_PROCESS pid=5 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dcd0000)
+REPLAY_PROCESS pid=6 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e5e8000)
+REPLAY_PROCESS pid=7 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e58f000)
+REPLAY_PROCESS pid=8 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002a7fb000)
+REPLAY_PROCESS pid=9 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029c9d000)
+REPLAY_PROCESS pid=10 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d46a000)
+REPLAY_PROCESS pid=11 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dd86000)
+REPLAY_PROCESS pid=12 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002de96000)
+REPLAY_PROCESS pid=13 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dc06000)
+REPLAY_PROCESS pid=14 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d253000)
+REPLAY_PROCESS pid=15 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ddcb000)
+REPLAY_PROCESS pid=16 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029cc1000)
+REPLAY_PROCESS pid=17 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ac27000)
+REPLAY_PROCESS pid=18 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cb46000)
+REPLAY_PROCESS pid=19 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cf27000)
+REPLAY_PROCESS pid=20 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cd93000)
+REPLAY_PROCESS pid=21 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029f1c000)
+REPLAY_PROCESS pid=22 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d546000)
+REPLAY_PROCESS pid=23 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c930000)
+REPLAY_PROCESS pid=24 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029ce9000)
+REPLAY_PROCESS pid=25 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d4e1000)
+REPLAY_PROCESS pid=26 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b7ad000)
+REPLAY_PROCESS pid=27 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e295000)
+REPLAY_PROCESS pid=28 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ccbc000)
+REPLAY_PROCESS pid=29 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d9d7000)
+REPLAY_PROCESS pid=30 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029ea9000)
+REPLAY_PROCESS pid=31 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b9a000)
+REPLAY_PROCESS pid=32 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b32000)
+REPLAY_PROCESS pid=33 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dac6000)
+REPLAY_PROCESS pid=34 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cc5a000)
+REPLAY_PROCESS pid=35 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b790000)
+REPLAY_PROCESS pid=36 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b39000)
+REPLAY_PROCESS pid=37 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029928000)
+REPLAY_PROCESS pid=38 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ca93000)
+REPLAY_PROCESS pid=39 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029d16000)
+REPLAY_PROCESS pid=40 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d111000)
+REPLAY_PROCESS pid=41 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x00000000299fb000)
+REPLAY_PROCESS pid=42 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029bac000)
+REPLAY_PROCESS pid=43 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x00000000296c3000)
+REPLAY_PROCESS pid=44 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ba2a000)
+REPLAY_PROCESS pid=45 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e25d000)
+REPLAY_PROCESS pid=46 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cfa3000)
+REPLAY_PROCESS pid=47 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d3a6000)
+REPLAY_PROCESS pid=48 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b7ec000)
+REPLAY_PROCESS pid=49 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b0c000)
+REPLAY_PROCESS pid=50 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029da4000)
+REPLAY_PROCESS pid=51 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029811000)
+REPLAY_PROCESS pid=52 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ca8c000)
+REPLAY_PROCESS pid=53 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029cc3000)
+REPLAY_PROCESS pid=54 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e18e000)
+REPLAY_PROCESS pid=55 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cd49000)
+REPLAY_PROCESS pid=56 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dea8000)
+REPLAY_PROCESS pid=57 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c9db000)
+REPLAY_PROCESS pid=58 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002df3e000)
+REPLAY_PROCESS pid=59 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d0e3000)
+REPLAY_PROCESS pid=60 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x00000000298ce000)
+REPLAY_PROCESS pid=61 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029c45000)
+REPLAY_PROCESS pid=62 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029aba000)
+REPLAY_PROCESS pid=63 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002db63000)
+REPLAY_PROCESS pid=64 info=(host = "cn155", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x00000000299c8000)
+SHARED_BYTES 2398648320
+ROUND mode=grouped rep=0 round=1 wall_s=2.74633692 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=2 wall_s=0.172149504 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=3 wall_s=0.172485135 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=4 wall_s=0.17119078 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=5 wall_s=0.170587078 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=6 wall_s=0.166636961 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=7 wall_s=0.079609612 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=0 round=8 wall_s=0.082771834 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=0 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=0 wall_s=3.801809 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=0 round=1 wall_s=0.176422925 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=0 round=2 wall_s=0.180688185 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=0 round=3 wall_s=0.181706284 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=0 round=4 wall_s=0.180971069 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=0 round=5 wall_s=0.179033587 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=0 round=6 wall_s=2.40612829 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=0 round=7 wall_s=0.159588236 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=0 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=0 wall_s=3.465644 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=1 round=1 wall_s=0.178317812 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=1 round=2 wall_s=0.181423708 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=1 round=3 wall_s=0.183537889 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=1 round=4 wall_s=0.180582996 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=1 round=5 wall_s=0.180620871 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=1 round=6 wall_s=0.246472071 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=1 round=7 wall_s=0.159552294 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=1 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=1 wall_s=1.311554 max_relative_error=2.977617591605e-14
+ROUND mode=grouped rep=1 round=1 wall_s=0.183052488 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=2 wall_s=0.174543346 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=3 wall_s=0.175212192 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=4 wall_s=0.172128165 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=5 wall_s=0.172739255 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=6 wall_s=0.172018661 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=7 wall_s=0.084133214 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=1 round=8 wall_s=0.087399346 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=1 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=1 wall_s=1.222017 max_relative_error=2.977617591605e-14
+ROUND mode=grouped rep=2 round=1 wall_s=0.183135487 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=2 wall_s=0.175343192 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=3 wall_s=0.174696099 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=4 wall_s=0.173690016 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=5 wall_s=0.173790073 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=6 wall_s=0.171953292 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=7 wall_s=0.084256353 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=2 round=8 wall_s=0.087512104 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=2 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=2 wall_s=1.225087 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=2 round=1 wall_s=0.182381152 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=2 round=2 wall_s=0.187139765 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=2 round=3 wall_s=0.184471924 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=2 round=4 wall_s=0.187245509 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=2 round=5 wall_s=0.184349406 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=2 round=6 wall_s=0.247372551 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=2 round=7 wall_s=0.161320272 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=2 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=2 wall_s=1.335228 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=3 round=1 wall_s=0.182320569 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=3 round=2 wall_s=0.183244212 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=3 round=3 wall_s=0.182697577 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=3 round=4 wall_s=0.181300268 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=3 round=5 wall_s=0.180172068 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=3 round=6 wall_s=0.246693791 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=3 round=7 wall_s=0.160629539 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=3 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=3 wall_s=1.318045 max_relative_error=2.977617591605e-14
+ROUND mode=grouped rep=3 round=1 wall_s=0.181146819 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=2 wall_s=0.170442788 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=3 wall_s=0.171805603 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=4 wall_s=0.17148854 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=5 wall_s=0.172730069 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=6 wall_s=0.171981474 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=7 wall_s=0.084455675 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=3 round=8 wall_s=0.087644846 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=3 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=3 wall_s=1.212331 max_relative_error=2.977617591605e-14
+ROUND mode=grouped rep=4 round=1 wall_s=0.181045173 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=2 wall_s=0.173878946 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=3 wall_s=0.173896805 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=4 wall_s=0.172635801 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=5 wall_s=0.171380077 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=6 wall_s=0.171382166 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=7 wall_s=0.084112869 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=4 round=8 wall_s=0.086896803 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=4 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=4 wall_s=1.215856 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=4 round=1 wall_s=0.181858711 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=4 round=2 wall_s=0.183371501 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=4 round=3 wall_s=0.184971116 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=4 round=4 wall_s=0.182894573 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=4 round=5 wall_s=0.181613037 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=4 round=6 wall_s=0.24674598 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=4 round=7 wall_s=0.156868991 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=4 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=4 wall_s=1.319297 max_relative_error=2.977617591605e-14
+ROUND mode=balanced rep=5 round=1 wall_s=0.181370662 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=5 round=2 wall_s=0.183623652 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=5 round=3 wall_s=0.184772382 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=5 round=4 wall_s=0.182420595 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=5 round=5 wall_s=0.181615022 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=balanced rep=5 round=6 wall_s=0.245439006 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ROUND mode=balanced rep=5 round=7 wall_s=0.159194622 merges=64 tasks_per_worker=2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+ERRORS mode=balanced rep=5 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=balanced workers=63 rep=5 wall_s=1.319412 max_relative_error=2.977617591605e-14
+ROUND mode=grouped rep=5 round=1 wall_s=0.181611844 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=2 wall_s=0.175590418 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=3 wall_s=0.175143965 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=4 wall_s=0.173905233 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=5 wall_s=0.172388178 merges=24 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=6 wall_s=0.171533936 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=7 wall_s=0.083981033 merges=32 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ROUND mode=grouped rep=5 round=8 wall_s=0.087046299 merges=48 tasks_per_worker=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ERRORS mode=grouped rep=5 grad=2.4826676577677763e-15 hess=2.9776175916046823e-14
+BALANCED_PASS scheduling=grouped workers=63 rep=5 wall_s=1.222001 max_relative_error=2.977617591605e-14
+BALANCED_RESULT scheduling=grouped workers=63 median_s=1.222001 min_s=1.212331 max_s=1.225087
+BALANCED_RESULT scheduling=balanced workers=63 median_s=1.319297 min_s=1.311554 max_s=1.335228
+REPLAY_MEMORY workers=63 worker_maxrss_max_bytes=1374973952 worker_maxrss_sum_bytes=72900771840 coordinator_maxrss_bytes=6358040576
+BALANCED_COMPLETE
