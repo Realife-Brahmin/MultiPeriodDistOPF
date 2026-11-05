@@ -92,7 +92,7 @@ for rep in (1, 2, 3):
         assert all(int(p["workers"]) == workers for p in passes)
         for p in quality:
             assert all(math.isfinite(float(p[k])) for k in ("objective", "original", "dual", "complementarity"))
-        expected_merges = (1392 if horizon == 288 else 368) if arm == "c1" else (912 if horizon == 288 else 256)
+        expected_merges = {96: (368, 256), 144: (624, 420), 288: (1392, 912)}[horizon][0 if arm == "c1" else 1]
         assert all(int(p["combinations"]) == expected_merges for p in passes)
         initial = re.search(r"FULL_STUDY_START x0_sha256=(\w+) ubar_sha256=(\w+)", text)
         assert initial

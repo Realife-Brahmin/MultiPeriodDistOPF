@@ -73,3 +73,16 @@ Post-processing also retains coordinator model-build time, full warm-up wall
 time and total process wall including independent validation from their
 existing logs. These columns are distinct from the full optimizer clock;
 the collector schema change does not alter numerical or timing gates.
+
+## Authorized T144 follow-up
+
+After the validated T96/T288 result, the user requested the intermediate
+T144 horizon. This compares c1 and selected c4, two repeats each, ordered
+c1/c4 then c4/c1. The same original1020-battery T144 frozen input is linked
+into a NEW immutable copy of the validated numerical source. The original
+T96/T288 snapshot and evidence remain intact. Its symbolic counts are624
+merges/8 rounds balanced and420/9 groupedb2, verified with replay_rounds.
+All numerical/physical/OpenDSS, same-start, worker/thread/affinity and strict
+solution-comparison gates remain identical. Add a third paired repeat only
+if timings overlap before declaring a winner. No additional tuning is
+authorized by this horizon extension.

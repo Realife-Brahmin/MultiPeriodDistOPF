@@ -92,3 +92,22 @@ and limitations. Setup/build/warm-up/process-wall times are kept distinct
 from optimizer times. No further optimizer tuning or production/paper changes
 were made. Verify the final evidence commit on the remote, then delete the
 dedicated finish-spar-ddp-dense-merge-full-solves heartbeat.
+
+NEW REQUEST after completed campaign: user authorized T144 original1020
+reference-versus-winner full solves, two repeats each in reverse order.
+Snapshot /home/aryan.jha/kamiak_jobs/dense_merge_fullsolve_T144_nov05,
+job31575217, Gold6438Y+64CPU300GiB3h/no-requeue/occupancyguard, initially
+pending on priority. Source copy inherits the exact validated procs/driver
+and right kernel, with the original frozenT144 input linked. Source and
+input hashes were rechecked. The standalone root comparison helper in
+this NEW snapshot is already the repaired function-scoped version, also
+available in posthoc_v2; old snapshots remain untouched.
+
+Collect comparisons_T144/c4_r1.toml and c4_r2.toml against c1 from each
+repeat. Run collect.py ROOT OUT --T144 strictly after T144.finished and
+all independent validators. The collector's count gate was extended
+with verified624/420 merge counts. Preserve any numerical differences,
+failure logs and raw solutions/hashes. Archive raw evidence, write the
+short matched comparison and push it. The two-horizon findings remain
+historical until the new result is available. A new dedicated T144
+completion monitor should be deleted after the final evidence push.
