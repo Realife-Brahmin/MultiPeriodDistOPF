@@ -111,3 +111,5 @@ failure logs and raw solutions/hashes. Archive raw evidence, write the
 short matched comparison and push it. The two-horizon findings remain
 historical until the new result is available. A new dedicated T144
 completion monitor should be deleted after the final evidence push.
+
+T144 FINAL: job31575217 completed0:0; strict collector/solution comparisons/reference repeat all pass. Full107.5640->78.2205s (27.28% lower), B85.8404->52.0445s. All source/input/runtime masks/thread/scientific gates pass. Evidence and findings in results_T144. Newly authorized T24 and128-core matched central/DDP comparisons are separately tracked in experiments/core128_t24_nov05; finish those sequentially and keep their monitor after archiving this completed horizon.

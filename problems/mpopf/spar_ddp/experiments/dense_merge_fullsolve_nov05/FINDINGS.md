@@ -1,6 +1,6 @@
 # Complete dense-merge ablation result, November 5, 2026
 
-The exact dense-merge improvements survive the tested complete original large10k solves at both horizons. The selected grouped b=2/right-sided kernel/31-workers x2-BLAS-thread configuration lowers full optimizer time by14.40% atT96 and24.03% atT288 against the original balanced/current-kernel63x1 configuration. All physical batteries and model constraints are retained.
+The exact dense-merge improvements survive the tested complete original large10k solves at the original two horizons, with a subsequent T144 confirmation. The selected grouped b=2/right-sided kernel/31-workers x2-BLAS-thread configuration lowers full optimizer time by14.40% atT96 and24.03% atT288 against the original balanced/current-kernel63x1 configuration. All physical batteries and model constraints are retained.
 
 ## T288 extension
 
@@ -47,3 +47,7 @@ The only failed attempt was the standalone post-processing helper's Julia soft-s
 results_T288/dense_fullsolve_T288_evidence.tgz contains raw logs, audits, masks/topology, scientific checks, source/input manifests, solution hashes and Slurm accounting. Extract it and run collect.py EXTRACTED/dense_merge_fullsolve_nov05 OUTPUT --T288 to reproduce strict validation and tables. The separate T96 evidence archive and its published comparison are retained intact.
 
 Final assessment is complete. No extra tuning, centralized solves, expanded campaigns or paper edits were performed.
+
+## Subsequent T144 confirmation
+
+Job31575217 independently validates the intermediate horizon: full optimizer107.5640->78.2205s (27.28% lower), Phase B85.8404->52.0445s. All four runs have18iterations/27passes/8barrier reductions/zero backtracks, identical physical starts and strict final-solution matches. See results_T144/FINDINGS.md and its preserved raw evidence. The improvement is repeatable in both pairs; no third repeat is needed. Across testedT96/T144/T288, overall optimizer reductions are14.40%/27.28%/24.03%; these are DDP ablations, not fresh centralized speedup claims.
