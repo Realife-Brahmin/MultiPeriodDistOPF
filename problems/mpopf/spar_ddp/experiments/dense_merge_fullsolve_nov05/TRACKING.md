@@ -67,3 +67,12 @@ The T96 result was reported to the user before extension. Select c4 for
 the authorized T288 comparison against c1, two repeats in reverse order.
 No third T96 repeat is needed. Commit the results_T96 evidence and comparison
 table, write the validation/selection markers, then submit job.sh288.
+
+The authorized T288 extension is submitted as job31575079 in the same immutable
+snapshot, Gold6438Y+64CPU300GiB3h/no-requeue. Only c1 and selected c4 run,
+ordered c1/c4 then c4/c1. T96.validated contains the strict collector result
+and selected_candidate.txt is c4. T96 evidence is pushed at2110ef56.
+The numerical sources and original harness were not edited for the extension.
+Use posthoc_v2/compare_solutions.jl for comparisons_T288/c4_r1.toml and c4_r2.toml,
+then collect.py ROOT OUT --T288. Keep the heartbeat until T288 comparison,
+strict validation, final findings and remote push are complete.
