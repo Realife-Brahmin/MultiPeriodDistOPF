@@ -45,3 +45,14 @@ Safe repairs only new immutable attempts, never edits to queued/running source.
 afterok dependencies serialize expensive jobs; inspect predecessor failures.
 Commit/push final evidence and assessment before removing completion heartbeat.
 
+
+## Scope correction and remaining test
+
+Reuse October16 centralized references for the usual-node T24 comparison;
+extra central work in the original batch remains preserved but is excluded.
+The final authorized addition is matchedT24 latest24x2/MA57/MA97 x2 on128-core
+hardware, job31576169. See FINDINGS.md and TRACKING.md for actual executed
+scope and the preserved setup failure. collect.py ROOT OUT --mode t24
+--historical-central EXISTING_near_opt_completed.csv reuses old references;
+--mode core128 or core128t24 scores fresh same-node references. No paper or
+published row is edited.
