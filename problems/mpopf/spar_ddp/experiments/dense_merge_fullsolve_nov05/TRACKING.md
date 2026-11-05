@@ -33,3 +33,9 @@ Proactive supervision should stay quiet while pending/healthy and notify on
 T96 completion/decision, a material failure, and final validated completion.
 Send a concise status before8AM PT on November5 even if work remains queued.
 Remove the dedicated monitor once the authorized campaign assessment is pushed.
+
+Dedicated heartbeat finish-spar-ddp-dense-merge-full-solves is ACTIVE on this
+thread every10 minutes. It carries the explicit T96-before-T288 reporting
+gate, scientific validation, source-preservation rules, third-repeat rule and
+meeting status deadline. At03:41 PT, c1/c2/c3 T3 smokes had passed all validators
+and c4 T3 with two BLAS threads was starting. No main-run result was available.
