@@ -1,0 +1,64 @@
+{
+  "balanced": {
+    "kernel_worker_seconds_per_pass": 55.29796547620001,
+    "operations_worker_seconds_per_pass": {
+      "assemble_matrix": 1.2539970736000001,
+      "assemble_vector": 0.0013513098,
+      "cholesky": 5.0106898314,
+      "transpose": 3.6014215878,
+      "copy": 1.0140761858,
+      "solve_vector": 0.1277814078,
+      "solve_matrix": 21.922044052,
+      "syrk": 11.5185228524,
+      "mirror": 1.1920231881999999,
+      "gemm": 9.271731448,
+      "gemv": 0.3817072576,
+      "fallback": 0.0
+    },
+    "critical_worker_seconds_per_pass": {
+      "assemble_matrix": 0.031079114599999996,
+      "assemble_vector": 2.8524400000000004e-05,
+      "cholesky": 0.12236862640000003,
+      "transpose": 0.1029722092,
+      "copy": 0.016639305200000003,
+      "solve_vector": 0.0032296914000000004,
+      "solve_matrix": 0.5230316378000001,
+      "syrk": 0.27746880119999995,
+      "mirror": 0.020685900200000003,
+      "gemm": 0.20743143940000008,
+      "gemv": 0.008685109600000001,
+      "fallback": 0.0
+    }
+  },
+  "grouped": {
+    "kernel_worker_seconds_per_pass": 34.39600497699998,
+    "operations_worker_seconds_per_pass": {
+      "assemble_matrix": 0.7440308122,
+      "assemble_vector": 0.0008300760000000001,
+      "cholesky": 3.3406867114,
+      "transpose": 2.4084493389999997,
+      "copy": 0.4976880058,
+      "solve_vector": 0.0811744194,
+      "solve_matrix": 13.985575415400001,
+      "syrk": 7.171241272800001,
+      "mirror": 0.6206175342,
+      "gemm": 5.3242101076,
+      "gemv": 0.2199440692,
+      "fallback": 0.0
+    },
+    "critical_worker_seconds_per_pass": {
+      "assemble_matrix": 0.024865742400000005,
+      "assemble_vector": 2.255e-05,
+      "cholesky": 0.10612485400000002,
+      "transpose": 0.09664784699999998,
+      "copy": 0.015580288999999997,
+      "solve_vector": 0.0030051804000000007,
+      "solve_matrix": 0.48136619479999987,
+      "syrk": 0.24781190560000002,
+      "mirror": 0.0183869438,
+      "gemm": 0.2017670844,
+      "gemv": 0.008075750599999999,
+      "fallback": 0.0
+    }
+  }
+}

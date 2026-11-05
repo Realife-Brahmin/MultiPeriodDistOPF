@@ -1,0 +1,118 @@
+balanced merges 1840 summed_worker_seconds 276.48982738100005
+{
+  "assemble_matrix": {
+    "worker_s_per_pass": 1.2539970736000001,
+    "percent_kernel": 2.267709241743649
+  },
+  "assemble_vector": {
+    "worker_s_per_pass": 0.0013513098,
+    "percent_kernel": 0.0024436880965929882
+  },
+  "cholesky": {
+    "worker_s_per_pass": 5.0106898314,
+    "percent_kernel": 9.061255307044846
+  },
+  "transpose": {
+    "worker_s_per_pass": 3.6014215878,
+    "percent_kernel": 6.512756042263499
+  },
+  "copy": {
+    "worker_s_per_pass": 1.0140761858,
+    "percent_kernel": 1.8338399560766006
+  },
+  "solve_vector": {
+    "worker_s_per_pass": 0.1277814078,
+    "percent_kernel": 0.2310779550379598
+  },
+  "solve_matrix": {
+    "worker_s_per_pass": 21.922044052,
+    "percent_kernel": 39.64349115418206
+  },
+  "syrk": {
+    "worker_s_per_pass": 11.5185228524,
+    "percent_kernel": 20.82992159513991
+  },
+  "mirror": {
+    "worker_s_per_pass": 1.1920231881999999,
+    "percent_kernel": 2.155636609656175
+  },
+  "gemm": {
+    "worker_s_per_pass": 9.271731448,
+    "percent_kernel": 16.76685818032584
+  },
+  "gemv": {
+    "worker_s_per_pass": 0.3817072576,
+    "percent_kernel": 0.6902736010500875
+  },
+  "fallback": {
+    "worker_s_per_pass": 0.0,
+    "percent_kernel": 0.0
+  }
+}
+two_sided true mean_merge_ms 173.62420921544117
+two_sided false mean_merge_ms 84.08521426666667
+critical_worker_op_seconds_per_pass {"assemble_matrix": 0.031079114599999996, "assemble_vector": 2.8524400000000004e-05, "cholesky": 0.12236862640000003, "transpose": 0.1029722092, "copy": 0.016639305200000003, "solve_vector": 0.0032296914000000004, "solve_matrix": 0.5230316378000001, "syrk": 0.27746880119999995, "mirror": 0.020685900200000003, "gemm": 0.20743143940000008, "gemv": 0.008685109600000001, "fallback": 0.0}
+grouped merges 1280 summed_worker_seconds 171.98002488499992
+{
+  "assemble_matrix": {
+    "worker_s_per_pass": 0.7440308122,
+    "percent_kernel": 2.1631314819774
+  },
+  "assemble_vector": {
+    "worker_s_per_pass": 0.0008300760000000001,
+    "percent_kernel": 0.0024132918940878672
+  },
+  "cholesky": {
+    "worker_s_per_pass": 3.3406867114,
+    "percent_kernel": 9.71242652637671
+  },
+  "transpose": {
+    "worker_s_per_pass": 2.4084493389999997,
+    "percent_kernel": 7.0021194048857955
+  },
+  "copy": {
+    "worker_s_per_pass": 0.4976880058,
+    "percent_kernel": 1.4469354976916515
+  },
+  "solve_vector": {
+    "worker_s_per_pass": 0.0811744194,
+    "percent_kernel": 0.23599955708309708
+  },
+  "solve_matrix": {
+    "worker_s_per_pass": 13.985575415400001,
+    "percent_kernel": 40.66046456485837
+  },
+  "syrk": {
+    "worker_s_per_pass": 7.171241272800001,
+    "percent_kernel": 20.84905289900756
+  },
+  "mirror": {
+    "worker_s_per_pass": 0.6206175342,
+    "percent_kernel": 1.8043302837495119
+  },
+  "gemm": {
+    "worker_s_per_pass": 5.3242101076,
+    "percent_kernel": 15.479152625894221
+  },
+  "gemv": {
+    "worker_s_per_pass": 0.2199440692,
+    "percent_kernel": 0.6394465559214589
+  },
+  "fallback": {
+    "worker_s_per_pass": 0.0,
+    "percent_kernel": 0.0
+  }
+}
+two_sided true mean_merge_ms 167.5708929525
+two_sided false mean_merge_ms 79.00689692291667
+critical_worker_op_seconds_per_pass {"assemble_matrix": 0.024865742400000005, "assemble_vector": 2.255e-05, "cholesky": 0.10612485400000002, "transpose": 0.09664784699999998, "copy": 0.015580288999999997, "solve_vector": 0.0030051804000000007, "solve_matrix": 0.48136619479999987, "syrk": 0.24781190560000002, "mirror": 0.0183869438, "gemm": 0.2017670844, "gemv": 0.008075750599999999, "fallback": 0.0}
+10k_1020_T12_ddp_r1 18.441 13.260759999999998
+10k_1020_T12_ddp_r2 18.595 13.456518
+10k_1020_T48_ddp_r1 28.242 21.854084
+10k_1020_T48_ddp_r2 28.099 21.735976999999995
+10k_1020_T72_ddp_r1 41.888 29.245569
+10k_1020_T72_ddp_r2 42.166 29.363766999999996
+10k_1020_T96_ddp_rbalanced 50.028 35.673632999999995
+10k_1020_T96_ddp_rgrouped 46.731 32.828737000000004
+10k_1020_T288_ddp_r1 202.893 158.563345
+10k_1020_T288_ddp_r2 195.183 152.667394
