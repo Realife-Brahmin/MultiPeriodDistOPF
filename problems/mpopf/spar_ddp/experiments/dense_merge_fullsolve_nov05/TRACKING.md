@@ -39,3 +39,17 @@ thread every10 minutes. It carries the explicit T96-before-T288 reporting
 gate, scientific validation, source-preservation rules, third-repeat rule and
 meeting status deadline. At03:41 PT, c1/c2/c3 T3 smokes had passed all validators
 and c4 T3 with two BLAS threads was starting. No main-run result was available.
+
+Nov5 04:12PT post-processing update: c1 and c2 first T96 repeats have independently
+passed all validators; c3 is running. The original standalone comparison helper
+hit Julia's global soft-scope rule before producing a comparison. Its failed
+log comparisons_T96/c2_r1.log is preserved. The committed helper now wraps its
+unchanged gates in compare_main(args). The repaired copy is isolated at
+SNAPSHOT/posthoc_v2/compare_solutions.jl with posthoc_v2/source.sha256; use this
+path for all further comparisons. The active snapshot's original helper,
+harness manifest and numerical solver sources were NOT edited.
+
+The repaired c2_r1 comparison passes the unchanged1e-10/same-iteration gate:
+both16 iterations, state scaled difference2.78e-15 and control scaled3.74e-16.
+Physical x0/ubar hashes are identical for c1/c2. This is an interim comparison,
+not the two-repeat campaign decision.
