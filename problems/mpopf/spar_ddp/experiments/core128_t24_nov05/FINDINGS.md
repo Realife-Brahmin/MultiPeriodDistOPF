@@ -94,7 +94,7 @@ reference row, skipping intended checks during development. Renaming the arm
 variable restored all unchanged start/objective/trajectory checks. Only the
 corrected strict outputs are reported. No solver source was changed.
 
-## Remaining authorized follow-up
+## Subsequently completed T24 follow-up
 
 T24 on128-core hardware is newly submitted as job31576169 in
 /home/aryan.jha/kamiak_jobs/dense_merge_core128_T24_nov05_v2.
@@ -105,3 +105,9 @@ attempt stopped BEFORE submission because a trailing blank line contained
 CR; its source/failure archive is preserved. A new immutable LF-only
 preparation succeeded. No numerical gate or arithmetic was changed.
 No more centralized T24 work is queued on the usual hardware.
+
+## Final campaign conclusion
+
+The fresh SAME128-core T24 comparison is fully validated: DDP13.684s full and7.2454094s feasible0.1%target, versus MA97medians17.7835s and9.6831455s. Speedups1.2996x full/1.3365x target, two forward/reversed repeats with separated timing ranges, all physical/OpenDSS/strict-solution gates passed. See results_T24_core128/FINDINGS.md and its raw archive. This confirms a T24 target-speedup above1 on both tested hardware classes; the usual-node result REUSES the original centralized reference while128-core uses fresh same-node references.
+
+The128-core T96 result also rejects a blanket claim that one worker per timestep minimizes solve time:48x2 beats96x1 at equal97core usage. Keep the improved kernel/schedule and resource allocation as measured experimental options; production adoption is a separate change. All authorized bounded tests and evidence collection are complete. No further simulations or paper/default edits are needed for this campaign. Remove the completion monitor after the final evidence push is verified.

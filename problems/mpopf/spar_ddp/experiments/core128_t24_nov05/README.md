@@ -56,3 +56,7 @@ scope and the preserved setup failure. collect.py ROOT OUT --mode t24
 --historical-central EXISTING_near_opt_completed.csv reuses old references;
 --mode core128 or core128t24 scores fresh same-node references. No paper or
 published row is edited.
+
+All requested comparisons are now complete and strictly validated. Final128-core
+T24 results and raw evidence are in results_T24_core128; overall assessment
+is in FINDINGS.md. The completion monitor is removed after final push.
