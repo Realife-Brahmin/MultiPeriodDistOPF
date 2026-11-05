@@ -56,3 +56,5 @@ Commit/pushraw evidence, strict tables and conciseassessmentsamebranch,
 verifyremote then remove dedicated completion heartbeat. Stayquiethealthy/
 pending; notifyonlymeaningfulfailure,necessarydecision or validatedcompletion.
 
+
+USER-APPROVED SCHEDULING CHANGE Nov5: exactcn178 restriction removed from PENDING31580246 via scontrol update JobId=31580246 ReqNodeList=. All numerical source/harness,128CPU600GiB3h,no-requeue and6760P-2.20ghz&cores-128 features unchanged. All4runs stillshareONEallocatednode. Before/after scontrol records preserved remotely in scheduling/. Initial ReqNodeList=ALL syntax was rejected as invalid node name and made no change; installed Slurm man page documents blank value to clear. Actual ReqNodeList now(null). Capture31580863 stillafterok31580246; nooverlap or job resubmission. Scheduler estimate remainsNov8 08:03PT immediatelyafterupdate and may change at recomputation. The previous exactcn178 notes are historical; future collection must accept ANYmatching6760Pnode while requiring same-node paired runs and actual audits.
