@@ -76,3 +76,19 @@ The numerical sources and original harness were not edited for the extension.
 Use posthoc_v2/compare_solutions.jl for comparisons_T288/c4_r1.toml and c4_r2.toml,
 then collect.py ROOT OUT --T288. Keep the heartbeat until T288 comparison,
 strict validation, final findings and remote push are complete.
+
+FINAL Nov5: T288 job31575079 completed0:0 in1h51m49s. Strict post-processing,
+all source/harness hashes, independent physical/OpenDSS validation, runtime
+threads/OS masks and same-repeat solution comparisons pass. Full medians
+c1=187.5305s and c4=142.4715s (24.03% lower). Phase B150.092112->91.1305385s
+(39.28% lower), with A/C+other penalties retained. Both pairs improve and timing
+ranges are disjoint, so no third pair is needed. All four runs have18 iterations,
+26 backward passes,7 mu reductions and1 backtrack, with strict1e-10 solution
+matches. The original comparison-helper scoping failure remains archived.
+
+The authorized campaign is complete. results_T288 contains raw evidence,
+strict validation and tables; FINDINGS.md summarizes both horizons, tradeoffs
+and limitations. Setup/build/warm-up/process-wall times are kept distinct
+from optimizer times. No further optimizer tuning or production/paper changes
+were made. Verify the final evidence commit on the remote, then delete the
+dedicated finish-spar-ddp-dense-merge-full-solves heartbeat.
