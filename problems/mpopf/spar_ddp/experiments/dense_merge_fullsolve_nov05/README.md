@@ -68,3 +68,8 @@ new immutable attempt and preservation of the old logs. Expensive jobs run
 sequentially on an otherwise unoccupied Gold6438Y+ node with64 CPUs and300GiB.
 
 Production defaults and published benchmark rows are outside this experiment.
+
+Post-processing also retains coordinator model-build time, full warm-up wall
+time and total process wall including independent validation from their
+existing logs. These columns are distinct from the full optimizer clock;
+the collector schema change does not alter numerical or timing gates.

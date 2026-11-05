@@ -109,6 +109,13 @@ for rep in (1, 2, 3):
                    coordinator_maxrss_mib=summary["memory"][-1]["coordinator_maxrss_mib"],
                    worker_maxrss_mib_max=summary["memory"][-1]["worker_maxrss_mib_max"],
                    worker_maxrss_mib_sum=summary["memory"][-1]["worker_maxrss_mib_sum"])
+        wall = (folder / "wall.txt").read_text()
+        row["process_wall_including_setup_warmup_validation_s"] = int(re.search(r"total_process_wall_s=([0-9]+)", wall)[1])
+        build = re.search(r"build complete: ([0-9.]+) s", text)
+        warm = re.search(r"WARMUP full iterations=[0-9]+ time_s=([0-9.]+)", text)
+        assert build and warm
+        row["coordinator_model_build_s"] = float(build[1])
+        row["warmup_wall_s"] = float(warm[1])
         rows.append(row)
         traces[(arm, rep)] = quality
         if arm != "c1":
