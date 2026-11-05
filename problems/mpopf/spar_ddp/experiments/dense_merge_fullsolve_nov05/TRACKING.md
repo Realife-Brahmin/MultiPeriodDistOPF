@@ -53,3 +53,17 @@ The repaired c2_r1 comparison passes the unchanged1e-10/same-iteration gate:
 both16 iterations, state scaled difference2.78e-15 and control scaled3.74e-16.
 Physical x0/ubar hashes are identical for c1/c2. This is an interim comparison,
 not the two-repeat campaign decision.
+
+Nov5 T96 completed and strictly validated. Job31574994 COMPLETED0:0 in1h37m36s.
+Two-repeat full medians c1/c2/c3/c4 are48.2925/45.9345/43.7375/41.3375s.
+c4 wins both pairs with disjoint ranges,14.40% lower full time and34.07%
+lower Phase B versus c1. All eight have16 iterations,25 backward passes,
+8 mu updates and0 backtracks. All original validators and strict1e-10
+solution matches pass, including the reference-repeat comparison.
+Physical starting array hashes are identical. The collector now also
+verifies every recorded OS-thread mask against disjoint physical-core maps.
+
+The T96 result was reported to the user before extension. Select c4 for
+the authorized T288 comparison against c1, two repeats in reverse order.
+No third T96 repeat is needed. Commit the results_T96 evidence and comparison
+table, write the validation/selection markers, then submit job.sh288.

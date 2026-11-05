@@ -55,10 +55,31 @@ for rep in (1, 2, 3):
         dss = (folder / "opendss.log").read_text()
         assert "below limit: 0" in dss and "above limit: 0" in dss
         workers, threads = (31, 2) if arm == "c4" else (63, 1)
+        maps = list((root / "jobs").glob(f"*/{horizon}_{arm}_{rep}/cpu_groups.csv"))
+        assert len(maps) == 1
+        groups = [set(map(int, line.split(","))) for line in maps[0].read_text().splitlines()]
+        assert len(groups) == workers + 1 and len(groups[0]) == 1
+        assert all(len(group) == threads for group in groups[1:])
+        allocated = [cpu for group in groups for cpu in group]
+        assert len(set(allocated)) == len(allocated) <= 64
+        topology = {}
+        for line in (maps[0].parent / "cpu_topology.csv").read_text().splitlines():
+            if not line.startswith("#"):
+                cpu, core, socket = map(int, line.split(","))
+                topology[cpu] = (socket, core)
+        assert len({topology[cpu] for cpu in allocated}) == len(allocated)
         for tag in ("after-setup", "after-solve"):
             audit = (folder / f"worker-audit-{tag}.txt").read_text().splitlines()
             assert len(audit) == workers
-            for line in audit:
+            for index, line in enumerate(audit):
+                recorded = re.findall(r'allowed\s*=\s*"([^"]+)"', line)
+                assert recorded
+                for mask in recorded:
+                    cpus = set()
+                    for span in mask.split(","):
+                        ends = list(map(int, span.split("-")))
+                        cpus.update(range(ends[0], ends[-1] + 1))
+                    assert cpus == groups[index+1], (folder, tag, index, cpus, groups[index+1])
                 assert int(re.search(r"blas\s*=\s*(\d+)", line)[1]) == threads
                 assert int(re.search(r"blas_default\s*=\s*(\d+)", line)[1]) == threads
                 assert "libopenblas" in line
