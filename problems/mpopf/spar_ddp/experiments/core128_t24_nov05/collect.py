@@ -39,6 +39,7 @@ subprocess.run([sys.executable,str(Path(__file__).with_name("collect_ddp.py")),s
 validation=json.loads((out/"ddp/validation.json").read_text());assert validation["validated"] and not validation["strict_equivalence_failures"]
 assert "strict_existing_match_gate = true" in (root/f"comparisons_T{T}/reference_repeats.toml").read_text()
 ddp=read(out/"ddp/per_run.csv")
+assert len({(r["x0_sha256"],r["ubar_sha256"]) for r in ddp})==1, "Physical start arrays differ across repeats"
 central=[];initial=[]
 if historical:
  assert a.historical_central, "Use existing published central reference on the usual node"
@@ -64,6 +65,11 @@ else:
     vals=re.findall(r"(?m)^"+label+r"\.*:\s+(\S+)\s+(\S+)",text)
     assert vals and 0<=num(vals[-1][1])<=1e-5,(folder,label,vals[-1:])
    v=physical(folder);trace=read(folder/"quality_trace.csv")
+   assert trace
+   for x in trace:
+    for k in ("seconds","objective","original","dual"):num(x[k])
+    assert num(x["original"])>=0
+   assert all(num(y["seconds"])>=num(x["seconds"]) for x,y in zip(trace,trace[1:]))
    central.append(dict(arm=arm,repeat=rep,full_s=num(s["central"][0]["solve_time_s"]),objective=v["objective"],independent_original_primal=v["original_max"],trace=trace,folder=folder,scope="fresh same-node reference"))
    initial.append(num(trace[0]["objective"]))
 reference=statistics.mean(r["reference_objective"] if historical else r["objective"] for r in central)
