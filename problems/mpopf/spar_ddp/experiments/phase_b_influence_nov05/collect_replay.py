@@ -25,7 +25,8 @@ assert 'INFLUENCE_SYNTHETIC_PASS' in (root/'unit.log').read_text()
 assert (root/'replay.finished').exists()
 account=(root/'accounting.txt').read_text()
 assert re.search(r'(?m)^\d+\|COMPLETED\|[^|]+\|0:0\|',account)
-assert 'Gold 6438Y+' in (root/'hardware.txt').read_text()
+hardware=(root/'hardware.txt').read_text()
+assert all(x in hardware for x in ('Gold 6438Y+','NumCPUs=64','mem=300G','Requeue=0','TimeLimit=02:00:00'))
 assert not (root/'stderr.log').read_text().strip()
 log=(root/'replay.log').read_text()
 assert 'INFLUENCE_AUDIT_COMPLETE' in log
@@ -56,7 +57,7 @@ for context in contexts:
  assert (hit[0]['depth'],hit[0]['left'],hit[0]['right'])==('2','5','7')
  assert any(x['right']=='5' and x['right_dependency']=='true' for x in rows)
  assert {int(x['left']) for x in rows if x['affected']=='true'}==set(range(1,6))
-tables={n:read(n) for n in ('merge_errors','suffix_errors','directions','trajectory','actions','changes','condition','ranks','spectra','costs','independent','input_errors','quantiles','blocks','outliers')}
+tables={n:read(n) for n in ('merge_errors','suffix_errors','directions','trajectory','actions','changes','condition','ranks','spectra','costs','independent','input_errors','quantiles','blocks','outliers','row_column')}
 assert len(tables['directions'])==24*24*7*4
 assert len(tables['trajectory'])==24*24*6
 assert len(tables['actions'])==24*24*7*2
@@ -64,6 +65,20 @@ assert len(tables['suffix_errors'])==24*25*2
 assert len(tables['changes'])==4*3*4
 assert len(tables['condition'])==4*3*2
 assert len(tables['ranks'])==4*3*3*2*4
+assert len(tables['spectra'])==4*3*3*2*1020
+for context in contexts:
+ for name,fields,probes in (('directions',{'du','dphi','dzl','dzu'},7),('trajectory',{'du','dphi','dzl','dzu','dx','next_dx'},1),('actions',{'V','v'},7),('suffix_errors',{'V','v'},1)):
+  rows=[x for x in tables[name] if x['context']==context or x['context'].startswith(context+'_')]
+  expected_stages=set(range(1,26 if name=='suffix_errors' else 25))
+  assert {int(x['stage']) for x in rows}==expected_stages,(context,name)
+  for stage in expected_stages:
+   subset=[x for x in rows if int(x['stage'])==stage]
+   assert {x['field'] for x in subset}==fields and len(subset)==len(fields)*probes,(context,name,stage)
+   assert len({(x['context'],x['field']) for x in subset})==len(subset)
+for x in tables['condition']:
+ assert int(x['negative'])==int(x['near_zero'])==0 and int(x['positive'])==1020
+ assert math.isfinite(float(x['abs_condition'])) and float(x['min_eig'])>0
+assert all(math.isfinite(float(x['singular_value'])) and float(x['singular_value'])>=0 for x in tables['spectra'])
 assert {x['kind'] for x in tables['spectra']}=={'delta','current'}
 for name in ('directions','trajectory','actions','suffix_errors','merge_errors'):
  assert all(math.isfinite(float(x['unit_scaled'])) and math.isfinite(float(x['relative_floor1e10'])) for x in tables[name]),name
@@ -84,6 +99,23 @@ for context in sorted(contexts):
  result['all_recovered_direction_probes_within_original_gates']=result['directions_threshold_exceedances']==result['trajectory_threshold_exceedances']==0
  summary.append(result)
 write('interventions',summary);write('first_amplification',first)
+separate=[]
+for context in sorted(contexts):
+ for name in ('merge_errors','suffix_errors','actions','directions','trajectory'):
+  rows=[x for x in tables[name] if x['context']==context or x['context'].startswith(context+'_')]
+  for criterion,field,threshold in (('unit_scaled','unit_scaled',1e-7),('relative_floor','relative_floor1e10',1e-5)):
+   bad=[x for x in rows if float(x[field])>=threshold]
+   if bad:
+    x=bad[0];separate.append(dict(intervention=context,table=name,criterion=criterion,first_context=x['context'],stage=x['stage'],field=x['field'],absolute_fro=x['absolute_fro'],reference_fro=x['reference_fro'],unit_scaled=x['unit_scaled'],relative_floor1e10=x['relative_floor1e10']))
+write('first_threshold_crossings',separate)
+concentration=[]
+for context in sorted({x['context'] for x in tables['changes']}):
+ for field in ('H','BL','BR','h'):
+  rows=[x for x in tables['row_column'] if x['context']==context and x['field']==field and x['axis']=='rows']
+  rows.sort(key=lambda x:float(x['delta_norm']),reverse=True)
+  total=sum(float(x['delta_norm'])**2 for x in rows);k=math.ceil(len(rows)*0.01)
+  concentration.append(dict(context=context,field=field,rows=len(rows),top_count=k,top_rows_energy_fraction=sum(float(x['delta_norm'])**2 for x in rows[:k])/total if total else 0.0,zero_change=total==0,largest_row_battery_bus=rows[0]['battery_bus'],largest_row_norm=rows[0]['delta_norm']))
+write('row_concentration',concentration)
 # Independent consumer/reference errors are explicit separate outcomes.
 ind=[]
 for x in tables['independent']:

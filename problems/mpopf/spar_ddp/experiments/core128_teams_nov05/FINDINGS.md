@@ -34,7 +34,7 @@ Both arms/repeats have16accepted steps/solver iterations,25backward passes,
 keys match; objective differences are zero and maximum original-primal
 trace difference4.55e-13. Same-repeat full solutions satisfy unchanged
 same-iteration/scaled state/control1e-10 checks: state2.89e-15,
-control3.52e-16. The48x2 repeats are bit-identical. Original numerical
+control3.52e-16. The48x2 repeated state/control arrays have zero numerical difference. Original numerical
 primal/dual/complementarity/bound gates1e-5 pass; independent physical
 residual<=1.14e-12, objective2704807.0669342116 in all four runs.
 Independent OpenDSS reports zero lower/upper voltage violations.
