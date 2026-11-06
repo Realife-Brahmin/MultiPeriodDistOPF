@@ -42,3 +42,11 @@ outputs from an active source tree. case_job.sh refuses to begin until v4 is
 finished. Do not submit T144 until current evidence is archived/committed, or
 T288 until T144 is validated and its individual evidence/report commit pushed.
 Preserve adverse outcomes and commit them too; no promise that all cases improve.
+
+User subsequently emphasized proceeding straight to benchmarks. Use the new
+benchmark_job.sh for T144/T288: it retains the clean ABBA solves, full warmups,
+original scientific/objective/physical checks and source/affinity guards, but
+skips repeating the already-passed unit/parse processes. It contains no debug
+solve. Numerical source and paired timing configuration are unchanged. Keep
+case_job.sh as the original prepared launcher. The new launcher is pinned in
+an updated harness manifest BEFORE submission; never modify a queued launcher.

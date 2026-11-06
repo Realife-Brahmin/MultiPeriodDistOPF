@@ -161,3 +161,21 @@ All4 original numerical/physical/bound/OpenDSS passes,16accepted/25passes/
 This separate commit contains T96 evidence/findings and shared provenance.
 User advised that time-to-target gain is modest and T24 target regresses; do not
 present full-convergence saving as the shared target improvement.
+
+User explicitly requested straight benchmark runs without further expensive
+cache validation. No new debug solve was planned; new benchmark_job.sh also
+skips redundant already-passed unit/parse processes, retaining clean paired
+full solves/full warmups and original scientific/objective/provenance checks.
+Original prepared case_job.sh preserved. New launcher/harness hashes pinned
+BEFORE queueing; numerical source unchanged. No active/queued file edited.
+
+T24 and T96 individual evidence/findings commits pushed6b8d3292 and9865f40d,
+remote verified. T144 benchmark-only job31613805 submitted from
+/home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_T144_nov06 after current
+allocation ended/nootherjobs;128physicalCPU600GiB3h/no-requeue/nomultithread,
+anymatching6760P,48x2BLAS/disjointteams, ABBA baseline/cache, occupancy guard.
+Initial pendingPriority. Runtime binary/libjulia/OpenBLAS SHA saved before run.
+T288 remains prepared NOT submitted, with same new benchmark_job.sh/harness
+pinned before any queueing. Use benchmark_job.sh for both remaining cases,
+NOT old case_job.sh/job.sh. Finish strict T144 per-case report/commit/push and
+remote verify before T288 submission; no repeated cache diagnostic study.
