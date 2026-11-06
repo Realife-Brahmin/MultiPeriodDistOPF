@@ -25,3 +25,13 @@ and integrated shadow/current-direction gates, then ABBA T24 and only after
 strict validation ABBA T96. Do not modify or interrupt this immutable job.
 Posthoc collect.py written for real outputs; not yet run or validated. No result
 claimed. Source-control only local posthoc/docs may evolve while job runs.
+
+Actual integrated worker admission/invalidation methods were AST-loaded into
+small source-matching units (worker_unit.jl): both local1.12.7 and cluster1.12.4
+pass state/matrix/model/factor/terminal/reg/path/unknown/context invalidation,
+missing entry, reset/payload release, late hit invalidation and changed-matrix
+fresh re-population. This unit is separate from active source/harness and does
+not modify it. Healthy31612252 currently in cold full-model setup/debug run.
+Follow-up monitor finish-integrated-barrier-reuse-study active every10minutes,
+with instructions to preserve active work and finish strict raw collection,
+assessment/push/PR; delete only after final validated evidence is pushed.
