@@ -1,0 +1,256 @@
+BATTERY_COUNT_RUN variant=10k_1020 T=96 method=ddp repeat=base_2
+PROCS workers started: 48 in 6.1 s
+PROCS_SWEEP installed: 48 workers for 96 periods (at most 2 periods a worker), collector=pass, setup 15.5 s (slowest worker 13.3 s), worker memory 1616 MiB at most, shared 2287.5 MiB
+FULL_STUDY_AUDIT tag=after-setup workers=48 threads_min=2 threads_max=2 coordinator_threads=1
+C_B OVERRIDE: 2.4e-05
+large10kC_1ph T=96: nx=1020, nu=54665, nc=42303, dense nu^2=2988262225, reduced=12362
+TERMINAL_SOC soft=1 gamma=4.200000e+02
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 10244 upper of 10321 buses; ell >= 0 dropped on 10320 lines; P_Subs >= 0 dropped: true (lossless lower bound 216.877 p.u.)
+build complete: 210.268 s, nc=42303
+SCREEN_ABLATION_ORIGINAL_BOUNDS enabled
+constructing dynamic Solver storage...
+optimality_tolerance=1.000e-05 max_iterations=400
+BARRIER_OPTIONS mu_init=1 kappa_mu=0.2 theta_mu=1.2 kappa_eps=10
+Solver construction complete: 1.384 s
+LOADFLOW_START sweeps=6 max_equality_residual=1.163e-06 lowest_voltage=0.9838 pu
+FILTERDDP_START_TIMING powerflow_init_s=13.724001164 initialization_first_call=1
+FULL_STUDY_START x0_sha256=838237b3522812b03a5bafd480ba27a39d4e1d292036c73e4491652f1d465e51 ubar_sha256=f733bf9d94bac3da29663647d69de14126102840de51cd48b8173c3a14a2a909
+WARMUP full iterations=16 time_s=125.342
+entering solve! ...
+FULL_STUDY_PHASE_B_THREADS iteration=0 mu=1.0 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=0 barrier_iteration=0 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=18
+FILTERDDP_ORIGINAL_PRIMAL iteration=0 barrier_iteration=0 original_max=1.162795459142e-06 primal_inf=1.162795459142e-06 objective=2.804603977502e+06
+FILTERDDP_PROCS_PASS iteration=0 barrier_iteration=0 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011198 step1_s=0.190051 rounds_s=0.613105 step3_s=0.135395 total_s=0.958973 start_max_s=0.009635 pre_max_s=0.082381 pre_sum_s=7.067594 pair_max_s=0.609770 pair_sum_s=17.206032 post_max_s=0.067648 post_sum_s=5.832627 gc_sum_s=0.321640 gc_max_s=0.009548 objective=2.804603977502e+06 primal_inf=1.162795e-06 dual_inf=5.000000e+01 cs_inf=1.000000e+00 mu=1.000000e+00
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+     0   2.80460398e+06   1.1628e-06   5.0000e+01   1.0000e+00    0.00      -     0.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=0 chain_s=0.055835 directions_s=0.062230 dir_max_s=0.033224 dir_sum_s=2.516634 gc_sum_s=0.000000 gamma_max=5.446948e-01
+FILTERDDP_PROCS_TRIAL iteration=0 gamma=5.446948e-01 wall_s=0.004699 trial_max_s=0.001802 trial_sum_s=0.156077 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=0 barrier_iteration=0 backward_s=0.959048528 forward_s=0.122916974 total_s=1.081965502 outcome=accepted step_size=5.446948161e-01 backtracks=0 mu=1.000000000e+00
+FULL_STUDY_PHASE_B_THREADS iteration=1 mu=1.0 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=1 barrier_iteration=0 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=19
+FILTERDDP_ORIGINAL_PRIMAL iteration=1 barrier_iteration=0 original_max=6.800387326582e+00 primal_inf=7.355063553002e+00 objective=2.740505799728e+06
+FILTERDDP_PROCS_PASS iteration=1 barrier_iteration=0 stages=96 workers=48 rounds=8 combinations=256 start_s=0.023343 step1_s=0.160908 rounds_s=0.611386 step3_s=0.133272 total_s=0.937877 start_max_s=0.022816 pre_max_s=0.082476 pre_sum_s=7.036782 pair_max_s=0.607635 pair_sum_s=17.204086 post_max_s=0.066769 post_sum_s=5.836767 gc_sum_s=0.871548 gc_max_s=0.022733 objective=2.740505799728e+06 primal_inf=7.355064e+00 dual_inf=2.276526e+01 cs_inf=1.000000e+00 mu=1.000000e+00
+     1   2.74050580e+06   7.3551e+00   2.2765e+01   1.0000e+00    0.00      -     5.4469e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=1 chain_s=0.055900 directions_s=0.062159 dir_max_s=0.033432 dir_sum_s=2.512359 gc_sum_s=0.000000 gamma_max=9.900063e-01
+FILTERDDP_PROCS_TRIAL iteration=1 gamma=9.900063e-01 wall_s=0.004692 trial_max_s=0.001808 trial_sum_s=0.155208 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=1 barrier_iteration=0 backward_s=0.937980654 forward_s=0.122869921 total_s=1.060850575 outcome=accepted step_size=9.900063415e-01 backtracks=0 mu=1.000000000e+00
+FULL_STUDY_PHASE_B_THREADS iteration=2 mu=1.0 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=2 barrier_iteration=0 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=20
+FILTERDDP_ORIGINAL_PRIMAL iteration=2 barrier_iteration=0 original_max=5.290910640166e-09 primal_inf=5.285388433662e-01 objective=2.764596658996e+06
+FILTERDDP_PROCS_PASS iteration=2 barrier_iteration=0 stages=96 workers=48 rounds=8 combinations=256 start_s=0.017909 step1_s=0.161246 rounds_s=0.614591 step3_s=0.134516 total_s=0.937328 start_max_s=0.016533 pre_max_s=0.082552 pre_sum_s=7.038980 pair_max_s=0.611273 pair_sum_s=17.219850 post_max_s=0.066952 post_sum_s=5.836321 gc_sum_s=0.664880 gc_max_s=0.016462 objective=2.764596658996e+06 primal_inf=5.285388e-01 dual_inf=2.275082e-01 cs_inf=2.474815e+00 mu=1.000000e+00
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=0 backward_s=0.937408759 forward_s=0.000000000 total_s=0.937408759 outcome=barrier_update step_size=9.900063415e-01 backtracks=0 mu=1.000000000e+00
+FULL_STUDY_PHASE_B_THREADS iteration=2 mu=0.2 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=2 barrier_iteration=1 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=20
+FILTERDDP_ORIGINAL_PRIMAL iteration=2 barrier_iteration=1 original_max=5.290910640166e-09 primal_inf=5.285388433662e-01 objective=2.764596658996e+06
+FILTERDDP_PROCS_PASS iteration=2 barrier_iteration=1 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011909 step1_s=0.160682 rounds_s=0.610885 step3_s=0.132959 total_s=0.925550 start_max_s=0.011208 pre_max_s=0.082790 pre_sum_s=7.052850 pair_max_s=0.607352 pair_sum_s=17.218423 post_max_s=0.066684 post_sum_s=5.835238 gc_sum_s=0.413693 gc_max_s=0.011148 objective=2.764596658996e+06 primal_inf=5.285388e-01 dual_inf=2.275082e-01 cs_inf=2.474815e+00 mu=2.000000e-01
+     2   2.76459666e+06   5.2854e-01   2.2751e-01   2.4748e+00   -0.70      -     9.9001e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=2 chain_s=0.055716 directions_s=0.065981 dir_max_s=0.035420 dir_sum_s=2.721174 gc_sum_s=0.000000 gamma_max=8.930961e-01
+FILTERDDP_PROCS_TRIAL iteration=2 gamma=8.930961e-01 wall_s=0.004744 trial_max_s=0.001762 trial_sum_s=0.153827 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=1 backward_s=0.925626086 forward_s=0.126574039 total_s=1.052200125 outcome=accepted step_size=8.930961124e-01 backtracks=0 mu=2.000000000e-01
+FULL_STUDY_PHASE_B_THREADS iteration=3 mu=0.2 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=3 barrier_iteration=1 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=21
+FILTERDDP_ORIGINAL_PRIMAL iteration=3 barrier_iteration=1 original_max=5.656189128178e-10 primal_inf=1.218424931452e+00 objective=2.814180611687e+06
+FILTERDDP_PROCS_PASS iteration=3 barrier_iteration=1 stages=96 workers=48 rounds=8 combinations=256 start_s=0.017974 step1_s=0.160864 rounds_s=0.609755 step3_s=0.134379 total_s=0.932044 start_max_s=0.016656 pre_max_s=0.082579 pre_sum_s=7.040464 pair_max_s=0.606555 pair_sum_s=17.195768 post_max_s=0.066730 post_sum_s=5.834539 gc_sum_s=0.668745 gc_max_s=0.016585 objective=2.814180611687e+06 primal_inf=1.218425e+00 dual_inf=3.896350e-02 cs_inf=8.287951e-01 mu=2.000000e-01
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=1 backward_s=0.932147942 forward_s=0.000000000 total_s=0.932147942 outcome=barrier_update step_size=8.930961124e-01 backtracks=0 mu=2.000000000e-01
+FULL_STUDY_PHASE_B_THREADS iteration=3 mu=0.04000000000000001 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=3 barrier_iteration=2 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=21
+FILTERDDP_ORIGINAL_PRIMAL iteration=3 barrier_iteration=2 original_max=5.656189128178e-10 primal_inf=1.218424931452e+00 objective=2.814180611687e+06
+FILTERDDP_PROCS_PASS iteration=3 barrier_iteration=2 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011883 step1_s=0.161303 rounds_s=0.613119 step3_s=0.132887 total_s=0.928240 start_max_s=0.011234 pre_max_s=0.083041 pre_sum_s=7.052010 pair_max_s=0.609462 pair_sum_s=17.204726 post_max_s=0.066569 post_sum_s=5.836153 gc_sum_s=0.413411 gc_max_s=0.011171 objective=2.814180611687e+06 primal_inf=1.218425e+00 dual_inf=3.896350e-02 cs_inf=8.287951e-01 mu=4.000000e-02
+     3   2.81418061e+06   1.2184e+00   3.8963e-02   8.2880e-01   -1.40      -     8.9310e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=3 chain_s=0.054984 directions_s=0.070014 dir_max_s=0.035306 dir_sum_s=2.843714 gc_sum_s=0.000000 gamma_max=9.199460e-01
+FILTERDDP_PROCS_TRIAL iteration=3 gamma=9.199460e-01 wall_s=0.004712 trial_max_s=0.001793 trial_sum_s=0.155039 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=2 backward_s=0.928333109 forward_s=0.129834936 total_s=1.058168045 outcome=accepted step_size=9.199459790e-01 backtracks=0 mu=4.000000000e-02
+FULL_STUDY_PHASE_B_THREADS iteration=4 mu=0.04000000000000001 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=4 barrier_iteration=2 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=22
+FILTERDDP_ORIGINAL_PRIMAL iteration=4 barrier_iteration=2 original_max=4.528007135907e-11 primal_inf=1.189458316871e+00 objective=2.758713884104e+06
+FILTERDDP_PROCS_PASS iteration=4 barrier_iteration=2 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018087 step1_s=0.160499 rounds_s=0.607918 step3_s=0.133973 total_s=0.929587 start_max_s=0.016617 pre_max_s=0.082287 pre_sum_s=7.037379 pair_max_s=0.604472 pair_sum_s=17.197291 post_max_s=0.066633 post_sum_s=5.848776 gc_sum_s=0.670353 gc_max_s=0.016552 objective=2.758713884104e+06 primal_inf=1.189458e+00 dual_inf=5.557166e-03 cs_inf=1.612517e-01 mu=4.000000e-02
+     4   2.75871388e+06   1.1895e+00   5.5572e-03   1.6125e-01   -1.40      -     9.1995e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=4 chain_s=0.054968 directions_s=0.068586 dir_max_s=0.037129 dir_sum_s=2.830957 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=4 gamma=1.000000e+00 wall_s=0.004670 trial_max_s=0.001806 trial_sum_s=0.154575 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=2 backward_s=0.929683826 forward_s=0.128345074 total_s=1.058028900 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FULL_STUDY_PHASE_B_THREADS iteration=5 mu=0.04000000000000001 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=5 barrier_iteration=2 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=23
+FILTERDDP_ORIGINAL_PRIMAL iteration=5 barrier_iteration=2 original_max=7.958078640513e-13 primal_inf=4.043621759913e-01 objective=2.746417177539e+06
+FILTERDDP_PROCS_PASS iteration=5 barrier_iteration=2 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018308 step1_s=0.160260 rounds_s=0.608675 step3_s=0.132798 total_s=0.929155 start_max_s=0.017265 pre_max_s=0.082589 pre_sum_s=7.037889 pair_max_s=0.605316 pair_sum_s=17.200526 post_max_s=0.066650 post_sum_s=5.840568 gc_sum_s=0.671400 gc_max_s=0.017199 objective=2.746417177539e+06 primal_inf=4.043622e-01 dual_inf=3.933918e-04 cs_inf=6.250783e-02 mu=4.000000e-02
+     5   2.74641718e+06   4.0436e-01   3.9339e-04   6.2508e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=5 chain_s=0.054998 directions_s=0.066759 dir_max_s=0.034986 dir_sum_s=2.713687 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=5 gamma=1.000000e+00 wall_s=0.004715 trial_max_s=0.001808 trial_sum_s=0.155570 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=5 barrier_iteration=2 backward_s=0.929232126 forward_s=0.126601008 total_s=1.055833134 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FULL_STUDY_PHASE_B_THREADS iteration=6 mu=0.04000000000000001 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=6 barrier_iteration=2 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=24
+FILTERDDP_ORIGINAL_PRIMAL iteration=6 barrier_iteration=2 original_max=1.136868377216e-12 primal_inf=2.973247633517e-02 objective=2.746635184195e+06
+FILTERDDP_PROCS_PASS iteration=6 barrier_iteration=2 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018041 step1_s=0.160699 rounds_s=0.608165 step3_s=0.133837 total_s=0.929756 start_max_s=0.016656 pre_max_s=0.082514 pre_sum_s=7.042249 pair_max_s=0.605041 pair_sum_s=17.203568 post_max_s=0.066740 post_sum_s=5.841619 gc_sum_s=0.670728 gc_max_s=0.016587 objective=2.746635184195e+06 primal_inf=2.973248e-02 dual_inf=1.825503e-05 cs_inf=5.845523e-02 mu=4.000000e-02
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=2 backward_s=0.929855180 forward_s=0.000000000 total_s=0.929855180 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FULL_STUDY_PHASE_B_THREADS iteration=6 mu=0.008000000000000002 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=6 barrier_iteration=3 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=24
+FILTERDDP_ORIGINAL_PRIMAL iteration=6 barrier_iteration=3 original_max=1.136868377216e-12 primal_inf=2.973247633517e-02 objective=2.746635184195e+06
+FILTERDDP_PROCS_PASS iteration=6 barrier_iteration=3 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011871 step1_s=0.161067 rounds_s=0.613763 step3_s=0.133029 total_s=0.928782 start_max_s=0.011133 pre_max_s=0.082965 pre_sum_s=7.056966 pair_max_s=0.610713 pair_sum_s=17.206237 post_max_s=0.066896 post_sum_s=5.834786 gc_sum_s=0.413524 gc_max_s=0.011073 objective=2.746635184195e+06 primal_inf=2.973248e-02 dual_inf=1.825503e-05 cs_inf=5.845523e-02 mu=8.000000e-03
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=3 backward_s=0.928876405 forward_s=0.000000000 total_s=0.928876405 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=8.000000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=6 mu=0.0016000000000000005 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=6 barrier_iteration=4 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=24
+FILTERDDP_ORIGINAL_PRIMAL iteration=6 barrier_iteration=4 original_max=1.136868377216e-12 primal_inf=2.973247633517e-02 objective=2.746635184195e+06
+FILTERDDP_PROCS_PASS iteration=6 barrier_iteration=4 stages=96 workers=48 rounds=8 combinations=256 start_s=0.012159 step1_s=0.161706 rounds_s=0.610545 step3_s=0.134106 total_s=0.927585 start_max_s=0.010423 pre_max_s=0.083005 pre_sum_s=7.055799 pair_max_s=0.607678 pair_sum_s=17.192208 post_max_s=0.066830 post_sum_s=5.833265 gc_sum_s=0.411195 gc_max_s=0.010366 objective=2.746635184195e+06 primal_inf=2.973248e-02 dual_inf=1.825503e-05 cs_inf=5.845523e-02 mu=1.600000e-03
+     6   2.74663518e+06   2.9732e-02   1.8255e-05   5.8455e-02   -2.80      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=6 chain_s=0.055618 directions_s=0.067880 dir_max_s=0.036563 dir_sum_s=2.812235 gc_sum_s=0.000000 gamma_max=7.715965e-01
+FILTERDDP_PROCS_TRIAL iteration=6 gamma=7.715965e-01 wall_s=0.004680 trial_max_s=0.001765 trial_sum_s=0.154122 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=4 backward_s=0.927664344 forward_s=0.128305358 total_s=1.055969702 outcome=accepted step_size=7.715964612e-01 backtracks=0 mu=1.600000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=7 mu=0.0016000000000000005 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=7 barrier_iteration=4 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=25
+FILTERDDP_ORIGINAL_PRIMAL iteration=7 barrier_iteration=4 original_max=6.821210263297e-13 primal_inf=1.545748422582e-01 objective=2.715669803326e+06
+FILTERDDP_PROCS_PASS iteration=7 barrier_iteration=4 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018219 step1_s=0.160490 rounds_s=0.612908 step3_s=0.132498 total_s=0.933185 start_max_s=0.017205 pre_max_s=0.082289 pre_sum_s=7.039720 pair_max_s=0.609364 pair_sum_s=17.201918 post_max_s=0.066847 post_sum_s=5.838956 gc_sum_s=0.670618 gc_max_s=0.017134 objective=2.715669803326e+06 primal_inf=1.545748e-01 dual_inf=1.496888e-03 cs_inf=1.655990e-02 mu=1.600000e-03
+     7   2.71566980e+06   1.5457e-01   1.4969e-03   1.6560e-02   -2.80      -     7.7160e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=7 chain_s=0.054982 directions_s=0.068963 dir_max_s=0.035452 dir_sum_s=2.824908 gc_sum_s=0.000000 gamma_max=6.363706e-01
+FILTERDDP_PROCS_TRIAL iteration=7 gamma=6.363706e-01 wall_s=0.004698 trial_max_s=0.001797 trial_sum_s=0.154047 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=7 barrier_iteration=4 backward_s=0.933279081 forward_s=0.128764304 total_s=1.062043385 outcome=accepted step_size=6.363706429e-01 backtracks=0 mu=1.600000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=8 mu=0.0016000000000000005 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=8 barrier_iteration=4 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=26
+FILTERDDP_ORIGINAL_PRIMAL iteration=8 barrier_iteration=4 original_max=6.821210263297e-13 primal_inf=9.563144839331e-02 objective=2.709805424623e+06
+FILTERDDP_PROCS_PASS iteration=8 barrier_iteration=4 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018057 step1_s=0.174920 rounds_s=0.610352 step3_s=0.133999 total_s=0.946427 start_max_s=0.016611 pre_max_s=0.082600 pre_sum_s=7.046311 pair_max_s=0.606926 pair_sum_s=17.208394 post_max_s=0.066861 post_sum_s=5.843229 gc_sum_s=0.669651 gc_max_s=0.016546 objective=2.709805424623e+06 primal_inf=9.563145e-02 dual_inf=5.994311e-04 cs_inf=8.329126e-03 mu=1.600000e-03
+     8   2.70980542e+06   9.5631e-02   5.9943e-04   8.3291e-03   -2.80      -     6.3637e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=8 chain_s=0.055050 directions_s=0.068071 dir_max_s=0.036503 dir_sum_s=2.819354 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=8 gamma=1.000000e+00 wall_s=0.004644 trial_max_s=0.001772 trial_sum_s=0.152779 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=4 backward_s=0.946523595 forward_s=0.127889611 total_s=1.074413206 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=9 mu=0.0016000000000000005 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=9 barrier_iteration=4 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=27
+FILTERDDP_ORIGINAL_PRIMAL iteration=9 barrier_iteration=4 original_max=9.094947017729e-13 primal_inf=4.450365242292e-02 objective=2.706466226560e+06
+FILTERDDP_PROCS_PASS iteration=9 barrier_iteration=4 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018396 step1_s=0.160481 rounds_s=0.612547 step3_s=0.132360 total_s=0.932824 start_max_s=0.017289 pre_max_s=0.082441 pre_sum_s=7.052660 pair_max_s=0.609921 pair_sum_s=17.199492 post_max_s=0.066713 post_sum_s=5.837063 gc_sum_s=0.671632 gc_max_s=0.017222 objective=2.706466226560e+06 primal_inf=4.450365e-02 dual_inf=2.726140e-05 cs_inf=2.948352e-03 mu=1.600000e-03
+     9   2.70646623e+06   4.4504e-02   2.7261e-05   2.9484e-03   -2.80      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=9 chain_s=0.055107 directions_s=0.064836 dir_max_s=0.034293 dir_sum_s=2.663893 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=9 gamma=1.000000e+00 wall_s=0.004677 trial_max_s=0.001784 trial_sum_s=0.154321 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=9 barrier_iteration=4 backward_s=0.932912776 forward_s=0.124732201 total_s=1.057644977 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=10 mu=0.0016000000000000005 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=10 barrier_iteration=4 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=28
+FILTERDDP_ORIGINAL_PRIMAL iteration=10 barrier_iteration=4 original_max=9.094947017729e-13 primal_inf=3.368965453888e-03 objective=2.706466427246e+06
+FILTERDDP_PROCS_PASS iteration=10 barrier_iteration=4 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018071 step1_s=0.161219 rounds_s=0.610528 step3_s=0.133878 total_s=0.932728 start_max_s=0.016523 pre_max_s=0.082489 pre_sum_s=7.048440 pair_max_s=0.607301 pair_sum_s=17.215404 post_max_s=0.066909 post_sum_s=5.839819 gc_sum_s=0.668341 gc_max_s=0.016455 objective=2.706466427246e+06 primal_inf=3.368965e-03 dual_inf=1.979924e-07 cs_inf=1.754055e-03 mu=1.600000e-03
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=4 backward_s=0.932804482 forward_s=0.000000000 total_s=0.932804482 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FULL_STUDY_PHASE_B_THREADS iteration=10 mu=0.00032000000000000013 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=10 barrier_iteration=5 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=28
+FILTERDDP_ORIGINAL_PRIMAL iteration=10 barrier_iteration=5 original_max=9.094947017729e-13 primal_inf=3.368965453888e-03 objective=2.706466427246e+06
+FILTERDDP_PROCS_PASS iteration=10 barrier_iteration=5 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011841 step1_s=0.161086 rounds_s=0.612819 step3_s=0.132773 total_s=0.927519 start_max_s=0.011099 pre_max_s=0.082752 pre_sum_s=7.069777 pair_max_s=0.610243 pair_sum_s=17.213808 post_max_s=0.066978 post_sum_s=5.837831 gc_sum_s=0.412441 gc_max_s=0.011037 objective=2.706466427246e+06 primal_inf=3.368965e-03 dual_inf=1.979924e-07 cs_inf=1.754055e-03 mu=3.200000e-04
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+    10   2.70646643e+06   3.3690e-03   1.9799e-07   1.7541e-03   -3.49      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=10 chain_s=0.054878 directions_s=0.067994 dir_max_s=0.035609 dir_sum_s=2.817005 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=10 gamma=1.000000e+00 wall_s=0.004671 trial_max_s=0.001767 trial_sum_s=0.152730 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=5 backward_s=0.927598272 forward_s=0.127662596 total_s=1.055260868 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FULL_STUDY_PHASE_B_THREADS iteration=11 mu=0.00032000000000000013 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=11 barrier_iteration=5 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=29
+FILTERDDP_ORIGINAL_PRIMAL iteration=11 barrier_iteration=5 original_max=9.094947017729e-13 primal_inf=6.143697085626e-03 objective=2.705137230497e+06
+FILTERDDP_PROCS_PASS iteration=11 barrier_iteration=5 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018045 step1_s=0.161426 rounds_s=0.612512 step3_s=0.133965 total_s=0.935047 start_max_s=0.016557 pre_max_s=0.082687 pre_sum_s=7.053586 pair_max_s=0.609076 pair_sum_s=17.208554 post_max_s=0.066881 post_sum_s=5.840101 gc_sum_s=0.669410 gc_max_s=0.016489 objective=2.705137230497e+06 primal_inf=6.143697e-03 dual_inf=3.951735e-06 cs_inf=6.131007e-04 mu=3.200000e-04
+    11   2.70513723e+06   6.1437e-03   3.9517e-06   6.1310e-04   -3.49      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=11 chain_s=0.055073 directions_s=0.067339 dir_max_s=0.035684 dir_sum_s=2.677429 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=11 gamma=1.000000e+00 wall_s=0.004690 trial_max_s=0.001773 trial_sum_s=0.154502 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=5 backward_s=0.935145754 forward_s=0.127220867 total_s=1.062366621 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FULL_STUDY_PHASE_B_THREADS iteration=12 mu=0.00032000000000000013 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=12 barrier_iteration=5 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=30
+FILTERDDP_ORIGINAL_PRIMAL iteration=12 barrier_iteration=5 original_max=9.094947017729e-13 primal_inf=3.100548610178e-04 objective=2.705137562918e+06
+FILTERDDP_PROCS_PASS iteration=12 barrier_iteration=5 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018364 step1_s=0.160512 rounds_s=0.610752 step3_s=0.132421 total_s=0.931046 start_max_s=0.017393 pre_max_s=0.082537 pre_sum_s=7.046671 pair_max_s=0.607432 pair_sum_s=17.213254 post_max_s=0.066701 post_sum_s=5.836850 gc_sum_s=0.673361 gc_max_s=0.017326 objective=2.705137562918e+06 primal_inf=3.100549e-04 dual_inf=2.120657e-08 cs_inf=3.549942e-04 mu=3.200000e-04
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=5 backward_s=0.931126251 forward_s=0.000000000 total_s=0.931126251 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FULL_STUDY_PHASE_B_THREADS iteration=12 mu=6.400000000000002e-5 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=12 barrier_iteration=6 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=30
+FILTERDDP_ORIGINAL_PRIMAL iteration=12 barrier_iteration=6 original_max=9.094947017729e-13 primal_inf=3.100548610178e-04 objective=2.705137562918e+06
+FILTERDDP_PROCS_PASS iteration=12 barrier_iteration=6 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011976 step1_s=0.161526 rounds_s=0.609788 step3_s=0.133858 total_s=0.926207 start_max_s=0.010378 pre_max_s=0.082537 pre_sum_s=7.064971 pair_max_s=0.606737 pair_sum_s=17.217699 post_max_s=0.066941 post_sum_s=5.838532 gc_sum_s=0.409561 gc_max_s=0.010319 objective=2.705137562918e+06 primal_inf=3.100549e-04 dual_inf=2.120657e-08 cs_inf=3.549942e-04 mu=6.400000e-05
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=6 backward_s=0.926301320 forward_s=0.000000000 total_s=0.926301320 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FULL_STUDY_PHASE_B_THREADS iteration=12 mu=9.27717969507451e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=12 barrier_iteration=7 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=30
+FILTERDDP_ORIGINAL_PRIMAL iteration=12 barrier_iteration=7 original_max=9.094947017729e-13 primal_inf=3.100548610178e-04 objective=2.705137562918e+06
+FILTERDDP_PROCS_PASS iteration=12 barrier_iteration=7 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011772 step1_s=0.160881 rounds_s=0.613222 step3_s=0.132477 total_s=0.927395 start_max_s=0.011084 pre_max_s=0.082611 pre_sum_s=7.064014 pair_max_s=0.610439 pair_sum_s=17.226861 post_max_s=0.066973 post_sum_s=5.834946 gc_sum_s=0.412558 gc_max_s=0.011021 objective=2.705137562918e+06 primal_inf=3.100549e-04 dual_inf=2.120657e-08 cs_inf=3.549942e-04 mu=9.277180e-06
+    12   2.70513756e+06   3.1005e-04   2.1207e-08   3.5499e-04   -5.03      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=12 chain_s=0.055055 directions_s=0.067999 dir_max_s=0.035497 dir_sum_s=2.821973 gc_sum_s=0.000000 gamma_max=9.625082e-01
+FILTERDDP_PROCS_TRIAL iteration=12 gamma=9.625082e-01 wall_s=0.004683 trial_max_s=0.001787 trial_sum_s=0.154642 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=7 backward_s=0.927490822 forward_s=0.127843453 total_s=1.055334275 outcome=accepted step_size=9.625082348e-01 backtracks=0 mu=9.277179695e-06
+FULL_STUDY_PHASE_B_THREADS iteration=13 mu=9.27717969507451e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=13 barrier_iteration=7 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=31
+FILTERDDP_ORIGINAL_PRIMAL iteration=13 barrier_iteration=7 original_max=2.046363078989e-12 primal_inf=9.012521354279e-04 objective=2.704827686310e+06
+FILTERDDP_PROCS_PASS iteration=13 barrier_iteration=7 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018038 step1_s=0.161204 rounds_s=0.612034 step3_s=0.133744 total_s=0.934065 start_max_s=0.016629 pre_max_s=0.082412 pre_sum_s=7.050921 pair_max_s=0.609367 pair_sum_s=17.208229 post_max_s=0.067139 post_sum_s=5.838321 gc_sum_s=0.670734 gc_max_s=0.016562 objective=2.704827686310e+06 primal_inf=9.012521e-04 dual_inf=2.735468e-07 cs_inf=1.002159e-04 mu=9.277180e-06
+    13   2.70482769e+06   9.0125e-04   2.7355e-07   1.0022e-04   -5.03      -     9.6251e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=13 chain_s=0.054805 directions_s=0.068851 dir_max_s=0.036689 dir_sum_s=2.820888 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=13 gamma=1.000000e+00 wall_s=0.004728 trial_max_s=0.001770 trial_sum_s=0.153622 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=13 barrier_iteration=7 backward_s=0.934146221 forward_s=0.128507670 total_s=1.062653891 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FULL_STUDY_PHASE_B_THREADS iteration=14 mu=9.27717969507451e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=14 barrier_iteration=7 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=32
+FILTERDDP_ORIGINAL_PRIMAL iteration=14 barrier_iteration=7 original_max=1.364242052659e-12 primal_inf=3.202405917171e-04 objective=2.704815644415e+06
+FILTERDDP_PROCS_PASS iteration=14 barrier_iteration=7 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018462 step1_s=0.161112 rounds_s=0.608503 step3_s=0.132155 total_s=0.929348 start_max_s=0.017220 pre_max_s=0.082854 pre_sum_s=7.053525 pair_max_s=0.605161 pair_sum_s=17.208058 post_max_s=0.066606 post_sum_s=5.834671 gc_sum_s=0.671166 gc_max_s=0.017153 objective=2.704815644415e+06 primal_inf=3.202406e-04 dual_inf=4.411438e-09 cs_inf=2.990526e-05 mu=9.277180e-06
+    14   2.70481564e+06   3.2024e-04   4.4114e-09   2.9905e-05   -5.03      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=14 chain_s=0.054812 directions_s=0.065528 dir_max_s=0.034045 dir_sum_s=2.659063 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=14 gamma=1.000000e+00 wall_s=0.004717 trial_max_s=0.001799 trial_sum_s=0.154498 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=7 backward_s=0.929447306 forward_s=0.125187995 total_s=1.054635301 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FULL_STUDY_PHASE_B_THREADS iteration=15 mu=9.27717969507451e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=15 barrier_iteration=7 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=33
+FILTERDDP_ORIGINAL_PRIMAL iteration=15 barrier_iteration=7 original_max=9.094947017729e-13 primal_inf=2.913805695171e-06 objective=2.704815635649e+06
+FILTERDDP_PROCS_PASS iteration=15 barrier_iteration=7 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018121 step1_s=0.161029 rounds_s=0.610219 step3_s=0.133810 total_s=0.932202 start_max_s=0.016635 pre_max_s=0.082498 pre_sum_s=7.053778 pair_max_s=0.607257 pair_sum_s=17.203211 post_max_s=0.066578 post_sum_s=5.840787 gc_sum_s=0.670574 gc_max_s=0.016566 objective=2.704815635649e+06 primal_inf=2.913806e-06 dual_inf=2.791418e-10 cs_inf=1.283439e-05 mu=9.277180e-06
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=7 backward_s=0.932305721 forward_s=0.000000000 total_s=0.932305721 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FULL_STUDY_PHASE_B_THREADS iteration=15 mu=1.0000000000000002e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=15 barrier_iteration=8 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=33
+FILTERDDP_ORIGINAL_PRIMAL iteration=15 barrier_iteration=8 original_max=9.094947017729e-13 primal_inf=2.913805695171e-06 objective=2.704815635649e+06
+FILTERDDP_PROCS_PASS iteration=15 barrier_iteration=8 stages=96 workers=48 rounds=8 combinations=256 start_s=0.011836 step1_s=0.161009 rounds_s=0.610417 step3_s=0.132486 total_s=0.924760 start_max_s=0.011155 pre_max_s=0.083183 pre_sum_s=7.071528 pair_max_s=0.607179 pair_sum_s=17.203028 post_max_s=0.066735 post_sum_s=5.831825 gc_sum_s=0.411980 gc_max_s=0.011094 objective=2.704815635649e+06 primal_inf=2.913806e-06 dual_inf=2.791418e-10 cs_inf=1.283439e-05 mu=1.000000e-06
+    15   2.70481564e+06   2.9138e-06   2.7914e-10   1.2834e-05   -6.00      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=15 chain_s=0.054802 directions_s=0.069053 dir_max_s=0.035464 dir_sum_s=2.833855 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=15 gamma=1.000000e+00 wall_s=0.004718 trial_max_s=0.001784 trial_sum_s=0.153694 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=8 backward_s=0.924858917 forward_s=0.128696404 total_s=1.053555321 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FULL_STUDY_PHASE_B_THREADS iteration=16 mu=1.0000000000000002e-6 threads=2 checked_every_merge=1
+BR_PASS solve=1 iteration=16 barrier_iteration=8 requested=false hit=false populated=0 reused=0 fallback=0 entries=0 bytes=0 valid=false debug=false epoch=34
+FILTERDDP_ORIGINAL_PRIMAL iteration=16 barrier_iteration=8 original_max=9.094947017729e-13 primal_inf=6.559214901447e-06 objective=2.704807066934e+06
+FILTERDDP_PROCS_PASS iteration=16 barrier_iteration=8 stages=96 workers=48 rounds=8 combinations=256 start_s=0.018007 step1_s=0.161151 rounds_s=1.901888 step3_s=0.133770 total_s=2.224014 start_max_s=0.016548 pre_max_s=0.082615 pre_sum_s=7.047304 pair_max_s=1.898753 pair_sum_s=23.642684 post_max_s=0.066996 post_sum_s=5.851405 gc_sum_s=0.668531 gc_max_s=0.016481 objective=2.704807066934e+06 primal_inf=6.559215e-06 dual_inf=6.384107e-10 cs_inf=3.728077e-06 mu=1.000000e-06
+FILTERDDP_ITER_TIMING iteration=16 barrier_iteration=8 backward_s=2.224115088 forward_s=0.000000000 total_s=2.224115088 outcome=converged step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+      From worker 2:	BR_RETIRE bytes=0 collected=false
+      From worker 6:	BR_RETIRE bytes=0 collected=false
+      From worker 7:	BR_RETIRE bytes=0 collected=false
+      From worker 4:	BR_RETIRE bytes=0 collected=false
+      From worker 3:	BR_RETIRE bytes=0 collected=false
+      From worker 8:	BR_RETIRE bytes=0 collected=false
+      From worker 9:	BR_RETIRE bytes=0 collected=false
+      From worker 5:	BR_RETIRE bytes=0 collected=false
+      From worker 10:	BR_RETIRE bytes=0 collected=false
+      From worker 12:	BR_RETIRE bytes=0 collected=false
+      From worker 16:	BR_RETIRE bytes=0 collected=false
+      From worker 11:	BR_RETIRE bytes=0 collected=false
+      From worker 14:	BR_RETIRE bytes=0 collected=false
+      From worker 13:	BR_RETIRE bytes=0 collected=false
+      From worker 15:	BR_RETIRE bytes=0 collected=false
+      From worker 21:	BR_RETIRE bytes=0 collected=false
+      From worker 22:	BR_RETIRE bytes=0 collected=false
+      From worker 18:	BR_RETIRE bytes=0 collected=false
+      From worker 17:	BR_RETIRE bytes=0 collected=false
+      From worker 23:	BR_RETIRE bytes=0 collected=false
+      From worker 20:	BR_RETIRE bytes=0 collected=false
+      From worker 19:	BR_RETIRE bytes=0 collected=false
+      From worker 25:	BR_RETIRE bytes=0 collected=false
+      From worker 26:	BR_RETIRE bytes=0 collected=false
+      From worker 24:	BR_RETIRE bytes=0 collected=false
+      From worker 28:	BR_RETIRE bytes=0 collected=false
+      From worker 31:	BR_RETIRE bytes=0 collected=false
+      From worker 32:	BR_RETIRE bytes=0 collected=false
+      From worker 27:	BR_RETIRE bytes=0 collected=false
+      From worker 30:	BR_RETIRE bytes=0 collected=false
+      From worker 33:	BR_RETIRE bytes=0 collected=false
+      From worker 34:	BR_RETIRE bytes=0 collected=false
+      From worker 29:	BR_RETIRE bytes=0 collected=false
+      From worker 35:	BR_RETIRE bytes=0 collected=false
+      From worker 39:	BR_RETIRE bytes=0 collected=false
+      From worker 36:	BR_RETIRE bytes=0 collected=false
+      From worker 38:	BR_RETIRE bytes=0 collected=false
+      From worker 41:	BR_RETIRE bytes=0 collected=false
+      From worker 37:	BR_RETIRE bytes=0 collected=false
+      From worker 43:	BR_RETIRE bytes=0 collected=false
+      From worker 40:	BR_RETIRE bytes=0 collected=false
+      From worker 42:	BR_RETIRE bytes=0 collected=false
+      From worker 46:	BR_RETIRE bytes=0 collected=false
+      From worker 44:	BR_RETIRE bytes=0 collected=false
+      From worker 47:	BR_RETIRE bytes=0 collected=false
+      From worker 48:	BR_RETIRE bytes=0 collected=false
+      From worker 45:	BR_RETIRE bytes=0 collected=false
+      From worker 49:	BR_RETIRE bytes=0 collected=false
+FILTERDDP_PROCS_MEMORY coordinator_maxrss_mib=3065.1 worker_maxrss_mib_max=2328.0 worker_maxrss_mib_sum=104037.6
+    16   2.70480707e+06   6.5592e-06   6.3841e-10   3.7281e-06   -6.00      -     1.0000e+00   0
+
+
+EXIT: Optimal solution found.
+
+solve complete: 26.936 s, iterations=16, status=0
+FILTERDDP_GC_TIME gc_s=0.054 collected_before_solve=1
+FILTERDDP_MEMORY_PEAK maxrss_mib=3065.1
+final residuals: primal=6.559214901447e-06 dual=6.384106516274e-10 complementarity=3.728077230233e-06
+saved_solution=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_nov06_v4/variants/10k_1020/source/spar_ddp/results/network_filterddp/filterddp_solution_large10kC_1ph_T96_periodic_CBsystem.jls
+FilterDDP objective=2704807.066934211645 max_equality_residual=6.559e-06
+BOUND_CHECK screen=substation,vupper,ell,psubs voltages below=0 above=0 worst_violation=0.000e+00 min_ell=2.232e-04 min_P_Subs=4.190e+02
+FULL_STUDY_AUDIT tag=after-solve workers=48 threads_min=2 threads_max=2 coordinator_threads=1

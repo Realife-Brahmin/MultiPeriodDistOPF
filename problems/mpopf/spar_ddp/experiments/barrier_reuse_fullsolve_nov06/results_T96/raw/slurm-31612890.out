@@ -1,0 +1,45 @@
+BR_RUN_BEGIN T=24 arm=debug repeat=1 debug=1
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T24_ddp_rdebug_1 debug=True
+BR_RUN_COMPLETE T=24 arm=debug repeat=1 debug=1
+BR_RUN_BEGIN T=24 arm=base repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T24_ddp_rbase_1 debug=False
+BR_RUN_COMPLETE T=24 arm=base repeat=1 debug=0
+BR_RUN_BEGIN T=24 arm=cache repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T24_ddp_rcache_1 debug=False
+BR_RUN_COMPLETE T=24 arm=cache repeat=1 debug=0
+BR_RUN_BEGIN T=24 arm=cache repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T24_ddp_rcache_2 debug=False
+BR_RUN_COMPLETE T=24 arm=cache repeat=2 debug=0
+BR_RUN_BEGIN T=24 arm=base repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 8.18e-09 pu | OpenDSS range 0.9733-1.0500 pu (optimizer lowest 0.9733) | below limit: 0 of 247680 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T24_ddp_rbase_2 debug=False
+BR_RUN_COMPLETE T=24 arm=base repeat=2 debug=0
+BR_RUN_BEGIN T=96 arm=base repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 3.24e-08 pu | OpenDSS range 0.9724-1.0500 pu (optimizer lowest 0.9724) | below limit: 0 of 990720 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T96_ddp_rbase_1 debug=False
+BR_RUN_COMPLETE T=96 arm=base repeat=1 debug=0
+BR_RUN_BEGIN T=96 arm=cache repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 3.24e-08 pu | OpenDSS range 0.9724-1.0500 pu (optimizer lowest 0.9724) | below limit: 0 of 990720 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T96_ddp_rcache_1 debug=False
+BR_RUN_COMPLETE T=96 arm=cache repeat=1 debug=0
+BR_RUN_BEGIN T=96 arm=cache repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 3.24e-08 pu | OpenDSS range 0.9724-1.0500 pu (optimizer lowest 0.9724) | below limit: 0 of 990720 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T96_ddp_rcache_2 debug=False
+BR_RUN_COMPLETE T=96 arm=cache repeat=2 debug=0
+BR_RUN_BEGIN T=96 arm=base repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 3.24e-08 pu | OpenDSS range 0.9724-1.0500 pu (optimizer lowest 0.9724) | below limit: 0 of 990720 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T96_ddp_rbase_2 debug=False
+BR_RUN_COMPLETE T=96 arm=base repeat=2 debug=0

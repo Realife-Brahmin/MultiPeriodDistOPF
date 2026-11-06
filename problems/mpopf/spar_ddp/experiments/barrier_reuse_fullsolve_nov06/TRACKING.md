@@ -150,3 +150,14 @@ T24 individual results_T24: full13.909->12.4145s (-10.74%), B9.576299->6.563754s
 Preserve this target tradeoff: full-convergence benefit is not earlier target.
 This commit contains ONLY T24 case evidence/findings plus shared provenance;
 T96 result has been strictly collected and will be committed separately next.
+
+T24 case independently committed/pushed6b8d3292. T96 strict real-output
+collector+supplementary full trajectory and step/mu/backtrack comparisons pass.
+T96 results_T96: full27.0085->24.3585s (-9.81%), B16.519537->12.371232s
+(-25.11%); sharedtarget14.564940->14.105083s (-3.16%), sameiteration9.
+All4 original numerical/physical/bound/OpenDSS passes,16accepted/25passes/
+8barrierupdates/0backtracks, strictx/u differences0. Cache8hits/17fresh,
+6392217600numericbytes. Bothfull/target timing ranges separate, no thirdpair.
+This separate commit contains T96 evidence/findings and shared provenance.
+User advised that time-to-target gain is modest and T24 target regresses; do not
+present full-convergence saving as the shared target improvement.
