@@ -198,3 +198,25 @@ pass elapsed timestamp if needed in a NEW immutable benchmark snapshot, both
 arms same source, warm marker code too. No repeated cache validation study or
 extra optimizer campaign. Do not continue claiming legacy-target percentages as
 actual wall-clock effects; report source limits honestly for existing runs.
+
+Passive clock implementation PREPARED ONLY in NEW immutable
+/home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_T288_clock_nov06_v2.
+Do NOT submit old unclocked T288 directory. Private source changes exactly TWO
+files: module elapsed Ref/helper + after-backward marker, outer driver warm and
+measured start calls now same helper. All other model/input/kernel/source SHA
+identical to prepared T288. Original snapshot/manifest/files preserved; exact
+small diff and parse/audit in clock_instrumentation. Helper starts monotonic
+clock at the unchanged outer solve-call boundary INCLUDING initialization and
+returns the existing full wall-clock time(); marker is warmed too. One cheap
+pass line, identical botharms, no algorithm/gate changes or validation study.
+ClusterJulia1.12.4 recursive parse passed, no optimizer launched. Initial local
+script-writing quote syntax failed before patch creation; an unsubmitted first
+copy remained unmodified. Fixed preparation uses new_v2; no active edits.
+
+Posthoc collect.py now recognizes complete monotonic pass-key-aligned direct
+markers when present, explicitly labels legacy front-loaded quality estimates
+otherwise, and retains prefix/bounds/legacy values. ExistingT24 real-output
+strict collect still passes in separate temporary output with numerical gates
+unchanged and samefull timing. Do not overwrite original raw CSV. T144 finishes
+untouched and uses loggedprefix/bounds; clocked T288 only AFTER T144 individual
+strict result commit/push/remoteverify. No reruns of completed24/96/144.

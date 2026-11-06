@@ -164,7 +164,33 @@ for rep in (1, 2, 3):
         reference=float(refs[str(horizon)]["objective"])
         hits=[x for x in quality if float(x["original"])<=1e-5 and abs(float(x["objective"])-reference)/max(1,abs(reference))<=.001]
         assert hits
-        row["quality_s"]=float(hits[0]["seconds"])
+        legacy=float(hits[0]["seconds"])
+        prefix=legacy-max(0.,float(summary["timer_remainder_s"]))
+        row["quality_legacy_frontloaded_s"]=legacy
+        row["quality_logged_prefix_s"]=prefix
+        row["quality_elapsed_lower_bound_s"]=prefix
+        row["quality_elapsed_upper_bound_s"]=legacy+.001
+        row["quality_direct_elapsed_s"]=None
+        clocks=[dict(re.findall(r"(\w+)=(\S+)",line)) for line in re.findall(r"^FILTERDDP_ELAPSED_CLOCK .*",text,re.M)]
+        if clocks:
+            assert len(clocks)==len(quality)
+            assert [(x["iteration"],x["barrier_iteration"]) for x in clocks]==[(x["iteration"],x["barrier_iteration"]) for x in quality]
+            elapsed=[float(x["elapsed_s"]) for x in clocks]
+            assert all(math.isfinite(x) and x>=0 for x in elapsed)
+            assert all(b>=a for a,b in zip(elapsed,elapsed[1:]))
+            assert elapsed[-1]<=float(summary["full_optimizer_s"])+.002
+            selected=[x for x in clocks if (x["iteration"],x["barrier_iteration"])==(hits[0]["iteration"],hits[0]["barrier_iteration"])]
+            assert len(selected)==1
+            actual=float(selected[0]["elapsed_s"])
+            assert prefix-.002<=actual<=legacy+.002
+            row["quality_direct_elapsed_s"]=actual
+            row["quality_elapsed_lower_bound_s"]=actual
+            row["quality_elapsed_upper_bound_s"]=actual
+            row["quality_s"]=actual
+            row["quality_clock_scope"]="direct passive elapsed marker at backward completion, outer optimizer boundary"
+        else:
+            row["quality_s"]=legacy
+            row["quality_clock_scope"]="legacy full-remainder front-loaded upper estimate, NOT directly measured elapsed; use prefix/bounds"
         row["quality_iteration"]=int(hits[0]["iteration"])
         row["reference_objective"]=reference
         row["reference_scope"]=refs[str(horizon)]["scope"]
@@ -207,8 +233,10 @@ for arm in arms:
     if len(selected) < 2:
         continue
     result = dict(arm=arm, repeats=len(selected))
-    for key in ("full_s", "A_s", "B_s", "C_s", "accepted_steps", "solver_iterations", "backward_passes", "mu_updates", "backtracks", "quality_s", "hit_passes", "eligible_requests", "cache_numeric_bytes_peak"):
+    for key in ("full_s", "A_s", "B_s", "C_s", "accepted_steps", "solver_iterations", "backward_passes", "mu_updates", "backtracks", "quality_s", "hit_passes", "eligible_requests", "cache_numeric_bytes_peak", "quality_legacy_frontloaded_s", "quality_logged_prefix_s", "quality_elapsed_lower_bound_s", "quality_elapsed_upper_bound_s"):
         result[key] = statistics.median(r[key] for r in selected)
+    result["quality_direct_elapsed_recorded"]=all(r["quality_direct_elapsed_s"] is not None for r in selected)
+    result["quality_clock_scope"]=selected[0]["quality_clock_scope"]
     result["full_min_s"] = min(r["full_s"] for r in selected)
     result["full_max_s"] = max(r["full_s"] for r in selected)
     result["strict_solution_match"] = arm == reference_arm or (sum(c["arm"] == arm for c in comparisons) == len(selected) and all(c["strict_existing_match_gate"] for c in comparisons if c["arm"] == arm))
@@ -224,6 +252,8 @@ for name, data in (("per_run", rows), ("medians", medians), ("solutions", compar
 validated = not missing and (root / f"T{horizon}.finished").exists()
 (out / "validation.json").write_text(json.dumps(dict(validated=validated, missing=missing,
     objective_gate=.001, physical_gate=1e-5, strict_dispatch_gate=1e-10,
+    quality_direct_elapsed_recorded=bool(rows) and all(r["quality_direct_elapsed_s"] is not None for r in rows),
+    legacy_target_timer_correction="Full leftover wall includes end cleanup; never interpret its front-loaded estimate as a direct elapsed target clock",
     strict_equivalence_failures=[c for c in comparisons if not c["strict_existing_match_gate"]]), indent=2))
 print(json.dumps(medians, indent=2))
 if not args.partial:
