@@ -60,7 +60,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 <div class="wrap">
   <header>
     <h1>Certified Feasibility Maps</h1>
-    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Certificates use empirical current limits. Drag to rotate or pan, scroll to zoom, click a point for its numbers.</p>
+    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Every line is held to its rated current; each certificate also uses the current bounds the network itself implies at that point, and was recomputed in exact rational arithmetic. Drag to rotate or pan, scroll to zoom, click a point for its numbers.</p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
@@ -85,7 +85,7 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
   <div class="strip">
     <h2>Unresolved band, no batteries, per direction (% of the measured edge)</h2>
     <div id="strip"></div>
-    <p class="note">No batteries. Green at −2%: the validated dispatch. Crimson: the certified edge. The grey bar between them is unresolved. Grey triangles: still feasible at the __LIMIT__° search limit, nothing to bracket.</p>
+    <p class="note">No batteries. Green at −2%: the validated dispatch. Crimson: the certified edge. The grey bar between them is unresolved.</p>
   </div>
 </div>
 
@@ -169,11 +169,11 @@ function draw() {
   const dc = s.dirs.filter(d => d.dcert != null), dr = dc.map(d => d.dcert / d.dreach).sort((a, b) => a - b);
   document.getElementById("counts").innerHTML =
     `<div class="count"><b>${n("certified")}</b><span>no batteries: certified</span></div>` +
-    `<div class="count"><b>${n("limit")}</b><span>no batteries: feasible at ${LIMIT}°</span></div>` +
+    (n("limit") ? `<div class="count"><b>${n("limit")}</b><span>no batteries: feasible at ${LIMIT}°</span></div>` : "") +
     `<div class="count"><b>${n("pending")}</b><span>no batteries: not certified</span></div>` +
     (bands.length ? `<div class="count" style="grid-column: span 3"><span>no batteries: proven infeasible from ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "") +
     (s.disp ? `<div class="count"><b>${dc.length}</b><span>with batteries: certified</span></div>` +
-              `<div class="count"><b>${s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: feasible at ${LIMIT}°</span></div>` +
+              (s.dirs.some(d => d.dlimit) ? `<div class="count"><b>${s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: feasible at ${LIMIT}°</span></div>` : "") +
               `<div class="count"><b>${s.dirs.length - dc.length - s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: not certified</span></div>` +
               (dr.length ? `<div class="count" style="grid-column: span 3"><span>with batteries: proven infeasible from ${fmt(dr[0], 3)}–${fmt(dr[dr.length - 1], 3)}× the reach, median ${fmt(dr[Math.floor(dr.length / 2)], 3)}×</span></div>` : "")
             : `<div class="count" style="grid-column: span 3"><span>with batteries: not run for this case</span></div>`);

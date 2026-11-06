@@ -41,16 +41,24 @@ def sphere_triangles(U):
             out.append(list(t))
     return out
 
-NOTES = {"ieee123": "IEEE 123-node feeder; the other substations out; band at every non-source bus.",
+NOTES = {"ieee123": "IEEE 123-node feeder at its own 4.16 kV, each substation behind the feeder's 5 MVA 1+j8% transformer; ieee123C's PV and batteries (44% of load); lines at their conductors' ampacity (336 ACSR 530 A, 1/0 ACSR 230 A, 1/0 AA cable 195 A, x k/3); the other substations out; band at every non-source bus.",
          "med3980": "IEEE 9500-node network with its service transformers (3980 buses), ties closed; substation 4 is the added one at l2804256; dropped substations' sections fed through the ties; band at customer buses.",
-         "sf6937": "Synthetic San Francisco feeder (NREL SMART-DS P1U), Type III ties; substations 1-4 are hs2, hs1, hs3, hs0; dropped substations' sections fed through the ties; band at customer buses."}
+         "sf6937": "Synthetic San Francisco feeder (NREL SMART-DS P1U), Type III ties; substations 1-4 are hs2, hs1, hs3, hs0; its own SMART-DS customer loads on the dataset's peak day (28 May) and PV from that day's sunrise to sunset; band at customer buses."}
 PREFIX = {"med3980": "med3980", "sf6937": "sfp1u"}
 DISP = {("ieee123", "14"): K / "farkas_disp_nov02" / "ieee123_s14", ("ieee123", "34"): K / "farkas_disp_nov02" / "ieee123_two",
         ("med3980", "123"): K / "farkas_disp_nov02" / "med3980_s123", ("sf6937", "1234"): K / "farkas_disp_oct30b" / "sfp1u_four"}
 
-# Only the paper's three cases (user, 2026-11-02): ieee123 S1+S4, med3980 S1-S3, sf6937 all four. Set FV_ALL=1 for every
-# pair and triple of the earlier page as well.
-PAPER = {("ieee123", "14"), ("med3980", "123"), ("sf6937", "1234")}
+# The paper's three cases with rated line currents (2026-11-04): ieee123 S1+S3 (4.16 kV), med3980 S1-S3, sf6937 all four
+# (day 148); every line at its rating, the idle certificates with derived current bounds and lsec, all exact-checked.
+# Per case: (folder of fb_A and fb_AD, glob of the idle certificates, folder of fb_CD). FV_ALL=1 draws the earlier
+# unrated pages instead (every pair and triple; the folders in the header).
+RATED = {("ieee123", "13"): (ROOT / "ieee123_416_nov03" / "fleetC_tiers" / "ieee123_s13",
+                             ROOT / "ieee123_416_nov03" / "derived_bounds" / "ieee123_s13", "fb_C_*.csv",
+                             ROOT / "ieee123_416_nov03" / "derived_bounds" / "ieee123_s13"),
+         ("med3980", "123"): (K / "farkas_rated_nov02" / "med3980_s123", K / "farkas_rated_nov02" / "med3980_s123_derived", "fb_C_*.csv",
+                              K / "farkas_rated_nov02" / "med3980_s123"),
+         ("sf6937", "1234"): (K / "farkas_day148b_nov03" / "sfp1u_four", K / "farkas_day148b_nov03" / "sfp1u_four", "fb_Cderived_*.csv",
+                              K / "farkas_day148b_nov03" / "sfp1u_four")}
 
 def cases():
     yield "ieee123", "14", K / "farkas_oct30b" / "ieee123_s14"
@@ -65,15 +73,14 @@ def cases():
 
 ALL = os.environ.get("FV_ALL") == "1"
 
-def case(sysname, digits, d):
+def case(sysname, digits, d, cdir = None, cglob = "fb_C_*.csv", dd = None):
     A = {int(r["id"]): r for f in d.glob("fb_A_*.csv") for r in rows(f)}
     if not A:
         return None
     if all(num(a["day_reach_deg"]) is None for a in A.values()):
         print(f"{sysname}_s{digits}: no dispatch even at equal angles (the remaining substations cannot serve the day); left out")
         return None
-    C ={int(r["id"]): r for f in d.glob("fb_C_*.csv") for r in rows(f)}
-    dd = DISP.get((sysname, digits))
+    C = {int(r["id"]): r for f in (cdir or d).glob(cglob) for r in rows(f)}
     AD = {int(r["id"]): r for f in dd.glob("fb_AD_*.csv") for r in rows(f)} if dd else {}
     CD = {int(r["id"]): r for f in dd.glob("fb_CD_*.csv") for r in rows(f)} if dd else {}
     n = len(digits); sources = [f"subs{k}" for k in digits]
@@ -112,8 +119,10 @@ def case(sysname, digits, d):
     return s
 
 data = []
-for sysname, digits, d in cases():
-    s = case(sysname, digits, d) if ALL or (sysname, digits) in PAPER else None
+todo = ([(s_, g, d, None, "fb_C_*.csv", DISP.get((s_, g))) for s_, g, d in cases()] if ALL else
+        [(s_, g, a, c, cg, cd) for (s_, g), (a, c, cg, cd) in RATED.items()])
+for sysname, digits, d, cdir, cglob, dd in todo:
+    s = case(sysname, digits, d, cdir, cglob, dd)
     if s is None:
         continue
     data.append(s); ds = s["dirs"]
