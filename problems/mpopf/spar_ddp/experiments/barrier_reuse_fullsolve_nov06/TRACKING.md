@@ -139,3 +139,14 @@ source. Extended T7/T24/T96/T144/T288 global units pass locally1.12.7 and on
 cluster1.12.4; case-shell syntax and recursive runtime parse pass. Use
 case_job.sh (NOT old job.sh) for these cases. Wait for active31612890 completion,
 strict T24 then T96 individual evidence commits, before T144 submission.
+
+Current31612890 completed0:0 in1h08m07. Final source/harness/runtime binary/
+libraries checks pass; all9 solutions retained cluster and finalSHA archived.
+Strict real-output collect.py passes T24; supplementary full objective/original/
+dual/complementarity trajectories and accepted step/backtrack/mu traces exact.
+T24 individual results_T24: full13.909->12.4145s (-10.74%), B9.576299->6.563754s
+(-31.46%). Shared0.1%objective/original-primal1e-5target7.355229->7.805897s
+(+6.13%, slower), sameiteration8. Both full pairs nonoverlap, no third needed.
+Preserve this target tradeoff: full-convergence benefit is not earlier target.
+This commit contains ONLY T24 case evidence/findings plus shared provenance;
+T96 result has been strictly collected and will be committed separately next.
