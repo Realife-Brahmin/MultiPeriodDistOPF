@@ -104,3 +104,16 @@ Only after old job ended and raw evidence was archived, prepared v4 submitted
 128CPU600GiB3h/no-requeue/nomultithread/anymatching6760P, no other user jobs.
 Initially pendingPriority. Existing debugT24 then gated ABBA24/96 launcher;
 no simulator overlap or reuse of old partial data as a completion gate.
+
+FIRST COMPLETE actual T24 validation PASSED in31612890 v4. Full debug solve
+status0/14accepted/23passes/8eligiblehits/15fresh. Real strict posthoc
+validate_debug.py verifies34878bitexact checks/all1196shadow nodes/all24stages
+current policies/control/equality/bound actions/probes/actualforward,168actual
+state negatives+416stalegradient rejections. Original numerical/bounds1e-5,
+independent original physical6.821e-13/OpenDSS8.18e-9pu+zero violations pass;
+source/harness/input/runtime hashes checked afterdebug while clean runs proceed.
+Debug memory/cache1298419200numericbytes; full diagnostic339.584s excluded
+from all clean performance comparisons. Completed debug raw/provenance and
+strict outputs in results_v4_debug_validation, archiveSHAa32e001084494618ec6f2c1dd9a11b5a1b567c744c20355725969c8df640535c.
+T24 baseline repeat1 also COMPLETE; cache repeat1 running. No full paired timing
+conclusion yet. Keep immutablejob running, do not rerun or interrupt.
