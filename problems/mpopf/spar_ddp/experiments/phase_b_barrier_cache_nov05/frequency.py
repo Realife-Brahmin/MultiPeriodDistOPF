@@ -15,9 +15,9 @@ for rep in (1,2):
   source_eligible=(prev['outcome']=='barrier_update' and cur['iteration']==prev['iteration'] and int(cur['barrier_iteration'])==int(prev['barrier_iteration'])+1 and float(cur['mu'])<float(prev['mu']))
   if source_eligible:
    eligible.append(index)
-   rows.append(dict(repeat=rep,previous_pass=index,current_pass=index+1,k=cur['iteration'],j_before=prev['barrier_iteration'],j_after=cur['barrier_iteration'],mu_before=prev['mu'],mu_after=cur['mu'],source_fixed_unshifted_path=True,accepted_step_between=False,hybrid_switch_configured=False,numerically_fingerprinted_in_full_capture=(cur['iteration']=='4' and cur['barrier_iteration']=='1'),classification='source_eligible_under_pinned_path_exact_numeric_key_only_known_for_captured_pair',fresh_scan_s=passes[index]['rounds_s']))
+   rows.append(dict(repeat=rep,previous_pass=index,current_pass=index+1,k=cur['iteration'],j_before=prev['barrier_iteration'],j_after=cur['barrier_iteration'],mu_before=prev['mu'],mu_after=cur['mu'],source_fixed_unshifted_path=True,accepted_step_between=False,hybrid_switch_configured=False,same_k_j_as_representative_global_capture=(cur['iteration']=='4' and cur['barrier_iteration']=='1'),classification='source_eligible_under_pinned_path_exact_numeric_key_only_known_for_captured_pair',fresh_scan_s=passes[index]['rounds_s']))
  summary=json.loads((d/'timing_summary.json').read_text())
- totals.append(dict(repeat=rep,total_passes=len(passes),source_eligible=len(eligible),other_fresh_passes=len(passes)-len(eligible),eligible_scan_s=sum(float(passes[i]['rounds_s']) for i in eligible),all_scan_s=sum(float(x['rounds_s']) for x in passes),optimizer_s=summary['full_optimizer_s'],exact_captured_transition_count=1))
+ totals.append(dict(repeat=rep,total_passes=len(passes),source_eligible=len(eligible),other_fresh_passes=len(passes)-len(eligible),eligible_scan_s=sum(float(passes[i]['rounds_s']) for i in eligible),all_scan_s=sum(float(x['rounds_s']) for x in passes),optimizer_s=summary['full_optimizer_s'],representative_globally_verified_transition_count=1))
 a.out.mkdir(exist_ok=False)
 for name,data in (('transitions',rows),('frequency',totals)):
  with (a.out/(name+'.csv')).open('w',newline='') as f:
