@@ -220,3 +220,5 @@ strict collect still passes in separate temporary output with numerical gates
 unchanged and samefull timing. Do not overwrite original raw CSV. T144 finishes
 untouched and uses loggedprefix/bounds; clocked T288 only AFTER T144 individual
 strict result commit/push/remoteverify. No reruns of completed24/96/144.
+
+T14431613805 completed0:0 in48m08. Strict real-output collection, all source/runtime/harness checks and exact full scalar/step trajectories pass. Full46.465->41.363s (-10.98%), B29.950566->22.912266s (-23.50%). Logged target prefix20.545541->18.643545s; conservative bounds establish earlier target, exact wall gain unrecorded (2.58%-11.27% bounds). No third pair. Individual results_T144 evidence/findings committed before clocked T288 submission.
