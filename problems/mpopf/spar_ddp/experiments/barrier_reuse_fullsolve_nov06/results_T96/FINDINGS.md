@@ -12,14 +12,18 @@ Xeon6760P;128physicalCPU600GiB allocation. Only the reuse toggle differs.
 | Phase A, s | 4.155452 | 3.970219 |
 | Phase B, s | 16.519537 | 12.371232 |
 | Phase C, s | 3.363053 | 3.431842 |
-| Shared quality target, s | 14.564940 | 14.105083 |
+| Legacy front-loaded target estimate (not direct elapsed), s | 14.564940 | 14.105083 |
 
 
-**Shared target tradeoff:** time to objective within0.1% of the completed same128-node
-central reference AND original primal<=1e-5 is **3.16% faster**,
-14.564940->14.105083s, at the same iteration
-9. This is separate from full convergence. No new central run.
-Both full convergence and the shared quality target improve in these pairs.
+**Quality-clock correction:** the saved legacy extractor computes target time
+as logged iteration prefix PLUS the ENTIRE full-solve unallocated remainder.
+That remainder includes post-loop cache retirement and cleanup, which happens
+AFTER the target. Its old target-time comparison is therefore not a direct
+elapsed-time measurement and must not be interpreted as a measured gain or
+regression. Raw logs/CSVs and original estimates remain preserved. See
+analysis/quality_clock_audit.csv/json for logged-prefix values and conservative
+wall-clock bounds; exact allocation of the unlogged remainder is unavailable.
+The full-convergence optimizer times and all scientific checks above are unchanged.
 
 Full ranges: baseline26.936-27.081s,
 cache24.335-24.382s. Both paired comparisons

@@ -179,3 +179,22 @@ T288 remains prepared NOT submitted, with same new benchmark_job.sh/harness
 pinned before any queueing. Use benchmark_job.sh for both remaining cases,
 NOT old case_job.sh/job.sh. Finish strict T144 per-case report/commit/push and
 remote verify before T288 submission; no repeated cache diagnostic study.
+
+IMPORTANT TIMING ACCOUNTING CORRECTION found while answering why caching could
+slow the early target. Legacy battery_count/extract.py sets setup=full_optimizer
+minus summed ITER_TIMING totals, then FRONT-LOADS ALL of it onto every quality
+prefix. This includes post-loop solve-exit cache retirement/GC, which occurs
+AFTER early target attainment. Thus earlier T24 +6.13% and T96 -3.16% quality
+comparisons are legacy estimates, NOT directly measured elapsed-target effects.
+Full optimizer medians/gains and all numerical/raw evidence are unaffected.
+T24 logged iteration prefix at target is7.225974->6.891799s (4.62% lower), but
+unknown remainder placement means exact elapsed target/sign cannot be recovered.
+T96 logged prefix14.269208->12.953785s (9.22% lower); bounds still establish
+cache earlier, but not an exact3.16% gain. Posthoc audit keeps legacy raw data,
+computes prefix/bounds with1ms full-clock rounding allowance, updates FINDINGS
+labels. No scientific threshold or timing datum changed. User informed.
+Current T144 must finish untouched. For not-yet-submitted T288, add only a cheap
+pass elapsed timestamp if needed in a NEW immutable benchmark snapshot, both
+arms same source, warm marker code too. No repeated cache validation study or
+extra optimizer campaign. Do not continue claiming legacy-target percentages as
+actual wall-clock effects; report source limits honestly for existing runs.
