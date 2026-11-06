@@ -6,7 +6,7 @@ include(joinpath(@__DIR__,"cache_kernel.jl"))
 Random.seed!(31196);n=7
 same(a,b)=reinterpret(UInt64,vec(a))==reinterpret(UInt64,vec(b))
 tiny()=PintElem(Matrix(8.0I,n,n),randn(n,n),Matrix(9.0I,n,n),randn(n),randn(n))
-for N in (7,24,96)
+for N in (7,24,96,144,288)
  leaves=[tiny() for _ in 1:N];term=PintVal(zeros(n,n),zeros(n))
  xs=Any[deepcopy(leaves)...,deepcopy(term)];ref=deepcopy(xs);cache=Dict{Any,Any}()
  for (d,ops) in enumerate(replay_rounds(N,2)),(t,m) in ops
@@ -47,4 +47,4 @@ for (k,j,mu,ctx,supported) in ((5,1,.2,(:pinned,),true),(4,2,.2,(:pinned,),true)
  local g=BRGate();br_request!(g,4,0,1.0,(:pinned,),true);br_event!(g,:barrier)
  @test !br_request!(g,k,j,mu,ctx,supported)
 end
-println("BR_UNIT_PASS grouped_right_population_hits_full_T7_T24_T96_buffer_reuse_fallback_epoch_negatives")
+println("BR_UNIT_PASS grouped_right_population_hits_full_T7_T24_T96_T144_T288_buffer_reuse_fallback_epoch_negatives")

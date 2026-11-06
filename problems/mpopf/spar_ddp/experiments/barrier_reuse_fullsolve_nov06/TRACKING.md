@@ -117,3 +117,25 @@ from all clean performance comparisons. Completed debug raw/provenance and
 strict outputs in results_v4_debug_validation, archiveSHAa32e001084494618ec6f2c1dd9a11b5a1b567c744c20355725969c8df640535c.
 T24 baseline repeat1 also COMPLETE; cache repeat1 running. No full paired timing
 conclusion yet. Keep immutablejob running, do not rerun or interrupt.
+
+NEW USER AUTHORIZATION: after confirmedT24 speedup Aryan requested ALL FOUR
+original large10k cases, committing each one separately (three remaining beyond
+T24). Canonical horizons from existing campaign are24/96/144/288. Four-case plan
+and dedicated immutable-case preparation/launcher added; no active31612890 files
+changed. T144/T288 carry48x2 on128core matching6760P, pairedtoggleonly, no team
+sweep or claim of globally optimal long-horizon worker policy. HistoricalOct16
+central OBJECTIVES only reused for shared targets; source SHA and four matching
+original-model rows per new horizon pinned. No new centralized timing runs.
+Commit T24 evidence/findings, then T96 separately after current job accounting/
+strictcollection; thenT144 validated individualcommit beforeT288 submission.
+New tiny grouped/right full-graph units includeT144/T288; all original gates kept.
+
+Both NEW dedicated snapshots are PREPARED, NOT SUBMITTED:
+/home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_T144_nov06 and
+/home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_T288_nov06.
+Exact common numerical source AND input SHA equal validated/running v4. T144
+adds only its original frozen input; T288 input was already pinned in inherited
+source. Extended T7/T24/T96/T144/T288 global units pass locally1.12.7 and on
+cluster1.12.4; case-shell syntax and recursive runtime parse pass. Use
+case_job.sh (NOT old job.sh) for these cases. Wait for active31612890 completion,
+strict T24 then T96 individual evidence commits, before T144 submission.

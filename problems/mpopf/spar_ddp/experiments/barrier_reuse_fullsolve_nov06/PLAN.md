@@ -58,3 +58,8 @@ single-core coordinator. It cannot mutate shared leaves (actual-method unit
 checks this). This avoids diagnostic-only BLAS oversubscription; clean timing
 and affinity policy are unchanged. Warmup executes the same cache retirement
 method as measured solve and frees payloads; debug warmup logs are preserved.
+
+Subsequent explicit user authorization expands the study to the original four
+horizons T24/T96/T144/T288, with one evidence/findings commit per case. See
+FOUR_CASE_PLAN.md. The active T24/T96 launcher remains untouched; the extension
+uses dedicated sequential immutable launchers after current validation/commits.

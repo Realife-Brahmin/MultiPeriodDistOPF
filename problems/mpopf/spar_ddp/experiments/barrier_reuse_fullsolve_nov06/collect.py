@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("root", type=Path)
 parser.add_argument("out", type=Path)
 parser.add_argument("--partial", action="store_true")
-parser.add_argument("--horizon",type=int,choices=(24,96),required=True)
+parser.add_argument("--horizon",type=int,choices=(24,96,144,288),required=True)
 args = parser.parse_args()
 root, out = args.root, args.out
 horizon, budget = args.horizon,128
@@ -112,7 +112,7 @@ for rep in (1, 2, 3):
         assert all(int(p["workers"]) == workers for p in passes)
         for p in quality:
             assert all(math.isfinite(float(p[k])) for k in ("objective", "original", "dual", "complementarity"))
-        expected_merges = {24:(68,52),96:(368,256)}[horizon][0 if arm == "original" else 1]
+        expected_merges = {24:(68,52),96:(368,256),144:(624,420),288:(1392,912)}[horizon][0 if arm == "original" else 1]
         assert all(int(p["combinations"]) == expected_merges for p in passes)
         initial = re.search(r"FULL_STUDY_START x0_sha256=(\w+) ubar_sha256=(\w+)", text)
         assert initial
@@ -141,7 +141,7 @@ for rep in (1, 2, 3):
             cache_passes.append(dict(re.findall(r"(\w+)=(\S+)",line)))
         assert len(cache_passes)==len(passes), (folder,len(cache_passes),len(passes))
         assert all(x["debug"]=="false" for x in cache_passes)
-        expected=52 if horizon==24 else 256
+        expected={24:52,96:256,144:420,288:912}[horizon]
         if arm=="base":
             assert all(x["hit"]=="false" and int(x["reused"])==0 and int(x["bytes"])==0 for x in cache_passes)
         else:
