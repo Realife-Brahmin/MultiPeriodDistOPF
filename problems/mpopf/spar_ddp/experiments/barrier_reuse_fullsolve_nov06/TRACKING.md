@@ -78,3 +78,15 @@ freed. These address diagnosed harness issues, not scientific thresholds or
 cache algebra. New immutable attempt required only AFTER old job terminates
 and raw failure evidence is preserved. Recursive parse and actual worker
 admission tests pass locally; actual reference-worker unit being added.
+
+Repair source324e7dfc pushed. NEW immutable
+/home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_nov06_v4 PREPARED ONLY,
+NOT submitted while31612252 runs. ClusterJulia1.12.4 original/global units,
+actual worker admission units, actual shadow-worker full-graph/no-shared-leaf-
+mutation units and recursive parse ALL pass. Shell/source/harness checks pass.
+The final printing command used legacy tail -1 with multiple files and failed
+only after all successful checks; reran tail -n 1 to inspect real success logs.
+No simulator retry or numerical failure hidden. Future v4 includes same known
+fast grouped/right baseline and toggle pair, diagnostic worker reference,
+preserved warmup log/renewed negatives and warmed retirement. Do NOT submit
+until31612252 is finished AND its adverse diagnostic-budget outcome archived.
