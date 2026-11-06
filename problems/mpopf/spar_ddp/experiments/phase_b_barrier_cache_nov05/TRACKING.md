@@ -1,0 +1,62 @@
+# Tracking
+
+User authorized complete combined exact barrier-cache pilot, including existing
+regular-DDP reuse clarification. Startingremote/worktreebb4de38b, fetchedno
+newer work. Preserve2untrackedbatteryrefs/defaults/paper/MSOPF/mainrows.
+Source argument, conservative exact whole-pass eligibility and24-process
+shared-memory balanced scan replay implemented. No production hooks changed.
+Minimal cache retainscurvature/factors/whitenedcrossblocks, never gradients.
+Global24leaf/terminal/68mergeinvariance plusfullcurrentpolicy/forward validation
+mustpassbeforewarmup/fivealternating charged2passpairs.
+
+LocalJulia1.12.7 ANDcluster1.12.4 source-kernel elem/value/currentvector/
+unchangedfallback/invalidation/global68/sharedlayout units passed; recursive
+parsecheckpassed, UTF8/LF andshellsyntaxchecked. Duringlocalpreparation,
+sharedvectoroffset andUTF8/readencoding/parser issues were fixed BEFOREany
+full scientific replay and the actualviewlayoutunit strengthened. Initial
+preparation importedfullmodeland rebuiltcolddependency caches in the prior
+capturedepot; log retained, no source/input/capture data changed. Finalunit
+bootstraploadsactualsource scan algebra withoutfullmodel import; newjobuses
+privatefirstdepot+existingcaches. Coldsetup/precompilationisnotbenchmarktime.
+
+Snapshot /home/aryan.jha/kamiak_jobs/phase_b_barrier_cache_nov05.
+ProposedoneunoccupiedGold6438Y+64CPU300GiB2h/no-requeue110minprocessbound,
+24processesx1BLAS/disjointphysicalcores+1coordinator. Sameoriginalbalanced
+assignment/rounds/raw-UPPER/in-placekernel/fullT24/currentsavedS. Existing
+barrier4j0->4j1andearly0->1capturedpackets only; no newcapture/sweep.
+Allsource/input/runtimeSHApinnedbeforeafter; unitgatebeforepilot.
+
+Follow through: inspectactualSlurm/fullstdoutstderr/pilot.log, globalexact
+matrix/signature checks, savedlive/fullsuffix/actions/forward/control/equality/
+bounderrors andnegativecontrols, fivecomplete alternatingpairs withZERO
+coordinatorANDworkercompile/recompile, hit/population/copy/detect/sync/retirement
+GCcosts/actualstorage/workerRSSlimits. Nofreepopulation. Failedfactorization
+mustuseunchangedfreshfallback,noinexacteligibility. AnyrepairONLYnewimmutable
+snapshotafterpreservingfailedattempt,nevereditactive/queuedcode/blindretry.
+
+ExistingusualnodeT24original24x1fullsolvelogs copiedfrequency/r1,r2 with
+execution-sourcehash; sourceeligibilityneedsbarrier_update,consecutivepasses,
+samek,nextj,mureduction, fixedunshiftedpath/nohybridswitch/noacceptedstep.
+Distinguishcompletecaptureverifiedonebarrierfromother sourceeligibleevents.
+EstimatebenefitusingmeasuredhitdeltaANDpopulationoverheadonallfreshpasses,
+withexplicitassumptions/GC/hardware/frozen-consumerlimits. Rawcode/checks/CSV/
+provenance/accounting/evidence+conciseassessmentmustbecommittedpushedremote
+verifiedbeforecompletion. Nofulloptimizerintegrationuntilpilotreport.
+
+V1 job31608936 COMPLETED0:0 7m7 cn168. GlobalALL24leaf/terminal/ALL68matrixinputsoutputs521rowsbitexact, source signatures exact, currentallpolicy/forwardgates/invalidation/negativecontrols pass. FIVEcleanalternatingpairs/zeroallworker+coordinatorcompile; chargedmedianbaseline3.250781s vscandidate5.436083s, hit2.146127s vsfresh1.423593s. Retainasaccuratebutcostlyv1, NOTwinner. Source-counted8barrieropportunities/23passes/15fresh (onlyonefullycapturefingerprinted), eligiblefreshscan6.007599/6.016921s outof17.306994/17.383117s; fulloptimizer22.595/22.746s. Fullv1rawandstrictanalysisarchivedresults_v1.
+A source-layout audit identifiedunnecessaryintermediateoutput+leafmatrixcopies inall-hitpath: allmergevectorupdatesuseonlyU/Y1/Y2; only24closedV areneededbycurrentstageconsumers. V2willretain68x3densematrices (U,Y1,Y2 orclosedV), NOleafmatrixcache, complete-cacheeligibility/wholefreshfallbackifanyentrymissing, plusdirectbefore-passpopulationoutputvalidation. Thisfulfillsminimal-layoutrequirementratherthanabroaderconfiguration sweep. Existingfivepairsv1preserved; v2sameinputs/schedule/processes/hardwareclass/gates, newimmutable snapshotonly. Noactiveedits/interruption.
+
+V2source7c4d6bc5pushed; local1.12.7 ANDcluster1.12.4 expanded68-nodecurrent-vector/closed-V/unit/negative/fallback/sharedlayouttests pass; recursiveparse/shell/LF/SHApass. NEWimmutable /home/aryan.jha/kamiak_jobs/phase_b_barrier_cache_nov05_v2, job31609146,64CPU300GiB2hGold6438Y+no-requeue, samecn168, startedafter31608936complete/nootherjobs. Fixed24processesxBLAS1/disjointphysicalcores; privatefirstdepot+readonlyfinishedv1/oldcaches. Noactiveruntimeedits. V2entriesretainU/Y1/Y2-or-finalV ONLY:204densematrices1,697,932,800numericbytes,NOleaf/internalcurvaturecache. Whole-cache completeness required; missing entry makescurrentpassfresh, unexpectedmidpassloss restartsfromcurrentleaves/sourcekernels. Directpopulationfulloutputgate addedbeforehitgate. Missing-entrynegativecontroladded. FIVEalternatingcleanpairs remainfixedscope, allcleanworker+coordinatorcompmustzero.
+Finishbystrictcollect.py(ROOT,newOUT) recognizinglayout2 and7negativecontrols,521globalbitexactmatrixrows,all49x24outputspermeasuredarm/repeat+populationpreflight. Rawv1remainsresults_v1. Finalv2archiveaccounting/sourcebeforeafter/allcode/logs/CSV/hardware/masks/workerRSS; excludejulia-depot. Fullcostmustincludefirstpopulation+detection/copies/RHS/consumers/forward/retirementGC. Diagnoseonlyrealoutputs/nogateloosening. Frequency.pyusesarchivedoriginal24x1T24fullsolves;8sourceeligible/23passes vsonefullyfingerprintedtransition,15freshpopulationopportunitiesmustbecharged. RecommendbeforeANYoptimizerintegration. Noadditionaltuning/sweep/regular-DDPstudy.
+RepositoryruleasksPR: noopenorclosedPRforcurrenthead found. origin/master is213filesbehindthislongresearchbranch; focusedreview should use acheckpointbasebranchat user-specifiedbb4de38b (prioraudit) instead ofmixingolderbranchwork. CreateONLYdraftfocusedPRafterfinalevidence/reportpushed; no merge/masterchange. Finishsameoriginalbranchverifyremote, preserve2untrackedrefs.
+
+FINAL V2 31609146 COMPLETED0:0 7m11cn168. Strictcollector passes521exactglobalrows/population+hitall49x24gates/all7controls/10cleanworkloads, zeroworker+coordinatorcompile. Numericcache1,697,932,800bytes, noleaf/internalmatrixcache. FIVEpairedchargedmedian3.636563fresh vs5.204454cache (+43.1%); hitmatrixscan.759100->.016196s butexactdetection.891971s dominates. Workeralloc9.438->22.421GB; cache/GCretirementcharged. Nodeallusersaccountingonlytwo sequentialpilotjobs. RawV2archiveSHAbe1784d5c393ee17c0bb3ac1067f67ff7882672ea50b65138d93e70b27cb7384 plusfinalanalysis/frequency/projectionCSV inresults_v2. Existing2fullsolves23passes8sourceconditionaleligible15fresh; representativenumericpointonlyone; zerocostscanupperbound26.5%, currentcostbalance negative~15.51s. FINDINGS recommendsrevise exactbookkeeping/nointegration, notnewmath orlowrankcampaign. Finalcommitpush/remoteverification andfocusedDRAFTPRremain; nojobsactive, nofurtherexperimentauthorizedbythispilot.
+
+COMPLETED: finalsource/RAWV1+V2/strictanalysis/invarianceargument/frequency/
+cost-projections/FINDINGS pushed9947cb7c andremoteSHAverified. FocusedDRAFT
+https://github.com/Realife-Brahmin/MultiPeriodDistOPF/pull/185 targets
+checkpointbranchddp/nov05-barrier-cache-base atbb4de38b soearlier213-filebranch
+historyisnotmixedintothisreview. No merge/masterchange. Reviewergetscomplete
+pilotreport; currentcachecorrectbut43.1%slowerfullycharged, recommendation
+reviseexactbookkeepingbeforeintegration. Allrequestedboundedworkcomplete;
+nojobsactive, bothuntrackedbatteryrefsuntouched. Noautomaticfollowupstudy.

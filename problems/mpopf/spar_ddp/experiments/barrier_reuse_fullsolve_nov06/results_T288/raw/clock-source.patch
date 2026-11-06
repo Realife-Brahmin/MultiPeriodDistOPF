@@ -1,0 +1,39 @@
+--- spar_ddp/DDP4OPF.jl/src/solve.jl
++++ spar_ddp/DDP4OPF.jl/src/solve.jl
+@@ -1,3 +1,5 @@
++const STUDY_OPTIMIZER_START_NS=Ref{UInt64}(0)
++study_clock_start!()=(STUDY_OPTIMIZER_START_NS[]=time_ns();time())
+ const STUDY_STATE_EVENT=Ref{Any}(nothing)
+ study_state_event(e)=(STUDY_STATE_EVENT[]===nothing ? nothing : STUDY_STATE_EVENT[](e))
+ function solve!(solver::Solver{T, nx, nu, nc, nux, ncx},
+@@ -56,6 +58,10 @@
+         (isnothing(pass_hook) || !pass_hook(solver, ocp, solver.nominal, data, options)) &&
+             backward_pass!(solver, ocp, solver.nominal, data, options, verbose=options.verbose)
+         backward_s = (time_ns() - backward_start_ns) / 1e9
++        if timing_diagnostic && STUDY_OPTIMIZER_START_NS[] != 0
++            @printf("FILTERDDP_ELAPSED_CLOCK iteration=%d barrier_iteration=%d elapsed_s=%.9f\n",
++                    data.k, data.j, (time_ns()-STUDY_OPTIMIZER_START_NS[])/1e9)
++        end
+         timing_diagnostic && flush(stdout)
+         data.status != 0 && break
+ 
+--- spar_ddp/examples/power_system/ieee123c_filterddp.jl
++++ spar_ddp/examples/power_system/ieee123c_filterddp.jl
+@@ -603,7 +603,7 @@
+ if warmup > 0
+     keep_max = solver.options.max_iterations
+     solver.options.max_iterations = min(warmup, keep_max)
+-    tw = time()
++    tw = DDP4OPF.study_clock_start!()
+     # To a scratch file, not devnull: the print methods are compiled per stream
+     # type, and the log is a file. With devnull about 1.7 s of compilation was
+     # left in the timed solve.
+@@ -634,7 +634,7 @@
+ # takes inside the timed solve is printed, for what it is worth at small sizes.
+ warmup > 0 && GC.gc()
+ gc_before = Base.gc_time_ns()
+-t1 = time()
++t1 = DDP4OPF.study_clock_start!()
+ println("entering solve! ...")
+ flush(stdout)
+ status = solve!(solver, x0, ubar)

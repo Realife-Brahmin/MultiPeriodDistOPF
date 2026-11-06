@@ -1,0 +1,20 @@
+BR_RUN_BEGIN T=144 arm=base repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 4.87e-08 pu | OpenDSS range 0.9723-1.0500 pu (optimizer lowest 0.9723) | below limit: 0 of 1486080 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T144_ddp_rbase_1 debug=False
+BR_RUN_COMPLETE T=144 arm=base repeat=1 debug=0
+BR_RUN_BEGIN T=144 arm=cache repeat=1 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 4.87e-08 pu | OpenDSS range 0.9723-1.0500 pu (optimizer lowest 0.9723) | below limit: 0 of 1486080 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T144_ddp_rcache_1 debug=False
+BR_RUN_COMPLETE T=144 arm=cache repeat=1 debug=0
+BR_RUN_BEGIN T=144 arm=cache repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 4.87e-08 pu | OpenDSS range 0.9723-1.0500 pu (optimizer lowest 0.9723) | below limit: 0 of 1486080 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T144_ddp_rcache_2 debug=False
+BR_RUN_COMPLETE T=144 arm=cache repeat=2 debug=0
+BR_RUN_BEGIN T=144 arm=base repeat=2 debug=0
+SCREEN_ABLATION_NUMERICAL_PASS
+TREE_ABLATION_OPENDSS_PASS OPENDSS_SUMMARY 10k_1020_ddp | voltage: largest difference 4.87e-08 pu | OpenDSS range 0.9723-1.0500 pu (optimizer lowest 0.9723) | below limit: 0 of 1486080 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+BR_SCIENTIFIC_GATE_PASS 10k_1020_T144_ddp_rbase_2 debug=False
+BR_RUN_COMPLETE T=144 arm=base repeat=2 debug=0

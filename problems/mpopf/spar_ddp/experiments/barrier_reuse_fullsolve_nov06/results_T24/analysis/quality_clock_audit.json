@@ -1,0 +1,26 @@
+{
+  "target_direct_wall_clock_recorded": false,
+  "legacy_estimator": "entire full optimizer minus summed iteration durations is allocated before first pass; includes post-loop exit/retirement",
+  "logged_prefix_reduction_percent": 4.624625266889792,
+  "wall_target_reduction_lower_bound_percent": -8.039380552110176,
+  "wall_target_reduction_upper_bound_percent": 6.313423626457837,
+  "medians": {
+    "base": {
+      "legacy_frontloaded_target_s": 7.355229321499998,
+      "entire_solve_unallocated_wall_s": 0.12925571899999788,
+      "logged_iteration_prefix_s": 7.2259736025,
+      "target_elapsed_lower_bound_s": 7.2259736025,
+      "target_elapsed_upper_bound_s": 7.356229321499998
+    },
+    "cache": {
+      "legacy_frontloaded_target_s": 7.805897118999999,
+      "entire_solve_unallocated_wall_s": 0.9140977175000007,
+      "logged_iteration_prefix_s": 6.891799401499998,
+      "target_elapsed_lower_bound_s": 6.891799401499998,
+      "target_elapsed_upper_bound_s": 7.806897119
+    }
+  },
+  "full_optimizer_results_unchanged": true,
+  "raw_evidence_unchanged": true,
+  "scientific_thresholds_unchanged": true
+}
