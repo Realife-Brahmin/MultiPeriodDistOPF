@@ -51,3 +51,12 @@ Finishbystrictcollect.py(ROOT,newOUT) recognizinglayout2 and7negativecontrols,52
 RepositoryruleasksPR: noopenorclosedPRforcurrenthead found. origin/master is213filesbehindthislongresearchbranch; focusedreview should use acheckpointbasebranchat user-specifiedbb4de38b (prioraudit) instead ofmixingolderbranchwork. CreateONLYdraftfocusedPRafterfinalevidence/reportpushed; no merge/masterchange. Finishsameoriginalbranchverifyremote, preserve2untrackedrefs.
 
 FINAL V2 31609146 COMPLETED0:0 7m11cn168. Strictcollector passes521exactglobalrows/population+hitall49x24gates/all7controls/10cleanworkloads, zeroworker+coordinatorcompile. Numericcache1,697,932,800bytes, noleaf/internalmatrixcache. FIVEpairedchargedmedian3.636563fresh vs5.204454cache (+43.1%); hitmatrixscan.759100->.016196s butexactdetection.891971s dominates. Workeralloc9.438->22.421GB; cache/GCretirementcharged. Nodeallusersaccountingonlytwo sequentialpilotjobs. RawV2archiveSHAbe1784d5c393ee17c0bb3ac1067f67ff7882672ea50b65138d93e70b27cb7384 plusfinalanalysis/frequency/projectionCSV inresults_v2. Existing2fullsolves23passes8sourceconditionaleligible15fresh; representativenumericpointonlyone; zerocostscanupperbound26.5%, currentcostbalance negative~15.51s. FINDINGS recommendsrevise exactbookkeeping/nointegration, notnewmath orlowrankcampaign. Finalcommitpush/remoteverification andfocusedDRAFTPRremain; nojobsactive, nofurtherexperimentauthorizedbythispilot.
+
+COMPLETED: finalsource/RAWV1+V2/strictanalysis/invarianceargument/frequency/
+cost-projections/FINDINGS pushed9947cb7c andremoteSHAverified. FocusedDRAFT
+https://github.com/Realife-Brahmin/MultiPeriodDistOPF/pull/185 targets
+checkpointbranchddp/nov05-barrier-cache-base atbb4de38b soearlier213-filebranch
+historyisnotmixedintothisreview. No merge/masterchange. Reviewergetscomplete
+pilotreport; currentcachecorrectbut43.1%slowerfullycharged, recommendation
+reviseexactbookkeepingbeforeintegration. Allrequestedboundedworkcomplete;
+nojobsactive, bothuntrackedbatteryrefsuntouched. Noautomaticfollowupstudy.
