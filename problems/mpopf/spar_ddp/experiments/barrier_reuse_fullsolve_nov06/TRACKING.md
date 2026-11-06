@@ -90,3 +90,17 @@ No simulator retry or numerical failure hidden. Future v4 includes same known
 fast grouped/right baseline and toggle pair, diagnostic worker reference,
 preserved warmup log/renewed negatives and warmed retirement. Do NOT submit
 until31612252 is finished AND its adverse diagnostic-budget outcome archived.
+
+31612252 ended NATURALLY at process cap: FAILED124:0,50m09s. Terminal traceback
+confirms coordinator _br_debug_before inside OpenBLAS dpotrf_U_parallel. Raw
+failure/runtime source/accounting/all source+harness final checks archived and
+downloaded results_v3_failure, archiveSHA1e400a4e81ca27af5f4ff9505d1b23fd1ddcd96f4eaa04e42601f7b99ddbd064.
+Real partial trace:4 completed warmup passes/k0-3,168actual negatives,6252debug
+checks all absolute/scaled/relative0. NO eligible hit/full solve/clean pair;
+scientific_complete=false. No gate weakened, no success inferred from partials.
+
+Only after old job ended and raw evidence was archived, prepared v4 submitted
+31612890, /home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_nov06_v4,
+128CPU600GiB3h/no-requeue/nomultithread/anymatching6760P, no other user jobs.
+Initially pendingPriority. Existing debugT24 then gated ABBA24/96 launcher;
+no simulator overlap or reuse of old partial data as a completion gate.
