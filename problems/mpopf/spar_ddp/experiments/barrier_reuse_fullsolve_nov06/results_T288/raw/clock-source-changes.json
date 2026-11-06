@@ -1,0 +1,17 @@
+{
+  "scope": "passive elapsed clock only; identical baseline/candidate source",
+  "changed": [
+    {
+      "file": "spar_ddp/DDP4OPF.jl/src/solve.jl",
+      "before_sha256": "0fac9fa9b45de8a0638d002fbfbd1ffb0594c93a9c3706444bebb4112cdb39ae",
+      "after_sha256": "16c3cc403de6596ca111fa6157e72d6488144df614c8d8bbad59087e7bd6fdcf",
+      "diff": "--- spar_ddp/DDP4OPF.jl/src/solve.jl\n+++ spar_ddp/DDP4OPF.jl/src/solve.jl\n@@ -1,3 +1,5 @@\n+const STUDY_OPTIMIZER_START_NS=Ref{UInt64}(0)\n+study_clock_start!()=(STUDY_OPTIMIZER_START_NS[]=time_ns();time())\n const STUDY_STATE_EVENT=Ref{Any}(nothing)\n study_state_event(e)=(STUDY_STATE_EVENT[]===nothing ? nothing : STUDY_STATE_EVENT[](e))\n function solve!(solver::Solver{T, nx, nu, nc, nux, ncx},\n@@ -56,6 +58,10 @@\n         (isnothing(pass_hook) || !pass_hook(solver, ocp, solver.nominal, data, options)) &&\n             backward_pass!(solver, ocp, solver.nominal, data, options, verbose=options.verbose)\n         backward_s = (time_ns() - backward_start_ns) / 1e9\n+        if timing_diagnostic && STUDY_OPTIMIZER_START_NS[] != 0\n+            @printf(\"FILTERDDP_ELAPSED_CLOCK iteration=%d barrier_iteration=%d elapsed_s=%.9f\\n\",\n+                    data.k, data.j, (time_ns()-STUDY_OPTIMIZER_START_NS[])/1e9)\n+        end\n         timing_diagnostic && flush(stdout)\n         data.status != 0 && break\n \n"
+    },
+    {
+      "file": "spar_ddp/examples/power_system/ieee123c_filterddp.jl",
+      "before_sha256": "8670c96e5902f5f4d4fe9dda505991fd4461c7afbb763e24b971de446c77b958",
+      "after_sha256": "b2d1ff5659af010f7fd052c174cfa3cfbaf8bdb6ffdfc11f6fcecabd32374d16",
+      "diff": "--- spar_ddp/examples/power_system/ieee123c_filterddp.jl\n+++ spar_ddp/examples/power_system/ieee123c_filterddp.jl\n@@ -603,7 +603,7 @@\n if warmup > 0\n     keep_max = solver.options.max_iterations\n     solver.options.max_iterations = min(warmup, keep_max)\n-    tw = time()\n+    tw = DDP4OPF.study_clock_start!()\n     # To a scratch file, not devnull: the print methods are compiled per stream\n     # type, and the log is a file. With devnull about 1.7 s of compilation was\n     # left in the timed solve.\n@@ -634,7 +634,7 @@\n # takes inside the timed solve is printed, for what it is worth at small sizes.\n warmup > 0 && GC.gc()\n gc_before = Base.gc_time_ns()\n-t1 = time()\n+t1 = DDP4OPF.study_clock_start!()\n println(\"entering solve! ...\")\n flush(stdout)\n status = solve!(solver, x0, ubar)\n"
+    }
+  ]
+}
