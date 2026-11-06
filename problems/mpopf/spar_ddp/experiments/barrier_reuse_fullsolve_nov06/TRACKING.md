@@ -222,3 +222,5 @@ untouched and uses loggedprefix/bounds; clocked T288 only AFTER T144 individual
 strict result commit/push/remoteverify. No reruns of completed24/96/144.
 
 T14431613805 completed0:0 in48m08. Strict real-output collection, all source/runtime/harness checks and exact full scalar/step trajectories pass. Full46.465->41.363s (-10.98%), B29.950566->22.912266s (-23.50%). Logged target prefix20.545541->18.643545s; conservative bounds establish earlier target, exact wall gain unrecorded (2.58%-11.27% bounds). No third pair. Individual results_T144 evidence/findings committed before clocked T288 submission.
+
+T144 individual result commit d1cde88e557d2b5b40c15020d205e726d104d073 pushed and remote verified. Only afterward, with no other user jobs, clocked T288 job31614402 submitted from /home/aryan.jha/kamiak_jobs/barrier_reuse_fullsolve_T288_clock_nov06_v2 using benchmark_job.sh. Prequeue source/harness SHA pass, runtime-before SHA saved. Initially pendingPriority;128physicalCPU600GiB3h/no-requeue/nomultithread anymatching6760P,48x2ABBA, no debug solve. PR185 and monitor updated; do not resubmit or modify queued snapshot.
