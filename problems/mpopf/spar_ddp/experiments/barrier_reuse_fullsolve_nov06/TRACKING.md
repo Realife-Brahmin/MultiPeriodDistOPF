@@ -35,3 +35,26 @@ not modify it. Healthy31612252 currently in cold full-model setup/debug run.
 Follow-up monitor finish-integrated-barrier-reuse-study active every10minutes,
 with instructions to preserve active work and finish strict raw collection,
 assessment/push/PR; delete only after final validated evidence is pushed.
+
+Heartbeat read-only live inspection:31612252 remains running, no failure observed.
+Warmup stdout is redirected by the unchanged driver to /tmp scratch and normally
+removed at warmup end; hence solve.log still shows construction while the warm
+solve is actually progressing. A short read-only srun ps/fd inspection (not a new
+simulation) verified coordinator stdout/progress: first accepted k0 pass completed,
+52 populated entries/1,298,419,200 bytes, all actual full-direction errors zero.
+Saved first-pass live warmup transcript to jobs/31612252/warmup-live-preserved.log
+BEFORE scratch retirement:1747 lines, ALL168 actual stage negatives (7x24),
+SHA e7a9736b68830f989bbb6637d9183251b37e40795d93e823255d907cb2e5183c.
+This is explicitly a partial warmup transcript, not a complete solve or clean
+benchmark. No active source/harness edited and no healthy work interrupted.
+
+Source audit found a prospective validation-harness issue: BR_NEGATIVE_DONE is
+not cleared between warm and measured solve, whereas gate.py currently seeks
+BR_NEGATIVE in measured solve.log. All168 actual negatives already executed and
+are preserved above. Do not fake coverage or remove that requirement. If this
+is the sole final launcher failure, a posthoc validator can require all168 real
+preserved warmup negatives plus complete measured debug/current-output gates;
+then use a NEW immutable continuation launcher for clean pairs (not resume
+job.sh, not blind rerun debug). Wait for actual outputs before deciding. All
+scientific thresholds remain unchanged. Initial debug first-pass JIT is large
+(backward547.201870653s), outside every clean timing clock; process has50min cap.
