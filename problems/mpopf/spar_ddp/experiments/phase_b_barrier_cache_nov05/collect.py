@@ -37,11 +37,16 @@ for arm in ('baseline','candidate'):
   for stage in range(1,25):
    q=[x for x in selected if int(x['stage'])==stage]
    assert len(q)==49 and len({(x['probe'],x['field']) for x in q})==49
-controls=rows('negative_controls');assert len(controls)==6
+layout=meta.get('layout_version',1)
+controls=rows('negative_controls');assert len(controls)==(7 if layout==2 else 6)
+if layout==2:
+ assert meta['population_full_output_gate']
+ population=[x for x in e if x['scope']=='cache_population_preflight'];assert len(population)==24*49
 assert all(x['rejected_or_invalidated']=='true' for x in controls)
 assert all(int(x['hits'])==0 and x['correct_fresh_outputs']=='true' for x in controls if x['control']!='stale_gradient_consumer')
-s=tomllib.loads((d/'storage.toml').read_text());assert s['merge_entries']==68 and s['leaf_entries']==24
-assert s['numeric_bytes']==408*1020*1020*8
+s=tomllib.loads((d/'storage.toml').read_text());assert s['merge_entries']==68 and s['leaf_entries']==(0 if layout==2 else 24)
+if layout==2:assert s['closed_values']==24
+assert s['numeric_bytes']==(204 if layout==2 else 408)*1020*1020*8
 assert (s['skipped_cholesky_per_hit'],s['skipped_matrix_triangular_solves_per_hit'],s['skipped_matrix_products_per_hit'])==(68,112,156)
 aff=rows('affinity');assert len(aff)==24 and len({x['allowed'] for x in aff})==24
 assert all(x['blas_threads']=='1' and ',' not in x['allowed'] and '-' not in x['allowed'] for x in aff)
@@ -88,5 +93,5 @@ for scope in sorted({x['scope'] for x in e}):
  for key in ('absolute_fro','unit_scaled','relative_floor1e10'):
   x=max(z,key=lambda x:float(x[key]));worst.append(dict(scope=scope,metric=key,stage=x['stage'],probe=x['probe'],field=x['field'],value=x[key]))
 write('worst_errors',worst)
-validation=dict(validated=True,global_exact_matrix_rows=len(inv),clean_two_pass_workloads=10,measured_pairs=5,current_output_gates_unchanged=True,negative_control_count=6,cache_numeric_bytes=s['numeric_bytes'],scope=meta['scope'],timing_includes_cache_population=True,worker_allocation_delta_includes_counter_rpc_overhead=True,worker_rss_is_shared_mapping_highwater_not_private_memory=True)
+validation=dict(validated=True,global_exact_matrix_rows=len(inv),clean_two_pass_workloads=10,measured_pairs=5,current_output_gates_unchanged=True,negative_control_count=len(controls),cache_layout_version=layout,population_full_output_gate=(layout==2),cache_numeric_bytes=s['numeric_bytes'],scope=meta['scope'],timing_includes_cache_population=True,worker_allocation_delta_includes_counter_rpc_overhead=True,worker_rss_is_shared_mapping_highwater_not_private_memory=True)
 (o/'validation.json').write_text(json.dumps(validation,indent=2));print(json.dumps(summary,indent=2));print(json.dumps(validation,indent=2))

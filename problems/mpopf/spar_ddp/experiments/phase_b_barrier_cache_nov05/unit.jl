@@ -15,7 +15,7 @@ for val in (false,true)
  z=deepcopy(x);z.ma .+= 0.1;z.mb .-=0.2
  yy=deepcopy(y);(val ? yy.v : yy.ma).+=0.3
  a=hit_merge!(deepcopy(z),yy,PairWork(n),c);b=_pp_combine!(z,yy,PairWork(n))
- for f in (hasproperty(b,:V) ? (:V,:v) : (:Maa,:Mab,:Mbb,:ma,:mb));@test exactbits(getproperty(a,f),getproperty(b,f));end
+ for f in (hasproperty(b,:V) ? (:V,:v) : (:ma,:mb));@test exactbits(getproperty(a,f),getproperty(b,f));end
 end
 x=tiny();y=tiny();x.Mbb[1,1]=-100.0
 out,c=populate_merge!(deepcopy(x),y,PairWork(n));ref=_pp_combine!(deepcopy(x),y,PairWork(n))
@@ -25,6 +25,25 @@ p=(k=4,j=0,mu=1.0,context="pinned",proof=:pinned_unshifted_tp_pre,stage_keys=["a
 q=merge(p,(j=1,mu=0.2));@test eligible(p,q)
 for delta in ((k=5,),(context="new_model",),(proof=:unknown,),(stage_keys=["changed_factor"],),(terminal_key="other",))
  @test !eligible(p,merge(q,delta))
+end
+@test !eligible(p,q;complete=false)
+# Full68-node closure test: hit intermediates need no matrix materialization.
+leaves=[tiny() for t in 1:24];term=PintVal(zeros(n,n),zeros(n))
+xs=Any[deepcopy(x) for x in leaves];push!(xs,deepcopy(term));cache=Dict{Any,Any}()
+for (depth,ops) in enumerate(rounds(24)),(t,mid) in ops
+ xs[t],entry=populate_merge!(xs[t],xs[mid],PairWork(n));cache[(depth,t,mid)]=entry
+end
+@test length(cache)==68&&count(c->c.V!==nothing,values(cache))==24
+newleaves=deepcopy(leaves)
+for e in newleaves;e.ma .+=0.11;e.mb .-=0.07;end
+actual=Any[deepcopy(x) for x in newleaves];push!(actual,deepcopy(term))
+ref=deepcopy(actual)
+for (depth,ops) in enumerate(rounds(24)),(t,mid) in ops
+ actual[t]=hit_merge!(actual[t],actual[mid],PairWork(n),cache[(depth,t,mid)])
+ ref[t]=_pp_combine!(ref[t],ref[mid],PairWork(n))
+end
+for t in 1:25
+ @test exactbits(actual[t].V,ref[t].V)&&exactbits(actual[t].v,ref[t].v)
 end
 @test sum(length,rounds(24))==68
 storage=zeros(3n*n+2n);slot=shared_slot_view(storage,n)

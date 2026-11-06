@@ -23,11 +23,12 @@ decreasing mu, bit-sensitive signatures of EVERY stage's relevant primal,
 dual, slack/bound, derivative, KKT/factor and layout data. Unsupported or
 unknown applied regularization invalidates. Source proof fixes zero for the
 pinned _tp_pre path; never infer it from reset reg_last. Any signature/context
-change invalidates all merge entries. A cache miss uses fresh source arithmetic;
+change invalidates all merge entries. A missing entry invalidates the WHOLEpass before hit execution; unexpected
+mid-pass loss restarts the current pass fresh from leaves. A cache miss uses fresh source arithmetic;
 failed Cholesky uses unchanged fresh fallback and does not populate that entry.
 
-Cache only leaf curvature and each required merge U, whitened cross blocks,
-and output curvature. No cached gradients or feedforward policies. Every pass
+Cache only each required merge U, whitened cross blocks, and the24FINAL
+closed curvature outputs. NOleaf curvature cache or intermediate block copies. No cached gradients or feedforward policies. Every pass
 reassembles current leaf gradients, terminal gradient, each h/vector triangular
 solve/both gradient updates, suffix gradients/current policy/forward recovery.
 Cache storage, population/detection/copy/lookup/sync/cleanup charged. Raw arrays

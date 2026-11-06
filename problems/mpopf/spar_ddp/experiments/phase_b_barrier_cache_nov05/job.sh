@@ -4,7 +4,7 @@ C=$SLURM_SUBMIT_DIR;cd "$C"
 CAP=/home/aryan.jha/kamiak_jobs/phase_b_influence_capture_nov05
 OLD=/home/aryan.jha/kamiak_jobs/value_coupling_audit_oct22
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
-export JULIA_DEPOT_PATH="$C/julia-depot:$CAP/julia-depot:$OLD/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
+export JULIA_DEPOT_PATH="$C/julia-depot:/home/aryan.jha/kamiak_jobs/phase_b_barrier_cache_nov05/julia-depot:$CAP/julia-depot:$OLD/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_MAIN_FREE=1
 export VALUE_REPLAY_NUMERICAL_ROOT="$CAP/source" PILOT_PROJECT="$CAP/source/envs/spar_ddp"
 export FILTERDDP_TREE_KKT=1 FILTERDDP_FACTOR_BACKED_POLICY=1 FILTERDDP_PAIRED_INPLACE=1

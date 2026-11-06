@@ -4,9 +4,7 @@ struct MergeMatrixCache
  U::Matrix{Float64}
  Y1::Matrix{Float64}
  Y2::Union{Nothing,Matrix{Float64}}
- A::Matrix{Float64}
- B::Union{Nothing,Matrix{Float64}}
- C::Union{Nothing,Matrix{Float64}}
+ V::Union{Nothing,Matrix{Float64}}
 end
 curvfields(x)=hasproperty(x,:V) ? (:V,) : (:Maa,:Mab,:Mbb)
 function populate_merge!(x,y,w)
@@ -33,7 +31,7 @@ function populate_merge!(x,y,w)
  end
  mul!(x.ma,w.Y1',w.g,-1.0,1.0)
  if !val;copyto!(x.mb,y.mb);mul!(x.mb,w.Y2',w.g,-1.0,1.0);end
- entry=MergeMatrixCache(Matrix(U),copy(w.Y1),val ? nothing : copy(w.Y2),copy(x.Maa),val ? nothing : copy(x.Mab),val ? nothing : copy(x.Mbb))
+ entry=MergeMatrixCache(Matrix(U),copy(w.Y1),val ? nothing : copy(w.Y2),val ? copy(x.Maa) : nothing)
  return val ? PintVal(x.Maa,x.ma) : x,entry
 end
 function hit_merge!(x,y,w,c::MergeMatrixCache)
@@ -42,8 +40,9 @@ function hit_merge!(x,y,w,c::MergeMatrixCache)
  ldiv!(UpperTriangular(c.U)',w.g)
  mul!(x.ma,c.Y1',w.g,-1.0,1.0)
  if !val;copyto!(x.mb,y.mb);mul!(x.mb,c.Y2',w.g,-1.0,1.0);end
- copyto!(x.Maa,c.A)
- if !val;copyto!(x.Mab,c.B);copyto!(x.Mbb,c.C);end
+ if val;copyto!(x.Maa,c.V);end
+ # Intermediate curvature is intentionally unmaterialized on an all-hit pass.
+ # Every eventual closed value restores its cached V; vectors are ALL current.
  val ? PintVal(x.Maa,x.ma) : x
 end
 function digest(x)
@@ -56,8 +55,8 @@ function stage_signature(p)
  fields=(:x,:u,Symbol("\u03d5"),:zl,:zu,:lxx,:lux,:cxx,:cx,:cu,:fx,:fu,:fxx,:active,:fu_active,:lux_in_B,:K,:lay,:stat,:fac,:Bd,:Up,:b0,:nzc,:cxE,:inv_ul,:inv_uu,Symbol("\u03a3_L"),Symbol("\u03a3_U"))
  digest(([(f,getproperty(S,f)) for f in fields],p.cl,p.nx,p.nu,p.nc))
 end
-function eligible(previous,current)
- previous!==nothing && previous.k==current.k && current.j==previous.j+1 &&
+function eligible(previous,current;complete=true)
+ complete && previous!==nothing && previous.k==current.k && current.j==previous.j+1 &&
  current.mu<previous.mu && current.context==previous.context &&
  current.proof==:pinned_unshifted_tp_pre && previous.proof==current.proof &&
  current.stage_keys==previous.stage_keys && current.terminal_key==previous.terminal_key
@@ -106,7 +105,7 @@ function rounds(N)
  end
  all
 end
-cache_numeric_bytes(c::MergeMatrixCache)=sum(isnothing(x) ? 0 : sizeof(x) for x in (c.U,c.Y1,c.Y2,c.A,c.B,c.C))
+cache_numeric_bytes(c::MergeMatrixCache)=sum(isnothing(x) ? 0 : sizeof(x) for x in (c.U,c.Y1,c.Y2,c.V))
 
 function shared_slot_view(a,n)
  ptr=pointer(a)

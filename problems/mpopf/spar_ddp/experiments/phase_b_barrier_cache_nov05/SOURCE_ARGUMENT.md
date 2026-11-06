@@ -58,3 +58,29 @@ are detection work and fully charged, not free trusted version counters.
 This argument has supported-config assumptions. Global captured comparisons
 and negative controls test its implementation; they do not generalize it to
 arbitrary mu-dependent objectives, alternate dynamics or changing models.
+
+## Minimal V2 storage and safe miss behavior
+
+V1 exact prototype retained every intermediate output and leaf matrix so a
+local miss could run fresh at any node. Fully charged cost was negative and
+its3.396GB payload was unnecessary for a complete hit pass; it is preserved.
+V2 uses an all-or-nothing cache, not approximate reuse. Each of68 entries has
+U,Y1,and either Y2 (44two-boundary merges) OR its FINALclosedV (24value merges).
+Thus204dense1020x1020 matrices,1,697,932,800 numeric bytes, not408matrices.
+No gradients, leaf matrix cache, matrix inputs or internal Maa/Mab/Mbb outputs
+are retained. This is the minimal dense-BLAS layout for these selected kernels,
+not a universal packed-storage lower bound: unused lower U could be packed
+only with a different storage/solve interface and additional conversion cost.
+
+On a verified complete hit, leaf and intermediate curvature need not be
+materialized: vector recurrences only read current ma/mb, U,Y1,Y2. Every
+closed value restores its cached V, so ALL24suffix gradients/Hessians and
+current consumers are fully available. All68 vector solves/112gradient
+matvecs still execute, followed by unchanged current-stage reconstruction.
+Before reuse require68entries and exact global eligibility. A missing entry
+makes the ENTIREpass fresh, preserving all original curvature operands. An
+unexpected mid-round loss also abandons speculative vector work and restarts
+from current leaves with unchanged fresh kernels; never fresh-combine an
+unmaterialized intermediate. Failed first-pass factorizations leave missing
+entries and disable future whole-pass reuse. Both population and hit outputs
+are explicitly checked against full fresh replay before measured pairs.

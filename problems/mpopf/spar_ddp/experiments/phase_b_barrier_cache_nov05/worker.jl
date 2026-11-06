@@ -3,7 +3,7 @@ include(joinpath(@__DIR__,"lib","replay.jl"))
 include(joinpath(@__DIR__,"cache_core.jl"))
 const WPACK=Dict{Int,Any}();const WREF=Dict{Int,Any}()
 const ENTRIES=Dict{Tuple{Int,Int,Int},MergeMatrixCache}()
-const LEAFMATS=Dict{Int,Any}();const DIAG=Dict{Any,Any}()
+const DIAG=Dict{Any,Any}()
 const WSHARED=Ref{Any}(nothing);const WRULE=Ref{Any}(nothing);const WDIR=Ref{Any}(nothing)
 const WSTAGE=Ref(0);const WWHICH=Ref(0);const WSIGNS=Ref(Float64[])
 function worker_setup(shared,n,t,dirs,signs)
@@ -23,21 +23,17 @@ function worker_setup(shared,n,t,dirs,signs)
  (pid=getpid(),blas=BLAS.get_num_threads(),backend=string(BLAS.get_config()),threads=Threads.nthreads(),rss=Sys.maxrss())
 end
 worker_key(i)=stage_signature(WPACK[i])
+worker_key_info(i)=(key=worker_key(i),entries=length(ENTRIES))
 function worker_reset_cache()
- empty!(ENTRIES);empty!(LEAFMATS);nothing
+ empty!(ENTRIES);nothing
 end
 function worker_leaf(i,hit,populate)
  t=WSTAGE[];p=WPACK[i];WWHICH[]=i
  fill!(_PP_END[].v,0.0) # current actual terminal gradient, never cached
- if hit&&haskey(LEAFMATS,t)
-  e=_PP_SLOTS[t];c=LEAFMATS[t]
-  for f in (:Maa,:Mab,:Mbb);copyto!(getproperty(e,f),getproperty(c,f));end
-  leaf_vectors!(e,p.S)
+ if hit
+  leaf_vectors!(_PP_SLOTS[t],p.S)
  else
   @assert _pp_elem(p.S,t,p.nx)!==nothing
-  if populate
-   e=_PP_SLOTS[t];LEAFMATS[t]=(Maa=copy(e.Maa),Mab=copy(e.Mab),Mbb=copy(e.Mbb))
-  end
  end
  nothing
 end
@@ -59,12 +55,15 @@ function worker_merge(depth,t,mid,yval,last,mode,diagnostic)
    end
   end
  end
- hit=false;stored=false;fallback=false
+ hit=false;stored=false;fallback=false;miss=false
  if mode==:hit&&haskey(ENTRIES,key)
   hit_merge!(x,y,_PP_WORK[1],ENTRIES[key]);hit=true
  elseif mode==:populate
   _,entry=populate_merge!(x,y,_PP_WORK[1]);fallback=entry===nothing
   if entry!==nothing;ENTRIES[key]=entry;stored=true;end
+ elseif mode==:hit
+  # Do NOT use an unmaterialized intermediate as a fresh operand.
+  miss=true
  else
   _pp_combine!(x,y,_PP_WORK[1])
  end
@@ -76,7 +75,7 @@ function worker_merge(depth,t,mid,yval,last,mode,diagnostic)
    for f in keys(out);push!(rows,("output_"*string(f),errors(getproperty(out,f),getproperty(old,f))));end
   end
  end
- (hit=hit,stored=stored,fallback=fallback,rows=rows)
+ (hit=hit,stored=stored,fallback=fallback,miss=miss,rows=rows)
 end
 function worker_policy(i,mu)
  t=WSTAGE[];p=WPACK[i];v=t==24 ? _PP_END[] : PintVal(_PP_SLOTS[t+1].Maa,_PP_SLOTS[t+1].ma)
@@ -128,10 +127,10 @@ function worker_validate(i,slot=i)
  (rows=rows,outliers=outliers)
 end
 function worker_storage()
- (numeric=sum(cache_numeric_bytes,values(ENTRIES);init=0)+sum(sum(sizeof(getproperty(x,f)) for f in (:Maa,:Mab,:Mbb)) for x in values(LEAFMATS);init=0),object_graph=Base.summarysize((ENTRIES,LEAFMATS)),merges=length(ENTRIES),leaves=length(LEAFMATS),rss=Sys.maxrss())
+ (numeric=sum(cache_numeric_bytes,values(ENTRIES);init=0),object_graph=Base.summarysize(ENTRIES),merges=length(ENTRIES),leaves=0,closed_values=count(x->x.V!==nothing,values(ENTRIES)),rss=Sys.maxrss())
 end
 function worker_retire()
- empty!(ENTRIES);empty!(LEAFMATS);GC.gc(false);nothing
+ empty!(ENTRIES);GC.gc(false);nothing
 end
 function worker_compilation()
  c,r=Base.cumulative_compile_time_ns();g=Base.gc_num()
@@ -175,3 +174,5 @@ function worker_affinity()
  @assert length(unique(masks))==1
  (pid=getpid(),allowed=first(masks),blas=BLAS.get_num_threads())
 end
+
+worker_remove_entry()=(isempty(ENTRIES)||delete!(ENTRIES,first(keys(ENTRIES)));nothing)

@@ -34,9 +34,10 @@ end
 function execute_pass(arm,i;diagnostic=:none,proof=:pinned_unshifted_tp_pre,context=ROOTCTX[],k=META[i]["iteration"],stale=false)
  start=time_ns();hit=false;populate=false
  if arm==:candidate
-  keys=stages(worker_key,i)
+  observations=stages(worker_key_info,i);keys=[x.key for x in observations]
+  complete=sum(x.entries for x in observations)==68
   current=(k=k,j=META[i]["barrier_iteration"],mu=META[i]["mu"],context=context,proof=proof,stage_keys=keys,terminal_key=digest(TV[]))
-  hit=eligible(STAMP[],current);populate=!hit&&proof==:pinned_unshifted_tp_pre
+  hit=eligible(STAMP[],current;complete=complete);populate=!hit&&proof==:pinned_unshifted_tp_pre
   !hit&&allworkers(worker_reset_cache)
   STAMP[]=current
  end
@@ -57,6 +58,12 @@ function execute_pass(arm,i;diagnostic=:none,proof=:pinned_unshifted_tp_pre,cont
  mode=arm==:baseline ? :fresh : hit ? :hit : populate ? :populate : :fresh
  for (depth,pairs) in enumerate(rounds(24))
   replies=fetch.([remotecall(worker_merge,OWNER[mod1(q,24)],depth,t,mid,isval[mid],mid==25,mode,diagnostic) for (q,(t,mid)) in enumerate(pairs)])
+  if mode==:hit&&any(r->r.miss,replies)
+   # Unexpected per-entry loss: restart the entire current pass with the
+   # unchanged fresh kernel, never mix fresh operands with stale scratch.
+   allworkers(worker_reset_cache);STAMP[]=nothing
+   return execute_pass(:baseline,i)
+  end
   for ((t,mid),r) in zip(pairs,replies)
    isval[t]=isval[mid];hits+=r.hit;stored+=r.stored;fallback+=r.fallback
    for (field,m) in r.rows
@@ -146,13 +153,17 @@ function runpilot(capture,input,out)
  allworkers(worker_clear_diagnostics)
  # Source-level stage-signature invariance must be exact before cache is allowed.
  key1=stages(worker_key,1);key2=stages(worker_key,2);@assert key1==key2 "conservative stage eligibility differs"
- STAMP[]=nothing;execute_pass(:candidate,1);h=execute_pass(:candidate,2);@assert h.hits==68&&h.stored==0
+ STAMP[]=nothing;execute_pass(:candidate,1);validate_state(1,"cache_population_preflight",0);h=execute_pass(:candidate,2);@assert h.hits==68&&h.stored==0
  validate_state(2,"cache_preflight",0)
  storage=allworkers(worker_storage)
  open(joinpath(out,"worker_memory.toml"),"w") do io;TOML.print(io,Dict("workers"=>[Dict(string(k)=>v for (k,v) in pairs(x)) for x in storage]));end
- open(joinpath(out,"storage.toml"),"w") do io;TOML.print(io,Dict("numeric_bytes"=>sum(x.numeric for x in storage),"object_graph_bytes"=>sum(x.object_graph for x in storage),"merge_entries"=>sum(x.merges for x in storage),"leaf_entries"=>sum(x.leaves for x in storage),"skipped_cholesky_per_hit"=>68,"skipped_matrix_triangular_solves_per_hit"=>112,"skipped_matrix_products_per_hit"=>156,"fresh_vector_triangular_solves_per_hit"=>68,"fresh_gradient_matvecs_per_hit"=>112));end
+ open(joinpath(out,"storage.toml"),"w") do io;TOML.print(io,Dict("numeric_bytes"=>sum(x.numeric for x in storage),"object_graph_bytes"=>sum(x.object_graph for x in storage),"merge_entries"=>sum(x.merges for x in storage),"leaf_entries"=>sum(x.leaves for x in storage),"closed_values"=>sum(x.closed_values for x in storage),"layout_version"=>2,"skipped_cholesky_per_hit"=>68,"skipped_matrix_triangular_solves_per_hit"=>112,"skipped_matrix_products_per_hit"=>156,"fresh_vector_triangular_solves_per_hit"=>68,"fresh_gradient_matvecs_per_hit"=>112));end
  retire()
  println("GLOBAL_INVARIANCE_CACHE_PREFLIGHT_PASS");flush(stdout)
+ # A missing entry invalidates the entire pass BEFORE using stale scratch.
+ STAMP[]=nothing;execute_pass(:candidate,1);remotecall_fetch(worker_remove_entry,OWNER[1])
+ x=execute_pass(:candidate,2);ok=validate_state(2,"missing_entry_invalidated",0)
+ @assert x.hits==0;emitrow("negative_controls","missing_merge_entry",x.hits,x.stored,ok,true);retire()
  # Actual ordinary accepted Newton step, no new capture.
  execute_pass(:baseline,4);snapshot_state(4,"saved_live_ordinary_after")
  STAMP[]=nothing;execute_pass(:candidate,3);x=execute_pass(:candidate,4);ok=validate_state(4,"ordinary_invalidated",0)
@@ -209,7 +220,7 @@ function runpilot(capture,input,out)
   end
  end
  open(joinpath(out,"validation.toml"),"w") do io
-  TOML.print(io,Dict("complete"=>true,"global_leaf_matrix_invariance"=>true,"global_68_merge_invariance"=>true,"signature_invariance"=>true,"measured_pairs"=>5,"warmup_compilation_cleared"=>true,"scaled_gate"=>1e-7,"relative_gate"=>1e-5,"relative_floor"=>1e-10,"process_workers"=>24,"blas_threads"=>1,"whole_workload_includes_population_detection_retirement"=>true,"scope"=>"frozen_process_parallel_pilot_not_optimizer_integration","applied_regularization_proof"=>"pinned_tp_pre_unshifted_source_not_reg_last"))
+  TOML.print(io,Dict("complete"=>true,"layout_version"=>2,"population_full_output_gate"=>true,"global_leaf_matrix_invariance"=>true,"global_68_merge_invariance"=>true,"signature_invariance"=>true,"measured_pairs"=>5,"warmup_compilation_cleared"=>true,"scaled_gate"=>1e-7,"relative_gate"=>1e-5,"relative_floor"=>1e-10,"process_workers"=>24,"blas_threads"=>1,"whole_workload_includes_population_detection_retirement"=>true,"scope"=>"frozen_process_parallel_pilot_not_optimizer_integration","applied_regularization_proof"=>"pinned_tp_pre_unshifted_source_not_reg_last"))
  end
  rmprocs(pids)
  println("EXACT_BARRIER_CACHE_PILOT_COMPLETE");flush(stdout)
