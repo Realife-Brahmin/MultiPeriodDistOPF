@@ -16,6 +16,8 @@ S="$C/variants/10k_1020/source"
 (cd "$S"; sha256sum -c "$C/execution-source.sha256") > "$M/source-check.log"
 export VALUE_REPLAY_NUMERICAL_ROOT="$S"
 julia --startup-file=no unit.jl > "$M/unit.log" 2>&1
+julia --startup-file=no worker_unit.jl > "$M/worker-unit.log" 2>&1
+julia --startup-file=no shadow_unit.jl > "$M/shadow-unit.log" 2>&1
 julia --startup-file=no parse.jl "$S/spar_ddp/examples/power_system/procs_pass.jl" "$S/spar_ddp/examples/power_system/br_integration.jl" > "$M/parse.log" 2>&1
 run_one() {
  local T=$1 arm=$2 rep=$3 debug=$4

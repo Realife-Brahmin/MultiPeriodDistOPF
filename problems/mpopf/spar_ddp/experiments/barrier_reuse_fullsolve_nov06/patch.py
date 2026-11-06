@@ -36,7 +36,7 @@ once('                t, mid, isval[mid], mid == N + 1)','                depth,
 once('        for (t, mid) in pairs; isval[t] = isval[mid]; end','        br_stats .+= [sum(r.population for r in res),sum(r.hit for r in res),sum(r.fallback for r in res)]\n        for (t, mid) in pairs; isval[t] = isval[mid]; end')
 once('remotecall_fetch(pw_step3, w, t, μ, λs[t], t == N)','remotecall_fetch(pw_step3, w, t, μ, λs[t], t == N, br_ref_value(t,t==N))')
 once('    t_3 = time_ns()\n','    t_3 = time_ns()\n    br_finish(M,d,requested,hit,br_stats)\n')
-once('    M.exits += 1','    M.exits += 1\n    if M.exits > 1 || get(ENV,"FILTERDDP_WARMUP","0")=="0"\n        @sync for p in M.pids;@async remotecall_fetch(br_retire!,p);end\n    end')
+once('    M.exits += 1','    M.exits += 1\n    @sync for p in M.pids;@async remotecall_fetch(br_retire!,p);end')
 once('    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0)','    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0)\n    '+module+'.STUDY_STATE_EVENT[]=event->br_event!(BR_GATE,event)')
 s+='\ninclude(joinpath(@__DIR__,"br_integration.jl"))\n'
 p.write_text(s,encoding='utf-8')
@@ -48,3 +48,11 @@ once('            data.j += 1','            study_state_event(:barrier)\n       
 once('        update_nominal_trajectory!(solver)','        study_state_event(:accepted)\n        update_nominal_trajectory!(solver)')
 p.write_text(s,encoding='utf-8')
 p=ps/'br_integration.jl';text=p.read_text(encoding='utf-8').replace('DDP4OPF.',module+'.');p.write_text(text,encoding='utf-8')
+
+# Preserve the separate diagnostic warmup transcript; clean warmup unchanged.
+p=ps/'ieee123c_filterddp.jl';s=p.read_text(encoding='utf-8')
+once('    rm(scratch; force=true)','''    if get(ENV,"STUDY_BARRIER_DEBUG","0")=="1"
+        cp(scratch,joinpath(ENV["STUDY_OUT"],"warmup-debug.log");force=false)
+    end
+    rm(scratch; force=true)''')
+p.write_text(s,encoding='utf-8')

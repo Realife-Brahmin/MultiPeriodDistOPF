@@ -37,6 +37,7 @@ function br_begin(d)
 end
 function br_release!()
  empty!(BR_ENTRIES);empty!(BR_STAGE_KEYS);empty!(BR_REF_RULES)
+ empty!(BR_NEGATIVE_DONE);empty!(BR_OLD_VECTORS)
  BR_EXPECTED[]=0;BR_VALID[]=false;BR_CONTEXT[]=nothing;BR_MODE[]=:fresh
  nothing
 end
@@ -100,14 +101,14 @@ function br_leaf!(S,t,n)
  end
  true
 end
-function _br_debug_before(M,N,n)
+function br_shadow_worker(N,n)
  BR_DEBUG||return nothing
  GC.gc(false)
- xs=Any[]
- for a in M.shared
-  p=pointer(sdata(a));mat(i)=unsafe_wrap(Array,p+(i-1)*n*n*8,(n,n));vec(i)=unsafe_wrap(Array,p+(3n*n+(i-1)*n)*8,(n,))
-  push!(xs,deepcopy(PintElem(mat(1),mat(2),mat(3),vec(1),vec(2))))
- end
+ # Phase A has completed on every owner; shared leaves are read-only here.
+ # Run the diagnostic reference on an existing worker with two physical cores,
+ # matching the real kernel thread count without oversubscribing the coordinator.
+ study_thread_check()
+ xs=Any[deepcopy(_PP_SLOTS[t]) for t in 1:N]
  push!(xs,PintVal(zeros(n,n),zeros(n)))
  nodes=Dict{Any,Any}();w=PairWork(n)
  for (depth,ops) in enumerate(study_scan_rounds(N,true)),(t,mid) in ops
@@ -121,8 +122,7 @@ function _br_debug_before(M,N,n)
     ma=copy(xs[t] isa PintVal ? xs[t].v : xs[t].ma),mb=xs[t] isa PintVal ? nothing : copy(xs[t].mb),
     V=xs[t] isa PintVal ? br_digest(xs[t].V) : nothing)
  end
- BR_SHADOW[]=(nodes=nodes,values=xs)
- nothing
+ (nodes=nodes,values=xs)
 end
 function br_debug_node(depth,t,mid)
  BR_DEBUG ? BR_SHADOW[].nodes[(depth,t,mid)] : nothing
@@ -239,11 +239,6 @@ end
 
 function br_debug_before(M,N,n)
  BR_DEBUG||return nothing
- old=BLAS.get_num_threads();BLAS.set_num_threads(STUDY_BLAS_TARGET)
- try
-  _br_debug_before(M,N,n)
- finally
-  BLAS.set_num_threads(old)
- end
+ BR_SHADOW[]=remotecall_fetch(br_shadow_worker,M.pids[1],N,n)
  nothing
 end

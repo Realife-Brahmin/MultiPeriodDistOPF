@@ -51,3 +51,10 @@ completed same128node central reference. Full optimizer, target, A/B/C, cache
 counts, allocations/GC/RSS limitations, setup/build/warmup/process wall remain
 separate. Archive raw logs/CSV/manifests/negative controls, commit/push/report.
 Never modify an active/queued immutable snapshot; preserve failed attempts.
+
+Validation implementation detail: the matched-BLAS2 fresh full shadow runs on
+an existing two-core-pinned worker after Phase A synchronization, not on the
+single-core coordinator. It cannot mutate shared leaves (actual-method unit
+checks this). This avoids diagnostic-only BLAS oversubscription; clean timing
+and affinity policy are unchanged. Warmup executes the same cache retirement
+method as measured solve and frees payloads; debug warmup logs are preserved.

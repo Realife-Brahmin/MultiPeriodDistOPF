@@ -58,3 +58,23 @@ then use a NEW immutable continuation launcher for clean pairs (not resume
 job.sh, not blind rerun debug). Wait for actual outputs before deciding. All
 scientific thresholds remain unchanged. Initial debug first-pass JIT is large
 (backward547.201870653s), outside every clean timing clock; process has50min cap.
+
+Next heartbeat live evidence confirms debug throughput is outside its intended
+budget: k1 backward506.416568359s, of which rounds_s502.490264 but actual
+worker merge maxima sum4.725463s. Current driver pins coordinator to ONE CPU;
+its debug helper temporarily requests BLAS2 there, oversubscribing its single
+physical core. This is diagnostic reference overhead, NOT an optimizer/cache
+performance result. All currently observed actual controls/equalities/bounds
+remain exactly zero error. No clean paired run started. Do not interrupt31612252;
+let its immutable50min process cap preserve the attempt. No new job meanwhile.
+
+Prepared LOCAL repair (not applied to active snapshot): execute the exact
+matched-BLAS2 fresh shadow on an existing TWO-core-pinned worker after all
+Phase A tasks complete, using private copies of shared leaves, then return its
+full reference values to coordinator. Clean path unchanged. Also retain debug
+warmup log, reset once-only negative flags between solves, and invoke retirement
+on warmup exit so the measured retirement path is compiled and payloads are
+freed. These address diagnosed harness issues, not scientific thresholds or
+cache algebra. New immutable attempt required only AFTER old job terminates
+and raw failure evidence is preserved. Recursive parse and actual worker
+admission tests pass locally; actual reference-worker unit being added.

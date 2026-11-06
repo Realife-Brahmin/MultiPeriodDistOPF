@@ -53,3 +53,12 @@ right-sided grouped kernel is separately checked at T7/T24/T96. Full runtime
 validation compares against a fresh shadow using the same BLAS thread count,
 raw UPPER convention and actual full horizon; matrix digests require exactness.
 Current policies/actions/directions retain the unchanged scientific error gates.
+
+Diagnostic-only repair after live budget diagnosis: fresh shadow computation
+moves to an existing worker already pinned to two physical cores. All Phase A
+owners are synchronized first; the reference uses private leaf copies and leaves
+shared operands untouched. The coordinator retains its single-core affinity.
+Clean baseline/cache scheduling and kernel remain identical. Both warm and
+measured exits now execute the same retirement method, and debug warmup logs
+are retained separately. Negative-control flags reset at new solve so validation
+evidence is present in the retained measured debug trace as well as warmup.
