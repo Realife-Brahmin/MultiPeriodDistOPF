@@ -229,6 +229,15 @@ unchanged. A candidate must be validated before any new benchmark protocol is
 selected. `diagnose_checkpoint.jl` intentionally records failed local solves in
 its diagnostic CSV; those failures are never accepted by the production driver.
 
+Later completion update: both original system gates passed with MA57 and MA97.
+The long MA97 tails converged in 1703 iterations on med2522 and 568 on large10k;
+warm-up/restart and independent OpenDSS checks passed. The adaptive candidate's
+MA97 run failed during warm-up with ALMOST_LOCALLY_SOLVED and is rejected.
+The original benchmark configuration remains in use. Array 31643458 tasks 0/1
+completed the two IEEE123 T=6 repeats; tasks 2/3 advanced to IEEE123 T=24.
+See `results/kamiak_t6_update_31643458/README.md` and its archived evidence for
+initial timings, timer boundaries and the preserved calibration failure.
+
 The normalized relative-residual controller and curvature-scaled initial rho
 are fixed across this campaign. These are experiments with the corrected
 formulation, not a reproduction of July's omitted-loss model. The existing
