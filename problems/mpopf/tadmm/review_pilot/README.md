@@ -1,5 +1,13 @@
 # Corrected tADMM reviewer-response experiments — November 7, 2026
 
+Plot colors follow the existing semantic palette in
+`../plots/plot_convergence_from_csv.jl`: objective #0072B2, primal #009E73,
+dual #E69F00, rho #CC79A7, centralized reference #D55E00 and threshold #505050.
+`plot_style.py` shares those exact RGB values across the Python plotters.
+Use line styles or marker shapes for additional distinctions (systems, backends,
+odd/even iterations); retain the metric's color. Original feasibility and all-copy
+consensus are both primal quantities, shown green with solid/dashed lines.
+
 ## Current first-assessment scope (user update)
 
 Use T>=24 to assess performance and penalty policies. T=6 evidence is retained

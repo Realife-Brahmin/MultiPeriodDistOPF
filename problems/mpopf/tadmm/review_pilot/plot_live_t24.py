@@ -8,6 +8,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, NullLocator
 import numpy as np
+from plot_style import OBJECTIVE, PRIMAL, DUAL, RHO, CENTRAL_REFERENCE, THRESHOLD
 
 root = Path(sys.argv[1]).resolve()
 meta = json.loads((root / 'snapshot.json').read_text())
@@ -21,28 +22,28 @@ for col, case in enumerate(meta['cases']):
     ref = case['central_objective']
     original, rmax, smax = (values(k) for k in ('original_primal', 'r_max', 's_max'))
     objective, rho = values('objective'), values('rho')
-    for data, threshold, label, color in ((original, 5e-7, 'Original feasibility / 5e-7', '#226699'),
-            (rmax, 2.5e-7, 'All-copy consensus / 2.5e-7', '#d07820'),
-            (smax, 1e-4, 'Dual residual / 1e-4', '#6e5794')):
-        axes[0, col].loglog(x, np.maximum(data / threshold, 1e-16), label=label, color=color)
-    axes[0, col].axhline(1, color='.35', linestyle='--', linewidth=.8)
+    for data, threshold, label, color, style in ((original, 5e-7, 'Original feasibility / 5e-7', PRIMAL, '-'),
+            (rmax, 2.5e-7, 'All-copy consensus / 2.5e-7', PRIMAL, '--'),
+            (smax, 1e-4, 'Dual residual / 1e-4', DUAL, '-')):
+        axes[0, col].loglog(x, np.maximum(data / threshold, 1e-16), label=label, color=color, linestyle=style)
+    axes[0, col].axhline(1, color=THRESHOLD, linestyle='--', linewidth=.8)
     axes[0, col].set(title=f"{case['name']}: T=24, MA57; k={x[-1]}, {case.get('warmup_status', 'snapshot')}")
     axes[0, col].legend(frameon=False, fontsize=8)
     gap = np.abs(objective - ref) / max(1, abs(ref))
-    axes[1, col].loglog(x, np.maximum(gap, 1e-16), color='#226699')
-    axes[1, col].axhline(.001, color='.35', linestyle='--', linewidth=.8, label='0.1% objective criterion')
+    axes[1, col].loglog(x, np.maximum(gap, 1e-16), color=OBJECTIVE)
+    axes[1, col].axhline(.001, color=THRESHOLD, linestyle='--', linewidth=.8, label='0.1% objective criterion')
     axes[1, col].legend(frameon=False, fontsize=8)
-    axes[2, col].step(x, rho, where='post', color='#226699')
+    axes[2, col].step(x, rho, where='post', color=RHO)
     axes[2, col].set_xscale('log')
     axes[2, col].set_yscale('log', base=2)
     axes[2, col].set_yticks(sorted(set(rho)))
     axes[2, col].yaxis.set_major_formatter(FuncFormatter(lambda v, p: f'{v:g}'))
     axes[2, col].yaxis.set_minor_locator(NullLocator())
     relative_ratio = values('r_relative') / np.maximum(values('s_relative'), 1e-16)
-    axes[3, col].loglog(x, np.maximum(relative_ratio, 1e-16), color='#226699')
+    axes[3, col].loglog(x, np.maximum(relative_ratio, 1e-16), color=RHO)
     axes[3, col].axhspan(.1, 10, color='.9', zorder=-1)
     for boundary in (.1, 10):
-        axes[3, col].axhline(boundary, color='.35', linestyle='--', linewidth=.8)
+        axes[3, col].axhline(boundary, color=THRESHOLD, linestyle='--', linewidth=.8)
     axes[3, col].text(.03, .93, 'Shaded: no rho update (0.1 to 10); checked every 5 iterations', transform=axes[3, col].transAxes, fontsize=8)
     for row in range(4):
         axes[row, col].grid(True, which='major', alpha=.2)
@@ -68,17 +69,19 @@ for col, case in enumerate(meta['cases']):
         note='Warm-up diagnosis only; sustained qualification refers to this saved trajectory, not a separate measured run or OpenDSS validation'))
     if case['name'] == 'med2522':
         zoom, zz = plt.subplots(3, 1, figsize=(10, 7), layout='constrained', sharex=True)
-        for ax, y, label in zip(zz, (objective-ref, original, smax/1e-4),
-                ('Objective minus reference\n(objective units)', 'Original-model violation\n(per-unit units)', 'Dual residual / threshold\n(dimensionless)')):
-            ax.plot(x[tail], y[tail], color='.6', linewidth=.8)
-            for parity, color, label_parity in ((1, '#226699', 'Odd iterations'), (0, '#d07820', 'Even iterations')):
+        for ax, y, label, color in zip(zz, (objective-ref, original, smax/1e-4),
+                ('Objective minus reference\n(objective units)', 'Original-model violation\n(per-unit units)', 'Dual residual / threshold\n(dimensionless)'),
+                (OBJECTIVE, PRIMAL, DUAL)):
+            ax.plot(x[tail], y[tail], color=color, linewidth=.8, alpha=.6)
+            for parity, marker, filled, label_parity in ((1, 'o', True, 'Odd iterations'), (0, 's', False, 'Even iterations')):
                 mask = x[tail] % 2 == parity
-                ax.scatter(x[tail][mask], y[tail][mask], s=12, color=color, label=label_parity)
+                ax.scatter(x[tail][mask], y[tail][mask], s=14, marker=marker,
+                    facecolors=color if filled else 'white', edgecolors=color, linewidths=.8, label=label_parity)
             ax.set_ylabel(label)
             ax.grid(True, alpha=.2)
-        zz[0].axhline(0, color='.4', linewidth=.8, linestyle='--')
+        zz[0].axhline(0, color=CENTRAL_REFERENCE, linewidth=.8, linestyle='--')
         zz[0].legend(frameon=False, ncol=2)
-        zz[2].axhline(1, color='.4', linewidth=.8, linestyle='--')
+        zz[2].axhline(1, color=THRESHOLD, linewidth=.8, linestyle='--')
         zz[2].set_ylim(0, max(2, max(smax[tail]/1e-4)*1.2))
         zz[-1].set_xlabel('ADMM iteration')
         zoom.suptitle(f'med2522 T=24: last {n} warm-up iterations; rho = {rho[-1]:g}\nObserved alternation is a diagnostic, not proof of its cause', fontsize=11)

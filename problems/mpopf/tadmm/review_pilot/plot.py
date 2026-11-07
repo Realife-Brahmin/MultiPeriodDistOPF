@@ -5,10 +5,12 @@ import tomllib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from plot_style import OBJECTIVE, PRIMAL, DUAL, THRESHOLD
 
 root = Path(__file__).resolve().parent / 'results'
 fig, axes = plt.subplots(2, 2, figsize=(10, 7), layout='constrained')
 names = {'ieee123C_1ph': 'IEEE123', 'ieee2522C_1ph': 'med2522', 'large10kC_1ph': 'large10k'}
+styles = {'ieee123C_1ph': '-', 'ieee2522C_1ph': '--', 'large10kC_1ph': '-.'}
 panels = [('gap', 'Objective agreement', 'Absolute relative objective gap', 1e-5),
           ('original_primal', 'Original-model feasibility', 'Maximum violation (per unit)', 5e-7),
           ('r_max', 'All SOC copies', 'Maximum consensus error (p.u. h)', 2.5e-7),
@@ -26,9 +28,11 @@ for out in sorted(root.iterdir()):
     ref = summary['central_objective']
     for axis, (key, title, ylabel, tol) in zip(axes.flat, panels):
         values = [abs(float(r['objective']) - ref) / max(1, abs(ref)) if key == 'gap' else float(r[key]) for r in trace]
-        axis.semilogy(iterations, [max(v, 1e-16) for v in values], label=names[summary['system']], linewidth=1.6)
+        color = OBJECTIVE if key == 'gap' else DUAL if key == 's_max' else PRIMAL
+        axis.semilogy(iterations, [max(v, 1e-16) for v in values], label=names[summary['system']],
+            color=color, linestyle=styles[summary['system']], linewidth=1.6)
         axis.set(title=title, xlabel='ADMM iteration', ylabel=ylabel)
-        axis.axhline(tol, color='0.6', linestyle='--', linewidth=0.7)
+        axis.axhline(tol, color=THRESHOLD, linestyle=':', linewidth=0.7)
         axis.grid(True, which='major', alpha=0.2)
 assert found, 'No validated measured traces available'
 axes[0, 0].legend(frameon=False)

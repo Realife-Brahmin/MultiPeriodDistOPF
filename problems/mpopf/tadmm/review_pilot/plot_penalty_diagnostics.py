@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, NullLocator
+from plot_style import PRIMAL, DUAL, RHO, THRESHOLD
 
 campaign = Path(sys.argv[1]).resolve()
 out = Path(sys.argv[2]).resolve()
@@ -15,26 +16,27 @@ metrics = [('original_primal', 'Original-model maximum violation (p.u.)', 5e-7),
     ('s_max', 'Dual residual maximum (cost / p.u. h)', 1e-4),
     ('rho', 'Penalty rho (cost / (p.u. h)^2)', None)]
 for col, (system, name) in enumerate((('ieee2522C_1ph', 'med2522'), ('large10kC_1ph', 'large10k'))):
-    for backend, color in (('ma57', '#2563a6'), ('ma97', '#c46920')):
+    for backend, style in (('ma57', '-'), ('ma97', '--')):
         cases = sorted((campaign / 'results').glob(f'{system}_T6_{backend}_verify_r0_*'))
         cases = [p for p in cases if (p / 'COMPLETE').exists()]
         assert len(cases) == 1, (system, backend, cases)
         trace = list(csv.DictReader((cases[0] / 'trace.csv').open()))
         for row, (key, label, threshold) in enumerate(metrics):
             axis = axes[row, col]
+            color = DUAL if key == 's_max' else RHO if key == 'rho' else PRIMAL
             x = [int(r['iteration']) for r in trace]
             y = [max(1e-16, float(r[key])) for r in trace]
             if key == 'rho':
-                axis.step(x, y, where='post', color=color, linewidth=1.5, label=backend.upper())
+                axis.step(x, y, where='post', color=color, linestyle=style, linewidth=1.5, label=backend.upper())
                 axis.set_xscale('log')
                 axis.set_yscale('log', base=2)
             else:
-                axis.loglog(x, y, color=color, linewidth=1.5, label=backend.upper())
+                axis.loglog(x, y, color=color, linestyle=style, linewidth=1.5, label=backend.upper())
             axis.set(xlabel='ADMM iteration (log scale)', ylabel=label)
             axis.grid(True, which='major', alpha=.2)
     for row, (_, _, threshold) in enumerate(metrics):
         if threshold is not None:
-            axes[row, col].axhline(threshold, color='.5', linewidth=.8, linestyle='--')
+            axes[row, col].axhline(threshold, color=THRESHOLD, linewidth=.8, linestyle=':')
     axes[0, col].set_title(f'{name}: corrected free-terminal MPOPF, T = 6')
     axes[0, col].legend(frameon=False)
     rho_axis = axes[3, col]
