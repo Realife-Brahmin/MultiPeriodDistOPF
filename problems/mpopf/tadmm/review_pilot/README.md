@@ -208,6 +208,27 @@ Submitted next, with results still pending when this note was written:
   concurrently. Backend order reverses on the second repeat. Completion markers
   require both backends' validated runs; partial/preempted attempts are preserved.
 
+Subsequent verification update: MA57 completed both med2522 (77 iterations) and
+large10k (132 iterations), including matching warm/measured traces and OpenDSS.
+MA97 med2522 has a much longer residual tail. This is not a converged benchmark
+result. Saved-checkpoint diagnostic jobs 31643470, 31643476 and 31643484 compare
+the same local OPFs without changing or restarting any measured trajectory.
+Nominal `tol=1e-9` alone does not enforce equally small unscaled complementarity;
+see [Ipopt termination options](https://coin-or.github.io/Ipopt/OPTIONS.html).
+The 1e-10 absolute-complementarity diagnostic hit an iteration limit. In the
+bounded diagnostic, adaptive barrier with `compl_inf_tol=1e-8` solved all six
+subproblems successfully with both backends and much closer objective agreement.
+That is evidence for an accuracy-control candidate, not proof of full ADMM
+convergence or of the sole cause of the long tail.
+
+Job 31643493 tests that candidate through full warm-up, measured restart and
+OpenDSS on med2522, both backends. Its labels begin `adaptive_verify_`; its case
+wrapper and hash are captured separately and all extra Ipopt settings appear in
+metadata. The original source, running trajectories and benchmark queue remain
+unchanged. A candidate must be validated before any new benchmark protocol is
+selected. `diagnose_checkpoint.jl` intentionally records failed local solves in
+its diagnostic CSV; those failures are never accepted by the production driver.
+
 The normalized relative-residual controller and curvature-scaled initial rho
 are fixed across this campaign. These are experiments with the corrected
 formulation, not a reproduction of July's omitted-loss model. The existing

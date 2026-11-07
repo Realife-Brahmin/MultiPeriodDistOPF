@@ -12,7 +12,9 @@ case $SOLVER in
  ma97) LIB=$HOME/opt/hsl-private/install/hsl_ma97-2.8.1-metis-openmp/lib/libhsl_ma97.so; EXTRA=ma97_order=amd;;
  *) echo 'This campaign permits MA57/MA97 only'; exit 2;;
 esac
-export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;$EXTRA"
+export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;$EXTRA${TADMM_ADDITIONAL_IPOPT_OPTIONS:+;$TADMM_ADDITIONAL_IPOPT_OPTIONS}"
+cp "$0" "$OUT/case-wrapper.sh"
+sha256sum "$OUT/case-wrapper.sh" > "$OUT/case-wrapper.sha256"
 case $SYS in ieee123C_1ph) CB=.001;; ieee2522C_1ph) CB=.0019;; large10kC_1ph) CB=.000024;; *) exit 2;; esac
 export TADMM_RHO_INIT=$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
