@@ -18,11 +18,15 @@ paths = ['AGENTS.md', '.agents/AGENTS.md', 'problems/mpopf/tadmm/review_pilot',
 paths += [base + f for f in ('export_ieee123c_data.jl', 'loadflow_start.jl',
     'terminal_soc_penalty.jl', 'control_layout.jl', 'opendss_check.jl')]
 paths += ['test_networks/' + s for s in ('ieee123C_1ph', 'ieee2522C_1ph', 'large10kC_1ph')]
-raw = subprocess.check_output(['git', '-c', 'core.autocrlf=false', 'archive', '--format=tar', 'HEAD', *paths], cwd=root)
+tracked = subprocess.check_output(['git', 'ls-files', '-z', '--', *paths], cwd=root).decode().split('\0')
+tracked = [p for p in tracked if p and '/results/' not in p]
+raw = subprocess.check_output(['git', '-c', 'core.autocrlf=false', 'archive', '--format=tar', 'HEAD', *tracked], cwd=root)
 with tarfile.open(fileobj=io.BytesIO(raw)) as check:
     for member in check.getmembers():
         if member.isfile() and member.name.endswith('.sh'):
             assert b'\r' not in check.extractfile(member).read(), member.name
+        if member.name.endswith('/worker_julia.sh'):
+            assert member.mode & 0o111, 'worker_julia.sh must be executable'
 buffer = io.BytesIO(raw)
 with tarfile.open(fileobj=buffer, mode='a') as archive:
     info = tarfile.TarInfo('source.commit')

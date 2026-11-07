@@ -10,6 +10,7 @@ include(joinpath(SHARED, "control_layout.jl"))
 
 function make_model(d, owned; local_window=false, rho=0.0)
     T = d[:T]; ns=d[:Nset]; es=d[:Lset]; bs=d[:Bset]; ds=d[:Dset]
+    loads=Set(d[:NLset]); batteries=Set(bs); ders=Set(ds)
     root=d[:substationBus]; dt=d[:delta_t_h]; base=d[:kVA_B]
     times = local_window ? collect(max(1,only(owned)-1):min(T,only(owned)+1)) : collect(1:T)
     # Only dynamics owned by t and its successor are needed in each window.
@@ -46,11 +47,11 @@ function make_model(d, owned; local_window=false, rho=0.0)
         @constraint(m,qs[t]==sum(q[e,t] for e in d[:L1set]))
         for j in d[:Nm1set]
             e=(d[:parent][j],j)
-            pl=j in d[:NLset] ? d[:p_L_pu][j,t] : 0.0
-            ql=j in d[:NLset] ? d[:q_L_pu][j,t] : 0.0
-            pd=j in ds ? d[:p_D_pu][j,t] : 0.0
-            pbat=j in bs ? pb[j,t] : 0.0
-            qder=j in ds ? qd[j,t] : 0.0
+            pl=j in loads ? d[:p_L_pu][j,t] : 0.0
+            ql=j in loads ? d[:q_L_pu][j,t] : 0.0
+            pd=j in ders ? d[:p_D_pu][j,t] : 0.0
+            pbat=j in batteries ? pb[j,t] : 0.0
+            qder=j in ders ? qd[j,t] : 0.0
             @constraint(m,sum(p[(j,k),t] for k in d[:children][j];init=0.0)-p[e,t]+d[:rdict_pu][e]*ell[e,t]==pbat+pd-pl)
             @constraint(m,sum(q[(j,k),t] for k in d[:children][j];init=0.0)-q[e,t]+d[:xdict_pu][e]*ell[e,t]==qder-ql)
         end
@@ -106,25 +107,46 @@ function solve_checked!(s; reuse=false)
     return solve_time(s.m)
 end
 
-function dispatch(stages,d; z=nothing)
-    T=d[:T]; ix,nu=control_layout(d); us=[zeros(nu) for _ in 1:T]
-    bb=zeros(length(d[:Bset]),T)
-    for t in 1:T
-        s=length(stages)==1 ? only(stages) : stages[t]; u=us[t]
+function dispatch_period(s,d,t)
+        ix,nu=control_layout(d); u=zeros(nu); bb=zeros(length(d[:Bset]))
         u[ix.ps]=value(s.ps[t]); u[ix.qs]=value(s.qs[t])
         for (n,e) in enumerate(d[:Lset])
             u[ix.P[n]]=value(s.p[e,t]); u[ix.Q[n]]=value(s.q[e,t]); u[ix.ell[n]]=value(s.ell[e,t])
         end
         for (n,j) in enumerate(d[:Nset]); u[ix.v[n]]=value(s.v[j,t]); end
         for (n,j) in enumerate(d[:Bset])
-            u[ix.pb[n]]=value(s.pb[j,t]); bb[n,t]=z===nothing ? value(s.b[j,t]) : z[n,t]
+            u[ix.pb[n]]=value(s.pb[j,t]); bb[n]=value(s.b[j,t])
         end
         for (n,j) in enumerate(d[:Dset])
             qm=sqrt(max(0.0,d[:S_D_R][j]^2-d[:p_D_pu][j,t]^2))
             u[ix.qnorm[n]]=qm>0 ? value(s.qd[j,t])/qm : 0.0
         end
+    return u,bb
+end
+
+function dispatch(stages,d; z=nothing)
+    T=d[:T]; us=Vector{Vector{Float64}}(undef,T); bb=zeros(length(d[:Bset]),T)
+    for t in 1:T
+        s=length(stages)==1 ? only(stages) : stages[t]
+        us[t],own_b=dispatch_period(s,d,t)
+        bb[:,t]=z===nothing ? own_b : z[:,t]
     end
     return us,bb
+end
+
+function stage_step!(s,d,z,u,rho,k)
+    tick=time_ns()
+    if k>1
+        vals=value.(s.vars); set_start_value.(s.vars,vals)
+    end
+    for (n,j) in enumerate(d[:Bset]),(a,t) in enumerate(s.times)
+        set_objective_coefficient(s.m,s.b[j,t],rho*(u[n,a]-z[n,t]))
+        set_objective_coefficient(s.m,s.b[j,t],s.b[j,t],rho/2)
+    end
+    solver_s=solve_checked!(s)
+    iterations=MOI.get(s.m,MOI.BarrierIterations())
+    copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
+    return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,
@@ -133,6 +155,7 @@ function physical_metrics(d,us,bb)
     ix,_=control_layout(d); bp=Dict(j=>n for (n,j) in enumerate(d[:Nset]))
     ep=Dict(e=>n for (n,e) in enumerate(d[:Lset])); bat=Dict(j=>n for (n,j) in enumerate(d[:Bset]))
     der=Dict(j=>n for (n,j) in enumerate(d[:Dset])); root=d[:substationBus]
+    loads=Set(d[:NLset])
     maxeq=0.0; maxbound=0.0; maxcone=0.0; gap=0.0; loss_gap=0.0; obj=0.0
     recovered_energy=[d[:B0_pu][j] for j in d[:Bset]]
     for t in 1:d[:T]
@@ -142,8 +165,8 @@ function physical_metrics(d,us,bb)
         maxbound=max(maxbound,-u[ix.ps])
         for j in d[:Nm1set]
             e=(d[:parent][j],j); n=ep[e]
-            pl=j in d[:NLset] ? d[:p_L_pu][j,t] : 0.0
-            ql=j in d[:NLset] ? d[:q_L_pu][j,t] : 0.0
+            pl=j in loads ? d[:p_L_pu][j,t] : 0.0
+            ql=j in loads ? d[:q_L_pu][j,t] : 0.0
             pd=haskey(der,j) ? d[:p_D_pu][j,t] : 0.0
             pbat=haskey(bat,j) ? pb[bat[j]] : 0.0
             qd=haskey(der,j) ? u[ix.qnorm[der[j]]]*sqrt(max(0.0,d[:S_D_R][j]^2-pd^2)) : 0.0

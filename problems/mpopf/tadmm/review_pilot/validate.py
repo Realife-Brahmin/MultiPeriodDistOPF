@@ -12,6 +12,7 @@ except ImportError:
 
 out = Path(sys.argv[1]).resolve()
 summary = tomllib.loads((out / 'summary.toml').read_text())
+meta = tomllib.loads((out / 'metadata.toml').read_text())
 assert summary['converged']
 assert summary['relative_objective_gap'] <= 1e-5
 assert summary['tadmm_original_primal'] <= 5e-7
@@ -25,6 +26,8 @@ checks = {}
 for name, rows in (('warmup', warm), ('trace', timed)):
     sub = list(csv.DictReader((out / f'{name}_subproblems.csv').open()))
     assert len(sub) == len(rows) * summary['T']
+    pairs = {(int(s['iteration']), int(s['period'])) for s in sub}
+    assert pairs == {(k, t) for k in range(1, len(rows) + 1) for t in range(1, summary['T'] + 1)}
     assert all(s['status'] in ('LOCALLY_SOLVED', 'OPTIMAL') for s in sub)
 for method in ('central', 'tadmm'):
     text = (out / f'{method}_opendss.log').read_text(encoding='utf-8-sig')
@@ -38,6 +41,16 @@ for method in ('central', 'tadmm'):
 samples = list(csv.DictReader((out / 'process_samples.csv').open()))
 checks['sampled_process_peak_gib'] = max(int(s['working_set_bytes']) for s in samples) / 2**30
 checks['peak_note'] = 'Sampled whole process, including warm-up and setup; not aggregate parallel-worker memory.'
+if meta.get('execution_mode') == 'distributed':
+    layout = meta['worker_layout']
+    assert len(layout) == meta['period_workers']
+    assert len({r['pid'] for r in layout}) == len(layout)
+    assert len({r['affinity'] for r in layout}) == len(layout)
+    assert sorted(t for r in layout for t in r['periods']) == list(range(1, summary['T'] + 1))
+    assert all(r['julia_threads'] == r['blas_threads'] == 1 and r['openmp_threads'] == '1' for r in layout)
+    assert all(r['affinity'] != meta['coordinator_affinity'] for r in layout)
+    checks['worker_layout_validation'] = 'pass'
+    checks['peak_note'] = 'Sampled aggregate RSS of coordinator and workers, including setup/warm-up. RSS double-counts shared pages; consult PSS samples and Slurm cgroup peak.'
 checks['optimization_validation'] = 'pass'
 checks['warmup_trace_validation'] = 'pass'
 checks['opendss_validation'] = 'pass'

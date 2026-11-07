@@ -16,11 +16,30 @@ export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;$EXTRA"
 case $SYS in ieee123C_1ph) CB=.001;; ieee2522C_1ph) CB=.0019;; large10kC_1ph) CB=.000024;; *) exit 2;; esac
 export TADMM_RHO_INIT=$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
+W=${TADMM_NWORKERS:-0}
+export TADMM_NWORKERS=$W
+if (( W>0 )); then
+ BUDGET=$((W+1))
+ CPU_RANGE=$(awk '/Cpus_allowed_list:/ {print $2}' /proc/self/status)
+ export TADMM_CPU_IDS=$(python3 -c 'import sys; a=[]
+for p in sys.argv[1].split(","):
+ b=p.split("-"); a.extend(range(int(b[0]),int(b[-1])+1))
+n=int(sys.argv[2]); assert len(a)>=n; print(",".join(map(str,a[:n])))' "$CPU_RANGE" "$BUDGET")
+ taskset -apc "$TADMM_CPU_IDS" "$$" > "$OUT/case-affinity.txt"
+ if [[ $SOLVER == ma97 ]]; then export OMP_NUM_THREADS=$BUDGET; else export OMP_NUM_THREADS=1; fi
+ export OMP_WAIT_POLICY=PASSIVE GOMP_SPINCOUNT=0
+else
+ export OMP_NUM_THREADS=1
+fi
 sha256sum "$LIB" > "$OUT/hsl.sha256"
 { hostname; date -Is; lscpu; taskset -pc $$; scontrol show job "$SLURM_JOB_ID"; env | grep -E '^(OMP_|OPENBLAS_|JULIA_|TADMM_)'; } > "$OUT/allocation.txt"
 python3 "$PILOT/capture.py" "$OUT" "$SYS"
 sha256sum "problems/mpopf/spar_ddp/results/network_filterddp/network_data_${SYS}_T${T}_periodic.jls" > "$OUT/input.sha256"
-julia --startup-file=no --project="$PILOT" "$PILOT/run.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+if (( W>0 )); then
+ taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/run.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+else
+ julia --startup-file=no --project="$PILOT" "$PILOT/run.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+fi
 OPT_PID=$!
 python3 "$PILOT/sample_linux.py" "$OPT_PID" "$OUT/process_samples.csv" > "$OUT/sampler.log" 2>&1 &
 SAMPLE_PID=$!
@@ -31,4 +50,8 @@ for METHOD in central tadmm; do
 done
 python3 "$PILOT/validate.py" "$OUT" > "$OUT/validation.log"
 date -u +%FT%TZ > "$OUT/COMPLETE"
+CG=/sys/fs/cgroup/memory/slurm/uid_$(id -u)/job_$SLURM_JOB_ID
+for F in memory.max_usage_in_bytes memory.limit_in_bytes; do
+ [[ ! -f "$CG/$F" ]] || printf '%s %s\n' "$F" "$(cat "$CG/$F")" >> "$OUT/cgroup_memory.txt"
+done
 echo "CASE_COMPLETE $OUT"
