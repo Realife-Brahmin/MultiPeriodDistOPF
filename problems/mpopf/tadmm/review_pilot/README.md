@@ -33,6 +33,9 @@ Corrected large10k is also a different physical instance from July's deck.
 balances. Current master includes those terms, but its stopping residual still
 checks only diagonal SOC copies. This harness checks all copies. Its dual
 residual repeats consensus changes with the correct copy multiplicity.
+The archived `run_bf.jl` centralized baseline omits those loss terms too;
+correcting displayed equations alone cannot repair the old numerical evidence.
+Both sides of the present comparison use the corrected balances.
 
 The default retains July's phase-aware rho policy: double every five iterations
 until primal consensus first passes, then allow residual-based changes; a
@@ -62,6 +65,30 @@ reference and local OPFs. The local HSL builds are under
 `C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build`. Include
 `hsllib=<DLL path>;linear_system_scaling=none` when selecting them.
 Library existence alone is not evidence that a backend loaded successfully.
+`check_backends.jl` subsequently passed an actual Ipopt solve with each of
+MUMPS, MA57 and MA97 on this machine; see `backend_checks.toml`.
+
+The large10k phase-aware MUMPS warm-up is an explicitly interrupted diagnostic.
+A separately labeled MA57 pilot uses fixed rho=12, the heuristic energy-cost
+curvature scale `2*C_B*kVA_B^2/dt`. That rule is a calibration candidate, not a
+claim of an optimal or validated universal tuning rule. Select fixed rho with
+`TADMM_RHO_POLICY=fixed` and `TADMM_RHO_INIT=12`. The IEEE123/med2522 phase-aware
+MUMPS cases and this MA57/fixed-rho case are different configurations; do not
+present them as a uniform solver/tuning sweep or isolate a MA57 speedup from
+this joint change. Every individual comparison uses the same linear backend
+for its own centralized reference and ADMM stages.
+
+The fixed-rho large10k warm-up was also preserved as an interrupted diagnostic:
+its dual residual passed while original-model primal feasibility decayed slowly.
+The subsequent `_relative_ma57` pilot starts at the same rho=12 and uses relative
+residual balancing from Wohlberg, *ADMM Penalty Parameter Selection by Residual
+Balancing* (2017), https://arxiv.org/abs/1704.06209, Eqs. 49 and 51. With `E`
+replicating the consensus vector, it compares `norm(b-E*z)/max(norm(b),norm(E*z))`
+to `norm(rho*E*(z-z_old))/norm(rho*u)`. Denominators are floored at 1e-12.
+Every five iterations it doubles/halves rho if the normalized ratio exceeds 10,
+with rho bounded in [1e-6,1e6] and scaled duals rescaled. Final ABSOLUTE stopping
+and physical validation thresholds are unchanged. This is an explicit controller
+variant, not a silently substituted result for the July phase-aware policy.
 
 A native conic backend is a separate future comparison. This harness currently
 passes the cone as a smooth quadratic inequality to Ipopt, a general NLP solver.

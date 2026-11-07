@@ -3,7 +3,7 @@ using SHA, TOML, Dates
 BLAS.set_num_threads(1)
 Threads.nthreads()==1 || error("This pilot requires one Julia thread: no parallel period solves")
 
-function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phase="timed")
+function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(d[:T]/24)))), out=nothing, phase="timed")
     T=d[:T]; bs=d[:Bset]; nb=length(bs)
     build0=time_ns()
     stages=[make_model(d,[t];local_window=true,rho=rho0) for t in 1:T]
@@ -14,7 +14,7 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
     multiplicity=[count(s->t in s.times,stages) for t in 1:T]
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
     rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
-    rho_policy in ("phase","residual") || error("unknown rho policy")
+    rho_policy in ("phase","residual","fixed","relative") || error("unknown rho policy")
     primal_seen=false; high_primal_count=0
     rmax=Inf; smax=Inf; ok=false
     tol_r=parse(Float64,get(ENV,"TADMM_PRIMAL_TOL","2.5e-7"))
@@ -22,7 +22,7 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
     details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s")
-    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s")
+    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
         k=iteration; iter0=time_ns(); times=Float64[]; solve_times=Float64[]; local_iterations=Int[]
@@ -52,13 +52,18 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
             j=bs[n]
             z[n,t]=clamp(z[n,t]/multiplicity[t],d[:soc_min][j]*d[:B_R_pu][j],d[:soc_max][j]*d[:B_R_pu][j])
         end
-        r2=0.0; s2=0.0; rmax=0.0; smax=0.0; ncopy=0
+        r2=0.0; s2=0.0; rmax=0.0; smax=0.0; ncopy=0; x2=0.0; z2=0.0; y2=0.0
         for t0 in 1:T,(a,t) in enumerate(stages[t0].times),n in 1:nb
             r=copies[t0][n,a]-z[n,t]; s=rho*(z[n,t]-zold[n,t])
             dual[t0][n,a]+=r
             r2+=r*r; s2+=s*s; rmax=max(rmax,abs(r)); smax=max(smax,abs(s)); ncopy+=1
+            x2+=copies[t0][n,a]^2; z2+=z[n,t]^2; y2+=(rho*dual[t0][n,a])^2
         end
         rr=sqrt(r2/ncopy); ss=sqrt(s2/ncopy)
+        # Wohlberg (2017), Eqs. 49, 51: A selects local energy copies,
+        # B=-E replicates consensus, c=0, and A' y equals the copy multipliers.
+        rrel=sqrt(r2)/max(sqrt(x2),sqrt(z2),1e-12)
+        srel=sqrt(s2)/max(sqrt(y2),1e-12)
         coord_s=(time_ns()-coord0)/1e9
         elapsed+=(time_ns()-iter0)/1e9
         ideal+=maximum(times)+coord_s
@@ -74,7 +79,7 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
             flush(details)
         end
         if io!==nothing
-            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic),',')); flush(io)
+            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic,rrel,srel),',')); flush(io)
         end
         if k==1 || k%25==0
             @printf("TADMM_ITER phase=%s k=%d objective=%.9f physical=%.3e rmax=%.3e smax=%.3e rho=%.5g algorithm_s=%.3f\n",phase,k,metrics.objective,metrics.original_primal,rmax,smax,rho,elapsed); flush(stdout)
@@ -102,7 +107,13 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
                 end
             end
             rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
-        elseif k%10==0
+        elseif rho_policy=="relative" && k%5==0
+            rho_old=rho
+            if rrel>10srel; rho=min(rho*2,1e6)
+            elseif srel>10rrel; rho=max(rho/2,1e-6)
+            end
+            rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
+        elseif rho_policy=="residual" && k%10==0
             rho_old=rho
             if rr>10ss; rho=min(rho*2,1e8)
             elseif ss>10rr; rho=max(rho/2,1e-6)
@@ -128,6 +139,7 @@ function main()
         "blas_threads"=>BLAS.get_num_threads(),"hostname"=>get(ENV,"COMPUTERNAME","unknown"),
         "data_sha256"=>bytes2hex(sha256(read(datafile))),"linear_solver"=>get(ENV,"TADMM_LINEAR_SOLVER","mumps"),
         "rho_policy"=>get(ENV,"TADMM_RHO_POLICY","phase"),"ipopt_extra_options"=>get(ENV,"TADMM_IPOPT_OPTIONS",""),
+        "rho_initial"=>parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(T/24)))),
         "timing_note"=>"Sequential measured wall time. Ideal parallel estimate is sum of per-iteration maximum stage elapsed time plus measured coordinator; never measured parallel speedup.")
     for f in ("model.jl","run.jl","Project.toml","Manifest.toml")
         metadata[f*"_sha256"]=bytes2hex(sha256(read(joinpath(@__DIR__,f))))
