@@ -7,6 +7,12 @@ redundant bounds and explicitly limits unscaled complementarity. See
 `PLATEAU_AUDIT.md` for controlled same-rho evidence and the fresh-run validation
 requirement. Prior frozen campaigns are preserved under their original sources.
 
+**Fresh validation passed:** med2522 T=24 job 31645746 converged in 389 warm-up
+and 389 measured iterations with matching traces and independent OpenDSS checks.
+The original failed run stopped at 5000. Both use rho=3800, increased to 7600
+after iteration 10; no tuning change accounts for this result. The corrected
+large10k T=24 follow-up is job 31645790. See results/accuracy_fix_T24_31645746.
+
 Plot colors follow the existing semantic palette in
 `../plots/plot_convergence_from_csv.jl`: objective #0072B2, primal #009E73,
 dual #E69F00, rho #CC79A7, centralized reference #D55E00 and threshold #505050.

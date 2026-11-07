@@ -7,6 +7,7 @@ import tomllib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter, NullLocator
 from plot_style import PRIMAL, DUAL, RHO, THRESHOLD
 
 old, new, out = map(lambda x: Path(x).resolve(), sys.argv[1:4])
@@ -41,6 +42,9 @@ for rows, label, style in ((old_rows, 'Original harness: warm-up failed at 5000'
 for axis in axes[:3]:
     axis.axhline(1, color=THRESHOLD, linestyle=':', linewidth=.8)
 axes[0].legend(frameon=False, fontsize=9)
+axes[-1].set_yticks(sorted({float(r['rho']) for rows in (old_rows, new_rows) for r in rows}))
+axes[-1].yaxis.set_major_formatter(FuncFormatter(lambda value, pos: f'{value:g}'))
+axes[-1].yaxis.set_minor_locator(NullLocator())
 axes[-1].set_xlabel('ADMM iteration (log scale)')
 fig.suptitle('med2522 T=24: source-voltage redundancy and local-accuracy fix\nSame frozen input, MA57, initial state and rho controller; corrected dispatch passes OpenDSS', fontsize=11)
 fig.savefig(out / 'accuracy-fix-comparison.png', dpi=170)

@@ -49,6 +49,19 @@ the same revised physical model. A fresh med2522 T=24 run must pass full warm-up
 measured restart, objective/physical checks and independent OpenDSS validation
 before claiming an end-to-end fix. Checkpoint replay is never a fresh timing.
 
+Fresh validation outcome: job 31645746 passed full warm-up and measured restart
+in 389 iterations each, matching numerical traces, all original feasibility /
+consensus / dual criteria and independent OpenDSS checks. Initial rho=3800 and
+its single increase to 7600 after iteration 10 match the failed run. The
+controlled tests and the fresh run therefore support the numerical-modeling /
+local-accuracy explanation without a penalty-policy change. Full measured loop
+time is 304.555781 s; centralized wall time 14.971893 s. Convergence is repaired;
+this is not a claim that the retained penalty is optimal or performance is yet
+competitive. See results/accuracy_fix_T24_31645746 for frozen evidence and plots.
+Job 31645790 is the one corrected-source large10k T=24 follow-up, gated on that
+successful validation. The earlier backend iteration counts are confounded by
+the local-accuracy defect and should not be treated as a universal backend ranking.
+
 The earlier 10k T=24 MA57 run has now completed all validation in 793 iterations;
 its original-source evidence is retained. It is not silently relabeled as a run
 of this revised source.
