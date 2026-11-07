@@ -1,5 +1,12 @@
 # Corrected tADMM reviewer-response experiments — November 7, 2026
 
+**Numerical-modeling update:** the T=24 plateau audit found redundant fixed-root
+voltage bounds creating opposing ~2.66e9 multipliers and inaccurate local
+termination under the scaled tolerance. The common model now removes those
+redundant bounds and explicitly limits unscaled complementarity. See
+`PLATEAU_AUDIT.md` for controlled same-rho evidence and the fresh-run validation
+requirement. Prior frozen campaigns are preserved under their original sources.
+
 Plot colors follow the existing semantic palette in
 `../plots/plot_convergence_from_csv.jl`: objective #0072B2, primal #009E73,
 dual #E69F00, rho #CC79A7, centralized reference #D55E00 and threshold #505050.

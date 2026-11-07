@@ -19,6 +19,9 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_silent(m)
     set_optimizer_attribute(m,"tol",1e-9)
     set_optimizer_attribute(m,"constr_viol_tol",1e-9)
+    # tol is scaled: huge multipliers can otherwise permit inaccurate proximal
+    # solves. Enforce an explicit absolute complementarity tolerance as well.
+    set_optimizer_attribute(m,"compl_inf_tol",1e-8)
     set_optimizer_attribute(m,"acceptable_iter",0)
     set_optimizer_attribute(m,"max_iter",3000)
     set_optimizer_attribute(m,"bound_relax_factor",0.0)
@@ -62,6 +65,13 @@ function make_model(d, owned; local_window=false, rho=0.0)
         end
         @constraint(m,v[root,t]==1.05^2)
         for j in ns
+            if j==root
+                # The equality fixes root voltage at its permitted maximum.
+                # An additional upper bound is redundant and yielded opposing
+                # ~1e9 multipliers, distorting Ipopt's scaled stopping test.
+                d[:Vminpu][j]<=1.05<=d[:Vmaxpu][j] || error("Source voltage outside original bounds")
+                continue
+            end
             set_lower_bound(v[j,t],d[:Vminpu][j]^2)
             set_upper_bound(v[j,t],d[:Vmaxpu][j]^2)
         end
