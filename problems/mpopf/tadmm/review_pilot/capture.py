@@ -9,7 +9,7 @@ pilot = Path(__file__).resolve().parent
 root = pilot.parents[3]
 out = Path(sys.argv[1]).resolve()
 system = sys.argv[2]
-files = [p for p in pilot.iterdir() if p.is_file() and p.suffix in ('.jl', '.py', '.ps1', '.toml')]
+files = [p for p in pilot.iterdir() if p.is_file() and p.suffix in ('.jl', '.py', '.ps1', '.sh', '.toml')]
 files += sorted((root / 'test_networks' / system).glob('*.dss'))
 files += [root / 'test_networks' / 'parse_opendss.jl']
 shared = root / 'problems/mpopf/spar_ddp/examples/power_system'
@@ -22,4 +22,5 @@ for p in files:
     shutil.copy2(p, dest)
     rows.append(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {rel.as_posix()}\n')
 (out / 'source.sha256').write_text(''.join(rows))
-(out / 'base_commit.txt').write_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True))
+revision = (root / 'source.commit').read_text() if (root / 'source.commit').is_file() else subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True)
+(out / 'base_commit.txt').write_text(revision)

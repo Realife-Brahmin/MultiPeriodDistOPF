@@ -2,13 +2,17 @@
 using JuMP, Ipopt, LinearAlgebra, TOML
 BLAS.set_num_threads(1)
 folder=get(ENV,"HSL_LIB_DIR","C:/Users/Aryan Ritwajeet Jha/Documents/hsl/build")
-ENV["PATH"]=folder*";"*ENV["PATH"]
+Sys.iswindows() && (ENV["PATH"]=folder*";"*ENV["PATH"])
 results=Dict{String,Any}()
-for backend in ("mumps","ma57","ma97")
+for backend in split(get(ENV,"TADMM_CHECK_BACKENDS","ma57,ma97"),',')
     m=Model(Ipopt.Optimizer); set_silent(m)
     set_optimizer_attribute(m,"linear_solver",backend)
     set_optimizer_attribute(m,"linear_system_scaling","none")
-    backend=="mumps" || set_optimizer_attribute(m,"hsllib",joinpath(folder,backend=="ma57" ? "libma57.dll" : "libhsl_ma97.dll"))
+    if backend!="mumps"
+        default=Sys.iswindows() ? joinpath(folder,backend=="ma57" ? "libma57.dll" : "libhsl_ma97.dll") :
+            joinpath(homedir(),"opt/hsl-private/install",backend=="ma57" ? "ma57-3.11.3-metis/lib/libma57.so" : "hsl_ma97-2.8.1-metis-openmp/lib/libhsl_ma97.so")
+        set_optimizer_attribute(m,"hsllib",get(ENV,"HSL_"*uppercase(backend)*"_LIB",default))
+    end
     @variable(m,x>=0)
     @variable(m,y>=0)
     @constraint(m,x+y==3)

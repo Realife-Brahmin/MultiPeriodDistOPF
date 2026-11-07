@@ -5,7 +5,10 @@ import json
 from pathlib import Path
 import re
 import sys
-import tomllib
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
 out = Path(sys.argv[1]).resolve()
 summary = tomllib.loads((out / 'summary.toml').read_text())
