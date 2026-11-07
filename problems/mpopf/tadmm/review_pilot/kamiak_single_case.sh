@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # First assessment: one chosen backend and one measured run, after warm-up.
 set -euo pipefail
-C=$(realpath "$1"); BASE=$(realpath "$2"); SYS=$3; T=$4; SOLVER=$5
+C=$(realpath "$1"); BASE=$(realpath "$2"); SYS=$3; T=$4; SOLVER=${5:-ma57}
 case $SYS in ieee2522C_1ph|large10kC_1ph) ;; *) exit 2;; esac
 [[ $T == 24 ]] || { echo 'This launch protocol is frozen for T=24'; exit 2; }
-case $SOLVER in ma57|ma97) ;; *) exit 2;; esac
+[[ $SOLVER == ma57 ]] || { echo 'User-selected protocol: MA57 only'; exit 2; }
 cd "$C/source"
 PILOT=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH

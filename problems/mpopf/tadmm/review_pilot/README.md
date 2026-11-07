@@ -17,8 +17,12 @@ one measured run per case initially, rather than a two-backend/two-repeat sweep.
 Compilation warm-up and the measured restart remain distinct; repeated benchmark
 trials are deferred until needed for a later finalized comparison.
 
-MA57 is selected provisionally for tADMM on med2522 and large10k using the
-available convergence evidence. The active med2522 T=24 MA57 case in task
+The user has selected **MA57 only for future tADMM workstream runs**, including
+their centralized reference. The first-pass launcher defaults to MA57 and
+rejects another backend. Older comparison/diagnostic scripts remain historical
+tools and do not authorize further MA97 or MUMPS runs. Available evidence favors
+MA57 in these cases; this is a workstream choice, not a universal solver ranking.
+The previously active med2522 T=24 MA57 case in task
 31643458_6 is retained. Duplicate MA97 task 31643458_7 was canceled, and pending
 tasks 8/9 (large10k T=6) and 10/11 (old paired T=24 repeats) were canceled.
 They are superseded, not numerical failures; their existing evidence is preserved.
@@ -39,6 +43,14 @@ node family and 25-CPU numerical budget. MA97 took about 25% longer here. These
 are partial-campaign optimizer timings, not a completed repeated benchmark or
 proof that the centralized backend difference is always small. Backend choice
 for a later final comparison can be revisited without duplicating every ADMM run.
+That earlier option is now superseded by the user's MA57-only direction.
+
+Latest T=24 status: med2522 task 31643458_6 stopped at its 5000-iteration warm-up
+cap with a persistent two-cycle; it has no validated measured result. large10k
+job 31643647 converged in 793 warm-up iterations and its measured restart is
+running. Do not rerun the unchanged med2522 configuration merely to extend its
+cap. Diagnose the observed plateau and inner-solve accuracy before selecting
+the next penalty experiment.
 
 This is a fresh experimental harness. Historical July drivers and result rows
 are preserved. It implements the same overlapping temporal consensus ADMM:
