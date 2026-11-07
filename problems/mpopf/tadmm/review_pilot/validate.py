@@ -19,6 +19,10 @@ for a, b in zip(warm, timed):
     for key in ('objective', 'original_primal', 'r_max', 's_max', 'rho'):
         assert abs(float(a[key]) - float(b[key])) <= 1e-10 * max(1, abs(float(a[key]))), (key, a, b)
 checks = {}
+for name, rows in (('warmup', warm), ('trace', timed)):
+    sub = list(csv.DictReader((out / f'{name}_subproblems.csv').open()))
+    assert len(sub) == len(rows) * summary['T']
+    assert all(s['status'] in ('LOCALLY_SOLVED', 'OPTIMAL') for s in sub)
 for method in ('central', 'tadmm'):
     text = (out / f'{method}_opendss.log').read_text(encoding='utf-8-sig')
     assert 'converged=true' in text

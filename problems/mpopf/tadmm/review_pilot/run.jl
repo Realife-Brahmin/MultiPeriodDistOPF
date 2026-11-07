@@ -13,14 +13,19 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
     copies=[zeros(nb,length(s.times)) for s in stages]
     multiplicity=[count(s->t in s.times,stages) for t in 1:T]
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
+    rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
+    rho_policy in ("phase","residual") || error("unknown rho policy")
+    primal_seen=false; high_primal_count=0
     rmax=Inf; smax=Inf; ok=false
     tol_r=parse(Float64,get(ENV,"TADMM_PRIMAL_TOL","2.5e-7"))
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
+    details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
+    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s")
     io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
-        k=iteration; iter0=time_ns(); times=Float64[]; solve_times=Float64[]
+        k=iteration; iter0=time_ns(); times=Float64[]; solve_times=Float64[]; local_iterations=Int[]
         for t0 in 1:T
             s=stages[t0]; tick=time_ns()
             # Updating an objective invalidates JuMP's cached solution: capture
@@ -33,6 +38,7 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
                 set_objective_coefficient(s.m,s.b[j,t],s.b[j,t],rho/2)
             end
             push!(solve_times,solve_checked!(s))
+            push!(local_iterations,MOI.get(s.m,MOI.BarrierIterations()))
             for (n,j) in enumerate(bs),(a,t) in enumerate(s.times)
                 copies[t0][n,a]=value(s.b[j,t])
             end
@@ -61,6 +67,12 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
         # end-to-end wall time below includes it, warm-up and setup are separate.
         diag0=time_ns(); us,bb=dispatch(stages,d;z=z); metrics=physical_metrics(d,us,bb)
         diagnostic+=(time_ns()-diag0)/1e9
+        if details!==nothing
+            for t0 in 1:T
+                println(details,join((k,t0,string(termination_status(stages[t0].m)),local_iterations[t0],solve_times[t0],times[t0]),','))
+            end
+            flush(details)
+        end
         if io!==nothing
             println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic),',')); flush(io)
         end
@@ -70,10 +82,27 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
         if rmax<=tol_r && smax<=tol_s && metrics.original_primal<=2tol_r
             ok=true; break
         end
-        # Standard scaled-dual residual balancing. All copies, including edge
-        # multiplicities, enter BOTH residual norms. This replaces July's
-        # diagonal-only stopping check and phase-specific heuristics.
-        if k%10==0
+        # July's phase-aware policy, now with ALL copies monitored. Never weaken
+        # consensus enforcement merely because the dimensional dual residual is
+        # numerically larger while primal consensus remains infeasible.
+        if rho_policy=="phase"
+            rho_old=rho
+            high_primal_count=rmax>2tol_r ? high_primal_count+1 : (rmax<tol_r/2 ? 0 : high_primal_count)
+            if high_primal_count>=15
+                rho=min(1e6,2.5rho); high_primal_count=0
+            end
+            if k%5==0
+                primal_seen |= rmax<=tol_r
+                if !primal_seen && rmax>tol_r
+                    rho=min(1e6,2rho)
+                elseif rr>5ss
+                    rho=min(1e6,2rho)
+                elseif ss>5rr && rmax<=tol_r
+                    rho=max(1.0,rho/5)
+                end
+            end
+            rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
+        elseif k%10==0
             rho_old=rho
             if rr>10ss; rho=min(rho*2,1e8)
             elseif ss>10rr; rho=max(rho/2,1e-6)
@@ -82,6 +111,7 @@ function run_admm(d; maxiter=5000, rho0=3000.0*sqrt(d[:T]/24), out=nothing, phas
         end
     end
     io===nothing || close(io)
+    details===nothing || close(details)
     wall_s=(time_ns()-start)/1e9
     @printf("TADMM_DONE phase=%s converged=%s iterations=%d objective=%.12f primal=%.3e rmax=%.3e smax=%.3e algorithm_s=%.6f ideal_parallel_estimate_s=%.6f wall_with_diagnostics_s=%.6f\n",phase,ok,k,metrics.objective,metrics.original_primal,rmax,smax,elapsed,ideal,wall_s); flush(stdout)
     return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s)
@@ -97,6 +127,7 @@ function main()
         "C_B"=>d[:C_B],"terminal_soc_penalty"=>0.0,"periodic"=>true,"julia_threads"=>Threads.nthreads(),
         "blas_threads"=>BLAS.get_num_threads(),"hostname"=>get(ENV,"COMPUTERNAME","unknown"),
         "data_sha256"=>bytes2hex(sha256(read(datafile))),"linear_solver"=>get(ENV,"TADMM_LINEAR_SOLVER","mumps"),
+        "rho_policy"=>get(ENV,"TADMM_RHO_POLICY","phase"),"ipopt_extra_options"=>get(ENV,"TADMM_IPOPT_OPTIONS",""),
         "timing_note"=>"Sequential measured wall time. Ideal parallel estimate is sum of per-iteration maximum stage elapsed time plus measured coordinator; never measured parallel speedup.")
     for f in ("model.jl","run.jl","Project.toml","Manifest.toml")
         metadata[f*"_sha256"]=bytes2hex(sha256(read(joinpath(@__DIR__,f))))
@@ -104,9 +135,13 @@ function main()
     open(io->TOML.print(io,metadata),joinpath(out,"metadata.toml"),"w")
     # Centralized reference: full warm-up, then exactly the original starts.
     build0=time_ns(); central=make_model(d,collect(1:T)); central_build=(time_ns()-build0)/1e9
+    set_optimizer_attribute(central.m,"output_file",joinpath(out,"central_ipopt_warmup.log"))
+    set_optimizer_attribute(central.m,"file_print_level",5)
+    set_optimizer_attribute(central.m,"print_timing_statistics","yes")
     warm0=time_ns(); solve_checked!(central); central_warm=(time_ns()-warm0)/1e9
     warm_iters=MOI.get(central.m,MOI.BarrierIterations())
     set_start_value.(central.vars,central.initial)
+    set_optimizer_attribute(central.m,"output_file",joinpath(out,"central_ipopt_timed.log"))
     tick=time_ns(); central_solver=solve_checked!(central); central_wall=(time_ns()-tick)/1e9
     central_iters=MOI.get(central.m,MOI.BarrierIterations())
     warm_iters==central_iters || error("central warm-up and timed iteration counts differ")

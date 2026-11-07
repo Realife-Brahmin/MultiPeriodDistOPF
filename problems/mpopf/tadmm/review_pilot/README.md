@@ -34,10 +34,14 @@ balances. Current master includes those terms, but its stopping residual still
 checks only diagonal SOC copies. This harness checks all copies. Its dual
 residual repeats consensus changes with the correct copy multiplicity.
 
-The old phase-specific rho heuristics are replaced by standard residual balancing
-every ten iterations, with scaled-dual rescaling when rho changes. rho starts at
-3000*sqrt(T/24), before any tuning. This is an algorithm-implementation change
-and must be disclosed in a July-to-current comparison.
+The default retains July's phase-aware rho policy: double every five iterations
+until primal consensus first passes, then allow residual-based changes; a
+15-iteration high-primal watchdog multiplies rho by 2.5. Every change rescales
+the scaled duals. rho starts at 3000*sqrt(T/24), bounded between 1 and 1e6.
+Phase transitions now use the maximum error across ALL copies. A generic
+ten-iteration residual-balancing variant (`TADMM_RHO_POLICY=residual`) is retained
+as a diagnostic; it reduced rho prematurely in the first med2522 warm-up and
+that diagnostic was interrupted and preserved, not reported as converged.
 
 Battery-power variables exist only where local dynamics need them; unconstrained
 powers for distant periods are removed. Dynamics at t and t+1 constrain the
