@@ -1,5 +1,37 @@
 # Corrected tADMM reviewer-response experiments — November 7, 2026
 
+## Current first-assessment scope (user update)
+
+Use T>=24 to assess performance and penalty policies. T=6 evidence is retained
+as correctness/debugging material, not an adequate horizon for those conclusions.
+T=12 is a diagnostic fallback only. The user requested one selected backend and
+one measured run per case initially, rather than a two-backend/two-repeat sweep.
+Compilation warm-up and the measured restart remain distinct; repeated benchmark
+trials are deferred until needed for a later finalized comparison.
+
+MA57 is selected provisionally for tADMM on med2522 and large10k using the
+available convergence evidence. The active med2522 T=24 MA57 case in task
+31643458_6 is retained. Duplicate MA97 task 31643458_7 was canceled, and pending
+tasks 8/9 (large10k T=6) and 10/11 (old paired T=24 repeats) were canceled.
+They are superseded, not numerical failures; their existing evidence is preserved.
+Job 31643647 instead runs one large10k T=24 MA57 case via
+`kamiak_single_case.sh`, with the same frozen numerical source and CPU policy.
+
+The old active paired launcher would otherwise start MA97 after med2522 MA57.
+A reserved MA97 output directory with `SKIPPED_BY_USER_REQUEST.txt` deliberately
+activates its existing refusal-to-overwrite guard. No numerical source is changed.
+The enclosing paired job may therefore exit 2 after the MA57 case is validated;
+read the MA57 directory's own COMPLETE and validation reports, rather than
+classifying this planned orchestration exit as a failed MA57 solve. The skipped
+directory has no numerical metadata or COMPLETE marker and is never a result.
+
+Preliminary centralized optimizer timings already available for med2522 T=24
+are 21.322863 s (MA57) and 26.671025 s (MA97), one observation each on the selected
+node family and 25-CPU numerical budget. MA97 took about 25% longer here. These
+are partial-campaign optimizer timings, not a completed repeated benchmark or
+proof that the centralized backend difference is always small. Backend choice
+for a later final comparison can be revisited without duplicating every ADMM run.
+
 This is a fresh experimental harness. Historical July drivers and result rows
 are preserved. It implements the same overlapping temporal consensus ADMM:
 each period owns one branch-flow OPF, local battery-energy copies span that
