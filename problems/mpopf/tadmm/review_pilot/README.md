@@ -1,4 +1,4 @@
-# Corrected tADMM reviewer-response pilot — 309, November 7, 2026
+# Corrected tADMM reviewer-response experiments — November 7, 2026
 
 This is a fresh experimental harness. Historical July drivers and result rows
 are preserved. It implements the same overlapping temporal consensus ADMM:
@@ -57,7 +57,9 @@ well-defined. No terminal condition is introduced by an end window.
 tADMM does not call FilterDDP/SPARDDP. It uses JuMP and Ipopt. The small
 `Project.toml` and pinned `Manifest.toml` avoid reinstantiating the historical
 plotting/interactive environment or requiring Gurobi. The DDP environment and
-defaults are unchanged. This pilot uses Julia 1.12.6 on ETRL309-ARYAN.
+defaults are unchanged. The sequential pilot uses Julia 1.12.6 on ETRL309-ARYAN;
+Kamiak uses 1.12.4 with a separately instantiated Linux environment and recorded
+package manifest.
 
 MUMPS is the initial Ipopt linear-system backend. `TADMM_LINEAR_SOLVER=ma57`
 or `ma97` and `TADMM_IPOPT_OPTIONS` select alternatives for BOTH the centralized
@@ -134,7 +136,7 @@ of the relaxed problem alone is never called AC feasibility.
 
 ## Timing interpretation
 
-Everything runs sequentially on 309: one Julia thread, one BLAS thread, one
+The historical 309 pilots run sequentially: one Julia thread, one BLAS thread, one
 OpenMP thread. No period-worker parallel simulation is performed.
 
 - `central_solver_s`: Ipopt-reported centralized solve time, after warm-up.
@@ -151,3 +153,66 @@ Setup, builds, warm-up and validation are reported separately. Process samples
 record working set, private bytes and CPU time every 0.5 s. The peak includes
 setup/warm-up and resident sequential models; it is not parallel aggregate RAM.
 These are exploratory single-repeat pilots, not publication-ready speedup rows.
+
+## Kamiak protocol and frozen campaign
+
+The user requested MA57/MA97 first on Kamiak; no Kamiak MUMPS runs are scheduled.
+The numerical source is frozen at commit
+`4fbae546bcc7ae6b4d53f6a1ed1d766dc6eb330e` in
+`/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/source`.
+Source and native Linux input-export SHA256 manifests are checked before every
+campaign task. Orchestration is stored separately in `harness/` and hashed per
+task, so later reporting work cannot change a running numerical experiment.
+
+`parallel_workers.jl` uses persistent Julia processes, with local subproblems
+assigned to workers and concurrent remote solves followed by ordered consensus
+reduction. Workers have one Julia, BLAS and OpenMP thread each. Each worker is
+pinned to its own physical CPU; another CPU is reserved for coordination.
+The correctness gate uses two workers; system verification and benchmarks use
+one worker per period. Workers rebuild models independently for the full warm-up
+and the measured restart. Every stage result and actual worker layout is checked.
+
+For timed cases, reserve all 64 physical CPUs on a 64-CPU Gold 6438Y+ node
+(`OverSubscribe=NO`); Kamiak rejects the `--exclusive` flag. Numerical work is
+restricted to T+1 CPUs: 7 for T=6 and 25 for T=24. The centralized MA97 baseline
+may use that same CPU budget through OpenMP; MA57 uses one OpenMP thread.
+Julia and BLAS remain single-threaded. This is a comparison under the same CPU
+budget, not a claim that both algorithms internally use every available core.
+Verification jobs share nodes and must not be reported as benchmark timings.
+
+`optimizer_loop_wall_s` is the primary measured parallel ADMM loop time. It
+includes actual worker communication, coordination, diagnostics, checkpointing
+and output. `tadmm_algorithm_s` excludes diagnostics and output and is only a
+breakdown. The ideal parallel estimate remains hypothetical and must never be
+substituted for measured runtime. Warm-up, model construction and independent
+OpenDSS validation are separate phases. `phase_events.csv`, per-process CPU/RSS,
+aggregate private resident/PSS sampling, and available Slurm cgroup peaks support
+resource analysis. Aggregate RSS can double-count shared pages.
+
+Checkpoints every 25 iterations preserve numerical state and source identities.
+A restart from a checkpoint is not a fresh contiguous timing result; no automatic
+checkpoint resume is used for the reported timed solves.
+
+Completed gates:
+
+- Job 31643403: IEEE123 T=6 serial MA57 and MA97, full convergence and OpenDSS.
+- Job 31643439: serial reference plus two-worker MA57/MA97, all 73 iterations;
+  MA57 objective identical to serial, MA97 relative difference 6.16e-13 or less.
+  All optimization, warm-up/restart, worker-layout, source and OpenDSS checks pass.
+
+Submitted next, with results still pending when this note was written:
+
+- Jobs 31643454 and 31643455: med2522 and large10k T=6, six workers, both backends.
+- Array 31643458: T=6/T=24, all three systems, two repeats per backend; dependent
+  on successful completion of both system gates. At most two task groups run
+  concurrently. Backend order reverses on the second repeat. Completion markers
+  require both backends' validated runs; partial/preempted attempts are preserved.
+
+The normalized relative-residual controller and curvature-scaled initial rho
+are fixed across this campaign. These are experiments with the corrected
+formulation, not a reproduction of July's omitted-loss model. The existing
+soft-terminal DDP campaign remains a different optimization problem. A matched
+DDP comparison needs the same free-terminal convention and hardware policy.
+Keep full-convergence timings separate from any later posthoc 0.1% objective /
+original-feasibility scoring and select the faster backend by two-repeat median,
+not the fastest individual observation.
