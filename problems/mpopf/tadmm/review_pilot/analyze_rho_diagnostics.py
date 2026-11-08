@@ -24,8 +24,11 @@ for i,case in enumerate(cases):
         assert all(m[k]==variants[0][k] for k in ('input_sha256','C_B','T','linear_solver','stopping_rule','reference_objective'))
     x=[int(r['iteration']) for r in trace]
     mode=m.get('diagnostics_mode','cached')
-    label=f"rho0={m['rho_initial']:g}, {m['rho_policy']}, {mode} checks"
-    labels.append(label)
+    tau=m.get('rho_tau_decrease',5)
+    policy='fixed' if m['rho_policy']=='fixed' else f'phase /{tau:g}'
+    if m.get('rho_watchdog',False):policy+=' + watchdog'
+    label=f"rho0={m['rho_initial']:g}, {policy}, {mode} checks"
+    labels.append(f"rho0={m['rho_initial']:g}\n{policy}, {mode}")
     style=['-', '--', '-.', ':'][i%4]
     for ax,y in [(axes[0,0],[float(r['owned_r_rms']) for r in trace]),
         (axes[0,1],[float(r['original_primal']) for r in trace]),
@@ -33,7 +36,7 @@ for i,case in enumerate(cases):
         ax.semilogy(x,y,ls=style,color=TADMM,label=label)
     row={k:m[k] for k in ('rho_initial','iterations','historical_stopped','original_primal','objective','reference_objective',
         'algorithm_s','loop_wall_s','C_B','input_sha256','T','linear_solver','stopping_rule')}
-    row.update(rho_policy=m['rho_policy'],diagnostics_mode=mode,objective_relative_gap=abs(m['objective']-m['reference_objective'])/abs(m['reference_objective']),
+    row.update(rho_policy=m['rho_policy'],rho_tau_decrease=tau,rho_watchdog=m.get('rho_watchdog',False),diagnostics_mode=mode,objective_relative_gap=abs(m['objective']-m['reference_objective'])/abs(m['reference_objective']),
         physical_NO_iteration=m['physical_NO_iteration'],dispatch_s=m.get('dispatch_s'),physical_check_s=m.get('physical_check_s'),
         numerical_prefix_matches_prior_exact=v['numerical_prefix_matches_prior_exact'],max_voltage_difference_pu=v['max_voltage_difference_pu'])
     variants.append(row)
