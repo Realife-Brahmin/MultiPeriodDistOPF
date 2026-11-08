@@ -1,0 +1,33 @@
+julia = "1.12.6"
+base_kva = 1000.0
+instance_sha256 = "f18ebdc099ec2613402a2a9999bf8585caf6e6a3b5932b25c5b070929739c970"
+T = 24
+batteries = 1020
+
+["rho15000/point_00103.jls"]
+max_SOC_error_period = 21
+integrated_energy_bound_pu_h = 0.000550818552633725
+consensus_energy_bound_pu_h = 0.0
+integrated_energy_bound_kwh = 0.550818552633725
+max_energy_error_bus = 88006
+max_dynamics_error_kwh = 0.22460051584194396
+max_integrated_consensus_difference_kwh = 0.5724606269893462
+max_power_bound_kw = 0.0
+max_SOC_bound_percentage_points = 0.041315522999829365
+snapshot_sha256 = "6f174d7ad16a0408b52a6e4d1d0de58f75956923c6689f0f17a0b167f9bc551e"
+max_energy_error_period = 21
+max_SOC_error_bus = 88006
+
+["rho60000/point_00101.jls"]
+max_SOC_error_period = 21
+integrated_energy_bound_pu_h = 0.0005511501977619737
+consensus_energy_bound_pu_h = 0.0
+integrated_energy_bound_kwh = 0.5511501977619737
+max_energy_error_bus = 88006
+max_dynamics_error_kwh = 0.24917634339211014
+max_integrated_consensus_difference_kwh = 0.5727947896527752
+max_power_bound_kw = 0.0
+max_SOC_bound_percentage_points = 0.041340398872035236
+snapshot_sha256 = "a85c07bd9c6b345eca682df83af724299dba857515e2cb7a6d3498cbb68b2ab2"
+max_energy_error_period = 21
+max_SOC_error_bus = 88006

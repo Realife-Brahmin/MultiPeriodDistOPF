@@ -1,0 +1,40 @@
+# Passive saved-array audit; no model construction or optimization.
+using Serialization,TOML,SHA
+include(joinpath(@__DIR__,"..","..","spar_ddp/examples/power_system/control_layout.jl"))
+function energy_audit(folder,out)
+    d=deserialize(joinpath(folder,"instance.jls"));ix,_=control_layout(d)
+    report=Dict{String,Any}("julia"=>string(VERSION),"T"=>d[:T],"batteries"=>length(d[:Bset]),
+        "base_kva"=>d[:kVA_B],"instance_sha256"=>bytes2hex(sha256(read(joinpath(folder,"instance.jls")))))
+    for (root,_,files) in walkdir(folder),file in files
+        endswith(file,".jls") && file!="instance.jls" || continue
+        path=joinpath(root,file);sol=deserialize(path)
+        energy=Float64[d[:B0_pu][j] for j in d[:Bset]]
+        bound=0.0;socpp=0.0;dyn=0.0;drift=0.0;power=0.0;consensusbound=0.0
+        bus=0;period=0;socbus=0;soctime=0
+        for t in 1:d[:T]
+            pb=sol[:u][t][ix.pb]
+            for (n,j) in enumerate(d[:Bset])
+                cap=d[:B_R_pu][j];lo=d[:soc_min][j]*cap;hi=d[:soc_max][j]*cap
+                energy[n]-=d[:delta_t_h]*pb[n]
+                error=max(lo-energy[n],energy[n]-hi,0.0)
+                if error>bound;bound=error;bus=j;period=t;end
+                if 100error/cap>socpp;socpp=100error/cap;socbus=j;soctime=t;end
+                prev=t==1 ? d[:B0_pu][j] : sol[:B][n,t-1]
+                dyn=max(dyn,abs(sol[:B][n,t]-prev+d[:delta_t_h]*pb[n]))
+                drift=max(drift,abs(sol[:B][n,t]-energy[n]))
+                power=max(power,abs(pb[n])-d[:P_B_R_pu][j])
+                consensusbound=max(consensusbound,lo-sol[:B][n,t],sol[:B][n,t]-hi)
+            end
+        end
+        key=replace(relpath(path,folder),'\\'=>'/')
+        report[key]=Dict("integrated_energy_bound_pu_h"=>bound,"integrated_energy_bound_kwh"=>bound*d[:kVA_B],
+            "max_SOC_bound_percentage_points"=>socpp,"max_energy_error_bus"=>bus,"max_energy_error_period"=>period,
+            "max_SOC_error_bus"=>socbus,"max_SOC_error_period"=>soctime,
+            "max_dynamics_error_kwh"=>dyn*d[:kVA_B],"max_integrated_consensus_difference_kwh"=>drift*d[:kVA_B],
+            "consensus_energy_bound_pu_h"=>consensusbound,"max_power_bound_kw"=>power*d[:kVA_B],
+            "snapshot_sha256"=>bytes2hex(sha256(read(path))))
+        println(key," ",report[key])
+    end
+    open(io->TOML.print(io,report),out,"w")
+end
+energy_audit(ARGS...)
