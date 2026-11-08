@@ -13,6 +13,10 @@ function energy_audit(folder,out)
         endswith(file,".jls") && file!="instance.jls" || continue
         path=joinpath(root,file)
         occursin("warmup",relpath(path,folder)) && continue
+        firstpart=first(splitpath(relpath(path,folder)))
+        if get(ENV,"TADMM_AUDIT_VALIDATED_ONLY","0")=="1" && startswith(firstpart,"rho")
+            isfile(joinpath(folder,"validation_"*firstpart*".json")) || continue
+        end
         sol=deserialize(path)
         haskey(sol,:u) && haskey(sol,:B) || continue
         energy=Float64[d[:B0_pu][j] for j in d[:Bset]]
@@ -54,7 +58,7 @@ function energy_audit(folder,out)
             "consensus_energy_bound_pu_h"=>consensusbound,"max_power_bound_kw"=>power*d[:kVA_B],
             "voltage_lower_binding_nonroot"=>lower_binding,"voltage_upper_binding_nonroot"=>upper_binding,
             "battery_power_binding"=>power_binding,"consensus_SOC_binding"=>energy_binding,
-            "voltage_power_binding_tolerance_pu"=>1e-6,"SOC_binding_tolerance_fraction"=>1e-6,
+            "voltage_squared_binding_tolerance"=>1e-6,"power_binding_tolerance_pu"=>1e-6,"SOC_binding_tolerance_fraction"=>1e-6,
             "normalized_cone_gap"=>normalized_cone,
             "normalized_cone_gap_definition"=>"abs(v*ell-P^2-Q^2)/max(1,abs(v*ell),P^2+Q^2)",
             "thermal_upper_constraints"=>"not modeled in this pilot; no thermal binding count claimed",

@@ -1,11 +1,55 @@
 # Large10k T24/T48/T96 rho sweep
 
 Frozen campaign source: 492451e3a3dfdf2cdc48273db75e71656374a8a8.
-Input/model gate 31652339 passed. Jobs: T24 31652340 (completed), T48 31652341
-and T96 31652342 (running at this checkpoint). All candidate outcomes will be
+Input/model gate 31652339 passed. Jobs: T24 31652340 and T48 31652341 completed.
+T96 31652342 (rho60000 first) and 31653264 (rho240000 first) are running at this
+checkpoint. All candidate outcomes will be
 retained; a completed collection validator does not imply physical feasibility.
 The [predeclared campaign plan](../../HORIZON_SWEEP_NOV08.md) states settings,
 resource limits, stopping rules and the extrapolated T96 anchor.
+
+## Completed T48 and remaining T96
+
+Both T48 starts reach the same final RMS/dual goal as T24. Starting rho30000
+takes 404 iterations / 822.0793 s core; rho120000 takes 322 / 653.9158 s.
+Their final relative objective gaps are 3.25e-8 / 3.28e-7. The fully converged
+central reference takes 86.3320 s. Thus neither tested start provides a timing
+advantage here. The historical paper-style cost/residual milestone occurs at
+98 / 172.8192 s and 95 / 166.8356 s; these earlier points have larger physical
+errors and are not substituted for final convergence.
+
+The independently reconstructed endpoint energy-bound errors are only
+0.224511 / 0.357637 kWh, or 0.011226 / 0.018668 percentage points of SOC.
+Maximum per-step energy-dynamics mismatches are 0.067092 / 0.093826 kWh.
+Consensus-energy and battery-power bound violations are zero. Normalized
+cone gaps are 8.87e-7 / 8.88e-7, using the definition in the raw audit.
+All 22 endpoint/unique-checkpoint OpenDSS records converge with zero voltage
+violations and maximum optimizer/DSS voltage difference <=1.49e-10 pu.
+This validates network flow agreement separately from battery consistency.
+No explicit line thermal upper bounds are modeled in this pilot.
+
+T48 measured aggregate PSS peaks at 5.02 GiB centrally and 31.20 / 31.68 GiB
+for the two tADMM arms (25 processes). The whole two-candidate workflow takes
+4290.3 s including full warmups and validation. These are single measured
+trajectories, not repeated benchmark medians.
+
+See the [combined convergence figure](analysis-T24-T48/horizon-convergence.png),
+[summary](analysis-T24-T48/summary.json), [T48 SOC figure](T48-SOC.png), and
+[native passive audit](campaign/posthoc/T48-all-points.toml). The archive
+horizon-T48-31652341.tgz has SHA256
+924f8499810a683b3d705d5d4ff25ab59f7f2473c6c79e900df3cda1fb90836f.
+
+The [selection manifest](selection.json) records the six original candidate
+configurations before either T96 arm completes. Once T48 freed an allocation,
+the same frozen numerical source was launched with reversed T96 rho order.
+Each batch will be stopped only after its distinct first arm has a completed
+assessment and per-arm validation, preventing duplicate second-arm work.
+The administrative watcher records the cancellation reason and validation;
+raw batch metadata will remain unchanged and incomplete as appropriate.
+Both T96 central measurements and all extra startup costs will be retained.
+Passive post-job audit 31653463 depends on both batches ending; it accepts
+completed per-arm records without requiring a whole-batch completion marker.
+No controller or solver change was made to obtain this scheduling split.
 
 ## Completed T24
 

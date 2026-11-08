@@ -387,27 +387,7 @@
           },
           "rho_per_horizon": 625.0,
           "all_milestone_opendss": {
-            "point_00002.jls": {
-              "converged": true,
-              "max_voltage_difference_pu": 6.48e-11,
-              "zero_voltage_violations": true
-            },
-            "point_00065.jls": {
-              "converged": true,
-              "max_voltage_difference_pu": 1.48e-10,
-              "zero_voltage_violations": true
-            },
-            "point_00102.jls": {
-              "converged": true,
-              "max_voltage_difference_pu": 1.48e-10,
-              "zero_voltage_violations": true
-            },
-            "point_00103.jls": {
-              "converged": true,
-              "max_voltage_difference_pu": 1.48e-10,
-              "zero_voltage_violations": true
-            },
-            "point_00038.jls": {
+            "point_00069.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
@@ -417,17 +397,37 @@
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
+            "point_00038.jls": {
+              "converged": true,
+              "max_voltage_difference_pu": 1.48e-10,
+              "zero_voltage_violations": true
+            },
+            "point_00065.jls": {
+              "converged": true,
+              "max_voltage_difference_pu": 1.48e-10,
+              "zero_voltage_violations": true
+            },
+            "point_00002.jls": {
+              "converged": true,
+              "max_voltage_difference_pu": 6.48e-11,
+              "zero_voltage_violations": true
+            },
+            "point_00103.jls": {
+              "converged": true,
+              "max_voltage_difference_pu": 1.48e-10,
+              "zero_voltage_violations": true
+            },
             "point_00062.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
-            "point_00042.jls": {
+            "point_00102.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
-            "point_00069.jls": {
+            "point_00042.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
@@ -791,17 +791,12 @@
               "max_voltage_difference_pu": 6.51e-11,
               "zero_voltage_violations": true
             },
-            "point_00052.jls": {
+            "point_00066.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
-            "point_00040.jls": {
-              "converged": true,
-              "max_voltage_difference_pu": 1.48e-10,
-              "zero_voltage_violations": true
-            },
-            "point_00072.jls": {
+            "point_00047.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
@@ -811,7 +806,7 @@
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
-            "point_00066.jls": {
+            "point_00040.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
@@ -821,7 +816,12 @@
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
             },
-            "point_00047.jls": {
+            "point_00072.jls": {
+              "converged": true,
+              "max_voltage_difference_pu": 1.48e-10,
+              "zero_voltage_violations": true
+            },
+            "point_00052.jls": {
               "converged": true,
               "max_voltage_difference_pu": 1.48e-10,
               "zero_voltage_violations": true
@@ -836,7 +836,17 @@
       ],
       "campaign_total_wall_s": 1072.009204927,
       "central_build_s": 13.10712076,
-      "central_warmup_wall_s": 37.390446969
+      "central_warmup_wall_s": 37.390446969,
+      "batch_completed": true,
+      "planned_batch_rhos": [
+        15000.0,
+        60000.0
+      ],
+      "included_rhos": [
+        15000.0,
+        60000.0
+      ],
+      "selection_reason": "Complete original batch"
     }
   ]
 }
