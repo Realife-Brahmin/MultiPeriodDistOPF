@@ -40,6 +40,8 @@ decision=dict(utc=datetime.now(timezone.utc).isoformat(),candidates=records,
     selection_rule='Lowest measured core time among completed validated T48 arms at final owned/all-copy RMS<=1e-5, unique dual<=1e-2 and objective gap<=0.1%. Original physical error is recorded separately, not relabeled strict NO.',
     tuning_cost_note='Both complete warm-start implementation comparisons, all warmups and all central references count toward exploration cost.',
     source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+decision['scheduler_accounting']=subprocess.check_output(
+    ['sacct','-j',','.join(map(str,jobs)),'--format=JobID,State,Elapsed,TotalCPU,MaxRSS,AllocCPUS','-P'],text=True)
 dest=C/'campaign/warm-start-selection.json'
 if not eligible:
     decision['status']='No validated candidate at the declared quality goal; no T96 job submitted.'

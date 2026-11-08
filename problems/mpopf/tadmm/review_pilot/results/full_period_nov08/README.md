@@ -54,5 +54,9 @@ a057763ca174af7cba6c1368f63604a378e8bb1a45c76be4dbc192cd7d4b1a35.
 It includes successful and failed setup gates, logs, source snapshots, hashes,
 actual layouts and scheduler accounting. Serialized large arrays remain on
 Kamiak. Setup failures are preserved and excluded from converged solve claims.
+The complete submission/selection/passive-audit protocol is in
+full-period-submission-protocol.tgz, SHA256
+5d900b0fa8600f29b8eb75dd4d851678429c466c6c4fef77be74eb34c1a15b96.
+The selector records scheduler CPU/resource accounting alongside both outcomes.
 The obsolete 24-worker T96 partial traces remain in the preceding campaign's
 horizon-T96-superseded.tgz; no incomplete case is relabeled converged.
