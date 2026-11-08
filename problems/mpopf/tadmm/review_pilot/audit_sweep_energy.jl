@@ -33,7 +33,20 @@ function energy_audit(folder,out)
             "max_dynamics_error_kwh"=>dyn*d[:kVA_B],"max_integrated_consensus_difference_kwh"=>drift*d[:kVA_B],
             "consensus_energy_bound_pu_h"=>consensusbound,"max_power_bound_kw"=>power*d[:kVA_B],
             "snapshot_sha256"=>bytes2hex(sha256(read(path))))
-        println(key," ",report[key])
+        if socbus!=0
+            n=findfirst(==(socbus),d[:Bset]);cap=d[:B_R_pu][socbus]
+            e=d[:B0_pu][socbus];actual=[100e/cap];consensus=[100e/cap]
+            for t in 1:d[:T]
+                e-=d[:delta_t_h]*sol[:u][t][ix.pb[n]]
+                push!(actual,100e/cap);push!(consensus,100sol[:B][n,t]/cap)
+            end
+            report[key]["hours"]=collect(0:d[:T]).*d[:delta_t_h]
+            report[key]["integrated_SOC_percent"]=actual
+            report[key]["consensus_SOC_percent"]=consensus
+            report[key]["minimum_SOC_percent"]=100d[:soc_min][socbus]
+            report[key]["maximum_SOC_percent"]=100d[:soc_max][socbus]
+        end
+        println(key," bound_kwh=",bound*d[:kVA_B]," SOC_bound_percentage_points=",socpp)
     end
     open(io->TOML.print(io,report),out,"w")
 end

@@ -48,6 +48,9 @@ points of SOC on a 1333.2-kWh battery. Consensus-energy box bounds and battery
 power bounds have zero violation. The per-step SOC dynamics mismatch is
 0.224601 / 0.249176 kWh; the largest integrated/consensus energy disagreement
 is 0.572461 / 0.572795 kWh. These quantities describe different checks.
+The worst overshoot is 95.0413% versus the 95% operating upper bound, under
+the lossless battery model. The [SOC trajectory and error plot](T24-SOC.png)
+([PDF](T24-SOC.pdf)) shows both the full trajectory and the deviation scale.
 
 The absolute engineering error is small, but these points do not satisfy the
 pre-existing strict 1e-5 physical threshold. Any engineering tolerance or repair
