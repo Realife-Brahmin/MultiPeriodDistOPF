@@ -1,5 +1,34 @@
 # July battery weight and slow-subproblem comparison
 
+## Current stopping-rule decision (November 8)
+
+The user explicitly selected the historical **owned-period RMS consensus**
+threshold 1e-4 for the 10k comparison. This is not a relaxation of the maximum
+original-model feasibility tolerance. The historical tadmm_socp.jl rule is
+owned RMS <=1e-4 AND (unique consensus-change dual RMS <=1e-2 OR objective
+range/max <1e-3 over the last five iterations, with positive maximum).
+The dual metric counts each battery/time once, unlike today's replicated-copy
+dual RMS. Objective agreement with centralized OPF is not part of this exit rule.
+
+historical_stopping.jl reproduces that definition. assess_historical_stop.jl
+uses it to terminate one large10k T24 trajectory, reusing the independently
+validated July-weight reference and holding fixed rho=48 and exact MA57 locals.
+The old stricter NO metric, all-copy residuals, original feasibility and actual
+endpoint OpenDSS diagnostics remain separately logged. A historical stop does
+not set the strict-convergence or physical-NO success flag.
+
+The previous 200-step assessments remain frozen evidence under their original
+stopping rules. They cannot be exactly rescored from the saved CSVs, which lack
+the owned-period metric. A fresh prefix is checked against the prior numerical
+trace and initial-start hashes. No model or penalty change is mixed into this
+stopping-rule assessment. Other existing drivers keep explicit strict defaults.
+
+Source caveat: commit 5e8815d2c changed the monolithic large10k threshold from
+1e-4 to 1e-3; the July split run_tadmm.jl defaults to 2e-3 with overrides and
+requires the dual condition rather than stagnation. The selected 1e-4 rule is
+the user's requested historical variant, not a claim that every July run used
+identical thresholds. Local Ipopt acceptable_tol=1e-4 is a different setting.
+
 The user requested restoring July's C_B and investigating the earlier strategy
 of cutting off slow local solves. This supersedes the earlier choice of DDP's
 system weights for the present tADMM workstream. SPAR-DDP defaults and all

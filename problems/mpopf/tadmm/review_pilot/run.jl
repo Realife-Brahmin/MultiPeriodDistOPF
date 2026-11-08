@@ -1,5 +1,6 @@
 include("model.jl")
 include("parallel_workers.jl")
+include("historical_stopping.jl")
 using SHA, TOML, Dates, Sockets
 BLAS.set_num_threads(1)
 Threads.nthreads()==1 || error("Use one Julia thread per process")
@@ -26,7 +27,8 @@ function save_admm_checkpoint(path,stages,z,dual,rho,k,phase,elapsed,ideal,solve
     return (time_ns()-tick)/1e9
 end
 
-function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(d[:T]/24)))), out=nothing, phase="timed",reference_objective=NaN,no_primal_tolerance=1e-5,system_name="")
+function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(d[:T]/24)))), out=nothing, phase="timed",reference_objective=NaN,no_primal_tolerance=1e-5,system_name="",stopping_rule="strict")
+    stopping_rule in ("strict","historical_owned_rms") || error("Unknown stopping rule")
     T=d[:T]; bs=d[:Bset]; nb=length(bs)
     build0=time_ns()
     parallel=parse(Int,get(ENV,"TADMM_NWORKERS","0"))>0
@@ -47,12 +49,14 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     checkpoint_s=0.0; checkpoint_interval=parse(Int,get(ENV,"TADMM_CHECKPOINT_INTERVAL","25"))
     rmax=Inf; smax=Inf; ok=false
     no_iteration=0; no_wall_s=NaN; no_save_s=0.0
+    objectives=Float64[]; historical_iteration=0; historical_met=false
+    owned_r=Inf; owned_s=Inf; historical_stagnant=false
     tol_r=parse(Float64,get(ENV,"TADMM_PRIMAL_TOL","2.5e-7"))
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
     details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated")
-    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s")
+    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s,owned_r_rms,owned_s_rms,historical_stagnant,historical_stop_met")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
         k=iteration; iter0=time_ns(); times=Float64[]; solve_times=Float64[]; local_iterations=Int[]
@@ -78,6 +82,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
             x2+=copies[t0][n,a]^2; z2+=z[n,t]^2; y2+=(rho*dual[t0][n,a])^2
         end
         rr=sqrt(r2/ncopy); ss=sqrt(s2/ncopy)
+        owned_r,owned_s=historical_rms(copies,z,zold,windows,rho)
         # Wohlberg (2017), Eqs. 49, 51: A selects local energy copies,
         # B=-E replicates consensus, c=0, and A' y equals the copy multipliers.
         rrel=sqrt(r2)/max(sqrt(x2),sqrt(z2),1e-12)
@@ -90,6 +95,16 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # end-to-end wall time below includes it, warm-up and setup are separate.
         diag0=time_ns(); us,bb=parallel ? pool_dispatch(d,z) : dispatch(stages,d;z=z); metrics=physical_metrics(d,us,bb)
         diagnostic+=(time_ns()-diag0)/1e9
+        push!(objectives,metrics.objective)
+        hs=historical_stop(owned_r,owned_s,objectives)
+        historical_met=hs.met; historical_stagnant=hs.stagnant
+        if historical_iteration==0 && historical_met
+            historical_iteration=k
+            if out!==nothing
+                serialize(replace(out,".csv"=>"_historical_dispatch.jls"),Dict(:system=>system_name,:T=>T,
+                    :objective=>metrics.objective,:u=>us,:B=>bb,:status=>"HISTORICAL_RMS_STOP_CANDIDATE"))
+            end
+        end
         if no_iteration==0 && isfinite(reference_objective) && metrics.original_primal<=no_primal_tolerance &&
                 abs(metrics.objective-reference_objective)/max(1.0,abs(reference_objective))<=0.001
             no_iteration=k; no_wall_s=(time_ns()-start)/1e9
@@ -110,16 +125,17 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
             flush(details)
         end
         if io!==nothing
-            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic,rrel,srel,(time_ns()-start)/1e9),',')); flush(io)
+            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic,rrel,srel,(time_ns()-start)/1e9,owned_r,owned_s,historical_stagnant,historical_met),',')); flush(io)
         end
         if k==1 || k%25==0
             @printf("TADMM_ITER phase=%s k=%d objective=%.9f physical=%.3e rmax=%.3e smax=%.3e rho=%.5g algorithm_s=%.3f\n",phase,k,metrics.objective,metrics.original_primal,rmax,smax,rho,elapsed); flush(stdout)
         end
-        if rmax<=tol_r && smax<=tol_s && metrics.original_primal<=2tol_r
+        ok=rmax<=tol_r && smax<=tol_s && metrics.original_primal<=2tol_r
+        if (stopping_rule=="strict" && ok) || (stopping_rule=="historical_owned_rms" && historical_met)
             if out!==nothing && checkpoint_interval>0
                 checkpoint_s+=save_admm_checkpoint(replace(out,".csv"=>"_checkpoint.jls"),stages,z,dual,rho,k,phase,elapsed,ideal,solver_total,diagnostic,primal_seen,high_primal_count)
             end
-            ok=true; break
+            break
         end
         # July's phase-aware policy, now with ALL copies monitored. Never weaken
         # consensus enforcement merely because the dimensional dual residual is
@@ -162,7 +178,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     details===nothing || close(details)
     wall_s=(time_ns()-start)/1e9
     @printf("TADMM_DONE phase=%s converged=%s iterations=%d objective=%.12f primal=%.3e rmax=%.3e smax=%.3e algorithm_s=%.6f ideal_parallel_estimate_s=%.6f wall_with_diagnostics_s=%.6f\n",phase,ok,k,metrics.objective,metrics.original_primal,rmax,smax,elapsed,ideal,wall_s); flush(stdout)
-    return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s,checkpoint_s,no_iteration,no_wall_s,no_save_s)
+    return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s,checkpoint_s,no_iteration,no_wall_s,no_save_s,
+        stopping_rule,historical_iteration,historical_met,owned_r,owned_s,historical_stagnant)
 end
 
 function main()

@@ -27,6 +27,7 @@ sha256sum --check --quiet "$C/execution-source.sha256"
 sha256sum --check --quiet "$C/input.sha256"
 OUT="$C/results/${SYSTEM}_T24_july_pair_$SLURM_JOB_ID"
 if [[ -n "$PAIR_REFERENCE" ]]; then OUT="$C/results/${SYSTEM}_T24_july_light_$SLURM_JOB_ID"; fi
+if [[ -n "${TADMM_HISTORICAL_REFERENCE:-}" ]]; then OUT="$C/results/${SYSTEM}_T24_historical_$SLURM_JOB_ID"; fi
 [[ ! -e "$OUT" ]] || exit 2
 mkdir -p "$OUT"
 CPU_RANGE=$(awk '/Cpus_allowed_list:/ {print $2}' /proc/self/status)
@@ -40,7 +41,9 @@ grep -q '6438Y+' "$OUT/allocation.txt"
 grep -q 'NumCPUs=64' "$OUT/allocation.txt"
 python3 "$PILOT/capture.py" "$OUT" "$SYSTEM"
 sha256sum "$0" > "$OUT/orchestration.sha256"
-if [[ -n "$PAIR_REFERENCE" ]]; then
+if [[ -n "${TADMM_HISTORICAL_REFERENCE:-}" ]]; then
+ taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/assess_historical_stop.jl" "$SYSTEM" 24 "$OUT" "$TADMM_HISTORICAL_REFERENCE" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+elif [[ -n "$PAIR_REFERENCE" ]]; then
  taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/assess_cap_light.jl" "$SYSTEM" 24 "$OUT" "$PAIR_REFERENCE" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 else
  taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/compare_july.jl" "$SYSTEM" 24 "$OUT" "$MAXITER" > "$OUT/solve.log" 2> "$OUT/solve.err" &
