@@ -21,6 +21,7 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"cb_profile"=>profile,
     "linear_solver"=>"ma57","rho_initial"=>parse(Float64,ENV["TADMM_RHO_INIT"]),
     "rho_policy"=>ENV["TADMM_RHO_POLICY"],"rho_balance_ratio"=>parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10")),
     "screening"=>join(sort!(collect(tadmm_screen(d).flags)),','),"maximum_iterations"=>maxiter,
+    "local_primal_report"=>(get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")=="1"),
     "no_objective_tolerance"=>0.001,"no_original_tolerance"=>no_tol,
     "warmup_steps_per_arm"=>3,"timing_note"=>"One assessment per arm after three discarded compile steps and fresh model/state reset. Not a full-sequence-warmed benchmark or repeat median.")
 function write_toml(path,object)

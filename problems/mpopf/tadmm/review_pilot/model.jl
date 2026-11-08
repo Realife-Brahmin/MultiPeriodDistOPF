@@ -59,6 +59,9 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_optimizer_attribute(m,"acceptable_iter",0)
     local_policy=local_window ? get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact") : "exact"
     local_policy in ("exact","cap30") || error("Unknown local-solve policy")
+    report_setting=get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")
+    report_setting in ("0","1") || error("TADMM_LOCAL_PRIMAL_REPORT must be 0 or 1")
+    local_primal_report=report_setting=="1"
     set_optimizer_attribute(m,"max_iter",local_policy=="cap30" ? 30 : 3000)
     set_optimizer_attribute(m,"bound_relax_factor",0.0)
     set_optimizer_attribute(m,"linear_solver",get(ENV,"TADMM_LINEAR_SOLVER","ma57"))
@@ -147,7 +150,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
         end
     end
     vars=all_variables(m); initial=start_value.(vars)
-    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout,local_policy)
+    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout,local_policy,local_primal_report)
 end
 
 function solve_checked!(s; reuse=false,allow_iteration_limit=false)
@@ -203,10 +206,11 @@ function stage_step!(s,d,z,u,rho,k)
     solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
     iterations=MOI.get(s.m,MOI.BarrierIterations())
     iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
-    local_primal=iteration_limit_hit ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
+    local_primal_evaluated=iteration_limit_hit && s.local_primal_report
+    local_primal=local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
     return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
-        iteration_limit_hit,local_primal,elapsed_s=(time_ns()-tick)/1e9)
+        iteration_limit_hit,local_primal,local_primal_evaluated,elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,

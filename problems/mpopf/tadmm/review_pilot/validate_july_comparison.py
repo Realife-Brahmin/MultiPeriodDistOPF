@@ -44,7 +44,7 @@ result = dict(kind='July-weight exact/cap30 assessment', benchmark_timing_claim=
 if stage == 'reference':
     (out / 'REFERENCE_VALIDATED').write_text('Exact July-weight reference and independent OpenDSS checks passed.\n')
 else:
-    policies = ('exact', 'cap30') if stage == 'complete' else (stage,)
+    policies = tuple(meta.get('policies',('exact','cap30'))) if stage == 'complete' else (stage,)
     for policy in policies:
         arm = out / policy
         row = tomllib.loads((arm / 'assessment.toml').read_text())
@@ -65,7 +65,12 @@ else:
                 assert s['iteration_limit_hit'] == str(cutoff).lower()
                 assert s['status'] in ('LOCALLY_SOLVED','OPTIMAL') or (policy == 'cap30' and cutoff)
                 if cutoff:
-                    assert math.isfinite(float(s['local_primal'])) and float(s['local_primal']) >= 0
+                    checked_local = meta.get('local_primal_report',True)
+                    assert s.get('local_primal_evaluated',str(checked_local).lower()) == str(checked_local).lower()
+                    if checked_local:
+                        assert math.isfinite(float(s['local_primal'])) and float(s['local_primal']) >= 0
+                    else:
+                        assert math.isnan(float(s['local_primal']))
                     limited += (phase == 'trace')
                 if policy == 'cap30':
                     assert int(s['ipopt_iterations']) <= 30
@@ -83,6 +88,7 @@ else:
         assert len({worker['affinity'] for worker in layout}) == meta['T']
         assert all(w['local_solve_policy'] == policy and w['julia_threads'] == w['blas_threads'] == 1 and
             w['openmp_threads'] == '1' for w in layout)
+        assert all(w.get('local_primal_report',True)==meta.get('local_primal_report',True) for w in layout)
         checked = dict(no_iteration=first, target_under_100=row['target_under_100'],
             truncated_local_solves=limited, stage_status_validation='pass', original_primal_at_end=row['original_primal'])
         if first:
@@ -101,8 +107,20 @@ else:
         for policy in policies:
             row = tomllib.loads((out / policy / 'assessment.toml').read_text())
             starts.append({t:digest for worker in row['worker_layout'] for t,digest in worker['initial_starts_sha256'].items()})
-        assert starts[0] == starts[1] and len(starts[0]) == meta['T']
-        result['identical_initial_primal_starts'] = 'pass'
+        if len(starts)==2:
+            assert starts[0] == starts[1] and len(starts[0]) == meta['T']
+            result['identical_initial_primal_starts'] = 'pass'
+        else:
+            prior = tomllib.loads((out/'comparison_reference'/'assessment.toml').read_text())
+            prior_starts={t:digest for worker in prior['worker_layout'] for t,digest in worker['initial_starts_sha256'].items()}
+            assert starts[0] == prior_starts and len(starts[0]) == meta['T']
+            previous=list(csv.DictReader((out/'comparison_reference'/'trace.csv').open()))
+            current=list(csv.DictReader((out/'cap30'/'trace.csv').open()))
+            assert len(previous)==len(current)
+            equivalent=all(math.isclose(float(a[k]),float(b[k]),rel_tol=1e-10,abs_tol=1e-10)
+                for a,b in zip(previous,current) for k in ('objective','original_primal','r_max','s_max','rho'))
+            result['identical_initial_primal_starts']='pass'
+            result['trajectory_matches_instrumented_cap']=equivalent
         (out / 'ASSESSMENT_VALIDATED').write_text('Paired assessment checked; inspect NO/strict flags separately.\n')
 (out / f'validation_{stage}.json').write_text(json.dumps(result,indent=2)+'\n')
 print(json.dumps(result,indent=2))

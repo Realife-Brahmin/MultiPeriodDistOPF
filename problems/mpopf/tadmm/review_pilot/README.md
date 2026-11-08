@@ -1,7 +1,7 @@
 # Corrected tADMM reviewer-response experiments — November 7, 2026
 
 **Current user pivot:** new tADMM comparisons restore July's battery coefficient,
-8.013987384856764e-8 at T24, and test exact local solves against a30-step cap.
+8.013987384856764e-8 at T24, and test exact local solves against a 30-step cap.
 See [JULY_COMPARISON.md](JULY_COMPARISON.md). Prior DDP-weight results below
 remain historical evidence. Current periodic profiles and corrected losses
 are retained; this is a controlled weight/cutoff comparison, not a full replay
@@ -16,13 +16,13 @@ requirement. Prior frozen campaigns are preserved under their original sources.
 
 **DDP transfer and NO target:** see [DDP_TRANSFER_AUDIT.md](DDP_TRANSFER_AUDIT.md)
 for the source-mapped review of the August–October work. The repaired C4
-baseline first reaches the current NO rule at **66 iterations on med2522** and
-**168 on large10k**. The user's target is below 100, separate from strict
+baseline first reaches the current NO rule at **66 iterations on med 2522** and
+**168 on large 10k**. The user's target is below 100, separate from strict
 stopping. Redundant current lower bounds are now removed using DDP's proof;
 data-only voltage-upper screening follows the October case-specific evidence.
 New runs save and OpenDSS-check the actual first NO dispatch.
 
-**Post-transfer assessment completed:** med2522 job 31650298 again reaches NO
+**Post-transfer assessment completed:** med 2522 job 31650298 again reaches NO
 at 66, now with the actual first NO dispatch independently passing OpenDSS.
 Five capped 10k penalty candidates all miss NO by 100. Fixed rho=48 is best
 among those tested, ending at 2.327e-5 original violation versus the 1e-5 limit.
@@ -30,11 +30,11 @@ Saved-point reconstruction identifies battery-dynamics inconsistency as the
 maximum violation. See `results/ddp_transfer_NO/README.md` for raw evidence,
 the plots in the manuscript's figure style, and the remaining tuning limit.
 
-**Fresh validation passed:** med2522 T=24 job 31645746 converged in 389 warm-up
+**Fresh validation passed:** med 2522 T=24 job 31645746 converged in 389 warm-up
 and 389 measured iterations with matching traces and independent OpenDSS checks.
 The original failed run stopped at 5000. Both use rho=3800, increased to 7600
 after iteration 10; no tuning change accounts for this result. The corrected
-large10k T=24 follow-up job 31645790 also passed, with 267 strict iterations.
+large 10k T=24 follow-up job 31645790 also passed, with 267 strict iterations.
 See results/accuracy_fix_T24_31645746.
 
 Current assessment figures follow the manuscript's actual PGFPlots styles,
@@ -61,14 +61,14 @@ their centralized reference. The first-pass launcher defaults to MA57 and
 rejects another backend. Older comparison/diagnostic scripts remain historical
 tools and do not authorize further MA97 or MUMPS runs. Available evidence favors
 MA57 in these cases; this is a workstream choice, not a universal solver ranking.
-The previously active med2522 T=24 MA57 case in task
+The previously active med 2522 T=24 MA57 case in task
 31643458_6 is retained. Duplicate MA97 task 31643458_7 was canceled, and pending
-tasks 8/9 (large10k T=6) and 10/11 (old paired T=24 repeats) were canceled.
+tasks 8/9 (large 10k T=6) and 10/11 (old paired T=24 repeats) were canceled.
 They are superseded, not numerical failures; their existing evidence is preserved.
-Historical job 31643647 instead ran one large10k T=24 MA57 case via
+Historical job 31643647 instead ran one large 10k T=24 MA57 case via
 `kamiak_single_case.sh`, with the same frozen numerical source and CPU policy.
 
-The old active paired launcher would otherwise start MA97 after med2522 MA57.
+The old active paired launcher would otherwise start MA97 after med 2522 MA57.
 A reserved MA97 output directory with `SKIPPED_BY_USER_REQUEST.txt` deliberately
 activates its existing refusal-to-overwrite guard. No numerical source is changed.
 The enclosing paired job may therefore exit 2 after the MA57 case is validated;
@@ -76,7 +76,7 @@ read the MA57 directory's own COMPLETE and validation reports, rather than
 classifying this planned orchestration exit as a failed MA57 solve. The skipped
 directory has no numerical metadata or COMPLETE marker and is never a result.
 
-Preliminary centralized optimizer timings already available for med2522 T=24
+Preliminary centralized optimizer timings already available for med 2522 T=24
 are 21.322863 s (MA57) and 26.671025 s (MA97), one observation each on the selected
 node family and 25-CPU numerical budget. MA97 took about 25% longer here. These
 are partial-campaign optimizer timings, not a completed repeated benchmark or
@@ -84,11 +84,11 @@ proof that the centralized backend difference is always small. Backend choice
 for a later final comparison can be revisited without duplicating every ADMM run.
 That earlier option is now superseded by the user's MA57-only direction.
 
-Earlier pre-fix T=24 status: med2522 task 31643458_6 stopped at its 5000-iteration warm-up
-cap with a persistent two-cycle; it has no validated measured result. large10k
+Earlier pre-fix T=24 status: med 2522 task 31643458_6 stopped at its 5000-iteration warm-up
+cap with a persistent two-cycle; it has no validated measured result. large 10k
 job 31643647 converged in 793 warm-up and measured iterations. Both are
 superseded by the validated numerical correction summarized above. The failed
-med2522 plateau was diagnosed rather than rerun with a larger cap.
+med 2522 plateau was diagnosed rather than rerun with a larger cap.
 
 This is a fresh experimental harness. Historical July drivers and result rows
 are preserved. It implements the same overlapping temporal consensus ADMM:
@@ -101,14 +101,14 @@ duals are updated for every copy.
 - Use the current shared test decks and SPAR-DDP exporter with periodic profiles.
 - The new comparison uses July's C_B rule from `experiment_settings.jl`.
   `TADMM_CB_PROFILE=ddp` explicitly selects the preserved system-specific
-  baseline weights: 0.001 IEEE123,0.0019 med2522,0.000024 large10k.
+  baseline weights: 0.001 IEEE123,0.0019 med 2522,0.000024 large 10k.
 - **No terminal-SOC penalty and no terminal equality** (explicit user decision).
   Initial SOC, SOC bounds and lossless battery dynamics remain enforced.
 - Include incoming-line real/reactive losses r*ell and x*ell, voltage-drop loss
   terms, nonnegative current square, and the second-order-cone inequality.
 - Preserve the current SPAR-DDP benchmark's root-device convention: root balances
   contain only source import and outgoing flows. Root-connected devices are
-  excluded from the OpenDSS reinjection check. The med2522 root resource is
+  excluded from the OpenDSS reinjection check. The med 2522 root resource is
   therefore not an active network injection. This is an explicit matched-model
   convention, not a claim that all raw-deck resources are represented.
 - Preserve the shared benchmark's absence of branch ampacity upper bounds.
@@ -116,7 +116,7 @@ duals are updated for every copy.
 
 Existing soft-terminal SPAR-DDP timings are NOT matched comparators for this
 free-terminal experiment. The new centralized solve here is the comparator.
-Corrected large10k is also a different physical instance from July's deck.
+Corrected large 10k is also a different physical instance from July's deck.
 
 ## Verified July defects and differences
 
@@ -134,7 +134,7 @@ until primal consensus first passes, then allow residual-based changes; a
 the scaled duals. rho starts at 3000*sqrt(T/24), bounded between 1 and 1e6.
 Phase transitions now use the maximum error across ALL copies. A generic
 ten-iteration residual-balancing variant (`TADMM_RHO_POLICY=residual`) is retained
-as a diagnostic; it reduced rho prematurely in the first med2522 warm-up and
+as a diagnostic; it reduced rho prematurely in the first med 2522 warm-up and
 that diagnostic was interrupted and preserved, not reported as converged.
 
 Battery-power variables exist only where local dynamics need them; unconstrained
@@ -161,17 +161,17 @@ Library existence alone is not evidence that a backend loaded successfully.
 `check_backends.jl` subsequently passed an actual Ipopt solve with each of
 MUMPS, MA57 and MA97 on this machine; see `backend_checks.toml`.
 
-The large10k phase-aware MUMPS warm-up is an explicitly interrupted diagnostic.
+The large 10k phase-aware MUMPS warm-up is an explicitly interrupted diagnostic.
 A separately labeled MA57 pilot uses fixed rho=12, the heuristic energy-cost
 curvature scale `2*C_B*kVA_B^2/dt`. That rule is a calibration candidate, not a
 claim of an optimal or validated universal tuning rule. Select fixed rho with
-`TADMM_RHO_POLICY=fixed` and `TADMM_RHO_INIT=12`. The IEEE123/med2522 phase-aware
+`TADMM_RHO_POLICY=fixed` and `TADMM_RHO_INIT=12`. The IEEE123/med 2522 phase-aware
 MUMPS cases and this MA57/fixed-rho case are different configurations; do not
 present them as a uniform solver/tuning sweep or isolate a MA57 speedup from
 this joint change. Every individual comparison uses the same linear backend
 for its own centralized reference and ADMM stages.
 
-The fixed-rho large10k warm-up was also preserved as an interrupted diagnostic:
+The fixed-rho large 10k warm-up was also preserved as an interrupted diagnostic:
 its dual residual passed while original-model primal feasibility decayed slowly.
 The subsequent `_relative_ma57` pilot starts at the same rho=12 and uses relative
 residual balancing from Wohlberg, *ADMM Penalty Parameter Selection by Residual
@@ -293,15 +293,15 @@ Completed gates:
 
 Submitted next, with results still pending when this note was written:
 
-- Jobs 31643454 and 31643455: med2522 and large10k T=6, six workers, both backends.
+- Jobs 31643454 and 31643455: med 2522 and large 10k T=6, six workers, both backends.
 - Array 31643458: T=6/T=24, all three systems, two repeats per backend; dependent
   on successful completion of both system gates. At most two task groups run
   concurrently. Backend order reverses on the second repeat. Completion markers
   require both backends' validated runs; partial/preempted attempts are preserved.
 
-Subsequent verification update: MA57 completed both med2522 (77 iterations) and
-large10k (132 iterations), including matching warm/measured traces and OpenDSS.
-MA97 med2522 has a much longer residual tail. This is not a converged benchmark
+Subsequent verification update: MA57 completed both med 2522 (77 iterations) and
+large 10k (132 iterations), including matching warm/measured traces and OpenDSS.
+MA97 med 2522 has a much longer residual tail. This is not a converged benchmark
 result. Saved-checkpoint diagnostic jobs 31643470, 31643476 and 31643484 compare
 the same local OPFs without changing or restarting any measured trajectory.
 Nominal `tol=1e-9` alone does not enforce equally small unscaled complementarity;
@@ -313,7 +313,7 @@ That is evidence for an accuracy-control candidate, not proof of full ADMM
 convergence or of the sole cause of the long tail.
 
 Job 31643493 tests that candidate through full warm-up, measured restart and
-OpenDSS on med2522, both backends. Its labels begin `adaptive_verify_`; its case
+OpenDSS on med 2522, both backends. Its labels begin `adaptive_verify_`; its case
 wrapper and hash are captured separately and all extra Ipopt settings appear in
 metadata. The original source, running trajectories and benchmark queue remain
 unchanged. A candidate must be validated before any new benchmark protocol is
@@ -321,7 +321,7 @@ selected. `diagnose_checkpoint.jl` intentionally records failed local solves in
 its diagnostic CSV; those failures are never accepted by the production driver.
 
 Later completion update: both original system gates passed with MA57 and MA97.
-The long MA97 tails converged in 1703 iterations on med2522 and 568 on large10k;
+The long MA97 tails converged in 1703 iterations on med 2522 and 568 on large 10k;
 warm-up/restart and independent OpenDSS checks passed. The adaptive candidate's
 MA97 run failed during warm-up with ALMOST_LOCALLY_SOLVED and is rejected.
 The original benchmark configuration remains in use. Array 31643458 tasks 0/1

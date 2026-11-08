@@ -11,9 +11,10 @@ function affinity_string()
     return strip(match(r"Cpus_allowed_list:\s*([^\n]+)",read("/proc/self/status",String)).captures[1])
 end
 
-function actor_prepare!(d,periods,rho,local_policy)
+function actor_prepare!(d,periods,rho,local_policy,local_primal_report)
     BLAS.set_num_threads(1)
     ENV["TADMM_LOCAL_SOLVE_POLICY"]=local_policy
+    ENV["TADMM_LOCAL_PRIMAL_REPORT"]=local_primal_report
     empty!(ACTOR_MODELS); GC.gc()
     ACTOR_DATA[]=d
     for t in periods
@@ -23,7 +24,7 @@ function actor_prepare!(d,periods,rho,local_policy)
     return Dict("julia_worker"=>myid(),"pid"=>getpid(),"hostname"=>gethostname(),
         "periods"=>periods,"affinity"=>affinity_string(),"blas_threads"=>BLAS.get_num_threads(),
         "julia_threads"=>Threads.nthreads(),"openmp_threads"=>get(ENV,"OMP_NUM_THREADS","unknown"),
-        "local_solve_policy"=>local_policy,"initial_starts_sha256"=>starts)
+        "local_solve_policy"=>local_policy,"local_primal_report"=>(local_primal_report=="1"),"initial_starts_sha256"=>starts)
 end
 
 function actor_step!(z,dual_by_period,rho,k)
@@ -65,7 +66,8 @@ function prepare_pool!(d,rho)
     end
     length(POOL_WIDS)==wanted || error("Worker count changed between warm-up and measured solve")
     local_policy=get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact")
-    jobs=[remotecall(actor_prepare!,wid,d,group,rho,local_policy) for (wid,group) in zip(POOL_WIDS,POOL_GROUPS)]
+    local_primal_report=get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")
+    jobs=[remotecall(actor_prepare!,wid,d,group,rho,local_policy,local_primal_report) for (wid,group) in zip(POOL_WIDS,POOL_GROUPS)]
     empty!(POOL_LAYOUT); append!(POOL_LAYOUT,fetch.(jobs))
     all(info->info["julia_threads"]==1 && info["blas_threads"]==1 && info["openmp_threads"]=="1",POOL_LAYOUT) || error("Worker thread policy mismatch")
     all(i->POOL_LAYOUT[i]["affinity"]==string(cpus[i+1]),eachindex(POOL_LAYOUT)) || error("Worker CPU pin mismatch")

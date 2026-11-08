@@ -41,12 +41,15 @@ for policy in ('exact', 'cap30'):
     bottlenecks = Counter()
     for k, rows in groups.items():
         worst = max(rows, key=lambda s:float(s['solver_s']))
+        stage_worst = max(rows, key=lambda s:float(s['stage_elapsed_s']))
         times = [float(s['solver_s']) for s in rows]
         median = statistics.median(times)
         row = dict(policy=policy, iteration=k, median_solver_s=median,
             max_solver_s=max(times), max_to_median=max(times)/max(median,1e-12),
             bottleneck_period=int(worst['period']), bottleneck_ipopt_iterations=int(worst['ipopt_iterations']),
             maximum_ipopt_iterations=max(int(s['ipopt_iterations']) for s in rows),
+            max_stage_elapsed_s=float(stage_worst['stage_elapsed_s']),
+            framework_at_slowest_stage_s=float(stage_worst['stage_elapsed_s'])-float(stage_worst['solver_s']),
             cutoffs=sum(s['iteration_limit_hit']=='true' for s in rows))
         stats.append(row); rounds.append(row)
         if k>1:
@@ -71,6 +74,8 @@ for policy in ('exact', 'cap30'):
         largest_truncated_local_primal=max((float(s['local_primal']) for s in limited),default=None),
         max_ipopt_iterations=max(int(s['ipopt_iterations']) for s in stages),
         median_round_max_solver_s=statistics.median(r['max_solver_s'] for r in tail),
+        median_round_max_stage_elapsed_s=statistics.median(r['max_stage_elapsed_s'] for r in tail),
+        median_framework_at_slowest_stage_s=statistics.median(r['framework_at_slowest_stage_s'] for r in tail),
         largest_round_max_solver_s=max(r['max_solver_s'] for r in tail),
         median_straggler_ratio=statistics.median(r['max_to_median'] for r in tail),
         largest_straggler_ratio=max(r['max_to_median'] for r in tail),
@@ -83,6 +88,7 @@ for policy in ('exact', 'cap30'):
 report = dict(system=meta['system'], T=meta['T'], C_B=meta['C_B'],
     input_sha256=meta['input_sha256'], rho_initial=meta['rho_initial'], rho_policy=meta['rho_policy'],
     benchmark_timing_claim=False, timing_note=meta['timing_note'],
+    cutoff_diagnostics_note='The instrumented cap arm evaluates full local primal feasibility after each cutoff; its stage elapsed time includes that additional diagnostic work. Raw solver times exclude it.',
     straggler_statistics_exclude_first_iteration=True,
     cost_only_note='Objective-only crossings do not assert feasibility and are not the historical full July criterion.', arms=summaries)
 (out / 'summary.json').write_text(json.dumps(report,indent=2)+'\n')

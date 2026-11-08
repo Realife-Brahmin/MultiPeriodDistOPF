@@ -2,6 +2,7 @@
 # Two controlled arms, not repeat trials or a July input/profile replay.
 set -euo pipefail
 C=$(realpath "$1"); REF=$(realpath "$2"); SYSTEM=$3; MAXITER=${4:-200}
+PAIR_REFERENCE=${5:-}
 case $SYSTEM in
  ieee2522C_1ph) RHO=3800; POLICY=relative; SCREEN=substation,ell;;
  large10kC_1ph) RHO=48; POLICY=fixed; SCREEN=substation,vupper,ell;;
@@ -15,6 +16,8 @@ export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps$
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export TADMM_LINEAR_SOLVER=ma57 TADMM_NWORKERS=24 TADMM_RHO_INIT=$RHO TADMM_RHO_POLICY=$POLICY
 export TADMM_CB_PROFILE=july TADMM_LOCAL_SOLVE_POLICY=exact TADMM_SCREEN=$SCREEN
+export TADMM_LOCAL_PRIMAL_REPORT=1
+if [[ -n "$PAIR_REFERENCE" ]]; then export TADMM_LOCAL_PRIMAL_REPORT=0; fi
 export TADMM_RHO_BALANCE_RATIO=10 TADMM_PRIMAL_TOL=2.5e-7 TADMM_DUAL_TOL=1e-4
 export TADMM_IPOPT_OPTIONS="hsllib=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2"
 export REDUCED_PROFILE=periodic TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
@@ -23,6 +26,7 @@ test -s "$C/JULY_PROFILE_VALIDATED"
 sha256sum --check --quiet "$C/execution-source.sha256"
 sha256sum --check --quiet "$C/input.sha256"
 OUT="$C/results/${SYSTEM}_T24_july_pair_$SLURM_JOB_ID"
+if [[ -n "$PAIR_REFERENCE" ]]; then OUT="$C/results/${SYSTEM}_T24_july_light_$SLURM_JOB_ID"; fi
 [[ ! -e "$OUT" ]] || exit 2
 mkdir -p "$OUT"
 CPU_RANGE=$(awk '/Cpus_allowed_list:/ {print $2}' /proc/self/status)
@@ -36,7 +40,11 @@ grep -q '6438Y+' "$OUT/allocation.txt"
 grep -q 'NumCPUs=64' "$OUT/allocation.txt"
 python3 "$PILOT/capture.py" "$OUT" "$SYSTEM"
 sha256sum "$0" > "$OUT/orchestration.sha256"
-taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/compare_july.jl" "$SYSTEM" 24 "$OUT" "$MAXITER" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+if [[ -n "$PAIR_REFERENCE" ]]; then
+ taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/assess_cap_light.jl" "$SYSTEM" 24 "$OUT" "$PAIR_REFERENCE" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+else
+ taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/compare_july.jl" "$SYSTEM" 24 "$OUT" "$MAXITER" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+fi
 PID=$!
 python3 "$PILOT/sample_linux.py" "$PID" "$OUT/process_samples.csv" > "$OUT/sampler.log" 2>&1 &
 SAMPLER=$!

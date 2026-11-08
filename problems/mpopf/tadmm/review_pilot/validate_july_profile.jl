@@ -11,6 +11,7 @@ apply_review_cb!(d,"ieee2522C_1ph";profile="july")
 @assert profiles==(d[:LoadShapeLoad],d[:LoadShapePV],d[:LoadShapeCost])
 @assert d[:C_B]==july_battery_cb(24)
 ENV["TADMM_LOCAL_SOLVE_POLICY"]="cap30"; ENV["TADMM_SCREEN"]="substation,ell"
+ENV["TADMM_LOCAL_PRIMAL_REPORT"]="1"
 s=make_model(d,[19];local_window=true,rho=3800.0)
 @assert s.local_policy=="cap30"
 # Force a cutoff cheaply; its primal is provisional, never a feasible-result claim.
@@ -18,6 +19,12 @@ set_optimizer_attribute(s.m,"max_iter",1)
 z=[d[:B0_pu][j] for j in d[:Bset],t in 1:d[:T]]
 row=stage_step!(s,d,z,zeros(length(d[:Bset]),length(s.times)),3800.0,1)
 @assert row.iteration_limit_hit && row.status=="ITERATION_LIMIT" && isfinite(row.local_primal)
+ENV["TADMM_LOCAL_PRIMAL_REPORT"]="0"
+light=make_model(d,[19];local_window=true,rho=3800.0)
+set_optimizer_attribute(light.m,"max_iter",1)
+lightrow=stage_step!(light,d,z,zeros(length(d[:Bset]),length(light.times)),3800.0,1)
+@assert lightrow.iteration_limit_hit && !lightrow.local_primal_evaluated && isnan(lightrow.local_primal)
+ENV["TADMM_LOCAL_PRIMAL_REPORT"]="1"
 central=make_model(d,[19])
 @assert central.local_policy=="exact"
 set_optimizer_attribute(central.m,"max_iter",1)
@@ -30,5 +37,6 @@ end
 @assert rejected
 open(io->TOML.print(io,Dict("july_cb_T24"=>d[:C_B],"profiles_unchanged"=>true,
     "cutoff_preserves_status"=>true,"cutoff_local_primal"=>row.local_primal,
+    "lightweight_cutoff_preserves_status"=>true,
     "central_cutoff_rejected"=>true)),joinpath(out,"validation.toml"),"w")
 println("JULY_PROFILE_VALIDATED ",out)
