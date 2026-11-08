@@ -11,6 +11,7 @@ try
         r=run_admm(d;maxiter=8,rho0=625.0T,out=joinpath(out,name*".csv"),phase="gate_"*name)
         @test length(POOL_LAYOUT)==T
         @test all(w->length(w["periods"])==1,POOL_LAYOUT)
+        @test all(w->w["warm_start"]==warm && w["objective_update"]==update,POOL_LAYOUT)
         @test length(unique((w["hostname"],w["affinity"]) for w in POOL_LAYOUT))==T
         @test length(unique(w["hostname"] for w in POOL_LAYOUT))==parse(Int,ENV["SLURM_JOB_NUM_NODES"])
         open(io->TOML.print(io,Dict("workers"=>deepcopy(POOL_LAYOUT),"core_s"=>r.elapsed,"iterations"=>r.k)),joinpath(out,name*".toml"),"w")
