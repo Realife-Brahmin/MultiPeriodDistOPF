@@ -20,6 +20,12 @@ are one. Reserve a separate CPU for each node's passive sampler. Reject
 duplicate host/CPU assignments or more than one period per worker. Use
 SlurmClusterManager 1.1.0: a non-solver probe confirmed that compute-node SSH is
 not available, so the worker launch must use srun inside the allocation.
+The launcher has its own colocated slurm/Project.toml and pinned Manifest;
+the numerical Project/Manifest and solver packages remain unchanged. Explicit
+srun command-line task counts override older Slurm's inherited batch task
+counts. Node samplers are spawned on reserved CPUs without another srun step.
+The coordinator is pinned before centralized warmup/measurement as well as
+before ADMM, so it does not share the sampler CPU.
 
 Warm-start variants are explicit: `primal` retains the prior primal-only path;
 `primal_dual` caches all primal and constraint/bound dual values before any
@@ -55,3 +61,7 @@ slower central timing is cherry-picked. Record total allocated CPUs, CPU time,
 and node-local PSS separately. Node samplers register each actual Julia PID;
 their independent samples must not be presented as synchronized global peaks
 without an explicit aggregation rule. Validation remains outside core timers.
+
+Native MA57 unit gate: all 248 checks passed. Cross-node gates and complete
+timings are recorded in results/full_period_nov08 as they become available.
+Setup failures retain logs and are never counted as converged solve trials.

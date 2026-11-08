@@ -2,8 +2,13 @@
 
 Frozen campaign source: 492451e3a3dfdf2cdc48273db75e71656374a8a8.
 Input/model gate 31652339 passed. Jobs: T24 31652340 and T48 31652341 completed.
-T96 31652342 (rho60000 first) and 31653264 (rho240000 first) are running at this
-checkpoint. All candidate outcomes will be
+T96 31652342 (rho60000 first) and 31653264 (rho240000 first) were superseded
+while incomplete when the user corrected the worker policy to one worker per
+period. Their partial traces, resource accounting and explicit cancellation
+reason are preserved in horizon-T96-superseded.tgz (SHA256
+b20cd15a3ce353ceadb94f48cfd7a762a766d3af368781a00a051a22e3933288).
+They are not completed benchmark configurations. See the
+[replacement full-period protocol](../../FULL_PERIOD_NOV08.md). All outcomes are
 retained; a completed collection validator does not imply physical feasibility.
 The [predeclared campaign plan](../../HORIZON_SWEEP_NOV08.md) states settings,
 resource limits, stopping rules and the extrapolated T96 anchor.
@@ -50,6 +55,9 @@ Both T96 central measurements and all extra startup costs will be retained.
 Passive post-job audit 31653463 depends on both batches ending; it accepts
 completed per-arm records without requiring a whole-batch completion marker.
 No controller or solver change was made to obtain this scheduling split.
+That scheduling plan was later superseded by the explicit user correction:
+both unfinished T96 batches, watcher and audit31653463 were stopped. The
+manifest remains a historical plan, not evidence that six cases completed.
 
 ## Completed T24
 

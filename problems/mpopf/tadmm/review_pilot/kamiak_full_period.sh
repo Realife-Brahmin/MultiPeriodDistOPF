@@ -39,12 +39,12 @@ export PATH="$C/source/$P/slurm/bin:$PATH"
 finish() { touch "$OUT/SAMPLING_DONE"; }
 trap finish EXIT
 if [[ $MODE == gate ]]; then
- julia --startup-file=no --project="$P" "$P/validate_stage_reuse.jl" > "$OUT/stage-reuse.log" 2>&1
- julia --startup-file=no --project="$P" "$P/validate_full_period.jl" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err"
+ taskset -c "${TADMM_CPU_IDS%%,*}" julia --startup-file=no --project="$P" "$P/validate_stage_reuse.jl" > "$OUT/stage-reuse.log" 2>&1
+ taskset -c "${TADMM_CPU_IDS%%,*}" julia --startup-file=no --project="$P" "$P/validate_full_period.jl" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err"
  test -s "$OUT/FULL_PERIOD_GATE_VALIDATED"
 else
  test -s "$C/FULL_PERIOD_READY"
- julia --startup-file=no --project="$P" "$P/run_horizon_sweep.jl" large10kC_1ph "$T" "$OUT" "$RHO" > "$OUT/solve.log" 2> "$OUT/solve.err"
+ taskset -c "${TADMM_CPU_IDS%%,*}" julia --startup-file=no --project="$P" "$P/run_horizon_sweep.jl" large10kC_1ph "$T" "$OUT" "$RHO" > "$OUT/solve.log" 2> "$OUT/solve.err"
  test -s "$OUT/SWEEP_VALIDATED"
 fi
 date -u +%FT%TZ > "$OUT/CASE_RECORDED"
