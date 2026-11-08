@@ -5,6 +5,7 @@ cd "$C/source";P=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
 export JULIA_DEPOT_PATH="$C/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_horizon_sweep/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_watchdog_rho/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_accuracy_fix/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
 export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps${PYTHONPATH:+:$PYTHONPATH}
+export JULIA_LOAD_PATH="$C/source/$P:$C/source/$P/slurm:@stdlib"
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export TADMM_LINEAR_SOLVER=ma57 TADMM_CLUSTER_BACKEND=slurm TADMM_NWORKERS=$T TADMM_EXECUTION_POLICY=one_per_period
 export TADMM_WARM_START=$WARM TADMM_OBJECTIVE_UPDATE=batched
