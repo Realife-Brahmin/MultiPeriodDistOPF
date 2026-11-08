@@ -61,7 +61,7 @@ for r in trace:
         if not seen:
             if rr>1e-4:rho=min(1e6,2*rho)
         elif rr>5*ss:rho=min(1e6,2*rho)
-        elif ss>5*rr and rr<=1e-4:rho=max(1,rho/5)
+        elif ss>5*rr and rr<=1e-4:rho=max(1,rho/m.get('rho_tau_decrease',5))
 layout=m['worker_layout']
 assert len(layout)==24 and len({w['affinity'] for w in layout})==24
 assert all(w['local_solve_policy']=='exact' and w['julia_threads']==w['blas_threads']==1 and w['openmp_threads']=='1' for w in layout)

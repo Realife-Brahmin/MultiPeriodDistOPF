@@ -25,4 +25,6 @@ end
     @test legacy_rho_update(3000.0,1e-4,1e-6,10,true)==(6000.0,true)
     @test legacy_rho_update(1.0,1e-5,1.0,10,true)==(1.0,true)
     @test legacy_rho_update(1e6,1.0,1e-6,10,false)==(1e6,false)
+    @test legacy_rho_update(15000.0,1e-4,1.0,5,false;tau_decrease=2.0)==(7500.0,true)
+    @test_throws ErrorException legacy_rho_update(15000.0,1e-4,1.0,5,false;tau_decrease=1.0)
 end

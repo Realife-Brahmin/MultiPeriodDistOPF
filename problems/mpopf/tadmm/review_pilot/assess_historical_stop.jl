@@ -45,7 +45,7 @@ try
         "input_sha256"=>prior["input_sha256"],"reference_objective"=>prior["reference_objective"],
         "reference_metadata_sha256"=>bytes2hex(sha256(read(joinpath(reference,"comparison.toml")))),
         "rho_initial"=>rho_initial,"rho_policy"=>rho_policy,"rho_tuning"=>tuning,
-        "rho_balance_ratio"=>5.0,"rho_tau_increase"=>2.0,"rho_tau_decrease"=>5.0,"rho_update_interval"=>5,
+        "rho_balance_ratio"=>5.0,"rho_tau_increase"=>2.0,"rho_tau_decrease"=>parse(Float64,get(ENV,"TADMM_RHO_TAU_DECREASE","5")),"rho_update_interval"=>5,
         "diagnostics_mode"=>get(ENV,"TADMM_DIAGNOSTICS","cached"),
         "stopping_rule"=>result.stopping_rule,"historical_primal_tolerance"=>1e-4,
         "historical_dual_tolerance"=>1e-2,"stagnation_window"=>5,"stagnation_range_tolerance"=>1e-3,
