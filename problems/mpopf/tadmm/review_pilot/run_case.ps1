@@ -7,6 +7,7 @@ $env:JULIA_DEPOT_PATH='C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\
 $env:JULIA_NUM_THREADS='1'
 $env:OPENBLAS_NUM_THREADS='1'
 $env:OMP_NUM_THREADS='1'
+$env:TADMM_LINEAR_SOLVER='ma57'
 $env:PROFILE_PERIODIC='1'
 $env:REDUCED_PROFILE='periodic'
 $env:REDUCED_CB='system'
@@ -33,8 +34,11 @@ do {
 } while(-not $child.HasExited)
 $child.WaitForExit()
 if($child.ExitCode -ne 0){throw "Optimization failed (exit $($child.ExitCode)): $outDir"}
-foreach($method in @('central','tadmm')){
-    & $juliaExe --startup-file=no $projectArg problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl $SystemName $Horizon (Join-Path $outDir "${method}_dispatch.jls") $method *> (Join-Path $outDir "${method}_opendss.log")
+$methods=@('central','tadmm')
+if(Test-Path -LiteralPath (Join-Path $outDir 'trace_no_dispatch.jls')){$methods+='tadmm_no'}
+foreach($method in $methods){
+    $dispatchFile=if($method -eq 'tadmm_no'){'trace_no_dispatch.jls'}else{"${method}_dispatch.jls"}
+    & $juliaExe --startup-file=no $projectArg problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl $SystemName $Horizon (Join-Path $outDir $dispatchFile) $method *> (Join-Path $outDir "${method}_opendss.log")
     if($LASTEXITCODE -ne 0){throw "OpenDSS check failed: $method $outDir"}
 }
 python (Join-Path $PSScriptRoot 'validate.py') $outDir

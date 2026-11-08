@@ -3,6 +3,12 @@
 set -euo pipefail
 C=$(realpath "$1"); REF=$(realpath "$2"); RHO=${3:-384}; POLICY=${4:-relative}
 BALANCE=${5:-10}
+SYSTEM=${6:-large10kC_1ph}
+case $SYSTEM in
+ large10kC_1ph) SCREEN=substation,vupper,ell; REFJOB=31645790;;
+ ieee2522C_1ph) SCREEN=substation,ell; REFJOB=31645746;;
+ *) exit 2;;
+esac
 [[ "$POLICY" == relative || "$POLICY" == fixed ]] || exit 2
 cd "$C/source"
 PILOT=problems/mpopf/tadmm/review_pilot
@@ -12,14 +18,14 @@ export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps$
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
 export TADMM_LINEAR_SOLVER=ma57 TADMM_NWORKERS=24 TADMM_RHO_INIT=$RHO TADMM_RHO_POLICY=$POLICY
 export TADMM_RHO_BALANCE_RATIO=$BALANCE
-export TADMM_SCREEN=substation,vupper,ell
+export TADMM_SCREEN=$SCREEN
 export TADMM_IPOPT_OPTIONS="hsllib=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2"
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
 unset NO_COLOR FORCE_COLOR OMP_PROC_BIND OMP_PLACES GOMP_CPU_AFFINITY KMP_AFFINITY LD_PRELOAD
 test -s "$C/DDP_TRANSFER_VALIDATED"
 sha256sum --check --quiet "$C/execution-source.sha256"
 sha256sum --check --quiet "$C/input.sha256"
-OUT="$C/results/large10k_T24_rho${RHO}_${POLICY}_mu${BALANCE}_NO_$SLURM_JOB_ID"
+OUT="$C/results/${SYSTEM}_T24_rho${RHO}_${POLICY}_mu${BALANCE}_NO_$SLURM_JOB_ID"
 [[ ! -e "$OUT" ]] || exit 2
 mkdir -p "$OUT"
 CPU_RANGE=$(awk '/Cpus_allowed_list:/ {print $2}' /proc/self/status)
@@ -31,17 +37,17 @@ taskset -apc "$TADMM_CPU_IDS" "$$" > "$OUT/affinity.txt"
 { hostname; lscpu; scontrol show job "$SLURM_JOB_ID"; env | grep -E '^(TADMM_|OMP_|OPENBLAS_|JULIA_)'; } > "$OUT/allocation.txt"
 grep -q '6438Y+' "$OUT/allocation.txt"
 grep -q 'NumCPUs=64' "$OUT/allocation.txt"
-python3 "$PILOT/capture.py" "$OUT" large10kC_1ph
+python3 "$PILOT/capture.py" "$OUT" "$SYSTEM"
 sha256sum "$0" > "$OUT/orchestration.sha256"
-REFERENCE="$REF/results/large10kC_1ph_T24_ma57_firstpass_31645790_a0"
-taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/calibrate_no.jl" large10kC_1ph 24 "$OUT" "$REFERENCE" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+REFERENCE="$REF/results/${SYSTEM}_T24_ma57_firstpass_${REFJOB}_a0"
+taskset -c "$TADMM_CPU_IDS" julia --startup-file=no --project="$PILOT" "$PILOT/calibrate_no.jl" "$SYSTEM" 24 "$OUT" "$REFERENCE" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 python3 "$PILOT/sample_linux.py" "$PID" "$OUT/process_samples.csv" > "$OUT/sampler.log" 2>&1 &
 SAMPLER=$!
 wait "$PID"
 wait "$SAMPLER"
 if [[ -f "$OUT/calibration_no_dispatch.jls" ]]; then
- julia --startup-file=no --project="$PILOT" problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl large10kC_1ph 24 "$OUT/calibration_no_dispatch.jls" tadmm_no > "$OUT/no_opendss.log" 2>&1
+ julia --startup-file=no --project="$PILOT" problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl "$SYSTEM" 24 "$OUT/calibration_no_dispatch.jls" tadmm_no > "$OUT/no_opendss.log" 2>&1
 fi
 python3 "$PILOT/validate_no_calibration.py" "$OUT" > "$OUT/validation.log"
 date -u +%FT%TZ > "$OUT/CALIBRATION_RECORDED"
