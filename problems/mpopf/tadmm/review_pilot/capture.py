@@ -13,7 +13,7 @@ files = [p for p in pilot.iterdir() if p.is_file() and p.suffix in ('.jl', '.py'
 files += sorted((root / 'test_networks' / system).glob('*.dss'))
 files += [root / 'test_networks' / 'parse_opendss.jl']
 shared = root / 'problems/mpopf/spar_ddp/examples/power_system'
-files += [shared / f for f in ('export_ieee123c_data.jl', 'loadflow_start.jl', 'terminal_soc_penalty.jl', 'control_layout.jl', 'opendss_check.jl')]
+files += [shared / f for f in ('export_ieee123c_data.jl', 'loadflow_start.jl', 'terminal_soc_penalty.jl', 'control_layout.jl', 'opendss_check.jl', 'voltage_screening.jl')]
 rows = []
 for p in files:
     rel = p.relative_to(root)

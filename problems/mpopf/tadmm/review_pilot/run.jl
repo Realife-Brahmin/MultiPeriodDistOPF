@@ -26,7 +26,7 @@ function save_admm_checkpoint(path,stages,z,dual,rho,k,phase,elapsed,ideal,solve
     return (time_ns()-tick)/1e9
 end
 
-function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(d[:T]/24)))), out=nothing, phase="timed")
+function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(d[:T]/24)))), out=nothing, phase="timed",reference_objective=NaN,no_primal_tolerance=1e-5,system_name="")
     T=d[:T]; bs=d[:Bset]; nb=length(bs)
     build0=time_ns()
     parallel=parse(Int,get(ENV,"TADMM_NWORKERS","0"))>0
@@ -44,6 +44,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     primal_seen=false; high_primal_count=0
     checkpoint_s=0.0; checkpoint_interval=parse(Int,get(ENV,"TADMM_CHECKPOINT_INTERVAL","25"))
     rmax=Inf; smax=Inf; ok=false
+    no_iteration=0; no_wall_s=NaN; no_save_s=0.0
     tol_r=parse(Float64,get(ENV,"TADMM_PRIMAL_TOL","2.5e-7"))
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
@@ -87,6 +88,18 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # end-to-end wall time below includes it, warm-up and setup are separate.
         diag0=time_ns(); us,bb=parallel ? pool_dispatch(d,z) : dispatch(stages,d;z=z); metrics=physical_metrics(d,us,bb)
         diagnostic+=(time_ns()-diag0)/1e9
+        if no_iteration==0 && isfinite(reference_objective) && metrics.original_primal<=no_primal_tolerance &&
+                abs(metrics.objective-reference_objective)/max(1.0,abs(reference_objective))<=0.001
+            no_iteration=k; no_wall_s=(time_ns()-start)/1e9
+            if out!==nothing
+                no_tick=time_ns()
+                serialize(replace(out,".csv"=>"_no_dispatch.jls"),Dict(:system=>system_name,:T=>T,
+                    :objective=>metrics.objective,:u=>us,:B=>bb,:status=>"ADMM_NO_CANDIDATE"))
+                no_save_s+=(time_ns()-no_tick)/1e9
+            end
+            @printf("TADMM_NO phase=%s k=%d objective=%.12f original=%.3e target_under_100=%s\n",phase,k,metrics.objective,metrics.original_primal,k<100)
+            flush(stdout)
+        end
         if details!==nothing
             for t0 in 1:T
                 println(details,join((k,t0,rows[t0].status,local_iterations[t0],solve_times[t0],times[t0]),','))
@@ -146,7 +159,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     details===nothing || close(details)
     wall_s=(time_ns()-start)/1e9
     @printf("TADMM_DONE phase=%s converged=%s iterations=%d objective=%.12f primal=%.3e rmax=%.3e smax=%.3e algorithm_s=%.6f ideal_parallel_estimate_s=%.6f wall_with_diagnostics_s=%.6f\n",phase,ok,k,metrics.objective,metrics.original_primal,rmax,smax,elapsed,ideal,wall_s); flush(stdout)
-    return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s,checkpoint_s)
+    return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s,checkpoint_s,no_iteration,no_wall_s,no_save_s)
 end
 
 function main()
@@ -155,12 +168,21 @@ function main()
     datafile=joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls")
     d=deserialize(datafile); d[:C_B]=battery_cb(system,"system")
     serialize(joinpath(out,"instance.jls"),d)
+    screen=tadmm_screen(d)
     metadata=Dict("system"=>system,"T"=>T,"timestamp_utc"=>string(now(UTC)),"julia"=>string(VERSION),
         "C_B"=>d[:C_B],"terminal_soc_penalty"=>0.0,"periodic"=>true,"julia_threads"=>Threads.nthreads(),
         "blas_threads"=>BLAS.get_num_threads(),"hostname"=>gethostname(),
         "data_sha256"=>bytes2hex(sha256(read(datafile))),"linear_solver"=>get(ENV,"TADMM_LINEAR_SOLVER","mumps"),
         "rho_policy"=>get(ENV,"TADMM_RHO_POLICY","phase"),"ipopt_extra_options"=>get(ENV,"TADMM_IPOPT_OPTIONS",""),
         "rho_initial"=>parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(T/24)))),
+        "screening"=>join(sort!(collect(screen.flags)),','),
+        "ell_lower_bounds_removed"=>("ell" in screen.flags),
+        "nonroot_voltage_lower_bounds_retained"=>true,
+        "import_lower_bound_removed"=>screen.drop_ps,
+        "nonroot_voltage_upper_bounds_removed"=>("vupper" in screen.flags ? count(n->d[:Nset][n]!=d[:substationBus] && !screen.keep_upper[n],eachindex(d[:Nset])) : 0),
+        "no_objective_relative_tolerance"=>0.001,
+        "no_original_primal_tolerance"=>(system=="ieee123C_1ph" ? 1e-6 : 1e-5),
+        "no_iteration_target"=>100,
         "period_workers"=>min(T,parse(Int,get(ENV,"TADMM_NWORKERS","0"))),
         "execution_mode"=>parse(Int,get(ENV,"TADMM_NWORKERS","0"))>0 ? "distributed" : "serial",
         "central_openmp_threads"=>get(ENV,"OMP_NUM_THREADS","unknown"),
@@ -211,7 +233,8 @@ function main()
     central=nothing; cu=nothing; cb=nothing; GC.gc()
     maxiter=parse(Int,get(ENV,"TADMM_MAX_ITER","5000"))
     phase_event(out,"admm_warmup_begin")
-    warm0=time_ns(); warm=run_admm(d;maxiter=maxiter,phase="warmup",out=joinpath(out,"warmup.csv")); warm_s=(time_ns()-warm0)/1e9
+    no_tol=system=="ieee123C_1ph" ? 1e-6 : 1e-5
+    warm0=time_ns(); warm=run_admm(d;maxiter=maxiter,phase="warmup",out=joinpath(out,"warmup.csv"),reference_objective=cm.objective,no_primal_tolerance=no_tol,system_name=system); warm_s=(time_ns()-warm0)/1e9
     phase_event(out,"admm_warmup_end")
     warm.ok || error("ADMM warm-up did not converge; preserve trace and diagnose before timing")
     serialize(joinpath(out,"warmup_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>warm.metrics.objective,:u=>warm.us,:B=>warm.bb,:status=>"ADMM_CONVERGED"))
@@ -220,10 +243,11 @@ function main()
     open(io->TOML.print(io,metadata),joinpath(out,"metadata.toml"),"w")
     GC.gc()
     phase_event(out,"admm_measured_begin")
-    result=run_admm(d;maxiter=maxiter,out=joinpath(out,"trace.csv"))
+    result=run_admm(d;maxiter=maxiter,out=joinpath(out,"trace.csv"),reference_objective=cm.objective,no_primal_tolerance=no_tol,system_name=system)
     phase_event(out,"admm_measured_end")
     result.ok || error("ADMM timed solve did not converge")
     result.k==warm.k || error("warm-up and timed ADMM iterations differ")
+    result.no_iteration==warm.no_iteration || error("warm-up and timed NO crossings differ")
     gap=abs(result.metrics.objective-cm.objective)/max(1.0,abs(cm.objective))
     serialize(joinpath(out,"tadmm_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>result.metrics.objective,:u=>result.us,:B=>result.bb,:status=>"ADMM_CONVERGED"))
     summary=Dict("system"=>system,"T"=>T,"converged"=>true,"iterations"=>result.k,
@@ -235,6 +259,9 @@ function main()
         "tadmm_wall_with_diagnostics_s"=>result.wall_s,"tadmm_warmup_s"=>warm_s,"tadmm_build_s"=>result.build_s,
         "optimizer_loop_wall_s"=>result.wall_s,
         "checkpoint_s"=>result.checkpoint_s,
+        "no_iteration"=>result.no_iteration,"no_target_under_100"=>(0<result.no_iteration<100),
+        "no_arrival_wall_s"=>result.no_wall_s,"no_dispatch_save_s"=>result.no_save_s,
+        "no_original_primal_tolerance"=>no_tol,"no_objective_relative_tolerance"=>0.001,
         "tadmm_original_primal"=>result.metrics.original_primal,"tadmm_consensus_max"=>result.rmax,"tadmm_dual_max"=>result.smax,
         "tadmm_soc_equality_gap"=>result.metrics.soc_equality_gap,"central_soc_equality_gap"=>cm.soc_equality_gap,
         "tadmm_fictitious_loss_kwh"=>result.metrics.fictitious_loss_kwh)
@@ -242,8 +269,10 @@ function main()
     gap<=1e-5 || error("converged ADMM objective disagrees with centralized reference: $gap")
     println("PILOT_OPTIMIZATION_COMPLETE gap=",gap," output=",out)
 end
-try
-    main()
-finally
-    shutdown_pool!()
+if abspath(PROGRAM_FILE)==abspath(@__FILE__)
+    try
+        main()
+    finally
+        shutdown_pool!()
+    end
 end

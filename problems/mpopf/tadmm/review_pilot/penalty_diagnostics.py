@@ -53,7 +53,8 @@ for case in sorted((campaign / 'results').iterdir()):
             relative_primal_before=float(prev['r_relative']),
             relative_dual_before=float(prev['s_relative'])))
     summary_rows.append(dict(case=case.name, system=s['system'], T=s['T'],
-        role='benchmark' if '_benchmark_' in case.name else 'shared-node verification',
+        role=('benchmark' if '_benchmark_' in case.name else
+            'single-run first assessment' if '_firstpass_' in case.name else 'shared-node verification'),
         backend=meta['linear_solver'], rho_policy=meta['rho_policy'],
         rho_initial=float(trace[0]['rho']), rho_final=float(trace[-1]['rho']),
         rho_min=min(float(r['rho']) for r in trace),
@@ -65,6 +66,7 @@ for case in sorted((campaign / 'results').iterdir()):
         first_near_optimal_loop_wall_s=float(near['loop_wall_s']) if near else '',
         near_optimal_sustained_from_iteration=int(sustained['iteration']) if sustained else '',
         near_optimal_sustained_from_loop_wall_s=float(sustained['loop_wall_s']) if sustained else '',
+        no_target_under_100=(int(near['iteration']) < 100) if near else False,
         near_optimal_note='First crossing: 0.1% objective and original feasibility 1e-5; not full convergence or a persistence guarantee',
         input_sha256=meta['data_sha256'],
         model_sha256=meta['model.jl_sha256'], driver_sha256=meta['run.jl_sha256']))

@@ -6,7 +6,8 @@ PILOT=problems/mpopf/tadmm/review_pilot
 OUT="$C/results/${SYS}_T${T}_${SOLVER}_${LABEL}"
 [[ ! -e "$OUT" ]] || { echo "Refusing overwrite: $OUT"; exit 2; }
 mkdir -p "$OUT"
-export TADMM_LINEAR_SOLVER=$SOLVER TADMM_RHO_POLICY=relative
+export TADMM_LINEAR_SOLVER=$SOLVER
+export TADMM_RHO_POLICY=${TADMM_RHO_POLICY:-relative}
 case $SOLVER in
  ma57) LIB=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so; EXTRA=ma57_pivot_order=2;;
  ma97) LIB=$HOME/opt/hsl-private/install/hsl_ma97-2.8.1-metis-openmp/lib/libhsl_ma97.so; EXTRA=ma97_order=amd;;
@@ -15,8 +16,14 @@ esac
 export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;$EXTRA${TADMM_ADDITIONAL_IPOPT_OPTIONS:+;$TADMM_ADDITIONAL_IPOPT_OPTIONS}"
 cp "$0" "$OUT/case-wrapper.sh"
 sha256sum "$OUT/case-wrapper.sh" > "$OUT/case-wrapper.sha256"
-case $SYS in ieee123C_1ph) CB=.001;; ieee2522C_1ph) CB=.0019;; large10kC_1ph) CB=.000024;; *) exit 2;; esac
-export TADMM_RHO_INIT=$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")
+case $SYS in
+ ieee123C_1ph) CB=.001; SCREEN=substation,vupper,ell;;
+ ieee2522C_1ph) CB=.0019; SCREEN=substation,ell;;
+ large10kC_1ph) CB=.000024; SCREEN=substation,vupper,ell;;
+ *) exit 2;;
+esac
+export TADMM_SCREEN=${TADMM_SCREEN:-$SCREEN}
+export TADMM_RHO_INIT=${TADMM_RHO_INIT:-$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")}
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
 W=${TADMM_NWORKERS:-0}
 export TADMM_NWORKERS=$W
@@ -50,6 +57,9 @@ wait "$SAMPLE_PID"
 for METHOD in central tadmm; do
  julia --startup-file=no --project="$PILOT" problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl "$SYS" "$T" "$OUT/${METHOD}_dispatch.jls" "$METHOD" > "$OUT/${METHOD}_opendss.log" 2>&1
 done
+if [[ -f "$OUT/trace_no_dispatch.jls" ]]; then
+ julia --startup-file=no --project="$PILOT" problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl "$SYS" "$T" "$OUT/trace_no_dispatch.jls" tadmm_no > "$OUT/tadmm_no_opendss.log" 2>&1
+fi
 python3 "$PILOT/validate.py" "$OUT" > "$OUT/validation.log"
 date -u +%FT%TZ > "$OUT/COMPLETE"
 CG=/sys/fs/cgroup/memory/slurm/uid_$(id -u)/job_$SLURM_JOB_ID

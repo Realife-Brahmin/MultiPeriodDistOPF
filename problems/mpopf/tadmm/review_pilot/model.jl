@@ -7,12 +7,45 @@ const SHARED = normpath(joinpath(@__DIR__, "..", "..", "spar_ddp", "examples", "
 include(joinpath(SHARED, "terminal_soc_penalty.jl"))
 include(joinpath(SHARED, "loadflow_start.jl"))
 include(joinpath(SHARED, "control_layout.jl"))
+include(joinpath(SHARED, "voltage_screening.jl"))
+
+# Reuse SPAR-DDP's proved, data-only screen; never infer an active set from a
+# previous optimum. Cache topology and screening once per exported instance.
+function tadmm_screen(d)
+    spec=get(ENV,"TADMM_SCREEN","substation,ell")
+    cache=get!(d,:_tadmm_screen_cache,Dict{String,Any}())
+    return get!(cache,spec) do
+        flags=Set(String.(strip.(split(spec,',';keepempty=false))))
+        isempty(setdiff(flags,Set(["substation","ell","vupper","psubs"]))) || error("Unknown TADMM_SCREEN item")
+        push!(flags,"substation") # fixed-root bounds are always redundant
+        # Positive voltage is needed for SOC => ell>=0. Keep all nonroot
+        # lower-voltage bounds, as in the validated DDP screening studies.
+        all(j->d[:Vminpu][j]>0,d[:Nset]) || error("ell screening requires positive voltage")
+        vs=("vupper" in flags || "psubs" in flags) ? voltage_screen(d,d[:T]) : nothing
+        keep_upper=vs===nothing ? trues(length(d[:Nset])) : [any(@view vs.keep_up[n,:]) for n in eachindex(d[:Nset])]
+        drop_ps="psubs" in flags && minimum(vs.psubs_min)>0
+        (;flags,keep_upper,drop_ps,psubs_min=vs===nothing ? NaN : minimum(vs.psubs_min))
+    end
+end
+
+function physical_layout(d)
+    return get!(d,:_tadmm_physical_layout) do
+        ix,nu=control_layout(d)
+        (;ix,nu,bp=Dict(j=>n for (n,j) in enumerate(d[:Nset])),
+            ep=Dict(e=>n for (n,e) in enumerate(d[:Lset])),
+            bat=Dict(j=>n for (n,j) in enumerate(d[:Bset])),
+            der=Dict(j=>n for (n,j) in enumerate(d[:Dset])),
+            root=d[:substationBus],loads=Set(d[:NLset]))
+    end
+end
 
 function make_model(d, owned; local_window=false, rho=0.0)
     T = d[:T]; ns=d[:Nset]; es=d[:Lset]; bs=d[:Bset]; ds=d[:Dset]
     loads=Set(d[:NLset]); batteries=Set(bs); ders=Set(ds)
     root=d[:substationBus]; dt=d[:delta_t_h]; base=d[:kVA_B]
     times = local_window ? collect(max(1,only(owned)-1):min(T,only(owned)+1)) : collect(1:T)
+    screen=tadmm_screen(d)
+    layout=physical_layout(d)
     # Only dynamics owned by t and its successor are needed in each window.
     dyn = local_window ? collect(only(owned):min(T,only(owned)+1)) : collect(1:T)
     m=Model(Ipopt.Optimizer)
@@ -25,7 +58,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_optimizer_attribute(m,"acceptable_iter",0)
     set_optimizer_attribute(m,"max_iter",3000)
     set_optimizer_attribute(m,"bound_relax_factor",0.0)
-    set_optimizer_attribute(m,"linear_solver",get(ENV,"TADMM_LINEAR_SOLVER","mumps"))
+    set_optimizer_attribute(m,"linear_solver",get(ENV,"TADMM_LINEAR_SOLVER","ma57"))
     for kv in split(get(ENV,"TADMM_IPOPT_OPTIONS",""),';';keepempty=false)
         k,v=strip.(split(kv,'=';limit=2))
         val=something(tryparse(Int,v),tryparse(Float64,v),String(v))
@@ -40,6 +73,12 @@ function make_model(d, owned; local_window=false, rho=0.0)
     @variable(m, qd[ds,owned])
     @variable(m, pb[bs,dyn])
     @variable(m, b[bs,times])
+    if "ell" in screen.flags
+        for e in es,t in owned; delete_lower_bound(ell[e,t]); end
+    end
+    if screen.drop_ps
+        for t in owned; delete_lower_bound(ps[t]); end
+    end
     @expression(m,cost,
         sum(d[:LoadShapeCost][t]*base*dt*ps[t] for t in owned)+
         sum(d[:C_B]*base^2*dt*pb[j,t]^2 for j in bs,t in owned))
@@ -64,7 +103,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
             @constraint(m,p[e,t]^2+q[e,t]^2<=v[i,t]*ell[e,t])
         end
         @constraint(m,v[root,t]==1.05^2)
-        for j in ns
+        for (n,j) in enumerate(ns)
             if j==root
                 # The equality fixes root voltage at its permitted maximum.
                 # An additional upper bound is redundant and yielded opposing
@@ -73,7 +112,9 @@ function make_model(d, owned; local_window=false, rho=0.0)
                 continue
             end
             set_lower_bound(v[j,t],d[:Vminpu][j]^2)
-            set_upper_bound(v[j,t],d[:Vmaxpu][j]^2)
+            if !("vupper" in screen.flags) || screen.keep_upper[n]
+                set_upper_bound(v[j,t],d[:Vmaxpu][j]^2)
+            end
         end
         for j in ds
             qmax=sqrt(max(0.0,d[:S_D_R][j]^2-d[:p_D_pu][j,t]^2))
@@ -103,7 +144,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
         end
     end
     vars=all_variables(m); initial=start_value.(vars)
-    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial)
+    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout)
 end
 
 function solve_checked!(s; reuse=false)
@@ -118,7 +159,7 @@ function solve_checked!(s; reuse=false)
 end
 
 function dispatch_period(s,d,t)
-        ix,nu=control_layout(d); u=zeros(nu); bb=zeros(length(d[:Bset]))
+        ix=s.layout.ix; u=zeros(s.layout.nu); bb=zeros(length(d[:Bset]))
         u[ix.ps]=value(s.ps[t]); u[ix.qs]=value(s.qs[t])
         for (n,e) in enumerate(d[:Lset])
             u[ix.P[n]]=value(s.p[e,t]); u[ix.Q[n]]=value(s.q[e,t]); u[ix.ell[n]]=value(s.ell[e,t])
@@ -162,10 +203,11 @@ end
 # Evaluate the assembled dispatch against original physical equations and bounds,
 # independently of JuMP's per-subproblem convergence/status and ADMM residuals.
 function physical_metrics(d,us,bb)
-    ix,_=control_layout(d); bp=Dict(j=>n for (n,j) in enumerate(d[:Nset]))
-    ep=Dict(e=>n for (n,e) in enumerate(d[:Lset])); bat=Dict(j=>n for (n,j) in enumerate(d[:Bset]))
-    der=Dict(j=>n for (n,j) in enumerate(d[:Dset])); root=d[:substationBus]
-    loads=Set(d[:NLset])
+    return physical_metrics_cached(d,us,bb,physical_layout(d))
+end
+
+function physical_metrics_cached(d,us,bb,layout)
+    (;ix,bp,ep,bat,der,root,loads)=layout
     maxeq=0.0; maxbound=0.0; maxcone=0.0; gap=0.0; loss_gap=0.0; obj=0.0
     recovered_energy=[d[:B0_pu][j] for j in d[:Bset]]
     for t in 1:d[:T]

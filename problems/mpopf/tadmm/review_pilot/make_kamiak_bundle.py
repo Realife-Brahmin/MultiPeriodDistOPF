@@ -16,7 +16,7 @@ paths = ['AGENTS.md', '.agents/AGENTS.md', 'problems/mpopf/tadmm/review_pilot',
     'test_networks/parse_opendss.jl', 'test_networks/LoadShapeDefault.dss',
     'test_networks/LoadShapePVDefault.dss', 'test_networks/LoadShapePSubsCostDefault.dss']
 paths += [base + f for f in ('export_ieee123c_data.jl', 'loadflow_start.jl',
-    'terminal_soc_penalty.jl', 'control_layout.jl', 'opendss_check.jl')]
+    'terminal_soc_penalty.jl', 'control_layout.jl', 'opendss_check.jl', 'voltage_screening.jl')]
 paths += ['test_networks/' + s for s in ('ieee123C_1ph', 'ieee2522C_1ph', 'large10kC_1ph')]
 tracked = subprocess.check_output(['git', 'ls-files', '-z', '--', *paths], cwd=root).decode().split('\0')
 tracked = [p for p in tracked if p and '/results/' not in p]

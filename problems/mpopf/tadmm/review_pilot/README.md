@@ -7,11 +7,20 @@ redundant bounds and explicitly limits unscaled complementarity. See
 `PLATEAU_AUDIT.md` for controlled same-rho evidence and the fresh-run validation
 requirement. Prior frozen campaigns are preserved under their original sources.
 
+**DDP transfer and NO target:** see [DDP_TRANSFER_AUDIT.md](DDP_TRANSFER_AUDIT.md)
+for the source-mapped review of the August–October work. The repaired C4
+baseline first reaches the current NO rule at **66 iterations on med2522** and
+**168 on large10k**. The user's target is below 100, separate from strict
+stopping. Redundant current lower bounds are now removed using DDP's proof;
+data-only voltage-upper screening follows the October case-specific evidence.
+New runs save and OpenDSS-check the actual first NO dispatch.
+
 **Fresh validation passed:** med2522 T=24 job 31645746 converged in 389 warm-up
 and 389 measured iterations with matching traces and independent OpenDSS checks.
 The original failed run stopped at 5000. Both use rho=3800, increased to 7600
 after iteration 10; no tuning change accounts for this result. The corrected
-large10k T=24 follow-up is job 31645790. See results/accuracy_fix_T24_31645746.
+large10k T=24 follow-up job 31645790 also passed, with 267 strict iterations.
+See results/accuracy_fix_T24_31645746.
 
 Plot colors follow the existing semantic palette in
 `../plots/plot_convergence_from_csv.jl`: objective #0072B2, primal #009E73,
