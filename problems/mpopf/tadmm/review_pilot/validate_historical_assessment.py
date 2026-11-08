@@ -52,9 +52,15 @@ if m['rho_initial']==48 and m['rho_policy']=='fixed':
     prefix=all(math.isclose(float(a[key]),float(b[key]),rel_tol=1e-10,abs_tol=1e-10)
         for a,b in zip(trace,baseline) for key in ('objective','original_primal','r_max','s_max','rho'))
     assert prefix
-rho=m['rho_initial']; seen=False
+rho=m['rho_initial']; seen=False; high_count=0
 for r in trace:
     assert float(r['rho'])==rho
+    if m['rho_policy']=='legacy_phase' and m.get('rho_watchdog',False):
+        rr=float(r['owned_r_rms'])
+        if rr>2e-4:high_count+=1
+        elif rr<.5e-4:high_count=0
+        if high_count>=15:
+            rho=min(1e6,2.5*rho);high_count=0
     if m['rho_policy']=='legacy_phase' and int(r['iteration'])%5==0:
         rr=float(r['owned_r_rms']); ss=float(r['owned_s_rms'])
         seen=seen or rr<=1e-4

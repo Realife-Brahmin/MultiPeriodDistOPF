@@ -14,3 +14,15 @@ function legacy_rho_update(rho,r,s,k,seen;eps_pri=1e-4,tau_decrease=5.0)
     end
     return next,seen
 end
+
+function legacy_rho_watchdog(rho,r,count;eps_pri=1e-4)
+    if r>2eps_pri
+        count+=1
+    elseif r<0.5eps_pri
+        count=0
+    end
+    if count>=15
+        return min(1e6,2.5rho),0
+    end
+    return rho,count
+end

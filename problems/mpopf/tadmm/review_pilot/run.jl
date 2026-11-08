@@ -49,6 +49,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     isfinite(balance_ratio) && balance_ratio>1 || error("Rho balance ratio must exceed one")
     primal_seen=false; high_primal_count=0
     legacy_tau_decrease=parse(Float64,get(ENV,"TADMM_RHO_TAU_DECREASE","5"))
+    legacy_watchdog=get(ENV,"TADMM_RHO_WATCHDOG","0")=="1"
     checkpoint_s=0.0; checkpoint_interval=parse(Int,get(ENV,"TADMM_CHECKPOINT_INTERVAL","25"))
     rmax=Inf; smax=Inf; ok=false
     no_iteration=0; no_wall_s=NaN; no_save_s=0.0
@@ -148,6 +149,12 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # numerically larger while primal consensus remains infeasible.
         if rho_policy=="legacy_phase"
             rho_old=rho
+            if legacy_watchdog
+                rho,high_primal_count=legacy_rho_watchdog(rho,owned_r,high_primal_count)
+                if rho!=rho_old
+                    @printf("LEGACY_WATCHDOG k=%d rho_old=%.8g rho_new=%.8g owned_r=%.3e\n",k,rho_old,rho,owned_r)
+                end
+            end
             rho,primal_seen=legacy_rho_update(rho,owned_r,owned_s,k,primal_seen;tau_decrease=legacy_tau_decrease)
             if rho!=rho_old
                 foreach(u->u.*=rho_old/rho,dual)
