@@ -29,8 +29,18 @@ name = {'ieee2522C_1ph': 'med2522', 'large10kC_1ph': 'large10k'}[meta['system']]
 datasets = {}
 summaries = {}
 rounds = []
-for policy in ('exact', 'cap30'):
-    arm = case / policy
+entries=[('exact',case/'exact',validation['arms']['exact']),('cap30',case/'cap30',validation['arms']['cap30'])]
+light_validation=None
+if len(sys.argv)>3:
+    light=Path(sys.argv[3])
+    assert (light/'ASSESSMENT_VALIDATED').is_file()
+    lm=tomllib.loads((light/'comparison.toml').read_text())
+    assert lm['input_sha256']==meta['input_sha256'] and lm['C_B']==meta['C_B']
+    light_validation=json.loads((light/'validation_complete.json').read_text())
+    entries.append(('cap30_light',light/'cap30',light_validation['arms']['cap30']))
+styles={'exact':'-','cap30':'--','cap30_light':'-.'}
+labels={'exact':'Exact local solves','cap30':'30-step cap + full local reports','cap30_light':'30-step cap; global checks'}
+for policy,arm,arm_validation in entries:
     info = tomllib.loads((arm / 'assessment.toml').read_text())
     trace = list(csv.DictReader((arm / 'trace.csv').open()))
     stages = list(csv.DictReader((arm / 'trace_subproblems.csv').open()))
@@ -71,7 +81,7 @@ for policy in ('exact', 'cap30'):
         total_loop_s=info['loop_wall_s'], total_algorithm_s=info['algorithm_s'],
         truncated_local_solves=len(limited),
         truncated_local_solves_after_first_iteration=sum(int(s['iteration'])>1 for s in limited),
-        largest_truncated_local_primal=max((float(s['local_primal']) for s in limited),default=None),
+        largest_truncated_local_primal=max((float(s['local_primal']) for s in limited if math.isfinite(float(s['local_primal']))),default=None),
         max_ipopt_iterations=max(int(s['ipopt_iterations']) for s in stages),
         median_round_max_solver_s=statistics.median(r['max_solver_s'] for r in tail),
         median_round_max_stage_elapsed_s=statistics.median(r['max_stage_elapsed_s'] for r in tail),
@@ -82,8 +92,8 @@ for policy in ('exact', 'cap30'):
         bottleneck_period_counts=dict(bottlenecks.most_common()),
         cost_only_0p5pct_iteration=next((int(r['iteration']) for r in trace if gap(r)<=.005),None),
         cost_only_0p1pct_iteration=next((int(r['iteration']) for r in trace if gap(r)<=.001),None),
-        stage_status_validation=validation['arms'][policy]['stage_status_validation'],
-        no_opendss_validated=('no_opendss' in validation['arms'][policy]))
+        stage_status_validation=arm_validation['stage_status_validation'],
+        no_opendss_validated=('no_opendss' in arm_validation))
     datasets[policy] = (info, trace, stats)
 report = dict(system=meta['system'], T=meta['T'], C_B=meta['C_B'],
     input_sha256=meta['input_sha256'], rho_initial=meta['rho_initial'], rho_policy=meta['rho_policy'],
@@ -91,14 +101,17 @@ report = dict(system=meta['system'], T=meta['T'], C_B=meta['C_B'],
     cutoff_diagnostics_note='The instrumented cap arm evaluates full local primal feasibility after each cutoff; its stage elapsed time includes that additional diagnostic work. Raw solver times exclude it.',
     straggler_statistics_exclude_first_iteration=True,
     cost_only_note='Objective-only crossings do not assert feasibility and are not the historical full July criterion.', arms=summaries)
+if light_validation is not None:
+    report['light_trajectory_matches_full_reports']=light_validation['trajectory_matches_instrumented_cap']
 (out / 'summary.json').write_text(json.dumps(report,indent=2)+'\n')
 with (out / 'straggler_rounds.csv').open('w',newline='') as stream:
     writer=csv.DictWriter(stream,fieldnames=rounds[0]);writer.writeheader();writer.writerows(rounds)
 
 fig, axes = plt.subplots(5,1,figsize=(10,11),sharex=True,layout='constrained')
-for policy, style in (('exact','-'),('cap30','--')):
+for policy,_,_ in entries:
+    style=styles[policy]
     info, trace, stats = datasets[policy]
-    label = f'{"Exact local solves" if policy=="exact" else "30-iteration local cap"}; NO {info["no_iteration"] or "not reached"}'
+    label = f'{labels[policy]}; NO {info["no_iteration"] or "not reached"}'
     x = [int(r['iteration']) for r in trace]
     values = [[max(abs(float(r['objective'])-ref)/max(1,abs(ref))/.001,1e-12) for r in trace],
         [max(float(r['original_primal'])/meta['no_original_tolerance'],1e-12) for r in trace],
@@ -124,12 +137,13 @@ for ext in ('png','pdf'):
 plt.close(fig)
 
 fig, axes = plt.subplots(3,1,figsize=(10,8),sharex=True,layout='constrained')
-for policy,style,medianstyle in (('exact','-',':'),('cap30','--','-.')):
+for n,(policy,_,_) in enumerate(entries):
+    style=styles[policy];medianstyle=((0,(1,2)),(0,(2,2)),(0,(1,3,3,3)))[n]
     info,trace,stats=datasets[policy]
     x=[r['iteration'] for r in stats]
-    label='Exact locals' if policy=='exact' else '30-iteration cap'
+    label=labels[policy]
     axes[0].semilogy(x,[r['max_solver_s'] for r in stats],color=TADMM,linestyle=style,label=label+': slowest')
-    axes[0].semilogy(x,[r['median_solver_s'] for r in stats],color=TADMM,linestyle=medianstyle,linewidth=1,label=label+': median')
+    axes[0].semilogy(x,[r['median_solver_s'] for r in stats],color=TADMM,linestyle=medianstyle,linewidth=1,alpha=.65,label=label+': median')
     axes[1].plot(x,[r['max_to_median'] for r in stats],color=TADMM,linestyle=style)
     axes[2].step(x,[r['cutoffs'] for r in stats],where='post',color=TADMM,linestyle=style)
 axes[0].set_ylabel('Local Ipopt solver time (s)');axes[0].legend(ncol=2)
