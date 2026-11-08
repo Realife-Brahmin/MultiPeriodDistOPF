@@ -48,7 +48,7 @@ The previously active med2522 T=24 MA57 case in task
 31643458_6 is retained. Duplicate MA97 task 31643458_7 was canceled, and pending
 tasks 8/9 (large10k T=6) and 10/11 (old paired T=24 repeats) were canceled.
 They are superseded, not numerical failures; their existing evidence is preserved.
-Job 31643647 instead runs one large10k T=24 MA57 case via
+Historical job 31643647 instead ran one large10k T=24 MA57 case via
 `kamiak_single_case.sh`, with the same frozen numerical source and CPU policy.
 
 The old active paired launcher would otherwise start MA97 after med2522 MA57.
@@ -67,12 +67,11 @@ proof that the centralized backend difference is always small. Backend choice
 for a later final comparison can be revisited without duplicating every ADMM run.
 That earlier option is now superseded by the user's MA57-only direction.
 
-Latest T=24 status: med2522 task 31643458_6 stopped at its 5000-iteration warm-up
+Earlier pre-fix T=24 status: med2522 task 31643458_6 stopped at its 5000-iteration warm-up
 cap with a persistent two-cycle; it has no validated measured result. large10k
-job 31643647 converged in 793 warm-up iterations and its measured restart is
-running. Do not rerun the unchanged med2522 configuration merely to extend its
-cap. Diagnose the observed plateau and inner-solve accuracy before selecting
-the next penalty experiment.
+job 31643647 converged in 793 warm-up and measured iterations. Both are
+superseded by the validated numerical correction summarized above. The failed
+med2522 plateau was diagnosed rather than rerun with a larger cap.
 
 This is a fresh experimental harness. Historical July drivers and result rows
 are preserved. It implements the same overlapping temporal consensus ADMM:
@@ -313,10 +312,12 @@ See `results/kamiak_t6_update_31643458/README.md` and its archived evidence for
 initial timings, timer boundaries and the preserved calibration failure.
 
 The normalized relative-residual controller and curvature-scaled initial rho
-are fixed across this campaign. These are experiments with the corrected
+were fixed across that original C3 campaign. Current bounded penalty tuning
+is documented separately in DDP_TRANSFER_AUDIT.md. These experiments use the corrected
 formulation, not a reproduction of July's omitted-loss model. The existing
 soft-terminal DDP campaign remains a different optimization problem. A matched
 DDP comparison needs the same free-terminal convention and hardware policy.
 Keep full-convergence timings separate from any later posthoc 0.1% objective /
-original-feasibility scoring and select the faster backend by two-repeat median,
-not the fastest individual observation.
+original-feasibility scoring. The former two-backend/repeat protocol is
+superseded for the present first assessment by the user's MA57-only,
+one-observation direction above.
