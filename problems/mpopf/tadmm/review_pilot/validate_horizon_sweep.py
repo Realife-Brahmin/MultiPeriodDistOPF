@@ -14,7 +14,8 @@ except ImportError:
 out=Path(sys.argv[1]); stage=sys.argv[2]
 m=tomllib.loads((out/'sweep.toml').read_text())
 assert m['T'] in (24,48,96) and m['system']=='large10kC_1ph'
-assert m['workers']==24 and m['compute_cpu_budget']==25 and m['linear_solver']=='ma57'
+expected_workers=m['T'] if m.get('execution_policy')=='one_per_period' else 24
+assert m['workers']==expected_workers and m['compute_cpu_budget']==expected_workers+1 and m['linear_solver']=='ma57'
 assert m['terminal_soc_penalty']==0 and m['central_original_primal']<=1e-6
 for line in (out/'source.sha256').read_text().splitlines():
     digest,rel=line.split('  ',1)
@@ -82,9 +83,13 @@ for name in names:
     assert a['final_rms_met']==('final_rms' in first)
     assert first.get('final_rms',len(trace))==len(trace)
     assert a['final_rms_met'] or len(trace)==m['maximum_iterations']
-    layout=a['worker_layout'];assert len(layout)==24 and len({w['affinity'] for w in layout})==24
+    layout=a['worker_layout'];assert len(layout)==expected_workers
+    assert len({(w['hostname'],w['affinity']) for w in layout})==expected_workers
     assert sorted(t for w in layout for t in w['periods'])==list(range(1,m['T']+1))
-    assert all(len(w['periods'])==m['T']//24 and w['julia_threads']==w['blas_threads']==1 and w['openmp_threads']=='1' for w in layout)
+    assert all(len(w['periods'])==m['T']//expected_workers and w['julia_threads']==w['blas_threads']==1 and w['openmp_threads']=='1' for w in layout)
+    if m.get('execution_policy')=='one_per_period':
+        assert len({w['hostname'] for w in layout})==m['nodes']
+        assert all(w['affinity']==w['expected_pin'] and w['warm_start']==m['warm_start'] and w['objective_update']==m['objective_update'] for w in layout)
     starts.append({t:h for w in layout for t,h in w['initial_starts_sha256'].items()})
     for folder in [arm,arm/'warmup']:
         rows=list(csv.DictReader((folder/'trace.csv').open()));sub=list(csv.DictReader((folder/'trace_subproblems.csv').open()))

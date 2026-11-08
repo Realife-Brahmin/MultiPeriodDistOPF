@@ -3,10 +3,10 @@ include("sweep_milestones.jl")
 function horizon_sweep_main()
 system,Targ,out,rhoarg=ARGS
 T=parse(Int,Targ); rhos=parse.(Float64,split(rhoarg,','))
-@assert system=="large10kC_1ph" && T in (24,48,96) && length(rhos)==2
+@assert system=="large10kC_1ph" && T in (24,48,96) && length(rhos) in (1,2)
 @assert ENV["TADMM_LINEAR_SOLVER"]=="ma57" && ENV["TADMM_RHO_POLICY"]=="legacy_phase"
 @assert ENV["TADMM_RHO_WATCHDOG"]=="1" && ENV["TADMM_RHO_PRIMAL_GATE"]=="1e-4"
-mkpath(out); total_start=time_ns()
+mkpath(out);register_process!(); total_start=time_ns()
 datafile=joinpath(SHARED,"..","..","results/network_filterddp/network_data_$(system)_T$(T)_periodic.jls")
 d=deserialize(datafile); apply_review_cb!(d,system;profile="july")
 ENV["REDUCED_CB"]=repr(d[:C_B]); ENV["REDUCED_PROFILE"]="periodic"
@@ -20,8 +20,14 @@ function check_dss(path,label,log)
         return success(pipeline(cmd;stdout=io,stderr=io))
     end
 end
+nw=parse(Int,get(ENV,"TADMM_NWORKERS","24"))
 meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>"ma57",
-    "input_sha256"=>bytes2hex(sha256(read(datafile))),"workers"=>24,"compute_cpu_budget"=>25,
+    "input_sha256"=>bytes2hex(sha256(read(datafile))),"workers"=>nw,"compute_cpu_budget"=>nw+1,
+    "cluster_backend"=>get(ENV,"TADMM_CLUSTER_BACKEND","local"),
+    "warm_start"=>get(ENV,"TADMM_WARM_START","primal"),
+    "objective_update"=>get(ENV,"TADMM_OBJECTIVE_UPDATE","legacy"),
+    "execution_policy"=>get(ENV,"TADMM_EXECUTION_POLICY","fixed24"),
+    "nodes"=>parse(Int,get(ENV,"SLURM_JOB_NUM_NODES","1")),
     "configured_memory_gb"=>128,"maximum_iterations"=>maxiter,"controller_primal_gate"=>1e-4,
     "rho_tau_decrease"=>5.0,"rho_tau_increase"=>2.0,"rho_balance_ratio"=>5.0,
     "rho_update_interval"=>5,"rho_watchdog_window"=>15,"rho_watchdog_factor"=>2.5,

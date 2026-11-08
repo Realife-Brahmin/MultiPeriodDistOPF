@@ -10,6 +10,16 @@ include(joinpath(SHARED, "control_layout.jl"))
 include(joinpath(SHARED, "voltage_screening.jl"))
 include("experiment_settings.jl")
 
+mutable struct StageReuse
+    rho::Float64
+    warm_start::String
+    objective_update::String
+    energy_vars::Vector{VariableRef}
+    coefficients::Vector{Float64}
+    constraints::Vector{ConstraintRef}
+    quadratic_updates::Int
+end
+
 # Reuse SPAR-DDP's proved, data-only screen; never infer an active set from a
 # previous optimum. Cache topology and screening once per exported instance.
 function tadmm_screen(d)
@@ -150,7 +160,14 @@ function make_model(d, owned; local_window=false, rho=0.0)
         end
     end
     vars=all_variables(m); initial=start_value.(vars)
-    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout,local_policy,local_primal_report)
+    warm_start=local_window ? get(ENV,"TADMM_WARM_START","primal") : "primal"
+    objective_update=get(ENV,"TADMM_OBJECTIVE_UPDATE","legacy")
+    warm_start in ("primal","primal_dual") || error("Unknown warm-start policy")
+    objective_update in ("legacy","batched") || error("Unknown objective update policy")
+    energy_vars=local_window ? VariableRef[b[j,t] for t in times for j in bs] : VariableRef[]
+    constraints=warm_start=="primal_dual" ? all_constraints(m;include_variable_in_set_constraints=true) : ConstraintRef[]
+    reuse=StageReuse(rho,warm_start,objective_update,energy_vars,zeros(length(energy_vars)),constraints,0)
+    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout,local_policy,local_primal_report,reuse)
 end
 
 function solve_checked!(s; reuse=false,allow_iteration_limit=false)
@@ -196,13 +213,45 @@ end
 
 function stage_step!(s,d,z,u,rho,k)
     tick=time_ns()
+    warm_tick=time_ns()
     if k>1
-        vals=value.(s.vars); set_start_value.(s.vars,vals)
+        # Cache every result before setting any start or modifying the model.
+        vals=value.(s.vars)
+        multipliers=s.reuse.warm_start=="primal_dual" ? dual.(s.reuse.constraints) : Float64[]
+        all(isfinite,vals) && all(isfinite,multipliers) || error("Nonfinite warm start")
+        set_start_value.(s.vars,vals)
+        if s.reuse.warm_start=="primal_dual"
+            set_dual_start_value.(s.reuse.constraints,multipliers)
+            set_optimizer_attribute(s.m,"warm_start_init_point","yes")
+            set_optimizer_attribute(s.m,"warm_start_bound_push",1e-8)
+            set_optimizer_attribute(s.m,"warm_start_bound_frac",1e-8)
+            set_optimizer_attribute(s.m,"warm_start_slack_bound_push",1e-8)
+            set_optimizer_attribute(s.m,"warm_start_slack_bound_frac",1e-8)
+            set_optimizer_attribute(s.m,"warm_start_mult_bound_push",1e-8)
+            set_optimizer_attribute(s.m,"mu_init",1e-6)
+        end
     end
-    for (n,j) in enumerate(d[:Bset]),(a,t) in enumerate(s.times)
-        set_objective_coefficient(s.m,s.b[j,t],rho*(u[n,a]-z[n,t]))
-        set_objective_coefficient(s.m,s.b[j,t],s.b[j,t],rho/2)
+    warm_start_s=(time_ns()-warm_tick)/1e9
+    update_tick=time_ns()
+    if s.reuse.objective_update=="batched"
+        nbat=length(d[:Bset])
+        for (a,t) in enumerate(s.times),n in 1:nbat
+            s.reuse.coefficients[(a-1)*nbat+n]=rho*(u[n,a]-z[n,t])
+        end
+        set_objective_coefficient(s.m,s.reuse.energy_vars,s.reuse.coefficients)
+        if rho!=s.reuse.rho
+            set_objective_coefficient(s.m,s.reuse.energy_vars,s.reuse.energy_vars,fill(rho/2,length(s.reuse.energy_vars)))
+            s.reuse.quadratic_updates+=1
+        end
+    else
+        for (n,j) in enumerate(d[:Bset]),(a,t) in enumerate(s.times)
+            set_objective_coefficient(s.m,s.b[j,t],rho*(u[n,a]-z[n,t]))
+            set_objective_coefficient(s.m,s.b[j,t],s.b[j,t],rho/2)
+        end
+        s.reuse.quadratic_updates+=1
     end
+    s.reuse.rho=rho
+    objective_update_s=(time_ns()-update_tick)/1e9
     solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
     iterations=MOI.get(s.m,MOI.BarrierIterations())
     iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
@@ -210,7 +259,8 @@ function stage_step!(s,d,z,u,rho,k)
     local_primal=local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
     return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
-        iteration_limit_hit,local_primal,local_primal_evaluated,elapsed_s=(time_ns()-tick)/1e9)
+        iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,
+        quadratic_updates=s.reuse.quadratic_updates,elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,
