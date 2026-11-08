@@ -15,6 +15,14 @@ stopping. Redundant current lower bounds are now removed using DDP's proof;
 data-only voltage-upper screening follows the October case-specific evidence.
 New runs save and OpenDSS-check the actual first NO dispatch.
 
+**Post-transfer assessment completed:** med2522 job 31650298 again reaches NO
+at 66, now with the actual first NO dispatch independently passing OpenDSS.
+Five capped 10k penalty candidates all miss NO by 100. Fixed rho=48 is best
+among those tested, ending at 2.327e-5 original violation versus the 1e-5 limit.
+Saved-point reconstruction identifies battery-dynamics inconsistency as the
+maximum violation. See `results/ddp_transfer_NO/README.md` for raw evidence,
+the plots in the established metric colors, and the remaining tuning limit.
+
 **Fresh validation passed:** med2522 T=24 job 31645746 converged in 389 warm-up
 and 389 measured iterations with matching traces and independent OpenDSS checks.
 The original failed run stopped at 5000. Both use rho=3800, increased to 7600

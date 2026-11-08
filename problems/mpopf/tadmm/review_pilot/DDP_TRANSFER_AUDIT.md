@@ -33,11 +33,25 @@ claimed for these failures. See `results/ddp_transfer_NO` for the complete
 preserved traces, including the failed gate-harness initialization.
 
 The residual-balance ratio is now an explicit, recorded hyperparameter;
-its default remains 10. A separate bounded trial uses ratio 2, starting at
-48, to test earlier adaptation. This changes the penalty-controller setting,
-not the consensus averaging or scaled-dual update. Success still requires
-the unchanged original-feasibility and objective thresholds and an actual
-saved NO dispatch passing OpenDSS.
+its default remains 10. Ratio-2 trials starting at 48 and 32 also missed NO,
+ending at 3.119e-5 and 2.497e-5 respectively. Thus **none of the five tested
+10k candidates meets the below-100 target**. Fixed 48 is the best of this
+initial group, without establishing an optimum or a new benchmark result.
+Only penalty settings changed; consensus averaging and scaled-dual updates
+are retained. No feasibility threshold was loosened.
+
+Pure reconstruction of all five saved endpoints matched their trace objective
+and original feasibility. The maximum violation equals the assembled battery
+dynamic-equation error in every case. For fixed 48, integrated-power SOC-bound
+violation is 3.158e-6 and cone-inequality violation is zero; the remaining
+2.327e-5 maximum is temporal consistency. These checks call no optimizer.
+
+The separate post-screening **med2522 T24 check (job 31650298) reaches NO at
+66**, with original violation 8.119e-6. Its actual first NO dispatch passes
+OpenDSS: maximum voltage difference 3.38e-10 p.u., no voltage violations.
+It keeps the baseline rho=3800->7600 policy and executes the full 100-step
+assessment. This confirms the below-100 medium target on the transferred
+code; it does not supply a warmed timing or strict-convergence claim.
 
 ## Exact, transferable changes
 
