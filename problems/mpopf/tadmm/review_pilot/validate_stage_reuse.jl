@@ -1,7 +1,7 @@
 using Test
 include("model.jl")
 
-# A nonlinear cone, equalities, lower/upper/fixed bounds exercise all multiplier
+# A nonlinear cone, equalities and lower/upper bounds exercise the multiplier
 # classes. Compare the same parameter sequence, including unchanged/changed rho.
 function toy_stage(warm,update)
     m=Model(Ipopt.Optimizer);set_silent(m)

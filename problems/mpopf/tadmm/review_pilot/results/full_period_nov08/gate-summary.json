@@ -1,0 +1,64 @@
+{
+  "short_gate_not_convergence_benchmark": true,
+  "iteration_one_excluded_from_local_medians": true,
+  "batched_numerical_path_exactly_matches": true,
+  "full_dual_path_agrees_within_audit_tolerances": true,
+  "source_checks_passed": true,
+  "modes": {
+    "legacy": {
+      "period_workers": 96,
+      "workers_per_host": {
+        "cn157": 48,
+        "cn158": 48
+      },
+      "local_solves": 768,
+      "median_inner_iterations": 13.0,
+      "maximum_inner_iterations": 19,
+      "median_solver_s": 0.5963209867477417,
+      "median_stage_elapsed_s": 0.723873232,
+      "median_warm_start_s": 0.029601578,
+      "median_objective_update_s": 0.019713528,
+      "max_opendss_voltage_difference_pu": 6.3e-11,
+      "final_original_primal": 3.847651349529746e-05,
+      "final_all_rms": 4.278495285229736e-07,
+      "final_unique_dual_rms": 7.1042411967567105
+    },
+    "batched": {
+      "period_workers": 96,
+      "workers_per_host": {
+        "cn157": 48,
+        "cn158": 48
+      },
+      "local_solves": 768,
+      "median_inner_iterations": 13.0,
+      "maximum_inner_iterations": 19,
+      "median_solver_s": 0.589972972869873,
+      "median_stage_elapsed_s": 0.697740161,
+      "median_warm_start_s": 0.0297655595,
+      "median_objective_update_s": 0.005433845499999999,
+      "max_opendss_voltage_difference_pu": 6.3e-11,
+      "final_original_primal": 3.847651349529746e-05,
+      "final_all_rms": 4.278495285229736e-07,
+      "final_unique_dual_rms": 7.1042411967567105
+    },
+    "dual": {
+      "period_workers": 96,
+      "workers_per_host": {
+        "cn157": 48,
+        "cn158": 48
+      },
+      "local_solves": 768,
+      "median_inner_iterations": 4.0,
+      "maximum_inner_iterations": 19,
+      "median_solver_s": 0.20837557315826416,
+      "median_stage_elapsed_s": 0.413781886,
+      "median_warm_start_s": 0.116928085,
+      "median_objective_update_s": 0.005381935,
+      "max_opendss_voltage_difference_pu": 6.3e-11,
+      "final_original_primal": 3.8476513495085823e-05,
+      "final_all_rms": 4.2784952852277655e-07,
+      "final_unique_dual_rms": 7.104241196756709
+    }
+  },
+  "warning": "Modes run sequentially with different JIT warmup histories; their total gate times are not fair speedup measurements."
+}
