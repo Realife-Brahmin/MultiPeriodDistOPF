@@ -24,8 +24,20 @@ objective error was approximately 1.52e-6. Thus physical feasibility, rather
 than objective accuracy, delays NO. One bounded candidate starts rho at 384
 instead of 48 (the old controller increased 48 to 96 after iteration 10).
 The relative controller and overlapping-window algorithm remain unchanged.
-This candidate is not an established optimum. Its 100-step diagnostic includes
-compilation and supplies no clean benchmark timing or full-convergence claim.
+The completed 100-step diagnostics supply no clean benchmark timing or
+full-convergence claim. The first three candidates all missed NO: initial
+384 with the existing relative controller returned to 96 and ended at
+1.396e-4 original violation; fixed 384 ended at 3.977e-4; fixed 48 improved
+to 2.327e-5. All stage statuses and source checks passed. No NO dispatch was
+claimed for these failures. See `results/ddp_transfer_NO` for the complete
+preserved traces, including the failed gate-harness initialization.
+
+The residual-balance ratio is now an explicit, recorded hyperparameter;
+its default remains 10. A separate bounded trial uses ratio 2, starting at
+48, to test earlier adaptation. This changes the penalty-controller setting,
+not the consensus averaging or scaled-dual update. Success still requires
+the unchanged original-feasibility and objective thresholds and an actual
+saved NO dispatch passing OpenDSS.
 
 ## Exact, transferable changes
 
