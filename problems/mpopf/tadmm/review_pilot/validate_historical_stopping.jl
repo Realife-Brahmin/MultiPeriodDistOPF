@@ -1,4 +1,5 @@
 include("historical_stopping.jl")
+include("legacy_rho.jl")
 using Test
 @testset "Historical owned-period RMS stopping" begin
     windows=[[1,2],[1,2,3],[2,3]]
@@ -15,4 +16,13 @@ using Test
     @test historical_stop(1e-4,0.02,[100.0,100.01,100.02,100.01,100.0]).met
     @test !historical_stop(0.0,0.02,[100.0,101,100,100,100]).met
     @test !historical_stop(0.0,0.02,zeros(5)).met
+end
+@testset "Legacy primal-first rho schedule" begin
+    @test legacy_rho_update(15000.0,1e-3,1.0,1,false)==(15000.0,false)
+    @test legacy_rho_update(15000.0,1e-3,1.0,5,false)==(30000.0,false)
+    @test legacy_rho_update(15000.0,1e-4,1.0,5,false)==(3000.0,true)
+    @test legacy_rho_update(3000.0,2e-4,1.0,10,true)==(3000.0,true)
+    @test legacy_rho_update(3000.0,1e-4,1e-6,10,true)==(6000.0,true)
+    @test legacy_rho_update(1.0,1e-5,1.0,10,true)==(1.0,true)
+    @test legacy_rho_update(1e6,1.0,1e-6,10,false)==(1e6,false)
 end

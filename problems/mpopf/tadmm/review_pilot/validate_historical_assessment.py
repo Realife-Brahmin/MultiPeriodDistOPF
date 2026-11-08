@@ -16,7 +16,7 @@ m=tomllib.loads((out/'historical.toml').read_text())
 assert m['system']=='large10kC_1ph' and m['T']==24 and m['linear_solver']=='ma57'
 assert m['stopping_rule']=='historical_owned_rms'
 assert math.isclose(m['C_B'],8.013987384856764e-8,rel_tol=1e-14)
-assert m['rho_policy']=='fixed' and m['rho_initial']>0
+assert m['rho_policy'] in ('fixed','legacy_phase') and m['rho_initial']>0
 assert m.get('rho_tuning',False) or m['rho_initial']==48
 assert (m['historical_primal_tolerance'],m['historical_dual_tolerance'],m['stagnation_window'],m['stagnation_range_tolerance'])==(1e-4,1e-2,5,1e-3)
 for line in (out/'source.sha256').read_text().splitlines():
@@ -39,14 +39,29 @@ for k,r in enumerate(trace,1):
 assert m['historical_stopped']==bool(first)
 assert (first==len(trace)) if first else len(trace)==200
 assert m['physical_NO_iteration']==no
+if no:
+    assert m['no_opendss_process_success']
+    no_log=(out/'no_opendss.log').read_text()
+    assert 'converged=true' in no_log
+    assert re.search(r'below limit: 0 of .*above limit: 0,',no_log)
+    assert float(re.search(r'voltage: largest difference ([\deE+.-]+) pu',no_log)[1])<=1e-4
 prefix=None
-if m['rho_initial']==48:
+if m['rho_initial']==48 and m['rho_policy']=='fixed':
     baseline=list(csv.DictReader((out/'baseline_trace.csv').open()))
     assert len(baseline)>=len(trace)
     prefix=all(math.isclose(float(a[key]),float(b[key]),rel_tol=1e-10,abs_tol=1e-10)
         for a,b in zip(trace,baseline) for key in ('objective','original_primal','r_max','s_max','rho'))
     assert prefix
-assert all(float(r['rho'])==m['rho_initial'] for r in trace)
+rho=m['rho_initial']; seen=False
+for r in trace:
+    assert float(r['rho'])==rho
+    if m['rho_policy']=='legacy_phase' and int(r['iteration'])%5==0:
+        rr=float(r['owned_r_rms']); ss=float(r['owned_s_rms'])
+        seen=seen or rr<=1e-4
+        if not seen:
+            if rr>1e-4:rho=min(1e6,2*rho)
+        elif rr>5*ss:rho=min(1e6,2*rho)
+        elif ss>5*rr and rr<=1e-4:rho=max(1,rho/5)
 layout=m['worker_layout']
 assert len(layout)==24 and len({w['affinity'] for w in layout})==24
 assert all(w['local_solve_policy']=='exact' and w['julia_threads']==w['blas_threads']==1 and w['openmp_threads']=='1' for w in layout)
@@ -69,7 +84,8 @@ physical=(m['original_primal']<=1e-5 and abs(m['objective']-m['reference_objecti
 result=dict(historical_iteration=first,physical_NO_iteration=no,endpoint_physical_NO=physical,
     numerical_prefix_matches_prior_exact=prefix,initial_starts_match=True,rho=m['rho_initial'],
     original_primal=m['original_primal'],opendss_converged=converged,max_voltage_difference_pu=dv,
-    algorithm_s=m['algorithm_s'],loop_wall_s=m['loop_wall_s'],benchmark_timing_claim=False)
+    algorithm_s=m['algorithm_s'],loop_wall_s=m['loop_wall_s'],benchmark_timing_claim=False,
+    physical_NO_opendss_validated=bool(no),rho_policy=m['rho_policy'])
 (out/'historical_validation.json').write_text(json.dumps(result,indent=2)+'\n')
 (out/'ASSESSMENT_VALIDATED').write_text('Stopping/source/status checks passed; physical and OpenDSS metrics are separate.\n')
 print(json.dumps(result,indent=2))

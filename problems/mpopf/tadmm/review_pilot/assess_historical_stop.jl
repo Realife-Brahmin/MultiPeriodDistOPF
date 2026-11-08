@@ -13,7 +13,8 @@ d=deserialize(dfile); apply_review_cb!(d,system;profile="july")
 rho_initial=parse(Float64,ENV["TADMM_RHO_INIT"])
 tuning=get(ENV,"TADMM_RHO_TUNING","0")=="1"
 @assert tuning || prior["rho_initial"]==rho_initial
-@assert prior["rho_policy"]==ENV["TADMM_RHO_POLICY"]=="fixed"
+rho_policy=ENV["TADMM_RHO_POLICY"]
+@assert rho_policy==prior["rho_policy"] || (tuning && rho_policy=="legacy_phase")
 @assert prior["screening"]==join(sort!(collect(tadmm_screen(d).flags)),',')
 ENV["TADMM_LOCAL_SOLVE_POLICY"]="exact"
 ENV["REDUCED_CB"]=repr(d[:C_B]); ENV["TERMINAL_SOC_SOFT"]="0"
@@ -39,10 +40,12 @@ try
     serialize(endpoint,Dict(:system=>system,:T=>T,:objective=>result.metrics.objective,:u=>result.us,:B=>result.bb,
         :status=>"HISTORICAL_RMS_ASSESSMENT_ENDPOINT"))
     dss_ok=check_dss(endpoint,"historical_endpoint",joinpath(out,"endpoint_opendss.log"))
+    no_dss_ok=result.no_iteration==0 ? false : check_dss(joinpath(out,"trace_no_dispatch.jls"),"physical_NO",joinpath(out,"no_opendss.log"))
     meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"linear_solver"=>"ma57",
         "input_sha256"=>prior["input_sha256"],"reference_objective"=>prior["reference_objective"],
         "reference_metadata_sha256"=>bytes2hex(sha256(read(joinpath(reference,"comparison.toml")))),
-        "rho_initial"=>rho_initial,"rho_policy"=>prior["rho_policy"],"rho_tuning"=>tuning,
+        "rho_initial"=>rho_initial,"rho_policy"=>rho_policy,"rho_tuning"=>tuning,
+        "rho_balance_ratio"=>5.0,"rho_tau_increase"=>2.0,"rho_tau_decrease"=>5.0,"rho_update_interval"=>5,
         "diagnostics_mode"=>get(ENV,"TADMM_DIAGNOSTICS","cached"),
         "stopping_rule"=>result.stopping_rule,"historical_primal_tolerance"=>1e-4,
         "historical_dual_tolerance"=>1e-2,"stagnation_window"=>5,"stagnation_range_tolerance"=>1e-3,
@@ -54,6 +57,7 @@ try
         "dispatch_s"=>result.dispatch_s,"physical_check_s"=>result.physical_check_s,
         "algorithm_s"=>result.elapsed,"loop_wall_s"=>result.wall_s,
         "endpoint_opendss_process_success"=>dss_ok,"worker_layout"=>deepcopy(POOL_LAYOUT),
+        "no_opendss_process_success"=>no_dss_ok,
         "timing_note"=>"Single exploratory trajectory after three compile steps and fresh reset; not a warmed benchmark median.")
     write_toml(joinpath(out,"historical.toml"),meta)
     run(`$(get(ENV,"PYTHON","python3")) $(joinpath(@__DIR__,"validate_historical_assessment.py")) $out`)

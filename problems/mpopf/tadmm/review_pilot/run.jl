@@ -1,6 +1,7 @@
 include("model.jl")
 include("parallel_workers.jl")
 include("historical_stopping.jl")
+include("legacy_rho.jl")
 using SHA, TOML, Dates, Sockets
 BLAS.set_num_threads(1)
 Threads.nthreads()==1 || error("Use one Julia thread per process")
@@ -43,7 +44,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
     dispatch_s=0.0; physical_check_s=0.0
     rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
-    rho_policy in ("phase","residual","fixed","relative") || error("unknown rho policy")
+    rho_policy in ("phase","residual","fixed","relative","legacy_phase") || error("unknown rho policy")
     balance_ratio=parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10"))
     isfinite(balance_ratio) && balance_ratio>1 || error("Rho balance ratio must exceed one")
     primal_seen=false; high_primal_count=0
@@ -144,7 +145,15 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # July's phase-aware policy, now with ALL copies monitored. Never weaken
         # consensus enforcement merely because the dimensional dual residual is
         # numerically larger while primal consensus remains infeasible.
-        if rho_policy=="phase"
+        if rho_policy=="legacy_phase"
+            rho_old=rho
+            rho,primal_seen=legacy_rho_update(rho,owned_r,owned_s,k,primal_seen)
+            if rho!=rho_old
+                foreach(u->u.*=rho_old/rho,dual)
+                @printf("LEGACY_RHO k=%d rho_old=%.8g rho_new=%.8g owned_r=%.3e owned_s=%.3e primal_seen=%s\n",k,rho_old,rho,owned_r,owned_s,primal_seen)
+                flush(stdout)
+            end
+        elseif rho_policy=="phase"
             rho_old=rho
             high_primal_count=rmax>2tol_r ? high_primal_count+1 : (rmax<tol_r/2 ? 0 : high_primal_count)
             if high_primal_count>=15

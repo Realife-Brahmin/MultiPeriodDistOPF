@@ -9,6 +9,7 @@ case $SYSTEM in
  *) exit 2;;
 esac
 RHO=${TADMM_REVIEW_RHO:-$RHO}
+POLICY=${TADMM_REVIEW_POLICY:-$POLICY}
 cd "$C/source"
 PILOT=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
