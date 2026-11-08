@@ -1,5 +1,12 @@
 # Corrected tADMM reviewer-response experiments — November 7, 2026
 
+**Current user pivot:** new tADMM comparisons restore July's battery coefficient,
+8.013987384856764e-8 at T24, and test exact local solves against a30-step cap.
+See [JULY_COMPARISON.md](JULY_COMPARISON.md). Prior DDP-weight results below
+remain historical evidence. Current periodic profiles and corrected losses
+are retained; this is a controlled weight/cutoff comparison, not a full replay
+of July's inputs and stopping rules. SPAR-DDP defaults are unchanged.
+
 **Numerical-modeling update:** the T=24 plateau audit found redundant fixed-root
 voltage bounds creating opposing ~2.66e9 multipliers and inaccurate local
 termination under the scaled tolerance. The common model now removes those
@@ -92,8 +99,9 @@ duals are updated for every copy.
 ## Agreed problem
 
 - Use the current shared test decks and SPAR-DDP exporter with periodic profiles.
-- Use system-specific C_B from `terminal_soc_penalty.jl`: 0.001 IEEE123,
-  0.0019 med2522, 0.000024 large10k. These weights are fixed across horizons.
+- The new comparison uses July's C_B rule from `experiment_settings.jl`.
+  `TADMM_CB_PROFILE=ddp` explicitly selects the preserved system-specific
+  baseline weights: 0.001 IEEE123,0.0019 med2522,0.000024 large10k.
 - **No terminal-SOC penalty and no terminal equality** (explicit user decision).
   Initial SOC, SOC bounds and lossless battery dynamics remain enforced.
 - Include incoming-line real/reactive losses r*ell and x*ell, voltage-drop loss

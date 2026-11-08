@@ -51,7 +51,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
-    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s")
+    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal")
     io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
@@ -104,7 +104,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         end
         if details!==nothing
             for t0 in 1:T
-                println(details,join((k,t0,rows[t0].status,local_iterations[t0],solve_times[t0],times[t0]),','))
+                println(details,join((k,t0,rows[t0].status,local_iterations[t0],solve_times[t0],times[t0],
+                    rows[t0].iteration_limit_hit,rows[t0].local_primal),','))
             end
             flush(details)
         end
@@ -168,11 +169,13 @@ function main()
     length(ARGS)>=3 || error("usage: run.jl system T output-directory")
     system=ARGS[1]; T=parse(Int,ARGS[2]); out=abspath(ARGS[3]); mkpath(out)
     datafile=joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls")
-    d=deserialize(datafile); d[:C_B]=battery_cb(system,"system")
+    get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact")=="exact" || error("Use compare_july.jl for explicit inexact local-solve assessments")
+    d=deserialize(datafile); cb_profile=apply_review_cb!(d,system)
     serialize(joinpath(out,"instance.jls"),d)
     screen=tadmm_screen(d)
     metadata=Dict("system"=>system,"T"=>T,"timestamp_utc"=>string(now(UTC)),"julia"=>string(VERSION),
-        "C_B"=>d[:C_B],"terminal_soc_penalty"=>0.0,"periodic"=>true,"julia_threads"=>Threads.nthreads(),
+        "C_B"=>d[:C_B],"cb_profile"=>cb_profile,"local_solve_policy"=>"exact",
+        "terminal_soc_penalty"=>0.0,"periodic"=>true,"julia_threads"=>Threads.nthreads(),
         "blas_threads"=>BLAS.get_num_threads(),"hostname"=>gethostname(),
         "data_sha256"=>bytes2hex(sha256(read(datafile))),"linear_solver"=>get(ENV,"TADMM_LINEAR_SOLVER","ma57"),
         "rho_policy"=>get(ENV,"TADMM_RHO_POLICY","phase"),"ipopt_extra_options"=>get(ENV,"TADMM_IPOPT_OPTIONS",""),

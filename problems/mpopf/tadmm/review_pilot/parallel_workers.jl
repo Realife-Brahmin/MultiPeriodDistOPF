@@ -1,4 +1,4 @@
-using Distributed, Sockets
+using Distributed, Sockets, SHA
 isdefined(Main,:make_model) || include("model.jl")
 const ACTOR_DATA=Ref{Any}(nothing)
 const ACTOR_MODELS=Dict{Int,Any}()
@@ -11,16 +11,19 @@ function affinity_string()
     return strip(match(r"Cpus_allowed_list:\s*([^\n]+)",read("/proc/self/status",String)).captures[1])
 end
 
-function actor_prepare!(d,periods,rho)
+function actor_prepare!(d,periods,rho,local_policy)
     BLAS.set_num_threads(1)
+    ENV["TADMM_LOCAL_SOLVE_POLICY"]=local_policy
     empty!(ACTOR_MODELS); GC.gc()
     ACTOR_DATA[]=d
     for t in periods
         ACTOR_MODELS[t]=make_model(d,[t];local_window=true,rho=rho)
     end
+    starts=Dict(string(t)=>bytes2hex(sha256(reinterpret(UInt8,Float64.(ACTOR_MODELS[t].initial)))) for t in periods)
     return Dict("julia_worker"=>myid(),"pid"=>getpid(),"hostname"=>gethostname(),
         "periods"=>periods,"affinity"=>affinity_string(),"blas_threads"=>BLAS.get_num_threads(),
-        "julia_threads"=>Threads.nthreads(),"openmp_threads"=>get(ENV,"OMP_NUM_THREADS","unknown"))
+        "julia_threads"=>Threads.nthreads(),"openmp_threads"=>get(ENV,"OMP_NUM_THREADS","unknown"),
+        "local_solve_policy"=>local_policy,"initial_starts_sha256"=>starts)
 end
 
 function actor_step!(z,dual_by_period,rho,k)
@@ -61,7 +64,8 @@ function prepare_pool!(d,rho)
         run(pipeline(`taskset -apc $(cpus[1]) $(getpid())`;stdout=devnull))
     end
     length(POOL_WIDS)==wanted || error("Worker count changed between warm-up and measured solve")
-    jobs=[remotecall(actor_prepare!,wid,d,group,rho) for (wid,group) in zip(POOL_WIDS,POOL_GROUPS)]
+    local_policy=get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact")
+    jobs=[remotecall(actor_prepare!,wid,d,group,rho,local_policy) for (wid,group) in zip(POOL_WIDS,POOL_GROUPS)]
     empty!(POOL_LAYOUT); append!(POOL_LAYOUT,fetch.(jobs))
     all(info->info["julia_threads"]==1 && info["blas_threads"]==1 && info["openmp_threads"]=="1",POOL_LAYOUT) || error("Worker thread policy mismatch")
     all(i->POOL_LAYOUT[i]["affinity"]==string(cpus[i+1]),eachindex(POOL_LAYOUT)) || error("Worker CPU pin mismatch")

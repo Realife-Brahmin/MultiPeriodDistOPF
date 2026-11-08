@@ -8,6 +8,7 @@ include(joinpath(SHARED, "terminal_soc_penalty.jl"))
 include(joinpath(SHARED, "loadflow_start.jl"))
 include(joinpath(SHARED, "control_layout.jl"))
 include(joinpath(SHARED, "voltage_screening.jl"))
+include("experiment_settings.jl")
 
 # Reuse SPAR-DDP's proved, data-only screen; never infer an active set from a
 # previous optimum. Cache topology and screening once per exported instance.
@@ -56,7 +57,9 @@ function make_model(d, owned; local_window=false, rho=0.0)
     # solves. Enforce an explicit absolute complementarity tolerance as well.
     set_optimizer_attribute(m,"compl_inf_tol",1e-8)
     set_optimizer_attribute(m,"acceptable_iter",0)
-    set_optimizer_attribute(m,"max_iter",3000)
+    local_policy=local_window ? get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact") : "exact"
+    local_policy in ("exact","cap30") || error("Unknown local-solve policy")
+    set_optimizer_attribute(m,"max_iter",local_policy=="cap30" ? 30 : 3000)
     set_optimizer_attribute(m,"bound_relax_factor",0.0)
     set_optimizer_attribute(m,"linear_solver",get(ENV,"TADMM_LINEAR_SOLVER","ma57"))
     for kv in split(get(ENV,"TADMM_IPOPT_OPTIONS",""),';';keepempty=false)
@@ -144,17 +147,20 @@ function make_model(d, owned; local_window=false, rho=0.0)
         end
     end
     vars=all_variables(m); initial=start_value.(vars)
-    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout)
+    return (;m,ps,qs,p,q,v,ell,qd,pb,b,cost,times,dyn,owned,vars,initial,layout,local_policy)
 end
 
-function solve_checked!(s; reuse=false)
+function solve_checked!(s; reuse=false,allow_iteration_limit=false)
     if reuse
         vals=value.(s.vars)
         set_start_value.(s.vars,vals)
     end
     optimize!(s.m)
     status=termination_status(s.m)
-    status in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL) || error("subproblem failed: $status")
+    solved=status in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+    truncated=allow_iteration_limit && status==MOI.ITERATION_LIMIT && has_values(s.m)
+    solved || truncated || error("subproblem failed: $status")
+    truncated && !all(isfinite,value.(s.vars)) && error("Nonfinite truncated local primal values")
     return solve_time(s.m)
 end
 
@@ -194,10 +200,13 @@ function stage_step!(s,d,z,u,rho,k)
         set_objective_coefficient(s.m,s.b[j,t],rho*(u[n,a]-z[n,t]))
         set_objective_coefficient(s.m,s.b[j,t],s.b[j,t],rho/2)
     end
-    solver_s=solve_checked!(s)
+    solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
     iterations=MOI.get(s.m,MOI.BarrierIterations())
+    iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
+    local_primal=iteration_limit_hit ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
-    return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),elapsed_s=(time_ns()-tick)/1e9)
+    return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
+        iteration_limit_hit,local_primal,elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,

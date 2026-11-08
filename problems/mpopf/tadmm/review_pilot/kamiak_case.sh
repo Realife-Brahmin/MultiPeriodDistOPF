@@ -23,7 +23,12 @@ case $SYS in
  *) exit 2;;
 esac
 export TADMM_SCREEN=${TADMM_SCREEN:-$SCREEN}
-export TADMM_RHO_INIT=${TADMM_RHO_INIT:-$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")}
+export TADMM_CB_PROFILE=${TADMM_CB_PROFILE:-july}
+if [[ "$TADMM_CB_PROFILE" == july ]]; then
+ export TADMM_RHO_INIT=${TADMM_RHO_INIT:-$(python3 -c 'import sys;print(3000*(int(sys.argv[1])/24)**.5)' "$T")}
+else
+ export TADMM_RHO_INIT=${TADMM_RHO_INIT:-$(python3 -c 'import sys;print(2*float(sys.argv[1])*1000**2*int(sys.argv[2])/24)' "$CB" "$T")}
+fi
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
 W=${TADMM_NWORKERS:-0}
 export TADMM_NWORKERS=$W
@@ -54,6 +59,7 @@ python3 "$PILOT/sample_linux.py" "$OPT_PID" "$OUT/process_samples.csv" > "$OUT/s
 SAMPLE_PID=$!
 wait "$OPT_PID"
 wait "$SAMPLE_PID"
+export REDUCED_CB=$(python3 -c 'import sys; import tomli; print(tomli.load(open(sys.argv[1],"rb"))["C_B"])' "$OUT/metadata.toml")
 for METHOD in central tadmm; do
  julia --startup-file=no --project="$PILOT" problems/mpopf/spar_ddp/examples/power_system/opendss_check.jl "$SYS" "$T" "$OUT/${METHOD}_dispatch.jls" "$METHOD" > "$OUT/${METHOD}_opendss.log" 2>&1
 done

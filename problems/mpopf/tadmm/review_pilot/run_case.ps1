@@ -34,6 +34,9 @@ do {
 } while(-not $child.HasExited)
 $child.WaitForExit()
 if($child.ExitCode -ne 0){throw "Optimization failed (exit $($child.ExitCode)): $outDir"}
+$cbLine=Get-Content -LiteralPath (Join-Path $outDir 'metadata.toml') | Where-Object {$_ -match '^C_B\s*='} | Select-Object -First 1
+if(!$cbLine){throw 'Missing C_B in run metadata'}
+$env:REDUCED_CB=($cbLine -split '=',2)[1].Trim()
 $methods=@('central','tadmm')
 if(Test-Path -LiteralPath (Join-Path $outDir 'trace_no_dispatch.jls')){$methods+='tadmm_no'}
 foreach($method in $methods){
