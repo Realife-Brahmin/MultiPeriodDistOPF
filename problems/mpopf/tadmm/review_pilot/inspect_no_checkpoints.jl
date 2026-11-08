@@ -1,5 +1,5 @@
 # Pure saved-point evaluation: builds variable maps but never calls optimize!.
-using Serialization, SHA, TOML, DelimitedFiles
+using Serialization, SHA, TOML
 source,c5,c6,out=ARGS
 include(joinpath(source,"problems/mpopf/tadmm/review_pilot/model.jl"))
 cases=[joinpath(c5,"results",name) for name in
@@ -32,10 +32,11 @@ for case in cases
         us[t]=u; s=nothing; GC.gc()
     end
     B=state[:z]; m=physical_metrics(d,us,B)
-    trace,header=readdlm(joinpath(case,"calibration.csv"),',';header=true)
-    position=Dict(String(k)=>n for (n,k) in enumerate(vec(header)))
-    isapprox(m.objective,trace[end,position["objective"]];rtol=1e-13,atol=1e-9) || error("Saved objective mismatch")
-    isapprox(m.original_primal,trace[end,position["original_primal"]];rtol=1e-12,atol=1e-10) || error("Saved feasibility mismatch")
+    lines=readlines(joinpath(case,"calibration.csv"))
+    position=Dict(k=>n for (n,k) in enumerate(split(first(lines),',')))
+    endpoint=split(last(lines),',')
+    isapprox(m.objective,parse(Float64,endpoint[position["objective"]]);rtol=1e-13,atol=1e-9) || error("Saved objective mismatch")
+    isapprox(m.original_primal,parse(Float64,endpoint[position["original_primal"]]);rtol=1e-12,atol=1e-10) || error("Saved feasibility mismatch")
     dynamic=0.0; accumulated_bound=0.0; recovered=[d[:B0_pu][j] for j in d[:Bset]]
     for t in 1:d[:T],(n,j) in enumerate(d[:Bset])
         prev=t==1 ? d[:B0_pu][j] : B[n,t-1]
