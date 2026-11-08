@@ -1,4 +1,4 @@
-# Corrected tADMM reviewer-response experiments — November 7, 2026
+# Corrected tADMM reviewer-response experiments â€” November 7, 2026
 
 **Current user pivot:** new tADMM comparisons restore July's battery coefficient,
 8.013987384856764e-8 at T24, and test exact local solves against a 30-step cap.
@@ -6,6 +6,13 @@ See [JULY_COMPARISON.md](JULY_COMPARISON.md). Prior DDP-weight results below
 remain historical evidence. Current periodic profiles and corrected losses
 are retained; this is a controlled weight/cutoff comparison, not a full replay
 of July's inputs and stopping rules. SPAR-DDP defaults are unchanged.
+
+The first matched July-weight assessment is complete. At T24, med2522 first
+passes NO at 126 with exact locals and 125 with the 30-step cap; both actual
+NO dispatches pass OpenDSS. The lightweight capped run preserves the full
+numerical trajectory and has a modest observed timing gain. Large10k reaches
+no NO point by 200; its maximum local iteration count is 24, so the cap never
+fires. See [results and plots](results/july_weight_comparison/README.md).
 
 **Numerical-modeling update:** the T=24 plateau audit found redundant fixed-root
 voltage bounds creating opposing ~2.66e9 multipliers and inaccurate local
@@ -15,7 +22,7 @@ redundant bounds and explicitly limits unscaled complementarity. See
 requirement. Prior frozen campaigns are preserved under their original sources.
 
 **DDP transfer and NO target:** see [DDP_TRANSFER_AUDIT.md](DDP_TRANSFER_AUDIT.md)
-for the source-mapped review of the August–October work. The repaired C4
+for the source-mapped review of the Augustâ€“October work. The repaired C4
 baseline first reaches the current NO rule at **66 iterations on med 2522** and
 **168 on large 10k**. The user's target is below 100, separate from strict
 stopping. Redundant current lower bounds are now removed using DDP's proof;

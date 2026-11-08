@@ -26,7 +26,7 @@ is an iteration cap, not evidence of a wall-clock timer killing workers.
 
 The historical reporting criteria also differ: paper-era rows use looser
 primal surrogates and a 0.5% near-optimal objective rule. Today's criterion is
-0.1% objective agreement AND original-model feasibility1e-5 on med/large,
+0.1% objective agreement AND original-model feasibility 1e-5 on med/large,
 with every local energy copy monitored. July's original r_norm monitors
 owned-period copies only. These differences must remain visible in any
 historical iteration comparison.
@@ -40,7 +40,7 @@ Recompute an exact centralized reference; do not reuse DDP-weight objectives.
 Pass the same numeric C_B to the independent OpenDSS checker.
 
 Keep each system's current selected rho setup to isolate the weight change:
-med 3800 with the existing relative/balance10 policy; large fixed48. This is
+med 3800 with the existing relative/balance10 policy; large fixed 48. This is
 explicitly a controlled July-weight experiment, not a replay of July's rho
 controller or a claim that these rhos are optimal at the restored weight.
 
@@ -58,7 +58,7 @@ The centralized reference always rejects iteration limits.
 
 Three discarded compile steps precede each assessment, followed by a complete
 model/primal/dual reset. Worker-side initial-start SHA256 values must match
-between arms. Each arm gets one assessment, up to200 outer steps initially;
+between arms. Each arm gets one assessment, up to 200 outer steps initially;
 NO is scored from its first original-feasible crossing. Actual NO dispatches
 are saved, hashed and independently OpenDSS-checked. Strict global criteria,
 local truncations, and capped unsuccessful endpoints have separate flags.
@@ -66,24 +66,33 @@ These short-warmup observations are not finalized publication timings.
 
 ## Current evidence for the outlier hypothesis
 
-In the prior DDP-weight large fixed48 pilot, all 2376 local solves after outer
-iteration 1 used at most24 Ipopt steps. A30-step cap would therefore have no
+In the prior DDP-weight large fixed 48 pilot, all 2376 local solves after outer
+iteration 1 used at most 24 Ipopt steps. A30-step cap would therefore have no
 effect on those later solves. At outer iteration 2, median/max solver time
 was 0.572/0.980 s; at 100,0.680/0.818 s. Restoring July's weaker curvature may
 change this behavior, so analyze the new matched stage logs rather than assume
 the historical outlier problem persists unchanged.
 
 The comparison must report cap-hit counts, affected periods, max/median
-stage times, outer iterations to both the100 target and actual NO, objective
+stage times, outer iterations to both the 100 target and actual NO, objective
 gap, original feasibility, and independent OpenDSS checks. No iteration-limit
 status or historical surrogate residual substitutes for original feasibility.
 
 The first cap arm is instrumented: it evaluates a full JuMP local primal
 report at every cutoff. On the medium pair this reduced the median slowest
-native Ipopt solve from0.331 to0.307 s, but increased critical-worker framework
-overhead from0.024 to0.066 s. An explicit lightweight timing check disables
+native Ipopt solve from 0.331 to 0.307 s, but increased critical-worker framework
+overhead from 0.024 to 0.066 s. An explicit lightweight timing check disables
 that redundant local report with TADMM_LOCAL_PRIMAL_REPORT=0. Finite-value
 checks, real cutoff statuses, every original global feasibility check, and
 independent OpenDSS at NO remain enabled. Its entire trajectory and initial
 starts are compared against the instrumented cap arm, using the same validated
 reference. Missing local reports are marked unevaluated/NaN rather than zero.
+
+The completed [assessment and raw evidence](results/july_weight_comparison/README.md)
+record medium NO at 126/125 for exact/capped locals and validated OpenDSS at those
+actual points. The lightweight cap preserves the 200-step trajectory and gives
+a modest observed loop-time saving. The large cap never activates (all solves
+use at most 24 steps), and neither arm reaches NO within 200. Its saved endpoint
+is limited by accumulated SOC-bound error, while a controlled worst-copy local
+probe confirms accurate local solves. These observations do not establish an
+optimal penalty for the restored weight or a final benchmark timing.
