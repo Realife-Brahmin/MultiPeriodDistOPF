@@ -1,11 +1,13 @@
-"""Controlled saved-state replay: metric colors follow the repository palette."""
+"""Controlled saved-state replay using the manuscript's tADMM figure style."""
 import csv
 from pathlib import Path
 import sys
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from plot_style import PRIMAL, DUAL, THRESHOLD
+from plot_style import PRIMAL, DUAL, THRESHOLD, configure_paper_style
+
+configure_paper_style()
 
 root = Path(sys.argv[1]).resolve()
 series = [('plateau_audit_31645686/default', 'Original local accuracy', '--', None),

@@ -1,11 +1,45 @@
-"""Mirror the existing tADMM convergence plot's semantic color palette.
+"""Match the manuscript's IEEE serif typography and PGFPlots colors.
 
-Source: ../plots/plot_convergence_from_csv.jl, Wong (2011) palette block.
-Keep metric colors stable; distinguish systems/backends/parity by line or marker.
+Sources in the IAS-Trans manuscript: main.tex (IEEEtran),
+figures/traj_common.tex and figures/scaling_inflation_common.tex.
+The paper assigns violet to tADMM, green to feasible centralized references,
+and maroon to infeasible centralized iterates. System colors label systems.
+All diagnostic curves here are tADMM; distinguish runs with line styles.
 """
-OBJECTIVE = '#0072B2'       # RGB(0, 114, 178)
-PRIMAL = '#009E73'          # RGB(0, 158, 115)
-DUAL = '#E69F00'            # RGB(230, 159, 0)
-RHO = '#CC79A7'             # RGB(204, 121, 167)
-CENTRAL_REFERENCE = '#D55E00'  # RGB(213, 94, 0)
-THRESHOLD = '#505050'       # RGB(80, 80, 80)
+TADMM = '#6A4C9C'
+CENTRAL_REFERENCE = '#2E8B57'
+INFEASIBLE_REFERENCE = '#8C1D1D'
+THRESHOLD = '#505050'
+SYSTEM_COLORS = {'ieee123C_1ph': '#1F5186', 'ieee2522C_1ph': '#B8860B',
+                 'large10kC_1ph': '#227822'}
+OBJECTIVE = PRIMAL = DUAL = RHO = TADMM
+
+
+def configure_paper_style():
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        'font.family': 'serif',
+        'font.serif': ['Times New Roman', 'Nimbus Roman', 'STIXGeneral'],
+        'mathtext.fontset': 'stix',
+        'font.size': 11,
+        'axes.labelsize': 11,
+        'axes.titlesize': 12,
+        'axes.titleweight': 'bold',
+        'xtick.labelsize': 10,
+        'ytick.labelsize': 10,
+        'legend.fontsize': 9,
+        'axes.linewidth': 0.6,
+        'xtick.direction': 'out',
+        'ytick.direction': 'out',
+        'lines.linewidth': 1.5,
+        'grid.color': '#E0E0E0',
+        'grid.linewidth': 0.5,
+        'grid.alpha': 1.0,
+        'legend.frameon': True,
+        'legend.facecolor': 'white',
+        'legend.edgecolor': '#BFBFBF',
+        'legend.framealpha': 0.92,
+        'pdf.fonttype': 42,
+        'ps.fonttype': 42,
+        'savefig.dpi': 220,
+    })

@@ -86,7 +86,13 @@ See [endpoint-components.toml](endpoint-components.toml) for all components.
 - [10k initial tuning](large10k-no-comparison.png): best fixed rho=48 and the
   initial rho=32/balance2 trial, alongside the fully converged C4 baseline.
 - [10k larger penalties](large10k-high-penalty.png): the rejected larger-rho
-  paths. Line styles identify settings; colors keep their established meanings.
+  paths. Line styles identify settings; violet identifies tADMM throughout.
+
+The current figures match the manuscript's serif text and mathematical fonts,
+violet tADMM curves (#6A4C9C), and gold/green system-title colors, taken from
+its PGFPlots style files. Each PNG has a vector PDF with the same basename.
+This replaces the older diagnostic metric palette for the displayed figures;
+the numerical data and original evidence archives are unchanged.
 
 The plotter verifies the exact reference-summary SHA and frozen input SHA.
 The first two normalized panels jointly determine NO; the dual panel uses

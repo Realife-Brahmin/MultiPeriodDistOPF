@@ -8,7 +8,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, NullLocator
 import numpy as np
-from plot_style import OBJECTIVE, PRIMAL, DUAL, RHO, CENTRAL_REFERENCE, THRESHOLD
+from plot_style import OBJECTIVE, PRIMAL, DUAL, RHO, CENTRAL_REFERENCE, THRESHOLD, configure_paper_style
+
+configure_paper_style()
 
 root = Path(sys.argv[1]).resolve()
 meta = json.loads((root / 'snapshot.json').read_text())

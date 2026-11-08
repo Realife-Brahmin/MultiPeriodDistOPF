@@ -5,7 +5,9 @@ import tomllib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from plot_style import OBJECTIVE, PRIMAL, DUAL, THRESHOLD
+from plot_style import OBJECTIVE, PRIMAL, DUAL, THRESHOLD, configure_paper_style
+
+configure_paper_style()
 
 root = Path(__file__).resolve().parent / 'results'
 fig, axes = plt.subplots(2, 2, figsize=(10, 7), layout='constrained')

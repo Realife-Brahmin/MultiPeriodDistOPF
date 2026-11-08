@@ -21,7 +21,7 @@ Five capped 10k penalty candidates all miss NO by 100. Fixed rho=48 is best
 among those tested, ending at 2.327e-5 original violation versus the 1e-5 limit.
 Saved-point reconstruction identifies battery-dynamics inconsistency as the
 maximum violation. See `results/ddp_transfer_NO/README.md` for raw evidence,
-the plots in the established metric colors, and the remaining tuning limit.
+the plots in the manuscript's figure style, and the remaining tuning limit.
 
 **Fresh validation passed:** med2522 T=24 job 31645746 converged in 389 warm-up
 and 389 measured iterations with matching traces and independent OpenDSS checks.
@@ -30,13 +30,15 @@ after iteration 10; no tuning change accounts for this result. The corrected
 large10k T=24 follow-up job 31645790 also passed, with 267 strict iterations.
 See results/accuracy_fix_T24_31645746.
 
-Plot colors follow the existing semantic palette in
-`../plots/plot_convergence_from_csv.jl`: objective #0072B2, primal #009E73,
-dual #E69F00, rho #CC79A7, centralized reference #D55E00 and threshold #505050.
-`plot_style.py` shares those exact RGB values across the Python plotters.
-Use line styles or marker shapes for additional distinctions (systems, backends,
-odd/even iterations); retain the metric's color. Original feasibility and all-copy
-consensus are both primal quantities, shown green with solid/dashed lines.
+Current assessment figures follow the manuscript's actual PGFPlots styles,
+`figures/traj_common.tex` and `figures/scaling_inflation_common.tex`, with the
+IEEE serif typography from `main.tex`. `plot_style.py` uses Times New Roman
+with STIX math, tADMM violet #6A4C9C, feasible centralized-reference green
+#2E8B57, and infeasible-reference maroon #8C1D1D. System titles use the paper's
+blue/gold/green system colors. Every diagnostic curve in the current NO plots
+is tADMM, so it is violet; line styles distinguish settings, and axis labels
+identify metrics. Gray lines mark thresholds. PNG and vector PDF versions
+are generated together. Original archived figure styles remain preserved.
 
 ## Current first-assessment scope (user update)
 

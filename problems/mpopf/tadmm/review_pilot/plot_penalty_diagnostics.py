@@ -6,7 +6,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, NullLocator
-from plot_style import PRIMAL, DUAL, RHO, THRESHOLD
+from plot_style import PRIMAL, DUAL, RHO, THRESHOLD, configure_paper_style
+
+configure_paper_style()
 
 campaign = Path(sys.argv[1]).resolve()
 out = Path(sys.argv[2]).resolve()

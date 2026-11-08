@@ -8,7 +8,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter, NullLocator
-from plot_style import PRIMAL, DUAL, RHO, THRESHOLD
+from plot_style import PRIMAL, DUAL, RHO, THRESHOLD, configure_paper_style
+
+configure_paper_style()
 
 old, new, out = map(lambda x: Path(x).resolve(), sys.argv[1:4])
 assert (new / 'COMPLETE').exists(), 'Do not promote an incomplete corrected run'

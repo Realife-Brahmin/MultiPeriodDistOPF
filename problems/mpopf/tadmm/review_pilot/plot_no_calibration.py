@@ -8,7 +8,9 @@ import tomllib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from plot_style import OBJECTIVE, PRIMAL, DUAL, RHO, THRESHOLD
+from plot_style import OBJECTIVE, PRIMAL, DUAL, RHO, THRESHOLD, SYSTEM_COLORS, configure_paper_style
+
+configure_paper_style()
 
 baseline, candidate, output = map(Path, sys.argv[1:4])
 assert (baseline / 'COMPLETE').is_file()
@@ -34,7 +36,7 @@ def setting(m):
     return f'rho0={m["rho_initial"]:g}, balance={m.get("rho_balance_ratio", 10):g}'
 
 series = [(old, f'C4 baseline: rho0={float(old[0]["rho"]):g}, balance=10; NO {first(old)}', '--'),
-    (new, f'DDP screening: {setting(meta)}; NO {first(new) or "not reached"}', '-')]
+    (new, f'Redundant-bound removal: {setting(meta)}; NO {first(new) or "not reached"}', '-')]
 for extra_index, extra in enumerate(sys.argv[4:]):
     adaptive = Path(extra)
     av = json.loads((adaptive / 'calibration_validation.json').read_text())
@@ -46,7 +48,7 @@ for extra_index, extra in enumerate(sys.argv[4:]):
     ar = list(csv.DictReader((adaptive / 'calibration.csv').open()))
     assert first(ar) == am['no_iteration']
     assert not first(ar) or av['no_dispatch_opendss_validation'] == 'pass'
-    series.append((ar, f'DDP screening: {setting(am)}; NO {first(ar) or "not reached"}', ('-.', ':', (0, (5, 1, 1, 1, 1, 1)))[extra_index % 3]))
+    series.append((ar, f'Redundant-bound removal: {setting(am)}; NO {first(ar) or "not reached"}', ('-.', ':', (0, (5, 1, 1, 1, 1, 1)))[extra_index % 3]))
 fig, axes = plt.subplots(4, 1, figsize=(10, 10), sharex=True, layout='constrained')
 for rows, label, style in series:
     x = [int(r['iteration']) for r in rows]
@@ -60,7 +62,7 @@ for rows, label, style in series:
         for axis in axes:
             axis.axvline(first(rows), color=THRESHOLD, linestyle=style, alpha=.35)
 for axis in axes:
-    axis.grid(alpha=.2)
+    axis.grid(which='major')
     axis.axvline(100, color=THRESHOLD, linestyle=':', linewidth=1)
     axis.set_xlim(1, max(110, first(old)+12))
 for axis in axes[:3]:
@@ -68,10 +70,12 @@ for axis in axes[:3]:
 axes[0].set_ylabel('Objective gap / NO tolerance')
 axes[1].set_ylabel('Original violation / NO tolerance')
 axes[2].set_ylabel('Dual residual / strict threshold')
-axes[3].set_ylabel('Penalty rho')
+axes[3].set_ylabel(r'Penalty $\rho$')
 axes[3].set_xlabel('ADMM iteration; NO requires the first two panels at or below 1')
-axes[0].legend(frameon=False, fontsize=9)
+axes[0].legend(fontsize=9)
 system_label = 'med2522' if meta['system'] == 'ieee2522C_1ph' else 'large10k'
-fig.suptitle(f'{system_label} T={meta["T"]}, MA57, free terminal SOC\n100-step assessment; exact DDP screening; iteration comparison only', fontsize=11)
-fig.savefig(output, dpi=170)
+fig.suptitle(f'{system_label}, $T={meta["T"]}$, MA57, free terminal SOC\n100-step assessment; redundant-bound removal; iteration comparison only',
+             fontsize=12, color=SYSTEM_COLORS[meta['system']])
+fig.savefig(output)
+fig.savefig(output.with_suffix('.pdf'))
 plt.close(fig)
