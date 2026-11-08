@@ -10,7 +10,9 @@ dfile=joinpath(SHARED,"..","..","results/network_filterddp/network_data_$(system
 d=deserialize(dfile); apply_review_cb!(d,system;profile="july")
 @assert prior["system"]==system && prior["C_B"]==d[:C_B]
 @assert prior["input_sha256"]==bytes2hex(sha256(read(dfile)))
-@assert prior["rho_initial"]==parse(Float64,ENV["TADMM_RHO_INIT"])
+rho_initial=parse(Float64,ENV["TADMM_RHO_INIT"])
+tuning=get(ENV,"TADMM_RHO_TUNING","0")=="1"
+@assert tuning || prior["rho_initial"]==rho_initial
 @assert prior["rho_policy"]==ENV["TADMM_RHO_POLICY"]=="fixed"
 @assert prior["screening"]==join(sort!(collect(tadmm_screen(d).flags)),',')
 ENV["TADMM_LOCAL_SOLVE_POLICY"]="exact"
@@ -40,13 +42,16 @@ try
     meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"linear_solver"=>"ma57",
         "input_sha256"=>prior["input_sha256"],"reference_objective"=>prior["reference_objective"],
         "reference_metadata_sha256"=>bytes2hex(sha256(read(joinpath(reference,"comparison.toml")))),
-        "rho_initial"=>prior["rho_initial"],"rho_policy"=>prior["rho_policy"],
+        "rho_initial"=>rho_initial,"rho_policy"=>prior["rho_policy"],"rho_tuning"=>tuning,
+        "diagnostics_mode"=>get(ENV,"TADMM_DIAGNOSTICS","cached"),
         "stopping_rule"=>result.stopping_rule,"historical_primal_tolerance"=>1e-4,
         "historical_dual_tolerance"=>1e-2,"stagnation_window"=>5,"stagnation_range_tolerance"=>1e-3,
         "iterations"=>result.k,"historical_stopped"=>result.historical_met,
         "strict_criteria_met"=>result.ok,"physical_NO_iteration"=>result.no_iteration,
         "objective"=>result.metrics.objective,"original_primal"=>result.metrics.original_primal,
         "owned_r_rms"=>result.owned_r,"owned_s_rms"=>result.owned_s,
+        "maxeq"=>result.metrics.maxeq,"maxbound"=>result.metrics.maxbound,"maxcone"=>result.metrics.maxcone,
+        "dispatch_s"=>result.dispatch_s,"physical_check_s"=>result.physical_check_s,
         "algorithm_s"=>result.elapsed,"loop_wall_s"=>result.wall_s,
         "endpoint_opendss_process_success"=>dss_ok,"worker_layout"=>deepcopy(POOL_LAYOUT),
         "timing_note"=>"Single exploratory trajectory after three compile steps and fresh reset; not a warmed benchmark median.")

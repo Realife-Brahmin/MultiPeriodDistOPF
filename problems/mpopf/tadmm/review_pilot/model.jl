@@ -215,7 +215,11 @@ end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,
 # independently of JuMP's per-subproblem convergence/status and ADMM residuals.
+include("typed_diagnostics.jl")
 function physical_metrics(d,us,bb)
+    mode=get(ENV,"TADMM_DIAGNOSTICS","cached")
+    mode in ("cached","typed") || error("Unknown diagnostic mode")
+    mode=="typed" && return typed_physical_metrics(us,bb,typed_physical_layout(d))
     return physical_metrics_cached(d,us,bb,physical_layout(d))
 end
 

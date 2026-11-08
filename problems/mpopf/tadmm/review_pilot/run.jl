@@ -41,6 +41,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     copies=[zeros(nb,length(window)) for window in windows]
     multiplicity=[count(window->t in window,windows) for t in 1:T]
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
+    dispatch_s=0.0; physical_check_s=0.0
     rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
     rho_policy in ("phase","residual","fixed","relative") || error("unknown rho policy")
     balance_ratio=parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10"))
@@ -56,7 +57,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
     details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated")
-    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s,owned_r_rms,owned_s_rms,historical_stagnant,historical_stop_met")
+    io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s,owned_r_rms,owned_s_rms,historical_stagnant,historical_stop_met,dispatch_s,physical_check_s")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
         k=iteration; iter0=time_ns(); times=Float64[]; solve_times=Float64[]; local_iterations=Int[]
@@ -93,7 +94,10 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         solver_total+=sum(solve_times)
         # Physical validation is deliberately outside the algorithm timer;
         # end-to-end wall time below includes it, warm-up and setup are separate.
-        diag0=time_ns(); us,bb=parallel ? pool_dispatch(d,z) : dispatch(stages,d;z=z); metrics=physical_metrics(d,us,bb)
+        diag0=time_ns(); us,bb=parallel ? pool_dispatch(d,z) : dispatch(stages,d;z=z)
+        dispatch_s+=(time_ns()-diag0)/1e9
+        physical0=time_ns(); metrics=physical_metrics(d,us,bb)
+        physical_check_s+=(time_ns()-physical0)/1e9
         diagnostic+=(time_ns()-diag0)/1e9
         push!(objectives,metrics.objective)
         hs=historical_stop(owned_r,owned_s,objectives)
@@ -125,7 +129,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
             flush(details)
         end
         if io!==nothing
-            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic,rrel,srel,(time_ns()-start)/1e9,owned_r,owned_s,historical_stagnant,historical_met),',')); flush(io)
+            println(io,join((k,metrics.objective,metrics.original_primal,rr,rmax,ss,smax,rho,elapsed,ideal,solver_total,diagnostic,rrel,srel,(time_ns()-start)/1e9,owned_r,owned_s,historical_stagnant,historical_met,dispatch_s,physical_check_s),',')); flush(io)
         end
         if k==1 || k%25==0
             @printf("TADMM_ITER phase=%s k=%d objective=%.9f physical=%.3e rmax=%.3e smax=%.3e rho=%.5g algorithm_s=%.3f\n",phase,k,metrics.objective,metrics.original_primal,rmax,smax,rho,elapsed); flush(stdout)
@@ -179,7 +183,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     wall_s=(time_ns()-start)/1e9
     @printf("TADMM_DONE phase=%s converged=%s iterations=%d objective=%.12f primal=%.3e rmax=%.3e smax=%.3e algorithm_s=%.6f ideal_parallel_estimate_s=%.6f wall_with_diagnostics_s=%.6f\n",phase,ok,k,metrics.objective,metrics.original_primal,rmax,smax,elapsed,ideal,wall_s); flush(stdout)
     return (;ok,k,metrics,us,bb,rmax,smax,elapsed,ideal,solver_total,diagnostic,wall_s,build_s,checkpoint_s,no_iteration,no_wall_s,no_save_s,
-        stopping_rule,historical_iteration,historical_met,owned_r,owned_s,historical_stagnant)
+        stopping_rule,historical_iteration,historical_met,owned_r,owned_s,historical_stagnant,dispatch_s,physical_check_s)
 end
 
 function main()

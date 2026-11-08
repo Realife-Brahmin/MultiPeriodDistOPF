@@ -8,6 +8,7 @@ case $SYSTEM in
  large10kC_1ph) RHO=48; POLICY=fixed; SCREEN=substation,vupper,ell;;
  *) exit 2;;
 esac
+RHO=${TADMM_REVIEW_RHO:-$RHO}
 cd "$C/source"
 PILOT=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH

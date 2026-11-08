@@ -16,7 +16,8 @@ m=tomllib.loads((out/'historical.toml').read_text())
 assert m['system']=='large10kC_1ph' and m['T']==24 and m['linear_solver']=='ma57'
 assert m['stopping_rule']=='historical_owned_rms'
 assert math.isclose(m['C_B'],8.013987384856764e-8,rel_tol=1e-14)
-assert m['rho_initial']==48 and m['rho_policy']=='fixed'
+assert m['rho_policy']=='fixed' and m['rho_initial']>0
+assert m.get('rho_tuning',False) or m['rho_initial']==48
 assert (m['historical_primal_tolerance'],m['historical_dual_tolerance'],m['stagnation_window'],m['stagnation_range_tolerance'])==(1e-4,1e-2,5,1e-3)
 for line in (out/'source.sha256').read_text().splitlines():
     digest,rel=line.split('  ',1)
@@ -38,10 +39,14 @@ for k,r in enumerate(trace,1):
 assert m['historical_stopped']==bool(first)
 assert (first==len(trace)) if first else len(trace)==200
 assert m['physical_NO_iteration']==no
-baseline=list(csv.DictReader((out/'baseline_trace.csv').open()))
-assert len(baseline)>=len(trace)
-assert all(math.isclose(float(a[key]),float(b[key]),rel_tol=1e-10,abs_tol=1e-10)
-    for a,b in zip(trace,baseline) for key in ('objective','original_primal','r_max','s_max','rho'))
+prefix=None
+if m['rho_initial']==48:
+    baseline=list(csv.DictReader((out/'baseline_trace.csv').open()))
+    assert len(baseline)>=len(trace)
+    prefix=all(math.isclose(float(a[key]),float(b[key]),rel_tol=1e-10,abs_tol=1e-10)
+        for a,b in zip(trace,baseline) for key in ('objective','original_primal','r_max','s_max','rho'))
+    assert prefix
+assert all(float(r['rho'])==m['rho_initial'] for r in trace)
 layout=m['worker_layout']
 assert len(layout)==24 and len({w['affinity'] for w in layout})==24
 assert all(w['local_solve_policy']=='exact' and w['julia_threads']==w['blas_threads']==1 and w['openmp_threads']=='1' for w in layout)
@@ -62,7 +67,7 @@ dv=float(match[1]) if match else None
 assert converged and dv is not None # Successful load flow is distinct from an accepted OPF point.
 physical=(m['original_primal']<=1e-5 and abs(m['objective']-m['reference_objective'])/max(1,abs(m['reference_objective']))<=.001)
 result=dict(historical_iteration=first,physical_NO_iteration=no,endpoint_physical_NO=physical,
-    numerical_prefix_matches_prior_exact=True,initial_starts_match=True,
+    numerical_prefix_matches_prior_exact=prefix,initial_starts_match=True,rho=m['rho_initial'],
     original_primal=m['original_primal'],opendss_converged=converged,max_voltage_difference_pu=dv,
     algorithm_s=m['algorithm_s'],loop_wall_s=m['loop_wall_s'],benchmark_timing_claim=False)
 (out/'historical_validation.json').write_text(json.dumps(result,indent=2)+'\n')
