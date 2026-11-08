@@ -2,7 +2,9 @@
 using Serialization, TOML, SHA, JuMP
 newsource,reference,out=ARGS
 mkpath(out)
-old=Module(:FrozenReference); fresh=Module(:DDPTransferred)
+module FrozenReference end
+module DDPTransferred end
+old=FrozenReference; fresh=DDPTransferred
 Base.include(old,joinpath(reference,"source/problems/mpopf/tadmm/review_pilot/model.jl"))
 Base.include(fresh,joinpath(newsource,"problems/mpopf/tadmm/review_pilot/model.jl"))
 results=Dict{String,Any}()
