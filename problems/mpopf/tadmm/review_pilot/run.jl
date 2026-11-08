@@ -41,6 +41,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
     rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
     rho_policy in ("phase","residual","fixed","relative") || error("unknown rho policy")
+    balance_ratio=parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10"))
+    isfinite(balance_ratio) && balance_ratio>1 || error("Rho balance ratio must exceed one")
     primal_seen=false; high_primal_count=0
     checkpoint_s=0.0; checkpoint_interval=parse(Int,get(ENV,"TADMM_CHECKPOINT_INTERVAL","25"))
     rmax=Inf; smax=Inf; ok=false
@@ -140,14 +142,14 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
             rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
         elseif rho_policy=="relative" && k%5==0
             rho_old=rho
-            if rrel>10srel; rho=min(rho*2,1e6)
-            elseif srel>10rrel; rho=max(rho/2,1e-6)
+            if rrel>balance_ratio*srel; rho=min(rho*2,1e6)
+            elseif srel>balance_ratio*rrel; rho=max(rho/2,1e-6)
             end
             rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
         elseif rho_policy=="residual" && k%10==0
             rho_old=rho
-            if rr>10ss; rho=min(rho*2,1e8)
-            elseif ss>10rr; rho=max(rho/2,1e-6)
+            if rr>balance_ratio*ss; rho=min(rho*2,1e8)
+            elseif ss>balance_ratio*rr; rho=max(rho/2,1e-6)
             end
             rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
         end
@@ -174,6 +176,7 @@ function main()
         "blas_threads"=>BLAS.get_num_threads(),"hostname"=>gethostname(),
         "data_sha256"=>bytes2hex(sha256(read(datafile))),"linear_solver"=>get(ENV,"TADMM_LINEAR_SOLVER","mumps"),
         "rho_policy"=>get(ENV,"TADMM_RHO_POLICY","phase"),"ipopt_extra_options"=>get(ENV,"TADMM_IPOPT_OPTIONS",""),
+        "rho_balance_ratio"=>parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10")),
         "rho_initial"=>parse(Float64,get(ENV,"TADMM_RHO_INIT",string(3000.0*sqrt(T/24)))),
         "screening"=>join(sort!(collect(screen.flags)),','),
         "ell_lower_bounds_removed"=>("ell" in screen.flags),

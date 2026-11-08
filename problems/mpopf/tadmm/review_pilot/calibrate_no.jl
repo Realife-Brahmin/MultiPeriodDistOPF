@@ -17,6 +17,7 @@ try
         reference_objective=ref["central_objective"],no_primal_tolerance=no_tol,system_name=system)
     meta=Dict("system"=>system,"T"=>T,"linear_solver"=>"ma57",
         "rho_initial"=>parse(Float64,ENV["TADMM_RHO_INIT"]),"rho_policy"=>ENV["TADMM_RHO_POLICY"],
+        "rho_balance_ratio"=>parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10")),
         "screening"=>join(sort!(collect(tadmm_screen(d).flags)),','),
         "reference_objective"=>ref["central_objective"],"reference_input_sha256"=>refmeta["data_sha256"],
         "reference_summary_sha256"=>bytes2hex(sha256(read(joinpath(reference_case,"summary.toml")))),
