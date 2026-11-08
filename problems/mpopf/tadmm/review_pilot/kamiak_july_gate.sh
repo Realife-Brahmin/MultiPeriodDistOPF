@@ -12,6 +12,7 @@ sha256sum --check --quiet "$C/execution-source.sha256"
 sha256sum --check --quiet "$C/input.sha256"
 P=problems/mpopf/tadmm/review_pilot
 julia --startup-file=no "$P/validate_historical_stopping.jl"
+julia --startup-file=no "$P/validate_sweep_milestones.jl"
 if [[ -n "${TADMM_DIAGNOSTIC_REFERENCE:-}" ]]; then
  julia --startup-file=no --project="$P" "$P/validate_typed_diagnostics.jl" "$TADMM_DIAGNOSTIC_REFERENCE" "$C/diagnostic-gate-$SLURM_JOB_ID"
 fi
