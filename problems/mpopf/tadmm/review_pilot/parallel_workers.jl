@@ -8,12 +8,27 @@ const ACTOR_MODELS=Dict{Int,Any}()
 const POOL_WIDS=Int[]
 const POOL_GROUPS=Vector{Int}[]
 const POOL_LAYOUT=Any[]
+const NODE_SAMPLER_STARTED=Ref(false)
+
+function start_node_sampler!(folder)
+    NODE_SAMPLER_STARTED[] && return
+    head=get(ENV,"TADMM_COORDINATOR_HOST",gethostname())
+    (myid()==1 || (gethostname()!=head && get(ENV,"SLURM_LOCALID","")=="0")) || return
+    pin=get(ENV,"TADMM_MONITOR_CPU",last(split(ENV["TADMM_CPU_IDS"],',')))
+    log=joinpath(dirname(folder),"sampler.$(gethostname()).log")
+    open(log,"w") do io
+        cmd=`taskset -c $pin python3 $(joinpath(@__DIR__,"sample_registry.py")) $folder`
+        run(pipeline(detach(cmd);stdout=io,stderr=io);wait=false)
+    end
+    NODE_SAMPLER_STARTED[]=true
+end
 
 function register_process!()
     folder=get(ENV,"TADMM_PID_REGISTRY","")
     isempty(folder) && return
     mkpath(folder)
     write(joinpath(folder,"$(gethostname())_$(getpid()).pid"),string(getpid()))
+    start_node_sampler!(folder)
 end
 
 function affinity_string()

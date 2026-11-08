@@ -14,6 +14,7 @@ export TADMM_SCREEN=substation,vupper,ell TADMM_DIAGNOSTICS=typed TADMM_RHO_TAU_
 export TADMM_RHO_WATCHDOG=1 TADMM_RHO_PRIMAL_GATE=1e-4 TADMM_LOCAL_PRIMAL_REPORT=1 TADMM_MAX_ITER=1000
 export TADMM_IPOPT_OPTIONS="hsllib=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2"
 export TADMM_JULIA_EXE=/home/aryan.jha/opt/julia-1.12.4/bin/julia
+export TADMM_COORDINATOR_HOST=$(hostname)
 export REDUCED_PROFILE=periodic TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
 unset NO_COLOR FORCE_COLOR OMP_PROC_BIND OMP_PLACES GOMP_CPU_AFFINITY KMP_AFFINITY LD_PRELOAD
 sha256sum --check --quiet "$C/execution-source.sha256"
@@ -33,9 +34,9 @@ NODES=$SLURM_JOB_NUM_NODES
 # Reserve 64 CPUs per node in sbatch, then launch exactly T one-thread workers.
 # Slurm gives the step the allocated node CPUs; wrapper checks distinct pins.
 export SLURM_NTASKS=$T SLURM_NTASKS_PER_NODE=$((T/NODES)) SLURM_CPUS_PER_TASK=1 SLURM_CPU_BIND=none
-srun --overlap --nodes="$NODES" --ntasks="$NODES" --ntasks-per-node=1 --cpus-per-task=1 --cpu-bind=none "$P/sample_registry.sh" "$OUT/pids" > "$OUT/sampler.log" 2>&1 &
-SAMPLER=$!
-finish() { touch "$OUT/SAMPLING_DONE";wait "$SAMPLER" || true; }
+export TADMM_NODES=$NODES TADMM_WORKERS_PER_NODE=$((T/NODES))
+export PATH="$C/source/$P/slurm/bin:$PATH"
+finish() { touch "$OUT/SAMPLING_DONE"; }
 trap finish EXIT
 if [[ $MODE == gate ]]; then
  julia --startup-file=no --project="$P" "$P/validate_stage_reuse.jl" > "$OUT/stage-reuse.log" 2>&1
