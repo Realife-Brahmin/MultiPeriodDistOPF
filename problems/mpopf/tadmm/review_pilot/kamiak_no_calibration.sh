@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # One bounded candidate. No full warm-up, repeat, or clean timing claim.
 set -euo pipefail
-C=$(realpath "$1"); REF=$(realpath "$2"); RHO=${3:-384}
+C=$(realpath "$1"); REF=$(realpath "$2"); RHO=${3:-384}; POLICY=${4:-relative}
+[[ "$POLICY" == relative || "$POLICY" == fixed ]] || exit 2
 cd "$C/source"
 PILOT=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
 export JULIA_DEPOT_PATH="$C/julia-depot:$REF/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
 export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps${PYTHONPATH:+:$PYTHONPATH}
 export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
-export TADMM_LINEAR_SOLVER=ma57 TADMM_NWORKERS=24 TADMM_RHO_INIT=$RHO TADMM_RHO_POLICY=relative
+export TADMM_LINEAR_SOLVER=ma57 TADMM_NWORKERS=24 TADMM_RHO_INIT=$RHO TADMM_RHO_POLICY=$POLICY
 export TADMM_SCREEN=substation,vupper,ell
 export TADMM_IPOPT_OPTIONS="hsllib=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2"
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0 OPENDSS_ZERO_LINE_C=1
@@ -16,7 +17,7 @@ unset NO_COLOR FORCE_COLOR OMP_PROC_BIND OMP_PLACES GOMP_CPU_AFFINITY KMP_AFFINI
 test -s "$C/DDP_TRANSFER_VALIDATED"
 sha256sum --check --quiet "$C/execution-source.sha256"
 sha256sum --check --quiet "$C/input.sha256"
-OUT="$C/results/large10k_T24_rho${RHO}_NO_$SLURM_JOB_ID"
+OUT="$C/results/large10k_T24_rho${RHO}_${POLICY}_NO_$SLURM_JOB_ID"
 [[ ! -e "$OUT" ]] || exit 2
 mkdir -p "$OUT"
 CPU_RANGE=$(awk '/Cpus_allowed_list:/ {print $2}' /proc/self/status)
