@@ -37,6 +37,15 @@ fixed 48 large pilot has only 100 steps; its curve is not extended or extrapolat
 
 ## Cutoff implementation and observed timings
 
+The post-first-outer-iteration local Ipopt counts give the following picture:
+medium median 26, 95th percentile 33, maximum 37; large median 11, 95th
+percentile 16, maximum 24. The persistent medium outliers are periods 18, 19
+and 20, with median counts 34, 32 and 33. In 177, 161 and 171 of the 199
+post-first rounds respectively, those periods exceed 30 steps. Large's hardest
+typical periods are 5 and 6, with medians 16 and 15. Its local iteration counts
+do not explain hundreds of outer iterations. These statistics describe the
+uncapped corrected-model July-weight assessments, not the old July formulation.
+
 Exact locals use the current accurate settings with a 3000-iteration budget.
 The cap arm changes only that budget to 30; other model/tolerance settings are
 held fixed. ITERATION_LIMIT remains a provisional status, with finite-value

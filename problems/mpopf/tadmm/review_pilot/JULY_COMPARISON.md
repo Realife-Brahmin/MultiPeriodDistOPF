@@ -29,6 +29,11 @@ requires the dual condition rather than stagnation. The selected 1e-4 rule is
 the user's requested historical variant, not a claim that every July run used
 identical thresholds. Local Ipopt acceptable_tol=1e-4 is a different setting.
 
+The [completed historical assessment](results/historical_stop_31652077/README.md)
+stops at 48 iterations, 50.54 s core / 110.46 s loop. Its prefix matches the
+previous exact-local trajectory. Original violation at this exit is 8.54e-3;
+OpenDSS voltage agreement is excellent but the separate physical NO flag is false.
+
 The user requested restoring July's C_B and investigating the earlier strategy
 of cutting off slow local solves. This supersedes the earlier choice of DDP's
 system weights for the present tADMM workstream. SPAR-DDP defaults and all
