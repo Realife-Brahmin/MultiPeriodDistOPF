@@ -7,6 +7,18 @@ remain historical evidence. Current periodic profiles and corrected losses
 are retained; this is a controlled weight/cutoff comparison, not a full replay
 of July's inputs and stopping rules. SPAR-DDP defaults are unchanged.
 
+**November 8:** the selected owned-period RMS stop at 1e-4 is now logged
+explicitly. The paper's high-rho start (15000 on large T24), primal-first phase
+and original 15-step watchdog give a historical exit at 44 iterations / 39.64 s
+core, versus 48 / 51.09 s fixed-rho. Endpoint violation improves 9.85x, but the
+0.2703% cost gap and 8.67e-4 original violation do not meet the separate physical
+NO rule. This is not a matched-quality speedup claim. See the
+[rho/diagnostic assessment](results/rho_diagnostics_nov08/README.md) and
+[period distributions / overhead](results/kamiak_execution_insights/README.md).
+Core solve time excludes independent physical validation; total loop wall time
+is reported separately. Typed diagnostics keep every check and are opt-in via
+TADMM_DIAGNOSTICS=typed; SPAR-DDP solving/defaults are unchanged.
+
 The first matched July-weight assessment is complete. At T24, med2522 first
 passes NO at 126 with exact locals and 125 with the 30-step cap; both actual
 NO dispatches pass OpenDSS. The lightweight capped run preserves the full

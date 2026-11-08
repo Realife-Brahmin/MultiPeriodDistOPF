@@ -2,7 +2,10 @@
 import csv
 import hashlib
 import json
+import math
 from pathlib import Path
+import re
+import statistics
 import sys
 import tomllib
 import matplotlib
@@ -14,12 +17,15 @@ out=Path(sys.argv[1]); cases=[Path(p) for p in sys.argv[2:]]
 out.mkdir(parents=True,exist_ok=True)
 configure_paper_style()
 fig,axes=plt.subplots(2,2,figsize=(10,7),layout='constrained')
-variants=[]; provenance=[]; labels=[]
+variants=[]; provenance=[]; labels=[]; histories=[]
 for i,case in enumerate(cases):
     assert (case/'ASSESSMENT_VALIDATED').is_file()
     m=tomllib.loads((case/'historical.toml').read_text())
     v=json.loads((case/'historical_validation.json').read_text())
     trace=list(csv.DictReader((case/'trace.csv').open()))
+    histories.append((case,m,trace))
+    sub=list(csv.DictReader((case/'trace_subproblems.csv').open()))
+    inner=sorted(int(r['ipopt_iterations']) for r in sub if int(r['iteration'])>1)
     if variants:
         assert all(m[k]==variants[0][k] for k in ('input_sha256','C_B','T','linear_solver','stopping_rule','reference_objective'))
     x=[int(r['iteration']) for r in trace]
@@ -37,11 +43,22 @@ for i,case in enumerate(cases):
     row={k:m[k] for k in ('rho_initial','iterations','historical_stopped','original_primal','objective','reference_objective',
         'algorithm_s','loop_wall_s','C_B','input_sha256','T','linear_solver','stopping_rule')}
     row.update(rho_policy=m['rho_policy'],rho_tau_decrease=tau,rho_watchdog=m.get('rho_watchdog',False),diagnostics_mode=mode,objective_relative_gap=abs(m['objective']-m['reference_objective'])/abs(m['reference_objective']),
+        post_first_inner_median=statistics.median(inner),post_first_inner_p95=inner[int(.95*(len(inner)-1))],post_first_inner_max=max(inner),
         physical_NO_iteration=m['physical_NO_iteration'],dispatch_s=m.get('dispatch_s'),physical_check_s=m.get('physical_check_s'),
         numerical_prefix_matches_prior_exact=v['numerical_prefix_matches_prior_exact'],max_voltage_difference_pu=v['max_voltage_difference_pu'])
     variants.append(row)
-    for f in ('historical.toml','historical_validation.json','trace.csv'):
+    for f in ('historical.toml','historical_validation.json','trace.csv','trace_subproblems.csv'):
         provenance.append(f"{hashlib.sha256((case/f).read_bytes()).hexdigest()}  {case.name}/{f}\n")
+for case,m,trace in histories:
+    if m.get('rho_watchdog',False):
+        ref=next(rows for _,other,rows in histories if other['rho_policy']==m['rho_policy'] and
+            other['rho_initial']==m['rho_initial'] and other.get('rho_tau_decrease',5)==m.get('rho_tau_decrease',5) and not other.get('rho_watchdog',False))
+        k=int(re.search(r'LEGACY_WATCHDOG k=(\d+)',(case/'solve.log').read_text())[1])
+        assert len(ref)>=k and len(trace)>=k
+        assert all(math.isclose(float(x[key]),float(y[key]),abs_tol=1e-10,rel_tol=1e-10)
+            for x,y in zip(ref[:k],trace[:k]) for key in ('objective','original_primal','r_max','s_max','owned_r_rms','owned_s_rms','rho'))
+        (out/'watchdog-prefix-audit.json').write_text(json.dumps(dict(matches_phase5_through_iteration=k,watchdog_fires_at=k),indent=2)+'\n')
+        provenance.append(f'{hashlib.sha256((case/"solve.log").read_bytes()).hexdigest()}  {case.name}/solve.log\n')
 for ax,threshold,title in [(axes[0,0],1e-4,'Owned-period primal RMS'),(axes[0,1],1e-5,'Maximum original-model violation'),
         (axes[1,0],.001,'Relative objective gap')]:
     ax.axhline(threshold,color=THRESHOLD,ls=':',label=f'Threshold {threshold:g}')

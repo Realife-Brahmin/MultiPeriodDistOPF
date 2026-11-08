@@ -1,0 +1,15 @@
+[ieee2522C_1ph]
+original_primal = 4.70297415420054e-6
+cached_median_s = 0.218501141
+all_metrics_match = true
+typed_median_s = 0.002257963
+isolated_speedup = 96.76914147840333
+probes = ["endpoint", "negative_ell", "negative_import", "voltage_lower", "voltage_upper", "battery_power", "battery_energy", "branch_flow", "cone", "reactive_bound", "integrated_soc"]
+
+[large10kC_1ph]
+original_primal = 0.0001417868831177227
+cached_median_s = 0.924395491
+all_metrics_match = true
+typed_median_s = 0.009754257
+isolated_speedup = 94.76841660005472
+probes = ["endpoint", "negative_ell", "negative_import", "voltage_lower", "voltage_upper", "battery_power", "battery_energy", "branch_flow", "cone", "reactive_bound", "integrated_soc"]

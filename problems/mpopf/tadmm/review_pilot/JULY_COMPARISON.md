@@ -34,6 +34,15 @@ stops at 48 iterations, 50.54 s core / 110.46 s loop. Its prefix matches the
 previous exact-local trajectory. Original violation at this exit is 8.54e-3;
 OpenDSS voltage agreement is excellent but the separate physical NO flag is false.
 
+The subsequent [high-rho and watchdog assessment](results/rho_diagnostics_nov08/README.md)
+restores the paper's rho0=15000 and the July split controller's enabled watchdog.
+The observed historical exit improves to 44 iterations / 39.64 s core, with
+9.85x lower original violation than fixed rho48. Its 0.2703% objective gap and
+8.67e-4 original violation remain outside the separate physical NO rule.
+Source/status/controller checks and actual endpoint OpenDSS logs are retained.
+The checker is outside all core solve timings, and its optimization is reported
+only as validation/total-loop improvement.
+
 The user requested restoring July's C_B and investigating the earlier strategy
 of cutting off slow local solves. This supersedes the earlier choice of DDP's
 system weights for the present tADMM workstream. SPAR-DDP defaults and all
