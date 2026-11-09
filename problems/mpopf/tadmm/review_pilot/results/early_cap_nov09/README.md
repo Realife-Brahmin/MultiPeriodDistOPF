@@ -38,9 +38,36 @@ the exact-phase boundary; it does not turn the endpoint into a feasibility claim
 
 Source4b5d07e5af2305912c17ca0b3e8e1b64028fd1b3. Gate31663478 passed472 tests,
 including finite acceptance above the screened tolerance and exact restoration.
-Run31663479 with passive audit31663480 is pending/running at submission.
+Run31663479 and passive audit31663480 completed; both native and independent
+local validators pass, including source hashes, warmup/reset trajectory,
+finite-cutoff status exceptions, initial values and final all-exact round.
 This follow-up accepts finite capped primal/multipliers in rounds2–30 and logs
 actual constraint errors instead of applying the1e-6 early screen. Exact solves
 from31 and final quality criteria are unchanged. It is selected after inspecting
-the rejected attempts, not an untuned heuristic. No completed result is claimed
-until all numerical and independent validation records are available.
+the rejected attempts, not an untuned heuristic.
+
+Result52 rounds /49.471650s core /54.126913s loop, central34.068545s. This is
+only1.94% less core time than the single historical exact trajectory, not a
+demonstrated repeatable speedup and still slower than centralized. It accepts14
+finite capped iterates with no exact recoveries. Early local violation peaks
+at0.173536 in the unscaled JuMP report; those early states are not feasible
+near-optimal results. From31 onward every local solve is exact, and the final
+owned/all-copy RMS1e-5 plus dual1e-2 target is met. Relative cost gap2.1488e-6;
+independent maximum energy-bound violation0.668225kWh /0.036451 SOC percentage
+points, versus0.869624kWh /0.065228 points baseline. Maximum dynamics mismatch
+is0.671864kWh, a distinct metric. Strict original-model physical feasibility
+is still false, so no equal-feasible-quality centralized win is claimed.
+
+Through round30 the candidate takes30.226727s versus34.407245s baseline,
+saving4.180518s. Its exact tail takes19.244922s versus16.042750s, consuming
+3.202172s of that gain. Thus the cap helps its immediate target but extra
+outer iterations and the later solve work absorb most of the benefit. It does
+not remove the global convergence bottleneck.
+
+Compact archive `early-cap-finite-completed.tgz` SHA256:
+`a31c39a137ca43cb435b3cdb38b0929416966b844d5a6eb67af6168d29e0a334`.
+See `finite-summary.json` for each accepted attempt, separate physical flags,
+phase times and network checks; `finite-convergence.png` restores the July
+four-panel style and marks the return to exact solves. Full arrays remain on
+Kamiak. No further cutoff variants are launched by this analysis; the separate
+single128-core med2522 T96 jobs remain queued pending hardware availability.

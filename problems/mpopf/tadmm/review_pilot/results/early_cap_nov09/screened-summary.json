@@ -1,5 +1,5 @@
 {
-  "case": "problems\\mpopf\\tadmm\\review_pilot\\results\\early_cap_nov09\\screened\\results\\run_T24_primal_dual_31663364",
+  "case": "screened\\results\\run_T24_primal_dual_31663364",
   "source": "db1bb2bfddc2c2fc4386ac1d85a2a82534569c47",
   "cap_screen": "feasible",
   "cap_iterations": 30,
@@ -126,6 +126,42 @@
   "accepted_gate_max": 6.812328479099961e-13,
   "final_round_all_exact": true,
   "first40_core_s": 46.62474777800001,
+  "through_cap_phase_core_s": 36.138251193,
+  "baseline_through_cap_phase_core_s": 34.407244777,
+  "exact_tail_core_s": 16.24323616000001,
+  "baseline_exact_tail_core_s": 16.042750186,
+  "largest_exact_tail_solves": [
+    {
+      "iteration": "34",
+      "period": "19",
+      "ipopt_iterations": "23",
+      "solver_s": "1.2195978164672852"
+    },
+    {
+      "iteration": "35",
+      "period": "5",
+      "ipopt_iterations": "21",
+      "solver_s": "1.1350340843200684"
+    },
+    {
+      "iteration": "36",
+      "period": "6",
+      "ipopt_iterations": "21",
+      "solver_s": "1.1128380298614502"
+    },
+    {
+      "iteration": "34",
+      "period": "6",
+      "ipopt_iterations": "24",
+      "solver_s": "1.0326061248779297"
+    },
+    {
+      "iteration": "34",
+      "period": "7",
+      "ipopt_iterations": "24",
+      "solver_s": "0.9977710247039795"
+    }
+  ],
   "validation": {
     "central_opendss": {
       "converged": true,

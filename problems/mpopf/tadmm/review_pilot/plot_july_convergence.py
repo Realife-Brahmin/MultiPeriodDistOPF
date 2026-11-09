@@ -93,6 +93,7 @@ def main():
     fig.text(.5,.956,rf"{system}, $T={m['T']}$ | {m['linear_solver'].upper()} | {method} | $\rho_0={rho:g}$",
              ha='center',fontsize=11)
     if m.get('local_solve_policy')=='early_cap30':
+        fig.subplots_adjust(top=.90)
         boundary=m['cap_end_iteration']+1
         fig.text(.5,.936,f"Local cap {m['cap_iterations']} in rounds 2 to {boundary-1} ({m.get('cap_screen','feasible')} screen); exact from {boundary}",ha='center',fontsize=9)
         for ax in axes:ax.axvline(boundary,color='#707070',ls=':',lw=1)

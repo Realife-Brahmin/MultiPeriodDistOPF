@@ -20,6 +20,7 @@ arm=args.case/'rho15000';baseline=args.baseline/'rho15000'
 a=tomllib.loads((arm/'assessment.toml').read_text());ba=tomllib.loads((baseline/'assessment.toml').read_text())
 audit=tomllib.loads(args.audit.read_text());e=audit['rho15000/endpoint.jls']
 details=rows(arm/'trace_subproblems.csv'); trace=rows(arm/'trace.csv')
+btrace=rows(baseline/'trace.csv')
 accepted=[r for r in details if r['inexact_accepted']=='true']
 recovered=[r for r in details if r['cap_recovery']=='true']
 attempts=[r for r in details if int(r['cap_attempt_iterations'])>0]
@@ -28,7 +29,8 @@ assert late and all(r['status'] in ('LOCALLY_SOLVED','OPTIMAL') for r in late)
 checks=json.loads((args.case/'validation_complete.json').read_text())
 result=dict(case=str(args.case),source=(args.case/'base_commit.txt').read_text().strip(),
     cap_screen=m.get('cap_screen','feasible'),
-    cap_iterations=m['cap_iterations'],cap_end_iteration=m['cap_end_iteration'],cap_local_feasibility_tolerance=m['cap_primal_tolerance'],
+    cap_iterations=m['cap_iterations'],cap_end_iteration=m['cap_end_iteration'],
+    cap_local_feasibility_tolerance=m['cap_primal_tolerance'] if m.get('cap_screen','feasible')=='feasible' else None,
     iterations=a['iterations'],baseline_iterations=ba['iterations'],core_s=a['core_s'],baseline_core_s=ba['core_s'],
     loop_s=a['loop_wall_s'],baseline_loop_s=ba['loop_wall_s'],central_s=m['central_wall_s'],baseline_central_s=bm['central_wall_s'],
     relative_core_change=a['core_s']/ba['core_s']-1,final_rms_met=a['final_rms_met'],
@@ -39,6 +41,11 @@ result=dict(case=str(args.case),source=(args.case/'base_commit.txt').read_text()
     accepted_gate_max=max((float(r['local_primal']) for r in accepted),default=None),
     final_round_all_exact=all(r['status'] in ('LOCALLY_SOLVED','OPTIMAL') for r in details if int(r['iteration'])==a['iterations']),
     first40_core_s=float(trace[39]['algorithm_s']) if len(trace)>=40 else None,
+    through_cap_phase_core_s=float(trace[m['cap_end_iteration']-1]['algorithm_s']),
+    baseline_through_cap_phase_core_s=float(btrace[m['cap_end_iteration']-1]['algorithm_s']),
+    exact_tail_core_s=a['core_s']-float(trace[m['cap_end_iteration']-1]['algorithm_s']),
+    baseline_exact_tail_core_s=ba['core_s']-float(btrace[m['cap_end_iteration']-1]['algorithm_s']),
+    largest_exact_tail_solves=[{k:r[k] for k in ('iteration','period','ipopt_iterations','solver_s')} for r in sorted(late,key=lambda r:float(r['solver_s']),reverse=True)[:5]],
     validation=checks,
     note='Single measured trajectory after full warmup/reset. Core counts local screening and recovery. Baseline SOC-bound error0.869624kWh; strict physical feasibility was false. No physical-quality win is inferred from RMS stopping alone.')
 args.output.write_text(json.dumps(result,indent=2)+'\n')

@@ -49,3 +49,12 @@ observed rejected attempts; do not claim it was an untuned heuristic. All local
 error evaluation remains counted conservatively. New native gate explicitly
 forces a finite accepted iterate above the screened tolerance and then verifies
 restoration of exact feasibility. Remote campaign has suffix `_early_cap_finite`.
+
+Follow-up gate31663478 passed472 checks; run31663479 and audit31663480 completed.
+The candidate reaches52 rounds /49.47165s core (central34.06854s) and improves
+maximum energy-bound error to0.668225kWh but does not meet strict physical
+feasibility. It saves only1.94% versus50.449995s exact baseline, insufficient
+for a repeatable speedup claim from a single trajectory. Through30 it saves
+4.1805s, while the exact tail costs3.2022s more. Completed raw archives,
+independent validation, per-attempt errors and plots are preserved in
+`results/early_cap_nov09/`; unsuccessful screened result remains included.

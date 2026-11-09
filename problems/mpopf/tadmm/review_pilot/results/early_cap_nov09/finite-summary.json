@@ -1,0 +1,301 @@
+{
+  "case": "finite\\results\\run_T24_primal_dual_31663479",
+  "source": "4b5d07e5af2305912c17ca0b3e8e1b64028fd1b3",
+  "cap_screen": "finite",
+  "cap_iterations": 30,
+  "cap_end_iteration": 30,
+  "cap_local_feasibility_tolerance": null,
+  "iterations": 52,
+  "baseline_iterations": 49,
+  "core_s": 49.471649725999995,
+  "baseline_core_s": 50.449994963,
+  "loop_s": 54.126913076,
+  "baseline_loop_s": 54.768778259,
+  "central_s": 34.068544798,
+  "baseline_central_s": 33.790131407,
+  "relative_core_change": -0.019392375315746335,
+  "final_rms_met": true,
+  "strict_physical_met": false,
+  "cost_gap": 2.14883925271989e-06,
+  "max_integrated_energy_bound_kwh": 0.668224538826756,
+  "max_SOC_bound_percentage_points": 0.03645126220962012,
+  "max_dynamics_error_kwh": 0.671864240615494,
+  "accepted_inexact": 14,
+  "recovered_exact": 0,
+  "cap_attempts": [
+    {
+      "iteration": "21",
+      "period": "1",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "4.618527782440651e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1714057922363281",
+      "local_primal_gate_s": "0.192714926"
+    },
+    {
+      "iteration": "22",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.0005763280231505519",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1109490394592285",
+      "local_primal_gate_s": "0.172840091"
+    },
+    {
+      "iteration": "22",
+      "period": "22",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "1.2789769243681803e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2096428871154785",
+      "local_primal_gate_s": "0.174689352"
+    },
+    {
+      "iteration": "23",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.15534751747018305",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2004549503326416",
+      "local_primal_gate_s": "0.174230766"
+    },
+    {
+      "iteration": "23",
+      "period": "11",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "8.704148513061227e-14",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.196687936782837",
+      "local_primal_gate_s": "0.204562183"
+    },
+    {
+      "iteration": "23",
+      "period": "12",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "6.812328479099961e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2401108741760254",
+      "local_primal_gate_s": "0.176004495"
+    },
+    {
+      "iteration": "23",
+      "period": "13",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "2.9665159217984183e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1996660232543945",
+      "local_primal_gate_s": "0.20174772"
+    },
+    {
+      "iteration": "23",
+      "period": "14",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "1.474376176702208e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1897649765014648",
+      "local_primal_gate_s": "0.197573298"
+    },
+    {
+      "iteration": "24",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.16209812546236435",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2272980213165283",
+      "local_primal_gate_s": "0.173493158"
+    },
+    {
+      "iteration": "25",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.15533082919382935",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.173387050628662",
+      "local_primal_gate_s": "0.203213384"
+    },
+    {
+      "iteration": "26",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.15155031260017893",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.178070068359375",
+      "local_primal_gate_s": "0.171623526"
+    },
+    {
+      "iteration": "27",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.17353572123180072",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1933000087738037",
+      "local_primal_gate_s": "0.175101484"
+    },
+    {
+      "iteration": "27",
+      "period": "4",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.027868193658036944",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2154979705810547",
+      "local_primal_gate_s": "0.210260026"
+    },
+    {
+      "iteration": "28",
+      "period": "4",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "2.7711166694643907e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1867949962615967",
+      "local_primal_gate_s": "0.209002557"
+    }
+  ],
+  "accepted_gate_max": 0.17353572123180072,
+  "final_round_all_exact": true,
+  "first40_core_s": 41.165737425,
+  "through_cap_phase_core_s": 30.226727270999998,
+  "baseline_through_cap_phase_core_s": 34.407244777,
+  "exact_tail_core_s": 19.244922454999998,
+  "baseline_exact_tail_core_s": 16.042750186,
+  "largest_exact_tail_solves": [
+    {
+      "iteration": "34",
+      "period": "9",
+      "ipopt_iterations": "25",
+      "solver_s": "1.0241501331329346"
+    },
+    {
+      "iteration": "34",
+      "period": "6",
+      "ipopt_iterations": "24",
+      "solver_s": "1.0160601139068604"
+    },
+    {
+      "iteration": "33",
+      "period": "4",
+      "ipopt_iterations": "24",
+      "solver_s": "1.0144009590148926"
+    },
+    {
+      "iteration": "34",
+      "period": "21",
+      "ipopt_iterations": "23",
+      "solver_s": "1.0067498683929443"
+    },
+    {
+      "iteration": "34",
+      "period": "19",
+      "ipopt_iterations": "23",
+      "solver_s": "0.9958610534667969"
+    }
+  ],
+  "validation": {
+    "central_opendss": {
+      "converged": true,
+      "max_voltage_difference_pu": 1.48e-10,
+      "zero_voltage_violations": true
+    },
+    "arms": {
+      "rho15000": {
+        "first_crossings": {
+          "owned_raw_1e-3": 2,
+          "all_raw_1e-3": 2,
+          "owned_raw_1e-4": 2,
+          "all_raw_1e-4": 2,
+          "owned_raw_1e-5": 2,
+          "all_raw_1e-5": 2,
+          "paper_cost_1e-3": 35,
+          "current_cost_1e-3": 38,
+          "paper_cost_1e-4": 43,
+          "current_cost_1e-4": 43,
+          "owned_dual_1e-3": 46,
+          "all_dual_1e-3": 46,
+          "owned_dual_1e-4": 46,
+          "all_dual_1e-4": 46,
+          "owned_dual_1e-5": 51,
+          "paper_cost_1e-5": 51,
+          "all_dual_1e-5": 52,
+          "current_cost_1e-5": 52,
+          "final_rms": 52
+        },
+        "final_rms_met": true,
+        "core_s": 49.471649725999995,
+        "loop_wall_s": 54.126913076,
+        "original_primal": 0.000671864240615494,
+        "objective_gap": 2.14883925271989e-06,
+        "opendss": {
+          "point_00002.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 6.48e-11,
+            "zero_voltage_violations": true
+          },
+          "point_00052.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00038.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00035.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00043.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00051.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00046.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "endpoint.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          }
+        }
+      }
+    },
+    "final_benchmark_claim": false
+  },
+  "note": "Single measured trajectory after full warmup/reset. Core counts local screening and recovery. Baseline SOC-bound error0.869624kWh; strict physical feasibility was false. No physical-quality win is inferred from RMS stopping alone."
+}
