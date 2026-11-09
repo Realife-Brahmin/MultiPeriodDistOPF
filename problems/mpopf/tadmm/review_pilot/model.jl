@@ -258,8 +258,10 @@ function stage_step!(s,d,z,u,rho,k)
     cap_end=parse(Int,get(ENV,"TADMM_CAP_END_ITERATION","30"))
     cap_limit=parse(Int,get(ENV,"TADMM_CAP_ITERATIONS","30"))
     cap_tol=parse(Float64,get(ENV,"TADMM_CAP_PRIMAL_TOL","1e-6"))
+    cap_screen=get(ENV,"TADMM_CAP_SCREEN","feasible")
     if s.local_policy=="early_cap30" && 1<k<=cap_end
         cap_limit>0 && cap_end>=2 && isfinite(cap_tol) && cap_tol>0 || error("Invalid early cap settings")
+        cap_screen in ("feasible","finite") || error("Invalid early cap screen")
         set_optimizer_attribute(s.m,"max_iter",cap_limit)
         solver_s=solve_checked!(s;allow_iteration_limit=true)
         iterations=MOI.get(s.m,MOI.BarrierIterations())
@@ -269,7 +271,7 @@ function stage_step!(s,d,z,u,rho,k)
             gated_primal=maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0)
             multipliers=s.reuse.warm_start=="primal_dual" ? dual.(s.reuse.constraints) : Float64[]
             reusable=all(isfinite,multipliers)
-            inexact_accepted=isfinite(gated_primal) && gated_primal<=cap_tol && reusable
+            inexact_accepted=isfinite(gated_primal) && reusable && (cap_screen=="finite" || gated_primal<=cap_tol)
             if !inexact_accepted
                 # Continue from the interrupted primal (and finite multipliers).
                 # Rejected attempt, feasibility gate and exact recovery all count.

@@ -110,7 +110,9 @@ for name in names:
                     assert 1<k<=m['cap_end_iteration'] and not recovery
                     assert r['status']=='ITERATION_LIMIT' and r['iteration_limit_hit']=='true'
                     assert r['local_primal_evaluated']=='true'
-                    assert float(r['local_primal'])<=m['cap_primal_tolerance']
+                    assert math.isfinite(float(r['local_primal']))
+                    if m.get('cap_screen','feasible')=='feasible':
+                        assert float(r['local_primal'])<=m['cap_primal_tolerance']
                     assert int(r['cap_attempt_iterations'])==m['cap_iterations']
                 else:
                     assert r['status'] in ('LOCALLY_SOLVED','OPTIMAL') and r['iteration_limit_hit']=='false'

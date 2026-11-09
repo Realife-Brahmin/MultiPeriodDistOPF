@@ -34,6 +34,7 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "cap_end_iteration"=>parse(Int,get(ENV,"TADMM_CAP_END_ITERATION","30")),
     "cap_iterations"=>parse(Int,get(ENV,"TADMM_CAP_ITERATIONS","30")),
     "cap_primal_tolerance"=>parse(Float64,get(ENV,"TADMM_CAP_PRIMAL_TOL","1e-6")),
+    "cap_screen"=>get(ENV,"TADMM_CAP_SCREEN","feasible"),
     "nodes"=>parse(Int,get(ENV,"SLURM_JOB_NUM_NODES","1")),
     "configured_memory_gb"=>128,"maximum_iterations"=>maxiter,"controller_primal_gate"=>1e-4,
     "rho_tau_decrease"=>5.0,"rho_tau_increase"=>2.0,"rho_balance_ratio"=>5.0,

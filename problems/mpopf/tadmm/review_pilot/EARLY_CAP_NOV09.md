@@ -30,3 +30,22 @@ Frozen numerical source db1bb2bfddc2c2fc4386ac1d85a2a82534569c47.
 Native gate31663363 passed455 checks (425 existing,26 acceptance/recovery/phase,
 4 endpoint-guard). Run31663364 follows the gate; passive energy audit31663365
 follows the run. Initial run status RUNNING; no result is asserted by submission.
+
+## Direct finite-iterate follow-up
+
+The screened candidate measured49 rounds /52.3815s core, versus baseline49/
+50.4500s, with essentially identical endpoint physics. Seven capped outputs
+were accepted; the two expensive period2 attempts at rounds22/23 were rejected
+because local feasibility at30 was5.7633e-4/1.3318e-2. They still consumed102/172
+total Ipopt iterations after exact recovery. Thus the screen prevented cutting
+the target outliers. This negative result is preserved separately.
+
+Test the same30-step early cap with `TADMM_CAP_SCREEN=finite`: allow finite
+local primal/multipliers without an early feasibility requirement, record actual
+constraint errors, then require all-exact solves from31 and unchanged final
+global checks. This is a distinct inexact-ADMM experiment, not loosening final
+feasibility or relabeling early dispatches. The candidate selection follows the
+observed rejected attempts; do not claim it was an untuned heuristic. All local
+error evaluation remains counted conservatively. New native gate explicitly
+forces a finite accepted iterate above the screened tolerance and then verifies
+restoration of exact feasibility. Remote campaign has suffix `_early_cap_finite`.

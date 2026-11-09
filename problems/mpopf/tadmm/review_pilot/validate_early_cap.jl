@@ -1,9 +1,9 @@
 include("validate_stage_reuse.jl")
 using SHA, TOML
 
-function cap_gate_trial(tolerance;expect_accept)
+function cap_gate_trial(tolerance;expect_accept,screen="feasible")
     withenv("TADMM_CAP_ITERATIONS"=>"1","TADMM_CAP_END_ITERATION"=>"2",
-            "TADMM_CAP_PRIMAL_TOL"=>string(tolerance)) do
+            "TADMM_CAP_PRIMAL_TOL"=>string(tolerance),"TADMM_CAP_SCREEN"=>screen) do
         s=toy_stage("primal_dual","batched";policy="early_cap30")
         # A nonlinear equality exposes a genuine primal error after one step.
         @constraint(s.m,s.b[1,2]*s.b[2,3]==0.8)
@@ -20,7 +20,9 @@ function cap_gate_trial(tolerance;expect_accept)
         @test capped.elapsed_s>=capped.local_primal_gate_s>=0
         if expect_accept
             @test capped.status=="ITERATION_LIMIT"
-            @test capped.local_primal_evaluated && capped.local_primal<=tolerance
+            @test capped.local_primal_evaluated && isfinite(capped.local_primal)
+            @test screen=="finite" || capped.local_primal<=tolerance
+            @test screen!="finite" || capped.local_primal>tolerance
             @test capped.iterations==1
         else
             @test capped.status in ("LOCALLY_SOLVED","OPTIMAL")
@@ -37,6 +39,7 @@ end
 @testset "Early cap accepts screened iterate, recovers rejection, restores exact solve" begin
     cap_gate_trial(1e3;expect_accept=true)
     cap_gate_trial(1e-20;expect_accept=false)
+    cap_gate_trial(1e-20;expect_accept=true,screen="finite")
 end
 
 include("sweep_milestones.jl")

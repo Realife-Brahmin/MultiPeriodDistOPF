@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 OLD=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_historical_anchors
+SCREEN=${2:-feasible}
+[[ $SCREEN == feasible || $SCREEN == finite ]]
 C=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_early_cap
+if [[ $SCREEN == finite ]]; then C=${C}_finite; fi
 test ! -e "$C"
 mkdir -p "$C/campaign" "$C/logs"
 cp -a "$OLD/source" "$C/source"
@@ -29,7 +32,7 @@ BASH
 cat > "$C/campaign/run.sh" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
-C=$1;test -s "$C/EARLY_CAP_GATE_VALIDATED"
+C=$1;export TADMM_CAP_SCREEN=${2:-feasible};test -s "$C/EARLY_CAP_GATE_VALIDATED"
 export TADMM_RHO_POLICY=bootstrap_fixed TADMM_RHO_FLOOR=48 TADMM_LOCAL_SOLVE_POLICY=early_cap30
 export TADMM_CAP_ITERATIONS=30 TADMM_CAP_END_ITERATION=30 TADMM_CAP_PRIMAL_TOL=1e-6
 exec bash "$C/source/problems/mpopf/tadmm/review_pilot/kamiak_full_period.sh" "$C" 24 run primal_dual 15000 ma57 large10kC_1ph
@@ -37,7 +40,7 @@ BASH
 for F in "$C/campaign/"*.sh;do bash -n "$F";done
 squeue -u aryan.jha > "$C/campaign/initial-queue.txt"
 G=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=00:10:00 --constraint='sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64' --job-name=tadmm-early-cap-gate --output="$C/logs/gate-%j.out" --error="$C/logs/gate-%j.err" "$C/campaign/gate.sh" "$C")
-J=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=64 --hint=nomultithread --mem=128G --time=01:00:00 --constraint='sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64' --dependency="afterok:$G" --kill-on-invalid-dep=yes --job-name=tadmm-large24-cap30 --output="$C/logs/cap-%j.out" --error="$C/logs/cap-%j.err" "$C/campaign/run.sh" "$C")
+J=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=64 --hint=nomultithread --mem=128G --time=01:00:00 --constraint='sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64' --dependency="afterok:$G" --kill-on-invalid-dep=yes --job-name=tadmm-large24-cap30 --output="$C/logs/cap-%j.out" --error="$C/logs/cap-%j.err" "$C/campaign/run.sh" "$C" "$SCREEN")
 A=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=00:15:00 --dependency="afterany:$J" --job-name=tadmm-cap-energy --output="$C/logs/audit-%j.out" --error="$C/logs/audit-%j.err" "$C/campaign/audit.sh" "$C" 24 "$J")
 printf 'gate=%s\nrun=%s\naudit=%s\n' "$G" "$J" "$A" > "$C/campaign/submissions.txt"
 cat "$C/campaign/submissions.txt"
