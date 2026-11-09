@@ -4,7 +4,8 @@ function horizon_sweep_main()
 system,Targ,out,rhoarg=ARGS
 T=parse(Int,Targ); rhos=parse.(Float64,split(rhoarg,','))
 @assert system=="large10kC_1ph" && T in (24,48,96) && length(rhos) in (1,2)
-@assert ENV["TADMM_LINEAR_SOLVER"]=="ma57" && ENV["TADMM_RHO_POLICY"]=="legacy_phase"
+solver=ENV["TADMM_LINEAR_SOLVER"]
+@assert solver in ("ma57","mumps") && ENV["TADMM_RHO_POLICY"]=="legacy_phase"
 @assert ENV["TADMM_RHO_WATCHDOG"]=="1" && ENV["TADMM_RHO_PRIMAL_GATE"]=="1e-4"
 mkpath(out);register_process!(); total_start=time_ns()
 datafile=joinpath(SHARED,"..","..","results/network_filterddp/network_data_$(system)_T$(T)_periodic.jls")
@@ -21,7 +22,7 @@ function check_dss(path,label,log)
     end
 end
 nw=parse(Int,get(ENV,"TADMM_NWORKERS","24"))
-meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>"ma57",
+meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>solver,
     "input_sha256"=>bytes2hex(sha256(read(datafile))),"workers"=>nw,"compute_cpu_budget"=>nw+1,
     "cluster_backend"=>get(ENV,"TADMM_CLUSTER_BACKEND","local"),
     "warm_start"=>get(ENV,"TADMM_WARM_START","primal"),

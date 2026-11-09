@@ -15,7 +15,8 @@ out=Path(sys.argv[1]); stage=sys.argv[2]
 m=tomllib.loads((out/'sweep.toml').read_text())
 assert m['T'] in (24,48,96) and m['system']=='large10kC_1ph'
 expected_workers=m['T'] if m.get('execution_policy')=='one_per_period' else 24
-assert m['workers']==expected_workers and m['compute_cpu_budget']==expected_workers+1 and m['linear_solver']=='ma57'
+assert m['workers']==expected_workers and m['compute_cpu_budget']==expected_workers+1 and m['linear_solver'] in ('ma57','mumps')
+assert f"running with linear solver {m['linear_solver']}" in (out/'central_timed.log').read_text()
 assert m['terminal_soc_penalty']==0 and m['central_original_primal']<=1e-6
 for line in (out/'source.sha256').read_text().splitlines():
     digest,rel=line.split('  ',1)
