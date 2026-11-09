@@ -92,6 +92,10 @@ def main():
     fig.suptitle('tADMM Convergence Summary',fontsize=16,y=.987)
     fig.text(.5,.956,rf"{system}, $T={m['T']}$ | {m['linear_solver'].upper()} | {method} | $\rho_0={rho:g}$",
              ha='center',fontsize=11)
+    if m.get('local_solve_policy')=='early_cap30':
+        boundary=m['cap_end_iteration']+1
+        fig.text(.5,.936,f"Local cap {m['cap_iterations']} in rounds 2 to {boundary-1} ({m.get('cap_screen','feasible')} screen); exact from {boundary}",ha='center',fontsize=9)
+        for ax in axes:ax.axvline(boundary,color='#707070',ls=':',lw=1)
     end_status=('RMS/dual target reached' if assessment['final_rms_met'] else 'Iteration budget reached; RMS/dual target not met')
     fig.text(.5,.018,f"{end_status} | Core solve: {assessment['core_s']:.1f} s",ha='center',fontsize=10,color='#505050')
     args.output.parent.mkdir(parents=True,exist_ok=True)
@@ -108,6 +112,7 @@ def main():
     manifest=dict(case=str(args.case),rho_initial=rho,iterations=n,style_source=dict(commit=STYLE_COMMIT,path=STYLE_PATH),
         colors=dict(objective=OBJECTIVE,primal=PRIMAL,dual=DUAL,rho=RHO),font='Computer Modern (cmr10; mathtext cm)',
         source_columns=columns,all_copy_curve='Dotted green; historical owned RMS is solid green',
+        local_solve_policy=m.get('local_solve_policy','exact'),
         log_display_floor_for_exact_zeros=floor,
         zero_counts={key:int((data[key]==0).sum()) for key in ('r_norm','s_norm','all_copy_r_norm')},
         quality=dict(final_rms_met=assessment['final_rms_met'],strict_criteria_met=assessment['strict_criteria_met'],

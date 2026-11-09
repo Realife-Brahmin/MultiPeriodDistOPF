@@ -1,0 +1,210 @@
+{
+  "case": "problems\\mpopf\\tadmm\\review_pilot\\results\\early_cap_nov09\\screened\\results\\run_T24_primal_dual_31663364",
+  "source": "db1bb2bfddc2c2fc4386ac1d85a2a82534569c47",
+  "cap_screen": "feasible",
+  "cap_iterations": 30,
+  "cap_end_iteration": 30,
+  "cap_local_feasibility_tolerance": 1e-06,
+  "iterations": 49,
+  "baseline_iterations": 49,
+  "core_s": 52.38148735300001,
+  "baseline_core_s": 50.449994963,
+  "loop_s": 57.306290899,
+  "baseline_loop_s": 54.768778259,
+  "central_s": 34.354851212,
+  "baseline_central_s": 33.790131407,
+  "relative_core_change": 0.038285284099960126,
+  "final_rms_met": true,
+  "strict_physical_met": false,
+  "cost_gap": 1.543908340148049e-06,
+  "max_integrated_energy_bound_kwh": 0.8696243281367533,
+  "max_SOC_bound_percentage_points": 0.065228347445001,
+  "max_dynamics_error_kwh": 0.6124960518197886,
+  "accepted_inexact": 7,
+  "recovered_exact": 2,
+  "cap_attempts": [
+    {
+      "iteration": "21",
+      "period": "1",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "4.618527782440651e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2019081115722656",
+      "local_primal_gate_s": "0.198684997"
+    },
+    {
+      "iteration": "22",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.0005763280231505519",
+      "inexact_accepted": "false",
+      "cap_recovery": "true",
+      "ipopt_iterations": "102",
+      "solver_s": "3.7539360523223877",
+      "local_primal_gate_s": "0.256390904"
+    },
+    {
+      "iteration": "22",
+      "period": "22",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "1.2789769243681803e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1840128898620605",
+      "local_primal_gate_s": "0.208880582"
+    },
+    {
+      "iteration": "23",
+      "period": "2",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "0.013318237280351752",
+      "inexact_accepted": "false",
+      "cap_recovery": "true",
+      "ipopt_iterations": "172",
+      "solver_s": "6.049461841583252",
+      "local_primal_gate_s": "0.224132673"
+    },
+    {
+      "iteration": "23",
+      "period": "11",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "8.704148513061227e-14",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1821808815002441",
+      "local_primal_gate_s": "0.198616603"
+    },
+    {
+      "iteration": "23",
+      "period": "12",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "6.812328479099961e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.2175970077514648",
+      "local_primal_gate_s": "0.204403905"
+    },
+    {
+      "iteration": "23",
+      "period": "13",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "2.9665159217984183e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.187229871749878",
+      "local_primal_gate_s": "0.208234538"
+    },
+    {
+      "iteration": "23",
+      "period": "14",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "1.474376176702208e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1925370693206787",
+      "local_primal_gate_s": "0.202719722"
+    },
+    {
+      "iteration": "25",
+      "period": "3",
+      "cap_attempt_iterations": "30",
+      "cap_attempt_primal": "2.469136006766348e-13",
+      "inexact_accepted": "true",
+      "cap_recovery": "false",
+      "ipopt_iterations": "30",
+      "solver_s": "1.1991820335388184",
+      "local_primal_gate_s": "0.172347181"
+    }
+  ],
+  "accepted_gate_max": 6.812328479099961e-13,
+  "final_round_all_exact": true,
+  "first40_core_s": 46.62474777800001,
+  "validation": {
+    "central_opendss": {
+      "converged": true,
+      "max_voltage_difference_pu": 1.48e-10,
+      "zero_voltage_violations": true
+    },
+    "arms": {
+      "rho15000": {
+        "first_crossings": {
+          "owned_raw_1e-3": 2,
+          "all_raw_1e-3": 2,
+          "owned_raw_1e-4": 2,
+          "all_raw_1e-4": 2,
+          "owned_raw_1e-5": 2,
+          "all_raw_1e-5": 2,
+          "paper_cost_1e-3": 29,
+          "current_cost_1e-3": 34,
+          "paper_cost_1e-4": 41,
+          "current_cost_1e-4": 42,
+          "owned_dual_1e-3": 46,
+          "all_dual_1e-3": 46,
+          "owned_dual_1e-4": 46,
+          "all_dual_1e-4": 46,
+          "owned_dual_1e-5": 49,
+          "all_dual_1e-5": 49,
+          "paper_cost_1e-5": 49,
+          "current_cost_1e-5": 49,
+          "final_rms": 49
+        },
+        "final_rms_met": true,
+        "core_s": 52.38148735300001,
+        "loop_wall_s": 57.306290899,
+        "original_primal": 0.0008696243281367533,
+        "objective_gap": 1.543908340148049e-06,
+        "opendss": {
+          "point_00042.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00034.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00041.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00049.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00029.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00002.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 6.48e-11,
+            "zero_voltage_violations": true
+          },
+          "point_00046.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          },
+          "endpoint.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.48e-10,
+            "zero_voltage_violations": true
+          }
+        }
+      }
+    },
+    "final_benchmark_claim": false
+  },
+  "note": "Single measured trajectory after full warmup/reset. Core counts local screening and recovery. Baseline SOC-bound error0.869624kWh; strict physical feasibility was false. No physical-quality win is inferred from RMS stopping alone."
+}
