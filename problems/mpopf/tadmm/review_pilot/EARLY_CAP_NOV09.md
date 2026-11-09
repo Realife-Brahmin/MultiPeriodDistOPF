@@ -26,3 +26,7 @@ exploratory measured trajectory, not a tuning sweep or repeated median benchmark
 
 Remote: `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_early_cap`.
 Reproduction launcher: repository-root `setup-early-cap-nov09.sh`.
+Frozen numerical source db1bb2bfddc2c2fc4386ac1d85a2a82534569c47.
+Native gate31663363 passed455 checks (425 existing,26 acceptance/recovery/phase,
+4 endpoint-guard). Run31663364 follows the gate; passive energy audit31663365
+follows the run. Initial run status RUNNING; no result is asserted by submission.
