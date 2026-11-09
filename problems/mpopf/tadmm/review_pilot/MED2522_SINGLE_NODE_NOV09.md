@@ -12,6 +12,9 @@ Unit gates from the anchor campaign apply to the unchanged numerical kernels;
 the only execution-source change is the launcher CPU-capacity/model check.
 Reproduction: repository-root `setup-med2522-single-node-nov09.sh`.
 Remote: `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_med2522_single_node`.
+Frozen source87a0c749e785ccbd640c2da5db9cd3527177a4e8. Submitted MA57 job31660388
+(audit31660389), then MUMPS31660390 (audit31660391). Initially pending priority
+and dependencies, respectively; submission does not imply numerical completion.
 
 ## Existing iteration-cost evidence
 
