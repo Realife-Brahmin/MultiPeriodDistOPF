@@ -68,7 +68,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_optimizer_attribute(m,"compl_inf_tol",1e-8)
     set_optimizer_attribute(m,"acceptable_iter",0)
     local_policy=local_window ? get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact") : "exact"
-    local_policy in ("exact","cap30","warm_retry") || error("Unknown local-solve policy")
+    local_policy in ("exact","cap30","warm_retry","early_cap30") || error("Unknown local-solve policy")
     report_setting=get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")
     report_setting in ("0","1") || error("TADMM_LOCAL_PRIMAL_REPORT must be 0 or 1")
     local_primal_report=report_setting=="1"
@@ -253,7 +253,43 @@ function stage_step!(s,d,z,u,rho,k)
     s.reuse.rho=rho
     objective_update_s=(time_ns()-update_tick)/1e9
     cold_retry=false;warm_attempt_iterations=0
-    if s.local_policy=="warm_retry" && k>1 && s.reuse.warm_start=="primal_dual"
+    inexact_accepted=false;cap_recovery=false;cap_attempt_iterations=0;local_primal_gate_s=0.0
+    gated_primal=NaN
+    cap_end=parse(Int,get(ENV,"TADMM_CAP_END_ITERATION","30"))
+    cap_limit=parse(Int,get(ENV,"TADMM_CAP_ITERATIONS","30"))
+    cap_tol=parse(Float64,get(ENV,"TADMM_CAP_PRIMAL_TOL","1e-6"))
+    if s.local_policy=="early_cap30" && 1<k<=cap_end
+        cap_limit>0 && cap_end>=2 && isfinite(cap_tol) && cap_tol>0 || error("Invalid early cap settings")
+        set_optimizer_attribute(s.m,"max_iter",cap_limit)
+        solver_s=solve_checked!(s;allow_iteration_limit=true)
+        iterations=MOI.get(s.m,MOI.BarrierIterations())
+        if termination_status(s.m)==MOI.ITERATION_LIMIT
+            cap_attempt_iterations=iterations
+            gate_tick=time_ns()
+            gated_primal=maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0)
+            multipliers=s.reuse.warm_start=="primal_dual" ? dual.(s.reuse.constraints) : Float64[]
+            reusable=all(isfinite,multipliers)
+            inexact_accepted=isfinite(gated_primal) && gated_primal<=cap_tol && reusable
+            if !inexact_accepted
+                # Continue from the interrupted primal (and finite multipliers).
+                # Rejected attempt, feasibility gate and exact recovery all count.
+                cap_recovery=true
+                nextvals=value.(s.vars)
+                set_start_value.(s.vars,nextvals)
+                if s.reuse.warm_start=="primal_dual" && reusable
+                    set_dual_start_value.(s.reuse.constraints,multipliers)
+                else
+                    set_optimizer_attribute(s.m,"warm_start_init_point","no")
+                end
+            end
+            local_primal_gate_s=(time_ns()-gate_tick)/1e9
+            if cap_recovery
+                set_optimizer_attribute(s.m,"max_iter",3000)
+                solver_s+=solve_checked!(s)
+                iterations+=MOI.get(s.m,MOI.BarrierIterations())
+            end
+        end
+    elseif s.local_policy=="warm_retry" && k>1 && s.reuse.warm_start=="primal_dual"
         cutoff=parse(Int,get(ENV,"TADMM_WARM_RETRY_LIMIT","20"));@assert cutoff>0
         interrupted=Ref(false);enabled=Ref(true)
         function callback(alg::Cint,it::Cint,obj::Float64,pr::Float64,du::Float64,mu::Float64,
@@ -277,16 +313,19 @@ function stage_step!(s,d,z,u,rho,k)
             termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL) || error("Warm solve failed")
         end
     else
+        s.local_policy=="early_cap30" && set_optimizer_attribute(s.m,"max_iter",3000)
         solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
         iterations=MOI.get(s.m,MOI.BarrierIterations())
     end
     iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
-    local_primal_evaluated=iteration_limit_hit && s.local_primal_report
-    local_primal=local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
+    local_primal_evaluated=inexact_accepted || (iteration_limit_hit && s.local_primal_report)
+    local_primal=inexact_accepted ? gated_primal : (local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN)
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
     return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
         iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,
-        quadratic_updates=s.reuse.quadratic_updates,cold_retry,warm_attempt_iterations,elapsed_s=(time_ns()-tick)/1e9)
+        quadratic_updates=s.reuse.quadratic_updates,cold_retry,warm_attempt_iterations,
+        inexact_accepted,cap_recovery,cap_attempt_iterations,cap_attempt_primal=gated_primal,
+        local_primal_gate_s,elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,

@@ -61,7 +61,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
-    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,quadratic_updates,cold_retry,warm_attempt_iterations")
+    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,quadratic_updates,cold_retry,warm_attempt_iterations,inexact_accepted,cap_recovery,cap_attempt_iterations,cap_attempt_primal,local_primal_gate_s")
     io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s,owned_r_rms,owned_s_rms,historical_stagnant,historical_stop_met,dispatch_s,physical_check_s,cone_equality_gap,fictitious_loss_kwh")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
@@ -133,7 +133,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
                 println(details,join((k,t0,rows[t0].status,local_iterations[t0],solve_times[t0],times[t0],
                     rows[t0].iteration_limit_hit,rows[t0].local_primal,rows[t0].local_primal_evaluated,
                     rows[t0].warm_start_s,rows[t0].objective_update_s,rows[t0].quadratic_updates,
-                    rows[t0].cold_retry,rows[t0].warm_attempt_iterations),','))
+                    rows[t0].cold_retry,rows[t0].warm_attempt_iterations,rows[t0].inexact_accepted,
+                    rows[t0].cap_recovery,rows[t0].cap_attempt_iterations,rows[t0].cap_attempt_primal,rows[t0].local_primal_gate_s),','))
             end
             flush(details)
         end

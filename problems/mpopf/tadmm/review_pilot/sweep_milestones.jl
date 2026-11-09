@@ -19,6 +19,9 @@ function sweep_observer(folder,d,system,reference;save_points=true)
     function observe(x)
         gap=abs(x.metrics.objective-reference)/max(1.0,abs(reference))
         flags=sweep_flags(x.owned_r,x.rr,x.owned_s,gap,x.metrics.original_primal)
+        if get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact")=="early_cap30" && x.k<=parse(Int,get(ENV,"TADMM_CAP_END_ITERATION","30"))
+            flags["final_rms"]=false # Require an all-exact round after the cap phase.
+        end
         fresh=sort!([key for (key,yes) in flags if yes && !haskey(milestones,key)])
         point="point_"*lpad(string(x.k),5,'0')*".jls"
         if !isempty(fresh) && save_points

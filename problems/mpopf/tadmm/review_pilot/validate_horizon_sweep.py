@@ -36,6 +36,8 @@ def flags(r):
         result['current_cost_'+key]=owned<=eps and allr<=eps and gap<=.001
     result['physical_NO']=float(r['original_primal'])<=1e-5 and gap<=.001
     result['final_rms']=owned<=1e-5 and allr<=1e-5 and dual<=.01
+    if m.get('local_solve_policy')=='early_cap30' and int(r['iteration'])<=m['cap_end_iteration']:
+        result['final_rms']=False
     return result
 
 def dss(path):
@@ -100,7 +102,24 @@ for name in names:
         rows=list(csv.DictReader((folder/'trace.csv').open()));sub=list(csv.DictReader((folder/'trace_subproblems.csv').open()))
         assert len(sub)==len(rows)*m['T']
         assert {(int(r['iteration']),int(r['period'])) for r in sub}=={(k,t) for k in range(1,len(rows)+1) for t in range(1,m['T']+1)}
-        assert all(r['status'] in ('LOCALLY_SOLVED','OPTIMAL') and r['iteration_limit_hit']=='false' for r in sub)
+        if m.get('local_solve_policy')=='early_cap30':
+            assert len(rows)>m['cap_end_iteration'] or not a['final_rms_met']
+            for r in sub:
+                k=int(r['iteration']);accepted=r['inexact_accepted']=='true';recovery=r['cap_recovery']=='true'
+                if accepted:
+                    assert 1<k<=m['cap_end_iteration'] and not recovery
+                    assert r['status']=='ITERATION_LIMIT' and r['iteration_limit_hit']=='true'
+                    assert r['local_primal_evaluated']=='true'
+                    assert float(r['local_primal'])<=m['cap_primal_tolerance']
+                    assert int(r['cap_attempt_iterations'])==m['cap_iterations']
+                else:
+                    assert r['status'] in ('LOCALLY_SOLVED','OPTIMAL') and r['iteration_limit_hit']=='false'
+                if recovery:
+                    assert 1<k<=m['cap_end_iteration'] and int(r['ipopt_iterations'])>=int(r['cap_attempt_iterations'])
+                if k>m['cap_end_iteration'] or k==1:
+                    assert not accepted and not recovery and int(r['cap_attempt_iterations'])==0
+        else:
+            assert all(r['status'] in ('LOCALLY_SOLVED','OPTIMAL') and r['iteration_limit_hit']=='false' for r in sub)
         if m.get('local_solve_policy')=='warm_retry':
             for r in sub:
                 if r['cold_retry']=='true':
