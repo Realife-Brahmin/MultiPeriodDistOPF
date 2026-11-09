@@ -1,5 +1,13 @@
 # Corrected tADMM reviewer-response experiments â€” November 7, 2026
 
+**November 9 plotting preference:** single-run convergence review uses the
+restored July four-panel view: objective (blue), owned r-norm (green), unique
+s-norm (orange) and rho (purple), all against iteration, with Computer Modern
+fonts. Use `plot_july_convergence.py CASE OUTPUT --rho RHO`; see the
+[restored plot gallery](results/july_view_nov09/README.md). The dotted green
+curve additionally shows all-copy RMS. Algorithm-comparison plots retain the
+separate manuscript palette; do not paint all four diagnostic metrics violet.
+
 **Current user pivot:** new tADMM comparisons restore July's battery coefficient,
 8.013987384856764e-8 at T24, and test exact local solves against a 30-step cap.
 See [JULY_COMPARISON.md](JULY_COMPARISON.md). Prior DDP-weight results below
