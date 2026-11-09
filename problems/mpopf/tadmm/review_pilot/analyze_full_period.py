@@ -58,6 +58,7 @@ for i,case in enumerate(cases):
         inner=[int(r['ipopt_iterations']) for r in details]
         a.pop('worker_layout')
         a.update(label=label,case=case.name,T=m['T'],rho=rho,workers=m['workers'],
+                 linear_solver=m['linear_solver'],
                  warm_start=m.get('warm_start','primal'),objective_update=m.get('objective_update','legacy'),
                  native_group_critical_s=native,stage_group_critical_s=stage,
                  core_outside_stage_critical_s=a['core_s']-stage,
@@ -72,7 +73,7 @@ for i,case in enumerate(cases):
         series=[[max(1e-14,abs(float(r['objective'])-m['central_objective'])/abs(m['central_objective'])) for r in trace],
                 [float(r['r_rms']) for r in trace],[max(1e-14,float(r['original_primal'])) for r in trace]]
         col=horizons.index(m['T']);curve=curves.get(m['T'],0);curves[m['T']]=curve+1
-        short=f"{m.get('warm_start','primal').replace('_','–')} start, $\\rho_0={rho:g}$"
+        short=f"{m['linear_solver'].upper()}, {m.get('warm_start','primal').replace('_','–')} start, $\\rho_0={rho:g}$"
         for ax,y in zip(axes[:,col],series):ax.semilogy(x,y,color=TADMM,ls=['-','--',':','-.'][curve%4],label=short)
         for f in (arm/'assessment.toml',arm/'trace.csv',arm/'trace_subproblems.csv',case/'sweep.toml',case/'validation_complete.json'):
             hashes.append(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {case.name}/{f.relative_to(case)}\n')

@@ -6,6 +6,15 @@ host, one period per worker, plus coordinator. All three variants completed
 768 exact local solves each; no iteration-limit exits. Source hashes and
 actual host/CPU/period maps were independently rechecked after download.
 
+The selection job submitted T96 successfully, then its passive-audit stage
+failed because a helper had not been copied into the frozen source bundle.
+Audit repair31656659 completed separately after all solves; no numerical source
+or timed trajectory changed. The exact helper, wrapper, hashes, logs and energy
+results are preserved in full-period-audit-repair.tgz, SHA256
+564b896887912fc29e710de4a8a4682f7f104b2e6704e3e6aea34d7cdd68b0c0.
+Completed-run archive full-period-completed-runs.tgz SHA256:
+0a2aa5c5536e748a1dee9f388647aa5fc4b296d7e64b5baa0cfbcc2406a427a3.
+
 The eight-iteration primal-only trajectories match exactly for scalar and
 batched objective updates (objective, physical error, owned/all-copy residuals
 and rho). The full-dual trajectory agrees within the declared numerical audit
