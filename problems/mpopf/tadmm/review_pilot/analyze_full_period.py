@@ -59,6 +59,9 @@ for i,case in enumerate(cases):
         a.pop('worker_layout')
         a.update(label=label,case=case.name,T=m['T'],rho=rho,workers=m['workers'],
                  linear_solver=m['linear_solver'],
+                 rho_policy=m.get('rho_policy','legacy_phase'),local_solve_policy=m.get('local_solve_policy','exact'),
+                 cold_retries=sum(r.get('cold_retry')=='true' for r in details),
+                 discarded_warm_iterations=sum(int(r.get('warm_attempt_iterations',0)) for r in details),
                  warm_start=m.get('warm_start','primal'),objective_update=m.get('objective_update','legacy'),
                  native_group_critical_s=native,stage_group_critical_s=stage,
                  core_outside_stage_critical_s=a['core_s']-stage,
@@ -74,6 +77,8 @@ for i,case in enumerate(cases):
                 [float(r['r_rms']) for r in trace],[max(1e-14,float(r['original_primal'])) for r in trace]]
         col=horizons.index(m['T']);curve=curves.get(m['T'],0);curves[m['T']]=curve+1
         short=f"{m['linear_solver'].upper()}, {m.get('warm_start','primal').replace('_','–')} start, $\\rho_0={rho:g}$"
+        if m.get('rho_policy')=='bootstrap_fixed':short+=f", fixed {m['rho_floor']:g}"
+        if m.get('local_solve_policy')=='warm_retry':short+=f", exact retry at {m['warm_retry_limit']}"
         for ax,y in zip(axes[:,col],series):ax.semilogy(x,y,color=TADMM,ls=['-','--',':','-.'][curve%4],label=short)
         for f in (arm/'assessment.toml',arm/'trace.csv',arm/'trace_subproblems.csv',case/'sweep.toml',case/'validation_complete.json'):
             hashes.append(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {case.name}/{f.relative_to(case)}\n')
