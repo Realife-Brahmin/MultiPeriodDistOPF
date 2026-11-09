@@ -5,7 +5,7 @@ system,Targ,out,rhoarg=ARGS
 T=parse(Int,Targ); rhos=parse.(Float64,split(rhoarg,','))
 @assert system=="large10kC_1ph" && T in (24,48,96) && length(rhos) in (1,2)
 solver=ENV["TADMM_LINEAR_SOLVER"]
-@assert solver in ("ma57","mumps") && ENV["TADMM_RHO_POLICY"]=="legacy_phase"
+@assert solver in ("ma57","mumps") && ENV["TADMM_RHO_POLICY"] in ("legacy_phase","bootstrap_fixed")
 @assert ENV["TADMM_RHO_WATCHDOG"]=="1" && ENV["TADMM_RHO_PRIMAL_GATE"]=="1e-4"
 mkpath(out);register_process!(); total_start=time_ns()
 datafile=joinpath(SHARED,"..","..","results/network_filterddp/network_data_$(system)_T$(T)_periodic.jls")
@@ -28,6 +28,9 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "warm_start"=>get(ENV,"TADMM_WARM_START","primal"),
     "objective_update"=>get(ENV,"TADMM_OBJECTIVE_UPDATE","legacy"),
     "execution_policy"=>get(ENV,"TADMM_EXECUTION_POLICY","fixed24"),
+    "rho_policy"=>ENV["TADMM_RHO_POLICY"],"rho_floor"=>parse(Float64,get(ENV,"TADMM_RHO_FLOOR","48")),
+    "local_solve_policy"=>get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact"),
+    "warm_retry_limit"=>parse(Int,get(ENV,"TADMM_WARM_RETRY_LIMIT","20")),
     "nodes"=>parse(Int,get(ENV,"SLURM_JOB_NUM_NODES","1")),
     "configured_memory_gb"=>128,"maximum_iterations"=>maxiter,"controller_primal_gate"=>1e-4,
     "rho_tau_decrease"=>5.0,"rho_tau_increase"=>2.0,"rho_balance_ratio"=>5.0,

@@ -45,7 +45,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     rho=rho0; elapsed=0.0; ideal=0.0; solver_total=0.0; diagnostic=0.0
     dispatch_s=0.0; physical_check_s=0.0
     rho_policy=get(ENV,"TADMM_RHO_POLICY","phase")
-    rho_policy in ("phase","residual","fixed","relative","legacy_phase") || error("unknown rho policy")
+    rho_policy in ("phase","residual","fixed","relative","legacy_phase","bootstrap_fixed") || error("unknown rho policy")
     balance_ratio=parse(Float64,get(ENV,"TADMM_RHO_BALANCE_RATIO","10"))
     isfinite(balance_ratio) && balance_ratio>1 || error("Rho balance ratio must exceed one")
     primal_seen=false; high_primal_count=0
@@ -61,7 +61,7 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     tol_s=parse(Float64,get(ENV,"TADMM_DUAL_TOL","1e-4"))
     io=out===nothing ? nothing : open(out,"w")
     details=out===nothing ? nothing : open(replace(out,".csv"=>"_subproblems.csv"),"w")
-    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,quadratic_updates")
+    details===nothing || println(details,"iteration,period,status,ipopt_iterations,solver_s,stage_elapsed_s,iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,quadratic_updates,cold_retry,warm_attempt_iterations")
     io===nothing || println(io,"iteration,objective,original_primal,r_rms,r_max,s_rms,s_max,rho,algorithm_s,ideal_parallel_estimate_s,solver_sum_s,diagnostic_s,r_relative,s_relative,loop_wall_s,owned_r_rms,owned_s_rms,historical_stagnant,historical_stop_met,dispatch_s,physical_check_s,cone_equality_gap,fictitious_loss_kwh")
     start=time_ns(); metrics=nothing; us=nothing; bb=nothing; k=0
     for iteration in 1:maxiter
@@ -132,7 +132,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
             for t0 in 1:T
                 println(details,join((k,t0,rows[t0].status,local_iterations[t0],solve_times[t0],times[t0],
                     rows[t0].iteration_limit_hit,rows[t0].local_primal,rows[t0].local_primal_evaluated,
-                    rows[t0].warm_start_s,rows[t0].objective_update_s,rows[t0].quadratic_updates),','))
+                    rows[t0].warm_start_s,rows[t0].objective_update_s,rows[t0].quadratic_updates,
+                    rows[t0].cold_retry,rows[t0].warm_attempt_iterations),','))
             end
             flush(details)
         end
@@ -152,7 +153,11 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # July's phase-aware policy, now with ALL copies monitored. Never weaken
         # consensus enforcement merely because the dimensional dual residual is
         # numerically larger while primal consensus remains infeasible.
-        if rho_policy=="legacy_phase"
+        if rho_policy=="bootstrap_fixed"
+            rho_old=rho
+            rho=bootstrap_fixed_rho(rho,k;floor=parse(Float64,get(ENV,"TADMM_RHO_FLOOR","48")))
+            rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
+        elseif rho_policy=="legacy_phase"
             rho_old=rho
             if legacy_watchdog
                 rho,high_primal_count=legacy_rho_watchdog(rho,owned_r,high_primal_count;eps_pri=legacy_primal_gate)

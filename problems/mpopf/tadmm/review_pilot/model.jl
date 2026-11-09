@@ -68,7 +68,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_optimizer_attribute(m,"compl_inf_tol",1e-8)
     set_optimizer_attribute(m,"acceptable_iter",0)
     local_policy=local_window ? get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact") : "exact"
-    local_policy in ("exact","cap30") || error("Unknown local-solve policy")
+    local_policy in ("exact","cap30","warm_retry") || error("Unknown local-solve policy")
     report_setting=get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")
     report_setting in ("0","1") || error("TADMM_LOCAL_PRIMAL_REPORT must be 0 or 1")
     local_primal_report=report_setting=="1"
@@ -252,15 +252,41 @@ function stage_step!(s,d,z,u,rho,k)
     end
     s.reuse.rho=rho
     objective_update_s=(time_ns()-update_tick)/1e9
-    solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
-    iterations=MOI.get(s.m,MOI.BarrierIterations())
+    cold_retry=false;warm_attempt_iterations=0
+    if s.local_policy=="warm_retry" && k>1 && s.reuse.warm_start=="primal_dual"
+        cutoff=parse(Int,get(ENV,"TADMM_WARM_RETRY_LIMIT","20"));@assert cutoff>0
+        interrupted=Ref(false);enabled=Ref(true)
+        function callback(alg::Cint,it::Cint,obj::Float64,pr::Float64,du::Float64,mu::Float64,
+                dn::Float64,reg::Float64,ad::Float64,ap::Float64,ls::Cint)
+            stop=enabled[] && it>=cutoff
+            interrupted[] |= stop
+            return !stop
+        end
+        MOI.set(s.m,Ipopt.CallbackFunction(),callback)
+        optimize!(s.m)
+        solver_s=solve_time(s.m);iterations=MOI.get(s.m,MOI.BarrierIterations())
+        if interrupted[] && !(termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL))
+            # Restart from the last fully solved primal, not the interrupted
+            # iterate. The recovery solve must meet all original tolerances.
+            cold_retry=true;warm_attempt_iterations=iterations;enabled[]=false
+            set_start_value.(s.vars,vals)
+            set_optimizer_attribute(s.m,"warm_start_init_point","no")
+            solver_s+=solve_checked!(s)
+            iterations+=MOI.get(s.m,MOI.BarrierIterations())
+        else
+            termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL) || error("Warm solve failed")
+        end
+    else
+        solver_s=solve_checked!(s;allow_iteration_limit=s.local_policy=="cap30")
+        iterations=MOI.get(s.m,MOI.BarrierIterations())
+    end
     iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
     local_primal_evaluated=iteration_limit_hit && s.local_primal_report
     local_primal=local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
     return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
         iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,
-        quadratic_updates=s.reuse.quadratic_updates,elapsed_s=(time_ns()-tick)/1e9)
+        quadratic_updates=s.reuse.quadratic_updates,cold_retry,warm_attempt_iterations,elapsed_s=(time_ns()-tick)/1e9)
 end
 
 # Evaluate the assembled dispatch against original physical equations and bounds,

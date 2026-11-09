@@ -3,7 +3,7 @@ include("model.jl")
 
 # A nonlinear cone, equalities and lower/upper bounds exercise the multiplier
 # classes. Compare the same parameter sequence, including unchanged/changed rho.
-function toy_stage(warm,update)
+function toy_stage(warm,update;policy="exact")
     m=Model(Ipopt.Optimizer);set_silent(m)
     set_optimizer_attribute(m,"linear_solver",get(ENV,"TADMM_LINEAR_SOLVER","mumps"))
     for kv in split(get(ENV,"TADMM_IPOPT_OPTIONS",""),';';keepempty=false)
@@ -22,16 +22,21 @@ function toy_stage(warm,update)
     vars=all_variables(m)
     refs=all_constraints(m;include_variable_in_set_constraints=true)
     reuse=StageReuse(100.0,warm,update,VariableRef[b[j,t] for t in 1:3 for j in 1:2],zeros(6),refs,0)
-    return (;m,vars,reuse,b,times=collect(1:3),owned=[2],local_policy="exact",local_primal_report=true)
+    return (;m,vars,reuse,b,times=collect(1:3),owned=[2],local_policy=policy,local_primal_report=true)
 end
 
-function trial(warm,update)
-    s=toy_stage(warm,update);history=[]
+function trial(warm,update;policy="exact")
+    s=toy_stage(warm,update;policy);history=[]
     for (k,rho) in enumerate([100.0,100.0,20.0,20.0,50.0])
         z=fill(0.8+0.01k,2,3)
         r=stage_step!(s,Dict(:Bset=>[1,2]),z,zeros(2,3),rho,k)
         @test r.status in ("LOCALLY_SOLVED","OPTIMAL")
         @test !r.iteration_limit_hit
+        if policy=="warm_retry" && k>1
+            @test r.cold_retry
+            @test r.warm_attempt_iterations==1
+            @test r.iterations>=r.warm_attempt_iterations
+        end
         @test maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0)<1e-7
         for a in 1:3,n in 1:2
             @test coefficient(objective_function(s.m),s.b[n,a])≈-rho*z[n,a]
@@ -41,6 +46,28 @@ function trial(warm,update)
     end
     @test s.reuse.quadratic_updates==(update=="batched" ? 2 : 5)
     return history
+end
+
+@testset "Interrupted warm attempt recovers to an exact local solution" begin
+    withenv("TADMM_WARM_RETRY_LIMIT"=>"1") do
+        retry=trial("primal_dual","batched";policy="warm_retry")
+        reference=trial("primal","batched")
+        for k in eachindex(retry)
+            @test retry[k][1]≈reference[k][1] atol=1e-6 rtol=1e-6
+            @test retry[k][2]≈reference[k][2] atol=1e-7 rtol=1e-7
+        end
+    end
+end
+
+include("legacy_rho.jl")
+@testset "High-rho bootstrap reaches a fixed floor without cycling" begin
+    rho=120000.0;path=Float64[]
+    for k in 1:100
+        push!(path,rho);rho=bootstrap_fixed_rho(rho,k;floor=48.0)
+    end
+    @test all(diff(path).<=0)
+    @test path[1]==120000 && path[26]==48
+    @test all(==(48.0),path[26:end])
 end
 
 @testset "Repeated exact local solves and batched objective updates" begin

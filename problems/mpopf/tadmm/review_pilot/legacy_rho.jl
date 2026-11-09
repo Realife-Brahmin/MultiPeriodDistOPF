@@ -1,5 +1,10 @@
 # July split implementation: primal-first phase, then gated residual balancing.
 # Residuals use the same owned/unique RMS definitions as the historical stop.
+function bootstrap_fixed_rho(rho,k;floor=48.0)
+    isfinite(floor) && floor>0 || error("Invalid fixed penalty floor")
+    return k%5==0 ? max(floor,rho/5) : rho
+end
+
 function legacy_rho_update(rho,r,s,k,seen;eps_pri=1e-4,tau_decrease=5.0)
     isfinite(tau_decrease) && tau_decrease>1 || error("Invalid rho decrease factor")
     k%5==0 || return rho,seen

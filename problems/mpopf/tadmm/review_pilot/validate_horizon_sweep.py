@@ -16,7 +16,8 @@ m=tomllib.loads((out/'sweep.toml').read_text())
 assert m['T'] in (24,48,96) and m['system']=='large10kC_1ph'
 expected_workers=m['T'] if m.get('execution_policy')=='one_per_period' else 24
 assert m['workers']==expected_workers and m['compute_cpu_budget']==expected_workers+1 and m['linear_solver'] in ('ma57','mumps')
-assert f"running with linear solver {m['linear_solver']}" in (out/'central_timed.log').read_text()
+actual_solver=re.search(r'running with linear solver ([\w-]+)',(out/'central_timed.log').read_text(),re.I)
+assert actual_solver and actual_solver[1].casefold()==m['linear_solver'].casefold()
 assert m['terminal_soc_penalty']==0 and m['central_original_primal']<=1e-6
 for line in (out/'source.sha256').read_text().splitlines():
     digest,rel=line.split('  ',1)
@@ -65,15 +66,18 @@ for name in names:
         for key,yes in flags(r).items():
             if yes:first.setdefault(key,k)
         rr=float(r['owned_r_rms']);ss=float(r['owned_s_rms'])
-        if rr>2e-4:high+=1
-        elif rr<.5e-4:high=0
-        if high>=15:rho=min(1e6,2.5*rho);high=0
-        if k%5==0:
-            seen=seen or rr<=1e-4
-            if not seen:
-                if rr>1e-4:rho=min(1e6,2*rho)
-            elif rr>5*ss:rho=min(1e6,2*rho)
-            elif ss>5*rr and rr<=1e-4:rho=max(1,rho/5)
+        if m.get('rho_policy','legacy_phase')=='bootstrap_fixed':
+            if k%5==0:rho=max(m['rho_floor'],rho/5)
+        else:
+            if rr>2e-4:high+=1
+            elif rr<.5e-4:high=0
+            if high>=15:rho=min(1e6,2.5*rho);high=0
+            if k%5==0:
+                seen=seen or rr<=1e-4
+                if not seen:
+                    if rr>1e-4:rho=min(1e6,2*rho)
+                elif rr>5*ss:rho=min(1e6,2*rho)
+                elif ss>5*rr and rr<=1e-4:rho=max(1,rho/5)
     assert set(first)==set(marks)
     for key,k in first.items():
         assert marks[key]['iteration']==k
@@ -97,6 +101,11 @@ for name in names:
         assert len(sub)==len(rows)*m['T']
         assert {(int(r['iteration']),int(r['period'])) for r in sub}=={(k,t) for k in range(1,len(rows)+1) for t in range(1,m['T']+1)}
         assert all(r['status'] in ('LOCALLY_SOLVED','OPTIMAL') and r['iteration_limit_hit']=='false' for r in sub)
+        if m.get('local_solve_policy')=='warm_retry':
+            for r in sub:
+                if r['cold_retry']=='true':
+                    assert int(r['warm_attempt_iterations'])>=m['warm_retry_limit']
+                    assert int(r['ipopt_iterations'])>=int(r['warm_attempt_iterations'])
     checks={p:dss(arm/(Path(p).stem+'_opendss.log')) for p in set(v['snapshot'] for v in marks.values())}
     checks['endpoint.jls']=dss(arm/'endpoint_opendss.log')
     if 'physical_NO' in marks:
