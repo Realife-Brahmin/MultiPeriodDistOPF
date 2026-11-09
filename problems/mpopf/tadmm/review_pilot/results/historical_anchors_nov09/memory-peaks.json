@@ -1,0 +1,221 @@
+{
+  "note": "PSS apportions shared pages; RSS can double count them. Peaks sampled once per second during measured solves include registered coordinator/worker runtime. Multi-node sums are upper bounds on synchronized aggregate peaks. No swap or old-PC paging measurements are available in these sample files.",
+  "cases": [
+    {
+      "case": "run_T24_primal_dual_31660055",
+      "system": "large10kC_1ph",
+      "T": 24,
+      "solver": "ma57",
+      "allocated_nodes": 1,
+      "configured_memory_gb": 128,
+      "phases": [
+        {
+          "phase": "central",
+          "nodes": [
+            {
+              "node": "process_samples.cn157.csv",
+              "samples": 34,
+              "peak_pss_gib": 3.0693254470825195,
+              "peak_rss_gib": 3.0715103149414062,
+              "peak_private_gib": 3.068828582763672,
+              "max_compute_processes": 1
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 3.0693254470825195,
+          "sum_node_peak_rss_gib_upper_bound": 3.0715103149414062
+        },
+        {
+          "phase": "rho15000",
+          "nodes": [
+            {
+              "node": "process_samples.cn157.csv",
+              "samples": 49,
+              "peak_pss_gib": 24.19169807434082,
+              "peak_rss_gib": 29.83289337158203,
+              "peak_private_gib": 23.948623657226562,
+              "max_compute_processes": 25
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 24.19169807434082,
+          "sum_node_peak_rss_gib_upper_bound": 29.83289337158203
+        }
+      ]
+    },
+    {
+      "case": "run_T24_primal_dual_31660057",
+      "system": "large10kC_1ph",
+      "T": 24,
+      "solver": "mumps",
+      "allocated_nodes": 1,
+      "configured_memory_gb": 128,
+      "phases": [
+        {
+          "phase": "central",
+          "nodes": [
+            {
+              "node": "process_samples.cn157.csv",
+              "samples": 69,
+              "peak_pss_gib": 3.1834945678710938,
+              "peak_rss_gib": 3.1855506896972656,
+              "peak_private_gib": 3.1830291748046875,
+              "max_compute_processes": 1
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 3.1834945678710938,
+          "sum_node_peak_rss_gib_upper_bound": 3.1855506896972656
+        },
+        {
+          "phase": "rho15000",
+          "nodes": [
+            {
+              "node": "process_samples.cn157.csv",
+              "samples": 90,
+              "peak_pss_gib": 24.731937408447266,
+              "peak_rss_gib": 30.412246704101562,
+              "peak_private_gib": 24.486793518066406,
+              "max_compute_processes": 25
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 24.731937408447266,
+          "sum_node_peak_rss_gib_upper_bound": 30.412246704101562
+        }
+      ]
+    },
+    {
+      "case": "run_T96_primal_dual_31660059",
+      "system": "ieee2522C_1ph",
+      "T": 96,
+      "solver": "ma57",
+      "allocated_nodes": 2,
+      "configured_memory_gb": 128,
+      "phases": [
+        {
+          "phase": "central",
+          "nodes": [
+            {
+              "node": "process_samples.cn163.csv",
+              "samples": 75,
+              "peak_pss_gib": 2.8548994064331055,
+              "peak_rss_gib": 2.8566856384277344,
+              "peak_private_gib": 2.8544387817382812,
+              "max_compute_processes": 1
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 2.8548994064331055,
+          "sum_node_peak_rss_gib_upper_bound": 2.8566856384277344
+        },
+        {
+          "phase": "rho20000",
+          "nodes": [
+            {
+              "node": "process_samples.cn163.csv",
+              "samples": 253,
+              "peak_pss_gib": 32.544254302978516,
+              "peak_rss_gib": 44.46307373046875,
+              "peak_private_gib": 32.29738235473633,
+              "max_compute_processes": 49
+            },
+            {
+              "node": "process_samples.cn164.csv",
+              "samples": 253,
+              "peak_pss_gib": 29.199057579040527,
+              "peak_rss_gib": 41.00163650512695,
+              "peak_private_gib": 28.952102661132812,
+              "max_compute_processes": 48
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 61.74331188201904,
+          "sum_node_peak_rss_gib_upper_bound": 85.4647102355957
+        }
+      ]
+    },
+    {
+      "case": "run_T96_primal_dual_31660061",
+      "system": "ieee2522C_1ph",
+      "T": 96,
+      "solver": "mumps",
+      "allocated_nodes": 2,
+      "configured_memory_gb": 128,
+      "phases": [
+        {
+          "phase": "central",
+          "nodes": [
+            {
+              "node": "process_samples.cn163.csv",
+              "samples": 124,
+              "peak_pss_gib": 3.0077266693115234,
+              "peak_rss_gib": 3.0095062255859375,
+              "peak_private_gib": 3.0072402954101562,
+              "max_compute_processes": 1
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 3.0077266693115234,
+          "sum_node_peak_rss_gib_upper_bound": 3.0095062255859375
+        },
+        {
+          "phase": "rho20000",
+          "nodes": [
+            {
+              "node": "process_samples.cn163.csv",
+              "samples": 353,
+              "peak_pss_gib": 31.94121265411377,
+              "peak_rss_gib": 43.47099304199219,
+              "peak_private_gib": 31.69873809814453,
+              "max_compute_processes": 49
+            },
+            {
+              "node": "process_samples.cn164.csv",
+              "samples": 357,
+              "peak_pss_gib": 29.07401180267334,
+              "peak_rss_gib": 40.38899612426758,
+              "peak_private_gib": 28.8270263671875,
+              "max_compute_processes": 48
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 61.01522445678711,
+          "sum_node_peak_rss_gib_upper_bound": 83.85998916625977
+        }
+      ]
+    },
+    {
+      "case": "run_T48_primal_dual_31660026",
+      "system": "large10kC_1ph",
+      "T": 48,
+      "solver": "mumps",
+      "allocated_nodes": 1,
+      "configured_memory_gb": 128,
+      "phases": [
+        {
+          "phase": "central",
+          "nodes": [
+            {
+              "node": "process_samples.cn154.csv",
+              "samples": 178,
+              "peak_pss_gib": 5.434571266174316,
+              "peak_rss_gib": 5.436668395996094,
+              "peak_private_gib": 5.434123992919922,
+              "max_compute_processes": 1
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 5.434571266174316,
+          "sum_node_peak_rss_gib_upper_bound": 5.436668395996094
+        },
+        {
+          "phase": "rho120000",
+          "nodes": [
+            {
+              "node": "process_samples.cn154.csv",
+              "samples": 234,
+              "peak_pss_gib": 54.13087272644043,
+              "peak_rss_gib": 65.53386306762695,
+              "peak_private_gib": 53.883262634277344,
+              "max_compute_processes": 49
+            }
+          ],
+          "sum_node_peak_pss_gib_upper_bound": 54.13087272644043,
+          "sum_node_peak_rss_gib_upper_bound": 65.53386306762695
+        }
+      ]
+    }
+  ]
+}
