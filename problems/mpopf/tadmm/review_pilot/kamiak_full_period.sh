@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 C=$(realpath "$1");T=$2;MODE=$3;WARM=${4:-primal_dual};RHO=${5:-120000};SOLVER=${6:-ma57}
+SYSTEM=${7:-large10kC_1ph}
 [[ $SOLVER == ma57 || $SOLVER == mumps ]]
+[[ $SYSTEM == large10kC_1ph || ( $SYSTEM == ieee2522C_1ph && $T == 96 && $MODE != gate ) ]]
 cd "$C/source";P=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
 export JULIA_DEPOT_PATH="$C/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_horizon_sweep/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_watchdog_rho/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_accuracy_fix/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
@@ -33,7 +35,7 @@ for p in s.split(","):
 assert len(a)>=50;print(",".join(map(str,a)))')
 { hostname;lscpu;scontrol show job "$SLURM_JOB_ID";env | grep -E '^(TADMM_|SLURM_|JULIA_|OMP_|OPENBLAS_)'; } > "$OUT/allocation.txt"
 grep -q '6438Y+' "$OUT/allocation.txt"
-python3 "$P/capture.py" "$OUT" large10kC_1ph
+python3 "$P/capture.py" "$OUT" "$SYSTEM"
 if [[ $SOLVER == ma57 ]];then
  sha256sum "$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so" > "$OUT/hsl.sha256"
 fi
@@ -51,7 +53,7 @@ if [[ $MODE == gate ]]; then
  test -s "$OUT/FULL_PERIOD_GATE_VALIDATED"
 else
  test -s "$C/FULL_PERIOD_READY"
- taskset -c "${TADMM_CPU_IDS%%,*}" julia --startup-file=no --project="$P" "$P/run_horizon_sweep.jl" large10kC_1ph "$T" "$OUT" "$RHO" > "$OUT/solve.log" 2> "$OUT/solve.err"
+ taskset -c "${TADMM_CPU_IDS%%,*}" julia --startup-file=no --project="$P" "$P/run_horizon_sweep.jl" "$SYSTEM" "$T" "$OUT" "$RHO" > "$OUT/solve.log" 2> "$OUT/solve.err"
  test -s "$OUT/SWEEP_VALIDATED"
 fi
 date -u +%FT%TZ > "$OUT/CASE_RECORDED"

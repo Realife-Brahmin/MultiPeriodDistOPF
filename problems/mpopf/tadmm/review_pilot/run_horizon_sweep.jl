@@ -3,7 +3,7 @@ include("sweep_milestones.jl")
 function horizon_sweep_main()
 system,Targ,out,rhoarg=ARGS
 T=parse(Int,Targ); rhos=parse.(Float64,split(rhoarg,','))
-@assert system=="large10kC_1ph" && T in (24,48,96) && length(rhos) in (1,2)
+@assert ((system=="large10kC_1ph" && T in (24,48,96)) || (system=="ieee2522C_1ph" && T==96)) && length(rhos) in (1,2)
 solver=ENV["TADMM_LINEAR_SOLVER"]
 @assert solver in ("ma57","mumps") && ENV["TADMM_RHO_POLICY"] in ("legacy_phase","bootstrap_fixed")
 @assert ENV["TADMM_RHO_WATCHDOG"]=="1" && ENV["TADMM_RHO_PRIMAL_GATE"]=="1e-4"
@@ -36,7 +36,7 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "rho_tau_decrease"=>5.0,"rho_tau_increase"=>2.0,"rho_balance_ratio"=>5.0,
     "rho_update_interval"=>5,"rho_watchdog_window"=>15,"rho_watchdog_factor"=>2.5,
     "final_owned_rms"=>1e-5,"final_all_copy_rms"=>1e-5,"final_dual_rms"=>1e-2,
-    "anchor_provenance"=>(T==96 ? "60000 is extrapolated; no July large10k T96 result" : "July paper and archived summary winner"),
+    "anchor_provenance"=>(system=="large10kC_1ph" && T==96 ? "60000 is extrapolated; no July large10k T96 result" : "July paper and archived summary winner"),
     "timer_note"=>"Core stage rounds plus coordination exclude diagnostics, milestone I/O, checkpoints and validation. Actual loop time, warmup/build and tuning cost logged separately. No best-of-sweep timing reported as untuned.",
     "screening"=>join(sort!(collect(tadmm_screen(d).flags)),','),"periodic"=>true,"terminal_soc_penalty"=>0.0)
 try
