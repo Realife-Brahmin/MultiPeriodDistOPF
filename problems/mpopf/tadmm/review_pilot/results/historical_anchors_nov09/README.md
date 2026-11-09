@@ -1,0 +1,63 @@
+# Completed historical-horizon/backend comparisons
+
+Numerical source 772e98c8fce0fa40b206902f63dbb147d3aa9138: base targeted
+source plus the explicit med2522 T96 harness extension. All four jobs and
+passive energy audits completed. Native gates passed 425 checks per backend.
+Independent local revalidation passes all five supplied completed cases,
+including the earlier fixed-policy large10k T48 MUMPS run. Collection success
+does not imply convergence: med2522 reached its budget without success.
+
+Large10k T24, rho15000 -> fixed48: both backends reach the owned/all-copy
+RMS1e-5 plus unique dual1e-2 goal in 49 iterations. MA57 core50.4500 s,
+loop54.7688 s versus central33.7901 s; MUMPS core100.1781 s, loop105.8067 s
+versus central69.7205 s. Final relative cost gap1.5439e-6. Final maximum
+integrated energy-bound violation0.86962 kWh /0.06523 SOC percentage points;
+the separate strict original-model physical flag is false. The previous
+legacy-controller T24 runs took101/103 iterations at their tight RMS/dual goal.
+
+For T24 the reconstructed historical stopping rule (owned RMS plus either
+dual1e-2 or five-objective stagnation) first crosses at33 iterations for1e-3,
+41 for1e-4, identically across backends. Those crossings are not identical to
+the residual/cost milestones: owned1e-3 plus0.5% cost first occurs at29,
+MA57 core33.3044 s / MUMPS67.0928 s, with20.9109 kWh energy overshoot.
+Do not promote that loose milestone to an equal-physical-quality speedup.
+
+Med2522 T96, rho20000 -> fixed48: both backends hit1000 iterations with no
+tight RMS/dual convergence and38.9723% relative objective gap. MA57 core300.9116 s
+versus central76.4463 s; MUMPS core437.5756 s versus central125.1212 s.
+Final maximum energy-bound violation96.61055 kWh, at bus1351/period96;
+maximum relative SOC violation567.4295 percentage points. These are failed
+convergence experiments, not near-optimal timing results. The transferred
+fixed floor is unvalidated for this system. The trace shows slowly decreasing
+primal residual and slowly increasing cost from below the centralized objective;
+changing the linear solver does not resolve the behavior. A cause is not yet
+established by an ablation. The loose1e-3 historical rule can stop at iteration5
+despite the large physical/objective errors;1e-4 never crosses here.
+
+Earlier large10k T48 MUMPS fixed-policy run31660026 also completed:129 iterations,
+294.3445 s core /312.6378 s loop versus central180.5189 s. Same49/129 iteration
+counts and numerical paths across backends support treating the solver switch
+as a per-iteration timing change in these cases, not improved ADMM convergence.
+Final energy error0.57835 kWh; strict original-model flag remains false.
+
+All36 network check records across these five cases converge with zero voltage
+violations, max voltage discrepancy9.78e-10 pu. This validates network dispatch
+agreement separately from battery consistency; it does not rescue med2522.
+No explicit thermal upper constraints are modeled. All timings are single
+measured trajectories after full warmup/reset, not repeat medians. Current
+modified inputs remain different from July; old iteration counts for the two
+anchor cases have not been recovered from the timing-only historical summary.
+
+Four July-style PNG/PDF/CSV/JSON sets preserve raw objective, owned/all-copy RMS,
+unique dual RMS and rho without smoothing. Budget-limited plots are labeled.
+The summary JSON includes first crossings and independent energy-audit metrics.
+
+Compact raw/source/validation-log archive SHA256:
+`321267ed71002587eac7d94f90fe13ad9b1449bec966d8ffae4070188d9c4fc8`.
+Full dispatch arrays and exported instances remain preserved in the remote
+campaigns; they are excluded from this13.4-MB compact archive. All captured
+source snapshots and logs are retained inside it. Collector:
+repository-root `collect-anchor-status-nov09.py`.
+
+Kamiak queue is empty after this round; no additional tuning runs are submitted
+by this collection.
