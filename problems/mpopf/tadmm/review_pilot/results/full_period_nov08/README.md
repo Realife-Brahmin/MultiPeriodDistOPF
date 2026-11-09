@@ -21,7 +21,51 @@ takes0.11693 s versus0.02977 s for primal-only transfer; it is included in
 stage/core timing. Modes execute sequentially with different JIT histories;
 total gate time ratios are not reportable implementation speedups.
 
-## Complete convergence comparisons now running
+## Completed comparisons
+
+All measured numerical runs and saved-point network checks completed. Native
+validation was independently rerun locally: source hashes, fresh warmup/reset
+paths, worker coverage, local statuses, stopping flags and OpenDSS records pass.
+
+- T48 primal-only:322 iterations,393.7843 s core,432.8034 s loop.
+- T48 primal-dual:322 iterations,334.2166 s core,373.6063 s loop. Full warm
+  starts save15.1% against the48-worker primal-only implementation. Combined
+  with full parallelism/batched updates this is1.96x faster than the preceding
+  24-worker653.9158-s case. Fresh matched central solves take88.2794/87.0827 s;
+  tADMM is still slower. Both final RMS/dual goals are met, objective gaps
+  below3.41e-7, and integrated energy overshoot0.35764 kWh /0.01867 SOC points.
+- T96 rho60000:1,000-iteration budget reached without the final RMS/dual goal,
+  core1586.7922 s. Objective gap0.0644% does not make this a converged solution:
+  integrated energy error24.4783 kWh /1.5920 SOC points, dual RMS0.1660.
+- T96 rho240000:849 iterations,1073.4769 s core,1228.1118 s loop, final RMS/dual
+  goal met. Objective gap7.83e-7; integrated energy overshoot0.68170 kWh /
+  0.04666 SOC points. Matched full central solve184.8716 s. This is5.81 times
+  the centralized time, not a speedup.
+
+The small engineering errors at the RMS-goal points are explicitly retained;
+they do not satisfy the separate original-model1e-5 physical NO threshold.
+All39 saved-point/endpoint OpenDSS records across four arms converge with zero
+voltage violations and maximum voltage disagreement<=1.50e-10 pu, including
+the budget-limited arm. Network agreement does not establish battery consensus.
+
+Slow local solves remain: T48 full-dual median4 inner iterations but max144,
+versus primal-only median13/max28. T96 maxima158/112 for the two rho starts.
+The total-time comparison includes these outliers and multiplier-transfer cost.
+The convergence figure shows persistent oscillation, especially at T96; reducing
+local solve time has not fixed the outer controller's horizon dependence.
+
+Measured T48 aggregate PSS is53.79/53.47 GiB, central5.18/5.03 GiB. T96 sums of
+independent per-node peak PSS are131.77/133.45 GiB, a conservative upper bound
+rather than a synchronized global peak; central9.80 GiB. No aggregate memory
+advantage is claimed. Complete workflow times including warmups/build/reference
+and validation are1501.3/1373.8 s (T48) and7717.8 s (both T96 starts).
+
+See [convergence plot](analysis-completed/implementation-comparison.png),
+[PDF](analysis-completed/implementation-comparison.pdf), [all metrics](analysis-completed/summary.json),
+and [T96 SOC plot](T96-SOC.png). Full-worker outcomes are exploratory single
+measured trajectories, not repeat medians or a validated universal rho heuristic.
+
+## Execution history
 
 T48 jobs31653532 (primal/batched) and31653533 (primal-dual/batched) each use
 48 workers on one Gold node. Both use rho120000, full warmup/reset, MA57,

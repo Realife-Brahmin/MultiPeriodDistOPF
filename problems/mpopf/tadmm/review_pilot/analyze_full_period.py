@@ -10,7 +10,7 @@ import tomllib
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from plot_style import configure_paper_style,TADMM,THRESHOLD
+from plot_style import configure_paper_style,TADMM,THRESHOLD,SYSTEM_COLORS
 
 def rows(path):
     with path.open() as f:return list(csv.DictReader(f))
@@ -41,8 +41,10 @@ def critical(details,layout,key):
     return sum(max(sum(periods[t] for t in w['periods']) for w in layout) for periods in by_iteration.values())
 
 out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=True);cases=[Path(p) for p in sys.argv[2:]]
-configure_paper_style();fig,axes=plt.subplots(1,3,figsize=(12,4),layout='constrained')
-summary=[];hashes=[];references={};curve=0
+configure_paper_style()
+horizons=sorted({tomllib.loads((p/'sweep.toml').read_text())['T'] for p in cases})
+fig,axes=plt.subplots(3,len(horizons),figsize=(5*len(horizons),8),layout='constrained',squeeze=False,sharex='col')
+summary=[];hashes=[];references={};curves={}
 for i,case in enumerate(cases):
     assert (case/'SWEEP_VALIDATED').is_file()
     m=tomllib.loads((case/'sweep.toml').read_text());validation=json.loads((case/'validation_complete.json').read_text())
@@ -69,13 +71,17 @@ for i,case in enumerate(cases):
         x=[float(r['algorithm_s']) for r in trace]
         series=[[max(1e-14,abs(float(r['objective'])-m['central_objective'])/abs(m['central_objective'])) for r in trace],
                 [float(r['r_rms']) for r in trace],[max(1e-14,float(r['original_primal'])) for r in trace]]
-        for ax,y in zip(axes,series):ax.semilogy(x,y,color=TADMM,ls=['-','--',':','-.'][curve%4],label=label)
-        curve+=1
+        col=horizons.index(m['T']);curve=curves.get(m['T'],0);curves[m['T']]=curve+1
+        short=f"{m.get('warm_start','primal').replace('_','–')} start, $\\rho_0={rho:g}$"
+        for ax,y in zip(axes[:,col],series):ax.semilogy(x,y,color=TADMM,ls=['-','--',':','-.'][curve%4],label=short)
         for f in (arm/'assessment.toml',arm/'trace.csv',arm/'trace_subproblems.csv',case/'sweep.toml',case/'validation_complete.json'):
             hashes.append(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {case.name}/{f.relative_to(case)}\n')
-for ax,title,tol in zip(axes,['Relative cost gap','Every-copy RMS','Original-model maximum violation'],[.001,1e-5,1e-5]):
-    ax.set_title(title);ax.set_xlabel('Core solve time (s)');ax.axhline(tol,color=THRESHOLD,ls=':');ax.grid(alpha=.25)
-axes[0].legend(fontsize=7)
+for col,T in enumerate(horizons):
+    for i,(title,tol) in enumerate(zip(['Relative cost gap','Every-copy RMS','Original-model maximum violation'],[.001,1e-5,1e-5])):
+        ax=axes[i,col];ax.axhline(tol,color=THRESHOLD,ls=':');ax.grid(alpha=.25)
+        if col==0:ax.set_ylabel(title)
+    axes[0,col].set_title(f'large10k, T={T}, {T} workers',color=SYSTEM_COLORS['large10kC_1ph'])
+    axes[0,col].legend(fontsize=8);axes[-1,col].set_xlabel('Core solve time (s)')
 fig.suptitle('MA57: full period parallelism and exact local warm starts',fontsize=14)
 for ext in ('png','pdf'):fig.savefig(out/f'implementation-comparison.{ext}',dpi=220)
 (out/'summary.json').write_text(json.dumps(dict(single_measured_trajectory=True,arms=summary),indent=2)+'\n')
