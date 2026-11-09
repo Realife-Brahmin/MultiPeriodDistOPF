@@ -34,7 +34,44 @@ See [comparison figure](analysis-T48/implementation-comparison.png),
 [PDF](analysis-T48/implementation-comparison.pdf), [all metrics](analysis-T48/summary.json)
 and [final SOC trajectory](T48-fixed-SOC.png).
 
-## T96 transfer check running
+## Completed T96 transfer check
+
+Job 31657825 and passive audit 31657826 completed; native and independent local
+validators pass, including source hashes, warmup/reset trajectory agreement,
+96 unique period workers on two hosts, exact final local statuses and all 12
+saved-point/endpoint OpenDSS records (zero voltage violations, maximum optimizer
+voltage difference <=1.50e-10 pu).
+
+The fixed-48 schedule reaches the tight RMS/dual goal in 379 iterations /
+474.1936 s core (555.3876 s loop), versus 849 / 1073.4769 s with the legacy
+controller at the same initial rho240000. This is a 2.26x core-time improvement.
+Final cost gap is7.41e-6, integrated energy overshoot0.80747 kWh /0.04037 SOC
+percentage points. The separate strict original-model feasibility flag remains
+false. The matched fully converged centralized reference is188.5880 s, so the
+tighter-goal tADMM result is still2.51 times slower than central.
+
+Relaxed milestones retain all quality flags:
+
+- Owned RMS<=1e-3 plus0.5% cost:64 iterations /98.6301 s, but25.9641 kWh SOC
+  error /1.29821 SOC points; all-copy RMS2.03e-3 and dual RMS0.275.
+- Every-copy RMS<=1e-3 plus0.1% cost:92 /144.7510 s, below the full central
+  time, but38.8749 kWh SOC error /2.91591 SOC points and dual RMS0.0987.
+- Adding dual<=1e-2 to the1e-3 RMS test:152 /216.8124 s, cost gap0.0738%,
+  energy error5.0857 kWh /0.30512 SOC points. Still slower than central.
+- Every-copy RMS<=1e-4 plus0.1% cost:188 /258.2386 s, energy error5.5845 kWh.
+
+Thus the earlier time advantages are qualified relaxed-target results, not
+equal-physical-quality speedups. Per-iteration core time at the final goal is
+about1.25 s for T96 versus1.24 s for T48; most remaining horizon penalty is in
+outer iteration count rather than the cost of one parallel iteration.
+
+See [T96 comparison](analysis-T96/implementation-comparison.png),
+[PDF](analysis-T96/implementation-comparison.pdf), [metrics](analysis-T96/summary.json)
+and [SOC trajectory](T96-fixed-SOC.png). Complete evidence is in
+targeted-T96-completed.tgz, SHA256:
+f91cccfaa061f4f9a27245dbfb140adcbbe0bdd08a93b27d1ade87d3a04acd8f.
+
+### Transfer-test history
 
 Job 31657825 extends only the fixed-48 schedule to T96 with 96 workers on two
 matched Gold nodes, initial rho 240000 and exact ordinary local solves. Same
