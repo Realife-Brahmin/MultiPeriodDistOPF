@@ -36,6 +36,11 @@ Remote campaign:
 `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_historical_anchors`.
 Reproduction launcher: repository-root `setup-historical-anchors-nov09.sh`.
 
+Submitted gate: 31660054. Large10k T24: MA57 31660055, MUMPS 31660057.
+Med2522 T96: MA57 31660059, MUMPS 31660061. Each has a dependent passive
+energy audit (31660056, 31660058, 31660060, 31660062 respectively).
+Submission is not evidence of numerical completion or convergence.
+
 The existing T48 MUMPS job 31660026 is retained. Pending large10k T96 job
 31660028 and dependent audit 31660029 were cancelled before running at this
 change of focus; they are not failed or completed numerical comparisons.
