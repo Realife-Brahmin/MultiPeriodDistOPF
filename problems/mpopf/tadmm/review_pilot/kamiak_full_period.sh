@@ -32,15 +32,16 @@ export TADMM_CPU_IDS=$(python3 -c 'import os
 s=next(x.split()[1] for x in open("/proc/self/status") if x.startswith("Cpus_allowed_list:"));a=[]
 for p in s.split(","):
  b=p.split("-");a.extend(range(int(b[0]),int(b[-1])+1))
-assert len(a)>=50;print(",".join(map(str,a)))')
+needed=int(os.environ["TADMM_NWORKERS"])//int(os.environ["SLURM_JOB_NUM_NODES"])+2
+assert len(a)>=needed,(len(a),needed);print(",".join(map(str,a)))')
 { hostname;lscpu;scontrol show job "$SLURM_JOB_ID";env | grep -E '^(TADMM_|SLURM_|JULIA_|OMP_|OPENBLAS_)'; } > "$OUT/allocation.txt"
-grep -q '6438Y+' "$OUT/allocation.txt"
+grep -Fq "${TADMM_CPU_MODEL_MATCH:-6438Y+}" "$OUT/allocation.txt"
 python3 "$P/capture.py" "$OUT" "$SYSTEM"
 if [[ $SOLVER == ma57 ]];then
  sha256sum "$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so" > "$OUT/hsl.sha256"
 fi
 NODES=$SLURM_JOB_NUM_NODES
-# Reserve 64 CPUs per node in sbatch, then launch exactly T one-thread workers.
+# Reserve at least workers-per-node plus coordinator/sampler CPUs in sbatch.
 # Slurm gives the step the allocated node CPUs; wrapper checks distinct pins.
 export SLURM_NTASKS=$T SLURM_NTASKS_PER_NODE=$((T/NODES)) SLURM_CPUS_PER_TASK=1 SLURM_CPU_BIND=none
 export TADMM_NODES=$NODES TADMM_WORKERS_PER_NODE=$((T/NODES))

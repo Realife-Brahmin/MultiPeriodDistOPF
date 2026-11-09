@@ -1,5 +1,10 @@
 # Corrected tADMM reviewer-response experiments â€” November 7, 2026
 
+**November 9 hardware requirement:** med2522 T96 uses one physical128-core
+node,96 period workers, a separate coordinator CPU and sampler CPU. Do not
+substitute two64-core nodes. Older two-node results remain exploratory evidence.
+Rebenchmark centralized on the same128-core CPU type before comparing timings.
+
 **November 9 plotting preference:** single-run convergence review uses the
 restored July four-panel view: objective (blue), owned r-norm (green), unique
 s-norm (orange) and rho (purple), all against iteration, with Computer Modern
