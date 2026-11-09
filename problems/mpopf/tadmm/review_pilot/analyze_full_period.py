@@ -43,7 +43,7 @@ def critical(details,layout,key):
 out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=True);cases=[Path(p) for p in sys.argv[2:]]
 configure_paper_style()
 horizons=sorted({tomllib.loads((p/'sweep.toml').read_text())['T'] for p in cases})
-fig,axes=plt.subplots(3,len(horizons),figsize=(5*len(horizons),8),layout='constrained',squeeze=False,sharex='col')
+fig,axes=plt.subplots(3,len(horizons),figsize=(max(8,5*len(horizons)),8),layout='constrained',squeeze=False,sharex='col')
 summary=[];hashes=[];references={};curves={}
 for i,case in enumerate(cases):
     assert (case/'SWEEP_VALIDATED').is_file()
