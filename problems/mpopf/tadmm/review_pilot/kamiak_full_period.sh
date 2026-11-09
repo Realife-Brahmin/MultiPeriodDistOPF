@@ -4,6 +4,10 @@ C=$(realpath "$1");T=$2;MODE=$3;WARM=${4:-primal_dual};RHO=${5:-120000};SOLVER=$
 SYSTEM=${7:-large10kC_1ph}
 [[ $SOLVER == ma57 || $SOLVER == mumps ]]
 [[ $SYSTEM == large10kC_1ph || ( $SYSTEM == ieee2522C_1ph && $T == 96 && $MODE != gate ) ]]
+if [[ $SYSTEM == ieee2522C_1ph ]]; then
+ [[ ${SLURM_JOB_NUM_NODES:?} == 1 ]]
+ export TADMM_CPU_MODEL_MATCH=${TADMM_CPU_MODEL_MATCH:-6760P}
+fi
 cd "$C/source";P=problems/mpopf/tadmm/review_pilot
 export PATH=/home/aryan.jha/opt/julia-1.12.4/bin:$PATH
 export JULIA_DEPOT_PATH="$C/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_horizon_sweep/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_watchdog_rho/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_accuracy_fix/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot"
