@@ -1,0 +1,102 @@
+[
+  {
+    "case": "run_T24_primal_dual_31665887",
+    "source": "8d688457cbccd78d1af95818a095503988f0a5af",
+    "cap": 30,
+    "iterations": 52,
+    "consensus_target_met": true,
+    "core_s": 48.45404814099999,
+    "loop_s": 53.691626878,
+    "central_s": 32.485389732,
+    "baseline_core_s": 50.449994963,
+    "relative_core_change": -0.03956287455457308,
+    "objective_gap": 2.14883925271989e-06,
+    "signed_objective_gap": -2.14883925271989e-06,
+    "original_max_violation": 0.000671864240615494,
+    "physical_NO_met": false,
+    "strict_driver_flag": false,
+    "owned_rms": 8.24660376425976e-06,
+    "all_copy_rms": 8.067195315769088e-06,
+    "dual_rms": 0.00807131464672666,
+    "max_integrated_energy_bound_kwh": 0.668224538826756,
+    "max_SOC_bound_percentage_points": 0.03645126220962012,
+    "max_dynamics_error_kwh": 0.671864240615494,
+    "max_power_bound_kw": 0.0,
+    "normalized_cone_gap": 4.670571529578005e-07,
+    "truncated_local_solves": 14,
+    "total_local_solves": 1248,
+    "final_round_truncated": 0,
+    "local_ipopt_iterations": {
+      "median": 4.0,
+      "p95": 23,
+      "maximum": 30
+    },
+    "local_solver_s": {
+      "median": 0.1897120475769043,
+      "p95": 0.9374518394470215,
+      "maximum": 1.2289519309997559
+    },
+    "tail_last_n": 50,
+    "tail_all_copy_rms_min": 1.242959497006043e-07,
+    "tail_all_copy_rms_max": 0.015156700896874676,
+    "endpoint_opendss": {
+      "converged": true,
+      "max_voltage_difference_pu": 1.48e-10,
+      "zero_voltage_violations": true
+    },
+    "all_saved_network_checks_converged": true,
+    "all_saved_network_checks_zero_voltage_violations": true,
+    "network_records": 9,
+    "timing_note": "Core excludes all original-model/SOC/network diagnostics; finite-only persistent caps have no timed local feasibility report. Includes warm starts, updates, communication and coordination. Prior early-cap local reports were conservatively counted; their timing boundary differs. No exact first step, recovery or cleanup."
+  },
+  {
+    "case": "run_T24_primal_dual_31665889",
+    "source": "8d688457cbccd78d1af95818a095503988f0a5af",
+    "cap": 10,
+    "iterations": 53,
+    "consensus_target_met": true,
+    "core_s": 37.262514713000016,
+    "loop_s": 41.571119154,
+    "central_s": 33.793986223,
+    "baseline_core_s": 50.449994963,
+    "relative_core_change": -0.26139705781282385,
+    "objective_gap": 3.4307565737723333e-06,
+    "signed_objective_gap": -3.4307565737723333e-06,
+    "original_max_violation": 0.0008186394976974487,
+    "physical_NO_met": false,
+    "strict_driver_flag": false,
+    "owned_rms": 7.509319551136661e-06,
+    "all_copy_rms": 7.419199263128938e-06,
+    "dual_rms": 0.007674901614910648,
+    "max_integrated_energy_bound_kwh": 0.8186394976974487,
+    "max_SOC_bound_percentage_points": 0.05084978890275936,
+    "max_dynamics_error_kwh": 0.34181022790108484,
+    "max_power_bound_kw": 0.0,
+    "normalized_cone_gap": 4.6827176302193957e-07,
+    "truncated_local_solves": 244,
+    "total_local_solves": 1272,
+    "final_round_truncated": 0,
+    "local_ipopt_iterations": {
+      "median": 4.0,
+      "p95": 10,
+      "maximum": 10
+    },
+    "local_solver_s": {
+      "median": 0.19396555423736572,
+      "p95": 0.44065093994140625,
+      "maximum": 0.7233579158782959
+    },
+    "tail_last_n": 50,
+    "tail_all_copy_rms_min": 1.245922542506884e-07,
+    "tail_all_copy_rms_max": 0.018096644773001568,
+    "endpoint_opendss": {
+      "converged": true,
+      "max_voltage_difference_pu": 1.48e-10,
+      "zero_voltage_violations": true
+    },
+    "all_saved_network_checks_converged": true,
+    "all_saved_network_checks_zero_voltage_violations": true,
+    "network_records": 8,
+    "timing_note": "Core excludes all original-model/SOC/network diagnostics; finite-only persistent caps have no timed local feasibility report. Includes warm starts, updates, communication and coordination. Prior early-cap local reports were conservatively counted; their timing boundary differs. No exact first step, recovery or cleanup."
+  }
+]

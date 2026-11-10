@@ -97,6 +97,9 @@ def main():
         boundary=m['cap_end_iteration']+1
         fig.text(.5,.936,f"Local cap {m['cap_iterations']} in rounds 2 to {boundary-1} ({m.get('cap_screen','feasible')} screen); exact from {boundary}",ha='center',fontsize=9)
         for ax in axes:ax.axvline(boundary,color='#707070',ls=':',lw=1)
+    elif m.get('local_solve_policy')=='persistent_cap':
+        fig.subplots_adjust(top=.90)
+        fig.text(.5,.936,f"Local cap {m['cap_iterations']} throughout, including first round; no exact cleanup",ha='center',fontsize=9)
     end_status=('RMS/dual target reached' if assessment['final_rms_met'] else 'Iteration budget reached; RMS/dual target not met')
     fig.text(.5,.018,f"{end_status} | Core solve: {assessment['core_s']:.1f} s",ha='center',fontsize=10,color='#505050')
     args.output.parent.mkdir(parents=True,exist_ok=True)

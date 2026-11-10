@@ -1,0 +1,46 @@
+{
+  "case": "completed\\results\\run_T24_primal_dual_31665889",
+  "rho_initial": 15000.0,
+  "iterations": 53,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "local_solve_policy": "persistent_cap",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": true,
+    "strict_criteria_met": false,
+    "original_primal": 0.0008186394976974487,
+    "objective_gap": 3.4307565737723333e-06
+  },
+  "sha256": {
+    "completed\\results\\run_T24_primal_dual_31665889\\rho15000\\trace.csv": "28f918896e032ba8c10320e8eb90d174620d41d8e75da9b73eda59bc9de2517d",
+    "completed\\results\\run_T24_primal_dual_31665889\\sweep.toml": "7a75d14b599e815d6ada9643652dfa21a5286d5c251990218ab54d42218842e4",
+    "completed\\results\\run_T24_primal_dual_31665889\\rho15000\\assessment.toml": "a5d03ca8cb06809e6c9aeca101c6496a749292873ac94121da8be46618b05e78",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "c1b6651fdef47dae1ec1092dc7a01763f542e263ff00ec5c1fe21a681b93e702",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "cap10-convergence.csv": "e1199690a7c0ad1aa78387f9cd77947d5e78da978a32433d78f0a720f1e806d1"
+  }
+}

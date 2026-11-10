@@ -50,3 +50,13 @@ the original manifest/logs remain preserved, and only generated `__pycache__`
 files are excluded by the repaired manifest. No mathematical source changed.
 Resubmitted cap30 job31665887 /audit31665888; cap10 job31665889 /audit31665890.
 The original failed scheduler states are retained, not presented as benchmarks.
+
+Both resubmitted runs/audits completed and independently validated. Cap30 gives
+52 rounds /48.4540s core; cap10 gives53 /37.2625s, versus exact49 /50.4500s.
+Cap10 reduces observed core time26.14%, still above matched central33.7940s.
+Both meet unchanged consensus RMS/dual targets, neither strict physical NO.
+Cap10 objective agreement0.000343%, energy-bound error0.818639kWh (baseline
+0.869624kWh); all saved OpenDSS checks pass. At the final round every local
+solve naturally finishes within its cap, without a separate exact phase.
+See `results/persistent_caps_nov09/` for raw compact archive, independent
+validation, local work distributions, separate physical flags and July plots.
