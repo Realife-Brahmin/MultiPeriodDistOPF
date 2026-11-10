@@ -36,6 +36,25 @@ function cap_gate_trial(tolerance;expect_accept,screen="feasible")
     end
 end
 
+@testset "Persistent caps apply from first round with no exact recovery or switch" begin
+    withenv("TADMM_CAP_ITERATIONS"=>"1","TADMM_CAP_SCREEN"=>"finite") do
+        s=toy_stage("primal_dual","batched";policy="persistent_cap")
+        d=Dict(:Bset=>[1,2]);limits=0
+        for k in (1,2,31,1001)
+            r=stage_step!(s,d,fill(isodd(k) ? 0.8 : 1.9,2,3),zeros(2,3),100.0,k)
+            @test r.iterations<=1
+            @test r.status in ("LOCALLY_SOLVED","OPTIMAL","ITERATION_LIMIT")
+            @test !r.cap_recovery && !r.cold_retry
+            @test !r.local_primal_evaluated
+            @test r.inexact_accepted==r.iteration_limit_hit
+            @test all(isfinite,value.(s.vars))
+            @test MOI.get(s.m,MOI.RawOptimizerAttribute("max_iter"))==1
+            limits+=r.iteration_limit_hit
+        end
+        @test limits>0
+    end
+end
+
 @testset "Early cap accepts screened iterate, recovers rejection, restores exact solve" begin
     cap_gate_trial(1e3;expect_accept=true)
     cap_gate_trial(1e-20;expect_accept=false)

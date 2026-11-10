@@ -68,7 +68,7 @@ function make_model(d, owned; local_window=false, rho=0.0)
     set_optimizer_attribute(m,"compl_inf_tol",1e-8)
     set_optimizer_attribute(m,"acceptable_iter",0)
     local_policy=local_window ? get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact") : "exact"
-    local_policy in ("exact","cap30","warm_retry","early_cap30") || error("Unknown local-solve policy")
+    local_policy in ("exact","cap30","warm_retry","early_cap30","persistent_cap") || error("Unknown local-solve policy")
     report_setting=get(ENV,"TADMM_LOCAL_PRIMAL_REPORT","1")
     report_setting in ("0","1") || error("TADMM_LOCAL_PRIMAL_REPORT must be 0 or 1")
     local_primal_report=report_setting=="1"
@@ -259,7 +259,17 @@ function stage_step!(s,d,z,u,rho,k)
     cap_limit=parse(Int,get(ENV,"TADMM_CAP_ITERATIONS","30"))
     cap_tol=parse(Float64,get(ENV,"TADMM_CAP_PRIMAL_TOL","1e-6"))
     cap_screen=get(ENV,"TADMM_CAP_SCREEN","feasible")
-    if s.local_policy=="early_cap30" && 1<k<=cap_end
+    if s.local_policy=="persistent_cap"
+        cap_limit>0 && cap_screen=="finite" || error("Persistent cap requires a positive cap and finite-only acceptance")
+        set_optimizer_attribute(s.m,"max_iter",cap_limit)
+        solver_s=solve_checked!(s;allow_iteration_limit=true)
+        iterations=MOI.get(s.m,MOI.BarrierIterations())
+        if termination_status(s.m)==MOI.ITERATION_LIMIT
+            multipliers=s.reuse.warm_start=="primal_dual" ? dual.(s.reuse.constraints) : Float64[]
+            all(isfinite,multipliers) || error("Nonfinite capped multipliers; no exact recovery permitted")
+            inexact_accepted=true;cap_attempt_iterations=iterations
+        end
+    elseif s.local_policy=="early_cap30" && 1<k<=cap_end
         cap_limit>0 && cap_end>=2 && isfinite(cap_tol) && cap_tol>0 || error("Invalid early cap settings")
         cap_screen in ("feasible","finite") || error("Invalid early cap screen")
         set_optimizer_attribute(s.m,"max_iter",cap_limit)
@@ -320,8 +330,10 @@ function stage_step!(s,d,z,u,rho,k)
         iterations=MOI.get(s.m,MOI.BarrierIterations())
     end
     iteration_limit_hit=termination_status(s.m)==MOI.ITERATION_LIMIT
-    local_primal_evaluated=inexact_accepted || (iteration_limit_hit && s.local_primal_report)
-    local_primal=inexact_accepted ? gated_primal : (local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN)
+    # Persistent finite-only caps do not use a local feasibility gate. The
+    # independent full-dispatch physical checker remains outside core timing.
+    local_primal_evaluated=s.local_policy!="persistent_cap" && (inexact_accepted || (iteration_limit_hit && s.local_primal_report))
+    local_primal=inexact_accepted && s.local_policy!="persistent_cap" ? gated_primal : (local_primal_evaluated ? maximum(values(primal_feasibility_report(s.m;atol=0.0));init=0.0) : NaN)
     copy_b=[value(s.b[j,t]) for j in d[:Bset],t in s.times]
     return (;period=only(s.owned),copy_b,solver_s,iterations,status=string(termination_status(s.m)),
         iteration_limit_hit,local_primal,local_primal_evaluated,warm_start_s,objective_update_s,

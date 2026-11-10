@@ -102,7 +102,18 @@ for name in names:
         rows=list(csv.DictReader((folder/'trace.csv').open()));sub=list(csv.DictReader((folder/'trace_subproblems.csv').open()))
         assert len(sub)==len(rows)*m['T']
         assert {(int(r['iteration']),int(r['period'])) for r in sub}=={(k,t) for k in range(1,len(rows)+1) for t in range(1,m['T']+1)}
-        if m.get('local_solve_policy')=='early_cap30':
+        if m.get('local_solve_policy')=='persistent_cap':
+            assert m['cap_screen']=='finite'
+            for r in sub:
+                assert int(r['ipopt_iterations'])<=m['cap_iterations']
+                assert r['cap_recovery']=='false' and r['cold_retry']=='false'
+                assert r['local_primal_evaluated']=='false'
+                limited=r['status']=='ITERATION_LIMIT'
+                assert r['status'] in ('LOCALLY_SOLVED','OPTIMAL','ITERATION_LIMIT')
+                assert (r['iteration_limit_hit']=='true')==limited
+                assert (r['inexact_accepted']=='true')==limited
+                assert int(r['cap_attempt_iterations'])==(int(r['ipopt_iterations']) if limited else 0)
+        elif m.get('local_solve_policy')=='early_cap30':
             assert len(rows)>m['cap_end_iteration'] or not a['final_rms_met']
             for r in sub:
                 k=int(r['iteration']);accepted=r['inexact_accepted']=='true';recovery=r['cap_recovery']=='true'
