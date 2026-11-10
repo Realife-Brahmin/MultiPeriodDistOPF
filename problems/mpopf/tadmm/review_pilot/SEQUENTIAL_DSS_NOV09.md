@@ -57,3 +57,33 @@ before stepping the full network because the installed engine rejects the
 Version2 uses an explicit one-point unity shape for daily/yearly/duty and adds
 a native load-power test to prevent double profile multiplication. Its campaign
 path has suffix `_sequential_dss_v2`; old files are not overwritten.
+
+## Completed verification (November 9)
+
+The primary replay uses 100% charge/discharge efficiency, zero idling loss,
+and no inverter efficiency curve. An explicit idle-period test confirms that
+stored energy does not leak. Centralized passing is an integration control;
+the explicit settings and native tests establish the battery assumptions.
+
+Gate31667059 passed63 checks; replay31667060 completed all six saved-endpoint
+replays without rerunning optimization. Latest-source gate31667199 passed73
+checks, including ten no-leakage assertions, and repeated the centralized
+replay successfully through the compressed-table CLI. The six original table
+sets use source ab3713e33022f3f78c5bffa202d5f8872536e20d (schema1); the latest
+gate uses97f68c75cfcc282d787a06584f7a2cdb3664a000 (schema2 metadata). Physics
+and the primary battery assumptions are unchanged between these versions.
+
+Centralized passes the chronological check. Cap10 and cap30 fail: their worst
+per-battery, per-interval energy-accounting discrepancies are0.798033 and
+0.644060kWh, respectively. These are maxima, not fleet totals or averages.
+OpenDSS clips stored energy at reserve after executing an interval; checking
+only bounded engine SOC would hide the discrepancy. With lossless batteries,
+the unclipped requested schedules violate SOC bounds by0.818639 and0.668225kWh.
+
+An independent Python verifier checked3,119,328 exported rows across all six
+cases, including table hashes, chronology, energy recurrences, network
+discrepancies and pass flags. Reporting fixtures also confirm that legacy
+snapshot-only checks cannot receive a full-MPOPF validation label. Results,
+complete primary tables, plots, source provenance and replay instructions are
+in `results/sequential_dss_nov09/README.md`. All validation is excluded from
+optimization solve-time benchmarks.
