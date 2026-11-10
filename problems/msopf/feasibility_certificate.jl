@@ -55,10 +55,12 @@ function validate_dispatch(net, delta_deg, kw, x; k)
     battery = get(kw, :battery, :optimize); pv_q = get(kw, :pv_q, :optimize)
     src_at = Dict(s.bus => s for s in net.sources)
     load = Dict(b => 0.0im for b in net.buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
+    Lt = bus_load(net, kw)                                  # load per bus and period (load_kw or load_factor)
     pvP = Dict(b => 0.0 for b in net.buses); for p in pvs; pvP[p.bus] += p.kW / S; end
     viol = Dict("ampacity" => 0.0, "kvl" => 0.0, "balance" => 0.0, "source" => 0.0, "pv_q" => 0.0, "battery" => 0.0, "soc" => 0.0, "band" => 0.0, "backflow" => 0.0)
     up!(kind, v) = (viol[kind] = max(viol[kind], v))
     minP, minroom = Inf, Inf
+    ampm = get(kw, :margin_amp, false)
     for t in 1:T
         V(b) = x.V_pu[b][t]
         out = Dict(b => 0.0im for b in net.buses)
@@ -69,6 +71,8 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             I = hasproperty(x, :raw) ? complex(x.raw.lr[l.name][t], x.raw.li[l.name][t]) : (V(l.from) - V(l.to)) / z
             up!("kvl", abs(V(l.from) - V(l.to) - z * I))
             amax = ampacity_of(kw, l.name); amax === nothing || up!("ampacity", max(0.0, abs(I) - amax))
+            # with margin_amp the limit is part of the margin, as the band: room (1 - |I|^2 / I_max^2) x k
+            ampm && amax !== nothing && (minroom = min(minroom, (1 - abs2(I) / amax^2) * k))
             out[l.from] += V(l.from) * conj(I) + conj(Y[1, 1] + Y[1, 2]) * abs2(V(l.from))
             out[l.to] += V(l.to) * conj(-I) + conj(Y[2, 2] + Y[2, 1]) * abs2(V(l.to))
         end
@@ -98,7 +102,7 @@ function validate_dispatch(net, delta_deg, kw, x; k)
             up!("pv_q", max(0.0, abs(q) - qmax))
         end
         for b in net.buses
-            mis = out[b] + lam[t] * load[b] - pvf[t] * pvP[b] - inj[b]
+            mis = out[b] + Lt[b][t] - pvf[t] * pvP[b] - inj[b]
             up!("balance", max(abs(real(mis)), abs(imag(mis))))
             haskey(src_at, b) && continue
             vm = abs(V(b))
@@ -116,7 +120,8 @@ function validate_dispatch(net, delta_deg, kw, x; k)
         end
         terminal === :cyclic && battery === :optimize && up!("soc", abs(Bk[T+1] - Bk[1]))
     end
-    eq = maximum(viol[c] for c in ("ampacity", "kvl", "balance", "source", "pv_q", "battery", "soc"))
+    eqc = ("kvl", "balance", "source", "pv_q", "battery", "soc")
+    eq = maximum(viol[c] for c in (ampm ? eqc : ("ampacity", eqc...)))     # with margin_amp a current above its limit is a negative margin
     return (; viol, max_violation = maximum(values(viol)), equations = eq, min_import_kW = minP, min_band_room_kW = minroom,
             margin_kW = min(minP, minroom))
 end
@@ -157,7 +162,8 @@ function variable_bounds(net, kw; k, m_lo_kW, vbox, band_in_margin = true)
     vmin = Dict(b => haskey(src_at, b) ? 0.0 : !banded_bus(kw, src_at, b) ? V_FLOOR : (band_in_margin ? sqrt(lo^2 + c * m_lo_kW / S) : lo) for b in net.buses)
     vmax = Dict(b => (haskey(src_at, b) || !banded_bus(kw, src_at, b)) ? sqrt(2) * vbox : (band_in_margin ? sqrt(hi^2 - c * m_lo_kW / S) : hi) for b in net.buses)
     Ib = Dict(b => 0.0 for b in net.buses)
-    for d in net.loads; Ib[d.bus] += maximum(lam) * abs(complex(d.kW, d.kvar)) / S / vmin[d.bus]; end
+    lk = get(kw, :load_kw, nothing)
+    for d in net.loads; Ib[d.bus] += maximum(abs(dload(d, t, lam, lk)) for t in 1:T) / S / vmin[d.bus]; end
     for p in pvs; Ib[p.bus] += max(p.kW * maximum(pvf), p.kVA) / S / vmin[p.bus]; end
     for bt in net.batteries; battery === :optimize && (Ib[bt.bus] += bt.kW_rated / S / vmin[bt.bus]); end
     for s in net.sources
@@ -252,7 +258,8 @@ function lateral_boxes(net, kw, vb, src_at; ideal = false)
     Plo = zeros(nb, T); Phi = zeros(nb, T); Qlo = zeros(nb, T); Qhi = zeros(nb, T); nsrc = zeros(Int, nb)
     for s in net.sources; nsrc[ix[s.bus]] += 1; end
     for d in net.loads, t in 1:T
-        k = ix[d.bus]; Plo[k, t] += lam[t] * d.kW / S; Phi[k, t] += lam[t] * d.kW / S; Qlo[k, t] += lam[t] * d.kvar / S; Qhi[k, t] += lam[t] * d.kvar / S
+        k = ix[d.bus]; s = dload(d, t, lam, get(kw, :load_kw, nothing)) / S
+        Plo[k, t] += real(s); Phi[k, t] += real(s); Qlo[k, t] += imag(s); Qhi[k, t] += imag(s)
     end
     for p in pvs, t in 1:T
         k = ix[p.bus]; Plo[k, t] -= pvf[t] * p.kW / S; Phi[k, t] -= pvf[t] * p.kW / S
@@ -373,6 +380,7 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
         terminal === :cyclic && battery === :optimize && @constraint(model, B[kk, T] == B[kk, 0])
     end
     load = Dict(b => 0.0im for b in buses); for d in net.loads; load[d.bus] += complex(d.kW, d.kvar) / S; end
+    Lt = bus_load(net, kw)
     pvP = Dict(b => 0.0 for b in buses); for p in pvs; pvP[p.bus] += p.kW / S; end
     battat = Dict(b => [bt.name for bt in net.batteries if bt.bus == b] for b in buses)
     pvat = Dict(b => [p.name for p in pvs if p.bus == b] for b in buses)
@@ -460,8 +468,8 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                     @constraint(model, VV(b) >= lo^2); @constraint(model, VV(b) <= hi^2)
                 end
             end
-            @constraint(model, outP[b] + lam[t] * real(load[b]) - pvf[t] * pvP[b] == Pin)
-            @constraint(model, outQ[b] + lam[t] * imag(load[b]) == Qin)
+            @constraint(model, outP[b] + real(Lt[b][t]) - pvf[t] * pvP[b] == Pin)
+            @constraint(model, outQ[b] + imag(Lt[b][t]) == Qin)
         end
     end
     # ---- Bus moment blocks (cuts :kcl0 and :jbound), 2026-10-22 ----------------------------------------
@@ -520,10 +528,10 @@ function relax_margin(net, delta_deg, kw; k, m_lo_kW = -1000.0, m_hi_kW = 1e4, c
                     end
                     push!(busblocks, (; t, bus = b, kind = :kcl0, n))
                 else
-                    Pnet = -lam[t] * real(load[b]) + pvf[t] * pvP[b]
+                    Pnet = -real(Lt[b][t]) + pvf[t] * pvP[b]
                     Pb = sum((bt.kW_rated / S for bt in net.batteries if bt.bus == b && battery === :optimize); init = 0.0)
                     qd = sum((pv_q === :optimize ? sqrt(max(p.kVA^2 - (pvf[t] * p.kW)^2, 0.0)) / S : 0.0 for p in pvs if p.bus == b); init = 0.0)
-                    Qnet = -lam[t] * imag(load[b])
+                    Qnet = -imag(Lt[b][t])
                     Smax = sqrt((abs(Pnet) + Pb)^2 + max(abs(Qnet + qd), abs(Qnet - qd))^2)
                     Jmax = Smax / vb.vmin[b]
                     @constraint(model, sum(ar[c1] * ar[c2] * X[c1, c2] + ai[c1] * ai[c2] * X[c1, c2] for c1 in 1:n, c2 in 1:n if ar[c1] * ar[c2] != 0 || ai[c1] * ai[c2] != 0) <= Jmax^2)

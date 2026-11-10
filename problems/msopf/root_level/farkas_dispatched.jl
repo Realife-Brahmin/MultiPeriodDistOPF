@@ -66,14 +66,23 @@ function dmain()
             open(io -> @printf(io, "%d,%s,%.6f,%.6f,NaN,true,0,%s,0\n", d.id, d.label, ridle, LIMIT, ucols), fa, "a")
             say("  ", d.label, ": idle feasible to the search limit; so is the dispatched day"); exit(0)
         end
-        isfinite(ridle) || error("direction $(d.id) has no idle reach (equal angles infeasible when idle): not handled yet")
-        _, _, _, xs = daymargin(angles(d, ridle); all = true)
-        any(x -> x === nothing, xs) && error("the idle hours at the idle reach do not validate")
-        n = 0; lo, mlo, xlo = ridle, NaN, stitch(xs)
-        m, x = dmargin(d, lo, xlo); n += 1
-        (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day does not validate as feasible at the idle reach (margin %.1f kW)", m))
+        n = 0
+        if isfinite(ridle)
+            _, _, _, xs = daymargin(angles(d, ridle); all = true)
+            any(x -> x === nothing, xs) && error("the idle hours at the idle reach do not validate")
+            lo, mlo, xlo = ridle, NaN, stitch(xs)
+            m, x = dmargin(d, lo, xlo); n += 1
+            (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day does not validate as feasible at the idle reach (margin %.1f kW)", m))
+            r = lo
+        else
+            # No idle region (rated sf6937, 2026-11-02: at 6 am switches 11% over their ratings at equal angles with the
+            # batteries idle; feasible with them, margin +830 kW): start at equal angles, cold, first step to 1 deg.
+            lo = 0.0; m, x = dmargin(d, 0.0, nothing); n += 1
+            (isfinite(m) && m >= 0) || error(@sprintf("the dispatched day is not feasible at equal angles either (margin %.1f kW)", m))
+            r = 0.8
+        end
         mlo, xlo = m, x
-        hi, mhi = NaN, NaN; r = lo
+        hi, mhi = NaN, NaN
         while true                                   # step out until the margin is negative or nothing validates
             r = min(1.25r, LIMIT); m, x = dmargin(d, r, xlo); n += 1
             if isfinite(m) && m >= 0
@@ -85,7 +94,7 @@ function dmain()
         end
         if isfinite(hi)
             side = 0
-            while (hi - lo) > 5e-3 * lo
+            while (hi - lo) > max(5e-3 * lo, 1e-3)              # 1e-3 deg floor: lo can be 0 (no idle region)
                 # Illinois regula falsi when the far side has a validated margin; bisection when it does not
                 r = isfinite(mhi) ? lo + (hi - lo) * mlo / (mlo - mhi) : (lo + hi) / 2
                 r = clamp(r, lo + 0.05(hi - lo), hi - 0.05(hi - lo))
@@ -102,7 +111,9 @@ function dmain()
                      atlim ? " (search limit)" : "", n, time() - t0))
         m98, x98 = dmargin(d, 0.98lo, xlo)
         (isfinite(m98) && m98 >= 0) || error("the 98% point does not validate")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf)
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = lam, pvs, pv_factor = pvf, ampacity_pu = get(kwb, :ampacity_pu, nothing),
+                            load_kw = get(kwb, :load_kw, nothing))
+        RATED && say(@sprintf("  OpenDSS replay of the day at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,%.6f,%.6f,%s,%d,%s,%.0f\n", d.id, d.label, ridle, lo, hi, atlim, n, ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_ADcur_$(d.id).csv"), "w") do io
             println(io, "element,kind,I_pu")
@@ -135,21 +146,31 @@ function dmain()
         rs = parse(Float64, a[4])
         envf = get(ENV, "FB_ENVELOPE", joinpath(OUT, "fb_envelope_disp.csv"))
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
-        for l in readlines(envf)[2:end]
+        for l in (RATED ? String[] : readlines(envf)[2:end])
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = parse(Float64, c[4])) : (senv[String(c[1])] = parse(Float64, c[4]))
         end
-        kwL = merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))
+        kwL = RATED ? merge(kwb, (; source_ampacity_pu = SRCAMP)) : merge(kwb, (; ampacity_pu = amp, source_ampacity_pu = senv))      # FB_RATINGS: the ratings, in kwb
+        RM = DERIVED ? network_response(net) : nothing                  # FB_DERIVED: farkas_bracketing.jl's derived_limits
         function certified(r)
             ok = false; s = nothing
+            kwr = DERIVED ? derived_limits(RM, kwL, angles(d, r), 1:kwL.T, r) : kwL     # the largest bound over the day's periods
             for sv in SOLVERS
                 opt, at = solver_of(sv)
-                c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
+                c = certify(net, angles(d, r), kwr; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
                 ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"
                 say(@sprintf("  %s: %.4f x r = %.5f deg -> U %+.4g kW, Farkas %.4g (%s, %s)%s; build %.0f s, solve %.0f s, %d blocks, max RSS %.1f GB",
-                             d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  certified" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
+                             d.label, r / rs, r, c.U, c.farkas.bound, c.status, sv, ok ? "  float bound certifies" : "", c.build_s, c.solve_s, c.nblocks, Sys.maxrss() / 2^30))
+                # the float verdict stands only if the bound recomputed in exact arithmetic agrees (as phase C, 2026-11-03;
+                # 19 of 32 rated CD certificates had come from SLOW_PROGRESS solves); exported first, verified once the model is freed
+                fname = joinpath(mkpath(joinpath(OUT, "certs")), "CD_$(d.id)_tmp.txt")
+                infeas = ok && EXACT ? export_relaxation(c, fname) : false
                 # only the numbers leave: holding the last result kept its model (about 45 GB) alive while the next one was
                 # built, and a fourth relaxation ran out of 64 GB (direction 2, 2026-10-31)
                 s = (; U = c.U, farkas = (; bound = c.farkas.bound)); c = nothing; GC.gc(true)
+                if ok && EXACT
+                    e = exact_verdict(fname, infeas); ok = e.ok
+                    say(@sprintf("  %s: exact %s %.6g -> %s (%.0f s)", d.label, e.kind, e.kind == "farkas" ? e.widened : e.U, ok ? "certified" : "NOT certified", e.seconds))
+                end
                 ok && break
             end
             return ok, s
@@ -174,6 +195,27 @@ function dmain()
         end
         open(io -> @printf(io, "%d,%s,%.6f,%.6f,%.6f,%.5f,%.6g,%.6g,%d,%.0f,%.1f\n", d.id, d.label, rs, hi, lo, hi / rs, Uhi, Fhi, n, time() - t0, Sys.maxrss() / 2^30), fc, "a")
         say(@sprintf("  %s: reach %.5f, certified from %.5f (x%.4f), unresolved up to %.5f; %d relaxations, %.0f s", d.label, rs, hi, hi / rs, lo, n, time() - t0))
+
+    elseif DPHASE == "VD"
+        # Exact audit of a CD certificate taken before the exact check (2026-11-03), as farkas_bracketing.jl's phase V:
+        # re-solve at the certified point, export, free the model, verify in rational arithmetic. Writes fb_VD_<i>.csv.
+        i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
+        c = split(readlines(joinpath(OUT, "fb_CD_$(d.id).csv"))[2], ',')
+        r = parse(Float64, c[4]); isfinite(r) || (say("  ", d.label, ": no certified point; skipped"); exit(0))
+        RATED || error("phase VD: rated campaigns only")
+        kwL = merge(kwb, (; source_ampacity_pu = SRCAMP))
+        opt, at = solver_of(SOLVERS[1]); t0 = time()
+        x = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS, solver_attributes = at, optimizer = opt)
+        fname = joinpath(mkpath(joinpath(OUT, "certs")), "CD_$(d.id).txt")
+        infeas = export_relaxation(x, fname; note = @sprintf("%s %s, dispatched day, r = %.6f deg", SYS, d.label, r))
+        st, ds, U, F = x.status, x.dual_status, x.U, x.farkas.bound; x = nothing; GC.gc(true)
+        e = exact_verdict(fname, infeas)
+        open(joinpath(OUT, "fb_VD_$(d.id).csv"), "w") do io
+            println(io, "id,label,r_cert_deg,status,dual_status,U_float_kW,farkas_float,kind,exact_bound,exact_bound_widened,exact_U_kW,certified_exact,seconds")
+            @printf(io, "%d,%s,%.6f,%s,%s,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%s,%.0f\n", d.id, d.label, r, st, ds, U, F, e.kind, e.bound, e.widened, e.U, e.ok, time() - t0)
+        end
+        say(@sprintf("  %s: r %.5f deg, %s / %s, float U %.4g kW, Farkas %.4g | exact %s %.6g -> %s; %.0f s",
+                     d.label, r, st, ds, U, F, e.kind, e.kind == "farkas" ? e.widened : e.U, e.ok ? "CERTIFIED" : "NOT certified", time() - t0))
     end
 end
 dmain()

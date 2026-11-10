@@ -19,7 +19,9 @@
 # Output folder: MULTIPERIOD_OUT_DIR (all phases of one system share it).
 include(joinpath(@__DIR__, "..", "multiperiod_full_angle.jl"))
 include(joinpath(@__DIR__, "..", "feasibility_certificate.jl"))
-using Logging
+include(joinpath(@__DIR__, "verify_certificate.jl"))
+include(joinpath(@__DIR__, "..", "current_bounds.jl"))
+using Logging, Statistics
 
 const SYS = get(ENV, "FB_SYSTEM", "med3980_four")
 const PHASE = get(ENV, "FB_PHASE", "A")
@@ -128,9 +130,117 @@ band = cfg.customers ? Set(l.to for l in net.lines if startswith(lowercase(l.nam
 lam, price, pvf = load_profile(24), price_profile(24), pv_profile(24)
 kw24 = (; pvs, pv_q = :optimize, C_B = cb_by_rule(net), ideal_sources = false, battery = :idle, band_buses = band, tol = 1e-8, constr_viol_tol = 1e-8,
         T = 24, load_factor = lam, price, pv_factor = pvf, gamma = gamma_by_rule(net), terminal = :soft)
-hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free))
+# FB_LOADDAY=148 (user, 2026-11-03; sf6937): each load its own 24 hourly values, the hourly means of SMART-DS's customer
+# profiles on that day (LoadDay<day>.csv, smartds_load_day.py), instead of one load factor for every load. lam is then
+# the total over the deck's nominal, for the logs only. PV keeps our own day.
+const LOADDAY = get(ENV, "FB_LOADDAY", "")
+if !isempty(LOADDAY)
+    rows = [split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "LoadDay$(LOADDAY).csv"))[2:end]]
+    lkw = Dict(String(r[1]) => complex.(parse.(Float64, r[2:25]), parse.(Float64, r[26:49])) for r in rows)
+    miss = [d.name for d in net.loads if !haskey(lkw, d.name)]
+    isempty(miss) || error("loads without a day profile: ", join(miss[1:min(10, end)], ", "))
+    lam = [sum(real(lkw[d.name][t]) for d in net.loads) / sum(d.kW for d in net.loads) for t in 1:24]
+    # PV (user, 2026-11-03): the same half-sine, but from that day's sunrise to sunset in San Francisco (37.77 N,
+    # 122.42 W; NOAA's approximations, with refraction), on the profiles' clock (local standard time: residential load
+    # is lowest at 3-4 am and highest at 4-5 pm, commercial rises 6-10 am), as hourly means over each hour ending h,
+    # like the loads, scaled to a largest hour of 1. Day 148: sunrise 4:55, sunset 19:18 PST.
+    startswith(cfg.deck, "smartds") || error("FB_LOADDAY is for the SMART-DS San Francisco deck")
+    pvf, rise, set = let N = parse(Int, LOADDAY), lat = 37.77, lon = -122.42
+        B = deg2rad(360 * (N - 81) / 364); eot = 9.87sin(2B) - 7.53cos(B) - 1.5sin(B)         # minutes
+        dec = deg2rad(23.44) * sind(360 * (284 + N) / 365)
+        noon = 12 + (-120 - lon) / 15 - eot / 60                                                # hours, PST
+        H = acosd((sind(-0.833) - sind(lat) * sin(dec)) / (cosd(lat) * cos(dec))) / 15
+        r, s = noon - H, noon + H
+        sun(x) = r < x < s ? sin(pi * (x - r) / (s - r)) : 0.0
+        p = [sum(sun(h - 1 + (k - 0.5) / 60) for k in 1:60) / 60 for h in 1:24]
+        (p ./ maximum(p), r, s)
+    end
+    kw24 = merge(kw24, (; load_factor = lam, load_kw = lkw, pv_factor = pvf))
+    say("loads of day $LOADDAY, total over nominal by hour: ", join([@sprintf("%.3f", x) for x in lam], " "))
+    say(@sprintf("PV: sunrise %.2f h, sunset %.2f h (PST); by hour: ", rise, set), join([@sprintf("%.3f", x) for x in pvf], " "))
+end
+# FB_RATINGS=1 (user, 2026-11-02): every line limited to its rating, from test_networks/<deck>/BranchRatings.csv
+# (branch_ratings.jl: normamps x k/3, transformers kVA / (sqrt(3) x base kV), in the deck's per-phase-equivalent units).
+# The OPF solves carry the limits in their margin (margin_amp), the certificates as hard limits; phase C then uses the
+# ratings instead of the envelope, and phase B is not needed. Service transformers (svc_*) stay unlimited: they carry
+# only their customers' load, which no dispatch changes, and some exceed nameplate at the datasets' peak.
+const RATED = get(ENV, "FB_RATINGS", "0") == "1"
+if RATED
+    rt = Dict(String(r[1]) => parse(Float64, r[8]) for r in (split(l, ',') for l in readlines(joinpath(REPO_ROOT, "test_networks", cfg.deck, "BranchRatings.csv"))[2:end])
+              if !isempty(r[8]) && r[2] != "service")
+    nolim = [l.name for l in net.lines if !haskey(rt, l.name) && !startswith(l.name, "svc_")]
+    isempty(nolim) || error("lines without a rating: ", join(nolim[1:min(10, end)], ", "))
+    kw24 = merge(kw24, (; ampacity_pu = Dict(l.name => rt[l.name] for l in net.lines if haskey(rt, l.name)), margin_amp = true))
+    # The certificates need a bound on each (near-ideal) source's current. By KCL it is the sum of the ratings of the
+    # lines at its bus, which must carry no load, capacitor or DER; 10% more covers the lines' charging current.
+    devb = Set(vcat([d.bus for d in net.loads], [c.bus for c in net.capacitors], [b.bus for b in net.batteries], [p.bus for p in kw24.pvs]))
+    SRCAMP = Dict{String,Float64}()
+    for s in net.sources
+        s.bus in devb && error("source $(s.name): devices at its bus, so the line ratings do not bound its current")
+        SRCAMP[s.name] = 1.1 * sum(rt[l.name] for l in net.lines if s.bus in (l.from, l.to))
+    end
+    say("source current bounds (pu, 1.1 x the ratings at the bus): ", join(["$k $(round(v; digits = 3))" for (k, v) in sort(collect(SRCAMP))], ", "))
+end
+hour_kw(t) = merge(kw24, (; T = 1, dt_h = 1.0, load_factor = [lam[t]], price = [price[t]], pv_factor = [pvf[t]], gamma = 0.0, terminal = :free,
+                           load_kw = haskey(kw24, :load_kw) ? Dict(n => [v[t]] for (n, v) in kw24.load_kw) : nothing))
 DIRS = directions(SYS, movers)
 angles(d, r) = merge(Dict(S0 => 0.0), Dict(m => r * d.u[k] for (k, m) in enumerate(movers)))
+"""
+Exact check of a solved relaxation `x` (from certify): export it and recompute its bound in rational arithmetic
+(verify_certificate.jl). A Farkas file (infeasible status) proves infeasibility if its bound, boxes widened, is > 0;
+an objective file if U = -bound S < -UTOL. Phase C accepts a point only if this passes (2026-11-03): sf6937's
+first rated run certified bisection points from NUMERICAL_ERROR solves (U to -1e157 kW) that did not reproduce
+(direction 64: exact U +313 kW on a re-solve). The exported file is deleted unless `keep`.
+"""
+exact_check(x, fname; note = "", keep = false) = exact_verdict(fname, export_relaxation(x, fname; note); keep)
+"Export a solved relaxation for exact_verdict (as a Farkas file if it was found infeasible); returns whether it was."
+function export_relaxation(x, fname; note = "")
+    infeas = !isnan(x.farkas.bound)
+    export_certificate(x.R.model, x.R.box, fname; c = infeas ? zero(AffExpr) : objective_function(x.R.model), note)
+    return infeas
+end
+"Exact verdict on an exported relaxation; needs no model, so a large one can be freed first (farkas_dispatched.jl)."
+function exact_verdict(fname, infeas; keep = false)
+    ve = verify_file(fname); keep || rm(fname)
+    S = net.S_base_kVA; eb = isfinite(ve.bound) ? Float64(BigFloat(ve.bound)) : -Inf; ew = isfinite(ve.bound) ? Float64(BigFloat(ve.bound_widened)) : -Inf
+    return (; ok = infeas ? ew > 0 : -ew * S < -UTOL, kind = infeas ? "farkas" : "objective", bound = eb, widened = ew, U = infeas ? NaN : -ew * S, seconds = ve.seconds)
+end
+const EXACT = get(ENV, "FB_EXACT", "1") == "1"
+const DERIVED = get(ENV, "FB_DERIVED", "0") == "1"
+# Lowest |V| at each device bus in the certificate model (variable_bounds with certify's m_lo_kW = -1000): banded buses
+# sqrt(0.95^2 - 1000 / KV) = 0.923 pu, unbanded ones (the primary of customer-band decks) the floor V_FLOOR.
+const VLO_BAND = sqrt(0.95^2 - 1000.0 / KV)
+"""
+FB_DERIVED=1 (2026-11-03): every line's and source's current at angles `ang` also bounded by current_bounds.jl (the
+model's own response, V = V0 + Z J, with |V| at each device bus above its floor in the certificate model), the limit
+being min(rating, derived). The device powers are the union over the periods Ts of each bus's rectangle: the angles
+are the same in every period, so V0 is too, and one bound covers the whole day. Capacitors are line-end shunts, so they
+are in Z. The derived bound holds for every state of the model at these angles, so a certificate under it proves the
+rated model infeasible. On ieee123 S1-S3 the relaxation had booked its fictitious losses on the lines between the two
+sources, up to their 530 A rating (15% gap; 1.4-1.9% with these bounds). Large networks use a coarser direction grid
+(its cos(pi / ndir) correction keeps the bound valid) and a Float64 response with network_response's allowance.
+"""
+function derived_limits(RM, kw, ang, Ts, r)
+    box = Dict{String,NTuple{4,Float64}}()
+    for t in Ts, (b, p1, p2, q1, q2) in device_rectangles(net, kw, t)
+        o = get(box, b, (p1, p2, q1, q2)); box[b] = (min(o[1], p1), max(o[2], p2), min(o[3], q1), max(o[4], q2))
+    end
+    for t in Ts                                    # a bus without device power in some period: the rectangle takes in zero
+        at_t = Set(x[1] for x in device_rectangles(net, kw, t))
+        for (b, o) in box; b in at_t || (box[b] = (min(o[1], 0.0), max(o[2], 0.0), min(o[3], 0.0), max(o[4], 0.0))); end
+    end
+    rects = [(b, o...) for (b, o) in box]
+    src_at = Dict(s.bus => s for s in net.sources)
+    lo = Dict(b => banded_bus(kw, src_at, b) ? VLO_BAND : V_FLOOR for b in keys(box))
+    big_ = length(net.buses) > 500
+    CB = current_bounds(RM, ang, rects, first(Ts); lo, lines = true, safe = RM.safe, ndir = big_ ? 720 : 3600, ndir_rho = big_ ? 360 : 3600)
+    amp = Dict(n => min(a, CB.lines[n]) for (n, a) in kw.ampacity_pu); samp = Dict(s => min(a, CB.out[s].sect) for (s, a) in kw.source_ampacity_pu)
+    say(@sprintf("    derived bounds at %.5f deg: %d of %d lines below their rating (median %.2f of it); sources %s", r,
+                 count(n -> amp[n] < kw.ampacity_pu[n], keys(amp)), length(amp), median([amp[n] / kw.ampacity_pu[n] for n in keys(amp)]),
+                 join(["$s $(round(samp[s]; digits = 3))/$(round(kw.source_ampacity_pu[s]; digits = 3))" for s in keys(samp)], ", ")))
+    return merge(kw, (; ampacity_pu = amp, source_ampacity_pu = samp))
+end
+
 margin(ang, kw; start = nothing) = solve_multiperiod(net, ang; kw..., objective = :margin, margin_band_kw = KV, margin_reg = 0.0, start)
 """
 Validated margin of an exact solve (retried cold and from `alt`; NaN if no start validates), and the solution. A
@@ -251,7 +361,9 @@ function main()
         m98, x98 = vmargin(angles(d, 0.98lo), kw1; start = xs, alt = xs)
         m0, x0 = vmargin(angles(d, 0.0), kw1)
         (isfinite(m98) && m98 >= 0 && isfinite(m0) && m0 >= 0) || error("the 98% point or equal angles does not validate at hour $tstar")
-        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]])
+        rp = replay_opendss(net, x98, angles(d, 0.98lo); load_factor = [lam[tstar]], pvs, pv_factor = [pvf[tstar]], load_kw = kw1.load_kw,
+                            ampacity_pu = get(kw24, :ampacity_pu, nothing))
+        RATED && say(@sprintf("  OpenDSS replay at 98%%: largest line loading %.4f (%s)", rp.load_max, rp.load_at))
         open(io -> @printf(io, "%d,%s,%.6f,false,%d,%.6f,%.4f,%s,%.0f\n", d.id, d.label, d.reach, tstar, lo, m98,
                            ucols, time() - t0), fa, "a")
         open(joinpath(OUT, "fb_Acur_$(d.id).csv"), "w") do io
@@ -287,16 +399,30 @@ function main()
         a[5] == "0" && (say("  ", d.label, ": equal angles infeasible for the day; skipped"); exit(0))
         tstar = parse(Int, a[5]); rs = parse(Float64, a[6])
         amp = Dict{String,Float64}(); senv = Dict{String,Float64}()
-        for l in readlines(joinpath(OUT, "fb_envelope.csv"))[2:end]
+        for l in (RATED ? String[] : readlines(joinpath(OUT, "fb_envelope.csv"))[2:end])
             c = split(l, ','); c[2] == "line" ? (amp[String(c[1])] = ENV_SCALE * parse(Float64, c[4])) : (senv[String(c[1])] = ENV_SCALE * parse(Float64, c[4]))
         end
         ENV_SCALE == 1.0 || say(@sprintf("  current limits %.2f x the envelope; writing %s", ENV_SCALE, basename(fc)))
-        kwL = merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
-        certified(r) = (c = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS); (classify(NaN, c.U, c.farkas.bound) == "infeasible", c))
+        kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : merge(hour_kw(tstar), (; ampacity_pu = amp, source_ampacity_pu = senv))
+        cdir = mkpath(joinpath(OUT, "certs"))
+        # FB_DERIVED=1 (2026-11-03): at each point, every line's and source's current also bounded by current_bounds.jl
+        # (the model's own response at these angles: V = V0 + Z J, devices in their power rectangles, |V| >= the
+        # certificate model's floor at device buses), limit = min(rating, derived). Implied by the model, so a
+        # certificate under these limits proves the rated model infeasible.
+        RM = DERIVED ? network_response(net) : nothing
+        function certified(r)
+            c = certify(net, angles(d, r), DERIVED ? derived_limits(RM, kwL, angles(d, r), 1:1, r) : kwL; k = KV, cuts = CUTS)
+            ok = classify(NaN, c.U, c.farkas.bound) == "infeasible"; ex = ""
+            if ok && EXACT      # the float verdict stands only if the exact recomputation agrees
+                e = exact_check(c, joinpath(cdir, "C$(CTAG)_$(d.id)_tmp.txt"))
+                ok = e.ok; ex = @sprintf("; exact %s %.6g -> %s (%.0f s)", e.kind, e.kind == "farkas" ? e.widened : e.U, e.ok ? "yes" : "NO", e.seconds)
+            end
+            say(@sprintf("  %s: %.4f x r* = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s%s", d.label, r / rs, r, c.U, c.farkas.bound, c.status, ex, ok ? "  certified" : ""))
+            return ok, c
+        end
         t0 = time(); lo = rs; hi = NaN; Uhi = NaN; Fhi = NaN; n = 0
         for g in GRID
             ok, c = certified(g * rs); n += 1
-            say(@sprintf("  %s: %.3f x r* = %.5f deg -> U %+.4g kW, Farkas %.4g (%s)%s", d.label, g, g * rs, c.U, c.farkas.bound, c.status, ok ? "  certified" : ""))
             ok ? (hi = g * rs; Uhi = c.U; Fhi = c.farkas.bound; break) : (lo = g * rs)
         end
         if isfinite(hi)
@@ -307,6 +433,28 @@ function main()
         end
         open(io -> @printf(io, "%d,%s,%d,%.6f,%.6f,%.6f,%.5f,%.6g,%.6g,%d,%.0f\n", d.id, d.label, tstar, rs, hi, lo, hi / rs, Uhi, Fhi, n, time() - t0), fc, "a")
         say(@sprintf("  %s: r* %.5f, certified from %.5f (x%.4f), unresolved up to %.5f; %d relaxations, %.0f s", d.label, rs, hi, hi / rs, lo, n, time() - t0))
+
+    elseif PHASE == "V"
+        # Exact audit of phase C's certified point (2026-11-03): some bisection steps certify from a solve that stopped
+        # with NUMERICAL_ERROR, whose multipliers are huge (U down to -1e157 kW); dual_bound's Float64 rounding allowance
+        # is not a worst case at that scale. Re-solve the relaxation there, export it, and recompute the bound in exact
+        # rational arithmetic (verify_certificate.jl). Writes fb_V<FB_CTAG>_<i>.csv.
+        i = parse(Int, ENV["FB_DIR"]); d = DIRS[i]
+        c = split(readlines(joinpath(OUT, "fb_C$(CTAG)_$(d.id).csv"))[2], ',')
+        tstar = parse(Int, c[3]); r = parse(Float64, c[5])
+        isfinite(r) || (say("  ", d.label, ": no certified point; skipped"); exit(0))
+        kwL = RATED ? merge(hour_kw(tstar), (; source_ampacity_pu = SRCAMP)) : error("phase V: rated campaigns only")
+        t0 = time(); x = certify(net, angles(d, r), kwL; k = KV, cuts = CUTS)
+        e = exact_check(x, joinpath(mkpath(joinpath(OUT, "certs")), "C$(CTAG)_$(d.id).txt");
+                        note = @sprintf("%s %s, hour %d, r = %.6f deg", SYS, d.label, tstar, r), keep = get(ENV, "FB_KEEP_CERT", "0") == "1")
+        fv = joinpath(OUT, "fb_V$(CTAG)_$(d.id).csv")
+        open(fv, "w") do io
+            println(io, "id,label,tstar,r_cert_deg,status,dual_status,U_float_kW,farkas_float,kind,exact_bound,exact_bound_widened,exact_U_kW,certified_exact,seconds")
+            @printf(io, "%d,%s,%d,%.6f,%s,%s,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%s,%.0f\n", d.id, d.label, tstar, r, x.status, x.dual_status, x.U, x.farkas.bound,
+                    e.kind, e.bound, e.widened, e.U, e.ok, time() - t0)
+        end
+        say(@sprintf("  %s: r %.5f deg, %s / %s, float U %.4g kW, Farkas %.4g | exact %s bound %.6g (widened %.6g) -> %s; %.0f s",
+                     d.label, r, x.status, x.dual_status, x.U, x.farkas.bound, e.kind, e.bound, e.widened, e.ok ? "CERTIFIED" : "NOT certified", time() - t0))
     end
 end
 main()

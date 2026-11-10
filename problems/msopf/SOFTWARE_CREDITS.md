@@ -1,0 +1,16 @@
+# Software credits for the MSOPF reference state
+
+The canonical package versions and selected backends are documented in [environments/kamiak/README.md](environments/kamiak/README.md). Please credit the packages and original network sources when using this workflow, in addition to citing this repository. Installed dependencies and selected numerical backends are distinguished below.
+
+- **JuMP** — modelling, version 1.30.0. M. Lubin et al., *JuMP 1.0: Recent improvements to a modeling language for mathematical optimization*, Mathematical Programming Computation, 2023. [DOI](https://doi.org/10.1007/s12532-023-00239-3).
+- **Ipopt** — local AC optimization, Julia wrapper 1.14.1. A. Wächter and L. T. Biegler, *On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming*, Mathematical Programming, 2006. [DOI](https://doi.org/10.1007/s10107-004-0559-y).
+- **Clarabel** — conic relaxations, version 0.11.1. P. J. Goulart and Y. Chen, *Clarabel: An Interior-Point Solver for Conic Programs with Quadratic Objectives*, 2024. [Paper](https://arxiv.org/abs/2405.12762).
+- **HSL** — the reference Ipopt jobs loaded the author's private MA57 3.11.3 build. [HSL project](https://www.hsl.rl.ac.uk/). HSL.jl 0.5.6 and HSL_jll 4.0.8+0 were installed but were not the MA57 library selected by those jobs; retain that distinction in reproduction reports.
+- **PARDISO / Intel MKL**, accessed through **Pardiso.jl 1.1.2** — the whole-day certificate backend used MKL_jll 2025.2.0+0. O. Schenk and K. Gärtner, *Solving unsymmetric sparse systems of linear equations with PARDISO*, Future Generation Computer Systems, 2004. [DOI](https://doi.org/10.1016/j.future.2003.07.011). Record and acknowledge the actual implementation and its upstream requirements when reproducing a different backend.
+- **OpenDSS, DSS C-API and OpenDSSDirect.jl** — independent power-flow replay; the reference audit records OpenDSSDirect 0.9.9 and DSS C-API 0.14.3. Credit EPRI's OpenDSS work, the DSS C-API/DSS-Extensions contributors, Tom Short and the Julia-interface contributors. The source models' authors are credited in the [network catalogue](../../test_networks/README.md#cite-the-networks-you-use).
+- **QDLDL**, **OpenBLAS**, **libblastrampoline** and their contributors — sparse factorizations and numerical support. Their package versions are preserved in the manifests; runtime BLAS and thread provenance have the qualifications in [RELEASE.md](RELEASE.md).
+- **Python**, **NumPy** and **Matplotlib** — supporting data processing and scientific figures where used. The Farkas HTML builder itself uses Python's standard library. Historical Python package versions were not captured in the canonical Julia manifests.
+- **Plotly.js 2.27.0** — interactive browser views. The released HTML loads this library from jsDelivr; it is not the optimization solver.
+- **Gurobi** — version 1.9.2 / Gurobi_jll 13.0.0 was installed in the recorded environments, but was not used for these reference phases. Its presence in the manifests must not be reported as a solver used for the published results.
+
+The manifests retain the complete transitive Julia dependency inventory. Upstream software licences and notices apply; this repository's MIT licence does not replace them. Proprietary HSL binaries are not bundled.

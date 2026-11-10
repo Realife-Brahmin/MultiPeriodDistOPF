@@ -91,3 +91,7 @@ problems/mpopf/spar_ddp/results/parallel_in_time/logs/*
 
 # Local Git transfer bundles are not source or scientific result artifacts.
 *.bundle
+
+# Recorded sf6937 Kamiak environments used by the MSOPF reference state.
+!problems/msopf/environments/kamiak/sdp_hsl/Manifest.toml
+!problems/msopf/environments/kamiak/sdp_pardiso/Manifest.toml
