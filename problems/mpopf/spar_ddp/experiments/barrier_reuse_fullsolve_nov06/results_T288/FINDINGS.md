@@ -1,0 +1,21 @@
+# T288 exact barrier reuse benchmark
+
+Directly measured near-optimal attainment **55.686355 -> 49.178584s**, **11.69% lower**. Full warmed optimizer **90.182 -> 81.6775s**, **9.43% lower**, including population and retirement/GC. Phase B55.539396->45.494904s (18.09% lower); A12.785741->12.466036s; C9.929599->10.352648s.
+
+Two full-warmup matched pairs in ABBA order, original1020-battery large10k, grouped b2/right,48workers x2BLAS plus coordinator1core/BLAS1 on otherwise-unoccupied cn179 Xeon6760P;128physicalCPU600GiB. Only reuse toggle differs. This carries the established T96 team policy, not a globally optimal long-horizon policy claim.
+
+Shared target: objective within0.1% of HISTORICAL October16 original1020 central OBJECTIVE2710177.302610366 AND original primal1e-5. This is not a fresh same-node centralized timing comparison. All arms first meet it at iteration12. Direct markers start at the unchanged outer optimizer boundary including trajectory initialization, sampled after each backward pass before convergence/barrier/forward branches. All26markers per solve finite, monotonic, exact pass-key-aligned and inside full optimizer wall. Same tiny passive instrumentation in both arms, warmed in normal full warmup, all overhead charged. Exact two-file diff/static source audit retained. Legacy front-loaded estimates and logged-prefix values remain in raw/analysis but are not substituted for direct timestamps.
+
+Baseline full range90.144-90.220s; cache81.090-82.265s. Direct target range baseline55.660134-55.712576s; cache48.738676-49.618491s. Both matched pairs improve, ranges separated; no third pair needed.
+
+All four runs pass original numerical primal/dual/complementarity/bounds1e-5, independent original physical residual1.1369e-12 and OpenDSS largest difference9.02e-7pu with zero voltage violations. Final original objective2710205.7872440177 identical. Both same-repeat and baseline-repeat final state/control differences0 under unchanged1e-10 gate. All objective/original/dual/complementarity trajectories, accepted step sizes/mu/backtracks exact. Same all-starting x0/ubar hashes. All18accepted steps,26passes,7barrier reductions,1backtrack.
+
+Cache7eligible/7hits/0miss/0factorization fallback,19fresh populations;17328populated and6384reused merges per solve. Numeric payload22,772,275,200bytes (21.208GiB), never stale gradients. Warm payloads cleared; measured population/storage/sync/current vectors/policies/full forward/retirement charged. Worker pass-GC sums baseline175.523-178.050s, cache197.508-199.686s overlap across workers, not additive wall. Pass counters exclude separately uninstrumented retirement GC, whose wall is inside optimizer. Worker RSS sums are historical high-water marks including shared mappings/JIT/warmup, not simultaneous private RAM or measured cache increment. Batch MaxRSS247701684KiB spans four processes.
+
+Separate scopes: model build620.378-621.630s; full warmup baseline196.640-199.541s, cache203.306-205.248s; total process wall baseline1235-1274s, cache1233-1234s including setup/warmup/validation. No whole-process speedup claim. No repeated diagnostic solve, worker/network/parameter sweep or central rerun.
+
+Job31614402 COMPLETED0:0 in1h23m06. Actual worker count/backend/default BLAS2/OS masks and disjoint same-socket physical2-core teams verified before/after. Source/input/harness/runtime binary/libjulia/OpenBLAS checks pass before/after; job stderr empty. Raw code/log/CSV/masks/hardware/provenance/accounting/hashes archived, source in runtime-source.tgz; binary solutions retained immutable on cluster. Strict collect.py --horizon288 passes against REAL direct-clock outputs; supplementary exact trajectory comparison passes. No scientific gate change.
+
+Archive SHA256 common.tgz451ee35793dc469be2d103ddb936bc1b7b842448ea7a76b51480fff7fa1cffeb; results.tgz90cfdafea62c9d68d676848e6c3194a11ce9695814c12d64f4e1a0175c1d6109.
+
+All four authorized cases are complete. Exact barrier reuse gives a modest full-convergence benefit with substantial persistent memory cost. A focused future experiment could measure retirement and population wall separately under the same fixed configuration, before any additional optimization; no extra run is launched here. Defaults, paper and main result rows unchanged.
