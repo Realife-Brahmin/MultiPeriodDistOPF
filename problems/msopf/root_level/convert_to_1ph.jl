@@ -257,10 +257,11 @@ function convert(name)
     end
     append!(branches, subx)                                 # substation transformers: lines from the source bus
     load = Dict{String,ComplexF64}(); load_mv = Dict{String,ComplexF64}(); dropped = 0.0; nload = 0
+    cust = Dict{String,Vector{Any}}()                       # the customer loads in each deck load, for LoadMembers.csv
     scale = peak_scale(cfg)
     for nm in real_names(ODD.Loads.AllNames())
         ODD.Circuit.SetActiveElement("Load.$nm"); ODD.CktElement.Enabled() || continue
-        ODD.Loads.Name(nm); s = complex(ODD.Loads.kW(), ODD.Loads.kvar())
+        ODD.Loads.Name(nm); s = complex(ODD.Loads.kW(), ODD.Loads.kvar()); s0 = s; shape = ODD.Loads.Yearly()
         if cfg.drop_loads !== nothing && occursin(cfg.drop_loads, lowercase(nm))
             dropped += real(s); continue
         end
@@ -271,6 +272,7 @@ function convert(name)
         r = root(dsu, pb); load_mv[r] = get(load_mv, r, 0im) + s / 3; nload += 1
         t = secondary && !(b in mv) ? lvsec[root(lv, b)] : r       # where the load sits in the deck
         load[t] = get(load, t, 0im) + s / 3
+        push!(get!(cust, t, Any[]), (; name = lowercase(nm), shape = lowercase(shape), kW = real(s0), kvar = imag(s0)))
     end
     secondary && append!(branches, [x for (k, x) in svc if haskey(load, k)])
     caps = Dict{String,Float64}()
@@ -289,7 +291,9 @@ function convert(name)
         a, b = root(dsu, l.a), root(dsu, l.b); a == b && continue
         push!(get!(par, a < b ? (a, b) : (b, a), Any[]), l)
     end
-    br = sort([(; name = ls[1].name, a = k[1], b = k[2], z = 1 / sum(1 / l.z for l in ls), n = length(ls), kind = ls[1].kind) for (k, ls) in par]; by = x -> x.name)
+    # members: the original elements each line stands for (parallels combined), read by branch_ratings.jl
+    br = sort([(; name = ls[1].name, a = k[1], b = k[2], z = 1 / sum(1 / l.z for l in ls), n = length(ls), kind = ls[1].kind,
+                members = [l.name for l in ls]) for (k, ls) in par]; by = x -> x.name)
     # Lines of almost no impedance (bus bars, jumpers; 1e-8 ohm on some decks) get the short-line value.
     br = [abs(x.z) < ZFLOOR && x.kind in (:line, :reactor) ? merge(x, (; z = ZSHORT, kind = :short)) : x for x in br]
     # reach from the sources; what is not reached is dropped
@@ -314,7 +318,7 @@ function convert(name)
     # switches' and the cable's impedances in series. Any other unreached group stays out, with a note.
     reached(x) = haskey(feeder, x)
     T = [(; t..., a = root(dsu, t.a), b = root(dsu, t.b)) for t in ties]
-    tieout = [t for t in T if reached(t.a) && reached(t.b) && t.a != t.b]
+    tieout = [(; t..., members = [t.name]) for t in T if reached(t.a) && reached(t.b) && t.a != t.b]
     un = Dict{String,Vector{Tuple{String,ComplexF64}}}()
     for x in br
         (reached(x.a) || reached(x.b)) && continue
@@ -338,7 +342,8 @@ function convert(name)
         haslo = any(haskey(load, b) for b in keys(zto))
         if length(att) == 2 && !haslo && outer(att[1]) != outer(att[2])
             h1, h2 = inner(att[1]) == s ? (att[1], att[2]) : (att[2], att[1])
-            push!(tieout, (; name = "tie_" * h1.name, a = outer(h1), b = outer(h2), z = h1.z + zto[inner(h2)] + h2.z))
+            cab = reduce(vcat, [x.members for x in br if haskey(zto, x.a) && haskey(zto, x.b)]; init = String[])
+            push!(tieout, (; name = "tie_" * h1.name, a = outer(h1), b = outer(h2), z = h1.z + zto[inner(h2)] + h2.z, members = [h1.name; h2.name; cab]))
         else
             push!(notes, @sprintf("normally-open group at %s (%d buses, %d ties into it%s): left out", s, length(zto), length(att), haslo ? ", with load" : ""))
         end
@@ -352,7 +357,7 @@ function convert(name)
     load_mv = Dict(b => s for (b, s) in load_mv if haskey(feeder, b))      # each load on its MV bus: where DERs go
     caps = Dict(b => q for (b, q) in caps if haskey(feeder, b))
     stats = (; nsw, nreg, nstep, nreac, nload, dropped, lost = length(lost), lostload, levels = sort(unique(round.([kv[b] for b in mv]; digits = 2))))
-    return (; name, cfg, buses = Set(keys(feeder)), mvbuses = Set(b for b in keys(feeder) if b in mv), branches = br, ties, load, load_mv, caps,
+    return (; name, cfg, buses = Set(keys(feeder)), mvbuses = Set(b for b in keys(feeder) if b in mv), branches = br, ties, load, load_mv, caps, cust,
             subs = [(; bus = s, mv = sort(unique([x.b for x in subx if x.a == s])), z = 1 / sum(1 / x.z for x in subx if x.a == s)) for s in srcs], feeder, stats, notes)
 end
 
@@ -411,6 +416,17 @@ function write_deck(c, pv, bt; out = joinpath(REPO, "test_networks", deckname(c)
         for b in sort(collect(keys(c.load)))
             s = c.load[b]; real(s) > 0 || continue
             println(io, "New load.L_$b Bus=$b.1 Phases=1 Model=1 kV=$kvs kW=$(f3(real(s))) kVAr=$(f3(imag(s))) Vminpu=0.95 Vmaxpu=1.05 Daily=LoadShapeLoadDefault")
+        end
+    end
+    # The customer loads in each deck load, with their yearly shapes and the original's nominal kW and kvar (3-phase
+    # totals, before any scaling): read by smartds_load_day.py to give each deck load the dataset's own hourly profile.
+    if any(x -> !isempty(x.shape), Iterators.flatten(values(c.cust)))
+        open(joinpath(out, "LoadMembers.csv"), "w") do io
+            println(io, "load,customer,shape,kW,kvar")
+            for b in sort(collect(keys(c.load)))
+                real(c.load[b]) > 0 || continue
+                for x in c.cust[b]; println(io, "l_$b,$(x.name),$(x.shape),$(x.kW),$(x.kvar)"); end
+            end
         end
     end
     w("Capacitor.dss") do io

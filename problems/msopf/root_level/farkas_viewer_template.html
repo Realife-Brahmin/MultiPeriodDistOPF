@@ -8,18 +8,15 @@
    the per-direction band runs underneath (everything stacks on phones). */
 :root {
   --bg: #f4f6f3; --panel: #ffffff; --fg: #18211d; --muted: #5a6761; --line: #d6dcd7; --accent: #2c6b5f;
-  --f0: #2C6FBB; --f1: #C05621; --f2: #00796B; --f3: #800080;
-  --ok: #1F8A3C; --cert: #B02418; --band: #E9B949; --grid: #e3e8e4;
+  --ok: #2A9D6E; --cert: #9E1B32; --day: #2F6DB5; --band: #B9BFC5; --grid: #e3e8e4;
   --sans: "Instrument Sans", "Segoe UI", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
-  --f0: #5B93D6; --f1: #DE7A45; --f2: #2FA898; --f3: #B04DB0;
-  --ok: #4CB868; --cert: #E05A4A; --band: #D9A93A; --grid: #26302c; color-scheme: dark } }
+  --ok: #4CBF8E; --cert: #E0607A; --day: #6EA0E0; --band: #5D666E; --grid: #26302c; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #111614; --panel: #19201d; --fg: #e3e9e5; --muted: #95a39c; --line: #2b3531; --accent: #6fb7a6;
-  --f0: #5B93D6; --f1: #DE7A45; --f2: #2FA898; --f3: #B04DB0;
-  --ok: #4CB868; --cert: #E05A4A; --band: #D9A93A; --grid: #26302c; color-scheme: dark }
+  --ok: #4CBF8E; --cert: #E0607A; --day: #6EA0E0; --band: #5D666E; --grid: #26302c; color-scheme: dark }
 html, body { height: 100%; }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px; }
@@ -63,15 +60,17 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
 <div class="wrap">
   <header>
     <h1>Certified Feasibility Maps</h1>
-    <p class="sub">Which upstream angle differences can the feeder live with? At equal angles (the centre) it works. A <b>direction</b> is one fixed recipe for tilting the angles apart, for example "raise substation 2 only" or "raise 2 and lower 3 equally"; along it we push the tilt further until no valid dispatch exists. Two substations have one angle difference, so just 2 directions (+ and −); three have a plane, sampled every 22.5° (16 directions); four have a 3-D space, sampled by 78 directions spread evenly over a sphere like golf-ball dimples. Each system has four substations, and every pair (6) and triple (4) of them is studied as well. Each direction is bracketed from both sides (Farkas bracketing): green, a validated AC dispatch at 98% of the edge; red, a sparse semidefinite relaxation proving every angle beyond infeasible. The thin gap between them is all that remains unresolved. Batteries idle, at each direction's limiting hour; certificates hold for the model with empirical current limits (the largest currents of the validated dispatches). Four sources: drag to rotate, scroll to zoom. Click a point for its numbers.</p>
+    <p class="sub">Angle differences between the substations (held over a 24-hour day) at which a feasible dispatch exists, for the paper's three cases. Along each direction from equal angles, a validated AC dispatch (checked in OpenDSS) and a Farkas certificate bracket the edge. Every line is held to its rated current. Idle certificates use additional current bounds from the network response. All 78 sf6937 whole-day certificates pass exact rational-arithmetic checks (59 in-run, 19 by audit); see the <a href="https://github.com/Realife-Brahmin/MultiPeriodDistOPF/blob/master/problems/msopf/RELEASE.md#validation-coverage">reference-state notes</a>. Drag to rotate or pan, scroll to zoom, click a point for its numbers.</p>
+    <p class="sub"><a href="https://github.com/Realife-Brahmin/MultiPeriodDistOPF/releases/latest">Current MSOPF release</a> &middot; <a href="https://github.com/Realife-Brahmin/MultiPeriodDistOPF/tree/msopf-pesgm2027-v1.0.1">Archived code and results (PESGM 2027)</a></p>
   </header>
   <div class="bar">
     <div class="tabs" role="tablist" id="tabs"></div>
     <div class="toggles">
-      <label><input type="checkbox" id="t-pred" checked> Predicted polytope</label>
-      <label><input type="checkbox" id="t-in" checked> Feasible shell</label>
-      <label><input type="checkbox" id="t-out" checked> Certified shell</label>
-      <label><input type="checkbox" id="t-pts" checked> Points</label>
+      <label><input type="checkbox" id="t-in" checked> Feasible dispatch, no batteries</label>
+      <label><input type="checkbox" id="t-out" checked> Proven infeasible, no batteries</label>
+      <label><input type="checkbox" id="t-din" checked> Feasible dispatch, with batteries</label>
+      <label><input type="checkbox" id="t-dout" checked> Proven infeasible, with batteries</label>
+      <label><input type="checkbox" id="t-pts"> Points</label>
     </div>
     <button class="btn" id="reset">Reset view</button>
   </div>
@@ -85,9 +84,9 @@ h2 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; colo
     </aside>
   </div>
   <div class="strip">
-    <h2>Unresolved band, per direction (% of the measured edge)</h2>
+    <h2>Unresolved band, no batteries, per direction (% of the measured edge)</h2>
     <div id="strip"></div>
-    <p class="note">Green at −2%: the validated dispatch. Red: the certified edge. The yellow bar between them is unresolved. Grey triangles: still feasible at the __LIMIT__° search limit, nothing to bracket.</p>
+    <p class="note">No batteries. Green at −2%: the validated dispatch. Crimson: the certified edge. The grey bar between them is unresolved.</p>
   </div>
 </div>
 
@@ -115,80 +114,97 @@ function tabs() {
     });
     el.appendChild(g);
   };
-  const s = DATA[cur];
-  group("System", SYSTEMS.map(sys => [sys, sys === s.sys, true,
-    () => { cur = find(sys, s.n) >= 0 ? find(sys, s.n) : DATA.reduce((b, x, i) => x.sys === sys && (b < 0 || x.n > DATA[b].n) ? i : b, -1); }]));
-  group("Substations", [2, 3, 4].map(n => [String(n), n === s.n, find(s.sys, n) >= 0, () => { cur = find(s.sys, n); }]));
-  const combos = DATA.map((x, i) => [x, i]).filter(([x]) => x.sys === s.sys && x.n === s.n);
-  if (combos.length > 1) group("Which", combos.map(([x, i]) => [x.combo, i === cur, true, () => { cur = i; }]));
+  group("Case", DATA.map((x, i) => [x.title, i === cur, true, () => { cur = i; }]));
 }
+
+// radius of a direction for a layer; batteries-used layers fall back to the reach while a direction is uncertified
+const R_OF = { inner: d => d.inner, cert: d => d.cert, dreach: d => d.dreach, dcert: d => d.dcert ?? d.dreach };
+const has = (s, key) => s.dirs.some(d => R_OF[key](d) != null);
+const show = id => document.getElementById(id).checked;
 
 function shell(s, key, color, opacity, name) {
   const x = [], y = [], z = [];
-  for (const d of s.dirs) { x.push(d.u[0] * d[key]); y.push(d.u[1] * d[key]); z.push(d.u[2] * d[key]); }
+  for (const d of s.dirs) { const r = R_OF[key](d) ?? 0; x.push(d.u[0] * r); y.push(d.u[1] * r); z.push(d.u[2] * r); }
   return { type: "mesh3d", x, y, z, i: s.tri.map(t => t[0]), j: s.tri.map(t => t[1]), k: s.tri.map(t => t[2]),
-           color, opacity, name, hoverinfo: "skip", flatshading: true, lighting: { ambient: 0.85, diffuse: 0.3 } };
+           color, opacity, name, hoverinfo: "skip", flatshading: true, lighting: { ambient: 0.9, diffuse: 0.2, specular: 0 } };
+}
+// a shell's triangle edges as lines; an edge with an uncertified end (batteries used) is drawn faint
+function meshLines(s, key, color, name) {
+  const seg = { x: [], y: [], z: [] }, faint = { x: [], y: [], z: [] }, seen = new Set();
+  const proven = d => key === "dcert" ? d.dcert != null : d.status === "certified";
+  for (const t of s.tri) for (const [p, q] of [[t[0], t[1]], [t[1], t[2]], [t[2], t[0]]]) {
+    const k = Math.min(p, q) + "," + Math.max(p, q); if (seen.has(k)) continue; seen.add(k);
+    const a = s.dirs[p], b = s.dirs[q], out = proven(a) && proven(b) ? seg : faint;
+    for (const d of [a, b, null]) for (const [c, j] of [["x", 0], ["y", 1], ["z", 2]]) out[c].push(d ? d.u[j] * R_OF[key](d) : null);
+  }
+  return [{ type: "scatter3d", mode: "lines", ...seg, line: { color, width: 2.5 }, hoverinfo: "skip", name },
+          { type: "scatter3d", mode: "lines", ...faint, line: { color, width: 1 }, opacity: 0.3, hoverinfo: "skip", name: name + " (not proven)" }];
 }
 
 const lab = d => d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `direction ${d.id}`);
 function hover(d) {
-  if (d.status === "limit") return `${lab(d)}<br>feasible at the ${LIMIT}° limit`;
-  if (d.status === "pending") return `${lab(d)}<br>rerun pending<br>day edge ${fmt(d.day)}°`;
-  return `${lab(d)}, hour ${d.hour}<br>feasible ${fmt(d.inner)}° · edge ${fmt(d.edge)}°<br>certified beyond ${fmt(d.cert)}° (+${fmt(d.band, 2)}%)<br>predicted ${fmt(d.pred)}°`;
+  let t = d.status === "limit" ? `${lab(d)}<br>no batteries: feasible at the ${LIMIT}° limit`
+        : d.status === "pending" ? `${lab(d)}<br>no batteries: not certified; day edge ${fmt(d.day)}°`
+        : `${lab(d)}, hour ${d.hour}<br>no batteries: feasible ${fmt(d.inner)}° · edge ${fmt(d.edge)}°<br>no batteries: proven infeasible from ${fmt(d.cert)}° (+${fmt(d.band, 2)}%)`;
+  if (d.dreach != null) t += d.dlimit ? `<br>with batteries: feasible at the ${LIMIT}° limit`
+        : `<br>with batteries: reach ${fmt(d.dreach)}°` + (d.dcert != null ? ` · proven infeasible from ${fmt(d.dcert)}° (${fmt(d.dcert / d.dreach, 3)}×)` : " · not proven");
+  return t;
 }
 
 function points(s, key, filter, sym, color, name, size = 4, open = false) {
   const ds = s.dirs.filter(filter);
   return { type: "scatter3d", mode: "markers", name, customdata: ds.map(d => d.id),
-           x: ds.map(d => d.u[0] * d[key]), y: ds.map(d => d.u[1] * d[key]), z: ds.map(d => d.u[2] * d[key]),
+           x: ds.map(d => d.u[0] * R_OF[key](d)), y: ds.map(d => d.u[1] * R_OF[key](d)), z: ds.map(d => d.u[2] * R_OF[key](d)),
            text: ds.map(hover), hovertemplate: "%{text}<extra></extra>",
            marker: { size, symbol: sym, color: open ? "rgba(0,0,0,0)" : color, line: { color, width: open ? 1.5 : 0 } } };
 }
 
 function draw() {
   const s = DATA[cur], fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
+  const ok = css("--ok"), cr = css("--cert"), day = css("--day");
   document.getElementById("sys-title").textContent = s.title;
   document.getElementById("sys-note").textContent = s.note;
   const cert = s.dirs.filter(d => d.status === "certified"), bands = cert.map(d => d.band).sort((a, b) => a - b);
   const med = bands.length ? bands[Math.floor(bands.length / 2)] : NaN;
   const n = st => s.dirs.filter(d => d.status === st).length;
+  const dc = s.dirs.filter(d => d.dcert != null), dr = dc.map(d => d.dcert / d.dreach).sort((a, b) => a - b);
   document.getElementById("counts").innerHTML =
-    `<div class="count"><b>${n("certified")}</b><span>certified</span></div>` +
-    `<div class="count"><b>${n("limit")}</b><span>feasible at ${LIMIT}°</span></div>` +
-    `<div class="count"><b>${n("pending")}</b><span>rerun pending</span></div>` +
-    (bands.length ? `<div class="count" style="grid-column: span 3"><span>certified ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "");
-  const fcol = s.sources.map((_, i) => css(`--f${i}`));
+    `<div class="count"><b>${n("certified")}</b><span>no batteries: certified</span></div>` +
+    (n("limit") ? `<div class="count"><b>${n("limit")}</b><span>no batteries: feasible at ${LIMIT}°</span></div>` : "") +
+    `<div class="count"><b>${n("pending")}</b><span>no batteries: not certified</span></div>` +
+    (bands.length ? `<div class="count" style="grid-column: span 3"><span>no batteries: proven infeasible from ${fmt(bands[0], 2)}–${fmt(bands[bands.length - 1], 2)}% beyond the measured edge, median ${fmt(med, 1)}%</span></div>` : "") +
+    (s.disp ? `<div class="count"><b>${dc.length}</b><span>with batteries: numerical certificates</span></div>` +
+              (s.dirs.some(d => d.dlimit) ? `<div class="count"><b>${s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: feasible at ${LIMIT}°</span></div>` : "") +
+              `<div class="count"><b>${s.dirs.length - dc.length - s.dirs.filter(d => d.dlimit).length}</b><span>with batteries: not certified</span></div>` +
+              (dr.length ? `<div class="count" style="grid-column: span 3"><span>with batteries: proven infeasible from ${fmt(dr[0], 3)}–${fmt(dr[dr.length - 1], 3)}× the reach, median ${fmt(dr[Math.floor(dr.length / 2)], 3)}×</span></div>` : "")
+            : `<div class="count" style="grid-column: span 3"><span>with batteries: not run for this case</span></div>`);
   document.getElementById("legend").innerHTML =
-    `<div><span class="sw" style="background:${css("--ok")};opacity:.6"></span>proven feasible (validated dispatch, 98%)</div>` +
-    `<div><span class="sw" style="background:${css("--cert")};opacity:.35"></span>certified infeasible beyond</div>` +
-    (s.dim < 3 ? (s.simplex ? `<div><span class="sw" style="border-top:2px dashed ${muted};height:0"></span>predicted simplex (sensitivities)</div>` : "") +
-                   `<div><span class="dot" style="border:1.5px solid ${fg}"></span>measured edge (local solves)</div>` :
-    s.sources.map((src, i) => `<div><span class="sw" style="background:${fcol[i]};opacity:.4"></span>predicted face, ${src} at zero import</div>`).join(""));
+    `<div><span class="sw" style="background:${ok};opacity:.5"></span>Feasible dispatch, no batteries</div>` +
+    `<div><span class="sw" style="border-top:2px solid ${cr};height:0"></span>Proven infeasible, no batteries (beyond the line)</div>` +
+    (s.disp ? `<div><span class="sw" style="background:${day};opacity:.2"></span>Feasible dispatch, with batteries</div>` +
+              `<div><span class="sw" style="border-top:2px solid ${day};height:0"></span>Proven infeasible, with batteries (beyond the line)</div>` : "") +
+    `<div><span class="sw" style="background:transparent"></span>Substations ${s.sources.map(x => x.replace("subs", "S")).join(", ")}; the others out of service</div>`;
   if (s.dim === 1) { draw1d(s); strip(s); return; }
   if (s.dim === 2) { draw2d(s); strip(s); return; }
   const T = [];
-  const show = id => document.getElementById(id).checked;
-  if (show("t-pred")) s.sources.forEach((src, si) => {
-    const tris = s.faces[src] || []; if (!tris.length) return;
-    const x = [], y = [], z = [];
-    tris.forEach(t => t.forEach(p => { x.push(p[0]); y.push(p[1]); z.push(p[2]); }));
-    T.push({ type: "mesh3d", x, y, z, i: tris.map((_, q) => 3 * q), j: tris.map((_, q) => 3 * q + 1), k: tris.map((_, q) => 3 * q + 2),
-             color: fcol[si], opacity: 0.16, name: `predicted, ${src}`, hoverinfo: "name", flatshading: true });
-  });
-  if (show("t-in")) T.push(shell(s, "inner", css("--ok"), 0.55, "proven feasible"));
-  if (show("t-out")) T.push(shell(s, "cert", css("--cert"), 0.16, "certified infeasible beyond"));
+  if (s.disp && show("t-din")) T.push(shell(s, "dreach", day, 0.14, "batteries used"));
+  if (s.disp && show("t-dout")) T.push(...meshLines(s, "dcert", day, "batteries used, proven edge"));
+  if (show("t-in")) T.push(shell(s, "inner", ok, 0.5, "batteries idle"));
+  if (show("t-out")) T.push(...meshLines(s, "cert", cr, "batteries idle, proven edge"));
   if (show("t-pts")) {
-    T.push(points(s, "inner", d => d.status === "certified", "circle", css("--ok"), "validated dispatch (98%)", 3));
-    T.push(points(s, "cert", d => d.status === "certified", "square", css("--cert"), "certified edge", 3));
+    T.push(points(s, "inner", d => d.status === "certified", "circle", ok, "validated dispatch (98%)", 3));
+    T.push(points(s, "cert", d => d.status === "certified", "square", cr, "idle proven edge", 3));
     T.push(points(s, "inner", d => d.status === "limit", "diamond", muted, `feasible at ${LIMIT}°`, 4, true));
-    T.push(points(s, "inner", d => d.status === "pending", "x", fg, "rerun pending", 4));
+    if (s.disp) T.push(points(s, "dcert", d => d.dreach != null, "circle", day, "batteries used", 3));
   }
-  const R = Math.min(LIMIT * 1.1, 1.08 * Math.max(...s.dirs.map(d => d.cert)));
+  // invisible hover targets on the outermost layer, so a click anywhere selects a direction
+  if (!show("t-pts")) T.push({ ...points(s, s.disp ? "dcert" : "cert", () => true, "circle", fg, "directions", 3), opacity: 0.01 });
+  const R = Math.min(LIMIT * 1.1, 1.08 * Math.max(...s.dirs.map(d => Math.max(d.cert, d.dcert ?? 0, d.dreach ?? 0))));
   const ax = t => ({ title: { text: t, font: { size: 12, color: fg } }, range: [-R, R], color: muted, gridcolor: grid,
                      zerolinecolor: muted, backgroundcolor: panel, showbackground: true, tickfont: { size: 10, color: muted } });
   const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false,
               font: { family: css("--sans"), color: fg },
-              scene: { xaxis: ax("δ₂ − δ₁ (°)"), yaxis: ax("δ₃ − δ₁ (°)"), zaxis: ax("δ₄ − δ₁ (°)"), aspectmode: "cube",
+              scene: { xaxis: ax(s.axes[0]), yaxis: ax(s.axes[1]), zaxis: ax(s.axes[2]), aspectmode: "cube",
                        camera: camera || { eye: { x: 1.45, y: 1.35, z: 0.9 } } } };
   const plot = document.getElementById("plot");
   Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
@@ -200,54 +216,62 @@ function draw() {
 }
 
 function draw2d(s) {
-  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel"), show = id => document.getElementById(id).checked;
-  const ring = key => { const x = s.dirs.map(d => d.u[0] * d[key]), y = s.dirs.map(d => d.u[1] * d[key]); return { x: [...x, x[0]], y: [...y, y[0]] }; };
+  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
+  const ok = css("--ok"), cr = css("--cert"), day = css("--day");
+  const ring = key => { const x = s.dirs.map(d => d.u[0] * R_OF[key](d)), y = s.dirs.map(d => d.u[1] * R_OF[key](d)); return { x: [...x, x[0]], y: [...y, y[0]] }; };
   const pts = (key, sym, color, size, open = false) => ({ type: "scatter", mode: "markers", ...ring(key), customdata: [...s.dirs.map(d => d.id), s.dirs[0].id],
     text: [...s.dirs.map(hover), hover(s.dirs[0])], hovertemplate: "%{text}<extra></extra>",
     marker: { symbol: sym, size, color: open ? "rgba(0,0,0,0)" : color, line: { color, width: open ? 1.5 : 0 } } });
+  const allProven = s.dirs.every(d => d.dcert != null || d.dlimit);
   const T = [];
-  if (show("t-out")) T.push({ type: "scatter", mode: "lines", ...ring("cert"), fill: "toself", fillcolor: css("--band") + "66", line: { color: css("--cert"), width: 1.6 }, hoverinfo: "skip" });
-  if (show("t-in")) T.push({ type: "scatter", mode: "lines", ...ring("inner"), fill: "toself", fillcolor: css("--ok") + "40", line: { color: css("--ok"), width: 1.2 }, hoverinfo: "skip" });
-  if (show("t-pred") && s.simplex) T.push({ type: "scatter", mode: "lines", x: s.simplex.x, y: s.simplex.y, line: { color: muted, width: 1.4, dash: "dash" }, hoverinfo: "skip" });
-  if (show("t-pts")) T.push(pts("inner", "circle", css("--ok"), 6), pts("edge", "circle", fg, 7, true), pts("cert", "square", css("--cert"), 6));
-  const R = 1.25 * Math.max(...s.dirs.map(d => d.cert));
+  if (s.disp && show("t-din")) T.push({ type: "scatter", mode: "lines", ...ring("dreach"), fill: "toself", fillcolor: day + "2e", line: { width: 0 }, hoverinfo: "skip" });
+  if (s.disp && show("t-dout")) T.push({ type: "scatter", mode: "lines", ...ring("dcert"), line: { color: day, width: 1.8, dash: allProven ? "solid" : "dash" }, hoverinfo: "skip" });
+  if (show("t-in")) T.push({ type: "scatter", mode: "lines", ...ring("inner"), fill: "toself", fillcolor: ok + "70", line: { color: ok, width: 1 }, hoverinfo: "skip" });
+  if (show("t-out")) T.push({ type: "scatter", mode: "lines", ...ring("cert"), line: { color: cr, width: 1.8 }, hoverinfo: "skip" });
+  if (show("t-pts")) T.push(pts("inner", "circle", ok, 6), pts("cert", "square", cr, 6), ...(s.disp ? [pts("dcert", "circle", day, 6)] : []));
+  else T.push({ ...pts(s.disp ? "dcert" : "cert", "circle", fg, 8), opacity: 0.01 });
+  const R = 1.15 * Math.max(...s.dirs.map(d => Math.max(d.cert, d.dcert ?? 0, d.dreach ?? 0)));
   const ax = (t, o) => ({ title: { text: t, font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: muted, ...o });
-  const L = { paper_bgcolor: panel, plot_bgcolor: css("--cert") + "14", margin: { l: 56, r: 16, t: 16, b: 48 }, showlegend: false,
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 56, r: 16, t: 16, b: 48 }, showlegend: false, dragmode: "pan",
               font: { family: css("--sans"), color: fg }, xaxis: ax(s.axes[0], { constrain: "domain" }), yaxis: ax(s.axes[1], { scaleanchor: "x", constrain: "domain" }) };
   const plot = document.getElementById("plot");
-  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["toImage", "zoom2d", "select2d", "lasso2d", "autoScale2d"] });
   plot.removeAllListeners && plot.removeAllListeners("plotly_click");
   plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
 }
 
 // Two sources: one angle difference, an interval with a bracket at each end.
 function draw1d(s) {
-  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel"), show = id => document.getElementById(id).checked;
+  const fg = css("--fg"), muted = css("--muted"), grid = css("--grid"), panel = css("--panel");
+  const ok = css("--ok"), cr = css("--cert"), day = css("--day");
   const ends = s.dirs.map(d => ({ d, sg: Math.sign(d.u[0]) }));
-  const R = 1.3 * Math.max(...s.dirs.map(d => d.cert));
-  const box = (x0, x1, color, op) => ({ type: "rect", xref: "x", yref: "y", x0, x1, y0: -0.3, y1: 0.3, fillcolor: color, opacity: op, line: { width: 0 }, layer: "below" });
+  const R = 1.25 * Math.max(...s.dirs.map(d => Math.max(d.cert, d.dcert ?? 0, d.dreach ?? 0)));
+  const box = (x0, x1, y0, y1, color, op) => ({ type: "rect", xref: "x", yref: "y", x0, x1, y0, y1, fillcolor: color, opacity: op, line: { width: 0 }, layer: "below" });
+  const edge = (x, y0, y1, color) => ({ type: "line", xref: "x", yref: "y", x0: x, x1: x, y0, y1, line: { color, width: 2.5 } });
+  const at = (sg, key) => sg * (R_OF[key](ends.find(e => e.sg === sg)?.d ?? {}) ?? 0);
   const shapes = [];
-  if (show("t-in")) shapes.push(box(...[-1, 1].map(sg => sg * (ends.find(e => e.sg === sg)?.d.inner ?? 0)), css("--ok"), 0.35));
+  if (s.disp && show("t-din")) shapes.push(box(at(-1, "dreach"), at(1, "dreach"), -0.3, 0.3, day, 0.18));
+  if (show("t-in")) shapes.push(box(at(-1, "inner"), at(1, "inner"), -0.3, 0.3, ok, 0.45));
   for (const { d, sg } of ends) {
-    if (d.status !== "certified") continue;
-    shapes.push(box(sg * d.inner, sg * d.cert, css("--band"), 0.6));
-    if (show("t-out")) shapes.push(box(sg * d.cert, sg * R, css("--cert"), 0.18));
+    if (show("t-out") && d.status === "certified") shapes.push(edge(sg * d.cert, -0.3, 0.3, cr));
+    if (s.disp && show("t-dout") && d.dcert != null) shapes.push(edge(sg * d.dcert, -0.3, 0.3, day));
   }
   const pts = (key, sym, color, size, open = false, filter = () => true) => {
     const ds = s.dirs.filter(filter);
-    return { type: "scatter", mode: "markers", x: ds.map(d => Math.sign(d.u[0]) * d[key]), y: ds.map(() => 0), customdata: ds.map(d => d.id),
+    return { type: "scatter", mode: "markers", x: ds.map(d => Math.sign(d.u[0]) * R_OF[key](d)), y: ds.map(() => 0), customdata: ds.map(d => d.id),
              text: ds.map(hover), hovertemplate: "%{text}<extra></extra>",
              marker: { symbol: sym, size, color: open ? "rgba(0,0,0,0)" : color, line: { color, width: open ? 1.5 : 0 } } };
   };
-  const T = show("t-pts") ? [pts("inner", "circle", css("--ok"), 9), pts("edge", "circle", fg, 11, true, d => d.status === "certified"),
-                             pts("cert", "square", css("--cert"), 9, false, d => d.status === "certified"),
-                             pts("inner", "diamond", muted, 10, true, d => d.status === "limit")] : [];
-  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 24, r: 24, t: 16, b: 56 }, showlegend: false, shapes,
+  const T = show("t-pts") ? [pts("inner", "circle", ok, 9), pts("cert", "square", cr, 9, false, d => d.status === "certified"),
+                             pts("inner", "diamond", muted, 10, true, d => d.status === "limit"),
+                             ...(s.disp ? [pts("dcert", "circle", day, 9, false, d => d.dreach != null)] : [])]
+                          : [{ ...pts(s.disp ? "dcert" : "cert", "circle", fg, 14), opacity: 0.01 }];
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 24, r: 24, t: 16, b: 56 }, showlegend: false, dragmode: "pan", shapes,
               font: { family: css("--sans"), color: fg },
               xaxis: { title: { text: s.axes[0], font: { size: 12 } }, range: [-R, R], color: muted, gridcolor: grid, zerolinecolor: fg },
               yaxis: { range: [-1.2, 1.2], visible: false, fixedrange: true } };
   const plot = document.getElementById("plot");
-  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, modeBarButtonsToRemove: ["toImage"] });
+  Plotly.react(plot, T, L, { displaylogo: false, responsive: true, scrollZoom: true, modeBarButtonsToRemove: ["toImage", "zoom2d", "select2d", "lasso2d", "autoScale2d"] });
   plot.removeAllListeners && plot.removeAllListeners("plotly_click");
   plot.on("plotly_click", e => { const id = e.points?.[0]?.customdata; if (id != null) select(id); });
 }
@@ -257,7 +281,7 @@ function strip(s) {
   const c = s.dirs.filter(d => d.status === "certified"), lim = s.dirs.filter(d => d.status === "limit"), pen = s.dirs.filter(d => d.status === "pending");
   const top = Math.max(3, ...c.map(d => d.band)) + 1, X = d => s.dim === 1 ? d.label : d.theta ?? d.id;
   const T = [
-    { type: "bar", x: c.map(X), y: c.map(d => d.band + 2), base: -2, marker: { color: css("--band"), opacity: 0.45 },
+    { type: "bar", x: c.map(X), y: c.map(d => d.band + 2), base: -2, marker: { color: css("--band"), opacity: 0.6 },
       customdata: c.map(d => d.id), text: c.map(hover), hovertemplate: "%{text}<extra></extra>", width: s.dim === 2 ? 9 : s.dim === 1 ? 0.3 : 0.7 },
     { type: "scatter", mode: "markers", x: c.map(X), y: c.map(() => -2), marker: { color: css("--ok"), size: 5 }, hoverinfo: "skip" },
     { type: "scatter", mode: "markers", x: c.map(X), y: c.map(d => d.band), marker: { color: css("--cert"), size: 6, symbol: "square" },
@@ -267,7 +291,7 @@ function strip(s) {
     { type: "scatter", mode: "markers", x: pen.map(X), y: pen.map(() => top - 0.5), marker: { color: fg, size: 7, symbol: "x" },
       customdata: pen.map(d => d.id), text: pen.map(hover), hovertemplate: "%{text}<extra></extra>" },
   ];
-  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, bargap: 0.3,
+  const L = { paper_bgcolor: panel, plot_bgcolor: panel, margin: { l: 44, r: 10, t: 8, b: 36 }, showlegend: false, dragmode: false, bargap: 0.3,
               font: { family: css("--sans"), color: fg, size: 11 },
               xaxis: s.dim === 1 ? { type: "category", categoryorder: "array", categoryarray: s.dirs.map(d => d.label), color: muted, gridcolor: grid }
                    : s.dim === 2 ? { title: { text: "direction θ (°)", font: { size: 11 } }, range: [-12, 350], color: muted, gridcolor: grid, zeroline: false, dtick: 45 }
@@ -282,19 +306,27 @@ function strip(s) {
 function select(id) {
   const d = DATA[cur].dirs.find(x => x.id === id); if (!d) return;
   const rows = [["direction", d.label ?? (d.theta != null ? `θ = ${d.theta}°` : `${d.id}  (${d.u.map(v => v.toFixed(3)).join(", ")})`)],
-                ["status", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "rerun pending"]];
+                ["no batteries", d.status === "certified" ? "certified" : d.status === "limit" ? `feasible at ${LIMIT}°` : "not certified"]];
   if (d.status === "certified") rows.push(["limiting hour", d.hour], ["feasible at", fmt(d.inner, 4) + "°"], ["measured edge", fmt(d.edge, 4) + "°"],
-    ["certified from", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"], ["predicted", fmt(d.pred, 4) + "°"],
+    ["proven infeasible from", fmt(d.cert, 4) + "° (+" + fmt(d.band, 2) + "%)"],
     ["by", d.farkas ? "Farkas ray" : "negative margin bound"], ["relaxations", `${d.relax}, ${d.secs < 120 ? Math.round(d.secs) + " s" : Math.round(d.secs / 60) + " min"}`]);
-  else rows.push(["day edge", fmt(d.day, 4) + "°"], ["predicted", fmt(d.pred, 4) + "°"]);
+  else rows.push(["day edge", fmt(d.day, 4) + "°"]);
+  if (d.dreach != null) {
+    rows.push(["with batteries", d.dlimit ? `feasible at ${LIMIT}°` : `reach ${fmt(d.dreach, 4)}°`]);
+    if (d.dcert != null) rows.push(["proven infeasible from", `${fmt(d.dcert, 4)}° (${fmt(d.dcert / d.dreach, 3)}×), unresolved to ${fmt(d.dunres, 4)}°`],
+                                   ["by", (d.dfarkas ? "Farkas ray" : "negative margin bound") + `, ${Math.round(d.dsecs / 60)} min`]);
+    else if (!d.dlimit) rows.push(["proven infeasible from", "not yet"]);
+  }
   document.getElementById("sel").innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
   document.getElementById("sel-hint").hidden = true;
 }
 
-["t-pred", "t-in", "t-out", "t-pts"].forEach(id => document.getElementById(id).addEventListener("change", draw));
+["t-in", "t-out", "t-din", "t-dout", "t-pts"].forEach(id => document.getElementById(id).addEventListener("change", draw));
 document.getElementById("reset").onclick = () => { camera = null; draw(); };
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
 new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+// open on the paper's four-source case, sf6937
+cur = Math.max(0, DATA.findIndex(s => s.sys === "sf6937" && s.n === 4));
 tabs(); draw();
 // Plotly sizes itself on the first draw, which can run before the grid has its width.
 const fit = () => ["plot", "strip"].forEach(id => Plotly.Plots.resize(document.getElementById(id)));
