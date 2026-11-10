@@ -2,7 +2,7 @@
 
 This reference state packages the rated-current, multi-period MSOPF study with two to four substations, PV reactive dispatch and batteries returning to their initial charge. It preserves source code and archived evidence; it does not establish a globally certified continuous operating region or comparative superiority to radial reconfiguration.
 
-Start with the [interactive Farkas maps](https://realife-brahmin.github.io/MultiPeriodDistOPF/farkas_maps.html), the [recorded environments](environments/kamiak/README.md), and the [paper-result index](RESULTS.md). The [HTML snapshot](../../docs/farkas_maps.html) is included in the repository. The live site can change after a release; use the released snapshot when citing a particular version.
+Start with the [interactive Farkas maps](https://realife-brahmin.github.io/MultiPeriodDistOPF/farkas_maps.html), the [recorded environments](environments/kamiak/README.md), the [paper-result index](RESULTS.md), and the [software credits](SOFTWARE_CREDITS.md). The [HTML snapshot](../../docs/farkas_maps.html) is included in the repository. The live site can change after a release; use the released snapshot when citing a particular version.
 
 ## Validation coverage
 
