@@ -4,45 +4,26 @@ Code for the multi-source OPF workstream: distribution feeders fed by several
 substations whose voltage angles are fixed upstream. The implementation starts
 with `solve_full_angle` in [`full_angle_pf.jl`](full_angle_pf.jl).
 
-## Setup on any machine
+## Paper-matched results and recorded environment
 
-The local **Project.toml** is MSOPF's current Julia environment, beside its
-models, scripts and results. Run with `--project=problems/msopf` from the
-repository root. The older branch-flow environment is preserved in
-`archive/legacy-environment/`; it is not the main environment.
-See [environment notes](ENVIRONMENT.md). Historical reference versions were:
+Start with the [paper-result index](RESULTS.md) and [interactive Farkas maps](https://realife-brahmin.github.io/MultiPeriodDistOPF/farkas_maps.html). The [reference-state notes](RELEASE.md) identify the canonical Kamiak configuration, package versions, resource requirements and validation coverage.
 
-| Package | Version |
-|---|---|
-| JuMP | 1.30.0 |
-| Ipopt | 1.14.1 |
-| OpenDSSDirect | 0.9.9 |
-| Gurobi | 1.9.2 |
+The original November environments are tracked under [environments/kamiak/](environments/kamiak/README.md), with Julia **1.12.7**:
+- **sdp_hsl** for AC edge searches and idle-certificate phases.
+- **sdp_pardiso** for whole-day certificate phases using Clarabel with MKL Pardiso.
 
-- **Julia 1.12.x.** Historical environments used 1.12.5.
-- **Instantiate once per clone.** Exact historical reproduction needs the recorded
-  campaign Manifest; a fresh environment without one resolves package versions:
-  ```bash
-  julia --project=problems/msopf -e 'using Pkg; Pkg.instantiate()'
-  ```
-  Run Julia from **Git Bash**, not PowerShell. PowerShell mangles the quotes in `-e '...'`.
-- **OpenDSS needs no separate install.** OpenDSSDirect ships the engine as a Julia artifact.
-- **Gurobi is optional.** Its binary also comes as an artifact, and only a license is needed. Without one,
-  `gurobi_usable()` skips the Gurobi cross-checks with a message; Ipopt does everything else.
-- **Harmless error on Julia 1.12.** On load, OpenDSSDirect 0.9.9 prints
-  `ERROR: Method overwriting is not permitted during Module precompilation`, plus some
-  `WARNING: Constructor ... extended` lines. The package then loads without its
-  precompiled cache and works, just a few seconds slower. Ignore it.
-- **Checked from a fresh clone.** On 2026-09-28 the branch was cloned into an empty
-  folder, instantiated, and run: solve and OpenDSS agree to 1.6e-5 kW and 5e-10 pu.
-- **Leave the Manifest alone.** Don't `Pkg.update`, `Pkg.resolve` or delete `problems/msopf/Manifest.toml`
-  to fix an error. Pkg also strips comments from `Project.toml`, so put notes in READMEs.
+From the repository root, in Bash/Git Bash:
 
-`problems/msopf/Project.toml` belongs to the older branch-flow scripts
-(`root_level/multi_poi_mpopf.jl` and similar). It has no tracked Manifest.
-`README_HOME_PC.md` is a November 2025 note about that environment.
+~~~bash
+julia --startup-file=no --project=problems/msopf/environments/kamiak/sdp_hsl -e 'using Pkg; Pkg.instantiate()'
+julia --startup-file=no --project=problems/msopf/environments/kamiak/sdp_pardiso -e 'using Pkg; Pkg.instantiate()'
+~~~
 
-## Drivers
+Select the corresponding recorded environment when running a campaign driver. Keep the manifests unchanged. The [environment README](environments/kamiak/README.md) explains external HSL libraries, OpenDSS engine provenance and the difference between installed packages and selected solver backends. The largest reference jobs requested 80 GB RAM each; browsing the HTML/results needs no Julia installation.
+
+The root `problems/msopf/Project.toml` is retained for general and historical drivers, and `archive/legacy-environment/` preserves the older branch-flow project. Neither substitutes for the recorded November certificate environments. Earlier portability checks and their old environment versions remain historical evidence, rather than a fresh verification of the release snapshot.
+
+## General and historical drivers
 
 Run from the repo root with `julia --project=problems/msopf <script> [args]`.
 
