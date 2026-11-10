@@ -40,10 +40,10 @@ Run from the repo root with `julia --project=problems/msopf <script> [args]`.
 [`multiperiod_full_angle.jl`](multiperiod_full_angle.jl) repeats the single-period equations in every
 period and links the periods through each battery's energy. Its conventions follow the DDP work:
 
-- **Profiles:** load, price and PV shapes from `problems/mpopf/tadmm/root_level/config.jl`, with periodic sampling.
+- **Profiles:** load, price and PV shapes match the [original profile configuration](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/blob/master/problems/mpopf/tadmm/root_level/config.jl), with periodic sampling; the MSOPF implementation is included here.
 - **Batteries:** one power variable each, lossless, 30–95% state of charge from 62.5%.
 - **Costs:** `C_B` comes from the sizing rule in
-  `problems/mpopf/spar_ddp/examples/power_system/terminal_soc_penalty.jl`, applied to this deck's fleet.
+  the [original sizing rule](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/blob/master/problems/mpopf/spar_ddp/examples/power_system/terminal_soc_penalty.jl), applied to this deck's fleet; it is implemented within the MSOPF model.
 - **Terminal SOC is hard: every battery ends the day where it started** (`terminal = :cyclic`, the
   default). This is an MSOPF-only exception to the DDP rule of a soft terminal SOC, decided by the user on
   2026-10-11 because feasibility is the question here. The soft rule (`terminal = :soft`, with `gamma`
