@@ -13,4 +13,7 @@ rated below the conductor in series takes the conductor's rating).
 | fb_Cderived | no-battery certificate with derived current bounds + lsec (FB_DERIVED=1, FB_CTAG=d; on Kamiak fb_Cd, renamed here: Windows filenames are case-insensitive and fb_Cd_<i> is fb_CD_<i>) |
 | fb_AD, fb_ADcur | battery reach over the day (78) |
 | fb_CD | battery certificate (FB_CD_BISECT=0, grid 1.02/1.05/1.10; 78 of 78: 51 at 1.02x, 25 at 1.05x, 2 at 1.10x) |
-| fb_VD | exact audit of the CD certificates taken before the exact check (13 of 13 passed) |
+| fb_VD | exact audit of the CD certificates taken before the exact check (19 of 19 passed; 59 additional checks passed in-run, giving 78/78 CD points exact-checked) |
+
+
+The [six final VD audits](reference_config/vd_audits_nov09/README.md) complete coverage without changing the original CD radii. See the [current coverage ledger](reference_config/cd_exact_status.csv); the original reference archive retains its earlier audit snapshot.

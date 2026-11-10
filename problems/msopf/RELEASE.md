@@ -6,9 +6,9 @@ Start with the [interactive Farkas maps](https://realife-brahmin.github.io/Multi
 
 ## Validation coverage
 
-The sf6937 whole-day results contain 78 numerical certificates. Exact-arithmetic checks cover **72/78**: 59 during the original solves and 13 in a post-run audit, all passing. Asynchronous task completion left directions **2, 11, 14, 16, 17 and 19** outside that earlier audit batch; their original numerical certificates are retained without a subsequent exact recheck. Additional exact audits are not part of this release. Per-direction coverage is recorded in [cd_exact_status.csv](results/kamiak/farkas_day148b_nov03/reference_config/cd_exact_status.csv), separately from the original solver-status and numerical-bound files.
+All **78/78 sf6937 whole-day certificates pass exact-arithmetic checks**: 59 during the original solves and 19 in post-run VD audits. The [six follow-up audits](results/kamiak/farkas_day148b_nov03/reference_config/vd_audits_nov09/README.md) complete directions 2, 11, 14, 16, 17 and 19 at the original published CD radii. Direction 11 is certified by a negative exact objective upper bound despite a slow-progress solver status; the other five follow-up checks use Farkas certificates. Per-direction coverage is recorded in [cd_exact_status.csv](results/kamiak/farkas_day148b_nov03/reference_config/cd_exact_status.csv). The original report/archive retains the earlier 72/78 snapshot as historical provenance; this release supersedes that coverage statement.
 
-The idle-certificate result and validated battery-reach results are unaffected by this coverage distinction. Curves, shells and polytope displays interpolate or predict sampled behaviour as labelled; they are not certificates between tested directions. A failed local solve is not an infeasibility proof.
+The follow-up audits do not change any numerical operating point, idle certificate or validated battery-reach result. Curves, shells and polytope displays interpolate or predict sampled behaviour as labelled; they are not certificates between tested directions. A failed local solve is not an infeasibility proof.
 
 ## Canonical hardware and numerical stack
 
