@@ -56,11 +56,12 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     D.Text.Command("Set DataPath=\"$out\"")
     D.Text.Command("Edit Vsource.source pu=1.05")
     D.Text.Command("BatchEdit Line..* c1=0 c0=0")
+    D.Text.Command("New LoadShape.seq_unity npts=1 interval=1 mult=(1)")
     # Explicit series are applied below; remove any daily/yearly multiplier.
     loads=Tuple{String,Float64,Float64}[]
     for name in D.Loads.AllNames()
         D.Loads.Name(name);push!(loads,(name,D.Loads.kW(),D.Loads.kvar()))
-        D.Text.Command("Edit Load.$name daily=none yearly=none duty=none Vminpu=0.3 Vmaxpu=1.7")
+        D.Text.Command("Edit Load.$name daily=seq_unity yearly=seq_unity duty=seq_unity Vminpu=0.3 Vmaxpu=1.7")
     end
     pvs=Tuple{Int,Float64,String}[]
     for name in D.PVsystems.AllNames()
@@ -72,7 +73,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     filter!(p->p[1]!=root,pvs)
     @assert sort(first.(pvs))==sort(filter(!=(root),ds))
     for (j,_,kv) in pvs
-        D.Text.Command("New Load.seq_pv$j bus1=$j.1 phases=1 model=1 kV=$kv kW=0 kvar=0 daily=none Vminpu=0.3 Vmaxpu=1.7")
+        D.Text.Command("New Load.seq_pv$j bus1=$j.1 phases=1 model=1 kV=$kv kW=0 kvar=0 daily=seq_unity Vminpu=0.3 Vmaxpu=1.7")
     end
     names=String[];buses_b=Int[];capacity=Float64[];ec=Float64[];ed=Float64[];original_ec=Float64[];original_ed=Float64[]
     for name in D.Storages.AllNames()
@@ -94,7 +95,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
         # Initialize once only. Operating upper SOC is checked, not replaced by
         # a fake smaller kWhRated value. Native reserve clamping is also audited.
         e0=data[:B0_pu][j]*base
-        D.Text.Command("Edit Storage.$name DispMode=External model=1 kWhStored=$e0 %reserve=$(100data[:soc_min][j]) %cutin=0 %cutout=0 Vminpu=0.3 Vmaxpu=1.7 daily=none yearly=none duty=none")
+        D.Text.Command("Edit Storage.$name DispMode=External model=1 kWhStored=$e0 %reserve=$(100data[:soc_min][j]) %cutin=0 %cutout=0 Vminpu=0.3 Vmaxpu=1.7 daily=seq_unity yearly=seq_unity duty=seq_unity")
         @assert lowercase(prop("DispMode"))=="external"
         push!(names,name);push!(buses_b,j);push!(capacity,cap)
     end

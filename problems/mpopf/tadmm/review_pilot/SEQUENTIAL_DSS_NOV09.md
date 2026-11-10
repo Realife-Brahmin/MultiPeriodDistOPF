@@ -50,3 +50,10 @@ This validator is passive and outside optimization solve-time benchmarks.
 
 Remote campaign: `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_sequential_dss`.
 Reproduce with repository-root `setup-sequential-dss-nov09.sh`.
+
+Initial gate31666999 passed53 storage/clock assertions. Replay31667000 stopped
+before stepping the full network because the installed engine rejects the
+`duty=none` clearing command. This setup failure and output remain preserved.
+Version2 uses an explicit one-point unity shape for daily/yearly/duty and adds
+a native load-power test to prevent double profile multiplication. Its campaign
+path has suffix `_sequential_dss_v2`; old files are not overwritten.

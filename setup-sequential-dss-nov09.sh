@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 OLD=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_persistent_caps
-C=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_sequential_dss
+C=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_sequential_dss_v2
 test ! -e "$C"
 mkdir -p "$C/campaign" "$C/logs"
 cp -a "$OLD/source" "$C/source"

@@ -63,3 +63,16 @@ end
     @test b.after[1]≈48.5 atol=1e-6
     @test b.h1==.5
 end
+@testset "Explicit unity shape does not double-apply load profile" begin
+    toy()
+    D.Text.Command("new LoadShape.seq_unity npts=1 interval=1 mult=(1)")
+    D.Text.Command("new Load.test phases=1 bus1=1 kv=12.47 model=1 kw=10 kvar=2 daily=seq_unity yearly=seq_unity duty=seq_unity")
+    for t in 1:3
+        a=S.storage_step!(["b"],[0.0],1.0,[1.0],[1.0])
+        D.Circuit.SetActiveElement("Load.test")
+        @test real(first(D.CktElement.Powers()))≈10 atol=1e-6
+        @test imag(first(D.CktElement.Powers()))≈2 atol=1e-6
+        b=S.finish_storage_step!(["b"],a,1.0,[1.0],[1.0])
+        @test b.h1==t
+    end
+end
