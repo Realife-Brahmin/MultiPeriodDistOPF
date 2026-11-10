@@ -46,6 +46,7 @@ for case in sorted((args.root/'results').glob('run_*')):
         endpoint_opendss=endpoint,all_saved_network_checks_converged=all(c['converged'] for c in checks.values()),
         all_saved_network_checks_zero_voltage_violations=all(c['zero_voltage_violations'] for c in checks.values()),
         network_records=len(checks)+1,
+        max_saved_network_voltage_difference_pu=max(c['max_voltage_difference_pu'] for c in [v['central_opendss'],*checks.values()]),
         timing_note='Core excludes all original-model/SOC/network diagnostics; finite-only persistent caps have no timed local feasibility report. Includes warm starts, updates, communication and coordination. Prior early-cap local reports were conservatively counted; their timing boundary differs. No exact first step, recovery or cleanup.'))
 result.sort(key=lambda r:r['cap'],reverse=True)
 args.output.write_text(json.dumps(result,indent=2)+'\n')

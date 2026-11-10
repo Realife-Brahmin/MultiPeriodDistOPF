@@ -47,6 +47,7 @@
     "all_saved_network_checks_converged": true,
     "all_saved_network_checks_zero_voltage_violations": true,
     "network_records": 9,
+    "max_saved_network_voltage_difference_pu": 1.48e-10,
     "timing_note": "Core excludes all original-model/SOC/network diagnostics; finite-only persistent caps have no timed local feasibility report. Includes warm starts, updates, communication and coordination. Prior early-cap local reports were conservatively counted; their timing boundary differs. No exact first step, recovery or cleanup."
   },
   {
@@ -97,6 +98,7 @@
     "all_saved_network_checks_converged": true,
     "all_saved_network_checks_zero_voltage_violations": true,
     "network_records": 8,
+    "max_saved_network_voltage_difference_pu": 7.99e-09,
     "timing_note": "Core excludes all original-model/SOC/network diagnostics; finite-only persistent caps have no timed local feasibility report. Includes warm starts, updates, communication and coordination. Prior early-cap local reports were conservatively counted; their timing boundary differs. No exact first step, recovery or cleanup."
   }
 ]

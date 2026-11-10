@@ -55,7 +55,8 @@ slightly below the central reference; assembled dispatches remain inexact,
 so objective agreement alone is not an optimality certificate.
 
 All17 saved network records including central/endpoints converge with zero
-voltage violations, maximum optimizer/OpenDSS voltage difference<=1.48e-10pu.
+voltage violations, maximum optimizer/OpenDSS voltage difference<=7.99e-9pu
+(both endpoint discrepancies are1.48e-10pu).
 Normalized cone gaps are4.67e-7/4.68e-7. Network agreement is separate from
 battery consistency. No thermal upper constraints are modeled by this pilot.
 
