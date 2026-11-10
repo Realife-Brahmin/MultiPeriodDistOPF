@@ -686,17 +686,12 @@
   "validation": {
     "sf6937_whole_day_numerical_certificates": 78,
     "exact_checks_in_run": 59,
-    "exact_checks_postrun": 13,
-    "exact_checked_total": 72,
-    "not_exact_checked": [
-      2,
-      11,
-      14,
-      16,
-      17,
-      19
-    ],
-    "note": "Asynchronous completion left six original numerical certificates outside the earlier exact-arithmetic audit batch. No further exact audits are included in this release."
+    "exact_checks_postrun": 19,
+    "exact_checked_total": 78,
+    "not_exact_checked": [],
+    "note": "All 78 sf6937 whole-day certificates have passing exact-arithmetic checks: 59 in-run and 19 by VD. The six follow-up VD audits (2, 11, 14, 16, 17, 19) were completed on Kamiak in Slurm array 31667126 and imported from commit 9e546ae81e3298d3037185f6ddb0806b6009fce3; their radii are unchanged.",
+    "completion_evidence": "vd_audits_nov09/README.md",
+    "followup_slurm_array": "31667126"
   },
   "unknowns": [
     "Per-job environment was reconstructed from submit commands, not stored by Slurm 17.11.",
