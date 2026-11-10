@@ -12,6 +12,6 @@ These are the rated-current, T=24 cases used by the PESGM 2027 study. Begin with
 
 ## sf6937, S1–S4, SMART-DS day 148
 
-[Campaign explanation](results/kamiak/farkas_day148b_nov03/README.md) and [all per-direction results](results/kamiak/farkas_day148b_nov03/sfp1u_four/): 78 directions. fb_A contains idle edges, fb_Cderived the paper's tighter idle certificates, fb_AD the daily battery reach, fb_CD the numerical whole-day certificates, and fb_VD the post-run whole-day audits. [Exact-check coverage](results/kamiak/farkas_day148b_nov03/reference_config/cd_exact_status.csv) records 72/78 for fb_CD.
+[Campaign explanation](results/kamiak/farkas_day148b_nov03/README.md) and [all per-direction results](results/kamiak/farkas_day148b_nov03/sfp1u_four/): 78 directions. fb_A contains idle edges, fb_Cderived the paper's tighter idle certificates, fb_AD the daily battery reach, fb_CD the numerical whole-day certificates, and fb_VD the post-run whole-day audits. [Exact-check coverage](results/kamiak/farkas_day148b_nov03/reference_config/cd_exact_status.csv) records 78/78 for fb_CD (59 in-run and 19 by VD), including the [six follow-up audits](results/kamiak/farkas_day148b_nov03/reference_config/vd_audits_nov09/README.md).
 
 The [older polytope/region viewer](../../docs/four_regions.html) is supporting historical material. Its sensitivity predictions, sparse screens and older test configurations should not be read as the current rated certificate campaign or as globally certified polytopes.

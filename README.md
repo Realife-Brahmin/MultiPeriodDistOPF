@@ -16,13 +16,13 @@ No Julia installation is needed to inspect the archived CSVs or HTML maps. The i
 
 ## Obtain this snapshot
 
-Download **Source code (zip)** from the [MSOPF release](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/releases/tag/msopf-pesgm2027-v1.0.0), or select the `msopf-pesgm2027-release` branch on GitHub. This branch presents only the MSOPF workstream, its shared network inputs, and supporting download/export tools. The full research repository, including the separate DDP workstreams, remains on [`master`](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/tree/master).
+Download **Source code (zip)** from the [MSOPF release](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/releases/tag/msopf-pesgm2027-v1.0.1), or select the `msopf-pesgm2027-release` branch on GitHub. This branch presents only the MSOPF workstream, its shared network inputs, and supporting download/export tools. The full research repository, including the separate DDP workstreams, remains on [`master`](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/tree/master).
 
 ## Use the code
 
 Start with the [MSOPF guide](problems/msopf/README.md). The reference environments record Julia **1.12.7**, JuMP **1.30.0**, MathOptInterface **1.50.0**, Ipopt **1.14.1**, Clarabel **0.11.1**, and OpenDSSDirect **0.9.9**. Whole-day certificates used MKL Pardiso; AC solves used an externally supplied MA57 library. Installation and licence requirements are explained in the environment notes. The original manifests are preserved rather than re-resolved.
 
-The largest reference tasks requested **80 GB RAM and 8 CPUs each**. Those resources concern recomputation, not browsing the results. No new numerical solves were performed when assembling this release.
+The largest reference tasks requested **80 GB RAM and 8 CPUs each**. Those resources concern recomputation, not browsing the results. The six follow-up exact audits are included. No further runs were launched to package this snapshot.
 
 ## Repository contents
 
