@@ -13,7 +13,7 @@ tar -xzf "$C/campaign/overlay.tar.gz" -C "$C/source"
 printf '%s\n' "$1" > "$C/source/source.commit"
 cd "$C/source";P=problems/mpopf/tadmm/review_pilot
 sha256sum --check --quiet "$C/input.sha256"
-find "$P" test_networks problems/mpopf/spar_ddp/examples/power_system -type f ! -path '*/results/*' -print0 | sort -z | xargs -0 sha256sum > "$C/execution-source.sha256"
+find "$P" test_networks problems/mpopf/spar_ddp/examples/power_system -type f ! -path '*/results/*' ! -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum > "$C/execution-source.sha256"
 bash -n "$P/kamiak_full_period.sh"
 python3 -m py_compile "$P/validate_horizon_sweep.py"
 cat > "$C/campaign/gate.sh" <<'BASH'

@@ -40,3 +40,13 @@ follow-up31663479:52 rounds /49.471650s,0.668225kWh, strict physical flag false.
 
 Remote: `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_persistent_caps`.
 Reproduction: repository-root `setup-persistent-caps-nov09.sh`.
+
+Frozen numerical source8d688457cbccd78d1af95818a095503988f0a5af. Gate31665844
+passed501 checks, including29 persistent-cap assertions at rounds1,2,31,1001.
+Initial jobs31665845/31665847 exited before any solve due to one generated
+Python bytecode checksum mismatch: setup compiled the validator after recording
+its old cache hash. All non-cache source and inputs were verified unchanged;
+the original manifest/logs remain preserved, and only generated `__pycache__`
+files are excluded by the repaired manifest. No mathematical source changed.
+Resubmitted cap30 job31665887 /audit31665888; cap10 job31665889 /audit31665890.
+The original failed scheduler states are retained, not presented as benchmarks.
