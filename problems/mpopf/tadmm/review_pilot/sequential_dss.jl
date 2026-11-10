@@ -89,7 +89,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
         @assert lowercase(strip(prop("EffCurve"))) in ("","none") "Inverter efficiency curve not supported silently"
         push!(original_ec,number("%EffCharge")/100);push!(original_ed,number("%EffDischarge")/100)
         if efficiency=="model"
-            D.Text.Command("Edit Storage.$name %EffCharge=100 %EffDischarge=100")
+            D.Text.Command("Edit Storage.$name %EffCharge=100 %EffDischarge=100 %IdlingkW=0")
         end
         push!(ec,number("%EffCharge")/100);push!(ed,number("%EffDischarge")/100)
         # Initialize once only. Operating upper SOC is checked, not replaced by
@@ -117,6 +117,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     requested=[data[:B0_pu][j]*base for j in buses_b];model_requested=copy(requested)
     expected_before=copy(requested)
     stats=Dict{String,Any}("efficiency_mode"=>efficiency,"T"=>T,"dt_h"=>dt,"batteries"=>length(names),
+        "base_kva"=>base,"buses"=>length(buses),"branches"=>length(lines),"idling_loss_percent"=>0.0,"table_schema"=>2,
         "engine_version"=>D.Basic.Version(),"instance_sha256"=>bytes2hex(sha256(read(instance))),
         "solution_sha256"=>bytes2hex(sha256(read(solution))),"source_sha256"=>bytes2hex(sha256(read(@__FILE__))),
         "original_charge_efficiency_min"=>minimum(original_ec),"original_discharge_efficiency_min"=>minimum(original_ed),
@@ -130,7 +131,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
         "note"=>"Live Storage chronology; energy initialized once. Snapshot checks are separate. No thermal upper compliance is claimed. PV injections, zero line capacitance, source1.05pu and constant-power voltage range match the optimization. Efficiency=dss retains battery efficiencies, not every original network setting.")
     objective=0.0;command_objective=0.0;files=Dict{String,String}()
     ios=Dict(name=>open(joinpath(out,name*".csv"),"w") for name in ("battery","bus","branch","period"))
-    csv(ios["battery"],("t","bus","name","command_kw","actual_kw","power_difference_kw","energy_before_kwh","energy_after_kwh","opf_energy_kwh","engine_minus_opf_kwh","requested_efficiency_energy_kwh","requested_model_energy_kwh","engine_energy_balance_error_kwh","SOC_engine_percent","SOC_opf_percent","SOC_low_kwh","SOC_high_kwh","engine_bound_error_kwh","requested_bound_error_kwh","engine_state"))
+    csv(ios["battery"],("t","bus","name","charge_efficiency","discharge_efficiency","command_kw","actual_kw","power_difference_kw","energy_before_kwh","energy_after_kwh","opf_energy_kwh","engine_minus_opf_kwh","requested_efficiency_energy_kwh","requested_model_energy_kwh","engine_energy_balance_error_kwh","SOC_engine_percent","SOC_opf_percent","SOC_low_kwh","SOC_high_kwh","engine_bound_error_kwh","requested_bound_error_kwh","engine_state"))
     csv(ios["bus"],("t","bus","opf_voltage_pu","dss_voltage_pu","difference_pu","lower_pu","upper_pu"))
     csv(ios["branch"],("t","from_bus","to_bus","opf_P_kw","dss_P_kw","P_difference_kw","opf_Q_kvar","dss_Q_kvar","Q_difference_kvar","opf_ell_pu","dss_ell_pu","ell_difference_pu","dss_line_loss_kw"))
     csv(ios["period"],("t","hour_start","hour_end","converged","opf_substation_kw","dss_substation_kw","substation_difference_kw","opf_substation_kvar","dss_substation_kvar","opf_line_loss_kw","dss_line_loss_kw","command_battery_kw","actual_battery_kw","max_voltage_difference_pu","max_dispatch_difference_kw","max_engine_energy_balance_kwh"))
@@ -182,7 +183,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
                 stats["reserve_or_capacity_clamp_records"]+=abs(done.balance[n])>base*1e-5
                 stats["power_tracking_records"]+=abs(step.actual[n]-command[n])>base*1e-5
                 D.Circuit.SetActiveElement("Storage."*names[n])
-                csv(ios["battery"],(t,j,names[n],command[n],step.actual[n],step.actual[n]-command[n],step.before[n],done.after[n],eo,done.after[n]-eo,requested[n],model_requested[n],done.balance[n],100done.after[n]/capacity[n],100eo/capacity[n],lo,hi,be,re,prop("State")))
+                csv(ios["battery"],(t,j,names[n],ec[n],ed[n],command[n],step.actual[n],step.actual[n]-command[n],step.before[n],done.after[n],eo,done.after[n]-eo,requested[n],model_requested[n],done.balance[n],100done.after[n]/capacity[n],100eo/capacity[n],lo,hi,be,re,prop("State")))
             end
             stats["max_voltage_difference_pu"]=max(stats["max_voltage_difference_pu"],vdelta)
             stats["max_substation_difference_kw"]=max(stats["max_substation_difference_kw"],abs(ps-u[ix.ps]*base))

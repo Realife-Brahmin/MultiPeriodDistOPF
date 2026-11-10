@@ -1,5 +1,11 @@
 # Corrected tADMM reviewer-response experiments â€” November 7, 2026
 
+**November 9 validation correction:** historical `opendss_check.jl` passes are
+network snapshots with battery injections, not chronological Storage execution.
+Use `sequential_dss.jl` for live-storage replay and read its separate pass flags.
+New horizon runs record both scopes; old logs/timings remain preserved. See
+[chronological validation provenance and tests](SEQUENTIAL_DSS_NOV09.md).
+
 **November 9 hardware requirement:** med2522 T96 uses one physical128-core
 node,96 period workers, a separate coordinator CPU and sampler CPU. Do not
 substitute two64-core nodes. Older two-node results remain exploratory evidence.

@@ -76,3 +76,13 @@ end
         @test b.h1==t
     end
 end
+@testset "Lossless idle periods do not leak stored energy" begin
+    toy(initial=50.0,eff=100.0)
+    a,b=step(0.0)
+    @test abs(a.actual[1])<1e-7
+    @test b.after[1]≈50 atol=1e-7
+    @test abs(b.balance[1])<1e-7
+    a,b=step(0.0)
+    @test b.after[1]≈50 atol=1e-7
+    @test b.h1==2
+end

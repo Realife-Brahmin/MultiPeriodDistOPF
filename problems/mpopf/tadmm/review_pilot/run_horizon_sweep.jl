@@ -21,6 +21,17 @@ function check_dss(path,label,log)
         return success(pipeline(cmd;stdout=io,stderr=io))
     end
 end
+function check_sequence(path,label)
+    folder=joinpath(out,label*"_sequential")
+    cmd=`$(Base.julia_cmd()) --startup-file=no --project=$(@__DIR__) $(joinpath(@__DIR__,"run_sequential_dss.jl")) $(joinpath(out,"instance.jls")) $path $folder model`
+    ok=withenv("SEQUENTIAL_DSS_GZIP"=>"1") do
+        open(joinpath(out,label*"_sequential.log"),"w") do io
+            success(pipeline(cmd;stdout=io,stderr=io))
+        end
+    end
+    ok || error("Chronological OpenDSS execution failed; see $(label)_sequential.log")
+    return TOML.parsefile(joinpath(folder,"summary.toml")),relpath(joinpath(folder,"summary.toml"),out)
+end
 nw=parse(Int,get(ENV,"TADMM_NWORKERS","24"))
 meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>solver,
     "input_sha256"=>bytes2hex(sha256(read(datafile))),"workers"=>nw,"compute_cpu_budget"=>nw+1,
@@ -39,6 +50,7 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "configured_memory_gb"=>128,"maximum_iterations"=>maxiter,"controller_primal_gate"=>1e-4,
     "rho_tau_decrease"=>5.0,"rho_tau_increase"=>2.0,"rho_balance_ratio"=>5.0,
     "rho_update_interval"=>5,"rho_watchdog_window"=>15,"rho_watchdog_factor"=>2.5,
+    "sequential_validation_version"=>1,
     "final_owned_rms"=>1e-5,"final_all_copy_rms"=>1e-5,"final_dual_rms"=>1e-2,
     "anchor_provenance"=>(system=="large10kC_1ph" && T==96 ? "60000 is extrapolated; no July large10k T96 result" : "July paper and archived summary winner"),
     "timer_note"=>"Core stage rounds plus coordination exclude diagnostics, milestone I/O, checkpoints and validation. Actual loop time, warmup/build and tuning cost logged separately. No best-of-sweep timing reported as untuned.",
@@ -84,6 +96,9 @@ try
     meta["central_initial_starts_sha256"]=starts
     serialize(joinpath(out,"central_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>cm.objective,:u=>u,:B=>b,:status=>"LOCALLY_SOLVED"))
     @assert check_dss(joinpath(out,"central_dispatch.jls"),"central",joinpath(out,"central_opendss.log"))
+    cs,cs_path=check_sequence(joinpath(out,"central_dispatch.jls"),"central")
+    meta["central_sequential_schedule_pass"]=cs["sequential_schedule_pass"]
+    meta["central_sequential_summary"]=cs_path
     write_toml(joinpath(out,"sweep.toml"),meta)
     central=nothing;u=nothing;b=nothing;GC.gc()
     previous_starts=nothing
@@ -137,6 +152,10 @@ try
             logs["endpoint.jls"]=logs[point]
         end
         write_toml(joinpath(arm,"opendss_status.toml"),logs)
+        ss,ss_path=check_sequence(endpoint,basename(arm)*"_endpoint")
+        assessment["sequential_schedule_pass"]=ss["sequential_schedule_pass"]
+        assessment["sequential_summary"]=ss_path
+        write_toml(joinpath(arm,"assessment.toml"),assessment)
         phase_event(out,"rho$(Int(rho))_validated")
         run(`$(get(ENV,"PYTHON","python3")) $(joinpath(@__DIR__,"validate_horizon_sweep.py")) $out $(basename(arm))`)
     end

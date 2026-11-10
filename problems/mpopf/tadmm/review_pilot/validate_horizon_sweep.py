@@ -43,7 +43,7 @@ def flags(r):
 def dss(path):
     text=path.read_text(errors='replace')
     dv=re.search(r'voltage: largest difference ([\deE+.-]+) pu',text)
-    return dict(converged='converged=true' in text and 'converged=false' not in text,
+    return dict(scope='network_snapshot_only',converged='converged=true' in text and 'converged=false' not in text,
         max_voltage_difference_pu=float(dv[1]) if dv else None,
         zero_voltage_violations=bool(re.search(r'below limit: 0 of .*above limit: 0,',text)))
 
@@ -51,6 +51,12 @@ central_dss=dss(out/'central_opendss.log')
 assert central_dss['converged'] and central_dss['zero_voltage_violations'] and central_dss['max_voltage_difference_pu']<=1e-4
 names=[f'rho{int(r)}' for r in m['rhos']] if stage=='complete' else [stage]
 result=dict(central_opendss=central_dss,arms={},final_benchmark_claim=False)
+central_sequence=None
+if m.get('sequential_validation_version')==1:
+    central_sequence=tomllib.loads((out/m['central_sequential_summary']).read_text())
+    assert central_sequence['sequential_schedule_pass']==m['central_sequential_schedule_pass']
+    assert central_sequence['efficiency_mode']=='model' and central_sequence['T']==m['T']
+result['central_sequential']=central_sequence
 starts=[]
 for name in names:
     arm=out/name
@@ -145,7 +151,15 @@ for name in names:
         assert q['converged'] and q['zero_voltage_violations'] and q['max_voltage_difference_pu']<=1e-4
     result['arms'][name]=dict(first_crossings=first,final_rms_met=a['final_rms_met'],core_s=a['core_s'],
         loop_wall_s=a['loop_wall_s'],original_primal=a['original_primal'],objective_gap=a['objective_gap'],opendss=checks)
+    seq=None
+    if m.get('sequential_validation_version')==1:
+        seq=tomllib.loads((out/a['sequential_summary']).read_text())
+        assert seq['sequential_schedule_pass']==a['sequential_schedule_pass']
+        assert seq['efficiency_mode']=='model' and seq['T']==m['T']
+        if (arm/'endpoint.jls').exists():assert hashlib.sha256((arm/'endpoint.jls').read_bytes()).hexdigest()==seq['solution_sha256']
+    result['arms'][name]['sequential']=seq
+    result['arms'][name]['full_mpopf_validation_pass']=(bool(central_sequence['sequential_schedule_pass'] and seq['sequential_schedule_pass'] and a['original_primal']<=1e-5 and a['objective_gap']<=.001) if seq is not None else None)
 if len(starts)>1:assert all(s==starts[0] for s in starts)
 (out/f'validation_{stage}.json').write_text(json.dumps(result,indent=2)+'\n')
-if stage=='complete':(out/'SWEEP_VALIDATED').write_text('Sources, full warmups, milestones and physical/OpenDSS flags audited separately.\n')
+if stage=='complete':(out/'SWEEP_VALIDATED').write_text('Collection/source/timing audit complete. Snapshot and chronological OpenDSS flags and original-model feasibility are separate; this marker alone does not certify full MPOPF feasibility.\n')
 print(json.dumps(result,indent=2))
