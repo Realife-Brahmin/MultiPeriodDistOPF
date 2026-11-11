@@ -1,0 +1,327 @@
+[
+  {
+    "case": "run_T24_primal_dual_31660055",
+    "campaign": "tadmm_review_nov09_historical_anchors",
+    "system": "large10kC_1ph",
+    "T": 24,
+    "solver": "ma57",
+    "iterations": 49,
+    "core_s": 50.449994963,
+    "loop_wall_s": 54.768778259,
+    "central_s": 33.790131407,
+    "final_rms_met": true,
+    "strict_physical_met": false,
+    "cost_gap": 1.5439083238823487e-06,
+    "final_energy": {
+      "integrated_energy_bound_kwh": 0.869624328055929,
+      "max_SOC_bound_percentage_points": 0.06522834743893857,
+      "max_dynamics_error_kwh": 0.6124960518258948
+    },
+    "historical_stops": {
+      "0.001": {
+        "iteration": "33",
+        "algorithm_s": "37.952616001",
+        "owned_r_rms": "0.0008087185302151558",
+        "r_rms": "0.0011743092053119063",
+        "owned_s_rms": "0.3743046302598101",
+        "original_primal": "0.00929010548561282"
+      },
+      "0.0001": {
+        "iteration": "41",
+        "algorithm_s": "45.338996412",
+        "owned_r_rms": "7.940343018940863e-5",
+        "r_rms": "0.00011244674901889739",
+        "owned_s_rms": "0.012128437584160743",
+        "original_primal": "0.004097229273079206"
+      }
+    },
+    "milestones": {
+      "paper_cost_1e-3": {
+        "iteration": 29,
+        "core_s": 33.304415849,
+        "relative_objective_gap": 0.0009835177525069113,
+        "original_primal": 0.020910910134031235,
+        "integrated_energy_bound_kwh": 20.910910134031234,
+        "max_SOC_bound_percentage_points": 1.4885862477295473,
+        "max_dynamics_error_kwh": 18.330635452027067
+      },
+      "current_cost_1e-3": {
+        "iteration": 34,
+        "core_s": 39.204905163,
+        "relative_objective_gap": 0.00022771517704793423,
+        "original_primal": 0.007426392587759956,
+        "integrated_energy_bound_kwh": 3.5513586633899585,
+        "max_SOC_bound_percentage_points": 0.21407298647219922,
+        "max_dynamics_error_kwh": 7.426392587759956
+      },
+      "all_dual_1e-3": {
+        "iteration": 46,
+        "core_s": 48.740327266,
+        "relative_objective_gap": 4.195631084250856e-06,
+        "original_primal": 0.0025062839559095718,
+        "integrated_energy_bound_kwh": 2.5062839559095718,
+        "max_SOC_bound_percentage_points": 0.13671634060165677,
+        "max_dynamics_error_kwh": 1.742707370499863
+      },
+      "current_cost_1e-4": {
+        "iteration": 42,
+        "core_s": 46.026721431,
+        "relative_objective_gap": 9.208562140538007e-07,
+        "original_primal": 0.0030103975971436103,
+        "integrated_energy_bound_kwh": 3.0103975971436103,
+        "max_SOC_bound_percentage_points": 0.1852129833356179,
+        "max_dynamics_error_kwh": 2.114977460059897
+      }
+    },
+    "dss_checks": 9,
+    "all_dss_converged": true,
+    "all_dss_zero_voltage_violations": true,
+    "max_dss_voltage_difference": 1.48e-10
+  },
+  {
+    "case": "run_T24_primal_dual_31660057",
+    "campaign": "tadmm_review_nov09_historical_anchors",
+    "system": "large10kC_1ph",
+    "T": 24,
+    "solver": "mumps",
+    "iterations": 49,
+    "core_s": 100.17808028200001,
+    "loop_wall_s": 105.806725643,
+    "central_s": 69.720547068,
+    "final_rms_met": true,
+    "strict_physical_met": false,
+    "cost_gap": 1.5439083240610925e-06,
+    "final_energy": {
+      "integrated_energy_bound_kwh": 0.8696243280537086,
+      "max_SOC_bound_percentage_points": 0.06522834743877202,
+      "max_dynamics_error_kwh": 0.6124960518265055
+    },
+    "historical_stops": {
+      "0.001": {
+        "iteration": "33",
+        "algorithm_s": "76.305473945",
+        "owned_r_rms": "0.000808718530215157",
+        "r_rms": "0.0011743092053119076",
+        "owned_s_rms": "0.3743046302598095",
+        "original_primal": "0.00929010548561332"
+      },
+      "0.0001": {
+        "iteration": "41",
+        "algorithm_s": "90.21427749800002",
+        "owned_r_rms": "7.940343018941114e-5",
+        "r_rms": "0.00011244674901888918",
+        "owned_s_rms": "0.012128437584160379",
+        "original_primal": "0.004097229273075875"
+      }
+    },
+    "milestones": {
+      "paper_cost_1e-3": {
+        "iteration": 29,
+        "core_s": 67.092843808,
+        "relative_objective_gap": 0.0009835177525067322,
+        "original_primal": 0.0209109101340359,
+        "integrated_energy_bound_kwh": 20.9109101340359,
+        "max_SOC_bound_percentage_points": 1.4885862477296306,
+        "max_dynamics_error_kwh": 18.330635452027234
+      },
+      "current_cost_1e-3": {
+        "iteration": 34,
+        "core_s": 78.79792047000001,
+        "relative_objective_gap": 0.00022771517704775544,
+        "original_primal": 0.007426392587759956,
+        "integrated_energy_bound_kwh": 3.551358663391513,
+        "max_SOC_bound_percentage_points": 0.21407298647214926,
+        "max_dynamics_error_kwh": 7.426392587759956
+      },
+      "all_dual_1e-3": {
+        "iteration": 46,
+        "core_s": 96.81102168800001,
+        "relative_objective_gap": 4.195631084429599e-06,
+        "original_primal": 0.002506283955910238,
+        "integrated_energy_bound_kwh": 2.506283955910238,
+        "max_SOC_bound_percentage_points": 0.1367163406016931,
+        "max_dynamics_error_kwh": 1.742707370500085
+      },
+      "current_cost_1e-4": {
+        "iteration": 42,
+        "core_s": 91.36262649400001,
+        "relative_objective_gap": 9.208562144112885e-07,
+        "original_primal": 0.0030103975971438324,
+        "integrated_energy_bound_kwh": 3.0103975971438324,
+        "max_SOC_bound_percentage_points": 0.18521298333575112,
+        "max_dynamics_error_kwh": 2.1149774600590088
+      }
+    },
+    "dss_checks": 9,
+    "all_dss_converged": true,
+    "all_dss_zero_voltage_violations": true,
+    "max_dss_voltage_difference": 1.48e-10
+  },
+  {
+    "case": "run_T96_primal_dual_31660059",
+    "campaign": "tadmm_review_nov09_historical_anchors",
+    "system": "ieee2522C_1ph",
+    "T": 96,
+    "solver": "ma57",
+    "iterations": 1000,
+    "core_s": 300.91164595099985,
+    "loop_wall_s": 349.539598831,
+    "central_s": 76.446303258,
+    "final_rms_met": false,
+    "strict_physical_met": false,
+    "cost_gap": 0.38972339654636995,
+    "final_energy": {
+      "integrated_energy_bound_kwh": 96.61054965111306,
+      "max_SOC_bound_percentage_points": 567.4295175091805,
+      "max_dynamics_error_kwh": 1.5671522507686133
+    },
+    "historical_stops": {
+      "0.001": {
+        "iteration": "5",
+        "algorithm_s": "1.5308737749999999",
+        "owned_r_rms": "0.0006666466926146033",
+        "r_rms": "0.0005457210997130825",
+        "owned_s_rms": "1.589981871475215",
+        "original_primal": "0.14493982471873948"
+      }
+    },
+    "milestones": {
+      "all_dual_1e-3": {
+        "iteration": 28,
+        "core_s": 9.112071112,
+        "relative_objective_gap": 0.4629430622738496,
+        "original_primal": 0.13283942290304887,
+        "integrated_energy_bound_kwh": 132.83942290304887,
+        "max_SOC_bound_percentage_points": 567.5626490842328,
+        "max_dynamics_error_kwh": 2.8761302113479195
+      }
+    },
+    "dss_checks": 4,
+    "all_dss_converged": true,
+    "all_dss_zero_voltage_violations": true,
+    "max_dss_voltage_difference": 9.78e-10
+  },
+  {
+    "case": "run_T96_primal_dual_31660061",
+    "campaign": "tadmm_review_nov09_historical_anchors",
+    "system": "ieee2522C_1ph",
+    "T": 96,
+    "solver": "mumps",
+    "iterations": 1000,
+    "core_s": 437.57564170600136,
+    "loop_wall_s": 487.237628251,
+    "central_s": 125.121175558,
+    "final_rms_met": false,
+    "strict_physical_met": false,
+    "cost_gap": 0.38972339654636995,
+    "final_energy": {
+      "integrated_energy_bound_kwh": 96.61054965111306,
+      "max_SOC_bound_percentage_points": 567.4295175091805,
+      "max_dynamics_error_kwh": 1.5671522507683167
+    },
+    "historical_stops": {
+      "0.001": {
+        "iteration": "5",
+        "algorithm_s": "2.3302284770000004",
+        "owned_r_rms": "0.0006666466926146033",
+        "r_rms": "0.0005457210997130825",
+        "owned_s_rms": "1.589981871475215",
+        "original_primal": "0.14493982471873948"
+      }
+    },
+    "milestones": {
+      "all_dual_1e-3": {
+        "iteration": 28,
+        "core_s": 14.57336561,
+        "relative_objective_gap": 0.4629430622738496,
+        "original_primal": 0.13283942290304887,
+        "integrated_energy_bound_kwh": 132.83942290304887,
+        "max_SOC_bound_percentage_points": 567.5626490842328,
+        "max_dynamics_error_kwh": 2.8761302113479195
+      }
+    },
+    "dss_checks": 4,
+    "all_dss_converged": true,
+    "all_dss_zero_voltage_violations": true,
+    "max_dss_voltage_difference": 9.78e-10
+  },
+  {
+    "case": "run_T48_primal_dual_31660026",
+    "campaign": "tadmm_review_nov09_mumps_fixed",
+    "system": "large10kC_1ph",
+    "T": 48,
+    "solver": "mumps",
+    "iterations": 129,
+    "core_s": 294.34450474000016,
+    "loop_wall_s": 312.637822753,
+    "central_s": 180.518908089,
+    "final_rms_met": true,
+    "strict_physical_met": false,
+    "cost_gap": 3.8370346343831544e-06,
+    "final_energy": {
+      "integrated_energy_bound_kwh": 0.578346928151785,
+      "max_SOC_bound_percentage_points": 0.04338035764714859,
+      "max_dynamics_error_kwh": 0.16585491020348897
+    },
+    "historical_stops": {
+      "0.001": {
+        "iteration": "6",
+        "algorithm_s": "9.302228156000002",
+        "owned_r_rms": "7.071747561590708e-8",
+        "r_rms": "7.387221253861217e-8",
+        "owned_s_rms": "9.872459382940063",
+        "original_primal": "4.762745406612472e-6"
+      },
+      "0.0001": {
+        "iteration": "6",
+        "algorithm_s": "9.302228156000002",
+        "owned_r_rms": "7.071747561590708e-8",
+        "r_rms": "7.387221253861217e-8",
+        "owned_s_rms": "9.872459382940063",
+        "original_primal": "4.762745406612472e-6"
+      }
+    },
+    "milestones": {
+      "paper_cost_1e-3": {
+        "iteration": 42,
+        "core_s": 107.48966389,
+        "relative_objective_gap": 0.003588009014199839,
+        "original_primal": 0.0255261867754355,
+        "integrated_energy_bound_kwh": 25.526186775435498,
+        "max_SOC_bound_percentage_points": 1.5614886628821711,
+        "max_dynamics_error_kwh": 15.06802783365635
+      },
+      "current_cost_1e-3": {
+        "iteration": 66,
+        "core_s": 188.08981174800002,
+        "relative_objective_gap": 0.0003722675030032718,
+        "original_primal": 0.018286474909506634,
+        "integrated_energy_bound_kwh": 18.286474909506634,
+        "max_SOC_bound_percentage_points": 1.097100726512277,
+        "max_dynamics_error_kwh": 6.164462859068548
+      },
+      "all_dual_1e-3": {
+        "iteration": 87,
+        "core_s": 224.99147342700007,
+        "relative_objective_gap": 0.0001365456884589718,
+        "original_primal": 0.006708466965367199,
+        "integrated_energy_bound_kwh": 6.708466965367199,
+        "max_SOC_bound_percentage_points": 0.33542334826835996,
+        "max_dynamics_error_kwh": 1.5970035460279586
+      },
+      "current_cost_1e-4": {
+        "iteration": 94,
+        "core_s": 236.6095627230001,
+        "relative_objective_gap": 1.2930087209561268e-05,
+        "original_primal": 0.002542990671178913,
+        "integrated_energy_bound_kwh": 2.542990671178913,
+        "max_SOC_bound_percentage_points": 0.12714953355894565,
+        "max_dynamics_error_kwh": 0.6070052756375066
+      }
+    },
+    "dss_checks": 10,
+    "all_dss_converged": true,
+    "all_dss_zero_voltage_violations": true,
+    "max_dss_voltage_difference": 1.49e-10
+  }
+]

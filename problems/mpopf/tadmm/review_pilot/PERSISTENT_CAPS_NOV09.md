@@ -1,0 +1,62 @@
+# Persistent inexact local caps, large10k T24
+
+User explicitly removed the exact-local phase and requested the final quality
+tradeoff. Test30 and10 Ipopt iterations per local solve from the very first
+ADMM round through termination, including discarded warmup. No uncapped first
+solve, exact recovery, late exact phase, or final local polishing is permitted.
+Ordinary local solves may converge naturally before the maximum. Nonfinite
+primal/multipliers abort the candidate rather than trigger exact recovery.
+
+Keep MA57,24 period workers, one Gold6438Y+ node per arm, July C_B, current
+periodic inputs, corrected losses, free terminal SOC, idle/load-flow starts,
+rho15000 -> fixed48, primal-dual reuse, batched updates and thread policy.
+Full centralized solves remain independent quality references, not warm starts
+for tADMM. Both candidate arms have full warmup/reset and source/input manifests.
+
+Use the unchanged owned/all-copy RMS1e-5 plus dual1e-2 consensus endpoint or1000
+outer-iteration budget. Report objective agreement and original-model violation
+separately; reaching consensus is not proof of OPF feasibility. Independently
+audit integrated battery SOC, dynamics, power bounds, relaxation gap and OpenDSS
+network agreement. Preserve failures, plateaus and invalid early points.
+
+Finite-only persistent acceptance does not compute a local feasibility report
+inside each stage: it does not use one to make algorithm decisions. Original
+dispatch physical diagnostics remain outside core as before; their wall cost,
+all actual core/loop time and warmup/setup are logged. This differs from the
+prior early-cap assessment's conservatively timed local reports; report that
+boundary change when comparing policies. Persistent30 versus10 uses identical
+boundaries. There is no hidden final feasibility gate or exact correction.
+
+Native tests use a one-iteration cap at outer1,2,31,1001, verify bounded work,
+finite iterates, no recovery and that the optimizer limit never becomes exact.
+Independent collection validation checks every warmup/measured local row,
+including the final round, against its cap and allowed statuses. No final exact
+guard applies to this policy. Selected30/10 values are experimental settings,
+not a validated tuning heuristic or repeated-median paper benchmark.
+
+Exact reference31660055:49 rounds /50.449995s core, central33.790131s; final
+energy-bound error0.869624kWh, strict physical flag false. Prior early-cap
+follow-up31663479:52 rounds /49.471650s,0.668225kWh, strict physical flag false.
+
+Remote: `/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_persistent_caps`.
+Reproduction: repository-root `setup-persistent-caps-nov09.sh`.
+
+Frozen numerical source8d688457cbccd78d1af95818a095503988f0a5af. Gate31665844
+passed501 checks, including29 persistent-cap assertions at rounds1,2,31,1001.
+Initial jobs31665845/31665847 exited before any solve due to one generated
+Python bytecode checksum mismatch: setup compiled the validator after recording
+its old cache hash. All non-cache source and inputs were verified unchanged;
+the original manifest/logs remain preserved, and only generated `__pycache__`
+files are excluded by the repaired manifest. No mathematical source changed.
+Resubmitted cap30 job31665887 /audit31665888; cap10 job31665889 /audit31665890.
+The original failed scheduler states are retained, not presented as benchmarks.
+
+Both resubmitted runs/audits completed and independently validated. Cap30 gives
+52 rounds /48.4540s core; cap10 gives53 /37.2625s, versus exact49 /50.4500s.
+Cap10 reduces observed core time26.14%, still above matched central33.7940s.
+Both meet unchanged consensus RMS/dual targets, neither strict physical NO.
+Cap10 objective agreement0.000343%, energy-bound error0.818639kWh (baseline
+0.869624kWh); all saved OpenDSS checks pass. At the final round every local
+solve naturally finishes within its cap, without a separate exact phase.
+See `results/persistent_caps_nov09/` for raw compact archive, independent
+validation, local work distributions, separate physical flags and July plots.

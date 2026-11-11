@@ -1,0 +1,45 @@
+{
+  "case": "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660061",
+  "rho_initial": 20000.0,
+  "iterations": 1000,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": false,
+    "strict_criteria_met": false,
+    "original_primal": 0.09661054965111306,
+    "objective_gap": 0.38972339654636995
+  },
+  "sha256": {
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660061\\rho20000\\trace.csv": "8d3f40dae318ce50b113d44544516880b2ec73bd0c4af98b44c139065f540d01",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660061\\sweep.toml": "3eebdcca20627f0e71a2176aaa96e1dbfbe0cbfb8c37a89f917570f56e122829",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660061\\rho20000\\assessment.toml": "db6ebdb485ee5ae6f5111810b428c151780a3f16cc32cead9980e96dac1a65d9",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "med2522-T96-MUMPS.csv": "792401a060a837a1ee05a724160188b780e53de14d81746e9a394869ff9d17da"
+  }
+}

@@ -1,0 +1,71 @@
+[
+  {
+    "system": "med2522",
+    "snapshot_iteration": 5000,
+    "rho_changes": [
+      {
+        "decision_after_iteration": 10,
+        "rho_old": 3800.0,
+        "rho_new": 7600.0
+      }
+    ],
+    "rho_final": 7600.0,
+    "first_near_optimal_iteration": 65,
+    "near_optimal_sustained_through_snapshot_from": 65,
+    "tail_iterations": 100,
+    "last_original": 1.1282456714861722e-06,
+    "last_consensus": 5.96954165993889e-07,
+    "last_dual": 0.0017239254425680667,
+    "tail_original_min": 1.1282456712571887e-06,
+    "tail_original_max": 1.4868167374955388e-06,
+    "tail_dual_min": 0.001723925403715118,
+    "tail_dual_max": 0.0017239254432799972,
+    "objective_gap_last": 2.9204876831664874e-06,
+    "relative_ratio_last": 2.680250643336426,
+    "loop_wall_s": 4524.008677816,
+    "warmup_status": "not converged",
+    "note": "Warm-up diagnosis only; sustained qualification refers to this saved trajectory, not a separate measured run or OpenDSS validation"
+  },
+  {
+    "system": "large10k",
+    "snapshot_iteration": 793,
+    "rho_changes": [
+      {
+        "decision_after_iteration": 10,
+        "rho_old": 48.0,
+        "rho_new": 96.0
+      },
+      {
+        "decision_after_iteration": 345,
+        "rho_old": 96.0,
+        "rho_new": 192.0
+      },
+      {
+        "decision_after_iteration": 355,
+        "rho_old": 192.0,
+        "rho_new": 384.0
+      },
+      {
+        "decision_after_iteration": 560,
+        "rho_old": 384.0,
+        "rho_new": 768.0
+      }
+    ],
+    "rho_final": 768.0,
+    "first_near_optimal_iteration": 168,
+    "near_optimal_sustained_through_snapshot_from": 403,
+    "tail_iterations": 100,
+    "last_original": 4.008774856512076e-07,
+    "last_consensus": 2.494540680686441e-07,
+    "last_dual": 1.087268020683041e-05,
+    "tail_original_min": 4.008774856512076e-07,
+    "tail_original_max": 5.947823373264605e-07,
+    "tail_dual_min": 1.087268020683041e-05,
+    "tail_dual_max": 9.764590254235372e-05,
+    "objective_gap_last": 9.644209636670408e-09,
+    "relative_ratio_last": 8.381145024999448,
+    "loop_wall_s": 3516.995111967,
+    "warmup_status": "converged",
+    "note": "Warm-up diagnosis only; sustained qualification refers to this saved trajectory, not a separate measured run or OpenDSS validation"
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "case": "screened\\results\\run_T24_primal_dual_31663364",
+  "rho_initial": 15000.0,
+  "iterations": 49,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "local_solve_policy": "early_cap30",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": true,
+    "strict_criteria_met": false,
+    "original_primal": 0.0008696243281367533,
+    "objective_gap": 1.543908340148049e-06
+  },
+  "sha256": {
+    "screened\\results\\run_T24_primal_dual_31663364\\rho15000\\trace.csv": "ee0a2fcc5013f7147e3a82935561cabd38a0031888250e86a176e128f810daec",
+    "screened\\results\\run_T24_primal_dual_31663364\\sweep.toml": "6515ea63a234c28f064c1376a0d757bfb92f71571da7b055890d2c8f7a7e90a8",
+    "screened\\results\\run_T24_primal_dual_31663364\\rho15000\\assessment.toml": "77551a410017a12ebb2a57591489d143ab65ea6f598c4ec9cb818014c56b48d0",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "0b4c632f41bef747b5d4f96f715bfc9515cc27c2dbfba0a190c05ce4e6b0c6c5",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "screened-convergence.csv": "8f260fb090f617d04a3a0558222248d564226448f49566d6395208841494dc29"
+  }
+}

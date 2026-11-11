@@ -1,0 +1,40 @@
+{
+  "central_opendss": {
+    "converged": true,
+    "max_voltage_difference_pu": 9.78e-10,
+    "zero_voltage_violations": true
+  },
+  "arms": {
+    "rho20000": {
+      "first_crossings": {
+        "owned_raw_1e-3": 1,
+        "all_raw_1e-3": 1,
+        "owned_dual_1e-3": 28,
+        "all_dual_1e-3": 28
+      },
+      "final_rms_met": false,
+      "core_s": 437.57564170600136,
+      "loop_wall_s": 487.237628251,
+      "original_primal": 0.09661054965111306,
+      "objective_gap": 0.38972339654636995,
+      "opendss": {
+        "point_00028.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 9.04e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00001.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 8.4e-10,
+          "zero_voltage_violations": true
+        },
+        "endpoint.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 9.48e-10,
+          "zero_voltage_violations": true
+        }
+      }
+    }
+  },
+  "final_benchmark_claim": false
+}

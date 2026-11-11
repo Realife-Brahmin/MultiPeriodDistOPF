@@ -1,0 +1,63 @@
+{
+  "source_commit": "492451e3a3dfdf2cdc48273db75e71656374a8a8",
+  "reason": "Parallelize the two original T96 candidates on freed resources; stop batches after first fully validated distinct arm, retaining raw cancellations and all overhead.",
+  "cases": [
+    {
+      "path": "results/large10k_T24_31652340",
+      "include_rhos": [
+        15000,
+        60000
+      ],
+      "reason": "Complete original batch"
+    },
+    {
+      "path": "results/large10k_T48_31652341",
+      "include_rhos": [
+        30000,
+        120000
+      ],
+      "reason": "Complete original batch"
+    },
+    {
+      "path": "results/large10k_T96_31652342",
+      "include_rhos": [
+        60000
+      ],
+      "reason": "Original T96 batch; retain first fully validated arm and stop before duplicate second arm"
+    },
+    {
+      "path": "results/large10k_T96_31653264",
+      "include_rhos": [
+        240000
+      ],
+      "reason": "Same frozen source and resources, reversed order; retain first fully validated arm and stop before duplicate second arm"
+    }
+  ],
+  "expected_configurations": [
+    {
+      "T": 24,
+      "rho": 15000
+    },
+    {
+      "T": 24,
+      "rho": 60000
+    },
+    {
+      "T": 48,
+      "rho": 30000
+    },
+    {
+      "T": 48,
+      "rho": 120000
+    },
+    {
+      "T": 96,
+      "rho": 60000
+    },
+    {
+      "T": 96,
+      "rho": 240000
+    }
+  ],
+  "extra_reference_note": "Both T96 batches execute full centralized warmup and measurement; retain both timings and count both in exploration cost."
+}

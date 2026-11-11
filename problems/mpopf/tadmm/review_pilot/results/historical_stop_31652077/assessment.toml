@@ -1,0 +1,363 @@
+reference_objective = 2.605186166625776e6
+T = 24
+original_primal = 0.00853850405694162
+objective = 2.605228033277688e6
+system = "large10kC_1ph"
+strict_criteria_met = false
+endpoint_opendss_process_success = true
+loop_wall_s = 110.455907756
+linear_solver = "ma57"
+stopping_rule = "historical_owned_rms"
+historical_primal_tolerance = 0.0001
+stagnation_window = 5
+iterations = 48
+physical_NO_iteration = 0
+algorithm_s = 50.535862282
+input_sha256 = "b750a212459d7972a4a72b18ef29d7ee8337c22db970a2e2c0eab5ce40dfce9c"
+historical_stopped = true
+owned_s_rms = 0.012086714758125113
+rho_policy = "fixed"
+C_B = 8.013987384856764e-8
+historical_dual_tolerance = 0.01
+rho_initial = 48.0
+stagnation_range_tolerance = 0.001
+timing_note = "Single exploratory trajectory after three compile steps and fresh reset; not a warmed benchmark median."
+reference_metadata_sha256 = "f17e33cd2b4f79502a19320e8dd58f60e79760eb35d7c796c3a7362e38f16af7"
+owned_r_rms = 7.332745939752707e-5
+
+[[worker_layout]]
+periods = [1]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 2
+blas_threads = 1
+pid = 3322544
+hostname = "cn168"
+affinity = "1"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    1 = "a6751e2984e723bf5e9cf9c8574e3c8be5a180be3b4b8a447869d48fda596a9e"
+[[worker_layout]]
+periods = [2]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 3
+blas_threads = 1
+pid = 3322552
+hostname = "cn168"
+affinity = "2"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    2 = "0c296d6e2c6254ea2dbebece9ac44211dc474eebc6d368a089014ad7453cba7c"
+[[worker_layout]]
+periods = [3]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 4
+blas_threads = 1
+pid = 3322558
+hostname = "cn168"
+affinity = "3"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    3 = "f9d2dbde3f49cc5d5c708f1d2c13e14746c4efab4d3f412c745b7fb669d5264b"
+[[worker_layout]]
+periods = [4]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 5
+blas_threads = 1
+pid = 3322561
+hostname = "cn168"
+affinity = "4"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    4 = "6e98404ead3967f26a068a9413c1102d3ae6649e53e4acec5553f2c397f1a8e3"
+[[worker_layout]]
+periods = [5]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 6
+blas_threads = 1
+pid = 3322582
+hostname = "cn168"
+affinity = "5"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    5 = "372bcf81b0e356c98cc5d5abc58689729d9692175f5ed8c595cd315a17db203b"
+[[worker_layout]]
+periods = [6]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 7
+blas_threads = 1
+pid = 3322593
+hostname = "cn168"
+affinity = "6"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    6 = "3284f73f61330ffcbff8bdbb7b1895b3030f7efe319a913bf5706bc02cb3915c"
+[[worker_layout]]
+periods = [7]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 8
+blas_threads = 1
+pid = 3322615
+hostname = "cn168"
+affinity = "7"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    7 = "b9042a81f8f3fa00c3176c7603c8fd990f13f412bf8740b7c993b0de5c4748ca"
+[[worker_layout]]
+periods = [8]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 9
+blas_threads = 1
+pid = 3322618
+hostname = "cn168"
+affinity = "8"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    8 = "a0d89d53a9335ae4b4ac6971eeba4f4bf4a86dd07d55587f650f5190db26ec11"
+[[worker_layout]]
+periods = [9]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 10
+blas_threads = 1
+pid = 3322621
+hostname = "cn168"
+affinity = "9"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    9 = "461a39724cefa1ff76e6805c445cf64c2ef4f4f324dba3d31a0eec383359ec78"
+[[worker_layout]]
+periods = [10]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 11
+blas_threads = 1
+pid = 3322629
+hostname = "cn168"
+affinity = "10"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    10 = "5ee2620e39d93cefc5a9c817390d2f67d37935a7c0c116d1086e700f5c81417b"
+[[worker_layout]]
+periods = [11]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 12
+blas_threads = 1
+pid = 3322634
+hostname = "cn168"
+affinity = "11"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    11 = "87604f734e3eaa7cbf014022b6478ccc7f6c7175a12e96eed6c75d7afc2c1d51"
+[[worker_layout]]
+periods = [12]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 13
+blas_threads = 1
+pid = 3322637
+hostname = "cn168"
+affinity = "12"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    12 = "8756fe0a044edfb2a68bf2cc922c7e801297a0bef8b5342de080a11a3462feb5"
+[[worker_layout]]
+periods = [13]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 14
+blas_threads = 1
+pid = 3322658
+hostname = "cn168"
+affinity = "13"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    13 = "0700dc906b59c50b2c6104c33d69f3ee3f22e651503422d8c3250b1fdc50d78e"
+[[worker_layout]]
+periods = [14]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 15
+blas_threads = 1
+pid = 3322677
+hostname = "cn168"
+affinity = "14"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    14 = "354988217b4a2720a41a49bc5e8fcc72b5524cfe8881e8eff7270efbb5aea1ad"
+[[worker_layout]]
+periods = [15]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 16
+blas_threads = 1
+pid = 3322723
+hostname = "cn168"
+affinity = "15"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    15 = "e7a1486021a7ef3d98c9d2b343d7cf13c54e6b9a7676f6a2ad70708861634987"
+[[worker_layout]]
+periods = [16]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 17
+blas_threads = 1
+pid = 3322726
+hostname = "cn168"
+affinity = "16"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    16 = "25a53ea134231625c9ef7ee34717fbb20c68474867e5fa9e8e55535319c75cb8"
+[[worker_layout]]
+periods = [17]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 18
+blas_threads = 1
+pid = 3322730
+hostname = "cn168"
+affinity = "17"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    17 = "5e9fdf024e83f2e1fd0f0e1b04491b60fa4388c3633a70b7b367dc088272c382"
+[[worker_layout]]
+periods = [18]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 19
+blas_threads = 1
+pid = 3322738
+hostname = "cn168"
+affinity = "18"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    18 = "a6a29605b200a16aae7d5a02616e017243e1fac54248cbaeaa220b99c1c007fd"
+[[worker_layout]]
+periods = [19]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 20
+blas_threads = 1
+pid = 3322741
+hostname = "cn168"
+affinity = "19"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    19 = "9b97ab0ea3ee0edbaad922bb2760a8ea19c793382c03de8005f35771f8258fb3"
+[[worker_layout]]
+periods = [20]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 21
+blas_threads = 1
+pid = 3322746
+hostname = "cn168"
+affinity = "20"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    20 = "508a45751fb82fdc09a9c7db87b7dce927f8742b0038dc174a4f69c42c4b995a"
+[[worker_layout]]
+periods = [21]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 22
+blas_threads = 1
+pid = 3322758
+hostname = "cn168"
+affinity = "21"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    21 = "9a27f6c1362e27b1820910def936137367fc262980253d33660f6f888275feee"
+[[worker_layout]]
+periods = [22]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 23
+blas_threads = 1
+pid = 3322778
+hostname = "cn168"
+affinity = "22"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    22 = "f53afa7bf45cec593c4f79b23356e3f93ff22e4e957a95dec82a4550e9837479"
+[[worker_layout]]
+periods = [23]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 24
+blas_threads = 1
+pid = 3322799
+hostname = "cn168"
+affinity = "23"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    23 = "f7236aa8508c63844cfa4e5cc67935289da13719130b59bd042612a462a454d8"
+[[worker_layout]]
+periods = [24]
+openmp_threads = "1"
+local_solve_policy = "exact"
+julia_worker = 25
+blas_threads = 1
+pid = 3322804
+hostname = "cn168"
+affinity = "24"
+julia_threads = 1
+local_primal_report = true
+
+    [worker_layout.initial_starts_sha256]
+    24 = "59098b1c43d2171cba7149e7ac67addd681efd8db4aaed53f36fd90d700be1fa"
