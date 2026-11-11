@@ -40,6 +40,8 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "objective_update"=>get(ENV,"TADMM_OBJECTIVE_UPDATE","legacy"),
     "execution_policy"=>get(ENV,"TADMM_EXECUTION_POLICY","fixed24"),
     "rho_policy"=>ENV["TADMM_RHO_POLICY"],"rho_floor"=>parse(Float64,get(ENV,"TADMM_RHO_FLOOR","48")),
+    "bootstrap_decrease"=>parse(Float64,get(ENV,"TADMM_BOOTSTRAP_DECREASE","5")),
+    "bootstrap_gate"=>parse(Float64,get(ENV,"TADMM_BOOTSTRAP_GATE","Inf")),
     "local_solve_policy"=>get(ENV,"TADMM_LOCAL_SOLVE_POLICY","exact"),
     "warm_retry_limit"=>parse(Int,get(ENV,"TADMM_WARM_RETRY_LIMIT","20")),
     "cap_end_iteration"=>parse(Int,get(ENV,"TADMM_CAP_END_ITERATION","30")),
@@ -52,7 +54,7 @@ meta=Dict("system"=>system,"T"=>T,"C_B"=>d[:C_B],"rhos"=>rhos,"linear_solver"=>s
     "rho_update_interval"=>5,"rho_watchdog_window"=>15,"rho_watchdog_factor"=>2.5,
     "sequential_validation_version"=>1,
     "final_owned_rms"=>1e-5,"final_all_copy_rms"=>1e-5,"final_dual_rms"=>1e-2,
-    "anchor_provenance"=>(system=="large10kC_1ph" && T==96 ? "60000 is extrapolated; no July large10k T96 result" : "July paper and archived summary winner"),
+    "anchor_provenance"=>get(ENV,"TADMM_RHO_PROVENANCE",system=="large10kC_1ph" && T==96 ? "60000 is extrapolated; no July large10k T96 result" : "July paper and archived summary winner"),
     "timer_note"=>"Core stage rounds plus coordination exclude diagnostics, milestone I/O, checkpoints and validation. Actual loop time, warmup/build and tuning cost logged separately. No best-of-sweep timing reported as untuned.",
     "screening"=>join(sort!(collect(tadmm_screen(d).flags)),','),"periodic"=>true,"terminal_soc_penalty"=>0.0)
 try

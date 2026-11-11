@@ -8,10 +8,13 @@ SYSTEM=${5:-ieee2522C_1ph}
 OUT="$C/results/run_T${T}_primal_dual_$J"
 export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps${PYTHONPATH:+:$PYTHONPATH}
 test -s "$OUT/sweep.toml"
-for REPLAY in central_sequential "rho${RHO}_endpoint_sequential";do
- python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/$REPLAY" "$C/source/test_networks/$SYSTEM/Storage.dss"
+RATINGS="$C/source/test_networks/$SYSTEM/Storage.dss"
+python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/central_sequential" "$RATINGS"
+IFS=, read -r -a RHO_ARMS <<< "$RHO"
+for INITIAL in "${RHO_ARMS[@]}"; do
+ python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/rho${INITIAL}_endpoint_sequential" "$RATINGS"
+ python3 "$C/campaign/summarize-tadmm-round-timing-nov10.py" "$OUT/rho$INITIAL"
 done
-python3 "$C/campaign/summarize-tadmm-round-timing-nov10.py" "$OUT/rho$RHO"
 python3 - "$OUT" <<'PY'
 import csv,json,sys
 from pathlib import Path

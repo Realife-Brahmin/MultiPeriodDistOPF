@@ -75,7 +75,8 @@ for name in names:
             if yes:first.setdefault(key,k)
         rr=float(r['owned_r_rms']);ss=float(r['owned_s_rms'])
         if m.get('rho_policy','legacy_phase')=='bootstrap_fixed':
-            if k%5==0:rho=max(m['rho_floor'],rho/5)
+            if k%5==0 and float(r['r_rms'])<=m.get('bootstrap_gate',math.inf):
+                rho=max(m['rho_floor'],rho/m.get('bootstrap_decrease',5))
         else:
             if rr>2e-4:high+=1
             elif rr<.5e-4:high=0

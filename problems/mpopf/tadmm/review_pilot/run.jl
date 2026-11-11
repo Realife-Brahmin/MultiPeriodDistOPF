@@ -50,6 +50,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
     isfinite(balance_ratio) && balance_ratio>1 || error("Rho balance ratio must exceed one")
     primal_seen=false; high_primal_count=0
     legacy_tau_decrease=parse(Float64,get(ENV,"TADMM_RHO_TAU_DECREASE","5"))
+    bootstrap_decrease=parse(Float64,get(ENV,"TADMM_BOOTSTRAP_DECREASE","5"))
+    bootstrap_gate=parse(Float64,get(ENV,"TADMM_BOOTSTRAP_GATE","Inf"))
     legacy_watchdog=get(ENV,"TADMM_RHO_WATCHDOG","0")=="1"
     legacy_primal_gate=parse(Float64,get(ENV,"TADMM_RHO_PRIMAL_GATE","1e-4"))
     checkpoint_s=0.0; checkpoint_interval=parse(Int,get(ENV,"TADMM_CHECKPOINT_INTERVAL","25"))
@@ -156,7 +158,8 @@ function run_admm(d; maxiter=5000, rho0=parse(Float64,get(ENV,"TADMM_RHO_INIT",s
         # numerically larger while primal consensus remains infeasible.
         if rho_policy=="bootstrap_fixed"
             rho_old=rho
-            rho=bootstrap_fixed_rho(rho,k;floor=parse(Float64,get(ENV,"TADMM_RHO_FLOOR","48")))
+            rho=bootstrap_fixed_rho(rho,k;floor=parse(Float64,get(ENV,"TADMM_RHO_FLOOR","48")),
+                decrease=bootstrap_decrease,residual=rr,gate=bootstrap_gate)
             rho==rho_old || foreach(u->u.*=rho_old/rho,dual)
         elseif rho_policy=="legacy_phase"
             rho_old=rho
