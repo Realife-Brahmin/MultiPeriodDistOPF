@@ -51,3 +51,15 @@ model's per-unit convention. These milestone times describe the older
 stopping rule. A passive chronological replay of the hashed saved
 dispatches, job 31681180, measures the battery and cone discrepancies
 without rerunning either optimizer.
+
+The replay completed in 2m09s. The early milestone wall times were 60.44 s
+and 75.94 s (+25.6%), versus +46.6% centralized. At the tighter consensus
+endpoint, tADMM loop time instead rose from 148.10 to 314.46 s (+112.3%).
+The early replay found maximum SOC disagreement of 2.700% and 6.377%
+of rated energy, respectively. Maximum raw cone gaps were 0.17031 and
+0.19479 pu squared. The older stopping milestone is therefore unsuitable
+as a comparable-quality benchmark at these two horizons.
+
+`july-milestone-replay-31681180.tgz` preserves the milestone hashes, replay
+summaries, expanded error distributions and logs. SHA256:
+`7ad75e77051fef3f1465601a4ec880d10a6f93bc0aadd5ec4df9dd5bc805bfc4`.
