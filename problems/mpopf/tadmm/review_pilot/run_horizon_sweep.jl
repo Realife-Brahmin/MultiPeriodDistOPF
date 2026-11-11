@@ -3,7 +3,7 @@ include("sweep_milestones.jl")
 function horizon_sweep_main()
 system,Targ,out,rhoarg=ARGS
 T=parse(Int,Targ); rhos=parse.(Float64,split(rhoarg,','))
-@assert ((system=="large10kC_1ph" && T in (24,48,96)) || (system=="ieee2522C_1ph" && T==96)) && length(rhos) in (1,2)
+@assert ((system=="large10kC_1ph" && T in (24,48,60,72,96)) || (system=="ieee2522C_1ph" && T==96)) && length(rhos) in (1,2)
 solver=ENV["TADMM_LINEAR_SOLVER"]
 @assert solver in ("ma57","mumps") && ENV["TADMM_RHO_POLICY"] in ("legacy_phase","bootstrap_fixed")
 @assert ENV["TADMM_RHO_WATCHDOG"]=="1" && ENV["TADMM_RHO_PRIMAL_GATE"]=="1e-4"

@@ -13,7 +13,7 @@ except ImportError:
 
 out=Path(sys.argv[1]); stage=sys.argv[2]
 m=tomllib.loads((out/'sweep.toml').read_text())
-assert (m['system']=='large10kC_1ph' and m['T'] in (24,48,96)) or (m['system']=='ieee2522C_1ph' and m['T']==96)
+assert (m['system']=='large10kC_1ph' and m['T'] in (24,48,60,72,96)) or (m['system']=='ieee2522C_1ph' and m['T']==96)
 expected_workers=m['T'] if m.get('execution_policy')=='one_per_period' else 24
 assert m['workers']==expected_workers and m['compute_cpu_budget']==expected_workers+1 and m['linear_solver'] in ('ma57','mumps')
 actual_solver=re.search(r'running with linear solver ([\w-]+)',(out/'central_timed.log').read_text(),re.I)
