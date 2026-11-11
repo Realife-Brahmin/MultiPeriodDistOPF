@@ -1,5 +1,19 @@
 # Targeted T48 experiments
 
+## November 10 persistent cap10 follow-up
+
+Kamiak job 31679860 started on cn168 with all 64 physical cores allocated
+and 48 time-step workers. Campaign path:
+`/home/aryan.jha/kamiak_jobs/tadmm_review_nov10_large10k_t48_cap10`.
+The frozen solver source is b1ba396977702b264eef679ce981f4881c15f787,
+with the existing cap and chronological replay gates and verified input and
+execution-source hashes. The run uses MA57, the fixed-48 bootstrap schedule
+starting at rho 120000, a persistent 10-iteration cap on tADMM subproblems,
+and a fresh fully converged centralized reference on the same allocation.
+Jobs 31679861 and 31679862 audit energy feasibility and explicit cone,
+chronological storage and RAM evidence after the solve. No results are
+claimed at submission.
+
 Source4a074c167403ba9decb31a578a8df4de1e47f0c0, gate31657404 passed425 tests:
 174 forced-interruption/exact-recovery checks,3 fixed-penalty schedule checks,
 and248 existing repeated-solve/objective/multiplier checks.

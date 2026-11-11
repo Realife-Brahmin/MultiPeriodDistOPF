@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
-C=/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_med2522_caps_sequence
 J=$1
-OUT="$C/results/run_T96_primal_dual_$J"
+C=${2:-/home/aryan.jha/kamiak_jobs/tadmm_review_nov09_med2522_caps_sequence}
+T=${3:-96}
+RHO=${4:-20000}
+SYSTEM=${5:-ieee2522C_1ph}
+OUT="$C/results/run_T${T}_primal_dual_$J"
 export PYTHONPATH=/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/python-deps${PYTHONPATH:+:$PYTHONPATH}
 test -s "$OUT/sweep.toml"
-for REPLAY in central_sequential rho20000_endpoint_sequential;do
- python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/$REPLAY" "$C/source/test_networks/ieee2522C_1ph/Storage.dss"
+for REPLAY in central_sequential "rho${RHO}_endpoint_sequential";do
+ python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/$REPLAY" "$C/source/test_networks/$SYSTEM/Storage.dss"
 done
 python3 - "$OUT" <<'PY'
 import csv,json,sys
