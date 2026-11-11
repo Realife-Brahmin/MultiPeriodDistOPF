@@ -24,6 +24,10 @@ for argument in sys.argv[1:]:
         result = {
             'archive_sha256': digest,
             'central_s': center,
+            'central_iterations': meta['central_iterations'],
+            'central_solver_s': meta['central_solver_s'],
+            'central_warmup_iterations': meta['central_warmup_iterations'],
+            'horizon': meta['T'],
             'settings': {key: meta[key] for key in ('local_solve_policy', 'cap_iterations', 'rho_floor', 'bootstrap_decrease')},
             'arms': {},
             'memory': json.loads(read('posthoc-memory-peaks.json')),
