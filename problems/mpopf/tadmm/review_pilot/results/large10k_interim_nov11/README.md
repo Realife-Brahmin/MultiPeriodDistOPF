@@ -32,3 +32,22 @@ The corrected 76-core source (9ea64e7e) is a separate frozen copy at
 It reuses the hashed profiles and checks the actual 8368 hardware.
 `ice-submissions.tsv` lists the corrected jobs. At verification both T60
 jobs were running and all three corrected 76-core jobs were queued.
+
+## Same-node T48 to T72 comparison
+
+Jobs 31680924 and 31680922 used cap20 on cn130 with the same penalty
+schedule. Centralized went from 93.2275 s (30 Ipopt iterations) to
+136.6908 s (29 iterations). tADMM core time went from 133.2674 to
+280.1445 s, with 123 versus 224 rounds and 1.0835 versus 1.2506 s per
+round on average. More rounds account for most of the tADMM time increase.
+At the observed T72 round cost, about 109 rounds would tie centralized
+and about 55 would reach 2x on core time.
+
+The archived `paper_cost_1e-3` milestone uses owned-copy RMS at most
+1e-3 and relative objective gap at most 0.5%. It occurs at round 45 and
+55.5853 s core for T48, and round 47 and 69.6200 s for T72. The maximum
+original-model violations at these points are 0.04973 and 0.06083 in the
+model's per-unit convention. These milestone times describe the older
+stopping rule. A passive chronological replay of the hashed saved
+dispatches, job 31681180, measures the battery and cone discrepancies
+without rerunning either optimizer.
