@@ -20,6 +20,25 @@ line-loss energy; report this alongside objective and constraint agreement.
 branch/voltage tables after checking table SHA256. Per-branch records are saved
 as `socp-tightness.csv.gz`. The audit is passive and cannot change a solution.
 
+The expanded audit records sample and nonzero counts, mean, median, p95,
+maximum, and the worst device and period. It distinguishes positive cone
+slack from cone inequality violation and retains both raw and normalized
+absolute equality gaps. Battery SOC agreement, energy accounting, SOC bounds,
+and dispatch are each scored in physical units and as percentages of the
+affected device rating. Bus voltage limits, branch P/Q and current agreement,
+squared-current lower bounds, substation import, and losses have separate
+distributions. Thermal upper bounds are absent in these pilot models, so
+thermal ampacity violation is recorded as unavailable. Nonzero sample counts
+include floating-point roundoff.
+
+`summarize-tadmm-round-timing-nov10.py` derives `round-timing.csv` from the
+measured trace and its per-period worker records. The file retains the original
+objective, residuals, rho and cumulative clocks, and adds each round's core
+and loop duration, summed worker time, min/median/mean/max local solver time,
+stage elapsed time and Ipopt iterations. It identifies the longest stage and
+counts capped subproblems. Maximum local stage duration and observed round
+wall time are separate measurements.
+
 Storage must execute chronologically in OpenDSS with100% efficiencies, zero
 idle/leakage losses, state initialized once and no resets/clamping used to
 repair the schedule. Report OPF/OpenDSS SOC differences in percentage points

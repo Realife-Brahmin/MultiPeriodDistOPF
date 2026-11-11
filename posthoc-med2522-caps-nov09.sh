@@ -11,6 +11,7 @@ test -s "$OUT/sweep.toml"
 for REPLAY in central_sequential "rho${RHO}_endpoint_sequential";do
  python3 "$C/campaign/audit-socp-storage-nov09.py" "$OUT/$REPLAY" "$C/source/test_networks/$SYSTEM/Storage.dss"
 done
+python3 "$C/campaign/summarize-tadmm-round-timing-nov10.py" "$OUT/rho$RHO"
 python3 - "$OUT" <<'PY'
 import csv,json,sys
 from pathlib import Path
