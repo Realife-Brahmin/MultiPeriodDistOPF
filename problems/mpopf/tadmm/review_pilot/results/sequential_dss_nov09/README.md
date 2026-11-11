@@ -21,6 +21,20 @@ All reported errors are maxima over individual batteries/intervals, not
 averages or fleet totals. The energy tolerance is0.01kWh (1e-5 times the
 1000kVA base). Raw tables retain numerical precision for other tolerances.
 
+An independent audit over every battery and period also maximizes each
+error as a fraction of the affected battery's rating. Cap10's worst SOC
+state disagreement is 0.055304 percentage points at bus 1057, hour 18
+(1,333.2 kWh rated), above the 0.05-point engineering target. Its maximum
+energy-accounting error is 0.043532% of rating, at bus 1047, hour 8.
+Its maximum requested bound error is 0.050850 points. Cap30's corresponding
+maxima are 0.023787 points, 0.035133%, and 0.036451 points. These endpoints
+reached all-copy RMS below 1e-5. They are not 1e-3 stopping milestones.
+See `rating-normalized/*-model.json` for the worst locations and cone
+statistics. The raw maximum absolute cone gaps are 1.55854e-5 for
+centralized and 7.85974e-6/7.85975e-6 for cap10/cap30, in per-unit squared.
+The smaller previously reported normalized gaps divide by
+`max(1, abs(v*ell), P^2+Q^2)` and measure a different quantity.
+
 ## Why the old snapshot pass was insufficient
 
 The shared snapshot checker substitutes constant-power injections for Storage.

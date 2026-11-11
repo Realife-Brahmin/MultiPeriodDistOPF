@@ -14,6 +14,32 @@ Jobs 31679861 and 31679862 audit energy feasibility and explicit cone,
 chronological storage and RAM evidence after the solve. No results are
 claimed at submission.
 
+### Exact comparison before selecting another cap
+
+Job 31679947 repeats T48 with exact local solves and the same frozen source,
+hardware class, penalty schedule, centralized reference procedure, and
+validation as job 31679860. The campaign directory ends in
+`tadmm_review_nov10_large10k_t48_exact`. Audit jobs 31679948 and 31679949
+follow it. The comparison changes the local solve policy only.
+
+The prior exact fixed-48 trajectory (31657407) contains 6,192 measured
+subproblem solves over 129 rounds. Ipopt iterations were 4 at the median,
+17 at p95, and 137 at the maximum. A cap10 would have cut 762 solves and
+the longest elapsed subproblem in 106 rounds. A cap20 would have cut 163
+solves and the longest subproblem in 39 rounds. The final round had a
+maximum of 11 iterations. These counts describe the exact trajectory and
+cannot predict the runtime or convergence of a capped trajectory.
+
+The fresh cap10 measured trace reached the consensus target after 176
+rounds, 154.70 s core and 175.98 s loop, versus 87.81 s centralized.
+Three last-round subproblems hit the cap. Its original-model violation
+was 8.12e-4 and its maximum raw cone slack was 1.52e-4 per-unit squared.
+At the last iteration before half the centralized core time, the all-copy
+RMS residual was 2.85e-3 and the original-model violation 1.83e-2.
+The earlier first crossing of 1e-3 had an objective about 6.8% above
+centralized, so the residual alone cannot select the stopping time.
+These are measured solve results pending completion of independent audits.
+
 Source4a074c167403ba9decb31a578a8df4de1e47f0c0, gate31657404 passed425 tests:
 174 forced-interruption/exact-recovery checks,3 fixed-penalty schedule checks,
 and248 existing repeated-solve/objective/multiplier checks.
