@@ -2,7 +2,7 @@
 set -euo pipefail
 JOBS=/home/aryan.jha/kamiak_jobs
 BASE="$JOBS/tadmm_review_nov09_med2522_caps_sequence"
-C="$JOBS/tadmm_review_nov10_large10k_t48_tuning"
+C="$JOBS/tadmm_review_nov10_large10k_t48_tuning_v2"
 LAUNCH="$JOBS/large10k-t48-tuning-nov10-launch"
 P=problems/mpopf/tadmm/review_pilot
 test -s "$BASE/MED_SEQUENCE_GATE_VALIDATED"
@@ -40,7 +40,7 @@ for path in ARGS[2:end]
 end
 println("Bootstrap schedule, defaults, residual gate and Julia parse checks passed.")
 JULIA
-"$JOBS/../opt/julia-1.12.4/bin/julia" --startup-file=no "$C/campaign/gate.jl" "$P/legacy_rho.jl" "$P/run.jl" "$P/run_horizon_sweep.jl" > "$C/logs/controller-gate.log"
+/home/aryan.jha/opt/julia-1.12.4/bin/julia --startup-file=no "$C/campaign/gate.jl" "$P/legacy_rho.jl" "$P/run.jl" "$P/run_horizon_sweep.jl" > "$C/logs/controller-gate.log" 2>&1
 cat > "$C/campaign/run.sh" <<'BASH'
 #!/usr/bin/env bash
 set -euo pipefail
