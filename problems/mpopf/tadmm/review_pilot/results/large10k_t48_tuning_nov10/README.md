@@ -20,8 +20,30 @@ and independent replay thresholds are retained. Save unsuccessful trials
 and tuning costs. A 2x claim requires a validated candidate at half its
 matched central solve time or less, then a matched confirmation run.
 
-First job 31680005 was running on cn168 at verification. The other jobs
-and dependent audits were queued. No tuning outcome is claimed yet.
+## Completed results
+
+All 24 candidates and 12 independent audits completed. The per-candidate
+results are in `completed-candidates.csv`, ordered by the ratio of matched
+centralized time to tADMM core time. Full compact evidence is archived per
+job. The complete replay tables and saved dispatches remain on Kamiak.
+
+The fastest candidate used cap20, initial rho 15000, decrease factor 5 and
+floor 24. It took 123 rounds, 125.85 s core and 140.70 s loop versus 87.85 s
+centralized on cn168. Its objective gap was 3.93e-6 relative, maximum SOC
+agreement error 0.3970 kWh or 0.02978 percentage points of rated capacity,
+and maximum requested bound error 0.5419 kWh or 0.04064 percentage points.
+The strict original-model maximum violation was 5.42e-4. The absolute cone
+gap matched the central value of 1.55854e-5 pu squared to displayed precision.
+
+None reached the physical near-optimal milestone or passed strict
+chronological replay. None reached the combined objective and
+original-model thresholds by half of matched centralized time. The
+engineering storage thresholds were met at the endpoint by 22 of 24.
+Peak sampled process-tree PSS ranged from 53.24 to 54.88 GiB.
+The gated variants had a median core time of 261.65 s versus 157.32 s for
+the ungated set. The grid also varied other settings, so this is a
+descriptive comparison. No candidate qualifies for a speedup confirmation
+or horizon extension under the declared criteria.
 
 The fresh exact comparison 31679947 on cn168 took 129 rounds, 154.9708 s
 core and 171.3019 s loop versus 87.7364 s centralized. Cap10 on the same
