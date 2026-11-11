@@ -5,6 +5,14 @@ BASE="$JOBS/tadmm_review_nov10_large10k_t48_tuning_v3"
 C="$JOBS/tadmm_review_nov11_large10k_interim"
 LAUNCH="$JOBS/large10k-interim-nov11-launch"
 P=problems/mpopf/tadmm/review_pilot
+CASES=(60:20:64 72:20:76 48:20:76 60:exact:64 72:exact:76)
+REUSE_PROFILES=${2:-}
+if [[ $REUSE_PROFILES == ice ]]; then
+ BASE=$C
+ C="${C}_ice"
+ CASES=(72:20:76 48:20:76 72:exact:76)
+ test -s "$BASE/INTERIM_PROFILES_VALIDATED"
+fi
 test ! -e "$C"
 mkdir -p "$C/campaign" "$C/logs"
 cp -a "$BASE/source" "$BASE/julia-depot" "$C/"
@@ -85,10 +93,18 @@ fi
 exec bash "$C/source/problems/mpopf/tadmm/review_pilot/kamiak_full_period.sh" "$C" "$T" run primal_dual 15000 ma57 large10kC_1ph
 BASH
 for script in "$C/campaign/"*.sh; do bash -n "$script"; done
-G=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=00:20:00 --job-name=large-interim-profiles --output="$C/logs/profiles-%j.out" --error="$C/logs/profiles-%j.err" "$C/campaign/export.sh" "$C")
-printf 'profiles=%s\n' "$G" > "$C/campaign/profile-job.txt"
+DEPENDENCY=()
+if [[ $REUSE_PROFILES == ice ]]; then
+ cp "$BASE/input.sha256" "$BASE/INTERIM_PROFILES_VALIDATED" "$C/"
+ cp "$BASE/campaign/profile-job.txt" "$C/campaign/"
+ sha256sum --check --quiet "$C/input.sha256"
+else
+ G=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=00:20:00 --job-name=large-interim-profiles --output="$C/logs/profiles-%j.out" --error="$C/logs/profiles-%j.err" "$C/campaign/export.sh" "$C")
+ printf 'profiles=%s\n' "$G" > "$C/campaign/profile-job.txt"
+ DEPENDENCY=(--dependency="afterok:$G" --kill-on-invalid-dep=yes)
+fi
 printf 'T\tcap\tcores\tmodel\tsolve\taudit\n' > "$C/campaign/submissions.tsv"
-for CASE in 60:20:64 72:20:76 48:20:76 60:exact:64 72:exact:76; do
+for CASE in "${CASES[@]}"; do
  IFS=: read -r T CAP CORES <<< "$CASE"
  if [[ $CORES == 64 ]]; then
   MODEL=6438Y+
@@ -97,7 +113,7 @@ for CASE in 60:20:64 72:20:76 48:20:76 60:exact:64 72:exact:76; do
   MODEL=8368
   FEATURES='icelake&platinum-8368-2.40ghz&mem-1TB&cores-76'
  fi
- J=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task="$CORES" --hint=nomultithread --mem=128G --time=02:00:00 --constraint="$FEATURES" --dependency="afterok:$G" --kill-on-invalid-dep=yes --job-name="large$T-$CAP-$CORES" --output="$C/logs/solve-%j.out" --error="$C/logs/solve-%j.err" "$C/campaign/run.sh" "$C" "$T" "$CAP" "$MODEL")
+ J=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task="$CORES" --hint=nomultithread --mem=128G --time=02:00:00 --constraint="$FEATURES" "${DEPENDENCY[@]}" --job-name="large$T-$CAP-$CORES" --output="$C/logs/solve-%j.out" --error="$C/logs/solve-%j.err" "$C/campaign/run.sh" "$C" "$T" "$CAP" "$MODEL")
  A=$(sbatch --parsable --account=dubey --partition=kamiak --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=8G --time=00:20:00 --dependency="afterany:$J" --job-name="large$T-audit" --output="$C/logs/audit-%j.out" --error="$C/logs/audit-%j.err" "$C/campaign/posthoc.sh" "$J" "$C" "$T" 15000 large10kC_1ph)
  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$T" "$CAP" "$CORES" "$MODEL" "$J" "$A" >> "$C/campaign/submissions.tsv"
 done
