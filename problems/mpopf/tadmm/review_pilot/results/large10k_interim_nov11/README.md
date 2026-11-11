@@ -63,3 +63,29 @@ as a comparable-quality benchmark at these two horizons.
 `july-milestone-replay-31681180.tgz` preserves the milestone hashes, replay
 summaries, expanded error distributions and logs. SHA256:
 `7ad75e77051fef3f1465601a4ec880d10a6f93bc0aadd5ec4df9dd5bc805bfc4`.
+
+## Exact local solves at T72
+
+Jobs 31680926 and 31680927 completed on the corrected campaign. The solve
+used cn130, a 76-core Xeon 8368, with 72 workers and the frozen 9ea64e7e
+source. Centralized MA57 took 137.51 s and 29 Ipopt iterations. Exact-local
+tADMM used 190 rounds and took 272.48 s core and 302.03 s loop. Cap20 on the
+same node used 224 rounds and 280.14 s core / 314.46 s loop.
+
+At the exact endpoint, chronological OpenDSS SOC differed by up to 0.15419%
+of rated capacity (2.056 kWh at bus 1057, period 72). The cap20 endpoint
+had 0.03831% maximum SOC disagreement. The exact endpoint's maximum absolute
+cone gap was 2.337806e-5 p.u. squared, effectively the same as centralized.
+The maximum normalized gap was 0.18147% versus 0.14761% centralized, using
+the archived denominator floor of 1e-12 p.u. squared. The relative objective
+gap was 7.53e-7. The exact endpoint exceeds the 0.05% SOC target and its
+timing establishes no speedup.
+
+Across rounds, the median and slowest worker solve times averaged 0.30 s
+and 0.92 s, respectively. The longest worker solve took 4.82 s and the
+maximum local Ipopt count was 130. Sampled coordinator-plus-worker memory
+peaked at 105.8 GiB summed RSS, 88.8 GiB PSS and 88.6 GiB private memory.
+
+The compact archive retains solver and audit logs, Slurm accounting, source
+and input manifests, round and per-period traces, and expanded audit
+summaries. The frozen campaign on Kamiak retains the full raw results.
