@@ -2,7 +2,7 @@
 set -euo pipefail
 JOBS=/home/aryan.jha/kamiak_jobs
 BASE="$JOBS/tadmm_review_nov09_med2522_caps_sequence"
-C="$JOBS/tadmm_review_nov10_large10k_t48_tuning_v2"
+C="$JOBS/tadmm_review_nov10_large10k_t48_tuning_v3"
 LAUNCH="$JOBS/large10k-t48-tuning-nov10-launch"
 P=problems/mpopf/tadmm/review_pilot
 test -s "$BASE/MED_SEQUENCE_GATE_VALIDATED"
@@ -23,13 +23,13 @@ sha256sum --check --quiet "$C/input.sha256"
 find "$P" test_networks problems/mpopf/spar_ddp/examples/power_system -type f ! -path '*/results/*' ! -path '*/__pycache__/*' -print0 | sort -z | xargs -0 sha256sum > "$C/execution-source.sha256"
 cat > "$C/campaign/gate.jl" <<'JULIA'
 include(abspath(ARGS[1]))
-rho = 120000.0
-path = Float64[]
-for k in 1:26
-    push!(path, rho)
-    rho = bootstrap_fixed_rho(rho,k)
+let rho = 120000.0, path = Float64[]
+    for k in 1:26
+        push!(path, rho)
+        rho = bootstrap_fixed_rho(rho,k)
+    end
+    @assert path[1:5:26] == [120000,24000,4800,960,192,48]
 end
-@assert path[1:5:26] == [120000,24000,4800,960,192,48]
 @assert bootstrap_fixed_rho(120000,5;decrease=2,residual=2e-4,gate=1e-4)==120000
 @assert bootstrap_fixed_rho(120000,5;decrease=2,residual=1e-4,gate=1e-4)==60000
 @assert bootstrap_fixed_rho(60,5;floor=48,decrease=10,residual=0,gate=1e-4)==48
