@@ -37,3 +37,30 @@ cap30 as 31681328 with audit 31681329.
 The two exact-run archives preserve original logs, manifests, traces,
 expanded chronological and SOCP audits, and Slurm accounting. Full dispatch
 files and replay tables remain in their original Kamiak result directories.
+
+## Cap10 and penalty-controller follow-up
+
+Cap10 (31681326, audit 31681327) reached 1000 rounds in 228.62 s core
+and 270.24 s loop against a fully solved 63.17 s centralized reference
+(63 Ipopt iterations). The input and centralized dispatch hashes matched
+the exact MA57 case. The cap activated in 44,204 of 96,000 measured local
+solves. Mean per-round median/slowest local solve times were 0.0887/0.1107 s.
+Sampled measured tADMM RSS/PSS/private peaks were 86.11/63.36/63.12 GiB.
+Centralized PSS peaked at 2.75 GiB.
+
+The objective gap remained 39.03%. The maximum chronological SOC error
+was 33.6594% of affected battery capacity, versus about 1.64e-8% for
+centralized. Maximum dispatch disagreement was 6.385 kW and requested SOC
+bound violation was 96.61 kWh. Maximum absolute cone equality gaps were
+9.0142e-6 versus 7.7920e-7 p.u. squared and p95 normalized gaps were
+2.3024% versus 0.2394%. The cap reduced worker time but did not recover a
+validated dispatch. The archive preserves both audits and raw traces.
+
+One controlled controller comparison is queued as 31681398, audit 31681399.
+It reuses the exact MA57 campaign and changes the controller from the
+unconditional decline to fixed 48 to the frozen residual-gated legacy
+implementation. This implementation uses the July-style primal-first
+logic with the existing 1e-4 adaptation gate and watchdog. The numerical
+stopping criteria, current feeder and corrected model, starts, rho0=20000,
+and local solve accuracy are shared with the exact MA57 reference. This
+comparison does not recreate July's stopping rule or test inputs.
