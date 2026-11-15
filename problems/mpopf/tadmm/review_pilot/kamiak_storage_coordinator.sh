@@ -28,5 +28,12 @@ export SC_NWORKERS=${SC_NWORKERS:-$T}
 { hostname; date -Is; lscpu; taskset -pc $$; scontrol show job "$SLURM_JOB_ID"; env | grep -E '^(OMP_|OPENBLAS_|JULIA_|TADMM_|SC_)'; } > "$OUT/allocation.txt"
 sha256sum "$P"/storage_coordinator*.jl "$P/model.jl" "$LIB" "problems/mpopf/spar_ddp/results/network_filterddp/network_data_${SYS}_T${T}_periodic.jls" > "$OUT/sources.sha256"
 julia --startup-file=no --project="$P" "$P/storage_coordinator_parallel.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err"
-grep -E 'CENTRAL|CASE|SC_NO|SC_REPAIR_NO|SC_DONE|SC_SUMMARY|SC_WARNING' "$OUT/solve.log"
+grep -E 'CENTRAL|CASE|SC_NO|SC_REPAIR_NO|SC_CONVERGED|SC_DONE|SC_SUMMARY|SC_WARNING' "$OUT/solve.log"
+# Chronological OpenDSS replay of every saved dispatch: live Storage elements,
+# energy carried through the horizon, never reset. Outside all solve clocks.
+for name in central converged repair_no no; do
+ [[ -s "$OUT/${name}_dispatch.jls" ]] || { echo "OPENDSS $name: no dispatch saved"; continue; }
+ SEQUENTIAL_DSS_GZIP=1 julia --startup-file=no --project="$P" "$P/run_sequential_dss.jl" "$OUT/instance.jls" "$OUT/${name}_dispatch.jls" "$OUT/${name}_sequential" model > "$OUT/${name}_opendss.log" 2>&1 || echo "OPENDSS $name: replay failed, see ${name}_opendss.log"
+ grep -h SEQUENTIAL_DSS "$OUT/${name}_opendss.log" | sed "s/^/OPENDSS $name: /" || true
+done
 date -Is > "$OUT/COMPLETE"

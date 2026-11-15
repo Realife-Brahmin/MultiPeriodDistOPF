@@ -50,7 +50,11 @@ function sc_repair!(zc)
         end
         for (n,j) in enumerate(d[:Bset]); fix(s.pb[j],zc[t][n];force=true); end
         optimize!(s.m)
-        ok=termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
-        (;t,ok,u=ok ? stage_dispatch(s,d) : Float64[],solver_s=solve_time(s.m),elapsed_s=(time_ns()-tick)/1e9)
+        # A tightly constrained period can stop at Ipopt's acceptable level instead
+        # of the strict tolerance. Return any finite point with its status; the
+        # caller judges it by the measured violation of the original model.
+        strict=termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+        ok=has_values(s.m) && all(isfinite,value.(s.vars))
+        (;t,ok,strict,status=string(raw_status(s.m)),u=ok ? stage_dispatch(s,d) : Float64[],solver_s=solve_time(s.m),elapsed_s=(time_ns()-tick)/1e9)
     end
 end
