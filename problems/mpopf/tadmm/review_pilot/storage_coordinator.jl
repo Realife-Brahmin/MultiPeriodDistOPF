@@ -83,8 +83,11 @@ function make_power_stage(d,t;rho)
     return (;m,t,ps,qs,p,q,v,ell,qd,pb,cb,vars=all_variables(m),layout)
 end
 
-function power_stage_step!(s,d,zt,ut,rho,k)
-    if k>1
+function power_stage_step!(s,d,zt,ut,rho,k;start=nothing)
+    if start!==nothing
+        # The model was last used for a repair solve: resume from the saved iterate.
+        set_start_value.(s.vars,start)
+    elseif k>1
         vals=value.(s.vars); set_start_value.(s.vars,vals)
     end
     for (n,j) in enumerate(d[:Bset])

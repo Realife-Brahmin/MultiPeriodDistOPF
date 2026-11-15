@@ -58,3 +58,72 @@ function sc_repair!(zc)
         (;t,ok,strict,status=string(raw_status(s.m)),u=ok ? stage_dispatch(s,d) : Float64[],solver_s=solve_time(s.m),elapsed_s=(time_ns()-tick)/1e9)
     end
 end
+
+# ---- Lean variant: each worker receives only its own periods' data and keeps
+# one model per period, used for the iterations and, when asked, for the repair.
+
+"""Columns of a per-period data matrix for a subset of periods, indexed like the full matrix."""
+struct PeriodColumns <: AbstractMatrix{Float64}
+    rows::Int
+    periods::Int
+    position::Dict{Int,Int}
+    columns::Matrix{Float64}
+end
+Base.size(a::PeriodColumns)=(a.rows,a.periods)
+Base.getindex(a::PeriodColumns,j::Int,t::Int)=a.columns[j,a.position[t]]
+
+"""Copy of the instance holding per-period matrices for `periods` only. Call after
+the screening and layout caches exist, so no worker needs the other periods."""
+function slim_instance(d,periods)
+    T=d[:T]; position=Dict(t=>n for (n,t) in enumerate(periods)); out=Dict{Symbol,Any}()
+    for (key,value) in d
+        out[key]=value isa Matrix{Float64} && size(value,2)==T && size(value,1)>1 ?
+            PeriodColumns(size(value,1),T,position,value[:,collect(periods)]) : value
+    end
+    return out
+end
+
+function sc_prepare_lean!(d,periods,chunk,rho)
+    BLAS.set_num_threads(1)
+    empty!(SC); GC.gc()
+    SC[:d]=d; SC[:periods]=sort(collect(periods)); SC[:chunk]=collect(chunk)
+    SC[:stages]=Dict(t=>make_power_stage(d,t;rho) for t in periods)
+    SC[:coord]=isempty(chunk) ? nothing : make_coordinator(d;idx=chunk)
+    SC[:resume]=Dict{Int,Vector{Float64}}()
+    return (;worker=myid(),pid=getpid(),host=gethostname(),affinity=sc_affinity(),periods=SC[:periods],batteries=length(chunk),
+        julia_threads=Threads.nthreads(),blas_threads=BLAS.get_num_threads())
+end
+
+function sc_xstep_lean!(zc,uc,rho,k)
+    d=SC[:d]
+    return map(SC[:periods]) do t
+        tick=time_ns()
+        x,solver_s,iterations=power_stage_step!(SC[:stages][t],d,zc[t],uc[t],rho,k;start=pop!(SC[:resume],t,nothing))
+        (;t,x,solver_s,iterations,elapsed_s=(time_ns()-tick)/1e9)
+    end
+end
+
+# Repair in the iteration model itself: drop the penalty, fix the batteries at the
+# schedule, solve, then restore the bounds and remember the iterate to resume from.
+function sc_repair_shared!(zc)
+    d=SC[:d]
+    return map(SC[:periods]) do t
+        tick=time_ns(); s=SC[:stages][t]
+        iterate=value.(s.vars); set_start_value.(s.vars,iterate)
+        for (n,j) in enumerate(d[:Bset])
+            set_objective_coefficient(s.m,s.pb[j],0.0)
+            set_objective_coefficient(s.m,s.pb[j],s.pb[j],s.cb)
+            fix(s.pb[j],zc[t][n];force=true)
+        end
+        optimize!(s.m)
+        strict=termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+        ok=has_values(s.m) && all(isfinite,value.(s.vars))
+        u=ok ? stage_dispatch(s,d) : Float64[]
+        status=string(raw_status(s.m)); solver_s=solve_time(s.m)   # read before the model changes again
+        for j in d[:Bset]
+            unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
+        end
+        SC[:resume][t]=iterate
+        (;t,ok,strict,status,u,solver_s,elapsed_s=(time_ns()-tick)/1e9)
+    end
+end
