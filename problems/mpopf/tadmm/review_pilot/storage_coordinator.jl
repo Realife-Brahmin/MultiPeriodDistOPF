@@ -136,8 +136,10 @@ function make_coordinator(d;idx=eachindex(d[:Bset]))
     return (;m,z,b,vars=all_variables(m))
 end
 
-function coordinator_step!(c,target,k)
-    if k>1
+function coordinator_step!(c,target,k;start=nothing)
+    if start!==nothing
+        set_start_value.(c.vars,start)
+    elseif k>1
         vals=value.(c.vars); set_start_value.(c.vars,vals)
     end
     for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end

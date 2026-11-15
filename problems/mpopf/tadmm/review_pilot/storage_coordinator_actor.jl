@@ -34,7 +34,7 @@ end
 # Update II for this worker's batteries. target has one row per battery of the chunk.
 function sc_zstep!(target,k)
     tick=time_ns()
-    z,solver_s=coordinator_step!(SC[:coord],target,k)
+    z,solver_s=coordinator_step!(SC[:coord],target,k;start=pop!(SC,:coord_resume,nothing))
     return (;z,solver_s,elapsed_s=(time_ns()-tick)/1e9)
 end
 
@@ -105,25 +105,50 @@ end
 
 # Repair in the iteration model itself: drop the penalty, fix the batteries at the
 # schedule, solve, then restore the bounds and remember the iterate to resume from.
-function sc_repair_shared!(zc)
+function sc_repair_shared!(zc;max_iter=3000)
     d=SC[:d]
     return map(SC[:periods]) do t
         tick=time_ns(); s=SC[:stages][t]
-        iterate=value.(s.vars); set_start_value.(s.vars,iterate)
+        # The iterate to resume from: saved by an earlier repair of this iteration, else the model's own.
+        iterate=haskey(SC[:resume],t) ? SC[:resume][t] : value.(s.vars)
+        set_start_value.(s.vars,iterate)
         for (n,j) in enumerate(d[:Bset])
             set_objective_coefficient(s.m,s.pb[j],0.0)
             set_objective_coefficient(s.m,s.pb[j],s.pb[j],s.cb)
             fix(s.pb[j],zc[t][n];force=true)
         end
+        # A period whose network cannot absorb the fixed batteries runs long before
+        # Ipopt gives up; the cap makes such an attempt cheap. It is then not strict.
+        set_optimizer_attribute(s.m,"max_iter",max_iter)
         optimize!(s.m)
         strict=termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
         ok=has_values(s.m) && all(isfinite,value.(s.vars))
         u=ok ? stage_dispatch(s,d) : Float64[]
         status=string(raw_status(s.m)); solver_s=solve_time(s.m)   # read before the model changes again
+        set_optimizer_attribute(s.m,"max_iter",3000)
         for j in d[:Bset]
             unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
         end
         SC[:resume][t]=iterate
         (;t,ok,strict,status,u,solver_s,elapsed_s=(time_ns()-tick)/1e9)
     end
+end
+
+# Battery step with some periods pinned: the schedule closest to `target` that
+# the batteries can follow when their powers in the pinned periods are given.
+# pinned maps period => powers of this worker's batteries.
+function sc_zstep_pinned!(target,pinned)
+    c=SC[:coord]; d=SC[:d]; tick=time_ns(); limits=[d[:P_B_R_pu][j] for j in d[:Bset][SC[:chunk]]]
+    iterate=haskey(SC,:coord_resume) ? SC[:coord_resume] : value.(c.vars)
+    set_start_value.(c.vars,iterate)
+    for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end
+    for (t,p) in pinned, n in eachindex(p); fix(c.z[n,t],p[n];force=true); end
+    optimize!(c.m)
+    ok=termination_status(c.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+    z=ok ? value.(c.z) : zeros(0,0)
+    for (t,p) in pinned, n in eachindex(p)
+        unfix(c.z[n,t]); set_lower_bound(c.z[n,t],-limits[n]); set_upper_bound(c.z[n,t],limits[n])
+    end
+    SC[:coord_resume]=iterate
+    return (;ok,z,elapsed_s=(time_ns()-tick)/1e9)
 end

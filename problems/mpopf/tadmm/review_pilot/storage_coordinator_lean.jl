@@ -16,7 +16,7 @@ include("storage_coordinator_parallel.jl")
 
 stamp(name)=(@printf("SC_PHASE %s %.3f\n",name,time()); flush(stdout))
 
-function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual,balance,balance_step)
+function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual,balance,balance_step,repair_max_iter,repair_backoff)
     T=d[:T]; bs=d[:Bset]; nb=length(bs); dt=d[:delta_t_h]; W=length(SC_WIDS)
     groups=[collect(w:W:T) for w in 1:W]; chunks=[collect(w:W:nb) for w in 1:W]
     build0=time_ns()
@@ -24,7 +24,8 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     build_s=(time_ns()-build0)/1e9
     phase=="warmup" && length(unique((i.host,i.affinity) for i in layout))!=W && Sys.islinux() && get(ENV,"SC_PIN","1")=="1" && error("Workers share CPUs")
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T)
-    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; converged=0; gap=NaN; violation=NaN; objective=NaN
+    tight_periods=Int[]; zrep=z; pinned_passes=0; pinned_accepted=0
+    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; converged=0; gap=NaN; violation=NaN; objective=NaN
     io=open(joinpath(out,"lean_trace_$(phase).csv"),"w")
     println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict")
     for iteration in 1:maxiter
@@ -52,11 +53,35 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             b>balance*a && (rho_next=rho/balance_step)
         end
         attempted=false; strict=false; rus=Vector{Vector{Float64}}(undef,T)
-        if k>ramp && r_rms<=eps_pri && s_rel<=eps_dual
+        if k>ramp && k>=next_attempt && r_rms<=eps_pri && s_rel<=eps_dual
             attempted=true; attempts+=1; strict=true
-            for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w])) for w in 1:W]), row in answer
-                strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u)
+            empty!(tight_periods); zrep=z
+            for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]);max_iter=repair_max_iter) for w in 1:W]), row in answer
+                strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u); (row.ok && row.strict) || push!(tight_periods,row.t)
             end
+            # Periods whose network cannot absorb the battery schedule (no slack in
+            # the voltage band) keep the powers their own solve asked for. The
+            # battery step is re-solved with those periods pinned, and the repair
+            # is run once more with the resulting schedule.
+            if !strict
+                tight=sort!(collect(tight_periods)); pinned_passes+=1
+                if !isempty(tight) && length(tight)<=max(1,T÷4)
+                    pjobs=[(w,remotecall(sc_zstep_pinned!,SC_WIDS[w],z[chunks[w],:],Dict(t=>x[chunks[w],t] for t in tight))) for w in 1:W if !isempty(chunks[w])]
+                    zp=copy(z); feasible=true
+                    for (w,job) in pjobs
+                        answer=fetch(job); feasible&=answer.ok; answer.ok && (zp[chunks[w],:]=answer.z)
+                    end
+                    if feasible
+                        strict=true
+                        for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>zp[:,t] for t in groups[w]);max_iter=repair_max_iter) for w in 1:W]), row in answer
+                            strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u)
+                        end
+                        strict && (zrep=zp; pinned_accepted=length(tight))
+                    end
+                end
+            end
+            # After a refused repair, iterate a few times before trying again.
+            strict || (next_attempt=k+repair_backoff)
         end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
         println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict),',')); flush(io)
@@ -65,7 +90,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             zb=zeros(nb,T)
             for n in 1:nb
                 e=d[:B0_pu][bs[n]]
-                for t in 1:T; e-=dt*z[n,t]; zb[n,t]=e; end
+                for t in 1:T; e-=dt*zrep[n,t]; zb[n,t]=e; end
             end
             pm=physical_metrics(d,rus,zb); objective=pm.objective; violation=pm.original_primal
             gap=abs(objective-reference)/max(1.0,abs(reference))
@@ -77,8 +102,8 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         end
     end
     close(io)
-    @printf("SC_LEAN_DONE phase=%s workers=%d iterations=%d converged=%d repair_attempts=%d algorithm_s=%.3f gap=%.3e violation=%.3e build_s=%.3f\n",
-        phase,W,k,converged,attempts,algorithm,gap,violation,build_s); flush(stdout)
+    @printf("SC_LEAN_DONE phase=%s workers=%d iterations=%d converged=%d repair_attempts=%d pinned_passes=%d pinned_periods=%d algorithm_s=%.3f gap=%.3e violation=%.3e build_s=%.3f\n",
+        phase,W,k,converged,attempts,pinned_passes,pinned_accepted,algorithm,gap,violation,build_s); flush(stdout)
     return (;k,converged,attempts,algorithm,gap,violation,build_s)
 end
 
@@ -118,7 +143,9 @@ function lean_main()
         system,T,profile,length(d[:Bset]),nworkers,rho_unit,get(ENV,"SC_RHO","2:0.0625:20"),balance,eps_pri,eps_dual); flush(stdout)
     stamp("pool_begin"); start_pool!(nworkers); stamp("pool_end")
     println("SC_PIDS ",join(fetch.([remotecall(getpid,w) for w in SC_WIDS]),' '))
-    common=(;rho,rho_end,ramp,maxiter=parse(Int,get(ENV,"SC_MAX_ITER","150")),reference,no_tol,out,eps_pri,eps_dual,balance,balance_step)
+    repair_max_iter=parse(Int,get(ENV,"SC_REPAIR_MAX_ITER","60")); repair_backoff=parse(Int,get(ENV,"SC_REPAIR_BACKOFF","3"))
+    @printf("SC_SETTINGS repair_max_iter=%d repair_backoff=%d\n",repair_max_iter,repair_backoff)
+    common=(;rho,rho_end,ramp,maxiter=parse(Int,get(ENV,"SC_MAX_ITER","150")),reference,no_tol,out,eps_pri,eps_dual,balance,balance_step,repair_max_iter,repair_backoff)
     stamp("tadmm_warmup_begin"); warm=run_lean(d,system;common...,phase="warmup"); stamp("tadmm_warmup_end")
     stamp("tadmm_timed_begin"); timed=run_lean(d,system;common...,phase="timed"); stamp("tadmm_timed_end")
     warm.k==timed.k || println("SC_WARNING warm-up and timed passes differ: ",warm.k," vs ",timed.k)
