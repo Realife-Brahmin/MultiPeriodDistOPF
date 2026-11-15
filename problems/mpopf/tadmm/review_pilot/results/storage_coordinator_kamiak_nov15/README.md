@@ -163,3 +163,36 @@ separated in these jobs.
 The last exploratory job (2 -> 0.25 with balancing and over-relaxation,
 large10k T48) did not converge in 150 iterations. The three T = 96 jobs of the
 2 -> 0.25 schedule in `tadmm_sc_nov15_v6` were cancelled unstarted.
+
+## Lean driver and measured memory (`tadmm_sc_nov15_v9_lean`)
+
+`storage_coordinator_lean.jl`: each worker holds only its own periods' data and
+one model per period; the repair is attempted only when the residual test is
+met, and every attempt is inside the tADMM clock. Memory is the sum of Pss over
+the process tree, sampled every 2 s (`sample_memory.py`); shared pages count
+once. Whole 64-core nodes, "base + balancing", one run each. Seconds and GB.
+
+| case | workers | centralized: time, memory | tADMM: time (iterations, repair attempts), memory |
+|---|---|---|---|
+| ieee123 T96 | 48 | 1.90, 0.74 | 1.14 (23, 1), 21.4 |
+| med2522 T24 | 24 | 14.6, 1.17 | 30.7 (32, 11), 13.3 |
+| med2522 T96 | 48 | 70.9, 2.77 | 25.9 (26, 4), 28.4 |
+| large10k T24 | 24 | 33.0, 2.79 | 19.0 (24, 1), 19.1 |
+| large10k T96 | 48 | 176.9, 9.48 | 56.3 (29, 1), 48.3 |
+
+Every centralized and converged dispatch passes the replay.
+
+- **Memory.** tADMM needs 5 to 30 times the centralized memory. About 0.45 GB
+  per worker is the Julia process itself (ieee123: 21.4 GB for 48 workers of a
+  tiny problem). The earlier Slurm MaxRSS figures were roughly twice the Pss:
+  med2522 T96 with 48 workers read 47 GB there and 33.2 GB here with the same
+  (diagnostic) driver, job 31819485. The lean driver brings that to 28.5 GB.
+- **Failed repair attempts are expensive on med2522.** At T24 the residual test
+  is met from iteration 22 but the repair is strict only at 32; the ten failed
+  attempts run long (Ipopt stops at its acceptable level after 100+ iterations)
+  and tADMM ends at 30.7 s against 14.6 s centralized. The diagnostic driver
+  reported 12.3 s for the same 32 iterations because it charged only the
+  accepted repair. Its converged times for med2522 are therefore optimistic.
+  large10k and ieee123 accept the first attempt and are unaffected.
+
+The diagnostic "before" run for large10k T96 was still running.
