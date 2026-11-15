@@ -47,7 +47,7 @@ function start_pool!(nworkers)
     pin && run(pipeline(`taskset -apc $(cpus[1]) $(getpid())`;stdout=devnull))
 end
 
-function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual,balance=0.0,balance_step=1.5)
+function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual,balance=0.0,balance_step=1.5,alpha=1.0)
     T=d[:T]; bs=d[:Bset]; nb=length(bs); dt=d[:delta_t_h]; W=length(SC_WIDS)
     groups=[collect(w:W:T) for w in 1:W]; chunks=[collect(w:W:nb) for w in 1:W]
     build0=time_ns()
@@ -76,13 +76,16 @@ function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,refe
         for answer in fetch.(jobs), row in answer
             x[:,row.t]=row.x; push!(stage_s,row.elapsed_s); iters=max(iters,row.iterations)
         end
-        target=x.+u; zold=copy(z)
+        # Over-relaxation (alpha in (1,2)): the network's request is pushed past
+        # the previous battery schedule before Updates II and III. alpha = 1 is plain ADMM.
+        zold=copy(z); xh=alpha==1.0 ? x : alpha.*x.+(1-alpha).*zold
+        target=xh.+u
         zjobs=[(w,remotecall(sc_zstep!,SC_WIDS[w],target[chunks[w],:],k)) for w in 1:W if !isempty(chunks[w])]
         battery_s=0.0
         for (w,job) in zjobs
             answer=fetch(job); z[chunks[w],:]=answer.z; battery_s=max(battery_s,answer.elapsed_s)
         end
-        u.+=x.-z
+        u.+=xh.-z
         # Residuals of the stopping test, inside the clock. The dual residual is
         # measured against the multipliers rho*u, the batteries' marginal prices.
         r_rms=sqrt(sum(abs2,x.-z)/length(z)); s_rms=rho*sqrt(sum(abs2,z.-zold)/length(z))
@@ -205,7 +208,8 @@ function main()
     eps_pri=parse(Float64,get(ENV,"SC_EPS_PRI","1e-5")); eps_dual=parse(Float64,get(ENV,"SC_EPS_DUAL","1e-3"))
     balance=parse(Float64,get(ENV,"SC_BALANCE","0")); balance_step=parse(Float64,get(ENV,"SC_BALANCE_STEP","1.5"))
     @printf("SC_SETTINGS eps_pri=%g eps_dual=%g balance=%g balance_step=%g\n",eps_pri,eps_dual,balance,balance_step)
-    common=(;rho,rho_end,ramp,spec,maxiter,reference,no_tol,out,eps_pri,eps_dual,balance,balance_step)
+    alpha=parse(Float64,get(ENV,"SC_ALPHA","1.0")); @printf("SC_SETTINGS alpha=%g\n",alpha)
+    common=(;rho,rho_end,ramp,spec,maxiter,reference,no_tol,out,eps_pri,eps_dual,balance,balance_step,alpha)
     warm=run_parallel(d,datafile,system;common...,phase="warmup")
     GC.gc()
     timed=run_parallel(d,datafile,system;common...,phase="timed")
