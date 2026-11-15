@@ -30,11 +30,13 @@ DRIVER=storage_coordinator_${SC_DRIVER:-lean}.jl
 sha256sum "$P"/storage_coordinator*.jl "$P/model.jl" "$LIB" "problems/mpopf/spar_ddp/results/network_filterddp/network_data_${SYS}_T${T}_periodic.jls" > "$OUT/sources.sha256"
 # The solver keeps the first allowed CPUs; the sampler sits on the last one.
 LAST=$(python3 -c 'import os; print(max(os.sched_getaffinity(0)))')
-julia --startup-file=no --project="$P" "$P/$DRIVER" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+# The threaded driver runs every worker as a thread of one process.
+JT=1; [[ ${SC_DRIVER:-lean} == threaded ]] && JT=$SC_NWORKERS
+julia --threads="$JT" --startup-file=no --project="$P" "$P/$DRIVER" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 taskset -c "$LAST" python3 "$P/sample_memory.py" sample "$PID" "$OUT/memory_samples.csv" "${SC_SAMPLE_S:-2}" &
 wait "$PID"
-grep -E 'CENTRAL|CASE|SC_LEAN|SC_CONVERGED|SC_REPAIR_NO|SC_SUMMARY|SC_WARNING' "$OUT/solve.log" || true
+grep -E 'CENTRAL|CASE|SC_LEAN|SC_THREADED|SC_CONVERGED|SC_REPAIR_NO|SC_SUMMARY|SC_WARNING' "$OUT/solve.log" || true
 python3 "$P/sample_memory.py" summarize "$OUT/memory_samples.csv" "$OUT/solve.log" | tee "$OUT/memory_summary.txt"
 for name in central converged; do
  [[ -s "$OUT/${name}_dispatch.jls" ]] || { echo "OPENDSS $name: no dispatch saved"; continue; }
