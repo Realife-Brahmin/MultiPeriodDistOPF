@@ -79,3 +79,22 @@ Chosen schedule from here on: 2 -> 0.25 `rho_unit` over 10 iterations, then
 held (0.25 is the best fixed value found on ieee123), without balancing. On
 ieee123 it converges at iteration 18 (T = 24) and 22 (T = 96), 309 PC.
 `tadmm_sc_nov15_v6` holds the timed whole-node runs with it.
+
+## Timed runs with the 2 -> 0.25 schedule (`tadmm_sc_nov15_v6`)
+
+Whole 64-core nodes, two runs per case (a / b). Every centralized, converged
+and 0.1% dispatch passes the replay. "0.1%" is the time to a dispatch within
+0.1% of the centralized optimum, for both solvers.
+
+| case | centralized, converged | tADMM, converged (iterations) | centralized, 0.1% | tADMM repaired, 0.1% (iterations) |
+|---|---|---|---|---|
+| ieee123 T24 | 0.433 / 0.435 | 0.425 / 0.426 (18) | 0.326 / 0.327 | 0.225 / 0.229 (9) |
+| med2522 T24 | 14.5 / 14.1 | 8.12 / 7.96 (23) | 11.4 / 11.0 | 3.01 / 2.95 (8) |
+| large10k T24 | 31.6 / 31.6 | 16.0 / 16.1 (20) | 23.7 / 23.7 | 7.65 / 7.40 (9) |
+| large10k T48 | 85.4 / 80.9 | 61.1 / 59.6 (54) | 67.2 / 63.6 | 9.89 / 9.66 (8) |
+
+Against the 2 -> 0.0625 schedule, convergence is faster at T = 24 (large10k 39
+-> 20 iterations) and slower at T = 48 (43 -> 54). The cost is within 0.003% by
+iteration 20 in both; the remaining iterations shrink the primal residual from
+8e-4 to 1e-5. `tadmm_sc_nov15_v7_explore` tests over-relaxation and residual
+balancing for that tail. The T = 96 runs were still queued.
