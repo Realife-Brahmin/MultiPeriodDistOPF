@@ -47,7 +47,7 @@ function start_pool!(nworkers)
     pin && run(pipeline(`taskset -apc $(cpus[1]) $(getpid())`;stdout=devnull))
 end
 
-function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual)
+function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,reference,no_tol,phase,out,eps_pri,eps_dual,balance=0.0,balance_step=1.5)
     T=d[:T]; bs=d[:Bset]; nb=length(bs); dt=d[:delta_t_h]; W=length(SC_WIDS)
     groups=[collect(w:W:T) for w in 1:W]; chunks=[collect(w:W:nb) for w in 1:W]
     build0=time_ns()
@@ -59,15 +59,17 @@ function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,refe
     end
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T); us=Vector{Vector{Float64}}(undef,T)
     algorithm=0.0; no=0; no_s=NaN; repair_no=0; repair_no_s=NaN; k=0; rho_start=rho
-    converged=0; converged_s=NaN; converged_gap=NaN
+    converged=0; converged_s=NaN; converged_gap=NaN; rho_next=rho
     io=open(joinpath(out,"trace_$(phase).csv"),"w")
     println(io,"iteration,objective,gap,original_primal,r_max,s_max,r_rms,s_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,median_stage_s,slowest_battery_step_s,max_local_ipopt_iterations,repair_gap,repair_primal,repair_wall_s,check_s,repair_periods_at_acceptable_level")
     loop0=time_ns()
     for iteration in 1:maxiter
         k=iteration; tick=time_ns()
-        if ramp>0
+        if ramp>0 && (k<=ramp+1 || balance<=1)
             next=rho_start*(rho_end/rho_start)^(min(k-1,ramp)/ramp)
             u.*=rho/next; rho=next
+        elseif rho_next!=rho
+            u.*=rho/rho_next; rho=rho_next
         end
         jobs=[remotecall(sc_xstep!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]),Dict(t=>u[:,t] for t in groups[w]),rho,k) for w in 1:W]
         stage_s=Float64[]; iters=0
@@ -86,6 +88,15 @@ function run_parallel(d,datafile,system;rho,rho_end=rho,ramp=0,spec,maxiter,refe
         r_rms=sqrt(sum(abs2,x.-z)/length(z)); s_rms=rho*sqrt(sum(abs2,z.-zold)/length(z))
         s_rel=s_rms/max(rho*sqrt(sum(abs2,u)/length(u)),1e-12)
         residuals_met=k>ramp && r_rms<=eps_pri && s_rel<=eps_dual
+        # After the schedule ends, optionally balance the two residuals, each
+        # measured against its own tolerance: raise rho when the primal one is
+        # further from its target, lower it when the dual one is.
+        rho_next=rho
+        if balance>1 && k>ramp
+            a=r_rms/eps_pri; b=s_rel/eps_dual
+            a>balance*b && (rho_next=rho*balance_step)
+            b>balance*a && (rho_next=rho/balance_step)
+        end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
         # Quality check, outside the algorithm clock.
         check0=time_ns()
@@ -192,7 +203,9 @@ function main()
     pool0=time_ns(); start_pool!(nworkers); @printf("SC_POOL workers=%d start_s=%.2f coordinator_affinity=%s\n",nworkers,(time_ns()-pool0)/1e9,sc_affinity())
     maxiter=parse(Int,get(ENV,"SC_MAX_ITER","150"))
     eps_pri=parse(Float64,get(ENV,"SC_EPS_PRI","1e-5")); eps_dual=parse(Float64,get(ENV,"SC_EPS_DUAL","1e-3"))
-    common=(;rho,rho_end,ramp,spec,maxiter,reference,no_tol,out,eps_pri,eps_dual)
+    balance=parse(Float64,get(ENV,"SC_BALANCE","0")); balance_step=parse(Float64,get(ENV,"SC_BALANCE_STEP","1.5"))
+    @printf("SC_SETTINGS eps_pri=%g eps_dual=%g balance=%g balance_step=%g\n",eps_pri,eps_dual,balance,balance_step)
+    common=(;rho,rho_end,ramp,spec,maxiter,reference,no_tol,out,eps_pri,eps_dual,balance,balance_step)
     warm=run_parallel(d,datafile,system;common...,phase="warmup")
     GC.gc()
     timed=run_parallel(d,datafile,system;common...,phase="timed")
