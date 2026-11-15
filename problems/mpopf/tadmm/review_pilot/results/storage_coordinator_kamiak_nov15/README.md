@@ -196,3 +196,33 @@ Every centralized and converged dispatch passes the replay.
   large10k and ieee123 accept the first attempt and are unaffected.
 
 The diagnostic "before" run for large10k T96 was still running.
+
+## Memory before and after, same sampler
+
+large10k T96, 48 workers: 89.2 GB with the diagnostic driver (job 31819486),
+48.3 GB with the lean one. med2522 T96, 48 workers: 33.2 GB and 28.5 GB.
+Centralized: 9.5 GB and 2.8 GB.
+
+## Correction: why the repair is refused on med2522
+
+Earlier entries say that with the batteries fixed, period 1 of med2522 is
+"infeasible by 3e-7". That figure is Ipopt's largest single constraint
+violation at the point where it gives up, and it is spread evenly over 5,314
+equalities (the root-voltage equation and every voltage-drop equation). The
+shortfall itself is larger: the period solves strictly only when the voltage
+limits are relaxed by between 1e-4 and 3e-4 p.u. squared (`diagnose_repair.jl`,
+iteration 24, where the two battery schedules differ by 2e-4 p.u. in that
+period). Relaxing them by 1e-6, 1e-5 or 3e-5, or using Ipopt's default bound
+relaxation, does not help. Period 1 has voltages at both limits and needs its
+batteries where its own solve put them. The strict rule was the right response;
+the size quoted for the infeasibility was wrong.
+
+## Pinned repair (`tadmm_sc_nov15_v10_lean`)
+
+When the repair is refused in a few periods, those periods keep the battery
+powers their own solve asked for, the battery step is re-solved with them
+pinned, and the repair is run once more with the resulting schedule. On the
+309 PC med2522 T24 then converges at iteration 22 with one pinned period, in
+half the time of the refused-attempt version; the accepted dispatch is 0.012%
+above the centralized optimum (3e-4% before) with violation 7e-10. Timed runs
+of all cases were queued when this was written.

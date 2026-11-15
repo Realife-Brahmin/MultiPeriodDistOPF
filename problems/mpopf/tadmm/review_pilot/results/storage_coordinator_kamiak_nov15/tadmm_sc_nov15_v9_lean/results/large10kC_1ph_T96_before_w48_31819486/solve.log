@@ -399,3 +399,17 @@ SC_WORKER (worker = 49, pid = 2619142, host = "cn150", affinity = "48", periods 
 SC_ITER phase=warmup k=1 gap=2.851e-01 original=5.790e+00 repair_gap=2.608e-02 rho=143.988 algorithm_s=13.837
 SC_ITER phase=warmup k=2 gap=2.710e-02 original=8.992e-01 repair_gap=2.161e-02 rho=121.079 algorithm_s=15.688
 SC_ITER phase=warmup k=3 gap=1.590e-02 original=5.692e-02 repair_gap=1.653e-02 rho=101.815 algorithm_s=17.235
+SC_REPAIR_NO phase=warmup k=10 gap=8.711e-04 original=6.821e-13 algorithm_s=30.050 repair_wall_s=1.755 total_s=31.804
+SC_ITER phase=warmup k=10 gap=1.505e-03 original=9.993e-02 repair_gap=8.711e-04 rho=30.2698 algorithm_s=30.050
+SC_ITER phase=warmup k=20 gap=7.210e-05 original=1.562e-02 repair_gap=3.081e-06 rho=5.351 algorithm_s=49.735
+SC_CONVERGED phase=warmup k=29 r_rms=4.379e-06 s_relative=1.325e-04 repair_gap=3.887e-07 repair_primal=9.095e-13 algorithm_s=67.314 repair_wall_s=1.717 total_s=69.032
+SC_DONE phase=warmup spec=2:0.0625:20 workers=48 iterations=29 converged=29 converged_s=69.032 converged_gap=3.887e-07 no=0 no_s=NaN repair_no=10 repair_no_s=31.804 algorithm_s=67.314 loop_wall_s=420.411 build_s=15.001
+SC_ITER phase=timed k=1 gap=2.851e-01 original=5.790e+00 repair_gap=2.608e-02 rho=143.988 algorithm_s=4.164
+SC_ITER phase=timed k=2 gap=2.710e-02 original=8.992e-01 repair_gap=2.161e-02 rho=121.079 algorithm_s=6.339
+SC_ITER phase=timed k=3 gap=1.590e-02 original=5.692e-02 repair_gap=1.653e-02 rho=101.815 algorithm_s=8.071
+SC_REPAIR_NO phase=timed k=10 gap=8.711e-04 original=6.821e-13 algorithm_s=20.408 repair_wall_s=1.788 total_s=22.197
+SC_ITER phase=timed k=10 gap=1.505e-03 original=9.993e-02 repair_gap=8.711e-04 rho=30.2698 algorithm_s=20.408
+SC_ITER phase=timed k=20 gap=7.210e-05 original=1.562e-02 repair_gap=3.081e-06 rho=5.351 algorithm_s=39.335
+SC_CONVERGED phase=timed k=29 r_rms=4.379e-06 s_relative=1.325e-04 repair_gap=3.887e-07 repair_primal=9.095e-13 algorithm_s=56.652 repair_wall_s=1.726 total_s=58.378
+SC_DONE phase=timed spec=2:0.0625:20 workers=48 iterations=29 converged=29 converged_s=58.378 converged_gap=3.887e-07 no=0 no_s=NaN repair_no=10 repair_no_s=22.197 algorithm_s=56.652 loop_wall_s=399.478 build_s=6.053
+SC_SUMMARY system=large10kC_1ph T=96 workers=48 | converged: central_s=175.323 tadmm_s=58.378 (k=29, gap=3.89e-07) ratio=3.00 | near-optimal 0.1%: central_s=138.434 tadmm_repair_s=22.197 (k=10) ratio=6.24 | tadmm without repair: no_s=NaN (k=0)
