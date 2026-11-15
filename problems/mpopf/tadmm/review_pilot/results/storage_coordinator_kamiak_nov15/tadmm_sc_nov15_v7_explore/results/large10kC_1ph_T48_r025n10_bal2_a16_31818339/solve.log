@@ -429,3 +429,11 @@ SC_ITER phase=timed k=60 gap=2.418e-05 original=1.419e-04 repair_gap=2.411e-05 r
 SC_ITER phase=timed k=70 gap=2.189e-05 original=1.606e-04 repair_gap=2.180e-05 rho=2075.78 algorithm_s=76.150
 SC_ITER phase=timed k=80 gap=1.973e-05 original=7.521e-05 repair_gap=1.965e-05 rho=2075.78 algorithm_s=88.595
 SC_ITER phase=timed k=90 gap=1.771e-05 original=1.770e-04 repair_gap=1.764e-05 rho=2075.78 algorithm_s=100.247
+SC_ITER phase=timed k=100 gap=1.589e-05 original=1.098e-04 repair_gap=1.581e-05 rho=2075.78 algorithm_s=112.045
+SC_ITER phase=timed k=110 gap=1.418e-05 original=1.274e-04 repair_gap=1.414e-05 rho=2075.78 algorithm_s=124.258
+SC_ITER phase=timed k=120 gap=1.267e-05 original=1.655e-04 repair_gap=1.262e-05 rho=2075.78 algorithm_s=136.460
+SC_ITER phase=timed k=130 gap=1.127e-05 original=1.302e-04 repair_gap=1.124e-05 rho=2075.78 algorithm_s=148.785
+SC_ITER phase=timed k=140 gap=1.006e-05 original=1.152e-04 repair_gap=9.993e-06 rho=2075.78 algorithm_s=160.913
+SC_ITER phase=timed k=150 gap=8.922e-06 original=7.491e-05 repair_gap=8.880e-06 rho=2075.78 algorithm_s=173.583
+SC_DONE phase=timed spec=2:0.25:10 workers=48 iterations=150 converged=0 converged_s=NaN converged_gap=NaN no=0 no_s=NaN repair_no=7 repair_no_s=9.419 algorithm_s=173.583 loop_wall_s=955.716 build_s=3.272
+SC_SUMMARY system=large10kC_1ph T=48 workers=48 | converged: central_s=76.538 tadmm_s=NaN (k=0, gap=NaN) ratio=NaN | near-optimal 0.1%: central_s=60.367 tadmm_repair_s=9.419 (k=7) ratio=6.41 | tadmm without repair: no_s=NaN (k=0)

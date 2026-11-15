@@ -129,3 +129,37 @@ variants were added: 98 cores on a shared 128-core node (`*_shared98`, times
 indicative) and 48 workers, two periods each, on a whole 64-core node (`*_w48`).
 The ieee123 T = 96 instance was not on Kamiak; the copy exported on the 309 PC
 (sha256 69cc566b...) was uploaded to `~/kamiak_jobs/tadmm_sc_inputs_extra`.
+
+## T = 48 and T = 96 with "base + balancing" (`tadmm_sc_nov15_v8`)
+
+Seconds, centralized / tADMM; iterations in brackets. "0.1%" is the time to a
+dispatch within 0.1% of the centralized optimum, for both solvers. Every
+centralized, converged and 0.1% dispatch below passes the chronological replay.
+
+| case | node, workers | converged | ratio | 0.1% | ratio |
+|---|---|---|---|---|---|
+| large10k T48 | whole 64-core, 48 | 80.9 / 31.4 (28) | 2.6 | 63.6 / 10.7 (9) | 6.0 |
+| ieee123 T96 | whole 64-core, 48 | 1.88 / 1.25 (23) | 1.5 | 1.44 / 0.51 (10) | 2.8 |
+| med2522 T96 | whole 64-core, 48 | 71.0 / 21.8 (26) | 3.3 | 53.6 / 6.85 (8) | 7.8 |
+| large10k T96 | whole 64-core, 48 | 176.7 / 58.7 (29) | 3.0 | 139.6 / 21.7 (10) | 6.4 |
+| ieee123 T96 | shared 128-core, 96 | 1.44 / 1.03 (23) | 1.4 | 1.11 / 0.44 (10) | 2.5 |
+| med2522 T96 | shared 128-core, 96 | 60.2 / 14.0 (26) | 4.3 | 45.4 / 3.70 (8) | 12.3 |
+| large10k T96 | shared 128-core, 96 | 165.5 / 36.9 (29) | 4.5 | 131.1 / 13.7 (10) | 9.6 |
+
+One run each. The 48-worker rows put two periods on each worker (Xeon 6438Y+);
+the 96-worker rows had 98 of a 128-core Xeon 6760P node with other users' jobs
+on the rest, so their times are indicative. Iterations do not depend on the
+number of workers. The whole-128-core T = 96 jobs (31818612-14) were still
+queued, expected 2026-11-17.
+
+Iterations to convergence with this setting over everything run: 21 to 32 at
+T = 24, 28 at T = 48, 23 to 29 at T = 96; to the 0.1% point, 8 to 10.
+
+Peak job memory (Slurm MaxRSS, whole job): large10k T96 149 GB with 96 workers
+and 105 GB with 48; med2522 T96 78 and 47 GB; ieee123 T96 62 and 35 GB. Most of
+it is one Julia process per worker; the centralized solve's own peak was not
+separated in these jobs.
+
+The last exploratory job (2 -> 0.25 with balancing and over-relaxation,
+large10k T48) did not converge in 150 iterations. The three T = 96 jobs of the
+2 -> 0.25 schedule in `tadmm_sc_nov15_v6` were cancelled unstarted.

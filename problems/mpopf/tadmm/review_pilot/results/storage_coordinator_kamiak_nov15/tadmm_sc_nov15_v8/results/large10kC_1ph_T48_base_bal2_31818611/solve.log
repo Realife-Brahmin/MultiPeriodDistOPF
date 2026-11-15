@@ -394,3 +394,22 @@ SC_WORKER (worker = 49, pid = 2614373, host = "cn150", affinity = "48", periods 
       From worker 3:	This program contains Ipopt, a library for large-scale nonlinear optimization.
       From worker 3:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
       From worker 3:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 3:	******************************************************************************
+      From worker 3:	
+SC_ITER phase=warmup k=1 gap=2.863e-01 original=5.789e+00 repair_gap=2.582e-02 rho=287.977 algorithm_s=11.169
+SC_ITER phase=warmup k=2 gap=2.736e-02 original=8.992e-01 repair_gap=2.133e-02 rho=242.159 algorithm_s=12.044
+SC_ITER phase=warmup k=3 gap=1.561e-02 original=5.725e-02 repair_gap=1.623e-02 rho=203.63 algorithm_s=13.288
+SC_REPAIR_NO phase=warmup k=9 gap=9.040e-04 original=9.095e-13 algorithm_s=18.250 repair_wall_s=0.673 total_s=18.923
+SC_ITER phase=warmup k=10 gap=8.654e-04 original=1.240e-01 repair_gap=7.857e-04 rho=60.5397 algorithm_s=19.180
+SC_ITER phase=warmup k=20 gap=1.470e-04 original=3.513e-02 repair_gap=1.653e-06 rho=10.702 algorithm_s=30.043
+SC_CONVERGED phase=warmup k=28 r_rms=7.103e-06 s_relative=1.075e-04 repair_gap=2.587e-07 repair_primal=9.095e-13 algorithm_s=39.189 repair_wall_s=0.875 total_s=40.064
+SC_DONE phase=warmup spec=2:0.0625:20 workers=48 iterations=28 converged=28 converged_s=40.064 converged_gap=2.587e-07 no=0 no_s=NaN repair_no=9 repair_no_s=18.923 algorithm_s=39.189 loop_wall_s=208.726 build_s=12.451
+SC_ITER phase=timed k=1 gap=2.863e-01 original=5.789e+00 repair_gap=2.582e-02 rho=287.977 algorithm_s=2.932
+SC_ITER phase=timed k=2 gap=2.736e-02 original=8.992e-01 repair_gap=2.133e-02 rho=242.159 algorithm_s=3.716
+SC_ITER phase=timed k=3 gap=1.561e-02 original=5.725e-02 repair_gap=1.623e-02 rho=203.63 algorithm_s=4.462
+SC_REPAIR_NO phase=timed k=9 gap=9.040e-04 original=9.095e-13 algorithm_s=9.998 repair_wall_s=0.682 total_s=10.681
+SC_ITER phase=timed k=10 gap=8.654e-04 original=1.240e-01 repair_gap=7.857e-04 rho=60.5397 algorithm_s=10.855
+SC_ITER phase=timed k=20 gap=1.470e-04 original=3.513e-02 repair_gap=1.653e-06 rho=10.702 algorithm_s=20.688
+SC_CONVERGED phase=timed k=28 r_rms=7.103e-06 s_relative=1.075e-04 repair_gap=2.587e-07 repair_primal=9.095e-13 algorithm_s=30.698 repair_wall_s=0.670 total_s=31.368
+SC_DONE phase=timed spec=2:0.0625:20 workers=48 iterations=28 converged=28 converged_s=31.368 converged_gap=2.587e-07 no=0 no_s=NaN repair_no=9 repair_no_s=10.681 algorithm_s=30.698 loop_wall_s=189.882 build_s=3.473
+SC_SUMMARY system=large10kC_1ph T=48 workers=48 | converged: central_s=80.909 tadmm_s=31.368 (k=28, gap=2.59e-07) ratio=2.58 | near-optimal 0.1%: central_s=63.595 tadmm_repair_s=10.681 (k=9) ratio=5.95 | tadmm without repair: no_s=NaN (k=0)
