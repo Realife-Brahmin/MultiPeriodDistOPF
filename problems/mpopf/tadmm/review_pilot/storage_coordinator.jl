@@ -112,8 +112,8 @@ function stage_dispatch(s,d)
 end
 
 # Whole-horizon battery step. Separable by battery; solved here as one sparse QP.
-function make_coordinator(d)
-    T=d[:T]; bs=d[:Bset]; dt=d[:delta_t_h]; nb=length(bs)
+function make_coordinator(d;idx=eachindex(d[:Bset]))
+    T=d[:T]; bs=d[:Bset][idx]; dt=d[:delta_t_h]; nb=length(bs)
     m=Model(Ipopt.Optimizer); set_silent(m)
     set_optimizer_attribute(m,"tol",1e-10)
     set_optimizer_attribute(m,"bound_relax_factor",0.0)
@@ -143,12 +143,13 @@ function coordinator_step!(c,target,k)
     return value.(c.z),solve_time(c.m)
 end
 
-function run_storage_coordinator(d;rho,maxiter=300,reference=NaN,no_tol=1e-5,alpha=1.0,adapt=false,label="sc",io=nothing,rho_end=rho,ramp=0,spec=string(rho))
+function run_storage_coordinator(d;rho,maxiter=300,reference=NaN,no_tol=1e-5,alpha=1.0,adapt=false,label="sc",io=nothing,rho_end=rho,ramp=0,spec=string(rho),check_repair=false)
     T=d[:T]; bs=d[:Bset]; nb=length(bs); dt=d[:delta_t_h]
     stages=[make_power_stage(d,t;rho) for t in 1:T]; coord=make_coordinator(d)
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T)
     no_iteration=0; strict=0; ideal=0.0; serial=0.0; k=0; metrics=nothing; rmax=Inf; smax=Inf
     us=Vector{Vector{Float64}}(undef,T)
+    repair=check_repair ? [make_power_stage(d,t;rho=0.0) for t in 1:T] : nothing; repair_no=0
     rho_start=rho
     for iteration in 1:maxiter
         k=iteration; slowest=0.0; iters=0
@@ -181,7 +182,34 @@ function run_storage_coordinator(d;rho,maxiter=300,reference=NaN,no_tol=1e-5,alp
             no_iteration=k
             @printf("SC_NO label=%s spec=%s rho=%g k=%d gap=%.3e original=%.3e ideal_s=%.2f\n",label,spec,rho,k,gap,metrics.original_primal,ideal)
         end
-        io===nothing || println(io,join((label,spec,k,metrics.objective,gap,metrics.original_primal,rr,rmax,ss,smax,ideal,serial,iters,rho,slowest,ct),','))
+        # Repair check: fix every battery at the coordinator's schedule (which
+        # satisfies the energy dynamics and limits) and re-solve each period's
+        # network. If all periods solve, the result violates nothing.
+        repair_gap=NaN; repair_primal=NaN; repair_s=NaN
+        if repair!==nothing
+            repair_s=0.0; solved=true
+            for t in 1:T
+                ps=repair[t]
+                for (n,j) in enumerate(bs); fix(ps.pb[j],z[n,t];force=true); end
+                optimize!(ps.m); repair_s=max(repair_s,solve_time(ps.m))
+                solved &= termination_status(ps.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+                solved || break
+            end
+            if solved
+                zb=zeros(nb,T)
+                for n in 1:nb
+                    e=d[:B0_pu][bs[n]]
+                    for t in 1:T; e-=dt*z[n,t]; zb[n,t]=e; end
+                end
+                pm=physical_metrics(d,[stage_dispatch(repair[t],d) for t in 1:T],zb)
+                repair_gap=abs(pm.objective-reference)/max(1.0,abs(reference)); repair_primal=pm.original_primal
+                if repair_no==0 && repair_gap<=1e-3 && repair_primal<=no_tol
+                    repair_no=k
+                    @printf("SC_REPAIR_NO label=%s spec=%s rho=%g k=%d gap=%.3e original=%.3e ideal_s=%.2f repair_s=%.2f\n",label,spec,rho,k,repair_gap,repair_primal,ideal,repair_s)
+                end
+            end
+        end
+        io===nothing || println(io,join((label,spec,k,metrics.objective,gap,metrics.original_primal,rr,rmax,ss,smax,ideal,serial,iters,rho,slowest,ct,repair_gap,repair_primal,repair_s),','))
         if k<=5 || k%10==0
             @printf("SC_ITER label=%s rho=%g k=%d gap=%.3e original=%.3e rmax=%.3e smax=%.3e\n",label,rho,k,gap,metrics.original_primal,rmax,smax); flush(stdout)
         end
@@ -195,7 +223,7 @@ function run_storage_coordinator(d;rho,maxiter=300,reference=NaN,no_tol=1e-5,alp
         end
     end
     gap=abs(metrics.objective-reference)/max(1.0,abs(reference))
-    @printf("SC_DONE label=%s spec=%s rho_final=%g rounds=%d strict=%d no=%d gap=%.3e original=%.3e rmax=%.3e ideal_s=%.2f serial_s=%.2f\n",label,spec,rho,k,strict,no_iteration,gap,metrics.original_primal,rmax,ideal,serial)
+    @printf("SC_DONE label=%s spec=%s rho_final=%g rounds=%d strict=%d no=%d repair_no=%d gap=%.3e original=%.3e rmax=%.3e ideal_s=%.2f serial_s=%.2f\n",label,spec,rho,k,strict,no_iteration,repair_no,gap,metrics.original_primal,rmax,ideal,serial)
     flush(stdout)
     return (;k,strict,no_iteration,gap,metrics,ideal,serial)
 end
@@ -222,7 +250,7 @@ function main()
     alpha=parse(Float64,get(ENV,"SC_ALPHA","1.0")); adapt=get(ENV,"SC_ADAPT","0")=="1"
     tag=get(ENV,"SC_TAG","sweep")
     open(joinpath(out,"trace_$(profile)_$(tag).csv"),"w") do io
-        println(io,"label,spec,iteration,objective,gap,original_primal,r_rms,r_max,s_rms,s_max,ideal_parallel_estimate_s,serial_s,max_local_ipopt_iterations,rho,slowest_stage_s,coordinator_s")
+        println(io,"label,spec,iteration,objective,gap,original_primal,r_rms,r_max,s_rms,s_max,ideal_parallel_estimate_s,serial_s,max_local_ipopt_iterations,rho,slowest_stage_s,coordinator_s,repair_gap,repair_primal,repair_slowest_stage_s")
         # SC_RHO entries: a number, or "a:b:n" for a geometric ramp from a to b over n rounds.
         # With SC_RHO_UNITS=1 the numbers multiply rho_unit.
         scale=get(ENV,"SC_RHO_UNITS","0")=="1" ? rho_unit : 1.0
@@ -231,7 +259,7 @@ function main()
             rho=scale*parse(Float64,parts[1])
             rho_end=length(parts)==3 ? scale*parse(Float64,parts[2]) : rho
             ramp=length(parts)==3 ? parse(Int,parts[3]) : 0
-            run_storage_coordinator(d;rho,maxiter,reference,no_tol,alpha,adapt,label=tag,io,rho_end,ramp,spec=String(spec))
+            run_storage_coordinator(d;rho,maxiter,reference,no_tol,alpha,adapt,label=tag,io,rho_end,ramp,spec=String(spec),check_repair=get(ENV,"SC_REPAIR","0")=="1")
         end
     end
 end
