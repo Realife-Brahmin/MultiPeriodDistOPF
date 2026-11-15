@@ -59,3 +59,23 @@ replay.
 
 Queued when this was written (v4): med2522 T24, and ieee123, med2522 and
 large10k at T = 96 on 128-core nodes.
+
+## Later the same day
+
+- `tadmm_sc_nov15_v4`: strict repair rule. med2522 T24 converges at iteration 27
+  in 9.85 s against 14.1 s centralized; 3.38 s against 11.0 s to within 0.1% of
+  the centralized optimum. All three dispatches pass the replay. Its T = 96 jobs
+  were cancelled before starting and resubmitted under v6.
+- `tadmm_sc_nov15_v5_explore`: penalty schedules at T = 24 on shared nodes
+  (26 CPUs), so use the iteration counts, not the times. Iterations to
+  convergence (med2522 / large10k): 2 -> 0.0625 over 20 then held, 27 / 39; the
+  same with residual balancing, 32 / 24; 2 -> 0.25 over 10 then held, 23 / 20;
+  the same with balancing, 20 / 20; 2 -> 0.125 over 14, 20 / 21. The point
+  within 0.1% of the centralized optimum stays at iteration 8 or 9 throughout.
+  Every converged dispatch whose replay had finished when the logs were copied
+  passes it.
+
+Chosen schedule from here on: 2 -> 0.25 `rho_unit` over 10 iterations, then
+held (0.25 is the best fixed value found on ieee123), without balancing. On
+ieee123 it converges at iteration 18 (T = 24) and 22 (T = 96), 309 PC.
+`tadmm_sc_nov15_v6` holds the timed whole-node runs with it.
