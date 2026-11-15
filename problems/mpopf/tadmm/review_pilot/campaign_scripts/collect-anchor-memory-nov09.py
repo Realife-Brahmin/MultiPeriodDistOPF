@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import tomllib
 
-base=Path(__file__).parent/'problems/mpopf/tadmm/review_pilot/results/historical_anchors_nov09'
+base=Path(__file__).resolve().parents[5]/'problems/mpopf/tadmm/review_pilot/results/historical_anchors_nov09'
 def rows(p):
     with p.open() as f:return list(csv.DictReader(f))
 def stamp(s):return datetime.fromisoformat(s.replace('Z','+00:00')).timestamp()

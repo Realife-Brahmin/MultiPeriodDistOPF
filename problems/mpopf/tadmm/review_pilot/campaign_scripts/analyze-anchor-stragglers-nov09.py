@@ -7,7 +7,7 @@ from pathlib import Path
 import statistics
 import tomllib
 
-root=Path(__file__).parent
+root=Path(__file__).resolve().parents[5]
 base=root/'problems/mpopf/tadmm/review_pilot/results/historical_anchors_nov09'
 cases=sorted(base.glob('tadmm_review_*/results/run_*'))
 cases.append(root/'problems/mpopf/tadmm/review_pilot/results/targeted_nov09/results/run_T48_primal_dual_31657407')

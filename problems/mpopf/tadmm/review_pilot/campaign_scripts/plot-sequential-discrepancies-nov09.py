@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-root=Path(__file__).parent;pilot=root/'problems/mpopf/tadmm/review_pilot'
+root=Path(__file__).resolve().parents[5];pilot=root/'problems/mpopf/tadmm/review_pilot'
 sys.path.insert(0,str(pilot))
 from plot_style import configure_july_convergence_style,OBJECTIVE,PRIMAL,DUAL
 base=pilot/'results/sequential_dss_nov09'

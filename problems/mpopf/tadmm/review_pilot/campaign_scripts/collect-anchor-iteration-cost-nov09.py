@@ -6,7 +6,7 @@ from pathlib import Path
 import statistics
 import tomllib
 
-base=Path(__file__).parent/'problems/mpopf/tadmm/review_pilot/results/historical_anchors_nov09'
+base=Path(__file__).resolve().parents[5]/'problems/mpopf/tadmm/review_pilot/results/historical_anchors_nov09'
 def rows(p):
     with p.open() as f:return list(csv.DictReader(f))
 def dist(x):
