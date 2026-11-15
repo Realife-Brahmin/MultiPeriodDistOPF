@@ -1,0 +1,40 @@
+exported=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\tadmm-storage-coordinator\problems\mpopf\spar_ddp\results\network_filterddp\network_data_ieee123C_1ph_T48_periodic.jls
+exported=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\tadmm-storage-coordinator\problems\mpopf\spar_ddp\results\network_filterddp\network_data_ieee123C_1ph_T96_periodic.jls
+CASE system=ieee123C_1ph T=24 C_B=8.01399e-08 profile=july batteries=51 reference=2831.014969712978
+SC_NO label=horizon rho=1000 k=79 gap=9.612e-07 original=9.860e-07 ideal_s=3.62
+SC_DONE label=horizon rho=1000 rounds=150 strict=0 no=79 gap=4.558e-07 original=2.746e-07 rmax=1.555e-07 ideal_s=6.98 serial_s=50.56
+SC_NO label=horizon rho=3000 k=50 gap=7.117e-07 original=9.937e-07 ideal_s=2.76
+SC_DONE label=horizon rho=3000 rounds=150 strict=0 no=50 gap=1.801e-07 original=1.124e-07 rmax=1.259e-07 ideal_s=7.54 serial_s=49.51
+SC_NO label=horizon rho=10000 k=62 gap=1.032e-07 original=9.523e-07 ideal_s=2.53
+SC_DONE label=horizon rho=10000 rounds=150 strict=0 no=62 gap=2.470e-07 original=1.596e-07 rmax=1.694e-07 ideal_s=6.57 serial_s=48.29
+TADMM_NO phase=timed k=407 objective=2832.811633617311 original=8.598e-07 target_under_100=false
+TADMM_DONE phase=timed converged=true iterations=907 objective=2831.015086946292 primal=1.460e-07 rmax=1.919e-07 smax=4.548e-05 algorithm_s=409.549228 ideal_parallel_estimate_s=42.705771 wall_with_diagnostics_s=444.377450
+BASELINE_DONE system=ieee123C_1ph T=24 strict=true rounds=907 no=407 ideal_s=42.71
+CENTRAL objective=2849.165630840412 primal=4.015e-10 iterations=29 wall_s=3.55
+CASE system=ieee123C_1ph T=48 C_B=8.00335e-08 profile=july batteries=51 reference=2849.165630840412
+SC_NO label=horizon rho=1000 k=53 gap=4.672e-07 original=8.904e-07 ideal_s=3.35
+SC_DONE label=horizon rho=1000 rounds=150 strict=0 no=53 gap=2.685e-07 original=2.136e-07 rmax=1.352e-07 ideal_s=10.65 serial_s=97.57
+SC_NO label=horizon rho=3000 k=76 gap=4.063e-07 original=3.917e-07 ideal_s=4.78
+SC_DONE label=horizon rho=3000 rounds=150 strict=0 no=76 gap=8.551e-08 original=2.113e-07 rmax=2.299e-07 ideal_s=9.86 serial_s=94.80
+SC_NO label=horizon rho=10000 k=81 gap=2.680e-05 original=7.196e-07 ideal_s=4.94
+SC_DONE label=horizon rho=10000 rounds=150 strict=0 no=81 gap=3.963e-06 original=2.127e-06 rmax=4.516e-06 ideal_s=10.60 serial_s=97.85
+TADMM_DONE phase=timed converged=false iterations=1000 objective=2880.748676320021 primal=8.059e-07 rmax=3.566e-07 smax=2.681e+00 algorithm_s=901.504248 ideal_parallel_estimate_s=84.173348 wall_with_diagnostics_s=971.665471
+BASELINE_DONE system=ieee123C_1ph T=48 strict=false rounds=1000 no=0 ideal_s=84.17
+CENTRAL objective=2859.336476432304 primal=3.241e-10 iterations=29 wall_s=4.77
+CASE system=ieee123C_1ph T=96 C_B=8.00082e-08 profile=july batteries=51 reference=2859.336476432304
+SC_NO label=horizon rho=1000 k=70 gap=5.795e-07 original=4.770e-07 ideal_s=10.55
+SC_DONE label=horizon rho=1000 rounds=150 strict=0 no=70 gap=2.148e-07 original=4.189e-07 rmax=2.233e-06 ideal_s=20.78 serial_s=209.19
+SC_NO label=horizon rho=3000 k=98 gap=2.758e-06 original=5.495e-07 ideal_s=12.53
+SC_DONE label=horizon rho=3000 rounds=150 strict=0 no=98 gap=6.452e-07 original=7.559e-07 rmax=3.766e-06 ideal_s=19.58 serial_s=208.73
+SC_DONE label=horizon rho=10000 rounds=150 strict=0 no=0 gap=2.343e-05 original=3.091e-06 rmax=1.411e-05 ideal_s=19.84 serial_s=208.46
+TADMM_DONE phase=timed converged=false iterations=1000 objective=2958.196655042047 primal=7.938e-07 rmax=1.993e-07 smax=1.363e+00 algorithm_s=1713.721561 ideal_parallel_estimate_s=136.151601 wall_with_diagnostics_s=1866.064820
+BASELINE_DONE system=ieee123C_1ph T=96 strict=false rounds=1000 no=0 ideal_s=136.15
+CENTRAL objective=8664.912457634449 primal=7.850e-16 iterations=49 wall_s=21.41
+CASE system=ieee2522C_1ph T=24 C_B=8.01399e-08 profile=july batteries=249 reference=8664.912457634449
+SC_NO label=horizon rho=3000 k=55 gap=3.621e-06 original=8.980e-06 ideal_s=30.75
+SC_DONE label=horizon rho=3000 rounds=150 strict=0 no=55 gap=3.875e-07 original=1.302e-06 rmax=1.534e-06 ideal_s=93.43 serial_s=1077.58
+SC_NO label=horizon rho=10000 k=65 gap=4.937e-06 original=4.849e-06 ideal_s=44.82
+SC_DONE label=horizon rho=10000 rounds=150 strict=0 no=65 gap=1.233e-06 original=4.006e-06 rmax=2.695e-06 ideal_s=107.81 serial_s=1228.45
+SC_NO label=horizon rho=30000 k=78 gap=1.361e-05 original=8.301e-06 ideal_s=48.50
+SC_DONE label=horizon rho=30000 rounds=150 strict=0 no=78 gap=5.737e-06 original=4.893e-06 rmax=5.772e-06 ideal_s=83.08 serial_s=1086.82
+BATCH_FINISHED
