@@ -226,3 +226,35 @@ pinned, and the repair is run once more with the resulting schedule. On the
 half the time of the refused-attempt version; the accepted dispatch is 0.012%
 above the centralized optimum (3e-4% before) with violation 7e-10. Timed runs
 of all cases were queued when this was written.
+
+## Timed runs with the pinned repair (`tadmm_sc_nov15_v10_lean`)
+
+Lean driver, every repair attempt inside the clock, "base + balancing", whole
+64-core nodes, one run each. Seconds and GB (Pss over the process tree). Every
+centralized and converged dispatch passes the replay.
+
+| case | workers | centralized: time, memory | tADMM: time (iterations), memory | ratio |
+|---|---|---|---|---|
+| ieee123 T24 | 24 | 0.435, - | 0.482 (21), 11.0 | 0.90 |
+| med2522 T24 | 24 | 14.5, 1.09 | 9.66 (22, one pinned period), 13.4 | 1.50 |
+| large10k T24 | 24 | 31.6, 2.78 | 19.2 (24), 19.3 | 1.64 |
+| large10k T48 | 48 | 85.6, 4.95 | 37.1 (28), 36.7 | 2.30 |
+| ieee123 T96 | 48 | 1.88, 0.83 | 1.13 (23), 21.5 | 1.66 |
+| med2522 T96 | 48 | 67.3, 2.92 | 18.6 (23, pinned), 28.1 | 3.61 |
+| large10k T96 | 48 | 219.7, 9.85 | 68.4 (29), 49.6 | 3.21 |
+
+med2522 T24 went from 30.7 s (ten refused repairs) to 9.66 s. The centralized
+large10k T96 solve took 219.7 s here against 176.9 s and 176.7 s in the two
+earlier runs on other nodes of the same type; the tADMM time moved the same way
+(68.4 s against 56.3 s), so the ratio is unchanged.
+
+T = 144 and T = 288 (48 workers) and the threaded driver
+(`tadmm_sc_nov15_v11_threaded`) were queued when this was written. Instances for
+T = 144 and 288 were exported on the 309 PC and uploaded; their sha256 prefixes
+are 4455a857 / 3d920ab1 / 32d26723 (T144) and ff53ad25 / cafc8dca / 9a49bdaf
+(T288) for ieee123 / med2522 / large10k.
+
+Thread probe on the 309 PC (`probe_threads.jl`, `storage_coordinator_threaded.jl`,
+8 threads): same iterations, gap and violation as the process version on ieee123
+and med2522 T24; the whole process peaks at 1.2 GB and 2.4 GB, centralized phase
+included; about 28% slower than 8 worker processes on med2522.
