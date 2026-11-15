@@ -98,3 +98,34 @@ Against the 2 -> 0.0625 schedule, convergence is faster at T = 24 (large10k 39
 iteration 20 in both; the remaining iterations shrink the primal residual from
 8e-4 to 1e-5. `tadmm_sc_nov15_v7_explore` tests over-relaxation and residual
 balancing for that tail. The T = 96 runs were still queued.
+
+## Tail of the convergence: what was tried (`tadmm_sc_nov15_v7_explore`, `tadmm_sc_nov15_v8`)
+
+Iterations to convergence (primal rms 1e-5, relative dual 1e-3, strict repair).
+v7 jobs ran on shared nodes: counts only. The point within 0.1% of the
+centralized optimum is at iteration 7 to 10 under every setting.
+
+| setting | ieee123 T24 | med2522 T24 | large10k T24 | large10k T48 |
+|---|---|---|---|---|
+| 2 -> 0.0625 over 20, held ("base") | 21 | 27 | 39 | 43 |
+| base + residual balancing | 21 | 32 | 24 | 28 |
+| 2 -> 0.25 over 10, held | 18 | 23 | 20 | 54 |
+| 2 -> 0.25 over 10 + balancing | - | 20 | 20 | 118 |
+| 2 -> 0.25 over 10 + over-relaxation 1.6 | 18 | 22 | 105 | 72 |
+| 2 -> 0.25 over 10 + balancing + over-relaxation | - | 21 | 20 | running |
+| base + over-relaxation 1.6 | - | - | - | 54 |
+
+No setting is best everywhere. Over-relaxation is dropped. The two candidates
+are "2 -> 0.25 over 10" (best at T = 24, poor at T = 48) and "base + balancing"
+(24 to 32 everywhere tested). These were tuned on the test cases themselves.
+
+Timed whole-node runs of "base + balancing" (`tadmm_sc_nov15_v8`), seconds,
+centralized / tADMM: ieee123 T24 converged 0.429 / 0.491 (21), 0.1% 0.323 /
+0.244 (10); med2522 T24 converged 14.1 / 12.3 (32), 0.1% 11.0 / 3.29 (9);
+large10k T24 converged 33.1 / 20.9 (24), 0.1% 24.8 / 7.45 (9). All pass the replay.
+
+T = 96: whole 128-core nodes were not expected before 2026-11-17, so two
+variants were added: 98 cores on a shared 128-core node (`*_shared98`, times
+indicative) and 48 workers, two periods each, on a whole 64-core node (`*_w48`).
+The ieee123 T = 96 instance was not on Kamiak; the copy exported on the 309 PC
+(sha256 69cc566b...) was uploaded to `~/kamiak_jobs/tadmm_sc_inputs_extra`.
