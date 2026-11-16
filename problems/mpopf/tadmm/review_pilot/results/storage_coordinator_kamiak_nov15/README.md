@@ -444,9 +444,18 @@ memory is not measured in these runs.
 |---|---|---|---|---|---|---|---|---|
 | large10k | 48 | 1 | 6 | 222.8 | 29 | 2.14e-06 | pass | 31822491 |
 | large10k | 72 | 1 | 4 | 157.9 | 29 | 2.14e-06 | pass | 31822490 |
+| large10k | 96 | 1 | 3 | 151.6 | 29 | 2.14e-06 | pass | 31822489 |
 | large10k | 144 | 2 | 2 | 74.2 | 29 | 2.14e-06 | pass | 31822488 |
+| med2522 | 48 | 1 | 6 | 57.2 | 23 | 9.28e-06 | pass | 31822496 |
+| med2522 | 72 | 1 | 4 | 30.5 | 23 | 9.28e-06 | pass | 31822495 |
 
-Rows for 96 and 288 workers and for med2522 are added below as the jobs finish.
+Centralized large10k T288 on the same node type, in the 96-worker job: 552.2 s
+(383.2 s to within 0.1%), replay passed. Against it tADMM is 2.5, 3.5, 3.6 and
+7.4 times faster with 48, 72, 96 and 144 workers. On one node the time stops
+falling between 72 and 96 workers (157.9 to 151.6 s), while 144 workers on two
+nodes, 72 on each, halve it: a node saturates at about 72 workers of this size,
+and more nodes help where more workers on the same node do not. The same was
+seen on the 64-core nodes. Shared nodes, so single runs carry some noise.
 
 ## A conic solver inside tADMM (`tadmm_sc_nov15_v16_conic`)
 
@@ -464,8 +473,10 @@ Ipopt/MA57, and tADMM. Gap is against the Ipopt/MA57 objective.
 |---|---|---|---|---|---|---|---|---|---|---|
 | ieee123 T24 | 24 | MOSEK | 0.82 | 0.43 | 0.52 | 21 | 5.5e-07 | 9.2e-07 | pass | 31822503 |
 | med2522 T24 | 24 | MOSEK | 24.6 | 14.5 | 10.8 | 22 | 9.5e-05 | 2.3e-06 | pass | 31822504 |
+| ieee123 T96 | 48 | MOSEK | 4.40 | 1.87 | 1.24 | 23 | 2.3e-06 | 7.0e-07 | pass | 31822625 |
+| ieee123 T24 | 24 | Clarabel | 0.66 | 0.44 | 0.57 | 21 | 5.7e-07 | 5.1e-07 | pass | 31822629 |
 
-Both on 26 CPUs of a 64-core node (not a whole node). med2522 needed one pinned
+The T24 cases ran on 26 CPUs of a 64-core node, ieee123 T96 on a whole one. med2522 needed one pinned
 period, as with Ipopt. With Ipopt/MA57 inside, tADMM took 9.7 s on med2522 T24,
 so the solver inside changes tADMM's time little, while the centralized solve
 is 1.7 times slower with MOSEK. Memory with MOSEK inside: 13.5 GB (ieee123) and
