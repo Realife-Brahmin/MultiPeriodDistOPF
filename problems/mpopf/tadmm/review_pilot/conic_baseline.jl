@@ -3,7 +3,7 @@
 #
 #   julia --project=<conic_env> conic_baseline.jl system T output-directory solver[,solver...]
 #
-# solvers: clarabel, gurobi, ipopt. Same data, objective and limits as
+# solvers: clarabel, gurobi, mosek, ipopt. Same data, objective and limits as
 # model.jl's centralized model, without its screening: every original bound is
 # kept and the cone is passed as a rotated second-order cone
 #   2*(v_i/2)*ell_ij >= P_ij^2 + Q_ij^2.
@@ -14,6 +14,7 @@ using Dates
 const CONIC_SOLVERS=length(ARGS)>=4 ? split(ARGS[4],',') : String[]
 "clarabel" in CONIC_SOLVERS && @eval using Clarabel
 "gurobi" in CONIC_SOLVERS && @eval using Gurobi
+"mosek" in CONIC_SOLVERS && @eval using MosekTools
 
 function make_conic_model(d,optimizer)
     T=d[:T]; ns=d[:Nset]; es=d[:Lset]; bs=d[:Bset]; ds=d[:Dset]
@@ -67,6 +68,10 @@ function optimizer_for(name)
     elseif name=="gurobi"
         return optimizer_with_attributes(Main.Gurobi.Optimizer,"OutputFlag"=>0,"Threads"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
             "Method"=>2,"Crossover"=>0,"BarConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"BarQCPConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")))
+    elseif name=="mosek"
+        return optimizer_with_attributes(Main.MosekTools.Optimizer,"QUIET"=>true,"MSK_IPAR_NUM_THREADS"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
+            "MSK_DPAR_INTPNT_CO_TOL_REL_GAP"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"MSK_DPAR_INTPNT_CO_TOL_PFEAS"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),
+            "MSK_DPAR_INTPNT_CO_TOL_DFEAS"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")))
     end
     error("unknown solver $name")
 end
