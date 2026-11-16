@@ -18,13 +18,16 @@ Wall time of the solve call, seconds; iterations in brackets.
 | ieee123 T96 | 2.42 (29) | 6.60 (28), "almost optimal" | 3.63 (24) |
 | med2522 T24 | 17.7 (49) | 28.2 (34), "almost optimal" | 43.5 (51), suboptimal termination |
 | med2522 T24, Gurobi with 8 threads | | | 37.2 (51), suboptimal termination |
+| med2522 T96 | 84.6 (57) | 128.0 (37), "almost optimal" | 83.4 (30) |
 
 Objectives agree with Ipopt's to between 2e-10 and 3e-7 relative. On med2522
 Clarabel and Gurobi stop short of their 1e-8 tolerances; their dispatches
 violate the original model by 1e-6 and 7e-8, Ipopt's by 8e-16.
 
-Neither conic solver is faster than Ipopt/MA57 on these instances: 1.3 to 2.7
-times slower on one thread, and Gurobi gains little from eight. The Ipopt
+Neither conic solver is meaningfully faster than Ipopt/MA57 on these instances.
+Gurobi matches it on med2522 T96 (83.4 s against 84.6 s) and is 1.3 to 2.5 times
+slower on the others, gaining little from eight threads; Clarabel is 1.5 to 2.7
+times slower throughout. The Ipopt
 baseline is therefore not what makes centralized look slow. Kamiak runs of
 Ipopt/MA57 and Clarabel on the test nodes, including large10k, were queued when
 this was written (`~/kamiak_jobs/tadmm_sc_nov15_v12_conic`).
