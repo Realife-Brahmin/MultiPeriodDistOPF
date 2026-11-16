@@ -33,3 +33,21 @@ Ipopt/MA57 and Clarabel on the test nodes, including large10k, were queued when
 this was written (`~/kamiak_jobs/tadmm_sc_nov15_v12_conic`).
 
 Dispatch files (`*_dispatch.jls`) are not committed.
+
+## MOSEK (added the same evening)
+
+MOSEK 11.2 through MosekTools, licence file valid to November 2027 on the 309 PC
+and on Kamiak. 309 PC, wall time of the solve call in seconds, one thread
+unless stated, Ipopt/MA57 for comparison.
+
+| case | Ipopt/MA57 | MOSEK |
+|---|---|---|
+| ieee123 T24 | 0.45 | 0.79 |
+| ieee123 T96 | 2.42 | 4.49 |
+| med2522 T24 | 17.7 | 24.6 (22.2 with 8 threads) |
+| med2522 T96 | 84.6 | 102.1 |
+
+MOSEK reports optimal in every run and its objectives agree with Ipopt's to
+about 2e-7 relative; its dispatches violate the original model by 5e-8 to 1e-6.
+It is slower than Ipopt/MA57 on every case here. Kamiak runs are in
+`../storage_coordinator_kamiak_nov15/tadmm_sc_nov15_v12_conic` (logs `mosek-*`).
