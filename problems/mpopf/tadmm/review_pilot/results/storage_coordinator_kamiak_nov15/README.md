@@ -308,3 +308,27 @@ losses in every case.
 The power-flow start for all periods in turn: 0.32 s (ieee123 T96), 7.2 s
 (med2522 T96), 39.6 s (large10k T144); per period 0.003, 0.075 and 0.27 s. It
 is inside the model build and outside both solvers' clocks.
+
+## Evening of 2026-11-15
+
+- **large10k T288, 48 workers** (`tadmm_sc_nov15_v10_lean`, job 31819922):
+  centralized 618.9 s and 28.4 GB; tADMM 248.6 s (29 iterations, first repair
+  accepted) and 108.2 GB; ratio 2.49. Both dispatches pass the replay. med2522
+  T288's tADMM dispatch also passed (59.7 s against 257.2 s).
+- **med2522 T96, one worker per period** on 98 cores of a shared 128-core node
+  (job 31820119, indicative): 10.5 s against 58.5 s, 46.8 GB against 2.7 GB,
+  replay passed.
+- **Conic baseline, large10k** (`tadmm_sc_nov15_v12_conic`): Ipopt/MA57 against
+  Clarabel 88.2 / 264.1 s at T48 and 189.4 / 556.1 s at T96; Clarabel stops at
+  "almost optimal" with violations of 8e-3 and 6e-4 and cone gaps near 0.1.
+- **Threads** (`tadmm_sc_nov15_v11_threaded`, `tadmm_sc_nov15_v13_threaded_gc`):
+  same iterations and answers as the process version and about a tenth of the
+  memory (ieee123 T24: 1.2 GB against 11.0 GB; med2522 T24: 2.7 GB against
+  13.4 GB), but far slower: 3.5 s against 0.48 s on ieee123 T24 and 101 s
+  against 9.7 s on med2522 T24, with 24 threads. A serial OpenBLAS in place of
+  the pthread one, and running the Julia collector only between iterations,
+  changed nothing (3.0 to 3.1 s). Slurm accounting shows where the time goes:
+  med2522 T24 used 61 min of system CPU time against 12 min of user time (the
+  process version: under 1 min against 14 min). The threads contend in the
+  kernel; memory mapping is the suspect. Tests with glibc allocator settings,
+  tcmalloc and MUMPS were queued.
