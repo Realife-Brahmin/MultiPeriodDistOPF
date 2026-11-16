@@ -591,17 +591,25 @@ to 31825887 (large10k and med2522, 48, 72 and 144 workers).
 | ieee123 T96 | 48 | 3.08 | 1.87 | 3.75 | about 1 | 23 | 2.3e-06 | 1.4e-08 | pass | 31825876 |
 | med2522 T24 | 24 | 15.9 | 14.5 | 18.3 | 9.7 | 22 | 7.4e-05 | 7.1e-07 | pass | 31825877 |
 | med2522 T96 | 48 | 74.8 | 71.2 | 34.8 | 18.6 | 23 | 5.9e-05 | 4.1e-06 | pass | 31825878 |
+| large10k T24 | 24 | 82.7 | 31.7 | 87.1 | 19.2 | 26 | 3.1e-07 | 6.1e-06 | pass | 31825879 |
 
 No stalled solves. Gurobi inside is the slowest of the three inner solvers:
 about twice Ipopt or MOSEK inside on med2522 and more on ieee123. With Gurobi on
 both sides tADMM wins only at med2522 T96 (2.2 times); at ieee123 T96 and
 med2522 T24 it is 0.8 to 0.9 of centralized Gurobi. Centralized Gurobi itself is
-close to centralized Ipopt/MA57 on med2522. large10k T24 and T96 were running
-(centralized Gurobi at T24: 82.7 s).
+close to centralized Ipopt/MA57 on med2522. On large10k T24 Gurobi inside takes
+87.1 s in 26 iterations (24 with Ipopt or MOSEK inside), no better than
+centralized Gurobi (82.7 s) and far behind centralized Ipopt/MA57 (31.7 s).
+large10k T96 was running (centralized Gurobi 283.5 s).
 
 ### T = 144 by number of workers (128-core nodes), first rows
 
 | system | workers | nodes | periods per worker | tADMM (s) | iterations | gap | replay | job |
 |---|---|---|---|---|---|---|---|---|
 | large10k | 48 | 1 | 3 | 95.2 | 29 | 1.33e-06 | pass | 31825884 |
+| large10k | 72 | 1 | 2 | 61.5 | 29 | 1.33e-06 | pass | 31825883 |
 | med2522 | 48 | 1 | 3 | 25.3 | 23 | 9.11e-06 | pass | 31825887 |
+
+Centralized large10k T144 on the same node type, in the 72-worker job: 245.9 s
+(207.5 s to within 0.1%), replay passed; tADMM is 2.6 and 4.0 times faster with
+48 and 72 workers.
