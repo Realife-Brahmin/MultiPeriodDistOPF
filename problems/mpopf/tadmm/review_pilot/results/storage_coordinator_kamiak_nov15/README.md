@@ -592,6 +592,7 @@ to 31825887 (large10k and med2522, 48, 72 and 144 workers).
 | med2522 T24 | 24 | 15.9 | 14.5 | 18.3 | 9.7 | 22 | 7.4e-05 | 7.1e-07 | pass | 31825877 |
 | med2522 T96 | 48 | 74.8 | 71.2 | 34.8 | 18.6 | 23 | 5.9e-05 | 4.1e-06 | pass | 31825878 |
 | large10k T24 | 24 | 82.7 | 31.7 | 87.1 | 19.2 | 26 | 3.1e-07 | 6.1e-06 | pass | 31825879 |
+| large10k T96 | 48 | 283.5 | 186.3 | 194.3 | 55 to 68 | 32 | 4.0e-07 | 2.9e-10 | pass | 31825880 |
 
 No stalled solves. Gurobi inside is the slowest of the three inner solvers:
 about twice Ipopt or MOSEK inside on med2522 and more on ieee123. With Gurobi on
@@ -600,7 +601,9 @@ med2522 T24 it is 0.8 to 0.9 of centralized Gurobi. Centralized Gurobi itself is
 close to centralized Ipopt/MA57 on med2522. On large10k T24 Gurobi inside takes
 87.1 s in 26 iterations (24 with Ipopt or MOSEK inside), no better than
 centralized Gurobi (82.7 s) and far behind centralized Ipopt/MA57 (31.7 s).
-large10k T96 was running (centralized Gurobi 283.5 s).
+On large10k T96 it takes 194.3 s in 32 iterations (29 with Ipopt or MOSEK
+inside): 1.5 times faster than centralized Gurobi, level with centralized
+Ipopt/MA57 (186.3 s), three times slower than tADMM with Ipopt inside.
 
 ### T = 144 by number of workers (128-core nodes), first rows
 
@@ -608,8 +611,14 @@ large10k T96 was running (centralized Gurobi 283.5 s).
 |---|---|---|---|---|---|---|---|---|
 | large10k | 48 | 1 | 3 | 95.2 | 29 | 1.33e-06 | pass | 31825884 |
 | large10k | 72 | 1 | 2 | 61.5 | 29 | 1.33e-06 | pass | 31825883 |
+| large10k | 144 | 2 | 1 | 41.0 | 29 | 1.33e-06 | pass | 31825882 |
 | med2522 | 48 | 1 | 3 | 25.3 | 23 | 9.11e-06 | pass | 31825887 |
+| med2522 | 72 | 1 | 2 | 15.9 | 23 | 9.06e-06 | pass | 31825886 |
+| med2522 | 144 | 2 | 1 | 9.0 | 23 | 9.14e-06 | pass | 31825885 |
 
 Centralized large10k T144 on the same node type, in the 72-worker job: 245.9 s
-(207.5 s to within 0.1%), replay passed; tADMM is 2.6 and 4.0 times faster with
-48 and 72 workers.
+(207.5 s to within 0.1%), replay passed; tADMM is 2.6, 4.0 and 6.0 times
+faster with 48, 72 and 144 workers. Centralized med2522 T144, in its 72-worker
+job: 91.0 s (67.3 s to within 0.1%), replay passed; tADMM is 3.6, 5.7 and 10.1
+times faster. The 144-worker rows are one worker per period, on two nodes.
+Shared nodes, single runs. No Kamiak jobs were left after these (10:21).
