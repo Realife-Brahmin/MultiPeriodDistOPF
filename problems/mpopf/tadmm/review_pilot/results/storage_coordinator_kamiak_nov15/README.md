@@ -462,8 +462,9 @@ so single runs carry some noise; the saturation point is one reading, not a law.
 Centralized med2522 T288 on the same node type, in the 96-worker job: 211.1 s
 (144.4 s to within 0.1%), replay passed. Against it tADMM is 3.7, 6.9, 7.7 and
 10.4 times faster with 48, 72, 96 and 144 workers. Here the gain flattens
-earlier (30.5 to 27.5 to 20.3 s): the periods are small, and a growing share of
-each iteration is the battery step and the exchange with the coordinator.
+earlier (30.5 to 27.5 to 20.3 s). The likely reason, not measured here: the
+periods are small, so the battery step and the exchange with the coordinator
+take a growing share of each iteration.
 
 The two 288-worker jobs (three nodes, 98 CPUs each) had not started after five
 hours in the queue (31822487, 31822492).
