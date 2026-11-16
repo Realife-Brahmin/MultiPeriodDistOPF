@@ -332,3 +332,12 @@ is inside the model build and outside both solvers' clocks.
   process version: under 1 min against 14 min). The threads contend in the
   kernel; memory mapping is the suspect. Tests with glibc allocator settings,
   tcmalloc and MUMPS were queued.
+
+- **large10k T96, one worker per period** on 98 cores of a shared 128-core
+  node (job 31820120, indicative): 38.4 s against 172.7 s (ratio 4.5), 70.6 GB
+  against 9.5 GB, both dispatches pass the replay.
+- **Repeat of med2522 T96, 48 workers** (job 31820123): 18.3 s against 67.2 s;
+  the first run was 18.6 s against 67.3 s.
+- **MOSEK** against Ipopt/MA57 on Kamiak, one thread: ieee123 T24 0.83 / 0.44 s,
+  ieee123 T96 4.57 / 1.98 s, med2522 T24 24.9 / 14.8 s; MOSEK reports optimal
+  and the objectives agree to 2e-7 relative. The larger cases were running.
