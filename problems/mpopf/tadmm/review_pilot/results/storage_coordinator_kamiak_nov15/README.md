@@ -384,3 +384,18 @@ still unknown; the process version remains the one to use.
 - **MUMPS, med2522 T96, 48 workers** (job 31820399): 33.1 s against 110.4 s
   (ratio 3.34; with MA57 18.6 s against 67.3 s, ratio 3.61). Both dispatches
   pass the replay. large10k T96 with MUMPS was running.
+
+- **large10k T288 with 96 workers:** the tADMM dispatch has now passed the
+  replay as well.
+- **MUMPS, large10k T96, 48 workers** (job 31820400): 110.9 s against 392.0 s
+  centralized (ratio 3.53; with MA57 55 to 68 s against 177 to 220 s, ratio
+  3.2). Both dispatches pass the replay.
+- **Memory per worker** (from `memory_samples.csv`, Pss; all workers divided by
+  their number): ieee123 0.43 to 0.51 GB; med2522 0.51 to 0.71 GB; large10k
+  0.66 to 1.69 GB (0.64 GB with one period per worker, 1.69 GB with six),
+  against 0.7 to 1.1, 1.1 to 7.1 and 2.8 to 29 GB for the centralized solve.
+  The coordinator's own memory is NOT measured by these runs: it is the process
+  that did the centralized solve first, and its Pss stays at that level
+  (27.3 GB at large10k T288 against 28.8 GB centralized). So the tADMM totals
+  quoted above include that leftover. `tadmm_sc_nov15_v14_coordinator` reruns
+  five cases without the centralized solve to measure it.

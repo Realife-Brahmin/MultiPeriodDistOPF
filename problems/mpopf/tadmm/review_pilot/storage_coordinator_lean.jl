@@ -115,24 +115,34 @@ function lean_main()
     no_tol=system=="ieee123C_1ph" ? 1e-6 : 1e-5
     nworkers=min(T,parse(Int,get(ENV,"SC_NWORKERS",string(T))))
     println("SC_HOST host=",gethostname()," time=",now()," affinity=",sc_affinity()," julia=",VERSION," pid=",getpid())
-    stamp("central_build_begin")
-    central=make_model(d,collect(1:T))
-    set_optimizer_attribute(central.m,"inf_pr_output","original")
-    trace=Tuple{Int,Float64,Float64,Float64}[]; clock=Ref(time_ns())
-    function callback(alg_mod::Cint,iter::Cint,obj::Float64,inf_pr::Float64,inf_du::Float64,mu::Float64,
-                      dnorm::Float64,reg::Float64,alpha_du::Float64,alpha_pr::Float64,ls::Cint)
-        push!(trace,(Int(iter),obj,inf_pr,(time_ns()-clock[])/1e9)); return true
+    # SC_REFERENCE=<objective> skips the centralized solve, so that the coordinator
+    # process holds nothing left over from it and its own memory can be measured.
+    skip_central=haskey(ENV,"SC_REFERENCE")
+    reference=NaN; central_wall=NaN; central_no_s=NaN
+    if skip_central
+        reference=parse(Float64,ENV["SC_REFERENCE"])
+        @printf("CENTRAL skipped, reference objective %.12f taken from an earlier run\n",reference)
+    else
+        stamp("central_build_begin")
+        central=make_model(d,collect(1:T))
+        set_optimizer_attribute(central.m,"inf_pr_output","original")
+        trace=Tuple{Int,Float64,Float64,Float64}[]; clock=Ref(time_ns())
+        function callback(alg_mod::Cint,iter::Cint,obj::Float64,inf_pr::Float64,inf_du::Float64,mu::Float64,
+                          dnorm::Float64,reg::Float64,alpha_du::Float64,alpha_pr::Float64,ls::Cint)
+            push!(trace,(Int(iter),obj,inf_pr,(time_ns()-clock[])/1e9)); return true
+        end
+        MOI.set(central.m,Ipopt.CallbackFunction(),callback)
+        stamp("central_warmup_begin"); solve_checked!(central); stamp("central_warmup_end")
+        set_start_value.(central.vars,central.initial); empty!(trace)
+        stamp("central_timed_begin"); clock[]=time_ns(); tick=time_ns(); solve_checked!(central); central_wall=(time_ns()-tick)/1e9; stamp("central_timed_end")
+        cu,cb=dispatch([central],d); cm=physical_metrics(d,cu,cb); reference=cm.objective
+        cno=findfirst(r->abs(r[2]-trace[end][2])<=1e-3*max(1.0,abs(trace[end][2])) && r[3]<=no_tol,trace)
+        @printf("CENTRAL objective=%.12f violation=%.3e iterations=%d wall_s=%.3f within_0.1%%_s=%.3f\n",reference,cm.original_primal,trace[end][1],central_wall,trace[cno][4])
+        serialize(joinpath(out,"central_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>cm.objective,:u=>cu,:B=>cb,:status=>"LOCALLY_SOLVED"))
+        central=nothing; cu=nothing; cb=nothing; GC.gc(); GC.gc()
+        stamp("central_released")
+        central_no_s=trace[cno][4]
     end
-    MOI.set(central.m,Ipopt.CallbackFunction(),callback)
-    stamp("central_warmup_begin"); solve_checked!(central); stamp("central_warmup_end")
-    set_start_value.(central.vars,central.initial); empty!(trace)
-    stamp("central_timed_begin"); clock[]=time_ns(); tick=time_ns(); solve_checked!(central); central_wall=(time_ns()-tick)/1e9; stamp("central_timed_end")
-    cu,cb=dispatch([central],d); cm=physical_metrics(d,cu,cb); reference=cm.objective
-    cno=findfirst(r->abs(r[2]-trace[end][2])<=1e-3*max(1.0,abs(trace[end][2])) && r[3]<=no_tol,trace)
-    @printf("CENTRAL objective=%.12f violation=%.3e iterations=%d wall_s=%.3f within_0.1%%_s=%.3f\n",reference,cm.original_primal,trace[end][1],central_wall,trace[cno][4])
-    serialize(joinpath(out,"central_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>cm.objective,:u=>cu,:B=>cb,:status=>"LOCALLY_SOLVED"))
-    central=nothing; cu=nothing; cb=nothing; GC.gc(); GC.gc()
-    stamp("central_released")
     tadmm_screen(d); physical_layout(d)   # caches the workers receive with their data
     prated=sort([d[:P_B_R_pu][j] for j in d[:Bset]]); rho_unit=(maximum(d[:LoadShapeCost])-minimum(d[:LoadShapeCost]))*d[:kVA_B]*d[:delta_t_h]/prated[cld(length(prated),2)]
     parts=split(get(ENV,"SC_RHO","2:0.0625:20"),':'); rho=rho_unit*parse(Float64,parts[1])
@@ -150,7 +160,7 @@ function lean_main()
     stamp("tadmm_timed_begin"); timed=run_lean(d,system;common...,phase="timed"); stamp("tadmm_timed_end")
     warm.k==timed.k || println("SC_WARNING warm-up and timed passes differ: ",warm.k," vs ",timed.k)
     @printf("SC_LEAN_SUMMARY system=%s T=%d workers=%d | centralized converged_s=%.3f within_0.1%%_s=%.3f | tadmm converged_s=%.3f iterations=%d repair_attempts=%d gap=%.2e violation=%.2e | ratio=%.2f\n",
-        system,T,nworkers,central_wall,trace[cno][4],timed.algorithm,timed.k,timed.attempts,timed.gap,timed.violation,central_wall/timed.algorithm)
+        system,T,nworkers,central_wall,central_no_s,timed.algorithm,timed.k,timed.attempts,timed.gap,timed.violation,central_wall/timed.algorithm)
 end
 if abspath(PROGRAM_FILE)==abspath(@__FILE__)
     try
