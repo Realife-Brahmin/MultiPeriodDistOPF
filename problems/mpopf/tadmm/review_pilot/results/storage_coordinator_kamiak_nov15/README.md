@@ -375,3 +375,12 @@ and trim thresholds) 2.9 s; passive OpenMP waiting 4.6 s; MUMPS instead of
 MA57 7.4 s. None helps, and it is not specific to MA57. The tcmalloc test
 failed at start-up (its libstdc++ is older than the one Julia needs). Cause
 still unknown; the process version remains the one to use.
+
+- **large10k T288, 96 workers** (three periods each; 98 cores of a shared
+  128-core node, job 31820122, indicative): 160.0 s against 743.5 s centralized
+  (ratio 4.65), 29 iterations, 125.9 GB against 30.3 GB. The centralized
+  dispatch passed the replay; the tADMM replay was still running when the logs
+  were copied.
+- **MUMPS, med2522 T96, 48 workers** (job 31820399): 33.1 s against 110.4 s
+  (ratio 3.34; with MA57 18.6 s against 67.3 s, ratio 3.61). Both dispatches
+  pass the replay. large10k T96 with MUMPS was running.
