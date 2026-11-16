@@ -341,3 +341,37 @@ is inside the model build and outside both solvers' clocks.
 - **MOSEK** against Ipopt/MA57 on Kamiak, one thread: ieee123 T24 0.83 / 0.44 s,
   ieee123 T96 4.57 / 1.98 s, med2522 T24 24.9 / 14.8 s; MOSEK reports optimal
   and the objectives agree to 2e-7 relative. The larger cases were running.
+
+## Late evening of 2026-11-15
+
+**One worker per period, shared 128-core Xeon 6760P nodes (indicative).**
+large10k T144, 96 workers (job 31820121): 78.8 s against 372.2 s centralized
+(ratio 4.7), 83.4 GB against 14.3 GB, both dispatches pass the replay.
+large10k T288 with 96 workers was running.
+
+**Repeats** (lean driver, whole 64-core nodes), tADMM / centralized seconds,
+first run in brackets: med2522 T24 9.08 / 14.06 (9.66 / 14.51); large10k T24
+19.22 / 31.55 (19.24 / 31.63); large10k T96 55.2 / 176.7 (68.4 / 219.7, and
+56.3 / 176.9 in `tadmm_sc_nov15_v9_lean`); med2522 T96 18.3 / 67.2
+(18.6 / 67.3). Iterations identical; ratios within 4%. The one slow node run
+(220 s centralized) slowed both solvers alike.
+
+**MUMPS for reference** (`mumps_*` folders in `tadmm_sc_nov15_v10_lean`): both
+the centralized solve and tADMM's solves use Ipopt's MUMPS instead of MA57.
+tADMM / centralized seconds: ieee123 T24 0.74 / 0.77, med2522 T24 14.9 / 23.3,
+large10k T24 39.3 / 66.3. Both solvers are 1.6 to 2.1 times slower than with
+MA57 and the ratios barely move (1.04, 1.56, 1.69 against 0.90, 1.50, 1.64).
+Same iterations; dispatches pass the replay. The T96 runs were not finished.
+
+**MOSEK on Kamiak** (`tadmm_sc_nov15_v12_conic`, logs `mosek-*`), one thread,
+Ipopt/MA57 / MOSEK seconds: med2522 T96 73.3 / 97.7; large10k T24 34.8 / 58.6,
+T48 88.6 / 135.8, T96 188.1 / 285.2. MOSEK reports optimal throughout, agrees
+with Ipopt's objective to 1e-8 relative on large10k, and leaves a violation of
+at most 1.5e-5. It is 1.3 to 1.7 times slower.
+
+**Thread slowdown, more tests** (`tadmm_sc_nov15_v13_threaded_gc`, ieee123
+T24, 24 threads, 0.48 s as processes): glibc allocator settings (large mmap
+and trim thresholds) 2.9 s; passive OpenMP waiting 4.6 s; MUMPS instead of
+MA57 7.4 s. None helps, and it is not specific to MA57. The tcmalloc test
+failed at start-up (its libstdc++ is older than the one Julia needs). Cause
+still unknown; the process version remains the one to use.

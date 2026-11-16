@@ -5,3 +5,7 @@ This program contains Ipopt, a library for large-scale nonlinear optimization.
          For more information visit https://github.com/coin-or/Ipopt
 ******************************************************************************
 
+CONIC_HOST host=cn157 time=2026-11-15T17:14:57.528 julia=1.12.4 system=large10kC_1ph T=48
+CONIC solver=ipopt status=LOCALLY_SOLVED iterations=30 wall_s=88.594 objective=2617411.473985016 violation=9.095e-13 cone_gap=1.559e-05 maxrss_gb=5.26
+CONIC_DETAIL solver=mosek build_s=10.68 reported_solve_s=122.098
+CONIC solver=mosek status=OPTIMAL iterations=38 wall_s=135.783 objective=2617411.454868161 violation=1.978e-06 cone_gap=1.328e-03 maxrss_gb=15.55

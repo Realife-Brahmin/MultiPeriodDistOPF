@@ -7,3 +7,5 @@ This program contains Ipopt, a library for large-scale nonlinear optimization.
 
 CONIC_HOST host=cn157 time=2026-11-15T17:13:57.206 julia=1.12.4 system=ieee2522C_1ph T=96
 CONIC solver=ipopt status=LOCALLY_SOLVED iterations=57 wall_s=73.317 objective=8745.091229059 violation=9.593e-16 cone_gap=7.792e-07 maxrss_gb=2.92
+CONIC_DETAIL solver=mosek build_s=4.60 reported_solve_s=92.223
+CONIC solver=mosek status=OPTIMAL iterations=55 wall_s=97.747 objective=8745.089623307 violation=1.833e-06 cone_gap=1.810e-05 maxrss_gb=7.53
