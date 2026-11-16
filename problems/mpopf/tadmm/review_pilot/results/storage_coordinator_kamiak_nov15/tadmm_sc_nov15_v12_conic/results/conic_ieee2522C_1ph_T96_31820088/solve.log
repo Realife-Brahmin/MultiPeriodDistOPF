@@ -1,0 +1,11 @@
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+CONIC_HOST host=cn157 time=2026-11-15T16:15:48.592 julia=1.12.4 system=ieee2522C_1ph T=96
+CONIC solver=ipopt status=LOCALLY_SOLVED iterations=57 wall_s=74.724 objective=8745.091229059 violation=9.593e-16 cone_gap=7.792e-07 maxrss_gb=2.96
+CONIC_DETAIL solver=clarabel build_s=5.31 reported_solve_s=82.941
+CONIC solver=clarabel status=ALMOST_OPTIMAL iterations=37 wall_s=107.100 objective=8745.092673464 violation=9.894e-08 cone_gap=8.172e-05 maxrss_gb=7.71

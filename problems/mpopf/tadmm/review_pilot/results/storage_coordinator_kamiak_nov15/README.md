@@ -258,3 +258,53 @@ Thread probe on the 309 PC (`probe_threads.jl`, `storage_coordinator_threaded.jl
 8 threads): same iterations, gap and violation as the process version on ieee123
 and med2522 T24; the whole process peaks at 1.2 GB and 2.4 GB, centralized phase
 included; about 28% slower than 8 worker processes on med2522.
+
+## T = 144 and T = 288 (`tadmm_sc_nov15_v10_lean`, 48 workers, whole 64-core nodes)
+
+Lean driver with the pinned repair; seconds and GB (Pss). With 48 workers each
+worker solves three (T = 144) or six (T = 288) periods one after another.
+
+| case | centralized: time, memory | tADMM: time (iterations), memory | ratio |
+|---|---|---|---|
+| ieee123 T144 | 3.41, 0.91 | 1.62 (23), 23.2 (whole job) | 2.11 |
+| med2522 T144 | 111.8, 3.83 | 30.1 (23), 32.2 | 3.71 |
+| large10k T144 | 267.9, 14.8 | 85.6 (29), 63.7 | 3.13 |
+| ieee123 T288 | 6.44, 1.07 | 3.29 (23), 25.2 | 1.96 |
+| med2522 T288 | 257.2, 7.10 | 59.7 (23), 40.9 | 4.31 |
+
+Centralized and tADMM dispatches pass the replay for the first four rows; for
+med2522 T288 the centralized one had passed and the tADMM replay was still
+running when the logs were copied. large10k T288 was still running. Iterations
+stay at 23 to 29 at every horizon from 24 to 288.
+
+## Conic baseline on Kamiak (`tadmm_sc_nov15_v12_conic`)
+
+Ipopt/MA57 and Clarabel in the same job, one thread each, on a Xeon 6438Y+
+node shared with the other conic jobs (4 cores per job). Seconds.
+
+| case | Ipopt/MA57 | Clarabel |
+|---|---|---|
+| ieee123 T24 | 0.45 | 0.64 |
+| ieee123 T96 | 2.02 | 3.74, almost optimal |
+| med2522 T24 | 15.1 | 21.6, almost optimal, violation 1.1e-6 |
+| med2522 T96 | 74.7 | 107.1, almost optimal |
+| large10k T24 | 35.2 | 110.2, almost optimal, violation 1.1e-3, cone gap 8e-2 |
+
+large10k T48 and T96 were still running. See also
+`../conic_baseline_nov15/README.md` for the 309 PC runs with Gurobi.
+
+## Binding constraints and relaxation gap (`tadmm_sc_nov15_v12_conic/results/binding_stats.csv`)
+
+`binding_stats.jl` on every saved centralized and tADMM dispatch of
+`tadmm_sc_nov15_v10_lean`, threshold 1e-6. Voltage limits bind on med2522 only
+(10 lower and 8 upper bus-periods of 60,504 at T24; 142 and 97 of 726,048 at
+T288); ieee123 has one bus per period at the upper limit; large10k has none.
+Batteries sit at a power limit in 21 to 35% of battery-periods. The largest cone
+gap is 3e-5 p.u. squared and the fictitious losses are below 1.2e-7 of the real
+losses in every case.
+
+## Start computation (309 PC, `time_start_computation.jl`)
+
+The power-flow start for all periods in turn: 0.32 s (ieee123 T96), 7.2 s
+(med2522 T96), 39.6 s (large10k T144); per period 0.003, 0.075 and 0.27 s. It
+is inside the model build and outside both solvers' clocks.
