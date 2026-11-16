@@ -13,6 +13,8 @@
 # (dispatch collection, physical metrics) and the repair solve, which are timed
 # separately. A full warm-up pass with the same models precedes the timed pass.
 using Distributed, Dates
+# SC_CLUSTER=slurm starts the workers with srun, across every node of the job.
+get(ENV,"SC_CLUSTER","local")=="slurm" && @eval using SlurmClusterManager
 include("storage_coordinator_actor.jl")
 BLAS.set_num_threads(1)
 
@@ -30,10 +32,22 @@ end
 function start_pool!(nworkers)
     isempty(SC_WIDS) || return
     cpus=allowed_cpus(); pin=Sys.islinux() && get(ENV,"SC_PIN","1")=="1"
-    pin && length(cpus)<nworkers+1 && error("Need $(nworkers+1) CPUs, have $(length(cpus))")
+    slurm=get(ENV,"SC_CLUSTER","local")=="slurm"
+    pin && !slurm && length(cpus)<nworkers+1 && error("Need $(nworkers+1) CPUs, have $(length(cpus))")
     common=[String(k)=>String(v) for (k,v) in ENV if startswith(k,"TADMM_") || startswith(k,"SC_") || k in ("JULIA_DEPOT_PATH","LD_LIBRARY_PATH","LD_PRELOAD")]
     append!(common,["OPENBLAS_NUM_THREADS"=>"1","OMP_NUM_THREADS"=>"1","MKL_NUM_THREADS"=>"1","JULIA_NUM_THREADS"=>"1"])
     flags=Cmd(["--startup-file=no","--threads=1","--project=$(dirname(Base.active_project()))"])
+    if slurm
+        # One srun step with nworkers tasks spread over the job's nodes; worker_slurm.sh
+        # pins each task to its own CPU and leaves the first CPU of a node to the coordinator.
+        parse(Int,ENV["SLURM_NTASKS"])==nworkers || error("SLURM_NTASKS must equal the number of workers")
+        ids=addprocs(Main.SlurmClusterManager.SlurmManager(;launch_timeout=1200.0);exename=joinpath(@__DIR__,"worker_slurm.sh"),
+            exeflags=flags,env=common,dir=@__DIR__,topology=:master_worker)
+        append!(SC_WIDS,ids)
+        fetch.([remotecall(Base.include,w,Main,joinpath(@__DIR__,"storage_coordinator_actor.jl")) for w in SC_WIDS])
+        run(pipeline(`taskset -apc $(cpus[1]) $(getpid())`;stdout=devnull))
+        return
+    end
     tasks=map(1:nworkers) do w
         @async if pin
             env=vcat(common,["TADMM_PIN_CPU"=>string(cpus[w+1]),"TADMM_JULIA_EXE"=>Base.julia_cmd().exec[1]])
