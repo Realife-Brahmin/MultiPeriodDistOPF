@@ -399,3 +399,20 @@ still unknown; the process version remains the one to use.
   (27.3 GB at large10k T288 against 28.8 GB centralized). So the tADMM totals
   quoted above include that leftover. `tadmm_sc_nov15_v14_coordinator` reruns
   five cases without the centralized solve to measure it.
+
+## Coordinator memory (`tadmm_sc_nov15_v14_coordinator`)
+
+Lean driver without the centralized solve (`SC_REFERENCE`), whole 64-core
+nodes, so the coordinator process holds nothing left over from it. Pss, GB.
+
+| case | workers | coordinator | all processes | all processes when the centralized solve ran first |
+|---|---|---|---|---|
+| ieee123 T96 | 48 | 0.44 | 21.2 | 21.5 |
+| med2522 T96 | 48 | 0.50 | 26.1 | 28.1 |
+| large10k T24 | 24 | 0.92 | 17.0 | 19.3 |
+| large10k T96 | 48 | 1.45 | 40.6 | 49.6 |
+
+The coordinator needs about as much as one worker (a Julia process and the
+instance data). Iterations, times and gaps are the same as in the runs with
+the centralized solve, and the tADMM dispatches pass the replay. large10k T288
+was still running.
