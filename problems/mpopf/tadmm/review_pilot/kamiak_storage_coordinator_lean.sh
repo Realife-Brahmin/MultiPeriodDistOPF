@@ -2,6 +2,8 @@
 # One Kamiak case of the lean storage-coordinated tADMM with memory sampling.
 # usage: kamiak_storage_coordinator_lean.sh C system T label
 # SC_DRIVER=parallel runs the diagnostic driver instead, with the same sampling.
+# SC_STAGE_SOLVER=mosek|clarabel runs tADMM's own solves with that conic solver
+# (project conic_env) and first times the centralized problem with it too.
 set -euo pipefail
 C=$(realpath "$1"); SYS=$2; T=$3; LABEL=$4
 P=problems/mpopf/tadmm/review_pilot
@@ -26,13 +28,19 @@ export TADMM_SCREEN=${TADMM_SCREEN:-$SCREEN}
 export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=0
 export SC_NWORKERS=${SC_NWORKERS:-$T} SC_RHO=${SC_RHO:-2:0.0625:20} SC_BALANCE=${SC_BALANCE:-2}
 DRIVER=storage_coordinator_${SC_DRIVER:-lean}.jl
+PROJECT=$P; [[ ${SC_STAGE_SOLVER:-ipopt} == ipopt ]] || PROJECT=$P/conic_env
 { hostname; date -Is; lscpu; taskset -pc $$; scontrol show job "$SLURM_JOB_ID"; env | grep -E '^(OMP_|OPENBLAS_|JULIA_|TADMM_|SC_)'; } > "$OUT/allocation.txt"
 sha256sum "$P"/storage_coordinator*.jl "$P/model.jl" "$LIB" "problems/mpopf/spar_ddp/results/network_filterddp/network_data_${SYS}_T${T}_periodic.jls" > "$OUT/sources.sha256"
 # The solver keeps the first allowed CPUs; the sampler sits on the last one.
 LAST=$(python3 -c 'import os; print(max(os.sched_getaffinity(0)))')
 # The threaded driver runs every worker as a thread of one process.
 JT=1; [[ ${SC_DRIVER:-lean} == threaded ]] && JT=$SC_NWORKERS
-julia --threads="$JT" --startup-file=no --project="$P" "$P/$DRIVER" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+if [[ ${SC_STAGE_SOLVER:-ipopt} != ipopt ]]; then
+ mkdir -p "$OUT/central_conic"
+ julia --startup-file=no --project="$PROJECT" "$P/conic_baseline.jl" "$SYS" "$T" "$OUT/central_conic" "$SC_STAGE_SOLVER" > "$OUT/central_conic/solve.log" 2> "$OUT/central_conic/solve.err"
+ grep -E "^CONIC" "$OUT/central_conic/solve.log" || true
+fi
+julia --threads="$JT" --startup-file=no --project="$PROJECT" "$P/$DRIVER" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 taskset -c "$LAST" python3 "$P/sample_memory.py" sample "$PID" "$OUT/memory_samples.csv" "${SC_SAMPLE_S:-2}" &
 wait "$PID"

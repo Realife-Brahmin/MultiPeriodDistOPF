@@ -3,6 +3,8 @@
 # OPF and repair models) and a set of batteries (their whole-horizon step).
 isdefined(Main,:run_storage_coordinator) || include("storage_coordinator.jl")
 const SC=Dict{Symbol,Any}()
+include("storage_coordinator_conic_stage.jl")
+sc_conic()=SC_STAGE_SOLVER!="ipopt"
 
 function sc_affinity()
     Sys.islinux() || return "not-linux"
@@ -34,6 +36,11 @@ end
 # Update II for this worker's batteries. target has one row per battery of the chunk.
 function sc_zstep!(target,k)
     tick=time_ns()
+    if sc_conic()
+        row=coordinator_step_conic!(SC[:coord],SC[:d],SC[:chunk],target)
+        row.ok || error("battery step failed")
+        return (;z=row.z,solver_s=row.solver_s,elapsed_s=(time_ns()-tick)/1e9)
+    end
     z,solver_s=coordinator_step!(SC[:coord],target,k;start=pop!(SC,:coord_resume,nothing))
     return (;z,solver_s,elapsed_s=(time_ns()-tick)/1e9)
 end
@@ -87,8 +94,8 @@ function sc_prepare_lean!(d,periods,chunk,rho)
     BLAS.set_num_threads(1)
     empty!(SC); GC.gc()
     SC[:d]=d; SC[:periods]=sort(collect(periods)); SC[:chunk]=collect(chunk)
-    SC[:stages]=Dict(t=>make_power_stage(d,t;rho) for t in periods)
-    SC[:coord]=isempty(chunk) ? nothing : make_coordinator(d;idx=chunk)
+    SC[:stages]=Dict(t=>(sc_conic() ? make_power_stage_conic(d,t;rho) : make_power_stage(d,t;rho)) for t in periods)
+    SC[:coord]=isempty(chunk) ? nothing : (sc_conic() ? make_coordinator_conic(d;idx=chunk) : make_coordinator(d;idx=chunk))
     SC[:resume]=Dict{Int,Vector{Float64}}()
     return (;worker=myid(),pid=getpid(),host=gethostname(),affinity=sc_affinity(),periods=SC[:periods],batteries=length(chunk),
         julia_threads=Threads.nthreads(),blas_threads=BLAS.get_num_threads())
@@ -98,7 +105,8 @@ function sc_xstep_lean!(zc,uc,rho,k)
     d=SC[:d]
     return map(SC[:periods]) do t
         tick=time_ns()
-        x,solver_s,iterations=power_stage_step!(SC[:stages][t],d,zc[t],uc[t],rho,k;start=pop!(SC[:resume],t,nothing))
+        x,solver_s,iterations=sc_conic() ? power_stage_step_conic!(SC[:stages][t],d,zc[t],uc[t],rho) :
+            power_stage_step!(SC[:stages][t],d,zc[t],uc[t],rho,k;start=pop!(SC[:resume],t,nothing))
         (;t,x,solver_s,iterations,elapsed_s=(time_ns()-tick)/1e9)
     end
 end
@@ -109,6 +117,10 @@ function sc_repair_shared!(zc;max_iter=3000)
     d=SC[:d]
     return map(SC[:periods]) do t
         tick=time_ns(); s=SC[:stages][t]
+        if sc_conic()
+            row=repair_stage_conic!(s,d,zc[t])
+            return (;t,ok=row.ok,strict=row.strict,status=row.status,u=row.u,solver_s=row.solver_s,elapsed_s=(time_ns()-tick)/1e9)
+        end
         # The iterate to resume from: saved by an earlier repair of this iteration, else the model's own.
         iterate=haskey(SC[:resume],t) ? SC[:resume][t] : value.(s.vars)
         set_start_value.(s.vars,iterate)
@@ -139,6 +151,10 @@ end
 # pinned maps period => powers of this worker's batteries.
 function sc_zstep_pinned!(target,pinned)
     c=SC[:coord]; d=SC[:d]; tick=time_ns(); limits=[d[:P_B_R_pu][j] for j in d[:Bset][SC[:chunk]]]
+    if sc_conic()
+        row=coordinator_step_conic!(c,d,SC[:chunk],target;pinned)
+        return (;ok=row.ok,z=row.z,elapsed_s=(time_ns()-tick)/1e9)
+    end
     iterate=haskey(SC,:coord_resume) ? SC[:coord_resume] : value.(c.vars)
     set_start_value.(c.vars,iterate)
     for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end
