@@ -27,6 +27,16 @@ function stage_optimizer(;threads=1)
     error("no conic stage solver selected")
 end
 conic_ok(m)=termination_status(m) in (MOI.OPTIMAL,MOI.ALMOST_OPTIMAL,MOI.LOCALLY_SOLVED)
+# A conic solve that stalls short of its tolerance still returns its last point.
+# Inside the iterations that point is used and the event is printed
+# (SC_CONIC_INEXACT); the repair, which produces the reported dispatch, accepts
+# only a solve that met the tolerance.
+function conic_usable(m,what)
+    conic_ok(m) && return true
+    (result_count(m)>=1 && has_values(m) && all(isfinite,value.(all_variables(m)))) || return false
+    println("SC_CONIC_INEXACT ",what," status=",termination_status(m)); flush(stdout)
+    return true
+end
 conic_strict(m)=termination_status(m) in (MOI.OPTIMAL,MOI.LOCALLY_SOLVED)
 
 function make_power_stage_conic(d,t;rho)
@@ -71,7 +81,7 @@ function power_stage_step_conic!(s,d,zt,ut,rho)
     bs=d[:Bset]
     @objective(s.m,Min,s.cost+sum((s.cb+rho/2)*s.pb[j]^2+rho*(ut[n]-zt[n])*s.pb[j] for (n,j) in enumerate(bs)))
     optimize!(s.m)
-    conic_ok(s.m) || error("stage $(s.t) failed: $(termination_status(s.m))")
+    conic_usable(s.m,"stage $(s.t)") || error("stage $(s.t) failed: $(termination_status(s.m))")
     return [value(s.pb[j]) for j in bs],solve_time(s.m),0
 end
 
@@ -105,7 +115,7 @@ function coordinator_step_conic!(c,d,idx,target;pinned=Dict{Int,Vector{Float64}}
     for (t,p) in pinned, n in eachindex(p); fix(c.z[n,t],p[n];force=true); end
     @objective(c.m,Min,sum(c.z[i]^2-2*target[i]*c.z[i] for i in eachindex(target)))
     optimize!(c.m)
-    ok=conic_ok(c.m); z=ok ? value.(c.z) : zeros(0,0); solver_s=solve_time(c.m)
+    ok=conic_usable(c.m,"battery step"); z=ok ? value.(c.z) : zeros(0,0); solver_s=solve_time(c.m)
     for (t,p) in pinned, n in eachindex(p)
         unfix(c.z[n,t]); set_lower_bound(c.z[n,t],-limits[n]); set_upper_bound(c.z[n,t],limits[n])
     end

@@ -448,6 +448,8 @@ memory is not measured in these runs.
 | large10k | 144 | 2 | 2 | 74.2 | 29 | 2.14e-06 | pass | 31822488 |
 | med2522 | 48 | 1 | 6 | 57.2 | 23 | 9.28e-06 | pass | 31822496 |
 | med2522 | 72 | 1 | 4 | 30.5 | 23 | 9.28e-06 | pass | 31822495 |
+| med2522 | 96 | 1 | 3 | 27.5 | 23 | 9.33e-06 | pass | 31822494 |
+| med2522 | 144 | 2 | 2 | 20.3 | 23 | 9.32e-06 | pass | 31822493 |
 
 Centralized large10k T288 on the same node type, in the 96-worker job: 552.2 s
 (383.2 s to within 0.1%), replay passed. Against it tADMM is 2.5, 3.5, 3.6 and
@@ -456,6 +458,15 @@ falling between 72 and 96 workers (157.9 to 151.6 s), while 144 workers on two
 nodes, 72 on each, halve it: a node saturates at about 72 workers of this size,
 and more nodes help where more workers on the same node do not. Shared nodes,
 so single runs carry some noise; the saturation point is one reading, not a law.
+
+Centralized med2522 T288 on the same node type, in the 96-worker job: 211.1 s
+(144.4 s to within 0.1%), replay passed. Against it tADMM is 3.7, 6.9, 7.7 and
+10.4 times faster with 48, 72, 96 and 144 workers. Here the gain flattens
+earlier (30.5 to 27.5 to 20.3 s): the periods are small, and a growing share of
+each iteration is the battery step and the exchange with the coordinator.
+
+The two 288-worker jobs (three nodes, 98 CPUs each) had not started after five
+hours in the queue (31822487, 31822492).
 
 ## A conic solver inside tADMM (`tadmm_sc_nov15_v16_conic`)
 
@@ -475,9 +486,26 @@ Ipopt/MA57, and tADMM. Gap is against the Ipopt/MA57 objective.
 | med2522 T24 | 24 | MOSEK | 24.6 | 14.5 | 10.8 | 22 | 9.5e-05 | 2.3e-06 | pass | 31822504 |
 | ieee123 T96 | 48 | MOSEK | 4.40 | 1.87 | 1.24 | 23 | 2.3e-06 | 7.0e-07 | pass | 31822625 |
 | ieee123 T24 | 24 | Clarabel | 0.66 | 0.44 | 0.57 | 21 | 5.7e-07 | 5.1e-07 | pass | 31822629 |
+| med2522 T96 | 48 | MOSEK | 93.5 | 67.2 | 19.1 | 23 | 7.3e-05 | 1.2e-06 | pass | 31822626 |
 
 The T24 cases ran on 26 CPUs of a 64-core node, ieee123 T96 on a whole one. med2522 needed one pinned
 period, as with Ipopt. With Ipopt/MA57 inside, tADMM took 9.7 s on med2522 T24,
 so the solver inside changes tADMM's time little, while the centralized solve
 is 1.7 times slower with MOSEK. Memory with MOSEK inside: 13.5 GB (ieee123) and
 15.9 GB (med2522) for 25 processes, about 0.1 GB per process more than with Ipopt.
+
+med2522 T96 with MOSEK inside used four pinned periods. With Ipopt/MA57 inside
+it took 18.6 s, so again the solver inside matters little to tADMM (19.1 s),
+and with MOSEK on both sides tADMM is 4.9 times faster than centralized.
+
+Three cases failed because a conic solve stalled short of its tolerance in the
+first iteration, and the code then stopped: large10k T24 (MOSEK, a period OPF,
+`SLOW_PROGRESS`, job 31822627), large10k T96 (MOSEK, the battery step, job
+31822628) and med2522 T24 (Clarabel, a period OPF, `NUMERICAL_ERROR`, job
+31822630). The centralized conic times of those jobs stand: MOSEK 57.0 s
+(large10k T24) and 275.0 s (large10k T96), Clarabel 20.8 s (med2522 T24,
+`ALMOST_OPTIMAL`). The code now uses the stalled solve's last point inside the
+iterations and prints `SC_CONIC_INEXACT`; the repair still accepts only a solve
+that met its tolerance. The three cases were resubmitted at tolerance 1e-8 and
+1e-6 (`CONIC_TOL`, applied to the centralized conic solve as well), jobs
+31824404 to 31824409.
