@@ -572,7 +572,7 @@ was added to `conic_env` on Kamiak.
 Gurobi inside tADMM works (24 workers each took a licence token), but on this
 small case it is three times slower than centralized Gurobi: 21 iterations of
 from-scratch solves at about 0.08 s each, where Ipopt or MOSEK inside take about
-0.5 s in total. Larger cases were submitted (jobs 31825862 onward).
+0.5 s in total. Larger cases were submitted (jobs 31825876 to 31825880).
 
 ### Why the 288-worker jobs never started
 
@@ -583,3 +583,25 @@ single-CPU workers cannot run under this account as it stands; both jobs were
 cancelled. The largest worker count that fits is 144 (148 CPUs, two nodes).
 One worker per period is therefore measured at T = 144 instead: jobs 31825882
 to 31825887 (large10k and med2522, 48, 72 and 144 workers).
+
+### Gurobi inside tADMM, larger cases (read 2026-11-16 09:41)
+
+| case | workers | centralized, Gurobi (s) | centralized, Ipopt/MA57 (s) | tADMM, Gurobi inside (s) | tADMM, Ipopt inside, earlier (s) | iterations | gap | violation | replay | job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ieee123 T96 | 48 | 3.08 | 1.87 | 3.75 | about 1 | 23 | 2.3e-06 | 1.4e-08 | pass | 31825876 |
+| med2522 T24 | 24 | 15.9 | 14.5 | 18.3 | 9.7 | 22 | 7.4e-05 | 7.1e-07 | pass | 31825877 |
+| med2522 T96 | 48 | 74.8 | 71.2 | 34.8 | 18.6 | 23 | 5.9e-05 | 4.1e-06 | pass | 31825878 |
+
+No stalled solves. Gurobi inside is the slowest of the three inner solvers:
+about twice Ipopt or MOSEK inside on med2522 and more on ieee123. With Gurobi on
+both sides tADMM wins only at med2522 T96 (2.2 times); at ieee123 T96 and
+med2522 T24 it is 0.8 to 0.9 of centralized Gurobi. Centralized Gurobi itself is
+close to centralized Ipopt/MA57 on med2522. large10k T24 and T96 were running
+(centralized Gurobi at T24: 82.7 s).
+
+### T = 144 by number of workers (128-core nodes), first rows
+
+| system | workers | nodes | periods per worker | tADMM (s) | iterations | gap | replay | job |
+|---|---|---|---|---|---|---|---|---|
+| large10k | 48 | 1 | 3 | 95.2 | 29 | 1.33e-06 | pass | 31825884 |
+| med2522 | 48 | 1 | 3 | 25.3 | 23 | 9.11e-06 | pass | 31825887 |
