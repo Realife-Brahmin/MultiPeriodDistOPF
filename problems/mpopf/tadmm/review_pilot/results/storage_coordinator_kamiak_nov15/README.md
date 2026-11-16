@@ -454,8 +454,8 @@ Centralized large10k T288 on the same node type, in the 96-worker job: 552.2 s
 7.4 times faster with 48, 72, 96 and 144 workers. On one node the time stops
 falling between 72 and 96 workers (157.9 to 151.6 s), while 144 workers on two
 nodes, 72 on each, halve it: a node saturates at about 72 workers of this size,
-and more nodes help where more workers on the same node do not. The same was
-seen on the 64-core nodes. Shared nodes, so single runs carry some noise.
+and more nodes help where more workers on the same node do not. Shared nodes,
+so single runs carry some noise; the saturation point is one reading, not a law.
 
 ## A conic solver inside tADMM (`tadmm_sc_nov15_v16_conic`)
 
