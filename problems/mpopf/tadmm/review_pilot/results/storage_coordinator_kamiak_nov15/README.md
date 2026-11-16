@@ -416,3 +416,9 @@ The coordinator needs about as much as one worker (a Julia process and the
 instance data). Iterations, times and gaps are the same as in the runs with
 the centralized solve, and the tADMM dispatches pass the replay. large10k T288
 was still running.
+
+large10k T288 without the centralized solve (job 31820757, 48 workers):
+coordinator 2.46 GB, all processes 83.1 GB (108.2 GB when the centralized solve
+ran first), tADMM 207.9 s in 29 iterations, replay passed. This job has no
+centralized time of its own; the matched pair is 248.6 s against 618.9 s in
+`tadmm_sc_nov15_v10_lean`. No Kamiak jobs were left after this one.
