@@ -28,4 +28,3 @@ repair, so on med2522 the repair is again refused at later iterations (for
 example iteration 30); med2522 at other horizons and large10k were not run;
 no OpenDSS replay, since the replay runs storage at 100% efficiency in its
 "model" mode and would need its "dss" mode extended to these efficiencies.
-EFOF=1 2>/dev/null
