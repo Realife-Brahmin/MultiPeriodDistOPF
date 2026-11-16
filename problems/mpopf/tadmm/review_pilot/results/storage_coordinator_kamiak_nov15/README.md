@@ -422,3 +422,51 @@ coordinator 2.46 GB, all processes 83.1 GB (108.2 GB when the centralized solve
 ran first), tADMM 207.9 s in 29 iterations, replay passed. This job has no
 centralized time of its own; the matched pair is 248.6 s against 618.9 s in
 `tadmm_sc_nov15_v10_lean`. No Kamiak jobs were left after this one.
+
+## Workers over several nodes (`tadmm_sc_nov15_v15_workers`)
+
+`start_pool!` has a Slurm backend (`SC_CLUSTER=slurm`): one `srun` step with one
+task per worker, each pinned to its own CPU by `worker_slurm.sh`;
+`kamiak_storage_coordinator_multinode.sh` launches the lean driver that way.
+Gate (job 31822345, ieee123 T96, 96 workers on two 128-core nodes): 23
+iterations, gap 2.24e-06, 0.78 s, both dispatches pass the replay; the
+single-node run gives the same iterations and gap.
+
+### T = 288 by number of workers (128-core Xeon 6760P nodes)
+
+All through the multi-node launcher, the centralized solve skipped
+(`SC_REFERENCE`) except where a centralized time is given. Kamiak does not allow
+exclusive nodes, so these nodes are shared with other users' jobs. The memory
+sampler sees the head node only (the workers are started by `srun`), so worker
+memory is not measured in these runs.
+
+| system | workers | nodes | periods per worker | tADMM (s) | iterations | gap | replay | job |
+|---|---|---|---|---|---|---|---|---|
+| large10k | 48 | 1 | 6 | 222.8 | 29 | 2.14e-06 | pass | 31822491 |
+| large10k | 72 | 1 | 4 | 157.9 | 29 | 2.14e-06 | pass | 31822490 |
+| large10k | 144 | 2 | 2 | 74.2 | 29 | 2.14e-06 | pass | 31822488 |
+
+Rows for 96 and 288 workers and for med2522 are added below as the jobs finish.
+
+## A conic solver inside tADMM (`tadmm_sc_nov15_v16_conic`)
+
+`SC_STAGE_SOLVER=mosek|clarabel|gurobi` (`storage_coordinator_conic_stage.jl`)
+runs tADMM's own solves with a conic solver: each period's OPF with the cone
+stated explicitly and all original bounds, the battery step as the same
+quadratic program, the repair and the pinned repair unchanged. A conic
+interior-point solve cannot start from the previous iterate, so every iteration
+solves every period from scratch. Tolerances are those of the centralized conic
+baseline (1e-8). The job times, on the same node, the centralized problem with
+that conic solver (`conic_baseline.jl`), the centralized problem with
+Ipopt/MA57, and tADMM. Gap is against the Ipopt/MA57 objective.
+
+| case | workers | solver | centralized, that solver (s) | centralized, Ipopt/MA57 (s) | tADMM, that solver (s) | iterations | gap | violation | replay | job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ieee123 T24 | 24 | MOSEK | 0.82 | 0.43 | 0.52 | 21 | 5.5e-07 | 9.2e-07 | pass | 31822503 |
+| med2522 T24 | 24 | MOSEK | 24.6 | 14.5 | 10.8 | 22 | 9.5e-05 | 2.3e-06 | pass | 31822504 |
+
+Both on 26 CPUs of a 64-core node (not a whole node). med2522 needed one pinned
+period, as with Ipopt. With Ipopt/MA57 inside, tADMM took 9.7 s on med2522 T24,
+so the solver inside changes tADMM's time little, while the centralized solve
+is 1.7 times slower with MOSEK. Memory with MOSEK inside: 13.5 GB (ieee123) and
+15.9 GB (med2522) for 25 processes, about 0.1 GB per process more than with Ipopt.
