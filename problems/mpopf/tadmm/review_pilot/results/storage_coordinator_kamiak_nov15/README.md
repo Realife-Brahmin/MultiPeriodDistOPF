@@ -510,3 +510,28 @@ iterations and prints `SC_CONIC_INEXACT`; the repair still accepts only a solve
 that met its tolerance. The three cases were resubmitted at tolerance 1e-8 and
 1e-6 (`CONIC_TOL`, applied to the centralized conic solve as well), jobs
 31824404 to 31824409.
+
+### Resubmitted cases (read 2026-11-16 02:52; the Kamiak login expired at 03:15)
+
+| case | workers | solver, tolerance | centralized, that solver (s) | centralized, Ipopt/MA57 (s) | tADMM, that solver (s) | iterations | gap | violation | replay | job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| large10k T24 | 24 | MOSEK, 1e-8 | 55.3 | 32.0 | 45.5 | 24 | 3.3e-07 | 7.6e-07 | pass | 31824404 |
+
+large10k T24 is the case where the solver inside does matter: with Ipopt/MA57
+inside tADMM took 19.2 s, with MOSEK 45.5 s, because every iteration solves
+every period from scratch while Ipopt restarts from the previous iterate. So
+with MOSEK on both sides tADMM is 1.2 times faster than centralized, and it is
+slower than centralized Ipopt/MA57 (32.0 s). Three of the 576 period solves of
+the timed pass stalled (`SLOW_PROGRESS`, periods 1 and 6) and their last point
+was used; the repair solves all met the tolerance and the dispatch passes the
+replay. The earlier sentence that the solver inside changes tADMM's time little
+holds for ieee123 and med2522 only.
+
+Clarabel inside tADMM on med2522 T24 at 1e-8 failed again (job 31824408): the
+period-18 solve ends in `NUMERICAL_ERROR` with no point to use. Clarabel's
+centralized time at 1e-6 is 20.4 s (`OPTIMAL`).
+
+Not read before the login expired: large10k T24 with MOSEK at 1e-6 (31824405),
+med2522 T24 with Clarabel at 1e-6 (31824409), large10k T96 with MOSEK at 1e-8
+and 1e-6 (31824406, 31824407), and the two 288-worker jobs (31822487,
+31822492), still waiting in the queue after five hours.
