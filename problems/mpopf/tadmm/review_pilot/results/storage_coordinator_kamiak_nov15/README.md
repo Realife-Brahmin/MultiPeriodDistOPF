@@ -535,3 +535,41 @@ Not read before the login expired: large10k T24 with MOSEK at 1e-6 (31824405),
 med2522 T24 with Clarabel at 1e-6 (31824409), large10k T96 with MOSEK at 1e-8
 and 1e-6 (31824406, 31824407), and the two 288-worker jobs (31822487,
 31822492), still waiting in the queue after five hours.
+
+### Read 2026-11-16 09:20 (overnight jobs)
+
+| case | workers | solver, tolerance | centralized, that solver (s) | centralized, Ipopt/MA57 (s) | tADMM, that solver (s) | iterations | gap | violation | replay | job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| large10k T96 | 48 | MOSEK, 1e-8 | 277.0 | 177.2 | 96.9 | 29 | 4.4e-07 | 6.3e-06 | pass | 31824406 |
+| large10k T24 | 24 | MOSEK, 1e-6 | 51.0 | 34.2 | not converged in 150 | - | - | - | - | 31824405 |
+| large10k T96 | 48 | MOSEK, 1e-6 | 255.4 | 218.9 | not converged in 150 | - | - | - | - | 31824407 |
+| med2522 T24 | 24 | Clarabel, 1e-6 | 20.4 | 14.5 | not converged in 150 | - | - | - | - | 31824409 |
+
+- large10k T96, MOSEK at 1e-8 on both sides: tADMM is 2.9 times faster than
+  centralized MOSEK and 1.8 times faster than centralized Ipopt/MA57 on the same
+  node. With Ipopt/MA57 inside tADMM took 55 to 68 s, so MOSEK inside costs
+  about 1.5 times here (2.4 times at T24). Two period solves of the timed pass
+  stalled and their last point was used; the dispatch passes the replay.
+- At tolerance 1e-6 the conic solves are too loose for tADMM's own stopping
+  rule (primal residual 1e-5): the MOSEK runs never met the residuals in 150
+  iterations (no repair was attempted), and the Clarabel run met them but every
+  one of its 129 repairs was refused (violation 1.2e-04). So the conic solver
+  inside needs its tight tolerance.
+- The two 288-worker jobs were still waiting in the queue (over 11 hours).
+
+### Gurobi on Kamiak
+
+Kamiak has Gurobi 13.0.1 (`/opt/apps/gurobi/13.0.1`, module under `Licensed`)
+with a token-server licence that answers from compute nodes only (the login
+node gets "Server must be on the same subnet"). Use it with
+`GRB_LICENSE_FILE=/opt/apps/gurobi/13.0.1/licenses/gurobi.lic`; Gurobi.jl 1.9.3
+was added to `conic_env` on Kamiak.
+
+| case | workers | solver | centralized, that solver (s) | centralized, Ipopt/MA57 (s) | tADMM, that solver (s) | iterations | gap | violation | replay | job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ieee123 T24 | 24 | Gurobi | 0.59 | 0.43 | 1.82 | 21 | 5.8e-07 | 3.0e-08 | pass | 31825855 |
+
+Gurobi inside tADMM works (24 workers each took a licence token), but on this
+small case it is three times slower than centralized Gurobi: 21 iterations of
+from-scratch solves at about 0.08 s each, where Ipopt or MOSEK inside take about
+0.5 s in total. Larger cases were submitted (jobs 31825862 onward).
