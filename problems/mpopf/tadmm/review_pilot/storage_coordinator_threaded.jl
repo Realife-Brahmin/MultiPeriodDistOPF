@@ -58,6 +58,12 @@ function run_threaded(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,o
     algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; pinned_passes=0; pinned_accepted=0
     converged=0; gap=NaN; violation=NaN
     io=open(joinpath(out,"threaded_trace_$(phase).csv"),"w")
+    # A collection requested by one thread stalls every thread until all of them
+    # reach a safe point, and a thread inside a long Ipopt call does not. With
+    # SC_GC_EVERY=n the collector is off during the threaded loops and runs once
+    # every n iterations, between them and inside the clock.
+    gc_every=parse(Int,get(ENV,"SC_GC_EVERY","0"))
+    gc_every>0 && GC.enable(false)
     println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,repair_attempted,repair_strict")
     for iteration in 1:maxiter
         k=iteration; tick=time_ns()
@@ -112,6 +118,9 @@ function run_threaded(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,o
             end
             strict || (next_attempt=k+repair_backoff)
         end
+        if gc_every>0 && k%gc_every==0
+            GC.enable(true); GC.gc(false); GC.enable(false)
+        end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
         println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,attempted,strict),',')); flush(io)
         if attempted && strict
@@ -130,6 +139,7 @@ function run_threaded(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,o
         end
     end
     close(io)
+    gc_every>0 && GC.enable(true)
     @printf("SC_THREADED_DONE phase=%s threads=%d iterations=%d converged=%d repair_attempts=%d pinned_passes=%d pinned_periods=%d algorithm_s=%.3f gap=%.3e violation=%.3e build_s=%.3f\n",
         phase,N,k,converged,attempts,pinned_passes,pinned_accepted,algorithm,gap,violation,build_s); flush(stdout)
     return (;k,converged,attempts,algorithm,gap,violation,build_s)
