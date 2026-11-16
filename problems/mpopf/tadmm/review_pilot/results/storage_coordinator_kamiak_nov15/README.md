@@ -573,3 +573,13 @@ Gurobi inside tADMM works (24 workers each took a licence token), but on this
 small case it is three times slower than centralized Gurobi: 21 iterations of
 from-scratch solves at about 0.08 s each, where Ipopt or MOSEK inside take about
 0.5 s in total. Larger cases were submitted (jobs 31825862 onward).
+
+### Why the 288-worker jobs never started
+
+The `kamiak` partition allows one user 180 CPUs at a time (QOS `kamiak`,
+`MaxTRESPU cpu=180`), and each 288-worker job asks for 294. The `vcea`
+partition has no such cap but only three 64-core nodes (192 CPUs). So 288
+single-CPU workers cannot run under this account as it stands; both jobs were
+cancelled. The largest worker count that fits is 144 (148 CPUs, two nodes).
+One worker per period is therefore measured at T = 144 instead: jobs 31825882
+to 31825887 (large10k and med2522, 48, 72 and 144 workers).
