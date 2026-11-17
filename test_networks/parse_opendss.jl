@@ -122,9 +122,12 @@ function parse_network_topology!(data::Dict)
     # Get circuit name and substation bus
     circuit_name = OpenDSSDirect.Circuit.Name()
     data[:substationBus] = 1  # Assume bus 1 is substation
-    
+
     # Get all bus names and extract bus numbers
     bus_names = OpenDSSDirect.Circuit.AllBusNames()
+    # Decks with named buses (e.g. ieee9500xf, SMART-DS) are numbered here; decks
+    # with numbered buses keep their numbers and the code below, unchanged.
+    all(n -> tryparse(Int, split(n, ".")[1]) !== nothing, bus_names) || return parse_named_topology!(data)
     bus_numbers = [parse(Int, split(name, ".")[1]) for name in bus_names]
     N = maximum(bus_numbers)
     
@@ -206,6 +209,77 @@ end
 
 
 """
+    parse_named_topology!(data::Dict)
+
+Topology of a deck whose buses have names. The deck must have exactly one
+enabled source; the enabled lines from it must form a tree (a closed tie that
+makes a loop is an error). Bus 1 is the source bus, the others are numbered
+breadth first from it; every branch is (parent, child). data[:busName][i] is
+the name of bus i, data[:bus_id] maps a (lower-case) name to its number and
+data[:lineName] a branch to its OpenDSS line. Buses that no enabled line
+reaches (the middle buses of open ties) are left out.
+"""
+function parse_named_topology!(data::Dict)
+    bname(s) = lowercase(String(split(s, ".")[1]))
+    src = nothing
+    for n in OpenDSSDirect.Vsources.AllNames()
+        OpenDSSDirect.Circuit.SetActiveElement("Vsource.$n")
+        OpenDSSDirect.CktElement.Enabled() || continue
+        isnothing(src) || error("deck $(data[:systemName]): more than one enabled source; the model needs one substation")
+        src = bname(OpenDSSDirect.CktElement.BusNames()[1])
+    end
+    isnothing(src) && error("deck $(data[:systemName]): no enabled source")
+    adj = Dict{String, Vector{Tuple{String, String}}}()
+    nlines = 0
+    for ln in OpenDSSDirect.Lines.AllNames()
+        OpenDSSDirect.Circuit.SetActiveElement("Line.$ln")
+        OpenDSSDirect.CktElement.Enabled() || continue
+        bs = OpenDSSDirect.CktElement.BusNames()
+        a, b = bname(bs[1]), bname(bs[2])
+        a == b && error("line $ln connects bus $a to itself")
+        push!(get!(adj, a, Tuple{String, String}[]), (b, ln)); push!(get!(adj, b, Tuple{String, String}[]), (a, ln))
+        nlines += 1
+    end
+    id = Dict(src => 1); order = [src]; via = Dict{String, String}(); par = Dict{String, String}()
+    q = 1
+    while q <= length(order)
+        x = order[q]; q += 1
+        for (y, ln) in get(adj, x, Tuple{String, String}[])
+            ln == get(via, x, "") && continue
+            haskey(id, y) && error("line $ln closes a loop at bus $y: the model needs a radial network")
+            push!(order, y); id[y] = length(order); via[y] = ln; par[y] = x
+        end
+    end
+    length(order) - 1 == nlines || error("deck $(data[:systemName]): $(nlines - length(order) + 1) enabled lines are not connected to the source")
+    N = length(order)
+    data[:N] = N
+    data[:Nset] = collect(1:N)
+    data[:m] = nlines
+    data[:busName] = order
+    data[:bus_id] = id
+    parent = Dict{Int, Union{Nothing, Int}}(1 => nothing)
+    children = Dict{Int, Vector{Int}}(i => Int[] for i in 1:N)
+    Lset = Tuple{Int, Int}[]; lineName = Dict{Tuple{Int, Int}, String}()
+    for y in order[2:end]
+        i, j = id[par[y]], id[y]
+        parent[j] = i; push!(children[i], j); push!(Lset, (i, j)); lineName[(i, j)] = via[y]
+    end
+    data[:Lset] = Lset
+    data[:parent] = parent
+    data[:children] = children
+    data[:lineName] = lineName
+    data[:L1set] = [(i, j) for (i, j) in Lset if i == 1]
+    data[:Lm1set] = [(i, j) for (i, j) in Lset if i != 1]
+    data[:Nm1set] = collect(2:N)
+    println("Named buses: $(N) buses from source bus $(src), $(nlines) lines")
+end
+
+# Number of the bus of an element's bus string ("7.1" -> 7; a named bus via data[:bus_id]).
+_bus_number(data::Dict, s::AbstractString) =
+    haskey(data, :bus_id) ? data[:bus_id][lowercase(String(split(s, ".")[1]))] : parse(Int, split(s, ".")[1])
+
+
+"""
     parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64)
 
 Parse line resistance and reactance.
@@ -220,14 +294,15 @@ function parse_line_impedances!(data::Dict, kVA_B::Float64, kV_B::Float64;
     xdict_pu = Dict{Tuple{Int,Int}, Float64}()
     
     line_names = OpenDSSDirect.Lines.AllNames()
-    
-    for line_name in line_names
+    named = haskey(data, :lineName)
+    named && (line_names = [data[:lineName][e] for e in data[:Lset]])   # enabled lines, as (parent, child)
+
+    for (k, line_name) in enumerate(line_names)
         OpenDSSDirect.Lines.Name(line_name)
-        
+
         # Get bus numbers from bus names (e.g., "7.1" -> 7)
         buses = OpenDSSDirect.CktElement.BusNames()
-        i = parse(Int, split(buses[1], ".")[1])
-        j = parse(Int, split(buses[2], ".")[1])
+        i, j = named ? data[:Lset][k] : (parse(Int, split(buses[1], ".")[1]), parse(Int, split(buses[2], ".")[1]))
         
         # Get R and X (Ohms)
         R_ohm = impedance_scale * OpenDSSDirect.Lines.RMatrix()[1]
@@ -265,7 +340,7 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
         
         # Get bus number (e.g., "7.1" -> 7)
         bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-        bus_num = parse(Int, split(bus_full, ".")[1])
+        bus_num = _bus_number(data, bus_full)
         
         # Get load power (kW, kVAR)
         kW = OpenDSSDirect.Loads.kW()
@@ -336,7 +411,8 @@ function parse_pv_generators!(data::Dict, T::Int, LoadShapePV::Vector, kVA_B::Fl
 
             # Get bus number (e.g., "7.1" -> 7)
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-            bus_num = parse(Int, split(bus_full, ".")[1])
+            bus_num = _bus_number(data, bus_full)
+            haskey(data, :bus_id) && haskey(p_D_R_pu, bus_num) && error("two PV units on bus $(bus_full): the model has one per bus")
             
             # Get generator rating: Pmpp, the rated maximum power. Not
             # PVsystems.kW(), which is the unit's PRESENT output: for a unit
@@ -400,7 +476,8 @@ function parse_batteries!(data::Dict, T::Int, kVA_B::Float64)
             
             # Get bus number (e.g., "7.1" -> 7)
             bus_full = OpenDSSDirect.CktElement.BusNames()[1]
-            bus_num = parse(Int, split(bus_full, ".")[1])
+            bus_num = _bus_number(data, bus_full)
+            haskey(data, :bus_id) && haskey(B_R, bus_num) && error("two storage units on bus $(bus_full): the model has one per bus")
             
             # Get storage parameters using Text.Command
             kWh_rated = parse(Float64, OpenDSSDirect.Text.Command("? Storage.$storage_name.kWhrated"))
