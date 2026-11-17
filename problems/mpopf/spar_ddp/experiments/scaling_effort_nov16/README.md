@@ -49,6 +49,23 @@ campaign row, solver default or paper is changed.
    1.1e-5 and 1.3e-6 of Ipopt), every dispatch clean in OpenDSS (6e-6 pu or
    better). DDP needs many more iterations here than on large10k (13-18).
 
+## med3980 against Ipopt (Kamiak job 31842910, one 64-core node)
+
+Campaign protocol (`kamiak/new_systems_job.sh`): DDP on 63 worker processes,
+Ipopt MA57/MA97 on one thread, shared load-flow start, full warm-up, every
+dispatch clean in OpenDSS. Time to the 0.1% gap with primal infeasibility at
+most 1e-5 (internal residuals for both, `near_opt_posthoc.py`,
+`ipopt_trace_posthoc.py`), full solve in brackets:
+
+| T | DDP | Ipopt MA57 | Ipopt MA97 | best Ipopt / DDP |
+|---|---|---|---|---|
+| 24 | 10.9 s (11.3) | 41.6 s (42.8) | 37.9 s (39.1) | 3.5 |
+| 96 | 33.1 s (34.5) | 187.1 s (196.2) | 165.9 s (175.1) | 5.0 |
+
+105 and 132 DDP iterations against 110 and 112 for Ipopt; DDP's final objective
+within 1.8e-5 and 4.0e-5 of Ipopt's. On this single-feeder system the ratio
+grows with the horizon. Logs in `kamiak/results_31842910_med3980/`.
+
 ## Files
 
 - `kamiak/job.sh`: large10k rounds vs chunked (jobs 31842814, failed at launch on
