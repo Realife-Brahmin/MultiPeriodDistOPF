@@ -65,6 +65,8 @@ most 1e-5 (internal residuals for both, `near_opt_posthoc.py`,
 |---|---|---|---|---|
 | 24 | 10.9 s (11.3) | 41.6 s (42.8) | 37.9 s (39.1) | 3.5 |
 | 96 | 33.1 s (34.5) | 187.1 s (196.2) | 165.9 s (175.1) | 5.0 |
+| 144 | 41.4 s (41.7) | | 235.3 s (248.5) | 5.7 |
+| 288 | 81.8 s (82.3) | | 487.0 s (530.5) | 6.0 |
 
 105 and 132 DDP iterations against 110 and 112 for Ipopt; DDP's final objective
 within 1.8e-5 and 4.0e-5 of Ipopt's. On this single-feeder system the ratio
@@ -78,6 +80,8 @@ Load scale 0.6 (one substation). Time to the 0.1% rule, full solve in brackets:
 |---|---|---|---|---|
 | 24 | 33.5 s (36.9) | 66.2 s (68.3) | 62.4 s (64.8) | 1.9 |
 | 96 | 134.3 s (141.7) | 365.4 s (377.6) | 333.2 s (346.2) | 2.5 |
+| 144 | 165.9 s (176.8) | | 530.0 s (563.8) | 3.2 |
+| 288 | 323.3 s (323.3) | | 1314.4 s (1439.1) | 4.1 |
 
 118 and 184 DDP iterations against 102 and 127 for Ipopt; DDP's final objective
 within 4.6e-6 and 1.6e-5 of Ipopt's; every dispatch clean in OpenDSS. At `T=96`
@@ -95,7 +99,13 @@ the levers left here. Logs in `kamiak/results_31842911_sf6937/`.
   first runs on the new systems.
 - `check_jacobian.jl`: stage Jacobian against central differences.
 
+`T=144` and `T=288` (jobs 31843080, 31843081; MA97 only, the faster Ipopt at
+`T<=96`) use the chunked scan (depth 15 -> 9.2 and 25 -> 12). DDP iterations:
+med3980 129 and 155, sf6937 195 and 222 (Ipopt 112, 114, 134, 162). med3980
+`T=144` ends 4.5e-4 above Ipopt's objective, inside the 0.1% rule but larger
+than elsewhere (1e-5 to 1e-4). Logs in `kamiak/results_31843080_med3980/` and
+`kamiak/results_31843081_sf6937/`.
+
 ## Not done
 
-The new systems at `T=144` and `T=288` (where the chunked scan engages on 63
-workers); two repeats per case for any reportable number; the paper.
+Two repeats per case for any reportable number; the paper.

@@ -1,0 +1,8 @@
+BEGIN T=144 arm=ddp 2026-11-17T07:42:33-08:00
+END T=144 arm=ddp wall=514s | solve complete: 41.738 s, iterations=129, status=0 | FilterDDP objective=12563.098036361987 max_equality_residual=4.139e-09 | below limit: 0 of 572688 above limit: 0 
+BEGIN T=144 arm=ma97 2026-11-17T07:51:07-08:00
+END T=144 arm=ma97 wall=602s | status=LOCALLY_SOLVED iterations=112 objective=12557.400279612590 solve_time_s=248.454 | below limit: 0 of 572688 above limit: 0 
+BEGIN T=288 arm=ddp 2026-11-17T08:01:15-08:00
+END T=288 arm=ddp wall=739s | solve complete: 82.304 s, iterations=155, status=0 | FilterDDP objective=12573.775361300051 max_equality_residual=4.154e-08 | below limit: 0 of 1145376 above limit: 0 
+BEGIN T=288 arm=ma97 2026-11-17T08:13:34-08:00
+END T=288 arm=ma97 wall=1256s | status=LOCALLY_SOLVED iterations=114 objective=12572.536363250356 solve_time_s=530.477 | below limit: 0 of 1145376 above limit: 0 
