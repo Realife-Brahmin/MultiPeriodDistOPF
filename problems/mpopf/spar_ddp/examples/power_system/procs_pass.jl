@@ -91,7 +91,7 @@ _pw_gc() = Base.gc_num().total_time / 1e9
 const _PW_PASSGC = Ref(false)         # in force now
 const _PW_PASSGC_WANT = Ref(false)    # asked for
 
-function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Vector)
+function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Vector, sums::Vector=Any[])
     BLAS.set_num_threads(1); _BLAS_DEFAULT[] = 1
     ENV["FILTERDDP_PAIRED_INPLACE"] = "1"
     t0 = time()
@@ -133,10 +133,12 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
         end
         push!(_PP_WORK, PairWork(n))
         _PP_END[] = PintVal(zeros(n, n), zeros(n))
+        empty!(_PC_SUM)
+        for a in sums; push!(_PC_SUM, _pc_wrap(a, n)); end
     end
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
-    _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), collect(Any, shared), copy(own))
+    _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), vcat(collect(Any, shared), collect(Any, sums)), copy(own))
     isempty(get(ENV,"FILTERDDP_VALUE_GROUPING","")) || vg_install(data)
     _PW_PASSGC_WANT[] = get(ENV, "FILTERDDP_PROCS_GC", "auto") == "pass"
     _PW_PASSGC[] = false
@@ -237,6 +239,63 @@ function pw_step3(t::Int, μ::Float64, λ::Vector{Float64}, last::Bool)
     isnothing(P) && return nothing
     return (dual=P.dual, zl_sum=P.zl_sum, zu_sum=P.zu_sum, ϕ1=P.ϕ1, e1=P.e1, e2=P.e2,
             el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+end
+
+# FILTERDDP_PROCS_CHUNKED=1 (dense value functions, more periods than workers):
+# the backward scan in chunks of consecutive periods instead of the pairwise
+# rounds over all periods. With P workers the rounds do about (T/2) log2(T)
+# full combinations a pass, so once T is well above P each worker does several
+# in sequence in every round (about 30 deep at T=288 on 63 workers). Here
+#   1. each worker combines its chunk's T/P functions into one (T/P - 1 full
+#      combinations, in a summary segment of its own; the periods' own
+#      functions are kept);
+#   2. the pairwise rounds run over the P summaries (log2(P) rounds);
+#   3. each worker closes its chunk's periods from the last to the first with
+#      the value function after the chunk (T/P closing combinations).
+# About 2T/P + log2(P) combinations deep instead of about (T/P) log2(T); the
+# same functions, combined in another order, so the iterates agree to rounding.
+_procs_chunked() = get(ENV, "FILTERDDP_PROCS_CHUNKED", "0") != "0"
+const _PC_SUM = PintElem[]                    # the chunk summaries (shared segments)
+
+function _pc_wrap(a, n::Int)
+    p = pointer(sdata(a))
+    blk = i -> unsafe_wrap(Array, p + (i - 1) * n * n * sizeof(Float64), (n, n))
+    vec = i -> unsafe_wrap(Array, p + (3n * n + (i - 1) * n) * sizeof(Float64), (n,))
+    return PintElem(blk(1), blk(2), blk(3), vec(1), vec(2))
+end
+
+# 1. summary c = G_a (+) G_a+1 (+) ... (+) G_b, left to right, written in its segment
+function pw_chunk_reduce(c::Int, a::Int, b::Int)
+    t0 = time_ns(); g0 = _pw_gc()
+    S = _PC_SUM[c]; G = _PP_SLOTS[a]
+    copyto!(S.Maa, G.Maa); copyto!(S.Mab, G.Mab); copyto!(S.Mbb, G.Mbb); copyto!(S.ma, G.ma); copyto!(S.mb, G.mb)
+    for t in a+1:b
+        _pp_combine!(S, _PP_SLOTS[t], _PP_WORK[1])
+    end
+    return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+end
+# 2. one combination of the rounds over the summaries (pw_combine on _PC_SUM)
+function pw_sum_combine(c::Int, mid::Int, yval::Bool, last::Bool)
+    t0 = time_ns(); g0 = _pw_gc()
+    x = _PC_SUM[c]
+    if last
+        _pp_combine!(x, _PP_END[], _PP_WORK[1])
+    elseif yval
+        _pp_combine!(x, PintVal(_PC_SUM[mid].Maa, _PC_SUM[mid].ma), _PP_WORK[1])
+    else
+        _pp_combine!(x, _PC_SUM[mid], _PP_WORK[1])
+    end
+    return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+end
+# 3. the chunk's periods closed from the last to the first; afterwards slot t
+# holds the value function before period t, as after the rounds
+function pw_chunk_close(c::Int, a::Int, b::Int, nchunks::Int)
+    t0 = time_ns(); g0 = _pw_gc()
+    y = c == nchunks ? _PP_END[] : PintVal(_PC_SUM[c+1].Maa, _PC_SUM[c+1].ma)
+    for t in b:-1:a
+        y = _pp_combine!(_PP_SLOTS[t], y, _PP_WORK[1])
+    end
+    return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
 end
 
 # Feeder blocks small enough to recur from the last period to the first: the
@@ -340,6 +399,7 @@ mutable struct ProcsMain
     x1::Vector{Float64}
     exits::Int                   # solves finished so far
     bv_sweep::Union{Nothing, Int}    # feeder blocks recurred by the workers (their number; 0: not; asked once, after the first step 1)
+    chunks::Vector{UnitRange{Int}}   # FILTERDDP_PROCS_CHUNKED: the periods of each chunk (chunk c on worker c); empty: rounds
 end
 const _PM = Ref{Any}(nothing)
 
@@ -401,6 +461,49 @@ function procs_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj, 
         merges = N * M.bv_sweep
         pair_sum = sum(r.el for r in res); pair_max = maximum(r.el for r in res)
         pair_gc = sum(r.gc for r in res); pair_gc_max = maximum(r.gc for r in res)
+        h = n
+    elseif !isempty(M.chunks)
+        # chunked scan (FILTERDDP_PROCS_CHUNKED): reduce, rounds over the summaries, close
+        P = length(M.chunks)
+        tc0 = time_ns()
+        r1c = Vector{Any}(undef, P)
+        @sync for (c, r) in enumerate(M.chunks)
+            @async r1c[c] = remotecall_fetch(pw_chunk_reduce, M.pids[c], c, first(r), last(r))
+        end
+        tc1 = time_ns()
+        sval = falses(P + 1); sval[P+1] = true
+        ns = P + 1; hs = 1; srounds = 0; smerges = 0; smax = 0.0; ssum = 0.0; sgc = 0.0
+        while hs < ns
+            prs = Tuple{Int, Int}[]
+            for i in 1:2hs:ns
+                mid = i + hs
+                mid > ns && continue
+                for c in i:mid-1; push!(prs, (c, mid)); end
+            end
+            res = Vector{Any}(undef, length(prs))
+            @sync for (q, (c, mid)) in enumerate(prs)
+                @async res[q] = remotecall_fetch(pw_sum_combine, M.pids[mod1(q, length(M.pids))], c, mid, sval[mid], mid == P + 1)
+            end
+            for (c, mid) in prs; sval[c] = sval[mid]; end
+            srounds += 1; smerges += length(prs)
+            smax += maximum(r.el for r in res); ssum += sum(r.el for r in res); sgc += sum(r.gc for r in res)
+            hs *= 2
+        end
+        tc2 = time_ns()
+        r3c = Vector{Any}(undef, P)
+        @sync for (c, r) in enumerate(M.chunks)
+            @async r3c[c] = remotecall_fetch(pw_chunk_close, M.pids[c], c, first(r), last(r), P)
+        end
+        tc3 = time_ns()
+        rounds = srounds + 2
+        merges = sum(length(r) - 1 for r in M.chunks) + smerges + N
+        pair_max = maximum(r.el for r in r1c) + smax + maximum(r.el for r in r3c)
+        pair_sum = sum(r.el for r in r1c) + ssum + sum(r.el for r in r3c)
+        pair_gc = sum(r.gc for r in r1c) + sgc + sum(r.gc for r in r3c)
+        pair_gc_max = max(maximum(r.gc for r in r1c), maximum(r.gc for r in r3c))
+        @printf("FILTERDDP_PROCS_CHUNKS iteration=%d chunks=%d reduce_s=%.6f reduce_max_s=%.6f top_s=%.6f top_rounds=%d top_max_sum_s=%.6f close_s=%.6f close_max_s=%.6f\n",
+                d.k, P, (tc1 - tc0) / 1e9, maximum(r.el for r in r1c), (tc2 - tc1) / 1e9, srounds, smax,
+                (tc3 - tc2) / 1e9, maximum(r.el for r in r3c))
         h = n
     end
     while h < n
@@ -588,13 +691,36 @@ function procs_install(system::String, T::Int, nx::Int; data=nothing)
     # feeder blocks: a period's segment holds only the blocks
     bv = !isnothing(data) && bv_install!(data, T, nothing; quiet=true)
     bv && (len = min(len, bv_block_length(data)))
+    # chunked scan: consecutive periods per worker, chunk c on worker c, and a summary segment per chunk
+    chunks = UnitRange{Int}[]
+    if _procs_chunked() && !bv && T > length(pids)
+        P = length(pids)
+        # Only where it is shallower: the rounds' depth is the sum over rounds of
+        # ceil(combinations / workers); the chunked scan's is (chunk - 1) full
+        # combinations, the rounds over P + 1 summaries, and chunk closing ones
+        # (a closing combination is counted as 0.4 of a full one).
+        depth(n) = (d = 0; h = 1; while h < n; k = sum(min(h, n - i - h + 1) for i in 1:2h:n if i + h <= n); d += cld(k, P); h *= 2; end; d)
+        m = cld(T, P)
+        d_rounds = depth(T + 1); d_chunked = (m - 1) + depth(P + 1) + 0.4m
+        @printf("PROCS_CHUNKED: depth in combinations, rounds %d, chunked %.1f (chunks of up to %d periods): %s\n",
+                d_rounds, d_chunked, m, d_chunked < d_rounds ? "chunked" : "rounds kept")
+        if d_chunked < d_rounds
+            q, r = divrem(T, P); a = 1
+            for c in 1:P
+                b = a + q - 1 + (c <= r ? 1 : 0)
+                push!(chunks, a:b); owner[a:b] .= pids[c]; a = b + 1
+            end
+        end
+    end
+    sums = Any[SharedArray{Float64}((len,); pids=vcat(myid(), pids)) for _ in chunks]
     shared = Any[SharedArray{Float64}((len,); pids=vcat(myid(), pids)) for _ in 1:T]
     t0 = time()
     info = Vector{Any}(undef, length(pids))
     @sync for (i, p) in enumerate(pids)
-        @async info[i] = remotecall_fetch(procs_worker_setup, p, system, T, findall(==(p), owner), shared)
+        @async info[i] = remotecall_fetch(procs_worker_setup, p, system, T, findall(==(p), owner), shared, sums)
     end
-    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0, nothing)
+    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0, nothing, chunks)
+    isempty(chunks) || println("PROCS_CHUNKED: ", length(chunks), " chunks of ", minimum(length, chunks), "-", maximum(length, chunks), " periods")
     SPARDDP.BACKWARD_PASS_HOOK[] = procs_backward_pass!
     SPARDDP.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
     SPARDDP.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!
