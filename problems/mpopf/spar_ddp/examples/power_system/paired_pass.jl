@@ -66,6 +66,14 @@ const _PP_WORK = PairWork[]                  # one per worker
 const _PP_END = Ref{Any}(nothing)            # the value function after the last stage: zero
 
 function _pp_storage!(N::Int, n::Int, workers::Int)
+    if _BV_ACTIVE[]
+        # block_value.jl keeps its own (small) storage; the work argument is unused there
+        if _BV_N[] != N
+            _BV_N[] = N; _BV_LAYOUT[] = nothing; empty!(_BV_SLOTS); empty!(_BV_BUFS)
+        end
+        while length(_PP_WORK) < workers; push!(_PP_WORK, PairWork(0)); end
+        return nothing
+    end
     if length(_PP_SLOTS) != N || size(_PP_SLOTS[1].Maa, 1) != n
         empty!(_PP_SLOTS); empty!(_PP_WORK)
         for _ in 1:N
@@ -180,8 +188,9 @@ function _pp_elem(S, t::Int, nx::Int)
     # the halved block without curvature, in battery order, and the energy rows' part
     bat = b0.bat
     inplace = _paired_inplace()
-    S0 = inplace ? b0.Sh0 : Matrix{Float64}(undef, nB, nB)
-    inplace || @inbounds for l in 1:nB, k in 1:nB; S0[bat[k], bat[l]] = b0.Sh0[k, l]; end
+    isbv = b0 isa BVBlock0                                   # feeder blocks (block_value.jl)
+    S0 = isbv ? zeros(0, 0) : inplace ? b0.Sh0 : Matrix{Float64}(undef, nB, nB)
+    (inplace || isbv) || @inbounds for l in 1:nB, k in 1:nB; S0[bat[k], bat[l]] = b0.Sh0[k, l]; end
     ninv = zeros(nN)
     I_ = Int[]; J_ = Int[]; V_ = Float64[]
     for (g, rg) in enumerate(stat.granges)
@@ -203,6 +212,7 @@ function _pp_elem(S, t::Int, nx::Int)
     Rhat = sparse(-L + SPN * (Nd * S.cxE))
     D = sparse(sparse(S.lxx) - S.cxE' * (Nd * S.cxE))
     dvec = S.lx + S.cxϕ + S.cxE' * (ninv .* r0N)
+    isbv && return bv_elem!(t, b0, f, rhat, Rhat, D, dvec)
     inplace && return _pp_elem!(_PP_SLOTS[t], S0, bat, f, rhat, Rhat, D, dvec)
     return pint_elem(PintLeaf(t, S0, rhat, Rhat, D, dvec, f, Float64[], zeros(0, 0), Float64[], 0.0))
 end
@@ -237,7 +247,7 @@ end
 function _pp_rounds!(xs::Vector{Any}, timed::Bool, inplace::Bool=false)
     n = length(xs)
     rounds = 0; merges = 0; pair_sum = 0.0; pair_max = 0.0
-    every = _pint_gc_every(size(xs[end].V, 1)); done = 0
+    every = xs[end] isa PintVal ? _pint_gc_every(size(xs[end].V, 1)) : 1; done = 0
     h = 1
     while h < n
         pairs = Tuple{Int, Int}[]
@@ -346,14 +356,21 @@ function paired_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj,
                 seq_sum += (time_ns() - t0) / 1e9 - (Base.gc_num().total_time - c0) / 1e9
             end
             info = (; rounds=0, merges=0, pair_sum=0.0, pair_max=0.0)
+        elseif _BV_ACTIVE[] && bv_sweep_here()
+            # feeder blocks small enough to recur from the last period to the
+            # first, the feeders split over the workers (one per period when counting)
+            s, mx = bv_sweep_parts!(N, timed ? N : Threads.nthreads(), timed)
+            for t in 1:N; xs[t] = BVVal((_BV_SLOTS[t]::BVElem).val); end
+            xs[N+1] = _BV_END[]
+            info = (; rounds=0, merges=N * bv_blocks(), pair_sum=s, pair_max=mx)
         else
             for t in 1:N; xs[t] = E[t]; end
-            xs[N+1] = inplace ? _PP_END[] : PintVal(zeros(nx, nx), zeros(nx))
+            xs[N+1] = _BV_ACTIVE[] ? _BV_END[] : inplace ? _PP_END[] : PintVal(zeros(nx, nx), zeros(nx))
             info = _pp_rounds!(xs, timed, inplace)
         end
         t_2 = time_ns(); g_2 = _pp_gcstat()
 
-        if !ordinary && get(ENV, "FILTERDDP_PAIRED_CHECK", "0") != "0"   # the ordinary sweep, to compare
+        if !ordinary && !_BV_ACTIVE[] && get(ENV, "FILTERDDP_PAIRED_CHECK", "0") != "0"   # the ordinary sweep, to compare
             V̂x = zeros(nx); V̂xx = zeros(nx, nx); err_V = 0.0; err_v = 0.0
             for t in N:-1:1
                 out = _tp_seq(S[t], V̂x, V̂xx, false, nu, nc)
@@ -378,7 +395,7 @@ function paired_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj,
             t0 = time_ns(); c0 = Base.gc_num().total_time
             if !ordinary
                 Vn = xs[t+1]
-                R[t] = _pp_solve(S[t], Vn.v, Vn.V)
+                R[t] = Vn isa BVVal ? _pp_solve(S[t], Vn) : _pp_solve(S[t], Vn.v, Vn.V)
             end
             P[t] = isnothing(R[t]) ? nothing : _tp_post(solver, S[t], R[t], t, μ, λs[t], nx, nu, nc, keep_reuse, keep_rows, cl)
             post_t[t] = (time_ns() - t0) / 1e9
@@ -463,6 +480,7 @@ end
 function install_paired_pass(data, idx)
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
+    bv_install!(data, 0, nothing)
     SPARDDP.BACKWARD_PASS_HOOK[] = (solver, ocp, traj, d, options) ->
         paired_backward_pass!(solver, ocp, traj, d, options, data, idx)
     if _paired_mode() != "count" && get(ENV, "FILTERDDP_THREADED_FORWARD", "1") != "0"
@@ -472,3 +490,6 @@ function install_paired_pass(data, idx)
     println("PAIRED_SWEEP installed: mode=", _paired_mode(), ", ", Threads.nthreads(), " Julia threads")
     return nothing
 end
+
+# FILTERDDP_VALUE_BLOCKS: the value function by feeder blocks (opt-in).
+include(joinpath(@__DIR__, "block_value.jl"))

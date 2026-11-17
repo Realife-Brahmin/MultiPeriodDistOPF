@@ -122,14 +122,18 @@ function procs_worker_setup(system::String, T::Int, own::Vector{Int}, shared::Ve
     # every period's function, in the shared segments
     n = nx
     empty!(_PP_SLOTS); empty!(_PP_WORK)
-    for t in 1:T
-        p = pointer(sdata(shared[t]))
-        blk = i -> unsafe_wrap(Array, p + (i - 1) * n * n * sizeof(Float64), (n, n))
-        vec = i -> unsafe_wrap(Array, p + (3n * n + (i - 1) * n) * sizeof(Float64), (n,))
-        push!(_PP_SLOTS, PintElem(blk(1), blk(2), blk(3), vec(1), vec(2)))
+    if bv_install!(data, T, shared; quiet=own[1] != 1)
+        push!(_PP_WORK, PairWork(0))                # feeder blocks: block_value.jl keeps the slots
+    else
+        for t in 1:T
+            p = pointer(sdata(shared[t]))
+            blk = i -> unsafe_wrap(Array, p + (i - 1) * n * n * sizeof(Float64), (n, n))
+            vec = i -> unsafe_wrap(Array, p + (3n * n + (i - 1) * n) * sizeof(Float64), (n,))
+            push!(_PP_SLOTS, PintElem(blk(1), blk(2), blk(3), vec(1), vec(2)))
+        end
+        push!(_PP_WORK, PairWork(n))
+        _PP_END[] = PintVal(zeros(n, n), zeros(n))
     end
-    push!(_PP_WORK, PairWork(n))
-    _PP_END[] = PintVal(zeros(n, n), zeros(n))
     _TP_LAYOUT[] = nothing
     _TP_LAST_DIAG[] = nothing
     _PW[] = ProcsWorker(solver, ocp, data, idx, nx, nu, nc, Dict{Int, Any}(), Dict{Int, Any}(), collect(Any, shared), copy(own))
@@ -195,6 +199,12 @@ end
 # function after the last period).
 function pw_combine(t::Int, mid::Int, yval::Bool, last::Bool)
     t0 = time_ns(); g0 = _pw_gc()
+    if _BV_ACTIVE[]
+        x = _BV_SLOTS[t]::BVElem
+        y = last ? _BV_END[]::BVVal : yval ? BVVal((_BV_SLOTS[mid]::BVElem).val) : _BV_SLOTS[mid]::BVElem
+        _pp_combine!(x, y, _PP_WORK[1])
+        return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+    end
     x = _PP_SLOTS[t]
     if get(ENV,"FILTERDDP_VALUE_GROUPING","") in ("root","chunks16")
         y=last ? _PP_END[] : yval ? PintVal(_PP_SLOTS[mid].Maa,_PP_SLOTS[mid].ma) : _PP_SLOTS[mid]
@@ -216,14 +226,28 @@ function pw_step3(t::Int, μ::Float64, λ::Vector{Float64}, last::Bool)
     W = _PW[]; s = W.solver
     t0 = time_ns(); g0 = _pw_gc()
     S = W.S[t]
-    Vn = last ? _PP_END[] : PintVal(_PP_SLOTS[t+1].Maa, _PP_SLOTS[t+1].ma)
-    R = _pp_solve(S, Vn.v, Vn.V)
+    if _BV_ACTIVE[]
+        R = _pp_solve(S, last ? _BV_END[]::BVVal : BVVal((_BV_SLOTS[t+1]::BVElem).val))
+    else
+        Vn = last ? _PP_END[] : PintVal(_PP_SLOTS[t+1].Maa, _PP_SLOTS[t+1].ma)
+        R = _pp_solve(S, Vn.v, Vn.V)
+    end
     isnothing(R) && return nothing
     P = _tp_post(s, S, R, t, μ, λ, W.nx, W.nu, W.nc, false, true, W.ocp.control_limits)
     isnothing(P) && return nothing
     return (dual=P.dual, zl_sum=P.zl_sum, zu_sum=P.zu_sum, ϕ1=P.ϕ1, e1=P.e1, e2=P.e2,
             el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
 end
+
+# Feeder blocks small enough to recur from the last period to the first: the
+# whole recursion on this worker, reading every period's slot in shared memory.
+function pw_bv_sweep(N::Int, part::Int, parts::Int)
+    t0 = time_ns(); g0 = _pw_gc()
+    bv_sweep!(N, part, parts)
+    return (el=(time_ns() - t0) / 1e9, gc=_pw_gc() - g0)
+end
+# 0: not swept; otherwise the number of feeder blocks
+pw_bv_sweep_here() = (_BV_ACTIVE[] && !isnothing(_BV_LAYOUT[]) && bv_sweep_here()) ? bv_blocks() : 0
 
 # The state after period t from the state before it, by the battery rows of the
 # feedback (the recursion of threaded_affine_directions).
@@ -315,6 +339,7 @@ mutable struct ProcsMain
     # coordinator's trajectory is not to be read between the start and the end.
     x1::Vector{Float64}
     exits::Int                   # solves finished so far
+    bv_sweep::Union{Nothing, Int}    # feeder blocks recurred by the workers (their number; 0: not; asked once, after the first step 1)
 end
 const _PM = Ref{Any}(nothing)
 
@@ -362,6 +387,22 @@ function procs_backward_pass!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, traj, 
     isval = falses(N + 1); isval[N+1] = true
     rounds = 0; merges = 0; pair_sum = 0.0; pair_max = 0.0; pair_gc = 0.0; pair_gc_max = 0.0
     n = N + 1; h = 1
+    if M.bv_sweep === nothing
+        M.bv_sweep = remotecall_fetch(pw_bv_sweep_here, M.pids[1])
+    end
+    if M.bv_sweep > 0
+        # feeder blocks (FILTERDDP_VALUE_BLOCKS): the ordinary recursion, the
+        # feeders split over the workers, all reading the shared segments
+        parts = min(length(M.pids), M.bv_sweep)
+        res = Vector{Any}(undef, parts)
+        @sync for p in 1:parts
+            @async res[p] = remotecall_fetch(pw_bv_sweep, M.pids[p], N, p, parts)
+        end
+        merges = N * M.bv_sweep
+        pair_sum = sum(r.el for r in res); pair_max = maximum(r.el for r in res)
+        pair_gc = sum(r.gc for r in res); pair_gc_max = maximum(r.gc for r in res)
+        h = n
+    end
     while h < n
         pairs = Tuple{Int, Int}[]
         for i in 1:2h:n
@@ -539,18 +580,21 @@ function procs_solve_exit(solver)
 end
 
 # Call after the workers exist and have this file and the driver loaded.
-function procs_install(system::String, T::Int, nx::Int)
+function procs_install(system::String, T::Int, nx::Int; data=nothing)
     pids = workers()
     (isempty(pids) || pids == [1]) && error("procs_pass.jl needs worker processes (addprocs)")
     owner = [pids[(t - 1) % length(pids) + 1] for t in 1:T]
     len = 3nx * nx + 2nx
+    # feeder blocks: a period's segment holds only the blocks
+    bv = !isnothing(data) && bv_install!(data, T, nothing; quiet=true)
+    bv && (len = min(len, bv_block_length(data)))
     shared = Any[SharedArray{Float64}((len,); pids=vcat(myid(), pids)) for _ in 1:T]
     t0 = time()
     info = Vector{Any}(undef, length(pids))
     @sync for (i, p) in enumerate(pids)
         @async info[i] = remotecall_fetch(procs_worker_setup, p, system, T, findall(==(p), owner), shared)
     end
-    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0)
+    _PM[] = ProcsMain(pids, owner, shared, -1, Float64[], 0, nothing)
     SPARDDP.BACKWARD_PASS_HOOK[] = procs_backward_pass!
     SPARDDP.AFFINE_DIRECTIONS_HOOK[] = procs_affine_directions
     SPARDDP.AFFINE_ROLLOUT_HOOK[] = procs_affine_rollout!

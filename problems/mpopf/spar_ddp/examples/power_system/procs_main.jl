@@ -20,7 +20,7 @@ end
 let system = ARGS[1], T = parse(Int, ARGS[2])
     ptag = haskey(ENV, "REDUCED_PROFILE") ? "_" * ENV["REDUCED_PROFILE"] : ""
     data = deserialize(joinpath(REPO, "problems", "mpopf", "spar_ddp", "results", "network_filterddp", "network_data_$(system)_T$(T)$(ptag).jls"))
-    procs_install(system, T, length(data[:Bset]))
+    procs_install(system, T, length(data[:Bset]); data=data)
 end
 main()
 rmprocs(workers())

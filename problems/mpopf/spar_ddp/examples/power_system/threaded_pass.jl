@@ -112,7 +112,16 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     fac = network_kkt_factor(lay, K)
     Bd, Up = _blas1(() -> _tree_kkt_prepare(lay, stat, fac, K))
     b0 = nothing
-    if !diag
+    if !diag && isdefined(@__MODULE__, :_BV_ACTIVE) && _BV_ACTIVE[]
+        # FILTERDDP_VALUE_BLOCKS (block_value.jl): the feeder blocks, never the n_B x n_B block
+        b0 = _blas1(() -> bv_finish0(lay, stat, fac, K, Bd, Up, length(active)))
+        isnothing(b0) && return nothing
+        if _bv_audit()
+            out, ins = _blas1(() -> bv_audit(lay, stat, fac, K, Bd, Up, length(active), b0))
+            @printf("BLOCK_VALUE_AUDIT iteration=%d stage=%d outside_blocks=%.3e inside_blocks=%.3e root_term_bound=%.3e\n",
+                    k, t, out, ins, b0.drop)
+        end
+    elseif !diag
         b0 = _blas1(() -> _tree_kkt_finish0(lay, stat, fac, K, Bd, Up, length(active)))
         isnothing(b0) && return nothing
     end

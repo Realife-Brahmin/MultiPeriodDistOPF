@@ -20,11 +20,11 @@ end
 mutable struct FactorBackedPolicy{T}
     factor::Any
     active_rows::Vector{Int}
-    B_active::Matrix{T}
+    B_active::AbstractMatrix{T}   # dense, or sparse when the value function is block diagonal (FILTERDDP_VALUE_BLOCKS)
     cx::SparseMatrixCSC{T, Int}
     rhs::Vector{T}
     Bδx::Vector{T}
-    βB::Matrix{T}        # battery rows of the feedback; filled under FILTERDDP_PARSIM only
+    βB::AbstractMatrix{T}         # battery rows of the feedback; filled under FILTERDDP_PARSIM only (same storage note)
 end
 
 mutable struct UpdateRule{T, nx, nu, nc, nux, ncx}
