@@ -46,7 +46,8 @@ pv_shape = let
 end
 
 network_kv_base = system == "ieee2522C_1ph" ? 7.2 :
-    (system == "large10kC_1ph" ? 12.47 : 2.4018)
+    (system == "large10kC_1ph" ? 12.47 :
+     (startswith(system, "ieee9500xf") || startswith(system, "smartds_") ? 7.1996 : 2.4018))   # 12.47 kV line-to-line decks
 
 data = parse_system_from_dss(system, T;
     LoadShapeLoad=load_shape,

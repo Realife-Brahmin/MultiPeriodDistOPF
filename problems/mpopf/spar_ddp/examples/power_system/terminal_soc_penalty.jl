@@ -28,6 +28,10 @@ const GAMMA_TERMINAL_BY_SYSTEM = Dict(
     "ieee123C_1ph"  => 1.75e4,
     "ieee2522C_1ph" => 3.29e4,
     "large10kC_1ph" => 4.20e2,
+    # Same rule, 2026-11-17, from the single-substation decks' batteries (median B_R
+    # 0.023151 and, at sf6937's load scale 0.6, 0.6 * 0.054819 p.u.h): med3980 and sf6937.
+    "ieee9500xf_sub1_1ph"     => 3.02e4,
+    "smartds_p1u_xf_sub1_1ph" => 2.13e4,
 )
 
 # Battery power penalty C_B -- per-system, one number each (user, 2026-09-26).
@@ -46,6 +50,9 @@ const CB_BY_SYSTEM = Dict(
     "ieee123C_1ph"  => 1.0e-3,
     "ieee2522C_1ph" => 1.9e-3,
     "large10kC_1ph" => 2.4e-5,
+    # Same rule, 2026-11-17 (median P_rated 5.788 and 0.6 * 13.705 kW): med3980 and sf6937.
+    "ieee9500xf_sub1_1ph"     => 1.7e-3,
+    "smartds_p1u_xf_sub1_1ph" => 1.2e-3,
 )
 
 """C_B from a REDUCED_CB setting: a number, or "system" for CB_BY_SYSTEM."""
@@ -63,6 +70,8 @@ const NEAR_OPT_PRIMAL_BY_SYSTEM = Dict(
     "ieee123C_1ph"  => 1e-6,
     "ieee2522C_1ph" => 1e-5,
     "large10kC_1ph" => 1e-5,       # 1e-4 until 2026-10-11 (user: "1e-5 is the sweet spot")
+    "ieee9500xf_sub1_1ph"     => 1e-5,    # med3980, 2026-11-17: as the other two large systems
+    "smartds_p1u_xf_sub1_1ph" => 1e-5,    # sf6937
 )
 
 """True when the soft terminal SOC penalty is on (TERMINAL_SOC_SOFT=1).

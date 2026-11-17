@@ -57,7 +57,9 @@ root, pbase, dt, kvb = data[:substationBus], data[:kVA_B], data[:delta_t_h], dat
 buspos = Dict(j => k for (k, j) in enumerate(buses))
 batpos = Dict(j => k for (k, j) in enumerate(bset))
 derpos = Dict(j => k for (k, j) in enumerate(dset))
-busnum(s) = parse(Int, split(strip(s), ".")[1])
+# a named bus the instance leaves out (an open tie's end) maps to 0, which no instance bus is
+busnum(s) = haskey(data, :bus_id) ? get(data[:bus_id], lowercase(String(split(strip(s), ".")[1])), 0) : parse(Int, split(strip(s), ".")[1])
+busname(j) = haskey(data, :busName) ? data[:busName][j] : string(j)     # the deck's name of bus j
 ask(q) = strip(ODD.Text.Command("? " * q))
 
 # ---- the circuit, from the system's own files ------------------------------
@@ -103,10 +105,10 @@ filter!(p -> p[1] != root, pvs); filter!(b -> b[1] != root, bats)
 (sort(first.(bats)) == sort(bset) || sort(first.(bats)) == sort(filter(!=(root), bset))) ||
     error("battery buses in the DSS files differ from the instance")
 for (j, _, kv) in pvs
-    ODD.Text.Command("New Load.injpv$(j) Bus1=$(j).1 Phases=1 Model=1 kV=$(kv) kW=0 kvar=0 Vminpu=0.3 Vmaxpu=1.7")
+    ODD.Text.Command("New Load.injpv$(j) Bus1=$(busname(j)).1 Phases=1 Model=1 kV=$(kv) kW=0 kvar=0 Vminpu=0.3 Vmaxpu=1.7")
 end
 for (j, kv) in bats
-    ODD.Text.Command("New Load.injb$(j) Bus1=$(j).1 Phases=1 Model=1 kV=$(kv) kW=0 kvar=0 Vminpu=0.3 Vmaxpu=1.7")
+    ODD.Text.Command("New Load.injb$(j) Bus1=$(busname(j)).1 Phases=1 Model=1 kV=$(kv) kW=0 kvar=0 Vminpu=0.3 Vmaxpu=1.7")
 end
 
 # ---- one power flow per period ----------------------------------------------

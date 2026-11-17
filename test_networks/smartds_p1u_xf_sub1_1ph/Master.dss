@@ -1,0 +1,34 @@
+Clear
+! smartds_p1u_xf_sub1_1ph (sf6937, one substation): smartds_p1u_xf_1ph fed from substation 1 alone, radially.
+! For the single-substation models (SPAR-DDP, 2026-11-17). Built from smartds_p1u_xf_1ph's files:
+!   - one source, the circuit's own, on substation 1's high-voltage bus; substations 2-5 are not created and
+!     their transformers (the only line at each one's high-voltage bus) are left out;
+!   - the ties joining the other substations' areas to substation 1's closed, one per area, chosen by
+!     problems/mpopf/spar_ddp/experiments/scaling_effort_nov16/single_source_scan.jl; the other ties
+!     stay open, so the network is radial (the parser checks it);
+!   - loads, capacitors, PV and batteries scaled together by one factor (scale_deck.py, line below).
+! Load scale: loads, capacitors, PV and batteries are the source deck's times 0.6 (scale_deck.py): the largest
+! of 0.7, 0.6, 0.5, 0.4 at which one substation's T=6 OPF solves (0.7: the load-flow start diverges), 2026-11-17.
+New Circuit.smartds_p1u_xf_sub1_1ph basekv=7.1996 Bus1=sb1_p1uhs2_1247_node_1_3 pu=1.05 phases=1 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+Redirect ../smartds_p1u_xf_1ph/BranchData.dss
+Line.xfmr_sb8_p1uhs1_1247_trans_2.enabled=false
+Line.xfmr_sb8_p1uhs3_1247_trans_2.enabled=false
+Line.xfmr_sb9_p1uhs0_1247_trans_263.enabled=false
+Line.xfmr_sb9_p1uhs0_1247_trans_264.enabled=false
+Redirect ../smartds_p1u_xf_1ph/Ties.dss
+Line.elbswitch_r_p1udt1165-p1udt1475_p1u_11936.enabled=true
+Line.sb9_p1uhs0_1247_267.enabled=true
+Line.tie_padswitch_r_p1udt1185-p1udt1711_p1u_11896.enabled=true
+Line.tie_padswitch_r_p1udt1317-p1udt1618_p1u_11891.enabled=true
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect Loads.dss
+Redirect Capacitor.dss
+Redirect PVSystem.dss
+Redirect Storage.dss
+Set VoltageBases = [12.47]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases

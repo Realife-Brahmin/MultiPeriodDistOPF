@@ -1,0 +1,21 @@
+! smartds_p1u_xf_sub1_1ph: smartds_p1u_xf_1ph/Capacitor.dss with kvar times 0.6 (scale_deck.py)
+! smartds_p1u_xf_1ph: single-phase per-phase equivalent of test_networks\sources\smartds_sfo_p1u\Master.dss (unmodified original).
+! Written by problems/msopf/root_level/convert_to_1ph.jl -- do not edit by hand.
+! The original's capacitor banks as fixed shunts, always in service (the original switches them by CapControl):
+! per-phase equivalent of the rated susceptance (kvar / 3, referred to the base voltage), banks on one bus combined.
+New Capacitor.C_p1udt1179 Phases=1 Bus1=p1udt1179.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1udt12 Phases=1 Bus1=p1udt12.1 kV=7.1996 kvar=120.0 conn=wye
+New Capacitor.C_p1udt1444 Phases=1 Bus1=p1udt1444.1 kV=7.1996 kvar=90.0 conn=wye
+New Capacitor.C_p1udt18 Phases=1 Bus1=p1udt18.1 kV=7.1996 kvar=90.0 conn=wye
+New Capacitor.C_p1udt281 Phases=1 Bus1=p1udt281.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1udt558 Phases=1 Bus1=p1udt558.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1udt998 Phases=1 Bus1=p1udt998.1 kV=7.1996 kvar=90.0 conn=wye
+New Capacitor.C_p1umv11 Phases=1 Bus1=p1umv11.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1umv12 Phases=1 Bus1=p1umv12.1 kV=7.1996 kvar=120.0 conn=wye
+New Capacitor.C_p1umv13 Phases=1 Bus1=p1umv13.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1umv14 Phases=1 Bus1=p1umv14.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1umv17 Phases=1 Bus1=p1umv17.1 kV=7.1996 kvar=90.0 conn=wye
+New Capacitor.C_p1umv18 Phases=1 Bus1=p1umv18.1 kV=7.1996 kvar=90.0 conn=wye
+New Capacitor.C_p1umv2 Phases=1 Bus1=p1umv2.1 kV=7.1996 kvar=120.0 conn=wye
+New Capacitor.C_p1umv20 Phases=1 Bus1=p1umv20.1 kV=7.1996 kvar=60.0 conn=wye
+New Capacitor.C_p1umv8 Phases=1 Bus1=p1umv8.1 kV=7.1996 kvar=60.0 conn=wye
