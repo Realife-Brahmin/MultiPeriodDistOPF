@@ -89,6 +89,24 @@ a pass takes 637 ms: battery sweep 341 ms (rounds, 7 deep on 63 workers; 506
 batteries), step 1 212 ms, step 3 63 ms. The sweep and the iteration count are
 the levers left here. Logs in `kamiak/results_31842911_sf6937/`.
 
+## Separate primal and dual step lengths (`FILTERDDP_SPLIT_STEP=1`)
+
+Most of sf6937's DDP steps were cut short by the fraction-to-the-boundary rule
+(106 of 193 steps below 0.1 at `T=96`, no backtracks). The solver's existing
+option gives the bound multipliers their own step, as Ipopt does. Iterations at
+`T=24` (309 PC, `run_paired.sh count`, same objective to 5e-7 in every pair):
+
+| | ieee123 | med2522 | med3980 | sf6937 | large10k |
+|---|---|---|---|---|---|
+| one step | 22 | 52 | 105 | 118 | 14 |
+| separate steps | 25 | 48 | 86 | 83 | 14 |
+
+(October's test, 60 against 31 on ieee123, was under the diagonal Hessian.)
+Used for the two-repeat runs (`kamiak/campaign_job.sh`, `DDP_SPLIT=1`).
+Stopping early and repairing (tADMM's step) was considered and not pursued:
+DDP's objective enters the 0.1% band only a few iterations before its residual
+reaches 1e-5 (sf6937 `T=96`: 159 against 175 of 184; med3980: 122 against 127).
+
 ## Files
 
 - `kamiak/job.sh`: large10k rounds vs chunked (jobs 31842814, failed at launch on
