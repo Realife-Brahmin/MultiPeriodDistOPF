@@ -70,6 +70,21 @@ most 1e-5 (internal residuals for both, `near_opt_posthoc.py`,
 within 1.8e-5 and 4.0e-5 of Ipopt's. On this single-feeder system the ratio
 grows with the horizon. Logs in `kamiak/results_31842910_med3980/`.
 
+## sf6937 against Ipopt (Kamiak job 31842911, same protocol)
+
+Load scale 0.6 (one substation). Time to the 0.1% rule, full solve in brackets:
+
+| T | DDP | Ipopt MA57 | Ipopt MA97 | best Ipopt / DDP |
+|---|---|---|---|---|
+| 24 | 33.5 s (36.9) | 66.2 s (68.3) | 62.4 s (64.8) | 1.9 |
+| 96 | 134.3 s (141.7) | 365.4 s (377.6) | 333.2 s (346.2) | 2.5 |
+
+118 and 184 DDP iterations against 102 and 127 for Ipopt; DDP's final objective
+within 4.6e-6 and 1.6e-5 of Ipopt's; every dispatch clean in OpenDSS. At `T=96`
+a pass takes 637 ms: battery sweep 341 ms (rounds, 7 deep on 63 workers; 506
+batteries), step 1 212 ms, step 3 63 ms. The sweep and the iteration count are
+the levers left here. Logs in `kamiak/results_31842911_sf6937/`.
+
 ## Files
 
 - `kamiak/job.sh`: large10k rounds vs chunked (jobs 31842814, failed at launch on
@@ -80,7 +95,7 @@ grows with the horizon. Logs in `kamiak/results_31842910_med3980/`.
   first runs on the new systems.
 - `check_jacobian.jl`: stage Jacobian against central differences.
 
-## Pending
+## Not done
 
-med3980 and sf6937 against Ipopt at `T=24`
-and `T=96` (jobs 31842910, 31842911).
+The new systems at `T=144` and `T=288` (where the chunked scan engages on 63
+workers); two repeats per case for any reportable number; the paper.
