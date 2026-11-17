@@ -44,7 +44,7 @@ function analytic_dynamics(nx, nu, pbidx, dt)
         end
         J
     end
-    zxx = (x,u,λ) -> zeros(nx, nx)
+    zxx = (x,u,λ) -> spzeros(nx, nx)          # sparse: a dense n_B x n_B zero was allocated per stage and pass
     zux = (x,u,λ) -> spzeros(nu, nx)
     zuu = (x,u,λ) -> spzeros(nu, nu)
     SPARDDP.Dynamics{nx,nu,typeof(f),typeof(fx),typeof(fu),typeof(zxx),typeof(zux),typeof(zuu)}(
@@ -60,7 +60,7 @@ function analytic_objective(nx, nu, psidx, pbidx, price, pbase, dt, C_B)
         g[pbidx] .= 2C_B*pbase^2*dt .* u[pbidx]
         g
     end
-    lxx = (x,u) -> zeros(nx, nx)
+    lxx = (x,u) -> spzeros(nx, nx)            # sparse zero, as zxx (same values wherever it is added)
     lux = (x,u) -> spzeros(nu, nx)
     luu = function (x,u)
         H = spzeros(nu, nu)

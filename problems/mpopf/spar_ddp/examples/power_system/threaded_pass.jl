@@ -46,8 +46,60 @@ end
 
 # Phase 1 of stage t. Returns a NamedTuple, or nothing if the stage is outside
 # the supported configuration.
+# _derivative_matrix without its copy of a matrix that is already sparse (the
+# derivative functions return a fresh matrix every call, and nothing here
+# writes into one).
+_tp_dm(A, m, n) = A isa SparseMatrixCSC ? A : SPARDDP._derivative_matrix(A, m, n)
+
+# The dynamics' second derivatives are checked to be zero on the first stage
+# a process builds; the dynamics are one function for every stage.
+const _TP_DYN_ZERO = Ref(false)
+
+# _fixed_pattern_hessian with the matrix kept per stage: the pattern does not
+# change from pass to pass (that is what "fixed pattern" means), so the values
+# are written into the kept matrix in the order sparse(I, J, V) would sum them
+# (the diagonal sigma first, then each block in turn), which gives the same
+# numbers bit for bit. Rebuilt whenever a block's pattern differs.
+const _TP_HESS = Dict{Tuple{UInt, Int}, Any}()
+const _TP_HESS_LOCK = ReentrantLock()
+function _tp_fixed_hessian(key, nu::Int, sigma::AbstractVector, blocks...)
+    c = lock(() -> get(_TP_HESS, key, nothing), _TP_HESS_LOCK)
+    ok = !isnothing(c) && length(c.pats) == length(blocks) &&
+         all(i -> blocks[i] isa SparseMatrixCSC && size(blocks[i]) == (nu, nu) &&
+                  blocks[i].colptr == c.pats[i][1] && rowvals(blocks[i]) == c.pats[i][2], eachindex(blocks))
+    if !ok
+        H = SPARDDP._fixed_pattern_hessian(nu, sigma, blocks...)
+        all(b -> b isa SparseMatrixCSC && size(b) == (nu, nu), blocks) || return H
+        pos(i, j) = (r = nzrange(H, j); r[searchsortedfirst(view(rowvals(H), r), i)])
+        seen = falses(nnz(H))
+        dpos = [pos(p, p) for p in 1:nu]; seen[dpos] .= true
+        maps = Vector{Vector{Int}}(); firsts = Vector{BitVector}()
+        for b in blocks
+            m = Vector{Int}(undef, nnz(b)); f = falses(nnz(b)); rv = rowvals(b)
+            for j in 1:nu, q in nzrange(b, j)
+                p = pos(rv[q], j); m[q] = p; f[q] = !seen[p]; seen[p] = true
+            end
+            push!(maps, m); push!(firsts, f)
+        end
+        all(seen) || return H                         # an entry from nowhere: do not cache
+        c = (H=H, dpos=dpos, maps=maps, firsts=firsts,
+             pats=[(copy(b.colptr), copy(rowvals(b))) for b in blocks])
+        lock(() -> (_TP_HESS[key] = c), _TP_HESS_LOCK)
+        return H
+    end
+    nz = nonzeros(c.H)
+    @inbounds for p in 1:nu; nz[c.dpos[p]] = sigma[p]; end
+    @inbounds for (b, m, f) in zip(blocks, c.maps, c.firsts)
+        v = nonzeros(b)
+        for q in eachindex(m)
+            f[q] ? (nz[m[q]] = v[q]) : (nz[m[q]] += v[q])
+        end
+    end
+    return c.H
+end
+
 function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu::Int, nc::Int, data, idx, build_layout::Bool)
-    DM = SPARDDP._derivative_matrix
+    DM = _tp_dm
     x, u, ϕ, zl, zu = traj[t].x, traj[t].u, traj[t].ϕ, traj[t].zl, traj[t].zu
     cl = ocp.control_limits
     con = SPARDDP.stage_con(ocp, t)
@@ -62,9 +114,13 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
     fx = DM(dyn.fx(x, u), nx, nx); fu = DM(dyn.fu(x, u), nx, nu)
     # Second derivatives of the dynamics are linear in their multiplier; a
     # nonzero one would make them depend on the sweep. Not supported.
-    one_x = ones(nx)
-    fxx = DM(dyn.fxx(x, u, one_x), nx, nx); fux = DM(dyn.fux(x, u, one_x), nu, nx); fuu = DM(dyn.fuu(x, u, one_x), nu, nu)
-    (iszero(fxx) && iszero(fux) && iszero(fuu)) || return nothing
+    if !_TP_DYN_ZERO[]
+        one_x = ones(nx)
+        fxx = DM(dyn.fxx(x, u, one_x), nx, nx); fux = DM(dyn.fux(x, u, one_x), nu, nx); fuu = DM(dyn.fuu(x, u, one_x), nu, nu)
+        (iszero(fxx) && iszero(fux) && iszero(fuu)) || return nothing
+        _TP_DYN_ZERO[] = true
+    end
+    fxx = spzeros(nx, nx); fux = spzeros(nu, nx); fuu = spzeros(nu, nu)
     (SPARDDP._is_identity(fx) && issparse(fu) && issparse(luu) && issparse(fuu) && iszero(cux)) || return nothing
     fu_sparse = sparse(fu)
     active = sort!(unique(findnz(fu)[2]))
@@ -100,9 +156,9 @@ function _tp_pre(solver, ocp, traj, t::Int, k::Int, μ, diag::Bool, nx::Int, nu:
         hd .+= cuu_d
         Ĥ = SPARDDP._floored_diagonal(hd)
     else
-        Ĥ = SPARDDP._fixed_pattern_hessian(nu, Σ_L + Σ_U, luu, fuu, cuu)
+        Ĥ = _tp_fixed_hessian((objectid(solver), t), nu, Σ_L + Σ_U, luu, fuu, cuu)
     end
-    cu_sparse = SPARDDP._stale_jacobian(t, k, sparse(cu))
+    cu_sparse = SPARDDP._stale_jacobian(t, k, cu isa SparseMatrixCSC ? cu : sparse(cu))
     key = (objectid(solver), t)
     K = SPARDDP._cached_kkt!(key, Ĥ, cu_sparse, nu, nc)
     L = build_layout ? _tp_layout!(data, idx, nu, K) : _TP_LAYOUT[]
