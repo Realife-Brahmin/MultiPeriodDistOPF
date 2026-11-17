@@ -101,6 +101,12 @@ option gives the bound multipliers their own step, as Ipopt does. Iterations at
 | one step | 22 | 52 | 105 | 118 | 14 |
 | separate steps | 25 | 48 | 86 | 83 | 14 |
 
+At `T=48`: 24 -> 25, 60 -> 52, 115 -> 94, 153 -> 100, 14 -> 14 (sf6937's gain
+grows with the horizon). Objectives agree to 2e-6, med3980 `T=48` to 1.3e-4.
+Not yet in our solver: Ipopt's safeguard that pulls a bound multiplier back
+towards mu / slack when it drifts too far (Waechter and Biegler 2006, the
+source of the separate multiplier step).
+
 (October's test, 60 against 31 on ieee123, was under the diagonal Hessian.)
 Used for the two-repeat runs (`kamiak/campaign_job.sh`, `DDP_SPLIT=1`).
 Stopping early and repairing (tADMM's step) was considered and not pursued:
