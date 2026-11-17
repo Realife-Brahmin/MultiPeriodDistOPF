@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Exploratory (not a campaign row): the single-substation med3980 and sf6937
+# against Ipopt, on the October campaign's matched protocol (run_case.sh of
+# proper_logging_campaign_oct16): periodic profile, per-system C_B and soft
+# terminal SOC, screening substation,vupper,ell,psubs, load-flow start shared
+# by both solvers, full warm-up, Ipopt tol 1e-6 monotone with HSL MA57/MA97 on
+# one thread, DDP on 63 worker processes (chunked scan where it is shallower,
+# collector once a pass). OpenDSS check after every solve. One system per job:
+#   sbatch ... new_systems_job.sh <system> "<T list>" "<arms: ma57 ma97 ddp>"
+set -uo pipefail
+C=$SLURM_SUBMIT_DIR; cd "$C/repo" || exit 2
+SYS=$1; TS=${2:-"24 96"}; ARMS=${3:-"ddp ma57 ma97"}
+export PATH=$HOME/opt/julia-1.12.7/bin:$PATH
+export JULIA_DEPOT_PATH=/home/aryan.jha/kamiak_jobs/block_value_nov17/julia-depot
+export JULIA_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 OMP_DYNAMIC=FALSE
+unset NO_COLOR FORCE_COLOR OMP_PROC_BIND OMP_PLACES GOMP_CPU_AFFINITY KMP_AFFINITY LD_PRELOAD
+M="$C/jobs/${SLURM_JOB_ID}_$SYS"; mkdir -p "$M"
+{ date -Is; hostname; julia --version; lscpu; scontrol show job "$SLURM_JOB_ID"; } > "$M/hardware.txt"
+grep -q '6438Y+' "$M/hardware.txt" || { echo "WRONG_NODE"; exit 2; }
+squeue -h -w "$SLURMD_NODENAME" -t RUNNING,COMPLETING,SUSPENDED -o '%i %u %C' > "$M/node_jobs.txt"
+P=problems/mpopf/spar_ddp; R=$P/results
+mkdir -p $R/network_filterddp $R/parallel_in_time/logs $R/opendss_check $R/kkt_ordering/captures/solutions $R/ipopt_hsl/logs
+export REDUCED_PROFILE=periodic REDUCED_CB=system TERMINAL_SOC_SOFT=1
+for T in $TS; do
+  D=$R/network_filterddp/network_data_${SYS}_T${T}_periodic.jls
+  if [ ! -s "$D" ]; then
+    PROFILE_PERIODIC=1 julia --startup-file=no --project=$P $P/examples/power_system/export_ieee123c_data.jl "$SYS" "$T" > "$M/export_T$T.log" 2>&1 || { echo "EXPORT_FAILED T=$T" >> "$M/summary.txt"; continue; }
+    sha256sum "$D" >> "$M/inputs.sha256"
+  fi
+  for A in $ARMS; do
+    tag=newsys_${SLURM_JOB_ID}_${A}
+    echo "BEGIN T=$T arm=$A $(date -Is)" >> "$M/summary.txt"; t0=$(date +%s)
+    if [ "$A" = ddp ]; then
+      FILTERDDP_PROCS_WORKERS=63 FILTERDDP_PROCS_GC=pass FILTERDDP_PROCS_CHUNKED=1 FILTERDDP_FEASIBILITY_DIAGNOSTIC=1 \
+        PAIRED_WARMUP=full PAIRED_TOL=1e-5 bash $P/examples/power_system/run_paired.sh "$SYS" "$T" procs "$tag" > "$M/run_T${T}_$A.out" 2>&1
+      L=$R/parallel_in_time/logs/fddp_${SYS}_T${T}_paired_${tag}.log; O=$R/opendss_check/parsim_${SYS}_T${T}_paired_${tag}.log
+      RES="$(grep -E 'solve complete' "$L" | tail -1) | $(grep -oE 'FilterDDP objective=[-0-9.eE+]+ max_equality_residual=[0-9.eE+-]+' "$L")"
+    else
+      if [ "$A" = ma97 ]; then lib=$HOME/opt/hsl-private/install/hsl_ma97-2.8.1-metis-openmp/lib/libhsl_ma97.so; extra=ma97_order=amd
+      else lib=$HOME/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so; extra=ma57_pivot_order=2; fi
+      L=$M/ipopt_T${T}_$A.log; SOL=$M/sol_T${T}_$A.jls
+      IPOPT_SCREEN=substation,vupper,ell,psubs IPOPT_LOADFLOW_START=1 IPOPT_MATCH_DDP_START=1 IPOPT_TRACE=1 IPOPT_WARMUP=full \
+        IPOPT_EXTRA_OPTIONS="linear_solver=$A;hsllib=$lib;linear_system_scaling=none;tol=1e-6;mu_strategy=monotone;inf_pr_output=original;$extra" \
+        IPOPT_SAVE_DISPATCH=$SOL julia --startup-file=no --project=$P $P/examples/power_system/centralized_ipopt_matched.jl "$SYS" "$T" "$M/ipopt_T${T}_${A}_internal.log" > "$L" 2>&1
+      bash $P/examples/power_system/run_opendss_check.sh "$SYS" "$T" "$SOL" "$tag" > "$M/opendss_T${T}_$A.out" 2>&1
+      O=$R/opendss_check/$tag.log
+      RES="$(grep -oE 'status=[A-Z_]+ iterations=[0-9]+ objective=[-0-9.eE+]+ solve_time_s=[0-9.]+' "$L" | head -1)"
+    fi
+    cp "$L" "$M/" 2>/dev/null; cp "$O" "$M/" 2>/dev/null
+    echo "END T=$T arm=$A wall=$(( $(date +%s) - t0 ))s | $RES | $(grep -oE 'below limit: [0-9]+ of [0-9]+|above limit: [0-9]+' "$O" 2>/dev/null | tr '\n' ' ')" >> "$M/summary.txt"
+  done
+done
+date -Is > "$M/finished"
