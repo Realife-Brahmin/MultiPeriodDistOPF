@@ -24,6 +24,10 @@ campaign row, solver default or paper is changed.
      bus-periods). The battery sweep 3.88 -> 1.88 s a pass (depth model 15 -> 9.2).
      For scale only (other node, other code): the October campaign's Ipopt took
      127 s (MA97) and 145 s (MA57) to full convergence at `T=144`.
+   - Same job, large10k `T=288`: 237.0 s (rounds) -> **116.4 s** (chunked), 18
+     iterations each, objective 2710205.787244017702 each, OpenDSS clean (0 of
+     2,972,160 bus-periods). The battery sweep 7.27 -> 2.78 s a pass (depth model
+     25 -> 12). The October campaign's Ipopt: 243 s (MA97), 381 s (MA57).
    - 309 PC, med2522 `T=24` on 4 workers (one feeder): battery sweep 103 -> 58 ms
      a pass, solve 32.7 -> 29.4 s, 52 iterations, same objective.
 3. **Step 1 allocations (commit 83601e98), general, bit-identical.** Dense zero
@@ -78,5 +82,5 @@ grows with the horizon. Logs in `kamiak/results_31842910_med3980/`.
 
 ## Pending
 
-large10k `T=288` (job 31842826); med3980 and sf6937 against Ipopt at `T=24`
+med3980 and sf6937 against Ipopt at `T=24`
 and `T=96` (jobs 31842910, 31842911).
