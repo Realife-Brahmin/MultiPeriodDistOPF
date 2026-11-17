@@ -29,6 +29,7 @@ function loadflow_sweep(data, t::Int; sweeps::Int=50)
         append!(stack, children[k])
     end
     NL, D = Set(data[:NLset]), Set(data[:Dset])
+    qC = get(data, :qC_pu, Dict{Int,Float64}())
     v = fill(1.05^2, length(buses))
     P = zeros(length(lines)); Q = zeros(length(lines)); ell = zeros(length(lines))
     change = Inf; n = 0
@@ -39,6 +40,7 @@ function loadflow_sweep(data, t::Int; sweeps::Int=50)
             e = (parent[k], k); le = linepos[e]
             pr = (k in NL ? data[:p_L_pu][k,t] : 0.0) - (k in D ? data[:p_D_pu][k,t] : 0.0)
             qr = (k in NL ? data[:q_L_pu][k,t] : 0.0)
+            haskey(qC, k) && (qr -= qC[k] * v[buspos[k]])      # fixed capacitor, at this sweep's voltage
             for c in children[k]
                 lc = linepos[(k, c)]
                 pr += P[lc]; qr += Q[lc]

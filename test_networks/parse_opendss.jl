@@ -99,6 +99,9 @@ function parse_system_from_dss(systemName::String, T::Int;
     
     # Parse loads
     parse_loads!(data, T, LoadShapeLoad, kVA_B)
+
+    # Fixed capacitors, if the deck enables any
+    parse_capacitors!(data, kVA_B, kV_B)
     
     # Parse PV/DERs
     parse_pv_generators!(data, T, LoadShapePV, kVA_B)
@@ -382,6 +385,38 @@ function parse_loads!(data::Dict, T::Int, LoadShapeLoad::Vector, kVA_B::Float64)
     data[:q_L_pu] = q_L_pu
     data[:p_L_R_pu] = p_L_R_pu
     data[:q_L_R_pu] = q_L_R_pu
+end
+
+
+"""
+    parse_capacitors!(data::Dict, kVA_B::Float64, kV_B::Float64)
+
+Fixed shunt capacitors. A capacitor of `kvar` at rated `kV` injects
+kvar * (V / kV)^2, which with v = (V / kV_B)^2 (the branch-flow model's voltage
+variable) is
+
+    q_C(v) = qC_pu[j] * v,    qC_pu[j] = (kvar / kVA_B) * (kV_B / kV)^2,
+
+linear in v and exact (OpenDSS models a capacitor the same way). Sets
+data[:Cset] (buses) and data[:qC_pu] only when the deck enables a capacitor,
+so decks without any are exported exactly as before.
+"""
+function parse_capacitors!(data::Dict, kVA_B::Float64, kV_B::Float64)
+    names = OpenDSSDirect.Capacitors.AllNames()
+    (isempty(names) || names[1] == "NONE") && return
+    qC = Dict{Int, Float64}()
+    for name in names
+        OpenDSSDirect.Circuit.SetActiveElement("Capacitor.$name")
+        OpenDSSDirect.CktElement.Enabled() || continue
+        OpenDSSDirect.Capacitors.Name(name)
+        j = _bus_number(data, OpenDSSDirect.CktElement.BusNames()[1])
+        j == data[:substationBus] && error("capacitor $name on the substation bus: not modeled")
+        qC[j] = get(qC, j, 0.0) + OpenDSSDirect.Capacitors.kvar() / kVA_B * (kV_B / OpenDSSDirect.Capacitors.kV())^2
+    end
+    isempty(qC) && return
+    data[:Cset] = sort(collect(keys(qC)))
+    data[:qC_pu] = qC
+    println("Capacitors: $(length(qC)) buses, $(round(sum(values(qC)) * kVA_B; digits=1)) kvar at 1 pu")
 end
 
 

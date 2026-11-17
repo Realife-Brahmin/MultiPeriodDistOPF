@@ -127,6 +127,8 @@ function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
     childptr = ones(Int, nn + 1); childP = Int[]; childQ = Int[]
     pbi = zeros(Int, nn); qni = zeros(Int, nn); qmaxv = zeros(nn)
     pLv = zeros(nn); qLv = zeros(nn); pDv = zeros(nn)
+    qCd = get(data, :qC_pu, nothing)                    # fixed capacitors: q = qC * v (parse_capacitors!)
+    qcv = zeros(nn); vbi = zeros(Int, nn)
     for (k, j) in enumerate(nonroot)
         line = (data[:parent][j], j)
         inP[k], inQ[k], inell[k] = idx.P[linepos[line]], idx.Q[linepos[line]], idx.ell[linepos[line]]
@@ -138,6 +140,7 @@ function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
         pLv[k] = j in data[:NLset] ? data[:p_L_pu][j,t] : 0.0
         qLv[k] = j in data[:NLset] ? data[:q_L_pu][j,t] : 0.0
         pDv[k] = j in ders ? data[:p_D_pu][j,t] : 0.0
+        isnothing(qCd) || (qcv[k] = get(qCd, j, 0.0); vbi[k] = idx.v[buspos[j]])
         j in batteries && (pbi[k] = idx.pb[batpos[j]])
         j in ders && (qni[k] = idx.qnorm[derpos[j]]; qmaxv[k] = qmax[j])
     end
@@ -177,6 +180,7 @@ function typed_equations(data, idx, t, qmax, buspos, linepos, batpos, derpos)
                 qD = qni[k] == 0 ? 0.0 : qmaxv[k]*u[qni[k]]
                 row += 1
                 c[row] = o - u[inQ[k]] + xin[k]*u[inell[k]] - qD + qLv[k]
+                qcv[k] == 0.0 || (c[row] -= qcv[k]*u[vbi[k]])
             end
             for e in 1:nl
                 row += 1
@@ -305,7 +309,9 @@ function build_model(data; gamma=0.0, stages=nothing)
                 qD = j in ders ? qmax[j]*u[idx.qnorm[derpos[j]]] : 0.0
                 incoming_line = (data[:parent][j],j)
                 z = data[:xdict_pu][incoming_line]
-                push!(c, outgoing - incoming + z*u[idx.ell[linepos[incoming_line]]] - qD + qL)
+                qC = haskey(get(data, :qC_pu, Dict{Int,Float64}()), j) ? data[:qC_pu][j]*u[idx.v[buspos[j]]] : nothing
+                push!(c, isnothing(qC) ? outgoing - incoming + z*u[idx.ell[linepos[incoming_line]]] - qD + qL :
+                         outgoing - incoming + z*u[idx.ell[linepos[incoming_line]]] - qD + qL - qC)
             end
             # BFM voltage drop.
             for (e,(i,j)) in enumerate(lines)
@@ -372,6 +378,7 @@ function build_model(data; gamma=0.0, stages=nothing)
                     J[row, idx.Q[linepos[(j,k)]]] += 1.0
                 end
                 j in ders && (J[row, idx.qnorm[derpos[j]]] -= qmax[j])
+                haskey(get(data, :qC_pu, Dict{Int,Float64}()), j) && (J[row, idx.v[buspos[j]]] -= data[:qC_pu][j])
             end
             for (e,(i,j)) in enumerate(lines)
                 row += 1

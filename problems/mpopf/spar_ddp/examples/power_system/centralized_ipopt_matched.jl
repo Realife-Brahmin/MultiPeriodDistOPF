@@ -128,8 +128,13 @@ for t in Tset
         qd = j in Dset ? q_D[j,t] : 0.0
         @constraint(model, outgoing_p - P[incoming,t] +
             data[:rdict_pu][incoming] * ell[incoming,t] == pb + pD - pL)
-        @constraint(model, outgoing_q - Q[incoming,t] +
-            data[:xdict_pu][incoming] * ell[incoming,t] == qd - qL)
+        if haskey(get(data, :qC_pu, Dict{Int,Float64}()), j)     # fixed capacitor: q = qC * v (parse_capacitors!)
+            @constraint(model, outgoing_q - Q[incoming,t] +
+                data[:xdict_pu][incoming] * ell[incoming,t] == qd - qL + data[:qC_pu][j] * v[j,t])
+        else
+            @constraint(model, outgoing_q - Q[incoming,t] +
+                data[:xdict_pu][incoming] * ell[incoming,t] == qd - qL)
+        end
     end
     for e in Lset
         i, j = e
