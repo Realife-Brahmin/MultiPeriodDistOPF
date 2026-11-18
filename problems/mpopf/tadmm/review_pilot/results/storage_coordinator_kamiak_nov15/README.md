@@ -644,6 +644,7 @@ what makes large10k converge; none of the simpler rules matches it.
 |---|---|---|---|---|---|---|---|
 | 96 | 96 | 1 | 183.9 | 55.2 | 29 | 3.33 | 31849399 |
 | 144 | 144 | 2 | 248.3 | 38.1 | 29 | 6.51 | 31849400 |
+| 288 | 144 | 2 | 557.4 | 77.5 | 29 | 7.19 | 31851704 |
 
 T = 96: both dispatches pass the replay; all processes 71.2 GB at peak, the coordinator holding
 the centralized solve's 9.2 GB. T = 144 and 288 with 144 workers on two nodes were still queued.
@@ -670,3 +671,15 @@ replays; fixed, the sampler is now started by the first worker task on each node
 rerun without the centralized solve (job 31851705, 40.1 s, 29 iterations): 47.7 GB on the head node
 (72 workers and the 2.4 GB coordinator) and 45.3 GB on the other (72 workers), so 90.7 GB for 144
 workers, 0.63 GB each.
+
+T = 288, 144 workers (job 31851704, per-node sampling working): both dispatches pass the replay.
+Memory in the timed pass: 85.7 GB on the head node (72 workers and the coordinator, which still
+held the centralized solve's memory) and 56.4 GB on the other (72 workers, 0.78 GB each). These
+three rows replace the 48-worker large10k rows at T = 96, 144 and 288 in the paper's Table V.
+
+Penalty comparison, conclusion: the decreasing start (2 rho_unit to rho_unit/16 over 20 iterations,
+then balancing) is needed. Fixed rho, or balancing from the first iteration (standard 10/2 or mild
+2/1.5), costs 2-4 times the iterations or does not converge on large10k. The decrease can be applied
+as halving every 4 iterations with the same result; shortening it to 10 or 5 iterations costs
+1.5-2.7 times the iterations on large10k. Not yet tested: other start and end values, and other
+networks (med3980, sf6937).
