@@ -31,7 +31,10 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     for iteration in 1:maxiter
         k=iteration; tick=time_ns()
         if k<=ramp+1 || balance<=1
-            next=rho_start*(rho_end/rho_start)^(min(k-1,ramp)/max(ramp,1)); u.*=rho/next; rho=next
+            # SC_RHO_STEP=s changes rho only every s iterations (same start and end), e.g. s=4 with
+            # 2:0.0625:20 halves rho at iterations 5, 9, 13, 17 and 21.
+            step=parse(Int,get(ENV,"SC_RHO_STEP","1"))
+            next=rho_start*(rho_end/rho_start)^((step*div(min(k-1,ramp),step))/max(ramp,1)); u.*=rho/next; rho=next
         elseif rho_next!=rho
             u.*=rho/rho_next; rho=rho_next
         end
