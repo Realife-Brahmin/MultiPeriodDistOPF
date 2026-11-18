@@ -8,7 +8,9 @@ const BUS_ID=Ref(Dict{String,Int}())
 function busnum(s)
     b=lowercase(String(first(split(strip(s),'.'))))
     haskey(BUS_ID[],b) && return BUS_ID[][b]
-    return parse(Int,b)
+    n=tryparse(Int,b)
+    n===nothing && !isempty(BUS_ID[]) && return -1   # not part of the modelled network
+    return n===nothing ? parse(Int,b) : n
 end
 prop(s)=D.Properties.Value(String(s))
 number(s)=parse(Float64,prop(s))
@@ -96,7 +98,8 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
         @assert lowercase(strip(prop("EffCurve"))) in ("","none") "Inverter efficiency curve not supported silently"
         push!(original_ec,number("%EffCharge")/100);push!(original_ed,number("%EffDischarge")/100)
         if efficiency=="model"
-            D.Text.Command("Edit Storage.$name %EffCharge=100 %EffDischarge=100 %IdlingkW=0")
+            etac=get(sol,:eta_charge,get(sol,:eta,1.0)); etad=get(sol,:eta_discharge,get(sol,:eta,1.0))
+            D.Text.Command("Edit Storage.$name %EffCharge=$(100etac) %EffDischarge=$(100etad) %IdlingkW=0")
         end
         push!(ec,number("%EffCharge")/100);push!(ed,number("%EffDischarge")/100)
         # Initialize once only. Operating upper SOC is checked, not replaced by
@@ -111,6 +114,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     linemap=Dict{Tuple{Int,Int},Tuple{String,Int}}();line_set=Set(lines)
     for name in D.Lines.AllNames()
         D.Lines.Name(name);ends=busnum.(D.CktElement.BusNames());nc=D.CktElement.NumConductors()
+        any(<(0),ends) && continue   # line outside the modelled network
         @assert D.CktElement.NumPhases()==1
         edge=(ends[1],ends[2])
         if edge in line_set
@@ -181,7 +185,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
             done=finish_storage_step!(names,step,dt,ec,ed);expected_before=copy(done.after)
             track=maximum(abs.(step.actual.-command);init=0.0);bal=maximum(abs.(done.balance);init=0.0)
             for (n,j) in enumerate(buses_b)
-                requested[n]+=energy_delta(command[n],dt,ec[n],ed[n]);model_requested[n]-=dt*command[n]
+                requested[n]+=energy_delta(command[n],dt,ec[n],ed[n]);model_requested[n]+=energy_delta(command[n],dt,ec[n],ed[n])   # the solved model's own efficiencies
                 lo=data[:soc_min][j]*capacity[n];hi=data[:soc_max][j]*capacity[n]
                 be=bound_error(done.after[n],lo,hi);re=bound_error(requested[n],lo,hi);eo=sol[:B][bat[j],t]*base
                 stats["max_engine_SOC_bound_kwh"]=max(stats["max_engine_SOC_bound_kwh"],be)
