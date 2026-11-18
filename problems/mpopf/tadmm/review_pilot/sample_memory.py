@@ -58,6 +58,34 @@ def sample(root, out, interval):
             time.sleep(interval)
 
 
+def julia_pids(uid):
+    """Every julia process of this user on this node (workers started by srun are not in the tree)."""
+    found = []
+    for name in os.listdir('/proc'):
+        if name.isdigit():
+            try:
+                if os.stat(f'/proc/{name}').st_uid != uid:
+                    continue
+                with open(f'/proc/{name}/comm') as f:
+                    if 'julia' in f.read():
+                        found.append(int(name))
+            except OSError:
+                pass
+    return found
+
+
+def sample_node(out, interval, stop):
+    """Sum over all of this user's julia processes on the node, until the file `stop` exists."""
+    uid = os.getuid()
+    with open(out, 'w') as f:
+        f.write('epoch_s,processes,sum_rss_kb,sum_pss_kb,root_rss_kb,root_pss_kb\n')
+        while not os.path.exists(stop):
+            values = [usage(p) for p in julia_pids(uid)]
+            f.write('%.3f,%d,%d,%d,0,0\n' % (time.time(), len(values), sum(v[0] for v in values), sum(v[1] for v in values)))
+            f.flush()
+            time.sleep(interval)
+
+
 def summarize(samples, log):
     marks = {}
     with open(log) as f:
@@ -91,5 +119,8 @@ def summarize(samples, log):
 if __name__ == '__main__':
     if sys.argv[1] == 'sample':
         sample(int(sys.argv[2]), sys.argv[3], float(sys.argv[4]) if len(sys.argv) > 4 else 2.0)
+    elif sys.argv[1] == 'sample-node':
+        # sample_memory.py sample-node OUT.csv INTERVAL_S STOPFILE
+        sample_node(sys.argv[2], float(sys.argv[3]), sys.argv[4])
     else:
         summarize(sys.argv[2], sys.argv[3])

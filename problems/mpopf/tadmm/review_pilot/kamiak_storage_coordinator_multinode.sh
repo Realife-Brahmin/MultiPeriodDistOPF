@@ -42,7 +42,15 @@ LAST=$(python3 -c 'import os; print(max(os.sched_getaffinity(0)))')
 julia --startup-file=no --project="$P" "$P/storage_coordinator_lean.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 taskset -c "$LAST" python3 "$P/sample_memory.py" sample "$PID" "$OUT/memory_samples.csv" "${SC_SAMPLE_S:-2}" &
+# One sampler per node: every julia process of this user on that node (workers included).
+srun --overlap --nodes="$NODES" --ntasks="$NODES" --ntasks-per-node=1 --cpus-per-task=1 --mem=0 \
+  bash -c "python3 $C/source/$P/sample_memory.py sample-node $OUT/memory_node_\$(hostname -s).csv ${SC_SAMPLE_S:-2} $OUT/STOP_SAMPLING" &
+NODESAMPLER=$!
 wait "$PID"
+touch "$OUT/STOP_SAMPLING"; wait "$NODESAMPLER" || true
+for f in "$OUT"/memory_node_*.csv; do
+ python3 "$P/sample_memory.py" summarize "$f" "$OUT/solve.log" | sed "s/^MEMORY/MEMORY ($(basename "$f" .csv))/" | tee -a "$OUT/memory_summary_nodes.txt"
+done
 grep -E 'CENTRAL|CASE|SC_LEAN|SC_WARNING' "$OUT/solve.log" || true
 grep -c SC_WORKER "$OUT/solve.log" || true
 # The sampler sees the head node only (coordinator and that node's workers).
