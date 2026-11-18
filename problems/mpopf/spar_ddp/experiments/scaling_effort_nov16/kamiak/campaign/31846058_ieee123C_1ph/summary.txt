@@ -1,0 +1,16 @@
+BEGIN T=24 arm=ddp repeat=1 2026-11-18T13:41:56-08:00
+END T=24 arm=ddp repeat=1 wall=119s | solve complete: 0.286 s, iterations=25, status=0 | FilterDDP objective=2924.472494727480 max_equality_residual=1.762e-08 | below limit: 0 of 3048 above limit: 0 
+BEGIN T=24 arm=ddp repeat=2 2026-11-18T13:43:55-08:00
+END T=24 arm=ddp repeat=2 wall=119s | solve complete: 0.290 s, iterations=25, status=0 | FilterDDP objective=2924.472494727480 max_equality_residual=1.762e-08 | below limit: 0 of 3048 above limit: 0 
+BEGIN T=96 arm=ddp repeat=1 2026-11-18T13:45:59-08:00
+END T=96 arm=ddp repeat=1 wall=170s | solve complete: 0.997 s, iterations=26, status=0 | FilterDDP objective=2956.063076553642 max_equality_residual=1.139e-07 | below limit: 0 of 12192 above limit: 0 
+BEGIN T=96 arm=ddp repeat=2 2026-11-18T13:48:49-08:00
+END T=96 arm=ddp repeat=2 wall=166s | solve complete: 0.994 s, iterations=26, status=0 | FilterDDP objective=2956.063076553642 max_equality_residual=1.139e-07 | below limit: 0 of 12192 above limit: 0 
+BEGIN T=144 arm=ddp repeat=1 2026-11-18T13:51:41-08:00
+END T=144 arm=ddp repeat=1 wall=165s | solve complete: 1.235 s, iterations=26, status=0 | FilterDDP objective=2959.885324849803 max_equality_residual=2.136e-07 | below limit: 0 of 18288 above limit: 0 
+BEGIN T=144 arm=ddp repeat=2 2026-11-18T13:54:26-08:00
+END T=144 arm=ddp repeat=2 wall=168s | solve complete: 1.243 s, iterations=26, status=0 | FilterDDP objective=2959.885324849803 max_equality_residual=2.136e-07 | below limit: 0 of 18288 above limit: 0 
+BEGIN T=288 arm=ddp repeat=1 2026-11-18T13:57:19-08:00
+END T=288 arm=ddp repeat=1 wall=179s | solve complete: 2.174 s, iterations=26, status=0 | FilterDDP objective=2963.765503549595 max_equality_residual=3.134e-08 | below limit: 0 of 36576 above limit: 0 
+BEGIN T=288 arm=ddp repeat=2 2026-11-18T14:00:18-08:00
+END T=288 arm=ddp repeat=2 wall=180s | solve complete: 2.123 s, iterations=26, status=0 | FilterDDP objective=2963.765503549595 max_equality_residual=3.134e-08 | below limit: 0 of 36576 above limit: 0 
