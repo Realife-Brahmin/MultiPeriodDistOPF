@@ -643,6 +643,7 @@ what makes large10k converge; none of the simpler rules matches it.
 | T | workers | nodes | centralized (s) | tADMM (s) | iterations | ratio | job |
 |---|---|---|---|---|---|---|---|
 | 96 | 96 | 1 | 183.9 | 55.2 | 29 | 3.33 | 31849399 |
+| 144 | 144 | 2 | 248.3 | 38.1 | 29 | 6.51 | 31849400 |
 
 T = 96: both dispatches pass the replay; all processes 71.2 GB at peak, the coordinator holding
 the centralized solve's 9.2 GB. T = 144 and 288 with 144 workers on two nodes were still queued.
@@ -662,3 +663,10 @@ All pass the replay (jobs 31850334-31850339; the first submission failed at star
 worker files on Kamiak were older than the driver). "Halve every four iterations" matches the
 smooth schedule to within one iteration, so it can replace it. The length of the decrease matters:
 on large10k a shorter decrease (5 or 10 iterations) costs 1.5 to 2.7 times the iterations.
+
+T = 144, 144 workers: both dispatches pass the replay (run separately, job 31851708, because
+Kamiak's srun has no `--overlap` and the per-node sampler then stopped the job script before its
+replays; fixed, the sampler is now started by the first worker task on each node). Memory, from a
+rerun without the centralized solve (job 31851705, 40.1 s, 29 iterations): 47.7 GB on the head node
+(72 workers and the 2.4 GB coordinator) and 45.3 GB on the other (72 workers), so 90.7 GB for 144
+workers, 0.63 GB each.
