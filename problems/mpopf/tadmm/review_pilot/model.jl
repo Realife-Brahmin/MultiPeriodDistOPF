@@ -111,7 +111,8 @@ function make_model(d, owned; local_window=false, rho=0.0)
             pbat=j in batteries ? pb[j,t] : 0.0
             qder=j in ders ? qd[j,t] : 0.0
             @constraint(m,sum(p[(j,k),t] for k in d[:children][j];init=0.0)-p[e,t]+d[:rdict_pu][e]*ell[e,t]==pbat+pd-pl)
-            @constraint(m,sum(q[(j,k),t] for k in d[:children][j];init=0.0)-q[e,t]+d[:xdict_pu][e]*ell[e,t]==qder-ql)
+            qcap=haskey(get(d,:qC_pu,Dict{Int,Float64}()),j) ? d[:qC_pu][j]*v[j,t] : 0.0   # fixed capacitor, q = qC * v
+            @constraint(m,sum(q[(j,k),t] for k in d[:children][j];init=0.0)-q[e,t]+d[:xdict_pu][e]*ell[e,t]==qder-ql+qcap)
         end
         for e in es
             i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
@@ -368,6 +369,7 @@ function physical_metrics_cached(d,us,bb,layout)
             pd=haskey(der,j) ? d[:p_D_pu][j,t] : 0.0
             pbat=haskey(bat,j) ? pb[bat[j]] : 0.0
             qd=haskey(der,j) ? u[ix.qnorm[der[j]]]*sqrt(max(0.0,d[:S_D_R][j]^2-pd^2)) : 0.0
+            haskey(get(d,:qC_pu,Dict{Int,Float64}()),j) && (qd+=d[:qC_pu][j]*v[bp[j]])   # fixed capacitor
             maxeq=max(maxeq,abs(sum(p[ep[(j,k)]] for k in d[:children][j];init=0.0)-p[n]+d[:rdict_pu][e]*ell[n]-pbat-pd+pl),
                 abs(sum(q[ep[(j,k)]] for k in d[:children][j];init=0.0)-q[n]+d[:xdict_pu][e]*ell[n]-qd+ql))
         end

@@ -51,7 +51,8 @@ function make_power_stage(d,t;rho)
         pbat=j in batteries ? pb[j] : 0.0
         qder=j in ders ? qd[j] : 0.0
         @constraint(m,sum(p[(j,k)] for k in d[:children][j];init=0.0)-p[e]+d[:rdict_pu][e]*ell[e]==pbat+pd-pl)
-        @constraint(m,sum(q[(j,k)] for k in d[:children][j];init=0.0)-q[e]+d[:xdict_pu][e]*ell[e]==qder-ql)
+        qcap=haskey(get(d,:qC_pu,Dict{Int,Float64}()),j) ? d[:qC_pu][j]*v[j] : 0.0   # fixed capacitor, q = qC * v
+        @constraint(m,sum(q[(j,k)] for k in d[:children][j];init=0.0)-q[e]+d[:xdict_pu][e]*ell[e]==qder-ql+qcap)
     end
     for e in es
         i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]

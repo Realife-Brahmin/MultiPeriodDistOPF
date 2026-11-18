@@ -3,7 +3,13 @@ using OpenDSSDirect, Serialization, TOML, SHA, Printf
 const D=OpenDSSDirect
 const REPO=normpath(joinpath(@__DIR__,"..","..","..",".."))
 include(joinpath(@__DIR__,"..","..","spar_ddp","examples","power_system","control_layout.jl"))
-busnum(s)=parse(Int,first(split(strip(s),'.')))
+# Decks with named buses (ieee9500xf, SMART-DS) carry the parser's name -> index map in data[:bus_id].
+const BUS_ID=Ref(Dict{String,Int}())
+function busnum(s)
+    b=lowercase(String(first(split(strip(s),'.'))))
+    haskey(BUS_ID[],b) && return BUS_ID[][b]
+    return parse(Int,b)
+end
 prop(s)=D.Properties.Value(String(s))
 number(s)=parse(Float64,prop(s))
 csv(io,x)=println(io,join(x,','))
@@ -47,6 +53,7 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     ispath(out) && error("Refusing to overwrite replay output")
     mkpath(out);out=abspath(out)
     data=deserialize(instance);sol=deserialize(solution);ix,nu=control_layout(data)
+    BUS_ID[]=Dict(lowercase(k)=>v for (k,v) in get(data,:bus_id,Dict{String,Int}()))
     T=data[:T];dt=data[:delta_t_h];base=data[:kVA_B];root=data[:substationBus]
     @assert length(sol[:u])==T && all(length(u)==nu for u in sol[:u])
     buses=data[:Nset];lines=data[:Lset];bs=data[:Bset];ds=data[:Dset]
