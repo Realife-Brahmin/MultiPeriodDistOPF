@@ -646,3 +646,19 @@ what makes large10k converge; none of the simpler rules matches it.
 
 T = 96: both dispatches pass the replay; all processes 71.2 GB at peak, the coordinator holding
 the centralized solve's 9.2 GB. T = 144 and 288 with 144 workers on two nodes were still queued.
+
+### Whole-number schedules (2026-11-17, same setting; `SC_RHO_STEP`)
+
+Start 2 rho_unit, end rho_unit/16 (five halvings), then the same balancing (2 / 1.5).
+
+| schedule | med2522 | large10k |
+|---|---|---|
+| halve every 4 iterations (20) | 23 iterations, 14.1 s | 30 iterations, 49.0 s |
+| halve every 2 iterations (10) | 26 iterations, 21.8 s | 44 iterations, 89.2 s |
+| halve every iteration (5) | 19 iterations, 13.8 s | 77 iterations, 124.3 s |
+| current (smooth, 20) | 23 iterations, 15.4 s | 29 iterations, 61.9 s |
+
+All pass the replay (jobs 31850334-31850339; the first submission failed at start-up because the
+worker files on Kamiak were older than the driver). "Halve every four iterations" matches the
+smooth schedule to within one iteration, so it can replace it. The length of the decrease matters:
+on large10k a shorter decrease (5 or 10 iterations) costs 1.5 to 2.7 times the iterations.
