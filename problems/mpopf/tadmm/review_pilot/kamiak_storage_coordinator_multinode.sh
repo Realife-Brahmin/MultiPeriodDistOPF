@@ -32,6 +32,7 @@ export SC_NWORKERS=${SC_NWORKERS:-$T} SC_RHO=${SC_RHO:-2:0.0625:20} SC_BALANCE=$
 NODES=$SLURM_JOB_NUM_NODES
 (( SC_NWORKERS % NODES == 0 )) || { echo "workers must be a multiple of the nodes"; exit 2; }
 export TADMM_JULIA_EXE=/home/aryan.jha/opt/julia-1.12.4/bin/julia
+export SC_NODE_SAMPLE_DIR="$OUT"
 export TADMM_NWORKERS=$SC_NWORKERS TADMM_NODES=$NODES TADMM_WORKERS_PER_NODE=$((SC_NWORKERS/NODES))
 # The worker step: SC_NWORKERS single-CPU tasks spread evenly, pinned by worker_slurm.sh.
 export SLURM_NTASKS=$SC_NWORKERS SLURM_NTASKS_PER_NODE=$((SC_NWORKERS/NODES)) SLURM_CPUS_PER_TASK=1 SLURM_CPU_BIND=none
@@ -42,14 +43,13 @@ LAST=$(python3 -c 'import os; print(max(os.sched_getaffinity(0)))')
 julia --startup-file=no --project="$P" "$P/storage_coordinator_lean.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 taskset -c "$LAST" python3 "$P/sample_memory.py" sample "$PID" "$OUT/memory_samples.csv" "${SC_SAMPLE_S:-2}" &
-# One sampler per node: every julia process of this user on that node (workers included).
-srun --overlap --nodes="$NODES" --ntasks="$NODES" --ntasks-per-node=1 --cpus-per-task=1 --mem=0 \
-  bash -c "python3 $C/source/$P/sample_memory.py sample-node $OUT/memory_node_\$(hostname -s).csv ${SC_SAMPLE_S:-2} $OUT/STOP_SAMPLING" &
-NODESAMPLER=$!
+# One sampler per node, started by the first worker task on that node (worker_slurm.sh):
+# every julia process of this user on that node, workers included.
 wait "$PID"
-touch "$OUT/STOP_SAMPLING"; wait "$NODESAMPLER" || true
+touch "$OUT/STOP_SAMPLING"; sleep 5
 for f in "$OUT"/memory_node_*.csv; do
- python3 "$P/sample_memory.py" summarize "$f" "$OUT/solve.log" | sed "s/^MEMORY/MEMORY ($(basename "$f" .csv))/" | tee -a "$OUT/memory_summary_nodes.txt"
+ [[ -e "$f" ]] || { echo "MEMORY per node: no samples"; break; }
+ python3 "$P/sample_memory.py" summarize "$f" "$OUT/solve.log" | sed "s/^MEMORY/MEMORY ($(basename "$f" .csv))/" | tee -a "$OUT/memory_summary_nodes.txt" || true
 done
 grep -E 'CENTRAL|CASE|SC_LEAN|SC_WARNING' "$OUT/solve.log" || true
 grep -c SC_WORKER "$OUT/solve.log" || true
