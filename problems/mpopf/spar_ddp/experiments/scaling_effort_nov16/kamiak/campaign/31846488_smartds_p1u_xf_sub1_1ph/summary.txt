@@ -1,0 +1,12 @@
+BEGIN T=24 arm=ddp repeat=1 2026-11-18T14:18:44-08:00
+END T=24 arm=ddp repeat=1 wall=295s | solve complete: 26.112 s, iterations=83, status=0 | FilterDDP objective=42599.699437629846 max_equality_residual=2.144e-06 | below limit: 0 of 166368 above limit: 0 
+BEGIN T=24 arm=ma57 repeat=1 2026-11-18T14:23:39-08:00
+END T=24 arm=ma57 repeat=1 wall=186s | status=LOCALLY_SOLVED iterations=102 objective=42599.504608838150 solve_time_s=69.091 | below limit: 0 of 166368 above limit: 0 
+BEGIN T=24 arm=ma97 repeat=1 2026-11-18T14:26:45-08:00
+END T=24 arm=ma97 repeat=1 wall=179s | status=LOCALLY_SOLVED iterations=102 objective=42599.504608838150 solve_time_s=64.823 | below limit: 0 of 166368 above limit: 0 
+BEGIN T=24 arm=ma97 repeat=2 2026-11-18T14:29:44-08:00
+END T=24 arm=ma97 repeat=2 wall=178s | status=LOCALLY_SOLVED iterations=102 objective=42599.504608838150 solve_time_s=64.590 | below limit: 0 of 166368 above limit: 0 
+BEGIN T=24 arm=ma57 repeat=2 2026-11-18T14:32:42-08:00
+END T=24 arm=ma57 repeat=2 wall=186s | status=LOCALLY_SOLVED iterations=102 objective=42599.504608838150 solve_time_s=68.907 | below limit: 0 of 166368 above limit: 0 
+BEGIN T=24 arm=ddp repeat=2 2026-11-18T14:35:48-08:00
+END T=24 arm=ddp repeat=2 wall=281s | solve complete: 25.599 s, iterations=83, status=0 | FilterDDP objective=42599.699437629846 max_equality_residual=2.144e-06 | below limit: 0 of 166368 above limit: 0 
