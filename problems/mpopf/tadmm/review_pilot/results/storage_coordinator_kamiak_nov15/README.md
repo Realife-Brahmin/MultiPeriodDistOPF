@@ -622,3 +622,27 @@ faster with 48, 72 and 144 workers. Centralized med2522 T144, in its 72-worker
 job: 91.0 s (67.3 s to within 0.1%), replay passed; tADMM is 3.6, 5.7 and 10.1
 times faster. The 144-worker rows are one worker per period, on two nodes.
 Shared nodes, single runs. No Kamiak jobs were left after these (10:21).
+
+## Penalty rules compared (2026-11-17, T = 96, 48 workers, shared 128-core nodes)
+
+Centralized skipped (`SC_REFERENCE`). `current` = 2 rho_unit decreasing to rho_unit/16 over
+20 iterations, then balancing (2 / 1.5); the others start at rho_unit and use no decrease.
+
+| rule | med2522 | large10k |
+|---|---|---|
+| current | 23 iterations, 15.4 s | 29 iterations, 61.9 s |
+| balancing 2 / 1.5 from iteration 1 | 23 iterations, 16.5 s | not converged in 150 |
+| balancing 10 / 2 (Boyd) from iteration 1 | 46 iterations, 27.1 s | not converged in 150 |
+| fixed rho_unit | 52 iterations, 36.3 s | 124 iterations, 248.9 s |
+
+Every converged run passes the OpenDSS replay. Jobs 31849402-31849409. The decreasing start is
+what makes large10k converge; none of the simpler rules matches it.
+
+## Final large10k table (128-core Xeon 6760P, centralized in the same job)
+
+| T | workers | nodes | centralized (s) | tADMM (s) | iterations | ratio | job |
+|---|---|---|---|---|---|---|---|
+| 96 | 96 | 1 | 183.9 | 55.2 | 29 | 3.33 | 31849399 |
+
+T = 96: both dispatches pass the replay; all processes 71.2 GB at peak, the coordinator holding
+the centralized solve's 9.2 GB. T = 144 and 288 with 144 workers on two nodes were still queued.
