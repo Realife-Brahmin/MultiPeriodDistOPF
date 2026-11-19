@@ -705,3 +705,21 @@ grids. The replay now skips deck lines the model leaves out and buses outside th
 ieee123, T = 24, 24 workers (jobs 31863308-09): eta = 1.0 reproduces the lossless result (21
 iterations, 0.44 s); eta = 0.95: centralized 0.38 s, tADMM 22 iterations, 0.42 s, gap 6.7e-7; both
 dispatches pass the replay with the storage efficiencies set to 95% in OpenDSS.
+
+### Results (2026-11-18 evening, 128-core nodes, 48 workers, T = 96)
+
+| case | centralized (s) | tADMM (s) | iterations | repair attempts | ratio | job |
+|---|---|---|---|---|---|---|
+| med3980 | 140.3 | 44.1 | 28 | 1 | 3.2 | 31863440 |
+| sf6937 (cap 3000, no centralized in job) | 318.4 (earlier job) | 350.0 | 72 | 6 (16 periods refused each time, 8 pinned) | 0.9 | 31863300 |
+| med2522, eta = 0.95 | 60.6 | 64.2 | 43 | 17 | 0.94 | 31863441 |
+| large10k, eta = 0.95 | 141.2 | 69.3 | 33 | 1 | 2.0 | 31863442 |
+
+- sf6937: residuals were met by iteration ~54 but 16 periods refuse the repair; after six attempts
+  the pinned repair succeeds at iteration 72. tADMM is not faster here.
+- med2522 with losses: the residuals settle late (iteration 26 or so) and 17 repair attempts are
+  needed (2 periods pinned), against 23 iterations and 1 attempt lossless. large10k with losses is
+  fine (33 iterations, one attempt). Lossy replays pass on both, efficiencies set in OpenDSS.
+- Replays of med3980 and sf6937 failed (voltage difference about 1.05 p.u. at some buses, for the
+  centralized dispatch too): the replay placed PV injections at bus numbers instead of the deck's bus
+  names. Fixed; replays re-run (job 31863542).

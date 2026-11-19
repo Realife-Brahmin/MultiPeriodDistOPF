@@ -82,7 +82,8 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
     filter!(p->p[1]!=root,pvs)
     @assert sort(first.(pvs))==sort(filter(!=(root),ds))
     for (j,_,kv) in pvs
-        D.Text.Command("New Load.seq_pv$j bus1=$j.1 phases=1 model=1 kV=$kv kW=0 kvar=0 daily=seq_unity Vminpu=0.3 Vmaxpu=1.7")
+        bname=haskey(data,:busName) ? data[:busName][j] : string(j)   # the deck's own name of bus j
+        D.Text.Command("New Load.seq_pv$j bus1=$bname.1 phases=1 model=1 kV=$kv kW=0 kvar=0 daily=seq_unity Vminpu=0.3 Vmaxpu=1.7")
     end
     names=String[];buses_b=Int[];capacity=Float64[];ec=Float64[];ed=Float64[];original_ec=Float64[];original_ed=Float64[]
     for name in D.Storages.AllNames()
