@@ -632,7 +632,7 @@ function procs_affine_rollout!(solver, ocp, d, dir, γ::T) where T
     M = _PM[]::ProcsMain
     N = ocp.N
     μ = Float64(d.μ)
-    γz = isnan(dir.γdual) ? γ : dir.γdual
+    γz = SPARDDP._multiplier_step(dir.γdual, dir.γmax, γ)
     t0 = time_ns()
     r = _pm_all((t, w) -> remotecall_fetch(pw_rollout, w, t, Float64(γ), Float64(γz), μ), M, N)
     d.status = 0

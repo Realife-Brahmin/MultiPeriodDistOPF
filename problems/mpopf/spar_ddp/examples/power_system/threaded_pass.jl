@@ -534,7 +534,7 @@ function threaded_affine_rollout!(solver::SPARDDP.Solver{T, nx, nu, nc}, ocp, d,
     μ = d.μ
     cl = ocp.control_limits
     N = ocp.N
-    γz = isnan(dir.γdual) ? γ : dir.γdual
+    γz = SPARDDP._multiplier_step(dir.γdual, dir.γmax, γ)
     c1 = zeros(T, N); cϕ = zeros(T, N); logl = zeros(T, N); logu = zeros(T, N); lv = zeros(T, N)
     bad = falses(N)
     Threads.@threads for t in 1:N

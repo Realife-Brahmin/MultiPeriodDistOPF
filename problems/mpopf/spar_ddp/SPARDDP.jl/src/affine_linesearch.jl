@@ -25,6 +25,19 @@ _affine_linesearch() = get(ENV, "FILTERDDP_AFFINE_LINESEARCH", "0") != "0"
 # control bounds only; the bound multipliers take their own largest step.
 # Without it one step size serves both and the smaller limit wins.
 _split_step() = get(ENV, "FILTERDDP_SPLIT_STEP", "0") != "0"
+# FILTERDDP_SPLIT_STEP=2: as 1, but when the line search backtracks the bound
+# multipliers' step is shortened by the same factor as the primal step,
+# gamma_z = gamma_dual * gamma / gamma_max. Each keeps its own
+# fraction-to-boundary limit; the multipliers no longer take their full step
+# while the primal step is cut short. With 1 they always do (Ipopt's choice),
+# and on large10k T=288 that left the dual infeasibility near 5e4 while the
+# line search cut every step to 1/16-1/32 for 45 iterations (61 against 18).
+_split_scaled() = get(ENV, "FILTERDDP_SPLIT_STEP", "0") == "2"
+function _multiplier_step(γdual::T, γmax::T, γ::T) where T
+    isnan(γdual) && return γ
+    _split_scaled() || return γdual
+    return γmax > 0 ? γdual * min(one(T), γ / γmax) : γdual
+end
 
 struct AffineDirections{T}
     dx::Vector{Vector{T}}
@@ -147,7 +160,7 @@ function affine_rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
     data.status = 0
     data.primal_1_next = T(0.0)
     data.barrier_lagrangian_next = T(0.0)
-    γz = isnan(dir.γdual) ? γ : dir.γdual
+    γz = _multiplier_step(dir.γdual, dir.γmax, γ)
     parsim = _parsim()
     gcnet = parsim && _parsim_gcnet()
     ps_sum = 0.0; ps_max = 0.0
