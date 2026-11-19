@@ -50,6 +50,11 @@ function physical_layout(d)
     end
 end
 
+# Battery efficiency, the same each way (SC_ETA, default lossless). With a net power p and no
+# simultaneous charge and discharge, the stored energy falls by dt*battery_drain(p).
+sc_eta()=parse(Float64,get(ENV,"SC_ETA","1.0"))
+battery_drain(p,eta=sc_eta())=p>0 ? p/eta : eta*p
+
 function make_model(d, owned; local_window=false, rho=0.0)
     T = d[:T]; ns=d[:Nset]; es=d[:Lset]; bs=d[:Bset]; ds=d[:Dset]
     loads=Set(d[:NLset]); batteries=Set(bs); ders=Set(ds)
@@ -157,7 +162,13 @@ function make_model(d, owned; local_window=false, rho=0.0)
             set_lower_bound(pb[j,t],-d[:P_B_R_pu][j]); set_upper_bound(pb[j,t],d[:P_B_R_pu][j])
             set_start_value(pb[j,t],0.0)
             prev=t==1 ? d[:B0_pu][j] : b[j,t-1]
-            @constraint(m,b[j,t]==prev-dt*pb[j,t])
+            eta=sc_eta()
+            if eta<1   # charging and discharging powers with efficiency eta each way (SC_ETA)
+                pc=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j]); pd=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j])
+                @constraint(m,pb[j,t]==pd-pc); @constraint(m,b[j,t]==prev+dt*(eta*pc-pd/eta))
+            else
+                @constraint(m,b[j,t]==prev-dt*pb[j,t])
+            end
         end
     end
     vars=all_variables(m); initial=start_value.(vars)
@@ -388,9 +399,9 @@ function physical_metrics_cached(d,us,bb,layout)
             # A dispatch handed to OpenDSS contains battery POWERS. Check the
             # energy obtained by integrating those powers as well as consensus
             # energies; small per-period errors must not hide accumulated drift.
-            recovered_energy[n]-=d[:delta_t_h]*pb[n]
+            recovered_energy[n]-=d[:delta_t_h]*battery_drain(pb[n])
             prev=t==1 ? d[:B0_pu][j] : bb[n,t-1]
-            maxeq=max(maxeq,abs(bb[n,t]-prev+d[:delta_t_h]*pb[n]))
+            maxeq=max(maxeq,abs(bb[n,t]-prev+d[:delta_t_h]*battery_drain(pb[n])))
             maxbound=max(maxbound,abs(pb[n])-d[:P_B_R_pu][j],
                 d[:soc_min][j]*d[:B_R_pu][j]-bb[n,t],bb[n,t]-d[:soc_max][j]*d[:B_R_pu][j],
                 d[:soc_min][j]*d[:B_R_pu][j]-recovered_energy[n],recovered_energy[n]-d[:soc_max][j]*d[:B_R_pu][j])

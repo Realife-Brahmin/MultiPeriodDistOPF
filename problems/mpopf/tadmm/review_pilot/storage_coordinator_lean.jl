@@ -61,7 +61,11 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             empty!(tight_periods); zrep=z
             for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]);max_iter=repair_max_iter) for w in 1:W]), row in answer
                 strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u); (row.ok && row.strict) || push!(tight_periods,row.t)
+                (row.ok && row.strict) || get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" &&
+                    println("SC_REPAIR_REFUSED k=$k t=$(row.t) ok=$(row.ok) status=$(row.status) solver_s=$(round(row.solver_s,digits=3))")
             end
+            get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" &&
+                println("SC_REPAIR_ATTEMPT k=$k refused=$(length(tight_periods)) of $T"); flush(stdout)
             # Periods whose network cannot absorb the battery schedule (no slack in
             # the voltage band) keep the powers their own solve asked for. The
             # battery step is re-solved with those periods pinned, and the repair
@@ -93,13 +97,13 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             zb=zeros(nb,T)
             for n in 1:nb
                 e=d[:B0_pu][bs[n]]
-                for t in 1:T; e-=dt*zrep[n,t]; zb[n,t]=e; end
+                for t in 1:T; e-=dt*battery_drain(zrep[n,t]); zb[n,t]=e; end
             end
             pm=physical_metrics(d,rus,zb); objective=pm.objective; violation=pm.original_primal
             gap=abs(objective-reference)/max(1.0,abs(reference))
             if violation<=no_tol
                 converged=k
-                phase=="timed" && serialize(joinpath(out,"converged_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>objective,:u=>rus,:B=>zb,:status=>"SC_LEAN_CONVERGED",:iteration=>k))
+                phase=="timed" && serialize(joinpath(out,"converged_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>objective,:u=>rus,:B=>zb,:eta=>sc_eta(),:status=>"SC_LEAN_CONVERGED",:iteration=>k))
                 break
             end
         end
@@ -141,7 +145,7 @@ function lean_main()
         cu,cb=dispatch([central],d); cm=physical_metrics(d,cu,cb); reference=cm.objective
         cno=findfirst(r->abs(r[2]-trace[end][2])<=1e-3*max(1.0,abs(trace[end][2])) && r[3]<=no_tol,trace)
         @printf("CENTRAL objective=%.12f violation=%.3e iterations=%d wall_s=%.3f within_0.1%%_s=%.3f\n",reference,cm.original_primal,trace[end][1],central_wall,trace[cno][4])
-        serialize(joinpath(out,"central_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>cm.objective,:u=>cu,:B=>cb,:status=>"LOCALLY_SOLVED"))
+        serialize(joinpath(out,"central_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>cm.objective,:u=>cu,:B=>cb,:eta=>sc_eta(),:status=>"LOCALLY_SOLVED"))
         central=nothing; cu=nothing; cb=nothing; GC.gc(); GC.gc()
         stamp("central_released")
         central_no_s=trace[cno][4]
@@ -157,7 +161,7 @@ function lean_main()
     stamp("pool_begin"); start_pool!(nworkers); stamp("pool_end")
     println("SC_PIDS ",join(fetch.([remotecall(getpid,w) for w in SC_WIDS]),' '))
     repair_max_iter=parse(Int,get(ENV,"SC_REPAIR_MAX_ITER","60")); repair_backoff=parse(Int,get(ENV,"SC_REPAIR_BACKOFF","3"))
-    @printf("SC_SETTINGS repair_max_iter=%d repair_backoff=%d stage_solver=%s\n",repair_max_iter,repair_backoff,SC_STAGE_SOLVER)
+    @printf("SC_SETTINGS repair_max_iter=%d repair_backoff=%d stage_solver=%s eta=%g\n",repair_max_iter,repair_backoff,SC_STAGE_SOLVER,sc_eta())
     common=(;rho,rho_end,ramp,maxiter=parse(Int,get(ENV,"SC_MAX_ITER","150")),reference,no_tol,out,eps_pri,eps_dual,balance,balance_step,repair_max_iter,repair_backoff)
     stamp("tadmm_warmup_begin"); warm=run_lean(d,system;common...,phase="warmup"); stamp("tadmm_warmup_end")
     stamp("tadmm_timed_begin"); timed=run_lean(d,system;common...,phase="timed"); stamp("tadmm_timed_end")

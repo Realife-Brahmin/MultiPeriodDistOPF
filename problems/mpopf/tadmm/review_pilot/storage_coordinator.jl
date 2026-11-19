@@ -126,14 +126,22 @@ function make_coordinator(d;idx=eachindex(d[:Bset]))
         k,v=strip.(split(kv,'=';limit=2))
         set_optimizer_attribute(m,String(k),something(tryparse(Int,v),tryparse(Float64,v),String(v)))
     end
-    @variable(m,z[1:nb,1:T]); @variable(m,b[1:nb,1:T])
+    @variable(m,z[1:nb,1:T]); @variable(m,b[1:nb,1:T]); scd=AffExpr[]
     for (n,j) in enumerate(bs),t in 1:T
         set_lower_bound(z[n,t],-d[:P_B_R_pu][j]); set_upper_bound(z[n,t],d[:P_B_R_pu][j])
         set_lower_bound(b[n,t],d[:soc_min][j]*d[:B_R_pu][j]); set_upper_bound(b[n,t],d[:soc_max][j]*d[:B_R_pu][j])
         set_start_value(z[n,t],0.0); set_start_value(b[n,t],d[:B0_pu][j])
-        @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])-dt*z[n,t])
+        eta=sc_eta()
+        if eta<1   # charging and discharging powers; a small throughput term rules out simultaneous use
+            pc=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j]); pd=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j])
+            @constraint(m,z[n,t]==pd-pc)
+            @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])+dt*(eta*pc-pd/eta))
+            push!(scd,pc+pd)
+        else
+            @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])-dt*z[n,t])
+        end
     end
-    @objective(m,Min,sum(z[n,t]^2 for n in 1:nb,t in 1:T))
+    @objective(m,Min,sum(z[n,t]^2 for n in 1:nb,t in 1:T)+1e-6*sum(scd;init=0.0))
     return (;m,z,b,vars=all_variables(m))
 end
 
