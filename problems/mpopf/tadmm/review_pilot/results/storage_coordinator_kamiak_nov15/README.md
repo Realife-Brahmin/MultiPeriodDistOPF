@@ -725,3 +725,17 @@ dispatches pass the replay with the storage efficiencies set to 95% in OpenDSS.
   names. Fixed; replays re-run (job 31863542).
 - Replays after the bus-name fix (job 31863542): med3980 centralized and tADMM dispatches pass,
   sf6937 tADMM dispatch passes (the diagnostic job had no centralized dispatch).
+
+### Lossless against lossy on the same node type (2026-11-19, 128-core, 48 workers, T = 96)
+
+| case | centralized (s) | tADMM (s) | iterations | repair attempts | ratio | job |
+|---|---|---|---|---|---|---|
+| med2522, lossless | 79.1 | 16.8 | 23 | 1 | 4.7 | 31874007 |
+| med2522, eta 0.95, repair cap 3000 | 82.4 | 91.8 | 43 | 21 | 0.90 | 31874006 |
+
+Losses barely change the centralized solve (79.1 to 82.4 s) but cost tADMM a factor of 5, all in
+the repair: periods 1-4 refuse it at every attempt from iteration 23 ("Solved_To_Acceptable_Level",
+some "Infeasible_Problem_Detected"), so the cap was not the cause. Both lossy dispatches pass the
+replay with 95% efficiencies. sf6937 (lossless) fails the same way in periods 2-8 and 69-76
+("Infeasible_Problem_Detected"): fixing the batteries at the agreed schedule leaves no feasible
+network in periods at their voltage limits.
