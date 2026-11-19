@@ -1,0 +1,53 @@
+# Centralized conic baseline (2026-11-15)
+
+Reviewer items AE-5 and R3-1: the centralized baseline is Ipopt, a general
+nonlinear solver, applied to a second-order cone program. `conic_baseline.jl`
+builds the same centralized problem with the cone stated explicitly (rotated
+second-order cone, every original bound kept) and solves it with Clarabel
+(open source) and Gurobi's barrier method, next to Ipopt/MA57 on the same
+machine. One thread each unless stated; each solver gets a warm-up solve and is
+timed on a freshly built model. Environment: `conic_env/Project.toml`.
+
+## 309 PC (Julia 1.12.6, Gurobi 13.0.3, Clarabel 0.11.1)
+
+Wall time of the solve call, seconds; iterations in brackets.
+
+| case | Ipopt/MA57 | Clarabel | Gurobi barrier |
+|---|---|---|---|
+| ieee123 T24 | 0.46 (25) | 0.77 (20) | 0.61 (18) |
+| ieee123 T96 | 2.42 (29) | 6.60 (28), "almost optimal" | 3.63 (24) |
+| med2522 T24 | 17.7 (49) | 28.2 (34), "almost optimal" | 43.5 (51), suboptimal termination |
+| med2522 T24, Gurobi with 8 threads | | | 37.2 (51), suboptimal termination |
+| med2522 T96 | 84.6 (57) | 128.0 (37), "almost optimal" | 83.4 (30) |
+
+Objectives agree with Ipopt's to between 2e-10 and 3e-7 relative. On med2522
+Clarabel and Gurobi stop short of their 1e-8 tolerances; their dispatches
+violate the original model by 1e-6 and 7e-8, Ipopt's by 8e-16.
+
+Neither conic solver is meaningfully faster than Ipopt/MA57 on these instances.
+Gurobi matches it on med2522 T96 (83.4 s against 84.6 s) and is 1.3 to 2.5 times
+slower on the others, gaining little from eight threads; Clarabel is 1.5 to 2.7
+times slower throughout. The Ipopt
+baseline is therefore not what makes centralized look slow. Kamiak runs of
+Ipopt/MA57 and Clarabel on the test nodes, including large10k, were queued when
+this was written (`~/kamiak_jobs/tadmm_sc_nov15_v12_conic`).
+
+Dispatch files (`*_dispatch.jls`) are not committed.
+
+## MOSEK (added the same evening)
+
+MOSEK 11.2 through MosekTools, licence file valid to November 2027 on the 309 PC
+and on Kamiak. 309 PC, wall time of the solve call in seconds, one thread
+unless stated, Ipopt/MA57 for comparison.
+
+| case | Ipopt/MA57 | MOSEK |
+|---|---|---|
+| ieee123 T24 | 0.45 | 0.79 |
+| ieee123 T96 | 2.42 | 4.49 |
+| med2522 T24 | 17.7 | 24.6 (22.2 with 8 threads) |
+| med2522 T96 | 84.6 | 102.1 |
+
+MOSEK reports optimal in every run and its objectives agree with Ipopt's to
+about 2e-7 relative; its dispatches violate the original model by 5e-8 to 1e-6.
+It is slower than Ipopt/MA57 on every case here. Kamiak runs are in
+`../storage_coordinator_kamiak_nov15/tadmm_sc_nov15_v12_conic` (logs `mosek-*`).

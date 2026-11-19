@@ -1,0 +1,7 @@
+CASE system=ieee123C_1ph T=24 C_B=8.01399e-08 profile=july batteries=51 reference=2831.014969712978 rho_unit=12000.5 median_P_rated_pu=0.0099996
+SC_REPAIR_NO label=repair spec=2:0.0625:20 rho=5045.58 k=10 gap=7.217e-04 original=1.447e-11 ideal_s=0.61 repair_s=0.02
+SC_NO label=repair spec=2:0.0625:20 rho=750.03 k=50 gap=7.252e-07 original=7.649e-07 ideal_s=3.81
+SC_DONE label=repair spec=2:0.0625:20 rho_final=750.03 rounds=70 strict=0 no=50 repair_no=10 gap=5.956e-07 original=4.684e-07 rmax=3.599e-07 ideal_s=5.08 serial_s=32.99
+SC_REPAIR_NO label=repair spec=0.25 rho=3000.12 k=10 gap=9.955e-04 original=1.016e-10 ideal_s=0.84 repair_s=0.02
+SC_NO label=repair spec=0.25 rho=3000.12 k=50 gap=7.113e-07 original=9.932e-07 ideal_s=3.54
+SC_DONE label=repair spec=0.25 rho_final=3000.12 rounds=70 strict=0 no=50 repair_no=10 gap=2.492e-07 original=2.270e-06 rmax=3.556e-06 ideal_s=4.91 serial_s=32.96

@@ -1,0 +1,45 @@
+{
+  "case": "tadmm_review_nov09_historical_anchors\\results\\run_T24_primal_dual_31660055",
+  "rho_initial": 15000.0,
+  "iterations": 49,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": true,
+    "strict_criteria_met": false,
+    "original_primal": 0.000869624328055929,
+    "objective_gap": 1.5439083238823487e-06
+  },
+  "sha256": {
+    "tadmm_review_nov09_historical_anchors\\results\\run_T24_primal_dual_31660055\\rho15000\\trace.csv": "48c24b560226a43e5e9190e0eca6aec22ad0d7abefdcc1ac477acb258902acc6",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T24_primal_dual_31660055\\sweep.toml": "67d64b6e14202746715d489bb2e3bbb172128a1d2c2ff73c401a70101f339fe8",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T24_primal_dual_31660055\\rho15000\\assessment.toml": "e30091915f4ecc774324a19faea459b3f9875a01eefb6c38f74c0fb8518752a0",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "large10k-T24-MA57.csv": "1ec2a13336fcb665aad6553cd88ae99785674992467760993a2d96fb62a0e40f"
+  }
+}

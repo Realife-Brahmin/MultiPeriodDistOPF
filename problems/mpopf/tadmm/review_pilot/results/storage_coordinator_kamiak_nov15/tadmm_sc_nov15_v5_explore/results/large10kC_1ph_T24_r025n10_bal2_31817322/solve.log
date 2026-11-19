@@ -1,0 +1,222 @@
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+SC_HOST host=cn184 time=2026-11-15T09:46:47.946 affinity=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,41,43,45,47,49,55,59 julia=1.12.4
+CENTRAL_NO iteration=19 of 25 elapsed_s=23.421 callback_final_objective=2605186.166625714395 model_objective=2605186.166625775862
+CENTRAL objective=2605186.166625775862 primal=6.821e-13 iterations=25 solver_s=31.202 wall_s=31.202 warmup_wall_s=34.658
+CASE system=large10kC_1ph T=24 C_B=8.01399e-08 profile=july batteries=1020 workers=24 rho_unit=287.977 spec=2:0.25:10 rho_start=575.954 rho_end=71.9942 ramp=10
+SC_POOL workers=24 start_s=92.28 coordinator_affinity=1
+SC_SETTINGS eps_pri=1e-05 eps_dual=0.001 balance=2 balance_step=1.5
+SC_WORKER (worker = 2, pid = 2929361, host = "cn184", affinity = "3", periods = [1], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 3, pid = 2929366, host = "cn184", affinity = "5", periods = [2], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 4, pid = 2929369, host = "cn184", affinity = "7", periods = [3], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 5, pid = 2929372, host = "cn184", affinity = "9", periods = [4], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 6, pid = 2929375, host = "cn184", affinity = "11", periods = [5], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 7, pid = 2929386, host = "cn184", affinity = "13", periods = [6], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 8, pid = 2929389, host = "cn184", affinity = "15", periods = [7], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 9, pid = 2929392, host = "cn184", affinity = "17", periods = [8], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 10, pid = 2929396, host = "cn184", affinity = "19", periods = [9], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 11, pid = 2929418, host = "cn184", affinity = "21", periods = [10], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 12, pid = 2929421, host = "cn184", affinity = "23", periods = [11], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 13, pid = 2929431, host = "cn184", affinity = "25", periods = [12], batteries = 43, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 14, pid = 2929434, host = "cn184", affinity = "27", periods = [13], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 15, pid = 2929446, host = "cn184", affinity = "29", periods = [14], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 16, pid = 2929458, host = "cn184", affinity = "31", periods = [15], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 17, pid = 2929461, host = "cn184", affinity = "33", periods = [16], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 18, pid = 2929467, host = "cn184", affinity = "35", periods = [17], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 19, pid = 2929486, host = "cn184", affinity = "37", periods = [18], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 20, pid = 2929490, host = "cn184", affinity = "41", periods = [19], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 21, pid = 2929494, host = "cn184", affinity = "43", periods = [20], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 22, pid = 2929497, host = "cn184", affinity = "45", periods = [21], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 23, pid = 2929502, host = "cn184", affinity = "47", periods = [22], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 24, pid = 2929506, host = "cn184", affinity = "49", periods = [23], batteries = 42, julia_threads = 1, blas_threads = 1)
+SC_WORKER (worker = 25, pid = 2929509, host = "cn184", affinity = "55", periods = [24], batteries = 42, julia_threads = 1, blas_threads = 1)
+      From worker 23:	
+      From worker 23:	******************************************************************************
+      From worker 23:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 23:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 23:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 23:	******************************************************************************
+      From worker 23:	
+      From worker 25:	
+      From worker 25:	******************************************************************************
+      From worker 25:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 25:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 25:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 25:	******************************************************************************
+      From worker 25:	
+      From worker 21:	
+      From worker 21:	******************************************************************************
+      From worker 21:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 21:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 21:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 21:	******************************************************************************
+      From worker 21:	
+      From worker 11:	
+      From worker 11:	******************************************************************************
+      From worker 11:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 11:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 11:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 11:	******************************************************************************
+      From worker 11:	
+      From worker 9:	
+      From worker 9:	******************************************************************************
+      From worker 9:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 9:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 9:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 9:	******************************************************************************
+      From worker 9:	
+      From worker 8:	
+      From worker 8:	******************************************************************************
+      From worker 8:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 8:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 8:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 8:	******************************************************************************
+      From worker 8:	
+      From worker 12:	
+      From worker 12:	******************************************************************************
+      From worker 12:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 12:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 12:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 12:	******************************************************************************
+      From worker 12:	
+      From worker 22:	
+      From worker 22:	******************************************************************************
+      From worker 22:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 22:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 22:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 22:	******************************************************************************
+      From worker 22:	
+      From worker 18:	
+      From worker 18:	******************************************************************************
+      From worker 18:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 18:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 18:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 18:	******************************************************************************
+      From worker 18:	
+      From worker 10:	
+      From worker 10:	******************************************************************************
+      From worker 10:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 10:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 10:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 10:	******************************************************************************
+      From worker 10:	
+      From worker 4:	
+      From worker 4:	******************************************************************************
+      From worker 4:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 4:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 4:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 4:	******************************************************************************
+      From worker 4:	
+      From worker 17:	
+      From worker 17:	******************************************************************************
+      From worker 17:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 17:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 17:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 17:	******************************************************************************
+      From worker 17:	
+      From worker 6:	
+      From worker 6:	******************************************************************************
+      From worker 6:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 6:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 6:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 6:	******************************************************************************
+      From worker 6:	
+      From worker 15:	
+      From worker 15:	******************************************************************************
+      From worker 15:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 15:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 15:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 15:	******************************************************************************
+      From worker 15:	
+      From worker 19:	
+      From worker 19:	******************************************************************************
+      From worker 19:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 19:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 19:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 19:	******************************************************************************
+      From worker 19:	
+      From worker 14:	
+      From worker 14:	******************************************************************************
+      From worker 14:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 14:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 14:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 14:	******************************************************************************
+      From worker 14:	
+      From worker 24:	
+      From worker 24:	******************************************************************************
+      From worker 24:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 24:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 24:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 24:	******************************************************************************
+      From worker 24:	
+      From worker 2:	
+      From worker 2:	******************************************************************************
+      From worker 2:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 2:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 2:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 2:	******************************************************************************
+      From worker 2:	
+      From worker 13:	
+      From worker 13:	******************************************************************************
+      From worker 13:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 13:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 13:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 13:	******************************************************************************
+      From worker 13:	
+      From worker 7:	
+      From worker 7:	******************************************************************************
+      From worker 7:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 7:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 7:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 7:	******************************************************************************
+      From worker 7:	
+      From worker 16:	
+      From worker 16:	******************************************************************************
+      From worker 16:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 16:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 16:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 16:	******************************************************************************
+      From worker 16:	
+      From worker 20:	
+      From worker 20:	******************************************************************************
+      From worker 20:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 20:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 20:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 20:	******************************************************************************
+      From worker 20:	
+      From worker 5:	
+      From worker 5:	******************************************************************************
+      From worker 5:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 5:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 5:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 5:	******************************************************************************
+      From worker 5:	
+      From worker 3:	
+      From worker 3:	******************************************************************************
+      From worker 3:	This program contains Ipopt, a library for large-scale nonlinear optimization.
+      From worker 3:	 Ipopt is released as open source code under the Eclipse Public License (EPL).
+      From worker 3:	         For more information visit https://github.com/coin-or/Ipopt
+      From worker 3:	******************************************************************************
+      From worker 3:	
+SC_ITER phase=warmup k=1 gap=2.887e-01 original=5.787e+00 repair_gap=2.503e-02 rho=575.954 algorithm_s=6.826
+SC_ITER phase=warmup k=2 gap=3.000e-02 original=9.300e-01 repair_gap=2.031e-02 rho=467.82 algorithm_s=7.666
+SC_ITER phase=warmup k=3 gap=1.410e-02 original=6.492e-02 repair_gap=1.475e-02 rho=379.988 algorithm_s=8.506
+SC_REPAIR_NO phase=warmup k=9 gap=6.497e-04 original=1.137e-12 algorithm_s=12.452 repair_wall_s=0.800 total_s=13.252
+SC_ITER phase=warmup k=10 gap=1.074e-03 original=1.153e-01 repair_gap=4.772e-04 rho=88.6353 algorithm_s=13.286
+SC_ITER phase=warmup k=20 gap=2.675e-06 original=6.760e-04 repair_gap=2.710e-06 rho=2767.7 algorithm_s=21.551
+SC_CONVERGED phase=warmup k=20 r_rms=9.900e-06 s_relative=5.490e-04 repair_gap=2.710e-06 repair_primal=1.592e-12 algorithm_s=21.551 repair_wall_s=0.576 total_s=22.126
+SC_DONE phase=warmup spec=2:0.25:10 workers=24 iterations=20 converged=20 converged_s=22.126 converged_gap=2.710e-06 no=0 no_s=NaN repair_no=9 repair_no_s=13.252 algorithm_s=21.551 loop_wall_s=80.757 build_s=8.771
+SC_ITER phase=timed k=1 gap=2.887e-01 original=5.787e+00 repair_gap=2.503e-02 rho=575.954 algorithm_s=0.639
+SC_ITER phase=timed k=2 gap=3.000e-02 original=9.300e-01 repair_gap=2.031e-02 rho=467.82 algorithm_s=1.303
+SC_ITER phase=timed k=3 gap=1.410e-02 original=6.492e-02 repair_gap=1.475e-02 rho=379.988 algorithm_s=2.093
+SC_REPAIR_NO phase=timed k=9 gap=6.497e-04 original=1.137e-12 algorithm_s=6.126 repair_wall_s=0.539 total_s=6.666
+SC_ITER phase=timed k=10 gap=1.074e-03 original=1.153e-01 repair_gap=4.772e-04 rho=88.6353 algorithm_s=6.854
+SC_ITER phase=timed k=20 gap=2.675e-06 original=6.760e-04 repair_gap=2.710e-06 rho=2767.7 algorithm_s=14.099
+SC_CONVERGED phase=timed k=20 r_rms=9.900e-06 s_relative=5.490e-04 repair_gap=2.710e-06 repair_primal=1.592e-12 algorithm_s=14.099 repair_wall_s=0.525 total_s=14.624
+SC_DONE phase=timed spec=2:0.25:10 workers=24 iterations=20 converged=20 converged_s=14.624 converged_gap=2.710e-06 no=0 no_s=NaN repair_no=9 repair_no_s=6.666 algorithm_s=14.099 loop_wall_s=67.592 build_s=2.118
+SC_SUMMARY system=large10kC_1ph T=24 workers=24 | converged: central_s=31.202 tadmm_s=14.624 (k=20, gap=2.71e-06) ratio=2.13 | near-optimal 0.1%: central_s=23.421 tadmm_repair_s=6.666 (k=9) ratio=3.51 | tadmm without repair: no_s=NaN (k=0)

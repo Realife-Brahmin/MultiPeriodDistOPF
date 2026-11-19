@@ -1,0 +1,15 @@
+Test Summary:                                         | Pass  Total  Time
+Chronology, signs and independent energy conservation |   13     13  0.5s
+Test Summary:                                           | Pass  Total  Time
+Reserve clamping cannot masquerade as executable energy |   12     12  0.0s
+Test Summary:                                               | Pass  Total  Time
+Capacity clamping and operating upper bound remain distinct |    9      9  0.0s
+Test Summary:                           | Pass  Total  Time
+Efficiencies and quarter-hour durations |   19     19  0.0s
+Test Summary:                                           | Pass  Total  Time
+Explicit unity shape does not double-apply load profile |   10     10  0.0s
+Test Summary:                                   | Pass  Total  Time
+Lossless idle periods do not leak stored energy |   10     10  0.0s
+PARSE_OK problems/mpopf/tadmm/review_pilot/run_horizon_sweep.jl
+PARSE_OK problems/mpopf/tadmm/review_pilot/run_sequential_dss.jl
+SEQUENTIAL_DSS efficiency=model pass=true max_tracking_kw=1.992191869248927e-7 max_energy_balance_kwh=2.9747005214630917e-7 max_SOC_bound_kwh=0.0

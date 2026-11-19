@@ -1,4 +1,7 @@
-# OpenDSS feasibility check of an MPOPF dispatch.
+# Network-only OpenDSS snapshot check of an MPOPF dispatch.
+# This disables Storage and does not advance battery energy. A pass here is
+# not chronological MPOPF execution validation. The tADMM review pilot also
+# uses review_pilot/sequential_dss.jl for live-storage chronological replay.
 #
 # The optimizers work on the relaxed branch-flow model and, for FilterDDP, may
 # stop at a near-optimal point. This script hands only the DISPATCH (battery
@@ -173,6 +176,7 @@ J_dss = sum(price[t] * dt * ps_dss[t] for t in 1:T) + battery + terminal
 
 @printf("OPENDSS_CHECK %s | %s T=%d | converged=%s | source %.2f pu in the DSS file, 1.05 used | devices on the substation bus skipped: %d | PV kW, DSS against instance: %.1e | line C1 %.3g nF\n",
         label, system, T, converged, source_pu_file, skipped, pv_mismatch, line_c1)
+println("OPENDSS_SCOPE network_snapshot_only live_storage=false energy_carried=false")
 @printf("  %3s %10s %10s %8s %9s %9s %9s %9s %8s %8s %6s %6s\n", "t", "P_opf kW", "P_dss kW", "diff %", "loss_opf", "loss_dss", "fict kW", "dV max", "Vmin dss", "Vmax dss", "low", "high")
 for t in 1:T
     @printf("  %3d %10.2f %10.2f %8.4f %9.3f %9.3f %9.3f %9.2e %8.4f %8.4f %6d %6d\n", t, ps_opf[t], ps_dss[t],

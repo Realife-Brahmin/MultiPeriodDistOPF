@@ -1,0 +1,19 @@
+CASE system=ieee123C_1ph T=48 C_B=8.00335e-08 profile=july batteries=51 reference=2849.165630840412 rho_unit=6000.24 median_P_rated_pu=0.0099996
+SC_NO label=schedule spec=0.0625 rho=375.015 k=74 gap=4.772e-07 original=7.155e-07 ideal_s=9.69
+SC_DONE label=schedule spec=0.0625 rho_final=375.015 rounds=120 strict=0 no=74 gap=4.195e-08 original=6.898e-07 rmax=4.020e-06 ideal_s=15.15 serial_s=119.40
+SC_NO label=schedule spec=0.125 rho=750.03 k=53 gap=2.075e-08 original=8.278e-07 ideal_s=4.99
+SC_DONE label=schedule spec=0.125 rho_final=750.03 rounds=120 strict=0 no=53 gap=3.527e-07 original=3.507e-07 rmax=4.137e-07 ideal_s=11.82 serial_s=110.62
+SC_NO label=schedule spec=0.25 rho=1500.06 k=43 gap=3.454e-07 original=7.858e-07 ideal_s=4.04
+SC_DONE label=schedule spec=0.25 rho_final=1500.06 rounds=120 strict=0 no=43 gap=1.908e-07 original=2.083e-07 rmax=2.094e-07 ideal_s=12.20 serial_s=110.35
+SC_NO label=schedule spec=0.5 rho=3000.12 k=76 gap=4.069e-07 original=3.912e-07 ideal_s=7.35
+SC_DONE label=schedule spec=0.5 rho_final=3000.12 rounds=120 strict=0 no=76 gap=6.291e-08 original=2.663e-07 rmax=6.142e-07 ideal_s=11.80 serial_s=108.45
+SC_NO label=schedule spec=8:0.125:30 rho=750.03 k=55 gap=4.782e-07 original=4.237e-07 ideal_s=5.75
+SC_DONE label=schedule spec=8:0.125:30 rho_final=750.03 rounds=120 strict=0 no=55 gap=8.506e-08 original=1.266e-07 rmax=2.519e-07 ideal_s=12.21 serial_s=107.29
+SC_NO label=schedule spec=8:0.125:15 rho=750.03 k=47 gap=4.989e-07 original=6.986e-07 ideal_s=4.30
+SC_DONE label=schedule spec=8:0.125:15 rho_final=750.03 rounds=120 strict=0 no=47 gap=7.070e-08 original=2.478e-07 rmax=1.268e-06 ideal_s=11.51 serial_s=102.60
+SC_NO label=schedule spec=2:0.0625:20 rho=375.015 k=34 gap=9.836e-07 original=9.575e-07 ideal_s=3.67
+SC_DONE label=schedule spec=2:0.0625:20 rho_final=375.015 rounds=120 strict=0 no=34 gap=1.031e-07 original=1.244e-07 rmax=3.090e-07 ideal_s=13.47 serial_s=104.04
+SC_NO label=schedule spec=0.0625:8:30 rho=48001.9 k=80 gap=5.978e-05 original=9.093e-07 ideal_s=7.81
+SC_DONE label=schedule spec=0.0625:8:30 rho_final=48001.9 rounds=120 strict=0 no=80 gap=4.151e-05 original=4.619e-07 rmax=1.985e-06 ideal_s=11.22 serial_s=107.59
+SC_NO label=schedule spec=0.125:2:20 rho=12000.5 k=107 gap=6.980e-06 original=9.234e-07 ideal_s=9.58
+SC_DONE label=schedule spec=0.125:2:20 rho_final=12000.5 rounds=120 strict=0 no=107 gap=5.295e-06 original=2.505e-06 rmax=6.756e-06 ideal_s=10.71 serial_s=103.77

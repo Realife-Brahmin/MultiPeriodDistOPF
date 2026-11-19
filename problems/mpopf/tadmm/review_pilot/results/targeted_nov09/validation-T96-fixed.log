@@ -1,0 +1,100 @@
+{
+  "central_opendss": {
+    "converged": true,
+    "max_voltage_difference_pu": 1.49e-10,
+    "zero_voltage_violations": true
+  },
+  "arms": {
+    "rho240000": {
+      "first_crossings": {
+        "owned_raw_1e-3": 1,
+        "all_raw_1e-3": 1,
+        "owned_raw_1e-4": 2,
+        "all_raw_1e-4": 2,
+        "owned_raw_1e-5": 2,
+        "all_raw_1e-5": 2,
+        "paper_cost_1e-3": 64,
+        "current_cost_1e-3": 92,
+        "paper_cost_1e-4": 116,
+        "owned_dual_1e-3": 152,
+        "all_dual_1e-3": 152,
+        "owned_dual_1e-4": 174,
+        "current_cost_1e-4": 188,
+        "all_dual_1e-4": 234,
+        "owned_dual_1e-5": 237,
+        "paper_cost_1e-5": 237,
+        "all_dual_1e-5": 379,
+        "current_cost_1e-5": 379,
+        "final_rms": 379
+      },
+      "final_rms_met": true,
+      "core_s": 474.1936108870003,
+      "loop_wall_s": 555.387557983,
+      "original_primal": 0.0008074712934063033,
+      "objective_gap": 7.413123366684737e-06,
+      "opendss": {
+        "point_00152.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00174.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00234.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00188.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00064.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00092.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00379.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00001.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 6.25e-11,
+          "zero_voltage_violations": true
+        },
+        "point_00116.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "point_00002.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 6.36e-11,
+          "zero_voltage_violations": true
+        },
+        "point_00237.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        },
+        "endpoint.jls": {
+          "converged": true,
+          "max_voltage_difference_pu": 1.5e-10,
+          "zero_voltage_violations": true
+        }
+      }
+    }
+  },
+  "final_benchmark_claim": false
+}

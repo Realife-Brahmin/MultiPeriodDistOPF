@@ -1,0 +1,432 @@
+{
+  "single_measured_trajectory": true,
+  "arms": [
+    {
+      "iterations": 322,
+      "original_primal": 0.00035763966484203547,
+      "objective": 2617410.583932348,
+      "build_s": 11.836050798,
+      "all_r_max": 0.00012138661505245452,
+      "physical_check_s": 6.954908957000002,
+      "strict_criteria_met": false,
+      "owned_s_rms": 4.674670180581812e-05,
+      "final_rms_met": true,
+      "core_s": 334.2165603949999,
+      "warmup_final_rms_met": true,
+      "warmup_total_wall_s": 502.84459736,
+      "loop_wall_s": 373.606278514,
+      "rho_initial": 120000.0,
+      "warmup_core_s": 349.4996825720002,
+      "dispatch_s": 30.089674673,
+      "owned_r_rms": 4.6867330911407e-06,
+      "warmup_iterations": 322,
+      "objective_gap": 3.4005072459223126e-07,
+      "label": "T=48, 48 workers, rho=120000, primal_dual, batched",
+      "case": "run_T48_primal_dual_31653533",
+      "T": 48,
+      "rho": 120000.0,
+      "workers": 48,
+      "linear_solver": "ma57",
+      "rho_policy": "legacy_phase",
+      "local_solve_policy": "exact",
+      "cold_retries": 0,
+      "discarded_warm_iterations": 0,
+      "warm_start": "primal_dual",
+      "objective_update": "batched",
+      "native_group_critical_s": 218.59018325805664,
+      "stage_group_critical_s": 282.98050196699995,
+      "core_outside_stage_critical_s": 51.23605842799992,
+      "warm_transfer_group_critical_s": 49.77478827100001,
+      "objective_update_group_critical_s": 5.160063520000005,
+      "inner_iterations_median": 4.0,
+      "inner_iterations_max": 144,
+      "inner_iterations_p95": 13,
+      "central_full_wall_s": 87.082655459,
+      "memory": {
+        "central": {
+          "nodes": {
+            "process_samples.cn157.csv": {
+              "peak_pss_gib": 5.029512405395508,
+              "maximum_processes": 1
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 5.029512405395508,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        },
+        "rho120000": {
+          "nodes": {
+            "process_samples.cn157.csv": {
+              "peak_pss_gib": 53.468111991882324,
+              "maximum_processes": 49
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 53.468111991882324,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        }
+      },
+      "validation": {
+        "first_crossings": {
+          "owned_raw_1e-3": 2,
+          "all_raw_1e-3": 2,
+          "owned_raw_1e-4": 2,
+          "all_raw_1e-4": 2,
+          "owned_raw_1e-5": 2,
+          "all_raw_1e-5": 2,
+          "paper_cost_1e-3": 95,
+          "paper_cost_1e-4": 117,
+          "current_cost_1e-3": 135,
+          "owned_dual_1e-3": 162,
+          "all_dual_1e-3": 162,
+          "owned_dual_1e-4": 165,
+          "all_dual_1e-4": 188,
+          "current_cost_1e-4": 188,
+          "owned_dual_1e-5": 310,
+          "paper_cost_1e-5": 310,
+          "all_dual_1e-5": 322,
+          "current_cost_1e-5": 322,
+          "final_rms": 322
+        },
+        "final_rms_met": true,
+        "core_s": 334.2165603949999,
+        "loop_wall_s": 373.606278514,
+        "original_primal": 0.00035763966484203547,
+        "objective_gap": 3.4005072459223126e-07,
+        "opendss": {
+          "point_00188.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00135.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00322.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00117.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00002.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 6.53e-11,
+            "zero_voltage_violations": true
+          },
+          "point_00162.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00310.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00165.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00095.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "endpoint.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          }
+        }
+      }
+    },
+    {
+      "iterations": 322,
+      "original_primal": 0.00035763974834501777,
+      "objective": 2617410.5847725393,
+      "build_s": 13.050322874,
+      "all_r_max": 0.0001213866150389098,
+      "physical_check_s": 7.179979138999997,
+      "strict_criteria_met": false,
+      "owned_s_rms": 4.674670262423416e-05,
+      "final_rms_met": true,
+      "core_s": 344.10634118100006,
+      "warmup_final_rms_met": true,
+      "warmup_total_wall_s": 509.542263911,
+      "loop_wall_s": 379.550730576,
+      "rho_initial": 120000.0,
+      "warmup_core_s": 356.39187149500015,
+      "dispatch_s": 25.969128929000007,
+      "owned_r_rms": 4.6868140460713355e-06,
+      "warmup_iterations": 322,
+      "objective_gap": 3.3972972375913474e-07,
+      "label": "T=48, 48 workers, rho=120000, primal_dual, batched",
+      "case": "run_T48_primal_dual_31657405",
+      "T": 48,
+      "rho": 120000.0,
+      "workers": 48,
+      "linear_solver": "ma57",
+      "rho_policy": "legacy_phase",
+      "local_solve_policy": "warm_retry",
+      "cold_retries": 208,
+      "discarded_warm_iterations": 4160,
+      "warm_start": "primal_dual",
+      "objective_update": "batched",
+      "native_group_critical_s": 228.38626909255981,
+      "stage_group_critical_s": 292.4699921890002,
+      "core_outside_stage_critical_s": 51.63634899199985,
+      "warm_transfer_group_critical_s": 45.77533980199992,
+      "objective_update_group_critical_s": 6.021561721999998,
+      "inner_iterations_median": 4.0,
+      "inner_iterations_max": 37,
+      "inner_iterations_p95": 13,
+      "central_full_wall_s": 86.333982924,
+      "memory": {
+        "central": {
+          "nodes": {
+            "process_samples.cn157.csv": {
+              "peak_pss_gib": 5.347597122192383,
+              "maximum_processes": 1
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 5.347597122192383,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        },
+        "rho120000": {
+          "nodes": {
+            "process_samples.cn157.csv": {
+              "peak_pss_gib": 53.69863033294678,
+              "maximum_processes": 49
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 53.69863033294678,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        }
+      },
+      "validation": {
+        "first_crossings": {
+          "owned_raw_1e-3": 2,
+          "all_raw_1e-3": 2,
+          "owned_raw_1e-4": 2,
+          "all_raw_1e-4": 2,
+          "owned_raw_1e-5": 2,
+          "all_raw_1e-5": 2,
+          "paper_cost_1e-3": 95,
+          "paper_cost_1e-4": 117,
+          "current_cost_1e-3": 135,
+          "owned_dual_1e-3": 162,
+          "all_dual_1e-3": 162,
+          "owned_dual_1e-4": 165,
+          "all_dual_1e-4": 188,
+          "current_cost_1e-4": 188,
+          "owned_dual_1e-5": 310,
+          "paper_cost_1e-5": 310,
+          "all_dual_1e-5": 322,
+          "current_cost_1e-5": 322,
+          "final_rms": 322
+        },
+        "final_rms_met": true,
+        "core_s": 344.10634118100006,
+        "loop_wall_s": 379.550730576,
+        "original_primal": 0.00035763974834501777,
+        "objective_gap": 3.3972972375913474e-07,
+        "opendss": {
+          "point_00135.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00095.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00322.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00117.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00188.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00165.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00162.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00310.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00002.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 6.53e-11,
+            "zero_voltage_violations": true
+          },
+          "endpoint.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          }
+        }
+      }
+    },
+    {
+      "iterations": 129,
+      "original_primal": 0.000578346928151563,
+      "objective": 2617401.4308865382,
+      "build_s": 13.923680338,
+      "all_r_max": 0.000194848598069286,
+      "physical_check_s": 3.1582459369999984,
+      "strict_criteria_met": false,
+      "owned_s_rms": 0.0022368844673088533,
+      "final_rms_met": true,
+      "core_s": 160.15888635000002,
+      "warmup_final_rms_met": true,
+      "warmup_total_wall_s": 311.763802338,
+      "loop_wall_s": 176.718699818,
+      "rho_initial": 120000.0,
+      "warmup_core_s": 171.9720329360001,
+      "dispatch_s": 11.757929090999996,
+      "owned_r_rms": 3.5643355895291234e-06,
+      "warmup_iterations": 129,
+      "objective_gap": 3.8370346343831544e-06,
+      "label": "T=48, 48 workers, rho=120000, primal_dual, batched",
+      "case": "run_T48_primal_dual_31657407",
+      "T": 48,
+      "rho": 120000.0,
+      "workers": 48,
+      "linear_solver": "ma57",
+      "rho_policy": "bootstrap_fixed",
+      "local_solve_policy": "exact",
+      "cold_retries": 0,
+      "discarded_warm_iterations": 0,
+      "warm_start": "primal_dual",
+      "objective_update": "batched",
+      "native_group_critical_s": 109.60426092147827,
+      "stage_group_critical_s": 138.156717531,
+      "core_outside_stage_critical_s": 22.00216881900002,
+      "warm_transfer_group_critical_s": 22.531626644000006,
+      "objective_update_group_critical_s": 2.636151554999999,
+      "inner_iterations_median": 4.0,
+      "inner_iterations_max": 137,
+      "inner_iterations_p95": 17,
+      "central_full_wall_s": 90.625065778,
+      "memory": {
+        "central": {
+          "nodes": {
+            "process_samples.cn163.csv": {
+              "peak_pss_gib": 5.247440338134766,
+              "maximum_processes": 1
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 5.247440338134766,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        },
+        "rho120000": {
+          "nodes": {
+            "process_samples.cn163.csv": {
+              "peak_pss_gib": 53.78102970123291,
+              "maximum_processes": 49
+            }
+          },
+          "sum_of_node_peak_pss_gib_upper_bound": 53.78102970123291,
+          "note": "Sum of independent node peaks is an upper bound, not a synchronized aggregate peak."
+        }
+      },
+      "validation": {
+        "first_crossings": {
+          "owned_raw_1e-3": 2,
+          "all_raw_1e-3": 2,
+          "owned_raw_1e-4": 2,
+          "all_raw_1e-4": 2,
+          "owned_raw_1e-5": 2,
+          "all_raw_1e-5": 2,
+          "paper_cost_1e-3": 42,
+          "current_cost_1e-3": 66,
+          "paper_cost_1e-4": 71,
+          "owned_dual_1e-3": 87,
+          "all_dual_1e-3": 87,
+          "owned_dual_1e-4": 87,
+          "all_dual_1e-4": 94,
+          "current_cost_1e-4": 94,
+          "owned_dual_1e-5": 106,
+          "paper_cost_1e-5": 106,
+          "all_dual_1e-5": 129,
+          "current_cost_1e-5": 129,
+          "final_rms": 129
+        },
+        "final_rms_met": true,
+        "core_s": 160.15888635000002,
+        "loop_wall_s": 176.718699818,
+        "original_primal": 0.000578346928151563,
+        "objective_gap": 3.8370346343831544e-06,
+        "opendss": {
+          "point_00106.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00087.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00129.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00071.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00002.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 6.53e-11,
+            "zero_voltage_violations": true
+          },
+          "point_00042.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00094.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "point_00066.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          },
+          "endpoint.jls": {
+            "converged": true,
+            "max_voltage_difference_pu": 1.49e-10,
+            "zero_voltage_violations": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+SC_HOST host=cn184 time=2026-11-15T16:26:18.128 threads=24 julia=1.12.4 pid=2975044
+SC_PHASE central_build_begin 1794788778.295
+SC_PHASE central_warmup_begin 1794788782.525
+
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+SC_PHASE central_warmup_end 1794788783.650
+SC_PHASE central_timed_begin 1794788783.669
+SC_PHASE central_timed_end 1794788783.998
+CENTRAL objective=2831.014969712935 violation=2.569e-11 iterations=26 wall_s=0.328 within_0.1%_s=0.248
+SC_PHASE central_released 1794788785.488
+CASE system=ieee123C_1ph T=24 profile=july batteries=51 threads=24 rho_unit=12000.5
+SC_PHASE tadmm_warmup_begin 1794788786.490
+SC_THREADED_DONE phase=warmup threads=24 iterations=21 converged=21 repair_attempts=1 pinned_passes=1 pinned_periods=1 algorithm_s=6.021 gap=7.265e-05 violation=1.047e-10 build_s=1.270
+SC_PHASE tadmm_warmup_end 1794788794.503
+SC_PHASE tadmm_timed_begin 1794788794.642
+SC_THREADED_DONE phase=timed threads=24 iterations=21 converged=21 repair_attempts=1 pinned_passes=0 pinned_periods=0 algorithm_s=3.056 gap=5.011e-07 violation=1.056e-10 build_s=0.005
+SC_PHASE tadmm_timed_end 1794788797.758
+SC_THREADED_SUMMARY system=ieee123C_1ph T=24 threads=24 | centralized converged_s=0.328 within_0.1%_s=0.248 | tadmm converged_s=3.056 iterations=21 repair_attempts=1 gap=5.01e-07 violation=1.06e-10 | ratio=0.11 | process_maxrss_gb=1.13

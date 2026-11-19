@@ -1,0 +1,75 @@
+{
+  "source": "problems\\mpopf\\tadmm\\review_pilot\\results\\sequential_dss_nov09\\tables\\cap30-model",
+  "summary_sha256": "1f464a26c7f0054c8532d711029f48b1701ddc6437e58c43f937730bc9801f3c",
+  "ratings_sha256": "dcd6e497cc07546387d5b83b4ac07c427a48dc15970353e192b498ab14065be4",
+  "base_kva": 1000.0,
+  "SOCP": {
+    "definition": "v_i_squared*ell_ij - P_ij_squared - Q_ij_squared, per-unit squared",
+    "max_absolute_gap_pu2": 7.859752372496587e-06,
+    "p95_absolute_gap_pu2": 1.0660752791658012e-08,
+    "max_cone_inequality_violation_pu2": 0.0,
+    "max_relative_gap": 0.0006349104139920014,
+    "p95_relative_gap": 9.992907083777778e-07,
+    "relative_denominator_floor_pu2": 1e-12,
+    "absolute_tightness_target_pu2": 1e-05,
+    "absolute_tightness_pass": true,
+    "worst_record": [
+      1,
+      1,
+      14001,
+      160.38571633654533,
+      160.38570847679296,
+      7.859752372496587e-06,
+      4.9005313889698736e-08,
+      1e-12
+    ],
+    "branch_period_records": 247680,
+    "note": "Inequality feasibility alone does not establish tightness. Relative gaps near zero flow are floor-sensitive; inspect absolute and relative results together."
+  },
+  "storage_maxima": {
+    "SOC_state_error_pp": 0.023786761186102755,
+    "energy_accounting_error_pct_capacity": 0.035133123868809686,
+    "requested_bound_error_pp": 0.03645126220963136,
+    "engine_bound_error_pp": 0.00810830603584968,
+    "dispatch_error_pct_rated_power": 1.9742181933491734e-07
+  },
+  "storage_worst_locations": {
+    "SOC_state_error_pp": {
+      "t": 6,
+      "bus": 1047,
+      "capacity_kwh": 1833.2,
+      "power_kw": 458.3
+    },
+    "energy_accounting_error_pct_capacity": {
+      "t": 8,
+      "bus": 1047,
+      "capacity_kwh": 1833.2,
+      "power_kw": 458.3
+    },
+    "requested_bound_error_pp": {
+      "t": 24,
+      "bus": 1047,
+      "capacity_kwh": 1833.2,
+      "power_kw": 458.3
+    },
+    "engine_bound_error_pp": {
+      "t": 21,
+      "bus": 1057,
+      "capacity_kwh": 1333.2,
+      "power_kw": 333.3
+    },
+    "dispatch_error_pct_rated_power": {
+      "t": 9,
+      "bus": 1092,
+      "capacity_kwh": 1666.8,
+      "power_kw": 416.7
+    }
+  },
+  "engineering_target": {
+    "SOC_pp_and_dispatch_pct_rated_target": 0.05,
+    "concerning_level": 0.5,
+    "all_storage_metrics_within_target": true,
+    "note": "Engineering agreement target is separate from unchanged strict physical feasibility and sequential schedule flags."
+  },
+  "strict_sequential_schedule_pass": false
+}

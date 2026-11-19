@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Older Slurm prefers inherited batch task counts over SLURM_NTASKS. Specify
+# worker counts on the command line instead of relying on environment overrides.
+exec /usr/bin/srun --nodes="${TADMM_NODES:?}" --ntasks="${TADMM_NWORKERS:?}" \
+ --ntasks-per-node="${TADMM_WORKERS_PER_NODE:?}" --cpus-per-task=1 --cpu-bind=none "$@"

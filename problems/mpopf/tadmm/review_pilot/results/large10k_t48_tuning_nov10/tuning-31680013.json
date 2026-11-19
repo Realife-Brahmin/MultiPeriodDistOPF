@@ -1,0 +1,506 @@
+{
+  "archive_sha256": "4ba24ddf5e7b97b8f46c95edf588241cc3e2f138f05aa0f5ad38c379712539dc",
+  "central_s": 87.216560843,
+  "settings": {
+    "local_solve_policy": "persistent_cap",
+    "cap_iterations": 30,
+    "rho_floor": 48.0,
+    "bootstrap_decrease": 5.0
+  },
+  "arms": {
+    "60000": {
+      "iterations": 139,
+      "core_s": 156.23809645700004,
+      "loop_wall_s": 175.242872793,
+      "original_primal": 0.001299380559425578,
+      "objective_gap": 1.8410253405154108e-07,
+      "sequential_schedule_pass": false,
+      "physical_NO_milestone": null,
+      "at_half_central_wall": {
+        "iteration": "34",
+        "objective": "2.6397514680703366e6",
+        "original_primal": "0.0379416360952749",
+        "r_rms": "0.005077894453524548",
+        "r_max": "0.03239491178066034",
+        "s_rms": "1.1313187617272047",
+        "s_max": "2.556009534007936",
+        "rho": "48.0",
+        "algorithm_s": "36.490890836999995",
+        "ideal_parallel_estimate_s": "36.240820086999996",
+        "solver_sum_s": "519.3041753768921",
+        "diagnostic_s": "3.813843597000001",
+        "r_relative": "0.004833174286035847",
+        "s_relative": "0.00932646373484361",
+        "loop_wall_s": "42.033883029",
+        "owned_r_rms": "0.002520446524088604",
+        "owned_s_rms": "1.1236243836350464",
+        "historical_stagnant": "false",
+        "historical_stop_met": "false",
+        "dispatch_s": "3.0504223110000006",
+        "physical_check_s": "0.763412773",
+        "cone_equality_gap": "1.5585384612124823e-5",
+        "fictitious_loss_kwh": "0.0005036745139842629",
+        "round_algorithm_s": "1.5978172459999982",
+        "round_loop_wall_s": "1.9242075160000027",
+        "round_solver_sum_s": "31.49372911453247",
+        "local_min_solver_s": "0.2199249267578125",
+        "local_median_solver_s": "0.6985983848571777",
+        "local_mean_solver_s": "0.6561193565527598",
+        "local_max_solver_s": "1.258207082748413",
+        "local_min_stage_elapsed_s": "0.410295484",
+        "local_median_stage_elapsed_s": "0.9091059635000001",
+        "local_mean_stage_elapsed_s": "0.87448166775",
+        "local_max_stage_elapsed_s": "1.430893958",
+        "local_min_ipopt_iterations": "3.0",
+        "local_median_ipopt_iterations": "14.5",
+        "local_mean_ipopt_iterations": "13.25",
+        "local_max_ipopt_iterations": "25.0",
+        "slowest_period": "42",
+        "slowest_period_ipopt_iterations": "19",
+        "capped_local_solves": "0"
+      },
+      "cap_hits": 37,
+      "cone": {
+        "definition": "v_i_squared*ell_ij - P_ij_squared - Q_ij_squared, per-unit squared",
+        "max_absolute_gap_pu2": 1.558537312007502e-05,
+        "p95_absolute_gap_pu2": 2.1142935824336463e-08,
+        "max_cone_inequality_violation_pu2": 0.0,
+        "max_relative_gap": 0.005201590953517901,
+        "p95_relative_gap": 2.0008662914551955e-06,
+        "relative_denominator_floor_pu2": 1e-12,
+        "absolute_tightness_target_pu2": 1e-05,
+        "absolute_tightness_pass": false,
+        "worst_record": [
+          37,
+          1,
+          40001,
+          160.75253567039488,
+          160.75252008502176,
+          1.558537312007502e-05,
+          9.695258028172624e-08,
+          1e-12
+        ],
+        "branch_period_records": 495360,
+        "note": "Inequality feasibility alone does not establish tightness. Relative gaps near zero flow are floor-sensitive; inspect absolute and relative results together."
+      },
+      "battery_maxima": {
+        "SOC_state_error_pp": {
+          "maximum": 0.06190963756406518,
+          "worst_location": {
+            "t": 47,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "energy_accounting_error_pct_capacity": {
+          "maximum": 0.0649690364853683,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "requested_bound_error_pp": {
+          "maximum": 0.06496902797128996,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "engine_bound_error_pp": {
+          "maximum": 0.024122216883339813,
+          "worst_location": {
+            "t": 42,
+            "bus": 17009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "dispatch_error_pct_rated_power": {
+          "maximum": 0.007766850402406771,
+          "worst_location": {
+            "t": 16,
+            "bus": 100071,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "SOC_state_error_kwh": {
+          "maximum": 1.2381927512813036,
+          "worst_location": {
+            "t": 47,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "energy_accounting_error_kwh": {
+          "maximum": 1.2993807297073658,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "requested_bound_error_kwh": {
+          "maximum": 1.2993805594257992,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "engine_bound_error_kwh": {
+          "maximum": 0.3853153397899405,
+          "worst_location": {
+            "t": 42,
+            "bus": 97043,
+            "capacity_kwh": 1833.2,
+            "power_kw": 458.3
+          }
+        },
+        "opf_bound_error_kwh": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "opf_bound_error_pp": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "integrated_dispatch_vs_opf_energy_kwh": {
+          "maximum": 1.2993805617625185,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "integrated_dispatch_vs_opf_SOC_pp": {
+          "maximum": 0.06496902808812592,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "dispatch_error_kw": {
+          "maximum": 0.032573770855447035,
+          "worst_location": {
+            "t": 16,
+            "bus": 100087,
+            "capacity_kwh": 1833.2,
+            "power_kw": 458.3
+          }
+        },
+        "opf_dispatch_bound_error_kw": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "opf_dispatch_bound_error_pct_rated": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "dss_dispatch_bound_error_kw": {
+          "maximum": 7.544667823822238e-08,
+          "worst_location": {
+            "t": 44,
+            "bus": 1092,
+            "capacity_kwh": 1666.8,
+            "power_kw": 416.7
+          }
+        },
+        "dss_dispatch_bound_error_pct_rated": {
+          "maximum": 1.8105754316828023e-08,
+          "worst_location": {
+            "t": 44,
+            "bus": 1092,
+            "capacity_kwh": 1666.8,
+            "power_kw": 416.7
+          }
+        }
+      },
+      "voltage_maximum_difference_pu": 1.3219960237620398e-07
+    },
+    "120000": {
+      "iterations": 152,
+      "core_s": 166.76588951699998,
+      "loop_wall_s": 186.357656614,
+      "original_primal": 0.0004299664105811285,
+      "objective_gap": 2.2867272449703425e-06,
+      "sequential_schedule_pass": false,
+      "physical_NO_milestone": null,
+      "at_half_central_wall": {
+        "iteration": "36",
+        "objective": "2.6371126766643985e6",
+        "original_primal": "0.03285197281815698",
+        "r_rms": "0.003957887100747273",
+        "r_max": "0.02583200115854445",
+        "s_rms": "1.043749313188512",
+        "s_max": "2.4693344663328176",
+        "rho": "48.0",
+        "algorithm_s": "37.057715228000006",
+        "ideal_parallel_estimate_s": "36.803034634",
+        "solver_sum_s": "506.1271245479584",
+        "diagnostic_s": "4.761389728000002",
+        "r_relative": "0.003764231514021515",
+        "s_relative": "0.008602273347877883",
+        "loop_wall_s": "42.034307109",
+        "owned_r_rms": "0.002076947414142004",
+        "owned_s_rms": "1.0366462303336994",
+        "historical_stagnant": "false",
+        "historical_stop_met": "false",
+        "dispatch_s": "3.9204616129999983",
+        "physical_check_s": "0.840918931",
+        "cone_equality_gap": "1.5585384288950827e-5",
+        "fictitious_loss_kwh": "0.0005041174273467086",
+        "round_algorithm_s": "1.490956079",
+        "round_loop_wall_s": "1.579306134999996",
+        "round_solver_sum_s": "27.409576177597046",
+        "local_min_solver_s": "0.18713593482971191",
+        "local_median_solver_s": "0.6055779457092285",
+        "local_mean_solver_s": "0.5710328370332718",
+        "local_max_solver_s": "1.0968260765075684",
+        "local_min_stage_elapsed_s": "0.388391499",
+        "local_median_stage_elapsed_s": "0.80799763",
+        "local_mean_stage_elapsed_s": "0.7794378325833334",
+        "local_max_stage_elapsed_s": "1.321113691",
+        "local_min_ipopt_iterations": "3.0",
+        "local_median_ipopt_iterations": "12.5",
+        "local_mean_ipopt_iterations": "11.8125",
+        "local_max_ipopt_iterations": "24.0",
+        "slowest_period": "44",
+        "slowest_period_ipopt_iterations": "24",
+        "capped_local_solves": "0"
+      },
+      "cap_hits": 33,
+      "cone": {
+        "definition": "v_i_squared*ell_ij - P_ij_squared - Q_ij_squared, per-unit squared",
+        "max_absolute_gap_pu2": 1.558537309165331e-05,
+        "p95_absolute_gap_pu2": 2.1142660871879825e-08,
+        "max_cone_inequality_violation_pu2": 0.0,
+        "max_relative_gap": 0.005201464984538989,
+        "p95_relative_gap": 2.000810139820351e-06,
+        "relative_denominator_floor_pu2": 1e-12,
+        "absolute_tightness_target_pu2": 1e-05,
+        "absolute_tightness_pass": false,
+        "worst_record": [
+          37,
+          1,
+          17001,
+          160.7994234680479,
+          160.7994078826748,
+          1.558537309165331e-05,
+          9.692430952496694e-08,
+          1e-12
+        ],
+        "branch_period_records": 495360,
+        "note": "Inequality feasibility alone does not establish tightness. Relative gaps near zero flow are floor-sensitive; inspect absolute and relative results together."
+      },
+      "battery_maxima": {
+        "SOC_state_error_pp": {
+          "maximum": 0.03107748465943132,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "energy_accounting_error_pct_capacity": {
+          "maximum": 0.023623751602459227,
+          "worst_location": {
+            "t": 15,
+            "bus": 87009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "requested_bound_error_pp": {
+          "maximum": 0.026713429491921185,
+          "worst_location": {
+            "t": 48,
+            "bus": 87009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "engine_bound_error_pp": {
+          "maximum": 0.02211624759534061,
+          "worst_location": {
+            "t": 42,
+            "bus": 6009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "dispatch_error_pct_rated_power": {
+          "maximum": 0.00494742421352198,
+          "worst_location": {
+            "t": 16,
+            "bus": 34091,
+            "capacity_kwh": 1833.2,
+            "power_kw": 458.3
+          }
+        },
+        "SOC_state_error_kwh": {
+          "maximum": 0.6215496931886264,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "energy_accounting_error_kwh": {
+          "maximum": 0.3543562740368884,
+          "worst_location": {
+            "t": 15,
+            "bus": 87009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "requested_bound_error_kwh": {
+          "maximum": 0.42996641058033447,
+          "worst_location": {
+            "t": 48,
+            "bus": 94043,
+            "capacity_kwh": 1666.8,
+            "power_kw": 416.7
+          }
+        },
+        "engine_bound_error_kwh": {
+          "maximum": 0.33174371393010915,
+          "worst_location": {
+            "t": 42,
+            "bus": 6009,
+            "capacity_kwh": 1500.0,
+            "power_kw": 375.0
+          }
+        },
+        "opf_bound_error_kwh": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "opf_bound_error_pp": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "integrated_dispatch_vs_opf_energy_kwh": {
+          "maximum": 0.621549859136735,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "integrated_dispatch_vs_opf_SOC_pp": {
+          "maximum": 0.03107749295683675,
+          "worst_location": {
+            "t": 48,
+            "bus": 1050,
+            "capacity_kwh": 2000.0,
+            "power_kw": 500.0
+          }
+        },
+        "dispatch_error_kw": {
+          "maximum": 0.022674045170571235,
+          "worst_location": {
+            "t": 16,
+            "bus": 34091,
+            "capacity_kwh": 1833.2,
+            "power_kw": 458.3
+          }
+        },
+        "opf_dispatch_bound_error_kw": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "opf_dispatch_bound_error_pct_rated": {
+          "maximum": 0.0,
+          "worst_location": {
+            "t": 1,
+            "bus": 6,
+            "capacity_kwh": 1333.2,
+            "power_kw": 333.3
+          }
+        },
+        "dss_dispatch_bound_error_kw": {
+          "maximum": 7.771274113110849e-08,
+          "worst_location": {
+            "t": 44,
+            "bus": 1092,
+            "capacity_kwh": 1666.8,
+            "power_kw": 416.7
+          }
+        },
+        "dss_dispatch_bound_error_pct_rated": {
+          "maximum": 1.8649565906193542e-08,
+          "worst_location": {
+            "t": 44,
+            "bus": 1092,
+            "capacity_kwh": 1666.8,
+            "power_kw": 416.7
+          }
+        }
+      },
+      "voltage_maximum_difference_pu": 1.2928632719955147e-07
+    }
+  },
+  "memory": {
+    "node_samples": {
+      "process_samples.cn157.csv": {
+        "working_set_bytes": 70768791552.0,
+        "private_bytes": 58412679168.0,
+        "pss_bytes": 58675299328.0,
+        "process_count": 49.0
+      }
+    },
+    "samples": 1303,
+    "scope": "Registered coordinator/workers; sampled one second; RSS sums include shared pages, PSS apportions them; these are sampled peaks, not exact allocation maxima."
+  }
+}
