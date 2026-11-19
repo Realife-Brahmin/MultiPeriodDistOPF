@@ -22,6 +22,7 @@ export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;ma57_pivot_or
 export TADMM_CB_PROFILE=${TADMM_CB_PROFILE:-july}
 case $SYS in
  ieee2522C_1ph) SCREEN=substation,ell;;
+ ieee9500xf_sub1_1ph|smartds_p1u_xf_sub1_1ph) SCREEN=substation,ell; export SC_REPAIR_MAX_ITER=${SC_REPAIR_MAX_ITER:-3000};;
  *) SCREEN=substation,vupper,ell;;
 esac
 export TADMM_SCREEN=${TADMM_SCREEN:-$SCREEN}

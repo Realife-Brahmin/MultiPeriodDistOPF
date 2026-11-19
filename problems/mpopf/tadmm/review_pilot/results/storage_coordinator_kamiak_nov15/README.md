@@ -683,3 +683,25 @@ then balancing) is needed. Fixed rho, or balancing from the first iteration (sta
 as halving every 4 iterations with the same result; shortening it to 10 or 5 iterations costs
 1.5-2.7 times the iterations on large10k. Not yet tested: other start and end values, and other
 networks (med3980, sf6937).
+
+## New grids and lossy batteries (2026-11-18)
+
+### med3980 and sf6937 (single-substation decks from the DDP branch; capacitors modelled)
+
+First runs (`tadmm_sc_nov18_newgrids`, T = 96, 48 workers, current penalty rule): the residuals met
+their tolerances (med3980 from iteration 28) but every repair was refused (41 and 32 attempts), and
+the OpenDSS replay stopped on a bus outside the modelled network. Centralized: 184.9 s (med3980,
+123 Ipopt iterations) and 318.4 s (sf6937, 124).
+
+Diagnosis (jobs 31863298-31863300, refusals logged): the repair's Ipopt cap of 60 iterations.
+med3980 with the cap at 3000: 28 iterations, one repair, accepted, 44.3 s, gap 3.3e-5. With the cap
+at 60: one period hit the cap at iteration 28 ("Maximum_Iterations_Exceeded"), accepted at 31. The
+first runs also lost the squared-current screening (a comma in `--export` split the setting), which
+made the repairs harder still. The launcher now sets the screening and a cap of 3000 for these two
+grids. The replay now skips deck lines the model leaves out and buses outside the network.
+
+### Lossy batteries (SC_ETA, eta each way)
+
+ieee123, T = 24, 24 workers (jobs 31863308-09): eta = 1.0 reproduces the lossless result (21
+iterations, 0.44 s); eta = 0.95: centralized 0.38 s, tADMM 22 iterations, 0.42 s, gap 6.7e-7; both
+dispatches pass the replay with the storage efficiencies set to 95% in OpenDSS.

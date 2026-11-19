@@ -119,8 +119,10 @@ function replay(instance,solution,out;efficiency="model",repo=REPO)
         edge=(ends[1],ends[2])
         if edge in line_set
             linemap[edge]=(name,1)
+        elseif (ends[2],ends[1]) in line_set
+            edge=(ends[2],ends[1]);linemap[edge]=(name,nc+1)
         else
-            edge=(ends[2],ends[1]);@assert edge in line_set;linemap[edge]=(name,nc+1)
+            continue   # a deck line the model leaves out (open tie); every model line is still required below
         end
     end
     @assert length(linemap)==length(lines)
