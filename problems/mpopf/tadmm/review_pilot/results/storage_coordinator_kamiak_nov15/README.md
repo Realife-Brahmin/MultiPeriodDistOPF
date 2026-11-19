@@ -723,3 +723,5 @@ dispatches pass the replay with the storage efficiencies set to 95% in OpenDSS.
 - Replays of med3980 and sf6937 failed (voltage difference about 1.05 p.u. at some buses, for the
   centralized dispatch too): the replay placed PV injections at bus numbers instead of the deck's bus
   names. Fixed; replays re-run (job 31863542).
+- Replays after the bus-name fix (job 31863542): med3980 centralized and tADMM dispatches pass,
+  sf6937 tADMM dispatch passes (the diagnostic job had no centralized dispatch).
