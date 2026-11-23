@@ -122,7 +122,8 @@ function make_model(d, owned; local_window=false, rho=0.0)
         for e in es
             i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
             @constraint(m,v[j,t]==v[i,t]-2*(r*p[e,t]+x*q[e,t])+(r^2+x^2)*ell[e,t])
-            @constraint(m,p[e,t]^2+q[e,t]^2<=v[i,t]*ell[e,t])
+            # SC_AC=1: the nonconvex branch-flow equality instead of its SOCP relaxation
+            get(ENV,"SC_AC","0")=="1" ? @constraint(m,p[e,t]^2+q[e,t]^2==v[i,t]*ell[e,t]) : @constraint(m,p[e,t]^2+q[e,t]^2<=v[i,t]*ell[e,t])
         end
         @constraint(m,v[root,t]==1.05^2)
         for (n,j) in enumerate(ns)
@@ -388,7 +389,7 @@ function physical_metrics_cached(d,us,bb,layout)
             i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
             maxeq=max(maxeq,abs(v[bp[j]]-v[bp[i]]+2*(r*p[n]+x*q[n])-(r^2+x^2)*ell[n]))
             cg=v[bp[i]]*ell[n]-p[n]^2-q[n]^2
-            maxcone=max(maxcone,-cg); gap=max(gap,abs(cg))
+            maxcone=max(maxcone,get(ENV,"SC_AC","0")=="1" ? abs(cg) : -cg); gap=max(gap,abs(cg))   # SC_AC: equality
             loss_gap+=r*cg/v[bp[i]]*d[:kVA_B]*d[:delta_t_h]
             maxbound=max(maxbound,-ell[n])
         end

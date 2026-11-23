@@ -57,7 +57,7 @@ function make_power_stage(d,t;rho)
     for e in es
         i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
         @constraint(m,v[j]==v[i]-2*(r*p[e]+x*q[e])+(r^2+x^2)*ell[e])
-        @constraint(m,p[e]^2+q[e]^2<=v[i]*ell[e])
+        get(ENV,"SC_AC","0")=="1" ? @constraint(m,p[e]^2+q[e]^2==v[i]*ell[e]) : @constraint(m,p[e]^2+q[e]^2<=v[i]*ell[e])   # SC_AC=1: nonconvex equality
     end
     @constraint(m,v[root]==1.05^2)
     for (n,j) in enumerate(ns)
