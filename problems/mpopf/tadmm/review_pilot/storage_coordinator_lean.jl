@@ -24,7 +24,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     build_s=(time_ns()-build0)/1e9
     phase=="warmup" && length(unique((i.host,i.affinity) for i in layout))!=W && Sys.islinux() && get(ENV,"SC_PIN","1")=="1" && error("Workers share CPUs")
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T)
-    tight_periods=Int[]; zrep=z; pinned_passes=0; pinned_accepted=0
+    tight_periods=Int[]; pinned_set=Set{Int}(); zrep=z; pinned_passes=0; pinned_accepted=0
     algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; converged=0; gap=NaN; violation=NaN; objective=NaN
     io=open(joinpath(out,"lean_trace_$(phase).csv"),"w")
     println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict")
@@ -71,7 +71,9 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             # battery step is re-solved with those periods pinned, and the repair
             # is run once more with the resulting schedule.
             if !strict
-                tight=sort!(collect(tight_periods)); pinned_passes+=1
+                # SC_PIN_UNION=1: a period that refused once stays pinned in every later attempt.
+                get(ENV,"SC_PIN_UNION","0")=="1" ? union!(pinned_set,tight_periods) : (empty!(pinned_set); union!(pinned_set,tight_periods))
+                tight=sort!(collect(pinned_set)); pinned_passes+=1
                 if !isempty(tight) && length(tight)<=max(1,T÷4)
                     pjobs=[(w,remotecall(sc_zstep_pinned!,SC_WIDS[w],z[chunks[w],:],Dict(t=>x[chunks[w],t] for t in tight))) for w in 1:W if !isempty(chunks[w])]
                     zp=copy(z); feasible=true
@@ -82,7 +84,9 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
                         strict=true
                         for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>zp[:,t] for t in groups[w]);max_iter=repair_max_iter) for w in 1:W]), row in answer
                             strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u)
+                            (row.ok && row.strict) || get(ENV,"SC_PIN_UNION","0")=="1" && push!(pinned_set,row.t)
                         end
+                        get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" && println("SC_PINNED_ATTEMPT k=$k pinned=$(length(tight)) strict=$strict")
                         strict && (zrep=zp; pinned_accepted=length(tight))
                     end
                 end
