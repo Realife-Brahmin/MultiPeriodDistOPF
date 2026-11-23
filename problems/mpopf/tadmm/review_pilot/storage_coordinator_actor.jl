@@ -113,9 +113,9 @@ end
 
 # Repair in the iteration model itself: drop the penalty, fix the batteries at the
 # schedule, solve, then restore the bounds and remember the iterate to resume from.
-function sc_repair_shared!(zc;max_iter=3000)
+function sc_repair_shared!(zc;max_iter=3000,band=0.0)
     d=SC[:d]
-    return map(SC[:periods]) do t
+    return map(filter(t->haskey(zc,t),SC[:periods])) do t
         tick=time_ns(); s=SC[:stages][t]
         if sc_conic()
             row=repair_stage_conic!(s,d,zc[t])
@@ -124,10 +124,14 @@ function sc_repair_shared!(zc;max_iter=3000)
         # The iterate to resume from: saved by an earlier repair of this iteration, else the model's own.
         iterate=haskey(SC[:resume],t) ? SC[:resume][t] : value.(s.vars)
         set_start_value.(s.vars,iterate)
-        # SC_REPAIR_BAND=b (p.u.): instead of fixing each battery at the schedule, let it move
-        # by at most b, with a strong penalty to stay put. The driver then takes the
-        # repaired powers as the schedule and integrates the stored energy from them.
-        band=parse(Float64,get(ENV,"SC_REPAIR_BAND","0")); W=parse(Float64,get(ENV,"SC_REPAIR_BAND_WEIGHT","1e9"))
+        # band>0 (second try for a refused period): each battery may move by at most band
+        # p.u., with a penalty W to stay put, and a loss penalty keeps the cone tight (where
+        # the lower voltage limit binds the relaxation otherwise raises voltage with slack
+        # current). The driver takes the repaired powers as the schedule.
+        W=parse(Float64,get(ENV,"SC_REPAIR_BAND_WEIGHT","1e6")); lw=parse(Float64,get(ENV,"SC_REPAIR_LOSS_WEIGHT","1e4"))
+        if band>0
+            for e in axes(s.ell,1); set_objective_coefficient(s.m,s.ell[e],lw*d[:rdict_pu][e]); end
+        end
         for (n,j) in enumerate(d[:Bset])
             if band>0
                 set_objective_coefficient(s.m,s.pb[j],-2W*zc[t][n])
@@ -152,6 +156,7 @@ function sc_repair_shared!(zc;max_iter=3000)
         u=ok ? stage_dispatch(s,d) : Float64[]
         status=string(raw_status(s.m)); solver_s=solve_time(s.m)   # read before the model changes again
         set_optimizer_attribute(s.m,"max_iter",3000)
+        band>0 && for e in axes(s.ell,1); set_objective_coefficient(s.m,s.ell[e],0.0); end
         for j in d[:Bset]
             is_fixed(s.pb[j]) && unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
         end

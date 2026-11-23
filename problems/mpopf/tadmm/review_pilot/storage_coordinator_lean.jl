@@ -66,6 +66,18 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             end
             get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" &&
                 println("SC_REPAIR_ATTEMPT k=$k refused=$(length(tight_periods)) of $T"); flush(stdout)
+            # SC_REPAIR_BAND=b: the refused periods try again with the batteries free to move by
+            # at most b p.u. (and a loss penalty); the schedule then takes their repaired powers.
+            band=parse(Float64,get(ENV,"SC_REPAIR_BAND","0"))
+            if !strict && band>0
+                zrep=copy(z); ipb=physical_layout(d).ix.pb; ok2=true; refused=sort(tight_periods)
+                for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w] if t in refused);max_iter=repair_max_iter,band) for w in 1:W]), row in answer
+                    ok2&=row.ok && row.strict
+                    row.ok && (rus[row.t]=row.u; zrep[:,row.t]=row.u[ipb])
+                end
+                phase=="timed" && @printf("SC_REPAIR_BAND k=%d periods=%d strict=%s max_shift=%.3e\n",k,length(refused),ok2,maximum(abs.(zrep.-z)))
+                ok2 ? (strict=true; empty!(tight_periods)) : (zrep=z)
+            end
             # Periods whose network cannot absorb the battery schedule (no slack in
             # the voltage band) keep the powers their own solve asked for. The
             # battery step is re-solved with those periods pinned, and the repair
@@ -98,12 +110,6 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict),',')); flush(io)
         if attempted && strict
             # Outside the clock: score the reported dispatch against the original model.
-            # With a repair band the schedule is the repaired powers themselves.
-            if parse(Float64,get(ENV,"SC_REPAIR_BAND","0"))>0
-                ipb=physical_layout(d).ix.pb; zrep=zeros(nb,T)
-                for t in 1:T; zrep[:,t]=rus[t][ipb]; end
-                phase=="timed" && @printf("SC_REPAIR_BAND_USED k=%d max_shift=%.3e\n",k,maximum(abs.(zrep.-z)))
-            end
             zb=zeros(nb,T)
             for n in 1:nb
                 e=d[:B0_pu][bs[n]]
