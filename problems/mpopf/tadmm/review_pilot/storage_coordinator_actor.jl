@@ -124,10 +124,21 @@ function sc_repair_shared!(zc;max_iter=3000)
         # The iterate to resume from: saved by an earlier repair of this iteration, else the model's own.
         iterate=haskey(SC[:resume],t) ? SC[:resume][t] : value.(s.vars)
         set_start_value.(s.vars,iterate)
+        # SC_REPAIR_BAND=b (p.u.): instead of fixing each battery at the schedule, let it move
+        # by at most b, with a strong penalty to stay put. The driver then takes the
+        # repaired powers as the schedule and integrates the stored energy from them.
+        band=parse(Float64,get(ENV,"SC_REPAIR_BAND","0")); W=parse(Float64,get(ENV,"SC_REPAIR_BAND_WEIGHT","1e9"))
         for (n,j) in enumerate(d[:Bset])
-            set_objective_coefficient(s.m,s.pb[j],0.0)
-            set_objective_coefficient(s.m,s.pb[j],s.pb[j],s.cb)
-            fix(s.pb[j],zc[t][n];force=true)
+            if band>0
+                set_objective_coefficient(s.m,s.pb[j],-2W*zc[t][n])
+                set_objective_coefficient(s.m,s.pb[j],s.pb[j],s.cb+W)
+                lim=d[:P_B_R_pu][j]
+                set_lower_bound(s.pb[j],max(-lim,zc[t][n]-band)); set_upper_bound(s.pb[j],min(lim,zc[t][n]+band))
+            else
+                set_objective_coefficient(s.m,s.pb[j],0.0)
+                set_objective_coefficient(s.m,s.pb[j],s.pb[j],s.cb)
+                fix(s.pb[j],zc[t][n];force=true)
+            end
         end
         # A period whose network cannot absorb the fixed batteries runs long before
         # Ipopt gives up; the cap makes such an attempt cheap. It is then not strict.
@@ -142,7 +153,7 @@ function sc_repair_shared!(zc;max_iter=3000)
         status=string(raw_status(s.m)); solver_s=solve_time(s.m)   # read before the model changes again
         set_optimizer_attribute(s.m,"max_iter",3000)
         for j in d[:Bset]
-            unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
+            is_fixed(s.pb[j]) && unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
         end
         SC[:resume][t]=iterate
         (;t,ok,strict,status,u,solver_s,elapsed_s=(time_ns()-tick)/1e9)

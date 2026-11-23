@@ -98,6 +98,12 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict),',')); flush(io)
         if attempted && strict
             # Outside the clock: score the reported dispatch against the original model.
+            # With a repair band the schedule is the repaired powers themselves.
+            if parse(Float64,get(ENV,"SC_REPAIR_BAND","0"))>0
+                ipb=physical_layout(d).ix.pb; zrep=zeros(nb,T)
+                for t in 1:T; zrep[:,t]=rus[t][ipb]; end
+                phase=="timed" && @printf("SC_REPAIR_BAND_USED k=%d max_shift=%.3e\n",k,maximum(abs.(zrep.-z)))
+            end
             zb=zeros(nb,T)
             for n in 1:nb
                 e=d[:B0_pu][bs[n]]
@@ -105,6 +111,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             end
             pm=physical_metrics(d,rus,zb); objective=pm.objective; violation=pm.original_primal
             gap=abs(objective-reference)/max(1.0,abs(reference))
+            violation>no_tol && phase=="timed" && @printf("SC_CHECK_FAILED k=%d eq=%.3e bound=%.3e cone=%.3e pinned=%d\n",k,pm.maxeq,pm.maxbound,pm.maxcone,length(pinned_set))
             if violation<=no_tol
                 converged=k
                 phase=="timed" && serialize(joinpath(out,"converged_dispatch.jls"),Dict(:system=>system,:T=>T,:objective=>objective,:u=>rus,:B=>zb,:eta=>sc_eta(),:status=>"SC_LEAN_CONVERGED",:iteration=>k))
