@@ -133,7 +133,10 @@ function sc_repair_shared!(zc;max_iter=3000)
         # Ipopt gives up; the cap makes such an attempt cheap. It is then not strict.
         set_optimizer_attribute(s.m,"max_iter",max_iter)
         optimize!(s.m)
-        strict=termination_status(s.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+        # SC_REPAIR_ACCEPT=1 also takes Ipopt's acceptable level: the dispatch is scored
+        # against the original model afterwards (violation <= no_tol), which decides.
+        accepted=get(ENV,"SC_REPAIR_ACCEPT","0")=="1" ? (MOI.LOCALLY_SOLVED,MOI.OPTIMAL,MOI.ALMOST_LOCALLY_SOLVED) : (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
+        strict=termination_status(s.m) in accepted
         ok=has_values(s.m) && all(isfinite,value.(s.vars))
         u=ok ? stage_dispatch(s,d) : Float64[]
         status=string(raw_status(s.m)); solver_s=solve_time(s.m)   # read before the model changes again
