@@ -189,10 +189,10 @@ function sc_zstep_pinned!(target,pinned)
     # shedding energy it cannot store), use the net power with the same energy change instead.
     simultaneous=0.0; changed=0
     if ok && get(ENV,"SC_PIN_NET","0")=="1" && c.pcs[1,1]!==nothing
-        eta=sc_eta()
+        eta=sc_eta(); tol=parse(Float64,get(ENV,"SC_PIN_NET_TOL","1e-7"))   # below this, interior-point noise
         for n in axes(z,1), t in axes(z,2)
             pc=value(c.pcs[n,t]); pd=value(c.pds[n,t]); both=min(pc,pd); simultaneous=max(simultaneous,both)
-            both>1e-9 || continue
+            both>tol || continue
             e=eta*pc-pd/eta; z[n,t]=e>=0 ? -e/eta : -e*eta; changed+=1
         end
     end
