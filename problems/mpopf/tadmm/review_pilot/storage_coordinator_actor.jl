@@ -34,14 +34,16 @@ function sc_xstep!(zc,uc,rho,k)
 end
 
 # Update II for this worker's batteries. target has one row per battery of the chunk.
-function sc_zstep!(target,k)
+function sc_zstep!(target,k;weights=nothing)
     tick=time_ns()
+    weights===nothing || sc_conic() && error("SC_PERIOD_RHO is not implemented for the conic battery step")
+    SC[:coord_w]=weights
     if sc_conic()
         row=coordinator_step_conic!(SC[:coord],SC[:d],SC[:chunk],target)
         row.ok || error("battery step failed")
         return (;z=row.z,solver_s=row.solver_s,elapsed_s=(time_ns()-tick)/1e9)
     end
-    z,solver_s=coordinator_step!(SC[:coord],target,k;start=pop!(SC,:coord_resume,nothing))
+    z,solver_s=coordinator_step!(SC[:coord],target,k;start=pop!(SC,:coord_resume,nothing),weights)
     return (;z,solver_s,elapsed_s=(time_ns()-tick)/1e9)
 end
 
@@ -105,8 +107,9 @@ function sc_xstep_lean!(zc,uc,rho,k)
     d=SC[:d]
     return map(SC[:periods]) do t
         tick=time_ns()
-        x,solver_s,iterations=sc_conic() ? power_stage_step_conic!(SC[:stages][t],d,zc[t],uc[t],rho) :
-            power_stage_step!(SC[:stages][t],d,zc[t],uc[t],rho,k;start=pop!(SC[:resume],t,nothing))
+        r=rho isa Number ? rho : rho[t]   # one penalty per period with SC_PERIOD_RHO
+        x,solver_s,iterations=sc_conic() ? power_stage_step_conic!(SC[:stages][t],d,zc[t],uc[t],r) :
+            power_stage_step!(SC[:stages][t],d,zc[t],uc[t],r,k;start=pop!(SC[:resume],t,nothing))
         (;t,x,solver_s,iterations,elapsed_s=(time_ns()-tick)/1e9)
     end
 end
@@ -176,7 +179,8 @@ function sc_zstep_pinned!(target,pinned)
     end
     iterate=haskey(SC,:coord_resume) ? SC[:coord_resume] : value.(c.vars)
     set_start_value.(c.vars,iterate)
-    for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end
+    wt=get(SC,:coord_w,nothing)   # per-period weights of the last battery step (quadratic terms already set)
+    for n in axes(target,1), t in axes(target,2); set_objective_coefficient(c.m,c.z[n,t],-2*(wt===nothing ? 1.0 : wt[t])*target[n,t]); end
     for (t,p) in pinned, n in eachindex(p); fix(c.z[n,t],p[n];force=true); end
     optimize!(c.m)
     ok=termination_status(c.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)

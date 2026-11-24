@@ -25,9 +25,17 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     phase=="warmup" && length(unique((i.host,i.affinity) for i in layout))!=W && Sys.islinux() && get(ENV,"SC_PIN","1")=="1" && error("Workers share CPUs")
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T)
     tight_periods=Int[]; pinned_set=Set{Int}(); zrep=z; pinned_passes=0; pinned_accepted=0
-    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; rho_floor=0.0; refuse_rho=parse(Float64,get(ENV,"SC_REFUSE_RHO","1")); refuse_cap=parse(Float64,get(ENV,"SC_REFUSE_RHO_MAX","16")); rho_refused=0.0; converged=0; gap=NaN; violation=NaN; objective=NaN
+    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; rho_floor=0.0; refuse_rho=parse(Float64,get(ENV,"SC_REFUSE_RHO","1")); refuse_cap=parse(Float64,get(ENV,"SC_REFUSE_RHO_MAX","16")); rho_refused=0.0; converged=0;
+    # SC_PERIOD_RHO=f: each period t carries its own penalty rho*prm[t]. After the ramp, a period whose
+    # mismatch exceeds f times the RMS mismatch (and eps_pri) doubles its multiplier, up to
+    # SC_PERIOD_RHO_MAX. SC_REFUSE_PERIOD=1: a refused repair raises only the refused periods (by
+    # SC_REFUSE_RHO) instead of the common penalty. Multipliers never decrease, so they settle.
+    prm=ones(T); period_f=parse(Float64,get(ENV,"SC_PERIOD_RHO","0")); period_cap=parse(Float64,get(ENV,"SC_PERIOD_RHO_MAX","16"))
+    refuse_period=get(ENV,"SC_REFUSE_PERIOD","0")=="1"
+    raise!(ts,f)=for t in ts; nv=min(prm[t]*f,period_cap); u[:,t].*=prm[t]/nv; prm[t]=nv; end
+    gap=NaN; violation=NaN; objective=NaN
     io=open(joinpath(out,"lean_trace_$(phase).csv"),"w")
-    println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict,r_max,r_max_period")
+    println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict,r_max,r_max_period,periods_raised,max_multiplier")
     for iteration in 1:maxiter
         k=iteration; tick=time_ns()
         if k<=ramp+1 || balance<=1
@@ -38,18 +46,18 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         elseif rho_next!=rho
             u.*=rho/rho_next; rho=rho_next
         end
-        jobs=[remotecall(sc_xstep_lean!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]),Dict(t=>u[:,t] for t in groups[w]),rho,k) for w in 1:W]
+        jobs=[remotecall(sc_xstep_lean!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]),Dict(t=>u[:,t] for t in groups[w]),Dict(t=>rho*prm[t] for t in groups[w]),k) for w in 1:W]
         slowest=0.0
         for answer in fetch.(jobs), row in answer; x[:,row.t]=row.x; slowest=max(slowest,row.elapsed_s); end
         zold=copy(z); target=x.+u; battery_s=0.0
-        zjobs=[(w,remotecall(sc_zstep!,SC_WIDS[w],target[chunks[w],:],k)) for w in 1:W if !isempty(chunks[w])]
+        zjobs=[(w,remotecall(sc_zstep!,SC_WIDS[w],target[chunks[w],:],k;weights=all(==(1.0),prm) ? nothing : prm)) for w in 1:W if !isempty(chunks[w])]
         for (w,job) in zjobs
             answer=fetch(job); z[chunks[w],:]=answer.z; battery_s=max(battery_s,answer.elapsed_s)
         end
         u.+=x.-z
         rmax,imax=findmax(abs.(x.-z)); r_max_period=imax[2]   # largest single battery-period mismatch
-        r_rms=sqrt(sum(abs2,x.-z)/length(z)); s_rms=rho*sqrt(sum(abs2,z.-zold)/length(z))
-        s_rel=s_rms/max(rho*sqrt(sum(abs2,u)/length(u)),1e-12)
+        r_rms=sqrt(sum(abs2,x.-z)/length(z)); s_rms=rho*sqrt(sum(abs2,(z.-zold).*prm')/length(z))
+        s_rel=s_rms/max(rho*sqrt(sum(abs2,u.*prm')/length(u)),1e-12)
         rho_next=rho
         if balance>1 && k>ramp
             a=r_rms/eps_pri; b=s_rel/eps_dual
@@ -57,6 +65,10 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             b>balance*a && (rho_next=rho/balance_step)
         end
         rho_next=max(rho_next,rho_floor)
+        if period_f>0 && k>ramp
+            rt=vec(sqrt.(sum(abs2,x.-z;dims=1)./nb))
+            raise!([t for t in 1:T if rt[t]>period_f*r_rms && rt[t]>eps_pri && prm[t]<period_cap],2.0)
+        end
         attempted=false; strict=false; rus=Vector{Vector{Float64}}(undef,T)
         # SC_EPS_MAX=e: also require every battery-period mismatch to be below e before a repair.
         eps_max=parse(Float64,get(ENV,"SC_EPS_MAX","Inf"))
@@ -111,7 +123,10 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             # After a refused repair, iterate a few times before trying again.
             strict || (next_attempt=k+repair_backoff)
             # SC_REFUSE_RHO=f: a refused repair multiplies the penalty by f, and balancing may not take it below that again.
-            strict || refuse_rho<=1 || (rho_refused==0 && (rho_refused=rho); rho_floor=min(rho*refuse_rho,refuse_cap*rho_refused); rho_next=max(rho_next,rho_floor))
+            if !strict && refuse_rho>1
+                refuse_period ? raise!(sort(collect(union(Set(tight_periods),pinned_set))),refuse_rho) :
+                    (rho_refused==0 && (rho_refused=rho); rho_floor=min(rho*refuse_rho,refuse_cap*rho_refused); rho_next=max(rho_next,rho_floor))
+            end
         end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
         # Outside the clock: save the pre-repair state, so that repair variants can be tried offline
@@ -127,7 +142,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
                 println("SC_WARNING repair snapshot not saved: ",sprint(showerror,err))
             end
         end
-        println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict,rmax,r_max_period),',')); flush(io)
+        println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict,rmax,r_max_period,count(>(1.0),prm),maximum(prm)),',')); flush(io)
         if attempted && strict
             # Outside the clock: score the reported dispatch against the original model.
             zb=zeros(nb,T)

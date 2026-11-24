@@ -145,13 +145,22 @@ function make_coordinator(d;idx=eachindex(d[:Bset]))
     return (;m,z,b,vars=all_variables(m))
 end
 
-function coordinator_step!(c,target,k;start=nothing)
+function coordinator_step!(c,target,k;start=nothing,weights=nothing)
     if start!==nothing
         set_start_value.(c.vars,start)
     elseif k>1
         vals=value.(c.vars); set_start_value.(c.vars,vals)
     end
-    for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end
+    # weights[t] (SC_PERIOD_RHO): period t's penalty relative to the common rho, so the
+    # step minimises sum_t weights[t]*|z_t - target_t|^2.
+    if weights===nothing
+        for i in eachindex(target); set_objective_coefficient(c.m,c.z[i],-2*target[i]); end
+    else
+        for n in axes(target,1), t in axes(target,2)
+            set_objective_coefficient(c.m,c.z[n,t],c.z[n,t],weights[t])
+            set_objective_coefficient(c.m,c.z[n,t],-2*weights[t]*target[n,t])
+        end
+    end
     optimize!(c.m)
     termination_status(c.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL) || error("coordinator failed: $(termination_status(c.m))")
     return value.(c.z),solve_time(c.m)
