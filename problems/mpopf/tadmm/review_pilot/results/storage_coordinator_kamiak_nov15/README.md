@@ -739,3 +739,55 @@ some "Infeasible_Problem_Detected"), so the cap was not the cause. Both lossy di
 replay with 95% efficiencies. sf6937 (lossless) fails the same way in periods 2-8 and 69-76
 ("Infeasible_Problem_Detected"): fixing the batteries at the agreed schedule leaves no feasible
 network in periods at their voltage limits.
+
+## Lossy table (2026-11-23/24, `tadmm_sc_nov15_v15_workers`, eta = 0.95 each way)
+
+Timing counts the numerical optimization only (no build, worker start-up or
+compilation). Both methods start from the same per-period load flow with idle
+batteries. Repair: back off 3 iterations after a failed check; `SC_REFUSE_RHO=4`
+with `SC_REFUSE_RHO_MAX=16`. Whole 64-core nodes; 144 workers = 2 nodes x 74 CPUs.
+Every converged dispatch passes the OpenDSS replay with battery efficiency.
+
+Ratio = centralized (Ipopt/MA57) / tADMM, both to convergence.
+
+| System | T | Workers | Ratio | Iterations | Repair attempts |
+|---|---|---|---|---|---|
+| ieee123 | 24 | 24 | 0.87 | 22 | 1 |
+| ieee123 | 96 | 48 | 1.87 | 24 | 1 |
+| ieee123 | 96 | 96 | 1.62 | 24 | 1 |
+| ieee123 | 144 | 48 | 1.89 | 24 | 1 |
+| ieee123 | 144 | 144 | 1.97 | 24 | 1 |
+| ieee123 | 288 | 48 | 2.03 | 23 | 1 |
+| med2522 | 24 | 24 | 1.18-1.33 | 26 | 2 |
+| med2522 | 96 | 48 | 3.13 | 26 | 2 |
+| med2522 | 96 | 96 | 5.42 | 26 | 2 |
+| med2522 | 144 | 48 | 2.65 | 29 | 3 |
+| med2522 | 144 | 144 | 7.36 | 26 | 2 |
+| med2522 | 288 | 48 | 1.70-1.83 | 44 | 8 |
+| large10k | 24 | 24 | 1.37 | 24 | 1 |
+| large10k | 48 | 48 | 1.77 | 33 | 1 |
+| large10k | 96 | 96 | 3.50 | 33 | 1 |
+| large10k | 144 | 144 | 4.04 | 34 | 1 |
+| large10k | 288 | 144 | 6.06 | 29 | 1 |
+
+### Max-norm repair gate (`SC_EPS_MAX`), med2522, 48 workers: rejected
+
+| T | Gate | Iterations | Attempts | Ratio |
+|---|---|---|---|---|
+| 96 | RMS <= 1e-5 | 26 | 2 | 3.13 |
+| 96 | RMS and max <= 1e-5 | 114 | 4 | 0.64 |
+| 288 | RMS <= 1e-5 | 44 | 8 | 1.70-1.83 |
+| 288 | RMS and max <= 1e-5 | 92 | 1 | 1.14 |
+
+At T = 288, iteration 24 has RMS 4e-6 but a worst battery-period mismatch of
+1.8e-4, and the worst period moves (6, 239, 195-199). The refused repairs come
+from these few lagging periods, but waiting for the max norm costs far more
+iterations than the refusals. Next candidate: a per-period penalty raised only
+where a period lags.
+
+### Table IX statistics, large10k
+
+No binding voltage limits at any horizon. 101 loose cone branches per period,
+identical in the centralized and tADMM solutions (a model property, not a tADMM
+artifact). The maximum cone gap grows with T (1.6e-5 at T = 24, 9.4e-5 at
+T = 288); fictitious loss share 1e-9 to 1.3e-8.
