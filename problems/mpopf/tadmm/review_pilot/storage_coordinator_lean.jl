@@ -27,7 +27,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     tight_periods=Int[]; pinned_set=Set{Int}(); zrep=z; pinned_passes=0; pinned_accepted=0
     algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; rho_floor=0.0; refuse_rho=parse(Float64,get(ENV,"SC_REFUSE_RHO","1")); refuse_cap=parse(Float64,get(ENV,"SC_REFUSE_RHO_MAX","16")); rho_refused=0.0; converged=0; gap=NaN; violation=NaN; objective=NaN
     io=open(joinpath(out,"lean_trace_$(phase).csv"),"w")
-    println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict")
+    println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict,r_max,r_max_period")
     for iteration in 1:maxiter
         k=iteration; tick=time_ns()
         if k<=ramp+1 || balance<=1
@@ -47,6 +47,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             answer=fetch(job); z[chunks[w],:]=answer.z; battery_s=max(battery_s,answer.elapsed_s)
         end
         u.+=x.-z
+        rmax,imax=findmax(abs.(x.-z)); r_max_period=imax[2]   # largest single battery-period mismatch
         r_rms=sqrt(sum(abs2,x.-z)/length(z)); s_rms=rho*sqrt(sum(abs2,z.-zold)/length(z))
         s_rel=s_rms/max(rho*sqrt(sum(abs2,u)/length(u)),1e-12)
         rho_next=rho
@@ -57,7 +58,9 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         end
         rho_next=max(rho_next,rho_floor)
         attempted=false; strict=false; rus=Vector{Vector{Float64}}(undef,T)
-        if k>ramp && k>=next_attempt && r_rms<=eps_pri && s_rel<=eps_dual
+        # SC_EPS_MAX=e: also require every battery-period mismatch to be below e before a repair.
+        eps_max=parse(Float64,get(ENV,"SC_EPS_MAX","Inf"))
+        if k>ramp && k>=next_attempt && r_rms<=eps_pri && s_rel<=eps_dual && rmax<=eps_max
             attempted=true; attempts+=1; strict=true
             snap=(;k,z=copy(z),x=copy(x),u=copy(u),rho)   # the state the repair starts from (SC_SAVE_REPAIR)
             empty!(tight_periods); zrep=z
@@ -124,7 +127,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
                 println("SC_WARNING repair snapshot not saved: ",sprint(showerror,err))
             end
         end
-        println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict),',')); flush(io)
+        println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict,rmax,r_max_period),',')); flush(io)
         if attempted && strict
             # Outside the clock: score the reported dispatch against the original model.
             zb=zeros(nb,T)
