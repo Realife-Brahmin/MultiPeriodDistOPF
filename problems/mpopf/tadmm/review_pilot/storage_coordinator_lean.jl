@@ -59,6 +59,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
         attempted=false; strict=false; rus=Vector{Vector{Float64}}(undef,T)
         if k>ramp && k>=next_attempt && r_rms<=eps_pri && s_rel<=eps_dual
             attempted=true; attempts+=1; strict=true
+            snap=(;k,z=copy(z),x=copy(x),u=copy(u),rho)   # the state the repair starts from (SC_SAVE_REPAIR)
             empty!(tight_periods); zrep=z
             for answer in fetch.([remotecall(sc_repair_shared!,SC_WIDS[w],Dict(t=>z[:,t] for t in groups[w]);max_iter=repair_max_iter) for w in 1:W]), row in answer
                 strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u); (row.ok && row.strict) || push!(tight_periods,row.t)
@@ -110,6 +111,19 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             strict || refuse_rho<=1 || (rho_floor=rho*refuse_rho; rho_next=max(rho_next,rho_floor))
         end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
+        # Outside the clock: save the pre-repair state, so that repair variants can be tried offline
+        # from it (agreed schedule z, period powers x, scaled duals u, penalty, and each period
+        # model's primal iterate before the repair). SC_SAVE_REPAIR=0 turns it off.
+        if attempted && phase=="timed" && get(ENV,"SC_SAVE_REPAIR","1")!="0"
+            try
+                dir=joinpath(out,"repair_snapshots"); mkpath(dir)
+                iterates=merge(fetch.([remotecall(()->Dict(t=>SC[:resume][t] for t in SC[:periods] if haskey(SC[:resume],t)),SC_WIDS[w]) for w in 1:W])...)
+                serialize(joinpath(dir,"k$(k).jls"),Dict(:system=>system,:T=>T,:k=>snap.k,:z=>snap.z,:x=>snap.x,:u=>snap.u,:rho=>snap.rho,
+                    :eta=>sc_eta(),:refused=>sort(collect(tight_periods)),:strict=>strict,:period_iterates=>iterates,:env=>Dict(k=>v for (k,v) in ENV if startswith(k,"SC_") || startswith(k,"TADMM_"))))
+            catch err
+                println("SC_WARNING repair snapshot not saved: ",sprint(showerror,err))
+            end
+        end
         println(io,join((k,r_rms,s_rel,rho,algorithm,iteration_s,slowest,battery_s,attempted,strict),',')); flush(io)
         if attempted && strict
             # Outside the clock: score the reported dispatch against the original model.
