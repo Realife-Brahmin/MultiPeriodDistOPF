@@ -52,4 +52,6 @@ for name in central converged; do
  SEQUENTIAL_DSS_GZIP=1 julia --startup-file=no --project="$P" "$P/run_sequential_dss.jl" "$OUT/instance.jls" "$OUT/${name}_dispatch.jls" "$OUT/${name}_sequential" model > "$OUT/${name}_opendss.log" 2>&1 || echo "OPENDSS $name: replay failed, see ${name}_opendss.log"
  grep -h SEQUENTIAL_DSS "$OUT/${name}_opendss.log" | sed "s/^/OPENDSS $name: /" || true
 done
+# Table IX diagnostics for every dispatch of this run: active limits and cone tightness.
+julia --startup-file=no --project="$P" "$P/binding_stats.jl" "$OUT/binding.csv" "$OUT" > "$OUT/binding.log" 2>&1 && sed "s/^/BINDING /" "$OUT/binding.csv" || echo "BINDING: failed, see binding.log"
 date -Is > "$OUT/COMPLETE"
