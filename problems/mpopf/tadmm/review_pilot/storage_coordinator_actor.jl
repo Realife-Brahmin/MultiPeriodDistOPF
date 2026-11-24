@@ -185,9 +185,20 @@ function sc_zstep_pinned!(target,pinned)
     optimize!(c.m)
     ok=termination_status(c.m) in (MOI.LOCALLY_SOLVED,MOI.OPTIMAL)
     z=ok ? value.(c.z) : zeros(0,0)
+    # SC_PIN_NET=1: where a battery charges and discharges in the same period (the step's way of
+    # shedding energy it cannot store), use the net power with the same energy change instead.
+    simultaneous=0.0; changed=0
+    if ok && get(ENV,"SC_PIN_NET","0")=="1" && c.pcs[1,1]!==nothing
+        eta=sc_eta()
+        for n in axes(z,1), t in axes(z,2)
+            pc=value(c.pcs[n,t]); pd=value(c.pds[n,t]); both=min(pc,pd); simultaneous=max(simultaneous,both)
+            both>1e-9 || continue
+            e=eta*pc-pd/eta; z[n,t]=e>=0 ? -e/eta : -e*eta; changed+=1
+        end
+    end
     for (t,p) in pinned, n in eachindex(p)
         unfix(c.z[n,t]); set_lower_bound(c.z[n,t],-limits[n]); set_upper_bound(c.z[n,t],limits[n])
     end
     SC[:coord_resume]=iterate
-    return (;ok,z,elapsed_s=(time_ns()-tick)/1e9)
+    return (;ok,z,simultaneous,changed,elapsed_s=(time_ns()-tick)/1e9)
 end

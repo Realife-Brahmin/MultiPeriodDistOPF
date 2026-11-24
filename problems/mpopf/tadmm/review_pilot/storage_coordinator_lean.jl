@@ -105,9 +105,10 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
                 tight=sort!(collect(pinned_set)); pinned_passes+=1
                 if !isempty(tight) && length(tight)<=max(1,T÷4)
                     pjobs=[(w,remotecall(sc_zstep_pinned!,SC_WIDS[w],z[chunks[w],:],Dict(t=>x[chunks[w],t] for t in tight))) for w in 1:W if !isempty(chunks[w])]
-                    zp=copy(z); feasible=true
+                    zp=copy(z); feasible=true; simul=0.0; nchanged=0
                     for (w,job) in pjobs
                         answer=fetch(job); feasible&=answer.ok; answer.ok && (zp[chunks[w],:]=answer.z)
+                        hasproperty(answer,:simultaneous) && (simul=max(simul,answer.simultaneous); nchanged+=answer.changed)
                     end
                     if feasible
                         strict=true
@@ -115,7 +116,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
                             strict&=row.ok && row.strict; row.ok && (rus[row.t]=row.u)
                             (row.ok && row.strict) || get(ENV,"SC_PIN_UNION","0")=="1" && push!(pinned_set,row.t)
                         end
-                        get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" && println("SC_PINNED_ATTEMPT k=$k pinned=$(length(tight)) strict=$strict")
+                        get(ENV,"SC_REPAIR_LOG","0")=="1" && phase=="timed" && println("SC_PINNED_ATTEMPT k=$k pinned=$(length(tight)) strict=$strict simultaneous=$simul net_replaced=$nchanged")
                         strict && (zrep=zp; pinned_accepted=length(tight))
                     end
                 end
