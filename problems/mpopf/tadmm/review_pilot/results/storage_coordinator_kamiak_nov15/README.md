@@ -791,3 +791,37 @@ No binding voltage limits at any horizon. 101 loose cone branches per period,
 identical in the centralized and tADMM solutions (a model property, not a tADMM
 artifact). The maximum cone gap grows with T (1.6e-5 at T = 24, 9.4e-5 at
 T = 288); fictitious loss share 1e-9 to 1.3e-8.
+
+## Net power in the pinned battery step (`SC_PIN_NET=1`, 2026-11-24)
+
+The pinned repair on med2522 kept failing the original-model check on the SOC
+bound by 1.1-1.7e-5. Cause: with the early (undervoltage, charging) periods
+pinned to their own powers, some batteries would overfill by ~1e-5 with no
+earlier period to compensate, and the battery QP stayed feasible by charging
+and discharging at once (up to 2.7e-5 p.u.; the throughput term costs only
+1e-6). The check and OpenDSS use net power, so they saw the overfill.
+`SC_PIN_NET=1` replaces each such pair by the net power with the same energy
+change. Only med2522 runs ever used the pinned step; ieee123 and large10k rows
+are unaffected. The 1e-9 threshold also rewrites interior-point noise in almost
+every entry (harmless, ~1e-10 p.u.); 1e-7 would be cleaner.
+
+Per-period penalties (`SC_PERIOD_RHO=f`): f = 10 never fires (lagging periods
+are 4-7x the RMS mismatch), f = 5 and 3 do not help (1.78, 1.82 at T = 288).
+`SC_REFUSE_PERIOD=1` alone: 41 iterations, 7 attempts, 2.09. Not needed with
+`SC_PIN_NET`.
+
+med2522 with `SC_PIN_NET=1` (all pass OpenDSS):
+
+| T | Workers | Ratio | Iterations | Attempts | Gap |
+|---|---|---|---|---|---|
+| 24 | 24 | 1.50 | 23 | 1 | 1.75e-4 |
+| 96 | 48 | 3.88 | 23 | 1 | 9.1e-5 |
+| 96 | 96 | 6.48 | 23 | 1 | 9.9e-5 |
+| 144 | 48 | 3.92 | 23 | 1 | 8.2e-5 |
+| 144 | 144 | 10.18 | 23 | 1 | 9.0e-5 |
+| 288 | 48 | 5.25 | 23 | 1 | 6.9e-5 |
+| 24 (AC) | 24 | 2.19 | 23 | 1 | 1.75e-4 |
+
+The gap is larger than before (~1e-5) because the repair is accepted about 20
+iterations earlier with the pinned periods at their own powers; all are well
+inside 0.1%.
