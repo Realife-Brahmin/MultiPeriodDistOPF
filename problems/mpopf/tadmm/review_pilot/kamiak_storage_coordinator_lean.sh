@@ -20,6 +20,7 @@ export LD_LIBRARY_PATH=$HOME/opt/hsl-private/deps${LD_LIBRARY_PATH:+:$LD_LIBRARY
 export TADMM_LINEAR_SOLVER=ma57
 export TADMM_IPOPT_OPTIONS="hsllib=$LIB;linear_system_scaling=none;ma57_pivot_order=2"
 export TADMM_CB_PROFILE=${TADMM_CB_PROFILE:-july}
+export SC_ETA=${SC_ETA:-0.95}   # the battery model: separate charge/discharge powers, 95% each way
 case $SYS in
  ieee2522C_1ph) SCREEN=substation,ell;;
  ieee9500xf_sub1_1ph|smartds_p1u_xf_sub1_1ph) SCREEN=substation,ell; export SC_REPAIR_MAX_ITER=${SC_REPAIR_MAX_ITER:-3000};;
