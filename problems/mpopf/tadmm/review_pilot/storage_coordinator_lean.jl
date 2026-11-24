@@ -25,7 +25,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
     phase=="warmup" && length(unique((i.host,i.affinity) for i in layout))!=W && Sys.islinux() && get(ENV,"SC_PIN","1")=="1" && error("Workers share CPUs")
     z=zeros(nb,T); u=zeros(nb,T); x=zeros(nb,T)
     tight_periods=Int[]; pinned_set=Set{Int}(); zrep=z; pinned_passes=0; pinned_accepted=0
-    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; rho_floor=0.0; refuse_rho=parse(Float64,get(ENV,"SC_REFUSE_RHO","1")); converged=0; gap=NaN; violation=NaN; objective=NaN
+    algorithm=0.0; k=0; rho_start=rho; rho_next=rho; attempts=0; next_attempt=0; rho_floor=0.0; refuse_rho=parse(Float64,get(ENV,"SC_REFUSE_RHO","1")); refuse_cap=parse(Float64,get(ENV,"SC_REFUSE_RHO_MAX","16")); rho_refused=0.0; converged=0; gap=NaN; violation=NaN; objective=NaN
     io=open(joinpath(out,"lean_trace_$(phase).csv"),"w")
     println(io,"iteration,r_rms,s_relative,rho,algorithm_s,iteration_s,slowest_stage_s,slowest_battery_step_s,repair_attempted,repair_strict")
     for iteration in 1:maxiter
@@ -108,7 +108,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             # After a refused repair, iterate a few times before trying again.
             strict || (next_attempt=k+repair_backoff)
             # SC_REFUSE_RHO=f: a refused repair multiplies the penalty by f, and balancing may not take it below that again.
-            strict || refuse_rho<=1 || (rho_floor=rho*refuse_rho; rho_next=max(rho_next,rho_floor))
+            strict || refuse_rho<=1 || (rho_refused==0 && (rho_refused=rho); rho_floor=min(rho*refuse_rho,refuse_cap*rho_refused); rho_next=max(rho_next,rho_floor))
         end
         iteration_s=(time_ns()-tick)/1e9; algorithm+=iteration_s
         # Outside the clock: save the pre-repair state, so that repair variants can be tried offline
@@ -137,7 +137,7 @@ function run_lean(d,system;rho,rho_end,ramp,maxiter,reference,no_tol,phase,out,e
             violation>no_tol && phase=="timed" && @printf("SC_CHECK_FAILED k=%d eq=%.3e bound=%.3e cone=%.3e pinned=%d\n",k,pm.maxeq,pm.maxbound,pm.maxcone,length(pinned_set))
             if violation>no_tol   # the repaired dispatch fails the original model: same as a refusal
                 next_attempt=k+repair_backoff
-                refuse_rho>1 && (rho_floor=rho*refuse_rho; rho_next=max(rho_next,rho_floor))
+                refuse_rho>1 && (rho_refused==0 && (rho_refused=rho); rho_floor=min(rho*refuse_rho,refuse_cap*rho_refused); rho_next=max(rho_next,rho_floor))
             end
             if violation<=no_tol
                 converged=k
