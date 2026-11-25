@@ -26,6 +26,26 @@ function stage_optimizer(;threads=1)
     end
     error("no conic stage solver selected")
 end
+# SC_CONIC_ITER_OPTS="name=value;..." sets solver parameters for the period solves inside
+# the iterations only (e.g. a looser barrier tolerance, Presolve=0); the repair, which
+# produces the reported dispatch, runs with the strict settings above, and the battery
+# step is never changed.
+function conic_iter_opts()
+    raw=strip(get(ENV,"SC_CONIC_ITER_OPTS",""))
+    isempty(raw) && return Pair{String,Any}[]
+    out=Pair{String,Any}[]
+    for kv in split(raw,";"); isempty(strip(kv)) && continue
+        k,v=strip.(split(kv,"=")); x=tryparse(Int,v); x===nothing && (x=parse(Float64,v)); push!(out,String(k)=>x)
+    end
+    return out
+end
+function conic_set_iter!(s)
+    opts=conic_iter_opts(); isempty(opts) && return nothing
+    strict=Pair{String,Any}[k=>get_attribute(s.m,k) for (k,_) in opts]
+    for (k,v) in opts; set_attribute(s.m,k,v); end
+    return (;iter=opts,strict)
+end
+conic_mode!(s,which)=(s.opts===nothing || for (k,v) in getfield(s.opts,which); set_attribute(s.m,k,v); end; nothing)
 conic_ok(m)=termination_status(m) in (MOI.OPTIMAL,MOI.ALMOST_OPTIMAL,MOI.LOCALLY_SOLVED)
 # A conic solve that stalls short of its tolerance still returns its last point.
 # Inside the iterations that point is used and the event is printed
@@ -75,7 +95,8 @@ function make_power_stage_conic(d,t;rho)
         set_lower_bound(pb[j],-d[:P_B_R_pu][j]); set_upper_bound(pb[j],d[:P_B_R_pu][j])
     end
     cost=@expression(m,d[:LoadShapeCost][t]*base*dt*ps)
-    return (;m,t,ps,qs,p,q,v,ell,qd,pb,cb=d[:C_B]*base^2*dt,cost,vars=all_variables(m),layout=physical_layout(d),conic=true)
+    s=(;m,t,ps,qs,p,q,v,ell,qd,pb,cb=d[:C_B]*base^2*dt,cost,vars=all_variables(m),layout=physical_layout(d),conic=true)
+    return merge(s,(;opts=conic_set_iter!(s)))
 end
 
 function power_stage_step_conic!(s,d,zt,ut,rho)
@@ -90,7 +111,7 @@ function repair_stage_conic!(s,d,zt)
     bs=d[:Bset]
     for (n,j) in enumerate(bs); fix(s.pb[j],zt[n];force=true); end
     @objective(s.m,Min,s.cost)
-    optimize!(s.m)
+    conic_mode!(s,:strict); optimize!(s.m); conic_mode!(s,:iter)
     strict=conic_strict(s.m); ok=has_values(s.m) && all(isfinite,value.(s.vars))
     u=ok ? stage_dispatch(s,d) : Float64[]; status=string(termination_status(s.m)); solver_s=solve_time(s.m)
     for j in bs
