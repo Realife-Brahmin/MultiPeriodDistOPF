@@ -20,7 +20,15 @@ case $SYS in ieee2522C_1ph) export TADMM_SCREEN=substation,ell;; *) export TADMM
 export GRB_LICENSE_FILE=/opt/apps/gurobi/13.0.1/licenses/gurobi.lic
 run(){ tag=$1; shift; mkdir -p "$OUT/$tag"; env "$@" julia --startup-file=no --project="$P/conic_env" "$P/${CONIC_SCRIPT:-conic_baseline.jl}" "$SYS" "$T" "$OUT/$tag" ${SOLVERS:-gurobi} > "$OUT/$tag/solve.log" 2> "$OUT/$tag/solve.err"; grep -E "^CONIC solver" "$OUT/$tag/solve.log" | sed "s/^/$tag /"; }
 # FAIR_SET=loose: screened, with cone tolerances looser than Gurobi's default.
-if [[ ${FAIR_SET:-} == loose ]]; then
+# FAIR_SET=g14def: Gurobi 14 (user's WLS licence, conic_env_g14) at Gurobi's default cone
+# tolerance 1e-6, unscreened, next to Ipopt; one session at a time.
+if [[ ${FAIR_SET:-} == g14def ]]; then
+ SOLVERS=ipopt run ipopt X=1
+ g14=$HOME/opt/gurobi1400/linux64
+ mkdir -p "$OUT/g14_deftol"
+ env GUROBI_HOME=$g14 GRB_LICENSE_FILE=$HOME/gurobi.lic LD_LIBRARY_PATH=$g14/lib:$LD_LIBRARY_PATH CONIC_SCREEN=0 CONIC_QCPTOL=1e-6   julia --startup-file=no --project="$P/conic_env_g14" "$P/${CONIC_SCRIPT:-conic_baseline.jl}" "$SYS" "$T" "$OUT/g14_deftol" gurobi > "$OUT/g14_deftol/solve.log" 2> "$OUT/g14_deftol/solve.err" || echo "g14_deftol failed"
+ grep -E "^CONIC (solver|_GUROBI)|^CONIC_GUROBI" "$OUT/g14_deftol/solve.log" | sed "s/^/g14_deftol /"
+elif [[ ${FAIR_SET:-} == loose ]]; then
  SOLVERS=ipopt run ipopt X=1
  run screen_tol1e-5 CONIC_SCREEN=1 CONIC_QCPTOL=1e-5
  run screen_tol1e-4 CONIC_SCREEN=1 CONIC_QCPTOL=1e-4
