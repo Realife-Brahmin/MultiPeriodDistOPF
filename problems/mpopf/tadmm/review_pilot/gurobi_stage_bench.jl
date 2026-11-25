@@ -10,7 +10,14 @@ trrho=[parse(Float64,split(l,",")[col]) for l in lines[2:end]]
 periods=length(ARGS)>=3 ? parse.(Int,split(ARGS[3],",")) : [1,d[:T]÷2]
 rhos=trrho[[1,min(10,end),min(22,end),end]]
 nb=length(d[:Bset]); z=zeros(nb); u=zeros(nb)
-settings=[("tol1e-8",Dict()),
+settings=get(ENV,"BENCH_SET","1")=="2" ? [("tol1e-8",Dict()),
+          ("tol1e-5",Dict("BarConvTol"=>1e-5,"BarQCPConvTol"=>1e-5)),
+          ("tol1e-3",Dict("BarConvTol"=>1e-3,"BarQCPConvTol"=>1e-3)),
+          ("scale0",Dict("ScaleFlag"=>0)),
+          ("scale2",Dict("ScaleFlag"=>2)),
+          ("homog1",Dict("BarHomogeneous"=>1)),
+          ("tol1e-6_scale2",Dict("BarConvTol"=>1e-6,"BarQCPConvTol"=>1e-6,"ScaleFlag"=>2))] :
+         [("tol1e-8",Dict()),
           ("tol1e-6",Dict("BarConvTol"=>1e-6,"BarQCPConvTol"=>1e-6)),
           ("tol1e-4",Dict("BarConvTol"=>1e-4,"BarQCPConvTol"=>1e-4)),
           ("presolve0",Dict("Presolve"=>0)),
@@ -22,7 +29,7 @@ settings=[("tol1e-8",Dict()),
 for t in periods
     s=make_power_stage_conic(d,t;rho=rhos[1])
     power_stage_step_conic!(s,d,z,u,rhos[1])   # compile
-    base=Dict(k=>get_attribute(s.m,k) for k in ("BarConvTol","BarQCPConvTol","Presolve","BarOrder"))
+    base=Dict(k=>get_attribute(s.m,k) for k in ("BarConvTol","BarQCPConvTol","Presolve","BarOrder","ScaleFlag","BarHomogeneous"))
     for (name,opts) in settings
         for (k,v) in base; set_attribute(s.m,k,v); end
         for (k,v) in opts; set_attribute(s.m,k,v); end

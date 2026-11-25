@@ -80,7 +80,11 @@ function make_power_stage_conic(d,t;rho)
     for e in es
         i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
         @constraint(m,v[j]==v[i]-2*(r*p[e]+x*q[e])+(r^2+x^2)*ell[e])
-        @constraint(m,[0.5*v[i],ell[e],p[e],q[e]] in RotatedSecondOrderCone())
+        if get(ENV,"SC_CONIC_CONE","rsoc")=="quad"   # p^2+q^2 <= v*ell as a quadratic constraint (Gurobi reads it as a rotated cone)
+            @constraint(m,p[e]^2+q[e]^2<=v[i]*ell[e])
+        else
+            @constraint(m,[0.5*v[i],ell[e],p[e],q[e]] in RotatedSecondOrderCone())
+        end
     end
     @constraint(m,v[root]==1.05^2)
     for j in ns
