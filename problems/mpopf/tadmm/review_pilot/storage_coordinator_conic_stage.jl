@@ -115,9 +115,10 @@ function repair_stage_conic!(s,d,zt)
     bs=d[:Bset]
     for (n,j) in enumerate(bs); fix(s.pb[j],zt[n];force=true); end
     @objective(s.m,Min,s.cost)
-    conic_mode!(s,:strict); optimize!(s.m); conic_mode!(s,:iter)
+    conic_mode!(s,:strict); optimize!(s.m)
     strict=conic_strict(s.m); ok=has_values(s.m) && all(isfinite,value.(s.vars))
     u=ok ? stage_dispatch(s,d) : Float64[]; status=string(termination_status(s.m)); solver_s=solve_time(s.m)
+    conic_mode!(s,:iter)   # after reading the results: changing a parameter discards them
     for j in bs
         unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
     end
