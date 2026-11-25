@@ -21,7 +21,11 @@ function make_conic_model(d,optimizer)
     loads=Set(d[:NLset]); batteries=Set(bs); ders=Set(ds)
     root=d[:substationBus]; dt=d[:delta_t_h]; base=d[:kVA_B]; owned=1:T
     m=Model(optimizer)
-    @variable(m,ps[owned]>=0); @variable(m,qs[owned])
+    # CONIC_SCREEN=1: drop the same provably inactive bounds as the Ipopt model (model.jl):
+    # upper voltage limits the data-only screen rules out, and P_Subs >= 0 when it is implied.
+    screened=get(ENV,"CONIC_SCREEN","0")=="1"; screen=screened ? tadmm_screen(d) : nothing
+    @variable(m,ps[owned]); @variable(m,qs[owned])
+    (screened && screen.drop_ps) || for t in owned; set_lower_bound(ps[t],0.0); end
     @variable(m,p[es,owned]); @variable(m,q[es,owned]); @variable(m,v[ns,owned]); @variable(m,ell[es,owned]>=0)
     @variable(m,qd[ds,owned]); @variable(m,pb[bs,owned]); @variable(m,b[bs,owned])
     @objective(m,Min,sum(d[:LoadShapeCost][t]*base*dt*ps[t] for t in owned)+sum(d[:C_B]*base^2*dt*pb[j,t]^2 for j in bs,t in owned))
@@ -43,9 +47,10 @@ function make_conic_model(d,optimizer)
             @constraint(m,[0.5*v[i,t],ell[e,t],p[e,t],q[e,t]] in RotatedSecondOrderCone())
         end
         @constraint(m,v[root,t]==1.05^2)
-        for j in ns
+        for (n,j) in enumerate(ns)
             j==root && continue
-            set_lower_bound(v[j,t],d[:Vminpu][j]^2); set_upper_bound(v[j,t],d[:Vmaxpu][j]^2)
+            set_lower_bound(v[j,t],d[:Vminpu][j]^2)
+            (screened && "vupper" in screen.flags && !screen.keep_upper[n]) || set_upper_bound(v[j,t],d[:Vmaxpu][j]^2)
         end
         for j in ds
             qmax=sqrt(max(0.0,d[:S_D_R][j]^2-d[:p_D_pu][j,t]^2))
@@ -74,7 +79,7 @@ function optimizer_for(name)
             "tol_feas"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"max_iter"=>500)
     elseif name=="gurobi"
         return optimizer_with_attributes(Main.Gurobi.Optimizer,"OutputFlag"=>0,"Threads"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
-            "Method"=>2,"Crossover"=>0,"BarConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"BarQCPConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")))
+            "Method"=>2,"Crossover"=>0,"BarConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"BarQCPConvTol"=>parse(Float64,get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))))
     elseif name=="mosek"
         return optimizer_with_attributes(Main.MosekTools.Optimizer,"QUIET"=>true,"MSK_IPAR_NUM_THREADS"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
             "MSK_DPAR_INTPNT_CO_TOL_REL_GAP"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"MSK_DPAR_INTPNT_CO_TOL_PFEAS"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),
@@ -87,7 +92,8 @@ function conic_main()
     system=ARGS[1]; T=parse(Int,ARGS[2]); out=abspath(ARGS[3]); mkpath(out); solvers=split(ARGS[4],',')
     d=deserialize(joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls"))
     apply_review_cb!(d,system)
-    println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T," eta=",sc_eta())
+    println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T," eta=",sc_eta(),
+        " screen=",get(ENV,"CONIC_SCREEN","0")," tol=",get(ENV,"CONIC_TOL","1e-8")," qcptol=",get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8")))
     "gurobi" in solvers && println("CONIC_GUROBI version=",join(let a=Ref{Cint}(),b=Ref{Cint}(),c=Ref{Cint}(); Main.Gurobi.GRBversion(a,b,c); (a[],b[],c[]) end,'.'))
     rows=String[]
     for name in solvers
