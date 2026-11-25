@@ -44,7 +44,11 @@ function make_conic_model(d,optimizer)
         for e in es
             i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
             @constraint(m,v[j,t]==v[i,t]-2*(r*p[e,t]+x*q[e,t])+(r^2+x^2)*ell[e,t])
-            @constraint(m,[0.5*v[i,t],ell[e,t],p[e,t],q[e,t]] in RotatedSecondOrderCone())
+            if get(ENV,"SC_CONIC_CONE","rsoc")=="quad"   # as in the tADMM period model
+                @constraint(m,p[e,t]^2+q[e,t]^2<=v[i,t]*ell[e,t])
+            else
+                @constraint(m,[0.5*v[i,t],ell[e,t],p[e,t],q[e,t]] in RotatedSecondOrderCone())
+            end
         end
         @constraint(m,v[root,t]==1.05^2)
         for (n,j) in enumerate(ns)
@@ -93,7 +97,7 @@ function conic_main()
     d=deserialize(joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls"))
     apply_review_cb!(d,system)
     println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T," eta=",sc_eta(),
-        " screen=",get(ENV,"CONIC_SCREEN","0")," tol=",get(ENV,"CONIC_TOL","1e-8")," qcptol=",get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8")))
+        " screen=",get(ENV,"CONIC_SCREEN","0")," tol=",get(ENV,"CONIC_TOL","1e-8")," qcptol=",get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))," cone=",get(ENV,"SC_CONIC_CONE","rsoc"))
     "gurobi" in solvers && println("CONIC_GUROBI version=",join(let a=Ref{Cint}(),b=Ref{Cint}(),c=Ref{Cint}(); Main.Gurobi.GRBversion(a,b,c); (a[],b[],c[]) end,'.'))
     rows=String[]
     for name in solvers
