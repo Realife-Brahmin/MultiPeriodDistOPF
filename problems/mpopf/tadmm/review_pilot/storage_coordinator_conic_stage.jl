@@ -102,23 +102,41 @@ end
 function make_coordinator_conic(d;idx=eachindex(d[:Bset]))
     T=d[:T]; bs=d[:Bset][idx]; dt=d[:delta_t_h]; nb=length(bs)
     m=Model(stage_optimizer())
-    @variable(m,z[1:nb,1:T]); @variable(m,b[1:nb,1:T])
+    @variable(m,z[1:nb,1:T]); @variable(m,b[1:nb,1:T]); scd=AffExpr[]
+    pcs=Matrix{Any}(nothing,nb,T); pds=Matrix{Any}(nothing,nb,T)
     for (n,j) in enumerate(bs),t in 1:T
         set_lower_bound(z[n,t],-d[:P_B_R_pu][j]); set_upper_bound(z[n,t],d[:P_B_R_pu][j])
         set_lower_bound(b[n,t],d[:soc_min][j]*d[:B_R_pu][j]); set_upper_bound(b[n,t],d[:soc_max][j]*d[:B_R_pu][j])
-        @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])-dt*z[n,t])
+        eta=sc_eta()
+        if eta<1   # as make_coordinator: charge and discharge powers, small throughput term
+            pc=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j]); pd=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j])
+            @constraint(m,z[n,t]==pd-pc)
+            @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])+dt*(eta*pc-pd/eta))
+            push!(scd,pc+pd); pcs[n,t]=pc; pds[n,t]=pd
+        else
+            @constraint(m,b[n,t]==(t==1 ? d[:B0_pu][j] : b[n,t-1])-dt*z[n,t])
+        end
     end
-    return (;m,z,b,vars=all_variables(m),conic=true)
+    return (;m,z,b,pcs,pds,scd=sum(scd;init=AffExpr(0.0)),vars=all_variables(m),conic=true)
 end
 
 function coordinator_step_conic!(c,d,idx,target;pinned=Dict{Int,Vector{Float64}}())
     limits=[d[:P_B_R_pu][j] for j in d[:Bset][idx]]
     for (t,p) in pinned, n in eachindex(p); fix(c.z[n,t],p[n];force=true); end
-    @objective(c.m,Min,sum(c.z[i]^2-2*target[i]*c.z[i] for i in eachindex(target)))
+    @objective(c.m,Min,sum(c.z[i]^2-2*target[i]*c.z[i] for i in eachindex(target))+1e-6*c.scd)
     optimize!(c.m)
     ok=conic_usable(c.m,"battery step"); z=ok ? value.(c.z) : zeros(0,0); solver_s=solve_time(c.m)
+    simultaneous=0.0; changed=0
+    if ok && !isempty(pinned) && get(ENV,"SC_PIN_NET","0")=="1" && c.pcs[1,1]!==nothing   # as sc_zstep_pinned!
+        eta=sc_eta(); tol=parse(Float64,get(ENV,"SC_PIN_NET_TOL","1e-7"))
+        for n in axes(z,1), t in axes(z,2)
+            pc=value(c.pcs[n,t]); pd=value(c.pds[n,t]); both=min(pc,pd); simultaneous=max(simultaneous,both)
+            both>tol || continue
+            e=eta*pc-pd/eta; z[n,t]=e>=0 ? -e/eta : -e*eta; changed+=1
+        end
+    end
     for (t,p) in pinned, n in eachindex(p)
         unfix(c.z[n,t]); set_lower_bound(c.z[n,t],-limits[n]); set_upper_bound(c.z[n,t],limits[n])
     end
-    return (;ok,z,solver_s)
+    return (;ok,z,solver_s,simultaneous,changed)
 end

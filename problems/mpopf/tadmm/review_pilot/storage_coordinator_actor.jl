@@ -175,7 +175,7 @@ function sc_zstep_pinned!(target,pinned)
     c=SC[:coord]; d=SC[:d]; tick=time_ns(); limits=[d[:P_B_R_pu][j] for j in d[:Bset][SC[:chunk]]]
     if sc_conic()
         row=coordinator_step_conic!(c,d,SC[:chunk],target;pinned)
-        return (;ok=row.ok,z=row.z,elapsed_s=(time_ns()-tick)/1e9)
+        return (;ok=row.ok,z=row.z,simultaneous=row.simultaneous,changed=row.changed,elapsed_s=(time_ns()-tick)/1e9)
     end
     iterate=haskey(SC,:coord_resume) ? SC[:coord_resume] : value.(c.vars)
     set_start_value.(c.vars,iterate)

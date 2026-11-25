@@ -33,8 +33,9 @@ function make_conic_model(d,optimizer)
             pl=j in loads ? d[:p_L_pu][j,t] : 0.0; ql=j in loads ? d[:q_L_pu][j,t] : 0.0
             pd=j in ders ? d[:p_D_pu][j,t] : 0.0
             pbat=j in batteries ? pb[j,t] : 0.0; qder=j in ders ? qd[j,t] : 0.0
+            qcap=haskey(get(d,:qC_pu,Dict{Int,Float64}()),j) ? d[:qC_pu][j]*v[j,t] : 0.0   # fixed capacitor, q = qC * v
             @constraint(m,sum(p[(j,k),t] for k in d[:children][j];init=0.0)-p[e,t]+d[:rdict_pu][e]*ell[e,t]==pbat+pd-pl)
-            @constraint(m,sum(q[(j,k),t] for k in d[:children][j];init=0.0)-q[e,t]+d[:xdict_pu][e]*ell[e,t]==qder-ql)
+            @constraint(m,sum(q[(j,k),t] for k in d[:children][j];init=0.0)-q[e,t]+d[:xdict_pu][e]*ell[e,t]==qder-ql+qcap)
         end
         for e in es
             i,j=e; r=d[:rdict_pu][e]; x=d[:xdict_pu][e]
@@ -54,7 +55,13 @@ function make_conic_model(d,optimizer)
     for j in bs, t in owned
         set_lower_bound(b[j,t],d[:soc_min][j]*d[:B_R_pu][j]); set_upper_bound(b[j,t],d[:soc_max][j]*d[:B_R_pu][j])
         set_lower_bound(pb[j,t],-d[:P_B_R_pu][j]); set_upper_bound(pb[j,t],d[:P_B_R_pu][j])
-        @constraint(m,b[j,t]==(t==1 ? d[:B0_pu][j] : b[j,t-1])-dt*pb[j,t])
+        prev=t==1 ? d[:B0_pu][j] : b[j,t-1]; eta=sc_eta()
+        if eta<1   # charging and discharging powers with efficiency eta each way, as in model.jl
+            pc=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j]); pd=@variable(m,lower_bound=0,upper_bound=d[:P_B_R_pu][j])
+            @constraint(m,pb[j,t]==pd-pc); @constraint(m,b[j,t]==prev+dt*(eta*pc-pd/eta))
+        else
+            @constraint(m,b[j,t]==prev-dt*pb[j,t])
+        end
     end
     return (;m,ps,qs,p,q,v,ell,qd,pb,b,layout=physical_layout(d))
 end
@@ -80,7 +87,8 @@ function conic_main()
     system=ARGS[1]; T=parse(Int,ARGS[2]); out=abspath(ARGS[3]); mkpath(out); solvers=split(ARGS[4],',')
     d=deserialize(joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls"))
     apply_review_cb!(d,system)
-    println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T)
+    println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T," eta=",sc_eta())
+    "gurobi" in solvers && println("CONIC_GUROBI version=",join(let a=Ref{Cint}(),b=Ref{Cint}(),c=Ref{Cint}(); Main.Gurobi.GRBversion(a,b,c); (a[],b[],c[]) end,'.'))
     rows=String[]
     for name in solvers
         if name=="ipopt"

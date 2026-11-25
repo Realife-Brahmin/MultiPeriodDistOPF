@@ -41,6 +41,16 @@ if [[ ${SC_STAGE_SOLVER:-ipopt} != ipopt ]]; then
  mkdir -p "$OUT/central_conic"
  julia --startup-file=no --project="$PROJECT" "$P/conic_baseline.jl" "$SYS" "$T" "$OUT/central_conic" "$SC_STAGE_SOLVER" > "$OUT/central_conic/solve.log" 2> "$OUT/central_conic/solve.err"
  grep -E "^CONIC" "$OUT/central_conic/solve.log" || true
+ # SC_G14=1 (Gurobi only): the same centralized solve with Gurobi 14 on the same node, in
+ # conic_env_g14 (Gurobi.jl patched for 14, ~/opt/gurobi14_env/README.txt) and the user's
+ # WLS licence (two sessions, so centralized only; tADMM keeps the site Gurobi 13).
+ if [[ $SC_STAGE_SOLVER == gurobi && ${SC_G14:-0} == 1 ]]; then
+  mkdir -p "$OUT/central_g14"
+  ( export GUROBI_HOME=$HOME/opt/gurobi1400/linux64 GRB_LICENSE_FILE=$HOME/gurobi.lic
+    export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$LD_LIBRARY_PATH
+    julia --startup-file=no --project="$P/conic_env_g14" "$P/conic_baseline.jl" "$SYS" "$T" "$OUT/central_g14" gurobi > "$OUT/central_g14/solve.log" 2> "$OUT/central_g14/solve.err" ) || echo "G14: failed, see central_g14/solve.err"
+  grep -E "^CONIC" "$OUT/central_g14/solve.log" | sed "s/^/G14 /" || true
+ fi
 fi
 julia --threads="$JT" --startup-file=no --project="$PROJECT" "$P/$DRIVER" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
