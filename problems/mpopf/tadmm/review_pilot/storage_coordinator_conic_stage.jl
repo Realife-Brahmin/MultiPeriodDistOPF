@@ -19,7 +19,7 @@ function stage_optimizer(;threads=1)
             "MSK_DPAR_INTPNT_QO_TOL_REL_GAP"=>tol,"MSK_DPAR_INTPNT_QO_TOL_PFEAS"=>tol,"MSK_DPAR_INTPNT_QO_TOL_DFEAS"=>tol)
     elseif SC_STAGE_SOLVER=="gurobi"
         return optimizer_with_attributes(Main.Gurobi.Optimizer,"OutputFlag"=>0,"Threads"=>threads,"Method"=>2,"Crossover"=>0,
-            "BarConvTol"=>tol,"BarQCPConvTol"=>tol)
+            "BarConvTol"=>tol,"BarQCPConvTol"=>tol,("FeasibilityTol"=>parse(Float64,ENV["CONIC_FEASTOL"]) for _ in 1:haskey(ENV,"CONIC_FEASTOL"))...)
     elseif SC_STAGE_SOLVER=="clarabel"
         return optimizer_with_attributes(Main.Clarabel.Optimizer,"verbose"=>false,"max_threads"=>threads,
             "tol_gap_abs"=>tol,"tol_gap_rel"=>tol,"tol_feas"=>tol,"max_iter"=>500)

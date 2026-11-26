@@ -83,7 +83,10 @@ function optimizer_for(name)
             "tol_feas"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"max_iter"=>500)
     elseif name=="gurobi"
         return optimizer_with_attributes(Main.Gurobi.Optimizer,"OutputFlag"=>0,"Threads"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
-            "Method"=>2,"Crossover"=>0,"BarConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"BarQCPConvTol"=>parse(Float64,get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))))
+            "Method"=>2,"Crossover"=>0,"BarConvTol"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"BarQCPConvTol"=>parse(Float64,get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))),
+            # CONIC_FEASTOL: Gurobi's primal feasibility tolerance (default 1e-6), which is what
+            # bounds the violation of a quadratic constraint (SC_CONIC_CONE=quad)
+            ("FeasibilityTol"=>parse(Float64,ENV["CONIC_FEASTOL"]) for _ in 1:haskey(ENV,"CONIC_FEASTOL"))...)
     elseif name=="mosek"
         return optimizer_with_attributes(Main.MosekTools.Optimizer,"QUIET"=>true,"MSK_IPAR_NUM_THREADS"=>parse(Int,get(ENV,"CONIC_THREADS","1")),
             "MSK_DPAR_INTPNT_CO_TOL_REL_GAP"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),"MSK_DPAR_INTPNT_CO_TOL_PFEAS"=>parse(Float64,get(ENV,"CONIC_TOL","1e-8")),
@@ -97,7 +100,7 @@ function conic_main()
     d=deserialize(joinpath(SHARED,"..","..","results","network_filterddp","network_data_$(system)_T$(T)_periodic.jls"))
     apply_review_cb!(d,system)
     println("CONIC_HOST host=",gethostname()," time=",now()," julia=",VERSION," system=",system," T=",T," eta=",sc_eta(),
-        " screen=",get(ENV,"CONIC_SCREEN","0")," tol=",get(ENV,"CONIC_TOL","1e-8")," qcptol=",get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))," cone=",get(ENV,"SC_CONIC_CONE","rsoc"))
+        " screen=",get(ENV,"CONIC_SCREEN","0")," tol=",get(ENV,"CONIC_TOL","1e-8")," qcptol=",get(ENV,"CONIC_QCPTOL",get(ENV,"CONIC_TOL","1e-8"))," cone=",get(ENV,"SC_CONIC_CONE","rsoc")," feastol=",get(ENV,"CONIC_FEASTOL","default"))
     "gurobi" in solvers && println("CONIC_GUROBI version=",join(let a=Ref{Cint}(),b=Ref{Cint}(),c=Ref{Cint}(); Main.Gurobi.GRBversion(a,b,c); (a[],b[],c[]) end,'.'))
     rows=String[]
     for name in solvers

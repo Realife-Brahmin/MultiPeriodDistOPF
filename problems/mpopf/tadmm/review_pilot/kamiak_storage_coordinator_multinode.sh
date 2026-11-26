@@ -41,7 +41,16 @@ export PATH="$C/source/$P/slurm/bin:$PATH"
 { hostname; date -Is; lscpu; taskset -pc $$; scontrol show job "$SLURM_JOB_ID"; env | grep -E '^(OMP_|OPENBLAS_|JULIA_|TADMM_|SC_|SLURM_N|SLURM_JOB_N)'; } > "$OUT/allocation.txt"
 sha256sum "$P"/storage_coordinator*.jl "$P/model.jl" "$LIB" "problems/mpopf/spar_ddp/results/network_filterddp/network_data_${SYS}_T${T}_periodic.jls" > "$OUT/sources.sha256"
 LAST=$(python3 -c 'import os; print(max(os.sched_getaffinity(0)))')
-julia --startup-file=no --project="$P" "$P/storage_coordinator_lean.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
+# SC_STAGE_SOLVER=mosek|gurobi: tADMM's own solves with that conic solver (project conic_env,
+# first in the load path so the workers find it too), after the centralized solve with it.
+PROJECT=$P
+if [[ ${SC_STAGE_SOLVER:-ipopt} != ipopt ]]; then
+ PROJECT=$P/conic_env; export JULIA_LOAD_PATH="$C/source/$P/conic_env:$JULIA_LOAD_PATH"
+ mkdir -p "$OUT/central_conic"
+ julia --startup-file=no --project="$PROJECT" "$P/conic_baseline.jl" "$SYS" "$T" "$OUT/central_conic" "$SC_STAGE_SOLVER" > "$OUT/central_conic/solve.log" 2> "$OUT/central_conic/solve.err"
+ grep -E "^CONIC" "$OUT/central_conic/solve.log" || true
+fi
+julia --startup-file=no --project="$PROJECT" "$P/storage_coordinator_lean.jl" "$SYS" "$T" "$OUT" > "$OUT/solve.log" 2> "$OUT/solve.err" &
 PID=$!
 taskset -c "$LAST" python3 "$P/sample_memory.py" sample "$PID" "$OUT/memory_samples.csv" "${SC_SAMPLE_S:-2}" &
 # One sampler per node, started by the first worker task on that node (worker_slurm.sh):
