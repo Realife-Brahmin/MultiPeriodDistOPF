@@ -1,0 +1,21 @@
+QUIET_WAIT waited_s=18 other_cores=0.77 timed_out=0
+ieee2522C_1ph diag: n=23691 nnz(K)=96025 rhs_cols=250 repeats=9 julia_threads=2
+  UMFPACK ldiv! (baseline) solve   0.1025 s  res 5.10e-15
+  factor extraction (L, U, p, q, Rs): 0.0028 s   nnz(L)+nnz(U)=215030
+  blocked          w=    1  solve   0.2301 s  +extract =   0.2330 s  speedup  0.44x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=    4  solve   0.1084 s  +extract =   0.1112 s  speedup  0.92x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=    8  solve   0.0743 s  +extract =   0.0772 s  speedup  1.33x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=   16  solve   0.0508 s  +extract =   0.0536 s  speedup  1.91x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=   32  solve   0.0530 s  +extract =   0.0559 s  speedup  1.83x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=   64  solve   0.0660 s  +extract =   0.0689 s  speedup  1.49x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=  128  solve   0.0691 s  +extract =   0.0720 s  speedup  1.42x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked          w=  250  solve   0.0944 s  +extract =   0.0972 s  speedup  1.05x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=    1  solve   0.1763 s  +extract =   0.1792 s  speedup  0.57x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=    4  solve   0.0857 s  +extract =   0.0886 s  speedup  1.16x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=    8  solve   0.0688 s  +extract =   0.0717 s  speedup  1.43x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=   16  solve   0.0535 s  +extract =   0.0563 s  speedup  1.82x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=   32  solve   0.0493 s  +extract =   0.0522 s  speedup  1.97x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=   64  solve   0.0536 s  +extract =   0.0565 s  speedup  1.82x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=  128  solve   0.0630 s  +extract =   0.0658 s  speedup  1.56x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+  blocked_threaded w=  250  solve   0.0982 s  +extract =   0.1011 s  speedup  1.01x  res 4.85e-15  max|dX|/max|X| 5.5e-14
+wrote ddp/results/kkt_ordering/blocked/blocked_ieee2522C_1ph_diag_t2.csv  finished=2026-09-25T19:07:03.790

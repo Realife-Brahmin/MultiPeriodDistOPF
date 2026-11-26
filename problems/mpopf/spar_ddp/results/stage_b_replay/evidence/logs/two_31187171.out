@@ -1,0 +1,872 @@
+2026-10-14T21:08:51-07:00
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      1
+Core(s) per socket:                      32
+Socket(s):                               2
+Stepping:                                8
+CPU(s) scaling MHz:                      87%
+CPU max MHz:                             4000.0000
+CPU min MHz:                             800.0000
+BogoMIPS:                                4000.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                128 MiB (64 instances)
+L3 cache:                                120 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsx async abort:           Not affected
+JobId=31187171 JobName=stageB_two
+   UserId=aryan.jha(9254) GroupId=its_p_sys_ur_kam-dubey(7274) MCS_label=N/A
+   Priority=51 Nice=0 Account=dubey QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:01 TimeLimit=00:20:00 TimeMin=N/A
+   SubmitTime=2026-10-14T20:57:08 EligibleTime=2026-10-14T21:08:40
+   StartTime=2026-10-14T21:08:50 EndTime=2026-10-14T21:28:50 Deadline=N/A
+   PreemptTime=None SuspendTime=None SecsPreSuspend=0
+   LastSchedEval=2026-10-14T21:08:50
+   Partition=kamiak AllocNode:Sid=login-p3n01:3087361
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn[162-163]
+   BatchHost=cn162
+   NumNodes=2 NumCPUs=128 NumTasks=128 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=128,mem=1200G,node=2,billing=128
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=1 MinMemoryNode=600G MinTmpDiskNode=0
+   Features=sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64 DelayBoot=00:00:00
+   Gres=(null) Reservation=(null)
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/run_replay.sh 1
+   WorkDir=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15
+   StdErr=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/logs/two_31187171.err
+   StdIn=/dev/null
+   StdOut=/home/aryan.jha/kamiak_jobs/stage_b_replay_oct15/logs/two_31187171.out
+   Power=
+
+julia_worker:9053#10.110.4.183
+julia_worker:9057#10.110.4.183
+julia_worker:9048#10.110.4.183
+julia_worker:9052#10.110.4.183
+julia_worker:9091#10.110.4.183
+julia_worker:9075#10.110.4.183
+julia_worker:9070#10.110.4.183
+julia_worker:9062#10.110.4.183
+julia_worker:9073#10.110.4.183
+julia_worker:9049#10.110.4.183
+julia_worker:9050#10.110.4.183
+julia_worker:9042#10.110.4.183
+julia_worker:9087#10.110.4.183
+julia_worker:9096#10.110.4.183
+julia_worker:9079#10.110.4.183
+julia_worker:9083#10.110.4.183
+julia_worker:9077#10.110.4.183
+julia_worker:9055#10.110.4.183
+julia_worker:9036#10.110.4.183
+julia_worker:9082#10.110.4.183
+julia_worker:9060#10.110.4.183
+julia_worker:9072#10.110.4.183
+julia_worker:9058#10.110.4.183
+julia_worker:9059#10.110.4.183
+julia_worker:9061#10.110.4.183
+julia_worker:9043#10.110.4.183
+julia_worker:9074#10.110.4.183
+julia_worker:9037#10.110.4.183
+julia_worker:9095#10.110.4.183
+julia_worker:9084#10.110.4.183
+julia_worker:9067#10.110.4.183
+julia_worker:9038#10.110.4.183
+REPLAY_PLACEMENT Dict(5 => "cn162", 56 => "cn162", 35 => "cn162", 55 => "cn162", 60 => "cn162", 30 => "cn162", 32 => "cn162", 6 => "cn162", 67 => "cn163", 45 => "cn162", 73 => "cn163", 64 => "cn162", 90 => "cn163", 4 => "cn162", 13 => "cn162", 54 => "cn162", 63 => "cn162", 86 => "cn163", 91 => "cn163", 62 => "cn162", 58 => "cn162", 52 => "cn162", 12 => "cn162", 28 => "cn162", 75 => "cn163", 23 => "cn162", 92 => "cn163", 41 => "cn162", 43 => "cn162", 11 => "cn162", 36 => "cn162", 68 => "cn163", 69 => "cn163", 82 => "cn163", 85 => "cn163", 39 => "cn162", 84 => "cn163", 77 => "cn163", 7 => "cn162", 25 => "cn162", 95 => "cn163", 71 => "cn163", 66 => "cn163", 76 => "cn163", 34 => "cn162", 50 => "cn162", 59 => "cn162", 93 => "cn163", 2 => "cn162", 10 => "cn162", 18 => "cn162", 26 => "cn162", 27 => "cn162", 42 => "cn162", 87 => "cn163", 79 => "cn163", 16 => "cn162", 20 => "cn162", 81 => "cn163", 19 => "cn162", 49 => "cn162", 44 => "cn162", 9 => "cn162", 31 => "cn162", 74 => "cn163", 61 => "cn162", 29 => "cn162", 94 => "cn163", 46 => "cn162", 57 => "cn162", 70 => "cn163", 21 => "cn162", 38 => "cn162", 88 => "cn163", 78 => "cn163", 72 => "cn163", 24 => "cn162", 8 => "cn162", 17 => "cn162", 37 => "cn162", 53 => "cn162", 22 => "cn162", 47 => "cn162", 83 => "cn163", 89 => "cn163", 14 => "cn162", 3 => "cn162", 80 => "cn163", 96 => "cn163", 51 => "cn162", 33 => "cn162", 40 => "cn162", 48 => "cn162", 15 => "cn162", 65 => "cn162", 97 => "cn163")
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=1 tasks=48 wall_s=4.762579 compute_sum_s=7.703888 fetch_sum_s=84.146745 gc_sum_s=0.000000 busiest_worker_s=6.114672 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=2 tasks=48 wall_s=3.356087 compute_sum_s=7.631559 fetch_sum_s=41.669779 gc_sum_s=0.000000 busiest_worker_s=3.915965 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=3 tasks=48 wall_s=3.146402 compute_sum_s=7.577966 fetch_sum_s=48.959499 gc_sum_s=0.000000 busiest_worker_s=4.245651 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=4 tasks=48 wall_s=3.090283 compute_sum_s=7.612620 fetch_sum_s=54.516117 gc_sum_s=0.000000 busiest_worker_s=4.457844 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+Master process (id 1) could not connect within 60.0 seconds.
+exiting.
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=5 tasks=48 wall_s=3.087302 compute_sum_s=7.620062 fetch_sum_s=58.779143 gc_sum_s=0.000000 busiest_worker_s=4.535146 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=6 tasks=64 wall_s=2.684211 compute_sum_s=7.518796 fetch_sum_s=13.634535 gc_sum_s=0.000000 busiest_worker_s=0.846599 scheduling_wait_est_s=1.837612 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=0 round=7 tasks=64 wall_s=0.529211 compute_sum_s=4.765259 fetch_sum_s=21.034189 gc_sum_s=0.000000 busiest_worker_s=0.957759 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=0 wall_s=22.011748 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=1 tasks=48 wall_s=1.240574 compute_sum_s=7.681183 fetch_sum_s=30.511335 gc_sum_s=0.000000 busiest_worker_s=2.787988 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=2 tasks=48 wall_s=0.881441 compute_sum_s=7.666051 fetch_sum_s=14.647991 gc_sum_s=0.000000 busiest_worker_s=1.830897 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=3 tasks=48 wall_s=0.788506 compute_sum_s=7.640548 fetch_sum_s=13.113462 gc_sum_s=0.000000 busiest_worker_s=1.710048 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=4 tasks=48 wall_s=0.844002 compute_sum_s=7.690567 fetch_sum_s=14.126115 gc_sum_s=0.000000 busiest_worker_s=1.782916 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=5 tasks=48 wall_s=0.819920 compute_sum_s=7.628893 fetch_sum_s=14.631057 gc_sum_s=0.000000 busiest_worker_s=1.765733 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=6 tasks=64 wall_s=0.729706 compute_sum_s=7.539195 fetch_sum_s=12.744528 gc_sum_s=0.000000 busiest_worker_s=0.803354 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=1 round=7 tasks=64 wall_s=0.456276 compute_sum_s=4.783170 fetch_sum_s=15.646715 gc_sum_s=0.000000 busiest_worker_s=0.802057 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=1 wall_s=5.762826 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=1 tasks=48 wall_s=1.260905 compute_sum_s=7.688790 fetch_sum_s=30.840405 gc_sum_s=0.000000 busiest_worker_s=2.808365 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=2 tasks=48 wall_s=0.861415 compute_sum_s=7.656178 fetch_sum_s=14.098663 gc_sum_s=0.000000 busiest_worker_s=1.808462 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=3 tasks=48 wall_s=0.796659 compute_sum_s=7.646353 fetch_sum_s=13.150697 gc_sum_s=0.000000 busiest_worker_s=1.722801 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=4 tasks=48 wall_s=0.826476 compute_sum_s=7.681551 fetch_sum_s=13.727570 gc_sum_s=0.000000 busiest_worker_s=1.759303 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=5 tasks=48 wall_s=0.818881 compute_sum_s=7.624627 fetch_sum_s=14.886028 gc_sum_s=0.000000 busiest_worker_s=1.773427 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=6 tasks=64 wall_s=0.729317 compute_sum_s=7.542607 fetch_sum_s=12.755883 gc_sum_s=0.000000 busiest_worker_s=0.803436 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=2 round=7 tasks=64 wall_s=0.455373 compute_sum_s=4.786105 fetch_sum_s=15.664257 gc_sum_s=0.000000 busiest_worker_s=0.802247 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=2 wall_s=5.751341 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=1 tasks=48 wall_s=1.256264 compute_sum_s=7.700248 fetch_sum_s=30.774969 gc_sum_s=0.000000 busiest_worker_s=2.812227 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=2 tasks=48 wall_s=0.870909 compute_sum_s=7.658278 fetch_sum_s=14.289806 gc_sum_s=0.000000 busiest_worker_s=1.823645 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=3 tasks=48 wall_s=0.791826 compute_sum_s=7.638399 fetch_sum_s=13.068490 gc_sum_s=0.000000 busiest_worker_s=1.717750 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=4 tasks=48 wall_s=0.859419 compute_sum_s=7.677601 fetch_sum_s=14.417934 gc_sum_s=0.000000 busiest_worker_s=1.817844 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=5 tasks=48 wall_s=0.823421 compute_sum_s=7.625161 fetch_sum_s=14.890000 gc_sum_s=0.000000 busiest_worker_s=1.774751 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=6 tasks=64 wall_s=0.728974 compute_sum_s=7.545832 fetch_sum_s=12.767321 gc_sum_s=0.000000 busiest_worker_s=0.803005 scheduling_wait_est_s=0.000000 bytes=774563520 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=32 rep=3 round=7 tasks=64 wall_s=0.454644 compute_sum_s=4.788716 fetch_sum_s=15.689846 gc_sum_s=0.000000 busiest_worker_s=0.811443 scheduling_wait_est_s=0.000000 bytes=516544320 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=32 rep=3 wall_s=5.787774 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=32 median_s=5.762826 min_s=5.751341 max_s=5.787774
+UNHANDLED TASK ERROR: On worker 1:
+On worker 88:
+peer 24 has not connected to 88
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 83:
+peer 19 has not connected to 83
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 87:
+peer 23 has not connected to 87
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 89:
+peer 25 has not connected to 89
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 82:
+peer 18 has not connected to 82
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 84:
+peer 20 has not connected to 84
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 85:
+peer 21 has not connected to 85
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=1 tasks=48 wall_s=4.869687 compute_sum_s=7.713940 fetch_sum_s=47.986214 gc_sum_s=0.000000 busiest_worker_s=4.849228 scheduling_wait_est_s=0.020459 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=2 tasks=48 wall_s=2.992757 compute_sum_s=7.641777 fetch_sum_s=18.185690 gc_sum_s=0.000000 busiest_worker_s=2.463765 scheduling_wait_est_s=0.528992 bytes=1199324160 cross_node_tasks=24
+UNHANDLED TASK ERROR: On worker 1:
+On worker 20:
+peer 18 has not connected to 20
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 20:
+peer 19 has not connected to 20
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 24:
+peer 23 has not connected to 24
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=3 tasks=48 wall_s=2.908744 compute_sum_s=7.622255 fetch_sum_s=21.987306 gc_sum_s=0.000000 busiest_worker_s=2.816533 scheduling_wait_est_s=0.092212 bytes=1199324160 cross_node_tasks=24
+UNHANDLED TASK ERROR: On worker 1:
+On worker 22:
+peer 19 has not connected to 22
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 22:
+peer 21 has not connected to 22
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+UNHANDLED TASK ERROR: On worker 1:
+On worker 22:
+peer 20 has not connected to 22
+Stacktrace:
+ [1] error
+   @ ./error.jl:44
+ [2] wait_for_conn
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:195
+ [3] #exec_conn_func##0
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:183
+ [4] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:184
+ [5] exec_conn_func
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:178
+ [6] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [7] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [8] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] #remotecall_fetch#109
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] #check_worker_state##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+ [5] #handle_msg##4
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+ [6] run_work_thunk
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:70
+ [7] #handle_msg##2
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/process_messages.jl:287
+Stacktrace:
+ [1] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Any}; kwargs::@Kwargs{})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:465
+ [2] remotecall_fetch(::Function, ::Distributed.Worker, ::Int64, ::Vararg{Int64})
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:454
+ [3] remotecall_fetch
+   @ ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/remotecall.jl:492 [inlined]
+ [4] (::Distributed.var"#check_worker_state##2#check_worker_state##3"{Distributed.Worker})()
+   @ Distributed ~/opt/julia-1.12.7/share/julia/stdlib/v1.12/Distributed/src/cluster.jl:169
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=4 tasks=48 wall_s=2.892821 compute_sum_s=7.667924 fetch_sum_s=24.645015 gc_sum_s=0.000000 busiest_worker_s=2.904094 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=5 tasks=48 wall_s=2.704832 compute_sum_s=7.671393 fetch_sum_s=26.951239 gc_sum_s=0.000000 busiest_worker_s=1.502921 scheduling_wait_est_s=1.201911 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=6 tasks=64 wall_s=0.581246 compute_sum_s=7.567659 fetch_sum_s=8.234528 gc_sum_s=0.000000 busiest_worker_s=0.640552 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=0 round=7 tasks=64 wall_s=0.491746 compute_sum_s=4.806098 fetch_sum_s=16.182564 gc_sum_s=0.000000 busiest_worker_s=0.843085 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=0 wall_s=17.444786 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=1 tasks=48 wall_s=1.180277 compute_sum_s=7.799345 fetch_sum_s=32.742884 gc_sum_s=0.000000 busiest_worker_s=2.020703 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=2 tasks=48 wall_s=0.707379 compute_sum_s=7.691517 fetch_sum_s=10.750826 gc_sum_s=0.000000 busiest_worker_s=1.145687 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=3 tasks=48 wall_s=0.717970 compute_sum_s=7.721950 fetch_sum_s=10.992438 gc_sum_s=0.000000 busiest_worker_s=1.150563 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=4 tasks=48 wall_s=0.680476 compute_sum_s=7.708459 fetch_sum_s=10.458493 gc_sum_s=0.000000 busiest_worker_s=1.120435 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=5 tasks=48 wall_s=0.673771 compute_sum_s=7.834454 fetch_sum_s=11.261213 gc_sum_s=0.000000 busiest_worker_s=0.672745 scheduling_wait_est_s=0.001025 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=6 tasks=64 wall_s=0.570453 compute_sum_s=7.556186 fetch_sum_s=8.314909 gc_sum_s=0.000000 busiest_worker_s=0.645057 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=1 round=7 tasks=64 wall_s=0.409744 compute_sum_s=4.802861 fetch_sum_s=11.843175 gc_sum_s=0.000000 busiest_worker_s=0.738272 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=1 wall_s=4.942567 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=1 tasks=48 wall_s=1.181373 compute_sum_s=7.776956 fetch_sum_s=32.751542 gc_sum_s=0.000000 busiest_worker_s=2.003141 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=2 tasks=48 wall_s=0.709241 compute_sum_s=7.707802 fetch_sum_s=10.774285 gc_sum_s=0.000000 busiest_worker_s=1.158041 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=3 tasks=48 wall_s=0.717814 compute_sum_s=7.711929 fetch_sum_s=10.886055 gc_sum_s=0.000000 busiest_worker_s=1.149596 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=4 tasks=48 wall_s=0.682110 compute_sum_s=7.703792 fetch_sum_s=10.508533 gc_sum_s=0.000000 busiest_worker_s=1.123460 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=5 tasks=48 wall_s=0.672254 compute_sum_s=7.844987 fetch_sum_s=11.167759 gc_sum_s=0.000000 busiest_worker_s=0.671249 scheduling_wait_est_s=0.001005 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=6 tasks=64 wall_s=0.573380 compute_sum_s=7.547435 fetch_sum_s=8.355921 gc_sum_s=0.000000 busiest_worker_s=0.648111 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=2 round=7 tasks=64 wall_s=0.420197 compute_sum_s=4.807299 fetch_sum_s=11.866047 gc_sum_s=0.000000 busiest_worker_s=0.759331 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=2 wall_s=4.958850 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=1 tasks=48 wall_s=1.179844 compute_sum_s=7.812171 fetch_sum_s=32.735241 gc_sum_s=0.000000 busiest_worker_s=2.011579 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=48
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=2 tasks=48 wall_s=0.710811 compute_sum_s=7.695942 fetch_sum_s=10.778664 gc_sum_s=0.000000 busiest_worker_s=1.153908 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=3 tasks=48 wall_s=0.714389 compute_sum_s=7.736565 fetch_sum_s=10.880571 gc_sum_s=0.000000 busiest_worker_s=1.150383 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=4 tasks=48 wall_s=0.684795 compute_sum_s=7.709889 fetch_sum_s=10.545454 gc_sum_s=0.000000 busiest_worker_s=1.125405 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=5 tasks=48 wall_s=0.672190 compute_sum_s=7.838379 fetch_sum_s=11.155870 gc_sum_s=0.000000 busiest_worker_s=0.671155 scheduling_wait_est_s=0.001034 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=6 tasks=64 wall_s=0.566923 compute_sum_s=7.562688 fetch_sum_s=8.264183 gc_sum_s=0.000000 busiest_worker_s=0.641823 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=48 rep=3 round=7 tasks=64 wall_s=0.414031 compute_sum_s=4.801629 fetch_sum_s=11.798895 gc_sum_s=0.000000 busiest_worker_s=0.747137 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=48 rep=3 wall_s=4.945466 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=48 median_s=4.945466 min_s=4.942567 max_s=4.958850
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=1 tasks=48 wall_s=3.707132 compute_sum_s=7.721122 fetch_sum_s=24.330625 gc_sum_s=0.000000 busiest_worker_s=1.396226 scheduling_wait_est_s=2.310906 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=2 tasks=48 wall_s=2.790967 compute_sum_s=7.705467 fetch_sum_s=9.965508 gc_sum_s=0.000000 busiest_worker_s=1.138300 scheduling_wait_est_s=1.652667 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=3 tasks=48 wall_s=2.736221 compute_sum_s=7.728404 fetch_sum_s=12.307592 gc_sum_s=0.000000 busiest_worker_s=1.190069 scheduling_wait_est_s=1.546153 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=4 tasks=48 wall_s=2.744312 compute_sum_s=7.670704 fetch_sum_s=14.087131 gc_sum_s=0.000000 busiest_worker_s=1.222167 scheduling_wait_est_s=1.522145 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=5 tasks=48 wall_s=1.332159 compute_sum_s=7.657487 fetch_sum_s=26.017486 gc_sum_s=0.000000 busiest_worker_s=1.331273 scheduling_wait_est_s=0.000885 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=6 tasks=64 wall_s=0.583002 compute_sum_s=7.550175 fetch_sum_s=8.597701 gc_sum_s=0.000000 busiest_worker_s=0.657026 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=0 round=7 tasks=64 wall_s=0.527677 compute_sum_s=4.824717 fetch_sum_s=16.643447 gc_sum_s=0.000000 busiest_worker_s=0.667701 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=0 wall_s=14.424435 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=1 tasks=48 wall_s=0.825251 compute_sum_s=7.803040 fetch_sum_s=21.676601 gc_sum_s=0.000000 busiest_worker_s=0.824783 scheduling_wait_est_s=0.000467 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=2 tasks=48 wall_s=0.563154 compute_sum_s=7.814746 fetch_sum_s=5.823388 gc_sum_s=0.000000 busiest_worker_s=0.766469 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=3 tasks=48 wall_s=0.537838 compute_sum_s=7.816967 fetch_sum_s=5.801694 gc_sum_s=0.000000 busiest_worker_s=0.730565 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=4 tasks=48 wall_s=0.513438 compute_sum_s=7.754139 fetch_sum_s=6.294188 gc_sum_s=0.000000 busiest_worker_s=0.695029 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=5 tasks=48 wall_s=0.515243 compute_sum_s=7.750289 fetch_sum_s=7.209807 gc_sum_s=0.000000 busiest_worker_s=0.721560 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=6 tasks=64 wall_s=0.582889 compute_sum_s=7.545948 fetch_sum_s=8.571996 gc_sum_s=0.000000 busiest_worker_s=0.657690 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=1 round=7 tasks=64 wall_s=0.385970 compute_sum_s=4.919341 fetch_sum_s=12.620378 gc_sum_s=0.000000 busiest_worker_s=0.639293 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=1 wall_s=3.926407 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=1 tasks=48 wall_s=0.824811 compute_sum_s=7.792221 fetch_sum_s=21.641046 gc_sum_s=0.000000 busiest_worker_s=0.824105 scheduling_wait_est_s=0.000706 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=2 tasks=48 wall_s=0.568219 compute_sum_s=7.771184 fetch_sum_s=5.849136 gc_sum_s=0.000000 busiest_worker_s=0.758385 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=3 tasks=48 wall_s=0.535897 compute_sum_s=7.783734 fetch_sum_s=5.783129 gc_sum_s=0.000000 busiest_worker_s=0.725254 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=4 tasks=48 wall_s=0.520324 compute_sum_s=7.770953 fetch_sum_s=6.381368 gc_sum_s=0.000000 busiest_worker_s=0.712643 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=5 tasks=48 wall_s=0.514832 compute_sum_s=7.746295 fetch_sum_s=7.236740 gc_sum_s=0.000000 busiest_worker_s=0.725463 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=6 tasks=64 wall_s=0.581848 compute_sum_s=7.540605 fetch_sum_s=8.570325 gc_sum_s=0.000000 busiest_worker_s=0.656971 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=2 round=7 tasks=64 wall_s=0.385641 compute_sum_s=4.925187 fetch_sum_s=12.604979 gc_sum_s=0.000000 busiest_worker_s=0.602332 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=2 wall_s=3.934174 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=1 tasks=48 wall_s=0.824196 compute_sum_s=7.798336 fetch_sum_s=21.678175 gc_sum_s=0.000000 busiest_worker_s=0.823624 scheduling_wait_est_s=0.000573 bytes=1199324160 cross_node_tasks=47
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=2 tasks=48 wall_s=0.570134 compute_sum_s=7.816993 fetch_sum_s=5.857670 gc_sum_s=0.000000 busiest_worker_s=0.764415 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=3 tasks=48 wall_s=0.540707 compute_sum_s=7.799153 fetch_sum_s=5.763643 gc_sum_s=0.000000 busiest_worker_s=0.730013 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=4 tasks=48 wall_s=0.520358 compute_sum_s=7.758518 fetch_sum_s=6.346539 gc_sum_s=0.000000 busiest_worker_s=0.710225 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=5 tasks=48 wall_s=0.524682 compute_sum_s=7.761000 fetch_sum_s=7.387875 gc_sum_s=0.000000 busiest_worker_s=0.735350 scheduling_wait_est_s=0.000000 bytes=1199324160 cross_node_tasks=24
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=6 tasks=64 wall_s=0.581552 compute_sum_s=7.545347 fetch_sum_s=8.563918 gc_sum_s=0.000000 busiest_worker_s=0.656092 scheduling_wait_est_s=0.000000 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=63 rep=3 round=7 tasks=64 wall_s=0.385724 compute_sum_s=4.922929 fetch_sum_s=12.656192 gc_sum_s=0.000000 busiest_worker_s=0.599992 scheduling_wait_est_s=0.000000 bytes=524875680 cross_node_tasks=33
+REPLAY_PASS nodes=2 shared=0 workers=63 rep=3 wall_s=3.950085 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=63 median_s=3.934174 min_s=3.926407 max_s=3.950085
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=1 tasks=48 wall_s=3.745419 compute_sum_s=7.848732 fetch_sum_s=35.828374 gc_sum_s=0.000000 busiest_worker_s=1.356982 scheduling_wait_est_s=2.388436 bytes=1199324160 cross_node_tasks=32
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=2 tasks=48 wall_s=2.730336 compute_sum_s=7.767099 fetch_sum_s=14.277934 gc_sum_s=0.000000 busiest_worker_s=1.168602 scheduling_wait_est_s=1.561734 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=3 tasks=48 wall_s=2.738451 compute_sum_s=7.739864 fetch_sum_s=17.453551 gc_sum_s=0.000000 busiest_worker_s=1.152754 scheduling_wait_est_s=1.585696 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=4 tasks=48 wall_s=2.720411 compute_sum_s=7.778186 fetch_sum_s=19.184145 gc_sum_s=0.000000 busiest_worker_s=1.165212 scheduling_wait_est_s=1.555199 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=5 tasks=48 wall_s=2.719254 compute_sum_s=7.742236 fetch_sum_s=20.842483 gc_sum_s=0.000000 busiest_worker_s=1.190463 scheduling_wait_est_s=1.528790 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=6 tasks=64 wall_s=2.540865 compute_sum_s=7.667486 fetch_sum_s=6.293899 gc_sum_s=0.000000 busiest_worker_s=0.507722 scheduling_wait_est_s=2.033143 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=0 round=7 tasks=64 wall_s=2.618019 compute_sum_s=4.894285 fetch_sum_s=68.744405 gc_sum_s=0.000000 busiest_worker_s=1.250015 scheduling_wait_est_s=1.368004 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=0 wall_s=19.816427 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=1 tasks=48 wall_s=0.841717 compute_sum_s=7.994627 fetch_sum_s=18.298142 gc_sum_s=0.000000 busiest_worker_s=0.841195 scheduling_wait_est_s=0.000522 bytes=1199324160 cross_node_tasks=32
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=2 tasks=48 wall_s=0.500903 compute_sum_s=7.889133 fetch_sum_s=4.827865 gc_sum_s=0.000000 busiest_worker_s=0.499974 scheduling_wait_est_s=0.000928 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=3 tasks=48 wall_s=0.502256 compute_sum_s=7.863873 fetch_sum_s=5.079562 gc_sum_s=0.000000 busiest_worker_s=0.501651 scheduling_wait_est_s=0.000605 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=4 tasks=48 wall_s=0.502757 compute_sum_s=7.894765 fetch_sum_s=5.366436 gc_sum_s=0.000000 busiest_worker_s=0.502046 scheduling_wait_est_s=0.000711 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=5 tasks=48 wall_s=0.503081 compute_sum_s=7.837317 fetch_sum_s=6.291514 gc_sum_s=0.000000 busiest_worker_s=0.502130 scheduling_wait_est_s=0.000951 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=6 tasks=64 wall_s=0.510899 compute_sum_s=7.670750 fetch_sum_s=6.251876 gc_sum_s=0.000000 busiest_worker_s=0.509881 scheduling_wait_est_s=0.001018 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=1 round=7 tasks=64 wall_s=0.306540 compute_sum_s=4.875787 fetch_sum_s=7.419085 gc_sum_s=0.000000 busiest_worker_s=0.305521 scheduling_wait_est_s=0.001019 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=1 wall_s=3.672043 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=1 tasks=48 wall_s=0.842636 compute_sum_s=7.966022 fetch_sum_s=18.215091 gc_sum_s=0.000000 busiest_worker_s=0.841918 scheduling_wait_est_s=0.000719 bytes=1199324160 cross_node_tasks=32
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=2 tasks=48 wall_s=0.501651 compute_sum_s=7.867215 fetch_sum_s=4.804451 gc_sum_s=0.000000 busiest_worker_s=0.500864 scheduling_wait_est_s=0.000787 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=3 tasks=48 wall_s=0.505003 compute_sum_s=7.847112 fetch_sum_s=5.131293 gc_sum_s=0.000000 busiest_worker_s=0.504368 scheduling_wait_est_s=0.000636 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=4 tasks=48 wall_s=0.504607 compute_sum_s=7.921703 fetch_sum_s=5.346401 gc_sum_s=0.000000 busiest_worker_s=0.503914 scheduling_wait_est_s=0.000693 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=5 tasks=48 wall_s=0.503767 compute_sum_s=7.835727 fetch_sum_s=6.269030 gc_sum_s=0.000000 busiest_worker_s=0.502895 scheduling_wait_est_s=0.000871 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=6 tasks=64 wall_s=0.507103 compute_sum_s=7.677677 fetch_sum_s=6.239261 gc_sum_s=0.000000 busiest_worker_s=0.506071 scheduling_wait_est_s=0.001032 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=2 round=7 tasks=64 wall_s=0.306319 compute_sum_s=4.889170 fetch_sum_s=7.426050 gc_sum_s=0.000000 busiest_worker_s=0.305555 scheduling_wait_est_s=0.000764 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=2 wall_s=3.674919 max_relative_error=2.977617591605e-14
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=1 tasks=48 wall_s=0.842317 compute_sum_s=7.898678 fetch_sum_s=18.231351 gc_sum_s=0.000000 busiest_worker_s=0.841665 scheduling_wait_est_s=0.000653 bytes=1199324160 cross_node_tasks=32
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=2 tasks=48 wall_s=0.504654 compute_sum_s=7.887628 fetch_sum_s=4.846302 gc_sum_s=0.000000 busiest_worker_s=0.503613 scheduling_wait_est_s=0.001042 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=3 tasks=48 wall_s=0.505505 compute_sum_s=7.860127 fetch_sum_s=5.137309 gc_sum_s=0.000000 busiest_worker_s=0.504869 scheduling_wait_est_s=0.000636 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=4 tasks=48 wall_s=0.502220 compute_sum_s=7.904159 fetch_sum_s=5.355753 gc_sum_s=0.000000 busiest_worker_s=0.501371 scheduling_wait_est_s=0.000850 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=5 tasks=48 wall_s=0.504902 compute_sum_s=7.838567 fetch_sum_s=6.329696 gc_sum_s=0.000000 busiest_worker_s=0.504001 scheduling_wait_est_s=0.000901 bytes=1199324160 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=6 tasks=64 wall_s=0.507459 compute_sum_s=7.672538 fetch_sum_s=6.244355 gc_sum_s=0.000000 busiest_worker_s=0.506501 scheduling_wait_est_s=0.000959 bytes=799549440 cross_node_tasks=16
+REPLAY_ROUND nodes=2 shared=0 workers=96 rep=3 round=7 tasks=64 wall_s=0.305947 compute_sum_s=4.888106 fetch_sum_s=7.444204 gc_sum_s=0.000000 busiest_worker_s=0.304966 scheduling_wait_est_s=0.000981 bytes=533207040 cross_node_tasks=32
+REPLAY_PASS nodes=2 shared=0 workers=96 rep=3 wall_s=3.676511 max_relative_error=2.977617591605e-14
+REPLAY_RESULT nodes=2 shared=0 workers=96 median_s=3.674919 min_s=3.672043 max_s=3.676511
+REPLAY_COMPLETE

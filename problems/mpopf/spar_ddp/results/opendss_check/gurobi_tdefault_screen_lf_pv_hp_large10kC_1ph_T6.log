@@ -1,0 +1,11 @@
+OPENDSS_CHECK gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T6 | large10kC_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 6.3e-30 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1 1002304.93 1002305.03  -0.0000  9413.328  9413.196     0.134  3.87e-09   0.9875   1.0500      0      0
+    2  812939.80  812939.45   0.0000  6146.745  6146.645     0.094  2.13e-08   0.9968   1.0500      0      0
+    3  544492.77  544492.45   0.0001  3096.639  3096.542     0.094  1.36e-08   1.0090   1.0500      0      0
+    4 1012403.70 1012403.57   0.0000  9572.557  9572.427     0.128  8.38e-09   0.9843   1.0500      0      0
+    5  966020.63  966020.49   0.0000  8717.375  8717.145     0.228  1.42e-08   0.9888   1.0500      0      0
+    6  893364.94  893364.79   0.0000  7464.082  7463.842     0.238  1.49e-08   0.9931   1.0500      0      0
+OPENDSS_SUMMARY gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T6 | import: optimizer 20926107.05 kWh, OpenDSS 20926103.15 kWh (+0.0000%) | losses: optimizer 177642.91, OpenDSS 177639.19 kWh, of which not physical 3.66 kWh
+OPENDSS_SUMMARY gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T6 | voltage: largest difference 2.13e-08 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY gurobi_tdefault_screen_lf_pv_hp_large10kC_1ph_T6 | objective: optimizer 2836588.405044, with OpenDSS import 2836587.778989 (-0.0000%) | solver-reported 2836587.591558

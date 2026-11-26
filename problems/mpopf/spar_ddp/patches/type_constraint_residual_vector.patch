@@ -1,0 +1,13 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -71,8 +71,8 @@
+             end
+             
+             if nc > 0
+                 callback_start_ns = time_ns()
+-                c = Vector(constraints.c(x, u))
++                c = Vector{T}(constraints.c(x, u))
+                 cx = _derivative_matrix(constraints.cx(x, u), nc, nx)
+                 cu = _derivative_matrix(constraints.cu(x, u), nc, nu)
+                 first_order_ns += time_ns() - callback_start_ns

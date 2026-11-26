@@ -1,0 +1,22 @@
+diff --git a/src/solver.jl b/src/solver.jl
+--- a/src/solver.jl
++++ b/src/solver.jl
+@@ -26,11 +26,17 @@ struct UpdateRule{T, nx, nu, nc, nux, ncx}
+     χu::Vector{T}
+     Σ_L::Vector{T}
+     Σ_U::Vector{T}
++    function UpdateRule{T, nx, nu, nc, nux, ncx}(α::Vector{T},
++            ψ::Vector{T}, β::Matrix{T}, ω::Matrix{T},
++            χl::Vector{T}, χu::Vector{T}, Σ_L::Vector{T},
++            Σ_U::Vector{T}) where {T, nx, nu, nc, nux, ncx}
++        new{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U)
++    end
+     function UpdateRule{T, nx, nu, nc, nux, ncx}(α::AbstractVector,
+             ψ::AbstractVector, β::AbstractMatrix, ω::AbstractMatrix,
+             χl::AbstractVector, χu::AbstractVector, Σ_L::AbstractVector,
+             Σ_U::AbstractVector) where {T, nx, nu, nc, nux, ncx}
+-        new{T, nx, nu, nc, nux, ncx}(Vector{T}(α), Vector{T}(ψ),
++        UpdateRule{T, nx, nu, nc, nux, ncx}(Vector{T}(α), Vector{T}(ψ),
+             Matrix{T}(β), Matrix{T}(ω), Vector{T}(χl), Vector{T}(χu),
+             Vector{T}(Σ_L), Vector{T}(Σ_U))
+     end

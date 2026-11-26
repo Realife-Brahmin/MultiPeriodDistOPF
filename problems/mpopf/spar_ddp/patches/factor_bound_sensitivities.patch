@@ -1,0 +1,85 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -260,14 +260,12 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
+ 
+             # update parameters of update rule for ineq. dual variables
+ 
+-            ζl =  -β .* Σ_L
+             χl = inv_ul .* μ - zl - Σ_L .* α
+ 
+-            ζu =  Σ_U .* β
+             χu = inv_uu .* μ - zu + Σ_U .* α
+ 
+             # update the update rule
+-            solver.update[t] = UpdateRule{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, ζl, ζu)
++            solver.update[t] = UpdateRule{T, nx, nu, nc, nux, ncx}(α, ψ, β, ω, χl, χu, Σ_L, Σ_U)
+ 
+             # evaluate optimality dual error
+             Lu = lu_ - zl + zu + fu' * λ
+@@ -307,7 +305,7 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx
+                 sparse_kkt ? Base.summarysize(rhs) / 2.0^20 : 0.0,
+                 sparse_kkt ? Base.summarysize(kkt_solution) / 2.0^20 : 0.0,
+                 Base.summarysize(β) / 2.0^20, Base.summarysize(ω) / 2.0^20,
+-                (Base.summarysize(ζl) + Base.summarysize(ζu)) / 2.0^20,
++                (Base.summarysize(Σ_L) + Base.summarysize(Σ_U)) / 2.0^20,
+                 Base.summarysize(V̂xx) / 2.0^20,
+                 Base.summarysize(solver.update[t]) / 2.0^20,
+                 max(Sys.maxrss() - stage_maxrss_start, 0) / 2.0^20)
+diff --git a/src/forward_pass.jl b/src/forward_pass.jl
+--- a/src/forward_pass.jl
++++ b/src/forward_pass.jl
+@@ -64,15 +64,16 @@ function rollout!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx, nu,
+         zū = solver.nominal[t].zu
+         χl = solver.update[t].χl
+         χu = solver.update[t].χu
+-        ζl = solver.update[t].ζl
+-        ζu = solver.update[t].ζu
++        Σ_L = solver.update[t].Σ_L
++        Σ_U = solver.update[t].Σ_U
+ 
+         δx = x - x̄
+ 
+-        u = ū + step_size .* α + β * δx
++        βδx = β * δx
++        u = ū + step_size .* α + βδx
+         ϕ = ϕ̄  + step_size .* ψ + ω * δx
+-        zl = zl̄ + step_size .* χl + ζl * δx
+-        zu = zū + step_size .* χu + ζu * δx
++        zl = zl̄ + step_size .* χl - Σ_L .* βδx
++        zu = zū + step_size .* χu + Σ_U .* βδx
+         
+         # update current trajectory
+         solver.current[t] = TrajectoryElement{T, nx, nu, nc}(x, u, ϕ, zl, zu)
+diff --git a/src/solver.jl b/src/solver.jl
+--- a/src/solver.jl
++++ b/src/solver.jl
+@@ -24,15 +24,15 @@ struct UpdateRule{T, nx, nu, nc, nux, ncx}
+     ω::Matrix{T}
+     χl::Vector{T}
+     χu::Vector{T}
+-    ζl::Matrix{T}
+-    ζu::Matrix{T}
++    Σ_L::Vector{T}
++    Σ_U::Vector{T}
+     function UpdateRule{T, nx, nu, nc, nux, ncx}(α::AbstractVector,
+             ψ::AbstractVector, β::AbstractMatrix, ω::AbstractMatrix,
+-            χl::AbstractVector, χu::AbstractVector, ζl::AbstractMatrix,
+-            ζu::AbstractMatrix) where {T, nx, nu, nc, nux, ncx}
++            χl::AbstractVector, χu::AbstractVector, Σ_L::AbstractVector,
++            Σ_U::AbstractVector) where {T, nx, nu, nc, nux, ncx}
+         new{T, nx, nu, nc, nux, ncx}(Vector{T}(α), Vector{T}(ψ),
+             Matrix{T}(β), Matrix{T}(ω), Vector{T}(χl), Vector{T}(χu),
+-            Matrix{T}(ζl), Matrix{T}(ζu))
++            Vector{T}(Σ_L), Vector{T}(Σ_U))
+     end
+ end
+ 
+@@ -41,6 +41,6 @@ function UpdateRule(T::T_, nx::Int, nu::Int, nc::Int) where T_
+     ncx = nc * nx
+     UpdateRule{T, nx, nu, nc, nux, ncx}(
+         zeros(T, nu), zeros(T, nc), zeros(T, nu, nx), zeros(T, nc, nx),
+-        zeros(T, nu), zeros(T, nu), zeros(T, nu, nx), zeros(T, nu, nx)
++        zeros(T, nu), zeros(T, nu), zeros(T, nu), zeros(T, nu)
+     )
+ end

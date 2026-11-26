@@ -1,0 +1,96 @@
+# Autonomous compact campaign tracking
+
+Authorized scope/gates: ../CAMPAIGN.md (takes precedence over historical narrow
+no-capture limits). Dedicated heartbeat spar-ddp-compact-campaign-to-decision.
+Base52d1183c; latest branch must be verified on every continuation.
+
+## Input coverage
+
+Original capture records only1/12/24. New minimal private runtime copies1.1MB
+driver code, links immutable package/env/raw input/validators; late-only packets
+1:4 and all24leaves are expected to add about1GiB. Home initially5.3GiB free,
+disk guard>=2GiB before starting; no existing-work deletion.
+
+Initial capture31369406/70442034 failed BEFORE any Julia simulation: inherited
+manifest used paths relative to the ORIGINAL root but was checked in the new
+sparse runtime root. Thus59 intentionally uncopied files appeared missing and
+the deliberately replaced helper differed. Original root independently rechecked
+and EVERY inherited checksum passed. Fix is cd to original root for INHERITED
+check; new runtime/overlay/input checks remain separate and unchanged. No hash
+filtered, no scientific gate loosened. Old snapshot preserved immutable at
+/home/aryan.jha/kamiak_jobs/compact_campaign_capture_oct23.
+capture_setup_failed.tgz SHA256
+69ee01a5e70568cd21da0b6fa8e4163b63d37317203953d5d706b301d7eb5c6b
+contains original failure stdout/stderr/check logs/overlay/manifests/accounting;
+the1.1MB runtime stays on cluster pinned by runtime.sha256. No trajectory data
+was produced. Safe replacement must be a NEW snapshot.
+
+Next: replacement smallT3 gate then matching largeT24 capture; inspect full
+logs and numerical/physical/OpenDSS/capture-equivalence checks. Once verified,
+apply direct generator to ALL1:4 and implement/measure all four-stage suffix
+and policy consumers with honest boundary cost. Do not stop at capture.
+
+Replacement31369418/a2e16a52 completed the T3 dense solve, numerical validation,
+independent physical original_max2.10e-16 and OpenDSS(max voltage1.59e-9pu),
+then FAILED in posthoc checker because its top-level probe accumulator used
+Julia soft scope. LargeT24 never started. All data/logs remain in
+/home/aryan.jha/kamiak_jobs/compact_campaign_capture_oct23_v2.
+capture_checker_failed.tgz SHA256
+aa4a4d69a232a0062af35ff1194456b9458f5f75c039cc0b31e57a3faf8edb54
+preserves full failed attempt excluding reused runtime/depot. Checker is now
+wrapped in a function; NO numerical change. Next snapshot REUSES this already
+completed smoke data read-only, revalidates with corrected checker into NEW
+report location, and ONLY then runs largeT24. Old failed job stays failed;
+no fake COMPLETE or repeated smoke simulation. Source/runtime/log hashes pin
+the reused evidence. All four-stage compact value/operator core and synthetic
+unit have also been implemented/passed; full fresh-cost harness remains next.
+
+## Coverage gate PASSED
+
+Replacement31369462/4e2943ec COMPLETED; immutable root
+/home/aryan.jha/kamiak_jobs/compact_campaign_capture_oct23_v3.
+Revalidated reused smoke is BIT-EXACT original Newton state, saved full probes0,
+ordinary error8.19e-17. LargeT24 also BIT-EXACT original late state: ALL24 raw
+leaves exactly equal, original selected nominal x/u/phi/zl/zu exactly equal,
+samek14/j8/mu and all newly captured periods1:4 full saved probe discrepancy0.
+Numerical/physical/OpenDSS validated: original physical max6.82e-13,
+objective2682722.226822585333, OpenDSS maxvoltage discrepancy8.18e-9pu/no
+violations. All overlay/runtime/inherited/input SHA checks passed. Large full
+records1:4 and24leaves remain immutable oncluster; home now4.4GiB free.
+capture_verified_evidence.tgz archives all textual/meta/settings/logs/accounting
+and minimal runtime driver source, excludes jls binaries/depot. Binary hashes
+and sizes are in per-point metadata; no new copy of old captures.
+
+NEXT gate3: campaign_probe.jl/campaign_compact.jl implement ALL FOUR direct
+initials, all closed values (full coordinate basis outside timers), all four
+stage zero/sine control/equality/bound consumers and battery path. Includes
+raw-skew/poisoned-Sh0/independent-consumer/negative/inertia gates. Incoming
+TRUE V5 construction from20tail leaves charged to BOTH modes with ORIGINAL
+global round association; candidate additionally pays boundary discovery.
+Exact wrapper warmup plus compile/recompile columns must both be ZERO in3
+alternating pairs. No numerical factor reuse across Newton iterates. Core
+synthetic units passed. Read advancement/complete accounting rule in CAMPAIGN.md.
+Do not stop merely because input coverage is complete.
+
+## Decision-ready completion
+
+Complete four-stage replay31369517/3f1e2e06 COMPLETED0:0 in3m10. Strict
+analyze_campaign.py validates all source/input/runtime/capture checks, units,
+raw four-stage values/directions/inertia, negative controls, three alternating
+fresh-input pairs and ZERO compilation/recompilation in EVERY measured phase.
+All scientific gates pass, but fresh-cost advancement gate FAILS: window
+2.66357s dense/2.70074s compact; whole with incoming dense-tail construction
+8.91349/8.91469s, not consistently faster in all three pairs. Allocation rises
+1.756->2.565GB. Complete findings/limitations/stopping rationale in FINDINGS.md;
+strict summaries in analysis/, full replay_evidence.tgz preserved.
+
+Decision REVISE full-stage consumption before optimizer integration; end this
+bounded implementation campaign without medium/longer/optimizer escalation.
+Direct generation and compact construction work, but all-stage consumption,
+actions, generation/discovery and allocation absorb the component saving.
+Independent dense-future consumer direction error already8.29e-8 is close to
+unchanged1e-7 threshold: no robustness guarantee. No production/paper/result
+changes, no compressed optimizer tested. No expensive jobs active at collection.
+After evidence/assessment commit is pushed and remote verified, delete dedicated
+heartbeat and deliver one concise final report. Preserve all capture/replay
+snapshots and earlier failed attempts; no cleanup of unrelated work.

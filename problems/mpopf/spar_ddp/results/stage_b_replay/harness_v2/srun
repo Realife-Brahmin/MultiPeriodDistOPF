@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# SlurmClusterManager invokes plain srun. Explicit task count takes precedence
+# over inherited per-node allocation settings and prevents surplus workers.
+exec /usr/bin/srun --ntasks="${REPLAY_LAUNCH_WORKERS:?}" "$@"

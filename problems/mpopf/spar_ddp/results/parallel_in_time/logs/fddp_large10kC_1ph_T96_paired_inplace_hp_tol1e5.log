@@ -1,0 +1,919 @@
+PAIRED_SWEEP installed: mode=count, 8 Julia threads
+C_B OVERRIDE: 2.4e-05
+large10kC_1ph T=96: nx=1020, nu=54665, nc=42303, dense nu^2=2988262225, reduced=12362
+TERMINAL_SOC soft=1 gamma=4.200000e+02
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 10244 upper of 10321 buses; ell >= 0 dropped on 10320 lines; P_Subs >= 0 dropped: true (lossless lower bound 216.877 p.u.)
+build complete: 344.715 s, nc=42303
+constructing dynamic Solver storage...
+optimality_tolerance=1.000e-05 max_iterations=400
+BARRIER_OPTIONS mu_init=1 kappa_mu=0.2 theta_mu=1.2 kappa_eps=10
+Solver construction complete: 0.710 s
+LOADFLOW_START sweeps=6 max_equality_residual=1.163e-06 lowest_voltage=0.9838 pu
+WARMUP 8 iterations=8 time_s=545.102
+entering solve! ...
+FILTERDDP_PAIRED_PASS iteration=0 barrier_iteration=0 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=9.679998 rounds_s=39.156189 step3_s=9.981806 total_s=58.818781 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=0 stages=96 pre_sum_s=8.158943700 pre_max_s=0.094942600 seq_sum_s=0.000000000 post_sum_s=9.034381700 post_max_s=0.124473400 pair_sum_s=39.155485200 pair_max_s=0.904089000 pre_gc_s=1.520713800 post_gc_s=0.946113600 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=0 inplace=1 step1_gc_s=1.520714 rounds_gc_s=0.000000 step3_gc_s=0.946114 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=20 full=3
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+     0   2.80460398e+06   1.1628e-06   5.0000e+01   1.0000e+00    0.00      -     0.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=0 dir_sum_s=1.597056100 dir_max_s=0.022808900 rec_s=0.067349900 rec_err=3.331e-16 trials=1 trial_sum_s=0.358998800 trial_max_s=0.052414400
+FILTERDDP_ITER_TIMING iteration=0 barrier_iteration=0 backward_s=58.818837000 forward_s=2.024382100 total_s=60.843219100 outcome=accepted step_size=5.446948161e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PAIRED_PASS iteration=1 barrier_iteration=0 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.495712 rounds_s=38.976809 step3_s=10.108001 total_s=59.581312 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=1 stages=96 pre_sum_s=8.475225000 pre_max_s=0.104356400 seq_sum_s=0.000000000 post_sum_s=9.074236100 post_max_s=0.127945500 pair_sum_s=38.976173600 pair_max_s=0.910322500 pre_gc_s=2.020113300 post_gc_s=1.032463000 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=1 inplace=1 step1_gc_s=2.020113 rounds_gc_s=0.000000 step3_gc_s=1.032463 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+     1   2.74050580e+06   7.3551e+00   2.2765e+01   1.0000e+00    0.00      -     5.4469e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=1 dir_sum_s=1.580552400 dir_max_s=0.022636300 rec_s=0.065097200 rec_err=2.220e-16 trials=1 trial_sum_s=0.352582100 trial_max_s=0.050541700
+FILTERDDP_ITER_TIMING iteration=1 barrier_iteration=0 backward_s=59.581383600 forward_s=1.999216300 total_s=61.580599900 outcome=accepted step_size=9.900063415e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PAIRED_PASS iteration=2 barrier_iteration=0 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.459995 rounds_s=39.436170 step3_s=10.040746 total_s=59.937696 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=2 stages=96 pre_sum_s=8.452976700 pre_max_s=0.119677500 seq_sum_s=0.000000000 post_sum_s=9.018854100 post_max_s=0.116448700 pair_sum_s=39.435491600 pair_max_s=0.913104500 pre_gc_s=2.006684600 post_gc_s=1.020621700 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=2 inplace=1 step1_gc_s=2.006685 rounds_gc_s=0.000000 step3_gc_s=1.020622 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=0 backward_s=59.937758900 forward_s=0.000000000 total_s=59.937758900 outcome=barrier_update step_size=9.900063415e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PARSIM_STAGE iteration=2 stage=96 pre_s=0.009582 seq_s=0.003217 post_s=0.009040 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=95 pre_s=0.008602 seq_s=0.003011 post_s=0.007955 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=94 pre_s=0.010064 seq_s=0.003595 post_s=0.009405 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=93 pre_s=0.008583 seq_s=0.003292 post_s=0.007581 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=92 pre_s=0.007501 seq_s=0.003129 post_s=0.007268 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=91 pre_s=0.009109 seq_s=0.003406 post_s=0.009458 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=90 pre_s=0.009146 seq_s=0.003237 post_s=0.008099 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=89 pre_s=0.008424 seq_s=0.003122 post_s=0.007062 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=88 pre_s=0.008146 seq_s=0.003380 post_s=0.007715 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=87 pre_s=0.008365 seq_s=0.003381 post_s=0.007566 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=86 pre_s=0.008001 seq_s=0.003564 post_s=0.007393 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=85 pre_s=0.008627 seq_s=0.003226 post_s=0.007406 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=84 pre_s=0.009499 seq_s=0.003373 post_s=0.008748 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=83 pre_s=0.009780 seq_s=0.003583 post_s=0.009092 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=82 pre_s=0.009629 seq_s=0.003453 post_s=0.008865 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=81 pre_s=0.009831 seq_s=0.003183 post_s=0.009370 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=80 pre_s=0.009399 seq_s=0.003301 post_s=0.007693 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=79 pre_s=0.008040 seq_s=0.003385 post_s=0.006810 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=78 pre_s=0.009312 seq_s=0.003424 post_s=0.008142 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=77 pre_s=0.009999 seq_s=0.003598 post_s=0.009166 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=76 pre_s=0.009898 seq_s=0.003785 post_s=0.008150 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=75 pre_s=0.009572 seq_s=0.003614 post_s=0.008836 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=74 pre_s=0.010837 seq_s=0.003246 post_s=0.009575 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=73 pre_s=0.009429 seq_s=0.003503 post_s=0.008074 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=72 pre_s=0.008526 seq_s=0.003347 post_s=0.008097 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=71 pre_s=0.009423 seq_s=0.003535 post_s=0.007834 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=70 pre_s=0.010648 seq_s=0.003301 post_s=0.009404 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=69 pre_s=0.008623 seq_s=0.003255 post_s=0.007749 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=68 pre_s=0.009103 seq_s=0.003332 post_s=0.007805 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=67 pre_s=0.008866 seq_s=0.003281 post_s=0.007761 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=66 pre_s=0.008957 seq_s=0.003405 post_s=0.007704 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=65 pre_s=0.009724 seq_s=0.003153 post_s=0.008658 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=64 pre_s=0.009329 seq_s=0.003187 post_s=0.008444 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=63 pre_s=0.008859 seq_s=0.003323 post_s=0.008501 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=62 pre_s=0.009820 seq_s=0.003286 post_s=0.008793 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=61 pre_s=0.009620 seq_s=0.003514 post_s=0.008783 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=60 pre_s=0.008393 seq_s=0.003292 post_s=0.007707 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=59 pre_s=0.008758 seq_s=0.003718 post_s=0.007812 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=58 pre_s=0.008287 seq_s=0.003212 post_s=0.007797 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=57 pre_s=0.009120 seq_s=0.003553 post_s=0.008190 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=56 pre_s=0.010040 seq_s=0.003466 post_s=0.009414 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=55 pre_s=0.008983 seq_s=0.003226 post_s=0.007874 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=54 pre_s=0.011153 seq_s=0.003704 post_s=0.009803 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=53 pre_s=0.010394 seq_s=0.003611 post_s=0.008896 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=52 pre_s=0.010142 seq_s=0.003527 post_s=0.010045 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=51 pre_s=0.009608 seq_s=0.003074 post_s=0.008693 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=50 pre_s=0.007913 seq_s=0.003081 post_s=0.007772 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=49 pre_s=0.007810 seq_s=0.003212 post_s=0.007880 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=48 pre_s=0.008370 seq_s=0.003507 post_s=0.007380 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=47 pre_s=0.010874 seq_s=0.003149 post_s=0.010116 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=46 pre_s=0.008408 seq_s=0.003127 post_s=0.008169 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=45 pre_s=0.009403 seq_s=0.003752 post_s=0.010392 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=44 pre_s=0.008723 seq_s=0.003486 post_s=0.008599 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=43 pre_s=0.008387 seq_s=0.003283 post_s=0.008055 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=42 pre_s=0.009192 seq_s=0.003194 post_s=0.008382 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=41 pre_s=0.008382 seq_s=0.003868 post_s=0.007890 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=40 pre_s=0.009829 seq_s=0.003282 post_s=0.009189 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=39 pre_s=0.010009 seq_s=0.003597 post_s=0.009483 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=38 pre_s=0.009364 seq_s=0.003172 post_s=0.008921 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=37 pre_s=0.008307 seq_s=0.003386 post_s=0.007851 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=36 pre_s=0.009857 seq_s=0.003369 post_s=0.008318 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=35 pre_s=0.007841 seq_s=0.003478 post_s=0.007941 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=34 pre_s=0.008013 seq_s=0.003168 post_s=0.007673 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=33 pre_s=0.010460 seq_s=0.003251 post_s=0.009586 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=32 pre_s=0.010189 seq_s=0.003080 post_s=0.009586 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=31 pre_s=0.009040 seq_s=0.002997 post_s=0.008519 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=30 pre_s=0.009223 seq_s=0.003140 post_s=0.008358 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=29 pre_s=0.009294 seq_s=0.003161 post_s=0.007894 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=28 pre_s=0.007733 seq_s=0.003190 post_s=0.007218 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=27 pre_s=0.007978 seq_s=0.003308 post_s=0.007101 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=26 pre_s=0.010615 seq_s=0.003095 post_s=0.009974 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=25 pre_s=0.009234 seq_s=0.003409 post_s=0.009113 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=24 pre_s=0.008782 seq_s=0.003295 post_s=0.007940 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=23 pre_s=0.008824 seq_s=0.003311 post_s=0.008314 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=22 pre_s=0.007897 seq_s=0.003371 post_s=0.007984 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=21 pre_s=0.008185 seq_s=0.003420 post_s=0.007092 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=20 pre_s=0.008179 seq_s=0.003636 post_s=0.007931 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=19 pre_s=0.011745 seq_s=0.003529 post_s=0.010771 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=18 pre_s=0.010237 seq_s=0.003533 post_s=0.009106 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=17 pre_s=0.009027 seq_s=0.003092 post_s=0.008566 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=16 pre_s=0.008484 seq_s=0.003600 post_s=0.008153 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=15 pre_s=0.007800 seq_s=0.003215 post_s=0.007609 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=14 pre_s=0.008271 seq_s=0.003155 post_s=0.008288 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=13 pre_s=0.008501 seq_s=0.003266 post_s=0.009250 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=12 pre_s=0.008985 seq_s=0.003215 post_s=0.008415 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=11 pre_s=0.011704 seq_s=0.003287 post_s=0.011058 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=10 pre_s=0.009891 seq_s=0.003196 post_s=0.009636 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=9 pre_s=0.009256 seq_s=0.003646 post_s=0.009182 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=8 pre_s=0.008871 seq_s=0.003364 post_s=0.008256 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=7 pre_s=0.008713 seq_s=0.003402 post_s=0.007985 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=6 pre_s=0.008648 seq_s=0.003237 post_s=0.008570 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=5 pre_s=0.009293 seq_s=0.003269 post_s=0.009575 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=4 pre_s=0.010534 seq_s=0.003256 post_s=0.010328 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=3 pre_s=0.011435 seq_s=0.003283 post_s=0.011118 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=2 pre_s=0.009977 seq_s=0.003437 post_s=0.009468 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=2 stage=1 pre_s=0.009590 seq_s=0.003443 post_s=0.009541 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=2 stages=96 pre_sum_s=0.883025200 pre_max_s=0.011744700 seq_sum_s=0.321509300 post_sum_s=0.819729500 post_max_s=0.011118300
+FILTERDDP_REUSE_PASS iteration=2 barrier_iteration=1 stages=96 total_s=2.026030300 mu=2.000000000e-01
+     2   2.76459666e+06   5.2854e-01   2.2751e-01   2.4748e+00   -0.70      -     9.9001e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=2 dir_sum_s=1.676350800 dir_max_s=0.112103600 rec_s=0.065542500 rec_err=2.220e-16 trials=1 trial_sum_s=0.298406600 trial_max_s=0.003668600
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=1 backward_s=2.026076400 forward_s=2.041251200 total_s=4.067327600 outcome=accepted step_size=8.930961124e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_PAIRED_PASS iteration=3 barrier_iteration=1 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=9.932065 rounds_s=38.952740 step3_s=9.624489 total_s=58.510223 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=3 stages=96 pre_sum_s=8.293280900 pre_max_s=0.094832300 seq_sum_s=0.000000000 post_sum_s=9.103418700 post_max_s=0.112159500 pair_sum_s=38.952123000 pair_max_s=0.875621300 pre_gc_s=1.638447800 post_gc_s=0.519774900 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=3 inplace=1 step1_gc_s=1.638448 rounds_gc_s=0.000000 step3_gc_s=0.519775 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=2
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=1 backward_s=58.510287500 forward_s=0.000000000 total_s=58.510287500 outcome=barrier_update step_size=8.930961124e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_PARSIM_STAGE iteration=3 stage=96 pre_s=0.009100 seq_s=0.003475 post_s=0.008310 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=95 pre_s=0.008736 seq_s=0.002969 post_s=0.008569 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=94 pre_s=0.008537 seq_s=0.003295 post_s=0.007899 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=93 pre_s=0.008571 seq_s=0.003234 post_s=0.008618 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=92 pre_s=0.008082 seq_s=0.003046 post_s=0.008154 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=91 pre_s=0.008994 seq_s=0.003403 post_s=0.007998 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=90 pre_s=0.008291 seq_s=0.003064 post_s=0.007804 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=89 pre_s=0.008700 seq_s=0.003148 post_s=0.008554 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=88 pre_s=0.008786 seq_s=0.136118 post_s=0.008009 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=87 pre_s=0.008742 seq_s=0.003040 post_s=0.007916 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=86 pre_s=0.007659 seq_s=0.002989 post_s=0.007277 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=85 pre_s=0.007891 seq_s=0.002971 post_s=0.007350 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=84 pre_s=0.008495 seq_s=0.003016 post_s=0.009271 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=83 pre_s=0.007926 seq_s=0.003183 post_s=0.007658 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=82 pre_s=0.008411 seq_s=0.003466 post_s=0.007775 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=81 pre_s=0.008617 seq_s=0.003152 post_s=0.007826 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=80 pre_s=0.008045 seq_s=0.003101 post_s=0.007284 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=79 pre_s=0.008671 seq_s=0.002926 post_s=0.009022 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=78 pre_s=0.008617 seq_s=0.003004 post_s=0.007636 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=77 pre_s=0.007968 seq_s=0.003108 post_s=0.007668 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=76 pre_s=0.008897 seq_s=0.003186 post_s=0.008118 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=75 pre_s=0.009061 seq_s=0.003122 post_s=0.011862 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=74 pre_s=0.010790 seq_s=0.003303 post_s=0.007317 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=73 pre_s=0.007770 seq_s=0.003098 post_s=0.007100 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=72 pre_s=0.008440 seq_s=0.003044 post_s=0.007421 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=71 pre_s=0.008191 seq_s=0.003040 post_s=0.007867 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=70 pre_s=0.008214 seq_s=0.003351 post_s=0.007662 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=69 pre_s=0.008874 seq_s=0.003013 post_s=0.008446 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=68 pre_s=0.008432 seq_s=0.003188 post_s=0.008039 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=67 pre_s=0.009535 seq_s=0.003181 post_s=0.009228 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=66 pre_s=0.008106 seq_s=0.003191 post_s=0.007469 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=65 pre_s=0.007960 seq_s=0.003057 post_s=0.006814 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=64 pre_s=0.008043 seq_s=0.003019 post_s=0.007249 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=63 pre_s=0.008226 seq_s=0.003154 post_s=0.007262 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=62 pre_s=0.008770 seq_s=0.003028 post_s=0.009095 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=61 pre_s=0.007937 seq_s=0.003237 post_s=0.008103 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=60 pre_s=0.009062 seq_s=0.003120 post_s=0.008904 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=59 pre_s=0.008143 seq_s=0.003039 post_s=0.007652 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=58 pre_s=0.007989 seq_s=0.003294 post_s=0.008713 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=57 pre_s=0.007772 seq_s=0.003163 post_s=0.007414 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=56 pre_s=0.007266 seq_s=0.003302 post_s=0.007465 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=55 pre_s=0.008223 seq_s=0.003419 post_s=0.007306 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=54 pre_s=0.007766 seq_s=0.003178 post_s=0.007519 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=53 pre_s=0.008710 seq_s=0.003347 post_s=0.009213 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=52 pre_s=0.009913 seq_s=0.003159 post_s=0.010188 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=51 pre_s=0.009187 seq_s=0.003318 post_s=0.008939 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=50 pre_s=0.008647 seq_s=0.003309 post_s=0.008943 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=49 pre_s=0.008430 seq_s=0.003508 post_s=0.007773 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=48 pre_s=0.008067 seq_s=0.003101 post_s=0.008428 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=47 pre_s=0.007652 seq_s=0.003155 post_s=0.007289 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=46 pre_s=0.007353 seq_s=0.003071 post_s=0.006998 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=45 pre_s=0.007927 seq_s=0.003394 post_s=0.008039 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=44 pre_s=0.009470 seq_s=0.003142 post_s=0.009095 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=43 pre_s=0.010513 seq_s=0.003172 post_s=0.009773 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=42 pre_s=0.008671 seq_s=0.003358 post_s=0.008557 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=41 pre_s=0.009702 seq_s=0.003022 post_s=0.008198 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=40 pre_s=0.008494 seq_s=0.003409 post_s=0.008288 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=39 pre_s=0.008210 seq_s=0.003488 post_s=0.008150 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=38 pre_s=0.007960 seq_s=0.003030 post_s=0.007486 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=37 pre_s=0.009300 seq_s=0.002996 post_s=0.009098 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=36 pre_s=0.009492 seq_s=0.003369 post_s=0.009142 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=35 pre_s=0.008858 seq_s=0.003293 post_s=0.008334 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=34 pre_s=0.007890 seq_s=0.003267 post_s=0.007562 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=33 pre_s=0.008756 seq_s=0.003204 post_s=0.008209 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=32 pre_s=0.008302 seq_s=0.003314 post_s=0.008357 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=31 pre_s=0.008859 seq_s=0.003363 post_s=0.008586 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=30 pre_s=0.009612 seq_s=0.003095 post_s=0.009202 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=29 pre_s=0.009505 seq_s=0.003464 post_s=0.009395 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=28 pre_s=0.009398 seq_s=0.003077 post_s=0.008529 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=27 pre_s=0.008744 seq_s=0.003177 post_s=0.008148 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=26 pre_s=0.009224 seq_s=0.003336 post_s=0.008977 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=25 pre_s=0.008488 seq_s=0.003417 post_s=0.008248 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=24 pre_s=0.008189 seq_s=0.003504 post_s=0.007726 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=23 pre_s=0.009150 seq_s=0.003232 post_s=0.008218 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=22 pre_s=0.010257 seq_s=0.003281 post_s=0.009644 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=21 pre_s=0.009495 seq_s=0.003434 post_s=0.009238 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=20 pre_s=0.008891 seq_s=0.003285 post_s=0.008109 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=19 pre_s=0.009560 seq_s=0.003341 post_s=0.008641 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=18 pre_s=0.009515 seq_s=0.003404 post_s=0.009333 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=17 pre_s=0.008530 seq_s=0.003507 post_s=0.007513 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=16 pre_s=0.009191 seq_s=0.003854 post_s=0.007913 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=15 pre_s=0.011230 seq_s=0.003365 post_s=0.010710 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=14 pre_s=0.010701 seq_s=0.003295 post_s=0.009538 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=13 pre_s=0.009794 seq_s=0.003700 post_s=0.009520 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=12 pre_s=0.011338 seq_s=0.003559 post_s=0.009509 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=11 pre_s=0.008829 seq_s=0.003486 post_s=0.008446 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=10 pre_s=0.009290 seq_s=0.003567 post_s=0.008398 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=9 pre_s=0.009836 seq_s=0.003469 post_s=0.011636 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=8 pre_s=0.010489 seq_s=0.003462 post_s=0.009358 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=7 pre_s=0.012008 seq_s=0.004241 post_s=0.010783 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=6 pre_s=0.009889 seq_s=0.003698 post_s=0.009509 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=5 pre_s=0.009782 seq_s=0.003303 post_s=0.009669 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=4 pre_s=0.009250 seq_s=0.003835 post_s=0.008308 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=3 pre_s=0.010608 seq_s=0.003470 post_s=0.009681 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=2 pre_s=0.009829 seq_s=0.003482 post_s=0.009117 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=3 stage=1 pre_s=0.009537 seq_s=0.003692 post_s=0.007839 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=3 stages=96 pre_sum_s=0.852828700 pre_max_s=0.012008100 seq_sum_s=0.447256300 post_sum_s=0.810122400 post_max_s=0.011862100
+FILTERDDP_REUSE_PASS iteration=3 barrier_iteration=2 stages=96 total_s=2.111867100 mu=4.000000000e-02
+     3   2.81418061e+06   1.2184e+00   3.8963e-02   8.2880e-01   -1.40      -     8.9310e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=3 dir_sum_s=1.561521900 dir_max_s=0.020546600 rec_s=0.071739900 rec_err=2.220e-16 trials=1 trial_sum_s=1.477639700 trial_max_s=1.108331200
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=2 backward_s=2.111911200 forward_s=3.111864000 total_s=5.223775200 outcome=accepted step_size=9.199459790e-01 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PAIRED_PASS iteration=4 barrier_iteration=2 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=9.988991 rounds_s=39.372293 step3_s=10.202200 total_s=59.564281 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=4 stages=96 pre_sum_s=8.420660900 pre_max_s=0.105800000 seq_sum_s=0.000000000 post_sum_s=9.098068000 post_max_s=0.126253400 pair_sum_s=39.371668200 pair_max_s=0.900194200 pre_gc_s=1.567992000 post_gc_s=1.102657600 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=4 inplace=1 step1_gc_s=1.567992 rounds_gc_s=0.000000 step3_gc_s=1.102658 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=20 full=3
+     4   2.75871388e+06   1.1895e+00   5.5572e-03   1.6125e-01   -1.40      -     9.1995e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=4 dir_sum_s=1.603687700 dir_max_s=0.022140400 rec_s=0.070850300 rec_err=2.220e-16 trials=1 trial_sum_s=0.357957100 trial_max_s=0.046195500
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=2 backward_s=59.564344700 forward_s=2.033475300 total_s=61.597820000 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PAIRED_PASS iteration=5 barrier_iteration=2 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.256313 rounds_s=38.792052 step3_s=9.996493 total_s=59.045637 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=5 stages=96 pre_sum_s=8.306382200 pre_max_s=0.102206800 seq_sum_s=0.000000000 post_sum_s=8.973648700 post_max_s=0.122448900 pair_sum_s=38.791362800 pair_max_s=0.874554200 pre_gc_s=1.949595200 post_gc_s=1.021573700 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=5 inplace=1 step1_gc_s=1.949595 rounds_gc_s=0.000000 step3_gc_s=1.021574 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+     5   2.74641718e+06   4.0436e-01   3.9339e-04   6.2508e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=5 dir_sum_s=1.630784400 dir_max_s=0.022139300 rec_s=0.065811600 rec_err=2.220e-16 trials=1 trial_sum_s=0.357748800 trial_max_s=0.046371500
+FILTERDDP_ITER_TIMING iteration=5 barrier_iteration=2 backward_s=59.045702900 forward_s=2.055304000 total_s=61.101006900 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PAIRED_PASS iteration=6 barrier_iteration=2 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.499026 rounds_s=39.500121 step3_s=10.099266 total_s=60.099187 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=6 stages=96 pre_sum_s=8.458922500 pre_max_s=0.106014500 seq_sum_s=0.000000000 post_sum_s=9.082157800 post_max_s=0.119842600 pair_sum_s=39.499487100 pair_max_s=0.910317200 pre_gc_s=2.039757200 post_gc_s=1.015873400 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=6 inplace=1 step1_gc_s=2.039757 rounds_gc_s=0.000000 step3_gc_s=1.015873 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=2 backward_s=60.099249400 forward_s=0.000000000 total_s=60.099249400 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PARSIM_STAGE iteration=6 stage=96 pre_s=0.009677 seq_s=0.003698 post_s=0.009596 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=95 pre_s=0.010637 seq_s=0.003252 post_s=0.009640 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=94 pre_s=0.008887 seq_s=0.003397 post_s=0.008063 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=93 pre_s=0.008630 seq_s=0.003312 post_s=0.008376 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=92 pre_s=0.009108 seq_s=0.003806 post_s=0.007909 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=91 pre_s=0.009591 seq_s=0.003220 post_s=0.008898 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=90 pre_s=0.008696 seq_s=0.003164 post_s=0.008133 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=89 pre_s=0.008505 seq_s=0.003254 post_s=0.007079 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=88 pre_s=0.008080 seq_s=0.003401 post_s=0.006960 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=87 pre_s=0.008726 seq_s=0.003286 post_s=0.007344 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=86 pre_s=0.008805 seq_s=0.003348 post_s=0.008418 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=85 pre_s=0.009276 seq_s=0.003251 post_s=0.008271 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=84 pre_s=0.009952 seq_s=0.003260 post_s=0.008577 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=83 pre_s=0.009394 seq_s=0.003742 post_s=0.012000 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=82 pre_s=0.009144 seq_s=0.003445 post_s=0.007213 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=81 pre_s=0.008003 seq_s=0.003807 post_s=0.007305 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=80 pre_s=0.007935 seq_s=0.003370 post_s=0.010598 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=79 pre_s=0.009615 seq_s=0.003606 post_s=0.007288 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=78 pre_s=0.010033 seq_s=0.003447 post_s=0.008561 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=77 pre_s=0.009668 seq_s=0.003407 post_s=0.008511 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=76 pre_s=0.012741 seq_s=0.003378 post_s=0.008515 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=75 pre_s=0.011368 seq_s=0.003691 post_s=0.009717 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=74 pre_s=0.008796 seq_s=0.003380 post_s=0.007831 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=73 pre_s=0.009113 seq_s=0.003533 post_s=0.007960 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=72 pre_s=0.010513 seq_s=0.003472 post_s=0.009288 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=71 pre_s=0.009431 seq_s=0.003300 post_s=0.008277 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=70 pre_s=0.008818 seq_s=0.003459 post_s=0.007814 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=69 pre_s=0.008942 seq_s=0.003296 post_s=0.007876 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=68 pre_s=0.009211 seq_s=0.003202 post_s=0.007537 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=67 pre_s=0.010745 seq_s=0.003427 post_s=0.010214 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=66 pre_s=0.008927 seq_s=0.003197 post_s=0.007525 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=65 pre_s=0.009055 seq_s=0.003296 post_s=0.007720 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=64 pre_s=0.009966 seq_s=0.003637 post_s=0.008743 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=63 pre_s=0.009934 seq_s=0.003351 post_s=0.009121 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=62 pre_s=0.009705 seq_s=0.003353 post_s=0.008603 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=61 pre_s=0.008988 seq_s=0.003209 post_s=0.008140 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=60 pre_s=0.008937 seq_s=0.003369 post_s=0.007867 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=59 pre_s=0.008844 seq_s=0.003335 post_s=0.007457 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=58 pre_s=0.009901 seq_s=0.003392 post_s=0.008706 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=57 pre_s=0.009752 seq_s=0.003384 post_s=0.008935 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=56 pre_s=0.010472 seq_s=0.004079 post_s=0.009658 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=55 pre_s=0.010309 seq_s=0.003478 post_s=0.009078 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=54 pre_s=0.009653 seq_s=0.003368 post_s=0.008093 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=53 pre_s=0.008263 seq_s=0.003050 post_s=0.007912 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=52 pre_s=0.007710 seq_s=0.003127 post_s=0.007276 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=51 pre_s=0.007998 seq_s=0.003172 post_s=0.007657 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=50 pre_s=0.008455 seq_s=0.003285 post_s=0.007117 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=49 pre_s=0.010406 seq_s=0.003250 post_s=0.009539 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=48 pre_s=0.008849 seq_s=0.003074 post_s=0.009271 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=47 pre_s=0.010075 seq_s=0.003188 post_s=0.009819 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=46 pre_s=0.009192 seq_s=0.003333 post_s=0.009042 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=45 pre_s=0.008619 seq_s=0.003134 post_s=0.008450 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=44 pre_s=0.008956 seq_s=0.003260 post_s=0.008230 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=43 pre_s=0.008310 seq_s=0.003106 post_s=0.007594 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=42 pre_s=0.010186 seq_s=0.003872 post_s=0.010096 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=41 pre_s=0.009834 seq_s=0.003090 post_s=0.008683 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=40 pre_s=0.010398 seq_s=0.003219 post_s=0.008985 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=39 pre_s=0.009020 seq_s=0.003306 post_s=0.008085 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=38 pre_s=0.009239 seq_s=0.003499 post_s=0.008417 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=37 pre_s=0.008284 seq_s=0.003405 post_s=0.008075 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=36 pre_s=0.008503 seq_s=0.003506 post_s=0.008128 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=35 pre_s=0.009684 seq_s=0.003395 post_s=0.009126 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=34 pre_s=0.010074 seq_s=0.003332 post_s=0.009600 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=33 pre_s=0.009905 seq_s=0.003490 post_s=0.009472 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=32 pre_s=0.008833 seq_s=0.003125 post_s=0.008858 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=31 pre_s=0.008185 seq_s=0.003110 post_s=0.008311 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=30 pre_s=0.006969 seq_s=0.003688 post_s=0.007054 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=29 pre_s=0.008229 seq_s=0.003215 post_s=0.007780 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=28 pre_s=0.010631 seq_s=0.003161 post_s=0.009732 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=27 pre_s=0.080762 seq_s=0.003349 post_s=0.009958 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=26 pre_s=0.009512 seq_s=0.003106 post_s=0.008938 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=25 pre_s=0.009336 seq_s=0.003008 post_s=0.008401 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=24 pre_s=0.008422 seq_s=0.003116 post_s=0.008046 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=23 pre_s=0.007915 seq_s=0.003000 post_s=0.007143 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=22 pre_s=0.008403 seq_s=0.003180 post_s=0.008327 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=21 pre_s=0.009375 seq_s=0.003253 post_s=0.007917 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=20 pre_s=0.010668 seq_s=0.003278 post_s=0.009422 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=19 pre_s=0.009724 seq_s=0.003271 post_s=0.009079 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=18 pre_s=0.009667 seq_s=0.003563 post_s=0.008235 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=17 pre_s=0.008861 seq_s=0.003248 post_s=0.008190 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=16 pre_s=0.009002 seq_s=0.003274 post_s=0.007653 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=15 pre_s=0.008481 seq_s=0.003425 post_s=0.008012 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=14 pre_s=0.008463 seq_s=0.003337 post_s=0.007515 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=13 pre_s=0.011666 seq_s=0.003430 post_s=0.010333 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=12 pre_s=0.010399 seq_s=0.003457 post_s=0.009673 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=11 pre_s=0.011171 seq_s=0.003688 post_s=0.009029 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=10 pre_s=0.009079 seq_s=0.003243 post_s=0.007961 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=9 pre_s=0.010202 seq_s=0.003829 post_s=0.008207 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=8 pre_s=0.009429 seq_s=0.003287 post_s=0.008204 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=7 pre_s=0.009096 seq_s=0.003243 post_s=0.008191 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=6 pre_s=0.010558 seq_s=0.003330 post_s=0.009220 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=5 pre_s=0.011317 seq_s=0.003342 post_s=0.010516 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=4 pre_s=0.012130 seq_s=0.003763 post_s=0.010956 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=3 pre_s=0.010741 seq_s=0.003244 post_s=0.009414 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=2 pre_s=0.009952 seq_s=0.003250 post_s=0.008850 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=1 pre_s=0.010528 seq_s=0.003376 post_s=0.009304 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=6 stages=96 pre_sum_s=0.976145800 pre_max_s=0.080761700 seq_sum_s=0.322340000 post_sum_s=0.822416800 post_max_s=0.012000300
+FILTERDDP_REUSE_PASS iteration=6 barrier_iteration=3 stages=96 total_s=2.122628100 mu=8.000000000e-03
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=3 backward_s=2.122672000 forward_s=0.000000000 total_s=2.122672000 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=8.000000000e-03
+FILTERDDP_PARSIM_STAGE iteration=6 stage=96 pre_s=0.009411 seq_s=0.003393 post_s=0.008226 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=95 pre_s=0.010465 seq_s=0.003345 post_s=0.010003 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=94 pre_s=0.008499 seq_s=0.003403 post_s=0.007782 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=93 pre_s=0.008420 seq_s=0.003302 post_s=0.007327 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=92 pre_s=0.008777 seq_s=0.003366 post_s=0.007549 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=91 pre_s=0.009451 seq_s=0.003285 post_s=0.008862 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=90 pre_s=0.009061 seq_s=0.003319 post_s=0.007531 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=89 pre_s=0.008452 seq_s=0.003204 post_s=0.007132 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=88 pre_s=0.008350 seq_s=0.003200 post_s=0.007260 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=87 pre_s=0.009173 seq_s=0.003953 post_s=0.007993 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=86 pre_s=0.008930 seq_s=0.003204 post_s=0.007533 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=85 pre_s=0.009127 seq_s=0.003206 post_s=0.007963 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=84 pre_s=0.009914 seq_s=0.003380 post_s=0.009003 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=83 pre_s=0.009591 seq_s=0.004036 post_s=0.012257 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=82 pre_s=0.009644 seq_s=0.003386 post_s=0.007490 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=81 pre_s=0.007897 seq_s=0.003390 post_s=0.006913 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=80 pre_s=0.009110 seq_s=0.003328 post_s=0.007304 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=79 pre_s=0.009048 seq_s=0.003290 post_s=0.007167 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=78 pre_s=0.009524 seq_s=0.003233 post_s=0.009384 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=77 pre_s=0.010203 seq_s=0.003343 post_s=0.008518 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=76 pre_s=0.009134 seq_s=0.003239 post_s=0.008196 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=75 pre_s=0.010266 seq_s=0.003163 post_s=0.009680 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=74 pre_s=0.008780 seq_s=0.003386 post_s=0.007617 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=73 pre_s=0.009108 seq_s=0.003279 post_s=0.008246 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=72 pre_s=0.010469 seq_s=0.003215 post_s=0.009227 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=71 pre_s=0.009204 seq_s=0.003353 post_s=0.008205 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=70 pre_s=0.010084 seq_s=0.003340 post_s=0.008438 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=69 pre_s=0.009481 seq_s=0.003471 post_s=0.008181 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=68 pre_s=0.008132 seq_s=0.003115 post_s=0.007900 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=67 pre_s=0.010166 seq_s=0.003130 post_s=0.009763 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=66 pre_s=0.007832 seq_s=0.003258 post_s=0.007936 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=65 pre_s=0.008183 seq_s=0.003190 post_s=0.007666 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=64 pre_s=0.008903 seq_s=0.003034 post_s=0.008421 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=63 pre_s=0.009189 seq_s=0.003373 post_s=0.009137 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=62 pre_s=0.008386 seq_s=0.003114 post_s=0.008301 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=61 pre_s=0.008212 seq_s=0.003001 post_s=0.007777 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=60 pre_s=0.008716 seq_s=0.003392 post_s=0.008045 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=59 pre_s=0.007391 seq_s=0.003038 post_s=0.007094 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=58 pre_s=0.008986 seq_s=0.003025 post_s=0.008994 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=57 pre_s=0.008498 seq_s=0.003095 post_s=0.008268 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=56 pre_s=0.009185 seq_s=0.003172 post_s=0.009202 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=55 pre_s=0.008903 seq_s=0.003295 post_s=0.008634 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=54 pre_s=0.009008 seq_s=0.003210 post_s=0.008268 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=53 pre_s=0.008105 seq_s=0.003337 post_s=0.008040 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=52 pre_s=0.008717 seq_s=0.003346 post_s=0.008607 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=51 pre_s=0.009279 seq_s=0.003191 post_s=0.008231 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=50 pre_s=0.008348 seq_s=0.003271 post_s=0.007571 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=49 pre_s=0.009672 seq_s=0.003181 post_s=0.009565 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=48 pre_s=0.009544 seq_s=0.003092 post_s=0.008098 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=47 pre_s=0.009186 seq_s=0.003331 post_s=0.008975 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=46 pre_s=0.009092 seq_s=0.003138 post_s=0.008883 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=45 pre_s=0.009024 seq_s=0.003205 post_s=0.008031 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=44 pre_s=0.008175 seq_s=0.003064 post_s=0.008348 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=43 pre_s=0.008823 seq_s=0.003887 post_s=0.008328 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=42 pre_s=0.009941 seq_s=0.003179 post_s=0.009541 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=41 pre_s=0.009477 seq_s=0.003586 post_s=0.009165 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=40 pre_s=0.009809 seq_s=0.003492 post_s=0.009086 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=39 pre_s=0.009138 seq_s=0.003223 post_s=0.008379 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=38 pre_s=0.009065 seq_s=0.003174 post_s=0.008380 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=37 pre_s=0.008034 seq_s=0.003164 post_s=0.008210 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=36 pre_s=0.007878 seq_s=0.003401 post_s=0.007795 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=35 pre_s=0.009595 seq_s=0.003055 post_s=0.008781 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=34 pre_s=0.010527 seq_s=0.003170 post_s=0.009724 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=33 pre_s=0.009323 seq_s=0.003143 post_s=0.009155 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=32 pre_s=0.008529 seq_s=0.003392 post_s=0.008241 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=31 pre_s=0.008360 seq_s=0.003340 post_s=0.008085 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=30 pre_s=0.007304 seq_s=0.003198 post_s=0.006846 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=29 pre_s=0.008178 seq_s=0.003058 post_s=0.007765 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=28 pre_s=0.011029 seq_s=0.003439 post_s=0.010100 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=27 pre_s=0.010055 seq_s=0.003096 post_s=0.009088 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=26 pre_s=0.008531 seq_s=0.003684 post_s=0.008495 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=25 pre_s=0.009565 seq_s=0.003238 post_s=0.008892 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=24 pre_s=0.008399 seq_s=0.003180 post_s=0.007711 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=23 pre_s=0.007454 seq_s=0.003269 post_s=0.006982 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=22 pre_s=0.008140 seq_s=0.003173 post_s=0.007779 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=21 pre_s=0.008328 seq_s=0.003301 post_s=0.008587 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=20 pre_s=0.009985 seq_s=0.003441 post_s=0.010145 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=19 pre_s=0.009465 seq_s=0.003268 post_s=0.009168 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=18 pre_s=0.008804 seq_s=0.003331 post_s=0.008593 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=17 pre_s=0.008999 seq_s=0.003435 post_s=0.007997 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=16 pre_s=0.008219 seq_s=0.003143 post_s=0.007935 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=15 pre_s=0.007495 seq_s=0.003218 post_s=0.007660 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=14 pre_s=0.007721 seq_s=0.003425 post_s=0.007469 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=13 pre_s=0.010433 seq_s=0.003129 post_s=0.010136 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=12 pre_s=0.009731 seq_s=0.003466 post_s=0.010012 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=11 pre_s=0.009644 seq_s=0.003306 post_s=0.008928 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=10 pre_s=0.007992 seq_s=0.003257 post_s=0.008115 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=9 pre_s=0.008605 seq_s=0.003239 post_s=0.008104 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=8 pre_s=0.009166 seq_s=0.003482 post_s=0.008321 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=7 pre_s=0.008352 seq_s=0.003247 post_s=0.008261 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=6 pre_s=0.009169 seq_s=0.003358 post_s=0.009211 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=5 pre_s=0.011143 seq_s=0.003474 post_s=0.010975 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=4 pre_s=0.010227 seq_s=0.003240 post_s=0.011116 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=3 pre_s=0.009341 seq_s=0.003433 post_s=0.008783 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=2 pre_s=0.009707 seq_s=0.003234 post_s=0.009293 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=6 stage=1 pre_s=0.009445 seq_s=0.003256 post_s=0.009508 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=6 stages=96 pre_sum_s=0.867526900 pre_max_s=0.011143200 seq_sum_s=0.315831800 post_sum_s=0.815579400 post_max_s=0.012257100
+FILTERDDP_REUSE_PASS iteration=6 barrier_iteration=4 stages=96 total_s=2.000919200 mu=1.600000000e-03
+     6   2.74663518e+06   2.9732e-02   1.8255e-05   5.8455e-02   -2.80      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=6 dir_sum_s=1.610495200 dir_max_s=0.022490300 rec_s=0.175817200 rec_err=2.220e-16 trials=1 trial_sum_s=0.306098800 trial_max_s=0.003652400
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=4 backward_s=2.000987500 forward_s=2.093379400 total_s=4.094366900 outcome=accepted step_size=7.715964612e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PAIRED_PASS iteration=7 barrier_iteration=4 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.854725 rounds_s=39.848413 step3_s=9.998379 total_s=60.702273 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=7 stages=96 pre_sum_s=8.868416700 pre_max_s=0.116399000 seq_sum_s=0.000000000 post_sum_s=9.012247300 post_max_s=0.109112500 pair_sum_s=39.847789000 pair_max_s=0.898979800 pre_gc_s=1.985947400 post_gc_s=0.984830700 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=7 inplace=1 step1_gc_s=1.985947 rounds_gc_s=0.000000 step3_gc_s=0.984831 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=19 full=3
+     7   2.71566980e+06   1.5457e-01   1.4969e-03   1.6560e-02   -2.80      -     7.7160e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=7 dir_sum_s=1.596451400 dir_max_s=0.022356200 rec_s=0.067328100 rec_err=2.220e-16 trials=1 trial_sum_s=0.314849400 trial_max_s=0.004401300
+FILTERDDP_ITER_TIMING iteration=7 barrier_iteration=4 backward_s=60.702345500 forward_s=1.979570900 total_s=62.681916400 outcome=accepted step_size=6.363706429e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PAIRED_PASS iteration=8 barrier_iteration=4 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.635386 rounds_s=39.158502 step3_s=9.925561 total_s=59.720206 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=8 stages=96 pre_sum_s=8.539023400 pre_max_s=0.102371000 seq_sum_s=0.000000000 post_sum_s=8.936883600 post_max_s=0.118796100 pair_sum_s=39.157835400 pair_max_s=0.930606700 pre_gc_s=2.096023300 post_gc_s=0.987390900 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=8 inplace=1 step1_gc_s=2.096023 rounds_gc_s=0.000000 step3_gc_s=0.987391 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=19 full=3
+     8   2.70980542e+06   9.5631e-02   5.9943e-04   8.3291e-03   -2.80      -     6.3637e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=8 dir_sum_s=1.666460700 dir_max_s=0.023962500 rec_s=0.069477600 rec_err=2.220e-16 trials=1 trial_sum_s=0.382108600 trial_max_s=0.073665100
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=4 backward_s=59.720267900 forward_s=2.119039500 total_s=61.839307400 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PAIRED_PASS iteration=9 barrier_iteration=4 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.463908 rounds_s=39.213571 step3_s=9.898132 total_s=59.576440 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=9 stages=96 pre_sum_s=8.571860100 pre_max_s=0.126883900 seq_sum_s=0.000000000 post_sum_s=8.929450700 post_max_s=0.105120800 pair_sum_s=39.212962300 pair_max_s=0.880125500 pre_gc_s=1.891670200 post_gc_s=0.967426800 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=9 inplace=1 step1_gc_s=1.891670 rounds_gc_s=0.000000 step3_gc_s=0.967427 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+     9   2.70646623e+06   4.4504e-02   2.7261e-05   2.9484e-03   -2.80      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=9 dir_sum_s=1.593971300 dir_max_s=0.021034200 rec_s=0.067668700 rec_err=2.220e-16 trials=1 trial_sum_s=0.376815400 trial_max_s=0.072938400
+FILTERDDP_ITER_TIMING iteration=9 barrier_iteration=4 backward_s=59.576513400 forward_s=2.039396000 total_s=61.615909400 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PAIRED_PASS iteration=10 barrier_iteration=4 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.634870 rounds_s=39.307823 step3_s=9.813863 total_s=59.757332 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=10 stages=96 pre_sum_s=8.603177000 pre_max_s=0.138832100 seq_sum_s=0.000000000 post_sum_s=8.947691700 post_max_s=0.113015600 pair_sum_s=39.307175200 pair_max_s=0.912113000 pre_gc_s=2.031351700 post_gc_s=0.864869600 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=10 inplace=1 step1_gc_s=2.031352 rounds_gc_s=0.000000 step3_gc_s=0.864870 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=4 backward_s=59.757393600 forward_s=0.000000000 total_s=59.757393600 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PARSIM_STAGE iteration=10 stage=96 pre_s=0.010102 seq_s=0.003287 post_s=0.008989 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=95 pre_s=0.009620 seq_s=0.003271 post_s=0.008445 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=94 pre_s=0.009395 seq_s=0.003252 post_s=0.008827 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=93 pre_s=0.008637 seq_s=0.003337 post_s=0.008061 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=92 pre_s=0.010174 seq_s=0.003713 post_s=0.009134 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=91 pre_s=0.009398 seq_s=0.003467 post_s=0.008426 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=90 pre_s=0.011010 seq_s=0.003676 post_s=0.008788 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=89 pre_s=0.010247 seq_s=0.003638 post_s=0.009697 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=88 pre_s=0.010004 seq_s=0.003490 post_s=0.008762 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=87 pre_s=0.011917 seq_s=0.003783 post_s=0.013029 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=86 pre_s=0.009140 seq_s=0.003493 post_s=0.009716 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=85 pre_s=0.008718 seq_s=0.003605 post_s=0.008019 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=84 pre_s=0.009813 seq_s=0.003366 post_s=0.007768 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=83 pre_s=0.009401 seq_s=0.003475 post_s=0.008154 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=82 pre_s=0.009089 seq_s=0.003262 post_s=0.007623 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=81 pre_s=0.009760 seq_s=0.003356 post_s=0.008208 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=80 pre_s=0.010561 seq_s=0.003517 post_s=0.009292 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=79 pre_s=0.009336 seq_s=0.003335 post_s=0.008495 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=78 pre_s=0.008997 seq_s=0.003581 post_s=0.008220 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=77 pre_s=0.009050 seq_s=0.003687 post_s=0.007584 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=76 pre_s=0.009276 seq_s=0.003377 post_s=0.007826 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=75 pre_s=0.009557 seq_s=0.003341 post_s=0.008897 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=74 pre_s=0.009352 seq_s=0.003368 post_s=0.008434 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=73 pre_s=0.009632 seq_s=0.003261 post_s=0.008858 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=72 pre_s=0.010931 seq_s=0.003764 post_s=0.010941 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=71 pre_s=0.010084 seq_s=0.003297 post_s=0.009414 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=70 pre_s=0.009577 seq_s=0.003369 post_s=0.008429 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=69 pre_s=0.009587 seq_s=0.003568 post_s=0.009965 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=68 pre_s=0.009884 seq_s=0.003433 post_s=0.009159 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=67 pre_s=0.009924 seq_s=0.003309 post_s=0.008079 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=66 pre_s=0.009327 seq_s=0.003431 post_s=0.008402 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=65 pre_s=0.009179 seq_s=0.003289 post_s=0.008396 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=64 pre_s=0.009243 seq_s=0.003566 post_s=0.008563 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=63 pre_s=0.010300 seq_s=0.003366 post_s=0.009409 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=62 pre_s=0.010331 seq_s=0.003580 post_s=0.008604 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=61 pre_s=0.009356 seq_s=0.003502 post_s=0.008264 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=60 pre_s=0.009270 seq_s=0.003277 post_s=0.008542 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=59 pre_s=0.010087 seq_s=0.003528 post_s=0.008975 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=58 pre_s=0.009077 seq_s=0.003411 post_s=0.008319 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=57 pre_s=0.009295 seq_s=0.003382 post_s=0.007748 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=56 pre_s=0.008636 seq_s=0.003317 post_s=0.006963 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=55 pre_s=0.007692 seq_s=0.003020 post_s=0.007057 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=54 pre_s=0.007687 seq_s=0.003005 post_s=0.007956 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=53 pre_s=0.009359 seq_s=0.003219 post_s=0.009191 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=52 pre_s=0.008558 seq_s=0.003343 post_s=0.008402 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=51 pre_s=0.008974 seq_s=0.003121 post_s=0.009037 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=50 pre_s=0.009246 seq_s=0.003175 post_s=0.008979 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=49 pre_s=0.008937 seq_s=0.003207 post_s=0.008371 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=48 pre_s=0.009008 seq_s=0.003325 post_s=0.008788 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=47 pre_s=0.009548 seq_s=0.003296 post_s=0.009346 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=46 pre_s=0.008728 seq_s=0.003203 post_s=0.007896 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=45 pre_s=0.009192 seq_s=0.003172 post_s=0.009385 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=44 pre_s=0.009984 seq_s=0.003507 post_s=0.009465 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=43 pre_s=0.010383 seq_s=0.003102 post_s=0.009269 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=42 pre_s=0.008573 seq_s=0.003746 post_s=0.008190 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=41 pre_s=0.008790 seq_s=0.003334 post_s=0.008182 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=40 pre_s=0.009916 seq_s=0.003310 post_s=0.010019 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=39 pre_s=0.009376 seq_s=0.003182 post_s=0.009205 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=38 pre_s=0.009491 seq_s=0.003246 post_s=0.009612 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=37 pre_s=0.009064 seq_s=0.003818 post_s=0.008421 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=36 pre_s=0.008705 seq_s=0.003405 post_s=0.008400 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=35 pre_s=0.007762 seq_s=0.003172 post_s=0.007807 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=34 pre_s=0.008742 seq_s=0.003237 post_s=0.008296 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=33 pre_s=0.010507 seq_s=0.003134 post_s=0.010460 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=32 pre_s=0.010261 seq_s=0.003198 post_s=0.010011 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=31 pre_s=0.009545 seq_s=0.003152 post_s=0.008551 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=30 pre_s=0.009013 seq_s=0.003064 post_s=0.008171 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=29 pre_s=0.008190 seq_s=0.003711 post_s=0.007687 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=28 pre_s=0.008085 seq_s=0.003351 post_s=0.007918 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=27 pre_s=0.007862 seq_s=0.003641 post_s=0.007650 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=26 pre_s=0.009994 seq_s=0.003126 post_s=0.009781 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=25 pre_s=0.009669 seq_s=0.003209 post_s=0.009105 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=24 pre_s=0.009393 seq_s=0.003727 post_s=0.009338 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=23 pre_s=0.008212 seq_s=0.003236 post_s=0.007488 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=22 pre_s=0.008402 seq_s=0.003343 post_s=0.007672 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=21 pre_s=0.008034 seq_s=0.003240 post_s=0.007074 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=20 pre_s=0.008080 seq_s=0.003201 post_s=0.007597 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=19 pre_s=0.007638 seq_s=0.003154 post_s=0.007563 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=18 pre_s=0.010625 seq_s=0.003385 post_s=0.009958 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=17 pre_s=0.009697 seq_s=0.003280 post_s=0.009000 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=16 pre_s=0.009248 seq_s=0.003457 post_s=0.008946 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=15 pre_s=0.008864 seq_s=0.003381 post_s=0.008825 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=14 pre_s=0.008956 seq_s=0.003199 post_s=0.007670 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=13 pre_s=0.007848 seq_s=0.003250 post_s=0.007273 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=12 pre_s=0.008232 seq_s=0.003108 post_s=0.007201 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=11 pre_s=0.007872 seq_s=0.003039 post_s=0.007240 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=10 pre_s=0.011405 seq_s=0.003197 post_s=0.010329 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=9 pre_s=0.009863 seq_s=0.003791 post_s=0.009193 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=8 pre_s=0.009152 seq_s=0.003363 post_s=0.008804 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=7 pre_s=0.008791 seq_s=0.003303 post_s=0.008898 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=6 pre_s=0.008608 seq_s=0.003361 post_s=0.008300 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=5 pre_s=0.008691 seq_s=0.003275 post_s=0.008062 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=4 pre_s=0.008158 seq_s=0.003241 post_s=0.007826 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=3 pre_s=0.008917 seq_s=0.003706 post_s=0.008394 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=2 pre_s=0.011152 seq_s=0.003368 post_s=0.010588 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=10 stage=1 pre_s=0.007798 seq_s=0.003089 post_s=0.007798 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=10 stages=96 pre_sum_s=0.890753800 pre_max_s=0.011916800 seq_sum_s=0.322748800 post_sum_s=0.829066300 post_max_s=0.013029300
+FILTERDDP_REUSE_PASS iteration=10 barrier_iteration=5 stages=96 total_s=2.044266300 mu=3.200000000e-04
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+    10   2.70646643e+06   3.3690e-03   1.9799e-07   1.7541e-03   -3.49      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=10 dir_sum_s=1.694383900 dir_max_s=0.108739700 rec_s=0.068614700 rec_err=2.220e-16 trials=1 trial_sum_s=0.296815400 trial_max_s=0.003793100
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=5 backward_s=2.044312200 forward_s=2.060773300 total_s=4.105085500 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FILTERDDP_PAIRED_PASS iteration=11 barrier_iteration=5 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.860304 rounds_s=39.222434 step3_s=10.197997 total_s=60.281559 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=11 stages=96 pre_sum_s=8.760977300 pre_max_s=0.123629900 seq_sum_s=0.000000000 post_sum_s=9.177619500 post_max_s=0.129182400 pair_sum_s=39.221770000 pair_max_s=0.867950400 pre_gc_s=2.098977000 post_gc_s=1.019065800 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=11 inplace=1 step1_gc_s=2.098977 rounds_gc_s=0.000000 step3_gc_s=1.019066 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+    11   2.70513723e+06   6.1437e-03   3.9517e-06   6.1310e-04   -3.49      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=11 dir_sum_s=1.663048600 dir_max_s=0.023399800 rec_s=0.096882100 rec_err=5.551e-17 trials=1 trial_sum_s=0.315616900 trial_max_s=0.004255600
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=5 backward_s=60.281636800 forward_s=2.076522500 total_s=62.358159300 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FILTERDDP_PAIRED_PASS iteration=12 barrier_iteration=5 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.552264 rounds_s=39.306351 step3_s=10.039496 total_s=59.898901 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=12 stages=96 pre_sum_s=8.492661600 pre_max_s=0.115200200 seq_sum_s=0.000000000 post_sum_s=9.015878900 post_max_s=0.105487200 pair_sum_s=39.305688600 pair_max_s=0.886415800 pre_gc_s=2.059270900 post_gc_s=1.022361400 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=12 inplace=1 step1_gc_s=2.059271 rounds_gc_s=0.000000 step3_gc_s=1.022361 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=19 full=3
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=5 backward_s=59.898962400 forward_s=0.000000000 total_s=59.898962400 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FILTERDDP_PARSIM_STAGE iteration=12 stage=96 pre_s=0.009880 seq_s=0.003109 post_s=0.009520 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=95 pre_s=0.010051 seq_s=0.003306 post_s=0.009300 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=94 pre_s=0.009736 seq_s=0.003303 post_s=0.008829 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=93 pre_s=0.008200 seq_s=0.003245 post_s=0.007448 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=92 pre_s=0.008622 seq_s=0.003239 post_s=0.007337 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=91 pre_s=0.008889 seq_s=0.003520 post_s=0.007844 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=90 pre_s=0.008591 seq_s=0.003321 post_s=0.007734 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=89 pre_s=0.009493 seq_s=0.003378 post_s=0.007831 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=88 pre_s=0.009897 seq_s=0.003271 post_s=0.009216 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=87 pre_s=0.008993 seq_s=0.003270 post_s=0.009003 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=86 pre_s=0.009933 seq_s=0.003351 post_s=0.008385 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=85 pre_s=0.010318 seq_s=0.003417 post_s=0.009266 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=84 pre_s=0.008970 seq_s=0.003866 post_s=0.008141 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=83 pre_s=0.008479 seq_s=0.003260 post_s=0.007163 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=82 pre_s=0.008730 seq_s=0.003412 post_s=0.007452 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=81 pre_s=0.008403 seq_s=0.003308 post_s=0.007159 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=80 pre_s=0.008954 seq_s=0.003626 post_s=0.007664 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=79 pre_s=0.010315 seq_s=0.003501 post_s=0.008587 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=78 pre_s=0.010013 seq_s=0.003530 post_s=0.008911 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=77 pre_s=0.010343 seq_s=0.003524 post_s=0.008145 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=76 pre_s=0.009956 seq_s=0.003576 post_s=0.008298 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=75 pre_s=0.009901 seq_s=0.003613 post_s=0.008535 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=74 pre_s=0.010091 seq_s=0.003398 post_s=0.008267 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=73 pre_s=0.009844 seq_s=0.003716 post_s=0.009036 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=72 pre_s=0.009798 seq_s=0.003554 post_s=0.008382 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=71 pre_s=0.010340 seq_s=0.003399 post_s=0.008696 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=70 pre_s=0.010092 seq_s=0.003669 post_s=0.008772 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=69 pre_s=0.010549 seq_s=0.003335 post_s=0.008526 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=68 pre_s=0.009201 seq_s=0.003514 post_s=0.008202 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=67 pre_s=0.009297 seq_s=0.003418 post_s=0.007836 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=66 pre_s=0.009293 seq_s=0.003488 post_s=0.008129 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=65 pre_s=0.009620 seq_s=0.003615 post_s=0.008670 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=64 pre_s=0.009191 seq_s=0.003469 post_s=0.007684 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=63 pre_s=0.009882 seq_s=0.003522 post_s=0.008516 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=62 pre_s=0.013279 seq_s=0.004384 post_s=0.010278 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=61 pre_s=0.010596 seq_s=0.003489 post_s=0.009183 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=60 pre_s=0.009561 seq_s=0.003510 post_s=0.008231 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=59 pre_s=0.010450 seq_s=0.003446 post_s=0.009635 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=58 pre_s=0.010125 seq_s=0.003592 post_s=0.008964 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=57 pre_s=0.009746 seq_s=0.003389 post_s=0.008089 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=56 pre_s=0.009669 seq_s=0.003661 post_s=0.008135 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=55 pre_s=0.009464 seq_s=0.003517 post_s=0.008235 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=54 pre_s=0.008647 seq_s=0.003399 post_s=0.007363 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=53 pre_s=0.009011 seq_s=0.003278 post_s=0.007612 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=52 pre_s=0.011304 seq_s=0.003462 post_s=0.009826 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=51 pre_s=0.009478 seq_s=0.003287 post_s=0.008476 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=50 pre_s=0.008066 seq_s=0.003090 post_s=0.008178 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=49 pre_s=0.009560 seq_s=0.003087 post_s=0.009104 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=48 pre_s=0.009284 seq_s=0.003053 post_s=0.008552 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=47 pre_s=0.008790 seq_s=0.003067 post_s=0.008559 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=46 pre_s=0.008730 seq_s=0.003302 post_s=0.007929 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=45 pre_s=0.010171 seq_s=0.003312 post_s=0.009428 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=44 pre_s=0.008887 seq_s=0.003337 post_s=0.009015 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=43 pre_s=0.009544 seq_s=0.003085 post_s=0.009255 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=42 pre_s=0.010037 seq_s=0.003070 post_s=0.009263 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=41 pre_s=0.008549 seq_s=0.003055 post_s=0.008186 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=40 pre_s=0.008132 seq_s=0.003079 post_s=0.007597 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=39 pre_s=0.008639 seq_s=0.003152 post_s=0.008217 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=38 pre_s=0.011393 seq_s=0.003331 post_s=0.010018 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=37 pre_s=0.009085 seq_s=0.003097 post_s=0.008982 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=36 pre_s=0.009539 seq_s=0.003147 post_s=0.008902 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=35 pre_s=0.009176 seq_s=0.003526 post_s=0.008201 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=34 pre_s=0.008128 seq_s=0.003185 post_s=0.007430 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=33 pre_s=0.008643 seq_s=0.003148 post_s=0.007536 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=32 pre_s=0.007734 seq_s=0.003200 post_s=0.007671 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=31 pre_s=0.010510 seq_s=0.003311 post_s=0.010148 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=30 pre_s=0.010032 seq_s=0.003519 post_s=0.009760 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=29 pre_s=0.009974 seq_s=0.003448 post_s=0.009103 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=28 pre_s=0.008499 seq_s=0.003245 post_s=0.008773 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=27 pre_s=0.008014 seq_s=0.003133 post_s=0.008316 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=26 pre_s=0.008999 seq_s=0.003117 post_s=0.007880 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=25 pre_s=0.008025 seq_s=0.003244 post_s=0.007842 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=24 pre_s=0.011491 seq_s=0.003289 post_s=0.011214 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=23 pre_s=0.011133 seq_s=0.003139 post_s=0.010351 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=22 pre_s=0.008782 seq_s=0.003334 post_s=0.008457 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=21 pre_s=0.008282 seq_s=0.003328 post_s=0.008130 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=20 pre_s=0.008154 seq_s=0.003186 post_s=0.007534 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=19 pre_s=0.007805 seq_s=0.003736 post_s=0.007528 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=18 pre_s=0.008939 seq_s=0.003196 post_s=0.007973 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=17 pre_s=0.007543 seq_s=0.003498 post_s=0.007039 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=16 pre_s=0.012420 seq_s=0.003840 post_s=0.010716 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=15 pre_s=0.010010 seq_s=0.003157 post_s=0.009084 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=14 pre_s=0.008798 seq_s=0.004037 post_s=0.008548 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=13 pre_s=0.008253 seq_s=0.003069 post_s=0.008054 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=12 pre_s=0.007474 seq_s=0.003232 post_s=0.007448 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=11 pre_s=0.008122 seq_s=0.003179 post_s=0.007595 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=10 pre_s=0.009221 seq_s=0.003519 post_s=0.008096 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=9 pre_s=0.009244 seq_s=0.003151 post_s=0.008448 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=8 pre_s=0.010771 seq_s=0.003063 post_s=0.010251 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=7 pre_s=0.008982 seq_s=0.003044 post_s=0.009278 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=6 pre_s=0.008607 seq_s=0.003182 post_s=0.008025 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=5 pre_s=0.009916 seq_s=0.003585 post_s=0.008895 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=4 pre_s=0.009134 seq_s=0.003107 post_s=0.008457 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=3 pre_s=0.008831 seq_s=0.003062 post_s=0.007875 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=2 pre_s=0.009483 seq_s=0.003191 post_s=0.009077 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=1 pre_s=0.010106 seq_s=0.003295 post_s=0.009644 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=12 stages=96 pre_sum_s=0.902831400 pre_max_s=0.013279100 seq_sum_s=0.322212900 post_sum_s=0.818070900 post_max_s=0.011214100
+FILTERDDP_REUSE_PASS iteration=12 barrier_iteration=6 stages=96 total_s=2.044831000 mu=6.400000000e-05
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=6 backward_s=2.044875500 forward_s=0.000000000 total_s=2.044875500 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_PARSIM_STAGE iteration=12 stage=96 pre_s=0.008806 seq_s=0.003180 post_s=0.008564 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=95 pre_s=0.009812 seq_s=0.003260 post_s=0.009258 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=94 pre_s=0.009163 seq_s=0.003127 post_s=0.008410 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=93 pre_s=0.008060 seq_s=0.003144 post_s=0.007272 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=92 pre_s=0.008526 seq_s=0.003322 post_s=0.007710 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=91 pre_s=0.008018 seq_s=0.003221 post_s=0.007733 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=90 pre_s=0.008038 seq_s=0.003566 post_s=0.008413 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=89 pre_s=0.008380 seq_s=0.003180 post_s=0.007938 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=88 pre_s=0.009994 seq_s=0.003590 post_s=0.008850 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=87 pre_s=0.008969 seq_s=0.003532 post_s=0.008193 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=86 pre_s=0.009822 seq_s=0.003639 post_s=0.008781 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=85 pre_s=0.009844 seq_s=0.003157 post_s=0.008966 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=84 pre_s=0.007728 seq_s=0.003085 post_s=0.007375 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=83 pre_s=0.008279 seq_s=0.003201 post_s=0.007485 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=82 pre_s=0.007777 seq_s=0.003136 post_s=0.007421 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=81 pre_s=0.007341 seq_s=0.003091 post_s=0.007434 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=80 pre_s=0.007539 seq_s=0.003169 post_s=0.007368 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=79 pre_s=0.008974 seq_s=0.003270 post_s=0.008710 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=78 pre_s=0.009109 seq_s=0.003248 post_s=0.008331 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=77 pre_s=0.008068 seq_s=0.003222 post_s=0.007926 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=76 pre_s=0.008491 seq_s=0.003286 post_s=0.008261 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=75 pre_s=0.008505 seq_s=0.003115 post_s=0.008533 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=74 pre_s=0.008468 seq_s=0.003129 post_s=0.008307 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=73 pre_s=0.008620 seq_s=0.003291 post_s=0.011024 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=72 pre_s=0.007908 seq_s=0.003447 post_s=0.007899 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=71 pre_s=0.009486 seq_s=0.003708 post_s=0.008562 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=70 pre_s=0.010246 seq_s=0.003526 post_s=0.008725 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=69 pre_s=0.009143 seq_s=0.003133 post_s=0.008783 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=68 pre_s=0.008222 seq_s=0.003186 post_s=0.008299 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=67 pre_s=0.010496 seq_s=0.003294 post_s=0.008344 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=66 pre_s=0.008772 seq_s=0.003482 post_s=0.007847 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=65 pre_s=0.009197 seq_s=0.003170 post_s=0.008011 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=64 pre_s=0.008543 seq_s=0.003252 post_s=0.007860 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=63 pre_s=0.008972 seq_s=0.003100 post_s=0.008348 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=62 pre_s=0.008651 seq_s=0.003134 post_s=0.008578 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=61 pre_s=0.009490 seq_s=0.003180 post_s=0.009533 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=60 pre_s=0.008806 seq_s=0.003357 post_s=0.008192 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=59 pre_s=0.009713 seq_s=0.003338 post_s=0.009183 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=58 pre_s=0.009850 seq_s=0.003908 post_s=0.008511 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=57 pre_s=0.009573 seq_s=0.003161 post_s=0.008039 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=56 pre_s=0.008910 seq_s=0.003265 post_s=0.008094 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=55 pre_s=0.008403 seq_s=0.003188 post_s=0.008554 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=54 pre_s=0.136778 seq_s=0.003476 post_s=0.008341 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=53 pre_s=0.008452 seq_s=0.003096 post_s=0.007688 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=52 pre_s=0.010867 seq_s=0.003293 post_s=0.010098 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=51 pre_s=0.009022 seq_s=0.003086 post_s=0.008082 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=50 pre_s=0.008986 seq_s=0.003066 post_s=0.008861 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=49 pre_s=0.010004 seq_s=0.003220 post_s=0.008951 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=48 pre_s=0.009197 seq_s=0.003158 post_s=0.008406 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=47 pre_s=0.009603 seq_s=0.003156 post_s=0.008650 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=46 pre_s=0.008802 seq_s=0.003106 post_s=0.007760 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=45 pre_s=0.010568 seq_s=0.003460 post_s=0.010081 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=44 pre_s=0.009820 seq_s=0.003300 post_s=0.008605 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=43 pre_s=0.012008 seq_s=0.003187 post_s=0.009820 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=42 pre_s=0.010269 seq_s=0.003432 post_s=0.009163 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=41 pre_s=0.009768 seq_s=0.003390 post_s=0.008454 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=40 pre_s=0.009078 seq_s=0.003407 post_s=0.008803 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=39 pre_s=0.009210 seq_s=0.003301 post_s=0.007662 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=38 pre_s=0.011235 seq_s=0.003305 post_s=0.010312 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=37 pre_s=0.010444 seq_s=0.003309 post_s=0.010537 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=36 pre_s=0.010971 seq_s=0.003318 post_s=0.009443 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=35 pre_s=0.009959 seq_s=0.003399 post_s=0.008388 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=34 pre_s=0.009033 seq_s=0.003409 post_s=0.009527 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=33 pre_s=0.008879 seq_s=0.003471 post_s=0.007792 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=32 pre_s=0.009216 seq_s=0.003430 post_s=0.007606 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=31 pre_s=0.011755 seq_s=0.003515 post_s=0.010663 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=30 pre_s=0.012057 seq_s=0.003538 post_s=0.010537 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=29 pre_s=0.010405 seq_s=0.003326 post_s=0.009466 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=28 pre_s=0.009598 seq_s=0.003319 post_s=0.008280 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=27 pre_s=0.009517 seq_s=0.003407 post_s=0.008284 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=26 pre_s=0.009318 seq_s=0.003496 post_s=0.007882 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=25 pre_s=0.008879 seq_s=0.003362 post_s=0.010271 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=24 pre_s=0.011525 seq_s=0.003359 post_s=0.010550 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=23 pre_s=0.010967 seq_s=0.003442 post_s=0.009895 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=22 pre_s=0.011567 seq_s=0.003932 post_s=0.012536 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=21 pre_s=0.009053 seq_s=0.003635 post_s=0.008284 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=20 pre_s=0.008775 seq_s=0.003308 post_s=0.007788 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=19 pre_s=0.009566 seq_s=0.003548 post_s=0.008062 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=18 pre_s=0.009238 seq_s=0.003448 post_s=0.008114 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=17 pre_s=0.008085 seq_s=0.003313 post_s=0.007076 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=16 pre_s=0.011240 seq_s=0.003520 post_s=0.010063 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=15 pre_s=0.010569 seq_s=0.003318 post_s=0.009642 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=14 pre_s=0.009522 seq_s=0.003248 post_s=0.008270 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=13 pre_s=0.009183 seq_s=0.003535 post_s=0.008049 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=12 pre_s=0.008591 seq_s=0.003274 post_s=0.007808 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=11 pre_s=0.009083 seq_s=0.003489 post_s=0.007939 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=10 pre_s=0.009072 seq_s=0.003262 post_s=0.008285 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=9 pre_s=0.008944 seq_s=0.003305 post_s=0.008061 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=8 pre_s=0.011646 seq_s=0.003247 post_s=0.010353 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=7 pre_s=0.009881 seq_s=0.003390 post_s=0.009053 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=6 pre_s=0.009128 seq_s=0.003393 post_s=0.007852 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=5 pre_s=0.009797 seq_s=0.003244 post_s=0.008462 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=4 pre_s=0.010117 seq_s=0.003338 post_s=0.008854 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=3 pre_s=0.009671 seq_s=0.003333 post_s=0.008293 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=2 pre_s=0.010085 seq_s=0.003162 post_s=0.008737 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=12 stage=1 pre_s=0.010490 seq_s=0.003412 post_s=0.009617 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=12 stages=96 pre_sum_s=1.030206100 pre_max_s=0.136778400 seq_sum_s=0.319185300 post_sum_s=0.829682200 post_max_s=0.012536100
+FILTERDDP_REUSE_PASS iteration=12 barrier_iteration=7 stages=96 total_s=2.180675000 mu=9.277179695e-06
+    12   2.70513756e+06   3.1005e-04   2.1207e-08   3.5499e-04   -5.03      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=12 dir_sum_s=1.578952600 dir_max_s=0.020194400 rec_s=0.063485200 rec_err=2.220e-16 trials=1 trial_sum_s=0.493739500 trial_max_s=0.143438300
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=7 backward_s=2.180752400 forward_s=2.137132400 total_s=4.317884800 outcome=accepted step_size=9.625082348e-01 backtracks=0 mu=9.277179695e-06
+FILTERDDP_PAIRED_PASS iteration=13 barrier_iteration=7 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.873914 rounds_s=39.589640 step3_s=9.961336 total_s=60.425661 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=13 stages=96 pre_sum_s=8.647245100 pre_max_s=0.106105200 seq_sum_s=0.000000000 post_sum_s=9.037490700 post_max_s=0.106849000 pair_sum_s=39.588919500 pair_max_s=0.911726100 pre_gc_s=2.226325800 post_gc_s=0.922573300 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=13 inplace=1 step1_gc_s=2.226326 rounds_gc_s=0.000000 step3_gc_s=0.922573 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+    13   2.70482769e+06   9.0125e-04   2.7355e-07   1.0022e-04   -5.03      -     9.6251e-01   0
+FILTERDDP_PARSIM_FORWARD iteration=13 dir_sum_s=1.652174700 dir_max_s=0.023582200 rec_s=0.069630900 rec_err=5.551e-17 trials=1 trial_sum_s=0.373552100 trial_max_s=0.054479600
+FILTERDDP_ITER_TIMING iteration=13 barrier_iteration=7 backward_s=60.425723200 forward_s=2.096317200 total_s=62.522040400 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_PAIRED_PASS iteration=14 barrier_iteration=7 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.814439 rounds_s=39.335681 step3_s=9.869133 total_s=60.020003 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=14 stages=96 pre_sum_s=8.716323000 pre_max_s=0.133673200 seq_sum_s=0.000000000 post_sum_s=8.952971000 post_max_s=0.111351800 pair_sum_s=39.335039900 pair_max_s=0.885381900 pre_gc_s=2.097778700 post_gc_s=0.914893300 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=14 inplace=1 step1_gc_s=2.097779 rounds_gc_s=0.000000 step3_gc_s=0.914893 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=18 full=3
+    14   2.70481564e+06   3.2024e-04   4.4114e-09   2.9905e-05   -5.03      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=14 dir_sum_s=1.688530500 dir_max_s=0.068944900 rec_s=0.070351200 rec_err=0.000e+00 trials=1 trial_sum_s=0.308438300 trial_max_s=0.004153900
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=7 backward_s=60.020063800 forward_s=2.068276200 total_s=62.088340000 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_PAIRED_PASS iteration=15 barrier_iteration=7 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.919721 rounds_s=39.242639 step3_s=9.936490 total_s=60.099620 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=15 stages=96 pre_sum_s=8.745982600 pre_max_s=0.122003000 seq_sum_s=0.000000000 post_sum_s=8.968330700 post_max_s=0.100751400 pair_sum_s=39.241871900 pair_max_s=0.916973300 pre_gc_s=2.173383400 post_gc_s=0.966913700 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=15 inplace=1 step1_gc_s=2.173383 rounds_gc_s=0.000000 step3_gc_s=0.966914 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=19 full=3
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=7 backward_s=60.099686000 forward_s=0.000000000 total_s=60.099686000 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_PARSIM_STAGE iteration=15 stage=96 pre_s=0.009276 seq_s=0.003190 post_s=0.009035 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=95 pre_s=0.008797 seq_s=0.003238 post_s=0.007654 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=94 pre_s=0.008762 seq_s=0.003267 post_s=0.007802 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=93 pre_s=0.008730 seq_s=0.003285 post_s=0.007379 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=92 pre_s=0.008762 seq_s=0.004115 post_s=0.008199 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=91 pre_s=0.009300 seq_s=0.003346 post_s=0.007900 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=90 pre_s=0.008936 seq_s=0.003275 post_s=0.007959 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=89 pre_s=0.008743 seq_s=0.003275 post_s=0.007767 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=88 pre_s=0.008961 seq_s=0.003423 post_s=0.007533 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=87 pre_s=0.010264 seq_s=0.003490 post_s=0.008431 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=86 pre_s=0.010974 seq_s=0.003713 post_s=0.009246 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=85 pre_s=0.009782 seq_s=0.003400 post_s=0.008510 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=84 pre_s=0.009221 seq_s=0.003491 post_s=0.007980 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=83 pre_s=0.009033 seq_s=0.003400 post_s=0.007935 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=82 pre_s=0.009483 seq_s=0.003461 post_s=0.008005 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=81 pre_s=0.013921 seq_s=0.004061 post_s=0.008720 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=80 pre_s=0.009565 seq_s=0.003441 post_s=0.008219 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=79 pre_s=0.009052 seq_s=0.003294 post_s=0.008130 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=78 pre_s=0.009210 seq_s=0.003651 post_s=0.008532 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=77 pre_s=0.009003 seq_s=0.003335 post_s=0.007678 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=76 pre_s=0.009101 seq_s=0.003337 post_s=0.008114 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=75 pre_s=0.009245 seq_s=0.003386 post_s=0.008015 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=74 pre_s=0.009931 seq_s=0.003760 post_s=0.008320 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=73 pre_s=0.011297 seq_s=0.003638 post_s=0.008662 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=72 pre_s=0.010381 seq_s=0.003848 post_s=0.008851 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=71 pre_s=0.009841 seq_s=0.003711 post_s=0.008037 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=70 pre_s=0.009321 seq_s=0.003481 post_s=0.007844 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=69 pre_s=0.009723 seq_s=0.003290 post_s=0.008244 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=68 pre_s=0.009783 seq_s=0.003607 post_s=0.008489 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=67 pre_s=0.010633 seq_s=0.003392 post_s=0.008944 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=66 pre_s=0.009195 seq_s=0.003502 post_s=0.008371 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=65 pre_s=0.010563 seq_s=0.003540 post_s=0.009116 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=64 pre_s=0.010720 seq_s=0.003654 post_s=0.009920 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=63 pre_s=0.011420 seq_s=0.004096 post_s=0.009154 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=62 pre_s=0.009383 seq_s=0.003840 post_s=0.007897 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=61 pre_s=0.009525 seq_s=0.003863 post_s=0.008059 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=60 pre_s=0.010222 seq_s=0.003763 post_s=0.008347 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=59 pre_s=0.009156 seq_s=0.003576 post_s=0.007828 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=58 pre_s=0.010386 seq_s=0.003678 post_s=0.008702 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=57 pre_s=0.010561 seq_s=0.003728 post_s=0.009081 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=56 pre_s=0.010926 seq_s=0.003686 post_s=0.008823 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=55 pre_s=0.010502 seq_s=0.003797 post_s=0.008984 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=54 pre_s=0.012866 seq_s=0.003295 post_s=0.008502 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=53 pre_s=0.008548 seq_s=0.003236 post_s=0.008348 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=52 pre_s=0.009461 seq_s=0.003165 post_s=0.010258 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=51 pre_s=0.009909 seq_s=0.003278 post_s=0.008908 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=50 pre_s=0.009528 seq_s=0.003121 post_s=0.009483 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=49 pre_s=0.009514 seq_s=0.003189 post_s=0.008951 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=48 pre_s=0.008283 seq_s=0.003520 post_s=0.007913 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=47 pre_s=0.008438 seq_s=0.003153 post_s=0.008755 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=46 pre_s=0.009012 seq_s=0.003182 post_s=0.008049 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=45 pre_s=0.010202 seq_s=0.003118 post_s=0.009732 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=44 pre_s=0.010873 seq_s=0.003189 post_s=0.009482 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=43 pre_s=0.009527 seq_s=0.003099 post_s=0.009206 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=42 pre_s=0.008332 seq_s=0.003165 post_s=0.008153 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=41 pre_s=0.008912 seq_s=0.003205 post_s=0.008230 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=40 pre_s=0.008644 seq_s=0.003228 post_s=0.008622 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=39 pre_s=0.008908 seq_s=0.003433 post_s=0.008418 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=38 pre_s=0.010429 seq_s=0.003273 post_s=0.009133 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=37 pre_s=0.009771 seq_s=0.003179 post_s=0.009110 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=36 pre_s=0.009173 seq_s=0.003144 post_s=0.009278 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=35 pre_s=0.009731 seq_s=0.003096 post_s=0.008635 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=34 pre_s=0.007928 seq_s=0.003001 post_s=0.007604 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=33 pre_s=0.008836 seq_s=0.003116 post_s=0.008561 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=32 pre_s=0.008248 seq_s=0.003462 post_s=0.007933 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=31 pre_s=0.011563 seq_s=0.004181 post_s=0.010630 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=30 pre_s=0.009731 seq_s=0.003395 post_s=0.009303 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=29 pre_s=0.009580 seq_s=0.003530 post_s=0.009147 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=28 pre_s=0.009196 seq_s=0.003296 post_s=0.008598 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=27 pre_s=0.007890 seq_s=0.003155 post_s=0.007533 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=26 pre_s=0.008720 seq_s=0.003220 post_s=0.008598 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=25 pre_s=0.008585 seq_s=0.003051 post_s=0.008017 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=24 pre_s=0.010359 seq_s=0.003105 post_s=0.009371 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=23 pre_s=0.009792 seq_s=0.003620 post_s=0.009465 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=22 pre_s=0.009817 seq_s=0.003507 post_s=0.009213 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=21 pre_s=0.008938 seq_s=0.003198 post_s=0.008382 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=20 pre_s=0.008817 seq_s=0.003154 post_s=0.008057 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=19 pre_s=0.007956 seq_s=0.003200 post_s=0.007849 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=18 pre_s=0.008210 seq_s=0.003079 post_s=0.007201 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=17 pre_s=0.008452 seq_s=0.003160 post_s=0.008015 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=16 pre_s=0.011791 seq_s=0.003190 post_s=0.011672 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=15 pre_s=0.010224 seq_s=0.003580 post_s=0.009775 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=14 pre_s=0.009630 seq_s=0.003438 post_s=0.008554 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=13 pre_s=0.008582 seq_s=0.003636 post_s=0.008195 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=12 pre_s=0.009245 seq_s=0.003210 post_s=0.008552 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=11 pre_s=0.007937 seq_s=0.003078 post_s=0.007781 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=10 pre_s=0.008072 seq_s=0.003087 post_s=0.007933 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=9 pre_s=0.008430 seq_s=0.003078 post_s=0.008043 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=8 pre_s=0.008643 seq_s=0.003137 post_s=0.008017 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=7 pre_s=0.009114 seq_s=0.003189 post_s=0.009000 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=6 pre_s=0.010656 seq_s=0.003321 post_s=0.010523 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=5 pre_s=0.010421 seq_s=0.003293 post_s=0.010304 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=4 pre_s=0.009682 seq_s=0.003222 post_s=0.008204 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=3 pre_s=0.009417 seq_s=0.003132 post_s=0.008160 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=2 pre_s=0.008674 seq_s=0.003043 post_s=0.008338 reuse=1
+FILTERDDP_PARSIM_STAGE iteration=15 stage=1 pre_s=0.010065 seq_s=0.003067 post_s=0.009697 reuse=1
+FILTERDDP_PARSIM_BACKWARD iteration=15 stages=96 pre_sum_s=0.914846500 pre_max_s=0.013920500 seq_sum_s=0.324723400 post_sum_s=0.823806200 post_max_s=0.011672400
+FILTERDDP_REUSE_PASS iteration=15 barrier_iteration=8 stages=96 total_s=2.065143700 mu=1.000000000e-06
+    15   2.70481564e+06   2.9138e-06   2.7914e-10   1.2834e-05   -6.00      -     1.0000e+00   0
+FILTERDDP_PARSIM_FORWARD iteration=15 dir_sum_s=1.778791800 dir_max_s=0.116575800 rec_s=0.062199100 rec_err=2.220e-16 trials=1 trial_sum_s=0.322093000 trial_max_s=0.003920600
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=8 backward_s=2.065186800 forward_s=2.164033200 total_s=4.229220000 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PAIRED_PASS iteration=16 barrier_iteration=8 stages=96 mode=count threads=8 rounds=7 combinations=368 step1_s=10.970972 rounds_s=59.477467 step3_s=9.847122 total_s=80.296405 scan_err_Vxx=NaN scan_err_Vx=NaN chol_fail=0
+FILTERDDP_PARSIM_BACKWARD iteration=16 stages=96 pre_sum_s=8.679346400 pre_max_s=0.100870600 seq_sum_s=0.000000000 post_sum_s=9.053345600 post_max_s=0.100311900 pair_sum_s=59.476823700 pair_max_s=3.021905900 pre_gc_s=2.291279800 post_gc_s=0.792509700 pair_gc_s=0.000000000
+FILTERDDP_PAIRED_GC iteration=16 inplace=1 step1_gc_s=2.291280 rounds_gc_s=0.000000 step3_gc_s=0.792510 step1_gib=9.944 rounds_gib=0.000 step3_gib=5.139 collections=19 full=3
+FILTERDDP_ITER_TIMING iteration=16 barrier_iteration=8 backward_s=80.296468900 forward_s=0.000000000 total_s=80.296468900 outcome=converged step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+    16   2.70480707e+06   6.5592e-06   6.3841e-10   3.7281e-06   -6.00      -     1.0000e+00   0
+
+
+EXIT: Optimal solution found.
+
+solve complete: 1087.683 s, iterations=16, status=0
+FILTERDDP_GC_TIME gc_s=52.296 collected_before_solve=1
+FILTERDDP_MEMORY_PEAK maxrss_mib=20010.8
+final residuals: primal=6.559214894120e-06 dual=6.384100427682e-10 complementarity=3.728077230233e-06
+saved_solution=C:\Users\Aryan Ritwajeet Jha\Documents\documents_general\MultiPeriodDistOPF\.claude\worktrees\new-session-a7b7a2\ddp\results\network_filterddp\filterddp_solution_large10kC_1ph_T96_periodic_CBsystem.jls
+FilterDDP objective=2704807.066934211645 max_equality_residual=6.559e-06
+BOUND_CHECK screen=substation,vupper,ell,psubs voltages below=0 above=0 worst_violation=0.000e+00 min_ell=2.232e-04 min_P_Subs=4.190e+02

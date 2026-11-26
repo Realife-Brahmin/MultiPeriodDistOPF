@@ -1,0 +1,82 @@
+C_B OVERRIDE: 0.001
+ieee123C_1ph T=96: nx=51, nu=791, nc=562, dense nu^2=625681, reduced=229
+TERMINAL_SOC soft=1 gamma=1.750000e+04
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 128 upper of 128 buses; ell >= 0 dropped on 127 lines; P_Subs >= 0 dropped: true (lossless lower bound 0.115 p.u.)
+build complete: 5.909 s, nc=562
+constructing dynamic Solver storage...
+optimality_tolerance=1.000e-05 max_iterations=400
+BARRIER_OPTIONS mu_init=1 kappa_mu=0.2 theta_mu=1.2 kappa_eps=10
+Solver construction complete: 0.887 s
+LOADFLOW_START sweeps=6 max_equality_residual=3.143e-04 lowest_voltage=0.9893 pu
+entering solve! ...
+TREE_KKT layout: nodes=128 feeders=1 nE=102 groups=1 max_own=10 max_iface=3
+solve complete: 82.330 s, iterations=56, status=0
+FILTERDDP_GC_TIME gc_s=10.228 collected_before_solve=0
+FILTERDDP_MEMORY_PEAK maxrss_mib=2820.6
+final residuals: primal=1.630560872633e-11 dual=3.606889578123e-07 complementarity=1.000029906246e-06
+solution_write_skipped=1
+FilterDDP objective=2956.080009009917 max_equality_residual=1.631e-11
+BOUND_CHECK screen=substation,vupper,ell,psubs voltages below=0 above=0 worst_violation=0.000e+00 min_ell=1.918e-06 min_P_Subs=4.508e-01
+Ipopt objective=2857.162113572183 objective_gap=9.892e+01
+max_abs_diff[P_Subs]=4.978e-01
+max_abs_diff[Q_Subs]=1.569e-02
+max_abs_diff[P]=4.978e-01
+max_abs_diff[Q]=1.569e-02
+max_abs_diff[v]=2.597e-02
+max_abs_diff[ell]=8.348e-01
+max_abs_diff[P_B]=1.236e-02
+max_abs_diff[B]=1.438e-02
+max_abs_diff[q_D]=4.778e-03
+ALLOC_PROFILE samples=3143022 sample_rate=0.02 estimated allocations=157151100 estimated GiB=14.31
+-- by number of allocations
+50.1%   24.9% bytes   (outside the repository)
+6.8%    3.3% bytes    #backward_pass!#26  backward_pass.jl:979
+6.6%    3.3% bytes    main  ieee123c_filterddp.jl:612
+6.1%    3.0% bytes    solve!  solve.jl:53
+3.2%    1.5% bytes    #backward_pass!#26  backward_pass.jl:989
+1.6%    3.3% bytes    \  tree_kkt.jl:189
+1.6%    1.4% bytes    smallmul  tree_kkt.jl:209
+0.9%    3.5% bytes    tree_kkt_factor  tree_kkt.jl:236
+0.9%    0.6% bytes    smalllu!  tree_kkt.jl:165
+0.9%    1.3% bytes    tree_kkt_factor  tree_kkt.jl:248
+0.8%    0.4% bytes    #backward_pass!#26  backward_pass.jl:877
+0.7%    2.0% bytes    _tree_kkt_prepare  tree_kkt.jl:556
+0.6%    0.1% bytes    #loadflow_sweep#5  loadflow_start.jl:55
+0.6%    0.3% bytes    #backward_pass!#26  backward_pass.jl:814
+0.6%    0.3% bytes    solve!  solve.jl:107
+0.6%    0.3% bytes    #build_model#132  ieee123c_filterddp.jl:271
+0.6%    0.3% bytes    main  ieee123c_filterddp.jl:506
+0.5%    0.2% bytes    #backward_pass!#26  backward_pass.jl:812
+0.4%    0.2% bytes    main  ieee123c_filterddp.jl:524
+0.4%    0.2% bytes    #build_model#132  ieee123c_filterddp.jl:267
+0.4%    0.2% bytes    #backward_pass!#26  backward_pass.jl:534
+0.4%    0.2% bytes    #167  ieee123c_filterddp.jl:333
+0.3%    0.2% bytes    tree_kkt_layout  tree_kkt.jl:116
+0.3%    0.2% bytes    main  ieee123c_filterddp.jl:564
+0.3%    0.2% bytes    main  ieee123c_filterddp.jl:517
+0.3%    0.1% bytes    affine_directions  affine_linesearch.jl:82
+0.3%    0.1% bytes    main  ieee123c_filterddp.jl:545
+0.3%    0.1% bytes    #backward_pass!#26  backward_pass.jl:746
+0.3%    0.1% bytes    main  ieee123c_filterddp.jl:523
+0.3%    0.2% bytes    initialize_trajectory!  solver.jl:125
+-- by bytes
+24.9%   50.1% count   (outside the repository)
+3.5%    0.9% count    tree_kkt_factor  tree_kkt.jl:236
+3.3%    1.6% count    \  tree_kkt.jl:189
+3.3%    6.6% count    main  ieee123c_filterddp.jl:612
+3.3%    6.8% count    #backward_pass!#26  backward_pass.jl:979
+3.0%    6.1% count    solve!  solve.jl:53
+2.8%    0.2% count    _derivative_matrix  backward_pass.jl:1
+2.7%    0.0% count    _tree_kkt_finish  tree_kkt.jl:651
+2.0%    0.7% count    _tree_kkt_prepare  tree_kkt.jl:556
+1.6%    0.1% count    #backward_pass!#26  backward_pass.jl:876
+1.5%    0.1% count    _tree_kkt_finish  tree_kkt.jl:693
+1.5%    0.0% count    #tree_kkt_solver#87  tree_kkt.jl:960
+1.5%    0.2% count    ensure  tree_kkt.jl:585
+1.5%    3.2% count    #backward_pass!#26  backward_pass.jl:989
+1.5%    0.1% count    _reuse_stage  reuse_pass.jl:53
+1.4%    1.6% count    smallmul  tree_kkt.jl:209
+1.4%    0.0% count    #tree_kkt_solver#87  tree_kkt.jl:961
+1.3%    0.2% count    #175  ieee123c_filterddp.jl:441
+1.3%    0.9% count    tree_kkt_factor  tree_kkt.jl:248
+1.3%    0.1% count    #backward_pass!#26  backward_pass.jl:1072
