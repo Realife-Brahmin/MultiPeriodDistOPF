@@ -1,0 +1,433 @@
+2026-10-15T00:41:30-07:00
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           46 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  64
+On-line CPU(s) list:                     0-63
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) Gold 6438Y+
+CPU family:                              6
+Model:                                   143
+Thread(s) per core:                      1
+Core(s) per socket:                      32
+Socket(s):                               2
+Stepping:                                8
+CPU(s) scaling MHz:                      91%
+CPU max MHz:                             4000.0000
+CPU min MHz:                             800.0000
+BogoMIPS:                                4000.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+L1d cache:                               3 MiB (64 instances)
+L1i cache:                               2 MiB (64 instances)
+L2 cache:                                128 MiB (64 instances)
+L3 cache:                                120 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsx async abort:           Not affected
+JobId=31189926 JobName=stageB_balanced
+   UserId=aryan.jha(9254) GroupId=its_p_sys_ur_kam-dubey(7274) MCS_label=N/A
+   Priority=49 Nice=0 Account=dubey QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:00 TimeLimit=00:12:00 TimeMin=N/A
+   SubmitTime=2026-10-15T00:41:28 EligibleTime=2026-10-15T00:41:28
+   StartTime=2026-10-15T00:41:30 EndTime=2026-10-15T00:53:30 Deadline=N/A
+   PreemptTime=None SuspendTime=None SecsPreSuspend=0
+   LastSchedEval=2026-10-15T00:41:30
+   Partition=kamiak AllocNode:Sid=login-p3n01:3244935
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn165
+   BatchHost=cn165
+   NumNodes=1 NumCPUs=64 NumTasks=64 CPUs/Task=1 ReqB:S:C:T=0:0:*:*
+   TRES=cpu=64,mem=600G,node=1,billing=64
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=1 MinMemoryNode=600G MinTmpDiskNode=0
+   Features=sapphirerapids&gold-6438y+-2.00ghz&mem-1024GB&cores-64 DelayBoot=00:00:00
+   Gres=(null) Reservation=(null)
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/home/aryan.jha/kamiak_jobs/balanced_stage_b_oct15/run_replay.sh 0
+   WorkDir=/home/aryan.jha/kamiak_jobs/balanced_stage_b_oct15
+   StdErr=/home/aryan.jha/kamiak_jobs/balanced_stage_b_oct15/logs/balanced_31189926.err
+   StdIn=/dev/null
+   StdOut=/home/aryan.jha/kamiak_jobs/balanced_stage_b_oct15/logs/balanced_31189926.out
+   Power=
+
+REPLAY_PLACEMENT Dict(5 => "cn165", 56 => "cn165", 35 => "cn165", 55 => "cn165", 60 => "cn165", 30 => "cn165", 32 => "cn165", 6 => "cn165", 45 => "cn165", 64 => "cn165", 4 => "cn165", 13 => "cn165", 54 => "cn165", 63 => "cn165", 62 => "cn165", 58 => "cn165", 52 => "cn165", 12 => "cn165", 28 => "cn165", 23 => "cn165", 41 => "cn165", 43 => "cn165", 11 => "cn165", 36 => "cn165", 39 => "cn165", 7 => "cn165", 25 => "cn165", 34 => "cn165", 50 => "cn165", 59 => "cn165", 2 => "cn165", 10 => "cn165", 18 => "cn165", 26 => "cn165", 27 => "cn165", 42 => "cn165", 16 => "cn165", 20 => "cn165", 19 => "cn165", 49 => "cn165", 44 => "cn165", 9 => "cn165", 31 => "cn165", 61 => "cn165", 29 => "cn165", 46 => "cn165", 57 => "cn165", 21 => "cn165", 38 => "cn165", 24 => "cn165", 8 => "cn165", 17 => "cn165", 37 => "cn165", 53 => "cn165", 22 => "cn165", 47 => "cn165", 14 => "cn165", 3 => "cn165", 51 => "cn165", 33 => "cn165", 40 => "cn165", 48 => "cn165", 15 => "cn165")
+REPLAY_PROCESS pid=1 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002efd5000)
+REPLAY_PROCESS pid=2 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d2a1000)
+REPLAY_PROCESS pid=3 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e28a000)
+REPLAY_PROCESS pid=4 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d572000)
+REPLAY_PROCESS pid=5 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d2db000)
+REPLAY_PROCESS pid=6 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b624000)
+REPLAY_PROCESS pid=7 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029dc7000)
+REPLAY_PROCESS pid=8 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029bdb000)
+REPLAY_PROCESS pid=9 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b0be000)
+REPLAY_PROCESS pid=10 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029d9f000)
+REPLAY_PROCESS pid=11 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029cba000)
+REPLAY_PROCESS pid=12 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e277000)
+REPLAY_PROCESS pid=13 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d98d000)
+REPLAY_PROCESS pid=14 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029c01000)
+REPLAY_PROCESS pid=15 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ac1c000)
+REPLAY_PROCESS pid=16 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029dbb000)
+REPLAY_PROCESS pid=17 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002aacf000)
+REPLAY_PROCESS pid=18 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029d56000)
+REPLAY_PROCESS pid=19 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d827000)
+REPLAY_PROCESS pid=20 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b0e000)
+REPLAY_PROCESS pid=21 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dca2000)
+REPLAY_PROCESS pid=22 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002df58000)
+REPLAY_PROCESS pid=23 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002da41000)
+REPLAY_PROCESS pid=24 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d989000)
+REPLAY_PROCESS pid=25 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002de42000)
+REPLAY_PROCESS pid=26 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d450000)
+REPLAY_PROCESS pid=27 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b6c9000)
+REPLAY_PROCESS pid=28 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d8c0000)
+REPLAY_PROCESS pid=29 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b499000)
+REPLAY_PROCESS pid=30 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029dbc000)
+REPLAY_PROCESS pid=31 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029b41000)
+REPLAY_PROCESS pid=32 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dc51000)
+REPLAY_PROCESS pid=33 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029d15000)
+REPLAY_PROCESS pid=34 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b550000)
+REPLAY_PROCESS pid=35 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e137000)
+REPLAY_PROCESS pid=36 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002aa59000)
+REPLAY_PROCESS pid=37 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002997a000)
+REPLAY_PROCESS pid=38 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d818000)
+REPLAY_PROCESS pid=39 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029a1d000)
+REPLAY_PROCESS pid=40 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002a6cd000)
+REPLAY_PROCESS pid=41 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x0000000029a36000)
+REPLAY_PROCESS pid=42 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002db01000)
+REPLAY_PROCESS pid=43 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002e3ec000)
+REPLAY_PROCESS pid=44 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ad89000)
+REPLAY_PROCESS pid=45 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c329000)
+REPLAY_PROCESS pid=46 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002aa12000)
+REPLAY_PROCESS pid=47 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d27a000)
+REPLAY_PROCESS pid=48 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d659000)
+REPLAY_PROCESS pid=49 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d42e000)
+REPLAY_PROCESS pid=50 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c792000)
+REPLAY_PROCESS pid=51 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d017000)
+REPLAY_PROCESS pid=52 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c3f3000)
+REPLAY_PROCESS pid=53 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d968000)
+REPLAY_PROCESS pid=54 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c77d000)
+REPLAY_PROCESS pid=55 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cc4f000)
+REPLAY_PROCESS pid=56 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c5ae000)
+REPLAY_PROCESS pid=57 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002dd08000)
+REPLAY_PROCESS pid=58 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002c37e000)
+REPLAY_PROCESS pid=59 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002cca2000)
+REPLAY_PROCESS pid=60 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d6a8000)
+REPLAY_PROCESS pid=61 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002b7e5000)
+REPLAY_PROCESS pid=62 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002ddfa000)
+REPLAY_PROCESS pid=63 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d1b9000)
+REPLAY_PROCESS pid=64 info=(host = "cn165", affinity = "0-63", cpu = "Intel(R) Xeon(R) Gold 6438Y+", maxrss = 0x000000002d0ae000)
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=3.081587 compute_sum_s=7.772907 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=2.814096 compute_sum_s=7.705464 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=2.801437 compute_sum_s=7.702529 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=2.794164 compute_sum_s=7.723692 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=2.793266 compute_sum_s=7.733478 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=2.559764 compute_sum_s=7.730751 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=0 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.156883 compute_sum_s=4.917592 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=0 wall_s=17.997223 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.379015 compute_sum_s=8.147527 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.340859 compute_sum_s=8.056633 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.342451 compute_sum_s=8.053134 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.340868 compute_sum_s=8.005600 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.329216 compute_sum_s=7.927884 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.246803 compute_sum_s=7.750398 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=0 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.161712 compute_sum_s=4.934696 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=0 wall_s=2.143544 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333843 compute_sum_s=7.967484 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334995 compute_sum_s=7.996686 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334788 compute_sum_s=7.986862 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.332101 compute_sum_s=7.947220 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.329359 compute_sum_s=7.909480 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256436 compute_sum_s=7.746527 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=1 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165499 compute_sum_s=4.935625 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=1 wall_s=2.089921 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.501573 compute_sum_s=7.773274 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489618 compute_sum_s=7.754726 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489814 compute_sum_s=7.765181 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.487578 compute_sum_s=7.741634 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486114 compute_sum_s=7.721879 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256235 compute_sum_s=7.737590 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=1 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165965 compute_sum_s=4.921614 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=1 wall_s=2.879660 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489545 compute_sum_s=7.747736 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489580 compute_sum_s=7.758885 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.488760 compute_sum_s=7.757934 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.487199 compute_sum_s=7.743521 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486952 compute_sum_s=7.724018 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256213 compute_sum_s=7.742450 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=2 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165695 compute_sum_s=4.922683 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=2 wall_s=2.866711 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333204 compute_sum_s=7.966251 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333986 compute_sum_s=7.974528 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334205 compute_sum_s=8.005246 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.331934 compute_sum_s=7.960761 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.330029 compute_sum_s=7.901678 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256712 compute_sum_s=7.748525 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=2 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.166195 compute_sum_s=4.946836 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=2 wall_s=2.089004 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333526 compute_sum_s=7.977866 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334180 compute_sum_s=7.978008 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333560 compute_sum_s=7.986224 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.331913 compute_sum_s=7.959441 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.331254 compute_sum_s=7.923900 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256767 compute_sum_s=7.764495 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=3 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.166073 compute_sum_s=4.945911 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=3 wall_s=2.090011 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.501846 compute_sum_s=7.762816 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.511750 compute_sum_s=7.781388 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489501 compute_sum_s=7.768378 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486181 compute_sum_s=7.743308 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486353 compute_sum_s=7.725155 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256593 compute_sum_s=7.743169 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=3 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165213 compute_sum_s=4.923418 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=3 wall_s=2.900029 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.490622 compute_sum_s=7.737846 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489625 compute_sum_s=7.766393 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489352 compute_sum_s=7.752908 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486515 compute_sum_s=7.749719 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.485993 compute_sum_s=7.718476 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.255717 compute_sum_s=7.761102 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=4 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165149 compute_sum_s=4.930598 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=4 wall_s=2.865644 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333648 compute_sum_s=7.972813 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334486 compute_sum_s=7.987288 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334152 compute_sum_s=7.992749 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.332361 compute_sum_s=7.941132 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.330293 compute_sum_s=7.905400 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.256761 compute_sum_s=7.748291 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=4 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165766 compute_sum_s=4.933838 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=4 wall_s=2.090196 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=1 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333489 compute_sum_s=7.983179 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=2 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.334873 compute_sum_s=7.985707 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=3 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.333321 compute_sum_s=7.991635 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=4 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.332551 compute_sum_s=7.969176 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=5 tasks=48 busy_workers=32 max_tasks=2 wall_s=0.329053 compute_sum_s=7.913947 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.257307 compute_sum_s=7.769307 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=32 rep=5 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.166435 compute_sum_s=4.943987 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=32 rep=5 wall_s=2.089787 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=1 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.503953 compute_sum_s=7.750278 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=2 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489333 compute_sum_s=7.759275 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=3 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.489088 compute_sum_s=7.764847 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=4 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486550 compute_sum_s=7.738944 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=5 tasks=48 busy_workers=16 max_tasks=3 wall_s=0.486268 compute_sum_s=7.727978 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=6 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.255954 compute_sum_s=7.737912 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=32 rep=5 round=7 tasks=64 busy_workers=32 max_tasks=2 wall_s=0.165351 compute_sum_s=4.924862 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=32 rep=5 wall_s=2.879132 max_relative_error=2.977617591605e-14
+BALANCED_RESULT scheduling=owner workers=32 median_s=2.879132 min_s=2.865644 max_s=2.900029
+BALANCED_RESULT scheduling=balanced workers=32 median_s=2.089921 min_s=2.089004 max_s=2.090196
+REPLAY_MEMORY workers=32 worker_maxrss_sum_bytes=46201311232 coordinator_maxrss_bytes=6042079232
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=2.647927 compute_sum_s=7.782598 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=2.649936 compute_sum_s=7.837012 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=2.646341 compute_sum_s=7.876206 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=2.620550 compute_sum_s=7.873310 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=2.479031 compute_sum_s=8.273180 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.246300 compute_sum_s=7.840455 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=0 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.168115 compute_sum_s=5.029473 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=0 wall_s=13.461344 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.185118 compute_sum_s=8.514642 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184213 compute_sum_s=8.481562 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.186531 compute_sum_s=8.461381 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.187402 compute_sum_s=8.473581 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183827 compute_sum_s=8.347918 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.259066 compute_sum_s=7.886308 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=0 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.167140 compute_sum_s=5.034543 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=0 wall_s=1.356194 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181959 compute_sum_s=8.330849 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182459 compute_sum_s=8.382071 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182557 compute_sum_s=8.368432 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183554 compute_sum_s=8.432627 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184415 compute_sum_s=8.312477 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.258833 compute_sum_s=7.860679 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=1 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.167912 compute_sum_s=5.044485 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=1 wall_s=1.344573 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.350358 compute_sum_s=7.884798 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344817 compute_sum_s=7.901000 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344190 compute_sum_s=7.885129 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344162 compute_sum_s=7.885007 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184152 compute_sum_s=8.283293 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.255969 compute_sum_s=7.839508 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=1 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.167209 compute_sum_s=5.024829 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=1 wall_s=1.993607 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.348595 compute_sum_s=7.879470 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344027 compute_sum_s=7.910065 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.343158 compute_sum_s=7.884195 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.347791 compute_sum_s=7.881426 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182887 compute_sum_s=8.273467 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256937 compute_sum_s=7.843526 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=2 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.167384 compute_sum_s=5.023294 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=2 wall_s=1.993493 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182606 compute_sum_s=8.337703 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183268 compute_sum_s=8.400748 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183855 compute_sum_s=8.397680 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184965 compute_sum_s=8.425044 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184687 compute_sum_s=8.322328 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.259025 compute_sum_s=7.863065 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=2 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.168336 compute_sum_s=5.042404 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=2 wall_s=1.349364 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182505 compute_sum_s=8.335350 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182811 compute_sum_s=8.386189 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183279 compute_sum_s=8.391622 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182322 compute_sum_s=8.420656 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182515 compute_sum_s=8.331237 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256154 compute_sum_s=7.860890 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=3 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.166337 compute_sum_s=5.035668 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=3 wall_s=1.338464 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.346726 compute_sum_s=7.870586 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.343284 compute_sum_s=7.904053 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344293 compute_sum_s=7.882493 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344532 compute_sum_s=7.873506 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181850 compute_sum_s=8.272862 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.257155 compute_sum_s=7.829580 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=3 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.165390 compute_sum_s=5.025039 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=3 wall_s=1.985787 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.347622 compute_sum_s=7.875474 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.344148 compute_sum_s=7.904332 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.345172 compute_sum_s=7.883705 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.346091 compute_sum_s=7.881964 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181931 compute_sum_s=8.283857 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256659 compute_sum_s=7.834998 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=4 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.165315 compute_sum_s=5.022731 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=4 wall_s=1.989472 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182077 compute_sum_s=8.342247 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183567 compute_sum_s=8.368019 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182629 compute_sum_s=8.375677 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182727 compute_sum_s=8.416606 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182421 compute_sum_s=8.334357 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256458 compute_sum_s=7.857065 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=4 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.165701 compute_sum_s=5.040153 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=4 wall_s=1.338164 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181273 compute_sum_s=8.336736 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183051 compute_sum_s=8.377737 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182658 compute_sum_s=8.361578 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182298 compute_sum_s=8.388867 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182941 compute_sum_s=8.336795 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256264 compute_sum_s=7.851255 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=48 rep=5 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.165778 compute_sum_s=5.039135 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=48 rep=5 wall_s=1.336837 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=1 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.347114 compute_sum_s=7.880520 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=2 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.343907 compute_sum_s=7.908614 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=3 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.343660 compute_sum_s=7.894182 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=4 tasks=48 busy_workers=24 max_tasks=2 wall_s=0.347048 compute_sum_s=7.884855 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182631 compute_sum_s=8.284139 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=6 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.256511 compute_sum_s=7.831932 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=48 rep=5 round=7 tasks=64 busy_workers=48 max_tasks=2 wall_s=0.165827 compute_sum_s=5.030206 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=48 rep=5 wall_s=1.989247 max_relative_error=2.977617591605e-14
+BALANCED_RESULT scheduling=owner workers=48 median_s=1.989472 min_s=1.985787 max_s=1.993607
+BALANCED_RESULT scheduling=balanced workers=48 median_s=1.338464 min_s=1.336837 max_s=1.349364
+REPLAY_MEMORY workers=48 worker_maxrss_sum_bytes=77117014016 coordinator_maxrss_bytes=6512590848
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=2.545566 compute_sum_s=8.211555 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=2.539053 compute_sum_s=8.038237 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=2.492244 compute_sum_s=8.020044 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=2.457284 compute_sum_s=7.981596 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.332397 compute_sum_s=7.928753 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.245410 compute_sum_s=7.766120 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=0 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.163063 compute_sum_s=5.564912 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=0 wall_s=10.778199 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180825 compute_sum_s=8.515715 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182218 compute_sum_s=8.496383 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181881 compute_sum_s=8.477688 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181512 compute_sum_s=8.446730 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.179203 compute_sum_s=8.315288 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.248038 compute_sum_s=8.242878 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=0 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.160401 compute_sum_s=5.527500 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=0 wall_s=1.317336 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180466 compute_sum_s=8.360328 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184142 compute_sum_s=8.413772 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184055 compute_sum_s=8.433801 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183861 compute_sum_s=8.408173 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180639 compute_sum_s=8.297442 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.245688 compute_sum_s=8.398829 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=1 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.165022 compute_sum_s=5.688865 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=1 wall_s=1.327089 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181338 compute_sum_s=8.264986 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=0.341403 compute_sum_s=8.102053 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=0.333185 compute_sum_s=8.023856 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=0.331573 compute_sum_s=7.968664 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.340186 compute_sum_s=7.907983 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.255551 compute_sum_s=7.756019 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=1 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.165801 compute_sum_s=5.682946 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=1 wall_s=1.952092 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181419 compute_sum_s=8.276760 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=0.342638 compute_sum_s=8.105947 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=0.334620 compute_sum_s=8.019242 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=0.330716 compute_sum_s=7.961381 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.339581 compute_sum_s=7.918399 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.254616 compute_sum_s=7.759028 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=2 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.160444 compute_sum_s=5.458931 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=2 wall_s=1.947324 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181284 compute_sum_s=8.348606 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183196 compute_sum_s=8.431240 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.185214 compute_sum_s=8.421690 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182345 compute_sum_s=8.402865 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181095 compute_sum_s=8.318540 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.246816 compute_sum_s=8.254925 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=2 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.165593 compute_sum_s=5.715933 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=2 wall_s=1.329004 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180978 compute_sum_s=8.353781 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181417 compute_sum_s=8.403794 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184226 compute_sum_s=8.389982 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184231 compute_sum_s=8.397462 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180741 compute_sum_s=8.303474 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.245497 compute_sum_s=8.186351 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=3 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.165272 compute_sum_s=5.680023 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=3 wall_s=1.325754 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181100 compute_sum_s=8.253450 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=0.343895 compute_sum_s=8.111727 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=0.333049 compute_sum_s=8.013980 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=0.331212 compute_sum_s=7.972266 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.339906 compute_sum_s=7.918226 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.254942 compute_sum_s=7.755156 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=3 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.160137 compute_sum_s=5.464435 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=3 wall_s=1.947521 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.180935 compute_sum_s=8.250781 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=0.342952 compute_sum_s=8.106165 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=0.333121 compute_sum_s=8.013536 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=0.330669 compute_sum_s=7.970568 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.339649 compute_sum_s=7.914789 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.253544 compute_sum_s=7.747045 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=4 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.160345 compute_sum_s=5.525141 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=4 wall_s=1.944240 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181854 compute_sum_s=8.345710 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182459 compute_sum_s=8.416941 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183334 compute_sum_s=8.393568 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.183625 compute_sum_s=8.382180 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181411 compute_sum_s=8.324567 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.245336 compute_sum_s=8.419687 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=4 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.164275 compute_sum_s=5.711678 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=4 wall_s=1.325335 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.182843 compute_sum_s=8.358701 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=2 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181666 compute_sum_s=8.433482 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=3 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184382 compute_sum_s=8.408707 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=4 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.184839 compute_sum_s=8.405716 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=5 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.181811 compute_sum_s=8.326283 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=6 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.243512 compute_sum_s=8.181518 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=balanced workers=63 rep=5 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.158168 compute_sum_s=5.416621 gc_sum_s=0.000000
+BALANCED_PASS scheduling=balanced workers=63 rep=5 wall_s=1.320501 max_relative_error=2.977617591605e-14
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=1 tasks=48 busy_workers=48 max_tasks=1 wall_s=0.186481 compute_sum_s=8.283914 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=2 tasks=48 busy_workers=40 max_tasks=2 wall_s=0.342628 compute_sum_s=8.122941 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=3 tasks=48 busy_workers=36 max_tasks=2 wall_s=0.343600 compute_sum_s=8.046769 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=4 tasks=48 busy_workers=34 max_tasks=2 wall_s=0.349430 compute_sum_s=8.022136 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=5 tasks=48 busy_workers=33 max_tasks=2 wall_s=0.346190 compute_sum_s=7.966222 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=6 tasks=64 busy_workers=33 max_tasks=2 wall_s=0.257188 compute_sum_s=7.795213 gc_sum_s=0.000000
+BALANCED_ROUND scheduling=owner workers=63 rep=5 round=7 tasks=64 busy_workers=63 max_tasks=2 wall_s=0.160195 compute_sum_s=5.477143 gc_sum_s=0.000000
+BALANCED_PASS scheduling=owner workers=63 rep=5 wall_s=1.988993 max_relative_error=2.977617591605e-14
+BALANCED_RESULT scheduling=owner workers=63 median_s=1.947521 min_s=1.944240 max_s=1.988993
+BALANCED_RESULT scheduling=balanced workers=63 median_s=1.325754 min_s=1.320501 max_s=1.329004
+REPLAY_MEMORY workers=63 worker_maxrss_sum_bytes=96337387520 coordinator_maxrss_bytes=6629519360
+BALANCED_COMPLETE

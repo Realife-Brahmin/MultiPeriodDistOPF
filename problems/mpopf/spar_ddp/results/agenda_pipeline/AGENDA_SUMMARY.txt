@@ -1,0 +1,182 @@
+====================================================================================================
+AGENDA PIPELINE SUMMARY -- C:/Users/Aryan Ritwajeet Jha/Documents/documents_general/MultiPeriodDistOPF/.claude/worktrees/new-session-a7b7a2/ddp/results/agenda_pipeline
+====================================================================================================
+
+A. DIAGONAL STAGE HESSIAN  (converge? time benefit?)
+
+system           arm         wall_s  iters  status    objective per-stage f/ms    factor_s     solve_s    fill
+ieee123C_1ph     exact        16.97     50      OK  2688.984190          13.05        2.39        0.48   2.567
+ieee123C_1ph     diag1e-8     15.31     60      OK  2688.984194           7.71        1.64        0.36   2.084
+ieee123C_1ph     diag1e-4     14.55     58      OK  2689.481743           5.54        1.15        0.29   2.093
+ieee123C_1ph     diag1e-1     17.78    200   FAIL8  2689.178781           4.62        2.91        0.68   2.066
+ieee2522C_1ph    exact       112.05     56      OK  8238.431077         157.18       31.59       43.02   2.598
+ieee2522C_1ph    diag1e-8    100.31     65      OK  8238.431090          57.57       13.13       30.35   2.221
+large10kC_1ph    exact      2623.63    103      OK 3124025.510479        2168.62      741.67     1024.19   1.606
+large10kC_1ph    diag1e-8   1409.84    120      OK 3124025.509533         208.34       81.88      763.79   2.209
+
+   deltas against each system's exact arm:
+   ieee123C_1ph     wall   -9.8%   iters  +20.0%   per-stage factor  -40.9%   nnz_LU  -40.8%   obj rel diff 1.65e-09
+   ieee2522C_1ph    wall  -10.5%   iters  +16.1%   per-stage factor  -63.4%   nnz_LU  -42.3%   obj rel diff 1.51e-09
+   large10kC_1ph    wall  -46.3%   iters  +16.5%   per-stage factor  -90.4%   nnz_LU  -51.2%   obj rel diff 3.03e-10
+
+
+B. STALE FACTOR AS PRECONDITIONER  (does A^-1 vary slowly?)
+   break-even: refinement must converge in <= 1 + factor/solve steps (~3)
+
+   ieee123C_1ph:
+    anchor   lag           dK/K   dSigma/Sigma          rho    refine    gmres
+         0     0      0.000e+00      0.000e+00    8.930e-14         1        1
+         0     1      1.657e-01      1.245e+00    7.734e-01        31       17
+         0     2      6.236e-01      2.219e+01    2.040e+01        31       61
+         0     3      8.344e-01      2.008e+01    1.263e+01        31       61
+        10     0      0.000e+00      0.000e+00    3.857e-15         1        1
+        10     1      1.336e+00      1.394e+00    7.567e-01        31       17
+        10     2      5.141e+00      5.373e+00    1.753e+00        31       29
+        10     3      1.242e+01      1.298e+01    4.716e+00        31       49
+        20     0      0.000e+00      0.000e+00    2.570e-14         1        1
+        20     1      2.363e+00      2.363e+00    1.594e-01        12        6
+        20     2      6.722e+00      6.722e+00    1.315e+00        31       14
+        20     3      1.885e+01      1.885e+01    3.029e+00        31       20
+        30     0      0.000e+00      0.000e+00    3.917e-14         1        1
+        30     1      2.293e+00      2.293e+00    2.734e-01        12        5
+        30     2      1.076e+01      1.076e+01    4.568e-01        19        7
+        30     3      2.666e+01      2.666e+01    1.982e+00        31       14
+        40     0      0.000e+00      0.000e+00    6.088e-14         1        1
+        40     1      1.132e+00      1.132e+00    1.426e+00        31        6
+        40     2      3.791e+00      3.791e+00    4.329e+00        31        8
+        40     3      1.071e+01      1.071e+01    8.469e+00        31        9
+   -> best refinement step count at any lag >= 1: 12  (does not pay)
+
+
+C. LINEAR SOLVERS  (UMFPACK vs MUMPS, threads, pivot tolerance)
+
+   ieee123C_1ph:
+   solver                 threads    factor_s     solve_s     total_s       nnz_LU    residual
+   UMFPACK                      1     0.00474     0.00153     0.00627        22116    7.37e-19
+   UMFPACK_symmetric            1     0.00469     0.00162     0.00631        28837    1.32e-18
+   UMFPACK_pivtol_1e-02         1     0.00482     0.00158     0.00640        21638    2.80e-17
+   UMFPACK_pivtol_1e-03         1     0.00495     0.00148     0.00643        21159    2.79e-15
+   UMFPACK_pivtol_1e-04         1     0.00481     0.00150     0.00632        20152    3.00e-13
+   UMFPACK_pivtol_1e-06         1     0.00481     0.00150     0.00631        19744    2.98e-12
+   MUMPS_unsymmetric            1     0.00461     0.00038     0.00498          n/a    7.19e+22
+   MUMPS_symmetric              1     0.01738     0.01122     0.02860          n/a    3.96e-16
+   UMFPACK                      2     0.00468     0.00154     0.00623        22116    7.37e-19
+   UMFPACK_symmetric            2     0.00476     0.00159     0.00635        28837    1.32e-18
+   UMFPACK_pivtol_1e-02         2     0.00489     0.00158     0.00646        21638    2.80e-17
+   UMFPACK_pivtol_1e-03         2     0.00512     0.00153     0.00665        21159    2.79e-15
+   UMFPACK_pivtol_1e-04         2     0.00510     0.00151     0.00661        20152    3.00e-13
+   UMFPACK_pivtol_1e-06         2     0.00485     0.00145     0.00630        19744    2.98e-12
+   MUMPS_unsymmetric            2     0.02130     0.00041     0.02171          n/a    7.19e+22
+   MUMPS_symmetric              2     0.03822     0.02809     0.06631          n/a    3.96e-16
+   UMFPACK                      4     0.00497     0.00150     0.00647        22116    7.37e-19
+   UMFPACK_symmetric            4     0.00468     0.00163     0.00631        28837    1.32e-18
+   UMFPACK_pivtol_1e-02         4     0.00476     0.00158     0.00633        21638    2.80e-17
+   UMFPACK_pivtol_1e-03         4     0.00489     0.00152     0.00641        21159    2.79e-15
+   UMFPACK_pivtol_1e-04         4     0.00508     0.00145     0.00652        20152    3.00e-13
+   UMFPACK_pivtol_1e-06         4     0.00478     0.00142     0.00620        19744    2.98e-12
+   MUMPS_unsymmetric            4     0.02398     0.00051     0.02449          n/a    7.19e+22
+   MUMPS_symmetric              4     0.03250     0.02709     0.05958          n/a    3.96e-16
+   UMFPACK                      8     0.00464     0.00161     0.00625        22116    7.37e-19
+   UMFPACK_symmetric            8     0.00444     0.00162     0.00606        28837    1.32e-18
+   UMFPACK_pivtol_1e-02         8     0.00462     0.00160     0.00623        21638    2.80e-17
+   UMFPACK_pivtol_1e-03         8     0.00477     0.00143     0.00620        21159    2.79e-15
+   UMFPACK_pivtol_1e-04         8     0.00477     0.00150     0.00626        20152    3.00e-13
+   UMFPACK_pivtol_1e-06         8     0.00493     0.00148     0.00641        19744    2.98e-12
+   MUMPS_unsymmetric            8     0.02794     0.00040     0.02834          n/a    7.19e+22
+   MUMPS_symmetric              8     0.03166     0.03015     0.06181          n/a    3.96e-16
+   UMFPACK                     16     0.00474     0.00162     0.00636        22116    7.37e-19
+   UMFPACK_symmetric           16     0.00466     0.00165     0.00631        28837    1.32e-18
+   UMFPACK_pivtol_1e-02        16     0.00480     0.00154     0.00634        21638    2.80e-17
+   UMFPACK_pivtol_1e-03        16     0.00484     0.00158     0.00642        21159    2.79e-15
+   UMFPACK_pivtol_1e-04        16     0.00522     0.00154     0.00676        20152    3.00e-13
+   UMFPACK_pivtol_1e-06        16     0.00482     0.00158     0.00640        19744    2.98e-12
+   MUMPS_unsymmetric           16     0.04195     0.00041     0.04236          n/a    7.19e+22
+   MUMPS_symmetric             16     0.03600     0.05597     0.09197          n/a    3.96e-16
+
+   ieee2522C_1ph:
+   solver                 threads    factor_s     solve_s     total_s       nnz_LU    residual
+   UMFPACK                      1     0.14825     0.18564     0.33389       477630    6.19e-16
+   UMFPACK_symmetric            1     0.11765     0.18582     0.30347       601646    6.24e-16
+   UMFPACK_pivtol_1e-02         1     0.13502     0.17727     0.31229       455111    7.13e-16
+   UMFPACK_pivtol_1e-03         1     0.15435     0.17453     0.32888       431134    1.44e-13
+   UMFPACK_pivtol_1e-04         1     0.13775     0.16992     0.30766       411089    9.18e-08
+   UMFPACK_pivtol_1e-06         1     0.14910     0.16819     0.31729       397988    1.42e-03
+   MUMPS_unsymmetric            1     0.18633     0.02700     0.21333          n/a    1.61e+22
+   MUMPS_symmetric              1     0.31953     0.02736     0.34689          n/a    1.61e+22
+   UMFPACK                      2     0.15465     0.19790     0.35254       477630    6.19e-16
+   UMFPACK_symmetric            2     0.13115     0.18770     0.31884       601646    6.24e-16
+   UMFPACK_pivtol_1e-02         2     0.14777     0.19405     0.34181       455111    7.13e-16
+   UMFPACK_pivtol_1e-03         2     0.16727     0.19318     0.36045       431134    1.44e-13
+   UMFPACK_pivtol_1e-04         2     0.15343     0.17755     0.33098       411089    9.18e-08
+   UMFPACK_pivtol_1e-06         2     0.16123     0.17206     0.33329       397988    1.65e-03
+   MUMPS_unsymmetric            2     0.25032     0.03157     0.28189          n/a    1.61e+22
+   MUMPS_symmetric              2     0.32685     0.03217     0.35902          n/a    1.61e+22
+   UMFPACK                      4     0.17559     0.19607     0.37166       477630    6.19e-16
+   UMFPACK_symmetric            4     0.16109     0.18932     0.35041       601646    6.24e-16
+   UMFPACK_pivtol_1e-02         4     0.15912     0.17825     0.33738       455111    7.13e-16
+   UMFPACK_pivtol_1e-03         4     0.19486     0.17626     0.37113       431134    1.44e-13
+   UMFPACK_pivtol_1e-04         4     0.17893     0.17169     0.35061       411089    9.18e-08
+   UMFPACK_pivtol_1e-06         4     0.16249     0.16690     0.32939       397988    1.46e-03
+   MUMPS_unsymmetric            4     0.25031     0.04182     0.29214          n/a    1.61e+22
+   MUMPS_symmetric              4     0.27044     0.04157     0.31201          n/a    1.61e+22
+   UMFPACK                      8     0.19414     0.19784     0.39198       477630    6.19e-16
+   UMFPACK_symmetric            8     0.14734     0.18443     0.33178       601646    6.24e-16
+   UMFPACK_pivtol_1e-02         8     0.16027     0.18088     0.34115       455111    7.38e-16
+   UMFPACK_pivtol_1e-03         8     0.17876     0.17613     0.35489       431134    1.44e-13
+   UMFPACK_pivtol_1e-04         8     0.17902     0.17334     0.35236       411089    9.18e-08
+   UMFPACK_pivtol_1e-06         8     0.16397     0.16691     0.33088       397988    1.45e-03
+   MUMPS_unsymmetric            8     0.21848     0.04387     0.26236          n/a    1.61e+22
+   MUMPS_symmetric              8     0.19580     0.03009     0.22589          n/a    1.61e+22
+   UMFPACK                     16     0.17728     0.18531     0.36258       477630    6.19e-16
+   UMFPACK_symmetric           16     0.14139     0.18334     0.32473       601646    6.24e-16
+   UMFPACK_pivtol_1e-02        16     0.16323     0.18059     0.34383       455111    7.38e-16
+   UMFPACK_pivtol_1e-03        16     0.18661     0.17697     0.36358       431134    1.44e-13
+   UMFPACK_pivtol_1e-04        16     0.16742     0.17113     0.33856       411089    9.18e-08
+   UMFPACK_pivtol_1e-06        16     0.16771     0.16570     0.33341       397988    1.45e-03
+   MUMPS_unsymmetric           16     0.20697     0.03546     0.24243          n/a    1.61e+22
+   MUMPS_symmetric             16     0.14348     0.02971     0.17320          n/a    1.61e+22
+
+   large10kC_1ph:
+   solver                 threads    factor_s     solve_s     total_s       nnz_LU    residual
+   UMFPACK                      1     0.43109     3.40633     3.83743      2119788    1.75e-15
+   UMFPACK_symmetric            1     0.56953     4.62261     5.19214      2925728    1.75e-15
+   UMFPACK_pivtol_1e-02         1     0.43745     3.37528     3.81273      2123893    1.75e-15
+   UMFPACK_pivtol_1e-03         1     0.43098     3.39558     3.82656      2132942    1.75e-15
+   UMFPACK_pivtol_1e-04         1     0.43485     3.38542     3.82028      2129492    1.75e-15
+   UMFPACK_pivtol_1e-06         1     0.44808     3.42610     3.87418      2127510    1.34e-11
+   MUMPS_unsymmetric            1     1.01019    11.86474    12.87492          n/a    2.10e-15
+   MUMPS_symmetric              1     2.03567    19.27931    21.31499          n/a    2.10e-15
+   UMFPACK                      2     0.47747     3.40427     3.88174      2119788    1.75e-15
+   UMFPACK_symmetric            2     0.72514     4.59092     5.31606      2925728    1.75e-15
+   UMFPACK_pivtol_1e-02         2     0.47792     3.41750     3.89542      2123893    1.75e-15
+   UMFPACK_pivtol_1e-03         2     0.48356     3.43653     3.92009      2132942    1.75e-15
+   UMFPACK_pivtol_1e-04         2     0.47556     3.44252     3.91808      2129492    1.75e-15
+   UMFPACK_pivtol_1e-06         2     0.50805     3.43880     3.94686      2127510    1.34e-11
+   MUMPS_unsymmetric            2     1.17156    17.70173    18.87329          n/a    2.62e-15
+   MUMPS_symmetric              2     1.95396    26.21900    28.17296          n/a    2.10e-15
+   UMFPACK                      4     0.48728     3.39576     3.88304      2119788    1.75e-15
+   UMFPACK_symmetric            4     0.86662     4.61780     5.48442      2925728    1.75e-15
+   UMFPACK_pivtol_1e-02         4     0.49003     3.42730     3.91732      2123893    1.75e-15
+   UMFPACK_pivtol_1e-03         4     0.50083     3.45097     3.95180      2132942    1.75e-15
+   UMFPACK_pivtol_1e-04         4     0.49766     3.40373     3.90139      2129492    1.75e-15
+   UMFPACK_pivtol_1e-06         4     0.50350     3.42522     3.92872      2127510    1.34e-11
+   MUMPS_unsymmetric            4     1.09583    27.15587    28.25170          n/a    2.62e-15
+   MUMPS_symmetric              4     1.56009    18.01255    19.57264          n/a    2.10e-15
+   UMFPACK                      8     0.48716     3.39040     3.87756      2119788    1.75e-15
+   UMFPACK_symmetric            8     0.96040     4.62890     5.58930      2925728    1.75e-15
+   UMFPACK_pivtol_1e-02         8     0.50132     3.44820     3.94952      2123893    1.75e-15
+   UMFPACK_pivtol_1e-03         8     0.49473     3.36879     3.86351      2132942    1.75e-15
+   UMFPACK_pivtol_1e-04         8     0.49003     3.32276     3.81280      2129492    1.75e-15
+   UMFPACK_pivtol_1e-06         8     0.49553     3.34759     3.84312      2127510    1.34e-11
+   MUMPS_unsymmetric            8     0.92591    11.96974    12.89565          n/a    2.62e-15
+   MUMPS_symmetric              8     1.34478     8.23884     9.58362          n/a    2.10e-15
+   UMFPACK                     16     0.49764     3.31104     3.80868      2119788    1.75e-15
+   UMFPACK_symmetric           16     0.89709     4.51559     5.41268      2925728    1.75e-15
+   UMFPACK_pivtol_1e-02        16     0.49262     3.30408     3.79670      2123893    1.75e-15
+   UMFPACK_pivtol_1e-03        16     0.50001     3.34020     3.84020      2132942    1.75e-15
+   UMFPACK_pivtol_1e-04        16     0.52188     3.30824     3.83012      2129492    1.75e-15
+   UMFPACK_pivtol_1e-06        16     0.52096     3.33153     3.85249      2127510    1.34e-11
+   MUMPS_unsymmetric           16     0.89588     8.53515     9.43103          n/a    2.62e-15
+   MUMPS_symmetric             16     1.35670     8.73601    10.09271          n/a    2.10e-15
+
+====================================================================================================

@@ -1,0 +1,151 @@
+julia_worker:9953#10.110.4.170
+PROCS workers started: 6 in 8.7 s
+PROCS_CPU_AFFINITY process=1 host=cn150 allowed=56 count=1
+PROCS_CPU_AFFINITY process=2 host=cn165 allowed=5 count=1
+PROCS_CPU_AFFINITY process=3 host=cn165 allowed=0 count=1
+PROCS_CPU_AFFINITY process=4 host=cn165 allowed=3 count=1
+PROCS_CPU_AFFINITY process=5 host=cn165 allowed=1 count=1
+PROCS_CPU_AFFINITY process=6 host=cn165 allowed=4 count=1
+PROCS_CPU_AFFINITY process=7 host=cn165 allowed=2 count=1
+PROCS_PLACEMENT host=cn150 processes=1
+PROCS_PLACEMENT host=cn165 processes=6
+PROCS_SCREENING_DIAGNOSTIC worker_screening_sum_s=6.248157117 worker_screening_max_s=1.094851422 worker_setup_wall_s=6.165410995 screening_sum_is_cpu_work_not_wall=1
+PROCS_SWEEP installed: 6 workers for 6 periods (at most 1 periods a worker), collector=pass, setup 6.3 s (slowest worker 4.3 s), worker memory 807 MiB at most, shared 0.0 MiB
+C_B OVERRIDE: 0.001
+ieee123C_1ph T=6: nx=51, nu=791, nc=562, dense nu^2=625681, reduced=229
+TERMINAL_SOC soft=1 gamma=1.750000e+04
+BOUND_SCREEN ell,psubs,substation,vupper: voltage limits dropped 1 lower, 128 upper of 128 buses; ell >= 0 dropped on 127 lines; P_Subs >= 0 dropped: true (lossless lower bound 0.145 p.u.)
+build complete: 3.209 s, nc=562
+constructing dynamic Solver storage...
+srun: error: cn150: task 0: Exited with exit code 1
+optimality_tolerance=1.000e-05 max_iterations=400
+BARRIER_OPTIONS mu_init=1 kappa_mu=0.2 theta_mu=1.2 kappa_eps=10
+Solver construction complete: 0.423 s
+LOADFLOW_START sweeps=6 max_equality_residual=3.146e-04 lowest_voltage=0.9888 pu
+WARMUP full iterations=18 time_s=41.212
+entering solve! ...
+FILTERDDP_PROCS_PASS iteration=0 barrier_iteration=0 stages=6 workers=6 rounds=3 combinations=11 start_s=0.003894 step1_s=0.001754 rounds_s=0.001425 step3_s=0.000667 total_s=0.007767 start_max_s=0.003548 pre_max_s=0.001002 pre_sum_s=0.005773 pair_max_s=0.000906 pair_sum_s=0.002520 pair_comm_sum_s=0.001521 post_max_s=0.000515 post_sum_s=0.001859 gc_sum_s=0.020618 gc_max_s=0.003514 objective=3.269459294566e+03 primal_inf=3.145856e-04 dual_inf=7.678461e+02 cs_inf=1.000000e+00 mu=1.000000e+00
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+     0   3.26945929e+03   3.1459e-04   7.6785e+02   1.0000e+00    0.00      -     0.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=0 chain_s=0.000647 directions_s=0.000658 dir_max_s=0.000417 dir_sum_s=0.002330 gc_sum_s=0.000000 gamma_max=8.661903e-02
+FILTERDDP_PROCS_TRIAL iteration=0 gamma=8.661903e-02 wall_s=0.000331 trial_max_s=0.000054 trial_sum_s=0.000300 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=0 barrier_iteration=0 backward_s=0.007814636 forward_s=0.001679580 total_s=0.009494216 outcome=accepted step_size=8.661903347e-02 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PROCS_PASS iteration=1 barrier_iteration=0 stages=6 workers=6 rounds=3 combinations=11 start_s=0.003726 step1_s=0.001265 rounds_s=0.001360 step3_s=0.000581 total_s=0.006955 start_max_s=0.003457 pre_max_s=0.001017 pre_sum_s=0.005766 pair_max_s=0.000866 pair_sum_s=0.002405 pair_comm_sum_s=0.001439 post_max_s=0.000440 post_sum_s=0.001640 gc_sum_s=0.020159 gc_max_s=0.003432 objective=3.481614827990e+03 primal_inf=2.987298e-02 dual_inf=7.013360e+02 cs_inf=9.999813e-01 mu=1.000000e+00
+     1   3.48161483e+03   2.9873e-02   7.0134e+02   9.9998e-01    0.00      -     8.6619e-02   0
+FILTERDDP_PROCS_DIRECTIONS iteration=1 chain_s=0.000635 directions_s=0.000600 dir_max_s=0.000377 dir_sum_s=0.002082 gc_sum_s=0.000000 gamma_max=2.042258e-01
+FILTERDDP_PROCS_TRIAL iteration=1 gamma=2.042258e-01 wall_s=0.000323 trial_max_s=0.000046 trial_sum_s=0.000258 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=1 barrier_iteration=0 backward_s=0.006991221 forward_s=0.001589743 total_s=0.008580964 outcome=accepted step_size=2.042257773e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PROCS_PASS iteration=2 barrier_iteration=0 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001212 step1_s=0.001129 rounds_s=0.001320 step3_s=0.000572 total_s=0.004253 start_max_s=0.001080 pre_max_s=0.000892 pre_sum_s=0.005043 pair_max_s=0.000798 pair_sum_s=0.002184 pair_comm_sum_s=0.001283 post_max_s=0.000436 post_sum_s=0.001576 gc_sum_s=0.006004 gc_max_s=0.001054 objective=3.634862586446e+03 primal_inf=2.478459e-02 dual_inf=5.581051e+02 cs_inf=9.998812e-01 mu=1.000000e+00
+     2   3.63486259e+03   2.4785e-02   5.5811e+02   9.9988e-01    0.00      -     2.0423e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=2 chain_s=0.000452 directions_s=0.000522 dir_max_s=0.000349 dir_sum_s=0.002031 gc_sum_s=0.000000 gamma_max=5.140797e-01
+FILTERDDP_PROCS_TRIAL iteration=2 gamma=5.140797e-01 wall_s=0.000241 trial_max_s=0.000037 trial_sum_s=0.000218 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=2 barrier_iteration=0 backward_s=0.004284397 forward_s=0.001239911 total_s=0.005524308 outcome=accepted step_size=5.140796831e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PROCS_PASS iteration=3 barrier_iteration=0 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001170 step1_s=0.001075 rounds_s=0.001136 step3_s=0.000553 total_s=0.003953 start_max_s=0.001046 pre_max_s=0.000865 pre_sum_s=0.005007 pair_max_s=0.000746 pair_sum_s=0.002126 pair_comm_sum_s=0.001220 post_max_s=0.000423 post_sum_s=0.001544 gc_sum_s=0.005869 gc_max_s=0.001024 objective=3.695797881030e+03 primal_inf=3.388511e-02 dual_inf=2.711946e+02 cs_inf=1.165354e+00 mu=1.000000e+00
+     3   3.69579788e+03   3.3885e-02   2.7119e+02   1.1654e+00    0.00      -     5.1408e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=3 chain_s=0.000436 directions_s=0.000522 dir_max_s=0.000340 dir_sum_s=0.002023 gc_sum_s=0.000000 gamma_max=9.901552e-01
+FILTERDDP_PROCS_TRIAL iteration=3 gamma=9.901552e-01 wall_s=0.000239 trial_max_s=0.000048 trial_sum_s=0.000227 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=3 barrier_iteration=0 backward_s=0.003978808 forward_s=0.001215986 total_s=0.005194794 outcome=accepted step_size=9.901552149e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PROCS_PASS iteration=4 barrier_iteration=0 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001168 step1_s=0.001085 rounds_s=0.001091 step3_s=0.000525 total_s=0.003884 start_max_s=0.001040 pre_max_s=0.000876 pre_sum_s=0.005048 pair_max_s=0.000761 pair_sum_s=0.002124 pair_comm_sum_s=0.001228 post_max_s=0.000399 post_sum_s=0.001484 gc_sum_s=0.005864 gc_max_s=0.001019 objective=3.747387149388e+03 primal_inf=1.176561e-02 dual_inf=2.180198e+00 cs_inf=1.428006e+00 mu=1.000000e+00
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=0 backward_s=0.003904400 forward_s=0.000000000 total_s=0.003904400 outcome=barrier_update step_size=9.901552149e-01 backtracks=0 mu=1.000000000e+00
+FILTERDDP_PROCS_PASS iteration=4 barrier_iteration=1 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001102 step1_s=0.001011 rounds_s=0.001055 step3_s=0.000509 total_s=0.003693 start_max_s=0.001017 pre_max_s=0.000859 pre_sum_s=0.004999 pair_max_s=0.000761 pair_sum_s=0.002104 pair_comm_sum_s=0.001211 post_max_s=0.000386 post_sum_s=0.001458 gc_sum_s=0.005615 gc_max_s=0.000999 objective=3.747387149388e+03 primal_inf=1.176561e-02 dual_inf=2.180198e+00 cs_inf=1.428006e+00 mu=2.000000e-01
+     4   3.74738715e+03   1.1766e-02   2.1802e+00   1.4280e+00   -0.70      -     9.9016e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=4 chain_s=0.000429 directions_s=0.000535 dir_max_s=0.000413 dir_sum_s=0.002400 gc_sum_s=0.000000 gamma_max=9.882649e-01
+FILTERDDP_PROCS_TRIAL iteration=4 gamma=9.882649e-01 wall_s=0.000187 trial_max_s=0.000037 trial_sum_s=0.000207 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=4 barrier_iteration=1 backward_s=0.003707515 forward_s=0.001169862 total_s=0.004877377 outcome=accepted step_size=9.882648819e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_PROCS_PASS iteration=5 barrier_iteration=1 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001037 step1_s=0.001043 rounds_s=0.001136 step3_s=0.000547 total_s=0.003780 start_max_s=0.000954 pre_max_s=0.000869 pre_sum_s=0.004896 pair_max_s=0.000757 pair_sum_s=0.002117 pair_comm_sum_s=0.001224 post_max_s=0.000419 post_sum_s=0.001534 gc_sum_s=0.005301 gc_max_s=0.000936 objective=3.430893944903e+03 primal_inf=7.930313e-01 dual_inf=4.973119e-01 cs_inf=4.129431e-01 mu=2.000000e-01
+FILTERDDP_ITER_TIMING iteration=5 barrier_iteration=1 backward_s=0.003797411 forward_s=0.000000000 total_s=0.003797411 outcome=barrier_update step_size=9.882648819e-01 backtracks=0 mu=2.000000000e-01
+FILTERDDP_PROCS_PASS iteration=5 barrier_iteration=2 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001692 step1_s=0.001069 rounds_s=0.001114 step3_s=0.000513 total_s=0.004403 start_max_s=0.001012 pre_max_s=0.000900 pre_sum_s=0.005023 pair_max_s=0.000738 pair_sum_s=0.002076 pair_comm_sum_s=0.001170 post_max_s=0.000392 post_sum_s=0.001479 gc_sum_s=0.005615 gc_max_s=0.000993 objective=3.430893944903e+03 primal_inf=7.930313e-01 dual_inf=4.973119e-01 cs_inf=4.129431e-01 mu=4.000000e-02
+     5   3.43089394e+03   7.9303e-01   4.9731e-01   4.1294e-01   -1.40      -     9.8826e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=5 chain_s=0.000439 directions_s=0.000608 dir_max_s=0.000446 dir_sum_s=0.002577 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=5 gamma=1.000000e+00 wall_s=0.000241 trial_max_s=0.000037 trial_sum_s=0.000213 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=5 barrier_iteration=2 backward_s=0.004419075 forward_s=0.001307813 total_s=0.005726888 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PROCS_PASS iteration=6 barrier_iteration=2 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001170 step1_s=0.001039 rounds_s=0.001129 step3_s=0.000524 total_s=0.003879 start_max_s=0.001052 pre_max_s=0.000846 pre_sum_s=0.004920 pair_max_s=0.000741 pair_sum_s=0.002068 pair_comm_sum_s=0.001181 post_max_s=0.000394 post_sum_s=0.001471 gc_sum_s=0.005814 gc_max_s=0.001032 objective=3.192191314437e+03 primal_inf=5.745312e+00 dual_inf=5.789954e-02 cs_inf=8.576577e-02 mu=4.000000e-02
+     6   3.19219131e+03   5.7453e+00   5.7900e-02   8.5766e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=6 chain_s=0.000448 directions_s=0.000564 dir_max_s=0.000393 dir_sum_s=0.002272 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=6 gamma=1.000000e+00 wall_s=0.000236 trial_max_s=0.000036 trial_sum_s=0.000207 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=6 barrier_iteration=2 backward_s=0.003895230 forward_s=0.001261784 total_s=0.005157014 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PROCS_PASS iteration=7 barrier_iteration=2 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001534 step1_s=0.002734 rounds_s=0.001715 step3_s=0.000579 total_s=0.006577 start_max_s=0.001422 pre_max_s=0.001813 pre_sum_s=0.005922 pair_max_s=0.001361 pair_sum_s=0.002702 pair_comm_sum_s=0.001812 post_max_s=0.000448 post_sum_s=0.001571 gc_sum_s=0.006309 gc_max_s=0.001403 objective=3.182429540238e+03 primal_inf=1.379652e+00 dual_inf=2.902614e-03 cs_inf=4.638356e-02 mu=4.000000e-02
+     7   3.18242954e+03   1.3797e+00   2.9026e-03   4.6384e-02   -1.40      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=7 chain_s=0.000443 directions_s=0.000674 dir_max_s=0.000440 dir_sum_s=0.002576 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=7 gamma=1.000000e+00 wall_s=0.000239 trial_max_s=0.000037 trial_sum_s=0.000214 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=7 barrier_iteration=2 backward_s=0.006592284 forward_s=0.001370283 total_s=0.007962567 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PROCS_PASS iteration=8 barrier_iteration=2 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001128 step1_s=0.001006 rounds_s=0.001042 step3_s=0.000557 total_s=0.003747 start_max_s=0.001019 pre_max_s=0.000849 pre_sum_s=0.004995 pair_max_s=0.000727 pair_sum_s=0.002058 pair_comm_sum_s=0.001165 post_max_s=0.000429 post_sum_s=0.001512 gc_sum_s=0.005837 gc_max_s=0.000997 objective=3.182763176279e+03 primal_inf=7.423784e-05 dual_inf=7.127002e-06 cs_inf=4.007609e-02 mu=4.000000e-02
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=2 backward_s=0.003764523 forward_s=0.000000000 total_s=0.003764523 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=4.000000000e-02
+FILTERDDP_PROCS_PASS iteration=8 barrier_iteration=3 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001108 step1_s=0.001053 rounds_s=0.001020 step3_s=0.000549 total_s=0.003743 start_max_s=0.001018 pre_max_s=0.000891 pre_sum_s=0.004973 pair_max_s=0.000719 pair_sum_s=0.002032 pair_comm_sum_s=0.001127 post_max_s=0.000426 post_sum_s=0.001529 gc_sum_s=0.005626 gc_max_s=0.001000 objective=3.182763176279e+03 primal_inf=7.423784e-05 dual_inf=7.127002e-06 cs_inf=4.007609e-02 mu=8.000000e-03
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=3 backward_s=0.003758529 forward_s=0.000000000 total_s=0.003758529 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=8.000000000e-03
+FILTERDDP_PROCS_PASS iteration=8 barrier_iteration=4 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001076 step1_s=0.000977 rounds_s=0.001007 step3_s=0.000539 total_s=0.003614 start_max_s=0.000972 pre_max_s=0.000838 pre_sum_s=0.004874 pair_max_s=0.000713 pair_sum_s=0.001995 pair_comm_sum_s=0.001126 post_max_s=0.000416 post_sum_s=0.001487 gc_sum_s=0.005251 gc_max_s=0.000953 objective=3.182763176279e+03 primal_inf=7.423784e-05 dual_inf=7.127002e-06 cs_inf=4.007609e-02 mu=1.600000e-03
+     8   3.18276318e+03   7.4238e-05   7.1270e-06   4.0076e-02   -2.80      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=8 chain_s=0.000470 directions_s=0.000576 dir_max_s=0.000441 dir_sum_s=0.002458 gc_sum_s=0.000000 gamma_max=9.131350e-01
+FILTERDDP_PROCS_TRIAL iteration=8 gamma=9.131350e-01 wall_s=0.000192 trial_max_s=0.000038 trial_sum_s=0.000209 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=8 barrier_iteration=4 backward_s=0.003625359 forward_s=0.001256271 total_s=0.004881630 outcome=accepted step_size=9.131349683e-01 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PROCS_PASS iteration=9 barrier_iteration=4 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001117 step1_s=0.001022 rounds_s=0.001038 step3_s=0.000544 total_s=0.003736 start_max_s=0.001000 pre_max_s=0.000871 pre_sum_s=0.004851 pair_max_s=0.000735 pair_sum_s=0.002066 pair_comm_sum_s=0.001163 post_max_s=0.000416 post_sum_s=0.001537 gc_sum_s=0.005538 gc_max_s=0.000980 objective=3.149843333057e+03 primal_inf=3.514123e+00 dual_inf=6.003226e-03 cs_inf=1.261844e-02 mu=1.600000e-03
+     9   3.14984333e+03   3.5141e+00   6.0032e-03   1.2618e-02   -2.80      -     9.1313e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=9 chain_s=0.000450 directions_s=0.000588 dir_max_s=0.000441 dir_sum_s=0.002609 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=9 gamma=1.000000e+00 wall_s=0.000189 trial_max_s=0.000037 trial_sum_s=0.000210 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=9 barrier_iteration=4 backward_s=0.003752036 forward_s=0.001240161 total_s=0.004992197 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PROCS_PASS iteration=10 barrier_iteration=4 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001145 step1_s=0.001022 rounds_s=0.001051 step3_s=0.000541 total_s=0.003774 start_max_s=0.001049 pre_max_s=0.000872 pre_sum_s=0.005009 pair_max_s=0.000758 pair_sum_s=0.002055 pair_comm_sum_s=0.001158 post_max_s=0.000408 post_sum_s=0.001502 gc_sum_s=0.005887 gc_max_s=0.001029 objective=3.144965212605e+03 primal_inf=4.654871e-01 dual_inf=2.571361e-03 cs_inf=3.863065e-03 mu=1.600000e-03
+  iter     objective        pr_inf       du_inf       cs_inf     lg(μ)   lg(reg)    alpha     ls
+    10   3.14496521e+03   4.6549e-01   2.5714e-03   3.8631e-03   -2.80      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=10 chain_s=0.000440 directions_s=0.000554 dir_max_s=0.000397 dir_sum_s=0.002336 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=10 gamma=1.000000e+00 wall_s=0.000192 trial_max_s=0.000036 trial_sum_s=0.000209 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=10 barrier_iteration=4 backward_s=0.003788109 forward_s=0.001200244 total_s=0.004988353 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PROCS_PASS iteration=11 barrier_iteration=4 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001132 step1_s=0.001049 rounds_s=0.001055 step3_s=0.000518 total_s=0.003768 start_max_s=0.001033 pre_max_s=0.000897 pre_sum_s=0.005040 pair_max_s=0.000759 pair_sum_s=0.002115 pair_comm_sum_s=0.001190 post_max_s=0.000387 post_sum_s=0.001467 gc_sum_s=0.005863 gc_max_s=0.001014 objective=3.144875829371e+03 primal_inf=1.247312e-03 dual_inf=3.528537e-04 cs_inf=1.917468e-03 mu=1.600000e-03
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=4 backward_s=0.003784852 forward_s=0.000000000 total_s=0.003784852 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=1.600000000e-03
+FILTERDDP_PROCS_PASS iteration=11 barrier_iteration=5 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001091 step1_s=0.001011 rounds_s=0.001057 step3_s=0.000546 total_s=0.003719 start_max_s=0.001010 pre_max_s=0.000861 pre_sum_s=0.004973 pair_max_s=0.000754 pair_sum_s=0.002091 pair_comm_sum_s=0.001166 post_max_s=0.000422 post_sum_s=0.001501 gc_sum_s=0.005641 gc_max_s=0.000992 objective=3.144875829371e+03 primal_inf=1.247312e-03 dual_inf=3.528537e-04 cs_inf=1.917468e-03 mu=3.200000e-04
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=5 backward_s=0.003736294 forward_s=0.000000000 total_s=0.003736294 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=3.200000000e-04
+FILTERDDP_PROCS_PASS iteration=11 barrier_iteration=6 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001096 step1_s=0.001043 rounds_s=0.001041 step3_s=0.000551 total_s=0.003746 start_max_s=0.000983 pre_max_s=0.000896 pre_sum_s=0.004806 pair_max_s=0.000741 pair_sum_s=0.002094 pair_comm_sum_s=0.001177 post_max_s=0.000421 post_sum_s=0.001524 gc_sum_s=0.005209 gc_max_s=0.000966 objective=3.144875829371e+03 primal_inf=1.247312e-03 dual_inf=3.528537e-04 cs_inf=1.917468e-03 mu=6.400000e-05
+    11   3.14487583e+03   1.2473e-03   3.5285e-04   1.9175e-03   -4.19      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=11 chain_s=0.000441 directions_s=0.000574 dir_max_s=0.000438 dir_sum_s=0.002563 gc_sum_s=0.000000 gamma_max=9.330883e-01
+FILTERDDP_PROCS_TRIAL iteration=11 gamma=9.330883e-01 wall_s=0.000191 trial_max_s=0.000036 trial_sum_s=0.000213 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=11 barrier_iteration=6 backward_s=0.003758680 forward_s=0.001223254 total_s=0.004981934 outcome=accepted step_size=9.330882903e-01 backtracks=0 mu=6.400000000e-05
+FILTERDDP_PROCS_PASS iteration=12 barrier_iteration=6 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001130 step1_s=0.001011 rounds_s=0.001179 step3_s=0.000551 total_s=0.003885 start_max_s=0.001043 pre_max_s=0.000862 pre_sum_s=0.004954 pair_max_s=0.000752 pair_sum_s=0.002117 pair_comm_sum_s=0.001202 post_max_s=0.000421 post_sum_s=0.001498 gc_sum_s=0.005765 gc_max_s=0.001023 objective=3.143337023378e+03 primal_inf=6.648034e-02 dual_inf=4.200258e-04 cs_inf=5.777387e-04 mu=6.400000e-05
+    12   3.14333702e+03   6.6480e-02   4.2003e-04   5.7774e-04   -4.19      -     9.3309e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=12 chain_s=0.000432 directions_s=0.000574 dir_max_s=0.000446 dir_sum_s=0.002554 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=12 gamma=1.000000e+00 wall_s=0.000187 trial_max_s=0.000036 trial_sum_s=0.000207 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=12 barrier_iteration=6 backward_s=0.003900870 forward_s=0.001206779 total_s=0.005107649 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_PROCS_PASS iteration=13 barrier_iteration=6 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001133 step1_s=0.001035 rounds_s=0.001025 step3_s=0.000514 total_s=0.003722 start_max_s=0.001046 pre_max_s=0.000882 pre_sum_s=0.004856 pair_max_s=0.000739 pair_sum_s=0.002056 pair_comm_sum_s=0.001160 post_max_s=0.000389 post_sum_s=0.001434 gc_sum_s=0.005762 gc_max_s=0.001027 objective=3.143196171896e+03 primal_inf=2.865302e-03 dual_inf=1.127420e-04 cs_inf=1.770647e-04 mu=6.400000e-05
+    13   3.14319617e+03   2.8653e-03   1.1274e-04   1.7706e-04   -4.19      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=13 chain_s=0.000431 directions_s=0.000511 dir_max_s=0.000395 dir_sum_s=0.002215 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=13 gamma=1.000000e+00 wall_s=0.000186 trial_max_s=0.000036 trial_sum_s=0.000201 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=13 barrier_iteration=6 backward_s=0.003737288 forward_s=0.001141432 total_s=0.004878720 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_PROCS_PASS iteration=14 barrier_iteration=6 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001091 step1_s=0.000996 rounds_s=0.001046 step3_s=0.000529 total_s=0.003677 start_max_s=0.000989 pre_max_s=0.000863 pre_sum_s=0.004809 pair_max_s=0.000746 pair_sum_s=0.002108 pair_comm_sum_s=0.001169 post_max_s=0.000403 post_sum_s=0.001475 gc_sum_s=0.005562 gc_max_s=0.000969 objective=3.143191534844e+03 primal_inf=5.353126e-05 dual_inf=1.152262e-05 cs_inf=8.928263e-05 mu=6.400000e-05
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=6 backward_s=0.003692374 forward_s=0.000000000 total_s=0.003692374 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=6.400000000e-05
+FILTERDDP_PROCS_PASS iteration=14 barrier_iteration=7 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001104 step1_s=0.000996 rounds_s=0.001321 step3_s=0.000551 total_s=0.003986 start_max_s=0.001018 pre_max_s=0.000865 pre_sum_s=0.004870 pair_max_s=0.001014 pair_sum_s=0.002304 pair_comm_sum_s=0.001434 post_max_s=0.000428 post_sum_s=0.001529 gc_sum_s=0.005526 gc_max_s=0.001000 objective=3.143191534844e+03 primal_inf=5.353126e-05 dual_inf=1.152262e-05 cs_inf=8.928263e-05 mu=9.277180e-06
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=7 backward_s=0.004001871 forward_s=0.000000000 total_s=0.004001871 outcome=barrier_update step_size=1.000000000e+00 backtracks=0 mu=9.277179695e-06
+FILTERDDP_PROCS_PASS iteration=14 barrier_iteration=8 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001094 step1_s=0.001054 rounds_s=0.001022 step3_s=0.001053 total_s=0.004238 start_max_s=0.000981 pre_max_s=0.000904 pre_sum_s=0.004929 pair_max_s=0.000721 pair_sum_s=0.002021 pair_comm_sum_s=0.001132 post_max_s=0.000927 post_sum_s=0.002005 gc_sum_s=0.005348 gc_max_s=0.000963 objective=3.143191534844e+03 primal_inf=5.353126e-05 dual_inf=1.152262e-05 cs_inf=8.928263e-05 mu=1.000000e-06
+    14   3.14319153e+03   5.3531e-05   1.1523e-05   8.9283e-05   -6.00      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=14 chain_s=0.000444 directions_s=0.000549 dir_max_s=0.000440 dir_sum_s=0.002489 gc_sum_s=0.000000 gamma_max=5.623672e-01
+FILTERDDP_PROCS_TRIAL iteration=14 gamma=5.623672e-01 wall_s=0.000188 trial_max_s=0.000035 trial_sum_s=0.000203 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=14 barrier_iteration=8 backward_s=0.004252370 forward_s=0.001195946 total_s=0.005448316 outcome=accepted step_size=5.623671812e-01 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PROCS_PASS iteration=15 barrier_iteration=8 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001131 step1_s=0.000996 rounds_s=0.001062 step3_s=0.000698 total_s=0.003902 start_max_s=0.001050 pre_max_s=0.000842 pre_sum_s=0.004774 pair_max_s=0.000753 pair_sum_s=0.002110 pair_comm_sum_s=0.001191 post_max_s=0.000574 post_sum_s=0.001662 gc_sum_s=0.005684 gc_max_s=0.001031 objective=3.143150408156e+03 primal_inf=1.598830e-04 dual_inf=8.889995e-06 cs_inf=4.216327e-05 mu=1.000000e-06
+    15   3.14315041e+03   1.5988e-04   8.8900e-06   4.2163e-05   -6.00      -     5.6237e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=15 chain_s=0.000442 directions_s=0.000575 dir_max_s=0.000440 dir_sum_s=0.002603 gc_sum_s=0.000000 gamma_max=7.591965e-01
+FILTERDDP_PROCS_TRIAL iteration=15 gamma=7.591965e-01 wall_s=0.000214 trial_max_s=0.000042 trial_sum_s=0.000214 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=15 barrier_iteration=8 backward_s=0.003915318 forward_s=0.001243127 total_s=0.005158445 outcome=accepted step_size=7.591964893e-01 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PROCS_PASS iteration=16 barrier_iteration=8 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001140 step1_s=0.001031 rounds_s=0.001056 step3_s=0.000538 total_s=0.003780 start_max_s=0.001050 pre_max_s=0.000846 pre_sum_s=0.004969 pair_max_s=0.000752 pair_sum_s=0.002092 pair_comm_sum_s=0.001177 post_max_s=0.000415 post_sum_s=0.001487 gc_sum_s=0.005888 gc_max_s=0.001031 objective=3.143125468153e+03 primal_inf=1.155256e-04 dual_inf=5.210393e-06 cs_inf=1.647146e-05 mu=1.000000e-06
+    16   3.14312547e+03   1.1553e-04   5.2104e-06   1.6471e-05   -6.00      -     7.5920e-01   0
+FILTERDDP_PROCS_DIRECTIONS iteration=16 chain_s=0.000436 directions_s=0.000572 dir_max_s=0.000442 dir_sum_s=0.002559 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=16 gamma=1.000000e+00 wall_s=0.000194 trial_max_s=0.000040 trial_sum_s=0.000224 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=16 barrier_iteration=8 backward_s=0.003794777 forward_s=0.001213404 total_s=0.005008181 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PROCS_PASS iteration=17 barrier_iteration=8 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001136 step1_s=0.001014 rounds_s=0.001052 step3_s=0.000531 total_s=0.003749 start_max_s=0.001049 pre_max_s=0.000872 pre_sum_s=0.004981 pair_max_s=0.000746 pair_sum_s=0.002097 pair_comm_sum_s=0.001185 post_max_s=0.000407 post_sum_s=0.001496 gc_sum_s=0.005767 gc_max_s=0.001030 objective=3.143117249415e+03 primal_inf=1.475190e-05 dual_inf=1.065930e-06 cs_inf=4.549541e-06 mu=1.000000e-06
+    17   3.14311725e+03   1.4752e-05   1.0659e-06   4.5495e-06   -6.00      -     1.0000e+00   0
+FILTERDDP_PROCS_DIRECTIONS iteration=17 chain_s=0.000445 directions_s=0.000525 dir_max_s=0.000399 dir_sum_s=0.002338 gc_sum_s=0.000000 gamma_max=1.000000e+00
+FILTERDDP_PROCS_TRIAL iteration=17 gamma=1.000000e+00 wall_s=0.000193 trial_max_s=0.000035 trial_sum_s=0.000205 gc_sum_s=0.000000 rejected=0
+FILTERDDP_ITER_TIMING iteration=17 barrier_iteration=8 backward_s=0.003763784 forward_s=0.001174724 total_s=0.004938508 outcome=accepted step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PROCS_PASS iteration=18 barrier_iteration=8 stages=6 workers=6 rounds=3 combinations=11 start_s=0.001140 step1_s=0.001029 rounds_s=0.001046 step3_s=0.000514 total_s=0.003745 start_max_s=0.001041 pre_max_s=0.000864 pre_sum_s=0.005079 pair_max_s=0.000733 pair_sum_s=0.002056 pair_comm_sum_s=0.001144 post_max_s=0.000388 post_sum_s=0.001457 gc_sum_s=0.005840 gc_max_s=0.001021 objective=3.143117191317e+03 primal_inf=1.427040e-07 dual_inf=6.755876e-08 cs_inf=1.625052e-06 mu=1.000000e-06
+FILTERDDP_ITER_TIMING iteration=18 barrier_iteration=8 backward_s=0.003759063 forward_s=0.000000000 total_s=0.003759063 outcome=converged step_size=1.000000000e+00 backtracks=0 mu=1.000000000e-06
+FILTERDDP_PROCS_MEMORY coordinator_maxrss_mib=1222.4 worker_maxrss_mib_max=882.7 worker_maxrss_mib_sum=5238.6
+    18   3.14311719e+03   1.4270e-07   6.7559e-08   1.6251e-06   -6.00      -     1.0000e+00   0
+
+
+EXIT: Optimal solution found.
+
+solve complete: 0.146 s, iterations=18, status=0
+FILTERDDP_START_TIMING powerflow_init_s=0.503577484 solve_time_s=0.146308899 init_plus_solve_s=0.649886383 powerflow_enabled=1 initialization_first_call=1 solver_warmup=full
+FILTERDDP_PREPROCESS_TIMING screening_s=0.834089611 powerflow_init_s=0.503577484 preprocessing_plus_solve_s=1.483975994 screening_includes_bound_updates=1
+FILTERDDP_GC_TIME gc_s=0.000 collected_before_solve=1
+FILTERDDP_MEMORY_PEAK maxrss_mib=1222.4
+final residuals: primal=1.427039634456e-07 dual=6.755876011928e-08 complementarity=1.625052386266e-06
+saved_solution=/home/aryan.jha/kamiak_jobs/matched_benchmark_oct15_large96_threeway_v3/repo/ddp/results/network_filterddp/filterddp_solution_ieee123C_1ph_T6_periodic_CBsystem.jls
+FilterDDP objective=3143.117191316511 max_equality_residual=1.427e-07
+BOUND_CHECK screen=substation,vupper,ell,psubs voltages below=0 above=0 worst_violation=0.000e+00 min_ell=1.229e-07 min_P_Subs=5.246e-01

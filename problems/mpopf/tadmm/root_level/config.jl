@@ -1,0 +1,110 @@
+# ============================================================================
+# SHARED CONFIGURATION - Edit this file, then run run_bf.jl or run_tadmm.jl
+# ============================================================================
+
+# System and time horizon
+const SYSTEM_NAME = haskey(ENV, "SYSTEM_OVERRIDE") ? ENV["SYSTEM_OVERRIDE"] : "large10kC_1ph"
+const T = haskey(ENV, "T_OVERRIDE") ? parse(Int, ENV["T_OVERRIDE"]) : 12  # 4, 6, 12, 24, 48, etc.
+const DELTA_T_H = 24.0 / T           # Time step duration in hours
+const DEFAULT_NETWORK_KV_BASE = SYSTEM_NAME == "ieee2522C_1ph" ? 7.2 :
+    (SYSTEM_NAME == "large10kC_1ph" ? 12.47 : 2.4018)
+const NETWORK_KV_BASE = parse(Float64,
+    get(ENV, "NETWORK_KV_BASE_OVERRIDE", string(DEFAULT_NETWORK_KV_BASE)))
+const NETWORK_IMPEDANCE_SCALE = parse(Float64,
+    get(ENV, "NETWORK_IMPEDANCE_SCALE_OVERRIDE", "1.0"))
+
+# Solver selection (Gurobi requires license)
+const USE_GUROBI = get(ENV, "USE_GUROBI_OVERRIDE", "false") == "true"
+const USE_GUROBI_FOR_BF = get(ENV, "USE_GUROBI_FOR_BF_OVERRIDE", "false") == "true"
+const USE_GUROBI_FOR_TADMM = false
+
+# BF-specific
+const BF_TIMEOUT_SEC = 0  # Kill BF after this many seconds (0 = no limit)
+const BF_MODEL = Symbol(get(ENV, "BF_MODEL_OVERRIDE", "socp"))
+const BF_RELAX_VOLTAGE_BOUNDS = get(ENV, "BF_RELAX_VOLTAGE_BOUNDS_OVERRIDE", "false") == "true"
+
+# Verbose output
+const VERBOSE = false
+
+# ============================================================================
+# LOAD SHAPES (deterministic profiles over T periods)
+# ============================================================================
+
+# Load profile: sinusoidal variation around 0.8-1.0
+# T=1 special-case: midday-peak snapshot (matches PV=1.0 below)
+# Phase sampling. range(0, 2pi, length=T) repeats the endpoint, so samples 1 and
+# T share a phase at every T; at T=3 it samples sin at 0, pi, 2pi, all zero, and
+# the price comes out CONSTANT with no arbitrage signal. PROFILE_PERIODIC=1
+# selects proper periodic sampling, phase_k = 2*pi*(k-1)/T, which is
+# non-degenerate at every T. Opt-in, because it changes the instance that
+# existing committed results were measured on. It must match the setting used
+# for the corresponding FilterDDP export, since C_B below is derived from this
+# profile and a mismatch would compare two different optimization problems.
+const PROFILE_PERIODIC = get(ENV, "PROFILE_PERIODIC", "0") == "1"
+const _COST_PHASE = PROFILE_PERIODIC ? [2pi * (k - 1) / T for k in 1:T] :
+                                       collect(range(0, 2pi, length=T))
+
+const LoadShapeLoad = T == 1 ? [0.97174] :
+    0.8 .+ 0.2 .* (sin.(_COST_PHASE .- 0.8) .+ 1) ./ 2
+
+# Energy cost profile: time-varying $/kWh
+const LoadShapeCost = T == 1 ? [0.14] :
+    0.08 .+ 0.12 .* (sin.(_COST_PHASE) .+ 1) ./ 2
+
+# Solar PV profile: bell curve in middle 50% of horizon
+const LoadShapePV = let
+    pv = zeros(T)
+    if T >= 4
+        t_start = max(1, round(Int, 0.25 * T))
+        t_end = min(T, round(Int, 0.75 * T))
+        n_active = t_end - t_start + 1
+        if n_active >= 2
+            t_normalized = range(0, pi, length=n_active)
+            pv[t_start:t_end] = [sin(t_norm) for t_norm in t_normalized]
+        else
+            pv[t_start:t_end] .= 1.0
+        end
+    elseif T == 3
+        pv[2] = 1.0
+    elseif T == 2
+        pv .= 0.5
+    else
+        pv .= 1.0
+    end
+    pv
+end
+
+# Battery quadratic cost coefficient
+const C_B = 1e-6 * minimum(LoadShapeCost)
+
+# Terminal state-of-charge penalty. The terminal SOC is a SOFT constraint: the
+# objective carries + GAMMA_TERMINAL * sum_j (B[j,T] - B0[j])^2, with B in p.u.
+# energy, rather than a hard B[j,T] == B0[j] equality.
+#
+# NOT YET WIRED IN (as of 2026-09-18): nothing references this constant, so no
+# solver applies the penalty and it changes no result. It is waiting on the
+# gamma decision -- a per-system, measurement-derived value, sized the way C_B
+# was. When it is wired in, the centralized reference (run_bf.jl), tADMM
+# (tadmm_socp.jl) and FilterDDP must all read THIS constant: a different value
+# in any one of them makes it a different optimization problem and invalidates
+# every comparison.
+#
+# Default scale: mean price times the 1000 kVA power base (parse_opendss sets
+# kVA_B = 1000 for every system), so a deviation of 0.1 p.u.h
+# costs about 1.4 USD, small against energy costs in the thousands but enough to
+# pin the terminal SOC. Override with GAMMA_TERMINAL_OVERRIDE.
+const GAMMA_TERMINAL = parse(Float64,
+    get(ENV, "GAMMA_TERMINAL_OVERRIDE",
+        string(sum(LoadShapeCost) / length(LoadShapeCost) * 1000.0)))
+
+# ============================================================================
+# OUTPUT DIRECTORIES
+# ============================================================================
+
+# These scripts live in problems/mpopf/tadmm/root_level/ while tADMM is parked; they are
+# meant to sit at the repo root when it is the active project (same convention as
+# archives/first_order_ddp/original/root_level/ and problems/msopf/root_level/). Anchoring on the parent of
+# this directory keeps them working from either location.
+const ENV_PATH = normpath(joinpath(@__DIR__, ".."))
+const PROCESSED_DATA_DIR = joinpath(ENV_PATH, "processedData")
+const SYSTEM_DIR = joinpath(PROCESSED_DATA_DIR, "$(SYSTEM_NAME)_T$(T)")

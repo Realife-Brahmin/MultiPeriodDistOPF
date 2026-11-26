@@ -1,0 +1,14 @@
+system,horizon,C_B,formulation,status,iterations,wall_s,objective_usd,obj_gap_rel,inner_solves,hessian_solves,inner_time_s,inner_pct,dual_inf,note
+ieee123C_1ph,3,1e-4,full,0,46,14.345,,,,,,,3.746118795597e-08,
+ieee123C_1ph,3,1e-4,reduced,0,32,21.56,2809.4321313719,9.952e-09,136,105,7.5,35,1.716080e-08,
+ieee2522C_1ph,12,1e-5,full,0,78,544.677,,,,,,,6.424088698504e-08,
+ieee2522C_1ph,12,1e-5,reduced,8,200,3529.40,8517.3620759651,5.096e-04,11852,420,2923.3,83,7.268062e+02,
+ieee2522C_1ph,12,1e-4,full,0,78,541.809,,,,,,,5.829151904199e-08,
+ieee2522C_1ph,12,1e-4,reduced,8,200,3856.62,reduced-space objective: NaN USD,objective gap: NaN USD (rel NaN),13358,420,3261.0,85,1.005595e+01,
+ieee2522C_1ph,12,1e-3,full,0,78,544.057,,,,,,,9.024860160281e-08,
+ieee2522C_1ph,12,1e-3,reduced,8,200,2692.15,8560.8774878082,9.576e-05,5161,420,2135.1,79,1.371018e+01,
+ieee2522C_1ph,24,1e-5,full,0,84,1111.726,,,,,,,7.011610911417e-08,
+ieee2522C_1ph,24,1e-5,reduced,8,200,3988.63,reduced-space objective: NaN USD,objective gap: NaN USD (rel NaN),5744,840,3201.7,80,1.648193e+04,
+ieee2522C_1ph,24,1e-4,full,0,83,1107.034,,,,,,,8.311411623432e-08,
+ieee2522C_1ph,24,1e-4,reduced,TIMEOUT_OR_CRASH,,,,,,,,,,KILLED BY OPERATOR - not an algorithmic failure; run was interrupted mid-solve
+ieee2522C_1ph,24,1e-3,full,TIMEOUT_OR_CRASH,,,,,,,,,,KILLED BY OPERATOR - sweep stopped before this cell ran

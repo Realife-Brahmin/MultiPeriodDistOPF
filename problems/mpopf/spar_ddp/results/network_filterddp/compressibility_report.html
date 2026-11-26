@@ -1,0 +1,499 @@
+<title>Sensitivity Rank Decay</title>
+<style>
+.viz-root {
+  color-scheme: light;
+  --surface-0:      #fbfaf8;
+  --surface-1:      #ffffff;
+  --surface-2:      #f2f0ec;
+  --border:         #e2ded5;
+  --text-primary:   #16150f;
+  --text-secondary: #5c5848;
+  --text-muted:     #8b8674;
+  --series-beta:    #2a78d6;
+  --series-omega:   #eb6834;
+  --accent-soft:    #eaf1fb;
+  --mono-ink:       #3c3a30;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .viz-root {
+    color-scheme: dark;
+    --surface-0:      #131210;
+    --surface-1:      #1a1917;
+    --surface-2:      #211f1b;
+    --border:         #34322b;
+    --text-primary:   #f5f3ec;
+    --text-secondary: #c3c0b1;
+    --text-muted:     #8b8674;
+    --series-beta:    #3987e5;
+    --series-omega:   #d95926;
+    --accent-soft:    #1c2431;
+    --mono-ink:       #d9d6c8;
+  }
+}
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface-0:      #131210;
+  --surface-1:      #1a1917;
+  --surface-2:      #211f1b;
+  --border:         #34322b;
+  --text-primary:   #f5f3ec;
+  --text-secondary: #c3c0b1;
+  --text-muted:     #8b8674;
+  --series-beta:    #3987e5;
+  --series-omega:   #d95926;
+  --accent-soft:    #1c2431;
+  --mono-ink:       #d9d6c8;
+}
+
+.viz-root {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  padding: 40px clamp(16px, 4vw, 56px) 64px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.viz-root * { box-sizing: border-box; }
+.viz-root .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+.masthead {
+  max-width: 920px;
+  margin: 0 auto 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.masthead .eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.masthead h1 {
+  font-size: clamp(24px, 3.4vw, 32px);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.masthead p {
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+  max-width: 66ch;
+  margin: 2px 0 0;
+}
+.masthead .meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.masthead .meta span b { color: var(--text-secondary); font-weight: 500; }
+
+.legend-row {
+  max-width: 920px;
+  margin: 22px auto 0;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.legend-row .swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.legend-row .dot {
+  width: 10px; height: 10px; border-radius: 3px;
+}
+.legend-row .dot.beta { background: var(--series-beta); }
+.legend-row .dot.omega { background: var(--series-omega); }
+.legend-row .divider { color: var(--border); }
+
+.panels {
+  max-width: 920px;
+  margin: 14px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px 14px;
+}
+.panel.pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  color: var(--text-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.panel-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.panel-head .dims {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.panel svg { display: block; width: 100%; height: auto; overflow: visible; }
+.panel .axis-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  fill: var(--text-muted);
+}
+.panel .gridline { stroke: var(--border); stroke-width: 1; }
+.panel .track-beta { fill: none; stroke: var(--series-beta); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.panel .track-omega { fill: none; stroke: var(--series-omega); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.panel .dot-beta { fill: var(--series-beta); }
+.panel .dot-omega { fill: var(--series-omega); }
+.panel .endpoint-label { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; }
+.panel .endpoint-label.beta { fill: var(--series-beta); }
+.panel .endpoint-label.omega { fill: var(--series-omega); }
+
+.hoverline { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+.tooltip {
+  position: absolute;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text-primary);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.08s;
+  white-space: nowrap;
+  z-index: 5;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+}
+.tooltip .row { display: flex; gap: 8px; justify-content: space-between; }
+.tooltip .row + .row { margin-top: 2px; }
+.tooltip .k { color: var(--text-muted); }
+
+.hit { fill: transparent; }
+
+.callout {
+  max-width: 920px;
+  margin: 4px auto 0;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.callout b { color: var(--text-primary); font-weight: 600; }
+.callout .tag {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.foot {
+  max-width: 920px;
+  margin: 18px auto 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+table.data-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+table.data-table caption {
+  text-align: left;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+table.data-table th, table.data-table td {
+  text-align: right;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+table.data-table th:first-child, table.data-table td:first-child { text-align: left; }
+table.data-table thead th { color: var(--text-muted); font-weight: 500; font-size: 11px; }
+details.table-toggle { max-width: 920px; margin: 6px auto 0; }
+details.table-toggle summary {
+  cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+details.table-toggle[open] summary { color: var(--text-secondary); }
+details.table-toggle .table-wrap { overflow-x: auto; padding: 8px 0 4px; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<div class="viz-root">
+  <div class="masthead">
+    <div class="eyebrow">FilterDDP backward pass &middot; diagnostic capture</div>
+    <h1>How compressible are the per-stage sensitivity solves?</h1>
+    <p>
+      Effective rank of FilterDDP's stage-1 control-sensitivity map (&beta;) and
+      equality-multiplier sensitivity map (&omega;), as a share of the full
+      state dimension n<sub>x</sub>, sampled every 5 outer iterations across
+      three network sizes. Rank is the smallest truncation whose relative
+      Frobenius error is within 5%.
+    </p>
+    <div class="meta">
+      <span>system &middot; <b>ieee123C_1ph, ieee2522C_1ph, large10kC_1ph</b></span>
+      <span>horizon &middot; <b>T = 3</b></span>
+      <span>capture stride &middot; <b>5 iterations</b></span>
+      <span>tolerance &middot; <b>5% relative Frobenius</b></span>
+    </div>
+  </div>
+
+  <div class="legend-row">
+    <span class="swatch"><span class="dot beta"></span>&beta; (control sensitivity)</span>
+    <span class="swatch"><span class="dot omega"></span>&omega; (equality-dual sensitivity)</span>
+    <span class="divider">|</span>
+    <span>rank as % of n<sub>x</sub>, stage 1</span>
+  </div>
+
+  <div class="panels" id="panels"></div>
+
+  <div class="callout">
+    <div class="tag">Structural, not statistical</div>
+    Independent of all three trends above: <b>the terminal stage's multi-RHS
+    block is exactly rank-deficient in a way none of the interior stages
+    are</b> &mdash; every one of its n<sub>x</sub> state-sensitivity columns
+    has singular value exactly 1.0, at every sampled iteration, on all three
+    systems. The terminal stage carries no incoming value curvature and its
+    only state-dependence is the per-battery energy-slack identity, so this
+    is an exact structural fact, not a fitted approximation &mdash; that
+    stage's solve is a candidate for row selection instead of a dense
+    multi-column KKT solve.
+  </div>
+
+  <details class="table-toggle">
+    <summary>View underlying values as a table</summary>
+    <div class="table-wrap" id="table-wrap"></div>
+  </details>
+
+  <div class="foot">
+    <span>ddp/notes/FILTERDDP_PERIODIC_CAPTURE_TRACE.md</span>
+    <span>ddp/examples/power_system/analyze_periodic_capture.jl</span>
+  </div>
+</div>
+
+<script>
+// iteration, nx, beta_rank_5pct, omega_rank_5pct -- stage 1, from
+// periodic_capture_summary.csv for each system (T=3).
+const DATA = {
+  ieee123C_1ph: {
+    label: "ieee123C_1ph",
+    dims: "n_x=51  n_u=791  n_c=562",
+    rows: [
+      [0,51,50,27],[5,51,49,50],[10,51,47,50],[15,51,39,48],[20,51,26,12],
+      [25,51,47,2],[30,51,48,17],[35,51,48,23],[40,51,48,15],[45,51,48,14],
+    ],
+  },
+  ieee2522C_1ph: {
+    label: "ieee2522C_1ph",
+    dims: "n_x=250  n_u=13358  n_c=10337",
+    rows: [
+      [0,250,213,6],[5,250,160,53],[10,250,57,6],[15,250,45,5],[20,250,56,10],
+      [25,250,57,15],[30,250,59,16],[35,250,78,18],[40,250,78,16],[45,250,66,14],
+      [50,250,51,13],[55,250,48,13],
+    ],
+  },
+  large10kC_1ph: {
+    label: "large10kC_1ph",
+    dims: "n_x=1020  n_u=54665  n_c=42303",
+    rows: [
+      [0,1020,982,165],[5,1020,983,339],[10,1020,991,240],[15,1020,989,270],
+      [20,1020,983,308],[25,1020,970,337],[30,1020,947,355],[35,1020,909,364],
+      [40,1020,869,365],[45,1020,830,363],[50,1020,795,357],[55,1020,753,348],
+      [60,1020,706,334],[65,1020,671,323],[70,1020,626,312],[75,1020,578,307],
+      [80,1020,562,291],[85,1020,599,313],[90,1020,762,168],[95,1020,892,289],
+      [100,1020,931,354],[105,1020,935,349],[110,1020,936,348],[115,1020,936,348],
+    ],
+  },
+};
+
+const NS = "http://www.w3.org/2000/svg";
+const W = 860, H = 220, PAD = { top: 14, right: 18, bottom: 30, left: 40 };
+
+function svgEl(tag, attrs) {
+  const el = document.createElementNS(NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+function buildPanel(container, key, entry) {
+  const panel = document.createElement("div");
+  panel.className = "panel";
+
+  if (!entry) {
+    panel.className = "panel pending";
+    panel.textContent = `${key} — solve in progress, updates when it lands`;
+    container.appendChild(panel);
+    return;
+  }
+
+  const head = document.createElement("div");
+  head.className = "panel-head";
+  head.innerHTML = `<h2>${entry.label}</h2><span class="dims mono">${entry.dims}</span>`;
+  panel.appendChild(head);
+
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const iters = entry.rows.map(r => r[0]);
+  const nx = entry.rows[0][1];
+  const xMax = Math.max(...iters);
+  const x = (it) => PAD.left + (it / xMax) * plotW;
+  const y = (pct) => PAD.top + plotH - (pct / 100) * plotH;
+
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img",
+    "aria-label": `${entry.label}: beta and omega effective rank vs iteration` });
+
+  // gridlines + y labels at 0/25/50/75/100%
+  [0, 25, 50, 75, 100].forEach(p => {
+    svg.appendChild(svgEl("line", { class: "gridline",
+      x1: PAD.left, x2: W - PAD.right, y1: y(p), y2: y(p) }));
+    const t = svgEl("text", { class: "axis-label", x: PAD.left - 8, y: y(p) + 3,
+      "text-anchor": "end" });
+    t.textContent = p + "%";
+    svg.appendChild(t);
+  });
+  // x labels: thin adaptively so ~8 labels show regardless of series length,
+  // and drop the second-to-last label if it would crowd the final one.
+  const labelStep = Math.max(1, Math.ceil(iters.length / 8));
+  iters.forEach((it, i) => {
+    const isLast = it === xMax;
+    if (!isLast && i % labelStep !== 0) return;
+    if (!isLast && i + labelStep >= iters.length - 1 && iters.length - 1 - i < labelStep) return;
+    const t = svgEl("text", { class: "axis-label", x: x(it), y: H - 8,
+      "text-anchor": "middle" });
+    t.textContent = "k=" + it;
+    svg.appendChild(t);
+  });
+
+  function series(colIdx, cls, dotCls) {
+    const pts = entry.rows.map(r => [r[0], (r[colIdx] / nx) * 100]);
+    const d = pts.map((p, i) => (i === 0 ? "M" : "L") + x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1)).join(" ");
+    svg.appendChild(svgEl("path", { class: cls, d }));
+    pts.forEach(p => {
+      svg.appendChild(svgEl("circle", { class: dotCls, cx: x(p[0]), cy: y(p[1]), r: 3 }));
+    });
+    return pts;
+  }
+  const betaPts = series(2, "track-beta", "dot-beta");
+  const omegaPts = series(3, "track-omega", "dot-omega");
+
+  const lastB = betaPts[betaPts.length - 1];
+  const lastO = omegaPts[omegaPts.length - 1];
+  const lb = svgEl("text", { class: "endpoint-label beta",
+    x: x(lastB[0]) - 6, y: y(lastB[1]) - 8, "text-anchor": "end" });
+  lb.textContent = Math.round(lastB[1]) + "%";
+  svg.appendChild(lb);
+  const lo = svgEl("text", { class: "endpoint-label omega",
+    x: x(lastO[0]) - 6, y: y(lastO[1]) + 15, "text-anchor": "end" });
+  lo.textContent = Math.round(lastO[1]) + "%";
+  svg.appendChild(lo);
+
+  // hover crosshair + tooltip
+  const hoverline = svgEl("line", { class: "hoverline",
+    x1: 0, x2: 0, y1: PAD.top, y2: H - PAD.bottom });
+  svg.appendChild(hoverline);
+  const hit = svgEl("rect", { class: "hit", x: PAD.left, y: PAD.top,
+    width: plotW, height: plotH });
+  svg.appendChild(hit);
+
+  panel.appendChild(svg);
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "tooltip";
+  panel.style.position = "relative";
+  panel.appendChild(tooltip);
+
+  function nearestIndex(mx) {
+    const it = ((mx - PAD.left) / plotW) * xMax;
+    let best = 0, bestD = Infinity;
+    iters.forEach((v, i) => { const d = Math.abs(v - it); if (d < bestD) { bestD = d; best = i; } });
+    return best;
+  }
+
+  hit.addEventListener("mousemove", (e) => {
+    const rect = svg.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / rect.width) * W;
+    const idx = nearestIndex(mx);
+    const row = entry.rows[idx];
+    const px = x(row[0]);
+    hoverline.setAttribute("x1", px);
+    hoverline.setAttribute("x2", px);
+    hoverline.style.opacity = 1;
+    tooltip.style.opacity = 1;
+    tooltip.innerHTML =
+      `<div class="row"><span class="k">iteration</span><b>${row[0]}</b></div>` +
+      `<div class="row"><span class="k">&beta; rank</span><b>${row[2]} / ${nx} (${Math.round(row[2]/nx*100)}%)</b></div>` +
+      `<div class="row"><span class="k">&omega; rank</span><b>${row[3]} / ${nx} (${Math.round(row[3]/nx*100)}%)</b></div>`;
+    const tw = tooltip.offsetWidth;
+    let left = (px / W) * panel.clientWidth + 14;
+    if (left + tw > panel.clientWidth - 8) left = (px / W) * panel.clientWidth - tw - 14;
+    tooltip.style.left = left + "px";
+    tooltip.style.top = "8px";
+  });
+  hit.addEventListener("mouseleave", () => {
+    hoverline.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  });
+
+  container.appendChild(panel);
+}
+
+const panelsEl = document.getElementById("panels");
+Object.entries(DATA).forEach(([key, entry]) => buildPanel(panelsEl, key, entry));
+
+// accessible data table
+const tableWrap = document.getElementById("table-wrap");
+Object.entries(DATA).forEach(([key, entry]) => {
+  if (!entry) return;
+  const table = document.createElement("table");
+  table.className = "data-table";
+  const nx = entry.rows[0][1];
+  table.innerHTML = `<caption>${entry.label} (n_x=${nx}), stage 1</caption>
+    <thead><tr><th>iteration</th><th>&beta; rank</th><th>&beta; %</th><th>&omega; rank</th><th>&omega; %</th></tr></thead>
+    <tbody>${entry.rows.map(r => `<tr><td>${r[0]}</td><td>${r[2]}</td><td>${Math.round(r[2]/nx*100)}%</td><td>${r[3]}</td><td>${Math.round(r[3]/nx*100)}%</td></tr>`).join("")}</tbody>`;
+  tableWrap.appendChild(table);
+});
+</script>

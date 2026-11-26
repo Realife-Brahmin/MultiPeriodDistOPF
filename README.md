@@ -1,38 +1,95 @@
-# Multi-source, multi-period distribution OPF
+# MultiPeriodDistOPF
 
-This is the focused MSOPF reference snapshot for the PESGM 2027 study. It contains the model, adapted OpenDSS networks, recorded Julia environments, and archived simulation results for distribution networks supplied simultaneously by multiple substations with prescribed upstream voltage phasors.
+Research code and OpenDSS test networks for optimal power flow on distribution
+feeders with **solar PV, batteries and multiple substations**.
 
-The study maps sampled feasible operating points and infeasibility bounds with and without battery operation. It provides a mathematical model for evaluating this operating option; it does not establish general superiority to radial reconfiguration.
+**[Research lines](#three-research-lines)** ·
+**[Test networks](#test-networks)** ·
+**[Getting started](#getting-started)** ·
+**[Citation](#citation)**
 
-## Explore the results first
+## Three research lines
 
-- [Interactive feasibility and certificate maps](https://realife-brahmin.github.io/MultiPeriodDistOPF/farkas_maps.html): IEEE123, med3980, and sf6937.
-- [Paper-result index](problems/msopf/RESULTS.md): exact archived run folders and the meaning of each phase.
-- [Release and validation notes](problems/msopf/RELEASE.md): provenance, certificate-check coverage, and interpretation limits.
-- [Recorded environments and hardware](problems/msopf/environments/kamiak/README.md): the sf6937 Kamiak campaign is the reference configuration.
-- [Software credits](problems/msopf/SOFTWARE_CREDITS.md): modelling, numerical solvers, simulation engines, and plotting tools.
+The repository holds three independent lines of work on the same branch-flow
+model. Each has its own folder, Julia environment and README.
 
-No Julia installation is needed to inspect the archived CSVs or HTML maps. The included [HTML snapshot](docs/farkas_maps.html) contains its numerical data and loads Plotly.js from a CDN; opening it needs internet access. The live site can change, so retain the HTML from this version for a fixed reference. [Earlier four-source polytopes](docs/four_regions.html) are supporting historical material, not the current certificate maps.
+| | What it does | Start here |
+|---|---|---|
+| **SPAR-DDP** | Multi-period OPF by sparse, parallel Differential Dynamic Programming: battery energy is the only state linking periods, and each period's network is eliminated locally. | [problems/mpopf/spar_ddp](problems/mpopf/spar_ddp/README.md) |
+| **tADMM** | Multi-period OPF by temporal ADMM: single-period OPFs solved in parallel, coordinated with whole-horizon battery problems through consensus on the battery powers. | [problems/mpopf/tadmm](problems/mpopf/tadmm/README.md) |
+| **MSOPF** | Multi-source OPF: feeders supplied by several substations with fixed voltage angles, and the dispatch that keeps them feasible over a day. | [problems/msopf](problems/msopf/README.md) |
 
-## Obtain this snapshot
+SPAR-DDP and tADMM are two ways to solve the same multi-period problem (MPOPF);
+MSOPF asks a different question on related networks. [problems/](problems/README.md)
+lists all three with their environments.
 
-Download **Source code (zip)** from the [MSOPF release](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/releases/tag/msopf-pesgm2027-v1.0.1), or select the `msopf-pesgm2027-release` branch on GitHub. This branch presents only the MSOPF workstream, its shared network inputs, and supporting download/export tools. The full research repository, including the separate DDP workstreams, remains on [`master`](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/tree/master).
+## Test networks
 
-## Use the code
+The OpenDSS decks are usable on their own, **without Julia or any optimization
+license**. Small to large:
+[ieee123](test_networks/ieee123C_1ph),
+[med2522](test_networks/ieee2522C_1ph),
+[large10k](test_networks/large10kC_1ph), the
+[multi-source ieee123](test_networks/ieee123_5poi_1ph), and converted EPRI,
+IEEE 8500/9500 and SMART-DS cases.
 
-Start with the [MSOPF guide](problems/msopf/README.md). The reference environments record Julia **1.12.7**, JuMP **1.30.0**, MathOptInterface **1.50.0**, Ipopt **1.14.1**, Clarabel **0.11.1**, and OpenDSSDirect **0.9.9**. Whole-day certificates used MKL Pardiso; AC solves used an externally supplied MA57 library. Installation and licence requirements are explained in the environment notes. The original manifests are preserved rather than re-resolved.
+They are research adaptations, not untouched official feeder models. The
+[network catalogue](test_networks/README.md) gives their sizes, provenance,
+shared files and how to run them in OpenDSS.
 
-The largest reference tasks requested **80 GB RAM and 8 CPUs each**. Those resources concern recomputation, not browsing the results. The six follow-up exact audits are included. No further runs were launched to package this snapshot.
+## Getting started
 
-## Repository contents
+[Download ZIP](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/archive/refs/heads/master.zip),
+or clone:
 
-- `problems/msopf/`: equations, solvers, campaign drivers, archived evidence, and release documentation.
-- `test_networks/`: shared profiles, adapted network decks, conversion tools, and upstream provenance.
-- `docs/`: interactive result viewers.
-- `tools/`: optional public-input download and network-export helpers.
+```bash
+git clone --depth 1 https://github.com/Realife-Brahmin/MultiPeriodDistOPF.git
+cd MultiPeriodDistOPF
+```
 
-Historical results retain their original paths and labels. Use the paper-result index to select the rated-current runs matching this study. External solver binaries and downloaded upstream datasets are subject to their own availability and licences.
+Each research line is a separate Julia project (Julia 1.12). From the repository
+root, instantiate the one you want:
 
-## Attribution
+```bash
+julia --project=problems/mpopf/spar_ddp -e 'using Pkg; Pkg.instantiate()'
+julia --project=problems/mpopf/tadmm    -e 'using Pkg; Pkg.instantiate()'
+julia --project=problems/msopf          -e 'using Pkg; Pkg.instantiate()'
+```
 
-Please cite the software using [CITATION.cff](CITATION.cff), retain the [MIT licence](LICENSE), and credit the [upstream networks](test_networks/README.md) and [software packages](problems/msopf/SOFTWARE_CREDITS.md). This snapshot accompanies research in preparation and does not imply paper acceptance.
+then follow that folder's README. There is no single root `main.jl`.
+
+- **Solvers.** Everything runs with open-source Ipopt and its bundled MUMPS.
+  The HSL linear solvers (MA57/MA97), Gurobi and MOSEK are optional and only
+  speed up or extend the comparisons.
+- **Scale.** OpenDSS power flows and the small ieee123 cases run on a
+  workstation. The large networks at long horizons were run on a university
+  computing cluster and need substantial memory and many cores; the recorded
+  job scripts are a starting point, not a guarantee for every machine.
+- **Setup help.** The [setup guide](docs/first-time-installation-guide.md) covers
+  Windows and Bash helpers and optional solver downloads.
+
+## Citation
+
+Please cite this repository when you use its **code, test networks or editable
+figures**:
+
+> Aryan Ritwajeet Jha and contributors, *MultiPeriodDistOPF*,
+> https://github.com/Realife-Brahmin/MultiPeriodDistOPF.
+
+Use GitHub's **"Cite this repository"** button or [CITATION.cff](CITATION.cff).
+Please also cite the [original network sources](test_networks/README.md#cite-the-networks-you-use)
+and the method you build on. SPAR-DDP's solver is a fork of FilterDDP.jl and keeps
+its [attribution and citation guidance](problems/mpopf/spar_ddp/SPARDDP.jl/NOTICE.md).
+The citation request adds no restriction to the [MIT license](LICENSE);
+third-party notices remain in force.
+
+## More
+
+- [Editable network illustrations](figures/networks/README.md)
+- [SPAR-DDP studies and reproducibility evidence](problems/mpopf/spar_ddp/experiments/README.md)
+- [MSOPF interactive region viewer](https://realife-brahmin.github.io/MultiPeriodDistOPF/four_regions.html)
+- [Contributing and repository maintenance](docs/repository-maintenance.md)
+
+Questions, reproduction reports and suggestions are welcome as
+[GitHub issues](https://github.com/Realife-Brahmin/MultiPeriodDistOPF/issues).
+If you try a case, please give its name, the commit and the command you ran.

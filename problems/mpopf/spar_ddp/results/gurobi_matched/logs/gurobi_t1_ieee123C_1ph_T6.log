@@ -1,0 +1,76 @@
+QUIET_WAIT waited_s=18 other_cores=0.25 timed_out=0
+Set parameter Username
+Set parameter LicenseID to value 2866376
+Academic license - for non-commercial use only - expires 2027-09-22
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_t1_ieee123C_1ph_T6_gurobilog.txt"
+Set parameter Threads to value 1
+Set parameter Threads to value 1
+Set parameter LogFile to value "ddp/results/gurobi_matched/logs/gurobi_t1_ieee123C_1ph_T6_gurobilog.txt"
+Warning for adding constraints: zero or small (< 1e-13) coefficients, ignored
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (win64 - Windows 11+.0 (26200.2))
+
+CPU model: Intel(R) Core(TM) i9-10900X CPU @ 3.70GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 10 physical cores, 20 logical processors, using up to 1 threads
+
+Non-default parameters:
+Threads  1
+
+Optimize a model with 2610 rows, 3984 columns and 9825 nonzeros (Min)
+Model fingerprint: 0x59806976
+Model has 57 linear objective coefficients and an objective constant of 582.0714870425
+Model has 357 quadratic objective terms
+Model has 762 quadratic constraints
+Coefficient statistics:
+  Matrix range     [6e-10, 4e+00]
+  QMatrix range    [1e+00, 1e+00]
+  Objective range  [4e+02, 1e+03]
+  QObjective range [8e+03, 4e+04]
+  Bounds range     [4e-03, 1e+00]
+  RHS range        [2e-05, 1e+00]
+Presolve removed 66 rows and 90 columns
+Presolve time: 0.02s
+Presolved: 4120 rows, 5420 columns, 14234 nonzeros
+Presolved model has 763 second-order cone constraints
+Ordering time: 0.00s
+
+Barrier statistics:
+ Dense cols : 1
+ AA' NZ     : 2.094e+04
+ Factor NZ  : 6.424e+04 (roughly 4 MB of memory)
+ Factor Ops : 1.395e+06 (less than 1 second per iteration)
+ Threads    : 1
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   2.15855926e+03 -3.79694674e+04  1.82e+02 8.38e+01  4.38e+03     0s
+   1   1.69373534e+05 -4.97990981e+04  8.07e+01 2.07e+01  1.77e+03     0s
+   2   1.69138178e+05 -5.13206103e+04  2.57e+01 1.28e+01  6.47e+02     0s
+   3   1.11794068e+05 -4.99626795e+04  6.40e+00 3.20e+00  1.68e+02     0s
+   4   3.84029301e+04 -3.41070593e+04  1.50e+00 5.04e-01  3.96e+01     0s
+   5   1.76952559e+04 -1.82753357e+04  5.67e-01 1.30e-01  1.49e+01     0s
+   6   6.58598409e+03 -6.51599738e+03  1.06e-01 1.62e-02  3.36e+00     0s
+   7   3.76332229e+03  2.91394508e+02  5.99e-03 3.99e-04  5.52e-01     0s
+   8   3.31376904e+03  2.82775925e+03  1.34e-03 4.11e-05  7.35e-02     0s
+   9   3.23195928e+03  2.98562545e+03  7.23e-04 1.97e-05  3.70e-02     0s
+  10   3.19468887e+03  3.04446404e+03  4.46e-04 1.17e-05  2.25e-02     0s
+  11   3.16563015e+03  3.08617879e+03  1.74e-04 6.27e-06  1.18e-02     0s
+  12   3.15479767e+03  3.10440484e+03  8.60e-05 4.00e-06  7.44e-03     0s
+  13   3.14823722e+03  3.12252141e+03  3.42e-05 2.23e-06  3.78e-03     0s
+  14   3.14543300e+03  3.13741217e+03  1.46e-05 7.80e-07  1.18e-03     0s
+  15   3.14382579e+03  3.14234752e+03  3.68e-06 1.19e-05  2.19e-04     0s
+  16   3.14338668e+03  3.14276440e+03  1.01e-06 5.18e-06  9.16e-05     0s
+  17   3.14324285e+03  3.14291287e+03  4.72e-07 2.88e-06  4.85e-05     0s
+  18   3.14319347e+03  3.14302402e+03  2.91e-07 1.18e-06  2.49e-05     0s
+  19   3.14314666e+03  3.14308339e+03  1.60e-07 2.62e-07  9.31e-06     0s
+  20   3.14312320e+03  3.14311106e+03  2.82e-08 2.35e-08  1.78e-06     0s
+  21   3.14311621e+03  3.14311564e+03  7.87e-08 3.34e-06  8.50e-08     0s
+
+Barrier solved model in 21 iterations and 0.14 seconds (0.08 work units)
+Optimal objective 3.14311621e+03
+
+
+User-callback calls 70, time in user-callback 0.02 sec
+GUROBI_OPTION Threads=1
+CENTRAL_GUROBI system=ieee123C_1ph T=6 profile=periodic C_B=1.000000e-03 gamma=1.750000e+04 status=OPTIMAL iterations=21 objective=3143.116209439211 solve_time_s=0.142 build_s=5.984 wall_s=8.496 variables=3984 solver=13.0.0
+CENTRAL_GUROBI_MEMORY maxrss_mib=619.8
+CENTRAL_GUROBI_BATTERY at_power_limit=0.000 mean_utilization=0.205 energy_window_used=1.000 throughput_pu_h=2.497678e+00 energy_term=3.129058e+03 cb_term=7.627956e+00 terminal_term=6.430719e+00

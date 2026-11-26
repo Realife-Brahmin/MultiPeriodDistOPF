@@ -1,0 +1,5 @@
+KKT kkt_ieee2522C_1ph_T3_exact_iter20_stage1.jls  system=ieee2522C_1ph arm=exact  n=23691 (nu=13355 nc=10336)  nnz=162818  nnz(H)=80148  nnz(22)=0  rhs=23691x250  asym=0.00e+00  repeats=9  blas=1 omp=1 openblas=1 julia=1
+  MUMPS_sym_amd_plain          ord   0.0082  fact   0.3156  solve1  0.03986  wide   1.0176  f+w   1.3332 | fill   4.60  res1 9.9e-15  resW 1.6e-14  AMD on the uncompressed graph
+  MUMPS_sym_amf_plain          ord   0.0092  fact   0.3159  solve1  0.03563  wide   1.0380  f+w   1.3539 | fill   4.82  res1 1.2e-14  resW 1.4e-14  AMF on the uncompressed graph
+  MUMPS_sym_metis_plain        ord   0.1314  fact   0.3252  solve1  0.04580  wide   1.1476  f+w   1.4728 | fill   5.35  res1 1.2e-14  resW 1.3e-14  METIS on the uncompressed graph
+wrote ddp/results/kkt_ordering/bench/bench_ieee2522C_1ph_exact_plain.csv  (3 rows)  finished=2026-09-24T20:35:48.575

@@ -1,0 +1,171 @@
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+index c7c4b1ea..49954d80 100644
+--- a/src/backward_pass.jl
++++ b/src/backward_pass.jl
+@@ -179,28 +179,40 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             kkt_alloc_bytes = 0
+             factor_alloc_bytes = 0
+             solve_alloc_bytes = 0
++            blocked_value = false
++            blocked_α = Vector{T}()
++            blocked_ψ = Vector{T}()
++            blocked_Vxx = Matrix{T}(undef, 0, 0)
++            blocked_Vx = Vector{T}()
+             if sparse_kkt
+                 kkt_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+                 kkt_start_ns = time_ns()
+                 Ĥ = sparse(Symmetric(Ĥ))
+                 K = [Ĥ sparse(cu'); sparse(cu) spzeros(T, nc, nc)]
++                capture_this_kkt = haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
++                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
++                blocked_value = get(ENV, "FILTERDDP_BLOCKED_VALUE_RHS", "0") == "1" &&
++                    get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" &&
++                    structured_B && !capture_this_kkt
++                block_width = min(parse(Int, get(ENV, "FILTERDDP_VALUE_BLOCK_WIDTH", "128")), nx)
++                rhs_width = blocked_value ? block_width : nx + 1
+                 if isnothing(rhs_workspace)
+-                    rhs_workspace = Matrix{T}(undef, nu + nc, nx + 1)
++                    rhs_workspace = Matrix{T}(undef, nu + nc, rhs_width)
+                 end
+                 rhs = rhs_workspace
+-                @views begin
+-                    @. rhs[1:nu, 1] = -Qû
++                @views @. rhs[1:nu, 1] = -Qû
++                @views @. rhs[nu+1:end, 1] = -c
++                if !blocked_value
++                    @views begin
+                     if structured_B
+                         fill!(rhs[1:nu, 2:nx+1], zero(T))
+                         @. rhs[active_B_rows, 2:nx+1] = -B_active
+                     else
+                         @. rhs[1:nu, 2:nx+1] = -B
+                     end
+-                    @. rhs[nu+1:end, 1] = -c
+                     @. rhs[nu+1:end, 2:nx+1] = -cx
++                    end
+                 end
+-                capture_this_kkt = haskey(ENV, "FILTERDDP_CAPTURE_KKT") &&
+-                    t == parse(Int, get(ENV, "FILTERDDP_CAPTURE_STAGE", "1"))
+                 captured_rhs = capture_this_kkt ? copy(rhs) : nothing
+                 kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
+                 kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
+@@ -215,16 +227,62 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                         factor_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - factor_alloc_start : 0
+                         solve_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+                         solve_start_ns = time_ns()
+-                        ldiv!(F, rhs)
+-                        kkt_solution = rhs
++                        if blocked_value
++                            ldiv!(F, @view(rhs[:, 1:1]))
++                            blocked_α = copy(@view rhs[1:nu, 1])
++                            blocked_ψ = copy(@view rhs[nu+1:end, 1])
++                            blocked_Vxx = zeros(T, nx, nx)
++                            blocked_Vx = zeros(T, nx)
++                            for first_col in 1:block_width:nx
++                                columns = first_col:min(first_col + block_width - 1, nx)
++                                width = length(columns)
++                                rhs_block = @view rhs[:, 1:width]
++                                fill!(rhs_block, zero(T))
++                                @views @. rhs[active_B_rows, 1:width] = -B_active[:, columns]
++                                @views @. rhs[nu+1:end, 1:width] = -cx[:, columns]
++                                ldiv!(F, rhs_block)
++                                β_block = @view rhs[1:nu, 1:width]
++                                ω_block = @view rhs[nu+1:end, 1:width]
++                                @views blocked_Vxx[columns, :] .=
++                                    β_block[active_B_rows, :]' * B_active + ω_block' * cx
++                                @views blocked_Vx[columns] .= β_block' * Qû + ω_block' * c
++                                all(isfinite, rhs_block) || (data.status = 1; break)
++                            end
++                        else
++                            ldiv!(F, rhs)
++                            kkt_solution = rhs
++                        end
+                         solve_s = (time_ns() - solve_start_ns) / 1e9
+                         solve_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - solve_alloc_start : 0
+                     else
+                         F = lu(K)
+-                        ldiv!(F, rhs)
+-                        kkt_solution = rhs
++                        if blocked_value
++                            ldiv!(F, @view(rhs[:, 1:1]))
++                            blocked_α = copy(@view rhs[1:nu, 1])
++                            blocked_ψ = copy(@view rhs[nu+1:end, 1])
++                            blocked_Vxx = zeros(T, nx, nx)
++                            blocked_Vx = zeros(T, nx)
++                            for first_col in 1:block_width:nx
++                                columns = first_col:min(first_col + block_width - 1, nx)
++                                width = length(columns)
++                                rhs_block = @view rhs[:, 1:width]
++                                fill!(rhs_block, zero(T))
++                                @views @. rhs[active_B_rows, 1:width] = -B_active[:, columns]
++                                @views @. rhs[nu+1:end, 1:width] = -cx[:, columns]
++                                ldiv!(F, rhs_block)
++                                β_block = @view rhs[1:nu, 1:width]
++                                ω_block = @view rhs[nu+1:end, 1:width]
++                                @views blocked_Vxx[columns, :] .=
++                                    β_block[active_B_rows, :]' * B_active + ω_block' * cx
++                                @views blocked_Vx[columns] .= β_block' * Qû + ω_block' * c
++                                all(isfinite, rhs_block) || (data.status = 1; break)
++                            end
++                        else
++                            ldiv!(F, rhs)
++                            kkt_solution = rhs
++                        end
+                     end
+-                    all(isfinite, kkt_solution) || (data.status = 1)
++                    !blocked_value && !all(isfinite, kkt_solution) && (data.status = 1)
+                 catch err
+                     verbose && @warn "Sparse KKT factorization failed" exception=(err, catch_backtrace())
+                     data.status = 1
+@@ -261,14 +319,14 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             update_alloc_start = memory_diagnostic ? Base.gc_bytes() : 0
+             if sparse_kkt
+                 update_rule = solver.update[t]
+-                copyto!(update_rule.α, @view kkt_solution[1:nu, 1])
+-                copyto!(update_rule.ψ, @view kkt_solution[nu+1:end, 1])
++                copyto!(update_rule.α, blocked_value ? blocked_α : @view(kkt_solution[1:nu, 1]))
++                copyto!(update_rule.ψ, blocked_value ? blocked_ψ : @view(kkt_solution[nu+1:end, 1]))
+                 α = update_rule.α
+                 ψ = update_rule.ψ
+                 factor_backed_policy = get(ENV, "FILTERDDP_FACTOR_BACKED_POLICY", "0") == "1" && structured_B
+                 if factor_backed_policy
+-                    β = @view kkt_solution[1:nu, 2:nx+1]
+-                    ω = @view kkt_solution[nu+1:end, 2:nx+1]
++                    β = blocked_value ? zeros(T, 0, 0) : @view(kkt_solution[1:nu, 2:nx+1])
++                    ω = blocked_value ? zeros(T, 0, 0) : @view(kkt_solution[nu+1:end, 2:nx+1])
+                     update_rule.β = zeros(T, 0, 0)
+                     update_rule.ω = zeros(T, 0, 0)
+                     update_rule.factor_policy = FactorBackedPolicy{T}(
+@@ -336,18 +394,26 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+             ϕ_norm += norm(ϕ, 1)
+ 
+             # Update return V derivatives for next timestep Vxx = C + β' * B + ω' cx
+-            if structured_B
++            if blocked_value
++                V̂xx = C + blocked_Vxx
++                V̂x = lx + blocked_Vx + fx' * V̂x
++            elseif structured_B
+                 beta_active = Matrix(@view β[active_B_rows, :])
+                 beta_B = beta_active' * B_active
++                V̂xx = C + beta_B
++                V̂x = lx + β' * Qû + fx' * V̂x
+             else
+                 beta_B = β' * B
++                V̂xx = C + beta_B
++                V̂x = lx + β' * Qû + fx' * V̂x
+             end
+-            V̂xx = C + beta_B
+-            V̂x = lx + β' * Qû + fx' * V̂x
+             λ = lx + fx' * λ
+             if nc > 0
+-                V̂xx = V̂xx + ω' * cx
+-                V̂x = V̂x + cx' * ϕ + ω' * c
++                if !blocked_value
++                    V̂xx = V̂xx + ω' * cx
++                    V̂x = V̂x + ω' * c
++                end
++                V̂x = V̂x + cx' * ϕ
+                 λ = λ + cx' * ϕ
+             end
+ 
+

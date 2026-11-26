@@ -1,0 +1,95 @@
+﻿=== FilterDDP test suite ===
+date: 2026-08-03T02:50:36.5211271-07:00
+julia: julia version 1.12.6
+
+--- does a test/ directory exist? ---
+NO - no test/ directory in the repository
+--- does Project.toml declare a test target / [extras]? ---
+name = "FilterDDP"
+uuid = "3fc7acb0-3ec8-433f-906a-2d1e86d217d2"
+version = "0.6.0"
+authors = ["Mingda Xu"]
+
+[deps]
+Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+FastLapackInterface = "29a986be-02c6-4525-aec4-84b980013641"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+RuntimeGeneratedFunctions = "7e49a35a-f44a-4d26-94aa-eba1b4ca6b47"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
+[compat]
+Crayons = "4.1.1"
+FastLapackInterface = "2.1.1"
+LinearAlgebra = "1.12.0"
+RuntimeGeneratedFunctions = "0.5.17"
+StaticArrays = "1.9.18"
+Symbolics = "7.14.0"
+julia = "1.12.4"
+
+--- attempting Pkg.test("FilterDDP") anyway, to record the actual outcome ---
+julia : ERROR: UndefVarError: `FilterDDP` not defined in `Main`
+At C:\Users\aryan\AppData\Local\Temp\claude\c--Users-aryan-Documents-documents-general-MultiPeriodDistOPF\2ba7f9d4-5696
+-4470-b15e-539e452c0eaa\scratchpad\stage23.ps1:27 char:1
++ julia --startup-file=no --project=$repo -e 'using Pkg; Pkg.test("Filt ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: UndefVar...fined in `Main`:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ none:1
+ [2] eval(m::Module, e::Any)
+   @ Core .\boot.jl:489
+ [3] exec_options(opts::Base.JLOptions)
+   @ Base .\client.jl:283
+ [4] _start()
+   @ Base .\client.jl:550
+Pkg.test exit code: 1
+
+--- retry: previous Pkg.test call lost its quotes to PowerShell arg parsing ---
+julia : ERROR: LoadError: Package FilterDDP did not provide a `test/runtests.jl` file
+At C:\Users\aryan\AppData\Local\Temp\claude\c--Users-aryan-Documents-documents-general-MultiPeriodDistOPF\2ba7f9d4-5696
+-4470-b15e-539e452c0eaa\scratchpad\stage5.ps1:16 char:1
++ julia --startup-file=no --project=$repo $jl 2>&1 | Tee-Object -FilePa ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: LoadErro...ntests.jl` file:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Stacktrace:
+  [1] pkgerror(::String, ::Vararg{String})
+    @ Pkg.Types 
+C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\Types.jl:68
+  [2] test(ctx::Pkg.Types.Context, pkgs::Vector{PackageSpec}; coverage::Bool, julia_args::Cmd, test_args::Cmd, 
+test_fn::Nothing, force_latest_compatible_version::Bool, allow_earlier_backwards_compatible_versions::Bool, 
+allow_reresolve::Bool)
+    @ Pkg.Operations 
+C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\Operations.jl:2422
+  [3] test
+    @ C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\Operations.jl:2387 
+[inlined]
+  [4] test(ctx::Pkg.Types.Context, pkgs::Vector{PackageSpec}; coverage::Bool, test_fn::Nothing, julia_args::Cmd, 
+test_args::Cmd, force_latest_compatible_version::Bool, allow_earlier_backwards_compatible_versions::Bool, 
+allow_reresolve::Bool, kwargs::@Kwargs{io::IOContext{IO}})
+    @ Pkg.API C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\API.jl:552
+  [5] test(pkgs::Vector{PackageSpec}; io::IOContext{IO}, kwargs::@Kwargs{})
+    @ Pkg.API C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\API.jl:169
+  [6] test(pkgs::Vector{PackageSpec})
+    @ Pkg.API C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\API.jl:158
+  [7] test(; name::Nothing, uuid::Nothing, version::Nothing, url::Nothing, rev::Nothing, path::Nothing, 
+mode::PackageMode, subdir::Nothing, kwargs::@Kwargs{})
+    @ Pkg.API C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\API.jl:186
+  [8] test()
+    @ Pkg.API C:\Users\aryan\.julia\juliaup\julia-1.12.6+0.x64.w64.mingw32\share\julia\stdlib\v1.12\Pkg\src\API.jl:175
+  [9] top-level scope
+    @ C:\Users\aryan\AppData\Local\Temp\pkgtest.jl:1
+ [10] include(mod::Module, _path::String)
+    @ Base .\Base.jl:306
+ [11] exec_options(opts::Base.JLOptions)
+    @ Base .\client.jl:317
+ [12] _start()
+    @ Base .\client.jl:550
+in expression starting at C:\Users\aryan\AppData\Local\Temp\pkgtest.jl:1
+Pkg.test exit code: 1

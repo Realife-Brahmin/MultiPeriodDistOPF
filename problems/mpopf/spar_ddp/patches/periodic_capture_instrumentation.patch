@@ -1,0 +1,102 @@
+warning: in the working copy of 'C:/Users/Aryan Ritwajeet Jha/Documents/documents_general/MultiPeriodDistOPF/ddp/external/FilterDDP.jl/src/backward_pass.jl', LF will be replaced by CRLF the next time Git touches it
+diff --git a/src/backward_pass.jl b/src/backward_pass.jl
+index 49954d8..5211b73 100644
+--- a/src/backward_pass.jl	
++++ b/src/backward_pass.jl
+@@ -214,6 +214,12 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                     end
+                 end
+                 captured_rhs = capture_this_kkt ? copy(rhs) : nothing
++                # DIAGNOSTIC: snapshot the multi-RHS block *before* ldiv! overwrites
++                # it in place, so the periodic capture below records the true input
++                # to the KKT solve rather than its solution.
++                periodic_capture_active = haskey(ENV, "FILTERDDP_PERIODIC_CAPTURE_DIR") &&
++                    data.k % parse(Int, get(ENV, "FILTERDDP_PERIODIC_CAPTURE_STRIDE", "5")) == 0
++                periodic_rhs_snapshot = periodic_capture_active ? copy(rhs) : nothing
+                 kkt_assembly_s = (time_ns() - kkt_start_ns) / 1e9
+                 kkt_alloc_bytes = memory_diagnostic ? Base.gc_bytes() - kkt_alloc_start : 0
+                 kkt_solution = Matrix{T}(undef, 0, 0)
+@@ -367,6 +373,83 @@ function backward_pass!(solver::Solver{T, nx, nu, nc, nux, ncx}, ocp::OCP{T, nx,
+                     beta=copy(β), psi=copy(ψ), omega=copy(ω)))
+             end
+ 
++            # DIAGNOSTIC (not part of the paper's optimization stack): dump every
++            # matrix/vector FilterDDP carries per stage, every FILTERDDP_PERIODIC_
++            # CAPTURE_STRIDE-th outer iteration, for offline shape/compressibility
++            # inspection. No effect unless FILTERDDP_PERIODIC_CAPTURE_DIR is set.
++            #
++            # Two modes, since raw dumps scale as O(nu*nx + nc*nx) per snapshot --
++            # fine at ieee123/ieee2522 scale (KB-MB), multiple GB per snapshot at
++            # large10k scale (nu~54665, nc~42303, nx~1020), which filled a disk
++            # during the first large10k attempt. Set FILTERDDP_PERIODIC_CAPTURE_
++            # INLINE_STATS=1 to compute the same shape/SVD-rank statistics that
++            # analyze_periodic_capture.jl would have computed offline, right here
++            # where the arrays already live in memory, and append one small CSV
++            # row per snapshot instead of serializing the arrays themselves.
++            if sparse_kkt && periodic_capture_active
++                capture_dir = ENV["FILTERDDP_PERIODIC_CAPTURE_DIR"]
++                mkpath(capture_dir)
++                if get(ENV, "FILTERDDP_PERIODIC_CAPTURE_INLINE_STATS", "0") == "1"
++                    function _optimal_rank(sv, tol)
++                        isempty(sv) && return 0
++                        total = sum(abs2, sv)
++                        total == 0 && return 0
++                        for r in 0:length(sv)
++                            tail = r == length(sv) ? 0.0 : sum(abs2, @view sv[r+1:end])
++                            sqrt(tail / total) <= tol && return r
++                        end
++                        return length(sv)
++                    end
++                    rhs_state = Matrix(@view periodic_rhs_snapshot[:, 2:end])
++                    beta_d = Matrix(β)
++                    omega_d = Matrix(ω)
++                    sv_rhs = isempty(rhs_state) ? Float64[] : svdvals(rhs_state)
++                    sv_beta = isempty(beta_d) ? Float64[] : svdvals(beta_d)
++                    sv_omega = isempty(omega_d) ? Float64[] : svdvals(omega_d)
++                    csv_path = joinpath(capture_dir, "periodic_capture_summary.csv")
++                    header_needed = !isfile(csv_path)
++                    open(csv_path, "a") do io
++                        header_needed && println(io,
++                            "iteration,stage,nx,nu,nc,K_shape,K_nnz,K_density,rhs_state_shape,beta_shape,omega_shape,alpha_len,psi_len,SigmaL_len,SigmaU_len,Vxx_shape,Vx_len,rhs_sv_max,rhs_sv_min,rhs_rank_1pct,rhs_rank_5pct,rhs_rank_10pct,beta_rank_1pct,beta_rank_5pct,omega_rank_1pct,omega_rank_5pct,rhs_cond,beta_cond,barrier_mu,reg")
++                        @printf(io, "%d,%d,%d,%d,%d,%dx%d,%d,%.6e,%dx%d,%dx%d,%dx%d,%d,%d,%d,%d,%dx%d,%d,%.6e,%.6e,%d,%d,%d,%d,%d,%d,%d,%.3e,%.3e,%.3e,%.3e\n",
++                            data.k, t, nx, nu, nc,
++                            size(K,1), size(K,2), nnz(K), nnz(K) / (size(K,1)^2),
++                            size(rhs_state,1), size(rhs_state,2),
++                            size(beta_d,1), size(beta_d,2), size(omega_d,1), size(omega_d,2),
++                            length(α), length(ψ), length(Σ_L), length(Σ_U),
++                            size(V̂xx,1), size(V̂xx,2), length(V̂x),
++                            isempty(sv_rhs) ? NaN : sv_rhs[1], isempty(sv_rhs) ? NaN : sv_rhs[end],
++                            _optimal_rank(sv_rhs, 0.01), _optimal_rank(sv_rhs, 0.05), _optimal_rank(sv_rhs, 0.10),
++                            _optimal_rank(sv_beta, 0.01), _optimal_rank(sv_beta, 0.05),
++                            _optimal_rank(sv_omega, 0.01), _optimal_rank(sv_omega, 0.05),
++                            (isempty(sv_rhs) || sv_rhs[end] == 0) ? Inf : sv_rhs[1]/sv_rhs[end],
++                            (isempty(sv_beta) || sv_beta[end] == 0) ? Inf : sv_beta[1]/sv_beta[end],
++                            μ, reg)
++                    end
++                elseif get(ENV, "FILTERDDP_PERIODIC_CAPTURE_KKT_ONLY", "0") == "1"
++                    capture_file = joinpath(capture_dir,
++                        @sprintf("iter%04d_stage%03d.jls", data.k, t))
++                    Serialization.serialize(capture_file, (
++                        iteration=data.k, stage=t, nx=nx, nu=nu, nc=nc,
++                        K=copy(K), rhs=copy(@view periodic_rhs_snapshot[:, 1:1]),
++                        barrier_mu=μ, reg=reg))
++                else
++                    capture_file = joinpath(capture_dir,
++                        @sprintf("iter%04d_stage%03d.jls", data.k, t))
++                    Serialization.serialize(capture_file, (
++                        iteration=data.k, stage=t, nx=nx, nu=nu, nc=nc,
++                        x=copy(x), u=copy(u),
++                        K=copy(K),
++                        rhs_multi=periodic_rhs_snapshot,
++                        kkt_solution=copy(kkt_solution),
++                        alpha=copy(α), beta=copy(Matrix(β)), psi=copy(ψ),
++                        omega=copy(Matrix(ω)),
++                        Sigma_L=copy(Σ_L), Sigma_U=copy(Σ_U),
++                        Vxx_incoming=copy(V̂xx), Vx_incoming=copy(V̂x),
++                        barrier_mu=μ, reg=reg))
++                end
++            end
++
+             # update parameters of update rule for ineq. dual variables
+ 
+             if sparse_kkt

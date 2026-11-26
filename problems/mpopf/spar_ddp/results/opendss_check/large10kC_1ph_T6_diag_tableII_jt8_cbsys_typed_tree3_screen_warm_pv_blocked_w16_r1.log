@@ -1,0 +1,11 @@
+OPENDSS_CHECK large10kC_1ph_T6_diag_tableII_jt8_cbsys_typed_tree3_screen_warm_pv_blocked_w16_r1 | large10kC_1ph T=6 | converged=true | source 1.05 pu in the DSS file, 1.05 used | devices on the substation bus skipped: 0 | PV kW, DSS against instance: 6.3e-30 | line C1 0 nF
+    t   P_opf kW   P_dss kW   diff %  loss_opf  loss_dss   fict kW    dV max Vmin dss Vmax dss    low   high
+    1 1002773.00 1002035.94   0.0736 10145.302  9408.246   723.280  4.63e-05   0.9875   1.0500      0      0
+    2  813848.12  813310.55   0.0661  6690.140  6152.574   529.447  3.38e-05   0.9968   1.0500      0      0
+    3  545157.22  544619.65   0.0987  3636.613  3099.048   531.813  3.38e-05   1.0089   1.0500      0      0
+    4 1013117.04 1012379.98   0.0728 10309.235  9572.180   723.145  4.63e-05   0.9843   1.0500      0      0
+    5  968602.70  967430.77   0.1211  9914.343  8742.412  1150.787  7.36e-05   0.9887   1.0500      0      0
+    6  892950.05  891778.12   0.1314  8610.107  7438.173  1152.431  7.36e-05   0.9932   1.0500      0      0
+OPENDSS_SUMMARY large10kC_1ph_T6_diag_tableII_jt8_cbsys_typed_tree3_screen_warm_pv_blocked_w16_r1 | import: optimizer 20945792.48 kWh, OpenDSS 20926220.06 kWh (+0.0935%) | losses: optimizer 197222.95, OpenDSS 177650.53 kWh, of which not physical 19243.61 kWh
+OPENDSS_SUMMARY large10kC_1ph_T6_diag_tableII_jt8_cbsys_typed_tree3_screen_warm_pv_blocked_w16_r1 | voltage: largest difference 7.36e-05 pu | OpenDSS range 0.9843-1.0500 pu (optimizer lowest 0.9843) | below limit: 0 of 61920 bus-periods, worst 0.00e+00 pu | above limit: 0, worst 0.00e+00 pu (tolerance 1e-04)
+OPENDSS_SUMMARY large10kC_1ph_T6_diag_tableII_jt8_cbsys_typed_tree3_screen_warm_pv_blocked_w16_r1 | objective: optimizer 2839188.807248, with OpenDSS import 2836712.368970 (-0.0872%)

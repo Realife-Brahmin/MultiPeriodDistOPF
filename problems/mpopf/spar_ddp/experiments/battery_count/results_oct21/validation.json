@@ -1,0 +1,92 @@
+{
+  "measured_solves": 48,
+  "smoke_solves": 6,
+  "groups": [
+    {
+      "variant": "10k_X",
+      "T": 24,
+      "solves": 6,
+      "reference": 2758956.329377311,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_Y",
+      "T": 24,
+      "solves": 6,
+      "reference": 2772809.719800392,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_X",
+      "T": 96,
+      "solves": 6,
+      "reference": 2781939.843898249,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_Y",
+      "T": 96,
+      "solves": 6,
+      "reference": 2795953.718135509,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_X",
+      "T": 144,
+      "solves": 6,
+      "reference": 2784691.355454147,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_Y",
+      "T": 144,
+      "solves": 6,
+      "reference": 2798720.7934914427,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_X",
+      "T": 288,
+      "solves": 6,
+      "reference": 2787477.824700519,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    },
+    {
+      "variant": "10k_Y",
+      "T": 288,
+      "solves": 6,
+      "reference": 2801522.1745252274,
+      "initial_objective_relative_range": 0.0,
+      "repeat_trajectories_agree": true,
+      "physical_and_opendss_checks": true,
+      "source_input_checks": true
+    }
+  ],
+  "all_pass": true,
+  "quality_objective_relative_tolerance": 0.001,
+  "original_primal_tolerance": 1e-05,
+  "quality_times_observed_not_interpolated": true,
+  "ddp_clock": "reconstructed from timed iteration rows and backward-pass endpoint",
+  "central_clock": "IPOPT_ITER callback, original primal from printed internal table"
+}
