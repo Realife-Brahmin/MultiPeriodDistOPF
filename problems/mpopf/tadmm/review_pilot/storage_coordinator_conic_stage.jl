@@ -30,8 +30,8 @@ end
 # the iterations only (e.g. a looser barrier tolerance, Presolve=0); the repair, which
 # produces the reported dispatch, runs with the strict settings above, and the battery
 # step is never changed.
-function conic_iter_opts()
-    raw=strip(get(ENV,"SC_CONIC_ITER_OPTS",""))
+function conic_iter_opts(var="SC_CONIC_ITER_OPTS")
+    raw=strip(get(ENV,var,""))
     isempty(raw) && return Pair{String,Any}[]
     out=Pair{String,Any}[]
     for kv in split(raw,";"); isempty(strip(kv)) && continue
@@ -98,14 +98,29 @@ function make_power_stage_conic(d,t;rho)
     for j in bs
         set_lower_bound(pb[j],-d[:P_B_R_pu][j]); set_upper_bound(pb[j],d[:P_B_R_pu][j])
     end
-    cost=@expression(m,d[:LoadShapeCost][t]*base*dt*ps)
-    s=(;m,t,ps,qs,p,q,v,ell,qd,pb,cb=d[:C_B]*base^2*dt,cost,vars=all_variables(m),layout=physical_layout(d),conic=true)
+    # SC_CONIC_OBJ_SCALE=auto divides the period objective by base*dt*max(price), so the import
+    # cost per p.u. is at most 1 whatever the horizon. Exact (same minimizer); it keeps the
+    # conic solver's tolerances, which are relative to the objective and duals, on one scale.
+    osc=get(ENV,"SC_CONIC_OBJ_SCALE","1")=="auto" ? 1/(base*dt*maximum(d[:LoadShapeCost])) : 1.0
+    # SC_CONIC_OBJ_SHIFT=1 prices the import above the period's net load (a constant), through a
+    # variable, so the objective the solver sees is the cost of losses and battery moves only.
+    # Exact (same minimizer); a relative gap of 1e-8 then resolves the battery and loss terms
+    # instead of being spent on a large constant import (large10k imports about 1000 p.u.).
+    if get(ENV,"SC_CONIC_OBJ_SHIFT","0")=="1"
+        net=sum((d[:p_L_pu][j,t] for j in d[:NLset]);init=0.0)-sum((d[:p_D_pu][j,t] for j in ds);init=0.0)
+        @variable(m,pw); @constraint(m,pw==ps-net)
+        @variable(m,loss); @constraint(m,loss==pw+sum(pb[j] for j in bs;init=0.0))   # import = net load - battery + loss
+        cost=@expression(m,d[:LoadShapeCost][t]*base*dt*pw)
+    else
+        cost=@expression(m,d[:LoadShapeCost][t]*base*dt*ps)
+    end
+    s=(;m,t,ps,qs,p,q,v,ell,qd,pb,osc,cb=d[:C_B]*base^2*dt,cost,vars=all_variables(m),layout=physical_layout(d),conic=true)
     return merge(s,(;opts=conic_set_iter!(s)))
 end
 
 function power_stage_step_conic!(s,d,zt,ut,rho)
     bs=d[:Bset]
-    @objective(s.m,Min,s.cost+sum((s.cb+rho/2)*s.pb[j]^2+rho*(ut[n]-zt[n])*s.pb[j] for (n,j) in enumerate(bs)))
+    @objective(s.m,Min,s.osc*(s.cost+sum((s.cb+rho/2)*s.pb[j]^2+rho*(ut[n]-zt[n])*s.pb[j] for (n,j) in enumerate(bs))))
     optimize!(s.m)
     conic_usable(s.m,"stage $(s.t)") || error("stage $(s.t) failed: $(termination_status(s.m))")
     return [value(s.pb[j]) for j in bs],solve_time(s.m),0
@@ -114,10 +129,23 @@ end
 function repair_stage_conic!(s,d,zt)
     bs=d[:Bset]
     for (n,j) in enumerate(bs); fix(s.pb[j],zt[n];force=true); end
-    @objective(s.m,Min,s.cost)
-    conic_mode!(s,:strict); optimize!(s.m)
+    # With SC_CONIC_OBJ_SHIFT=1 the batteries are fixed here, so the import above net load minus
+    # battery output is the line loss, a variable of its own: pricing only it differs from the
+    # import cost by a constant, and the relative gap then resolves the losses themselves. Exact.
+    if get(ENV,"SC_CONIC_OBJ_SHIFT","0")=="1"
+        @objective(s.m,Min,s.osc*d[:LoadShapeCost][s.t]*d[:kVA_B]*d[:delta_t_h]*s.m[:loss])
+    else
+        @objective(s.m,Min,s.osc*s.cost)
+    end
+    conic_mode!(s,:strict)
+    # SC_CONIC_REPAIR_OPTS="name=value;...": parameters for the repair solve only (e.g. a tighter
+    # interior-point tolerance, so that cones on near-lossless branches are left tight).
+    ropts=conic_iter_opts("SC_CONIC_REPAIR_OPTS"); rkeep=Pair{String,Any}[k=>get_attribute(s.m,k) for (k,_) in ropts]
+    for (k,v) in ropts; set_attribute(s.m,k,v); end
+    optimize!(s.m)
     strict=conic_strict(s.m); ok=has_values(s.m) && all(isfinite,value.(s.vars))
     u=ok ? stage_dispatch(s,d) : Float64[]; status=string(termination_status(s.m)); solver_s=solve_time(s.m)
+    for (k,v) in rkeep; set_attribute(s.m,k,v); end
     conic_mode!(s,:iter)   # after reading the results: changing a parameter discards them
     for j in bs
         unfix(s.pb[j]); set_lower_bound(s.pb[j],-d[:P_B_R_pu][j]); set_upper_bound(s.pb[j],d[:P_B_R_pu][j])
