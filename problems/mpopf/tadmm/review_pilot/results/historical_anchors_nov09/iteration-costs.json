@@ -1,0 +1,197 @@
+[
+  {
+    "system": "large10kC_1ph",
+    "T": 24,
+    "solver": "ma57",
+    "case": "run_T24_primal_dual_31660055",
+    "iterations": 49,
+    "central_s": 33.790131407,
+    "mean_core_round_s": 1.0295917339387755,
+    "core_round_s": {
+      "median": 0.7815233829999997,
+      "p95": 1.5167549079999993,
+      "maximum": 6.352392866999999
+    },
+    "warmed_local_solver_s": {
+      "median": 0.19383907318115234,
+      "p95": 0.9329121112823486,
+      "maximum": 6.088176012039185
+    },
+    "warmed_local_stage_s": {
+      "median": 0.380363245,
+      "p95": 1.105272135,
+      "maximum": 6.272969552
+    },
+    "warmed_local_ipopt_iterations": {
+      "median": 4.0,
+      "p95": 22,
+      "maximum": 172
+    },
+    "warmed_round_max_stage_s": {
+      "median": 0.7030864880000001,
+      "p95": 1.440505546,
+      "maximum": 6.272969552
+    },
+    "prefix40_core_s": 44.807236479,
+    "count_only_40_round_projection_s": 41.18366935755102,
+    "count_only_strictly_faster_max_iterations": 32,
+    "observed_last_prefix_below_central": 29,
+    "note": "Projection holds measured average iteration cost fixed. Observed prefixes are unfinished states, not converged solutions. Existing core timer excludes build/warmup/diagnostics."
+  },
+  {
+    "system": "large10kC_1ph",
+    "T": 24,
+    "solver": "mumps",
+    "case": "run_T24_primal_dual_31660057",
+    "iterations": 49,
+    "central_s": 69.720547068,
+    "mean_core_round_s": 2.0444506180000004,
+    "core_round_s": {
+      "median": 1.6167300750000067,
+      "p95": 2.976672008999998,
+      "maximum": 12.410951897000004
+    },
+    "warmed_local_solver_s": {
+      "median": 0.6874558925628662,
+      "p95": 2.1108639240264893,
+      "maximum": 12.158390998840332
+    },
+    "warmed_local_stage_s": {
+      "median": 0.869940524,
+      "p95": 2.274028156,
+      "maximum": 12.335992987
+    },
+    "warmed_local_ipopt_iterations": {
+      "median": 4.0,
+      "p95": 22,
+      "maximum": 172
+    },
+    "warmed_round_max_stage_s": {
+      "median": 1.4995107375,
+      "p95": 2.902664102,
+      "maximum": 12.335992987
+    },
+    "prefix40_core_s": 89.13058052400001,
+    "count_only_40_round_projection_s": 81.77802472000002,
+    "count_only_strictly_faster_max_iterations": 34,
+    "observed_last_prefix_below_central": 30,
+    "note": "Projection holds measured average iteration cost fixed. Observed prefixes are unfinished states, not converged solutions. Existing core timer excludes build/warmup/diagnostics."
+  },
+  {
+    "system": "ieee2522C_1ph",
+    "T": 96,
+    "solver": "ma57",
+    "case": "run_T96_primal_dual_31660059",
+    "iterations": 1000,
+    "central_s": 76.446303258,
+    "mean_core_round_s": 0.30091164595099984,
+    "core_round_s": {
+      "median": 0.29850172150000276,
+      "p95": 0.3260988819999966,
+      "maximum": 0.4241238349999996
+    },
+    "warmed_local_solver_s": {
+      "median": 0.1171109676361084,
+      "p95": 0.15130996704101562,
+      "maximum": 0.3018929958343506
+    },
+    "warmed_local_stage_s": {
+      "median": 0.156852759,
+      "p95": 0.191203373,
+      "maximum": 0.345484489
+    },
+    "warmed_local_ipopt_iterations": {
+      "median": 10.0,
+      "p95": 13,
+      "maximum": 33
+    },
+    "warmed_round_max_stage_s": {
+      "median": 0.20915184,
+      "p95": 0.229401848,
+      "maximum": 0.345484489
+    },
+    "prefix40_core_s": 12.777240436000003,
+    "count_only_40_round_projection_s": 12.036465838039994,
+    "count_only_strictly_faster_max_iterations": 254,
+    "observed_last_prefix_below_central": 253,
+    "note": "Projection holds measured average iteration cost fixed. Observed prefixes are unfinished states, not converged solutions. Existing core timer excludes build/warmup/diagnostics."
+  },
+  {
+    "system": "ieee2522C_1ph",
+    "T": 96,
+    "solver": "mumps",
+    "case": "run_T96_primal_dual_31660061",
+    "iterations": 1000,
+    "central_s": 125.121175558,
+    "mean_core_round_s": 0.4375756417060014,
+    "core_round_s": {
+      "median": 0.4325507305000116,
+      "p95": 0.4713890319999994,
+      "maximum": 0.7504125720000001
+    },
+    "warmed_local_solver_s": {
+      "median": 0.23652160167694092,
+      "p95": 0.2907729148864746,
+      "maximum": 0.6385130882263184
+    },
+    "warmed_local_stage_s": {
+      "median": 0.27647648199999997,
+      "p95": 0.331549972,
+      "maximum": 0.673159851
+    },
+    "warmed_local_ipopt_iterations": {
+      "median": 10.0,
+      "p95": 13,
+      "maximum": 33
+    },
+    "warmed_round_max_stage_s": {
+      "median": 0.345271901,
+      "p95": 0.38559884,
+      "maximum": 0.673159851
+    },
+    "prefix40_core_s": 20.164648740000004,
+    "count_only_40_round_projection_s": 17.503025668240056,
+    "count_only_strictly_faster_max_iterations": 285,
+    "observed_last_prefix_below_central": 282,
+    "note": "Projection holds measured average iteration cost fixed. Observed prefixes are unfinished states, not converged solutions. Existing core timer excludes build/warmup/diagnostics."
+  },
+  {
+    "system": "large10kC_1ph",
+    "T": 48,
+    "solver": "mumps",
+    "case": "run_T48_primal_dual_31660026",
+    "iterations": 129,
+    "central_s": 180.518908089,
+    "mean_core_round_s": 2.2817403468217066,
+    "core_round_s": {
+      "median": 1.734510623999995,
+      "p95": 4.697979687000014,
+      "maximum": 10.542863597999997
+    },
+    "warmed_local_solver_s": {
+      "median": 0.7001420259475708,
+      "p95": 1.749722957611084,
+      "maximum": 10.234893083572388
+    },
+    "warmed_local_stage_s": {
+      "median": 0.8741801075,
+      "p95": 1.945764624,
+      "maximum": 10.395276267
+    },
+    "warmed_local_ipopt_iterations": {
+      "median": 4.0,
+      "p95": 17,
+      "maximum": 137
+    },
+    "warmed_round_max_stage_s": {
+      "median": 1.56948634,
+      "p95": 4.554039251,
+      "maximum": 10.395276267
+    },
+    "prefix40_core_s": 90.80980500300001,
+    "count_only_40_round_projection_s": 91.26961387286826,
+    "count_only_strictly_faster_max_iterations": 79,
+    "observed_last_prefix_below_central": 62,
+    "note": "Projection holds measured average iteration cost fixed. Observed prefixes are unfinished states, not converged solutions. Existing core timer excludes build/warmup/diagnostics."
+  }
+]

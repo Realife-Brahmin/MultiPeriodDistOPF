@@ -1,0 +1,81 @@
+cn178
+2026-11-15T12:01:53-08:00
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           52 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  128
+On-line CPU(s) list:                     0-127
+Vendor ID:                               GenuineIntel
+Model name:                              Intel(R) Xeon(R) 6760P
+CPU family:                              6
+Model:                                   173
+Thread(s) per core:                      1
+Core(s) per socket:                      64
+Socket(s):                               2
+Stepping:                                1
+BogoMIPS:                                4400.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 intel_ppin cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi vnmi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+Virtualization:                          VT-x
+L1d cache:                               6 MiB (128 instances)
+L1i cache:                               8 MiB (128 instances)
+L2 cache:                                256 MiB (128 instances)
+L3 cache:                                640 MiB (2 instances)
+NUMA node(s):                            2
+NUMA node0 CPU(s):                       0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,120,122,124,126
+NUMA node1 CPU(s):                       1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65,67,69,71,73,75,77,79,81,83,85,87,89,91,93,95,97,99,101,103,105,107,109,111,113,115,117,119,121,123,125,127
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Not affected
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS Not affected; BHI BHI_DIS_S
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsx async abort:           Not affected
+pid 2952823's current affinity list: 0-64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,97,98,101-107,109,111,113,117,119,121,123,125,127
+JobId=31818617 JobName=s98-ieee123-T96
+   UserId=aryan.jha(9254) GroupId=its_p_sys_ur_kam-dubey(7274) MCS_label=N/A
+   Priority=35 Nice=0 Account=dubey QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:00:02 TimeLimit=03:00:00 TimeMin=N/A
+   SubmitTime=2026-11-15T11:23:49 EligibleTime=2026-11-15T11:23:49
+   StartTime=2026-11-15T12:01:51 EndTime=2026-11-15T15:01:51 Deadline=N/A
+   PreemptTime=None SuspendTime=None SecsPreSuspend=0
+   LastSchedEval=2026-11-15T12:01:51
+   Partition=kamiak AllocNode:Sid=login-p3n04:1756795
+   ReqNodeList=(null) ExcNodeList=(null)
+   NodeList=cn178
+   BatchHost=cn178
+   NumNodes=1 NumCPUs=98 NumTasks=1 CPUs/Task=98 ReqB:S:C:T=0:0:*:1
+   TRES=cpu=98,mem=64G,node=1,billing=98
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=98 MinMemoryNode=64G MinTmpDiskNode=0
+   Features=graniterapids&6760P-2.20ghz&cores-128 DelayBoot=00:00:00
+   Gres=(null) Reservation=(null)
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=/home/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8/source/problems/mpopf/tadmm/review_pilot/kamiak_storage_coordinator.sh /home/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8 ieee123C_1ph 96 base_bal2_shared98
+   WorkDir=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8
+   StdErr=/home/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8/logs/s98-ieee123-T96-31818617.err
+   StdIn=/dev/null
+   StdOut=/home/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8/logs/s98-ieee123-T96-31818617.out
+   Power=
+
+TADMM_IPOPT_OPTIONS=hsllib=/home/aryan.jha/opt/hsl-private/install/ma57-3.11.3-metis/lib/libma57.so;linear_system_scaling=none;ma57_pivot_order=2
+OPENBLAS_NUM_THREADS=1
+SC_NWORKERS=96
+TADMM_CB_PROFILE=july
+TADMM_LINEAR_SOLVER=ma57
+SC_RHO=2:0.0625:20
+SC_BALANCE=2
+JULIA_DEPOT_PATH=/weka/data/lab/dubey/aryan.jha/kamiak_jobs/tadmm_sc_nov15_v8/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov11_large10k_interim_ice/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_horizon_sweep/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov08_watchdog_rho/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_accuracy_fix/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_parallel/julia-depot:/home/aryan.jha/kamiak_jobs/tadmm_review_nov07_v2/julia-depot:/home/aryan.jha/kamiak_jobs/tree_ablation_oct20_campaign_v2/julia-depot
+OMP_NUM_THREADS=1
+JULIA_NUM_THREADS=1
+TADMM_SCREEN=substation,vupper,ell

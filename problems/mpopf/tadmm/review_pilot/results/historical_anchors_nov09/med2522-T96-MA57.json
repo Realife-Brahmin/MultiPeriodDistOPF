@@ -1,0 +1,45 @@
+{
+  "case": "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660059",
+  "rho_initial": 20000.0,
+  "iterations": 1000,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": false,
+    "strict_criteria_met": false,
+    "original_primal": 0.09661054965111306,
+    "objective_gap": 0.38972339654636995
+  },
+  "sha256": {
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660059\\rho20000\\trace.csv": "1fdf8cd5952ece013832f1475fb1c395babd8a2123eb039b0bde9a1bf3aba159",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660059\\sweep.toml": "d7eb2ec85dc2451527c7f6cd1bcb18cacb312b989bb6b8b631f338435a47e9a3",
+    "tadmm_review_nov09_historical_anchors\\results\\run_T96_primal_dual_31660059\\rho20000\\assessment.toml": "96226aaa76e30cac0a1e231a8f35be7c9b045fc71838f1e69cc1a24c90f78581",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "med2522-T96-MA57.csv": "97614332ab2d9246d4f238642714dc536dbea7f8f783126e8b12c79d9a12e9b9"
+  }
+}

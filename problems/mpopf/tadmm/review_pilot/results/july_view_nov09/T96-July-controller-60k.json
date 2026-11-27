@@ -1,0 +1,45 @@
+{
+  "case": "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T96_primal_dual_31653593",
+  "rho_initial": 60000.0,
+  "iterations": 1000,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": false,
+    "strict_criteria_met": false,
+    "original_primal": 0.024478318727514048,
+    "objective_gap": 0.0006439632238201286
+  },
+  "sha256": {
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T96_primal_dual_31653593\\rho60000\\trace.csv": "4b8ed6b52339f894027f86792fd513f3b8f8def046b4d5234d73cbc432d39796",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T96_primal_dual_31653593\\sweep.toml": "32d11d12e17ecdf9517ac66a5ec112f989f5677bb30af99798292e602fc6dd06",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T96_primal_dual_31653593\\rho60000\\assessment.toml": "c925e54a7bb7f2ca5346c7ac66834ef7566f7c630a41116b6632724c9d32cc57",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\july_view_nov09\\T96-July-controller-60k.csv": "845ca038374c8a90cf876237257885fa1f2ac4781358a1b60e203a7f94ca8d3a"
+  }
+}

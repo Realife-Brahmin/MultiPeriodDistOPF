@@ -1,0 +1,47 @@
+power_tracking_records = 0
+base_kva = 1000.0
+instance_sha256 = "5553d14f5918e642f085a5ceb7329c91c446a7613e6e639809839723565cad7b"
+T = 24
+original_discharge_efficiency_min = 0.95
+max_engine_SOC_bound_kwh = 0.0
+engine_version = "DSS C-API Library version 0.14.3 revision eb03a63a86e287bc71312d7e50c30288ae946142 based on OpenDSS SVN 3723 [FPC 3.2.2] (64-bit build) MVMULT INCREMENTAL_Y CONTEXT_API PM 20240313054323; License Status: Open "
+table_schema = 2
+original_charge_efficiency_min = 0.95
+source_sha256 = "f2994cca297a96cea6d3d4914df106cd73e0cfc3ab519f8219f3bf504432761d"
+max_ell_difference_pu = 1.3114532222857633e-5
+opf_objective = 2831.014969712936
+terminal_hour = 24.0
+physical_tolerance_pu = 1.0e-5
+solution_sha256 = "04302a88d105c1417cb982b1490f586134f9f1983de2a95a78d0be84ff2465c6"
+max_requested_SOC_bound_kwh = 0.0
+max_line_P_difference_kw = 4.836153266296606e-6
+command_objective = 2831.014969712936
+batteries = 51
+idling_loss_percent = 0.0
+buses = 128
+used_discharge_efficiency_min = 1.0
+used_charge_efficiency_min = 1.0
+voltage_violations = 0
+max_engine_energy_balance_kwh = 4.8275285990939665e-9
+reserve_or_capacity_clamp_records = 0
+sequential_schedule_pass = true
+replayed_objective = 2831.0149630271508
+max_line_Q_difference_kvar = 3.4753695956624142e-6
+branches = 127
+note = "Live Storage chronology; energy initialized once. Snapshot checks are separate. No thermal upper compliance is claimed. PV injections, zero line capacitance, source1.05pu and constant-power voltage range match the optimization. Efficiency=dss retains battery efficiencies, not every original network setting."
+max_voltage_difference_pu = 5.671056957368137e-10
+converged = true
+efficiency_mode = "model"
+max_substation_difference_kw = 4.9528825911693275e-6
+network_voltage_agreement_pass = true
+dt_h = 1.0
+max_engine_vs_opf_energy_kwh = 7.637638077540032e-9
+opf_state_agreement_pass = true
+max_power_tracking_kw = 8.791250394324379e-9
+dispatch_energy_execution_pass = true
+
+[table_sha256]
+"branch.csv" = "269c4844deb2e1adf06258e18de45c63fa6edab0879ee063646e4360aaedcbfa"
+"bus.csv" = "3dbedb70e82074d397e18bace059fab5dafb2dd86a6ffaa8f52f4b76ca289564"
+"battery.csv" = "6e1945f86aae986e71c812b8d7d429e2a7b801c7675da9a52af78b6ab60c4b9b"
+"period.csv" = "0377cb3a45ff774867ed1ddae253fb10e215cf64550272dea73390f3801822ad"

@@ -1,0 +1,45 @@
+{
+  "case": "problems\\mpopf\\tadmm\\review_pilot\\results\\targeted_nov09\\results\\run_T48_primal_dual_31657407",
+  "rho_initial": 120000.0,
+  "iterations": 129,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": true,
+    "strict_criteria_met": false,
+    "original_primal": 0.000578346928151563,
+    "objective_gap": 3.8370346343831544e-06
+  },
+  "sha256": {
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\targeted_nov09\\results\\run_T48_primal_dual_31657407\\rho120000\\trace.csv": "40fe615b8c61c4597161b8710c655ee5219960e9916475e4d8866fed5bb66afc",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\targeted_nov09\\results\\run_T48_primal_dual_31657407\\sweep.toml": "1bd305bd2b297a70a2ce2b3ed7b556525d8bfbd7e4b0bd3eb80456a7956d1872",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\targeted_nov09\\results\\run_T48_primal_dual_31657407\\rho120000\\assessment.toml": "ed94bb2766e8de48b2fa1e77cdbd32f2ba7e735ea1b6dbc5542910e52d1ef350",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\july_view_nov09\\T48-fixed48.csv": "60457a0dfdf5ec718160b3be99c6afe8f8a5b3d2d54376e65633eadc92e95eb0"
+  }
+}

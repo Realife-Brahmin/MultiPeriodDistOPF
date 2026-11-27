@@ -1,0 +1,45 @@
+{
+  "case": "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T48_primal_dual_31653533",
+  "rho_initial": 120000.0,
+  "iterations": 322,
+  "style_source": {
+    "commit": "50b8901c324ba9eefd0d672c6e484e0ededc7a57",
+    "path": "envs/tadmm/Plotter.jl"
+  },
+  "colors": {
+    "objective": "#1E90FF",
+    "primal": "#006400",
+    "dual": "#EE7600",
+    "rho": "#800080"
+  },
+  "font": "Computer Modern (cmr10; mathtext cm)",
+  "source_columns": {
+    "objective": "objective",
+    "r_norm": "owned_r_rms",
+    "s_norm": "owned_s_rms",
+    "all_copy_r_norm": "r_rms",
+    "rho": "rho",
+    "core_s": "algorithm_s"
+  },
+  "all_copy_curve": "Dotted green; historical owned RMS is solid green",
+  "log_display_floor_for_exact_zeros": 1e-16,
+  "zero_counts": {
+    "r_norm": 0,
+    "s_norm": 0,
+    "all_copy_r_norm": 0
+  },
+  "quality": {
+    "final_rms_met": true,
+    "strict_criteria_met": false,
+    "original_primal": 0.00035763966484203547,
+    "objective_gap": 3.4005072459223126e-07
+  },
+  "sha256": {
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T48_primal_dual_31653533\\rho120000\\trace.csv": "e99387fcbae6ed5edf20b56e7f390f30c788060e3c418ab3be721116fbfee55f",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T48_primal_dual_31653533\\sweep.toml": "4512d27971f6f5a5787868fea127abca0c9013630b135369b41d06d8be417616",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\full_period_nov08\\results\\run_T48_primal_dual_31653533\\rho120000\\assessment.toml": "ef78d9d8f26d913172732cae72a5d33d49b7a4c19866eab952d1321c9b682c5f",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_july_convergence.py": "65fbfa04fa45437547e73e33769061ab206622971ada86b578c58d1e28c3b5bc",
+    "C:\\Users\\Aryan Ritwajeet Jha\\.codex\\.chatgpt-projects\\g-p-6acf02316ef08191bad32ee735d4c341\\tadmm-nov07\\problems\\mpopf\\tadmm\\review_pilot\\plot_style.py": "7076273373ba01e6273c45904ef89c7bc188bbc7469e425279c73dd0c677c196",
+    "problems\\mpopf\\tadmm\\review_pilot\\results\\july_view_nov09\\T48-July-controller.csv": "6ad0a96a141200eb3fd26e6415f7983d8a255738a9953f4a12f5c8b014063666"
+  }
+}

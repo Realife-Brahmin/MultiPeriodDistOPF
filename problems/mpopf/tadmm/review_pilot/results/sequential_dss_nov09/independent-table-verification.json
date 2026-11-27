@@ -1,0 +1,176 @@
+[
+  {
+    "case": "cap10-dss",
+    "passed": false,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 9.819511755487191e-06,
+    "max_energy_accounting_error_kwh": 133.43602127527004,
+    "max_engine_SOC_bound_kwh": 0.0,
+    "max_unconstrained_requested_SOC_bound_kwh": 234.41781047241,
+    "max_engine_vs_OPF_energy_kwh": 107.12669971018556,
+    "clamp_records": 2040,
+    "worst_battery": {
+      "t": 24,
+      "bus": 6099,
+      "command_kw": 499.99999998668227,
+      "actual_kw": 499.999999986671,
+      "engine_energy_kwh": 600.0,
+      "opf_energy_kwh": 600.0000000023603,
+      "energy_accounting_error_kwh": 133.41186578732777,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 234.41781047241
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  },
+  {
+    "case": "cap10-model",
+    "passed": false,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 1.9921969851566246e-07,
+    "max_energy_accounting_error_kwh": 0.798033450551884,
+    "max_engine_SOC_bound_kwh": 0.6779291905199898,
+    "max_unconstrained_requested_SOC_bound_kwh": 0.818639497697859,
+    "max_engine_vs_OPF_energy_kwh": 0.7373068514883698,
+    "clamp_records": 1276,
+    "worst_battery": {
+      "t": 24,
+      "bus": 1047,
+      "command_kw": 458.299999985911,
+      "actual_kw": 458.29999989599565,
+      "engine_energy_kwh": 549.96,
+      "opf_energy_kwh": 549.9600000022715,
+      "energy_accounting_error_kwh": 0.020606044185740302,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 0.818639497697859
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  },
+  {
+    "case": "cap30-dss",
+    "passed": false,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 1.1201957243471084e-05,
+    "max_energy_accounting_error_kwh": 133.44110214964928,
+    "max_engine_SOC_bound_kwh": 0.0,
+    "max_unconstrained_requested_SOC_bound_kwh": 234.42336466974984,
+    "max_engine_vs_OPF_energy_kwh": 107.1301011347582,
+    "clamp_records": 2040,
+    "worst_battery": {
+      "t": 24,
+      "bus": 54100,
+      "command_kw": 499.99999998670205,
+      "actual_kw": 499.9999999866971,
+      "engine_energy_kwh": 600.0,
+      "opf_energy_kwh": 600.0000000023547,
+      "energy_accounting_error_kwh": 133.41587724834721,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 234.42336466974984
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  },
+  {
+    "case": "cap30-model",
+    "passed": false,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 8.226567211686006e-07,
+    "max_energy_accounting_error_kwh": 0.6440604267630192,
+    "max_engine_SOC_bound_kwh": 0.10809993606994794,
+    "max_unconstrained_requested_SOC_bound_kwh": 0.6682245388269621,
+    "max_engine_vs_OPF_energy_kwh": 0.43605890606363573,
+    "clamp_records": 841,
+    "worst_battery": {
+      "t": 24,
+      "bus": 1047,
+      "command_kw": 458.29999998575335,
+      "actual_kw": 458.2999998958374,
+      "engine_energy_kwh": 549.96,
+      "opf_energy_kwh": 549.960000002261,
+      "energy_accounting_error_kwh": 0.024164067487447483,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 0.6682245388269621
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  },
+  {
+    "case": "central-dss",
+    "passed": false,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 1.992191869248927e-07,
+    "max_energy_accounting_error_kwh": 133.42105277158294,
+    "max_engine_SOC_bound_kwh": 0.0,
+    "max_unconstrained_requested_SOC_bound_kwh": 234.3421052567462,
+    "max_engine_vs_OPF_energy_kwh": 107.10526340957972,
+    "clamp_records": 2040,
+    "worst_battery": {
+      "t": 24,
+      "bus": 17081,
+      "command_kw": 499.99999999326104,
+      "actual_kw": 499.9999999932339,
+      "engine_energy_kwh": 600.0,
+      "opf_energy_kwh": 600.0000000018366,
+      "energy_accounting_error_kwh": 133.42105263855,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 234.3421052567462
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  },
+  {
+    "case": "central-model",
+    "passed": true,
+    "table_rows": {
+      "battery": 24480,
+      "bus": 247704,
+      "branch": 247680,
+      "period": 24
+    },
+    "max_tracking_kw": 1.992191869248927e-07,
+    "max_energy_accounting_error_kwh": 2.9747005214630917e-07,
+    "max_engine_SOC_bound_kwh": 0.0,
+    "max_unconstrained_requested_SOC_bound_kwh": 0.0,
+    "max_engine_vs_OPF_energy_kwh": 4.00388557864062e-07,
+    "clamp_records": 0,
+    "worst_battery": {
+      "t": 8,
+      "bus": 1092,
+      "command_kw": 128.18607597566313,
+      "actual_kw": 128.18607593041403,
+      "engine_energy_kwh": 500.04,
+      "opf_energy_kwh": 500.0400000576696,
+      "energy_accounting_error_kwh": 2.9747005214630917e-07,
+      "engine_bound_error_kwh": 0,
+      "requested_bound_error_kwh": 0
+    },
+    "all_table_hashes_match": true,
+    "independent_csv_checks_pass": true
+  }
+]

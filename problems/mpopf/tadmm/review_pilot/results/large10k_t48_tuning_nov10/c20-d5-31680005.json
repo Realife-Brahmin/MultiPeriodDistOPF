@@ -1,0 +1,104 @@
+{
+  "archive_sha256": "95df1dab2aad795bd526c338625b4137db4ef1863a6b08642867ace7307468dc",
+  "central_s": 87.644986841,
+  "arms": {
+    "60000": {
+      "iterations": 139,
+      "core_s": 139.88158105399998,
+      "loop_wall_s": 156.82877195,
+      "original_primal": 0.0007906282451138891,
+      "objective_gap": 2.7017646029796794e-06,
+      "sequential_schedule_pass": false,
+      "physical_NO_milestone": null,
+      "cone": 1.558537309165331e-05,
+      "storage": {
+        "SOC_state_error_pp": 0.02871725170986943,
+        "energy_accounting_error_pct_capacity": 0.03091912349098052,
+        "requested_bound_error_pp": 0.03953141225573518,
+        "engine_bound_error_pp": 0.02227526079400377,
+        "dispatch_error_pct_rated_power": 0.008728377976281133
+      },
+      "at_half_central_wall": {
+        "iteration": "37",
+        "objective": "2.633031690274118e6",
+        "original_primal": "0.03678939077451093",
+        "r_rms": "0.00296701971827775",
+        "r_max": "0.025953036134536256",
+        "s_rms": "0.7462451979306929",
+        "s_max": "1.9783108924239574",
+        "rho": "48.0",
+        "algorithm_s": "38.688111061",
+        "ideal_parallel_estimate_s": "38.22193425199999",
+        "solver_sum_s": "505.53907346725464",
+        "diagnostic_s": "3.8192176690000004",
+        "r_relative": "0.0027986929259688287",
+        "s_relative": "0.00615552327791006",
+        "loop_wall_s": "42.806177296",
+        "owned_r_rms": "0.0015019704694156917",
+        "owned_s_rms": "0.7411631851046527",
+        "historical_stagnant": "false",
+        "historical_stop_met": "false",
+        "dispatch_s": "3.0083541630000004",
+        "physical_check_s": "0.810853671",
+        "cone_equality_gap": "0.15604260219996202",
+        "fictitious_loss_kwh": "0.2772062675033631"
+      },
+      "cap_hits": 173
+    },
+    "120000": {
+      "iterations": 153,
+      "core_s": 152.262137544,
+      "loop_wall_s": 170.870368727,
+      "original_primal": 0.0005088719970847144,
+      "objective_gap": 1.6698112956405652e-07,
+      "sequential_schedule_pass": false,
+      "physical_NO_milestone": null,
+      "cone": 1.558537309165331e-05,
+      "storage": {
+        "SOC_state_error_pp": 0.032338935300310824,
+        "energy_accounting_error_pct_capacity": 0.0268816370643504,
+        "requested_bound_error_pp": 0.02775867319902344,
+        "engine_bound_error_pp": 0.020232751057494627,
+        "dispatch_error_pct_rated_power": 0.006938824109045201
+      },
+      "at_half_central_wall": {
+        "iteration": "39",
+        "objective": "2.6337444502149513e6",
+        "original_primal": "0.03564831192613238",
+        "r_rms": "0.0035671146326980356",
+        "r_max": "0.030909110685380492",
+        "s_rms": "0.7074815568211332",
+        "s_max": "1.9653600409806167",
+        "rho": "48.0",
+        "algorithm_s": "39.00900433400001",
+        "ideal_parallel_estimate_s": "38.717656463000004",
+        "solver_sum_s": "523.7933938503265",
+        "diagnostic_s": "3.88115579",
+        "r_relative": "0.0033598723810204633",
+        "s_relative": "0.005834277218472349",
+        "loop_wall_s": "43.138604259",
+        "owned_r_rms": "0.0018259731316566043",
+        "owned_s_rms": "0.7026242832908762",
+        "historical_stagnant": "false",
+        "historical_stop_met": "false",
+        "dispatch_s": "3.0012796109999997",
+        "physical_check_s": "0.879865239",
+        "cone_equality_gap": "0.15338438407452018",
+        "fictitious_loss_kwh": "0.16899346549828084"
+      },
+      "cap_hits": 154
+    }
+  },
+  "memory": {
+    "node_samples": {
+      "process_samples.cn168.csv": {
+        "working_set_bytes": 70838091776.0,
+        "private_bytes": 58471010304.0,
+        "pss_bytes": 58735950848.0,
+        "process_count": 49.0
+      }
+    },
+    "samples": 1307,
+    "scope": "Registered coordinator/workers; sampled one second; RSS sums include shared pages, PSS apportions them; these are sampled peaks, not exact allocation maxima."
+  }
+}

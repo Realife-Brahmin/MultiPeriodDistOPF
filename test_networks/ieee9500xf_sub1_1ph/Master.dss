@@ -1,0 +1,28 @@
+Clear
+! ieee9500xf_sub1_1ph (med3980, one substation): ieee9500xf_1ph fed from substation 1 alone, radially.
+! For the single-substation models (SPAR-DDP, 2026-11-17). Built from ieee9500xf_1ph's files:
+!   - one source, the circuit's own, on substation 1's high-voltage bus; substations 2 and 3 are not created and
+!     their transformers (the only line at each one's high-voltage bus) are left out;
+!   - the ties joining the other substations' areas to substation 1's closed, one per area, chosen by
+!     problems/mpopf/spar_ddp/experiments/scaling_effort_nov16/single_source_scan.jl; the other ties
+!     stay open, so the network is radial (the parser checks it);
+! Load scale 1: the source deck's loads, capacitors, PV and batteries as they are (Ipopt solves T=6 at full load, 2026-11-17).
+New Circuit.ieee9500xf_sub1_1ph basekv=7.1996 Bus1=hvmv69sub1_hsb pu=1.05 phases=1 R1=0 X1=0.00000001 R0=0 X0=0.00000001
+Redirect ../ieee9500xf_1ph/BranchData.dss
+Line.xfmr_hvmv69_11sub2.enabled=false
+Line.xfmr_hvmv69_11sub3.enabled=false
+Redirect ../ieee9500xf_1ph/Ties.dss
+Line.a8645_48332_sw.enabled=true
+Line.v7173_48332_sw.enabled=true
+Redirect ../LoadShapeDefault.dss
+Redirect ../LoadShapePVDefault.dss
+Redirect ../ieee9500xf_1ph/Loads.dss
+Redirect ../ieee9500xf_1ph/Capacitor.dss
+Redirect ../ieee9500xf_1ph/PVSystem.dss
+Redirect ../ieee9500xf_1ph/Storage.dss
+Set VoltageBases = [12.47]
+Set mode = Daily
+Set stepsize = 1h
+Set number = 1
+
+CalcVoltageBases
